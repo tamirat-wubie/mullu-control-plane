@@ -1,0 +1,53 @@
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+.pytest_cache/
+.python-version
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.nox/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+dist/
+build/
+site/
+*.egg-info/
+
+# Rust and Cargo
+target/
+**/target/
+maf/rust/Cargo.lock
+
+# Virtual environments and notebooks
+.ipynb_checkpoints/
+
+# Logs and local state
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak

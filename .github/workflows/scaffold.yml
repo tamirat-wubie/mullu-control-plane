@@ -1,0 +1,11 @@
+name: scaffold
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder step
+        run: echo "Mullu Platform scaffold workflow"

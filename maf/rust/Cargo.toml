@@ -1,0 +1,8 @@
+[workspace]
+members = [
+  "crates/maf-kernel",
+  "crates/maf-capability",
+  "crates/maf-agent",
+  "crates/maf-cli",
+]
+resolver = "2"
