@@ -26,6 +26,7 @@ from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
 from mcoi_runtime.core.template_validator import TemplateValidator
+from mcoi_runtime.core.verification_engine import VerificationEngine
 
 from .config import AppConfig
 
@@ -40,6 +41,7 @@ class BootstrappedRuntime:
     planning_boundary: PlanningBoundary
     policy_engine: PolicyEngine[PolicyDecision]
     replay_engine: ReplayEngine
+    verification_engine: VerificationEngine
     runtime_kernel: RuntimeKernel[TemplateReference, PolicyDecision]
     template_validator: TemplateValidator
     dispatcher: Dispatcher
@@ -88,6 +90,7 @@ def bootstrap_runtime(
     planning_boundary = PlanningBoundary()
     policy_engine: PolicyEngine[PolicyDecision] = PolicyEngine()
     replay_engine = ReplayEngine()
+    verification_engine = VerificationEngine()
     runtime_kernel: RuntimeKernel[TemplateReference, PolicyDecision] = RuntimeKernel(
         registry_store=registry_store,
         registry_index=registry_index,
@@ -131,6 +134,7 @@ def bootstrap_runtime(
         planning_boundary=planning_boundary,
         policy_engine=policy_engine,
         replay_engine=replay_engine,
+        verification_engine=verification_engine,
         runtime_kernel=runtime_kernel,
         template_validator=template_validator,
         dispatcher=dispatcher,

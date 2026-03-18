@@ -11,6 +11,7 @@ from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.core.verification_engine import VerificationEngine
 
 
 def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> None:
@@ -21,6 +22,7 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
 
     assert runtime.dispatcher.template_validator is runtime.template_validator
     assert runtime.runtime_kernel.registry_store is runtime.registry_store
+    assert runtime.verification_engine.__class__ is VerificationEngine
     assert runtime.executors["shell_command"].__class__ is ShellExecutor
     assert runtime.observers["filesystem"].__class__ is FilesystemObserver
     assert runtime.observers["process"].__class__ is ProcessObserver
@@ -42,4 +44,5 @@ def test_bootstrap_runtime_respects_explicit_adapter_overrides() -> None:
 
     assert runtime.executors["shell_command"].__class__ is FakeExecutor
     assert runtime.observers["filesystem"].__class__ is FakeObserver
+    assert runtime.verification_engine.__class__ is VerificationEngine
     assert runtime.clock() != ""

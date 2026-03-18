@@ -109,6 +109,7 @@ def test_operator_loop_processes_one_request_and_keeps_verification_open() -> No
     assert report.validation_passed is True
     assert report.verification_closed is False
     assert report.completed is False
+    assert report.verification_error is None
 
 
 def test_operator_loop_stops_before_dispatch_on_policy_denial() -> None:
@@ -144,6 +145,7 @@ def test_operator_loop_stops_before_dispatch_on_policy_denial() -> None:
     assert report.execution_result is None
     assert report.policy_decision.status.value == "deny"
     assert report.validation_error == "policy_denied_or_escalated"
+    assert report.verification_error is None
 
 
 def test_operator_loop_stops_before_dispatch_on_validation_failure() -> None:
@@ -179,6 +181,7 @@ def test_operator_loop_stops_before_dispatch_on_validation_failure() -> None:
     assert report.validation_passed is False
     assert report.validation_error is not None
     assert report.validation_error.startswith("missing_parameter:")
+    assert report.verification_error is None
 
 
 def test_operator_loop_stops_before_dispatch_on_admissibility_failure() -> None:
@@ -213,9 +216,10 @@ def test_operator_loop_stops_before_dispatch_on_admissibility_failure() -> None:
     assert report.execution_result is None
     assert len(report.planning_result.rejected) == 1
     assert report.validation_error == "planning_rejected_inadmissible_knowledge"
+    assert report.verification_error is None
 
 
-def test_operator_loop_marks_completion_only_with_explicit_verification() -> None:
+def test_operator_loop_closes_and_completes_on_matching_successful_verification() -> None:
     executor = FakeExecutor()
     runtime = bootstrap_runtime(
         clock=lambda: "2026-03-18T12:00:00+00:00",
@@ -261,3 +265,94 @@ def test_operator_loop_marks_completion_only_with_explicit_verification() -> Non
     assert report.execution_result.execution_id == expected_execution_id
     assert report.verification_closed is True
     assert report.completed is True
+    assert report.verification_error is None
+
+
+def test_operator_loop_closes_but_does_not_complete_on_failed_verification() -> None:
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        executors={"shell_command": executor},
+        observers={},
+    )
+    loop = OperatorLoop(runtime)
+    expected_execution_id = derive_execution_id(
+        "goal-1",
+        "shell_command",
+        "template-6",
+        {"message": "hello"},
+    )
+    verification = VerificationResult(
+        verification_id="verification-2",
+        execution_id=expected_execution_id,
+        status=VerificationStatus.FAIL,
+        checks=(VerificationCheck(name="stdout_present", status=VerificationStatus.FAIL),),
+        evidence=(EvidenceRecord(description="verification.evidence", details={"ok": False}),),
+        closed_at="2026-03-18T12:00:02+00:00",
+    )
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-6",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template={
+                "template_id": "template-6",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('{message}')"),
+                "required_parameters": ("message",),
+            },
+            bindings={"message": "hello"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            verification_result=verification,
+        )
+    )
+
+    assert report.execution_result is not None
+    assert report.verification_closed is True
+    assert report.completed is False
+    assert report.verification_error is None
+
+
+def test_operator_loop_fails_closed_on_mismatched_verification() -> None:
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        executors={"shell_command": executor},
+        observers={},
+    )
+    loop = OperatorLoop(runtime)
+    verification = VerificationResult(
+        verification_id="verification-3",
+        execution_id="execution-other",
+        status=VerificationStatus.PASS,
+        checks=(VerificationCheck(name="stdout_present", status=VerificationStatus.PASS),),
+        evidence=(EvidenceRecord(description="verification.evidence", details={"ok": True}),),
+        closed_at="2026-03-18T12:00:02+00:00",
+    )
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-7",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template={
+                "template_id": "template-7",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('{message}')"),
+                "required_parameters": ("message",),
+            },
+            bindings={"message": "hello"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            verification_result=verification,
+        )
+    )
+
+    assert report.execution_result is not None
+    assert report.verification_closed is False
+    assert report.completed is False
+    assert report.verification_error == "verification_execution_mismatch"

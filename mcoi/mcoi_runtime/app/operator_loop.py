@@ -103,6 +103,7 @@ class OperatorRunReport:
     execution_result: ExecutionResult | None
     verification_closed: bool
     completed: bool
+    verification_error: str | None
     dispatched: bool
 
 
@@ -172,6 +173,7 @@ class OperatorLoop:
                 execution_result=None,
                 verification_closed=False,
                 completed=False,
+                verification_error=None,
                 dispatched=False,
             )
 
@@ -187,6 +189,7 @@ class OperatorLoop:
                 execution_result=None,
                 verification_closed=False,
                 completed=False,
+                verification_error=None,
                 dispatched=False,
             )
 
@@ -204,6 +207,7 @@ class OperatorLoop:
                 execution_result=None,
                 verification_closed=False,
                 completed=False,
+                verification_error=None,
                 dispatched=False,
             )
 
@@ -215,7 +219,7 @@ class OperatorLoop:
                 bindings=request.bindings,
             )
         )
-        verification_closed = self._verification_closed(
+        verification_closure = self.runtime.verification_engine.evaluate(
             verification_result=request.verification_result,
             execution_result=execution_result,
         )
@@ -228,8 +232,9 @@ class OperatorLoop:
             validation_passed=True,
             validation_error=None,
             execution_result=execution_result,
-            verification_closed=verification_closed,
-            completed=verification_closed,
+            verification_closed=verification_closure.verification_closed,
+            completed=verification_closure.completed,
+            verification_error=verification_closure.error,
             dispatched=True,
         )
 
@@ -257,13 +262,3 @@ class OperatorLoop:
             )
             for evidence in result.evidence
         )
-
-    @staticmethod
-    def _verification_closed(
-        *,
-        verification_result: VerificationResult | None,
-        execution_result: ExecutionResult | None,
-    ) -> bool:
-        if verification_result is None or execution_result is None:
-            return False
-        return verification_result.execution_id == execution_result.execution_id
