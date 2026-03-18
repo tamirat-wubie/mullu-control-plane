@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:replay-record:1",
+  "title": "Replay Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "replay_id",
+    "trace_id",
+    "source_hash",
+    "approved_effects",
+    "blocked_effects",
+    "mode",
+    "recorded_at"
+  ],
+  "properties": {
+    "replay_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approved_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "effect_id"
+        ],
+        "properties": {
+          "effect_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "details": {}
+        }
+      }
+    },
+    "blocked_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "effect_id"
+        ],
+        "properties": {
+          "effect_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "details": {}
+        }
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "observation_only",
+        "effect_bearing"
+      ]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
