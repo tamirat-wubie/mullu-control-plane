@@ -41,6 +41,31 @@ class HttpConnectorConfig:
             raise ValueError("max_response_bytes must be positive")
 
 
+_BLOCKED_HOSTS = frozenset({
+    "localhost", "127.0.0.1", "0.0.0.0", "::1",
+    "[::1]", "169.254.169.254",  # AWS metadata
+})
+
+_BLOCKED_PREFIXES = (
+    "10.", "172.16.", "172.17.", "172.18.", "172.19.",
+    "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+    "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+    "172.30.", "172.31.", "192.168.",
+)
+
+
+def _is_private_host(host: str) -> bool:
+    """Check if a host resolves to a private/loopback/metadata address."""
+    if not host:
+        return True
+    lower = host.lower().strip("[]")
+    if lower in _BLOCKED_HOSTS:
+        return True
+    if any(lower.startswith(p) for p in _BLOCKED_PREFIXES):
+        return True
+    return False
+
+
 def _normalize_url(url: str) -> str:
     """Normalize URL for consistent scope checking."""
     parsed = urlparse(url)
@@ -99,6 +124,12 @@ class HttpConnector:
             normalized_url = _normalize_url(url)
         except Exception:
             return self._failure(result_id, connector.connector_id, started_at, "malformed_url")
+
+        # SSRF protection: block private/loopback/metadata addresses
+        parsed = urlparse(normalized_url)
+        if _is_private_host(parsed.hostname or ""):
+            return self._failure(result_id, connector.connector_id, started_at,
+                                 "blocked_private_address")
 
         # Build request with filtered headers
         try:

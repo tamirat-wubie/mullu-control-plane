@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from mcoi_runtime.contracts._base import freeze_value, thaw_value
 
@@ -83,10 +83,11 @@ class SnapshotStore:
       - data.json: the snapshot payload
     """
 
-    def __init__(self, base_path: Path) -> None:
+    def __init__(self, base_path: Path, *, clock: Callable[[], str] | None = None) -> None:
         if not isinstance(base_path, Path):
             raise PersistenceError("base_path must be a Path instance")
         self._base_path = base_path
+        self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
 
     def _snapshot_dir(self, snapshot_id: str) -> Path:
         return self._base_path / snapshot_id
@@ -105,7 +106,7 @@ class SnapshotStore:
         thawed = thaw_value(data)
         data_json = _deterministic_json(thawed)
         content_hash = _content_hash(data_json)
-        created_at = datetime.now(timezone.utc).isoformat()
+        created_at = self._clock()
 
         metadata = SnapshotMetadata(
             snapshot_id=snapshot_id,
