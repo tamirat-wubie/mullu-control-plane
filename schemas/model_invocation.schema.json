@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:model-invocation:1",
+  "title": "Model Invocation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "invocation_id",
+    "model_id",
+    "prompt_hash",
+    "invoked_at"
+  ],
+  "properties": {
+    "invocation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prompt_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_tokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cost_estimate": {
+      "type": "number",
+      "minimum": 0
+    },
+    "invoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

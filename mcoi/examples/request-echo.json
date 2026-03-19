@@ -1,0 +1,11 @@
+{
+  "request_id": "example-001",
+  "subject_id": "operator",
+  "goal_id": "run-echo",
+  "template": {
+    "template_id": "echo-tpl",
+    "action_type": "shell_command",
+    "command_argv": ["echo", "Hello from MCOI"]
+  },
+  "bindings": {}
+}

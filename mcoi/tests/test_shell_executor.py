@@ -1,0 +1,77 @@
+"""Purpose: verify argv-only shell execution for the MCOI runtime.
+Governance scope: execution-slice tests only.
+Dependencies: pytest, subprocess helpers, and the execution-slice shell adapter.
+Invariants: shell execution is explicit, captures output, and never uses shell=True or retries.
+"""
+
+from __future__ import annotations
+
+import subprocess
+
+from mcoi_runtime.adapters.executor_base import ExecutionRequest
+from mcoi_runtime.adapters.shell_executor import ShellExecutor
+from mcoi_runtime.contracts.execution import ExecutionOutcome
+
+
+def test_shell_executor_runs_explicit_argv_without_shell_mode() -> None:
+    captured: dict[str, object] = {}
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["argv"] = args[0]
+        captured["shell"] = kwargs["shell"]
+        captured["timeout"] = kwargs["timeout"]
+        return subprocess.CompletedProcess(args[0], 0, stdout="ok", stderr="")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-1",
+            goal_id="goal-1",
+            argv=("python", "-c", "print('ok')"),
+            timeout_seconds=5,
+        )
+    )
+
+    assert result.status is ExecutionOutcome.SUCCEEDED
+    assert result.actual_effects[0].details["stdout"] == "ok"
+    assert captured["argv"] == ["python", "-c", "print('ok')"]
+    assert captured["shell"] is False
+    assert captured["timeout"] == 5
+
+
+def test_shell_executor_maps_timeout_to_typed_cancellation() -> None:
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise subprocess.TimeoutExpired(cmd=args[0], timeout=kwargs["timeout"])
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-2",
+            goal_id="goal-2",
+            argv=("python", "-c", "print('ok')"),
+            timeout_seconds=0.1,
+        )
+    )
+
+    assert result.status is ExecutionOutcome.CANCELLED
+    assert result.actual_effects[0].name == "process_timed_out"
+    assert result.actual_effects[0].details["code"] == "timeout"
+
+
+def test_shell_executor_maps_nonzero_exit_to_failed_result() -> None:
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args[0], 3, stdout="", stderr="failure")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-3",
+            goal_id="goal-3",
+            argv=("python", "-c", "raise SystemExit(3)"),
+        )
+    )
+
+    assert result.status is ExecutionOutcome.FAILED
+    assert result.actual_effects[0].name == "process_failed"
+    assert result.actual_effects[0].details["returncode"] == 3
+    assert result.actual_effects[0].details["stderr"] == "failure"

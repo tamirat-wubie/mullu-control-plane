@@ -1,0 +1,14 @@
+{
+  "request_id": "example-002",
+  "subject_id": "operator",
+  "goal_id": "run-ls",
+  "template": {
+    "template_id": "ls-tpl",
+    "action_type": "shell_command",
+    "command_argv": ["ls", "{target_dir}"],
+    "required_parameters": ["target_dir"]
+  },
+  "bindings": {
+    "target_dir": "/tmp"
+  }
+}

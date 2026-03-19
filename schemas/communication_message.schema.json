@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:communication-message:1",
+  "title": "Communication Message",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "message_id",
+    "sender_id",
+    "recipient_id",
+    "channel",
+    "message_type",
+    "payload",
+    "correlation_id",
+    "created_at"
+  ],
+  "properties": {
+    "message_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sender_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recipient_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "approval",
+        "escalation",
+        "notification",
+        "explanation"
+      ]
+    },
+    "message_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

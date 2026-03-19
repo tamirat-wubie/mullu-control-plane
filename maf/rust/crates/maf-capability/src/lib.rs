@@ -1,5 +1,187 @@
 #![forbid(unsafe_code)]
-//! Purpose: MAF Core capability scaffold crate.
-//! Governance scope: Milestone 0 scaffold only.
-//! Dependencies: shared capability contracts.
-//! Invariants: no capability runtime logic is implemented in scaffold files.
+//! MAF Core capability types — cross-domain capability abstractions.
+//!
+//! Purpose: define generic capability descriptors, effect classes, determinism classes,
+//! and trust classes that verticals specialize but do not redefine.
+//!
+//! Governance: maps to schemas/capability_descriptor.schema.json and docs/06_capability_planes.md.
+//! Invariants: capability classifications are explicit and frozen per the audit.
+
+use serde::{Deserialize, Serialize};
+
+// ---------------------------------------------------------------------------
+// Effect class — what kind of side effects a capability may produce
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum EffectClass {
+    InternalPure,
+    ExternalRead,
+    ExternalWrite,
+    HumanMediated,
+    Privileged,
+}
+
+// ---------------------------------------------------------------------------
+// Determinism class — how predictable a capability's output is
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeterminismClass {
+    Deterministic,
+    InputBounded,
+    RecordedNondeterministic,
+}
+
+// ---------------------------------------------------------------------------
+// Trust class — how much the platform trusts the capability's source
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TrustClass {
+    TrustedInternal,
+    BoundedExternal,
+    UntrustedExternal,
+}
+
+// ---------------------------------------------------------------------------
+// Verification strength — how strongly the capability's output is verified
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VerificationStrength {
+    None,
+    Weak,
+    Moderate,
+    Strong,
+    Mandatory,
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle state — where the capability is in its lifecycle
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LifecycleState {
+    Candidate,
+    Provisional,
+    Verified,
+    Trusted,
+    Deprecated,
+    Blocked,
+}
+
+// ---------------------------------------------------------------------------
+// Capability constraint
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CapabilityConstraint {
+    pub key: String,
+    pub value: String,
+}
+
+// ---------------------------------------------------------------------------
+// Capability descriptor — maps to schemas/capability_descriptor.schema.json
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CapabilityDescriptor {
+    pub capability_id: String,
+    pub subject_id: String,
+    pub name: String,
+    pub version: String,
+    pub scope: String,
+    #[serde(default)]
+    pub constraints: Vec<CapabilityConstraint>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub effect_class: Option<EffectClass>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub determinism_class: Option<DeterminismClass>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trust_class: Option<TrustClass>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verification_strength: Option<VerificationStrength>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lifecycle: Option<LifecycleState>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn effect_class_serializes_to_snake_case() {
+        let json = serde_json::to_string(&EffectClass::ExternalRead).unwrap();
+        assert_eq!(json, r#""external_read""#);
+    }
+
+    #[test]
+    fn determinism_class_serializes_to_snake_case() {
+        let json = serde_json::to_string(&DeterminismClass::InputBounded).unwrap();
+        assert_eq!(json, r#""input_bounded""#);
+    }
+
+    #[test]
+    fn trust_class_serializes_to_snake_case() {
+        let json = serde_json::to_string(&TrustClass::BoundedExternal).unwrap();
+        assert_eq!(json, r#""bounded_external""#);
+    }
+
+    #[test]
+    fn lifecycle_serializes_to_snake_case() {
+        let json = serde_json::to_string(&LifecycleState::Deprecated).unwrap();
+        assert_eq!(json, r#""deprecated""#);
+    }
+
+    #[test]
+    fn capability_descriptor_round_trips() {
+        let descriptor = CapabilityDescriptor {
+            capability_id: "cap-1".into(),
+            subject_id: "agent-1".into(),
+            name: "shell_execute".into(),
+            version: "1.0.0".into(),
+            scope: "local".into(),
+            constraints: vec![CapabilityConstraint {
+                key: "os".into(),
+                value: "linux".into(),
+            }],
+            effect_class: Some(EffectClass::ExternalWrite),
+            determinism_class: Some(DeterminismClass::RecordedNondeterministic),
+            trust_class: Some(TrustClass::TrustedInternal),
+            verification_strength: Some(VerificationStrength::Strong),
+            lifecycle: Some(LifecycleState::Verified),
+        };
+        let json = serde_json::to_string(&descriptor).unwrap();
+        let restored: CapabilityDescriptor = serde_json::from_str(&json).unwrap();
+        assert_eq!(descriptor, restored);
+    }
+
+    #[test]
+    fn capability_descriptor_minimal() {
+        let descriptor = CapabilityDescriptor {
+            capability_id: "cap-2".into(),
+            subject_id: "agent-1".into(),
+            name: "read_file".into(),
+            version: "1.0.0".into(),
+            scope: "local".into(),
+            constraints: vec![],
+            effect_class: None,
+            determinism_class: None,
+            trust_class: None,
+            verification_strength: None,
+            lifecycle: None,
+        };
+        let json = serde_json::to_string(&descriptor).unwrap();
+        // Optional fields should not appear when None
+        assert!(!json.contains("effect_class"));
+        assert!(!json.contains("lifecycle"));
+        let restored: CapabilityDescriptor = serde_json::from_str(&json).unwrap();
+        assert_eq!(descriptor, restored);
+    }
+}
