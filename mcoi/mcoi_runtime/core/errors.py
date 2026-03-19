@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any, Mapping
 
 
@@ -89,6 +90,9 @@ class StructuredError:
             raise ValueError("source_plane must be a SourcePlane value")
         if not isinstance(self.recoverability, Recoverability):
             raise ValueError("recoverability must be a Recoverability value")
+        if isinstance(self.context, dict):
+            object.__setattr__(self, "context", MappingProxyType(dict(self.context)))
+        object.__setattr__(self, "related_ids", tuple(self.related_ids))
 
 
 # --- Convenience constructors for common error patterns ---

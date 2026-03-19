@@ -100,8 +100,10 @@ def _reconstruct_dataclass(raw: dict[str, Any], dc_type: type) -> Any:
     """Recursively reconstruct a dataclass from a raw dict."""
     try:
         hints = get_type_hints(dc_type)
-    except Exception:
-        hints = {}
+    except Exception as exc:
+        raise CorruptedDataError(
+            f"cannot resolve type hints for {dc_type.__name__}: {exc}"
+        ) from exc
 
     reconstructed: dict[str, Any] = {}
     for f in fields(dc_type):

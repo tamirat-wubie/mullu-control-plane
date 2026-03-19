@@ -9,7 +9,6 @@ Invariants:
 
 from __future__ import annotations
 
-from mcoi_runtime.app.deployment_profiles import DeploymentProfile
 from mcoi_runtime.contracts.deployment import (
     ConformanceVerdict,
     ConformanceViolation,
@@ -18,22 +17,6 @@ from mcoi_runtime.contracts.deployment import (
     ViolationType,
 )
 from .invariants import ensure_non_empty_text, stable_identifier
-
-
-def bind_profile(profile: DeploymentProfile) -> DeploymentBinding:
-    """Create a deployment binding from a profile."""
-    return DeploymentBinding(
-        profile_id=profile.profile_id,
-        autonomy_mode=profile.autonomy_mode,
-        policy_pack_id=profile.policy_pack_id,
-        policy_pack_version=profile.policy_pack_version,
-        allowed_executor_routes=profile.enabled_executor_routes,
-        allowed_observer_routes=profile.enabled_observer_routes,
-        export_enabled=profile.export_enabled,
-        import_enabled=profile.import_enabled,
-        max_retention_days=profile.max_retention_days,
-        telemetry_enabled=profile.telemetry_enabled,
-    )
 
 
 class DeploymentEnforcer:

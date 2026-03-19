@@ -11,8 +11,9 @@ from mcoi_runtime.contracts.deployment import (
     DeploymentConformanceReport,
     ViolationType,
 )
-from mcoi_runtime.core.deployment import DeploymentEnforcer, bind_profile
+from mcoi_runtime.core.deployment import DeploymentEnforcer
 from mcoi_runtime.app.deployment_profiles import (
+    bind_profile,
     LOCAL_DEV,
     OPERATOR_APPROVED,
     PILOT_PROD,
