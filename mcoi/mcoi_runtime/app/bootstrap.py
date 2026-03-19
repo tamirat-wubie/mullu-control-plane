@@ -19,6 +19,7 @@ from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, Policy
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
+from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
 from mcoi_runtime.core.policy_engine import PolicyEngine
 from mcoi_runtime.core.registry_index import RegistryIndex
@@ -26,7 +27,9 @@ from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
 from mcoi_runtime.core.template_validator import TemplateValidator
+from mcoi_runtime.core.provider_registry import ProviderRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
+from mcoi_runtime.core.world_state import WorldStateEngine
 
 from .config import AppConfig
 
@@ -45,6 +48,9 @@ class BootstrappedRuntime:
     runtime_kernel: RuntimeKernel[TemplateReference, PolicyDecision]
     template_validator: TemplateValidator
     dispatcher: Dispatcher
+    world_state: WorldStateEngine
+    meta_reasoning: MetaReasoningEngine
+    provider_registry: ProviderRegistry
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
 
@@ -125,6 +131,10 @@ def bootstrap_runtime(
         clock=runtime_clock,
     )
 
+    world_state = WorldStateEngine()
+    meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
+    provider_registry = ProviderRegistry(clock=runtime_clock)
+
     return BootstrappedRuntime(
         config=app_config,
         clock=runtime_clock,
@@ -138,6 +148,9 @@ def bootstrap_runtime(
         runtime_kernel=runtime_kernel,
         template_validator=template_validator,
         dispatcher=dispatcher,
+        world_state=world_state,
+        meta_reasoning=meta_reasoning,
+        provider_registry=provider_registry,
         executors=frozen_executors,
         observers=frozen_observers,
     )

@@ -1,0 +1,73 @@
+# Mullu Platform MCOI Runtime -- Release Notes v0.1.0
+
+**Version:** 0.1.0 (internal alpha)
+**Date:** 2026-03-19
+**Status:** Internal use only. Not for external distribution.
+
+## Summary
+
+First internal alpha of the Mullu Platform MCOI Runtime. This release provides a
+governed execution runtime for agentic operations with policy control, verification
+closure, persistence, replay, procedural memory, and a multi-plane capability
+architecture.
+
+## What's Included
+
+### Runtime Core
+- **Policy engine:** gate all execution through policy approval; deny/escalate block dispatch
+- **Verification closure:** every action requires verification before completion
+- **Dispatcher:** route execution to registered executor adapters
+- **Replay engine:** deterministic replay of persisted execution traces
+- **Procedural memory:** working/episodic/procedural tiers with promotion between tiers
+- **Structured error taxonomy:** 11 error families with recoverability classification
+
+### Capability Planes
+- Communication plane (message routing, delivery tracking)
+- External integration plane (HTTP connector, SMTP connector, provider registry)
+- Model orchestration plane (model invocation, response handling)
+- Temporal plane (scheduling, deadlines, state transitions)
+- Coordination plane (delegation, handoff, conflict detection, merge decisions)
+- World-state plane (entity tracking, contradiction detection, state hashing)
+- Meta-reasoning plane (capability degradation, escalation recommendations)
+
+### Operator Tooling
+- **CLI:** `mcoi run`, `mcoi status`, `mcoi profiles`, `mcoi packs`
+- **Operator console:** structured run reports with view models
+- **Configuration profiles:** local-dev, safe-readonly, operator-approved, sandboxed
+- **Policy packs:** declarative rule sets for runtime governance
+
+### Persistence
+- Trace store (JSON-backed execution trace persistence)
+- Snapshot store (world-state snapshots)
+- Replay store (replay record persistence)
+- Registry backend (provider and capability registration)
+
+### Platform Components
+- **MAF Core:** Rust type definitions for the Mullu Agentic Framework
+- **MCOI Runtime:** Python runtime implementation
+- **Architecture docs:** 18 documents covering all planes and subsystems
+- **JSON schemas:** 16 schemas for contracts, traces, policies, and connectors
+
+## Test Coverage
+
+- **Python:** 352 tests
+- **Rust:** 21 tests
+
+## Breaking Changes
+
+N/A -- first release.
+
+## Known Issues
+
+See [KNOWN_LIMITATIONS_v0.1.md](KNOWN_LIMITATIONS_v0.1.md) for a complete list of
+current limitations and areas not yet implemented.
+
+## Security
+
+See [SECURITY_MODEL_v0.1.md](SECURITY_MODEL_v0.1.md) for the current security posture
+and what is not yet covered.
+
+## Getting Started
+
+See [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) for installation, CLI usage,
+and configuration.

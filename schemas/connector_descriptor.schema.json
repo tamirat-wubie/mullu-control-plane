@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:connector-descriptor:1",
+  "title": "Connector Descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connector_id",
+    "name",
+    "provider",
+    "effect_class",
+    "trust_class",
+    "credential_scope_id",
+    "enabled"
+  ],
+  "properties": {
+    "connector_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effect_class": {
+      "type": "string",
+      "enum": [
+        "internal_pure",
+        "external_read",
+        "external_write",
+        "human_mediated",
+        "privileged"
+      ]
+    },
+    "trust_class": {
+      "type": "string",
+      "enum": [
+        "trusted_internal",
+        "bounded_external",
+        "untrusted_external"
+      ]
+    },
+    "credential_scope_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

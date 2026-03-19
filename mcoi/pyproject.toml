@@ -9,6 +9,9 @@ description = "MCOI Runtime scaffold for Mullu Platform."
 requires-python = ">=3.12"
 dependencies = []
 
+[project.scripts]
+mcoi = "mcoi_runtime.app.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 

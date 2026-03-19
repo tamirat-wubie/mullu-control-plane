@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:delivery-result:1",
+  "title": "Delivery Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "delivery_id",
+    "message_id",
+    "status",
+    "channel"
+  ],
+  "properties": {
+    "delivery_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "delivered",
+        "failed",
+        "pending"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "approval",
+        "escalation",
+        "notification",
+        "explanation"
+      ]
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error_code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

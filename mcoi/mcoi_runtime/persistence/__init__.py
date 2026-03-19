@@ -1,5 +1,33 @@
-"""Purpose: MCOI persistence package scaffold.
-Governance scope: Milestone 0 scaffold only.
-Dependencies: runtime-local contracts package.
-Invariants: persistence behavior is deferred beyond scaffold setup.
+"""Purpose: MCOI persistence-core layer for deterministic, local, inspectable storage.
+Governance scope: persistence API surface for runtime snapshots, traces, and registry state.
+Dependencies: runtime-local contracts package, runtime-core invariants.
+Invariants: persistence is explicit, deterministic, local, and fail-closed.
 """
+
+from .errors import (
+    CorruptedDataError,
+    PersistenceError,
+    PersistenceWriteError,
+    SnapshotNotFoundError,
+    TraceNotFoundError,
+)
+from .registry_backend import RegistryBackend
+from .replay_store import ReplayStore
+from .snapshot_store import SnapshotMetadata, SnapshotStore
+from .trace_store import TraceStore
+from ._serialization import deserialize_record, serialize_record
+
+__all__ = [
+    "CorruptedDataError",
+    "PersistenceError",
+    "PersistenceWriteError",
+    "RegistryBackend",
+    "ReplayStore",
+    "SnapshotMetadata",
+    "SnapshotNotFoundError",
+    "SnapshotStore",
+    "TraceNotFoundError",
+    "TraceStore",
+    "deserialize_record",
+    "serialize_record",
+]
