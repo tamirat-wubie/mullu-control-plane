@@ -37,7 +37,17 @@ from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceState, Evid
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult, PlanningKnowledge
 from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.core.skills import StepExecutor
 from mcoi_runtime.core.template_validator import TemplateValidationError
+from mcoi_runtime.contracts.skill import (
+    SkillDescriptor,
+    SkillExecutionRecord,
+    SkillLifecycle,
+    SkillOutcome,
+    SkillOutcomeStatus,
+    SkillSelectionDecision,
+    SkillStepOutcome,
+)
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 
@@ -96,6 +106,41 @@ class OperatorRequest:
         for value in self.missing_capability_ids:
             if not isinstance(value, str) or not value.strip():
                 raise RuntimeCoreInvariantError("missing_capability_ids must contain non-empty strings")
+
+
+@dataclass(frozen=True, slots=True)
+class SkillRequest:
+    """Request to execute a skill through the governed runtime."""
+
+    request_id: str
+    subject_id: str
+    goal_id: str
+    skill_id: str | None = None
+    input_context: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id", "goal_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True, slots=True)
+class SkillRunReport:
+    """Report from a skill execution through the operator loop."""
+
+    request_id: str
+    goal_id: str
+    skill_id: str | None
+    selection: SkillSelectionDecision | None
+    execution_record: SkillExecutionRecord | None
+    status: SkillOutcomeStatus
+    completed: bool
+    structured_errors: tuple[StructuredError, ...] = ()
+
+    @property
+    def succeeded(self) -> bool:
+        return self.status is SkillOutcomeStatus.SUCCEEDED
 
 
 @dataclass(frozen=True, slots=True)
@@ -380,6 +425,111 @@ class OperatorLoop:
             execution_route=route,
         )
 
+    def run_skill(self, request: SkillRequest) -> SkillRunReport:
+        """Execute a skill through the governed runtime path.
+
+        1. Resolve skill (by ID or select from registry)
+        2. Check policy for the skill
+        3. Execute through SkillExecutor with a governed step executor
+        4. Update capability confidence from outcome
+        5. Return structured report
+        """
+        registry = self.runtime.skill_registry
+        selector = self.runtime.skill_selector
+        executor = self.runtime.skill_executor
+
+        # Step 1: resolve skill
+        skill: SkillDescriptor | None = None
+        selection: SkillSelectionDecision | None = None
+
+        if request.skill_id:
+            skill = registry.get(request.skill_id)
+            if skill is None:
+                return SkillRunReport(
+                    request_id=request.request_id,
+                    goal_id=request.goal_id,
+                    skill_id=request.skill_id,
+                    selection=None,
+                    execution_record=None,
+                    status=SkillOutcomeStatus.FAILED,
+                    completed=False,
+                    structured_errors=(
+                        execution_error(
+                            error_code="skill_not_found",
+                            message=f"skill not found: {request.skill_id}",
+                        ),
+                    ),
+                )
+            if skill.lifecycle is SkillLifecycle.BLOCKED:
+                return SkillRunReport(
+                    request_id=request.request_id,
+                    goal_id=request.goal_id,
+                    skill_id=request.skill_id,
+                    selection=None,
+                    execution_record=None,
+                    status=SkillOutcomeStatus.POLICY_DENIED,
+                    completed=False,
+                    structured_errors=(
+                        policy_error(
+                            error_code="skill_blocked",
+                            message=f"skill is blocked: {request.skill_id}",
+                            recoverability=Recoverability.FATAL_FOR_RUN,
+                        ),
+                    ),
+                )
+        else:
+            # Select from all registered skills
+            candidates = registry.list_skills(exclude_blocked=True)
+            selection = selector.select(candidates)
+            if selection is None:
+                return SkillRunReport(
+                    request_id=request.request_id,
+                    goal_id=request.goal_id,
+                    skill_id=None,
+                    selection=None,
+                    execution_record=None,
+                    status=SkillOutcomeStatus.FAILED,
+                    completed=False,
+                    structured_errors=(
+                        execution_error(
+                            error_code="no_skill_available",
+                            message="no suitable skill found in registry",
+                        ),
+                    ),
+                )
+            skill = registry.get(selection.selected_skill_id)
+
+        # Step 2: execute with governed step executor
+        governed_executor = _GovernedStepExecutor(runtime=self.runtime)
+        record = executor.execute(
+            skill,
+            step_executor=governed_executor,
+            input_context=dict(request.input_context) if request.input_context else None,
+        )
+
+        # Step 3: update skill confidence
+        succeeded = record.outcome.status is SkillOutcomeStatus.SUCCEEDED
+        existing = skill.confidence
+        new_confidence = min(1.0, existing + 0.1) if succeeded else max(0.0, existing - 0.1)
+        registry.update_confidence(skill.skill_id, round(new_confidence, 4))
+
+        # Step 4: lifecycle promotion on first success
+        if succeeded and skill.lifecycle is SkillLifecycle.CANDIDATE:
+            try:
+                registry.transition(skill.skill_id, SkillLifecycle.PROVISIONAL)
+            except RuntimeCoreInvariantError:
+                pass
+
+        return SkillRunReport(
+            request_id=request.request_id,
+            goal_id=request.goal_id,
+            skill_id=skill.skill_id,
+            selection=selection,
+            execution_record=record,
+            status=record.outcome.status,
+            completed=succeeded,
+        )
+
     def _runtime_state_fields(self) -> dict:
         """Capture current world-state, meta-reasoning, and provider state for reports."""
         ws = self.runtime.world_state
@@ -484,4 +634,60 @@ class OperatorLoop:
                 category=directive.category,
             )
             for evidence in result.evidence
+        )
+
+
+class _GovernedStepExecutor:
+    """Step executor that dispatches through the governed runtime path."""
+
+    def __init__(self, *, runtime: BootstrappedRuntime) -> None:
+        self._runtime = runtime
+
+    def execute_step(
+        self,
+        step_id: str,
+        action_type: str,
+        input_bindings: Mapping[str, Any],
+    ) -> SkillStepOutcome:
+        """Execute one skill step through the dispatcher."""
+        template = {"action_type": action_type, **{k: v for k, v in input_bindings.items()}}
+        bindings = {k: str(v) for k, v in input_bindings.items() if isinstance(v, str)}
+
+        try:
+            self._runtime.template_validator.validate(template, bindings)
+        except TemplateValidationError as exc:
+            return SkillStepOutcome(
+                step_id=step_id,
+                status=SkillOutcomeStatus.FAILED,
+                error_message=f"validation:{exc.code}:{exc}",
+            )
+
+        try:
+            result = self._runtime.dispatcher.dispatch(
+                DispatchRequest(
+                    goal_id=step_id,
+                    route=action_type,
+                    template=template,
+                    bindings=bindings,
+                )
+            )
+        except Exception as exc:
+            return SkillStepOutcome(
+                step_id=step_id,
+                status=SkillOutcomeStatus.FAILED,
+                error_message=f"dispatch_error:{exc}",
+            )
+
+        if result.status is ExecutionOutcome.SUCCEEDED:
+            return SkillStepOutcome(
+                step_id=step_id,
+                status=SkillOutcomeStatus.SUCCEEDED,
+                execution_id=result.execution_id,
+                outputs={"execution_id": result.execution_id, "status": result.status.value},
+            )
+        return SkillStepOutcome(
+            step_id=step_id,
+            status=SkillOutcomeStatus.FAILED,
+            execution_id=result.execution_id,
+            error_message=f"execution_{result.status.value}",
         )

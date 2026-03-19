@@ -16,6 +16,7 @@ from .view_models import (
     ReplaySummaryView,
     RunbookSummaryView,
     RunSummaryView,
+    SkillSummaryView,
     TemporalTaskView,
 )
 
@@ -138,4 +139,25 @@ def render_runbook_summary(view: RunbookSummaryView) -> str:
         lines.append(f"  provenance_execution:   {view.provenance_execution_id}")
     if view.provenance_replay_id:
         lines.append(f"  provenance_replay:      {view.provenance_replay_id}")
+    return "\n".join(lines)
+
+
+def render_skill_summary(view: SkillSummaryView) -> str:
+    """Render a skill execution result as text."""
+    lines = [
+        "=== Skill Summary ===",
+        f"  request_id:       {view.request_id}",
+        f"  goal_id:          {view.goal_id}",
+        f"  skill_id:         {view.skill_id or '(none)'}",
+        f"  status:           {view.status}",
+        f"  completed:        {view.completed}",
+        f"  selected_from:    {view.selected_from}",
+        f"  steps:            {view.step_count}",
+    ]
+    if view.failed_step:
+        lines.append(f"  failed_step:      {view.failed_step}")
+    if view.structured_errors:
+        lines.append(f"  errors ({len(view.structured_errors)}):")
+        for err in view.structured_errors:
+            lines.append(f"    [{err.family}] {err.error_code}: {err.message}")
     return "\n".join(lines)

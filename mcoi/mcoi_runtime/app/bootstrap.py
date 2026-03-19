@@ -26,6 +26,7 @@ from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
+from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
@@ -51,6 +52,9 @@ class BootstrappedRuntime:
     world_state: WorldStateEngine
     meta_reasoning: MetaReasoningEngine
     provider_registry: ProviderRegistry
+    skill_registry: SkillRegistry
+    skill_selector: SkillSelector
+    skill_executor: SkillExecutor
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
 
@@ -134,6 +138,9 @@ def bootstrap_runtime(
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
+    skill_registry = SkillRegistry()
+    skill_selector = SkillSelector()
+    skill_executor = SkillExecutor(clock=runtime_clock)
 
     return BootstrappedRuntime(
         config=app_config,
@@ -151,6 +158,9 @@ def bootstrap_runtime(
         world_state=world_state,
         meta_reasoning=meta_reasoning,
         provider_registry=provider_registry,
+        skill_registry=skill_registry,
+        skill_selector=skill_selector,
+        skill_executor=skill_executor,
         executors=frozen_executors,
         observers=frozen_observers,
     )

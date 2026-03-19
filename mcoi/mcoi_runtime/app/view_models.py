@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-from mcoi_runtime.app.operator_loop import OperatorRunReport
+from mcoi_runtime.app.operator_loop import OperatorRunReport, SkillRunReport
 from mcoi_runtime.core.coordination import CoordinationEngine
 from mcoi_runtime.contracts.temporal import TemporalTask, StateTransition, ResumeCheckpoint
 from mcoi_runtime.core.errors import StructuredError
@@ -252,4 +252,48 @@ class RunbookSummaryView:
             provenance_replay_id=(
                 result.entry.provenance.replay_id if result.entry else None
             ),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Skill summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class SkillSummaryView:
+    """Skill execution result for operator display."""
+
+    request_id: str
+    goal_id: str
+    skill_id: str | None
+    status: str
+    completed: bool
+    selected_from: int
+    step_count: int
+    failed_step: str | None
+    structured_errors: tuple[ErrorView, ...]
+
+    @staticmethod
+    def from_report(report: SkillRunReport) -> SkillSummaryView:
+        step_count = 0
+        failed_step = None
+        if report.execution_record and report.execution_record.outcome.step_outcomes:
+            step_count = len(report.execution_record.outcome.step_outcomes)
+            for so in report.execution_record.outcome.step_outcomes:
+                if so.status.value != "succeeded":
+                    failed_step = so.step_id
+                    break
+
+        return SkillSummaryView(
+            request_id=report.request_id,
+            goal_id=report.goal_id,
+            skill_id=report.skill_id,
+            status=report.status.value,
+            completed=report.completed,
+            selected_from=(
+                len(report.selection.candidates_considered) if report.selection else 0
+            ),
+            step_count=step_count,
+            failed_step=failed_step,
+            structured_errors=tuple(ErrorView.from_error(e) for e in report.structured_errors),
         )
