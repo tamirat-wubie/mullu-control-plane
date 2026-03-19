@@ -50,6 +50,11 @@ class RunSummaryView:
     provider_count: int = 0
     unhealthy_providers: tuple[str, ...] = ()
     execution_route: str | None = None
+    integration_provider_id: str | None = None
+    communication_provider_id: str | None = None
+    model_provider_id: str | None = None
+    autonomy_mode: str | None = None
+    autonomy_decision: str | None = None
 
     @staticmethod
     def from_report(report: OperatorRunReport) -> RunSummaryView:
@@ -74,6 +79,11 @@ class RunSummaryView:
             provider_count=report.provider_count,
             unhealthy_providers=report.unhealthy_providers,
             execution_route=report.execution_route,
+            integration_provider_id=report.integration_provider_id,
+            communication_provider_id=report.communication_provider_id,
+            model_provider_id=report.model_provider_id,
+            autonomy_mode=report.autonomy_mode,
+            autonomy_decision=report.autonomy_decision,
         )
 
 

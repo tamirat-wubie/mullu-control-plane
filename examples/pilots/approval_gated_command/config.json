@@ -1,0 +1,6 @@
+{
+  "allowed_planning_classes": ["constraint"],
+  "enabled_executor_routes": ["shell_command"],
+  "enabled_observer_routes": ["filesystem", "process"],
+  "autonomy_mode": "approval_required"
+}

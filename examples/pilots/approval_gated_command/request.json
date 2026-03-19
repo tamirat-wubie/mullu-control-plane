@@ -1,0 +1,12 @@
+{
+  "request_id": "pilot-approval-001",
+  "subject_id": "operator-1",
+  "goal_id": "goal-restart-service",
+  "template": {
+    "action_type": "shell_command",
+    "command": "systemctl restart nginx"
+  },
+  "bindings": {
+    "action_type": "shell_command"
+  }
+}

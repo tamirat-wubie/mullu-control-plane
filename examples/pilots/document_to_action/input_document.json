@@ -1,0 +1,6 @@
+{
+  "task": "backup_database",
+  "target": "production_db",
+  "retention_days": 30,
+  "notify_email": "ops@company.com"
+}

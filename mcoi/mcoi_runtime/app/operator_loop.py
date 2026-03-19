@@ -179,6 +179,11 @@ class OperatorRunReport:
     provider_count: int = 0
     unhealthy_providers: tuple[str, ...] = ()
     execution_route: str | None = None
+    integration_provider_id: str | None = None
+    communication_provider_id: str | None = None
+    model_provider_id: str | None = None
+    autonomy_mode: str | None = None
+    autonomy_decision: str | None = None
 
 
 @dataclass(slots=True)
@@ -276,6 +281,10 @@ class OperatorLoop:
                 escalation_recommendations=_rsf["escalation_recommendations"],
                 provider_count=_rsf["provider_count"],
                 unhealthy_providers=_rsf["unhealthy_providers"],
+                autonomy_mode=_rsf.get("autonomy_mode"),
+                integration_provider_id=_rsf.get("integration_provider_id"),
+                communication_provider_id=_rsf.get("communication_provider_id"),
+                model_provider_id=_rsf.get("model_provider_id"),
             )
 
         if policy_decision.status is not PolicyDecisionStatus.ALLOW:
@@ -316,6 +325,10 @@ class OperatorLoop:
                 escalation_recommendations=_rsf["escalation_recommendations"],
                 provider_count=_rsf["provider_count"],
                 unhealthy_providers=_rsf["unhealthy_providers"],
+                autonomy_mode=_rsf.get("autonomy_mode"),
+                integration_provider_id=_rsf.get("integration_provider_id"),
+                communication_provider_id=_rsf.get("communication_provider_id"),
+                model_provider_id=_rsf.get("model_provider_id"),
             )
 
         try:
@@ -352,6 +365,10 @@ class OperatorLoop:
                 escalation_recommendations=_rsf["escalation_recommendations"],
                 provider_count=_rsf["provider_count"],
                 unhealthy_providers=_rsf["unhealthy_providers"],
+                autonomy_mode=_rsf.get("autonomy_mode"),
+                integration_provider_id=_rsf.get("integration_provider_id"),
+                communication_provider_id=_rsf.get("communication_provider_id"),
+                model_provider_id=_rsf.get("model_provider_id"),
             )
 
         execution_result = self.runtime.dispatcher.dispatch(
@@ -423,6 +440,8 @@ class OperatorLoop:
                 and h.status in (ProviderHealthStatus.DEGRADED, ProviderHealthStatus.UNAVAILABLE)
             ),
             execution_route=route,
+            autonomy_mode=self.runtime.autonomy.mode.value,
+            **self._resolve_provider_ids(),
         )
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
@@ -547,7 +566,29 @@ class OperatorLoop:
                 if (h := pr.get_health(p.provider_id)) is not None
                 and h.status in (ProviderHealthStatus.DEGRADED, ProviderHealthStatus.UNAVAILABLE)
             ),
+            "autonomy_mode": self.runtime.autonomy.mode.value,
+            **self._resolve_provider_ids(),
         }
+
+    def _resolve_provider_ids(self) -> dict[str, str | None]:
+        """Resolve first healthy provider ID per class for run reports."""
+        from mcoi_runtime.contracts.provider import ProviderClass
+        pr = self.runtime.provider_registry
+        result: dict[str, str | None] = {
+            "integration_provider_id": None,
+            "communication_provider_id": None,
+            "model_provider_id": None,
+        }
+        field_map = {
+            ProviderClass.INTEGRATION: "integration_provider_id",
+            ProviderClass.COMMUNICATION: "communication_provider_id",
+            ProviderClass.MODEL: "model_provider_id",
+        }
+        for pc, field_name in field_map.items():
+            providers = pr.list_providers(provider_class=pc, enabled_only=True)
+            if providers:
+                result[field_name] = providers[0].provider_id
+        return result
 
     def _register_execution_entity(
         self,

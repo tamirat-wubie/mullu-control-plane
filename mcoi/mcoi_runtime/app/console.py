@@ -60,6 +60,16 @@ def render_run_summary(view: RunSummaryView) -> str:
         lines.append(f"  providers:          {view.provider_count}")
         if view.unhealthy_providers:
             lines.append(f"  unhealthy:          {', '.join(view.unhealthy_providers)}")
+    if view.integration_provider_id:
+        lines.append(f"  integration_prov:   {view.integration_provider_id}")
+    if view.communication_provider_id:
+        lines.append(f"  communication_prov: {view.communication_provider_id}")
+    if view.model_provider_id:
+        lines.append(f"  model_prov:         {view.model_provider_id}")
+    if view.autonomy_mode:
+        lines.append(f"  autonomy_mode:      {view.autonomy_mode}")
+    if view.autonomy_decision:
+        lines.append(f"  autonomy_decision:  {view.autonomy_decision}")
     return "\n".join(lines)
 
 
