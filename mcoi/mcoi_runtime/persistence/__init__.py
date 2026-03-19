@@ -13,6 +13,7 @@ from .errors import (
 )
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
+from .skill_store import SkillStore
 from .snapshot_store import SnapshotMetadata, SnapshotStore
 from .trace_store import TraceStore
 from ._serialization import deserialize_record, serialize_record
@@ -24,6 +25,7 @@ __all__ = [
     "RegistryBackend",
     "ReplayStore",
     "SnapshotMetadata",
+    "SkillStore",
     "SnapshotNotFoundError",
     "SnapshotStore",
     "TraceNotFoundError",

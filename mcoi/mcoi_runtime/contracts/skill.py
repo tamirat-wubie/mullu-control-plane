@@ -302,6 +302,9 @@ class SkillExecutionRecord(ContractRecord):
     selection: SkillSelectionDecision | None = None
     started_at: str | None = None
     finished_at: str | None = None
+    trace_id: str | None = None
+    replay_id: str | None = None
+    runbook_id: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
