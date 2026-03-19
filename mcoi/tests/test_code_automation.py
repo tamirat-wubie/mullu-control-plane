@@ -111,6 +111,15 @@ class TestPathContainment:
         ws = _setup_workspace(tmp_path)
         assert not _is_within_root(ws, Path("/etc/passwd"))
 
+    def test_prefix_collision_sibling_blocked(self, tmp_path: Path):
+        """Sibling directory with name prefix of root must NOT be treated as within root."""
+        ws = _setup_workspace(tmp_path)
+        # Create a sibling directory whose name starts with the root name
+        evil_sibling = ws.parent / (ws.name + "_evil")
+        evil_sibling.mkdir()
+        (evil_sibling / "secret.txt").write_text("stolen", encoding="utf-8")
+        assert not _is_within_root(ws, evil_sibling / "secret.txt")
+
 
 # --- Adapter ---
 

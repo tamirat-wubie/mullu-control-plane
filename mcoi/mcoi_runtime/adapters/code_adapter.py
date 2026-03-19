@@ -32,11 +32,15 @@ from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifie
 
 
 def _is_within_root(root: Path, target: Path) -> bool:
-    """Check if target path is strictly within root (no traversal)."""
+    """Check if target path is strictly within root (no traversal).
+
+    Uses Path.is_relative_to() to avoid string-prefix collisions
+    (e.g., /tmp/workspace vs /tmp/workspace_evil).
+    """
     try:
         resolved_root = root.resolve()
         resolved_target = target.resolve()
-        return str(resolved_target).startswith(str(resolved_root))
+        return resolved_target.is_relative_to(resolved_root)
     except (OSError, ValueError):
         return False
 

@@ -37,10 +37,15 @@ class AlertThreshold:
     message_template: str  # {value} and {threshold} will be substituted
 
 
+MAX_RUN_HISTORY = 10_000
+MAX_ALERTS = 1_000
+
+
 class TelemetryCollector:
     """Collects and aggregates telemetry from runtime outcomes.
 
     Thread-unsafe — intended for single-threaded operator loop use.
+    Run history and alerts are bounded to prevent unbounded memory growth.
     """
 
     def __init__(self, *, clock: Callable[[], str]) -> None:
@@ -115,6 +120,9 @@ class TelemetryCollector:
             skill_id=skill_id,
             recorded_at=self._clock(),
         ))
+        # Prune oldest entries if history exceeds cap
+        if len(self._run_history) > MAX_RUN_HISTORY:
+            self._run_history = self._run_history[-MAX_RUN_HISTORY:]
 
         self._check_thresholds()
 
@@ -231,6 +239,9 @@ class TelemetryCollector:
                         threshold=t.threshold,
                         triggered_at=self._clock(),
                     ))
+                    # Prune oldest alerts if cap exceeded
+                    if len(self._alerts) > MAX_ALERTS:
+                        self._alerts = self._alerts[-MAX_ALERTS:]
 
     def _get_metric_value(self, metric_name: str, source: str) -> float | None:
         if metric_name == "failure_rate" and source == "runs":
