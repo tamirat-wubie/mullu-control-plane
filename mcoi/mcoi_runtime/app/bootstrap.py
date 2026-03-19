@@ -26,6 +26,8 @@ from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
+from mcoi_runtime.contracts.autonomy import AutonomyMode
+from mcoi_runtime.core.autonomy import AutonomyEngine
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
@@ -55,6 +57,7 @@ class BootstrappedRuntime:
     skill_registry: SkillRegistry
     skill_selector: SkillSelector
     skill_executor: SkillExecutor
+    autonomy: AutonomyEngine
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
 
@@ -141,6 +144,7 @@ def bootstrap_runtime(
     skill_registry = SkillRegistry()
     skill_selector = SkillSelector()
     skill_executor = SkillExecutor(clock=runtime_clock)
+    autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
 
     return BootstrappedRuntime(
         config=app_config,
@@ -161,6 +165,7 @@ def bootstrap_runtime(
         skill_registry=skill_registry,
         skill_selector=skill_selector,
         skill_executor=skill_executor,
+        autonomy=autonomy,
         executors=frozen_executors,
         observers=frozen_observers,
     )

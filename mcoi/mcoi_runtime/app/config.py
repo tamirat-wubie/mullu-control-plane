@@ -27,6 +27,7 @@ class AppConfig:
     allowed_planning_classes: tuple[str, ...] = ("constraint",)
     enabled_executor_routes: tuple[str, ...] = ("shell_command",)
     enabled_observer_routes: tuple[str, ...] = ("filesystem", "process")
+    autonomy_mode: str = "bounded_autonomous"
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -57,5 +58,8 @@ class AppConfig:
             ),
             enabled_observer_routes=tuple(
                 normalized.get("enabled_observer_routes", ("filesystem", "process"))
+            ),
+            autonomy_mode=str(
+                normalized.get("autonomy_mode", "bounded_autonomous")
             ),
         )
