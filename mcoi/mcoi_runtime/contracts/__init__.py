@@ -14,6 +14,25 @@ from .plan import Plan, PlanItem
 from .policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from .recovery import RecoveryRecord
 from .replay import ReplayEffect, ReplayMode, ReplayRecord
+from .skill import (
+    DeterminismClass,
+    EffectClass,
+    PostconditionType,
+    PreconditionType,
+    SkillClass,
+    SkillDescriptor,
+    SkillExecutionRecord,
+    SkillLifecycle,
+    SkillOutcome,
+    SkillOutcomeStatus,
+    SkillPostcondition,
+    SkillPrecondition,
+    SkillSelectionDecision,
+    SkillStep,
+    SkillStepOutcome,
+    TrustClass,
+    VerificationStrength,
+)
 from .stabilization import StabilizationRecord
 from .state import StateCategory, StateReference
 from .template import TemplateReference
@@ -45,6 +64,23 @@ __all__ = [
     "ReplayMode",
     "ReplayRecord",
     "RuntimeDescriptor",
+    "DeterminismClass",
+    "EffectClass",
+    "PostconditionType",
+    "PreconditionType",
+    "SkillClass",
+    "SkillDescriptor",
+    "SkillExecutionRecord",
+    "SkillLifecycle",
+    "SkillOutcome",
+    "SkillOutcomeStatus",
+    "SkillPostcondition",
+    "SkillPrecondition",
+    "SkillSelectionDecision",
+    "SkillStep",
+    "SkillStepOutcome",
+    "TrustClass",
+    "VerificationStrength",
     "StabilizationRecord",
     "StateCategory",
     "StateReference",
