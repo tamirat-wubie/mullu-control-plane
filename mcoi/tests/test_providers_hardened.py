@@ -164,13 +164,45 @@ def test_cli_run_with_inline_json(tmp_path: Path) -> None:
         "template": {
             "template_id": "tpl-1",
             "action_type": "shell_command",
-            "command_argv": [sys.executable, "-c", "print('cli-test')"],
+            "command_argv": ["{python_executable}", "-c", "print('cli-test')"],
         },
         "bindings": {},
     })
     exit_code = main(["run", request])
     # Exit code 1 because verification is open (not complete), which is correct
     assert exit_code == 1
+
+
+def test_cli_runtime_binding_allows_portable_python_template(capsys: pytest.CaptureFixture[str]) -> None:
+    request = json.dumps({
+        "request_id": "cli-bind-1",
+        "subject_id": "cli-op",
+        "goal_id": "cli-goal",
+        "template": {
+            "template_id": "tpl-bind-1",
+            "action_type": "shell_command",
+            "command_argv": ["{python_executable}", "-c", "print('binding-test')"],
+        },
+        "bindings": {},
+    })
+    exit_code = main(["run", request])
+    output = capsys.readouterr().out
+
+    assert exit_code == 1
+    assert "dispatched:         True" in output
+    assert "validation_error" not in output
+
+
+def test_cli_shipped_examples_run_portably(capsys: pytest.CaptureFixture[str]) -> None:
+    examples_root = Path(__file__).resolve().parent.parent / "examples"
+
+    for example_name in ("request-echo.json", "request-with-bindings.json"):
+        exit_code = main(["run", str(examples_root / example_name)])
+        output = capsys.readouterr().out
+
+        assert exit_code == 1
+        assert "dispatched:         True" in output
+        assert "validation_error" not in output
 
 
 def test_cli_no_command_returns_zero() -> None:

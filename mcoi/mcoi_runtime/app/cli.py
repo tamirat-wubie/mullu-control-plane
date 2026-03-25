@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -24,6 +25,32 @@ from .operator_loop import OperatorLoop, OperatorRequest
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
+
+
+def _runtime_bindings() -> dict[str, str]:
+    """Return explicit runtime bindings exposed by the CLI.
+
+    These bindings keep shipped example requests portable across environments
+    without weakening template validation or adapter boundaries.
+    """
+    interpreter = os.environ.get("MCOI_PYTHON_EXECUTABLE", sys.executable)
+    return {"python_executable": interpreter}
+
+
+def _resolve_bindings(request_data: dict) -> object:
+    """Merge caller bindings with explicit CLI runtime bindings.
+
+    If the supplied payload is malformed, preserve it so the operator-loop
+    validation path still fails explicitly.
+    """
+    bindings = request_data.get("bindings", {})
+    if bindings is None:
+        return _runtime_bindings()
+    if not isinstance(bindings, dict):
+        return bindings
+    merged = _runtime_bindings()
+    merged.update(bindings)
+    return merged
 
 
 def _resolve_config(args: argparse.Namespace) -> AppConfig:
@@ -52,7 +79,7 @@ def run_command(args: argparse.Namespace) -> int:
         subject_id=request_data.get("subject_id", "cli-operator"),
         goal_id=request_data.get("goal_id", "cli-goal"),
         template=request_data.get("template", {}),
-        bindings=request_data.get("bindings", {}),
+        bindings=_resolve_bindings(request_data),
     )
 
     report = loop.run_step(request)
