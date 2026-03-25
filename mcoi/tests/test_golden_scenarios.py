@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
 from mcoi_runtime.adapters.file_communication import FileCommunicationAdapter
 from mcoi_runtime.adapters.stub_model import StubModelAdapter
@@ -68,7 +69,7 @@ _CLOCK = "2026-03-19T12:00:00+00:00"
 _TEMPLATE = {
     "template_id": "golden-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "golden"],
+    "command_argv": [sys.executable, "-c", "print('golden')"],
 }
 
 
@@ -93,7 +94,7 @@ def test_scenario_bounded_execution_verification_open() -> None:
     Expected: dispatched=True, completed=False, verification_closed=False."""
     loop = _make_loop()
     report = loop.run_step(OperatorRequest(
-        request_id="golden-1", subject_id="pilot", goal_id="run-echo",
+        request_id="golden-1", subject_id="pilot", goal_id="run-print",
         template=_TEMPLATE, bindings={},
     ))
 
@@ -101,7 +102,7 @@ def test_scenario_bounded_execution_verification_open() -> None:
     assert report.completed is False
     assert report.verification_closed is False
     assert report.execution_id is not None
-    assert report.goal_id == "run-echo"
+    assert report.goal_id == "run-print"
     assert report.structured_errors == ()
     assert report.world_state_entity_count >= 1
     assert report.world_state_hash is not None
@@ -293,7 +294,7 @@ def test_scenario_runbook_admission(tmp_path: Path) -> None:
 
     result = library.admit(
         runbook_id="golden-runbook", name="Echo Procedure",
-        description="Verified echo command",
+        description="Verified portable print command",
         template=_TEMPLATE, bindings_schema={},
         replay_id="rb-replay", execution_id="exec-rb", verification_id="ver-rb",
         execution_succeeded=True, verification_passed=True,

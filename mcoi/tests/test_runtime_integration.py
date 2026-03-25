@@ -9,6 +9,8 @@ Invariants:
 
 from __future__ import annotations
 
+import sys
+
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import render_run_summary
@@ -20,7 +22,7 @@ from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnow
 _VALID_TEMPLATE = {
     "template_id": "test-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "hello"],
+    "command_argv": [sys.executable, "-c", "print('hello')"],
 }
 _CLOCK = "2026-03-19T00:00:00+00:00"
 

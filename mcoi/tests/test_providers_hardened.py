@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -96,8 +97,8 @@ def test_smtp_config_rejects_empty_host() -> None:
 
 
 def test_process_model_config_validates() -> None:
-    config = ProcessModelConfig(command=("echo", "hello"), timeout_seconds=10)
-    assert config.command == ("echo", "hello")
+    config = ProcessModelConfig(command=(sys.executable, "-c", "print('hello')"), timeout_seconds=10)
+    assert config.command == (sys.executable, "-c", "print('hello')")
 
 
 def test_process_model_config_rejects_empty_command() -> None:
@@ -105,13 +106,13 @@ def test_process_model_config_rejects_empty_command() -> None:
         ProcessModelConfig(command=())
 
 
-def test_process_model_invokes_echo() -> None:
+def test_process_model_invokes_portable_python_command() -> None:
     adapter = ProcessModelAdapter(
-        config=ProcessModelConfig(command=("echo", "test-output")),
+        config=ProcessModelConfig(command=(sys.executable, "-c", "print('test-output')")),
         clock=lambda: _CLOCK,
     )
     inv = ModelInvocation(
-        invocation_id="inv-1", model_id="echo-model",
+        invocation_id="inv-1", model_id="python-model",
         prompt_hash="prompt-1", invoked_at=_CLOCK,
     )
     resp = adapter.invoke(inv)
@@ -123,7 +124,7 @@ def test_process_model_invokes_echo() -> None:
 
 def test_process_model_handles_failure() -> None:
     adapter = ProcessModelAdapter(
-        config=ProcessModelConfig(command=("python", "-c", "import sys; sys.exit(1)")),
+        config=ProcessModelConfig(command=(sys.executable, "-c", "import sys; sys.exit(1)")),
         clock=lambda: _CLOCK,
     )
     inv = ModelInvocation(
@@ -163,7 +164,7 @@ def test_cli_run_with_inline_json(tmp_path: Path) -> None:
         "template": {
             "template_id": "tpl-1",
             "action_type": "shell_command",
-            "command_argv": ["echo", "cli-test"],
+            "command_argv": [sys.executable, "-c", "print('cli-test')"],
         },
         "bindings": {},
     })

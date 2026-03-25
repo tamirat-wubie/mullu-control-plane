@@ -1,11 +1,11 @@
 {
   "request_id": "example-001",
   "subject_id": "operator",
-  "goal_id": "run-echo",
+  "goal_id": "run-print",
   "template": {
-    "template_id": "echo-tpl",
+    "template_id": "python-print-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "Hello from MCOI"]
+    "command_argv": ["python", "-c", "print('Hello from MCOI')"]
   },
   "bindings": {}
 }

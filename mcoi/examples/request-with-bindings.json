@@ -1,14 +1,14 @@
 {
   "request_id": "example-002",
   "subject_id": "operator",
-  "goal_id": "run-ls",
+  "goal_id": "run-print-with-binding",
   "template": {
-    "template_id": "ls-tpl",
+    "template_id": "python-print-binding-tpl",
     "action_type": "shell_command",
-    "command_argv": ["ls", "{target_dir}"],
-    "required_parameters": ["target_dir"]
+    "command_argv": ["python", "-c", "import sys; print(sys.argv[1])", "{message}"],
+    "required_parameters": ["message"]
   },
   "bindings": {
-    "target_dir": "/tmp"
+    "message": "Hello from MCOI bindings"
   }
 }

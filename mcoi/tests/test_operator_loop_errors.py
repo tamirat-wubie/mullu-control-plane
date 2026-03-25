@@ -6,6 +6,8 @@ Invariants: every failure path produces typed StructuredError in the report.
 
 from __future__ import annotations
 
+import sys
+
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
@@ -18,7 +20,7 @@ from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnow
 _VALID_TEMPLATE = {
     "template_id": "test-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "hello"],
+    "command_argv": [sys.executable, "-c", "print('hello')"],
 }
 _CLOCK_VALUE = "2026-03-19T00:00:00+00:00"
 

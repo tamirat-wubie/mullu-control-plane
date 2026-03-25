@@ -10,6 +10,7 @@ Invariants:
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -75,7 +76,11 @@ def _setup(tmp_path: Path) -> tuple[RunbookLibrary, ReplayStore, TraceStore]:
     return library, replay_store, trace_store
 
 
-_TEMPLATE = {"template_id": "tpl-1", "action_type": "shell_command", "command_argv": ["echo", "ok"]}
+_TEMPLATE = {
+    "template_id": "tpl-1",
+    "action_type": "shell_command",
+    "command_argv": [sys.executable, "-c", "print('ok')"],
+}
 _BINDINGS = {"output": "string"}
 _CONTEXT = ReplayContext(state_hash="state-abc", environment_digest="env-xyz")
 
@@ -87,8 +92,8 @@ def test_admit_verified_run(tmp_path: Path) -> None:
 
     result = library.admit(
         runbook_id="rb-1",
-        name="echo test",
-        description="runs echo hello",
+        name="portable print test",
+        description="runs a portable Python print command",
         template=_TEMPLATE,
         bindings_schema=_BINDINGS,
         replay_id="replay-1",
