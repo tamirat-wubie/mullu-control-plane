@@ -8,6 +8,7 @@
 //! Invariants: types are serialization-stable and match docs/15_deterministic_serialization_policy.md.
 
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 // ---------------------------------------------------------------------------
 // Policy
@@ -24,8 +25,11 @@ pub enum PolicyStatus {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PolicyReason {
-    pub code: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
     pub message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -36,6 +40,10 @@ pub struct PolicyDecision {
     pub status: PolicyStatus,
     pub reasons: Vec<PolicyReason>,
     pub issued_at: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -67,6 +75,10 @@ pub struct ExecutionResult {
     pub assumed_effects: Vec<EffectRecord>,
     pub started_at: String,
     pub finished_at: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -91,12 +103,26 @@ pub struct VerificationCheck {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EvidenceRecord {
+    pub description: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uri: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VerificationResult {
     pub verification_id: String,
     pub execution_id: String,
     pub status: VerificationStatus,
     pub checks: Vec<VerificationCheck>,
+    pub evidence: Vec<EvidenceRecord>,
     pub closed_at: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -107,7 +133,6 @@ pub struct VerificationResult {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TraceEntry {
     pub trace_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parent_trace_id: Option<String>,
     pub event_type: String,
     pub subject_id: String,
@@ -115,6 +140,10 @@ pub struct TraceEntry {
     pub state_hash: String,
     pub registry_hash: String,
     pub timestamp: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -130,16 +159,53 @@ pub enum ReplayMode {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReplayEffect {
+    pub effect_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ReplayRecord {
     pub replay_id: String,
     pub trace_id: String,
     pub source_hash: String,
+    pub approved_effects: Vec<ReplayEffect>,
+    pub blocked_effects: Vec<ReplayEffect>,
     pub mode: ReplayMode,
     pub recorded_at: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub state_hash: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub environment_digest: Option<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
+}
+
+// ---------------------------------------------------------------------------
+// Learning admission
+// ---------------------------------------------------------------------------
+
+/// Learning admission status. Maps to schemas/learning_admission.schema.json.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LearningAdmissionStatus {
+    Admit,
+    Reject,
+    Defer,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LearningAdmissionDecision {
+    pub admission_id: String,
+    pub knowledge_id: String,
+    pub status: LearningAdmissionStatus,
+    pub reasons: Vec<PolicyReason>,
+    pub issued_at: String,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
 // ---------------------------------------------------------------------------
@@ -334,28 +400,122 @@ pub fn obligation_machine() -> StateMachineSpec {
         name: "Obligation Lifecycle".into(),
         version: "2.0.0".into(),
         states: vec![
-            "pending".into(), "active".into(), "escalated".into(),
-            "completed".into(), "expired".into(), "cancelled".into(),
+            "pending".into(),
+            "active".into(),
+            "escalated".into(),
+            "completed".into(),
+            "expired".into(),
+            "cancelled".into(),
         ],
         initial_state: "pending".into(),
         terminal_states: vec!["completed".into(), "expired".into(), "cancelled".into()],
         transitions: vec![
             tr("pending", "active", "activate", "", "obligation_activated"),
-            tr("pending", "completed", "close", "final_state=completed", "obligation_closed"),
-            tr("pending", "expired", "close", "final_state=expired", "obligation_expired"),
-            tr("pending", "cancelled", "close", "final_state=cancelled", "obligation_cancelled"),
-            tr("pending", "escalated", "escalate", "", "obligation_escalated"),
-            tr("pending", "pending", "transfer", "owner_changes", "obligation_transferred"),
-            tr("active", "completed", "close", "final_state=completed", "obligation_closed"),
-            tr("active", "expired", "close", "final_state=expired", "obligation_expired"),
-            tr("active", "cancelled", "close", "final_state=cancelled", "obligation_cancelled"),
-            tr("active", "escalated", "escalate", "", "obligation_escalated"),
-            tr("active", "active", "transfer", "owner_changes", "obligation_transferred"),
-            tr("escalated", "completed", "close", "final_state=completed", "obligation_closed"),
-            tr("escalated", "expired", "close", "final_state=expired", "obligation_expired"),
-            tr("escalated", "cancelled", "close", "final_state=cancelled", "obligation_cancelled"),
-            tr("escalated", "escalated", "escalate", "re-escalation to higher authority", "obligation_escalated"),
-            tr("escalated", "escalated", "transfer", "owner_changes", "obligation_transferred"),
+            tr(
+                "pending",
+                "completed",
+                "close",
+                "final_state=completed",
+                "obligation_closed",
+            ),
+            tr(
+                "pending",
+                "expired",
+                "close",
+                "final_state=expired",
+                "obligation_expired",
+            ),
+            tr(
+                "pending",
+                "cancelled",
+                "close",
+                "final_state=cancelled",
+                "obligation_cancelled",
+            ),
+            tr(
+                "pending",
+                "escalated",
+                "escalate",
+                "",
+                "obligation_escalated",
+            ),
+            tr(
+                "pending",
+                "pending",
+                "transfer",
+                "owner_changes",
+                "obligation_transferred",
+            ),
+            tr(
+                "active",
+                "completed",
+                "close",
+                "final_state=completed",
+                "obligation_closed",
+            ),
+            tr(
+                "active",
+                "expired",
+                "close",
+                "final_state=expired",
+                "obligation_expired",
+            ),
+            tr(
+                "active",
+                "cancelled",
+                "close",
+                "final_state=cancelled",
+                "obligation_cancelled",
+            ),
+            tr(
+                "active",
+                "escalated",
+                "escalate",
+                "",
+                "obligation_escalated",
+            ),
+            tr(
+                "active",
+                "active",
+                "transfer",
+                "owner_changes",
+                "obligation_transferred",
+            ),
+            tr(
+                "escalated",
+                "completed",
+                "close",
+                "final_state=completed",
+                "obligation_closed",
+            ),
+            tr(
+                "escalated",
+                "expired",
+                "close",
+                "final_state=expired",
+                "obligation_expired",
+            ),
+            tr(
+                "escalated",
+                "cancelled",
+                "close",
+                "final_state=cancelled",
+                "obligation_cancelled",
+            ),
+            tr(
+                "escalated",
+                "escalated",
+                "escalate",
+                "re-escalation to higher authority",
+                "obligation_escalated",
+            ),
+            tr(
+                "escalated",
+                "escalated",
+                "transfer",
+                "owner_changes",
+                "obligation_transferred",
+            ),
         ],
     }
 }
@@ -368,51 +528,186 @@ pub fn supervisor_machine() -> StateMachineSpec {
         name: "Supervisor Tick Lifecycle".into(),
         version: "2.0.0".into(),
         states: vec![
-            "idle".into(), "polling".into(), "evaluating_obligations".into(),
-            "evaluating_deadlines".into(), "waking_work".into(), "running_reactions".into(),
-            "reasoning".into(), "acting".into(), "checkpointing".into(),
-            "emitting_heartbeat".into(), "paused".into(), "degraded".into(), "halted".into(),
+            "idle".into(),
+            "polling".into(),
+            "evaluating_obligations".into(),
+            "evaluating_deadlines".into(),
+            "waking_work".into(),
+            "running_reactions".into(),
+            "reasoning".into(),
+            "acting".into(),
+            "checkpointing".into(),
+            "emitting_heartbeat".into(),
+            "paused".into(),
+            "degraded".into(),
+            "halted".into(),
         ],
         initial_state: "idle".into(),
         terminal_states: vec!["halted".into()],
         transitions: vec![
             // Normal tick flow
-            tr("idle", "polling", "tick_start", "", "supervisor_tick_started"),
-            tr("polling", "evaluating_obligations", "poll_complete", "", "supervisor_poll_complete"),
-            tr("polling", "degraded", "backpressure_triggered", "", "supervisor_backpressure"),
-            tr("evaluating_obligations", "evaluating_deadlines", "obligations_evaluated", "", ""),
-            tr("evaluating_deadlines", "waking_work", "deadlines_evaluated", "", ""),
+            tr(
+                "idle",
+                "polling",
+                "tick_start",
+                "",
+                "supervisor_tick_started",
+            ),
+            tr(
+                "polling",
+                "evaluating_obligations",
+                "poll_complete",
+                "",
+                "supervisor_poll_complete",
+            ),
+            tr(
+                "polling",
+                "degraded",
+                "backpressure_triggered",
+                "",
+                "supervisor_backpressure",
+            ),
+            tr(
+                "evaluating_obligations",
+                "evaluating_deadlines",
+                "obligations_evaluated",
+                "",
+                "",
+            ),
+            tr(
+                "evaluating_deadlines",
+                "waking_work",
+                "deadlines_evaluated",
+                "",
+                "",
+            ),
             tr("waking_work", "running_reactions", "work_woken", "", ""),
-            tr("running_reactions", "reasoning", "reactions_complete", "", ""),
+            tr(
+                "running_reactions",
+                "reasoning",
+                "reactions_complete",
+                "",
+                "",
+            ),
             tr("reasoning", "acting", "reasoning_complete", "", ""),
-            tr("acting", "checkpointing", "actions_complete", "checkpoint_interval_reached", "supervisor_checkpointing"),
-            tr("acting", "emitting_heartbeat", "actions_complete_no_checkpoint", "checkpoint_interval_not_reached", ""),
-            tr("acting", "idle", "tick_complete", "", "supervisor_tick_complete"),
-            tr("checkpointing", "emitting_heartbeat", "checkpoint_complete", "heartbeat_interval_reached", "supervisor_checkpoint_complete"),
-            tr("checkpointing", "idle", "checkpoint_complete_no_heartbeat", "heartbeat_interval_not_reached", "supervisor_checkpoint_complete"),
-            tr("emitting_heartbeat", "idle", "heartbeat_complete", "", "supervisor_heartbeat_emitted"),
+            tr(
+                "acting",
+                "checkpointing",
+                "actions_complete",
+                "checkpoint_interval_reached",
+                "supervisor_checkpointing",
+            ),
+            tr(
+                "acting",
+                "emitting_heartbeat",
+                "actions_complete_no_checkpoint",
+                "checkpoint_interval_not_reached",
+                "",
+            ),
+            tr(
+                "acting",
+                "idle",
+                "tick_complete",
+                "",
+                "supervisor_tick_complete",
+            ),
+            tr(
+                "checkpointing",
+                "emitting_heartbeat",
+                "checkpoint_complete",
+                "heartbeat_interval_reached",
+                "supervisor_checkpoint_complete",
+            ),
+            tr(
+                "checkpointing",
+                "idle",
+                "checkpoint_complete_no_heartbeat",
+                "heartbeat_interval_not_reached",
+                "supervisor_checkpoint_complete",
+            ),
+            tr(
+                "emitting_heartbeat",
+                "idle",
+                "heartbeat_complete",
+                "",
+                "supervisor_heartbeat_emitted",
+            ),
             // Pause/resume
             tr("idle", "paused", "pause", "", "supervisor_paused"),
             tr("paused", "idle", "resume", "", "supervisor_resumed"),
-            tr("paused", "halted", "halt", "operator_halt_while_paused", "supervisor_halted"),
+            tr(
+                "paused",
+                "halted",
+                "halt",
+                "operator_halt_while_paused",
+                "supervisor_halted",
+            ),
             tr("paused", "degraded", "error", "", "supervisor_error"),
             // Degraded paths
-            tr("degraded", "idle", "tick_complete", "backpressure/livelock resolved", ""),
-            tr("degraded", "halted", "halt", "livelock strategy=HALT or max_errors exceeded", "supervisor_halted"),
-            tr("degraded", "paused", "pause", "operator_pause_in_degraded", "supervisor_paused"),
+            tr(
+                "degraded",
+                "idle",
+                "tick_complete",
+                "backpressure/livelock resolved",
+                "",
+            ),
+            tr(
+                "degraded",
+                "halted",
+                "halt",
+                "livelock strategy=HALT or max_errors exceeded",
+                "supervisor_halted",
+            ),
+            tr(
+                "degraded",
+                "paused",
+                "pause",
+                "operator_pause_in_degraded",
+                "supervisor_paused",
+            ),
             // Livelock
-            tr("acting", "degraded", "livelock_detected", "", "supervisor_livelock"),
+            tr(
+                "acting",
+                "degraded",
+                "livelock_detected",
+                "",
+                "supervisor_livelock",
+            ),
             // Error from all working phases → degraded
             tr("idle", "degraded", "error", "", "supervisor_error"),
             tr("polling", "degraded", "error", "", "supervisor_error"),
-            tr("evaluating_obligations", "degraded", "error", "", "supervisor_error"),
-            tr("evaluating_deadlines", "degraded", "error", "", "supervisor_error"),
+            tr(
+                "evaluating_obligations",
+                "degraded",
+                "error",
+                "",
+                "supervisor_error",
+            ),
+            tr(
+                "evaluating_deadlines",
+                "degraded",
+                "error",
+                "",
+                "supervisor_error",
+            ),
             tr("waking_work", "degraded", "error", "", "supervisor_error"),
-            tr("running_reactions", "degraded", "error", "", "supervisor_error"),
+            tr(
+                "running_reactions",
+                "degraded",
+                "error",
+                "",
+                "supervisor_error",
+            ),
             tr("reasoning", "degraded", "error", "", "supervisor_error"),
             tr("acting", "degraded", "error", "", "supervisor_error"),
             tr("checkpointing", "degraded", "error", "", "supervisor_error"),
-            tr("emitting_heartbeat", "degraded", "error", "", "supervisor_error"),
+            tr(
+                "emitting_heartbeat",
+                "degraded",
+                "error",
+                "",
+                "supervisor_error",
+            ),
             tr("degraded", "degraded", "error", "", "supervisor_error"),
         ],
     }
@@ -425,26 +720,93 @@ pub fn reaction_pipeline_machine() -> StateMachineSpec {
         name: "Reaction Pipeline".into(),
         version: "2.0.0".into(),
         states: vec![
-            "received".into(), "matching".into(), "idempotency_check".into(),
-            "backpressure_check".into(), "gating".into(), "executed".into(),
-            "emitted".into(), "deferred".into(), "rejected".into(), "recorded".into(),
+            "received".into(),
+            "matching".into(),
+            "idempotency_check".into(),
+            "backpressure_check".into(),
+            "gating".into(),
+            "executed".into(),
+            "emitted".into(),
+            "deferred".into(),
+            "rejected".into(),
+            "recorded".into(),
         ],
         initial_state: "received".into(),
         terminal_states: vec!["recorded".into()],
         transitions: vec![
             tr("received", "matching", "begin_react", "", ""),
             tr("matching", "idempotency_check", "rules_matched", "", ""),
-            tr("matching", "recorded", "no_rules_matched", "zero matched rules", ""),
-            tr("idempotency_check", "rejected", "duplicate_detected", "", "reaction_rejected"),
-            tr("idempotency_check", "backpressure_check", "not_duplicate", "", ""),
-            tr("backpressure_check", "deferred", "backpressure_limit", "", "reaction_deferred"),
+            tr(
+                "matching",
+                "recorded",
+                "no_rules_matched",
+                "zero matched rules",
+                "",
+            ),
+            tr(
+                "idempotency_check",
+                "rejected",
+                "duplicate_detected",
+                "",
+                "reaction_rejected",
+            ),
+            tr(
+                "idempotency_check",
+                "backpressure_check",
+                "not_duplicate",
+                "",
+                "",
+            ),
+            tr(
+                "backpressure_check",
+                "deferred",
+                "backpressure_limit",
+                "",
+                "reaction_deferred",
+            ),
             tr("backpressure_check", "gating", "backpressure_ok", "", ""),
-            tr("gating", "executed", "verdict_proceed", "", "reaction_executed"),
-            tr("gating", "deferred", "verdict_defer", "", "reaction_deferred"),
-            tr("gating", "rejected", "verdict_reject", "", "reaction_rejected"),
-            tr("gating", "rejected", "verdict_escalate", "", "reaction_rejected"),
-            tr("gating", "rejected", "verdict_requires_approval", "", "reaction_rejected"),
-            tr("executed", "emitted", "emit_event", "", "reaction_event_emitted"),
+            tr(
+                "gating",
+                "executed",
+                "verdict_proceed",
+                "",
+                "reaction_executed",
+            ),
+            tr(
+                "gating",
+                "deferred",
+                "verdict_defer",
+                "",
+                "reaction_deferred",
+            ),
+            tr(
+                "gating",
+                "rejected",
+                "verdict_reject",
+                "",
+                "reaction_rejected",
+            ),
+            tr(
+                "gating",
+                "rejected",
+                "verdict_escalate",
+                "",
+                "reaction_rejected",
+            ),
+            tr(
+                "gating",
+                "rejected",
+                "verdict_requires_approval",
+                "",
+                "reaction_rejected",
+            ),
+            tr(
+                "executed",
+                "emitted",
+                "emit_event",
+                "",
+                "reaction_event_emitted",
+            ),
             tr("emitted", "recorded", "record", "", ""),
             tr("executed", "recorded", "record", "no_event_emission", ""),
             tr("deferred", "recorded", "record", "", ""),
@@ -460,29 +822,113 @@ pub fn checkpoint_lifecycle_machine() -> StateMachineSpec {
         name: "Checkpoint Lifecycle".into(),
         version: "1.0.0".into(),
         states: vec![
-            "idle".into(), "capturing".into(), "verifying_capture".into(),
-            "committed".into(), "restoring".into(), "verifying_restore".into(),
-            "verified".into(), "rolling_back".into(), "failed".into(),
+            "idle".into(),
+            "capturing".into(),
+            "verifying_capture".into(),
+            "committed".into(),
+            "restoring".into(),
+            "verifying_restore".into(),
+            "verified".into(),
+            "rolling_back".into(),
+            "failed".into(),
         ],
         initial_state: "idle".into(),
         terminal_states: vec!["failed".into()],
         transitions: vec![
             // Capture flow
-            tr("idle", "capturing", "begin_capture", "", "checkpoint_capture_started"),
-            tr("capturing", "verifying_capture", "snapshots_complete", "", "checkpoint_snapshots_captured"),
-            tr("verifying_capture", "committed", "hash_verified", "", "checkpoint_committed"),
-            tr("verifying_capture", "failed", "hash_mismatch", "", "checkpoint_capture_failed"),
-            tr("committed", "idle", "capture_finalized", "", "checkpoint_capture_complete"),
+            tr(
+                "idle",
+                "capturing",
+                "begin_capture",
+                "",
+                "checkpoint_capture_started",
+            ),
+            tr(
+                "capturing",
+                "verifying_capture",
+                "snapshots_complete",
+                "",
+                "checkpoint_snapshots_captured",
+            ),
+            tr(
+                "verifying_capture",
+                "committed",
+                "hash_verified",
+                "",
+                "checkpoint_committed",
+            ),
+            tr(
+                "verifying_capture",
+                "failed",
+                "hash_mismatch",
+                "",
+                "checkpoint_capture_failed",
+            ),
+            tr(
+                "committed",
+                "idle",
+                "capture_finalized",
+                "",
+                "checkpoint_capture_complete",
+            ),
             // Restore flow
-            tr("idle", "restoring", "begin_restore", "", "checkpoint_restore_started"),
-            tr("restoring", "verifying_restore", "subsystems_restored", "", "checkpoint_subsystems_restored"),
-            tr("verifying_restore", "verified", "restore_hash_verified", "", "checkpoint_restore_verified"),
-            tr("verified", "idle", "restore_finalized", "", "checkpoint_restore_complete"),
+            tr(
+                "idle",
+                "restoring",
+                "begin_restore",
+                "",
+                "checkpoint_restore_started",
+            ),
+            tr(
+                "restoring",
+                "verifying_restore",
+                "subsystems_restored",
+                "",
+                "checkpoint_subsystems_restored",
+            ),
+            tr(
+                "verifying_restore",
+                "verified",
+                "restore_hash_verified",
+                "",
+                "checkpoint_restore_verified",
+            ),
+            tr(
+                "verified",
+                "idle",
+                "restore_finalized",
+                "",
+                "checkpoint_restore_complete",
+            ),
             // Rollback paths
-            tr("verifying_restore", "rolling_back", "restore_hash_mismatch", "", "checkpoint_rollback_triggered"),
-            tr("restoring", "rolling_back", "restore_error", "", "checkpoint_rollback_triggered"),
-            tr("rolling_back", "idle", "rollback_complete", "", "checkpoint_rollback_complete"),
-            tr("rolling_back", "failed", "rollback_failed", "", "checkpoint_rollback_failed"),
+            tr(
+                "verifying_restore",
+                "rolling_back",
+                "restore_hash_mismatch",
+                "",
+                "checkpoint_rollback_triggered",
+            ),
+            tr(
+                "restoring",
+                "rolling_back",
+                "restore_error",
+                "",
+                "checkpoint_rollback_triggered",
+            ),
+            tr(
+                "rolling_back",
+                "idle",
+                "rollback_complete",
+                "",
+                "checkpoint_rollback_complete",
+            ),
+            tr(
+                "rolling_back",
+                "failed",
+                "rollback_failed",
+                "",
+                "checkpoint_rollback_failed",
+            ),
         ],
     }
 }
@@ -586,7 +1032,8 @@ pub struct RestoreVerification {
     pub expected_composite_hash: String,
     pub actual_composite_hash: String,
     #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
-    pub subsystem_results: std::collections::HashMap<String, std::collections::HashMap<String, String>>,
+    pub subsystem_results:
+        std::collections::HashMap<String, std::collections::HashMap<String, String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
 }
@@ -706,6 +1153,12 @@ mod tests {
     }
 
     #[test]
+    fn learning_admission_status_serializes_to_snake_case() {
+        let json = serde_json::to_string(&LearningAdmissionStatus::Admit).unwrap();
+        assert_eq!(json, r#""admit""#);
+    }
+
+    #[test]
     fn replay_mode_serializes_to_snake_case() {
         let json = serde_json::to_string(&ReplayMode::ObservationOnly).unwrap();
         assert_eq!(json, r#""observation_only""#);
@@ -722,10 +1175,13 @@ mod tests {
             state_hash: "h-1".into(),
             registry_hash: "r-1".into(),
             timestamp: "2026-03-19T00:00:00+00:00".into(),
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
         };
         let json = serde_json::to_string(&entry).unwrap();
         let restored: TraceEntry = serde_json::from_str(&json).unwrap();
         assert_eq!(entry, restored);
+        assert!(json.contains("\"parent_trace_id\":\"trace-0\""));
     }
 
     #[test]
@@ -736,14 +1192,92 @@ mod tests {
             goal_id: "g-1".into(),
             status: PolicyStatus::Allow,
             reasons: vec![PolicyReason {
-                code: "ok".into(),
+                code: Some("ok".into()),
                 message: "all good".into(),
+                details: Some(serde_json::json!({"kind": "audit"})),
             }],
             issued_at: "2026-03-19T00:00:00+00:00".into(),
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
         };
         let json = serde_json::to_string(&decision).unwrap();
         let restored: PolicyDecision = serde_json::from_str(&json).unwrap();
         assert_eq!(decision, restored);
+        assert!(json.contains("\"details\":{\"kind\":\"audit\"}"));
+    }
+
+    #[test]
+    fn verification_result_round_trips() {
+        let verification = VerificationResult {
+            verification_id: "v-1".into(),
+            execution_id: "e-1".into(),
+            status: VerificationStatus::Pass,
+            checks: vec![VerificationCheck {
+                name: "stdout".into(),
+                status: VerificationStatus::Pass,
+                details: Some(serde_json::json!({"matched": true})),
+            }],
+            evidence: vec![EvidenceRecord {
+                description: "captured stdout".into(),
+                uri: Some("memory://stdout".into()),
+                details: None,
+            }],
+            closed_at: "2026-03-19T00:00:00+00:00".into(),
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
+        };
+        let json = serde_json::to_string(&verification).unwrap();
+        let restored: VerificationResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(verification, restored);
+        assert!(json.contains("\"evidence\""));
+    }
+
+    #[test]
+    fn replay_record_round_trips() {
+        let replay = ReplayRecord {
+            replay_id: "r-1".into(),
+            trace_id: "t-1".into(),
+            source_hash: "sha256:abc".into(),
+            approved_effects: vec![ReplayEffect {
+                effect_id: "eff-1".into(),
+                description: Some("approved".into()),
+                details: None,
+            }],
+            blocked_effects: vec![ReplayEffect {
+                effect_id: "eff-2".into(),
+                description: Some("blocked".into()),
+                details: Some(serde_json::json!({"reason": "unsafe"})),
+            }],
+            mode: ReplayMode::ObservationOnly,
+            recorded_at: "2026-03-19T00:00:00+00:00".into(),
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
+        };
+        let json = serde_json::to_string(&replay).unwrap();
+        let restored: ReplayRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(replay, restored);
+        assert!(json.contains("\"approved_effects\""));
+    }
+
+    #[test]
+    fn learning_admission_round_trips() {
+        let decision = LearningAdmissionDecision {
+            admission_id: "adm-1".into(),
+            knowledge_id: "know-1".into(),
+            status: LearningAdmissionStatus::Admit,
+            reasons: vec![PolicyReason {
+                code: None,
+                message: "verified observation".into(),
+                details: None,
+            }],
+            issued_at: "2026-03-19T00:00:00+00:00".into(),
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
+        };
+        let json = serde_json::to_string(&decision).unwrap();
+        let restored: LearningAdmissionDecision = serde_json::from_str(&json).unwrap();
+        assert_eq!(decision, restored);
+        assert!(json.contains("\"status\":\"admit\""));
     }
 
     // -------------------------------------------------------------------
@@ -752,30 +1286,54 @@ mod tests {
 
     #[test]
     fn transition_verdict_serializes_to_snake_case() {
-        assert_eq!(serde_json::to_string(&TransitionVerdict::Allowed).unwrap(), r#""allowed""#);
-        assert_eq!(serde_json::to_string(&TransitionVerdict::DeniedIllegalEdge).unwrap(), r#""denied_illegal_edge""#);
-        assert_eq!(serde_json::to_string(&TransitionVerdict::DeniedTerminalState).unwrap(), r#""denied_terminal_state""#);
+        assert_eq!(
+            serde_json::to_string(&TransitionVerdict::Allowed).unwrap(),
+            r#""allowed""#
+        );
+        assert_eq!(
+            serde_json::to_string(&TransitionVerdict::DeniedIllegalEdge).unwrap(),
+            r#""denied_illegal_edge""#
+        );
+        assert_eq!(
+            serde_json::to_string(&TransitionVerdict::DeniedTerminalState).unwrap(),
+            r#""denied_terminal_state""#
+        );
     }
 
     #[test]
     fn state_machine_legal_transition() {
         let m = obligation_machine();
-        assert_eq!(m.is_legal("pending", "active", "activate"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("active", "completed", "close"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("pending", "active", "activate"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("active", "completed", "close"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
     fn state_machine_illegal_transition() {
         let m = obligation_machine();
         // pending→escalated via "close" is illegal (close goes to terminal states)
-        assert_eq!(m.is_legal("pending", "escalated", "close"), TransitionVerdict::DeniedIllegalEdge);
+        assert_eq!(
+            m.is_legal("pending", "escalated", "close"),
+            TransitionVerdict::DeniedIllegalEdge
+        );
     }
 
     #[test]
     fn state_machine_terminal_state_blocks_all() {
         let m = obligation_machine();
-        assert_eq!(m.is_legal("completed", "active", "activate"), TransitionVerdict::DeniedTerminalState);
-        assert_eq!(m.is_legal("expired", "pending", "reset"), TransitionVerdict::DeniedTerminalState);
+        assert_eq!(
+            m.is_legal("completed", "active", "activate"),
+            TransitionVerdict::DeniedTerminalState
+        );
+        assert_eq!(
+            m.is_legal("expired", "pending", "reset"),
+            TransitionVerdict::DeniedTerminalState
+        );
     }
 
     #[test]
@@ -787,7 +1345,9 @@ mod tests {
         assert!(actions.iter().any(|t| t.to_state == "active"));
         assert!(actions.iter().any(|t| t.to_state == "completed"));
         assert!(actions.iter().any(|t| t.to_state == "escalated"));
-        assert!(actions.iter().any(|t| t.to_state == "pending" && t.action == "transfer"));
+        assert!(actions
+            .iter()
+            .any(|t| t.to_state == "pending" && t.action == "transfer"));
     }
 
     #[test]
@@ -795,7 +1355,10 @@ mod tests {
         let m = obligation_machine();
         let reachable = m.reachable_from("active");
         // v2: active → completed, expired, cancelled, escalated, active(transfer)
-        assert_eq!(reachable, vec!["active", "cancelled", "completed", "escalated", "expired"]);
+        assert_eq!(
+            reachable,
+            vec!["active", "cancelled", "completed", "escalated", "expired"]
+        );
     }
 
     #[test]
@@ -834,17 +1397,38 @@ mod tests {
 
     #[test]
     fn journal_entry_kind_serializes() {
-        assert_eq!(serde_json::to_string(&JournalEntryKind::Tick).unwrap(), r#""tick""#);
-        assert_eq!(serde_json::to_string(&JournalEntryKind::Transition).unwrap(), r#""transition""#);
-        assert_eq!(serde_json::to_string(&JournalEntryKind::Checkpoint).unwrap(), r#""checkpoint""#);
-        assert_eq!(serde_json::to_string(&JournalEntryKind::Livelock).unwrap(), r#""livelock""#);
+        assert_eq!(
+            serde_json::to_string(&JournalEntryKind::Tick).unwrap(),
+            r#""tick""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalEntryKind::Transition).unwrap(),
+            r#""transition""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalEntryKind::Checkpoint).unwrap(),
+            r#""checkpoint""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalEntryKind::Livelock).unwrap(),
+            r#""livelock""#
+        );
     }
 
     #[test]
     fn checkpoint_scope_serializes() {
-        assert_eq!(serde_json::to_string(&CheckpointScope::Supervisor).unwrap(), r#""supervisor""#);
-        assert_eq!(serde_json::to_string(&CheckpointScope::EventSpine).unwrap(), r#""event_spine""#);
-        assert_eq!(serde_json::to_string(&CheckpointScope::Composite).unwrap(), r#""composite""#);
+        assert_eq!(
+            serde_json::to_string(&CheckpointScope::Supervisor).unwrap(),
+            r#""supervisor""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointScope::EventSpine).unwrap(),
+            r#""event_spine""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointScope::Composite).unwrap(),
+            r#""composite""#
+        );
     }
 
     #[test]
@@ -924,10 +1508,22 @@ mod tests {
 
     #[test]
     fn restore_verdict_serializes_to_snake_case() {
-        assert_eq!(serde_json::to_string(&RestoreVerdict::Verified).unwrap(), r#""verified""#);
-        assert_eq!(serde_json::to_string(&RestoreVerdict::HashMismatch).unwrap(), r#""hash_mismatch""#);
-        assert_eq!(serde_json::to_string(&RestoreVerdict::SubsystemMissing).unwrap(), r#""subsystem_missing""#);
-        assert_eq!(serde_json::to_string(&RestoreVerdict::RollbackTriggered).unwrap(), r#""rollback_triggered""#);
+        assert_eq!(
+            serde_json::to_string(&RestoreVerdict::Verified).unwrap(),
+            r#""verified""#
+        );
+        assert_eq!(
+            serde_json::to_string(&RestoreVerdict::HashMismatch).unwrap(),
+            r#""hash_mismatch""#
+        );
+        assert_eq!(
+            serde_json::to_string(&RestoreVerdict::SubsystemMissing).unwrap(),
+            r#""subsystem_missing""#
+        );
+        assert_eq!(
+            serde_json::to_string(&RestoreVerdict::RollbackTriggered).unwrap(),
+            r#""rollback_triggered""#
+        );
     }
 
     #[test]
@@ -950,11 +1546,26 @@ mod tests {
 
     #[test]
     fn journal_validation_verdict_serializes() {
-        assert_eq!(serde_json::to_string(&JournalValidationVerdict::Valid).unwrap(), r#""valid""#);
-        assert_eq!(serde_json::to_string(&JournalValidationVerdict::SequenceGap).unwrap(), r#""sequence_gap""#);
-        assert_eq!(serde_json::to_string(&JournalValidationVerdict::EpochMismatch).unwrap(), r#""epoch_mismatch""#);
-        assert_eq!(serde_json::to_string(&JournalValidationVerdict::OrderingViolation).unwrap(), r#""ordering_violation""#);
-        assert_eq!(serde_json::to_string(&JournalValidationVerdict::EmptyJournal).unwrap(), r#""empty_journal""#);
+        assert_eq!(
+            serde_json::to_string(&JournalValidationVerdict::Valid).unwrap(),
+            r#""valid""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalValidationVerdict::SequenceGap).unwrap(),
+            r#""sequence_gap""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalValidationVerdict::EpochMismatch).unwrap(),
+            r#""epoch_mismatch""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalValidationVerdict::OrderingViolation).unwrap(),
+            r#""ordering_violation""#
+        );
+        assert_eq!(
+            serde_json::to_string(&JournalValidationVerdict::EmptyJournal).unwrap(),
+            r#""empty_journal""#
+        );
     }
 
     #[test]
@@ -997,19 +1608,46 @@ mod tests {
 
     #[test]
     fn replay_step_verdict_serializes() {
-        assert_eq!(serde_json::to_string(&ReplayStepVerdict::Match).unwrap(), r#""match""#);
-        assert_eq!(serde_json::to_string(&ReplayStepVerdict::OutcomeDiverged).unwrap(), r#""outcome_diverged""#);
-        assert_eq!(serde_json::to_string(&ReplayStepVerdict::TickNumberDiverged).unwrap(), r#""tick_number_diverged""#);
-        assert_eq!(serde_json::to_string(&ReplayStepVerdict::Skipped).unwrap(), r#""skipped""#);
-        assert_eq!(serde_json::to_string(&ReplayStepVerdict::Error).unwrap(), r#""error""#);
+        assert_eq!(
+            serde_json::to_string(&ReplayStepVerdict::Match).unwrap(),
+            r#""match""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplayStepVerdict::OutcomeDiverged).unwrap(),
+            r#""outcome_diverged""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplayStepVerdict::TickNumberDiverged).unwrap(),
+            r#""tick_number_diverged""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplayStepVerdict::Skipped).unwrap(),
+            r#""skipped""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplayStepVerdict::Error).unwrap(),
+            r#""error""#
+        );
     }
 
     #[test]
     fn replay_session_verdict_serializes() {
-        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::Success).unwrap(), r#""success""#);
-        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::DivergenceDetected).unwrap(), r#""divergence_detected""#);
-        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::EmptyJournal).unwrap(), r#""empty_journal""#);
-        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::Aborted).unwrap(), r#""aborted""#);
+        assert_eq!(
+            serde_json::to_string(&ReplaySessionVerdict::Success).unwrap(),
+            r#""success""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplaySessionVerdict::DivergenceDetected).unwrap(),
+            r#""divergence_detected""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplaySessionVerdict::EmptyJournal).unwrap(),
+            r#""empty_journal""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReplaySessionVerdict::Aborted).unwrap(),
+            r#""aborted""#
+        );
     }
 
     #[test]
@@ -1053,39 +1691,114 @@ mod tests {
 
     #[test]
     fn checkpoint_lifecycle_state_serializes() {
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Idle).unwrap(), r#""idle""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Capturing).unwrap(), r#""capturing""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::VerifyingCapture).unwrap(), r#""verifying_capture""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Committed).unwrap(), r#""committed""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Restoring).unwrap(), r#""restoring""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::VerifyingRestore).unwrap(), r#""verifying_restore""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Verified).unwrap(), r#""verified""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::RollingBack).unwrap(), r#""rolling_back""#);
-        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Failed).unwrap(), r#""failed""#);
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::Idle).unwrap(),
+            r#""idle""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::Capturing).unwrap(),
+            r#""capturing""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::VerifyingCapture).unwrap(),
+            r#""verifying_capture""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::Committed).unwrap(),
+            r#""committed""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::Restoring).unwrap(),
+            r#""restoring""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::VerifyingRestore).unwrap(),
+            r#""verifying_restore""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::Verified).unwrap(),
+            r#""verified""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::RollingBack).unwrap(),
+            r#""rolling_back""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckpointLifecycleState::Failed).unwrap(),
+            r#""failed""#
+        );
     }
 
     #[test]
     fn reaction_pipeline_state_serializes() {
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Received).unwrap(), r#""received""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Matching).unwrap(), r#""matching""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::IdempotencyCheck).unwrap(), r#""idempotency_check""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::BackpressureCheck).unwrap(), r#""backpressure_check""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Gating).unwrap(), r#""gating""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Executed).unwrap(), r#""executed""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Emitted).unwrap(), r#""emitted""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Deferred).unwrap(), r#""deferred""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Rejected).unwrap(), r#""rejected""#);
-        assert_eq!(serde_json::to_string(&ReactionPipelineState::Recorded).unwrap(), r#""recorded""#);
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Received).unwrap(),
+            r#""received""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Matching).unwrap(),
+            r#""matching""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::IdempotencyCheck).unwrap(),
+            r#""idempotency_check""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::BackpressureCheck).unwrap(),
+            r#""backpressure_check""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Gating).unwrap(),
+            r#""gating""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Executed).unwrap(),
+            r#""executed""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Emitted).unwrap(),
+            r#""emitted""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Deferred).unwrap(),
+            r#""deferred""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Rejected).unwrap(),
+            r#""rejected""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ReactionPipelineState::Recorded).unwrap(),
+            r#""recorded""#
+        );
     }
 
     #[test]
     fn obligation_lifecycle_state_serializes() {
-        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Pending).unwrap(), r#""pending""#);
-        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Active).unwrap(), r#""active""#);
-        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Escalated).unwrap(), r#""escalated""#);
-        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Completed).unwrap(), r#""completed""#);
-        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Expired).unwrap(), r#""expired""#);
-        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Cancelled).unwrap(), r#""cancelled""#);
+        assert_eq!(
+            serde_json::to_string(&ObligationLifecycleState::Pending).unwrap(),
+            r#""pending""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ObligationLifecycleState::Active).unwrap(),
+            r#""active""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ObligationLifecycleState::Escalated).unwrap(),
+            r#""escalated""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ObligationLifecycleState::Completed).unwrap(),
+            r#""completed""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ObligationLifecycleState::Expired).unwrap(),
+            r#""expired""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ObligationLifecycleState::Cancelled).unwrap(),
+            r#""cancelled""#
+        );
     }
 
     // -------------------------------------------------------------------
@@ -1107,9 +1820,15 @@ mod tests {
     fn obligation_machine_v2_transfer_self_loop() {
         let m = obligation_machine();
         // Transfer from pending → pending is legal
-        assert_eq!(m.is_legal("pending", "pending", "transfer"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("pending", "pending", "transfer"),
+            TransitionVerdict::Allowed
+        );
         // Transfer from active → active is legal
-        assert_eq!(m.is_legal("active", "active", "transfer"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("active", "active", "transfer"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
@@ -1126,43 +1845,93 @@ mod tests {
     #[test]
     fn supervisor_machine_v2_normal_tick_path() {
         let m = supervisor_machine();
-        assert_eq!(m.is_legal("idle", "polling", "tick_start"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("polling", "evaluating_obligations", "poll_complete"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("evaluating_obligations", "evaluating_deadlines", "obligations_evaluated"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("evaluating_deadlines", "waking_work", "deadlines_evaluated"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("waking_work", "running_reactions", "work_woken"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("running_reactions", "reasoning", "reactions_complete"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("reasoning", "acting", "reasoning_complete"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("acting", "idle", "tick_complete"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("idle", "polling", "tick_start"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("polling", "evaluating_obligations", "poll_complete"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal(
+                "evaluating_obligations",
+                "evaluating_deadlines",
+                "obligations_evaluated"
+            ),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("evaluating_deadlines", "waking_work", "deadlines_evaluated"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("waking_work", "running_reactions", "work_woken"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("running_reactions", "reasoning", "reactions_complete"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("reasoning", "acting", "reasoning_complete"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("acting", "idle", "tick_complete"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
     fn supervisor_machine_v2_pause_resume() {
         let m = supervisor_machine();
-        assert_eq!(m.is_legal("idle", "paused", "pause"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("paused", "idle", "resume"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("paused", "halted", "halt"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("idle", "paused", "pause"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("paused", "idle", "resume"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("paused", "halted", "halt"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
     fn supervisor_machine_v2_halted_is_terminal() {
         let m = supervisor_machine();
-        assert_eq!(m.is_legal("halted", "idle", "resume"), TransitionVerdict::DeniedTerminalState);
+        assert_eq!(
+            m.is_legal("halted", "idle", "resume"),
+            TransitionVerdict::DeniedTerminalState
+        );
     }
 
     #[test]
     fn supervisor_machine_v2_error_from_all_phases() {
         let m = supervisor_machine();
         let working_phases = [
-            "idle", "polling", "evaluating_obligations", "evaluating_deadlines",
-            "waking_work", "running_reactions", "reasoning", "acting",
-            "checkpointing", "emitting_heartbeat", "paused", "degraded",
+            "idle",
+            "polling",
+            "evaluating_obligations",
+            "evaluating_deadlines",
+            "waking_work",
+            "running_reactions",
+            "reasoning",
+            "acting",
+            "checkpointing",
+            "emitting_heartbeat",
+            "paused",
+            "degraded",
         ];
         for phase in &working_phases {
             assert_eq!(
                 m.is_legal(phase, "degraded", "error"),
                 TransitionVerdict::Allowed,
-                "error from {} should be allowed", phase,
+                "error from {} should be allowed",
+                phase,
             );
         }
     }
@@ -1181,10 +1950,19 @@ mod tests {
     fn reaction_pipeline_machine_emission_path() {
         let m = reaction_pipeline_machine();
         // Happy path through emission
-        assert_eq!(m.is_legal("executed", "emitted", "emit_event"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("emitted", "recorded", "record"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("executed", "emitted", "emit_event"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("emitted", "recorded", "record"),
+            TransitionVerdict::Allowed
+        );
         // Direct record (no emission)
-        assert_eq!(m.is_legal("executed", "recorded", "record"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("executed", "recorded", "record"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
@@ -1200,34 +1978,73 @@ mod tests {
     #[test]
     fn checkpoint_lifecycle_capture_flow() {
         let m = checkpoint_lifecycle_machine();
-        assert_eq!(m.is_legal("idle", "capturing", "begin_capture"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("capturing", "verifying_capture", "snapshots_complete"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("verifying_capture", "committed", "hash_verified"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("committed", "idle", "capture_finalized"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("idle", "capturing", "begin_capture"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("capturing", "verifying_capture", "snapshots_complete"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("verifying_capture", "committed", "hash_verified"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("committed", "idle", "capture_finalized"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
     fn checkpoint_lifecycle_restore_flow() {
         let m = checkpoint_lifecycle_machine();
-        assert_eq!(m.is_legal("idle", "restoring", "begin_restore"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("restoring", "verifying_restore", "subsystems_restored"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("verifying_restore", "verified", "restore_hash_verified"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("verified", "idle", "restore_finalized"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("idle", "restoring", "begin_restore"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("restoring", "verifying_restore", "subsystems_restored"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("verifying_restore", "verified", "restore_hash_verified"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("verified", "idle", "restore_finalized"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
     fn checkpoint_lifecycle_rollback_path() {
         let m = checkpoint_lifecycle_machine();
-        assert_eq!(m.is_legal("verifying_restore", "rolling_back", "restore_hash_mismatch"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("restoring", "rolling_back", "restore_error"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("rolling_back", "idle", "rollback_complete"), TransitionVerdict::Allowed);
-        assert_eq!(m.is_legal("rolling_back", "failed", "rollback_failed"), TransitionVerdict::Allowed);
+        assert_eq!(
+            m.is_legal("verifying_restore", "rolling_back", "restore_hash_mismatch"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("restoring", "rolling_back", "restore_error"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("rolling_back", "idle", "rollback_complete"),
+            TransitionVerdict::Allowed
+        );
+        assert_eq!(
+            m.is_legal("rolling_back", "failed", "rollback_failed"),
+            TransitionVerdict::Allowed
+        );
     }
 
     #[test]
     fn checkpoint_lifecycle_failed_is_terminal() {
         let m = checkpoint_lifecycle_machine();
-        assert_eq!(m.is_legal("failed", "idle", "retry"), TransitionVerdict::DeniedTerminalState);
+        assert_eq!(
+            m.is_legal("failed", "idle", "retry"),
+            TransitionVerdict::DeniedTerminalState
+        );
     }
 
     #[test]
