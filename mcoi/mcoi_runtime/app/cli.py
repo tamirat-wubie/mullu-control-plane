@@ -182,7 +182,11 @@ def build_parser() -> argparse.ArgumentParser:
         description="MCOI Operator Runtime CLI",
     )
     parser.add_argument("--config", help="Path to config JSON file")
-    parser.add_argument("--profile", help="Named configuration profile (e.g., local-dev, safe-readonly)")
+    profile_names = ", ".join(list_profiles())
+    parser.add_argument(
+        "--profile",
+        help=f"Named configuration profile ({profile_names})",
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser("run", help="Execute a single operator request")

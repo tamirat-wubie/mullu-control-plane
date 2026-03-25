@@ -128,6 +128,15 @@ def test_cli_profiles_command() -> None:
     assert exit_code == 0
 
 
+def test_cli_profile_help_lists_all_profiles() -> None:
+    parser = build_parser()
+    profile_action = next(action for action in parser._actions if action.dest == "profile")
+    help_text = profile_action.help or ""
+
+    for profile_name in list_profiles():
+        assert str(profile_name) in help_text
+
+
 def test_cli_packs_command() -> None:
     exit_code = main(["packs"])
     assert exit_code == 0
