@@ -94,7 +94,7 @@ Runs a portable Python print command through the shell executor:
   "template": {
     "template_id": "python-print-tpl",
     "action_type": "shell_command",
-    "command_argv": ["python", "-c", "print('Hello from MCOI')"]
+    "command_argv": ["{python_executable}", "-c", "print('Hello from MCOI')"]
   },
   "bindings": {}
 }
@@ -112,7 +112,7 @@ Runs a portable Python print command with a bound message:
   "template": {
     "template_id": "python-print-binding-tpl",
     "action_type": "shell_command",
-    "command_argv": ["python", "-c", "import sys; print(sys.argv[1])", "{message}"],
+    "command_argv": ["{python_executable}", "-c", "import sys; print(sys.argv[1])", "{message}"],
     "required_parameters": ["message"]
   },
   "bindings": {
@@ -120,6 +120,10 @@ Runs a portable Python print command with a bound message:
   }
 }
 ```
+
+The CLI injects `python_executable` automatically from the local interpreter.
+Override it explicitly with the `MCOI_PYTHON_EXECUTABLE` environment variable if
+you need a different Python binary.
 
 ## Reading Operator Reports
 

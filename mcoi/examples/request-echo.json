@@ -5,7 +5,7 @@
   "template": {
     "template_id": "python-print-tpl",
     "action_type": "shell_command",
-    "command_argv": ["python", "-c", "print('Hello from MCOI')"]
+    "command_argv": ["{python_executable}", "-c", "print('Hello from MCOI')"]
   },
   "bindings": {}
 }

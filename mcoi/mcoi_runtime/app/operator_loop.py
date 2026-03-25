@@ -65,6 +65,7 @@ from mcoi_runtime.contracts.skill import (
     SkillSelectionDecision,
     SkillStepOutcome,
 )
+from mcoi_runtime.persistence.errors import PersistenceError
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 
@@ -289,23 +290,13 @@ class OperatorLoop:
 
         if planning_result.rejected:
             rejected_ids = tuple(r.knowledge_id for r in planning_result.rejected)
-            return OperatorRunReport(
-                request_id=request.request_id,
-                goal_id=request.goal_id,
-                policy_decision_id=policy_decision.decision_id,
-                execution_id=None,
-                verification_id=None,
+            return self._blocked_run_report(
+                request=request,
                 observation_reports=tuple(observation_reports),
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_passed=False,
-                validation_error="planning_rejected_inadmissible_knowledge",
-                execution_result=None,
-                verification_closed=False,
-                completed=False,
-                verification_error=None,
-                dispatched=False,
+                validation_error_text="planning_rejected_inadmissible_knowledge",
                 structured_errors=(
                     admissibility_error(
                         error_code="planning_rejected_inadmissible_knowledge",
@@ -318,37 +309,17 @@ class OperatorLoop:
                         },
                     ),
                 ),
-                world_state_hash=_rsf["world_state_hash"],
-                world_state_entity_count=_rsf["world_state_entity_count"],
-                world_state_contradiction_count=_rsf["world_state_contradiction_count"],
-                degraded_capabilities=_rsf["degraded_capabilities"],
-                escalation_recommendations=_rsf["escalation_recommendations"],
-                provider_count=_rsf["provider_count"],
-                unhealthy_providers=_rsf["unhealthy_providers"],
-                autonomy_mode=_rsf.get("autonomy_mode"),
-                integration_provider_id=_rsf.get("integration_provider_id"),
-                communication_provider_id=_rsf.get("communication_provider_id"),
-                model_provider_id=_rsf.get("model_provider_id"),
+                runtime_state_fields=_rsf,
             )
 
         if policy_decision.status is not PolicyDecisionStatus.ALLOW:
-            return OperatorRunReport(
-                request_id=request.request_id,
-                goal_id=request.goal_id,
-                policy_decision_id=policy_decision.decision_id,
-                execution_id=None,
-                verification_id=None,
+            return self._blocked_run_report(
+                request=request,
                 observation_reports=tuple(observation_reports),
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_passed=False,
-                validation_error="policy_denied_or_escalated",
-                execution_result=None,
-                verification_closed=False,
-                completed=False,
-                verification_error=None,
-                dispatched=False,
+                validation_error_text="policy_denied_or_escalated",
                 structured_errors=(
                     policy_error(
                         error_code=f"policy_{policy_decision.status.value}",
@@ -362,39 +333,19 @@ class OperatorLoop:
                         context={"policy_status": policy_decision.status.value},
                     ),
                 ),
-                world_state_hash=_rsf["world_state_hash"],
-                world_state_entity_count=_rsf["world_state_entity_count"],
-                world_state_contradiction_count=_rsf["world_state_contradiction_count"],
-                degraded_capabilities=_rsf["degraded_capabilities"],
-                escalation_recommendations=_rsf["escalation_recommendations"],
-                provider_count=_rsf["provider_count"],
-                unhealthy_providers=_rsf["unhealthy_providers"],
-                autonomy_mode=_rsf.get("autonomy_mode"),
-                integration_provider_id=_rsf.get("integration_provider_id"),
-                communication_provider_id=_rsf.get("communication_provider_id"),
-                model_provider_id=_rsf.get("model_provider_id"),
+                runtime_state_fields=_rsf,
             )
 
         try:
             self.runtime.template_validator.validate(request.template, request.bindings)
         except TemplateValidationError as exc:
-            return OperatorRunReport(
-                request_id=request.request_id,
-                goal_id=request.goal_id,
-                policy_decision_id=policy_decision.decision_id,
-                execution_id=None,
-                verification_id=None,
+            return self._blocked_run_report(
+                request=request,
                 observation_reports=tuple(observation_reports),
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_passed=False,
-                validation_error=f"{exc.code}:{exc}",
-                execution_result=None,
-                verification_closed=False,
-                completed=False,
-                verification_error=None,
-                dispatched=False,
+                validation_error_text=f"{exc.code}:{exc}",
                 structured_errors=(
                     validation_error(
                         error_code=exc.code,
@@ -402,17 +353,7 @@ class OperatorLoop:
                         source_plane=SourcePlane.EXECUTION,
                     ),
                 ),
-                world_state_hash=_rsf["world_state_hash"],
-                world_state_entity_count=_rsf["world_state_entity_count"],
-                world_state_contradiction_count=_rsf["world_state_contradiction_count"],
-                degraded_capabilities=_rsf["degraded_capabilities"],
-                escalation_recommendations=_rsf["escalation_recommendations"],
-                provider_count=_rsf["provider_count"],
-                unhealthy_providers=_rsf["unhealthy_providers"],
-                autonomy_mode=_rsf.get("autonomy_mode"),
-                integration_provider_id=_rsf.get("integration_provider_id"),
-                communication_provider_id=_rsf.get("communication_provider_id"),
-                model_provider_id=_rsf.get("model_provider_id"),
+                runtime_state_fields=_rsf,
             )
 
         execution_result = self.runtime.dispatcher.dispatch(
@@ -488,6 +429,54 @@ class OperatorLoop:
             execution_route=route,
             autonomy_mode=self.runtime.autonomy.mode.value,
             **self._resolve_provider_ids(),
+        )
+
+    def _blocked_run_report(
+        self,
+        *,
+        request: OperatorRequest,
+        observation_reports: tuple[ObservationReport, ...],
+        merged_state: EvidenceState,
+        planning_result: PlanningBoundaryResult,
+        policy_decision: PolicyDecision,
+        validation_error_text: str,
+        structured_errors: tuple[StructuredError, ...],
+        runtime_state_fields: Mapping[str, object],
+    ) -> OperatorRunReport:
+        """Construct a deterministic blocked-run report.
+
+        Centralizes the non-dispatched report shape so admissibility, policy,
+        and validation failures cannot drift apart silently.
+        """
+        return OperatorRunReport(
+            request_id=request.request_id,
+            goal_id=request.goal_id,
+            policy_decision_id=policy_decision.decision_id,
+            execution_id=None,
+            verification_id=None,
+            observation_reports=observation_reports,
+            merged_state=merged_state,
+            planning_result=planning_result,
+            policy_decision=policy_decision,
+            validation_passed=False,
+            validation_error=validation_error_text,
+            execution_result=None,
+            verification_closed=False,
+            completed=False,
+            verification_error=None,
+            dispatched=False,
+            structured_errors=structured_errors,
+            world_state_hash=runtime_state_fields["world_state_hash"],
+            world_state_entity_count=runtime_state_fields["world_state_entity_count"],
+            world_state_contradiction_count=runtime_state_fields["world_state_contradiction_count"],
+            degraded_capabilities=runtime_state_fields["degraded_capabilities"],
+            escalation_recommendations=runtime_state_fields["escalation_recommendations"],
+            provider_count=runtime_state_fields["provider_count"],
+            unhealthy_providers=runtime_state_fields["unhealthy_providers"],
+            autonomy_mode=runtime_state_fields.get("autonomy_mode"),
+            integration_provider_id=runtime_state_fields.get("integration_provider_id"),
+            communication_provider_id=runtime_state_fields.get("communication_provider_id"),
+            model_provider_id=runtime_state_fields.get("model_provider_id"),
         )
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
@@ -758,7 +747,8 @@ class OperatorLoop:
             )
 
         # Step 4: start workflow and execute all stages
-        record = workflow_engine.start_workflow(workflow_descriptor)
+        workflow_context = dict(request.input_context) if request.input_context else None
+        record = workflow_engine.start_workflow(workflow_descriptor, context=workflow_context)
         stage_executor = _WorkflowStageExecutor(loop=self, request=request)
 
         # Execute stages one-by-one until completion or failure
@@ -767,6 +757,7 @@ class OperatorLoop:
                 workflow_descriptor,
                 record,
                 stage_executor,
+                context=workflow_context,
             )
             if new_record is record:
                 # No progress — stuck: mark as FAILED
@@ -892,26 +883,30 @@ class OperatorLoop:
                 completed_at=self.runtime.clock(),
             )
 
-        # Step 4: create plan — use sub-goals from the goal descriptor metadata
-        # The caller is expected to provide sub-goals in descriptor.metadata["sub_goals"]
-        # or they are constructed externally and passed here.
-        raw_sub_goals = goal_descriptor.metadata.get("sub_goals", ())
-        if not raw_sub_goals:
-            # No sub-goals — create a single sub-goal from the goal itself
-            raw_sub_goals = (
-                SubGoal(
-                    sub_goal_id=f"{goal_descriptor.goal_id}-sg-1",
-                    goal_id=goal_descriptor.goal_id,
-                    description=goal_descriptor.description,
+        # Step 4: create plan — the caller must provide explicit executable
+        # sub-goals in descriptor.metadata["sub_goals"].
+        raw_sub_goals = goal_descriptor.metadata.get("sub_goals")
+        if raw_sub_goals is None:
+            return GoalRunReport(
+                goal_id=goal_descriptor.goal_id,
+                status=GoalStatus.FAILED,
+                plan_id=None,
+                errors=(
+                    validation_error(
+                        error_code="goal_missing_sub_goals",
+                        message="goal execution requires explicit sub-goals in metadata['sub_goals']",
+                        source_plane=SourcePlane.EXECUTION,
+                    ),
                 ),
+                started_at=started_at,
+                completed_at=self.runtime.clock(),
             )
-        else:
-            # Ensure they are SubGoal instances
-            sub_goals_list: list[SubGoal] = []
-            for sg in raw_sub_goals:
-                if isinstance(sg, SubGoal):
-                    sub_goals_list.append(sg)
-            raw_sub_goals = tuple(sub_goals_list)
+
+        sub_goals_list: list[SubGoal] = []
+        for sg in raw_sub_goals:
+            if isinstance(sg, SubGoal):
+                sub_goals_list.append(sg)
+        raw_sub_goals = tuple(sub_goals_list)
 
         # Guard: if all sub-goals were filtered out, return a validation error
         if not raw_sub_goals:
@@ -1235,11 +1230,16 @@ class _WorkflowStageExecutor:
                     completed_at=self._loop.runtime.clock(),
                 )
 
-        # Non-skill stages complete as no-ops in this implementation
+        # Fail closed until non-skill workflow stages have explicit handlers.
         return StageExecutionResult(
             stage_id=stage_id,
-            status=StageStatus.COMPLETED,
-            output={"stage_type": stage_type},
+            status=StageStatus.FAILED,
+            error=execution_error(
+                error_code="workflow_stage_handler_missing",
+                message=f"workflow stage type {stage_type} has no governed runtime handler",
+                recoverability=Recoverability.FATAL_FOR_RUN,
+                context={"stage_type": stage_type},
+            ),
             started_at=started_at,
             completed_at=self._loop.runtime.clock(),
         )
@@ -1276,14 +1276,36 @@ class _GoalSubGoalExecutor:
                 subject_id=self._request.subject_id,
                 goal_id=self._request.goal_id,
                 skill_id=sub_goal.skill_id,
+                input_context=self._request.input_context,
             ))
             new_status = SubGoalStatus.COMPLETED if report.succeeded else SubGoalStatus.FAILED
         elif sub_goal.workflow_id is not None:
-            # Workflow-based sub-goals would need a descriptor lookup — mark as completed for now
-            new_status = SubGoalStatus.COMPLETED
+            workflow_store = self._loop.runtime.workflow_store
+            if workflow_store is None:
+                new_status = SubGoalStatus.FAILED
+            else:
+                try:
+                    descriptor = workflow_store.load_descriptor(sub_goal.workflow_id)
+                except PersistenceError:
+                    new_status = SubGoalStatus.FAILED
+                else:
+                    report = self._loop.run_workflow(
+                        SkillRequest(
+                            request_id=f"{self._request.request_id}-{sub_goal.sub_goal_id}",
+                            subject_id=self._request.subject_id,
+                            goal_id=self._request.goal_id,
+                            input_context=self._request.input_context,
+                        ),
+                        descriptor,
+                    )
+                    new_status = (
+                        SubGoalStatus.COMPLETED
+                        if report.status is WorkflowStatus.COMPLETED
+                        else SubGoalStatus.FAILED
+                    )
         else:
-            # No skill or workflow — mark as completed (no-op sub-goal)
-            new_status = SubGoalStatus.COMPLETED
+            # Fail closed until bare sub-goals have an explicit executable handler.
+            new_status = SubGoalStatus.FAILED
 
         return SubGoal(
             sub_goal_id=sub_goal.sub_goal_id,

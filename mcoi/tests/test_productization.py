@@ -138,6 +138,48 @@ def test_cli_status_with_profile() -> None:
     assert exit_code == 0
 
 
+def test_cli_status_with_shipped_config_examples(capsys: pytest.CaptureFixture[str]) -> None:
+    examples_root = Path(__file__).resolve().parent.parent / "examples"
+
+    for config_name in ("config-local-dev.json", "config-safe-readonly.json"):
+        exit_code = main(["--config", str(examples_root / config_name), "status"])
+        output = capsys.readouterr().out
+
+        assert exit_code == 0
+        assert "=== MCOI Runtime Status ===" in output
+
+
+def test_cli_rejects_malformed_config_json(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_file = tmp_path / "bad-config.json"
+    config_file.write_text('{"enabled_executor_routes": ["shell_command"]', encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--config", str(config_file), "status"])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "invalid config JSON" in captured.err
+    assert str(config_file) in captured.err
+
+
+def test_cli_rejects_non_object_config_json(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_file = tmp_path / "bad-config-root.json"
+    config_file.write_text('["not", "an", "object"]', encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--config", str(config_file), "status"])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "config JSON root must be an object" in captured.err
+
+
 def test_cli_run_with_profile() -> None:
     request = json.dumps({
         "request_id": "prof-1",

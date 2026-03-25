@@ -6,6 +6,7 @@ Proves that workflows are first-class in the live operator runtime path.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -70,16 +71,17 @@ def _register_skill(loop: OperatorLoop, skill_id="sk-1", **kw):
     return descriptor
 
 
-def _make_request(request_id="req-w1", goal_id="goal-1"):
+def _make_request(request_id="req-w1", goal_id="goal-1", input_context=None):
     return SkillRequest(
         request_id=request_id,
         subject_id="operator-1",
         goal_id=goal_id,
+        input_context=input_context,
     )
 
 
 def _make_linear_workflow(workflow_id="wf-1"):
-    """Create a simple 2-stage linear workflow (no skill references)."""
+    """Create a simple 2-stage observation workflow."""
     return WorkflowDescriptor(
         workflow_id=workflow_id,
         name="linear-test",
@@ -95,14 +97,50 @@ def _make_linear_workflow(workflow_id="wf-1"):
     )
 
 
+def _make_skill_workflow(
+    workflow_id: str = "wf-skill",
+    *,
+    first_skill_id: str = "sk-1",
+    second_skill_id: str = "sk-2",
+):
+    """Create a simple 2-stage skill-backed workflow."""
+    return WorkflowDescriptor(
+        workflow_id=workflow_id,
+        name="skill-test",
+        stages=(
+            WorkflowStage(
+                stage_id="s1",
+                stage_type=StageType.SKILL_EXECUTION,
+                skill_id=first_skill_id,
+            ),
+            WorkflowStage(
+                stage_id="s2",
+                stage_type=StageType.SKILL_EXECUTION,
+                skill_id=second_skill_id,
+                predecessors=("s1",),
+            ),
+        ),
+        created_at=FIXED_CLOCK,
+    )
+
+
+def _workflow_input_context(label: str) -> dict[str, object]:
+    return {
+        "template_id": f"tpl-{label}",
+        "command_argv": [sys.executable, "-c", f"print('{label}')"],
+    }
+
+
 class TestWorkflowRuntimeGoldenScenarios:
     """Prove that workflows are live in the runtime."""
 
-    def test_linear_workflow_executes_stages_in_order(self):
-        """A linear workflow executes stages in topological order."""
+    def test_skill_workflow_executes_stages_in_order(self):
+        """A skill-backed workflow executes stages in topological order."""
         loop = _make_loop()
-        wf = _make_linear_workflow()
-        request = _make_request()
+        _register_skill(loop, "sk-1", name="shell_command")
+        _register_skill(loop, "sk-2", name="shell_command")
+        wf = _make_skill_workflow("wf-1")
+        request = _make_request(input_context=_workflow_input_context("wf-1"))
 
         report = loop.run_workflow(request, wf)
 
@@ -113,6 +151,22 @@ class TestWorkflowRuntimeGoldenScenarios:
         # s1 should be first
         assert report.stage_summaries[0].stage_id == "s1"
         assert report.stage_summaries[1].stage_id == "s2"
+
+    def test_observation_stage_fails_closed_without_handler(self):
+        """Observation stages must not claim completion without a runtime handler."""
+        loop = _make_loop()
+        wf = _make_linear_workflow("wf-observation")
+        request = _make_request("req-obs", "goal-obs")
+
+        report = loop.run_workflow(request, wf)
+
+        assert report.workflow_id == "wf-observation"
+        assert report.status is WorkflowStatus.FAILED
+        assert len(report.stage_summaries) == 1
+        assert report.stage_summaries[0].stage_id == "s1"
+        assert report.stage_summaries[0].status.value == "failed"
+        assert len(report.errors) >= 1
+        assert report.errors[0].error_code == "workflow_stage_handler_missing"
 
     def test_failed_stage_stops_workflow(self):
         """A failed stage stops the workflow and marks it failed."""
@@ -160,8 +214,18 @@ class TestWorkflowRuntimeGoldenScenarios:
     def test_workflow_persistence_round_trip(self, tmp_path: Path):
         """Workflow execution record survives save/load cycle."""
         loop, store = _make_loop_with_store(tmp_path)
-        wf = _make_linear_workflow("wf-persist")
-        request = _make_request("req-w4", "goal-4")
+        _register_skill(loop, "sk-persist-1", name="shell_command")
+        _register_skill(loop, "sk-persist-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-persist",
+            first_skill_id="sk-persist-1",
+            second_skill_id="sk-persist-2",
+        )
+        request = _make_request(
+            "req-w4",
+            "goal-4",
+            input_context=_workflow_input_context("wf-persist"),
+        )
 
         report = loop.run_workflow(request, wf)
 
@@ -222,8 +286,18 @@ class TestWorkflowViewModelAndConsole:
 
     def test_workflow_view_model_and_render(self):
         loop = _make_loop()
-        wf = _make_linear_workflow("wf-view")
-        request = _make_request("req-wv", "goal-v")
+        _register_skill(loop, "sk-view-1", name="shell_command")
+        _register_skill(loop, "sk-view-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-view",
+            first_skill_id="sk-view-1",
+            second_skill_id="sk-view-2",
+        )
+        request = _make_request(
+            "req-wv",
+            "goal-v",
+            input_context=_workflow_input_context("wf-view"),
+        )
 
         report = loop.run_workflow(request, wf)
         view = WorkflowSummaryView.from_report(report)
