@@ -140,9 +140,12 @@ def test_cli_status_with_profile() -> None:
 
 def test_cli_status_with_shipped_config_examples(capsys: pytest.CaptureFixture[str]) -> None:
     examples_root = Path(__file__).resolve().parent.parent / "examples"
+    config_examples = sorted(examples_root.glob("config-*.json"))
 
-    for config_name in ("config-local-dev.json", "config-safe-readonly.json"):
-        exit_code = main(["--config", str(examples_root / config_name), "status"])
+    assert config_examples
+
+    for config_path in config_examples:
+        exit_code = main(["--config", str(config_path), "status"])
         output = capsys.readouterr().out
 
         assert exit_code == 0
