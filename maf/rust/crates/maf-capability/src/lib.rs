@@ -8,6 +8,7 @@
 //! Invariants: capability classifications are explicit and frozen per the audit.
 
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 // ---------------------------------------------------------------------------
 // Effect class — what kind of side effects a capability may produce
@@ -98,17 +99,11 @@ pub struct CapabilityDescriptor {
     pub version: String,
     pub scope: String,
     #[serde(default)]
-    pub constraints: Vec<CapabilityConstraint>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub effect_class: Option<EffectClass>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub determinism_class: Option<DeterminismClass>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub trust_class: Option<TrustClass>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub verification_strength: Option<VerificationStrength>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub lifecycle: Option<LifecycleState>,
+    pub constraints: Vec<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metadata: BTreeMap<String, serde_json::Value>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
 #[cfg(test)]
@@ -147,19 +142,14 @@ mod tests {
             name: "shell_execute".into(),
             version: "1.0.0".into(),
             scope: "local".into(),
-            constraints: vec![CapabilityConstraint {
-                key: "os".into(),
-                value: "linux".into(),
-            }],
-            effect_class: Some(EffectClass::ExternalWrite),
-            determinism_class: Some(DeterminismClass::RecordedNondeterministic),
-            trust_class: Some(TrustClass::TrustedInternal),
-            verification_strength: Some(VerificationStrength::Strong),
-            lifecycle: Some(LifecycleState::Verified),
+            constraints: vec!["os=linux".into()],
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
         };
         let json = serde_json::to_string(&descriptor).unwrap();
         let restored: CapabilityDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(descriptor, restored);
+        assert!(json.contains("\"constraints\":[\"os=linux\"]"));
     }
 
     #[test]
@@ -170,18 +160,15 @@ mod tests {
             name: "read_file".into(),
             version: "1.0.0".into(),
             scope: "local".into(),
-            constraints: vec![],
-            effect_class: None,
-            determinism_class: None,
-            trust_class: None,
-            verification_strength: None,
-            lifecycle: None,
+            constraints: vec!["read_only".into()],
+            metadata: BTreeMap::new(),
+            extensions: BTreeMap::new(),
         };
         let json = serde_json::to_string(&descriptor).unwrap();
-        // Optional fields should not appear when None
-        assert!(!json.contains("effect_class"));
-        assert!(!json.contains("lifecycle"));
+        assert!(!json.contains("metadata"));
+        assert!(!json.contains("extensions"));
         let restored: CapabilityDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(descriptor, restored);
+        assert!(json.contains("\"constraints\":[\"read_only\"]"));
     }
 }
