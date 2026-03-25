@@ -62,12 +62,13 @@ mcoi packs
 Profiles provide named, deterministic configurations. Use `--profile <name>` with
 any CLI command.
 
-| Profile | Planning Classes | Executor Routes | Observer Routes |
-|---|---|---|---|
-| `local-dev` | constraint | shell_command | filesystem, process |
-| `safe-readonly` | constraint | shell_command | filesystem |
-| `operator-approved` | constraint, learned | shell_command | filesystem, process |
-| `sandboxed` | constraint | shell_command | filesystem |
+| Profile | Autonomy Mode | Planning Classes | Executor Routes | Observer Routes |
+|---|---|---|---|---|
+| `local-dev` | bounded_autonomous | constraint | shell_command | filesystem, process |
+| `safe-readonly` | observe_only | constraint | shell_command | filesystem, process |
+| `operator-approved` | approval_required | constraint | shell_command | filesystem, process |
+| `sandboxed` | suggest_only | constraint | shell_command | filesystem |
+| `pilot-prod` | approval_required | constraint | shell_command | filesystem, process |
 
 You can also pass a JSON config file directly with `--config path/to/config.json`.
 Config files use the same keys:

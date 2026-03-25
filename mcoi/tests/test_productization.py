@@ -13,6 +13,8 @@ import sys
 import pytest
 
 from mcoi_runtime.app.cli import build_parser, main
+from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.app.deployment_profiles import get_profile as get_deployment_profile
 from mcoi_runtime.app.policy_packs import PolicyPack, PolicyPackRegistry, PolicyRule
 from mcoi_runtime.app.profiles import (
     ProfileLoadError,
@@ -35,7 +37,14 @@ def test_load_local_dev_profile() -> None:
 
 def test_load_safe_readonly_profile() -> None:
     result = load_profile(ProfileName.SAFE_READONLY)
-    assert "process" not in result.config.enabled_observer_routes
+    assert "process" in result.config.enabled_observer_routes
+
+
+def test_load_pilot_prod_profile() -> None:
+    result = load_profile(ProfileName.PILOT_PROD)
+    assert result.profile_name == "pilot-prod"
+    assert result.config.autonomy_mode == "approval_required"
+    assert "process" in result.config.enabled_observer_routes
 
 
 def test_load_profile_with_overrides() -> None:
@@ -63,6 +72,15 @@ def test_list_profiles_returns_all() -> None:
     assert "safe-readonly" in profiles
     assert "operator-approved" in profiles
     assert "sandboxed" in profiles
+    assert "pilot-prod" in profiles
+
+
+def test_config_profiles_match_deployment_profile_inventory() -> None:
+    for profile_name in list_profiles():
+        deployment_profile = get_deployment_profile(profile_name)
+        assert deployment_profile is not None
+        loaded = load_profile(profile_name)
+        assert loaded.config == AppConfig.from_mapping(deployment_profile.to_config_dict())
 
 
 # --- Policy Packs ---
@@ -144,6 +162,11 @@ def test_cli_packs_command() -> None:
 
 def test_cli_status_with_profile() -> None:
     exit_code = main(["--profile", "local-dev", "status"])
+    assert exit_code == 0
+
+
+def test_cli_status_with_pilot_prod_profile() -> None:
+    exit_code = main(["--profile", "pilot-prod", "status"])
     assert exit_code == 0
 
 
