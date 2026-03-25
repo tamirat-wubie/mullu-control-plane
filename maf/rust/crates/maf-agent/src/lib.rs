@@ -241,24 +241,42 @@ mod tests {
 
     #[test]
     fn temporal_state_serializes() {
-        assert_eq!(serde_json::to_string(&TemporalState::Pending).unwrap(), r#""pending""#);
-        assert_eq!(serde_json::to_string(&TemporalState::Expired).unwrap(), r#""expired""#);
+        assert_eq!(
+            serde_json::to_string(&TemporalState::Pending).unwrap(),
+            r#""pending""#
+        );
+        assert_eq!(
+            serde_json::to_string(&TemporalState::Expired).unwrap(),
+            r#""expired""#
+        );
     }
 
     #[test]
     fn delegation_status_serializes() {
-        assert_eq!(serde_json::to_string(&DelegationStatus::Accepted).unwrap(), r#""accepted""#);
+        assert_eq!(
+            serde_json::to_string(&DelegationStatus::Accepted).unwrap(),
+            r#""accepted""#
+        );
     }
 
     #[test]
     fn communication_channel_serializes() {
-        assert_eq!(serde_json::to_string(&CommunicationChannel::Approval).unwrap(), r#""approval""#);
-        assert_eq!(serde_json::to_string(&CommunicationChannel::Escalation).unwrap(), r#""escalation""#);
+        assert_eq!(
+            serde_json::to_string(&CommunicationChannel::Approval).unwrap(),
+            r#""approval""#
+        );
+        assert_eq!(
+            serde_json::to_string(&CommunicationChannel::Escalation).unwrap(),
+            r#""escalation""#
+        );
     }
 
     #[test]
     fn health_status_serializes() {
-        assert_eq!(serde_json::to_string(&HealthStatus::Degraded).unwrap(), r#""degraded""#);
+        assert_eq!(
+            serde_json::to_string(&HealthStatus::Degraded).unwrap(),
+            r#""degraded""#
+        );
     }
 
     #[test]
@@ -315,8 +333,17 @@ mod tests {
 
     #[test]
     fn connector_and_model_status_serializes() {
-        assert_eq!(serde_json::to_string(&ConnectorStatus::Timeout).unwrap(), r#""timeout""#);
-        assert_eq!(serde_json::to_string(&ModelStatus::Succeeded).unwrap(), r#""succeeded""#);
-        assert_eq!(serde_json::to_string(&ValidationStatus::Pending).unwrap(), r#""pending""#);
+        assert_eq!(
+            serde_json::to_string(&ConnectorStatus::Timeout).unwrap(),
+            r#""timeout""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ModelStatus::Succeeded).unwrap(),
+            r#""succeeded""#
+        );
+        assert_eq!(
+            serde_json::to_string(&ValidationStatus::Pending).unwrap(),
+            r#""pending""#
+        );
     }
 }

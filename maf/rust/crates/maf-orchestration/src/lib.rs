@@ -524,9 +524,10 @@ pub mod function {
 pub mod roles {
     use super::*;
 
-    #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
     #[serde(rename_all = "snake_case")]
     pub enum WorkerStatus {
+        #[default]
         Available,
         Busy,
         Overloaded,
@@ -584,11 +585,7 @@ pub mod roles {
         pub metadata: HashMap<String, serde_json::Value>,
     }
 
-    impl Default for WorkerStatus {
-        fn default() -> Self {
-            WorkerStatus::Available
-        }
-    }
+    // Default derived via #[default] on Available variant
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
     pub struct WorkerCapacity {

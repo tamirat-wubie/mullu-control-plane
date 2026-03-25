@@ -492,8 +492,7 @@ mod tests {
 
     #[test]
     fn compilation_status_deserializes_from_python_format() {
-        let cs: CompilationStatus =
-            serde_json::from_str(r#""success_with_warnings""#).unwrap();
+        let cs: CompilationStatus = serde_json::from_str(r#""success_with_warnings""#).unwrap();
         assert_eq!(cs, CompilationStatus::SuccessWithWarnings);
     }
 }
