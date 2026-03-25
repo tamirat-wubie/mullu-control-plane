@@ -1,8 +1,8 @@
 """Purpose: named configuration profiles for deterministic runtime startup.
-Governance scope: profile loading and merging only.
-Dependencies: AppConfig.
+Governance scope: config profile loading and merging only.
+Dependencies: AppConfig, deployment profile inventory.
 Invariants:
-  - Profiles are explicit and named.
+  - Config profiles derive from the canonical deployment profile inventory.
   - No profile silently widens permissions.
   - Profile merging is deterministic — later values override earlier ones.
   - Unknown profile names fail closed.
@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from types import MappingProxyType
 from typing import Any, Mapping
 
 from .config import AppConfig
+from .deployment_profiles import BUILTIN_PROFILES
 
 
 class ProfileName(StrEnum):
@@ -25,31 +25,7 @@ class ProfileName(StrEnum):
     SAFE_READONLY = "safe-readonly"
     OPERATOR_APPROVED = "operator-approved"
     SANDBOXED = "sandboxed"
-
-
-# Built-in profile definitions — frozen to prevent accidental mutation
-_BUILTIN_PROFILES: Mapping[str, Mapping[str, Any]] = MappingProxyType({
-    ProfileName.LOCAL_DEV: MappingProxyType({
-        "allowed_planning_classes": ("constraint",),
-        "enabled_executor_routes": ("shell_command",),
-        "enabled_observer_routes": ("filesystem", "process"),
-    }),
-    ProfileName.SAFE_READONLY: MappingProxyType({
-        "allowed_planning_classes": ("constraint",),
-        "enabled_executor_routes": ("shell_command",),
-        "enabled_observer_routes": ("filesystem",),
-    }),
-    ProfileName.OPERATOR_APPROVED: MappingProxyType({
-        "allowed_planning_classes": ("constraint", "learned"),
-        "enabled_executor_routes": ("shell_command",),
-        "enabled_observer_routes": ("filesystem", "process"),
-    }),
-    ProfileName.SANDBOXED: MappingProxyType({
-        "allowed_planning_classes": ("constraint",),
-        "enabled_executor_routes": ("shell_command",),
-        "enabled_observer_routes": ("filesystem",),
-    }),
-})
+    PILOT_PROD = "pilot-prod"
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,10 +51,11 @@ def load_profile(
     Overrides are applied on top of the profile defaults.
     Unknown profile names fail closed.
     """
-    if name not in _BUILTIN_PROFILES:
+    deployment_profile = BUILTIN_PROFILES.get(name)
+    if deployment_profile is None:
         raise ProfileLoadError(f"unknown profile: {name}")
 
-    base = dict(_BUILTIN_PROFILES[name])
+    base = deployment_profile.to_config_dict()
     override_count = 0
 
     if overrides:
@@ -89,14 +66,10 @@ def load_profile(
             else:
                 raise ProfileLoadError(f"unknown config key in overrides: {key}")
 
-    config = AppConfig(
-        allowed_planning_classes=tuple(base["allowed_planning_classes"]),
-        enabled_executor_routes=tuple(base["enabled_executor_routes"]),
-        enabled_observer_routes=tuple(base["enabled_observer_routes"]),
-    )
+    config = AppConfig.from_mapping(base)
 
     return ProfileLoadResult(
-        profile_name=name,
+        profile_name=deployment_profile.profile_id,
         config=config,
         overrides_applied=override_count,
     )
@@ -104,4 +77,4 @@ def load_profile(
 
 def list_profiles() -> tuple[str, ...]:
     """List all available profile names."""
-    return tuple(sorted(_BUILTIN_PROFILES.keys()))
+    return tuple(sorted(BUILTIN_PROFILES.keys()))
