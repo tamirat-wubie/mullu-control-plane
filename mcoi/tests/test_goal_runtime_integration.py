@@ -131,6 +131,28 @@ class TestGoalRuntimeGoldenScenarios:
         # The sub-goal was attempted — it either completed or failed depending on executor
         assert len(report.completed_sub_goals) + len(report.failed_sub_goals) == 1
 
+    def test_workflow_backed_sub_goal_fails_closed_without_descriptor_lookup(self):
+        """Workflow-backed sub-goals must not claim completion without execution."""
+        loop = _make_loop()
+        sub_goals = (
+            SubGoal(
+                sub_goal_id="sg-workflow",
+                goal_id="goal-workflow",
+                description="workflow-backed sub-goal",
+                workflow_id="wf-missing",
+            ),
+        )
+        goal = _make_goal("goal-workflow", sub_goals=sub_goals)
+        request = _make_request("req-goal-workflow", "goal-workflow")
+
+        report = loop.run_goal(request, goal)
+
+        assert report.status is GoalStatus.FAILED
+        assert report.completed_sub_goals == ()
+        assert report.failed_sub_goals == ("sg-workflow",)
+        assert len(report.errors) >= 1
+        assert report.errors[0].error_code == "goal_sub_goal_failed"
+
     def test_failed_sub_goal_marks_goal_as_failed(self):
         """A failed sub-goal marks the goal as failed."""
         loop = _make_loop()

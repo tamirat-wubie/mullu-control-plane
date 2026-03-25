@@ -1267,8 +1267,9 @@ class _GoalSubGoalExecutor:
             ))
             new_status = SubGoalStatus.COMPLETED if report.succeeded else SubGoalStatus.FAILED
         elif sub_goal.workflow_id is not None:
-            # Workflow-based sub-goals would need a descriptor lookup — mark as completed for now
-            new_status = SubGoalStatus.COMPLETED
+            # Fail closed until workflow-backed sub-goals can resolve a descriptor
+            # through an explicit registry or store lookup.
+            new_status = SubGoalStatus.FAILED
         else:
             # No skill or workflow — mark as completed (no-op sub-goal)
             new_status = SubGoalStatus.COMPLETED
