@@ -354,7 +354,7 @@ class TestPrioritySort:
 
 class TestReplan:
     def test_produces_new_plan_and_record(self):
-        engine = GoalReasoningEngine(clock=_make_clock([_T0, _T0, _T0, _T1]))
+        engine = GoalReasoningEngine(clock=_make_clock([_T0, _T0, _T1]))
         old_plan = GoalPlan(
             plan_id="plan-001",
             goal_id="goal-001",
@@ -380,6 +380,8 @@ class TestReplan:
         assert record.previous_plan_id == "plan-001"
         assert record.new_plan_id == new_plan.plan_id
         assert record.reason == "sg-old failed"
+        assert new_plan.created_at == _T0
+        assert record.replanned_at == _T1
 
     def test_replan_empty_reason_rejected(self):
         engine = GoalReasoningEngine(clock=_make_clock([_T0]))

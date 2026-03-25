@@ -19,7 +19,6 @@ from mcoi_runtime.contracts.goal import (
     GoalDescriptor,
     GoalExecutionState,
     GoalPlan,
-    GoalPriority,
     GoalReplanRecord,
     GoalStatus,
     SubGoal,
@@ -73,18 +72,7 @@ class GoalReasoningEngine:
         The GoalPlan constructor validates that sub_goals is non-empty and
         that predecessors form a DAG.
         """
-        plan_id = stable_identifier("goal-plan", {
-            "goal_id": goal.goal_id,
-            "version": version,
-            "created_at": self._clock(),
-        })
-        return GoalPlan(
-            plan_id=plan_id,
-            goal_id=goal.goal_id,
-            sub_goals=sub_goals,
-            created_at=self._clock(),
-            version=version,
-        )
+        return self._build_plan(goal.goal_id, sub_goals, version=version)
 
     # --- Sub-goal execution ---
 
@@ -182,32 +170,15 @@ class GoalReasoningEngine:
         """
         ensure_non_empty_text("reason", reason)
         new_version = old_plan.version + 1
-        new_plan = self.create_plan(
-            GoalDescriptor(
-                goal_id=state.goal_id,
-                description="replan-placeholder",
-                priority=GoalPriority.NORMAL,
-                created_at=self._clock(),
-            ),
-            new_sub_goals,
-            version=new_version,
-        )
-        # Override goal_id from state (the placeholder descriptor is just for the helper)
-        new_plan_with_goal = GoalPlan(
-            plan_id=new_plan.plan_id,
-            goal_id=state.goal_id,
-            sub_goals=new_sub_goals,
-            created_at=new_plan.created_at,
-            version=new_version,
-        )
+        new_plan = self._build_plan(state.goal_id, new_sub_goals, version=new_version)
         record = GoalReplanRecord(
             goal_id=state.goal_id,
             previous_plan_id=old_plan.plan_id,
-            new_plan_id=new_plan_with_goal.plan_id,
+            new_plan_id=new_plan.plan_id,
             reason=reason,
             replanned_at=self._clock(),
         )
-        return new_plan_with_goal, record
+        return new_plan, record
 
     # --- Deadline checking ---
 
@@ -242,3 +213,25 @@ class GoalReasoningEngine:
             return (rank, deadline)
 
         return sorted(goals, key=sort_key)
+
+    def _build_plan(
+        self,
+        goal_id: str,
+        sub_goals: tuple[SubGoal, ...],
+        *,
+        version: int,
+    ) -> GoalPlan:
+        """Build a plan directly from explicit goal identity and sub-goals."""
+        plan_created_at = self._clock()
+        plan_id = stable_identifier("goal-plan", {
+            "goal_id": goal_id,
+            "version": version,
+            "created_at": plan_created_at,
+        })
+        return GoalPlan(
+            plan_id=plan_id,
+            goal_id=goal_id,
+            sub_goals=sub_goals,
+            created_at=self._clock(),
+            version=version,
+        )
