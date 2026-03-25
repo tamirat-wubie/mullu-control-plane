@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shipped artifact validation for MCOI example and pilot JSON files.
+"""Shipped artifact validation for MCOI example, pilot, and doc-linked JSON files.
 
 Validates:
   1. Shipped config artifacts deserialize through AppConfig without silent key drift.
@@ -7,6 +7,7 @@ Validates:
   3. Request templates validate without executing adapters or mutating runtime state.
   4. Request action routes are admitted by their paired config artifact or by default config.
   5. Auxiliary pilot JSON artifacts remain inventory-bounded and contract-validated.
+  6. Operator and pilot markdown references stay aligned with governed artifact inventory.
 
 Usage:
   python scripts/validate_artifacts.py
@@ -16,6 +17,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -143,6 +145,26 @@ AUXILIARY_PILOT_VALIDATORS: dict[str, AuxiliaryArtifactValidator] = {
     "examples/pilots/document_to_action/input_document.json": _validate_document_to_action_input,
 }
 
+DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
+    "OPERATOR_GUIDE_v0.1.md": (
+        "mcoi/examples/config-local-dev.json",
+        "mcoi/examples/config-safe-readonly.json",
+        "mcoi/examples/request-echo.json",
+        "mcoi/examples/request-with-bindings.json",
+    ),
+    "PILOT_WORKFLOWS_v0.1.md": (
+        "examples/pilots/approval_gated_command/config.json",
+        "examples/pilots/approval_gated_command/request.json",
+        "examples/pilots/document_to_action/config.json",
+        "examples/pilots/document_to_action/input_document.json",
+        "examples/pilots/failure_escalation/config.json",
+    ),
+}
+
+_DOC_ARTIFACT_PATTERN = re.compile(
+    r"(mcoi/examples/[A-Za-z0-9._/-]+\.json|examples/pilots/[A-Za-z0-9._/-]+\.json)"
+)
+
 
 def discover_example_inventory() -> ExampleArtifactInventory:
     """Discover the governed shipped example inventory."""
@@ -235,6 +257,78 @@ def validate_auxiliary_artifact(path: Path, *, artifact_key: str | None = None) 
     return validator(path)
 
 
+def validate_document_artifact_reference_text(
+    *,
+    document_name: str,
+    content: str,
+    expected_paths: tuple[str, ...],
+    governed_paths: set[str],
+    strict: bool = False,
+) -> list[str]:
+    """Validate governed artifact references within one markdown document."""
+    errors: list[str] = []
+    referenced_paths = tuple(sorted(set(_DOC_ARTIFACT_PATTERN.findall(content))))
+
+    missing_expected = sorted(set(expected_paths) - set(referenced_paths))
+    if missing_expected:
+        errors.append(
+            f"{document_name}: missing governed artifact references {missing_expected}"
+        )
+
+    for referenced_path in referenced_paths:
+        artifact_path = REPO_ROOT / referenced_path
+        if referenced_path not in governed_paths:
+            errors.append(
+                f"{document_name}: references ungoverned artifact path {referenced_path}"
+            )
+        elif not artifact_path.exists():
+            errors.append(
+                f"{document_name}: references missing artifact path {referenced_path}"
+            )
+
+    if strict:
+        unexpected_references = sorted(set(referenced_paths) - set(expected_paths))
+        if unexpected_references:
+            errors.append(
+                f"{document_name}: unexpected governed artifact references {unexpected_references}"
+            )
+
+    return errors
+
+
+def validate_documented_artifact_references(*, strict: bool = False) -> list[str]:
+    """Validate markdown references to governed artifacts."""
+    errors: list[str] = []
+    inventory = discover_example_inventory()
+    governed_paths = {
+        _relative_path(path)
+        for path in (
+            list(inventory.config_paths)
+            + list(inventory.request_paths)
+            + list(inventory.auxiliary_paths)
+        )
+    }
+
+    for document_name, expected_paths in DOCUMENT_ARTIFACT_EXPECTATIONS.items():
+        document_path = REPO_ROOT / document_name
+        if not document_path.exists():
+            errors.append(f"{document_name}: documentation file not found")
+            continue
+
+        content = document_path.read_text(encoding="utf-8")
+        errors.extend(
+            validate_document_artifact_reference_text(
+                document_name=document_name,
+                content=content,
+                expected_paths=expected_paths,
+                governed_paths=governed_paths,
+                strict=strict,
+            )
+        )
+
+    return errors
+
+
 def validate_example_artifacts(*, strict: bool = False) -> list[str]:
     """Validate the shipped example inventory."""
     inventory = discover_example_inventory()
@@ -268,6 +362,8 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
 
     for auxiliary_path in inventory.auxiliary_paths:
         errors.extend(validate_auxiliary_artifact(auxiliary_path))
+
+    errors.extend(validate_documented_artifact_references(strict=strict))
 
     return errors
 

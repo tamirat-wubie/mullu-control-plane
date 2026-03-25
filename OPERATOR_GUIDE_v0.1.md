@@ -21,9 +21,9 @@ This makes the `mcoi` CLI available in your active Python environment.
 Execute a single operator request from a JSON file or inline JSON.
 
 ```
-mcoi run examples/request-echo.json
-mcoi run --profile local-dev examples/request-echo.json
-mcoi run --config examples/config-local-dev.json examples/request-with-bindings.json
+mcoi run mcoi/examples/request-echo.json
+mcoi run --profile local-dev mcoi/examples/request-echo.json
+mcoi run --config mcoi/examples/config-local-dev.json mcoi/examples/request-with-bindings.json
 ```
 
 The command prints a run summary followed by an execution summary, then exits with
@@ -83,7 +83,7 @@ Config files use the same keys:
 
 ## Example Request Files
 
-### request-echo.json
+### mcoi/examples/request-echo.json
 
 Runs a portable Python print command through the shell executor:
 
@@ -101,7 +101,7 @@ Runs a portable Python print command through the shell executor:
 }
 ```
 
-### request-with-bindings.json
+### mcoi/examples/request-with-bindings.json
 
 Runs a portable Python print command with a bound message:
 
@@ -125,6 +125,12 @@ Runs a portable Python print command with a bound message:
 The CLI injects `python_executable` automatically from the local interpreter.
 Override it explicitly with the `MCOI_PYTHON_EXECUTABLE` environment variable if
 you need a different Python binary.
+
+### Shipped Config Files
+
+- `mcoi/examples/config-local-dev.json` mirrors the local development route set.
+- `mcoi/examples/config-safe-readonly.json` keeps the same planning class but limits
+  observation to the filesystem surface.
 
 ## Reading Operator Reports
 

@@ -40,6 +40,27 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.auxiliary_paths) >= 1
 
 
+def test_validate_documented_artifact_references_strictly() -> None:
+    errors = validate_artifacts.validate_documented_artifact_references(strict=True)
+
+    assert errors == []
+    assert len(errors) == 0
+
+
+def test_document_reference_text_rejects_ungoverned_paths() -> None:
+    errors = validate_artifacts.validate_document_artifact_reference_text(
+        document_name="doc.md",
+        content="Use `mcoi/examples/request-echo.json` and `examples/pilots/ghost/config.json`.",
+        expected_paths=("mcoi/examples/request-echo.json",),
+        governed_paths={"mcoi/examples/request-echo.json"},
+        strict=True,
+    )
+
+    assert len(errors) == 2
+    assert any("ungoverned artifact path examples/pilots/ghost/config.json" in error for error in errors)
+    assert any("unexpected governed artifact references" in error for error in errors)
+
+
 def test_validate_config_artifact_rejects_unknown_keys(tmp_path: Path) -> None:
     config_path = tmp_path / "config-invalid.json"
     config_path.write_text(

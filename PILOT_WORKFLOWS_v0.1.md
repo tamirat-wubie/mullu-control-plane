@@ -15,6 +15,7 @@ Three controlled pilot workflows that prove the platform works as a system.
 6. Run report surfaces autonomy mode and provider IDs
 
 **Config:** `examples/pilots/approval_gated_command/config.json` (autonomy_mode: approval_required)
+**Request:** `examples/pilots/approval_gated_command/request.json`
 
 **Expected outcomes:**
 - Without approval: execution blocked, typed decision surfaced
@@ -36,6 +37,7 @@ Three controlled pilot workflows that prove the platform works as a system.
 6. Completion notice generated with execution correlation
 
 **Config:** `examples/pilots/document_to_action/config.json` (autonomy_mode: bounded_autonomous)
+**Input:** `examples/pilots/document_to_action/input_document.json`
 
 **Expected outcomes:**
 - Extracted fields match document content exactly
