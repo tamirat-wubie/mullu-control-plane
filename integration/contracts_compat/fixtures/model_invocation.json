@@ -1,0 +1,11 @@
+{
+  "invocation_id": "model-invoke-001",
+  "model_id": "symbolic-reviewer-v1",
+  "prompt_hash": "sha256-prompt-001",
+  "invoked_at": "2026-03-25T12:05:00+00:00",
+  "input_tokens": 128,
+  "cost_estimate": 0.12,
+  "metadata": {
+    "route": "bounded_external"
+  }
+}

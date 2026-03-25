@@ -1,0 +1,16 @@
+{
+  "message_id": "message-approval-001",
+  "sender_id": "operator-runtime",
+  "recipient_id": "operator-human",
+  "channel": "approval",
+  "message_type": "execution_request",
+  "payload": {
+    "goal_id": "goal-shell-read",
+    "summary": "Approve governed read command"
+  },
+  "correlation_id": "corr-approval-001",
+  "created_at": "2026-03-25T12:04:00+00:00",
+  "metadata": {
+    "priority": "normal"
+  }
+}

@@ -36,6 +36,10 @@ FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fixtures"
 
 # Map schema files to their Python contract classes
 SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
+    "communication_message.schema.json": (
+        "mcoi_runtime.contracts.communication",
+        "CommunicationMessage",
+    ),
     "connector_descriptor.schema.json": (
         "mcoi_runtime.contracts.connector",
         "ConnectorDescriptor",
@@ -44,6 +48,10 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.connector",
         "ConnectorResult",
     ),
+    "delivery_result.schema.json": (
+        "mcoi_runtime.contracts.communication",
+        "DeliveryResult",
+    ),
     "capability_descriptor.schema.json": (
         "mcoi_runtime.contracts.capability",
         "CapabilityDescriptor",
@@ -51,6 +59,14 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
     "execution_result.schema.json": (
         "mcoi_runtime.contracts.execution",
         "ExecutionResult",
+    ),
+    "model_invocation.schema.json": (
+        "mcoi_runtime.contracts.model",
+        "ModelInvocation",
+    ),
+    "model_response.schema.json": (
+        "mcoi_runtime.contracts.model",
+        "ModelResponse",
     ),
     "plan.schema.json": (
         "mcoi_runtime.contracts.plan",
@@ -79,6 +95,16 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
     "environment_fingerprint.schema.json": (
         "mcoi_runtime.contracts.environment",
         "EnvironmentFingerprint",
+    ),
+}
+
+
+SCHEMA_BOUNDARY_EXCEPTIONS: dict[str, str] = {
+    "workflow.schema.json": (
+        "workflow.schema.json models the legacy simple workflow interchange surface "
+        "with steps[], while mcoi_runtime.contracts.workflow exposes the richer "
+        "descriptor/stage/binding symbolic runtime surface. There is no direct 1:1 "
+        "contract mapping without reinterpretation."
     ),
 }
 
@@ -395,6 +421,36 @@ def _load_canonical_fixtures() -> dict[str, dict[str, Any]]:
     return fixtures
 
 
+def _build_communication_message(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.communication import CommunicationChannel, CommunicationMessage
+
+    return CommunicationMessage(
+        message_id=payload["message_id"],
+        sender_id=payload["sender_id"],
+        recipient_id=payload["recipient_id"],
+        channel=CommunicationChannel(payload["channel"]),
+        message_type=payload["message_type"],
+        payload=payload["payload"],
+        correlation_id=payload["correlation_id"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_delivery_result(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.communication import CommunicationChannel, DeliveryResult, DeliveryStatus
+
+    return DeliveryResult(
+        delivery_id=payload["delivery_id"],
+        message_id=payload["message_id"],
+        status=DeliveryStatus(payload["status"]),
+        channel=CommunicationChannel(payload["channel"]),
+        delivered_at=payload.get("delivered_at"),
+        error_code=payload.get("error_code"),
+        metadata=payload["metadata"],
+    )
+
+
 def _build_connector_descriptor(payload: dict[str, Any]) -> Any:
     from mcoi_runtime.contracts.connector import ConnectorDescriptor
     from mcoi_runtime.contracts._shared_enums import EffectClass, TrustClass
@@ -482,6 +538,36 @@ def _build_execution_result(payload: dict[str, Any]) -> Any:
         finished_at=payload["finished_at"],
         metadata=payload["metadata"],
         extensions=payload["extensions"],
+    )
+
+
+def _build_model_invocation(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.model import ModelInvocation
+
+    return ModelInvocation(
+        invocation_id=payload["invocation_id"],
+        model_id=payload["model_id"],
+        prompt_hash=payload["prompt_hash"],
+        invoked_at=payload["invoked_at"],
+        input_tokens=payload.get("input_tokens"),
+        cost_estimate=payload.get("cost_estimate"),
+        metadata=payload["metadata"],
+    )
+
+
+def _build_model_response(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.model import ModelResponse, ModelStatus, ValidationStatus
+
+    return ModelResponse(
+        response_id=payload["response_id"],
+        invocation_id=payload["invocation_id"],
+        status=ModelStatus(payload["status"]),
+        output_digest=payload["output_digest"],
+        completed_at=payload["completed_at"],
+        validation_status=ValidationStatus(payload["validation_status"]),
+        output_tokens=payload.get("output_tokens"),
+        actual_cost=payload.get("actual_cost"),
+        metadata=payload["metadata"],
     )
 
 
@@ -630,12 +716,16 @@ def _build_plan(payload: dict[str, Any]) -> Any:
 
 
 FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
+    "communication_message.schema.json": _build_communication_message,
     "connector_descriptor.schema.json": _build_connector_descriptor,
     "connector_result.schema.json": _build_connector_result,
+    "delivery_result.schema.json": _build_delivery_result,
     "capability_descriptor.schema.json": _build_capability_descriptor,
     "environment_fingerprint.schema.json": _build_environment_fingerprint,
     "policy_decision.schema.json": _build_policy_decision,
     "execution_result.schema.json": _build_execution_result,
+    "model_invocation.schema.json": _build_model_invocation,
+    "model_response.schema.json": _build_model_response,
     "plan.schema.json": _build_plan,
     "trace_entry.schema.json": _build_trace_entry,
     "replay_record.schema.json": _build_replay_record,
@@ -813,6 +903,20 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
     return errors
 
 
+def check_schema_boundary_exceptions() -> list[str]:
+    """Require explicit bounded reasons for schema surfaces without direct 1:1 contract parity."""
+    errors: list[str] = []
+    for schema_file, reason in SCHEMA_BOUNDARY_EXCEPTIONS.items():
+        schema_path = SCHEMA_DIR / schema_file
+        if not schema_path.exists():
+            errors.append(f"{schema_file}: declared boundary exception schema file not found")
+            continue
+        if not reason.strip():
+            errors.append(f"{schema_file}: boundary exception reason must be non-empty")
+        print(f"  OK  {schema_file} boundary exception")
+    return errors
+
+
 def validate_canonical_fixtures(strict: bool = False) -> list[str]:
     """Validate canonical shared-contract fixtures against their schemas."""
     errors: list[str] = []
@@ -893,6 +997,9 @@ def main() -> None:
 
     print("\n=== Rust Contract-Schema Parity ===")
     errors.extend(check_rust_contract_parity(strict=strict))
+
+    print("\n=== Bounded Schema Exceptions ===")
+    errors.extend(check_schema_boundary_exceptions())
 
     print("\n=== Canonical Shared Fixtures ===")
     errors.extend(validate_canonical_fixtures(strict=strict))

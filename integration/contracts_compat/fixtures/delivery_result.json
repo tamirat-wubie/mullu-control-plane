@@ -1,0 +1,11 @@
+{
+  "delivery_id": "delivery-001",
+  "message_id": "message-approval-001",
+  "status": "delivered",
+  "channel": "approval",
+  "delivered_at": "2026-03-25T12:04:01+00:00",
+  "error_code": "none",
+  "metadata": {
+    "transport": "local"
+  }
+}

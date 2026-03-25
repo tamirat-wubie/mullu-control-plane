@@ -38,6 +38,13 @@ def test_rust_shared_types_match_shared_schemas_strictly() -> None:
     assert errors == []
 
 
+def test_schema_boundary_exceptions_are_explicit_and_valid() -> None:
+    errors = validate_schemas.check_schema_boundary_exceptions()
+    assert isinstance(errors, list)
+    assert len(errors) == 0
+    assert errors == []
+
+
 def test_canonical_shared_fixtures_match_shared_schemas_strictly() -> None:
     errors = validate_schemas.validate_canonical_fixtures(strict=True)
     assert isinstance(errors, list)

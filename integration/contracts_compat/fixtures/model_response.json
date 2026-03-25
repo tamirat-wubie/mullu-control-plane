@@ -1,0 +1,13 @@
+{
+  "response_id": "model-response-001",
+  "invocation_id": "model-invoke-001",
+  "status": "succeeded",
+  "output_digest": "sha256-output-001",
+  "completed_at": "2026-03-25T12:05:02+00:00",
+  "validation_status": "passed",
+  "output_tokens": 64,
+  "actual_cost": 0.11,
+  "metadata": {
+    "validator": "policy_pack_default"
+  }
+}
