@@ -289,23 +289,13 @@ class OperatorLoop:
 
         if planning_result.rejected:
             rejected_ids = tuple(r.knowledge_id for r in planning_result.rejected)
-            return OperatorRunReport(
-                request_id=request.request_id,
-                goal_id=request.goal_id,
-                policy_decision_id=policy_decision.decision_id,
-                execution_id=None,
-                verification_id=None,
+            return self._blocked_run_report(
+                request=request,
                 observation_reports=tuple(observation_reports),
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_passed=False,
-                validation_error="planning_rejected_inadmissible_knowledge",
-                execution_result=None,
-                verification_closed=False,
-                completed=False,
-                verification_error=None,
-                dispatched=False,
+                validation_error_text="planning_rejected_inadmissible_knowledge",
                 structured_errors=(
                     admissibility_error(
                         error_code="planning_rejected_inadmissible_knowledge",
@@ -318,37 +308,17 @@ class OperatorLoop:
                         },
                     ),
                 ),
-                world_state_hash=_rsf["world_state_hash"],
-                world_state_entity_count=_rsf["world_state_entity_count"],
-                world_state_contradiction_count=_rsf["world_state_contradiction_count"],
-                degraded_capabilities=_rsf["degraded_capabilities"],
-                escalation_recommendations=_rsf["escalation_recommendations"],
-                provider_count=_rsf["provider_count"],
-                unhealthy_providers=_rsf["unhealthy_providers"],
-                autonomy_mode=_rsf.get("autonomy_mode"),
-                integration_provider_id=_rsf.get("integration_provider_id"),
-                communication_provider_id=_rsf.get("communication_provider_id"),
-                model_provider_id=_rsf.get("model_provider_id"),
+                runtime_state_fields=_rsf,
             )
 
         if policy_decision.status is not PolicyDecisionStatus.ALLOW:
-            return OperatorRunReport(
-                request_id=request.request_id,
-                goal_id=request.goal_id,
-                policy_decision_id=policy_decision.decision_id,
-                execution_id=None,
-                verification_id=None,
+            return self._blocked_run_report(
+                request=request,
                 observation_reports=tuple(observation_reports),
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_passed=False,
-                validation_error="policy_denied_or_escalated",
-                execution_result=None,
-                verification_closed=False,
-                completed=False,
-                verification_error=None,
-                dispatched=False,
+                validation_error_text="policy_denied_or_escalated",
                 structured_errors=(
                     policy_error(
                         error_code=f"policy_{policy_decision.status.value}",
@@ -362,39 +332,19 @@ class OperatorLoop:
                         context={"policy_status": policy_decision.status.value},
                     ),
                 ),
-                world_state_hash=_rsf["world_state_hash"],
-                world_state_entity_count=_rsf["world_state_entity_count"],
-                world_state_contradiction_count=_rsf["world_state_contradiction_count"],
-                degraded_capabilities=_rsf["degraded_capabilities"],
-                escalation_recommendations=_rsf["escalation_recommendations"],
-                provider_count=_rsf["provider_count"],
-                unhealthy_providers=_rsf["unhealthy_providers"],
-                autonomy_mode=_rsf.get("autonomy_mode"),
-                integration_provider_id=_rsf.get("integration_provider_id"),
-                communication_provider_id=_rsf.get("communication_provider_id"),
-                model_provider_id=_rsf.get("model_provider_id"),
+                runtime_state_fields=_rsf,
             )
 
         try:
             self.runtime.template_validator.validate(request.template, request.bindings)
         except TemplateValidationError as exc:
-            return OperatorRunReport(
-                request_id=request.request_id,
-                goal_id=request.goal_id,
-                policy_decision_id=policy_decision.decision_id,
-                execution_id=None,
-                verification_id=None,
+            return self._blocked_run_report(
+                request=request,
                 observation_reports=tuple(observation_reports),
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_passed=False,
-                validation_error=f"{exc.code}:{exc}",
-                execution_result=None,
-                verification_closed=False,
-                completed=False,
-                verification_error=None,
-                dispatched=False,
+                validation_error_text=f"{exc.code}:{exc}",
                 structured_errors=(
                     validation_error(
                         error_code=exc.code,
@@ -402,17 +352,7 @@ class OperatorLoop:
                         source_plane=SourcePlane.EXECUTION,
                     ),
                 ),
-                world_state_hash=_rsf["world_state_hash"],
-                world_state_entity_count=_rsf["world_state_entity_count"],
-                world_state_contradiction_count=_rsf["world_state_contradiction_count"],
-                degraded_capabilities=_rsf["degraded_capabilities"],
-                escalation_recommendations=_rsf["escalation_recommendations"],
-                provider_count=_rsf["provider_count"],
-                unhealthy_providers=_rsf["unhealthy_providers"],
-                autonomy_mode=_rsf.get("autonomy_mode"),
-                integration_provider_id=_rsf.get("integration_provider_id"),
-                communication_provider_id=_rsf.get("communication_provider_id"),
-                model_provider_id=_rsf.get("model_provider_id"),
+                runtime_state_fields=_rsf,
             )
 
         execution_result = self.runtime.dispatcher.dispatch(
@@ -488,6 +428,54 @@ class OperatorLoop:
             execution_route=route,
             autonomy_mode=self.runtime.autonomy.mode.value,
             **self._resolve_provider_ids(),
+        )
+
+    def _blocked_run_report(
+        self,
+        *,
+        request: OperatorRequest,
+        observation_reports: tuple[ObservationReport, ...],
+        merged_state: EvidenceState,
+        planning_result: PlanningBoundaryResult,
+        policy_decision: PolicyDecision,
+        validation_error_text: str,
+        structured_errors: tuple[StructuredError, ...],
+        runtime_state_fields: Mapping[str, object],
+    ) -> OperatorRunReport:
+        """Construct a deterministic blocked-run report.
+
+        Centralizes the non-dispatched report shape so admissibility, policy,
+        and validation failures cannot drift apart silently.
+        """
+        return OperatorRunReport(
+            request_id=request.request_id,
+            goal_id=request.goal_id,
+            policy_decision_id=policy_decision.decision_id,
+            execution_id=None,
+            verification_id=None,
+            observation_reports=observation_reports,
+            merged_state=merged_state,
+            planning_result=planning_result,
+            policy_decision=policy_decision,
+            validation_passed=False,
+            validation_error=validation_error_text,
+            execution_result=None,
+            verification_closed=False,
+            completed=False,
+            verification_error=None,
+            dispatched=False,
+            structured_errors=structured_errors,
+            world_state_hash=runtime_state_fields["world_state_hash"],
+            world_state_entity_count=runtime_state_fields["world_state_entity_count"],
+            world_state_contradiction_count=runtime_state_fields["world_state_contradiction_count"],
+            degraded_capabilities=runtime_state_fields["degraded_capabilities"],
+            escalation_recommendations=runtime_state_fields["escalation_recommendations"],
+            provider_count=runtime_state_fields["provider_count"],
+            unhealthy_providers=runtime_state_fields["unhealthy_providers"],
+            autonomy_mode=runtime_state_fields.get("autonomy_mode"),
+            integration_provider_id=runtime_state_fields.get("integration_provider_id"),
+            communication_provider_id=runtime_state_fields.get("communication_provider_id"),
+            model_provider_id=runtime_state_fields.get("model_provider_id"),
         )
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
