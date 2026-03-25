@@ -195,9 +195,12 @@ def test_cli_runtime_binding_allows_portable_python_template(capsys: pytest.Capt
 
 def test_cli_shipped_examples_run_portably(capsys: pytest.CaptureFixture[str]) -> None:
     examples_root = Path(__file__).resolve().parent.parent / "examples"
+    request_examples = sorted(examples_root.glob("request-*.json"))
 
-    for example_name in ("request-echo.json", "request-with-bindings.json"):
-        exit_code = main(["run", str(examples_root / example_name)])
+    assert request_examples
+
+    for example_path in request_examples:
+        exit_code = main(["run", str(example_path)])
         output = capsys.readouterr().out
 
         assert exit_code == 1
