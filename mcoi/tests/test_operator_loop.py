@@ -15,6 +15,7 @@ from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.operator_loop import ObservationDirective, OperatorLoop, OperatorRequest
 from mcoi_runtime.contracts.evidence import EvidenceRecord
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.provider import CredentialScope, ProviderClass, ProviderDescriptor
 from mcoi_runtime.contracts.verification import VerificationCheck, VerificationResult, VerificationStatus
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceStateCategory
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnowledge
@@ -53,6 +54,28 @@ class FakeObserver:
                 ),
             ),
         )
+
+
+def _register_provider(
+    loop: OperatorLoop,
+    *,
+    provider_id: str,
+    provider_class: ProviderClass,
+    enabled: bool = True,
+) -> None:
+    loop.runtime.provider_registry.register(
+        ProviderDescriptor(
+            provider_id=provider_id,
+            name=f"provider-{provider_id}",
+            provider_class=provider_class,
+            credential_scope_id=f"scope-{provider_id}",
+            enabled=enabled,
+        ),
+        CredentialScope(
+            scope_id=f"scope-{provider_id}",
+            provider_id=provider_id,
+        ),
+    )
 
 
 def test_operator_loop_processes_one_request_and_keeps_verification_open() -> None:
@@ -266,6 +289,42 @@ def test_operator_loop_closes_and_completes_on_matching_successful_verification(
     assert report.verification_closed is True
     assert report.completed is True
     assert report.verification_error is None
+
+
+def test_operator_loop_reports_first_healthy_provider_per_class() -> None:
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        executors={"shell_command": executor},
+        observers={},
+    )
+    loop = OperatorLoop(runtime)
+    _register_provider(loop, provider_id="provider-a", provider_class=ProviderClass.INTEGRATION)
+    _register_provider(loop, provider_id="provider-b", provider_class=ProviderClass.INTEGRATION)
+    loop.runtime.provider_registry.record_failure("provider-a", "transient_error")
+    loop.runtime.provider_registry.record_success("provider-b")
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-provider-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template={
+                "template_id": "template-provider-1",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('{message}')"),
+                "required_parameters": ("message",),
+            },
+            bindings={"message": "hello"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+        )
+    )
+
+    assert report.integration_provider_id == "provider-b"
+    assert report.provider_count == 2
+    assert report.unhealthy_providers == ("provider-a",)
 
 
 def test_operator_loop_closes_but_does_not_complete_on_failed_verification() -> None:

@@ -1026,8 +1026,11 @@ class OperatorLoop:
         }
         for pc, field_name in field_map.items():
             providers = pr.list_providers(provider_class=pc, enabled_only=True)
-            if providers:
-                result[field_name] = providers[0].provider_id
+            for provider in providers:
+                health = pr.get_health(provider.provider_id)
+                if health is not None and health.status is ProviderHealthStatus.HEALTHY:
+                    result[field_name] = provider.provider_id
+                    break
         return result
 
     def _register_execution_entity(
