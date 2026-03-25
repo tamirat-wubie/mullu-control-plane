@@ -746,7 +746,8 @@ class OperatorLoop:
             )
 
         # Step 4: start workflow and execute all stages
-        record = workflow_engine.start_workflow(workflow_descriptor)
+        workflow_context = dict(request.input_context) if request.input_context else None
+        record = workflow_engine.start_workflow(workflow_descriptor, context=workflow_context)
         stage_executor = _WorkflowStageExecutor(loop=self, request=request)
 
         # Execute stages one-by-one until completion or failure
@@ -755,6 +756,7 @@ class OperatorLoop:
                 workflow_descriptor,
                 record,
                 stage_executor,
+                context=workflow_context,
             )
             if new_record is record:
                 # No progress — stuck: mark as FAILED
@@ -1223,11 +1225,16 @@ class _WorkflowStageExecutor:
                     completed_at=self._loop.runtime.clock(),
                 )
 
-        # Non-skill stages complete as no-ops in this implementation
+        # Fail closed until non-skill workflow stages have explicit handlers.
         return StageExecutionResult(
             stage_id=stage_id,
-            status=StageStatus.COMPLETED,
-            output={"stage_type": stage_type},
+            status=StageStatus.FAILED,
+            error=execution_error(
+                error_code="workflow_stage_handler_missing",
+                message=f"workflow stage type {stage_type} has no governed runtime handler",
+                recoverability=Recoverability.FATAL_FOR_RUN,
+                context={"stage_type": stage_type},
+            ),
             started_at=started_at,
             completed_at=self._loop.runtime.clock(),
         )

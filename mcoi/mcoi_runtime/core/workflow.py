@@ -193,10 +193,16 @@ class WorkflowEngine:
 
             # Execute this stage
             inputs = dict(context) if context else {}
-            # Collect outputs from predecessor stages
-            for result in record.stage_results:
-                for key, value in result.output.items():
-                    inputs[f"{result.stage_id}.{key}"] = value
+            stage_results_by_id = {result.stage_id: result for result in record.stage_results}
+            for binding in descriptor.bindings:
+                if binding.target_stage_id != stage.stage_id:
+                    continue
+                source_result = stage_results_by_id.get(binding.source_stage_id)
+                if source_result is None:
+                    continue
+                if binding.source_output_key not in source_result.output:
+                    continue
+                inputs[binding.target_input_key] = source_result.output[binding.source_output_key]
 
             result = stage_executor.execute_stage(
                 stage_id=stage.stage_id,

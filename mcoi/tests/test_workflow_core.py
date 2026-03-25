@@ -51,9 +51,11 @@ class FakeStageExecutor:
         self._fail_stages = fail_stages or set()
         self._outputs = outputs or {}
         self.executed: list[str] = []
+        self.inputs_by_stage: dict[str, dict] = {}
 
     def execute_stage(self, stage_id, stage_type, skill_id, inputs):
         self.executed.append(stage_id)
+        self.inputs_by_stage[stage_id] = dict(inputs)
         if stage_id in self._fail_stages:
             return StageExecutionResult(
                 stage_id=stage_id,
@@ -254,6 +256,47 @@ class TestWorkflowEngineParallel:
         record = engine.execute_next_stage(d, record, executor)
         completed_ids = {r.stage_id for r in record.stage_results}
         assert "C" not in completed_ids
+
+    def test_explicit_bindings_flow_to_target_stage_inputs(self):
+        binding = WorkflowBinding(
+            binding_id="b1",
+            source_stage_id="A",
+            source_output_key="payload",
+            target_stage_id="B",
+            target_input_key="message",
+        )
+        d = _descriptor(stages=(
+            _stage("A"),
+            _stage("B", predecessors=("A",)),
+        ), bindings=(binding,))
+        clock = _make_clock(["t0"] * 10)
+        engine = WorkflowEngine(clock=clock)
+        executor = FakeStageExecutor(outputs={"A": {"payload": "hello"}})
+
+        record = engine.start_workflow(d, context={"template_id": "tpl-1"})
+        record = engine.execute_next_stage(d, record, executor, context={"template_id": "tpl-1"})
+        record = engine.execute_next_stage(d, record, executor, context={"template_id": "tpl-1"})
+
+        assert record.status is WorkflowStatus.COMPLETED
+        assert executor.inputs_by_stage["B"]["message"] == "hello"
+        assert executor.inputs_by_stage["B"]["template_id"] == "tpl-1"
+
+    def test_predecessor_outputs_are_not_implicitly_injected(self):
+        d = _descriptor(stages=(
+            _stage("A"),
+            _stage("B", predecessors=("A",)),
+        ))
+        clock = _make_clock(["t0"] * 10)
+        engine = WorkflowEngine(clock=clock)
+        executor = FakeStageExecutor(outputs={"A": {"payload": "hello"}})
+
+        record = engine.start_workflow(d, context={"template_id": "tpl-2"})
+        record = engine.execute_next_stage(d, record, executor, context={"template_id": "tpl-2"})
+        record = engine.execute_next_stage(d, record, executor, context={"template_id": "tpl-2"})
+
+        assert record.status is WorkflowStatus.COMPLETED
+        assert "payload" not in executor.inputs_by_stage["B"]
+        assert "A.payload" not in executor.inputs_by_stage["B"]
 
 
 class TestWorkflowEngineCycleDetection:
