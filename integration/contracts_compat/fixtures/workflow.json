@@ -1,0 +1,35 @@
+{
+  "workflow_id": "wf-shell-read-001",
+  "name": "governed-shell-read",
+  "description": "Observe input and run a governed read command",
+  "stages": [
+    {
+      "stage_id": "stage-observe",
+      "stage_type": "observation",
+      "skill_id": "observe_input",
+      "description": "Capture current input state",
+      "predecessors": [],
+      "timeout_seconds": 30
+    },
+    {
+      "stage_id": "stage-run",
+      "stage_type": "skill_execution",
+      "skill_id": "shell_read",
+      "description": "Run the governed shell read",
+      "predecessors": [
+        "stage-observe"
+      ],
+      "timeout_seconds": 60
+    }
+  ],
+  "bindings": [
+    {
+      "binding_id": "binding-stdout",
+      "source_stage_id": "stage-observe",
+      "source_output_key": "observed_path",
+      "target_stage_id": "stage-run",
+      "target_input_key": "input_path"
+    }
+  ],
+  "created_at": "2026-03-25T12:06:00+00:00"
+}

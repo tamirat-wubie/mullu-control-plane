@@ -657,6 +657,17 @@ pub mod roles {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     // --- Jobs ---
 
@@ -731,6 +742,15 @@ mod tests {
         let json = serde_json::to_string(&wd).unwrap();
         let back: workflow::WorkflowDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(wd, back);
+    }
+
+    #[test]
+    fn canonical_workflow_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/workflow.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowDescriptor>(fixture_json);
     }
 
     // --- Goals ---

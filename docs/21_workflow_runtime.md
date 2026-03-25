@@ -14,7 +14,7 @@ execution.
 
 | Artifact | Role |
 |---|---|
-| `WorkflowDescriptor` | Immutable definition of a workflow's stages, bindings, and transitions. |
+| `WorkflowDescriptor` | Immutable definition of a workflow's stages and bindings. |
 | `WorkflowStage` | One unit of work within a workflow (skill execution, approval gate, etc.). |
 | `WorkflowBinding` | Data-flow edge connecting one stage's output to another's input. |
 | `WorkflowExecutionRecord` | Full trace of a workflow run including per-stage results. |
@@ -68,7 +68,7 @@ draft --> validated --> running --> completed
 ## Prohibitions
 
 1. No stage may bypass autonomy or policy evaluation. Every skill-execution stage is subject to the same autonomy mode and policy checks as a standalone skill invocation.
-2. No hidden transitions. Every control-flow edge must appear in the workflow descriptor's transition list.
+2. No hidden control flow. Every control-flow dependency must appear in the descriptor's predecessor graph or an explicit `WorkflowTransition` artifact.
 3. No unverified completion. A workflow may only reach `completed` status after all stages have produced verified results.
 4. No cycle in the stage graph. The validator rejects any descriptor whose stage predecessors form a cycle.
 5. No dangling bindings. Every binding must reference stages that exist in the descriptor.

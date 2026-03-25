@@ -88,6 +88,10 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.verification",
         "VerificationResult",
     ),
+    "workflow.schema.json": (
+        "mcoi_runtime.contracts.workflow",
+        "WorkflowDescriptor",
+    ),
     "learning_admission.schema.json": (
         "mcoi_runtime.contracts.learning",
         "LearningAdmissionDecision",
@@ -95,16 +99,6 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
     "environment_fingerprint.schema.json": (
         "mcoi_runtime.contracts.environment",
         "EnvironmentFingerprint",
-    ),
-}
-
-
-SCHEMA_BOUNDARY_EXCEPTIONS: dict[str, str] = {
-    "workflow.schema.json": (
-        "workflow.schema.json models the legacy simple workflow interchange surface "
-        "with steps[], while mcoi_runtime.contracts.workflow exposes the richer "
-        "descriptor/stage/binding symbolic runtime surface. There is no direct 1:1 "
-        "contract mapping without reinterpretation."
     ),
 }
 
@@ -173,6 +167,17 @@ RUST_SCHEMA_CONTRACT_MAP: dict[str, RustContractMapping] = {
         struct_name="LearningAdmissionDecision",
         enum_fields={"status": "LearningAdmissionStatus"},
         nested_fields={"reasons": NestedRustMapping(struct_name="PolicyReason")},
+    ),
+    "workflow.schema.json": RustContractMapping(
+        source=REPO_ROOT / "maf" / "rust" / "crates" / "maf-orchestration" / "src" / "lib.rs",
+        struct_name="WorkflowDescriptor",
+        nested_fields={
+            "stages": NestedRustMapping(
+                struct_name="WorkflowStage",
+                enum_fields={"stage_type": "StageType"},
+            ),
+            "bindings": NestedRustMapping(struct_name="WorkflowBinding"),
+        },
     ),
 }
 
@@ -571,6 +576,43 @@ def _build_model_response(payload: dict[str, Any]) -> Any:
     )
 
 
+def _build_workflow(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.workflow import (
+        StageType,
+        WorkflowBinding,
+        WorkflowDescriptor,
+        WorkflowStage,
+    )
+
+    return WorkflowDescriptor(
+        workflow_id=payload["workflow_id"],
+        name=payload["name"],
+        description=payload["description"],
+        stages=tuple(
+            WorkflowStage(
+                stage_id=stage["stage_id"],
+                stage_type=StageType(stage["stage_type"]),
+                skill_id=stage.get("skill_id"),
+                description=stage.get("description", ""),
+                predecessors=tuple(stage.get("predecessors", [])),
+                timeout_seconds=stage.get("timeout_seconds"),
+            )
+            for stage in payload["stages"]
+        ),
+        bindings=tuple(
+            WorkflowBinding(
+                binding_id=binding["binding_id"],
+                source_stage_id=binding["source_stage_id"],
+                source_output_key=binding["source_output_key"],
+                target_stage_id=binding["target_stage_id"],
+                target_input_key=binding["target_input_key"],
+            )
+            for binding in payload["bindings"]
+        ),
+        created_at=payload["created_at"],
+    )
+
+
 def _build_environment_fingerprint(payload: dict[str, Any]) -> Any:
     from mcoi_runtime.contracts.environment import (
         EnvironmentFingerprint,
@@ -730,6 +772,7 @@ FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "trace_entry.schema.json": _build_trace_entry,
     "replay_record.schema.json": _build_replay_record,
     "verification_result.schema.json": _build_verification_result,
+    "workflow.schema.json": _build_workflow,
     "learning_admission.schema.json": _build_learning_admission,
 }
 
@@ -903,20 +946,6 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
     return errors
 
 
-def check_schema_boundary_exceptions() -> list[str]:
-    """Require explicit bounded reasons for schema surfaces without direct 1:1 contract parity."""
-    errors: list[str] = []
-    for schema_file, reason in SCHEMA_BOUNDARY_EXCEPTIONS.items():
-        schema_path = SCHEMA_DIR / schema_file
-        if not schema_path.exists():
-            errors.append(f"{schema_file}: declared boundary exception schema file not found")
-            continue
-        if not reason.strip():
-            errors.append(f"{schema_file}: boundary exception reason must be non-empty")
-        print(f"  OK  {schema_file} boundary exception")
-    return errors
-
-
 def validate_canonical_fixtures(strict: bool = False) -> list[str]:
     """Validate canonical shared-contract fixtures against their schemas."""
     errors: list[str] = []
@@ -997,9 +1026,6 @@ def main() -> None:
 
     print("\n=== Rust Contract-Schema Parity ===")
     errors.extend(check_rust_contract_parity(strict=strict))
-
-    print("\n=== Bounded Schema Exceptions ===")
-    errors.extend(check_schema_boundary_exceptions())
 
     print("\n=== Canonical Shared Fixtures ===")
     errors.extend(validate_canonical_fixtures(strict=strict))
