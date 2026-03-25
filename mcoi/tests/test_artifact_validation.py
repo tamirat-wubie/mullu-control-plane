@@ -21,10 +21,12 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     inventory = validate_artifacts.discover_example_inventory()
     config_names = {path.name for path in inventory.config_paths}
     request_names = {path.name for path in inventory.request_paths}
+    auxiliary_names = {path.name for path in inventory.auxiliary_paths}
     pilot_names = {path.name for path in inventory.pilot_directories}
 
     assert "config-local-dev.json" in config_names
     assert "request-echo.json" in request_names
+    assert "input_document.json" in auxiliary_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -35,6 +37,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert errors == []
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
+    assert len(inventory.auxiliary_paths) >= 1
 
 
 def test_validate_config_artifact_rejects_unknown_keys(tmp_path: Path) -> None:
@@ -110,3 +113,63 @@ def test_validate_request_artifact_accepts_runtime_binding_template(tmp_path: Pa
     assert errors == []
     assert payload["template"]["command_argv"][0] == "{python_executable}"
     assert request_path.name.endswith(".json")
+
+
+def test_validate_auxiliary_pilot_artifact_accepts_shipped_document_input() -> None:
+    inventory = validate_artifacts.discover_example_inventory()
+    auxiliary_path = next(
+        path for path in inventory.auxiliary_paths if path.name == "input_document.json"
+    )
+
+    errors = validate_artifacts.validate_example_artifacts(strict=True)
+
+    assert errors == []
+    assert auxiliary_path.exists()
+    assert auxiliary_path.parent.name == "document_to_action"
+
+
+def test_validate_auxiliary_pilot_document_rejects_missing_required_fields(tmp_path: Path) -> None:
+    auxiliary_path = tmp_path / "input_document.json"
+    auxiliary_path.write_text(
+        json.dumps(
+            {
+                "task": "backup_database",
+                "target": "production_db",
+                "notify_email": "ops@example.com",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_auxiliary_artifact(
+        auxiliary_path,
+        artifact_key="examples/pilots/document_to_action/input_document.json",
+    )
+
+    assert len(errors) == 1
+    assert "missing auxiliary fields" in errors[0]
+    assert "retention_days" in errors[0]
+
+
+def test_validate_auxiliary_pilot_document_rejects_non_positive_retention_days(tmp_path: Path) -> None:
+    auxiliary_path = tmp_path / "input_document.json"
+    auxiliary_path.write_text(
+        json.dumps(
+            {
+                "task": "backup_database",
+                "target": "production_db",
+                "retention_days": 0,
+                "notify_email": "ops@example.com",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_auxiliary_artifact(
+        auxiliary_path,
+        artifact_key="examples/pilots/document_to_action/input_document.json",
+    )
+
+    assert len(errors) == 1
+    assert "retention_days" in errors[0]
+    assert "positive integer" in errors[0]

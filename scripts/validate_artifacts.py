@@ -6,6 +6,7 @@ Validates:
   2. Shipped request artifacts normalize through the governed CLI request contract.
   3. Request templates validate without executing adapters or mutating runtime state.
   4. Request action routes are admitted by their paired config artifact or by default config.
+  5. Auxiliary pilot JSON artifacts remain inventory-bounded and contract-validated.
 
 Usage:
   python scripts/validate_artifacts.py
@@ -18,7 +19,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -31,6 +32,8 @@ if str(MCOI_PATH) not in sys.path:
 
 from mcoi_runtime.app.cli import _build_operator_request
 from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.contracts.document import DocumentVerificationStatus
+from mcoi_runtime.core.document import extract_json_fields, ingest_document, verify_extraction
 from mcoi_runtime.core.template_validator import TemplateValidationError, TemplateValidator
 
 
@@ -40,7 +43,11 @@ class ExampleArtifactInventory:
 
     config_paths: tuple[Path, ...]
     request_paths: tuple[Path, ...]
+    auxiliary_paths: tuple[Path, ...]
     pilot_directories: tuple[Path, ...]
+
+
+AuxiliaryArtifactValidator = Callable[[Path], list[str]]
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -67,6 +74,76 @@ def _load_json_object(path: Path, *, kind: str) -> dict[str, Any]:
     return payload
 
 
+def _require_non_empty_text(value: Any, *, field_name: str, path: Path) -> list[str]:
+    if isinstance(value, str) and value.strip():
+        return []
+    return [f"{_relative_path(path)}: field '{field_name}' must be a non-empty string"]
+
+
+def _require_positive_int(value: Any, *, field_name: str, path: Path) -> list[str]:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        return [f"{_relative_path(path)}: field '{field_name}' must be a positive integer"]
+    return []
+
+
+def _validate_document_to_action_input(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="pilot auxiliary")
+    errors: list[str] = []
+    expected_keys = ("task", "target", "retention_days", "notify_email")
+
+    unknown_keys = sorted(set(payload) - set(expected_keys))
+    if unknown_keys:
+        errors.append(
+            f"{_relative_path(path)}: unexpected auxiliary fields: {', '.join(unknown_keys)}"
+        )
+
+    missing_keys = tuple(key for key in expected_keys if key not in payload)
+    if missing_keys:
+        errors.append(
+            f"{_relative_path(path)}: missing auxiliary fields: {', '.join(missing_keys)}"
+        )
+        return errors
+
+    errors.extend(_require_non_empty_text(payload["task"], field_name="task", path=path))
+    errors.extend(_require_non_empty_text(payload["target"], field_name="target", path=path))
+    errors.extend(_require_positive_int(payload["retention_days"], field_name="retention_days", path=path))
+    errors.extend(_require_non_empty_text(payload["notify_email"], field_name="notify_email", path=path))
+    if errors:
+        return errors
+
+    content = path.read_text(encoding="utf-8")
+    document_one = ingest_document(
+        "pilot-document-to-action-input",
+        _relative_path(path),
+        content,
+    )
+    document_two = ingest_document(
+        "pilot-document-to-action-input",
+        _relative_path(path),
+        content,
+    )
+    extraction = extract_json_fields(document_one, expected_keys)
+    verification = verify_extraction(extraction, expected_keys)
+
+    if document_one.fingerprint.content_hash != document_two.fingerprint.content_hash:
+        errors.append(f"{_relative_path(path)}: document fingerprint must be deterministic")
+    if extraction.extracted_count != len(expected_keys):
+        errors.append(f"{_relative_path(path)}: extracted_count must equal expected field count")
+    if extraction.missing_count != 0:
+        errors.append(f"{_relative_path(path)}: extraction must not miss required pilot fields")
+    if extraction.malformed_count != 0:
+        errors.append(f"{_relative_path(path)}: extraction must not mark pilot fields malformed")
+    if verification.status is not DocumentVerificationStatus.PASS:
+        errors.append(f"{_relative_path(path)}: verification must pass for the shipped pilot document")
+
+    return errors
+
+
+AUXILIARY_PILOT_VALIDATORS: dict[str, AuxiliaryArtifactValidator] = {
+    "examples/pilots/document_to_action/input_document.json": _validate_document_to_action_input,
+}
+
+
 def discover_example_inventory() -> ExampleArtifactInventory:
     """Discover the governed shipped example inventory."""
     pilot_directories = (
@@ -82,9 +159,18 @@ def discover_example_inventory() -> ExampleArtifactInventory:
         list(MCOI_EXAMPLES_DIR.glob("request-*.json"))
         + [path / "request.json" for path in pilot_directories if (path / "request.json").exists()]
     )
+    auxiliary_paths = _sort_paths(
+        [
+            path
+            for pilot_directory in pilot_directories
+            for path in pilot_directory.glob("*.json")
+            if path.name not in {"config.json", "request.json"}
+        ]
+    )
     return ExampleArtifactInventory(
         config_paths=config_paths,
         request_paths=request_paths,
+        auxiliary_paths=auxiliary_paths,
         pilot_directories=pilot_directories,
     )
 
@@ -140,6 +226,15 @@ def validate_request_artifact(path: Path) -> list[str]:
     return errors
 
 
+def validate_auxiliary_artifact(path: Path, *, artifact_key: str | None = None) -> list[str]:
+    """Validate one governed auxiliary pilot artifact."""
+    validator_key = artifact_key or _relative_path(path)
+    validator = AUXILIARY_PILOT_VALIDATORS.get(validator_key)
+    if validator is None:
+        return [f"{_relative_path(path)}: no auxiliary validator registered"]
+    return validator(path)
+
+
 def validate_example_artifacts(*, strict: bool = False) -> list[str]:
     """Validate the shipped example inventory."""
     inventory = discover_example_inventory()
@@ -149,6 +244,15 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
         errors.append("no shipped config artifacts discovered")
     if strict and not inventory.request_paths:
         errors.append("no shipped request artifacts discovered")
+    if strict:
+        expected_auxiliary = set(AUXILIARY_PILOT_VALIDATORS)
+        actual_auxiliary = {_relative_path(path) for path in inventory.auxiliary_paths}
+        missing_auxiliary = sorted(expected_auxiliary - actual_auxiliary)
+        unexpected_auxiliary = sorted(actual_auxiliary - expected_auxiliary)
+        if missing_auxiliary:
+            errors.append(f"missing governed auxiliary pilot artifacts: {missing_auxiliary}")
+        if unexpected_auxiliary:
+            errors.append(f"unexpected auxiliary pilot artifacts: {unexpected_auxiliary}")
 
     for pilot_directory in inventory.pilot_directories:
         if not (pilot_directory / "config.json").exists():
@@ -162,6 +266,9 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
     for request_path in inventory.request_paths:
         errors.extend(validate_request_artifact(request_path))
 
+    for auxiliary_path in inventory.auxiliary_paths:
+        errors.extend(validate_auxiliary_artifact(auxiliary_path))
+
     return errors
 
 
@@ -172,6 +279,7 @@ def main() -> None:
     print("=== Artifact Inventory ===")
     print(f"  config artifacts:  {len(inventory.config_paths)}")
     print(f"  request artifacts: {len(inventory.request_paths)}")
+    print(f"  auxiliary files:   {len(inventory.auxiliary_paths)}")
     print(f"  pilot directories: {len(inventory.pilot_directories)}")
 
     print("\n=== Artifact Validation ===")
