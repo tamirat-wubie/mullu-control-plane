@@ -1,22 +1,30 @@
-name: CI — Build Verification
+name: CI - Build Verification
 
 on:
   push:
-    branches: [main, "phase-*", "maf/*", "mcoi/*", "infra/*"]
+    branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  # -----------------------------------------------------------------------
-  # Python (MCOI Runtime)
-  # -----------------------------------------------------------------------
   python-tests:
-    name: Python Tests
-    runs-on: ubuntu-latest
+    name: Python Tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.12"
+            run-soak: false
+          - os: ubuntu-latest
+            python-version: "3.13"
+            run-soak: true
+          - os: windows-latest
+            python-version: "3.13"
+            run-soak: false
     defaults:
       run:
         working-directory: mcoi
@@ -28,21 +36,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
-      - name: Run tests
-        run: python -m pytest --tb=short -q
+      - name: Install dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run main test suite
+        run: python -m pytest --tb=short -q -m "not soak"
 
       - name: Run soak tests
+        if: matrix.run-soak
         run: python -m pytest -m soak --tb=short -q
 
-  # -----------------------------------------------------------------------
-  # Rust (MAF Substrate)
-  # -----------------------------------------------------------------------
   rust-tests:
     name: Rust Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: maf/rust
@@ -59,7 +69,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             maf/rust/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('maf/rust/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('maf/rust/Cargo.toml', 'maf/rust/crates/**/Cargo.toml') }}
 
       - name: Run tests
         run: cargo test
@@ -70,12 +80,10 @@ jobs:
       - name: Run clippy
         run: cargo clippy -- -D warnings
 
-  # -----------------------------------------------------------------------
-  # Schema Validation
-  # -----------------------------------------------------------------------
   schema-validation:
     name: Schema Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -85,17 +93,15 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: pip install -e "mcoi[dev]"
+        run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]"
 
       - name: Validate schemas
         run: python scripts/validate_schemas.py
 
-  # -----------------------------------------------------------------------
-  # Build Verification
-  # -----------------------------------------------------------------------
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [python-tests, rust-tests, schema-validation]
     steps:
       - uses: actions/checkout@v4
@@ -109,7 +115,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Python build check
-        run: pip install -e "mcoi[dev]" && python -c "import mcoi_runtime; print('MCOI import OK')"
+        run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]" && python -c "import mcoi_runtime; print('MCOI import OK')"
 
       - name: Rust build check
         working-directory: maf/rust
