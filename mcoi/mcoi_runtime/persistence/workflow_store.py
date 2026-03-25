@@ -1,17 +1,19 @@
-"""Purpose: persistence for workflow execution records.
-Governance scope: persistence layer workflow record storage only.
+"""Purpose: persistence for workflow descriptors and execution records.
+Governance scope: persistence layer workflow storage only.
 Dependencies: persistence errors, serialization helpers, workflow contracts.
-Invariants: one file per execution record, atomic writes, fail closed on malformed data.
+Invariants:
+  - Workflow descriptors and execution records are stored explicitly.
+  - Artifact types do not collide on disk.
+  - Reads fail closed on malformed data.
 """
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
 
-from mcoi_runtime.contracts.workflow import WorkflowExecutionRecord
+from mcoi_runtime.contracts.workflow import WorkflowDescriptor, WorkflowExecutionRecord
 
 from ._serialization import deserialize_record, serialize_record
 from .errors import (
@@ -20,6 +22,9 @@ from .errors import (
     PersistenceError,
     PersistenceWriteError,
 )
+
+
+_DESCRIPTOR_PREFIX = "workflow-descriptor--"
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -44,10 +49,7 @@ def _atomic_write(path: Path, content: str) -> None:
 
 
 class WorkflowStore:
-    """Append-only persistence for WorkflowExecutionRecord artifacts.
-
-    Each record is stored as a single JSON file named {execution_id}.json.
-    """
+    """Persistence for WorkflowDescriptor and WorkflowExecutionRecord artifacts."""
 
     def __init__(self, base_path: Path) -> None:
         if not isinstance(base_path, Path):
@@ -78,6 +80,14 @@ class WorkflowStore:
         content = serialize_record(record)
         _atomic_write(path, content)
 
+    def save_descriptor(self, descriptor: WorkflowDescriptor) -> None:
+        """Persist a workflow descriptor."""
+        if not isinstance(descriptor, WorkflowDescriptor):
+            raise PersistenceError("descriptor must be a WorkflowDescriptor instance")
+        path = self._descriptor_path(descriptor.workflow_id)
+        content = serialize_record(descriptor)
+        _atomic_write(path, content)
+
     def load_execution_record(self, execution_id: str) -> WorkflowExecutionRecord:
         """Load a workflow execution record by execution ID."""
         if not isinstance(execution_id, str) or not execution_id.strip():
@@ -85,7 +95,16 @@ class WorkflowStore:
         path = self._safe_path(execution_id)
         if not path.exists():
             raise PersistenceError(f"workflow execution record not found: {execution_id}")
-        return _load_workflow_file(path)
+        return _load_workflow_file(path, WorkflowExecutionRecord, "workflow record")
+
+    def load_descriptor(self, workflow_id: str) -> WorkflowDescriptor:
+        """Load a workflow descriptor by workflow ID."""
+        if not isinstance(workflow_id, str) or not workflow_id.strip():
+            raise PersistenceError("workflow_id must be a non-empty string")
+        path = self._descriptor_path(workflow_id)
+        if not path.exists():
+            raise PersistenceError(f"workflow descriptor not found: {workflow_id}")
+        return _load_workflow_file(path, WorkflowDescriptor, "workflow descriptor")
 
     def list_executions(self) -> tuple[str, ...]:
         """List all persisted workflow execution IDs in sorted order."""
@@ -94,20 +113,33 @@ class WorkflowStore:
         return tuple(
             entry.stem
             for entry in sorted(self._base_path.iterdir())
-            if entry.is_file() and entry.suffix == ".json"
+            if entry.is_file() and entry.suffix == ".json" and not entry.name.startswith(_DESCRIPTOR_PREFIX)
         )
 
+    def list_descriptors(self) -> tuple[str, ...]:
+        """List all persisted workflow descriptor IDs in sorted order."""
+        if not self._base_path.exists():
+            return ()
+        return tuple(
+            entry.name[len(_DESCRIPTOR_PREFIX):-len(".json")]
+            for entry in sorted(self._base_path.iterdir())
+            if entry.is_file() and entry.suffix == ".json" and entry.name.startswith(_DESCRIPTOR_PREFIX)
+        )
 
-def _load_workflow_file(path: Path) -> WorkflowExecutionRecord:
-    """Load and validate a single workflow execution record JSON file."""
+    def _descriptor_path(self, workflow_id: str) -> Path:
+        return self._safe_path(f"{_DESCRIPTOR_PREFIX}{workflow_id}")
+
+
+def _load_workflow_file(path: Path, record_type: type, label: str):
+    """Load and validate a single persisted workflow artifact JSON file."""
     try:
         content = path.read_text(encoding="utf-8")
     except OSError as exc:
         raise CorruptedDataError(f"cannot read workflow file {path.name}: {exc}") from exc
 
     try:
-        return deserialize_record(content, WorkflowExecutionRecord)
+        return deserialize_record(content, record_type)
     except CorruptedDataError:
         raise
     except (TypeError, ValueError) as exc:
-        raise CorruptedDataError(f"invalid workflow record in {path.name}: {exc}") from exc
+        raise CorruptedDataError(f"invalid {label} in {path.name}: {exc}") from exc

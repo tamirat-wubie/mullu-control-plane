@@ -12,7 +12,10 @@ import pytest
 from mcoi_runtime.contracts.workflow import (
     StageExecutionResult,
     StageStatus,
+    StageType,
+    WorkflowDescriptor,
     WorkflowExecutionRecord,
+    WorkflowStage,
     WorkflowStatus,
 )
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
@@ -48,6 +51,19 @@ def _make_record(execution_id="exec-001", workflow_id="wf-1", **kw):
     )
     defaults.update(kw)
     return WorkflowExecutionRecord(**defaults)
+
+
+def _make_descriptor(workflow_id="wf-1", **kw):
+    defaults = dict(
+        workflow_id=workflow_id,
+        name=f"workflow-{workflow_id}",
+        stages=(
+            WorkflowStage(stage_id="s1", stage_type=StageType.OBSERVATION),
+        ),
+        created_at=FIXED_CLOCK,
+    )
+    defaults.update(kw)
+    return WorkflowDescriptor(**defaults)
 
 
 # --- WorkflowStore ---
@@ -144,3 +160,45 @@ class TestWorkflowStore:
         store.save_execution_record(record)
         loaded = store.load_execution_record("exec-001")
         assert loaded.status is WorkflowStatus.FAILED
+
+    def test_save_and_load_descriptor_round_trip(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        descriptor = _make_descriptor()
+        store.save_descriptor(descriptor)
+        loaded = store.load_descriptor("wf-1")
+
+        assert loaded.workflow_id == descriptor.workflow_id
+        assert loaded.name == descriptor.name
+        assert loaded.stages[0].stage_id == "s1"
+
+    def test_list_descriptors(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        store.save_descriptor(_make_descriptor("wf-b"))
+        store.save_descriptor(_make_descriptor("wf-a"))
+
+        assert store.list_descriptors() == ("wf-a", "wf-b")
+
+    def test_list_executions_ignores_descriptors(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        store.save_execution_record(_make_record("exec-1"))
+        store.save_descriptor(_make_descriptor("wf-1"))
+
+        assert store.list_executions() == ("exec-1",)
+
+    def test_load_missing_descriptor_raises(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        with pytest.raises(PersistenceError, match="workflow descriptor not found"):
+            store.load_descriptor("missing")
+
+    def test_malformed_descriptor_fails_closed(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        (tmp_path / "workflows").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "workflows" / "workflow-descriptor--bad.json").write_text("not json!!")
+
+        with pytest.raises(CorruptedDataError):
+            store.load_descriptor("bad")
+
+    def test_invalid_descriptor_type_rejected(self, tmp_path: Path):
+        store = WorkflowStore(tmp_path / "workflows")
+        with pytest.raises(PersistenceError, match="WorkflowDescriptor"):
+            store.save_descriptor("not a descriptor")

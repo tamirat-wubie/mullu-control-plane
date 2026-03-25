@@ -65,6 +65,7 @@ from mcoi_runtime.contracts.skill import (
     SkillSelectionDecision,
     SkillStepOutcome,
 )
+from mcoi_runtime.persistence.errors import PersistenceError
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 
@@ -1275,9 +1276,29 @@ class _GoalSubGoalExecutor:
             ))
             new_status = SubGoalStatus.COMPLETED if report.succeeded else SubGoalStatus.FAILED
         elif sub_goal.workflow_id is not None:
-            # Fail closed until workflow-backed sub-goals can resolve a descriptor
-            # through an explicit registry or store lookup.
-            new_status = SubGoalStatus.FAILED
+            workflow_store = self._loop.runtime.workflow_store
+            if workflow_store is None:
+                new_status = SubGoalStatus.FAILED
+            else:
+                try:
+                    descriptor = workflow_store.load_descriptor(sub_goal.workflow_id)
+                except PersistenceError:
+                    new_status = SubGoalStatus.FAILED
+                else:
+                    report = self._loop.run_workflow(
+                        SkillRequest(
+                            request_id=f"{self._request.request_id}-{sub_goal.sub_goal_id}",
+                            subject_id=self._request.subject_id,
+                            goal_id=self._request.goal_id,
+                            input_context=self._request.input_context,
+                        ),
+                        descriptor,
+                    )
+                    new_status = (
+                        SubGoalStatus.COMPLETED
+                        if report.status is WorkflowStatus.COMPLETED
+                        else SubGoalStatus.FAILED
+                    )
         else:
             # Fail closed until bare sub-goals have an explicit executable handler.
             new_status = SubGoalStatus.FAILED

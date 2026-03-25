@@ -5,6 +5,7 @@ Proves that goals are first-class in the live operator runtime path.
 
 from __future__ import annotations
 
+from pathlib import Path
 import sys
 
 import pytest
@@ -32,6 +33,8 @@ from mcoi_runtime.contracts.skill import (
     TrustClass,
     VerificationStrength,
 )
+from mcoi_runtime.contracts.workflow import StageType, WorkflowDescriptor, WorkflowStage
+from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 
 FIXED_CLOCK = "2025-01-15T10:00:00+00:00"
@@ -46,6 +49,12 @@ def _make_loop_with_autonomy(mode: str):
     config = AppConfig(autonomy_mode=mode)
     runtime = bootstrap_runtime(config=config, clock=lambda: FIXED_CLOCK)
     return OperatorLoop(runtime=runtime)
+
+
+def _make_loop_with_workflow_store(tmp_path: Path):
+    store = WorkflowStore(tmp_path / "workflows")
+    runtime = bootstrap_runtime(clock=lambda: FIXED_CLOCK, workflow_store=store)
+    return OperatorLoop(runtime=runtime), store
 
 
 def _register_skill(loop: OperatorLoop, skill_id="sk-1", **kw):
@@ -92,6 +101,21 @@ def _goal_input_context(label: str) -> dict[str, object]:
         "template_id": f"tpl-{label}",
         "command_argv": [sys.executable, "-c", f"print('{label}')"],
     }
+
+
+def _make_skill_workflow_descriptor(workflow_id: str, skill_id: str) -> WorkflowDescriptor:
+    return WorkflowDescriptor(
+        workflow_id=workflow_id,
+        name=f"workflow-{workflow_id}",
+        stages=(
+            WorkflowStage(
+                stage_id="s1",
+                stage_type=StageType.SKILL_EXECUTION,
+                skill_id=skill_id,
+            ),
+        ),
+        created_at=FIXED_CLOCK,
+    )
 
 
 class TestGoalRuntimeGoldenScenarios:
@@ -185,6 +209,33 @@ class TestGoalRuntimeGoldenScenarios:
         assert report.failed_sub_goals == ("sg-workflow",)
         assert len(report.errors) >= 1
         assert report.errors[0].error_code == "goal_sub_goal_failed"
+
+    def test_workflow_backed_sub_goal_executes_from_persisted_descriptor(self, tmp_path: Path):
+        """Workflow-backed sub-goals complete when a stored descriptor exists."""
+        loop, store = _make_loop_with_workflow_store(tmp_path)
+        _register_skill(loop, "sk-workflow", name="shell_command")
+        store.save_descriptor(_make_skill_workflow_descriptor("wf-goal", "sk-workflow"))
+
+        sub_goals = (
+            SubGoal(
+                sub_goal_id="sg-workflow-live",
+                goal_id="goal-workflow-live",
+                description="workflow-backed sub-goal",
+                workflow_id="wf-goal",
+            ),
+        )
+        goal = _make_goal("goal-workflow-live", sub_goals=sub_goals)
+        request = _make_request(
+            "req-goal-workflow-live",
+            "goal-workflow-live",
+            input_context=_goal_input_context("goal-workflow-live"),
+        )
+
+        report = loop.run_goal(request, goal)
+
+        assert report.status is GoalStatus.COMPLETED
+        assert report.completed_sub_goals == ("sg-workflow-live",)
+        assert report.failed_sub_goals == ()
 
     def test_failed_sub_goal_marks_goal_as_failed(self):
         """A failed sub-goal marks the goal as failed."""
