@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -145,7 +146,7 @@ def test_cli_run_with_profile() -> None:
         "template": {
             "template_id": "tpl-1",
             "action_type": "shell_command",
-            "command_argv": ["echo", "profile-test"],
+            "command_argv": [sys.executable, "-c", "print('profile-test')"],
         },
         "bindings": {},
     })
@@ -162,7 +163,7 @@ def test_cli_run_with_example_file(tmp_path: Path) -> None:
         "template": {
             "template_id": "tpl-1",
             "action_type": "shell_command",
-            "command_argv": ["echo", "from-file"],
+            "command_argv": [sys.executable, "-c", "print('from-file')"],
         },
         "bindings": {},
     }), encoding="utf-8")

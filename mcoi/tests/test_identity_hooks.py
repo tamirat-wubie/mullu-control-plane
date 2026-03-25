@@ -7,6 +7,7 @@ Invariants: IDs are explicit, stable, and survive persistence round-trips.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -28,7 +29,7 @@ from mcoi_runtime.persistence import ReplayStore, SnapshotStore, TraceStore
 _VALID_TEMPLATE = {
     "template_id": "test-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "hello"],
+    "command_argv": [sys.executable, "-c", "print('hello')"],
 }
 _CLOCK = "2026-03-19T00:00:00+00:00"
 

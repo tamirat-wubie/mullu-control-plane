@@ -7,6 +7,7 @@ Invariants: view models are read-only projections; rendering is deterministic.
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
@@ -51,7 +52,7 @@ _CLOCK = "2026-03-19T00:00:00+00:00"
 _VALID_TEMPLATE = {
     "template_id": "test-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "hello"],
+    "command_argv": [sys.executable, "-c", "print('hello')"],
 }
 
 
