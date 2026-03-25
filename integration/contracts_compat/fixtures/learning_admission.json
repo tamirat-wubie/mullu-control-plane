@@ -1,0 +1,21 @@
+{
+  "admission_id": "learn-001",
+  "knowledge_id": "knowledge-shell-read-001",
+  "status": "admit",
+  "reasons": [
+    {
+      "message": "Verified execution evidence is available",
+      "code": "knowledge_verified",
+      "details": {
+        "verification_id": "verify-001"
+      }
+    }
+  ],
+  "issued_at": "2026-03-25T12:00:09+00:00",
+  "metadata": {
+    "source": "verified_runtime"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

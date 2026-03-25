@@ -36,3 +36,17 @@ def test_rust_shared_types_match_shared_schemas_strictly() -> None:
     assert isinstance(errors, list)
     assert len(errors) == 0
     assert errors == []
+
+
+def test_canonical_shared_fixtures_match_shared_schemas_strictly() -> None:
+    errors = validate_schemas.validate_canonical_fixtures(strict=True)
+    assert isinstance(errors, list)
+    assert len(errors) == 0
+    assert errors == []
+
+
+def test_python_contracts_round_trip_canonical_shared_fixtures_exactly() -> None:
+    errors = validate_schemas.check_python_fixture_round_trip()
+    assert isinstance(errors, list)
+    assert len(errors) == 0
+    assert errors == []

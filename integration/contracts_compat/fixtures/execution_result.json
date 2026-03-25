@@ -1,0 +1,35 @@
+{
+  "execution_id": "exec-shell-read-001",
+  "goal_id": "goal-shell-read",
+  "status": "succeeded",
+  "actual_effects": [
+    {
+      "name": "process_exit",
+      "details": {
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "stdout_captured",
+      "details": {
+        "bytes": 12
+      }
+    }
+  ],
+  "assumed_effects": [
+    {
+      "name": "filesystem_read",
+      "details": {
+        "path": "C:/tmp/input.txt"
+      }
+    }
+  ],
+  "started_at": "2026-03-25T12:00:05+00:00",
+  "finished_at": "2026-03-25T12:00:06+00:00",
+  "metadata": {
+    "adapter": "shell_executor"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

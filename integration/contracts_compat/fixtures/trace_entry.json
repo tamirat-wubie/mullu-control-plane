@@ -1,0 +1,16 @@
+{
+  "trace_id": "trace-run-001",
+  "parent_trace_id": null,
+  "event_type": "operator_step_dispatched",
+  "subject_id": "subject-operator-runtime",
+  "goal_id": "goal-shell-read",
+  "state_hash": "state-sha256-001",
+  "registry_hash": "registry-sha256-001",
+  "timestamp": "2026-03-25T12:00:04+00:00",
+  "metadata": {
+    "plane": "operator"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

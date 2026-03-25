@@ -1,0 +1,37 @@
+{
+  "verification_id": "verify-001",
+  "execution_id": "exec-shell-read-001",
+  "status": "pass",
+  "checks": [
+    {
+      "name": "exit_code_zero",
+      "status": "pass",
+      "details": {
+        "exit_code": 0
+      }
+    },
+    {
+      "name": "stdout_present",
+      "status": "pass",
+      "details": {
+        "bytes": 12
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "description": "stdout digest captured",
+      "uri": "file:///artifacts/stdout.txt",
+      "details": {
+        "sha256": "abc123"
+      }
+    }
+  ],
+  "closed_at": "2026-03-25T12:00:08+00:00",
+  "metadata": {
+    "verifier": "operator_supplied"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

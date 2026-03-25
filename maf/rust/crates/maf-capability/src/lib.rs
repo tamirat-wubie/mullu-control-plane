@@ -109,6 +109,17 @@ pub struct CapabilityDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     #[test]
     fn effect_class_serializes_to_snake_case() {
@@ -170,5 +181,14 @@ mod tests {
         let restored: CapabilityDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(descriptor, restored);
         assert!(json.contains("\"constraints\":[\"read_only\"]"));
+    }
+
+    #[test]
+    fn canonical_capability_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/capability_descriptor.json"
+        ));
+        assert_fixture_round_trip::<CapabilityDescriptor>(fixture_json);
     }
 }

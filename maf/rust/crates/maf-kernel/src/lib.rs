@@ -1129,6 +1129,17 @@ pub struct ReplaySessionResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     #[test]
     fn policy_status_serializes_to_snake_case() {
@@ -1278,6 +1289,60 @@ mod tests {
         let restored: LearningAdmissionDecision = serde_json::from_str(&json).unwrap();
         assert_eq!(decision, restored);
         assert!(json.contains("\"status\":\"admit\""));
+    }
+
+    #[test]
+    fn canonical_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/policy_decision.json"
+        ));
+        assert_fixture_round_trip::<PolicyDecision>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_execution_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/execution_result.json"
+        ));
+        assert_fixture_round_trip::<ExecutionResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_trace_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/trace_entry.json"
+        ));
+        assert_fixture_round_trip::<TraceEntry>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_replay_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/replay_record.json"
+        ));
+        assert_fixture_round_trip::<ReplayRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_verification_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/verification_result.json"
+        ));
+        assert_fixture_round_trip::<VerificationResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_learning_admission_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/learning_admission.json"
+        ));
+        assert_fixture_round_trip::<LearningAdmissionDecision>(fixture_json);
     }
 
     // -------------------------------------------------------------------

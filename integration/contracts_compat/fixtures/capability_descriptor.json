@@ -1,0 +1,18 @@
+{
+  "capability_id": "cap-shell-readonly",
+  "subject_id": "subject-operator-runtime",
+  "name": "shell_execute",
+  "version": "1.0.0",
+  "scope": "local",
+  "constraints": [
+    "argv_only",
+    "read_only_environment"
+  ],
+  "metadata": {
+    "owner": "shared-contracts",
+    "plane": "execution"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

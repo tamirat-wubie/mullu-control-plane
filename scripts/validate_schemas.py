@@ -8,9 +8,12 @@ Validates:
      with the schema's required fields.
   3. Every shared schema that has a matching Rust contract surface maps to
      the same field names and enum values without reinterpretation.
-  4. In --strict mode, checks that all schema properties are present in the
-     Python and Rust contract surfaces and that canonical Rust structs do not
-     carry extra top-level or nested fields.
+  4. Canonical shared payload fixtures match shared schemas and round-trip
+     exactly through the Python shared-contract surface.
+  5. In --strict mode, checks that all schema properties are present in the
+     Python and Rust contract surfaces, canonical Rust structs do not carry
+     extra top-level or nested fields, and canonical fixtures cover the full
+     declared shared payload surface.
 
 Usage:
   python scripts/validate_schemas.py           # basic validation
@@ -23,10 +26,13 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_DIR = REPO_ROOT / "schemas"
+FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fixtures"
 
 # Map schema files to their Python contract classes
 SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
@@ -145,6 +151,12 @@ RUST_SCHEMA_CONTRACT_MAP: dict[str, RustContractMapping] = {
 }
 
 
+SharedFixtureBuilder = Callable[[dict[str, Any]], Any]
+
+
+CANONICAL_SHARED_SCHEMA_FILES: tuple[str, ...] = tuple(RUST_SCHEMA_CONTRACT_MAP.keys())
+
+
 def validate_json_schemas() -> list[str]:
     """Validate all schema files are valid JSON with required structure."""
     errors: list[str] = []
@@ -180,6 +192,11 @@ def validate_json_schemas() -> list[str]:
 
 def _load_schema(schema_path: Path) -> dict:
     with open(schema_path, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _load_json(path: Path) -> Any:
+    with open(path, encoding="utf-8") as handle:
         return json.load(handle)
 
 
@@ -234,6 +251,316 @@ def _extract_rust_enum_values(source_text: str, name: str) -> set[str]:
         if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", variant):
             values.add(_camel_to_snake(variant))
     return values
+
+
+def _validate_datetime_text(value: str, path: str) -> list[str]:
+    if not isinstance(value, str):
+        return [f"{path}: expected string date-time"]
+    normalized = value.replace("Z", "+00:00")
+    try:
+        datetime.fromisoformat(normalized)
+    except ValueError:
+        return [f"{path}: invalid ISO 8601 date-time string"]
+    return []
+
+
+def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
+    if not schema:
+        return []
+
+    if "anyOf" in schema:
+        branch_errors = [
+            _validate_schema_instance(branch, instance, path)
+            for branch in schema["anyOf"]
+        ]
+        if any(not errors for errors in branch_errors):
+            return []
+        flattened = [error for branch in branch_errors for error in branch]
+        return [f"{path}: no anyOf branch matched"] + flattened
+
+    if "$ref" in schema:
+        return []
+
+    errors: list[str] = []
+    schema_type = schema.get("type")
+
+    if schema_type == "object":
+        if not isinstance(instance, dict):
+            return [f"{path}: expected object"]
+        properties = schema.get("properties", {})
+        required = set(schema.get("required", []))
+        missing = required - set(instance.keys())
+        if missing:
+            errors.append(f"{path}: missing required fields {sorted(missing)}")
+
+        additional = schema.get("additionalProperties", True)
+        for key, value in instance.items():
+            if key in properties:
+                errors.extend(_validate_schema_instance(properties[key], value, f"{path}.{key}"))
+            elif additional is False:
+                errors.append(f"{path}: unexpected property '{key}'")
+            elif isinstance(additional, dict):
+                errors.extend(_validate_schema_instance(additional, value, f"{path}.{key}"))
+        return errors
+
+    if schema_type == "array":
+        if not isinstance(instance, list):
+            return [f"{path}: expected array"]
+        min_items = schema.get("minItems")
+        if isinstance(min_items, int) and len(instance) < min_items:
+            errors.append(f"{path}: expected at least {min_items} item(s)")
+        item_schema = schema.get("items", {})
+        for index, item in enumerate(instance):
+            errors.extend(_validate_schema_instance(item_schema, item, f"{path}[{index}]"))
+        return errors
+
+    if schema_type == "string":
+        if not isinstance(instance, str):
+            return [f"{path}: expected string"]
+        min_length = schema.get("minLength")
+        if isinstance(min_length, int) and len(instance) < min_length:
+            errors.append(f"{path}: expected minimum length {min_length}")
+        if "enum" in schema and instance not in schema["enum"]:
+            errors.append(f"{path}: expected one of {sorted(schema['enum'])}")
+        if schema.get("format") == "date-time":
+            errors.extend(_validate_datetime_text(instance, path))
+        return errors
+
+    if schema_type == "integer":
+        if not isinstance(instance, int) or isinstance(instance, bool):
+            return [f"{path}: expected integer"]
+        minimum = schema.get("minimum")
+        if minimum is not None and instance < minimum:
+            errors.append(f"{path}: expected integer >= {minimum}")
+        return errors
+
+    if schema_type == "number":
+        if not isinstance(instance, (int, float)) or isinstance(instance, bool):
+            return [f"{path}: expected number"]
+        minimum = schema.get("minimum")
+        if minimum is not None and instance < minimum:
+            errors.append(f"{path}: expected number >= {minimum}")
+        return errors
+
+    if schema_type == "boolean":
+        if not isinstance(instance, bool):
+            return [f"{path}: expected boolean"]
+        return errors
+
+    if schema_type == "null":
+        if instance is not None:
+            return [f"{path}: expected null"]
+        return errors
+
+    if "enum" in schema and instance not in schema["enum"]:
+        errors.append(f"{path}: expected one of {sorted(schema['enum'])}")
+    return errors
+
+
+def _check_fixture_schema_coverage(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
+    if not schema or "anyOf" in schema or "$ref" in schema:
+        return []
+
+    errors: list[str] = []
+    schema_type = schema.get("type")
+
+    if schema_type == "object" and isinstance(instance, dict):
+        properties = schema.get("properties", {})
+        missing = set(properties) - set(instance)
+        if missing:
+            errors.append(f"{path}: canonical fixture missing schema properties {sorted(missing)}")
+        for key, property_schema in properties.items():
+            if key in instance:
+                errors.extend(_check_fixture_schema_coverage(property_schema, instance[key], f"{path}.{key}"))
+        return errors
+
+    if schema_type == "array" and isinstance(instance, list):
+        item_schema = schema.get("items", {})
+        for index, item in enumerate(instance):
+            errors.extend(_check_fixture_schema_coverage(item_schema, item, f"{path}[{index}]"))
+        return errors
+
+    return errors
+
+
+def _canonical_fixture_path(schema_file: str) -> Path:
+    return FIXTURE_DIR / schema_file.replace(".schema.json", ".json")
+
+
+def _load_canonical_fixtures() -> dict[str, dict[str, Any]]:
+    fixtures: dict[str, dict[str, Any]] = {}
+    for schema_file in CANONICAL_SHARED_SCHEMA_FILES:
+        fixtures[schema_file] = _load_json(_canonical_fixture_path(schema_file))
+    return fixtures
+
+
+def _build_capability_descriptor(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.capability import CapabilityDescriptor
+
+    return CapabilityDescriptor(
+        capability_id=payload["capability_id"],
+        subject_id=payload["subject_id"],
+        name=payload["name"],
+        version=payload["version"],
+        scope=payload["scope"],
+        constraints=tuple(payload["constraints"]),
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_policy_decision(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
+
+    return PolicyDecision(
+        decision_id=payload["decision_id"],
+        subject_id=payload["subject_id"],
+        goal_id=payload["goal_id"],
+        status=PolicyDecisionStatus(payload["status"]),
+        reasons=tuple(
+            DecisionReason(
+                message=reason["message"],
+                code=reason.get("code"),
+                details=reason.get("details"),
+            )
+            for reason in payload["reasons"]
+        ),
+        issued_at=payload["issued_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_execution_result(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+
+    return ExecutionResult(
+        execution_id=payload["execution_id"],
+        goal_id=payload["goal_id"],
+        status=ExecutionOutcome(payload["status"]),
+        actual_effects=tuple(
+            EffectRecord(name=effect["name"], details=effect.get("details"))
+            for effect in payload["actual_effects"]
+        ),
+        assumed_effects=tuple(
+            EffectRecord(name=effect["name"], details=effect.get("details"))
+            for effect in payload["assumed_effects"]
+        ),
+        started_at=payload["started_at"],
+        finished_at=payload["finished_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_trace_entry(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.trace import TraceEntry
+
+    return TraceEntry(
+        trace_id=payload["trace_id"],
+        parent_trace_id=payload["parent_trace_id"],
+        event_type=payload["event_type"],
+        subject_id=payload["subject_id"],
+        goal_id=payload["goal_id"],
+        state_hash=payload["state_hash"],
+        registry_hash=payload["registry_hash"],
+        timestamp=payload["timestamp"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_replay_record(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.replay import ReplayEffect, ReplayMode, ReplayRecord
+
+    return ReplayRecord(
+        replay_id=payload["replay_id"],
+        trace_id=payload["trace_id"],
+        source_hash=payload["source_hash"],
+        approved_effects=tuple(
+            ReplayEffect(
+                effect_id=effect["effect_id"],
+                description=effect.get("description"),
+                details=effect.get("details"),
+            )
+            for effect in payload["approved_effects"]
+        ),
+        blocked_effects=tuple(
+            ReplayEffect(
+                effect_id=effect["effect_id"],
+                description=effect.get("description"),
+                details=effect.get("details"),
+            )
+            for effect in payload["blocked_effects"]
+        ),
+        mode=ReplayMode(payload["mode"]),
+        recorded_at=payload["recorded_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_verification_result(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.evidence import EvidenceRecord
+    from mcoi_runtime.contracts.verification import VerificationCheck, VerificationResult, VerificationStatus
+
+    return VerificationResult(
+        verification_id=payload["verification_id"],
+        execution_id=payload["execution_id"],
+        status=VerificationStatus(payload["status"]),
+        checks=tuple(
+            VerificationCheck(
+                name=check["name"],
+                status=VerificationStatus(check["status"]),
+                details=check.get("details"),
+            )
+            for check in payload["checks"]
+        ),
+        evidence=tuple(
+            EvidenceRecord(
+                description=evidence["description"],
+                uri=evidence.get("uri"),
+                details=evidence.get("details"),
+            )
+            for evidence in payload["evidence"]
+        ),
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_learning_admission(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
+    from mcoi_runtime.contracts.policy import DecisionReason
+
+    return LearningAdmissionDecision(
+        admission_id=payload["admission_id"],
+        knowledge_id=payload["knowledge_id"],
+        status=LearningAdmissionStatus(payload["status"]),
+        reasons=tuple(
+            DecisionReason(
+                message=reason["message"],
+                code=reason.get("code"),
+                details=reason.get("details"),
+            )
+            for reason in payload["reasons"]
+        ),
+        issued_at=payload["issued_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
+    "capability_descriptor.schema.json": _build_capability_descriptor,
+    "policy_decision.schema.json": _build_policy_decision,
+    "execution_result.schema.json": _build_execution_result,
+    "trace_entry.schema.json": _build_trace_entry,
+    "replay_record.schema.json": _build_replay_record,
+    "verification_result.schema.json": _build_verification_result,
+    "learning_admission.schema.json": _build_learning_admission,
+}
 
 
 def check_contract_parity(strict: bool = False) -> list[str]:
@@ -405,6 +732,75 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
     return errors
 
 
+def validate_canonical_fixtures(strict: bool = False) -> list[str]:
+    """Validate canonical shared-contract fixtures against their schemas."""
+    errors: list[str] = []
+
+    if not FIXTURE_DIR.exists():
+        return [f"Canonical fixture directory not found: {FIXTURE_DIR}"]
+
+    expected_files = {
+        schema_file.replace(".schema.json", ".json")
+        for schema_file in CANONICAL_SHARED_SCHEMA_FILES
+    }
+    actual_files = {path.name for path in FIXTURE_DIR.glob("*.json")}
+
+    missing_files = expected_files - actual_files
+    if missing_files:
+        errors.append(f"canonical fixtures missing files: {sorted(missing_files)}")
+
+    if strict:
+        extra_files = actual_files - expected_files
+        if extra_files:
+            errors.append(f"canonical fixtures contain unexpected files: {sorted(extra_files)}")
+
+    for schema_file in CANONICAL_SHARED_SCHEMA_FILES:
+        schema = _load_schema(SCHEMA_DIR / schema_file)
+        fixture_path = _canonical_fixture_path(schema_file)
+        if not fixture_path.exists():
+            continue
+        fixture = _load_json(fixture_path)
+        errors.extend(
+            f"{schema_file} fixture {message}"
+            for message in _validate_schema_instance(schema, fixture)
+        )
+        if strict:
+            errors.extend(
+                f"{schema_file} fixture {message}"
+                for message in _check_fixture_schema_coverage(schema, fixture)
+            )
+        print(f"  OK  {schema_file} fixture <-> {fixture_path.name}")
+
+    return errors
+
+
+def check_python_fixture_round_trip() -> list[str]:
+    """Check that canonical shared fixtures round-trip exactly through Python contracts."""
+    errors: list[str] = []
+
+    mcoi_path = REPO_ROOT / "mcoi"
+    if str(mcoi_path) not in sys.path:
+        sys.path.insert(0, str(mcoi_path))
+
+    fixtures = _load_canonical_fixtures()
+    for schema_file, fixture in fixtures.items():
+        contract = FIXTURE_BUILDERS[schema_file](fixture)
+        rendered = contract.to_json_dict()
+        if rendered != fixture:
+            errors.append(
+                f"{schema_file}: Python contract JSON surface diverges from canonical fixture"
+            )
+        canonical_text = json.dumps(fixture, ensure_ascii=True, separators=(",", ":"))
+        rendered_text = contract.to_json()
+        if rendered_text != canonical_text:
+            errors.append(
+                f"{schema_file}: Python contract serialization order diverges from canonical fixture"
+            )
+        print(f"  OK  {schema_file} fixture <-> Python contract round-trip")
+
+    return errors
+
+
 def main() -> None:
     strict = "--strict" in sys.argv
 
@@ -416,6 +812,12 @@ def main() -> None:
 
     print("\n=== Rust Contract-Schema Parity ===")
     errors.extend(check_rust_contract_parity(strict=strict))
+
+    print("\n=== Canonical Shared Fixtures ===")
+    errors.extend(validate_canonical_fixtures(strict=strict))
+
+    print("\n=== Python Fixture Round-Trip ===")
+    errors.extend(check_python_fixture_round_trip())
 
     if errors:
         print(f"\n{'='*40}")

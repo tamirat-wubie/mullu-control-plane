@@ -1,0 +1,31 @@
+{
+  "replay_id": "replay-001",
+  "trace_id": "trace-run-001",
+  "source_hash": "artifact-sha256-001",
+  "approved_effects": [
+    {
+      "effect_id": "effect-stdout-001",
+      "description": "stdout capture",
+      "details": {
+        "bytes": 12
+      }
+    }
+  ],
+  "blocked_effects": [
+    {
+      "effect_id": "effect-write-001",
+      "description": "filesystem write",
+      "details": {
+        "path": "C:/tmp/output.txt"
+      }
+    }
+  ],
+  "mode": "observation_only",
+  "recorded_at": "2026-03-25T12:00:07+00:00",
+  "metadata": {
+    "replay_class": "safe"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

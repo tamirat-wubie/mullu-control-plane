@@ -1,0 +1,22 @@
+{
+  "decision_id": "decision-allow-001",
+  "subject_id": "subject-operator-runtime",
+  "goal_id": "goal-shell-read",
+  "status": "allow",
+  "reasons": [
+    {
+      "message": "Explicit operator approval present",
+      "code": "policy_allow",
+      "details": {
+        "approval_id": "apr-001"
+      }
+    }
+  ],
+  "issued_at": "2026-03-25T12:00:00+00:00",
+  "metadata": {
+    "policy_pack": "default"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}
