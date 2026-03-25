@@ -338,13 +338,15 @@ mod tests {
 
     #[test]
     fn outcome_quality_serializes_to_snake_case() {
-        let json = serde_json::to_string(&decision_learning::OutcomeQuality::PartialSuccess).unwrap();
+        let json =
+            serde_json::to_string(&decision_learning::OutcomeQuality::PartialSuccess).unwrap();
         assert_eq!(json, r#""partial_success""#);
     }
 
     #[test]
     fn adjustment_type_serializes_to_snake_case() {
-        let json = serde_json::to_string(&decision_learning::AdjustmentType::ConfidenceBoost).unwrap();
+        let json =
+            serde_json::to_string(&decision_learning::AdjustmentType::ConfidenceBoost).unwrap();
         assert_eq!(json, r#""confidence_boost""#);
     }
 
@@ -427,7 +429,8 @@ mod tests {
 
     #[test]
     fn uncertainty_source_serializes_to_snake_case() {
-        let json = serde_json::to_string(&meta_reasoning::UncertaintySource::ContradictedState).unwrap();
+        let json =
+            serde_json::to_string(&meta_reasoning::UncertaintySource::ContradictedState).unwrap();
         assert_eq!(json, r#""contradicted_state""#);
     }
 

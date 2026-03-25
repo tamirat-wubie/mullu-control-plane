@@ -700,7 +700,9 @@ mod tests {
 
     #[test]
     fn benchmark_adversarial_category_serializes_to_snake_case() {
-        let json = serde_json::to_string(&benchmark::AdversarialCategory::SimulationUtilityDisagreement).unwrap();
+        let json =
+            serde_json::to_string(&benchmark::AdversarialCategory::SimulationUtilityDisagreement)
+                .unwrap();
         assert_eq!(json, r#""simulation_utility_disagreement""#);
     }
 

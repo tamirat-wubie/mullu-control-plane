@@ -389,15 +389,13 @@ mod tests {
 
     #[test]
     fn supervisor_phase_deserializes_from_python_format() {
-        let sp: SupervisorPhase =
-            serde_json::from_str(r#""evaluating_obligations""#).unwrap();
+        let sp: SupervisorPhase = serde_json::from_str(r#""evaluating_obligations""#).unwrap();
         assert_eq!(sp, SupervisorPhase::EvaluatingObligations);
     }
 
     #[test]
     fn tick_outcome_deserializes_from_python_format() {
-        let to: TickOutcome =
-            serde_json::from_str(r#""backpressure_applied""#).unwrap();
+        let to: TickOutcome = serde_json::from_str(r#""backpressure_applied""#).unwrap();
         assert_eq!(to, TickOutcome::BackpressureApplied);
     }
 }
