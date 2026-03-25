@@ -172,6 +172,23 @@ class TestWorkflowValidator:
         errors = v.validate(d)
         assert any("unknown target stage" in e for e in errors)
 
+    def test_binding_source_must_be_declared_predecessor(self):
+        binding = WorkflowBinding(
+            binding_id="b1",
+            source_stage_id="A",
+            source_output_key="out",
+            target_stage_id="B",
+            target_input_key="in",
+        )
+        d = _descriptor(stages=(
+            _stage("A"),
+            _stage("B"),
+        ), bindings=(binding,))
+        v = WorkflowValidator()
+        errors = v.validate(d)
+        assert len(errors) == 1
+        assert "must be declared as a predecessor" in errors[0]
+
 
 # --- WorkflowEngine ---
 
@@ -297,6 +314,41 @@ class TestWorkflowEngineParallel:
         assert record.status is WorkflowStatus.COMPLETED
         assert "payload" not in executor.inputs_by_stage["B"]
         assert "A.payload" not in executor.inputs_by_stage["B"]
+
+    def test_missing_bound_output_fails_target_stage(self):
+        binding = WorkflowBinding(
+            binding_id="b1",
+            source_stage_id="A",
+            source_output_key="payload",
+            target_stage_id="B",
+            target_input_key="message",
+        )
+        d = _descriptor(stages=(
+            _stage("A"),
+            _stage("B", predecessors=("A",)),
+        ), bindings=(binding,))
+        clock = _make_clock([
+            "2025-01-01T00:00:00+00:00",
+            "2025-01-01T00:00:01+00:00",
+            "2025-01-01T00:00:02+00:00",
+            "2025-01-01T00:00:03+00:00",
+            "2025-01-01T00:00:04+00:00",
+            "2025-01-01T00:00:05+00:00",
+            "2025-01-01T00:00:06+00:00",
+        ])
+        engine = WorkflowEngine(clock=clock)
+        executor = FakeStageExecutor(outputs={"A": {"other": "hello"}})
+
+        record = engine.start_workflow(d)
+        record = engine.execute_next_stage(d, record, executor)
+        record = engine.execute_next_stage(d, record, executor)
+
+        assert record.status is WorkflowStatus.FAILED
+        assert len(record.stage_results) == 2
+        assert record.stage_results[1].stage_id == "B"
+        assert record.stage_results[1].status is StageStatus.FAILED
+        assert "missing source output" in str(record.stage_results[1].error)
+        assert executor.executed == ["A"]
 
 
 class TestWorkflowEngineCycleDetection:

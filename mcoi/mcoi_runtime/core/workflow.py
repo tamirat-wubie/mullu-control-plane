@@ -50,6 +50,7 @@ class WorkflowValidator:
         """Return a list of validation error strings. Empty list means valid."""
         errors: list[str] = []
         stage_ids = {stage.stage_id for stage in descriptor.stages}
+        stages_by_id = {stage.stage_id: stage for stage in descriptor.stages}
 
         # Check predecessor references
         for stage in descriptor.stages:
@@ -68,6 +69,16 @@ class WorkflowValidator:
             if binding.target_stage_id not in stage_ids:
                 errors.append(
                     f"binding '{binding.binding_id}' references unknown target stage '{binding.target_stage_id}'"
+                )
+            target_stage = stages_by_id.get(binding.target_stage_id)
+            if (
+                target_stage is not None
+                and binding.source_stage_id in stage_ids
+                and binding.source_stage_id not in target_stage.predecessors
+            ):
+                errors.append(
+                    f"binding '{binding.binding_id}' source '{binding.source_stage_id}' "
+                    f"must be declared as a predecessor of target stage '{binding.target_stage_id}'"
                 )
 
         # Check for cycles via topological sort (Kahn's algorithm)
@@ -199,9 +210,43 @@ class WorkflowEngine:
                     continue
                 source_result = stage_results_by_id.get(binding.source_stage_id)
                 if source_result is None:
-                    continue
+                    binding_failure = StageExecutionResult(
+                        stage_id=stage.stage_id,
+                        status=StageStatus.FAILED,
+                        error=(
+                            f"binding '{binding.binding_id}' source stage "
+                            f"'{binding.source_stage_id}' has no completed result"
+                        ),
+                        started_at=self._clock(),
+                        completed_at=self._clock(),
+                    )
+                    return WorkflowExecutionRecord(
+                        workflow_id=record.workflow_id,
+                        execution_id=record.execution_id,
+                        status=WorkflowStatus.FAILED,
+                        stage_results=record.stage_results + (binding_failure,),
+                        started_at=record.started_at,
+                        completed_at=self._clock(),
+                    )
                 if binding.source_output_key not in source_result.output:
-                    continue
+                    binding_failure = StageExecutionResult(
+                        stage_id=stage.stage_id,
+                        status=StageStatus.FAILED,
+                        error=(
+                            f"binding '{binding.binding_id}' missing source output "
+                            f"'{binding.source_output_key}' from stage '{binding.source_stage_id}'"
+                        ),
+                        started_at=self._clock(),
+                        completed_at=self._clock(),
+                    )
+                    return WorkflowExecutionRecord(
+                        workflow_id=record.workflow_id,
+                        execution_id=record.execution_id,
+                        status=WorkflowStatus.FAILED,
+                        stage_results=record.stage_results + (binding_failure,),
+                        started_at=record.started_at,
+                        completed_at=self._clock(),
+                    )
                 inputs[binding.target_input_key] = source_result.output[binding.source_output_key]
 
             result = stage_executor.execute_stage(
