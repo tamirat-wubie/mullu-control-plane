@@ -84,17 +84,17 @@ Config files use the same keys:
 
 ### request-echo.json
 
-Runs `echo "Hello from MCOI"` through the shell executor:
+Runs a portable Python print command through the shell executor:
 
 ```json
 {
   "request_id": "example-001",
   "subject_id": "operator",
-  "goal_id": "run-echo",
+  "goal_id": "run-print",
   "template": {
-    "template_id": "echo-tpl",
+    "template_id": "python-print-tpl",
     "action_type": "shell_command",
-    "command_argv": ["echo", "Hello from MCOI"]
+    "command_argv": ["python", "-c", "print('Hello from MCOI')"]
   },
   "bindings": {}
 }
@@ -102,21 +102,21 @@ Runs `echo "Hello from MCOI"` through the shell executor:
 
 ### request-with-bindings.json
 
-Runs `ls {target_dir}` with a binding that substitutes the target directory:
+Runs a portable Python print command with a bound message:
 
 ```json
 {
   "request_id": "example-002",
   "subject_id": "operator",
-  "goal_id": "run-ls",
+  "goal_id": "run-print-with-binding",
   "template": {
-    "template_id": "ls-tpl",
+    "template_id": "python-print-binding-tpl",
     "action_type": "shell_command",
-    "command_argv": ["ls", "{target_dir}"],
-    "required_parameters": ["target_dir"]
+    "command_argv": ["python", "-c", "import sys; print(sys.argv[1])", "{message}"],
+    "required_parameters": ["message"]
   },
   "bindings": {
-    "target_dir": "/tmp"
+    "message": "Hello from MCOI bindings"
   }
 }
 ```
