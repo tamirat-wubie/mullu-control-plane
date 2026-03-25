@@ -883,26 +883,30 @@ class OperatorLoop:
                 completed_at=self.runtime.clock(),
             )
 
-        # Step 4: create plan — use sub-goals from the goal descriptor metadata
-        # The caller is expected to provide sub-goals in descriptor.metadata["sub_goals"]
-        # or they are constructed externally and passed here.
-        raw_sub_goals = goal_descriptor.metadata.get("sub_goals", ())
-        if not raw_sub_goals:
-            # No sub-goals — create a single sub-goal from the goal itself
-            raw_sub_goals = (
-                SubGoal(
-                    sub_goal_id=f"{goal_descriptor.goal_id}-sg-1",
-                    goal_id=goal_descriptor.goal_id,
-                    description=goal_descriptor.description,
+        # Step 4: create plan — the caller must provide explicit executable
+        # sub-goals in descriptor.metadata["sub_goals"].
+        raw_sub_goals = goal_descriptor.metadata.get("sub_goals")
+        if raw_sub_goals is None:
+            return GoalRunReport(
+                goal_id=goal_descriptor.goal_id,
+                status=GoalStatus.FAILED,
+                plan_id=None,
+                errors=(
+                    validation_error(
+                        error_code="goal_missing_sub_goals",
+                        message="goal execution requires explicit sub-goals in metadata['sub_goals']",
+                        source_plane=SourcePlane.EXECUTION,
+                    ),
                 ),
+                started_at=started_at,
+                completed_at=self.runtime.clock(),
             )
-        else:
-            # Ensure they are SubGoal instances
-            sub_goals_list: list[SubGoal] = []
-            for sg in raw_sub_goals:
-                if isinstance(sg, SubGoal):
-                    sub_goals_list.append(sg)
-            raw_sub_goals = tuple(sub_goals_list)
+
+        sub_goals_list: list[SubGoal] = []
+        for sg in raw_sub_goals:
+            if isinstance(sg, SubGoal):
+                sub_goals_list.append(sg)
+        raw_sub_goals = tuple(sub_goals_list)
 
         # Guard: if all sub-goals were filtered out, return a validation error
         if not raw_sub_goals:

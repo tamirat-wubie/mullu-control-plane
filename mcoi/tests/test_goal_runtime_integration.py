@@ -121,6 +121,22 @@ def _make_skill_workflow_descriptor(workflow_id: str, skill_id: str) -> Workflow
 class TestGoalRuntimeGoldenScenarios:
     """Prove that goals are live in the runtime."""
 
+    def test_goal_without_explicit_sub_goals_fails_validation(self):
+        """Goals must provide explicit executable sub-goals."""
+        loop = _make_loop()
+        goal = _make_goal("goal-missing-sub-goals")
+        request = _make_request("req-missing-sub-goals", "goal-missing-sub-goals")
+
+        report = loop.run_goal(request, goal)
+
+        assert isinstance(report, GoalRunReport)
+        assert report.status is GoalStatus.FAILED
+        assert report.plan_id is None
+        assert report.completed_sub_goals == ()
+        assert report.failed_sub_goals == ()
+        assert len(report.errors) == 1
+        assert report.errors[0].error_code == "goal_missing_sub_goals"
+
     def test_goal_with_skill_backed_sub_goal_creates_plan_and_completes(self):
         """A goal with an executable sub-goal creates a plan and completes."""
         loop = _make_loop()
