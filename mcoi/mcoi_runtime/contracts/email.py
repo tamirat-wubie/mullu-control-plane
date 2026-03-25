@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 
 class EmailDirection(StrEnum):
@@ -66,6 +66,8 @@ class EmailEnvelope(ContractRecord):
             require_non_empty_text(r, f"recipients[{idx}]")
         object.__setattr__(self, "recipients", freeze_value(list(self.recipients)))
         object.__setattr__(self, "subject", require_non_empty_text(self.subject, "subject"))
+        if self.sent_at is not None:
+            require_datetime_text(self.sent_at, "sent_at")
 
 
 @dataclass(frozen=True, slots=True)

@@ -17,11 +17,26 @@ from .executor_base import ExecutionFailure, ExecutionRequest, build_execution_r
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 
+_DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
+_TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
+
+
+def _truncate_output(text: str | None, max_bytes: int) -> str:
+    """Truncate output to max_bytes, appending a marker if truncated."""
+    if text is None:
+        return ""
+    encoded = text.encode("utf-8", errors="replace")
+    if len(encoded) <= max_bytes:
+        return text
+    truncated = encoded[:max_bytes].decode("utf-8", errors="replace")
+    return truncated + _TRUNCATION_MARKER.format(limit=max_bytes)
+
 
 @dataclass(slots=True)
 class ShellExecutor:
     runner: Runner = field(default=subprocess.run)
     clock: Callable[[], str] = field(default=utc_now_text)
+    max_output_bytes: int = field(default=_DEFAULT_MAX_OUTPUT_BYTES)
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         started_at = self.clock()
@@ -50,8 +65,8 @@ class ShellExecutor:
                     details={
                         "argv": list(request.argv),
                         "timeout_seconds": request.timeout_seconds,
-                        "stdout": exc.output,
-                        "stderr": exc.stderr,
+                        "stdout": _truncate_output(exc.output, self.max_output_bytes),
+                        "stderr": _truncate_output(exc.stderr, self.max_output_bytes),
                     },
                 ),
                 effect_name="process_timed_out",
@@ -75,6 +90,8 @@ class ShellExecutor:
             )
 
         finished_at = self.clock()
+        stdout = _truncate_output(completed.stdout, self.max_output_bytes)
+        stderr = _truncate_output(completed.stderr, self.max_output_bytes)
         status = ExecutionOutcome.SUCCEEDED if completed.returncode == 0 else ExecutionOutcome.FAILED
         effect_name = "process_completed" if status is ExecutionOutcome.SUCCEEDED else "process_failed"
         return build_execution_result(
@@ -87,8 +104,8 @@ class ShellExecutor:
                     details={
                         "argv": list(request.argv),
                         "returncode": completed.returncode,
-                        "stdout": completed.stdout,
-                        "stderr": completed.stderr,
+                        "stdout": stdout,
+                        "stderr": stderr,
                     },
                 ),
             ),

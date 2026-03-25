@@ -199,7 +199,9 @@ class ApprovalEngine:
             now = datetime.fromisoformat(self._clock().replace("Z", "+00:00"))
             return now >= expiry
         except ValueError:
-            return False
+            # Fail closed: unparseable expiry is treated as expired so that
+            # a malformed timestamp can never grant perpetual validity.
+            return True
 
     def _make_id(self, prefix: str) -> str:
         return stable_identifier(prefix, {

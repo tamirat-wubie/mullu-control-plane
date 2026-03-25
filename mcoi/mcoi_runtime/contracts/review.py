@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 
 class ReviewStatus(StrEnum):
@@ -66,7 +66,7 @@ class ReviewRequest(ContractRecord):
         if not isinstance(self.scope, ReviewScope):
             raise ValueError("scope must be a ReviewScope instance")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
-        object.__setattr__(self, "requested_at", require_non_empty_text(self.requested_at, "requested_at"))
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
 
@@ -87,7 +87,7 @@ class ReviewDecision(ContractRecord):
         object.__setattr__(self, "reviewer_id", require_non_empty_text(self.reviewer_id, "reviewer_id"))
         if not isinstance(self.status, ReviewStatus):
             raise ValueError("status must be a ReviewStatus value")
-        object.__setattr__(self, "decided_at", require_non_empty_text(self.decided_at, "decided_at"))
+        object.__setattr__(self, "decided_at", require_datetime_text(self.decided_at, "decided_at"))
 
     @property
     def is_approved(self) -> bool:

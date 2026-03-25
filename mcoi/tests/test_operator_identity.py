@@ -154,7 +154,7 @@ class TestAuditEntry:
             actor_type=ActorType.HUMAN,
             action="test",
             target_artifact_id="t",
-            timestamp="ts",
+            timestamp="2025-01-15T10:00:00+00:00",
             details={"key": "value"},
         )
         assert entry.details["key"] == "value"

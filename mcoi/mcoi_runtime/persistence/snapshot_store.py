@@ -19,6 +19,7 @@ from mcoi_runtime.contracts._base import freeze_value, thaw_value
 
 from .errors import (
     CorruptedDataError,
+    PathTraversalError,
     PersistenceError,
     PersistenceWriteError,
     SnapshotNotFoundError,
@@ -89,8 +90,29 @@ class SnapshotStore:
         self._base_path = base_path
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
 
+    def _safe_path(self, id_value: str, suffix: str = "") -> Path:
+        """Construct a path from *id_value* and validate it stays inside _base_path.
+
+        Raises PathTraversalError if the ID contains path-separator characters,
+        parent-directory references, or null bytes, or if the resolved path
+        escapes the base directory.
+        """
+        if "\0" in id_value:
+            raise PathTraversalError(f"ID contains null byte: {id_value!r}")
+        if "/" in id_value or "\\" in id_value or ".." in id_value:
+            raise PathTraversalError(
+                f"ID contains forbidden characters: {id_value!r}"
+            )
+        candidate = (self._base_path / f"{id_value}{suffix}").resolve()
+        base_resolved = self._base_path.resolve()
+        if not candidate.is_relative_to(base_resolved):
+            raise PathTraversalError(
+                f"path escapes base directory: {id_value!r}"
+            )
+        return candidate
+
     def _snapshot_dir(self, snapshot_id: str) -> Path:
-        return self._base_path / snapshot_id
+        return self._safe_path(snapshot_id)
 
     def save_snapshot(
         self,
@@ -165,6 +187,14 @@ class SnapshotStore:
 
         if not isinstance(data_raw, dict):
             raise CorruptedDataError(f"data for snapshot {snapshot_id} is not a JSON object")
+
+        # Verify content hash to detect corruption
+        actual_hash = _content_hash(_deterministic_json(data_raw))
+        if actual_hash != metadata.content_hash:
+            raise CorruptedDataError(
+                f"snapshot {snapshot_id} content hash mismatch: "
+                f"expected {metadata.content_hash}, got {actual_hash}"
+            )
 
         return metadata, data_raw
 

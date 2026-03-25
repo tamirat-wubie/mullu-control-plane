@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text, require_non_negative_int
 
 
 class PatchStatus(StrEnum):
@@ -98,6 +98,10 @@ class WorkspaceState(ContractRecord):
         object.__setattr__(self, "repo_id", require_non_empty_text(self.repo_id, "repo_id"))
         object.__setattr__(self, "root_path", require_non_empty_text(self.root_path, "root_path"))
         object.__setattr__(self, "files", freeze_value(list(self.files)))
+        object.__setattr__(self, "total_files", require_non_negative_int(self.total_files, "total_files"))
+        object.__setattr__(self, "total_bytes", require_non_negative_int(self.total_bytes, "total_bytes"))
+        if self.captured_at is not None:
+            require_datetime_text(self.captured_at, "captured_at")
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,6 +157,8 @@ class BuildResult(ContractRecord):
         if not isinstance(self.status, BuildStatus):
             raise ValueError("status must be a BuildStatus value")
         object.__setattr__(self, "command", require_non_empty_text(self.command, "command"))
+        object.__setattr__(self, "exit_code", require_non_negative_int(self.exit_code, "exit_code"))
+        object.__setattr__(self, "duration_ms", require_non_negative_int(self.duration_ms, "duration_ms"))
 
     @property
     def succeeded(self) -> bool:
@@ -179,6 +185,11 @@ class TestResult(ContractRecord):
         if not isinstance(self.status, TestStatus):
             raise ValueError("status must be a TestStatus value")
         object.__setattr__(self, "command", require_non_empty_text(self.command, "command"))
+        object.__setattr__(self, "exit_code", require_non_negative_int(self.exit_code, "exit_code"))
+        object.__setattr__(self, "passed", require_non_negative_int(self.passed, "passed"))
+        object.__setattr__(self, "failed", require_non_negative_int(self.failed, "failed"))
+        object.__setattr__(self, "errors", require_non_negative_int(self.errors, "errors"))
+        object.__setattr__(self, "duration_ms", require_non_negative_int(self.duration_ms, "duration_ms"))
 
     @property
     def all_passed(self) -> bool:
@@ -205,3 +216,5 @@ class CodeReviewRecord(ContractRecord):
             raise ValueError("verdict must be a ReviewVerdict value")
         object.__setattr__(self, "files_reviewed", freeze_value(list(self.files_reviewed)))
         object.__setattr__(self, "comments", freeze_value(list(self.comments)))
+        if self.reviewed_at is not None:
+            require_datetime_text(self.reviewed_at, "reviewed_at")

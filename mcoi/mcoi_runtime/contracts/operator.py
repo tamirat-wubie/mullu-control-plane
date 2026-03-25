@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 
 class ActorType(StrEnum):
@@ -67,7 +67,7 @@ class ActionAttribution(ContractRecord):
         object.__setattr__(self, "operator_id", require_non_empty_text(self.operator_id, "operator_id"))
         object.__setattr__(self, "action_type", require_non_empty_text(self.action_type, "action_type"))
         object.__setattr__(self, "target_id", require_non_empty_text(self.target_id, "target_id"))
-        object.__setattr__(self, "timestamp", require_non_empty_text(self.timestamp, "timestamp"))
+        object.__setattr__(self, "timestamp", require_datetime_text(self.timestamp, "timestamp"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,7 +88,7 @@ class ApprovalAttribution(ContractRecord):
         object.__setattr__(self, "decision", require_non_empty_text(self.decision, "decision"))
         object.__setattr__(self, "target_id", require_non_empty_text(self.target_id, "target_id"))
         object.__setattr__(self, "correlation_id", require_non_empty_text(self.correlation_id, "correlation_id"))
-        object.__setattr__(self, "timestamp", require_non_empty_text(self.timestamp, "timestamp"))
+        object.__setattr__(self, "timestamp", require_datetime_text(self.timestamp, "timestamp"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,8 +105,9 @@ class ManualOverride(ContractRecord):
 
     def __post_init__(self) -> None:
         for f in ("override_id", "operator_id", "overridden_decision_id",
-                   "original_status", "new_status", "reason", "timestamp"):
+                   "original_status", "new_status", "reason"):
             object.__setattr__(self, f, require_non_empty_text(getattr(self, f), f))
+        object.__setattr__(self, "timestamp", require_datetime_text(self.timestamp, "timestamp"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,5 +129,5 @@ class AuditEntry(ContractRecord):
             raise ValueError("actor_type must be an ActorType value")
         object.__setattr__(self, "action", require_non_empty_text(self.action, "action"))
         object.__setattr__(self, "target_artifact_id", require_non_empty_text(self.target_artifact_id, "target_artifact_id"))
-        object.__setattr__(self, "timestamp", require_non_empty_text(self.timestamp, "timestamp"))
+        object.__setattr__(self, "timestamp", require_datetime_text(self.timestamp, "timestamp"))
         object.__setattr__(self, "details", freeze_value(self.details))

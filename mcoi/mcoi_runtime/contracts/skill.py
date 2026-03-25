@@ -14,7 +14,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_non_empty_text, require_unit_float
+from ._shared_enums import EffectClass, TrustClass
 
 
 # --- Classification enums ---
@@ -26,24 +27,10 @@ class SkillClass(StrEnum):
     LEARNED = "learned"
 
 
-class EffectClass(StrEnum):
-    INTERNAL_PURE = "internal_pure"
-    EXTERNAL_READ = "external_read"
-    EXTERNAL_WRITE = "external_write"
-    HUMAN_MEDIATED = "human_mediated"
-    PRIVILEGED = "privileged"
-
-
 class DeterminismClass(StrEnum):
     DETERMINISTIC = "deterministic"
     INPUT_BOUNDED = "input_bounded"
     RECORDED_NONDETERMINISTIC = "recorded_nondeterministic"
-
-
-class TrustClass(StrEnum):
-    TRUSTED_INTERNAL = "trusted_internal"
-    BOUNDED_EXTERNAL = "bounded_external"
-    UNTRUSTED_EXTERNAL = "untrusted_external"
 
 
 class VerificationStrength(StrEnum):
@@ -194,8 +181,7 @@ class SkillDescriptor(ContractRecord):
         object.__setattr__(self, "steps", freeze_value(list(self.steps)))
         object.__setattr__(self, "provider_requirements", freeze_value(list(self.provider_requirements)))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
-        if not isinstance(self.confidence, (int, float)) or self.confidence < 0.0 or self.confidence > 1.0:
-            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         # Composite skills must have steps
         if self.skill_class is SkillClass.COMPOSITE and not self.steps:
             raise ValueError("composite skills must have at least one step")

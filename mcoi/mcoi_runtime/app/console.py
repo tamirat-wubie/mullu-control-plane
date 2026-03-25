@@ -13,11 +13,17 @@ from .view_models import (
     CoordinationSummaryView,
     ErrorView,
     ExecutionSummaryView,
+    GoalSummaryView,
+    GraphSummaryView,
+    JobSummaryView,
     ReplaySummaryView,
     RunbookSummaryView,
     RunSummaryView,
+    SimulationSummaryView,
     SkillSummaryView,
+    TeamSummaryView,
     TemporalTaskView,
+    WorkflowSummaryView,
 )
 
 
@@ -170,4 +176,91 @@ def render_skill_summary(view: SkillSummaryView) -> str:
         lines.append(f"  errors ({len(view.structured_errors)}):")
         for err in view.structured_errors:
             lines.append(f"    [{err.family}] {err.error_code}: {err.message}")
+    return "\n".join(lines)
+
+
+def render_workflow_summary(view: WorkflowSummaryView) -> str:
+    """Render a workflow execution result as text."""
+    lines = [
+        "=== Workflow Summary ===",
+        f"  workflow_id:        {view.workflow_id}",
+        f"  status:             {view.status}",
+        f"  stage_count:        {view.stage_count}",
+        f"  completed_stages:   {view.completed_stages}",
+    ]
+    if view.failed_stage_id:
+        lines.append(f"  failed_stage_id:    {view.failed_stage_id}")
+    return "\n".join(lines)
+
+
+def render_goal_summary(view: GoalSummaryView) -> str:
+    """Render a goal execution result as text."""
+    lines = [
+        "=== Goal Summary ===",
+        f"  goal_id:            {view.goal_id}",
+        f"  status:             {view.status}",
+        f"  priority:           {view.priority}",
+        f"  sub_goal_count:     {view.sub_goal_count}",
+        f"  completed:          {view.completed}",
+        f"  failed:             {view.failed}",
+    ]
+    return "\n".join(lines)
+
+
+def render_job_summary(view: JobSummaryView) -> str:
+    """Render a job execution summary as text."""
+    lines = [
+        "=== Job Summary ===",
+        f"  job_id:             {view.job_id}",
+        f"  name:               {view.name}",
+        f"  status:             {view.status}",
+        f"  priority:           {view.priority}",
+        f"  sla_status:         {view.sla_status}",
+        f"  assigned_to:        {view.assigned_to or '(unassigned)'}",
+        f"  thread_id:          {view.thread_id or '(none)'}",
+        f"  deadline:           {view.deadline or '(none)'}",
+    ]
+    return "\n".join(lines)
+
+
+def render_team_summary(view: TeamSummaryView) -> str:
+    """Render a team workload summary as text."""
+    lines = [
+        "=== Team Summary ===",
+        f"  team_id:            {view.team_id}",
+        f"  total_workers:      {view.total_workers}",
+        f"  available_workers:  {view.available_workers}",
+        f"  overloaded_workers: {view.overloaded_workers}",
+        f"  queued_jobs:        {view.queued_jobs}",
+        f"  assigned_jobs:      {view.assigned_jobs}",
+    ]
+    return "\n".join(lines)
+
+
+def render_graph_summary(view: GraphSummaryView) -> str:
+    """Render an operational graph summary as text."""
+    lines = [
+        "=== Graph Summary ===",
+        f"  total_nodes:              {view.total_nodes}",
+        f"  total_edges:              {view.total_edges}",
+        f"  unfulfilled_obligations:  {view.unfulfilled_obligations}",
+    ]
+    if view.node_types:
+        lines.append("  node_types:")
+        for ntype, count in sorted(view.node_types.items()):
+            lines.append(f"    {ntype}: {count}")
+    return "\n".join(lines)
+
+
+def render_simulation_summary(view: SimulationSummaryView) -> str:
+    """Render a simulation result summary as text."""
+    lines = [
+        "=== Simulation Summary ===",
+        f"  request_id:             {view.request_id}",
+        f"  option_count:           {view.option_count}",
+        f"  recommended_option:     {view.recommended_option_id}",
+        f"  verdict_type:           {view.verdict_type}",
+        f"  confidence:             {view.confidence:.2f}",
+        f"  top_risk_level:         {view.top_risk_level}",
+    ]
     return "\n".join(lines)

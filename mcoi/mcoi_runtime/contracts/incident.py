@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 
 class IncidentSeverity(StrEnum):
@@ -79,7 +79,7 @@ class IncidentRecord(ContractRecord):
         object.__setattr__(self, "source_id", require_non_empty_text(self.source_id, "source_id"))
         object.__setattr__(self, "failure_family", require_non_empty_text(self.failure_family, "failure_family"))
         object.__setattr__(self, "message", require_non_empty_text(self.message, "message"))
-        object.__setattr__(self, "occurred_at", require_non_empty_text(self.occurred_at, "occurred_at"))
+        object.__setattr__(self, "occurred_at", require_datetime_text(self.occurred_at, "occurred_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
 
@@ -129,5 +129,5 @@ class RecoveryAttempt(ContractRecord):
         object.__setattr__(self, "decision_id", require_non_empty_text(self.decision_id, "decision_id"))
         if not isinstance(self.action, RecoveryAction):
             raise ValueError("action must be a RecoveryAction value")
-        object.__setattr__(self, "started_at", require_non_empty_text(self.started_at, "started_at"))
-        object.__setattr__(self, "finished_at", require_non_empty_text(self.finished_at, "finished_at"))
+        object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
+        object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))

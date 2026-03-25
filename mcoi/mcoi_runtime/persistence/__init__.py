@@ -6,20 +6,25 @@ Invariants: persistence is explicit, deterministic, local, and fail-closed.
 
 from .errors import (
     CorruptedDataError,
+    PathTraversalError,
     PersistenceError,
     PersistenceWriteError,
     SnapshotNotFoundError,
     TraceNotFoundError,
 )
+from .goal_store import GoalStore
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
 from .skill_store import SkillStore
 from .snapshot_store import SnapshotMetadata, SnapshotStore
 from .trace_store import TraceStore
+from .workflow_store import WorkflowStore
 from ._serialization import deserialize_record, serialize_record
 
 __all__ = [
     "CorruptedDataError",
+    "GoalStore",
+    "PathTraversalError",
     "PersistenceError",
     "PersistenceWriteError",
     "RegistryBackend",
@@ -30,6 +35,7 @@ __all__ = [
     "SnapshotStore",
     "TraceNotFoundError",
     "TraceStore",
+    "WorkflowStore",
     "deserialize_record",
     "serialize_record",
 ]

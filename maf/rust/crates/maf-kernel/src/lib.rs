@@ -148,6 +148,7 @@ pub struct ReplayRecord {
 
 /// Error family. Maps to docs/08_error_taxonomy.md.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ErrorFamily {
     ValidationError,
     ObservationError,
@@ -172,6 +173,510 @@ pub enum Recoverability {
     ApprovalRequired,
     FatalForRun,
     Unsupported,
+}
+
+// ---------------------------------------------------------------------------
+// State machine formalization
+// ---------------------------------------------------------------------------
+
+/// Outcome of checking whether a transition is legal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TransitionVerdict {
+    Allowed,
+    DeniedIllegalEdge,
+    DeniedTerminalState,
+    DeniedGuardFailed,
+}
+
+/// A single legal edge in a state machine.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TransitionRule {
+    pub from_state: String,
+    pub to_state: String,
+    pub action: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub guard_label: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub emits: String,
+}
+
+/// A formal, versioned specification of a lifecycle state machine.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StateMachineSpec {
+    pub machine_id: String,
+    pub name: String,
+    pub version: String,
+    pub states: Vec<String>,
+    pub initial_state: String,
+    pub terminal_states: Vec<String>,
+    pub transitions: Vec<TransitionRule>,
+}
+
+impl StateMachineSpec {
+    /// Check whether a specific transition is legal.
+    pub fn is_legal(&self, from_state: &str, to_state: &str, action: &str) -> TransitionVerdict {
+        if self.terminal_states.iter().any(|s| s == from_state) {
+            return TransitionVerdict::DeniedTerminalState;
+        }
+        for t in &self.transitions {
+            if t.from_state == from_state && t.to_state == to_state && t.action == action {
+                return TransitionVerdict::Allowed;
+            }
+        }
+        TransitionVerdict::DeniedIllegalEdge
+    }
+
+    /// Return all transitions legal from current_state.
+    pub fn legal_actions(&self, current_state: &str) -> Vec<&TransitionRule> {
+        self.transitions
+            .iter()
+            .filter(|t| t.from_state == current_state)
+            .collect()
+    }
+
+    /// Return all states directly reachable from the given state.
+    pub fn reachable_from(&self, state: &str) -> Vec<&str> {
+        let mut result: Vec<&str> = self
+            .transitions
+            .iter()
+            .filter(|t| t.from_state == state)
+            .map(|t| t.to_state.as_str())
+            .collect();
+        result.sort();
+        result.dedup();
+        result
+    }
+}
+
+/// Immutable record of a state transition that occurred at runtime.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TransitionAuditRecord {
+    pub audit_id: String,
+    pub machine_id: String,
+    pub entity_id: String,
+    pub from_state: String,
+    pub to_state: String,
+    pub action: String,
+    pub verdict: TransitionVerdict,
+    pub actor_id: String,
+    pub reason: String,
+    pub transitioned_at: String,
+    #[serde(default)]
+    pub metadata: std::collections::HashMap<String, serde_json::Value>,
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle state enums (match Python canonical machines)
+// ---------------------------------------------------------------------------
+
+/// States in the checkpoint/restore lifecycle machine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CheckpointLifecycleState {
+    Idle,
+    Capturing,
+    VerifyingCapture,
+    Committed,
+    Restoring,
+    VerifyingRestore,
+    Verified,
+    RollingBack,
+    Failed,
+}
+
+/// States in the reaction pipeline lifecycle machine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReactionPipelineState {
+    Received,
+    Matching,
+    IdempotencyCheck,
+    BackpressureCheck,
+    Gating,
+    Executed,
+    Emitted,
+    Deferred,
+    Rejected,
+    Recorded,
+}
+
+/// States in the obligation lifecycle machine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ObligationLifecycleState {
+    Pending,
+    Active,
+    Escalated,
+    Completed,
+    Expired,
+    Cancelled,
+}
+
+// ---------------------------------------------------------------------------
+// Canonical machine constructors
+// ---------------------------------------------------------------------------
+
+fn tr(from: &str, to: &str, action: &str, guard: &str, emits: &str) -> TransitionRule {
+    TransitionRule {
+        from_state: from.into(),
+        to_state: to.into(),
+        action: action.into(),
+        guard_label: guard.into(),
+        emits: emits.into(),
+    }
+}
+
+/// Construct the canonical obligation lifecycle machine (v2.0.0, 16 edges).
+pub fn obligation_machine() -> StateMachineSpec {
+    StateMachineSpec {
+        machine_id: "obligation-lifecycle".into(),
+        name: "Obligation Lifecycle".into(),
+        version: "2.0.0".into(),
+        states: vec![
+            "pending".into(), "active".into(), "escalated".into(),
+            "completed".into(), "expired".into(), "cancelled".into(),
+        ],
+        initial_state: "pending".into(),
+        terminal_states: vec!["completed".into(), "expired".into(), "cancelled".into()],
+        transitions: vec![
+            tr("pending", "active", "activate", "", "obligation_activated"),
+            tr("pending", "completed", "close", "final_state=completed", "obligation_closed"),
+            tr("pending", "expired", "close", "final_state=expired", "obligation_expired"),
+            tr("pending", "cancelled", "close", "final_state=cancelled", "obligation_cancelled"),
+            tr("pending", "escalated", "escalate", "", "obligation_escalated"),
+            tr("pending", "pending", "transfer", "owner_changes", "obligation_transferred"),
+            tr("active", "completed", "close", "final_state=completed", "obligation_closed"),
+            tr("active", "expired", "close", "final_state=expired", "obligation_expired"),
+            tr("active", "cancelled", "close", "final_state=cancelled", "obligation_cancelled"),
+            tr("active", "escalated", "escalate", "", "obligation_escalated"),
+            tr("active", "active", "transfer", "owner_changes", "obligation_transferred"),
+            tr("escalated", "completed", "close", "final_state=completed", "obligation_closed"),
+            tr("escalated", "expired", "close", "final_state=expired", "obligation_expired"),
+            tr("escalated", "cancelled", "close", "final_state=cancelled", "obligation_cancelled"),
+            tr("escalated", "escalated", "escalate", "re-escalation to higher authority", "obligation_escalated"),
+            tr("escalated", "escalated", "transfer", "owner_changes", "obligation_transferred"),
+        ],
+    }
+}
+
+/// Construct the canonical supervisor tick lifecycle machine (v2.0.0, 33 edges).
+/// 13 states, includes error from all non-terminal/non-halted phases including paused.
+pub fn supervisor_machine() -> StateMachineSpec {
+    StateMachineSpec {
+        machine_id: "supervisor-tick-lifecycle".into(),
+        name: "Supervisor Tick Lifecycle".into(),
+        version: "2.0.0".into(),
+        states: vec![
+            "idle".into(), "polling".into(), "evaluating_obligations".into(),
+            "evaluating_deadlines".into(), "waking_work".into(), "running_reactions".into(),
+            "reasoning".into(), "acting".into(), "checkpointing".into(),
+            "emitting_heartbeat".into(), "paused".into(), "degraded".into(), "halted".into(),
+        ],
+        initial_state: "idle".into(),
+        terminal_states: vec!["halted".into()],
+        transitions: vec![
+            // Normal tick flow
+            tr("idle", "polling", "tick_start", "", "supervisor_tick_started"),
+            tr("polling", "evaluating_obligations", "poll_complete", "", "supervisor_poll_complete"),
+            tr("polling", "degraded", "backpressure_triggered", "", "supervisor_backpressure"),
+            tr("evaluating_obligations", "evaluating_deadlines", "obligations_evaluated", "", ""),
+            tr("evaluating_deadlines", "waking_work", "deadlines_evaluated", "", ""),
+            tr("waking_work", "running_reactions", "work_woken", "", ""),
+            tr("running_reactions", "reasoning", "reactions_complete", "", ""),
+            tr("reasoning", "acting", "reasoning_complete", "", ""),
+            tr("acting", "checkpointing", "actions_complete", "checkpoint_interval_reached", "supervisor_checkpointing"),
+            tr("acting", "emitting_heartbeat", "actions_complete_no_checkpoint", "checkpoint_interval_not_reached", ""),
+            tr("acting", "idle", "tick_complete", "", "supervisor_tick_complete"),
+            tr("checkpointing", "emitting_heartbeat", "checkpoint_complete", "heartbeat_interval_reached", "supervisor_checkpoint_complete"),
+            tr("checkpointing", "idle", "checkpoint_complete_no_heartbeat", "heartbeat_interval_not_reached", "supervisor_checkpoint_complete"),
+            tr("emitting_heartbeat", "idle", "heartbeat_complete", "", "supervisor_heartbeat_emitted"),
+            // Pause/resume
+            tr("idle", "paused", "pause", "", "supervisor_paused"),
+            tr("paused", "idle", "resume", "", "supervisor_resumed"),
+            tr("paused", "halted", "halt", "operator_halt_while_paused", "supervisor_halted"),
+            tr("paused", "degraded", "error", "", "supervisor_error"),
+            // Degraded paths
+            tr("degraded", "idle", "tick_complete", "backpressure/livelock resolved", ""),
+            tr("degraded", "halted", "halt", "livelock strategy=HALT or max_errors exceeded", "supervisor_halted"),
+            tr("degraded", "paused", "pause", "operator_pause_in_degraded", "supervisor_paused"),
+            // Livelock
+            tr("acting", "degraded", "livelock_detected", "", "supervisor_livelock"),
+            // Error from all working phases → degraded
+            tr("idle", "degraded", "error", "", "supervisor_error"),
+            tr("polling", "degraded", "error", "", "supervisor_error"),
+            tr("evaluating_obligations", "degraded", "error", "", "supervisor_error"),
+            tr("evaluating_deadlines", "degraded", "error", "", "supervisor_error"),
+            tr("waking_work", "degraded", "error", "", "supervisor_error"),
+            tr("running_reactions", "degraded", "error", "", "supervisor_error"),
+            tr("reasoning", "degraded", "error", "", "supervisor_error"),
+            tr("acting", "degraded", "error", "", "supervisor_error"),
+            tr("checkpointing", "degraded", "error", "", "supervisor_error"),
+            tr("emitting_heartbeat", "degraded", "error", "", "supervisor_error"),
+            tr("degraded", "degraded", "error", "", "supervisor_error"),
+        ],
+    }
+}
+
+/// Construct the canonical reaction pipeline machine (v2.0.0, 17 edges).
+pub fn reaction_pipeline_machine() -> StateMachineSpec {
+    StateMachineSpec {
+        machine_id: "reaction-pipeline".into(),
+        name: "Reaction Pipeline".into(),
+        version: "2.0.0".into(),
+        states: vec![
+            "received".into(), "matching".into(), "idempotency_check".into(),
+            "backpressure_check".into(), "gating".into(), "executed".into(),
+            "emitted".into(), "deferred".into(), "rejected".into(), "recorded".into(),
+        ],
+        initial_state: "received".into(),
+        terminal_states: vec!["recorded".into()],
+        transitions: vec![
+            tr("received", "matching", "begin_react", "", ""),
+            tr("matching", "idempotency_check", "rules_matched", "", ""),
+            tr("matching", "recorded", "no_rules_matched", "zero matched rules", ""),
+            tr("idempotency_check", "rejected", "duplicate_detected", "", "reaction_rejected"),
+            tr("idempotency_check", "backpressure_check", "not_duplicate", "", ""),
+            tr("backpressure_check", "deferred", "backpressure_limit", "", "reaction_deferred"),
+            tr("backpressure_check", "gating", "backpressure_ok", "", ""),
+            tr("gating", "executed", "verdict_proceed", "", "reaction_executed"),
+            tr("gating", "deferred", "verdict_defer", "", "reaction_deferred"),
+            tr("gating", "rejected", "verdict_reject", "", "reaction_rejected"),
+            tr("gating", "rejected", "verdict_escalate", "", "reaction_rejected"),
+            tr("gating", "rejected", "verdict_requires_approval", "", "reaction_rejected"),
+            tr("executed", "emitted", "emit_event", "", "reaction_event_emitted"),
+            tr("emitted", "recorded", "record", "", ""),
+            tr("executed", "recorded", "record", "no_event_emission", ""),
+            tr("deferred", "recorded", "record", "", ""),
+            tr("rejected", "recorded", "record", "", ""),
+        ],
+    }
+}
+
+/// Construct the canonical checkpoint lifecycle machine (v1.0.0, 13 edges).
+pub fn checkpoint_lifecycle_machine() -> StateMachineSpec {
+    StateMachineSpec {
+        machine_id: "checkpoint-lifecycle".into(),
+        name: "Checkpoint Lifecycle".into(),
+        version: "1.0.0".into(),
+        states: vec![
+            "idle".into(), "capturing".into(), "verifying_capture".into(),
+            "committed".into(), "restoring".into(), "verifying_restore".into(),
+            "verified".into(), "rolling_back".into(), "failed".into(),
+        ],
+        initial_state: "idle".into(),
+        terminal_states: vec!["failed".into()],
+        transitions: vec![
+            // Capture flow
+            tr("idle", "capturing", "begin_capture", "", "checkpoint_capture_started"),
+            tr("capturing", "verifying_capture", "snapshots_complete", "", "checkpoint_snapshots_captured"),
+            tr("verifying_capture", "committed", "hash_verified", "", "checkpoint_committed"),
+            tr("verifying_capture", "failed", "hash_mismatch", "", "checkpoint_capture_failed"),
+            tr("committed", "idle", "capture_finalized", "", "checkpoint_capture_complete"),
+            // Restore flow
+            tr("idle", "restoring", "begin_restore", "", "checkpoint_restore_started"),
+            tr("restoring", "verifying_restore", "subsystems_restored", "", "checkpoint_subsystems_restored"),
+            tr("verifying_restore", "verified", "restore_hash_verified", "", "checkpoint_restore_verified"),
+            tr("verified", "idle", "restore_finalized", "", "checkpoint_restore_complete"),
+            // Rollback paths
+            tr("verifying_restore", "rolling_back", "restore_hash_mismatch", "", "checkpoint_rollback_triggered"),
+            tr("restoring", "rolling_back", "restore_error", "", "checkpoint_rollback_triggered"),
+            tr("rolling_back", "idle", "rollback_complete", "", "checkpoint_rollback_complete"),
+            tr("rolling_back", "failed", "rollback_failed", "", "checkpoint_rollback_failed"),
+        ],
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Checkpoint journal types
+// ---------------------------------------------------------------------------
+
+/// What kind of event a journal entry records.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JournalEntryKind {
+    Tick,
+    Transition,
+    Checkpoint,
+    EventEmitted,
+    ObligationChanged,
+    ReactionDecided,
+    Heartbeat,
+    Livelock,
+    Halt,
+    Resume,
+}
+
+/// A single append-only journal entry for deterministic replay.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JournalEntry {
+    pub entry_id: String,
+    pub epoch_id: String,
+    pub sequence: u64,
+    pub kind: JournalEntryKind,
+    pub subject_id: String,
+    pub payload: serde_json::Value,
+    pub recorded_at: String,
+}
+
+/// What subsystems a checkpoint covers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CheckpointScope {
+    Supervisor,
+    EventSpine,
+    ObligationRuntime,
+    ReactionEngine,
+    Composite,
+}
+
+/// Snapshot of a single subsystem's state at a checkpoint boundary.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SubsystemSnapshot {
+    pub snapshot_id: String,
+    pub scope: CheckpointScope,
+    pub state_hash: String,
+    pub record_count: u64,
+    pub captured_at: String,
+    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+    pub payload: std::collections::HashMap<String, serde_json::Value>,
+}
+
+/// A unified checkpoint spanning all subsystems at a single boundary.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CompositeCheckpoint {
+    pub checkpoint_id: String,
+    pub epoch_id: String,
+    pub tick_number: u64,
+    pub snapshots: Vec<SubsystemSnapshot>,
+    pub journal_sequence: u64,
+    pub composite_hash: String,
+    pub created_at: String,
+}
+
+impl CompositeCheckpoint {
+    /// Return the snapshot for a specific subsystem scope, if present.
+    pub fn snapshot_for(&self, scope: CheckpointScope) -> Option<&SubsystemSnapshot> {
+        self.snapshots.iter().find(|s| s.scope == scope)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Restore verification types
+// ---------------------------------------------------------------------------
+
+/// Outcome of a checkpoint restoration verification.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RestoreVerdict {
+    Verified,
+    HashMismatch,
+    SubsystemMissing,
+    RollbackTriggered,
+}
+
+/// Immutable record of a checkpoint restore and its verification outcome.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RestoreVerification {
+    pub verification_id: String,
+    pub checkpoint_id: String,
+    pub epoch_id: String,
+    pub tick_number: u64,
+    pub verdict: RestoreVerdict,
+    pub expected_composite_hash: String,
+    pub actual_composite_hash: String,
+    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+    pub subsystem_results: std::collections::HashMap<String, std::collections::HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verified_at: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Journal validation types
+// ---------------------------------------------------------------------------
+
+/// Outcome of journal integrity validation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JournalValidationVerdict {
+    Valid,
+    SequenceGap,
+    EpochMismatch,
+    OrderingViolation,
+    EmptyJournal,
+}
+
+/// Result of validating a journal segment's integrity.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JournalValidationResult {
+    pub validation_id: String,
+    pub epoch_id: String,
+    pub entry_count: u64,
+    pub first_sequence: u64,
+    pub last_sequence: u64,
+    pub verdict: JournalValidationVerdict,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub gap_positions: Vec<u64>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub detail: String,
+}
+
+// ---------------------------------------------------------------------------
+// Journal replay types
+// ---------------------------------------------------------------------------
+
+/// Outcome of a single replayed journal entry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReplayStepVerdict {
+    Match,
+    OutcomeDiverged,
+    TickNumberDiverged,
+    Skipped,
+    Error,
+}
+
+/// Overall outcome of a replay session.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReplaySessionVerdict {
+    Success,
+    DivergenceDetected,
+    EmptyJournal,
+    Aborted,
+}
+
+/// Result of replaying a single journal entry.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReplayStepResult {
+    pub step_id: String,
+    pub sequence: u64,
+    pub kind: JournalEntryKind,
+    pub verdict: ReplayStepVerdict,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_payload: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actual_payload: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub detail: String,
+}
+
+/// Overall result of a replay session.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReplaySessionResult {
+    pub session_id: String,
+    pub epoch_id: String,
+    pub entries_replayed: u64,
+    pub entries_matched: u64,
+    pub entries_diverged: u64,
+    pub entries_skipped: u64,
+    pub verdict: ReplaySessionVerdict,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub steps: Vec<ReplayStepResult>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub started_at: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub completed_at: String,
 }
 
 #[cfg(test)]
@@ -239,5 +744,504 @@ mod tests {
         let json = serde_json::to_string(&decision).unwrap();
         let restored: PolicyDecision = serde_json::from_str(&json).unwrap();
         assert_eq!(decision, restored);
+    }
+
+    // -------------------------------------------------------------------
+    // State machine tests
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn transition_verdict_serializes_to_snake_case() {
+        assert_eq!(serde_json::to_string(&TransitionVerdict::Allowed).unwrap(), r#""allowed""#);
+        assert_eq!(serde_json::to_string(&TransitionVerdict::DeniedIllegalEdge).unwrap(), r#""denied_illegal_edge""#);
+        assert_eq!(serde_json::to_string(&TransitionVerdict::DeniedTerminalState).unwrap(), r#""denied_terminal_state""#);
+    }
+
+    #[test]
+    fn state_machine_legal_transition() {
+        let m = obligation_machine();
+        assert_eq!(m.is_legal("pending", "active", "activate"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("active", "completed", "close"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn state_machine_illegal_transition() {
+        let m = obligation_machine();
+        // pending→escalated via "close" is illegal (close goes to terminal states)
+        assert_eq!(m.is_legal("pending", "escalated", "close"), TransitionVerdict::DeniedIllegalEdge);
+    }
+
+    #[test]
+    fn state_machine_terminal_state_blocks_all() {
+        let m = obligation_machine();
+        assert_eq!(m.is_legal("completed", "active", "activate"), TransitionVerdict::DeniedTerminalState);
+        assert_eq!(m.is_legal("expired", "pending", "reset"), TransitionVerdict::DeniedTerminalState);
+    }
+
+    #[test]
+    fn state_machine_legal_actions() {
+        let m = obligation_machine();
+        let actions = m.legal_actions("pending");
+        // v2: pending has activate, close(×3 guards), escalate, transfer = 6 edges
+        assert_eq!(actions.len(), 6);
+        assert!(actions.iter().any(|t| t.to_state == "active"));
+        assert!(actions.iter().any(|t| t.to_state == "completed"));
+        assert!(actions.iter().any(|t| t.to_state == "escalated"));
+        assert!(actions.iter().any(|t| t.to_state == "pending" && t.action == "transfer"));
+    }
+
+    #[test]
+    fn state_machine_reachable_from() {
+        let m = obligation_machine();
+        let reachable = m.reachable_from("active");
+        // v2: active → completed, expired, cancelled, escalated, active(transfer)
+        assert_eq!(reachable, vec!["active", "cancelled", "completed", "escalated", "expired"]);
+    }
+
+    #[test]
+    fn state_machine_spec_round_trips() {
+        let m = obligation_machine();
+        let json = serde_json::to_string(&m).unwrap();
+        let restored: StateMachineSpec = serde_json::from_str(&json).unwrap();
+        assert_eq!(m, restored);
+    }
+
+    #[test]
+    fn transition_audit_record_round_trips() {
+        let mut metadata = std::collections::HashMap::new();
+        metadata.insert("context".into(), serde_json::json!("test"));
+        let rec = TransitionAuditRecord {
+            audit_id: "a-1".into(),
+            machine_id: "obligation-lifecycle".into(),
+            entity_id: "obl-1".into(),
+            from_state: "pending".into(),
+            to_state: "active".into(),
+            action: "activate".into(),
+            verdict: TransitionVerdict::Allowed,
+            actor_id: "supervisor".into(),
+            reason: "deadline approaching".into(),
+            transitioned_at: "2026-03-20T00:00:00+00:00".into(),
+            metadata,
+        };
+        let json = serde_json::to_string(&rec).unwrap();
+        let restored: TransitionAuditRecord = serde_json::from_str(&json).unwrap();
+        assert_eq!(rec, restored);
+    }
+
+    // -------------------------------------------------------------------
+    // Journal and checkpoint tests
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn journal_entry_kind_serializes() {
+        assert_eq!(serde_json::to_string(&JournalEntryKind::Tick).unwrap(), r#""tick""#);
+        assert_eq!(serde_json::to_string(&JournalEntryKind::Transition).unwrap(), r#""transition""#);
+        assert_eq!(serde_json::to_string(&JournalEntryKind::Checkpoint).unwrap(), r#""checkpoint""#);
+        assert_eq!(serde_json::to_string(&JournalEntryKind::Livelock).unwrap(), r#""livelock""#);
+    }
+
+    #[test]
+    fn checkpoint_scope_serializes() {
+        assert_eq!(serde_json::to_string(&CheckpointScope::Supervisor).unwrap(), r#""supervisor""#);
+        assert_eq!(serde_json::to_string(&CheckpointScope::EventSpine).unwrap(), r#""event_spine""#);
+        assert_eq!(serde_json::to_string(&CheckpointScope::Composite).unwrap(), r#""composite""#);
+    }
+
+    #[test]
+    fn composite_checkpoint_round_trips() {
+        let cp = CompositeCheckpoint {
+            checkpoint_id: "cp-1".into(),
+            epoch_id: "epoch-1".into(),
+            tick_number: 42,
+            snapshots: vec![
+                SubsystemSnapshot {
+                    snapshot_id: "snap-1".into(),
+                    scope: CheckpointScope::Supervisor,
+                    state_hash: "abc123".into(),
+                    record_count: 10,
+                    captured_at: "2026-03-20T00:00:00+00:00".into(),
+                    payload: std::collections::HashMap::new(),
+                },
+                SubsystemSnapshot {
+                    snapshot_id: "snap-2".into(),
+                    scope: CheckpointScope::EventSpine,
+                    state_hash: "def456".into(),
+                    record_count: 100,
+                    captured_at: "2026-03-20T00:00:00+00:00".into(),
+                    payload: std::collections::HashMap::new(),
+                },
+            ],
+            journal_sequence: 500,
+            composite_hash: "composite-hash-1".into(),
+            created_at: "2026-03-20T00:00:00+00:00".into(),
+        };
+        let json = serde_json::to_string(&cp).unwrap();
+        let restored: CompositeCheckpoint = serde_json::from_str(&json).unwrap();
+        assert_eq!(cp, restored);
+    }
+
+    #[test]
+    fn composite_checkpoint_snapshot_for() {
+        let cp = CompositeCheckpoint {
+            checkpoint_id: "cp-1".into(),
+            epoch_id: "epoch-1".into(),
+            tick_number: 1,
+            snapshots: vec![SubsystemSnapshot {
+                snapshot_id: "s-1".into(),
+                scope: CheckpointScope::Supervisor,
+                state_hash: "h".into(),
+                record_count: 0,
+                captured_at: "2026-03-20T00:00:00+00:00".into(),
+                payload: std::collections::HashMap::new(),
+            }],
+            journal_sequence: 0,
+            composite_hash: "h".into(),
+            created_at: "2026-03-20T00:00:00+00:00".into(),
+        };
+        assert!(cp.snapshot_for(CheckpointScope::Supervisor).is_some());
+        assert!(cp.snapshot_for(CheckpointScope::EventSpine).is_none());
+    }
+
+    #[test]
+    fn journal_entry_round_trips() {
+        let entry = JournalEntry {
+            entry_id: "j-1".into(),
+            epoch_id: "epoch-1".into(),
+            sequence: 0,
+            kind: JournalEntryKind::Tick,
+            subject_id: "supervisor".into(),
+            payload: serde_json::json!({"tick": 1, "outcome": "work_done"}),
+            recorded_at: "2026-03-20T00:00:00+00:00".into(),
+        };
+        let json = serde_json::to_string(&entry).unwrap();
+        let restored: JournalEntry = serde_json::from_str(&json).unwrap();
+        assert_eq!(entry, restored);
+    }
+
+    // -------------------------------------------------------------------
+    // Restore verification tests
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn restore_verdict_serializes_to_snake_case() {
+        assert_eq!(serde_json::to_string(&RestoreVerdict::Verified).unwrap(), r#""verified""#);
+        assert_eq!(serde_json::to_string(&RestoreVerdict::HashMismatch).unwrap(), r#""hash_mismatch""#);
+        assert_eq!(serde_json::to_string(&RestoreVerdict::SubsystemMissing).unwrap(), r#""subsystem_missing""#);
+        assert_eq!(serde_json::to_string(&RestoreVerdict::RollbackTriggered).unwrap(), r#""rollback_triggered""#);
+    }
+
+    #[test]
+    fn restore_verification_round_trips() {
+        let rv = RestoreVerification {
+            verification_id: "rv-1".into(),
+            checkpoint_id: "cp-1".into(),
+            epoch_id: "epoch-1".into(),
+            tick_number: 10,
+            verdict: RestoreVerdict::Verified,
+            expected_composite_hash: "abc123".into(),
+            actual_composite_hash: "abc123".into(),
+            subsystem_results: std::collections::HashMap::new(),
+            verified_at: Some("2026-03-20T00:00:00+00:00".into()),
+        };
+        let json = serde_json::to_string(&rv).unwrap();
+        let restored: RestoreVerification = serde_json::from_str(&json).unwrap();
+        assert_eq!(rv, restored);
+    }
+
+    #[test]
+    fn journal_validation_verdict_serializes() {
+        assert_eq!(serde_json::to_string(&JournalValidationVerdict::Valid).unwrap(), r#""valid""#);
+        assert_eq!(serde_json::to_string(&JournalValidationVerdict::SequenceGap).unwrap(), r#""sequence_gap""#);
+        assert_eq!(serde_json::to_string(&JournalValidationVerdict::EpochMismatch).unwrap(), r#""epoch_mismatch""#);
+        assert_eq!(serde_json::to_string(&JournalValidationVerdict::OrderingViolation).unwrap(), r#""ordering_violation""#);
+        assert_eq!(serde_json::to_string(&JournalValidationVerdict::EmptyJournal).unwrap(), r#""empty_journal""#);
+    }
+
+    #[test]
+    fn journal_validation_result_round_trips() {
+        let jvr = JournalValidationResult {
+            validation_id: "jv-1".into(),
+            epoch_id: "epoch-1".into(),
+            entry_count: 50,
+            first_sequence: 0,
+            last_sequence: 49,
+            verdict: JournalValidationVerdict::Valid,
+            gap_positions: vec![],
+            detail: String::new(),
+        };
+        let json = serde_json::to_string(&jvr).unwrap();
+        let restored: JournalValidationResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(jvr, restored);
+    }
+
+    #[test]
+    fn journal_validation_result_with_gaps_round_trips() {
+        let jvr = JournalValidationResult {
+            validation_id: "jv-2".into(),
+            epoch_id: "epoch-1".into(),
+            entry_count: 8,
+            first_sequence: 0,
+            last_sequence: 10,
+            verdict: JournalValidationVerdict::SequenceGap,
+            gap_positions: vec![3, 7],
+            detail: "2 gap(s) detected".into(),
+        };
+        let json = serde_json::to_string(&jvr).unwrap();
+        let restored: JournalValidationResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(jvr, restored);
+    }
+
+    // -------------------------------------------------------------------
+    // Replay types tests
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn replay_step_verdict_serializes() {
+        assert_eq!(serde_json::to_string(&ReplayStepVerdict::Match).unwrap(), r#""match""#);
+        assert_eq!(serde_json::to_string(&ReplayStepVerdict::OutcomeDiverged).unwrap(), r#""outcome_diverged""#);
+        assert_eq!(serde_json::to_string(&ReplayStepVerdict::TickNumberDiverged).unwrap(), r#""tick_number_diverged""#);
+        assert_eq!(serde_json::to_string(&ReplayStepVerdict::Skipped).unwrap(), r#""skipped""#);
+        assert_eq!(serde_json::to_string(&ReplayStepVerdict::Error).unwrap(), r#""error""#);
+    }
+
+    #[test]
+    fn replay_session_verdict_serializes() {
+        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::Success).unwrap(), r#""success""#);
+        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::DivergenceDetected).unwrap(), r#""divergence_detected""#);
+        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::EmptyJournal).unwrap(), r#""empty_journal""#);
+        assert_eq!(serde_json::to_string(&ReplaySessionVerdict::Aborted).unwrap(), r#""aborted""#);
+    }
+
+    #[test]
+    fn replay_step_result_round_trips() {
+        let step = ReplayStepResult {
+            step_id: "rs-1".into(),
+            sequence: 5,
+            kind: JournalEntryKind::Tick,
+            verdict: ReplayStepVerdict::Match,
+            expected_payload: Some(serde_json::json!({"tick_number": 5, "outcome": "idle_tick"})),
+            actual_payload: Some(serde_json::json!({"tick_number": 5, "outcome": "idle_tick"})),
+            detail: String::new(),
+        };
+        let json = serde_json::to_string(&step).unwrap();
+        let restored: ReplayStepResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(step, restored);
+    }
+
+    #[test]
+    fn replay_session_result_round_trips() {
+        let session = ReplaySessionResult {
+            session_id: "rses-1".into(),
+            epoch_id: "epoch-1".into(),
+            entries_replayed: 20,
+            entries_matched: 15,
+            entries_diverged: 0,
+            entries_skipped: 5,
+            verdict: ReplaySessionVerdict::Success,
+            steps: vec![],
+            started_at: "2026-03-20T00:00:00+00:00".into(),
+            completed_at: "2026-03-20T00:01:00+00:00".into(),
+        };
+        let json = serde_json::to_string(&session).unwrap();
+        let restored: ReplaySessionResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(session, restored);
+    }
+
+    // -------------------------------------------------------------------
+    // Lifecycle state enum tests
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn checkpoint_lifecycle_state_serializes() {
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Idle).unwrap(), r#""idle""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Capturing).unwrap(), r#""capturing""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::VerifyingCapture).unwrap(), r#""verifying_capture""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Committed).unwrap(), r#""committed""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Restoring).unwrap(), r#""restoring""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::VerifyingRestore).unwrap(), r#""verifying_restore""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Verified).unwrap(), r#""verified""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::RollingBack).unwrap(), r#""rolling_back""#);
+        assert_eq!(serde_json::to_string(&CheckpointLifecycleState::Failed).unwrap(), r#""failed""#);
+    }
+
+    #[test]
+    fn reaction_pipeline_state_serializes() {
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Received).unwrap(), r#""received""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Matching).unwrap(), r#""matching""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::IdempotencyCheck).unwrap(), r#""idempotency_check""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::BackpressureCheck).unwrap(), r#""backpressure_check""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Gating).unwrap(), r#""gating""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Executed).unwrap(), r#""executed""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Emitted).unwrap(), r#""emitted""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Deferred).unwrap(), r#""deferred""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Rejected).unwrap(), r#""rejected""#);
+        assert_eq!(serde_json::to_string(&ReactionPipelineState::Recorded).unwrap(), r#""recorded""#);
+    }
+
+    #[test]
+    fn obligation_lifecycle_state_serializes() {
+        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Pending).unwrap(), r#""pending""#);
+        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Active).unwrap(), r#""active""#);
+        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Escalated).unwrap(), r#""escalated""#);
+        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Completed).unwrap(), r#""completed""#);
+        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Expired).unwrap(), r#""expired""#);
+        assert_eq!(serde_json::to_string(&ObligationLifecycleState::Cancelled).unwrap(), r#""cancelled""#);
+    }
+
+    // -------------------------------------------------------------------
+    // Canonical machine constructor tests
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn obligation_machine_v2_structure() {
+        let m = obligation_machine();
+        assert_eq!(m.machine_id, "obligation-lifecycle");
+        assert_eq!(m.version, "2.0.0");
+        assert_eq!(m.states.len(), 6);
+        assert_eq!(m.terminal_states.len(), 3);
+        assert_eq!(m.transitions.len(), 16);
+        assert_eq!(m.initial_state, "pending");
+    }
+
+    #[test]
+    fn obligation_machine_v2_transfer_self_loop() {
+        let m = obligation_machine();
+        // Transfer from pending → pending is legal
+        assert_eq!(m.is_legal("pending", "pending", "transfer"), TransitionVerdict::Allowed);
+        // Transfer from active → active is legal
+        assert_eq!(m.is_legal("active", "active", "transfer"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn supervisor_machine_v2_structure() {
+        let m = supervisor_machine();
+        assert_eq!(m.machine_id, "supervisor-tick-lifecycle");
+        assert_eq!(m.version, "2.0.0");
+        assert_eq!(m.states.len(), 13);
+        assert_eq!(m.terminal_states, vec!["halted"]);
+        assert_eq!(m.transitions.len(), 33);
+        assert_eq!(m.initial_state, "idle");
+    }
+
+    #[test]
+    fn supervisor_machine_v2_normal_tick_path() {
+        let m = supervisor_machine();
+        assert_eq!(m.is_legal("idle", "polling", "tick_start"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("polling", "evaluating_obligations", "poll_complete"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("evaluating_obligations", "evaluating_deadlines", "obligations_evaluated"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("evaluating_deadlines", "waking_work", "deadlines_evaluated"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("waking_work", "running_reactions", "work_woken"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("running_reactions", "reasoning", "reactions_complete"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("reasoning", "acting", "reasoning_complete"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("acting", "idle", "tick_complete"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn supervisor_machine_v2_pause_resume() {
+        let m = supervisor_machine();
+        assert_eq!(m.is_legal("idle", "paused", "pause"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("paused", "idle", "resume"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("paused", "halted", "halt"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn supervisor_machine_v2_halted_is_terminal() {
+        let m = supervisor_machine();
+        assert_eq!(m.is_legal("halted", "idle", "resume"), TransitionVerdict::DeniedTerminalState);
+    }
+
+    #[test]
+    fn supervisor_machine_v2_error_from_all_phases() {
+        let m = supervisor_machine();
+        let working_phases = [
+            "idle", "polling", "evaluating_obligations", "evaluating_deadlines",
+            "waking_work", "running_reactions", "reasoning", "acting",
+            "checkpointing", "emitting_heartbeat", "paused", "degraded",
+        ];
+        for phase in &working_phases {
+            assert_eq!(
+                m.is_legal(phase, "degraded", "error"),
+                TransitionVerdict::Allowed,
+                "error from {} should be allowed", phase,
+            );
+        }
+    }
+
+    #[test]
+    fn reaction_pipeline_machine_structure() {
+        let m = reaction_pipeline_machine();
+        assert_eq!(m.machine_id, "reaction-pipeline");
+        assert_eq!(m.version, "2.0.0");
+        assert_eq!(m.states.len(), 10);
+        assert_eq!(m.terminal_states, vec!["recorded"]);
+        assert_eq!(m.transitions.len(), 17);
+    }
+
+    #[test]
+    fn reaction_pipeline_machine_emission_path() {
+        let m = reaction_pipeline_machine();
+        // Happy path through emission
+        assert_eq!(m.is_legal("executed", "emitted", "emit_event"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("emitted", "recorded", "record"), TransitionVerdict::Allowed);
+        // Direct record (no emission)
+        assert_eq!(m.is_legal("executed", "recorded", "record"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn checkpoint_lifecycle_machine_structure() {
+        let m = checkpoint_lifecycle_machine();
+        assert_eq!(m.machine_id, "checkpoint-lifecycle");
+        assert_eq!(m.version, "1.0.0");
+        assert_eq!(m.states.len(), 9);
+        assert_eq!(m.terminal_states, vec!["failed"]);
+        assert_eq!(m.transitions.len(), 13);
+    }
+
+    #[test]
+    fn checkpoint_lifecycle_capture_flow() {
+        let m = checkpoint_lifecycle_machine();
+        assert_eq!(m.is_legal("idle", "capturing", "begin_capture"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("capturing", "verifying_capture", "snapshots_complete"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("verifying_capture", "committed", "hash_verified"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("committed", "idle", "capture_finalized"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn checkpoint_lifecycle_restore_flow() {
+        let m = checkpoint_lifecycle_machine();
+        assert_eq!(m.is_legal("idle", "restoring", "begin_restore"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("restoring", "verifying_restore", "subsystems_restored"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("verifying_restore", "verified", "restore_hash_verified"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("verified", "idle", "restore_finalized"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn checkpoint_lifecycle_rollback_path() {
+        let m = checkpoint_lifecycle_machine();
+        assert_eq!(m.is_legal("verifying_restore", "rolling_back", "restore_hash_mismatch"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("restoring", "rolling_back", "restore_error"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("rolling_back", "idle", "rollback_complete"), TransitionVerdict::Allowed);
+        assert_eq!(m.is_legal("rolling_back", "failed", "rollback_failed"), TransitionVerdict::Allowed);
+    }
+
+    #[test]
+    fn checkpoint_lifecycle_failed_is_terminal() {
+        let m = checkpoint_lifecycle_machine();
+        assert_eq!(m.is_legal("failed", "idle", "retry"), TransitionVerdict::DeniedTerminalState);
+    }
+
+    #[test]
+    fn all_four_machines_round_trip() {
+        let machines = vec![
+            obligation_machine(),
+            supervisor_machine(),
+            reaction_pipeline_machine(),
+            checkpoint_lifecycle_machine(),
+        ];
+        for m in &machines {
+            let json = serde_json::to_string(m).unwrap();
+            let restored: StateMachineSpec = serde_json::from_str(&json).unwrap();
+            assert_eq!(*m, restored, "round-trip failed for {}", m.machine_id);
+        }
     }
 }

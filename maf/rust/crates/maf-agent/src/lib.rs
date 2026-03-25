@@ -192,7 +192,7 @@ pub struct CapabilityConfidence {
     pub verification_pass_rate: f64,
     pub timeout_rate: f64,
     pub error_rate: f64,
-    pub sample_count: u32,
+    pub sample_count: u64,
     pub assessed_at: String,
 }
 

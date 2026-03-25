@@ -4,5 +4,11 @@ members = [
   "crates/maf-capability",
   "crates/maf-agent",
   "crates/maf-cli",
+  "crates/maf-event",
+  "crates/maf-governance",
+  "crates/maf-supervisor",
+  "crates/maf-ops",
+  "crates/maf-orchestration",
+  "crates/maf-learning",
 ]
 resolver = "2"

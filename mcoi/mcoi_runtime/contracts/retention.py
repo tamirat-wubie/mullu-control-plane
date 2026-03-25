@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_non_empty_text, require_non_negative_int
 
 
 class ArtifactClass(StrEnum):
@@ -75,6 +75,11 @@ class PruneCandidate(ContractRecord):
         object.__setattr__(self, "artifact_id", require_non_empty_text(self.artifact_id, "artifact_id"))
         if not isinstance(self.artifact_class, ArtifactClass):
             raise ValueError("artifact_class must be an ArtifactClass value")
+        require_non_negative_int(self.age_days, "age_days")
+        if not isinstance(self.is_referenced, bool):
+            raise ValueError("is_referenced must be a bool")
+        if not isinstance(self.compliance_hold, bool):
+            raise ValueError("compliance_hold must be a bool")
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,4 +108,8 @@ class RetentionStatus(ContractRecord):
     results: tuple[PruneResult, ...] = ()
 
     def __post_init__(self) -> None:
+        require_non_negative_int(self.evaluated_count, "evaluated_count")
+        require_non_negative_int(self.pruned_count, "pruned_count")
+        require_non_negative_int(self.skipped_count, "skipped_count")
+        require_non_negative_int(self.failed_count, "failed_count")
         object.__setattr__(self, "results", freeze_value(list(self.results)))

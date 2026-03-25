@@ -95,6 +95,19 @@ def test_malformed_data_raises_corrupted(tmp_path: Path) -> None:
         store.load_snapshot("bad-data")
 
 
+def test_tampered_data_raises_corrupted(tmp_path: Path) -> None:
+    """Verify that load_snapshot detects corruption when data.json is tampered with."""
+    store = SnapshotStore(tmp_path / "snapshots")
+    store.save_snapshot("snap-tamper", {"key": "original"})
+
+    # Tamper with the data.json file on disk
+    data_path = tmp_path / "snapshots" / "snap-tamper" / "data.json"
+    data_path.write_text(json.dumps({"key": "TAMPERED"}), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="content hash mismatch"):
+        store.load_snapshot("snap-tamper")
+
+
 def test_empty_snapshot_id_raises(tmp_path: Path) -> None:
     store = SnapshotStore(tmp_path / "snapshots")
     with pytest.raises(PersistenceError):

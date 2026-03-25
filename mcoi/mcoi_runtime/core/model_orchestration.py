@@ -132,10 +132,17 @@ class ModelOrchestrationEngine:
 
         try:
             response = adapter.invoke(invocation)
-        except Exception:
+        except RuntimeCoreInvariantError:
+            raise  # Invariant violations must propagate — never swallow governance errors
+        except Exception as exc:
             if self._provider_registry is not None and provider_id is not None:
-                self._provider_registry.record_failure(provider_id, "adapter_exception")
-            return self._failure_response(invocation, error_status=ModelStatus.FAILED, validation=ValidationStatus.FAILED)
+                self._provider_registry.record_failure(provider_id, f"adapter_exception:{type(exc).__name__}")
+            return self._failure_response(
+                invocation,
+                error_status=ModelStatus.FAILED,
+                validation=ValidationStatus.FAILED,
+                failure_metadata={"exception_type": type(exc).__name__, "detail": str(exc)},
+            )
 
         # Update provider health
         if self._provider_registry is not None and provider_id is not None:
@@ -170,6 +177,7 @@ class ModelOrchestrationEngine:
         *,
         error_status: ModelStatus,
         validation: ValidationStatus,
+        failure_metadata: dict[str, str] | None = None,
     ) -> ModelResponse:
         response_id = stable_identifier("model-resp", {
             "invocation_id": invocation.invocation_id,
@@ -182,4 +190,5 @@ class ModelOrchestrationEngine:
             output_digest="none",
             completed_at=self._clock(),
             validation_status=validation,
+            metadata=failure_metadata or {},
         )

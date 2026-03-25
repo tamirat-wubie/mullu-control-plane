@@ -72,7 +72,7 @@ class FileCommunicationAdapter:
                 delivered_at=self._clock(),
                 metadata={"file_path": str(file_path)},
             )
-        except Exception as exc:
+        except OSError as exc:
             return DeliveryResult(
                 delivery_id=delivery_id,
                 message_id=message.message_id,

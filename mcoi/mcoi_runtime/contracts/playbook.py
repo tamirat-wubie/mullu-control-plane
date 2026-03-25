@@ -14,7 +14,13 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import (
+    ContractRecord,
+    freeze_value,
+    require_datetime_text,
+    require_non_empty_text,
+    require_unit_float,
+)
 
 
 class PlaybookStatus(StrEnum):
@@ -102,6 +108,7 @@ class IncidentMatchRecord(ContractRecord):
         object.__setattr__(self, "incident_id", require_non_empty_text(self.incident_id, "incident_id"))
         if not isinstance(self.result, PatternMatchResult):
             raise ValueError("result must be a PatternMatchResult value")
+        object.__setattr__(self, "match_score", require_unit_float(self.match_score, "match_score"))
         object.__setattr__(self, "match_reasons", freeze_value(list(self.match_reasons)))
 
 
@@ -127,8 +134,8 @@ class PlaybookExecutionRecord(ContractRecord):
         object.__setattr__(self, "incident_id", require_non_empty_text(self.incident_id, "incident_id"))
         if not isinstance(self.outcome, PlaybookOutcome):
             raise ValueError("outcome must be a PlaybookOutcome value")
-        object.__setattr__(self, "started_at", require_non_empty_text(self.started_at, "started_at"))
-        object.__setattr__(self, "finished_at", require_non_empty_text(self.finished_at, "finished_at"))
+        object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
+        object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))
 
     @property
     def succeeded(self) -> bool:

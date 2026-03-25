@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_non_empty_text, require_non_negative_int
 
 
 class AutonomyMode(StrEnum):
@@ -118,4 +118,9 @@ class AutonomyStatus(ContractRecord):
     def __post_init__(self) -> None:
         if not isinstance(self.mode, AutonomyMode):
             raise ValueError("mode must be an AutonomyMode value")
+        object.__setattr__(self, "total_decisions", require_non_negative_int(self.total_decisions, "total_decisions"))
+        object.__setattr__(self, "allowed_count", require_non_negative_int(self.allowed_count, "allowed_count"))
+        object.__setattr__(self, "blocked_count", require_non_negative_int(self.blocked_count, "blocked_count"))
+        object.__setattr__(self, "suggestion_count", require_non_negative_int(self.suggestion_count, "suggestion_count"))
+        object.__setattr__(self, "pending_approval_count", require_non_negative_int(self.pending_approval_count, "pending_approval_count"))
         object.__setattr__(self, "violations", freeze_value(list(self.violations)))

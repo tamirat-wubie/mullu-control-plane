@@ -10,6 +10,7 @@ from typing import Any, Mapping
 import pytest
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
+from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import render_skill_summary
 from mcoi_runtime.app.operator_loop import OperatorLoop, SkillRequest, SkillRunReport
 from mcoi_runtime.app.view_models import SkillSummaryView
@@ -228,3 +229,106 @@ class TestSkillRuntimeEdgeCases:
         ))
 
         assert report.succeeded is False
+
+
+def _make_loop_with_autonomy(mode: str):
+    """Build an operator loop with a specific autonomy mode."""
+    config = AppConfig(autonomy_mode=mode)
+    runtime = bootstrap_runtime(config=config, clock=lambda: FIXED_CLOCK)
+    return OperatorLoop(runtime=runtime)
+
+
+class TestSkillGovernanceChecks:
+    """Verify that run_skill enforces autonomy mode and policy evaluation."""
+
+    def test_skill_blocked_in_observe_only_mode(self):
+        """Skill execution is blocked when autonomy mode is OBSERVE_ONLY."""
+        loop = _make_loop_with_autonomy("observe_only")
+        _register_skill(loop, "sk-obs-block", name="shell_command")
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-gov-1",
+            subject_id="operator-1",
+            goal_id="goal-gov-1",
+            skill_id="sk-obs-block",
+        ))
+
+        assert report.status is SkillOutcomeStatus.POLICY_DENIED
+        assert report.completed is False
+        assert report.execution_record is None
+        assert len(report.structured_errors) == 1
+        assert report.structured_errors[0].error_code == "autonomy_blocked"
+        assert "observe_only" in report.structured_errors[0].message
+
+    def test_skill_blocked_in_suggest_only_mode(self):
+        """Skill execution is blocked when autonomy mode is SUGGEST_ONLY."""
+        loop = _make_loop_with_autonomy("suggest_only")
+        _register_skill(loop, "sk-sug-block", name="shell_command")
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-gov-2",
+            subject_id="operator-1",
+            goal_id="goal-gov-2",
+            skill_id="sk-sug-block",
+        ))
+
+        assert report.status is SkillOutcomeStatus.POLICY_DENIED
+        assert report.completed is False
+        assert report.execution_record is None
+        assert len(report.structured_errors) == 1
+        assert report.structured_errors[0].error_code == "autonomy_blocked"
+        assert "suggest_only" in report.structured_errors[0].message
+
+    def test_skill_blocked_when_policy_denies(self):
+        """Skill execution is blocked when the policy engine returns deny."""
+        loop = _make_loop()
+        _register_skill(loop, "sk-pol-deny", name="shell_command")
+
+        # Monkey-patch the policy engine to always deny
+        original_evaluate = loop.runtime.policy_engine.evaluate
+
+        def deny_evaluate(policy_input, decision_factory):
+            return decision_factory(
+                decision_id="deny-decision-1",
+                subject_id=policy_input.subject_id,
+                goal_id=policy_input.goal_id,
+                status="deny",
+                reasons=(type("R", (), {"code": "test_deny", "message": "test policy denial"}),),
+                issued_at=policy_input.issued_at,
+            )
+
+        loop.runtime.policy_engine.evaluate = deny_evaluate
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-gov-3",
+            subject_id="operator-1",
+            goal_id="goal-gov-3",
+            skill_id="sk-pol-deny",
+        ))
+
+        assert report.status is SkillOutcomeStatus.POLICY_DENIED
+        assert report.completed is False
+        assert report.execution_record is None
+        assert len(report.structured_errors) == 1
+        assert "policy_deny" in report.structured_errors[0].error_code
+
+        # Restore
+        loop.runtime.policy_engine.evaluate = original_evaluate
+
+    def test_skill_proceeds_when_autonomy_and_policy_allow(self):
+        """Skill execution proceeds when both autonomy and policy permit it."""
+        loop = _make_loop()  # Default is bounded_autonomous — allows execution
+        _register_skill(loop, "sk-gov-allow", name="shell_command")
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-gov-4",
+            subject_id="operator-1",
+            goal_id="goal-gov-4",
+            skill_id="sk-gov-allow",
+        ))
+
+        # Should not be POLICY_DENIED
+        assert report.status is not SkillOutcomeStatus.POLICY_DENIED
+        # Execution record should exist (skill was actually attempted)
+        assert report.execution_record is not None
+        assert report.skill_id == "sk-gov-allow"

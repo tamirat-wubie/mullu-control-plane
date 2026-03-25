@@ -47,6 +47,9 @@ class Plan(ContractRecord):
         for field_name in ("plan_id", "goal_id", "state_hash", "registry_hash"):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         object.__setattr__(self, "items", require_non_empty_tuple(self.items, "items"))
+        for idx, item in enumerate(self.items):
+            if not isinstance(item, PlanItem):
+                raise ValueError(f"items[{idx}] must be a PlanItem instance")
         if self.status is not None:
             object.__setattr__(self, "status", require_non_empty_text(self.status, "status"))
         if self.created_at is not None:

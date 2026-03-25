@@ -28,11 +28,15 @@ from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
 from mcoi_runtime.contracts.autonomy import AutonomyMode
 from mcoi_runtime.core.autonomy import AutonomyEngine
+from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
+from mcoi_runtime.core.workflow import WorkflowEngine
 from mcoi_runtime.core.world_state import WorldStateEngine
+from mcoi_runtime.persistence.goal_store import GoalStore
+from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 from .config import AppConfig
 
@@ -58,6 +62,10 @@ class BootstrappedRuntime:
     skill_selector: SkillSelector
     skill_executor: SkillExecutor
     autonomy: AutonomyEngine
+    goal_reasoning_engine: GoalReasoningEngine
+    workflow_engine: WorkflowEngine
+    goal_store: GoalStore | None
+    workflow_store: WorkflowStore | None
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
 
@@ -93,6 +101,8 @@ def bootstrap_runtime(
     clock: Callable[[], str] | None = None,
     executors: Mapping[str, ExecutorAdapter] | None = None,
     observers: Mapping[str, ObserverAdapter[object]] | None = None,
+    goal_store: GoalStore | None = None,
+    workflow_store: WorkflowStore | None = None,
 ) -> BootstrappedRuntime:
     app_config = config or AppConfig()
     runtime_clock = clock or utc_now_text
@@ -145,6 +155,8 @@ def bootstrap_runtime(
     skill_selector = SkillSelector()
     skill_executor = SkillExecutor(clock=runtime_clock)
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
+    goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
+    workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
 
     return BootstrappedRuntime(
         config=app_config,
@@ -166,6 +178,10 @@ def bootstrap_runtime(
         skill_selector=skill_selector,
         skill_executor=skill_executor,
         autonomy=autonomy,
+        goal_reasoning_engine=goal_reasoning_engine,
+        workflow_engine=workflow_engine_inst,
+        goal_store=goal_store,
+        workflow_store=workflow_store,
         executors=frozen_executors,
         observers=frozen_observers,
     )

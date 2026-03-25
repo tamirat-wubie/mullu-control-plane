@@ -14,7 +14,14 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import (
+    ContractRecord,
+    freeze_value,
+    require_datetime_text,
+    require_non_empty_text,
+    require_non_negative_float,
+    require_non_negative_int,
+)
 
 
 class AlertSeverity(StrEnum):
@@ -72,6 +79,9 @@ class SkillMetrics(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
+        for attr in ("total_executions", "succeeded", "failed",
+                      "precondition_failures", "postcondition_failures", "promotions"):
+            require_non_negative_int(getattr(self, attr), attr)
 
     @property
     def success_rate(self) -> float:
@@ -91,6 +101,8 @@ class ProviderMetrics(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "provider_id", require_non_empty_text(self.provider_id, "provider_id"))
+        for attr in ("total_invocations", "succeeded", "failed", "timeouts", "scope_rejections"):
+            require_non_negative_int(getattr(self, attr), attr)
 
     @property
     def success_rate(self) -> float:
@@ -115,6 +127,9 @@ class AutonomyMetrics(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "mode", require_non_empty_text(self.mode, "mode"))
+        for attr in ("total_decisions", "allowed", "blocked",
+                      "suggestions", "pending_approval", "violations"):
+            require_non_negative_int(getattr(self, attr), attr)
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,6 +155,9 @@ class TelemetryAlert(ContractRecord):
         object.__setattr__(self, "source", require_non_empty_text(self.source, "source"))
         object.__setattr__(self, "message", require_non_empty_text(self.message, "message"))
         object.__setattr__(self, "metric_name", require_non_empty_text(self.metric_name, "metric_name"))
+        require_non_negative_float(self.metric_value, "metric_value")
+        require_non_negative_float(self.threshold, "threshold")
+        object.__setattr__(self, "triggered_at", require_datetime_text(self.triggered_at, "triggered_at"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,7 +174,7 @@ class TelemetrySnapshot(ContractRecord):
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "snapshot_id", require_non_empty_text(self.snapshot_id, "snapshot_id"))
-        object.__setattr__(self, "captured_at", require_non_empty_text(self.captured_at, "captured_at"))
+        object.__setattr__(self, "captured_at", require_datetime_text(self.captured_at, "captured_at"))
         if not isinstance(self.run_metrics, RunMetrics):
             raise ValueError("run_metrics must be a RunMetrics instance")
         object.__setattr__(self, "skill_metrics", freeze_value(list(self.skill_metrics)))

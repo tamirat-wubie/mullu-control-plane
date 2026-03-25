@@ -186,16 +186,21 @@ def promote_to_episodic(
         source_ids=source.source_ids,
     )
 
+    # Construct-then-commit: remove from working first (reversible),
+    # then admit to episodic. If admission fails, re-add to working.
+    # This prevents the entry existing in both tiers simultaneously.
+    working.remove(entry_id)
+
     try:
         episodic.admit(episodic_entry)
     except RuntimeCoreInvariantError:
+        # Rollback: re-add to working memory
+        working.store(source)
         return PromotionResult(
             entry_id=entry_id,
             status=PromotionStatus.REJECTED,
             reason="entry already exists in episodic memory",
         )
-
-    working.remove(entry_id)
 
     return PromotionResult(
         entry_id=entry_id,

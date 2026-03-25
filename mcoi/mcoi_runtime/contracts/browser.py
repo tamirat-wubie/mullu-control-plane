@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 
 class BrowserSessionStatus(StrEnum):
@@ -63,6 +63,8 @@ class BrowserSession(ContractRecord):
         object.__setattr__(self, "session_id", require_non_empty_text(self.session_id, "session_id"))
         if not isinstance(self.status, BrowserSessionStatus):
             raise ValueError("status must be a BrowserSessionStatus value")
+        if self.created_at is not None:
+            require_datetime_text(self.created_at, "created_at")
 
     @property
     def is_active(self) -> bool:
@@ -165,7 +167,7 @@ class BrowserObservation(ContractRecord):
         object.__setattr__(self, "session_id", require_non_empty_text(self.session_id, "session_id"))
         if not isinstance(self.page, PageDescriptor):
             raise ValueError("page must be a PageDescriptor instance")
-        object.__setattr__(self, "observed_at", require_non_empty_text(self.observed_at, "observed_at"))
+        require_datetime_text(self.observed_at, "observed_at")
 
 
 @dataclass(frozen=True, slots=True)

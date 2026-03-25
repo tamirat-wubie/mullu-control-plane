@@ -27,3 +27,7 @@ class CorruptedDataError(PersistenceError):
 
 class PersistenceWriteError(PersistenceError):
     """Raised when a write operation to disk fails."""
+
+
+class PathTraversalError(PersistenceError):
+    """Raised when an ID would escape the base directory (path traversal attack)."""

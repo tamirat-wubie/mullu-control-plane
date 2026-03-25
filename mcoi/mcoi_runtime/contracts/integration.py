@@ -14,24 +14,7 @@ from enum import StrEnum
 from typing import Any, Mapping
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
-
-
-class EffectClass(StrEnum):
-    """What kind of side effects a connector may produce."""
-
-    INTERNAL_PURE = "internal_pure"
-    EXTERNAL_READ = "external_read"
-    EXTERNAL_WRITE = "external_write"
-    HUMAN_MEDIATED = "human_mediated"
-    PRIVILEGED = "privileged"
-
-
-class TrustClass(StrEnum):
-    """How much the platform trusts the connector's source."""
-
-    TRUSTED_INTERNAL = "trusted_internal"
-    BOUNDED_EXTERNAL = "bounded_external"
-    UNTRUSTED_EXTERNAL = "untrusted_external"
+from ._shared_enums import EffectClass, TrustClass
 
 
 class ConnectorStatus(StrEnum):

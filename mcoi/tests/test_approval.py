@@ -348,3 +348,52 @@ class TestApprovalGoldenScenarios:
         recorded = engine.list_overrides()[0]
         assert recorded.operator_id == "admin-1"
         assert recorded.approval_id == "approval-42"
+
+
+# --- Fail-closed expiry on malformed timestamps ---
+
+
+class TestApprovalExpiryFailClosed:
+    """_is_expired must fail closed: malformed or empty timestamps are treated as expired."""
+
+    def test_valid_future_expiry_not_expired(self):
+        engine = _engine(clock_time=T0)
+        assert not engine._is_expired(T_FUTURE)
+
+    def test_valid_past_expiry_is_expired(self):
+        engine = _engine(clock_time=T0)
+        assert engine._is_expired(T_PAST)
+
+    def test_malformed_expiry_treated_as_expired(self):
+        engine = _engine(clock_time=T0)
+        assert engine._is_expired("not-a-date")
+
+    def test_empty_string_expiry_treated_as_expired(self):
+        engine = _engine(clock_time=T0)
+        assert engine._is_expired("")
+
+    def test_malformed_expiry_blocks_decision(self):
+        """A request with a malformed expires_at must be rejected at construction time."""
+        with pytest.raises(ValueError, match="expires_at"):
+            _request(expires_at="garbage-timestamp")
+
+    def test_malformed_expiry_blocks_validation(self):
+        """A request with a malformed expires_at must fail validation."""
+        engine = _engine(clock_time=T0)
+        # Create request without expiry first, then monkey-patch to simulate corruption
+        engine.submit_request(_request(expires_at=None))
+        d = engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
+        assert d.is_active
+        # Replace the stored request with a duck-typed copy carrying a
+        # corrupt expires_at, avoiding object.__setattr__ on frozen dataclass.
+        import dataclasses as _dc
+        import types as _types
+        req = engine._requests["req-1"]
+        ns = _types.SimpleNamespace(
+            **{f.name: getattr(req, f.name) for f in _dc.fields(req)},
+        )
+        ns.expires_at = "corrupt!"
+        engine._requests["req-1"] = ns
+        valid, reason = engine.validate_approval(d.decision_id, target_id="sk-1", action="execute")
+        assert not valid
+        assert "expired" in reason

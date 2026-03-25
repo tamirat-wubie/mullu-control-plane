@@ -45,6 +45,21 @@ def _is_within_root(root: Path, target: Path) -> bool:
         return False
 
 
+_DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
+_TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
+
+
+def _truncate_output(text: str | None, max_bytes: int) -> str:
+    """Truncate output to max_bytes, appending a marker if truncated."""
+    if text is None:
+        return ""
+    encoded = text.encode("utf-8", errors="replace")
+    if len(encoded) <= max_bytes:
+        return text
+    truncated = encoded[:max_bytes].decode("utf-8", errors="replace")
+    return truncated + _TRUNCATION_MARKER.format(limit=max_bytes)
+
+
 def _content_hash(content: str) -> str:
     return sha256(content.encode("utf-8")).hexdigest()
 
@@ -216,7 +231,7 @@ class LocalCodeAdapter:
             return PatchApplicationResult(
                 patch_id=patch_id, status=PatchStatus.APPLIED, target_file=target_file,
             )
-        except Exception as exc:
+        except (OSError, ValueError, IndexError) as exc:
             return PatchApplicationResult(
                 patch_id=patch_id, status=PatchStatus.MALFORMED,
                 target_file=target_file, error_message=f"patch error: {exc}",
@@ -228,10 +243,12 @@ class LocalCodeAdapter:
         command: list[str],
         *,
         timeout_seconds: int = 60,
+        max_output_bytes: int = _DEFAULT_MAX_OUTPUT_BYTES,
     ) -> tuple[int, str, str, int]:
         """Run a command in the workspace root. Returns (exit_code, stdout, stderr, duration_ms).
 
         Uses list form (no shell expansion). Timeout enforced.
+        Output is truncated to max_output_bytes (default 1 MB).
         """
         ensure_non_empty_text("command_id", command_id)
         start = time.monotonic()
@@ -245,10 +262,12 @@ class LocalCodeAdapter:
                 shell=False,  # Explicit: no shell expansion
             )
             duration_ms = int((time.monotonic() - start) * 1000)
-            return result.returncode, result.stdout, result.stderr, duration_ms
+            stdout = _truncate_output(result.stdout, max_output_bytes)
+            stderr = _truncate_output(result.stderr, max_output_bytes)
+            return result.returncode, stdout, stderr, duration_ms
         except subprocess.TimeoutExpired:
             duration_ms = int((time.monotonic() - start) * 1000)
             return -1, "", "timeout", duration_ms
-        except Exception as exc:
+        except OSError as exc:
             duration_ms = int((time.monotonic() - start) * 1000)
             return -1, "", f"error: {exc}", duration_ms

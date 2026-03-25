@@ -25,6 +25,21 @@ from mcoi_runtime.contracts.model import (
 from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
 
 
+_DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
+_TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
+
+
+def _truncate_output(text: str | None, max_bytes: int) -> str:
+    """Truncate output to max_bytes, appending a marker if truncated."""
+    if text is None:
+        return ""
+    encoded = text.encode("utf-8", errors="replace")
+    if len(encoded) <= max_bytes:
+        return text
+    truncated = encoded[:max_bytes].decode("utf-8", errors="replace")
+    return truncated + _TRUNCATION_MARKER.format(limit=max_bytes)
+
+
 @dataclass(frozen=True, slots=True)
 class ProcessModelConfig:
     """Configuration for a local process model adapter."""
@@ -32,6 +47,7 @@ class ProcessModelConfig:
     command: tuple[str, ...]
     timeout_seconds: float = 60.0
     cost_per_invocation: float = 0.0
+    max_output_bytes: int = _DEFAULT_MAX_OUTPUT_BYTES
 
     def __post_init__(self) -> None:
         if not self.command:
@@ -42,6 +58,8 @@ class ProcessModelConfig:
             raise ValueError("timeout_seconds must be positive")
         if self.cost_per_invocation < 0:
             raise ValueError("cost_per_invocation must be non-negative")
+        if self.max_output_bytes <= 0:
+            raise ValueError("max_output_bytes must be positive")
 
 
 class ProcessModelAdapter:
@@ -71,6 +89,7 @@ class ProcessModelAdapter:
             )
 
             if result.returncode != 0:
+                stderr_truncated = _truncate_output(result.stderr, self._config.max_output_bytes)
                 return ModelResponse(
                     response_id=response_id,
                     invocation_id=invocation.invocation_id,
@@ -78,10 +97,10 @@ class ProcessModelAdapter:
                     output_digest=hashlib.sha256(result.stderr.encode("utf-8")).hexdigest(),
                     completed_at=self._clock(),
                     validation_status=ValidationStatus.FAILED,
-                    metadata={"returncode": result.returncode, "stderr": result.stderr[:500]},
+                    metadata={"returncode": result.returncode, "stderr": stderr_truncated[:500]},
                 )
 
-            output = result.stdout
+            output = _truncate_output(result.stdout, self._config.max_output_bytes)
             output_digest = hashlib.sha256(output.encode("utf-8")).hexdigest()
             output_tokens = len(output.split())
 

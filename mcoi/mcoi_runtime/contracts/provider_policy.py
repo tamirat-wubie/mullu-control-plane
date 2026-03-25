@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_non_empty_text, require_non_negative_int
 
 
 class ProviderPolicyType(StrEnum):
@@ -45,6 +45,13 @@ class HttpProviderPolicy(ContractRecord):
         object.__setattr__(self, "policy_id", require_non_empty_text(self.policy_id, "policy_id"))
         object.__setattr__(self, "allowed_methods", freeze_value(list(self.allowed_methods)))
         object.__setattr__(self, "allowed_content_types", freeze_value(list(self.allowed_content_types)))
+        require_non_negative_int(self.max_response_bytes, "max_response_bytes")
+        require_non_negative_int(self.max_retries, "max_retries")
+        if not isinstance(self.retry_enabled, bool):
+            raise ValueError("retry_enabled must be a bool")
+        if not isinstance(self.require_https, bool):
+            raise ValueError("require_https must be a bool")
+        object.__setattr__(self, "header_allowlist", freeze_value(list(self.header_allowlist)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +68,11 @@ class SmtpProviderPolicy(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "policy_id", require_non_empty_text(self.policy_id, "policy_id"))
         object.__setattr__(self, "allowed_recipient_domains", freeze_value(list(self.allowed_recipient_domains)))
+        require_non_negative_int(self.max_message_bytes, "max_message_bytes")
+        if not isinstance(self.attachments_enabled, bool):
+            raise ValueError("attachments_enabled must be a bool")
+        if not isinstance(self.dry_run, bool):
+            raise ValueError("dry_run must be a bool")
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +93,12 @@ class ProcessProviderPolicy(ContractRecord):
         object.__setattr__(self, "command_allowlist", freeze_value(list(self.command_allowlist)))
         object.__setattr__(self, "env_allowlist", freeze_value(list(self.env_allowlist)))
         object.__setattr__(self, "cwd_allowed", freeze_value(list(self.cwd_allowed)))
+        require_non_negative_int(self.max_output_bytes, "max_output_bytes")
+        require_non_negative_int(self.timeout_seconds, "timeout_seconds")
+        if not isinstance(self.stderr_capture, bool):
+            raise ValueError("stderr_capture must be a bool")
+        if not isinstance(self.shell_expansion_denied, bool):
+            raise ValueError("shell_expansion_denied must be a bool")
 
 
 @dataclass(frozen=True, slots=True)

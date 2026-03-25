@@ -24,6 +24,7 @@ from mcoi_runtime.core.replay_engine import (
 
 from .errors import (
     CorruptedDataError,
+    PathTraversalError,
     PersistenceError,
     PersistenceWriteError,
 )
@@ -133,8 +134,24 @@ class ReplayStore:
             raise PersistenceError("base_path must be a Path instance")
         self._base_path = base_path
 
+    def _safe_path(self, id_value: str, suffix: str = "") -> Path:
+        """Construct a path from *id_value* and validate it stays inside _base_path."""
+        if "\0" in id_value:
+            raise PathTraversalError(f"ID contains null byte: {id_value!r}")
+        if "/" in id_value or "\\" in id_value or ".." in id_value:
+            raise PathTraversalError(
+                f"ID contains forbidden characters: {id_value!r}"
+            )
+        candidate = (self._base_path / f"{id_value}{suffix}").resolve()
+        base_resolved = self._base_path.resolve()
+        if not candidate.is_relative_to(base_resolved):
+            raise PathTraversalError(
+                f"path escapes base directory: {id_value!r}"
+            )
+        return candidate
+
     def _replay_path(self, replay_id: str) -> Path:
-        return self._base_path / f"{replay_id}.json"
+        return self._safe_path(replay_id, suffix=".json")
 
     def save(self, record: ReplayRecord) -> None:
         if not isinstance(record, ReplayRecord):

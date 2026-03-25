@@ -10,9 +10,11 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any, Mapping, TYPE_CHECKING
 
-from mcoi_runtime.app.operator_loop import OperatorRunReport, SkillRunReport
+from mcoi_runtime.app.operator_loop import GoalRunReport, OperatorRunReport, SkillRunReport, WorkflowRunReport
+from mcoi_runtime.contracts.job import JobDescriptor, JobState, JobStatus, JobPriority, SlaStatus
+from mcoi_runtime.contracts.roles import TeamQueueState, WorkloadSnapshot
 from mcoi_runtime.core.coordination import CoordinationEngine
 from mcoi_runtime.contracts.temporal import TemporalTask, StateTransition, ResumeCheckpoint
 from mcoi_runtime.core.errors import StructuredError
@@ -20,6 +22,11 @@ from mcoi_runtime.core.memory import MemoryTier, PromotionResult
 from mcoi_runtime.core.persisted_replay import PersistedReplayResult
 from mcoi_runtime.core.replay_engine import ReplayVerdict
 from mcoi_runtime.core.runbook import RunbookAdmissionResult, RunbookEntry
+
+from mcoi_runtime.contracts.simulation import SimulationComparison, SimulationVerdict
+
+if TYPE_CHECKING:
+    from mcoi_runtime.core.operational_graph import OperationalGraph
 
 
 # ---------------------------------------------------------------------------
@@ -306,4 +313,194 @@ class SkillSummaryView:
             step_count=step_count,
             failed_step=failed_step,
             structured_errors=tuple(ErrorView.from_error(e) for e in report.structured_errors),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Workflow summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class WorkflowSummaryView:
+    """Workflow execution result for operator display."""
+
+    workflow_id: str
+    status: str
+    stage_count: int
+    completed_stages: int
+    failed_stage_id: str | None
+
+    @staticmethod
+    def from_report(report: WorkflowRunReport) -> WorkflowSummaryView:
+        completed = sum(
+            1 for s in report.stage_summaries
+            if s.status.value == "completed"
+        )
+        failed_stage = None
+        for s in report.stage_summaries:
+            if s.status.value == "failed":
+                failed_stage = s.stage_id
+                break
+
+        return WorkflowSummaryView(
+            workflow_id=report.workflow_id,
+            status=report.status.value,
+            stage_count=len(report.stage_summaries),
+            completed_stages=completed,
+            failed_stage_id=failed_stage,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Goal summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class GoalSummaryView:
+    """Goal execution result for operator display."""
+
+    goal_id: str
+    status: str
+    priority: str
+    sub_goal_count: int
+    completed: int
+    failed: int
+
+    @staticmethod
+    def from_report(report: GoalRunReport, priority: str = "normal") -> GoalSummaryView:
+        return GoalSummaryView(
+            goal_id=report.goal_id,
+            status=report.status.value,
+            priority=priority,
+            sub_goal_count=len(report.completed_sub_goals) + len(report.failed_sub_goals),
+            completed=len(report.completed_sub_goals),
+            failed=len(report.failed_sub_goals),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Job summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class JobSummaryView:
+    """Job execution summary for operator display."""
+
+    job_id: str
+    name: str
+    status: str
+    priority: str
+    sla_status: str
+    assigned_to: str | None
+    thread_id: str | None
+    deadline: str | None
+
+    @staticmethod
+    def from_state(state: JobState, descriptor: JobDescriptor) -> JobSummaryView:
+        return JobSummaryView(
+            job_id=state.job_id,
+            name=descriptor.name,
+            status=state.status.value,
+            priority=descriptor.priority.value,
+            sla_status=state.sla_status.value if hasattr(state, "sla_status") and state.sla_status is not None else "unknown",
+            assigned_to=state.assigned_to if hasattr(state, "assigned_to") else None,
+            thread_id=state.thread_id if hasattr(state, "thread_id") else None,
+            deadline=descriptor.deadline if hasattr(descriptor, "deadline") else None,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Team summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class TeamSummaryView:
+    """Team workload summary for operator display."""
+
+    team_id: str
+    total_workers: int
+    available_workers: int
+    overloaded_workers: int
+    queued_jobs: int
+    assigned_jobs: int
+
+    @staticmethod
+    def from_snapshot(
+        workload: WorkloadSnapshot,
+        queue_state: TeamQueueState,
+    ) -> TeamSummaryView:
+        """Build a team summary from a workload snapshot and queue state."""
+        return TeamSummaryView(
+            team_id=workload.team_id,
+            total_workers=workload.total_workers,
+            available_workers=workload.available_workers,
+            overloaded_workers=workload.overloaded_workers,
+            queued_jobs=queue_state.queued_jobs,
+            assigned_jobs=queue_state.assigned_jobs,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Graph summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class GraphSummaryView:
+    """Operational graph summary for operator display."""
+
+    total_nodes: int
+    total_edges: int
+    node_types: Mapping[str, int]
+    unfulfilled_obligations: int
+
+    @staticmethod
+    def from_graph(graph: OperationalGraph) -> GraphSummaryView:
+        """Build a summary view from an OperationalGraph instance."""
+        nodes = graph.all_nodes()
+        edges = graph.all_edges()
+        obligations = graph.all_obligations()
+
+        type_counts: dict[str, int] = {}
+        for node in nodes:
+            key = node.node_type.value
+            type_counts[key] = type_counts.get(key, 0) + 1
+
+        unfulfilled = sum(1 for o in obligations if not o.fulfilled)
+
+        return GraphSummaryView(
+            total_nodes=len(nodes),
+            total_edges=len(edges),
+            node_types=type_counts,
+            unfulfilled_obligations=unfulfilled,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Simulation summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class SimulationSummaryView:
+    """Simulation result summary for operator display."""
+
+    request_id: str
+    option_count: int
+    recommended_option_id: str
+    verdict_type: str
+    confidence: float
+    top_risk_level: str
+
+    @staticmethod
+    def from_result(
+        comparison: SimulationComparison,
+        verdict: SimulationVerdict,
+    ) -> SimulationSummaryView:
+        """Build a summary view from simulation comparison and verdict."""
+        return SimulationSummaryView(
+            request_id=comparison.request_id,
+            option_count=len(comparison.ranked_option_ids),
+            recommended_option_id=verdict.recommended_option_id,
+            verdict_type=verdict.verdict_type.value,
+            confidence=verdict.confidence,
+            top_risk_level=comparison.top_risk_level.value,
         )

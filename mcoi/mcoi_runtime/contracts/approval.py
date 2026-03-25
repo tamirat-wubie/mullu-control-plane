@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 
 
 class ApprovalStatus(StrEnum):
@@ -79,7 +79,9 @@ class ApprovalRequest(ContractRecord):
         if not isinstance(self.scope, ApprovalScope):
             raise ValueError("scope must be an ApprovalScope instance")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
-        object.__setattr__(self, "requested_at", require_non_empty_text(self.requested_at, "requested_at"))
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+        if self.expires_at is not None:
+            object.__setattr__(self, "expires_at", require_datetime_text(self.expires_at, "expires_at"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,7 +102,7 @@ class ApprovalDecisionRecord(ContractRecord):
         object.__setattr__(self, "approver_id", require_non_empty_text(self.approver_id, "approver_id"))
         if not isinstance(self.status, ApprovalStatus):
             raise ValueError("status must be an ApprovalStatus value")
-        object.__setattr__(self, "decided_at", require_non_empty_text(self.decided_at, "decided_at"))
+        object.__setattr__(self, "decided_at", require_datetime_text(self.decided_at, "decided_at"))
 
     @property
     def is_active(self) -> bool:
@@ -134,4 +136,4 @@ class OverrideRecord(ContractRecord):
         object.__setattr__(self, "original_decision", require_non_empty_text(self.original_decision, "original_decision"))
         object.__setattr__(self, "new_decision", require_non_empty_text(self.new_decision, "new_decision"))
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
-        object.__setattr__(self, "overridden_at", require_non_empty_text(self.overridden_at, "overridden_at"))
+        object.__setattr__(self, "overridden_at", require_datetime_text(self.overridden_at, "overridden_at"))

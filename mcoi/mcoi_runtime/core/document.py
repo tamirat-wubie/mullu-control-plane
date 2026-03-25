@@ -119,7 +119,7 @@ def extract_fields(
                     value=value,
                 ))
                 extracted += 1
-        except Exception:
+        except Exception:  # Extractors are user-provided callables; any error means malformed
             fields.append(ExtractionField(
                 field_name=field_name,
                 status=ExtractionStatus.MALFORMED,

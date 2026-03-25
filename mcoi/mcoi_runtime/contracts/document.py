@@ -15,7 +15,7 @@ from enum import StrEnum
 from hashlib import sha256
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_non_empty_text
+from ._base import ContractRecord, freeze_value, require_non_empty_text, require_unit_float
 
 
 class DocumentFormat(StrEnum):
@@ -115,8 +115,7 @@ class ExtractionField(ContractRecord):
         object.__setattr__(self, "field_name", require_non_empty_text(self.field_name, "field_name"))
         if not isinstance(self.status, ExtractionStatus):
             raise ValueError("status must be an ExtractionStatus value")
-        if not isinstance(self.confidence, (int, float)) or self.confidence < 0.0 or self.confidence > 1.0:
-            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "value", freeze_value(self.value))
 
 
