@@ -1,0 +1,13 @@
+{
+  "connector_id": "connector-github-read",
+  "name": "github_readonly",
+  "provider": "github",
+  "effect_class": "external_read",
+  "trust_class": "bounded_external",
+  "credential_scope_id": "cred-scope-github-read",
+  "enabled": true,
+  "metadata": {
+    "plane": "connector",
+    "owner": "operator-runtime"
+  }
+}

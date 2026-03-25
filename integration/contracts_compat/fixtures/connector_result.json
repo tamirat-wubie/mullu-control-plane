@@ -1,0 +1,12 @@
+{
+  "result_id": "connector-result-001",
+  "connector_id": "connector-github-read",
+  "status": "succeeded",
+  "response_digest": "sha256-response-001",
+  "started_at": "2026-03-25T12:01:00+00:00",
+  "finished_at": "2026-03-25T12:01:01+00:00",
+  "error_code": "none",
+  "metadata": {
+    "request_class": "read"
+  }
+}

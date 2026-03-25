@@ -1,0 +1,24 @@
+{
+  "fingerprint_id": "env-fingerprint-001",
+  "captured_at": "2026-03-25T12:02:00+00:00",
+  "digest": "sha256-env-001",
+  "platform": {
+    "os": "windows",
+    "architecture": "x86_64",
+    "distribution": "windows-11"
+  },
+  "runtime": {
+    "name": "python",
+    "version": "3.13.4"
+  },
+  "tooling": {
+    "cargo": "1.88.0",
+    "pytest": "8.4.2"
+  },
+  "metadata": {
+    "capture_mode": "explicit"
+  },
+  "extensions": {
+    "audit_tag": "canonical_fixture"
+  }
+}

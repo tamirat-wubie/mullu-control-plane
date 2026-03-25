@@ -8,12 +8,12 @@ Validates:
      with the schema's required fields.
   3. Every shared schema that has a matching Rust contract surface maps to
      the same field names and enum values without reinterpretation.
-  4. Canonical shared payload fixtures match shared schemas and round-trip
-     exactly through the Python shared-contract surface.
+  4. Canonical payload fixtures match schema-backed contracts and round-trip
+     exactly through the Python contract surface.
   5. In --strict mode, checks that all schema properties are present in the
      Python and Rust contract surfaces, canonical Rust structs do not carry
      extra top-level or nested fields, and canonical fixtures cover the full
-     declared shared payload surface.
+     declared payload surface for every fixture-backed contract.
 
 Usage:
   python scripts/validate_schemas.py           # basic validation
@@ -154,6 +154,7 @@ RUST_SCHEMA_CONTRACT_MAP: dict[str, RustContractMapping] = {
 SharedFixtureBuilder = Callable[[dict[str, Any]], Any]
 
 
+FIXTURE_SCHEMA_FILES: tuple[str, ...] = tuple(SCHEMA_CONTRACT_MAP.keys())
 CANONICAL_SHARED_SCHEMA_FILES: tuple[str, ...] = tuple(RUST_SCHEMA_CONTRACT_MAP.keys())
 
 
@@ -389,9 +390,40 @@ def _canonical_fixture_path(schema_file: str) -> Path:
 
 def _load_canonical_fixtures() -> dict[str, dict[str, Any]]:
     fixtures: dict[str, dict[str, Any]] = {}
-    for schema_file in CANONICAL_SHARED_SCHEMA_FILES:
+    for schema_file in FIXTURE_SCHEMA_FILES:
         fixtures[schema_file] = _load_json(_canonical_fixture_path(schema_file))
     return fixtures
+
+
+def _build_connector_descriptor(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.connector import ConnectorDescriptor
+    from mcoi_runtime.contracts._shared_enums import EffectClass, TrustClass
+
+    return ConnectorDescriptor(
+        connector_id=payload["connector_id"],
+        name=payload["name"],
+        provider=payload["provider"],
+        effect_class=EffectClass(payload["effect_class"]),
+        trust_class=TrustClass(payload["trust_class"]),
+        credential_scope_id=payload["credential_scope_id"],
+        enabled=payload["enabled"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_connector_result(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.connector import ConnectorResult, ConnectorStatus
+
+    return ConnectorResult(
+        result_id=payload["result_id"],
+        connector_id=payload["connector_id"],
+        status=ConnectorStatus(payload["status"]),
+        response_digest=payload["response_digest"],
+        started_at=payload["started_at"],
+        finished_at=payload["finished_at"],
+        error_code=payload["error_code"],
+        metadata=payload["metadata"],
+    )
 
 
 def _build_capability_descriptor(payload: dict[str, Any]) -> Any:
@@ -448,6 +480,25 @@ def _build_execution_result(payload: dict[str, Any]) -> Any:
         ),
         started_at=payload["started_at"],
         finished_at=payload["finished_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
+def _build_environment_fingerprint(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.environment import (
+        EnvironmentFingerprint,
+        PlatformDescriptor,
+        RuntimeDescriptor,
+    )
+
+    return EnvironmentFingerprint(
+        fingerprint_id=payload["fingerprint_id"],
+        captured_at=payload["captured_at"],
+        digest=payload["digest"],
+        platform=PlatformDescriptor(**payload["platform"]),
+        runtime=RuntimeDescriptor(**payload["runtime"]),
+        tooling=payload["tooling"],
         metadata=payload["metadata"],
         extensions=payload["extensions"],
     )
@@ -552,10 +603,40 @@ def _build_learning_admission(payload: dict[str, Any]) -> Any:
     )
 
 
+def _build_plan(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.plan import Plan, PlanItem
+
+    return Plan(
+        plan_id=payload["plan_id"],
+        goal_id=payload["goal_id"],
+        state_hash=payload["state_hash"],
+        registry_hash=payload["registry_hash"],
+        items=tuple(
+            PlanItem(
+                item_id=item["item_id"],
+                description=item["description"],
+                order=item.get("order"),
+                depends_on=tuple(item.get("depends_on", [])),
+            )
+            for item in payload["items"]
+        ),
+        status=payload["status"],
+        objective=payload["objective"],
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+        extensions=payload["extensions"],
+    )
+
+
 FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
+    "connector_descriptor.schema.json": _build_connector_descriptor,
+    "connector_result.schema.json": _build_connector_result,
     "capability_descriptor.schema.json": _build_capability_descriptor,
+    "environment_fingerprint.schema.json": _build_environment_fingerprint,
     "policy_decision.schema.json": _build_policy_decision,
     "execution_result.schema.json": _build_execution_result,
+    "plan.schema.json": _build_plan,
     "trace_entry.schema.json": _build_trace_entry,
     "replay_record.schema.json": _build_replay_record,
     "verification_result.schema.json": _build_verification_result,
@@ -741,7 +822,7 @@ def validate_canonical_fixtures(strict: bool = False) -> list[str]:
 
     expected_files = {
         schema_file.replace(".schema.json", ".json")
-        for schema_file in CANONICAL_SHARED_SCHEMA_FILES
+        for schema_file in FIXTURE_SCHEMA_FILES
     }
     actual_files = {path.name for path in FIXTURE_DIR.glob("*.json")}
 
@@ -754,7 +835,7 @@ def validate_canonical_fixtures(strict: bool = False) -> list[str]:
         if extra_files:
             errors.append(f"canonical fixtures contain unexpected files: {sorted(extra_files)}")
 
-    for schema_file in CANONICAL_SHARED_SCHEMA_FILES:
+    for schema_file in FIXTURE_SCHEMA_FILES:
         schema = _load_schema(SCHEMA_DIR / schema_file)
         fixture_path = _canonical_fixture_path(schema_file)
         if not fixture_path.exists():
