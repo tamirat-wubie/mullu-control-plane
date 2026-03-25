@@ -5,6 +5,8 @@ Proves that goals are first-class in the live operator runtime path.
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
@@ -76,29 +78,39 @@ def _make_goal(goal_id="goal-1", sub_goals=None):
     )
 
 
-def _make_request(request_id="req-g1", goal_id="goal-1"):
+def _make_request(request_id="req-g1", goal_id="goal-1", input_context=None):
     return SkillRequest(
         request_id=request_id,
         subject_id="operator-1",
         goal_id=goal_id,
+        input_context=input_context,
     )
+
+
+def _goal_input_context(label: str) -> dict[str, object]:
+    return {
+        "template_id": f"tpl-{label}",
+        "command_argv": [sys.executable, "-c", f"print('{label}')"],
+    }
 
 
 class TestGoalRuntimeGoldenScenarios:
     """Prove that goals are live in the runtime."""
 
-    def test_goal_accepted_and_plan_created(self):
-        """A goal is accepted and a plan is created from sub-goals."""
+    def test_goal_with_skill_backed_sub_goal_creates_plan_and_completes(self):
+        """A goal with an executable sub-goal creates a plan and completes."""
         loop = _make_loop()
+        _register_skill(loop, "sk-goal", name="shell_command")
         sub_goals = (
             SubGoal(
                 sub_goal_id="sg-1",
                 goal_id="goal-1",
                 description="sub-goal 1",
+                skill_id="sk-goal",
             ),
         )
         goal = _make_goal("goal-1", sub_goals=sub_goals)
-        request = _make_request()
+        request = _make_request(input_context=_goal_input_context("goal-1"))
 
         report = loop.run_goal(request, goal)
 
@@ -130,6 +142,27 @@ class TestGoalRuntimeGoldenScenarios:
         assert report.plan_id is not None
         # The sub-goal was attempted — it either completed or failed depending on executor
         assert len(report.completed_sub_goals) + len(report.failed_sub_goals) == 1
+
+    def test_bare_sub_goal_fails_closed_without_handler(self):
+        """Bare sub-goals must not claim completion without execution semantics."""
+        loop = _make_loop()
+        sub_goals = (
+            SubGoal(
+                sub_goal_id="sg-bare",
+                goal_id="goal-bare",
+                description="bare sub-goal",
+            ),
+        )
+        goal = _make_goal("goal-bare", sub_goals=sub_goals)
+        request = _make_request("req-goal-bare", "goal-bare")
+
+        report = loop.run_goal(request, goal)
+
+        assert report.status is GoalStatus.FAILED
+        assert report.completed_sub_goals == ()
+        assert report.failed_sub_goals == ("sg-bare",)
+        assert len(report.errors) >= 1
+        assert report.errors[0].error_code == "goal_sub_goal_failed"
 
     def test_workflow_backed_sub_goal_fails_closed_without_descriptor_lookup(self):
         """Workflow-backed sub-goals must not claim completion without execution."""
@@ -277,15 +310,17 @@ class TestGoalViewModelAndConsole:
 
     def test_goal_view_model_and_render(self):
         loop = _make_loop()
+        _register_skill(loop, "sk-view", name="shell_command")
         sub_goals = (
             SubGoal(
                 sub_goal_id="sg-v1",
                 goal_id="goal-v",
                 description="view sub-goal",
+                skill_id="sk-view",
             ),
         )
         goal = _make_goal("goal-v", sub_goals=sub_goals)
-        request = _make_request("req-gv", "goal-v")
+        request = _make_request("req-gv", "goal-v", input_context=_goal_input_context("goal-v"))
 
         report = loop.run_goal(request, goal)
         view = GoalSummaryView.from_report(report, priority="normal")

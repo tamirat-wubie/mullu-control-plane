@@ -1271,6 +1271,7 @@ class _GoalSubGoalExecutor:
                 subject_id=self._request.subject_id,
                 goal_id=self._request.goal_id,
                 skill_id=sub_goal.skill_id,
+                input_context=self._request.input_context,
             ))
             new_status = SubGoalStatus.COMPLETED if report.succeeded else SubGoalStatus.FAILED
         elif sub_goal.workflow_id is not None:
@@ -1278,8 +1279,8 @@ class _GoalSubGoalExecutor:
             # through an explicit registry or store lookup.
             new_status = SubGoalStatus.FAILED
         else:
-            # No skill or workflow — mark as completed (no-op sub-goal)
-            new_status = SubGoalStatus.COMPLETED
+            # Fail closed until bare sub-goals have an explicit executable handler.
+            new_status = SubGoalStatus.FAILED
 
         return SubGoal(
             sub_goal_id=sub_goal.sub_goal_id,
