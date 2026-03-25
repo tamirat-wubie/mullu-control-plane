@@ -14,7 +14,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import NoReturn
+from typing import Any, Mapping, NoReturn
 
 from .bootstrap import bootstrap_runtime
 from .config import AppConfig
@@ -22,10 +22,23 @@ from .console import (
     render_execution_summary,
     render_run_summary,
 )
-from .operator_loop import OperatorLoop, OperatorRequest
+from .operator_models import OperatorRequest
+from .operator_loop import OperatorLoop
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+
+_REQUEST_ALLOWED_KEYS = frozenset(
+    {
+        "request_id",
+        "subject_id",
+        "goal_id",
+        "template",
+        "bindings",
+    }
+)
 
 
 def _fatal(message: str) -> NoReturn:
@@ -60,6 +73,74 @@ def _resolve_bindings(request_data: dict) -> object:
     return merged
 
 
+def _required_text_field(
+    payload: Mapping[str, Any],
+    *,
+    field_name: str,
+    kind: str,
+    source_name: str,
+) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{kind} field '{field_name}' must be a non-empty string in {source_name}")
+    return value
+
+
+def _build_operator_request(
+    payload: Mapping[str, Any],
+    *,
+    source_name: str,
+) -> OperatorRequest:
+    if not isinstance(payload, Mapping):
+        raise ValueError(f"request payload must be an object in {source_name}")
+
+    unknown_keys = sorted(set(payload) - _REQUEST_ALLOWED_KEYS)
+    if unknown_keys:
+        joined = ", ".join(unknown_keys)
+        raise ValueError(f"unsupported request fields in {source_name}: {joined}")
+
+    template = payload.get("template")
+    if not isinstance(template, Mapping):
+        raise ValueError(f"request field 'template' must be an object in {source_name}")
+
+    if "bindings" not in payload:
+        raise ValueError(f"request field 'bindings' is required in {source_name}")
+
+    bindings = payload.get("bindings")
+    if not isinstance(bindings, Mapping):
+        raise ValueError(f"request field 'bindings' must be an object in {source_name}")
+
+    resolved_bindings = _resolve_bindings(dict(payload))
+    if not isinstance(resolved_bindings, Mapping):
+        raise ValueError(f"request field 'bindings' must be an object in {source_name}")
+
+    try:
+        return OperatorRequest(
+            request_id=_required_text_field(
+                payload,
+                field_name="request_id",
+                kind="request",
+                source_name=source_name,
+            ),
+            subject_id=_required_text_field(
+                payload,
+                field_name="subject_id",
+                kind="request",
+                source_name=source_name,
+            ),
+            goal_id=_required_text_field(
+                payload,
+                field_name="goal_id",
+                kind="request",
+                source_name=source_name,
+            ),
+            template=template,
+            bindings=resolved_bindings,
+        )
+    except RuntimeCoreInvariantError as exc:
+        raise ValueError(str(exc)) from exc
+
+
 def _resolve_config(args: argparse.Namespace) -> AppConfig:
     """Resolve config from --profile or --config, with profile taking precedence."""
     if hasattr(args, "profile") and args.profile:
@@ -80,13 +161,11 @@ def run_command(args: argparse.Namespace) -> int:
     loop = OperatorLoop(runtime=runtime)
 
     request_data = _load_request(args.request)
-    request = OperatorRequest(
-        request_id=request_data.get("request_id", "cli-request"),
-        subject_id=request_data.get("subject_id", "cli-operator"),
-        goal_id=request_data.get("goal_id", "cli-goal"),
-        template=request_data.get("template", {}),
-        bindings=_resolve_bindings(request_data),
-    )
+    request_source = "inline input" if args.request.lstrip().startswith(("{", "[")) else args.request
+    try:
+        request = _build_operator_request(request_data, source_name=request_source)
+    except ValueError as exc:
+        _fatal(str(exc))
 
     report = loop.run_step(request)
 

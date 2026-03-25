@@ -215,6 +215,32 @@ def test_cli_rejects_non_object_config_json(
     assert "config JSON root must be an object" in captured.err
 
 
+def test_cli_rejects_config_with_unknown_keys(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_file = tmp_path / "unknown-config.json"
+    config_file.write_text(
+        json.dumps(
+            {
+                "enabled_executor_routes": ["shell_command"],
+                "enabled_observer_routes": ["filesystem"],
+                "allowed_planning_classes": ["constraint"],
+                "unexpected_key": "drift",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--config", str(config_file), "status"])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "unknown config keys" in captured.err
+    assert str(config_file) in captured.err
+
+
 def test_cli_run_with_profile() -> None:
     request = json.dumps({
         "request_id": "prof-1",
@@ -246,3 +272,55 @@ def test_cli_run_with_example_file(tmp_path: Path) -> None:
     }), encoding="utf-8")
     exit_code = main(["run", str(request_file)])
     assert exit_code == 1
+
+
+def test_cli_rejects_request_with_unknown_top_level_fields(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    request = json.dumps(
+        {
+            "request_id": "req-unknown-1",
+            "subject_id": "operator-1",
+            "goal_id": "goal-1",
+            "template": {
+                "template_id": "tpl-1",
+                "action_type": "shell_command",
+                "command_argv": [sys.executable, "-c", "print('x')"],
+            },
+            "bindings": {},
+            "unexpected_field": True,
+        }
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["run", request])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "unsupported request fields" in captured.err
+    assert "unexpected_field" in captured.err
+
+
+def test_cli_rejects_request_missing_identity_fields(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    request = json.dumps(
+        {
+            "subject_id": "operator-1",
+            "goal_id": "goal-1",
+            "template": {
+                "template_id": "tpl-1",
+                "action_type": "shell_command",
+                "command_argv": [sys.executable, "-c", "print('x')"],
+            },
+            "bindings": {},
+        }
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["run", request])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "request field 'request_id' must be a non-empty string" in captured.err
+    assert "inline input" in captured.err

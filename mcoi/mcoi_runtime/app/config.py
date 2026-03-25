@@ -10,6 +10,22 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 
+_APP_CONFIG_KEYS = frozenset(
+    {
+        "allowed_planning_classes",
+        "enabled_executor_routes",
+        "enabled_observer_routes",
+        "autonomy_mode",
+    }
+)
+
+
+def _require_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
 def _require_text_tuple(value: Any, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, (tuple, list)):
         raise ValueError(f"{field_name} must be a sequence of strings")
@@ -45,10 +61,22 @@ class AppConfig:
             "enabled_observer_routes",
             _require_text_tuple(self.enabled_observer_routes, "enabled_observer_routes"),
         )
+        object.__setattr__(self, "autonomy_mode", _require_text(self.autonomy_mode, "autonomy_mode"))
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any] | None = None) -> AppConfig:
-        normalized = dict(values or {})
+        if values is None:
+            normalized: dict[str, Any] = {}
+        elif not isinstance(values, Mapping):
+            raise ValueError("config values must be a mapping")
+        else:
+            normalized = dict(values)
+
+        unknown_keys = sorted(set(normalized) - _APP_CONFIG_KEYS)
+        if unknown_keys:
+            joined = ", ".join(unknown_keys)
+            raise ValueError(f"unknown config keys: {joined}")
+
         return cls(
             allowed_planning_classes=tuple(
                 normalized.get("allowed_planning_classes", ("constraint",))
@@ -59,7 +87,5 @@ class AppConfig:
             enabled_observer_routes=tuple(
                 normalized.get("enabled_observer_routes", ("filesystem", "process"))
             ),
-            autonomy_mode=str(
-                normalized.get("autonomy_mode", "bounded_autonomous")
-            ),
+            autonomy_mode=normalized.get("autonomy_mode", "bounded_autonomous"),
         )

@@ -98,6 +98,9 @@ jobs:
       - name: Validate schemas
         run: python scripts/validate_schemas.py
 
+      - name: Validate shipped artifacts
+        run: python scripts/validate_artifacts.py
+
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
@@ -124,10 +127,14 @@ jobs:
       - name: Contract-schema parity check
         run: python scripts/validate_schemas.py --strict
 
+      - name: Artifact validation check
+        run: python scripts/validate_artifacts.py --strict
+
       - name: Print summary
         run: |
           echo "=== Build Verification Summary ==="
           echo "Python: OK"
           echo "Rust: OK"
           echo "Schemas: OK"
+          echo "Artifacts: OK"
           echo "=================================="

@@ -3,10 +3,9 @@
   "subject_id": "operator-1",
   "goal_id": "goal-restart-service",
   "template": {
+    "template_id": "pilot-approval-gated-command",
     "action_type": "shell_command",
-    "command": "systemctl restart nginx"
+    "command_argv": ["systemctl", "restart", "nginx"]
   },
-  "bindings": {
-    "action_type": "shell_command"
-  }
+  "bindings": {}
 }

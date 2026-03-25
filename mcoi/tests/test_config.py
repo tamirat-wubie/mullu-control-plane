@@ -6,6 +6,8 @@ Invariants: configuration loads only from passed values and has explicit default
 
 from __future__ import annotations
 
+import pytest
+
 from mcoi_runtime.app.config import AppConfig
 
 
@@ -29,3 +31,13 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
     assert config.allowed_planning_classes == ("constraint", "reference")
     assert config.enabled_executor_routes == ("shell_command",)
     assert config.enabled_observer_routes == ("filesystem",)
+
+
+def test_app_config_rejects_unknown_keys() -> None:
+    with pytest.raises(ValueError, match="unknown config keys"):
+        AppConfig.from_mapping({"unknown_key": "value"})
+
+
+def test_app_config_rejects_non_text_autonomy_mode() -> None:
+    with pytest.raises(ValueError, match="autonomy_mode"):
+        AppConfig.from_mapping({"autonomy_mode": 7})
