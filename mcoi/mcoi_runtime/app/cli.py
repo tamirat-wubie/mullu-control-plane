@@ -14,6 +14,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import NoReturn
 
 from .bootstrap import bootstrap_runtime
 from .config import AppConfig
@@ -25,6 +26,12 @@ from .operator_loop import OperatorLoop, OperatorRequest
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
+
+
+def _fatal(message: str) -> NoReturn:
+    """Print a CLI error and terminate deterministically."""
+    print(f"error: {message}", file=sys.stderr)
+    raise SystemExit(1)
 
 
 def _runtime_bindings() -> dict[str, str]:
@@ -60,8 +67,7 @@ def _resolve_config(args: argparse.Namespace) -> AppConfig:
             result = load_profile(args.profile)
             return result.config
         except ProfileLoadError as exc:
-            print(f"error: {exc}", file=sys.stderr)
-            sys.exit(1)
+            _fatal(str(exc))
     if hasattr(args, "config") and args.config:
         return _load_config(args.config)
     return AppConfig()
@@ -130,23 +136,44 @@ def packs_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_json_object(*, content: str, kind: str, source_name: str) -> dict:
+    """Load a JSON object and fail closed on malformed or non-object input."""
+    try:
+        payload = json.loads(content)
+    except json.JSONDecodeError as exc:
+        _fatal(f"invalid {kind} JSON in {source_name}: {exc.msg}")
+    if not isinstance(payload, dict):
+        _fatal(f"{kind} JSON root must be an object in {source_name}")
+    return payload
+
+
 def _load_config(path: str) -> AppConfig:
     config_path = Path(path)
     if not config_path.exists():
-        print(f"error: config file not found: {path}", file=sys.stderr)
-        sys.exit(1)
-    data = json.loads(config_path.read_text(encoding="utf-8"))
-    return AppConfig.from_mapping(data)
+        _fatal(f"config file not found: {path}")
+    try:
+        content = config_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        _fatal(f"cannot read config file {path}: {exc}")
+    data = _load_json_object(content=content, kind="config", source_name=path)
+    try:
+        return AppConfig.from_mapping(data)
+    except (TypeError, ValueError) as exc:
+        _fatal(f"invalid config file {path}: {exc}")
 
 
 def _load_request(source: str) -> dict:
-    if source.startswith("{"):
-        return json.loads(source)
+    stripped_source = source.lstrip()
+    if stripped_source.startswith("{") or stripped_source.startswith("["):
+        return _load_json_object(content=source, kind="request", source_name="inline input")
     path = Path(source)
     if not path.exists():
-        print(f"error: request file not found: {source}", file=sys.stderr)
-        sys.exit(1)
-    return json.loads(path.read_text(encoding="utf-8"))
+        _fatal(f"request file not found: {source}")
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        _fatal(f"cannot read request file {source}: {exc}")
+    return _load_json_object(content=content, kind="request", source_name=source)
 
 
 def build_parser() -> argparse.ArgumentParser:

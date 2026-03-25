@@ -205,6 +205,40 @@ def test_cli_shipped_examples_run_portably(capsys: pytest.CaptureFixture[str]) -
         assert "validation_error" not in output
 
 
+def test_cli_rejects_malformed_inline_request_json(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["run", '{"request_id": "bad"'])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "invalid request JSON in inline input" in captured.err
+
+
+def test_cli_rejects_non_object_inline_request_json(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["run", '["not", "an", "object"]'])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "request JSON root must be an object" in captured.err
+
+
+def test_cli_rejects_malformed_request_file_json(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    request_file = tmp_path / "bad-request.json"
+    request_file.write_text('{"request_id": "bad"', encoding="utf-8")
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["run", str(request_file)])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "invalid request JSON" in captured.err
+    assert str(request_file) in captured.err
+
+
 def test_cli_no_command_returns_zero() -> None:
     exit_code = main([])
     assert exit_code == 0
