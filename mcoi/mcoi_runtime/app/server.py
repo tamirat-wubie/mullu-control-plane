@@ -1890,7 +1890,136 @@ def production_readiness():
     return {
         "ready": all_ready,
         "checks": checks,
-        "version": "1.2.0",
+        "version": "1.3.0",
         "subsystems": len(checks),
         "governed": True,
     }
+
+
+# ═══ Phase 215A — Agent Chain Endpoint ═══
+
+from mcoi_runtime.core.agent_chain import AgentChainEngine, ChainStep
+
+agent_chain = AgentChainEngine(
+    clock=_clock,
+    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
+)
+
+
+class ChainStepRequest(BaseModel):
+    step_id: str
+    name: str
+    prompt_template: str
+    on_failure: str = "halt"
+
+
+class ChainRequest(BaseModel):
+    steps: list[ChainStepRequest]
+    initial_input: str = ""
+    tenant_id: str = ""
+
+
+@app.post("/api/v1/chain/execute")
+def execute_chain(req: ChainRequest):
+    """Execute a multi-agent chain."""
+    metrics.inc("requests_governed")
+    steps = [ChainStep(step_id=s.step_id, name=s.name, prompt_template=s.prompt_template, on_failure=s.on_failure) for s in req.steps]
+    result = agent_chain.execute(steps, initial_input=req.initial_input)
+    event_bus.publish("chain.completed" if result.succeeded else "chain.failed",
+                      tenant_id=req.tenant_id, source="agent_chain",
+                      payload={"chain_id": result.chain_id, "succeeded": result.succeeded})
+    return {
+        "chain_id": result.chain_id, "succeeded": result.succeeded,
+        "steps": [{"id": s.step_id, "name": s.name, "succeeded": s.succeeded, "cost": s.cost} for s in result.steps],
+        "final_output": result.final_output, "total_cost": result.total_cost,
+        "error": result.error, "governed": True,
+    }
+
+
+@app.get("/api/v1/chain/history")
+def chain_history(limit: int = 50):
+    """Agent chain execution history."""
+    return {"chains": [
+        {"id": c.chain_id, "succeeded": c.succeeded, "steps": len(c.steps), "cost": c.total_cost}
+        for c in agent_chain.history(limit=limit)
+    ], "summary": agent_chain.summary()}
+
+
+# ═══ Phase 215B — Monitoring Endpoint ═══
+
+from mcoi_runtime.core.monitoring import MonitoringEngine
+
+monitor = MonitoringEngine(clock=_clock)
+
+
+@app.get("/api/v1/monitor")
+def monitoring_dashboard():
+    """Real-time monitoring vitals."""
+    vitals = monitor.compute_vitals(
+        active_tenants=tenant_budget_mgr.tenant_count(),
+        llm_calls=llm_bridge.invocation_count,
+        total_cost=llm_bridge.total_cost,
+        health_score=health_agg.compute().overall_score,
+        circuit_state=llm_circuit.state.value,
+        event_count=event_bus.event_count,
+    )
+    return {
+        "uptime_seconds": vitals.uptime_seconds,
+        "requests_per_minute": vitals.requests_per_minute,
+        "errors_per_minute": vitals.errors_per_minute,
+        "error_rate_pct": vitals.error_rate_pct,
+        "active_tenants": vitals.active_tenants,
+        "llm_calls_total": vitals.llm_calls_total,
+        "total_cost": vitals.total_cost,
+        "health_score": vitals.health_score,
+        "circuit_breaker": vitals.circuit_breaker_state,
+        "events": vitals.event_bus_events,
+        "captured_at": vitals.captured_at,
+    }
+
+
+# ═══ Phase 215C — Task Queue Endpoint ═══
+
+from mcoi_runtime.core.task_queue import TaskQueue
+
+task_queue = TaskQueue(clock=_clock)
+
+
+class QueueSubmitRequest(BaseModel):
+    task_id: str
+    payload: dict[str, Any] = {}
+    priority: int = 0
+    tenant_id: str = ""
+
+
+@app.post("/api/v1/queue/submit")
+def queue_submit(req: QueueSubmitRequest):
+    """Submit a task to the async queue."""
+    metrics.inc("requests_governed")
+    task = task_queue.submit(req.task_id, req.payload, priority=req.priority, tenant_id=req.tenant_id)
+    return {"task_id": task.task_id, "priority": task.priority, "queued_at": task.submitted_at}
+
+
+@app.post("/api/v1/queue/process")
+def queue_process():
+    """Process one task from the queue."""
+    metrics.inc("requests_governed")
+    result = task_queue.process_one(lambda payload: {"processed": True, **payload})
+    if result is None:
+        return {"processed": False, "reason": "queue empty"}
+    return {"processed": True, "task_id": result.task_id, "succeeded": result.succeeded, "output": result.output}
+
+
+@app.get("/api/v1/queue/status")
+def queue_status():
+    """Task queue status."""
+    return task_queue.summary()
+
+
+@app.get("/api/v1/queue/result/{task_id}")
+def queue_result(task_id: str):
+    """Get task result."""
+    result = task_queue.get_result(task_id)
+    if result is None:
+        raise HTTPException(404, detail="task result not found")
+    return {"task_id": result.task_id, "output": result.output, "succeeded": result.succeeded}
