@@ -20,6 +20,7 @@ from mcoi_runtime.contracts.workflow import (
 )
 from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.errors import Recoverability, execution_error
+from mcoi_runtime.app.governed_execution import governed_operator_dispatch
 from mcoi_runtime.core.template_validator import TemplateValidationError
 from mcoi_runtime.persistence.errors import PersistenceError
 
@@ -56,14 +57,21 @@ class _GovernedStepExecutor:
             )
 
         try:
-            result = self._runtime.dispatcher.dispatch(
-                DispatchRequest(
-                    goal_id=step_id,
-                    route=action_type,
-                    template=template,
-                    bindings=bindings,
+            if hasattr(self._runtime, 'governed_dispatcher') and self._runtime.governed_dispatcher is not None:
+                result = governed_operator_dispatch(
+                    self._runtime.governed_dispatcher,
+                    DispatchRequest(goal_id=step_id, route=action_type, template=template, bindings=bindings),
+                    actor_id="operator_skill",
                 )
-            )
+            else:
+                result = self._runtime.dispatcher.dispatch(
+                    DispatchRequest(
+                        goal_id=step_id,
+                        route=action_type,
+                        template=template,
+                        bindings=bindings,
+                    )
+                )
         except ExecutionAdapterError as exc:
             return SkillStepOutcome(
                 step_id=step_id,

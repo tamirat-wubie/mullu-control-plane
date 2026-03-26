@@ -30,6 +30,7 @@ from mcoi_runtime.core.errors import (
 )
 from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceState
+from mcoi_runtime.app.governed_execution import governed_operator_dispatch
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult
 from mcoi_runtime.core.policy_engine import PolicyInput
@@ -174,14 +175,26 @@ class OperatorLoop:
                 runtime_state_fields=runtime_state_fields,
             )
 
-        execution_result = self.runtime.dispatcher.dispatch(
-            DispatchRequest(
-                goal_id=request.goal_id,
-                route=str(request.template.get("action_type", "")),
-                template=request.template,
-                bindings=request.bindings,
+        if hasattr(self.runtime, 'governed_dispatcher') and self.runtime.governed_dispatcher is not None:
+            execution_result = governed_operator_dispatch(
+                self.runtime.governed_dispatcher,
+                DispatchRequest(
+                    goal_id=request.goal_id,
+                    route=str(request.template.get("action_type", "")),
+                    template=request.template,
+                    bindings=request.bindings,
+                ),
+                actor_id="operator_main",
             )
-        )
+        else:
+            execution_result = self.runtime.dispatcher.dispatch(
+                DispatchRequest(
+                    goal_id=request.goal_id,
+                    route=str(request.template.get("action_type", "")),
+                    template=request.template,
+                    bindings=request.bindings,
+                )
+            )
         verification_closure = self.runtime.verification_engine.evaluate(
             verification_result=request.verification_result,
             execution_result=execution_result,
