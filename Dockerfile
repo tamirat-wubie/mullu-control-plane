@@ -6,7 +6,7 @@ COPY mcoi/ ./mcoi/
 COPY scripts/ ./scripts/
 
 RUN pip install --no-cache-dir -e mcoi[dev] && \
-    pip install --no-cache-dir fastapi uvicorn
+    pip install --no-cache-dir fastapi uvicorn psycopg2-binary anthropic openai
 
 ENV MULLU_ENV=pilot
 ENV PYTHONPATH=/app/mcoi
