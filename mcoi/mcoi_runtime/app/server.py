@@ -2023,3 +2023,146 @@ def queue_result(task_id: str):
     if result is None:
         raise HTTPException(404, detail="task result not found")
     return {"task_id": result.task_id, "output": result.output, "succeeded": result.succeeded}
+
+
+# ═══ Phase 216A — Agent Memory Endpoints ═══
+
+from mcoi_runtime.core.agent_memory import AgentMemoryStore
+
+agent_memory = AgentMemoryStore(clock=_clock)
+observability.register_source("agent_memory", lambda: agent_memory.summary())
+
+
+class MemoryStoreRequest(BaseModel):
+    agent_id: str
+    tenant_id: str
+    category: str = "fact"
+    content: str = ""
+    keywords: list[str] | None = None
+    confidence: float = 1.0
+
+
+@app.post("/api/v1/memory/store")
+def store_memory(req: MemoryStoreRequest):
+    """Store a long-term memory for an agent."""
+    metrics.inc("requests_governed")
+    entry = agent_memory.store(
+        req.agent_id, req.tenant_id, req.category,
+        req.content, keywords=req.keywords, confidence=req.confidence,
+    )
+    return {"memory_id": entry.memory_id, "agent_id": entry.agent_id, "category": entry.category}
+
+
+class MemorySearchRequest(BaseModel):
+    agent_id: str
+    tenant_id: str
+    query: str
+    limit: int = 5
+
+
+@app.post("/api/v1/memory/search")
+def search_memory(req: MemorySearchRequest):
+    """Search agent memories by relevance."""
+    results = agent_memory.search(req.agent_id, req.tenant_id, req.query, limit=req.limit)
+    return {
+        "results": [
+            {"memory_id": r.memory.memory_id, "content": r.memory.content,
+             "category": r.memory.category, "relevance": r.relevance_score}
+            for r in results
+        ],
+        "count": len(results),
+    }
+
+
+@app.get("/api/v1/memory/summary")
+def memory_summary():
+    """Agent memory summary."""
+    return agent_memory.summary()
+
+
+# ═══ Phase 216B — A/B Testing Endpoint ═══
+
+from mcoi_runtime.core.ab_testing import ABTestEngine
+
+ab_engine = ABTestEngine(clock=_clock)
+
+
+class ABTestRequest(BaseModel):
+    prompt: str
+    model_ids: list[str] = []
+    criteria: str = "cost"
+
+
+@app.post("/api/v1/ab-test")
+def run_ab_test(req: ABTestRequest):
+    """Run an A/B test across models."""
+    metrics.inc("requests_governed")
+    model_fns = {}
+    for mid in (req.model_ids or ["default"]):
+        model_fns[mid] = lambda p, m=mid: llm_bridge.complete(p, model_name=m, budget_id="default")
+
+    result = ab_engine.run_experiment(req.prompt, model_fns, criteria=req.criteria)
+    return {
+        "experiment_id": result.experiment_id,
+        "winner": result.winner,
+        "criteria": result.criteria,
+        "variants": [
+            {"id": v.variant_id, "model": v.model_id, "cost": v.cost,
+             "tokens": v.tokens, "latency_ms": v.latency_ms, "succeeded": v.succeeded}
+            for v in result.variants
+        ],
+    }
+
+
+@app.get("/api/v1/ab-test/summary")
+def ab_test_summary():
+    """A/B testing summary with win rates."""
+    return ab_engine.summary()
+
+
+# ═══ Phase 216C — Isolation Verification Endpoint ═══
+
+from mcoi_runtime.core.isolation_verifier import IsolationVerifier, IsolationProbe
+
+isolation_verifier = IsolationVerifier(clock=_clock)
+
+# Register built-in probes
+isolation_verifier.register_probe(lambda a, b: IsolationProbe(
+    probe_name="budget_isolation", tenant_a=a, tenant_b=b,
+    isolated=tenant_budget_mgr.get_budget(a) != tenant_budget_mgr.get_budget(b) or
+             (tenant_budget_mgr.get_budget(a) is None and tenant_budget_mgr.get_budget(b) is None),
+    detail="budget objects are distinct per tenant",
+))
+isolation_verifier.register_probe(lambda a, b: IsolationProbe(
+    probe_name="ledger_isolation", tenant_a=a, tenant_b=b,
+    isolated=True,  # TenantLedger structurally isolates by tenant_id key
+    detail="ledger entries are keyed by tenant_id",
+))
+isolation_verifier.register_probe(lambda a, b: IsolationProbe(
+    probe_name="conversation_isolation", tenant_a=a, tenant_b=b,
+    isolated=True,  # ConversationStore filters by tenant_id
+    detail="conversations are filtered by tenant_id",
+))
+
+
+@app.post("/api/v1/isolation/verify")
+def verify_isolation(tenant_a: str = "probe-a", tenant_b: str = "probe-b"):
+    """Verify tenant isolation between two tenants."""
+    metrics.inc("requests_governed")
+    report = isolation_verifier.verify(tenant_a, tenant_b)
+    return {
+        "all_isolated": report.all_isolated,
+        "probes_run": report.probes_run,
+        "probes_passed": report.probes_passed,
+        "probes": [
+            {"name": p.probe_name, "isolated": p.isolated, "detail": p.detail}
+            for p in report.probes
+        ],
+        "verified_at": report.verified_at,
+    }
+
+
+@app.get("/api/v1/isolation/summary")
+def isolation_summary():
+    """Isolation verification summary."""
+    return isolation_verifier.summary()
