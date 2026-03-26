@@ -20,6 +20,11 @@ from mcoi_runtime.app.streaming import StreamingAdapter
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.core.live_path_certification import LivePathCertifier
 from mcoi_runtime.core.certification_daemon import CertificationConfig, CertificationDaemon
+from mcoi_runtime.core.tenant_budget import TenantBudgetManager, TenantBudgetPolicy
+from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine
+from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
+from mcoi_runtime.core.audit_trail import AuditTrail
+from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 from mcoi_runtime.persistence.postgres_store import InMemoryStore, create_store
 
 import hashlib
@@ -82,7 +87,22 @@ cert_daemon = CertificationDaemon(
     ),
 )
 
-app = FastAPI(title="Mullu Platform", version="0.2.0", description="Governed AI Operating System")
+# Phase 202A: Tenant budget manager
+tenant_budget_mgr = TenantBudgetManager(clock=_clock)
+
+# Phase 202B: Governance metrics engine
+metrics = GovernanceMetricsEngine(clock=_clock)
+
+# Phase 202C: Rate limiter
+rate_limiter = RateLimiter(default_config=RateLimitConfig(max_tokens=60, refill_rate=1.0))
+
+# Phase 202D: Audit trail
+audit_trail = AuditTrail(clock=_clock)
+
+# Phase 201D: Tenant-scoped ledger
+tenant_ledger = TenantLedger(clock=_clock)
+
+app = FastAPI(title="Mullu Platform", version="0.3.0", description="Governed AI Operating System")
 
 
 class ExecuteRequest(BaseModel):
@@ -302,3 +322,136 @@ def bootstrap_info():
             "max_tokens_per_call": llm_bootstrap_result.config.max_tokens_per_call,
         },
     }
+
+
+# ═══ Phase 202A — Tenant Budget & Ledger Endpoints ═══
+
+from dataclasses import asdict as _asdict
+from mcoi_runtime.core.tenant_budget import TenantBudgetReport as _TBR
+
+def _budget_report(r: _TBR) -> dict[str, Any]:
+    return {
+        "tenant_id": r.tenant_id, "budget_id": r.budget_id, "max_cost": r.max_cost,
+        "spent": r.spent, "remaining": r.remaining, "calls_made": r.calls_made,
+        "max_calls": r.max_calls, "exhausted": r.exhausted, "enabled": r.enabled,
+        "utilization_pct": r.utilization_pct,
+    }
+
+
+class TenantBudgetRequest(BaseModel):
+    tenant_id: str
+    max_cost: float = 10.0
+    max_calls: int = 1000
+
+
+@app.post("/api/v1/tenant/budget")
+def create_tenant_budget(req: TenantBudgetRequest):
+    """Create or update a tenant's budget policy."""
+    tenant_budget_mgr.set_policy(TenantBudgetPolicy(
+        tenant_id=req.tenant_id, max_cost=req.max_cost, max_calls=req.max_calls,
+    ))
+    budget = tenant_budget_mgr.ensure_budget(req.tenant_id)
+    audit_trail.record(
+        action="tenant.budget.create", actor_id="system",
+        tenant_id=req.tenant_id, target=req.tenant_id, outcome="success",
+    )
+    metrics.inc("requests_governed")
+    return _budget_report(tenant_budget_mgr.report(req.tenant_id))
+
+
+@app.get("/api/v1/tenant/{tenant_id}/budget")
+def get_tenant_budget(tenant_id: str):
+    """Get a tenant's budget report."""
+    metrics.inc("requests_governed")
+    return _budget_report(tenant_budget_mgr.report(tenant_id))
+
+
+@app.get("/api/v1/tenant/{tenant_id}/ledger")
+def get_tenant_ledger(tenant_id: str, entry_type: str | None = None, limit: int = 50):
+    """Get a tenant's scoped ledger entries."""
+    metrics.inc("requests_governed")
+    entries = tenant_ledger.query(tenant_id, entry_type=entry_type, limit=limit)
+    return {
+        "entries": [{"entry_id": e.entry_id, "type": e.entry_type, "actor": e.actor_id,
+                      "content": e.content, "at": e.recorded_at} for e in entries],
+        "count": len(entries),
+        "tenant_id": tenant_id,
+    }
+
+
+@app.get("/api/v1/tenant/{tenant_id}/summary")
+def get_tenant_summary(tenant_id: str):
+    """Get a tenant's ledger summary."""
+    metrics.inc("requests_governed")
+    summary = tenant_ledger.summary(tenant_id)
+    return {
+        "tenant_id": summary.tenant_id,
+        "total_entries": summary.total_entries,
+        "entry_types": summary.entry_types,
+        "total_cost": summary.total_cost,
+    }
+
+
+@app.get("/api/v1/tenants")
+def list_tenants():
+    """List all tenants with budgets and ledger activity."""
+    metrics.inc("requests_governed")
+    return {
+        "tenants": tenant_budget_mgr.all_reports(),
+        "ledger_tenants": tenant_ledger.all_tenant_ids(),
+        "total_spent": tenant_budget_mgr.total_spent(),
+    }
+
+
+# ═══ Phase 202B — Governance Metrics Endpoint ═══
+
+@app.get("/api/v1/metrics")
+def get_metrics():
+    """Governance metrics — counters, gauges, histograms."""
+    return metrics.to_dict()
+
+
+# ═══ Phase 202C — Rate Limiter Status ═══
+
+@app.get("/api/v1/rate-limit/status")
+def rate_limit_status():
+    """Rate limiter status."""
+    return rate_limiter.status()
+
+
+# ═══ Phase 202D — Audit Trail Endpoints ═══
+
+@app.get("/api/v1/audit")
+def get_audit_trail(
+    tenant_id: str | None = None,
+    action: str | None = None,
+    outcome: str | None = None,
+    limit: int = 50,
+):
+    """Query the audit trail with optional filters."""
+    metrics.inc("requests_governed")
+    entries = audit_trail.query(
+        tenant_id=tenant_id, action=action, outcome=outcome, limit=limit,
+    )
+    return {
+        "entries": [
+            {"id": e.entry_id, "action": e.action, "actor": e.actor_id,
+             "tenant": e.tenant_id, "target": e.target, "outcome": e.outcome,
+             "at": e.recorded_at}
+            for e in entries
+        ],
+        "count": len(entries),
+    }
+
+
+@app.get("/api/v1/audit/verify")
+def verify_audit_chain():
+    """Verify audit trail hash-chain integrity."""
+    valid, checked = audit_trail.verify_chain()
+    return {"valid": valid, "entries_checked": checked, "last_hash": audit_trail.last_hash[:16]}
+
+
+@app.get("/api/v1/audit/summary")
+def audit_summary():
+    """Audit trail summary."""
+    return audit_trail.summary()
