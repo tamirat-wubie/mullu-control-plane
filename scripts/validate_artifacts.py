@@ -188,6 +188,7 @@ OPERATIONAL_DOCUMENT_EXPECTATIONS: dict[str, OperationalDocumentExpectation] = {
             "cargo test",
             "scripts/validate_schemas.py --strict",
             "scripts/validate_artifacts.py --strict",
+            "scripts/validate_release_status.py --strict",
         ),
         forbidden_literals=(
             "352+ tests",
@@ -205,6 +206,7 @@ OPERATIONAL_DOCUMENT_EXPECTATIONS: dict[str, OperationalDocumentExpectation] = {
             "PILOT_CHECKLIST_v0.1.md",
             "PILOT_OPERATIONS_GUIDE_v0.1.md",
             "scripts/validate_schemas.py --strict",
+            "scripts/validate_release_status.py --strict",
             "pytest -q",
             "cargo test",
         ),

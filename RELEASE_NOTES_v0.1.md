@@ -47,6 +47,7 @@ architecture.
 - **MCOI Runtime:** Python runtime implementation
 - **Architecture docs:** governed platform, runtime, and pilot documentation under `docs/`
 - **JSON schemas:** canonical contract schemas validated by `scripts/validate_schemas.py --strict`
+- **Release gate:** deterministic summary derived by `scripts/validate_release_status.py --strict`
 
 ## Test Coverage
 

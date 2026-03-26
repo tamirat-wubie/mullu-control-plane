@@ -93,7 +93,8 @@ readonly-only
         strict=True,
     )
 
-    assert len(errors) == 2
+    assert len(errors) == 3
+    assert any("missing required literals" in error and "scripts/validate_release_status.py --strict" in error for error in errors)
     assert any("contains stale literals" in error for error in errors)
     assert any("missing built-in profiles" in error and "pilot-prod" in error for error in errors)
 

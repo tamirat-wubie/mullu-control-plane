@@ -101,6 +101,9 @@ jobs:
       - name: Validate shipped artifacts
         run: python scripts/validate_artifacts.py
 
+      - name: Validate release status
+        run: python scripts/validate_release_status.py
+
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
@@ -130,6 +133,9 @@ jobs:
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict
 
+      - name: Release status check
+        run: python scripts/validate_release_status.py --strict
+
       - name: Print summary
         run: |
           echo "=== Build Verification Summary ==="
@@ -137,4 +143,5 @@ jobs:
           echo "Rust: OK"
           echo "Schemas: OK"
           echo "Artifacts: OK"
+          echo "Release status: OK"
           echo "=================================="
