@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  # PostgreSQL production database
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mullu
+      POSTGRES_USER: mullu
+      POSTGRES_PASSWORD: mullu_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mullu -d mullu"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Mullu Platform API server
+  mullu:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DB_BACKEND: memory  # Use 'postgresql' when psycopg2 wired
+      MULLU_DB_URL: "postgresql://mullu:mullu_dev_password@postgres:5432/mullu"
+      MULLU_LLM_BACKEND: stub
+      MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
+      MULLU_LLM_BUDGET_MAX_COST: "100.0"
+      MULLU_LLM_BUDGET_MAX_CALLS: "10000"
+      # Set these to enable real LLM backends:
+      # ANTHROPIC_API_KEY: ""
+      # OPENAI_API_KEY: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pgdata:
