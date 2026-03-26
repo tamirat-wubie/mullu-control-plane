@@ -875,3 +875,101 @@ def system_snapshot():
         "rate_limiter": rate_limiter.status(),
         "captured_at": _clock(),
     }
+
+
+# ═══ Phase 207A — Config Update API ═══
+
+class ConfigUpdateRequest(BaseModel):
+    changes: dict[str, Any]
+    applied_by: str = "api"
+    description: str = ""
+
+
+@app.post("/api/v1/config/update")
+def update_config(req: ConfigUpdateRequest):
+    """Hot-reload configuration via REST API."""
+    metrics.inc("requests_governed")
+    result = config_manager.update(
+        req.changes, applied_by=req.applied_by, description=req.description,
+    )
+    audit_trail.record(
+        action="config.update", actor_id=req.applied_by,
+        tenant_id="system", target="config",
+        outcome="success" if result.success else "denied",
+        detail={"version": result.version, "changes": list(req.changes.keys())},
+    )
+    event_bus.publish(
+        "config.updated" if result.success else "config.rejected",
+        source="config_manager",
+        payload={"version": result.version, "success": result.success},
+    )
+    return {
+        "success": result.success,
+        "version": result.version,
+        "previous_version": result.previous_version,
+        "error": result.error,
+    }
+
+
+class ConfigRollbackRequest(BaseModel):
+    to_version: int
+    applied_by: str = "api"
+
+
+@app.post("/api/v1/config/rollback")
+def rollback_config(req: ConfigRollbackRequest):
+    """Rollback configuration to a previous version."""
+    metrics.inc("requests_governed")
+    result = config_manager.rollback(req.to_version, applied_by=req.applied_by)
+    audit_trail.record(
+        action="config.rollback", actor_id=req.applied_by,
+        tenant_id="system", target="config",
+        outcome="success" if result.success else "denied",
+        detail={"to_version": req.to_version},
+    )
+    return {
+        "success": result.success,
+        "version": result.version,
+        "error": result.error,
+    }
+
+
+# ═══ Phase 207B — Governance Guards Info ═══
+
+@app.get("/api/v1/guards")
+def list_guards():
+    """List governance guard chain."""
+    from mcoi_runtime.core.governance_guard import (
+        GovernanceGuardChain, create_rate_limit_guard,
+        create_budget_guard, create_tenant_guard,
+    )
+    chain = GovernanceGuardChain()
+    chain.add(create_tenant_guard())
+    chain.add(create_rate_limit_guard(rate_limiter))
+    chain.add(create_budget_guard(tenant_budget_mgr))
+    return {
+        "guards": chain.guard_names(),
+        "count": chain.guard_count,
+    }
+
+
+# ═══ Phase 207C — Capabilities Info ═══
+
+@app.get("/api/v1/capabilities")
+def list_capabilities():
+    """List available agent capabilities."""
+    from mcoi_runtime.core.agent_protocol import AgentCapability
+    return {
+        "capabilities": [
+            {"id": c.value, "name": c.name}
+            for c in AgentCapability
+        ],
+    }
+
+
+# ═══ Phase 207D — Replay Info ═══
+
+@app.get("/api/v1/replay/traces")
+def list_traces(limit: int = 50):
+    """Execution replay traces (placeholder — recorder not wired yet)."""
+    return {"traces": [], "count": 0}
