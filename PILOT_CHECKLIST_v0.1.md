@@ -2,15 +2,17 @@
 
 ## Pre-flight
 
-- [ ] All 556+ Python tests pass
-- [ ] All 21 Rust tests pass
+- [ ] All Python tests pass (`pytest -q`)
+- [ ] All Rust tests pass (`cargo test`)
 - [ ] Config profile matches pilot workflow requirements
 - [ ] Autonomy mode is explicitly set in config
-- [ ] Example request files are valid JSON
+- [ ] Example request files are valid JSON and pass `scripts/validate_artifacts.py --strict`
 
 ## Per-pilot verification
 
 ### Pilot 1: Approval-Gated Command
+- [ ] Config witness: `examples/pilots/approval_gated_command/config.json`
+- [ ] Request witness: `examples/pilots/approval_gated_command/request.json`
 - [ ] Autonomy mode is `approval_required`
 - [ ] Execution blocked without approval artifact
 - [ ] Approval email generated with correlation_id
@@ -20,6 +22,8 @@
 - [ ] Console renders autonomy mode
 
 ### Pilot 2: Document-to-Action
+- [ ] Config witness: `examples/pilots/document_to_action/config.json`
+- [ ] Input witness: `examples/pilots/document_to_action/input_document.json`
 - [ ] Autonomy mode is `bounded_autonomous`
 - [ ] Document fingerprint is deterministic
 - [ ] All expected fields extracted
@@ -29,6 +33,7 @@
 - [ ] Completion notice carries execution_id and skill_id
 
 ### Pilot 3: Failure-Escalation
+- [ ] Config witness: `examples/pilots/failure_escalation/config.json`
 - [ ] Autonomy mode is `bounded_autonomous`
 - [ ] Skill failure produces structured error
 - [ ] Confidence decreases after failure
@@ -41,6 +46,7 @@
 - [ ] No silent failures in any pilot
 - [ ] All structured errors have error_code, family, source_plane
 - [ ] All reports have autonomy_mode populated
+- [ ] Pilot witnesses remain aligned with `PILOT_WORKFLOWS_v0.1.md`
 - [ ] Known limitations reviewed and accepted
 
 ## Known acceptable limitations (v0.1)

@@ -33,7 +33,7 @@ architecture.
 ### Operator Tooling
 - **CLI:** `mcoi run`, `mcoi status`, `mcoi profiles`, `mcoi packs`
 - **Operator console:** structured run reports with view models
-- **Configuration profiles:** local-dev, safe-readonly, operator-approved, sandboxed
+- **Configuration profiles:** local-dev, safe-readonly, operator-approved, sandboxed, pilot-prod
 - **Policy packs:** declarative rule sets for runtime governance
 
 ### Persistence
@@ -45,13 +45,13 @@ architecture.
 ### Platform Components
 - **MAF Core:** Rust type definitions for the Mullu Agentic Framework
 - **MCOI Runtime:** Python runtime implementation
-- **Architecture docs:** 18 documents covering all planes and subsystems
-- **JSON schemas:** 16 schemas for contracts, traces, policies, and connectors
+- **Architecture docs:** governed platform, runtime, and pilot documentation under `docs/`
+- **JSON schemas:** canonical contract schemas validated by `scripts/validate_schemas.py --strict`
 
 ## Test Coverage
 
-- **Python:** 352 tests
-- **Rust:** 21 tests
+- **Python:** validated by the full `pytest -q` suite
+- **Rust:** validated by `cargo test`
 
 ## Breaking Changes
 
@@ -70,4 +70,7 @@ and what is not yet covered.
 ## Getting Started
 
 See [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) for installation, CLI usage,
-and configuration.
+and configuration. See [PILOT_WORKFLOWS_v0.1.md](PILOT_WORKFLOWS_v0.1.md),
+[PILOT_CHECKLIST_v0.1.md](PILOT_CHECKLIST_v0.1.md), and
+[PILOT_OPERATIONS_GUIDE_v0.1.md](PILOT_OPERATIONS_GUIDE_v0.1.md) for controlled
+pilot execution guidance.

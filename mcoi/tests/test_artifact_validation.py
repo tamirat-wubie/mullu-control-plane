@@ -47,6 +47,13 @@ def test_validate_documented_artifact_references_strictly() -> None:
     assert len(errors) == 0
 
 
+def test_validate_operational_documents_strictly() -> None:
+    errors = validate_artifacts.validate_operational_documents(strict=True)
+
+    assert errors == []
+    assert len(errors) == 0
+
+
 def test_document_reference_text_rejects_ungoverned_paths() -> None:
     errors = validate_artifacts.validate_document_artifact_reference_text(
         document_name="doc.md",
@@ -59,6 +66,36 @@ def test_document_reference_text_rejects_ungoverned_paths() -> None:
     assert len(errors) == 2
     assert any("ungoverned artifact path examples/pilots/ghost/config.json" in error for error in errors)
     assert any("unexpected governed artifact references" in error for error in errors)
+
+
+def test_operational_document_text_rejects_stale_release_inventory() -> None:
+    content = """
+RELEASE_NOTES_v0.1.md
+KNOWN_LIMITATIONS_v0.1.md
+SECURITY_MODEL_v0.1.md
+OPERATOR_GUIDE_v0.1.md
+PILOT_WORKFLOWS_v0.1.md
+PILOT_CHECKLIST_v0.1.md
+PILOT_OPERATIONS_GUIDE_v0.1.md
+pytest -q
+cargo test
+scripts/validate_schemas.py --strict
+scripts/validate_artifacts.py --strict
+All 4 profiles load correctly
+default-safe
+strict-approval
+readonly-only
+352+ tests
+"""
+    errors = validate_artifacts.validate_operational_document_text(
+        document_name="RELEASE_CHECKLIST_v0.1.md",
+        content=content,
+        strict=True,
+    )
+
+    assert len(errors) == 2
+    assert any("contains stale literals" in error for error in errors)
+    assert any("missing built-in profiles" in error and "pilot-prod" in error for error in errors)
 
 
 def test_validate_config_artifact_rejects_unknown_keys(tmp_path: Path) -> None:

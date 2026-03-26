@@ -2,8 +2,8 @@
 
 ## Test Gates
 
-- [x] All Python tests pass (352+ tests)
-- [x] All Rust tests pass (21 tests)
+- [x] All Python tests pass (`pytest -q`)
+- [x] All Rust tests pass (`cargo test`)
 - [x] Golden scenario suite passes (12 end-to-end scenarios)
 - [x] Deserialization hardening tests pass (nested dataclass round-trips)
 - [x] Persistence round-trip tests pass (all stores)
@@ -16,14 +16,17 @@
 - [x] KNOWN_LIMITATIONS_v0.1.md written and current
 - [x] SECURITY_MODEL_v0.1.md written
 - [x] OPERATOR_GUIDE_v0.1.md written
-- [x] 18 architecture docs complete (docs/00 through docs/18)
-- [x] 22 JSON schemas validated
+- [x] PILOT_WORKFLOWS_v0.1.md written
+- [x] PILOT_CHECKLIST_v0.1.md written
+- [x] PILOT_OPERATIONS_GUIDE_v0.1.md written
+- [x] Shared schemas validate with `scripts/validate_schemas.py --strict`
+- [x] Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`
 
 ## Configuration Gates
 
 - [x] All example configs validated (examples/*.json)
 - [x] All CLI commands documented and tested (run, status, profiles, packs)
-- [x] All 4 profiles load correctly (local-dev, safe-readonly, operator-approved, sandboxed)
+- [x] All built-in profiles load correctly (local-dev, safe-readonly, operator-approved, sandboxed, pilot-prod)
 - [x] All 3 policy packs load correctly (default-safe, strict-approval, readonly-only)
 - [x] Builtin profiles are frozen (MappingProxyType)
 

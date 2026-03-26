@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shipped artifact validation for MCOI example, pilot, and doc-linked JSON files.
+"""Shipped artifact validation for MCOI example, pilot, and governed docs.
 
 Validates:
   1. Shipped config artifacts deserialize through AppConfig without silent key drift.
@@ -8,6 +8,7 @@ Validates:
   4. Request action routes are admitted by their paired config artifact or by default config.
   5. Auxiliary pilot JSON artifacts remain inventory-bounded and contract-validated.
   6. Operator and pilot markdown references stay aligned with governed artifact inventory.
+  7. Release and pilot operational documents stay aligned with live profiles, packs, and witnesses.
 
 Usage:
   python scripts/validate_artifacts.py
@@ -34,6 +35,8 @@ if str(MCOI_PATH) not in sys.path:
 
 from mcoi_runtime.app.cli import _build_operator_request
 from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.app.policy_packs import PolicyPackRegistry
+from mcoi_runtime.app.profiles import list_profiles
 from mcoi_runtime.contracts.document import DocumentVerificationStatus
 from mcoi_runtime.core.document import extract_json_fields, ingest_document, verify_extraction
 from mcoi_runtime.core.template_validator import TemplateValidationError, TemplateValidator
@@ -47,6 +50,16 @@ class ExampleArtifactInventory:
     request_paths: tuple[Path, ...]
     auxiliary_paths: tuple[Path, ...]
     pilot_directories: tuple[Path, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class OperationalDocumentExpectation:
+    """Required dynamic and static content for governed non-JSON documents."""
+
+    required_literals: tuple[str, ...] = ()
+    forbidden_literals: tuple[str, ...] = ()
+    require_all_profiles: bool = False
+    require_all_policy_packs: bool = False
 
 
 AuxiliaryArtifactValidator = Callable[[Path], list[str]]
@@ -158,6 +171,74 @@ DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
         "examples/pilots/document_to_action/config.json",
         "examples/pilots/document_to_action/input_document.json",
         "examples/pilots/failure_escalation/config.json",
+    ),
+}
+
+OPERATIONAL_DOCUMENT_EXPECTATIONS: dict[str, OperationalDocumentExpectation] = {
+    "RELEASE_CHECKLIST_v0.1.md": OperationalDocumentExpectation(
+        required_literals=(
+            "RELEASE_NOTES_v0.1.md",
+            "KNOWN_LIMITATIONS_v0.1.md",
+            "SECURITY_MODEL_v0.1.md",
+            "OPERATOR_GUIDE_v0.1.md",
+            "PILOT_WORKFLOWS_v0.1.md",
+            "PILOT_CHECKLIST_v0.1.md",
+            "PILOT_OPERATIONS_GUIDE_v0.1.md",
+            "pytest -q",
+            "cargo test",
+            "scripts/validate_schemas.py --strict",
+            "scripts/validate_artifacts.py --strict",
+        ),
+        forbidden_literals=(
+            "352+ tests",
+            "All 4 profiles load correctly",
+            "18 architecture docs complete",
+            "22 JSON schemas validated",
+        ),
+        require_all_profiles=True,
+        require_all_policy_packs=True,
+    ),
+    "RELEASE_NOTES_v0.1.md": OperationalDocumentExpectation(
+        required_literals=(
+            "OPERATOR_GUIDE_v0.1.md",
+            "PILOT_WORKFLOWS_v0.1.md",
+            "PILOT_CHECKLIST_v0.1.md",
+            "PILOT_OPERATIONS_GUIDE_v0.1.md",
+            "scripts/validate_schemas.py --strict",
+            "pytest -q",
+            "cargo test",
+        ),
+        forbidden_literals=(
+            "Configuration profiles: local-dev, safe-readonly, operator-approved, sandboxed",
+            "**Python:** 352 tests",
+            "**JSON schemas:** 16 schemas",
+            "18 documents covering all planes and subsystems",
+        ),
+        require_all_profiles=True,
+    ),
+    "PILOT_CHECKLIST_v0.1.md": OperationalDocumentExpectation(
+        required_literals=(
+            "pytest -q",
+            "cargo test",
+            "scripts/validate_artifacts.py --strict",
+            "examples/pilots/approval_gated_command/config.json",
+            "examples/pilots/approval_gated_command/request.json",
+            "examples/pilots/document_to_action/config.json",
+            "examples/pilots/document_to_action/input_document.json",
+            "examples/pilots/failure_escalation/config.json",
+            "PILOT_WORKFLOWS_v0.1.md",
+        ),
+        forbidden_literals=(
+            "556+ Python tests",
+            "21 Rust tests",
+        ),
+    ),
+    "PILOT_OPERATIONS_GUIDE_v0.1.md": OperationalDocumentExpectation(
+        required_literals=(
+            "OPERATOR_GUIDE_v0.1.md",
+            "PILOT_WORKFLOWS_v0.1.md",
+            "PILOT_CHECKLIST_v0.1.md",
+        ),
     ),
 }
 
@@ -329,6 +410,69 @@ def validate_documented_artifact_references(*, strict: bool = False) -> list[str
     return errors
 
 
+def validate_operational_document_text(
+    *,
+    document_name: str,
+    content: str,
+    strict: bool = False,
+) -> list[str]:
+    """Validate non-JSON governed documents against live inventories."""
+    expectation = OPERATIONAL_DOCUMENT_EXPECTATIONS.get(document_name)
+    if expectation is None:
+        return [f"{document_name}: no operational document expectation registered"] if strict else []
+
+    errors: list[str] = []
+
+    missing_literals = tuple(
+        literal for literal in expectation.required_literals if literal not in content
+    )
+    if missing_literals:
+        errors.append(f"{document_name}: missing required literals {list(missing_literals)}")
+
+    stale_literals = tuple(
+        literal for literal in expectation.forbidden_literals if literal in content
+    )
+    if stale_literals:
+        errors.append(f"{document_name}: contains stale literals {list(stale_literals)}")
+
+    if expectation.require_all_profiles:
+        missing_profiles = tuple(
+            profile_name for profile_name in list_profiles() if profile_name not in content
+        )
+        if missing_profiles:
+            errors.append(f"{document_name}: missing built-in profiles {list(missing_profiles)}")
+
+    if expectation.require_all_policy_packs:
+        pack_ids = tuple(pack.pack_id for pack in PolicyPackRegistry().list_packs())
+        missing_pack_ids = tuple(pack_id for pack_id in pack_ids if pack_id not in content)
+        if missing_pack_ids:
+            errors.append(f"{document_name}: missing policy pack IDs {list(missing_pack_ids)}")
+
+    return errors
+
+
+def validate_operational_documents(*, strict: bool = False) -> list[str]:
+    """Validate release and pilot operational docs against governed inventories."""
+    errors: list[str] = []
+
+    for document_name in OPERATIONAL_DOCUMENT_EXPECTATIONS:
+        document_path = REPO_ROOT / document_name
+        if not document_path.exists():
+            errors.append(f"{document_name}: operational document not found")
+            continue
+
+        content = document_path.read_text(encoding="utf-8")
+        errors.extend(
+            validate_operational_document_text(
+                document_name=document_name,
+                content=content,
+                strict=strict,
+            )
+        )
+
+    return errors
+
+
 def validate_example_artifacts(*, strict: bool = False) -> list[str]:
     """Validate the shipped example inventory."""
     inventory = discover_example_inventory()
@@ -364,6 +508,7 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
         errors.extend(validate_auxiliary_artifact(auxiliary_path))
 
     errors.extend(validate_documented_artifact_references(strict=strict))
+    errors.extend(validate_operational_documents(strict=strict))
 
     return errors
 

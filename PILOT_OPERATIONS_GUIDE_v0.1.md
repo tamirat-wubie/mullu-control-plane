@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers operating the Mullu Platform MCOI Runtime during controlled pilot use. It assumes familiarity with the OPERATOR_GUIDE_v0.1.md basics.
+This guide covers operating the Mullu Platform MCOI Runtime during controlled pilot use. It assumes familiarity with the OPERATOR_GUIDE_v0.1.md basics and should be used together with PILOT_WORKFLOWS_v0.1.md and PILOT_CHECKLIST_v0.1.md.
 
 ## Telemetry
 
