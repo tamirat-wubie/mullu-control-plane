@@ -207,8 +207,11 @@ class ProductionSurface:
         self.auth = AuthGate()
         self.tenants = TenantBoundary()
         self.observability = ObservabilityCollector()
+        self._total_requests: int = 0
+        self._total_errors: int = 0
 
     def handle_request(self, request: APIRequest) -> APIResponse:
+        self._total_requests += 1
         trace_id = request.request_id
         self.observability.record("request", f"{request.method} {request.path}", request.tenant_id, trace_id)
 
@@ -217,12 +220,14 @@ class ProductionSurface:
             try:
                 session = self.auth.validate(request.headers.get("session_id", ""))
             except PermissionError:
+                self._total_errors += 1
                 self.observability.record("error", "auth_denied", request.tenant_id, trace_id)
                 return APIResponse(request.request_id, 401, {"error": "unauthorized"}, True)
 
         # Tenant gate
         if self.manifest.tenant_isolation:
             if not self.tenants.validate_access(request.tenant_id, request.tenant_id):
+                self._total_errors += 1
                 self.observability.record("error", "tenant_violation", request.tenant_id, trace_id)
                 return APIResponse(request.request_id, 403, {"error": "tenant_violation"}, True)
 
@@ -231,13 +236,15 @@ class ProductionSurface:
         return self.api.handle(request, lambda r: {"status": "ok", "governed": True, "trace_id": trace_id})
 
     def health(self) -> dict[str, Any]:
+        total = self._total_requests
+        error_rate = (self._total_errors / total) if total > 0 else 0.0
         return {
             "status": "healthy",
             "environment": self.manifest.environment,
             "governed": self.manifest.governed,
             "active_sessions": self.auth.active_sessions,
             "tenants": self.tenants.tenant_count,
-            "requests": self.api.request_count,
-            "error_rate": round(self.api.error_rate(), 3),
+            "requests": self._total_requests,
+            "error_rate": round(error_rate, 3),
             "events": self.observability.event_count,
         }
