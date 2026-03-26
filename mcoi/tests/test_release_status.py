@@ -37,6 +37,8 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert summary.ci_workflow_present is True
+    assert summary.release_version == "0.1.0 (internal alpha)"
+    assert summary.release_date == "2026-03-19"
 
 
 def test_validate_ci_workflow_text_rejects_missing_release_gate() -> None:
@@ -52,6 +54,32 @@ python scripts/validate_artifacts.py --strict
     assert len(errors) == 1
     assert "python scripts/validate_release_status.py --strict" in errors[0]
     assert "cargo test" in errors[0]
+
+
+def test_validate_release_metadata_texts_rejects_mismatch() -> None:
+    (_, _), errors = validate_release_status.validate_release_metadata_texts(
+        {
+            "RELEASE_NOTES_v0.1.md": "**Version:** 0.1.0 (internal alpha)\n**Date:** 2026-03-19\n",
+            "KNOWN_LIMITATIONS_v0.1.md": "**Version:** 0.1.0 (internal alpha)\n**Date:** 2026-03-20\n",
+            "SECURITY_MODEL_v0.1.md": "**Version:** 0.2.0 (internal alpha)\n**Date:** 2026-03-19\n",
+        }
+    )
+
+    assert len(errors) == 2
+    assert any("KNOWN_LIMITATIONS_v0.1.md: date metadata mismatch" in error for error in errors)
+    assert any("SECURITY_MODEL_v0.1.md: version metadata mismatch" in error for error in errors)
+
+
+def test_validate_release_limitation_coverage_rejects_missing_anchor() -> None:
+    errors = validate_release_status.validate_release_limitation_coverage(
+        known_limitations_text="Policy packs are declarative only\nmake_dataclass\nHTTP connector\nurllib\n",
+        security_model_text="No Authentication or Authorization\n",
+    )
+
+    assert len(errors) >= 3
+    assert any("coordination_persistence_limitation" in error for error in errors)
+    assert any("working_memory_limitation" in error for error in errors)
+    assert any("encryption_limitation" in error for error in errors)
 
 
 def test_validate_release_status_rejects_missing_required_docs(monkeypatch) -> None:

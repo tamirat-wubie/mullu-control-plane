@@ -18,6 +18,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+import re
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MCOI_PATH = REPO_ROOT / "mcoi"
@@ -61,6 +62,37 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_release_status.py --strict",
 )
 
+METADATA_DOCUMENTS: tuple[str, ...] = (
+    "RELEASE_NOTES_v0.1.md",
+    "KNOWN_LIMITATIONS_v0.1.md",
+    "SECURITY_MODEL_v0.1.md",
+)
+
+ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
+    "policy_pack_limitation": (
+        "Policy packs are declarative only",
+    ),
+    "registry_backend_limitation": (
+        "make_dataclass",
+    ),
+    "coordination_persistence_limitation": (
+        "Coordination state is in-memory only",
+    ),
+    "working_memory_limitation": (
+        "Working and episodic memory are in-memory only",
+    ),
+    "http_connector_limitation": (
+        "HTTP connector",
+        "urllib",
+    ),
+    "auth_limitation": (
+        "No Authentication or Authorization",
+    ),
+    "encryption_limitation": (
+        "No Encryption at Rest",
+    ),
+}
+
 
 @dataclass(frozen=True, slots=True)
 class ReleaseStatusSummary:
@@ -74,6 +106,8 @@ class ReleaseStatusSummary:
     request_artifacts: tuple[str, ...]
     auxiliary_artifacts: tuple[str, ...]
     ci_workflow_present: bool
+    release_version: str | None
+    release_date: str | None
 
 
 def _sorted_names(paths: tuple[Path, ...] | list[Path]) -> tuple[str, ...]:
@@ -105,6 +139,8 @@ def discover_release_status_summary() -> ReleaseStatusSummary:
         request_artifacts=_sorted_names(list(artifact_inventory.request_paths)),
         auxiliary_artifacts=_sorted_names(list(artifact_inventory.auxiliary_paths)),
         ci_workflow_present=CI_WORKFLOW_PATH.exists(),
+        release_version=None,
+        release_date=None,
     )
 
 
@@ -117,6 +153,80 @@ def validate_ci_workflow_text(content: str) -> list[str]:
     )
     if missing_literals:
         errors.append(f"ci workflow missing required literals: {list(missing_literals)}")
+
+    return errors
+
+
+def _extract_metadata_field(content: str, label: str) -> str | None:
+    match = re.search(rf"^\*\*{re.escape(label)}:\*\*\s*(.+)$", content, re.MULTILINE)
+    if match is None:
+        return None
+    return match.group(1).strip()
+
+
+def validate_release_metadata_texts(metadata_texts: dict[str, str]) -> tuple[tuple[str | None, str | None], list[str]]:
+    """Validate that release-surface docs carry aligned version and date metadata."""
+    errors: list[str] = []
+    extracted: dict[str, tuple[str | None, str | None]] = {}
+
+    for document_name, content in metadata_texts.items():
+        version = _extract_metadata_field(content, "Version")
+        date = _extract_metadata_field(content, "Date")
+        extracted[document_name] = (version, date)
+        if version is None:
+            errors.append(f"{document_name}: missing Version metadata")
+        if date is None:
+            errors.append(f"{document_name}: missing Date metadata")
+
+    reference_version: str | None = None
+    reference_date: str | None = None
+    for document_name in METADATA_DOCUMENTS:
+        version, date = extracted.get(document_name, (None, None))
+        if version is not None and reference_version is None:
+            reference_version = version
+        if date is not None and reference_date is None:
+            reference_date = date
+
+    if reference_version is not None and "internal alpha" not in reference_version:
+        errors.append(f"release metadata version must declare internal alpha: {reference_version}")
+
+    for document_name, (version, date) in extracted.items():
+        if reference_version is not None and version is not None and version != reference_version:
+            errors.append(
+                f"{document_name}: version metadata mismatch {version!r} != {reference_version!r}"
+            )
+        if reference_date is not None and date is not None and date != reference_date:
+            errors.append(
+                f"{document_name}: date metadata mismatch {date!r} != {reference_date!r}"
+            )
+
+    return (reference_version, reference_date), errors
+
+
+def validate_release_limitation_coverage(
+    *,
+    known_limitations_text: str,
+    security_model_text: str,
+) -> list[str]:
+    """Validate that accepted release limitations are anchored in supporting docs."""
+    errors: list[str] = []
+    limitation_sources = {
+        "policy_pack_limitation": known_limitations_text,
+        "registry_backend_limitation": known_limitations_text,
+        "coordination_persistence_limitation": known_limitations_text,
+        "working_memory_limitation": known_limitations_text,
+        "http_connector_limitation": known_limitations_text,
+        "auth_limitation": security_model_text,
+        "encryption_limitation": security_model_text,
+    }
+
+    for limitation_id, required_literals in ACCEPTED_LIMITATION_EXPECTATIONS.items():
+        source = limitation_sources[limitation_id]
+        missing_literals = tuple(literal for literal in required_literals if literal not in source)
+        if missing_literals:
+            errors.append(
+                f"{limitation_id}: missing supporting literals {list(missing_literals)}"
+            )
 
     return errors
 
@@ -138,6 +248,36 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     else:
         ci_content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
         errors.extend(validate_ci_workflow_text(ci_content))
+
+    metadata_texts = {
+        document_name: (REPO_ROOT / document_name).read_text(encoding="utf-8")
+        for document_name in METADATA_DOCUMENTS
+        if (REPO_ROOT / document_name).exists()
+    }
+    (release_version, release_date), metadata_errors = validate_release_metadata_texts(
+        metadata_texts
+    )
+    errors.extend(metadata_errors)
+    if len(metadata_texts) == len(METADATA_DOCUMENTS):
+        errors.extend(
+            validate_release_limitation_coverage(
+                known_limitations_text=metadata_texts["KNOWN_LIMITATIONS_v0.1.md"],
+                security_model_text=metadata_texts["SECURITY_MODEL_v0.1.md"],
+            )
+        )
+
+    summary = ReleaseStatusSummary(
+        release_documents=summary.release_documents,
+        schema_files=summary.schema_files,
+        builtin_profiles=summary.builtin_profiles,
+        policy_packs=summary.policy_packs,
+        config_artifacts=summary.config_artifacts,
+        request_artifacts=summary.request_artifacts,
+        auxiliary_artifacts=summary.auxiliary_artifacts,
+        ci_workflow_present=summary.ci_workflow_present,
+        release_version=release_version,
+        release_date=release_date,
+    )
 
     errors.extend(validate_schemas.validate_json_schemas())
     errors.extend(validate_schemas.check_contract_parity(strict=strict))
@@ -174,6 +314,8 @@ def main() -> None:
     print(f"  request artifacts:  {len(summary.request_artifacts)}")
     print(f"  auxiliary artifacts:{len(summary.auxiliary_artifacts):>4}")
     print(f"  ci workflow:        {'present' if summary.ci_workflow_present else 'missing'}")
+    print(f"  release version:    {summary.release_version or 'missing'}")
+    print(f"  release date:       {summary.release_date or 'missing'}")
 
     print("\n=== Live Inventory ===")
     print(f"  profiles: {', '.join(summary.builtin_profiles)}")

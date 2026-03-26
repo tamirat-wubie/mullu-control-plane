@@ -41,6 +41,12 @@ runtime does not yet behave as intended by the architecture specification.
   is implemented, but working/episodic tiers are not persistence-backed. Restarting
   the runtime loses working and episodic memory contents.
 
+## Coordination
+
+- **Coordination state is in-memory only.** Active workflow coordination, delegation,
+  and handoff context are not persisted. Restarting the runtime loses in-flight
+  coordination state and requires operator restart from a governed entry point.
+
 ## Policy
 
 - **Policy packs are declarative only.** Packs can be listed and loaded, but the
