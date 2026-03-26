@@ -208,7 +208,55 @@ plugin_registry.load("cost-alert", hooks={
 })
 plugin_registry.activate("cost-alert")
 
-app = FastAPI(title="Mullu Platform", version="0.6.0", description="Governed AI Operating System")
+# Phase 208A: Governance guard middleware
+from mcoi_runtime.app.middleware import GovernanceMiddleware, build_guard_chain
+guard_chain = build_guard_chain(rate_limiter=rate_limiter, budget_mgr=tenant_budget_mgr)
+
+# Phase 208B: Traced workflow engine
+from mcoi_runtime.core.traced_workflow import TracedWorkflowEngine
+from mcoi_runtime.core.execution_replay import ReplayRecorder
+replay_recorder = ReplayRecorder(clock=_clock)
+traced_workflow = TracedWorkflowEngine(
+    workflow_engine=workflow_engine, replay_recorder=replay_recorder,
+)
+observability.register_source("replay", lambda: replay_recorder.summary())
+
+# Phase 208C: Conversation store
+from mcoi_runtime.core.conversation_memory import ConversationStore
+conversation_store = ConversationStore(clock=_clock)
+
+# Phase 208D: Schema validator
+from mcoi_runtime.core.schema_validator import SchemaValidator, SchemaDefinition, SchemaRule
+schema_validator = SchemaValidator()
+schema_validator.register(SchemaDefinition(
+    schema_id="workflow_request", name="Workflow Request",
+    rules=(
+        SchemaRule(field="task_id", rule_type="required", value=True),
+        SchemaRule(field="description", rule_type="required", value=True),
+        SchemaRule(field="capability", rule_type="required", value=True),
+    ),
+))
+schema_validator.register(SchemaDefinition(
+    schema_id="pipeline_request", name="Pipeline Request",
+    rules=(
+        SchemaRule(field="steps", rule_type="required", value=True),
+        SchemaRule(field="steps", rule_type="type", value="list"),
+    ),
+))
+
+app = FastAPI(title="Mullu Platform", version="0.8.0", description="Governed AI Operating System")
+
+# Wire middleware
+app.add_middleware(
+    GovernanceMiddleware,
+    guard_chain=guard_chain,
+    metrics_fn=lambda name, val: metrics.inc(name, val),
+    on_reject=lambda ctx: audit_trail.record(
+        action="guard.rejected", actor_id="system",
+        tenant_id=ctx.get("tenant_id", ""), target=ctx.get("path", ""),
+        outcome="denied", detail=ctx,
+    ),
+)
 
 
 class ExecuteRequest(BaseModel):
@@ -971,5 +1019,118 @@ def list_capabilities():
 
 @app.get("/api/v1/replay/traces")
 def list_traces(limit: int = 50):
-    """Execution replay traces (placeholder — recorder not wired yet)."""
-    return {"traces": [], "count": 0}
+    """Execution replay traces."""
+    traces = replay_recorder.list_traces(limit=limit)
+    return {
+        "traces": [
+            {"id": t.trace_id, "frames": len(t.frames), "hash": t.trace_hash[:16], "at": t.recorded_at}
+            for t in traces
+        ],
+        "count": len(traces),
+        "summary": replay_recorder.summary(),
+    }
+
+
+# ═══ Phase 208B — Traced Workflow Endpoint ═══
+
+@app.post("/api/v1/workflow/traced")
+def execute_traced_workflow(req: WorkflowRequest):
+    """Execute a workflow with automatic replay trace recording."""
+    metrics.inc("requests_governed")
+    try:
+        cap = AgentCapability(req.capability)
+    except ValueError:
+        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+
+    result, trace = traced_workflow.execute(
+        task_id=req.task_id, description=req.description,
+        capability=cap, payload=req.payload,
+        tenant_id=req.tenant_id, budget_id=req.budget_id,
+    )
+    return {
+        "workflow_id": result.workflow_id,
+        "status": result.status,
+        "agent_id": result.agent_id,
+        "output": result.output,
+        "trace_id": trace.trace_id if trace else None,
+        "trace_frames": len(trace.frames) if trace else 0,
+        "trace_hash": trace.trace_hash[:16] if trace else None,
+    }
+
+
+# ═══ Phase 208C — Conversation Endpoints ═══
+
+class ConversationMessageRequest(BaseModel):
+    conversation_id: str
+    role: str = "user"
+    content: str = ""
+    tenant_id: str = ""
+
+
+@app.post("/api/v1/conversation/message")
+def add_conversation_message(req: ConversationMessageRequest):
+    """Add a message to a conversation."""
+    metrics.inc("requests_governed")
+    conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
+    msg = conv.add_message(req.role, req.content)
+    return {
+        "conversation_id": conv.conversation_id,
+        "message_id": msg.message_id,
+        "message_count": conv.message_count,
+    }
+
+
+@app.get("/api/v1/conversation/{conversation_id}")
+def get_conversation(conversation_id: str):
+    """Get conversation history."""
+    conv = conversation_store.get(conversation_id)
+    if conv is None:
+        raise HTTPException(404, detail="conversation not found")
+    return {
+        "conversation_id": conv.conversation_id,
+        "messages": [{"role": m.role, "content": m.content, "id": m.message_id} for m in conv.messages],
+        "summary": conv.summary(),
+    }
+
+
+@app.get("/api/v1/conversations")
+def list_conversations(tenant_id: str | None = None):
+    """List conversations."""
+    convs = conversation_store.list_conversations(tenant_id=tenant_id)
+    return {
+        "conversations": [c.summary() for c in convs],
+        "count": len(convs),
+    }
+
+
+# ═══ Phase 208D — Schema Validation Endpoint ═══
+
+@app.get("/api/v1/schemas")
+def list_schemas():
+    """List registered validation schemas."""
+    return {
+        "schemas": [
+            {"id": s.schema_id, "name": s.name, "rules": len(s.rules)}
+            for s in schema_validator.list_schemas()
+        ],
+        "summary": schema_validator.summary(),
+    }
+
+
+class ValidateRequest(BaseModel):
+    schema_id: str
+    data: dict[str, Any]
+
+
+@app.post("/api/v1/schemas/validate")
+def validate_data(req: ValidateRequest):
+    """Validate data against a registered schema."""
+    result = schema_validator.validate(req.schema_id, req.data)
+    return {
+        "schema_id": result.schema_id,
+        "valid": result.valid,
+        "errors": [
+            {"field": e.field, "rule": e.rule_type, "message": e.message}
+            for e in result.errors
+        ],
+    }
