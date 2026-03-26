@@ -1460,6 +1460,165 @@ def release_info():
             "persistence": "InMemoryStore / SQLiteStore / PostgresStore",
             "replay": "ReplayRecorder + ReplayExecutor",
             "schemas": "SchemaValidator (7 rule types)",
+            "tools": "ToolRegistry + ToolAugmentedAgent",
+            "streaming": "AnthropicStreamingAdapter",
+            "state": "StatePersistence (atomic JSON)",
+            "structured_output": "StructuredOutputEngine",
+            "retry": "RetryExecutor + CircuitBreaker",
         },
         "governed": True,
     }
+
+
+# ═══ Phase 212A — Tool-Use, Streaming, State Endpoints ═══
+
+from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
+from mcoi_runtime.adapters.anthropic_streaming import AnthropicStreamingAdapter
+from mcoi_runtime.persistence.state_persistence import StatePersistence
+from mcoi_runtime.core.structured_output import StructuredOutputEngine, OutputSchema
+from mcoi_runtime.core.retry_engine import CircuitBreaker
+
+# Tool registry with example tools
+tool_registry = ToolRegistry(clock=_clock)
+tool_registry.register(
+    ToolDefinition(
+        tool_id="calculator", name="Calculator",
+        description="Evaluate a math expression",
+        parameters=(ToolParameter(name="expression", param_type="string", description="Math expression"),),
+        category="utility",
+    ),
+    handler=lambda args: {"result": str(eval(args.get("expression", "0")))},
+)
+tool_registry.register(
+    ToolDefinition(
+        tool_id="get_time", name="Get Time",
+        description="Get the current time",
+        parameters=(),
+        category="utility",
+    ),
+    handler=lambda args: {"time": _clock()},
+)
+observability.register_source("tools", lambda: tool_registry.summary())
+
+# Anthropic streaming adapter
+anthropic_stream = AnthropicStreamingAdapter(
+    api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+    clock=_clock,
+)
+
+# State persistence
+state_persistence = StatePersistence(clock=_clock)
+
+# Structured output engine
+structured_output = StructuredOutputEngine()
+structured_output.register(OutputSchema(
+    schema_id="analysis", name="Analysis Output",
+    fields={"summary": "string", "key_points": "array", "confidence": "number"},
+    required_fields=("summary", "key_points"),
+))
+
+# LLM circuit breaker
+llm_circuit = CircuitBreaker(failure_threshold=10, recovery_timeout_ms=60000)
+
+
+@app.get("/api/v1/tools")
+def list_tools(category: str | None = None):
+    """List registered tools."""
+    tools = tool_registry.list_tools(category=category)
+    return {
+        "tools": [
+            {"id": t.tool_id, "name": t.name, "description": t.description,
+             "parameters": [{"name": p.name, "type": p.param_type, "required": p.required} for p in t.parameters],
+             "category": t.category}
+            for t in tools
+        ],
+        "count": len(tools),
+    }
+
+
+class ToolInvokeRequest(BaseModel):
+    tool_id: str
+    arguments: dict[str, Any] = {}
+    tenant_id: str = ""
+
+
+@app.post("/api/v1/tools/invoke")
+def invoke_tool(req: ToolInvokeRequest):
+    """Invoke a registered tool."""
+    metrics.inc("requests_governed")
+    result = tool_registry.invoke(req.tool_id, req.arguments, tenant_id=req.tenant_id)
+    audit_trail.record(
+        action="tool.invoke", actor_id="api", tenant_id=req.tenant_id,
+        target=req.tool_id, outcome="success" if result.succeeded else "error",
+    )
+    return {
+        "invocation_id": result.invocation_id, "tool_id": result.tool_id,
+        "output": result.output, "succeeded": result.succeeded, "error": result.error,
+    }
+
+
+@app.get("/api/v1/tools/llm-format")
+def tools_llm_format():
+    """Export tools in LLM-compatible format."""
+    return {"tools": tool_registry.to_llm_tools()}
+
+
+@app.get("/api/v1/tools/history")
+def tool_history(limit: int = 50):
+    """Tool invocation history."""
+    return {"history": [
+        {"id": r.invocation_id, "tool": r.tool_id, "succeeded": r.succeeded}
+        for r in tool_registry.invocation_history(limit=limit)
+    ], "summary": tool_registry.summary()}
+
+
+class StateSaveRequest(BaseModel):
+    state_type: str
+    data: dict[str, Any]
+
+
+@app.post("/api/v1/state/save")
+def save_state(req: StateSaveRequest):
+    """Save runtime state."""
+    metrics.inc("requests_governed")
+    snap = state_persistence.save(req.state_type, req.data)
+    return {"state_type": snap.state_type, "hash": snap.state_hash[:16], "saved_at": snap.saved_at}
+
+
+@app.get("/api/v1/state/{state_type}")
+def load_state(state_type: str):
+    """Load runtime state."""
+    snap = state_persistence.load(state_type)
+    if snap is None:
+        raise HTTPException(404, detail=f"state not found: {state_type}")
+    return {"state_type": snap.state_type, "data": snap.data, "hash": snap.state_hash[:16]}
+
+
+@app.get("/api/v1/state")
+def list_states():
+    """List saved states."""
+    return {"states": state_persistence.list_states(), "summary": state_persistence.summary()}
+
+
+class ParseOutputRequest(BaseModel):
+    schema_id: str
+    text: str
+
+
+@app.post("/api/v1/output/parse")
+def parse_structured_output(req: ParseOutputRequest):
+    """Parse LLM output against a schema."""
+    result = structured_output.parse(req.schema_id, req.text)
+    return {"schema_id": result.schema_id, "valid": result.valid, "parsed": result.parsed, "errors": list(result.errors)}
+
+
+@app.get("/api/v1/output/schemas")
+def list_output_schemas():
+    """List output schemas."""
+    return {"schemas": [{"id": s.schema_id, "name": s.name, "fields": s.fields} for s in structured_output.list_schemas()]}
+
+
+@app.get("/api/v1/circuit-breaker")
+def circuit_breaker_status():
+    """LLM circuit breaker status."""
+    return llm_circuit.status()
