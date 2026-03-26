@@ -364,7 +364,30 @@ from mcoi_runtime.core.tenant_isolation_audit import TenantIsolationAuditor
 tenant_isolation = TenantIsolationAuditor(clock=_clock)
 observability.register_source("tenant_isolation", lambda: tenant_isolation.summary())
 
-app = FastAPI(title="Mullu Platform", version="2.7.0", description="Governed AI Operating System")
+# Phase 226A: Input validation
+from mcoi_runtime.core.input_validation import InputValidator, InputSchema, ValidationRule, RuleType
+input_validator = InputValidator()
+input_validator.register(InputSchema("api_request", "API Request", rules=(
+    ValidationRule("tenant_id", RuleType.REQUIRED),
+    ValidationRule("tenant_id", RuleType.TYPE_CHECK, value=str),
+)))
+
+# Phase 226B: Prometheus exporter
+from mcoi_runtime.core.prometheus_exporter import PrometheusExporter
+prom_exporter = PrometheusExporter(prefix="mullu")
+prom_exporter.register_counter("requests_governed_total", "Total governed requests")
+prom_exporter.register_counter("errors_total", "Total errors")
+prom_exporter.register_gauge("active_tenants", "Active tenant count")
+prom_exporter.register_gauge("health_score", "Platform health score")
+
+# Phase 226C: Health check aggregation
+from mcoi_runtime.core.health_check_agg import HealthCheckAggregator, HealthCheckDef
+health_agg_v2 = HealthCheckAggregator(clock=_clock)
+health_agg_v2.register(HealthCheckDef("store", lambda: {"status": "healthy"}, weight=2.0, critical=True))
+health_agg_v2.register(HealthCheckDef("llm", lambda: {"status": "healthy"}, weight=2.0, critical=True))
+health_agg_v2.register(HealthCheckDef("event_bus", lambda: {"status": "healthy" if event_bus.error_count == 0 else "degraded"}, weight=1.0))
+
+app = FastAPI(title="Mullu Platform", version="2.8.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2730,3 +2753,29 @@ def get_recent_isolation_audits(count: int = 10):
         "count": len(audits),
         "governed": True,
     }
+
+
+# ── Phase 226A: Input validation endpoint ────────────────────────────────
+@app.get("/api/v1/validation/schemas")
+def list_validation_schemas():
+    """List registered validation schemas."""
+    metrics.inc("requests_governed")
+    return {"validation": input_validator.summary(), "governed": True}
+
+
+# ── Phase 226B: Prometheus metrics endpoint ──────────────────────────────
+@app.get("/metrics")
+def prometheus_metrics():
+    """Export metrics in Prometheus text exposition format."""
+    from fastapi.responses import PlainTextResponse
+    prom_exporter.inc_counter("requests_governed_total")
+    return PlainTextResponse(content=prom_exporter.export(), media_type="text/plain")
+
+
+# ── Phase 226C: Health check v2 endpoint ─────────────────────────────────
+@app.get("/api/v1/health/v2")
+def health_check_v2():
+    """Run health checks with degraded state support."""
+    metrics.inc("requests_governed")
+    result = health_agg_v2.run()
+    return {"health": result.to_dict(), "governed": True}
