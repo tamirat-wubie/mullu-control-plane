@@ -36,6 +36,22 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.release_documents) >= 8
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
+    assert summary.ci_workflow_present is True
+
+
+def test_validate_ci_workflow_text_rejects_missing_release_gate() -> None:
+    errors = validate_release_status.validate_ci_workflow_text(
+        """
+name: CI - Build Verification
+python -m pytest --tb=short -q -m "not soak"
+python scripts/validate_schemas.py --strict
+python scripts/validate_artifacts.py --strict
+"""
+    )
+
+    assert len(errors) == 1
+    assert "python scripts/validate_release_status.py --strict" in errors[0]
+    assert "cargo test" in errors[0]
 
 
 def test_validate_release_status_rejects_missing_required_docs(monkeypatch) -> None:

@@ -5,7 +5,8 @@ Validates:
   1. Required release, operator, and pilot governance documents exist.
   2. Shared schemas, contract parity, and canonical fixtures remain valid.
   3. Shipped artifacts and governed operational docs remain aligned with live inventories.
-  4. A single release summary can be derived from live profiles, packs, schemas, and witnesses.
+  4. The CI workflow still carries the required test and validation command gates.
+  5. A single release summary can be derived from live profiles, packs, schemas, and witnesses.
 
 Usage:
   python scripts/validate_release_status.py
@@ -43,6 +44,23 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
     "PILOT_OPERATIONS_GUIDE_v0.1.md",
 )
 
+CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+
+REQUIRED_CI_LITERALS: tuple[str, ...] = (
+    'branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]',
+    'python -m pytest --tb=short -q -m "not soak"',
+    'python -m pytest -m soak --tb=short -q',
+    "cargo test",
+    "cargo fmt -- --check",
+    "cargo clippy -- -D warnings",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_artifacts.py",
+    "python scripts/validate_schemas.py --strict",
+    "python scripts/validate_artifacts.py --strict",
+    "python scripts/validate_release_status.py",
+    "python scripts/validate_release_status.py --strict",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ReleaseStatusSummary:
@@ -55,6 +73,7 @@ class ReleaseStatusSummary:
     config_artifacts: tuple[str, ...]
     request_artifacts: tuple[str, ...]
     auxiliary_artifacts: tuple[str, ...]
+    ci_workflow_present: bool
 
 
 def _sorted_names(paths: tuple[Path, ...] | list[Path]) -> tuple[str, ...]:
@@ -85,7 +104,21 @@ def discover_release_status_summary() -> ReleaseStatusSummary:
         config_artifacts=_sorted_names(list(artifact_inventory.config_paths)),
         request_artifacts=_sorted_names(list(artifact_inventory.request_paths)),
         auxiliary_artifacts=_sorted_names(list(artifact_inventory.auxiliary_paths)),
+        ci_workflow_present=CI_WORKFLOW_PATH.exists(),
     )
+
+
+def validate_ci_workflow_text(content: str) -> list[str]:
+    """Validate that the CI workflow carries the required release gates."""
+    errors: list[str] = []
+
+    missing_literals = tuple(
+        literal for literal in REQUIRED_CI_LITERALS if literal not in content
+    )
+    if missing_literals:
+        errors.append(f"ci workflow missing required literals: {list(missing_literals)}")
+
+    return errors
 
 
 def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSummary, list[str]]:
@@ -100,6 +133,11 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     )
     if missing_documents:
         errors.append(f"missing required release documents: {list(missing_documents)}")
+    if not summary.ci_workflow_present:
+        errors.append("missing required CI workflow: .github/workflows/ci.yml")
+    else:
+        ci_content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
+        errors.extend(validate_ci_workflow_text(ci_content))
 
     errors.extend(validate_schemas.validate_json_schemas())
     errors.extend(validate_schemas.check_contract_parity(strict=strict))
@@ -135,6 +173,7 @@ def main() -> None:
     print(f"  config artifacts:   {len(summary.config_artifacts)}")
     print(f"  request artifacts:  {len(summary.request_artifacts)}")
     print(f"  auxiliary artifacts:{len(summary.auxiliary_artifacts):>4}")
+    print(f"  ci workflow:        {'present' if summary.ci_workflow_present else 'missing'}")
 
     print("\n=== Live Inventory ===")
     print(f"  profiles: {', '.join(summary.builtin_profiles)}")

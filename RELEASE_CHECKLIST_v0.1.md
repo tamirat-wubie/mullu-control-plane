@@ -22,6 +22,7 @@
 - [x] Shared schemas validate with `scripts/validate_schemas.py --strict`
 - [x] Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`
 - [x] Release status derives from `scripts/validate_release_status.py --strict`
+- [x] CI workflow retains the full gated release command set in `.github/workflows/ci.yml`
 
 ## Configuration Gates
 
