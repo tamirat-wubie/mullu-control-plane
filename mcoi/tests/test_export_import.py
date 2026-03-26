@@ -209,7 +209,7 @@ class TestDeploymentProfiles:
 
     def test_pilot_prod(self):
         assert PILOT_PROD.autonomy_mode == "approval_required"
-        assert PILOT_PROD.policy_pack_id == "default-pack"
+        assert PILOT_PROD.policy_pack_id == "default-safe"
         assert PILOT_PROD.max_retention_days == 180
 
     def test_all_builtin_profiles_exist(self):

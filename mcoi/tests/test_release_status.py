@@ -72,7 +72,7 @@ def test_validate_release_metadata_texts_rejects_mismatch() -> None:
 
 def test_validate_release_limitation_coverage_rejects_missing_anchor() -> None:
     errors = validate_release_status.validate_release_limitation_coverage(
-        known_limitations_text="Policy packs are declarative only\nmake_dataclass\nHTTP connector\nurllib\n",
+        known_limitations_text="make_dataclass\nHTTP connector\nurllib\n",
         security_model_text="No Authentication or Authorization\n",
     )
 

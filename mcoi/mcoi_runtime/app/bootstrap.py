@@ -39,6 +39,7 @@ from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 from .config import AppConfig
+from .policy_packs import PolicyPackRegistry
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,7 +112,10 @@ def bootstrap_runtime(
     registry_index: RegistryIndex[TemplateReference] = RegistryIndex()
     evidence_merger = EvidenceMerger()
     planning_boundary = PlanningBoundary()
-    policy_engine: PolicyEngine[PolicyDecision] = PolicyEngine()
+    policy_pack_registry = PolicyPackRegistry()
+    policy_engine: PolicyEngine[PolicyDecision] = PolicyEngine(
+        pack_resolver=policy_pack_registry
+    )
     replay_engine = ReplayEngine()
     verification_engine = VerificationEngine()
     runtime_kernel: RuntimeKernel[TemplateReference, PolicyDecision] = RuntimeKernel(

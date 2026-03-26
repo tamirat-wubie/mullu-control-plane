@@ -146,6 +146,9 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
             subject_id=request.subject_id,
             goal_id=request.goal_id,
             issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=True,
         ),
         build_policy_decision,
     )
@@ -263,6 +266,9 @@ def run_workflow(
             subject_id=request.subject_id,
             goal_id=request.goal_id,
             issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=True,
         ),
         build_policy_decision,
     )
@@ -388,6 +394,9 @@ def run_goal(
             subject_id=request.subject_id,
             goal_id=request.goal_id,
             issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=True,
         ),
         build_policy_decision,
     )

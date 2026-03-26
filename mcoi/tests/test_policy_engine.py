@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from mcoi_runtime.app.policy_packs import PolicyPackRegistry
 from mcoi_runtime.core.policy_engine import PolicyEngine, PolicyInput, PolicyReason
 
 
@@ -68,3 +69,69 @@ def test_policy_engine_denies_and_escalates_on_explicit_inputs() -> None:
     assert denied.reasons[0].code == "blocked_knowledge"
     assert escalated.status == "escalate"
     assert escalated.reasons[0].code == "operator_review_required"
+
+
+def test_policy_engine_applies_strict_approval_pack() -> None:
+    engine: PolicyEngine[PolicyDecision] = PolicyEngine(pack_resolver=PolicyPackRegistry())
+
+    decision = engine.evaluate(
+        PolicyInput(
+            subject_id="subject-1",
+            goal_id="goal-1",
+            issued_at="2026-03-18T12:00:00+00:00",
+            policy_pack_id="strict-approval",
+            policy_pack_version="v0.1",
+        ),
+        build_decision,
+    )
+
+    assert decision.status == "escalate"
+    assert decision.reasons[0].code == "escalate-all"
+    assert decision.decision_id != ""
+
+
+def test_policy_engine_applies_readonly_pack_for_write_and_read_paths() -> None:
+    engine: PolicyEngine[PolicyDecision] = PolicyEngine(pack_resolver=PolicyPackRegistry())
+
+    denied = engine.evaluate(
+        PolicyInput(
+            subject_id="subject-1",
+            goal_id="goal-write",
+            issued_at="2026-03-18T12:00:00+00:00",
+            policy_pack_id="readonly-only",
+            has_write_effects=True,
+        ),
+        build_decision,
+    )
+    allowed = engine.evaluate(
+        PolicyInput(
+            subject_id="subject-1",
+            goal_id="goal-read",
+            issued_at="2026-03-18T12:00:00+00:00",
+            policy_pack_id="readonly-only",
+            has_write_effects=False,
+        ),
+        build_decision,
+    )
+
+    assert denied.status == "deny"
+    assert denied.reasons[0].code == "deny-writes"
+    assert allowed.status == "allow"
+    assert allowed.reasons[0].code == "allow-reads"
+
+
+def test_policy_engine_fails_closed_on_unknown_policy_pack() -> None:
+    engine: PolicyEngine[PolicyDecision] = PolicyEngine(pack_resolver=PolicyPackRegistry())
+
+    decision = engine.evaluate(
+        PolicyInput(
+            subject_id="subject-1",
+            goal_id="goal-1",
+            issued_at="2026-03-18T12:00:00+00:00",
+            policy_pack_id="missing-pack",
+        ),
+        build_decision,
+    )
+
+    assert decision.status == "deny"
+    assert decision.reasons[0].code == "unknown_policy_pack"

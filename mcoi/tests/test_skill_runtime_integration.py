@@ -315,6 +315,33 @@ class TestSkillGovernanceChecks:
         # Restore
         loop.runtime.policy_engine.evaluate = original_evaluate
 
+    def test_skill_blocked_by_strict_approval_policy_pack(self):
+        """Strict-approval pack escalates the skill path before execution."""
+        runtime = bootstrap_runtime(
+            config=AppConfig(
+                autonomy_mode="bounded_autonomous",
+                policy_pack_id="strict-approval",
+                policy_pack_version="v0.1",
+            ),
+            clock=lambda: FIXED_CLOCK,
+        )
+        loop = OperatorLoop(runtime=runtime)
+        _register_skill(loop, "sk-pack-block", name="shell_command")
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-gov-pack-1",
+            subject_id="operator-1",
+            goal_id="goal-gov-pack-1",
+            skill_id="sk-pack-block",
+        ))
+
+        assert report.status is SkillOutcomeStatus.POLICY_DENIED
+        assert report.completed is False
+        assert report.execution_record is None
+        assert len(report.structured_errors) == 1
+        assert report.structured_errors[0].error_code == "policy_escalate"
+        assert "escalate" in report.structured_errors[0].message
+
     def test_skill_proceeds_when_autonomy_and_policy_allow(self):
         """Skill execution proceeds when both autonomy and policy permit it."""
         loop = _make_loop()  # Default is bounded_autonomous — allows execution

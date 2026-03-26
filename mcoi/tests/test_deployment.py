@@ -80,7 +80,7 @@ class TestProfileBinding:
 
     def test_bind_pilot_prod(self):
         binding = bind_profile(PILOT_PROD)
-        assert binding.policy_pack_id == "default-pack"
+        assert binding.policy_pack_id == "default-safe"
         assert binding.max_retention_days == 180
 
 
@@ -221,7 +221,7 @@ class TestDeploymentGoldenScenarios:
     def test_pilot_prod_has_policy_pack(self):
         """Pilot-prod profile carries policy pack binding."""
         enforcer = DeploymentEnforcer(bind_profile(PILOT_PROD))
-        assert enforcer.binding.policy_pack_id == "default-pack"
+        assert enforcer.binding.policy_pack_id == "default-safe"
         assert enforcer.binding.policy_pack_version == "v0.1"
         report = enforcer.evaluate_conformance(
             actual_autonomy_mode="approval_required",

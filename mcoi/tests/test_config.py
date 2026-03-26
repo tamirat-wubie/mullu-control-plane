@@ -17,6 +17,8 @@ def test_app_config_uses_explicit_defaults() -> None:
     assert config.allowed_planning_classes == ("constraint",)
     assert config.enabled_executor_routes == ("shell_command",)
     assert config.enabled_observer_routes == ("filesystem", "process")
+    assert config.policy_pack_id is None
+    assert config.policy_pack_version is None
 
 
 def test_app_config_loads_deterministically_from_mapping() -> None:
@@ -25,12 +27,16 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
             "allowed_planning_classes": ("constraint", "reference"),
             "enabled_executor_routes": ("shell_command",),
             "enabled_observer_routes": ("filesystem",),
+            "policy_pack_id": "strict-approval",
+            "policy_pack_version": "v0.1",
         }
     )
 
     assert config.allowed_planning_classes == ("constraint", "reference")
     assert config.enabled_executor_routes == ("shell_command",)
     assert config.enabled_observer_routes == ("filesystem",)
+    assert config.policy_pack_id == "strict-approval"
+    assert config.policy_pack_version == "v0.1"
 
 
 def test_app_config_rejects_unknown_keys() -> None:
@@ -41,3 +47,8 @@ def test_app_config_rejects_unknown_keys() -> None:
 def test_app_config_rejects_non_text_autonomy_mode() -> None:
     with pytest.raises(ValueError, match="autonomy_mode"):
         AppConfig.from_mapping({"autonomy_mode": 7})
+
+
+def test_app_config_rejects_empty_policy_pack_id() -> None:
+    with pytest.raises(ValueError, match="policy_pack_id"):
+        AppConfig.from_mapping({"policy_pack_id": ""})

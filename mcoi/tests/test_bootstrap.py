@@ -9,8 +9,10 @@ from __future__ import annotations
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
-from mcoi_runtime.app.bootstrap import bootstrap_runtime
+from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.contracts.policy import PolicyDecisionStatus
+from mcoi_runtime.core.policy_engine import PolicyInput
 from mcoi_runtime.core.verification_engine import VerificationEngine
 
 
@@ -46,3 +48,26 @@ def test_bootstrap_runtime_respects_explicit_adapter_overrides() -> None:
     assert runtime.observers["filesystem"].__class__ is FakeObserver
     assert runtime.verification_engine.__class__ is VerificationEngine
     assert runtime.clock() != ""
+
+
+def test_bootstrap_runtime_wires_policy_pack_aware_engine() -> None:
+    runtime = bootstrap_runtime(
+        config=AppConfig(policy_pack_id="strict-approval", policy_pack_version="v0.1"),
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+    )
+
+    decision = runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id="subject-1",
+            goal_id="goal-1",
+            issued_at=runtime.clock(),
+            policy_pack_id=runtime.config.policy_pack_id,
+            policy_pack_version=runtime.config.policy_pack_version,
+            has_write_effects=True,
+        ),
+        build_policy_decision,
+    )
+
+    assert runtime.config.policy_pack_id == "strict-approval"
+    assert decision.status is PolicyDecisionStatus.ESCALATE
+    assert decision.reasons[0].code == "escalate-all"

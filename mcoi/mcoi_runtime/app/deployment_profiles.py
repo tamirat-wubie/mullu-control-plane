@@ -50,6 +50,8 @@ class DeploymentProfile:
             "enabled_executor_routes": list(self.enabled_executor_routes),
             "enabled_observer_routes": list(self.enabled_observer_routes),
             "autonomy_mode": self.autonomy_mode,
+            "policy_pack_id": self.policy_pack_id,
+            "policy_pack_version": self.policy_pack_version,
         }
 
 
@@ -109,7 +111,7 @@ PILOT_PROD = DeploymentProfile(
     name="Pilot Production",
     description="Production-like with approval required and full telemetry",
     autonomy_mode="approval_required",
-    policy_pack_id="default-pack",
+    policy_pack_id="default-safe",
     policy_pack_version="v0.1",
     enabled_executor_routes=("shell_command",),
     enabled_observer_routes=("filesystem", "process"),

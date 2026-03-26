@@ -60,7 +60,6 @@
 
 ## Known Accepted Limitations
 
-- [ ] Policy packs are declarative only (not enforced in PolicyEngine)
 - [ ] Registry backend uses dynamic make_dataclass for opaque restoration
 - [ ] Coordination engine is in-memory only (no persistence)
 - [ ] Working/episodic memory is in-memory only

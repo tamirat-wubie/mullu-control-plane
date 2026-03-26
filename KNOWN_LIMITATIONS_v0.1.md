@@ -47,13 +47,6 @@ runtime does not yet behave as intended by the architecture specification.
   and handoff context are not persisted. Restarting the runtime loses in-flight
   coordination state and requires operator restart from a governed entry point.
 
-## Policy
-
-- **Policy packs are declarative only.** Packs can be listed and loaded, but the
-  policy engine does not yet consume pack rules during evaluation. Policy decisions
-  currently come from the core policy engine's built-in logic, not from pack
-  declarations.
-
 ## Replay
 
 - **Verdict reports show first failing class only.** When a replay produces multiple

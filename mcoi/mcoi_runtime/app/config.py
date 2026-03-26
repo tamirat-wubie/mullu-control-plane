@@ -16,6 +16,8 @@ _APP_CONFIG_KEYS = frozenset(
         "enabled_executor_routes",
         "enabled_observer_routes",
         "autonomy_mode",
+        "policy_pack_id",
+        "policy_pack_version",
     }
 )
 
@@ -44,6 +46,8 @@ class AppConfig:
     enabled_executor_routes: tuple[str, ...] = ("shell_command",)
     enabled_observer_routes: tuple[str, ...] = ("filesystem", "process")
     autonomy_mode: str = "bounded_autonomous"
+    policy_pack_id: str | None = None
+    policy_pack_version: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -62,6 +66,14 @@ class AppConfig:
             _require_text_tuple(self.enabled_observer_routes, "enabled_observer_routes"),
         )
         object.__setattr__(self, "autonomy_mode", _require_text(self.autonomy_mode, "autonomy_mode"))
+        if self.policy_pack_id is not None:
+            object.__setattr__(self, "policy_pack_id", _require_text(self.policy_pack_id, "policy_pack_id"))
+        if self.policy_pack_version is not None:
+            object.__setattr__(
+                self,
+                "policy_pack_version",
+                _require_text(self.policy_pack_version, "policy_pack_version"),
+            )
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any] | None = None) -> AppConfig:
@@ -88,4 +100,6 @@ class AppConfig:
                 normalized.get("enabled_observer_routes", ("filesystem", "process"))
             ),
             autonomy_mode=normalized.get("autonomy_mode", "bounded_autonomous"),
+            policy_pack_id=normalized.get("policy_pack_id"),
+            policy_pack_version=normalized.get("policy_pack_version"),
         )

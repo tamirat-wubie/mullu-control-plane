@@ -69,9 +69,6 @@ METADATA_DOCUMENTS: tuple[str, ...] = (
 )
 
 ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
-    "policy_pack_limitation": (
-        "Policy packs are declarative only",
-    ),
     "registry_backend_limitation": (
         "make_dataclass",
     ),
@@ -226,7 +223,6 @@ def validate_release_limitation_coverage(
     """Validate that accepted release limitations are anchored in supporting docs."""
     errors: list[str] = []
     limitation_sources = {
-        "policy_pack_limitation": known_limitations_text,
         "registry_backend_limitation": known_limitations_text,
         "coordination_persistence_limitation": known_limitations_text,
         "working_memory_limitation": known_limitations_text,

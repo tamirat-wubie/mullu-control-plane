@@ -45,6 +45,8 @@ def test_load_pilot_prod_profile() -> None:
     assert result.profile_name == "pilot-prod"
     assert result.config.autonomy_mode == "approval_required"
     assert "process" in result.config.enabled_observer_routes
+    assert result.config.policy_pack_id == "default-safe"
+    assert result.config.policy_pack_version == "v0.1"
 
 
 def test_load_profile_with_overrides() -> None:
