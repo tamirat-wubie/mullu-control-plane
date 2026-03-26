@@ -24,6 +24,15 @@ from mcoi_runtime.core.tenant_budget import TenantBudgetManager, TenantBudgetPol
 from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine
 from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
 from mcoi_runtime.core.audit_trail import AuditTrail
+from mcoi_runtime.core.agent_protocol import (
+    AgentCapability, AgentDescriptor, AgentRegistry, TaskManager, TaskSpec,
+)
+from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine
+from mcoi_runtime.core.webhook_system import WebhookManager, WebhookSubscription
+from mcoi_runtime.core.deep_health import DeepHealthChecker
+from mcoi_runtime.core.config_reload import ConfigManager
+from mcoi_runtime.core.observability import ObservabilityAggregator
+from mcoi_runtime.core.plugin_system import PluginRegistry
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 from mcoi_runtime.persistence.postgres_store import InMemoryStore, create_store
 
@@ -102,7 +111,58 @@ audit_trail = AuditTrail(clock=_clock)
 # Phase 201D: Tenant-scoped ledger
 tenant_ledger = TenantLedger(clock=_clock)
 
-app = FastAPI(title="Mullu Platform", version="0.3.0", description="Governed AI Operating System")
+# Phase 203A: Agent registry + task manager
+agent_registry = AgentRegistry()
+agent_registry.register(AgentDescriptor(
+    agent_id="llm-agent", name="LLM Completion Agent",
+    capabilities=(AgentCapability.LLM_COMPLETION, AgentCapability.TOOL_USE),
+))
+agent_registry.register(AgentDescriptor(
+    agent_id="code-agent", name="Code Execution Agent",
+    capabilities=(AgentCapability.CODE_EXECUTION,),
+))
+task_manager = TaskManager(clock=_clock, registry=agent_registry)
+
+# Phase 203B: Webhook manager
+webhook_manager = WebhookManager(clock=_clock)
+
+# Phase 203C: Deep health checker
+deep_health = DeepHealthChecker(clock=_clock)
+deep_health.register("store", lambda: {"status": "healthy", "ledger_count": store.ledger_count()})
+deep_health.register("llm", lambda: {"status": "healthy", "invocations": llm_bridge.invocation_count})
+deep_health.register("certification", lambda: {"status": "healthy", **cert_daemon.status()})
+deep_health.register("metrics", lambda: {"status": "healthy", "counters": len(metrics.KNOWN_COUNTERS)})
+
+# Phase 203D: Config manager
+config_manager = ConfigManager(clock=_clock, initial={
+    "llm": {"default_model": llm_bootstrap_result.config.default_model},
+    "rate_limits": {"max_tokens": 60, "refill_rate": 1.0},
+    "certification": {"interval_seconds": 300, "enabled": True},
+})
+
+# Phase 204B: Agent workflow engine
+workflow_engine = AgentWorkflowEngine(
+    clock=_clock,
+    task_manager=task_manager,
+    llm_complete_fn=lambda prompt, budget_id: llm_bridge.complete(prompt, budget_id=budget_id),
+    webhook_manager=webhook_manager,
+    audit_trail=audit_trail,
+)
+
+# Phase 204C: Observability aggregator
+observability = ObservabilityAggregator(clock=_clock)
+observability.register_source("health", lambda: {"status": "healthy"})
+observability.register_source("llm", lambda: llm_bridge.budget_summary())
+observability.register_source("tenants", lambda: {"count": tenant_budget_mgr.tenant_count(), "total_spent": tenant_budget_mgr.total_spent()})
+observability.register_source("agents", lambda: {"agents": agent_registry.count, "tasks": task_manager.task_count})
+observability.register_source("audit", lambda: audit_trail.summary())
+observability.register_source("certification", lambda: cert_daemon.status())
+observability.register_source("workflows", lambda: workflow_engine.summary())
+
+# Phase 204D: Plugin registry
+plugin_registry = PluginRegistry()
+
+app = FastAPI(title="Mullu Platform", version="0.5.0", description="Governed AI Operating System")
 
 
 class ExecuteRequest(BaseModel):
@@ -455,3 +515,186 @@ def verify_audit_chain():
 def audit_summary():
     """Audit trail summary."""
     return audit_trail.summary()
+
+
+# ═══ Phase 205A — Agent Workflow Endpoints ═══
+
+class WorkflowRequest(BaseModel):
+    task_id: str
+    description: str
+    capability: str = "llm.completion"
+    payload: dict[str, Any] = {}
+    tenant_id: str = "system"
+    budget_id: str = "default"
+
+
+@app.post("/api/v1/workflow/execute")
+def execute_workflow(req: WorkflowRequest):
+    """Execute a governed multi-agent workflow."""
+    metrics.inc("requests_governed")
+    try:
+        cap = AgentCapability(req.capability)
+    except ValueError:
+        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+
+    result = workflow_engine.execute(
+        task_id=req.task_id, description=req.description,
+        capability=cap, payload=req.payload,
+        tenant_id=req.tenant_id, budget_id=req.budget_id,
+    )
+    metrics.inc("llm_calls_total" if result.status == "completed" else "errors_total")
+    return {
+        "workflow_id": result.workflow_id,
+        "task_id": result.task_id,
+        "agent_id": result.agent_id,
+        "status": result.status,
+        "steps": [{"name": s.step_name, "status": s.status, "detail": s.detail} for s in result.steps],
+        "output": result.output,
+        "error": result.error,
+    }
+
+
+@app.get("/api/v1/workflow/history")
+def workflow_history(limit: int = 50):
+    """Workflow execution history."""
+    return {
+        "workflows": [
+            {"id": r.workflow_id, "task": r.task_id, "agent": r.agent_id, "status": r.status}
+            for r in workflow_engine.history(limit=limit)
+        ],
+        "summary": workflow_engine.summary(),
+    }
+
+
+# ═══ Phase 205A — Agent Registry Endpoints ═══
+
+@app.get("/api/v1/agents")
+def list_agents():
+    """List registered agents and their capabilities."""
+    agents = agent_registry.list_agents()
+    return {
+        "agents": [
+            {"id": a.agent_id, "name": a.name, "capabilities": [c.value for c in a.capabilities], "enabled": a.enabled}
+            for a in agents
+        ],
+        "count": len(agents),
+    }
+
+
+@app.get("/api/v1/agents/{agent_id}/tasks")
+def agent_tasks(agent_id: str):
+    """Get tasks assigned to an agent."""
+    metrics.inc("requests_governed")
+    return {"agent_id": agent_id, "task_count": task_manager.task_count, "summary": task_manager.summary()}
+
+
+# ═══ Phase 205A — Webhook Endpoints ═══
+
+class WebhookSubscribeRequest(BaseModel):
+    subscription_id: str
+    tenant_id: str
+    url: str
+    events: list[str]
+    secret: str = ""
+
+
+@app.post("/api/v1/webhooks/subscribe")
+def webhook_subscribe(req: WebhookSubscribeRequest):
+    """Subscribe to webhook events."""
+    metrics.inc("requests_governed")
+    sub = WebhookSubscription(
+        subscription_id=req.subscription_id, tenant_id=req.tenant_id,
+        url=req.url, events=tuple(req.events), secret=req.secret,
+    )
+    webhook_manager.subscribe(sub)
+    audit_trail.record(
+        action="webhook.subscribe", actor_id="system",
+        tenant_id=req.tenant_id, target=req.subscription_id, outcome="success",
+    )
+    return {"subscription_id": sub.subscription_id, "events": list(sub.events)}
+
+
+@app.get("/api/v1/webhooks")
+def list_webhooks(tenant_id: str | None = None):
+    """List webhook subscriptions."""
+    subs = webhook_manager.list_subscriptions(tenant_id=tenant_id)
+    return {
+        "subscriptions": [
+            {"id": s.subscription_id, "tenant": s.tenant_id, "url": s.url, "events": list(s.events), "enabled": s.enabled}
+            for s in subs
+        ],
+        "count": len(subs),
+    }
+
+
+@app.get("/api/v1/webhooks/deliveries")
+def webhook_deliveries(limit: int = 50):
+    """Recent webhook delivery history."""
+    return {
+        "deliveries": [
+            {"id": d.delivery_id, "subscription": d.subscription_id, "event": d.event, "status": d.status, "at": d.created_at}
+            for d in webhook_manager.delivery_history(limit=limit)
+        ],
+    }
+
+
+# ═══ Phase 205A — Deep Health Endpoint ═══
+
+@app.get("/api/v1/health/deep")
+def deep_health_check():
+    """System-wide deep health diagnostic."""
+    result = deep_health.run()
+    return {
+        "overall": result.overall.value,
+        "components": [
+            {"name": c.name, "status": c.status.value, "latency_ms": c.latency_ms, "detail": c.detail}
+            for c in result.components
+        ],
+        "total_latency_ms": result.total_latency_ms,
+        "checked_at": result.checked_at,
+    }
+
+
+# ═══ Phase 205A — Config Endpoints ═══
+
+@app.get("/api/v1/config")
+def get_config():
+    """Current runtime configuration."""
+    return {
+        "version": config_manager.version,
+        "config": config_manager.get_all(),
+        "hash": config_manager.config_hash[:16] if config_manager.config_hash else "",
+    }
+
+
+@app.get("/api/v1/config/history")
+def config_history(limit: int = 10):
+    """Configuration change history."""
+    return {
+        "versions": [
+            {"version": v.version, "hash": v.config_hash[:16], "by": v.applied_by, "at": v.applied_at, "desc": v.description}
+            for v in config_manager.history(limit=limit)
+        ],
+    }
+
+
+# ═══ Phase 205A — Observability Dashboard ═══
+
+@app.get("/api/v1/dashboard")
+def dashboard():
+    """Aggregated observability dashboard data."""
+    return observability.collect_all()
+
+
+# ═══ Phase 205A — Plugin Endpoints ═══
+
+@app.get("/api/v1/plugins")
+def list_plugins():
+    """List registered plugins."""
+    return {
+        "plugins": [
+            {"id": p.descriptor.plugin_id, "name": p.descriptor.name, "version": p.descriptor.version, "status": p.status.value}
+            for p in plugin_registry.list_plugins()
+        ],
+        "summary": plugin_registry.summary(),
+    }
