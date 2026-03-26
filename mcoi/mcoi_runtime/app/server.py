@@ -244,7 +244,34 @@ schema_validator.register(SchemaDefinition(
     ),
 ))
 
-app = FastAPI(title="Mullu Platform", version="0.8.0", description="Governed AI Operating System")
+# Phase 209C: Prompt template engine
+from mcoi_runtime.core.prompt_template_engine import PromptTemplateEngine, PromptTemplate
+prompt_engine = PromptTemplateEngine()
+prompt_engine.register(PromptTemplate(
+    template_id="summarize", name="Summarize",
+    template="Summarize the following text concisely:\n\n{{text}}",
+    variables=("text",), system_prompt="You are a concise summarizer.",
+    category="analysis",
+))
+prompt_engine.register(PromptTemplate(
+    template_id="translate", name="Translate",
+    template="Translate the following text to {{language}}:\n\n{{text}}",
+    variables=("text", "language"), system_prompt="You are a professional translator.",
+    category="language",
+))
+prompt_engine.register(PromptTemplate(
+    template_id="analyze", name="Analyze",
+    template="Analyze the following {{topic}} and provide key insights:\n\n{{content}}",
+    variables=("topic", "content"), system_prompt="You are an expert analyst.",
+    category="analysis",
+))
+
+# Phase 209D: Cost analytics engine
+from mcoi_runtime.core.cost_analytics import CostAnalyticsEngine
+cost_analytics = CostAnalyticsEngine(clock=_clock)
+observability.register_source("cost_analytics", lambda: cost_analytics.summary())
+
+app = FastAPI(title="Mullu Platform", version="0.9.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -1133,4 +1160,170 @@ def validate_data(req: ValidateRequest):
             {"field": e.field, "rule": e.rule_type, "message": e.message}
             for e in result.errors
         ],
+    }
+
+
+# ═══ Phase 209A — Conversation-Aware Chat Endpoint ═══
+
+class ChatRequest(BaseModel):
+    conversation_id: str
+    message: str
+    tenant_id: str = "system"
+    budget_id: str = "default"
+    model_name: str = "claude-sonnet-4-20250514"
+    system_prompt: str = ""
+
+
+@app.post("/api/v1/chat")
+def chat_completion(req: ChatRequest):
+    """Multi-turn chat — uses conversation history for context."""
+    metrics.inc("requests_governed")
+    metrics.inc("llm_calls_total")
+
+    conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
+
+    # Add system prompt on first message
+    if req.system_prompt and conv.message_count == 0:
+        conv.add_system(req.system_prompt)
+
+    # Add user message
+    conv.add_user(req.message)
+
+    # Call LLM with full conversation history
+    result = llm_bridge.chat(
+        conv.to_chat_messages(),
+        model_name=req.model_name,
+        budget_id=req.budget_id,
+        tenant_id=req.tenant_id,
+    )
+
+    if result.succeeded:
+        conv.add_assistant(result.content)
+        metrics.inc("llm_calls_succeeded")
+        # Record cost analytics
+        cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
+    else:
+        metrics.inc("llm_calls_failed")
+
+    return {
+        "conversation_id": conv.conversation_id,
+        "content": result.content,
+        "model": result.model_name,
+        "tokens": result.total_tokens,
+        "cost": result.cost,
+        "succeeded": result.succeeded,
+        "message_count": conv.message_count,
+        "governed": True,
+    }
+
+
+# ═══ Phase 209C — Prompt Template Endpoints ═══
+
+@app.get("/api/v1/prompts")
+def list_prompt_templates(category: str | None = None):
+    """List registered prompt templates."""
+    templates = prompt_engine.list_templates(category=category)
+    return {
+        "templates": [
+            {"id": t.template_id, "name": t.name, "variables": list(t.variables),
+             "category": t.category, "version": t.version}
+            for t in templates
+        ],
+        "summary": prompt_engine.summary(),
+    }
+
+
+class PromptRenderRequest(BaseModel):
+    template_id: str
+    variables: dict[str, str]
+    tenant_id: str = "system"
+    budget_id: str = "default"
+    execute: bool = False  # If True, also run the rendered prompt through LLM
+
+
+@app.post("/api/v1/prompts/render")
+def render_prompt(req: PromptRenderRequest):
+    """Render a prompt template with variables, optionally execute via LLM."""
+    metrics.inc("requests_governed")
+    try:
+        rendered = prompt_engine.render(req.template_id, req.variables)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+
+    response: dict[str, Any] = {
+        "template_id": rendered.template_id,
+        "prompt": rendered.prompt,
+        "system_prompt": rendered.system_prompt,
+        "version": rendered.version,
+    }
+
+    if req.execute:
+        metrics.inc("llm_calls_total")
+        result = llm_bridge.complete(
+            rendered.prompt, system=rendered.system_prompt,
+            budget_id=req.budget_id, tenant_id=req.tenant_id,
+        )
+        response["llm_result"] = {
+            "content": result.content,
+            "model": result.model_name,
+            "tokens": result.total_tokens,
+            "cost": result.cost,
+            "succeeded": result.succeeded,
+        }
+        if result.succeeded:
+            cost_analytics.record(req.tenant_id, result.model_name, result.cost, result.total_tokens)
+
+    return response
+
+
+# ═══ Phase 209D — Cost Analytics Endpoints ═══
+
+@app.get("/api/v1/costs")
+def cost_summary():
+    """Overall cost analytics summary."""
+    return cost_analytics.summary()
+
+
+@app.get("/api/v1/costs/top-spenders")
+def top_spenders(limit: int = 10):
+    """Top spending tenants."""
+    return {
+        "spenders": [
+            {"tenant_id": b.tenant_id, "total_cost": b.total_cost, "calls": b.call_count}
+            for b in cost_analytics.top_spenders(limit=limit)
+        ],
+    }
+
+
+@app.get("/api/v1/costs/by-model")
+def costs_by_model():
+    """Cost breakdown by LLM model."""
+    return {"models": cost_analytics.model_usage()}
+
+
+@app.get("/api/v1/costs/{tenant_id}")
+def tenant_costs(tenant_id: str):
+    """Cost breakdown for a specific tenant."""
+    breakdown = cost_analytics.tenant_breakdown(tenant_id)
+    return {
+        "tenant_id": breakdown.tenant_id,
+        "total_cost": breakdown.total_cost,
+        "total_tokens": breakdown.total_tokens,
+        "call_count": breakdown.call_count,
+        "avg_cost_per_call": breakdown.avg_cost_per_call,
+        "by_model": breakdown.by_model,
+        "most_expensive_model": breakdown.most_expensive_model,
+    }
+
+
+@app.get("/api/v1/costs/{tenant_id}/projection")
+def cost_projection(tenant_id: str, budget: float = 0.0, days_elapsed: float = 1.0):
+    """Cost projection for a tenant."""
+    proj = cost_analytics.project(tenant_id, budget=budget, days_elapsed=days_elapsed)
+    return {
+        "tenant_id": proj.tenant_id,
+        "current_daily_rate": proj.current_daily_rate,
+        "projected_monthly": proj.projected_monthly,
+        "budget_remaining": proj.budget_remaining,
+        "days_until_exhaustion": proj.days_until_exhaustion,
     }
