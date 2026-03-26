@@ -318,7 +318,20 @@ agent_orchestrator = AgentOrchestrator(clock=_clock, agent_capabilities={
 })
 observability.register_source("orchestration", lambda: agent_orchestrator.summary())
 
-app = FastAPI(title="Mullu Platform", version="2.4.0", description="Governed AI Operating System")
+# Phase 223A: Rate limit headers
+from mcoi_runtime.core.rate_limit_headers import RateLimitHeaderProvider
+rate_limit_headers = RateLimitHeaderProvider(default_limit=60, window_seconds=60.0)
+
+# Phase 223B: Webhook retry engine
+from mcoi_runtime.core.webhook_retry import WebhookRetryEngine, RetryPolicy
+webhook_retry = WebhookRetryEngine(policy=RetryPolicy(max_retries=3, base_delay_seconds=1.0))
+observability.register_source("webhook_retry", lambda: webhook_retry.summary())
+
+# Phase 223C: Config file watcher
+from mcoi_runtime.core.config_watcher import ConfigFileWatcher
+config_watcher = ConfigFileWatcher(poll_interval=30.0, clock=_clock)
+
+app = FastAPI(title="Mullu Platform", version="2.5.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2507,3 +2520,39 @@ def agent_handoff(req: HandoffRequest):
         "error": result.error,
         "governed": True,
     }
+
+
+# ── Phase 223A: Rate limit headers endpoint ──────────────────────────────
+@app.get("/api/v1/rate-limits/{client_id}")
+def get_rate_limit_info(client_id: str):
+    """Return rate limit headers for a client."""
+    metrics.inc("requests_governed")
+    info = rate_limit_headers.peek(client_id)
+    return {"headers": info.to_headers(), "is_exhausted": info.is_exhausted, "governed": True}
+
+
+# ── Phase 223B: Webhook retry endpoint ───────────────────────────────────
+@app.get("/api/v1/webhooks/retry/summary")
+def get_webhook_retry_summary():
+    """Return webhook retry engine summary."""
+    metrics.inc("requests_governed")
+    return {"webhook_retry": webhook_retry.summary(), "governed": True}
+
+
+@app.get("/api/v1/webhooks/retry/dead-letters")
+def get_dead_letters():
+    """Return dead-lettered webhook deliveries."""
+    metrics.inc("requests_governed")
+    return {
+        "dead_letters": [d.to_dict() for d in webhook_retry.dead_letters],
+        "count": webhook_retry.dead_letter_count,
+        "governed": True,
+    }
+
+
+# ── Phase 223C: Config watcher endpoint ──────────────────────────────────
+@app.get("/api/v1/config/watcher")
+def get_config_watcher_status():
+    """Return config file watcher status."""
+    metrics.inc("requests_governed")
+    return {"config_watcher": config_watcher.summary(), "governed": True}
