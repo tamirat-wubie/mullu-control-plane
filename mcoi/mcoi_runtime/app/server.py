@@ -294,7 +294,31 @@ health_agg.register("event_bus", lambda: {"status": "healthy" if event_bus.error
 from mcoi_runtime.core.api_version import APIVersionManager, EndpointDescriptor
 api_versions = APIVersionManager(clock=_clock)
 
-app = FastAPI(title="Mullu Platform", version="2.0.0", description="Governed AI Operating System")
+# Phase 222A: Grafana dashboard generator
+from mcoi_runtime.core.grafana_dashboard import build_default_dashboard
+grafana_dashboard = build_default_dashboard()
+
+# Phase 222B: Request tracing
+from mcoi_runtime.core.request_tracing import RequestTracer, TraceContext
+request_tracer = RequestTracer(
+    max_traces=10_000,
+    on_span_finish=lambda span: audit_trail.record(
+        action="trace.span.finish", actor_id="tracer",
+        tenant_id="", target=span.operation,
+        outcome=span.status.value,
+    ),
+)
+observability.register_source("tracing", lambda: request_tracer.summary())
+
+# Phase 222C: Agent orchestration
+from mcoi_runtime.core.agent_orchestration import AgentOrchestrator
+agent_orchestrator = AgentOrchestrator(clock=_clock, agent_capabilities={
+    "llm-agent": ("llm_completion", "tool_use"),
+    "code-agent": ("code_execution",),
+})
+observability.register_source("orchestration", lambda: agent_orchestrator.summary())
+
+app = FastAPI(title="Mullu Platform", version="2.4.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2385,5 +2409,101 @@ def execute_workflow_template(req: TemplateExecuteRequest):
         "final_output": result.final_output,
         "steps": len(result.steps),
         "total_cost": result.total_cost,
+        "governed": True,
+    }
+
+
+# ── Phase 222A: Grafana dashboard endpoint ──────────────────────────────
+@app.get("/api/v1/grafana/dashboard")
+def get_grafana_dashboard():
+    """Export the default Grafana dashboard JSON."""
+    metrics.inc("requests_governed")
+    return grafana_dashboard.generate()
+
+
+# ── Phase 222B: Request tracing endpoints ────────────────────────────────
+@app.get("/api/v1/traces")
+def get_tracing_summary():
+    """Return tracing summary statistics."""
+    metrics.inc("requests_governed")
+    return {"tracing": request_tracer.summary(), "governed": True}
+
+
+@app.get("/api/v1/traces/{trace_id}")
+def get_trace(trace_id: str):
+    """Return spans for a specific trace."""
+    metrics.inc("requests_governed")
+    spans = request_tracer.get_trace(trace_id)
+    if not spans:
+        raise HTTPException(404, detail=f"Trace not found: {trace_id}")
+    return {
+        "trace_id": trace_id,
+        "spans": [s.to_dict() for s in spans],
+        "governed": True,
+    }
+
+
+@app.get("/api/v1/traces/slow")
+def get_slow_traces(threshold_ms: float = 1000.0):
+    """Return traces exceeding latency threshold."""
+    metrics.inc("requests_governed")
+    return {"slow_traces": request_tracer.slow_traces(threshold_ms), "governed": True}
+
+
+# ── Phase 222C: Agent orchestration endpoints ────────────────────────────
+@app.get("/api/v1/orchestration")
+def get_orchestration_summary():
+    """Return orchestration summary."""
+    metrics.inc("requests_governed")
+    return {"orchestration": agent_orchestrator.summary(), "governed": True}
+
+
+class OrchestrationPlanRequest(BaseModel):
+    initiator_id: str
+    goal: str
+
+
+@app.post("/api/v1/orchestration/plans")
+def create_orchestration_plan(req: OrchestrationPlanRequest):
+    """Create a new multi-agent orchestration plan."""
+    metrics.inc("requests_governed")
+    try:
+        plan = agent_orchestrator.create_plan(req.initiator_id, req.goal)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    return {"plan": plan.to_dict(), "governed": True}
+
+
+@app.get("/api/v1/orchestration/plans/{plan_id}")
+def get_orchestration_plan(plan_id: str):
+    """Get orchestration plan details."""
+    metrics.inc("requests_governed")
+    plan = agent_orchestrator.get_plan(plan_id)
+    if not plan:
+        raise HTTPException(404, detail=f"Plan not found: {plan_id}")
+    return {"plan": plan.to_dict(), "governed": True}
+
+
+class HandoffRequest(BaseModel):
+    from_agent: str
+    to_agent: str
+    required_capabilities: list[str] = []
+    payload: dict[str, Any] = {}
+
+
+@app.post("/api/v1/orchestration/handoff")
+def agent_handoff(req: HandoffRequest):
+    """Execute an agent-to-agent handoff."""
+    metrics.inc("requests_governed")
+    result = agent_orchestrator.handoff(
+        req.from_agent, req.to_agent,
+        required_capabilities=tuple(req.required_capabilities),
+        payload=req.payload,
+    )
+    return {
+        "from_agent": result.from_agent,
+        "to_agent": result.to_agent,
+        "success": result.success,
+        "error": result.error,
         "governed": True,
     }
