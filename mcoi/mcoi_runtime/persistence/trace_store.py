@@ -1,6 +1,6 @@
 """Purpose: append-only trace entry persistence.
 Governance scope: persistence layer trace storage only.
-Dependencies: persistence errors, serialization helpers, TraceEntry contract.
+Dependencies: persistence errors, serialization helpers, TraceEntry contract, hash chain.
 Invariants: one file per trace entry, append-only, fail closed on malformed data.
 """
 
@@ -10,6 +10,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from mcoi_runtime.contracts.trace import TraceEntry
 
@@ -21,6 +22,9 @@ from .errors import (
     PersistenceWriteError,
     TraceNotFoundError,
 )
+
+if TYPE_CHECKING:
+    from .hash_chain import HashChainStore
 
 
 def _atomic_write(path: Path, content: str) -> None:
@@ -65,12 +69,18 @@ class TraceStore:
 
     Each trace entry is stored as a single JSON file named {trace_id}.json
     under base_path. Ordering is by sorted trace_id.
+
+    When a hash_chain is provided, each append computes a SHA-256 content hash
+    of the serialized entry and records it in the chain for tamper detection.
     """
 
-    def __init__(self, base_path: Path) -> None:
+    def __init__(
+        self, base_path: Path, *, hash_chain: HashChainStore | None = None
+    ) -> None:
         if not isinstance(base_path, Path):
             raise PersistenceError("base_path must be a Path instance")
         self._base_path = base_path
+        self._hash_chain = hash_chain
 
     def _safe_path(self, id_value: str, suffix: str = "") -> Path:
         """Construct a path from *id_value* and validate it stays inside _base_path."""
@@ -98,6 +108,11 @@ class TraceStore:
         path = self._trace_path(entry.trace_id)
         content = serialize_record(entry)
         _atomic_write(path, content)
+
+        if self._hash_chain is not None:
+            from .hash_chain import compute_content_hash
+
+            self._hash_chain.append(compute_content_hash(content))
 
     def list_traces(self) -> tuple[str, ...]:
         if not self._base_path.exists():

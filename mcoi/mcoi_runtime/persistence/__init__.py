@@ -12,6 +12,8 @@ from .errors import (
     SnapshotNotFoundError,
     TraceNotFoundError,
 )
+from .hash_chain import HashChainStore, compute_chain_hash, compute_content_hash
+from .coordination_store import CoordinationStore
 from .goal_store import GoalStore
 from .memory_store import MemoryStore
 from .registry_backend import RegistryBackend
@@ -23,7 +25,11 @@ from .workflow_store import WorkflowStore
 from ._serialization import deserialize_record, serialize_record
 
 __all__ = [
+    "CoordinationStore",
     "CorruptedDataError",
+    "HashChainStore",
+    "compute_chain_hash",
+    "compute_content_hash",
     "GoalStore",
     "MemoryStore",
     "PathTraversalError",
