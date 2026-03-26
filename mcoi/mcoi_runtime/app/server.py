@@ -347,7 +347,24 @@ data_export.register_source("audit", lambda: [
     e.to_dict() if hasattr(e, "to_dict") else e for e in audit_trail.recent(1000)
 ])
 
-app = FastAPI(title="Mullu Platform", version="2.6.0", description="Governed AI Operating System")
+# Phase 225A: SLA monitoring
+from mcoi_runtime.core.sla_monitor import SLAMonitor, SLATarget, SLAMetricType
+sla_monitor = SLAMonitor(clock=_clock)
+sla_monitor.add_target(SLATarget("uptime", "Platform Uptime", SLAMetricType.UPTIME, 99.9, "gte"))
+sla_monitor.add_target(SLATarget("latency-p99", "API Latency P99", SLAMetricType.LATENCY_P99, 500.0, "lte"))
+observability.register_source("sla", lambda: sla_monitor.summary())
+
+# Phase 225B: Notification dispatcher
+from mcoi_runtime.core.notification_dispatcher import NotificationDispatcher, NotificationChannel
+notification_dispatcher = NotificationDispatcher(clock=_clock)
+notification_dispatcher.register_channel(NotificationChannel.IN_APP, lambda n: True)
+
+# Phase 225C: Tenant isolation auditor
+from mcoi_runtime.core.tenant_isolation_audit import TenantIsolationAuditor
+tenant_isolation = TenantIsolationAuditor(clock=_clock)
+observability.register_source("tenant_isolation", lambda: tenant_isolation.summary())
+
+app = FastAPI(title="Mullu Platform", version="2.7.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2662,5 +2679,54 @@ def export_data(req: DataExportRequest):
     return {
         "export": result.to_dict(),
         "content": result.content,
+        "governed": True,
+    }
+
+
+# ── Phase 225A: SLA monitoring endpoints ─────────────────────────────────
+@app.get("/api/v1/sla")
+def get_sla_summary():
+    """Return SLA monitoring summary."""
+    metrics.inc("requests_governed")
+    return {"sla": sla_monitor.summary(), "governed": True}
+
+
+@app.get("/api/v1/sla/violations")
+def get_sla_violations(sla_id: str | None = None):
+    """Return SLA violations."""
+    metrics.inc("requests_governed")
+    violations = sla_monitor.violations(sla_id)
+    return {
+        "violations": [{"sla_id": v.sla_id, "actual": v.actual_value,
+                         "threshold": v.threshold} for v in violations],
+        "count": len(violations),
+        "governed": True,
+    }
+
+
+# ── Phase 225B: Notification endpoints ───────────────────────────────────
+@app.get("/api/v1/notifications/summary")
+def get_notification_summary():
+    """Return notification dispatcher summary."""
+    metrics.inc("requests_governed")
+    return {"notifications": notification_dispatcher.summary(), "governed": True}
+
+
+# ── Phase 225C: Tenant isolation audit endpoints ─────────────────────────
+@app.get("/api/v1/tenant-isolation")
+def get_tenant_isolation_summary():
+    """Return tenant isolation audit summary."""
+    metrics.inc("requests_governed")
+    return {"tenant_isolation": tenant_isolation.summary(), "governed": True}
+
+
+@app.get("/api/v1/tenant-isolation/audits")
+def get_recent_isolation_audits(count: int = 10):
+    """Return recent tenant isolation audit results."""
+    metrics.inc("requests_governed")
+    audits = tenant_isolation.recent_audits(count)
+    return {
+        "audits": [a.to_dict() for a in audits],
+        "count": len(audits),
         "governed": True,
     }
