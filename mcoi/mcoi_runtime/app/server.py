@@ -2166,3 +2166,24 @@ def verify_isolation(tenant_a: str = "probe-a", tenant_b: str = "probe-b"):
 def isolation_summary():
     """Isolation verification summary."""
     return isolation_verifier.summary()
+
+
+# ═══ Phase 217 — Usage Reports ═══
+
+from mcoi_runtime.core.usage_reporter import UsageReporter
+
+usage_reporter = UsageReporter(clock=_clock)
+usage_reporter.register_source("llm_calls", lambda tid: llm_bridge.invocation_count)
+usage_reporter.register_source("total_cost", lambda tid: llm_bridge.total_cost)
+
+
+@app.get("/api/v1/usage/{tenant_id}")
+def tenant_usage(tenant_id: str):
+    """Per-tenant usage report."""
+    report = usage_reporter.generate(tenant_id)
+    return {
+        "tenant_id": report.tenant_id,
+        "llm_calls": report.llm_calls,
+        "total_cost": report.total_cost,
+        "generated_at": report.generated_at,
+    }
