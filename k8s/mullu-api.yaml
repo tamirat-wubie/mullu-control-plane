@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mullu-config
+  namespace: mullu
+data:
+  MULLU_ENV: "production"
+  MULLU_DB_BACKEND: "postgresql"
+  MULLU_DB_URL: "postgresql://mullu:mullu-prod-password@postgres:5432/mullu"
+  MULLU_LLM_BACKEND: "stub"
+  MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
+  MULLU_CERT_INTERVAL: "300"
+  MULLU_CERT_ENABLED: "true"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mullu-secrets
+  namespace: mullu
+type: Opaque
+stringData:
+  ANTHROPIC_API_KEY: ""
+  OPENAI_API_KEY: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mullu-api
+  namespace: mullu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mullu-api
+  template:
+    metadata:
+      labels:
+        app: mullu-api
+        governed: "true"
+    spec:
+      containers:
+        - name: mullu-api
+          image: mullu-platform:2.0.0
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: mullu-config
+            - secretRef:
+                name: mullu-secrets
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mullu-api
+  namespace: mullu
+spec:
+  selector:
+    app: mullu-api
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mullu-api-hpa
+  namespace: mullu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mullu-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
