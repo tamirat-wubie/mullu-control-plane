@@ -294,7 +294,7 @@ health_agg.register("event_bus", lambda: {"status": "healthy" if event_bus.error
 from mcoi_runtime.core.api_version import APIVersionManager, EndpointDescriptor
 api_versions = APIVersionManager(clock=_clock)
 
-app = FastAPI(title="Mullu Platform", version="1.1.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="2.0.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2187,3 +2187,47 @@ def tenant_usage(tenant_id: str):
         "total_cost": report.total_cost,
         "generated_at": report.generated_at,
     }
+
+
+# ═══ Phase 218B — Dependency Graph Endpoint ═══
+
+from mcoi_runtime.core.dependency_graph import DependencyGraph, SubsystemNode
+
+dep_graph = DependencyGraph()
+dep_graph.add(SubsystemNode(name="store", version="1.0"))
+dep_graph.add(SubsystemNode(name="llm", version="1.0", dependencies=("store",)))
+dep_graph.add(SubsystemNode(name="agents", version="1.0", dependencies=("llm", "store")))
+dep_graph.add(SubsystemNode(name="workflows", version="1.0", dependencies=("agents", "llm")))
+dep_graph.add(SubsystemNode(name="conversations", version="1.0", dependencies=("llm",)))
+dep_graph.add(SubsystemNode(name="events", version="1.0", dependencies=("store",)))
+dep_graph.add(SubsystemNode(name="governance", version="1.0", dependencies=("store", "events")))
+dep_graph.add(SubsystemNode(name="api", version="1.0", dependencies=("governance", "workflows", "conversations")))
+
+
+@app.get("/api/v1/dependencies")
+def dependency_graph_endpoint():
+    """Subsystem dependency graph."""
+    return {
+        "startup_order": dep_graph.topological_sort(),
+        "summary": dep_graph.summary(),
+    }
+
+
+@app.get("/api/v1/dependencies/{name}/impact")
+def dependency_impact(name: str):
+    """Impact analysis if a subsystem fails."""
+    impacted = dep_graph.impact_of_failure(name)
+    return {"subsystem": name, "impacted": impacted, "count": len(impacted)}
+
+
+# ═══ Phase 218C — Backpressure Endpoint ═══
+
+from mcoi_runtime.core.backpressure import BackpressureEngine
+
+backpressure = BackpressureEngine()
+
+
+@app.get("/api/v1/backpressure")
+def backpressure_status():
+    """Current backpressure state."""
+    return backpressure.status()
