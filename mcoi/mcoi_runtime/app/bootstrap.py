@@ -78,6 +78,7 @@ class BootstrappedRuntime:
     memory_store: MemoryStore | None
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
+    governed_dispatcher: object | None = None
 
 
 def build_policy_decision(
@@ -166,6 +167,10 @@ def bootstrap_runtime(
         clock=runtime_clock,
     )
 
+    # Phase 195C: create governed dispatcher wrapping the raw one
+    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
+    governed = GovernedDispatcher(dispatcher, clock=runtime_clock)
+
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
@@ -211,4 +216,5 @@ def bootstrap_runtime(
         memory_store=memory_store,
         executors=frozen_executors,
         observers=frozen_observers,
+        governed_dispatcher=governed,
     )

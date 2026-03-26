@@ -15,6 +15,9 @@ from mcoi_runtime.core.governed_dispatcher import (
 )
 from mcoi_runtime.contracts.execution import ExecutionResult
 
+# Module-level counter for unique intent IDs (avoids collision with fixed clocks)
+_intent_counter: list[int] = [0]
+
 
 def governed_operator_dispatch(
     governed: GovernedDispatcher,
@@ -34,8 +37,9 @@ def governed_operator_dispatch(
     from datetime import datetime, timezone
 
     if not intent_id:
-        # Generate deterministic intent ID from request
-        raw = f"{actor_id}:{request.goal_id}:{request.route}:{datetime.now(timezone.utc).isoformat()}"
+        # Generate unique intent ID using counter to avoid collisions with fixed clocks
+        _intent_counter[0] += 1
+        raw = f"{actor_id}:{request.goal_id}:{request.route}:{_intent_counter[0]}:{datetime.now(timezone.utc).isoformat()}"
         intent_id = f"op-intent-{hashlib.sha256(raw.encode()).hexdigest()[:12]}"
 
     context = GovernedDispatchContext(
