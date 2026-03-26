@@ -81,7 +81,8 @@ class AuthGate:
 
     def create_session(self, session_id: str, actor_id: str, tenant_id: str, ttl_seconds: int = 3600) -> Session:
         now = datetime.now(timezone.utc)
-        expires = datetime(now.year, now.month, now.day, now.hour + 1, tzinfo=now.tzinfo)
+        from datetime import timedelta
+        expires = now + timedelta(seconds=ttl_seconds)
         session = Session(session_id, actor_id, tenant_id, now.isoformat(), expires.isoformat())
         self._sessions[session_id] = session
         return session
