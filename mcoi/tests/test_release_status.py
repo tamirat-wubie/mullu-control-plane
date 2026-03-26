@@ -82,6 +82,26 @@ def test_validate_release_limitation_coverage_rejects_missing_anchor() -> None:
     assert any("encryption_limitation" in error for error in errors)
 
 
+def test_scan_source_hygiene_text_rejects_bare_except_and_marker() -> None:
+    path = REPO_ROOT / "sample.py"
+    marker = "TO" + "DO"
+    errors = validate_release_status.scan_source_hygiene_text(
+        path,
+        f"try:\n    pass\nexcept:\n    pass\n# {marker} fix later\n",
+    )
+
+    assert len(errors) == 2
+    assert any("contains bare except clause" in error for error in errors)
+    assert any("contains source hygiene marker TODO" in error for error in errors)
+
+
+def test_validate_source_hygiene_passes_for_current_repo() -> None:
+    errors = validate_release_status.validate_source_hygiene()
+
+    assert errors == []
+    assert len(errors) == 0
+
+
 def test_validate_release_status_rejects_missing_required_docs(monkeypatch) -> None:
     monkeypatch.setattr(
         validate_release_status,

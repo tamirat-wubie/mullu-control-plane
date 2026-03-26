@@ -93,6 +93,21 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     ),
 }
 
+SOURCE_HYGIENE_GLOBS: tuple[str, ...] = ("*.py", "*.rs", "*.toml", "*.yml", "*.yaml")
+IGNORED_SOURCE_DIR_SEGMENTS: tuple[str, ...] = (
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    "__pycache__",
+    "target",
+)
+PYTHON_BARE_EXCEPT_PATTERN = re.compile(r"^\s*except\s*:\s*$", re.MULTILINE)
+LINE_COMMENT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"#\s*(TODO|FIXME|HACK)\b"),
+    re.compile(r"//\s*(TODO|FIXME|HACK)\b"),
+    re.compile(r"/\*\s*(TODO|FIXME|HACK)\b"),
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ReleaseStatusSummary:
@@ -231,6 +246,46 @@ def validate_release_limitation_coverage(
     return errors
 
 
+def _iter_source_hygiene_paths() -> tuple[Path, ...]:
+    paths: list[Path] = []
+    for pattern in SOURCE_HYGIENE_GLOBS:
+        for path in REPO_ROOT.rglob(pattern):
+            if any(segment in IGNORED_SOURCE_DIR_SEGMENTS for segment in path.parts):
+                continue
+            if not path.is_file():
+                continue
+            paths.append(path)
+    return tuple(sorted(set(paths)))
+
+
+def scan_source_hygiene_text(path: Path, content: str) -> list[str]:
+    """Scan one governed source file for release-checklist hygiene violations."""
+    errors: list[str] = []
+    relative_path = path.relative_to(REPO_ROOT).as_posix()
+
+    if path.suffix == ".py" and PYTHON_BARE_EXCEPT_PATTERN.search(content):
+        errors.append(f"{relative_path}: contains bare except clause")
+
+    for pattern in LINE_COMMENT_PATTERNS:
+        match = pattern.search(content)
+        if match is not None:
+            errors.append(
+                f"{relative_path}: contains source hygiene marker {match.group(1)}"
+            )
+            break
+
+    return errors
+
+
+def validate_source_hygiene() -> list[str]:
+    """Validate release-checklist hygiene claims across governed source files."""
+    errors: list[str] = []
+    for path in _iter_source_hygiene_paths():
+        content = path.read_text(encoding="utf-8")
+        errors.extend(scan_source_hygiene_text(path, content))
+    return errors
+
+
 def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSummary, list[str]]:
     """Validate the governed release surface and return live inventory plus errors."""
     errors: list[str] = []
@@ -265,6 +320,8 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
                 security_model_text=metadata_texts["SECURITY_MODEL_v0.1.md"],
             )
         )
+
+    errors.extend(validate_source_hygiene())
 
     summary = ReleaseStatusSummary(
         release_documents=summary.release_documents,

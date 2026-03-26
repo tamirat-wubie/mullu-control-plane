@@ -1053,7 +1053,7 @@ class TestDetectQueryViolations:
     def test_stuck_executing_violation(self, engine):
         """Manually simulate stuck executing by setting status directly."""
         engine.register_query("q1", "t1")
-        # Hack: directly set status to EXECUTING
+        # Directly set status to EXECUTING for the stuck-state witness.
         from mcoi_runtime.contracts.knowledge_query import KnowledgeQuery as KQ
         from datetime import datetime, timezone
         old = engine._queries["q1"]
