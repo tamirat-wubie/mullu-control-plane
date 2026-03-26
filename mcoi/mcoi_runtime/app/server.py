@@ -331,7 +331,23 @@ observability.register_source("webhook_retry", lambda: webhook_retry.summary())
 from mcoi_runtime.core.config_watcher import ConfigFileWatcher
 config_watcher = ConfigFileWatcher(poll_interval=30.0, clock=_clock)
 
-app = FastAPI(title="Mullu Platform", version="2.5.0", description="Governed AI Operating System")
+# Phase 224A: Structured logging
+from mcoi_runtime.core.structured_logging import StructuredLogger, LogLevel
+platform_logger = StructuredLogger(name="mullu-platform", min_level=LogLevel.INFO)
+
+# Phase 224B: API key authentication
+from mcoi_runtime.core.api_key_auth import APIKeyManager
+api_key_mgr = APIKeyManager(clock=_clock)
+observability.register_source("api_keys", lambda: api_key_mgr.summary())
+
+# Phase 224C: Data export pipeline
+from mcoi_runtime.core.data_export import DataExportPipeline, ExportFormat, ExportRequest
+data_export = DataExportPipeline(clock=_clock)
+data_export.register_source("audit", lambda: [
+    e.to_dict() if hasattr(e, "to_dict") else e for e in audit_trail.recent(1000)
+])
+
+app = FastAPI(title="Mullu Platform", version="2.6.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2556,3 +2572,95 @@ def get_config_watcher_status():
     """Return config file watcher status."""
     metrics.inc("requests_governed")
     return {"config_watcher": config_watcher.summary(), "governed": True}
+
+
+# ── Phase 224A: Structured logging endpoints ─────────────────────────────
+@app.get("/api/v1/logs")
+def get_logs(count: int = 50, min_level: str = "INFO"):
+    """Return recent structured log entries."""
+    metrics.inc("requests_governed")
+    level = LogLevel[min_level.upper()] if min_level.upper() in LogLevel.__members__ else LogLevel.INFO
+    entries = platform_logger.recent(count=count, min_level=level)
+    return {
+        "logs": [e.to_dict() for e in entries],
+        "summary": platform_logger.summary(),
+        "governed": True,
+    }
+
+
+# ── Phase 224B: API key management endpoints ─────────────────────────────
+class CreateAPIKeyRequest(BaseModel):
+    tenant_id: str
+    scopes: list[str]
+    description: str = ""
+    ttl_seconds: float | None = None
+
+
+@app.post("/api/v1/api-keys")
+def create_api_key(req: CreateAPIKeyRequest):
+    """Create a new API key."""
+    metrics.inc("requests_governed")
+    raw_key, api_key = api_key_mgr.create_key(
+        req.tenant_id, frozenset(req.scopes),
+        description=req.description, ttl_seconds=req.ttl_seconds,
+    )
+    return {
+        "raw_key": raw_key,
+        "key": api_key.to_dict(),
+        "governed": True,
+    }
+
+
+@app.get("/api/v1/api-keys")
+def list_api_keys(tenant_id: str | None = None):
+    """List API keys."""
+    metrics.inc("requests_governed")
+    keys = api_key_mgr.list_keys(tenant_id=tenant_id)
+    return {"keys": [k.to_dict() for k in keys], "governed": True}
+
+
+@app.delete("/api/v1/api-keys/{key_id}")
+def revoke_api_key(key_id: str):
+    """Revoke an API key."""
+    metrics.inc("requests_governed")
+    if not api_key_mgr.revoke(key_id):
+        raise HTTPException(404, detail=f"Key not found: {key_id}")
+    return {"revoked": True, "key_id": key_id, "governed": True}
+
+
+# ── Phase 224C: Data export endpoints ────────────────────────────────────
+@app.get("/api/v1/export/sources")
+def list_export_sources():
+    """List available data export sources."""
+    metrics.inc("requests_governed")
+    return {"sources": data_export.list_sources(), "governed": True}
+
+
+class DataExportRequest(BaseModel):
+    source: str
+    format: str = "json"
+    fields: list[str] = []
+    filters: dict[str, Any] = {}
+    limit: int = 10_000
+
+
+@app.post("/api/v1/export")
+def export_data(req: DataExportRequest):
+    """Export data in CSV, JSON, or JSONL format."""
+    metrics.inc("requests_governed")
+    try:
+        fmt = ExportFormat(req.format)
+    except ValueError:
+        raise HTTPException(400, detail=f"Unsupported format: {req.format}")
+    try:
+        result = data_export.export(ExportRequest(
+            source=req.source, format=fmt,
+            fields=tuple(req.fields), filters=req.filters, limit=req.limit,
+        ))
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    return {
+        "export": result.to_dict(),
+        "content": result.content,
+        "governed": True,
+    }
