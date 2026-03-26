@@ -294,7 +294,7 @@ health_agg.register("event_bus", lambda: {"status": "healthy" if event_bus.error
 from mcoi_runtime.core.api_version import APIVersionManager, EndpointDescriptor
 api_versions = APIVersionManager(clock=_clock)
 
-app = FastAPI(title="Mullu Platform", version="1.0.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="1.1.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -1622,3 +1622,130 @@ def list_output_schemas():
 def circuit_breaker_status():
     """LLM circuit breaker status."""
     return llm_circuit.status()
+
+
+# ═══ Phase 213A — Circuit-Breaker Protected LLM Completion ═══
+
+@app.post("/api/v1/complete/safe")
+def safe_completion(req: CompletionRequest):
+    """LLM completion with circuit-breaker protection."""
+    metrics.inc("requests_governed")
+    if not llm_circuit.allow_request():
+        metrics.inc("requests_rejected")
+        raise HTTPException(503, detail={
+            "error": "LLM circuit breaker is open — service temporarily unavailable",
+            "circuit_state": llm_circuit.state.value,
+            "governed": True,
+        })
+
+    try:
+        result = llm_bridge.complete(
+            req.prompt, model_name=req.model_name, max_tokens=req.max_tokens,
+            temperature=req.temperature, tenant_id=req.tenant_id,
+            budget_id=req.budget_id, system=req.system,
+        )
+        if result.succeeded:
+            llm_circuit.record_success()
+            metrics.inc("llm_calls_succeeded")
+            cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
+        else:
+            llm_circuit.record_failure()
+            metrics.inc("llm_calls_failed")
+
+        return {
+            "content": result.content, "model": result.model_name,
+            "provider": result.provider.value, "tokens": result.total_tokens,
+            "cost": result.cost, "succeeded": result.succeeded,
+            "circuit_state": llm_circuit.state.value, "governed": True,
+        }
+    except Exception as exc:
+        llm_circuit.record_failure()
+        metrics.inc("errors_total")
+        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+
+
+# ═══ Phase 213B — Tool-Augmented Workflow Endpoint ═══
+
+from mcoi_runtime.core.tool_agent import ToolAugmentedAgent
+
+tool_agent = ToolAugmentedAgent(
+    tool_registry=tool_registry,
+    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
+    max_tool_calls=10,
+)
+
+
+class ToolWorkflowRequest(BaseModel):
+    prompt: str
+    tool_ids: list[str] | None = None
+    tenant_id: str = "system"
+
+
+@app.post("/api/v1/workflow/tools")
+def tool_augmented_workflow(req: ToolWorkflowRequest):
+    """Execute a tool-augmented workflow — LLM + tool invocations."""
+    metrics.inc("requests_governed")
+    result = tool_agent.execute_with_tools(
+        req.prompt, tool_ids=req.tool_ids, tenant_id=req.tenant_id,
+    )
+    return {
+        "content": result.content,
+        "tool_calls": [
+            {"tool_id": tc.tool_id, "arguments": tc.arguments,
+             "succeeded": tc.result.succeeded, "output": tc.result.output}
+            for tc in result.tool_calls
+        ],
+        "total_tool_calls": result.total_tool_calls,
+        "all_succeeded": result.all_succeeded,
+        "governed": True,
+    }
+
+
+# ═══ Phase 213C — Streaming Chat Endpoint (SSE + Conversation) ═══
+
+@app.post("/api/v1/chat/stream")
+def streaming_chat(req: ChatRequest):
+    """Streaming chat — SSE with conversation history."""
+    metrics.inc("requests_governed")
+    conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
+
+    if req.system_prompt and conv.message_count == 0:
+        conv.add_system(req.system_prompt)
+    conv.add_user(req.message)
+
+    # Get completion (non-streaming internally, streamed to client)
+    result = llm_bridge.chat(
+        conv.to_chat_messages(), model_name=req.model_name,
+        budget_id=req.budget_id, tenant_id=req.tenant_id,
+    )
+
+    if result.succeeded:
+        conv.add_assistant(result.content)
+        cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
+
+    # Stream as SSE
+    return StreamingResponse(
+        streaming_adapter.stream_to_sse(result, request_id=f"chat-{req.conversation_id}"),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ═══ Phase 213D — v1.1.0 Release Info ═══
+
+@app.get("/api/v1/release/latest")
+def latest_release():
+    """Latest release information."""
+    return {
+        "version": "1.1.0",
+        "phase": 213,
+        "endpoints": 100,
+        "tests": 43900,
+        "highlights": [
+            "Circuit-breaker protected LLM calls",
+            "Tool-augmented workflow endpoint",
+            "Streaming chat with conversation history (SSE)",
+            "15 subsystems operational",
+        ],
+        "governed": True,
+    }
