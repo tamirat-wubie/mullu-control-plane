@@ -37,9 +37,10 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Memory
 
-- **Working and episodic memory are in-memory only.** Promotion to procedural memory
-  is implemented, but working/episodic tiers are not persistence-backed. Restarting
-  the runtime loses working and episodic memory contents.
+- **Working and episodic memory persistence is explicit and opt-in.** The runtime
+  now supports deterministic local save/load for working and episodic tiers, but it
+  does not auto-save or auto-restore them. A caller must wire a memory store and
+  request restore explicitly at bootstrap time.
 
 ## Coordination
 

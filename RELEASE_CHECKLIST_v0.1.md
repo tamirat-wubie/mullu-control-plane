@@ -62,7 +62,7 @@
 
 - [ ] Registry backend uses dynamic make_dataclass for opaque restoration
 - [ ] Coordination engine is in-memory only (no persistence)
-- [ ] Working/episodic memory is in-memory only
+- [ ] Working/episodic memory persistence is explicit and opt-in
 - [ ] HTTP connector uses urllib (no per-read timeout enforcement)
 - [ ] No authentication/authorization system
 - [ ] No encryption at rest

@@ -78,7 +78,7 @@ def test_validate_release_limitation_coverage_rejects_missing_anchor() -> None:
 
     assert len(errors) >= 3
     assert any("coordination_persistence_limitation" in error for error in errors)
-    assert any("working_memory_limitation" in error for error in errors)
+    assert any("memory_persistence_limitation" in error for error in errors)
     assert any("encryption_limitation" in error for error in errors)
 
 

@@ -6,14 +6,21 @@ Invariants: bootstrap wires components and adapters explicitly without executing
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
+
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.core.policy_engine import PolicyInput
 from mcoi_runtime.core.verification_engine import VerificationEngine
+from mcoi_runtime.persistence.memory_store import MemoryStore
 
 
 def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> None:
@@ -71,3 +78,73 @@ def test_bootstrap_runtime_wires_policy_pack_aware_engine() -> None:
     assert runtime.config.policy_pack_id == "strict-approval"
     assert decision.status is PolicyDecisionStatus.ESCALATE
     assert decision.reasons[0].code == "escalate-all"
+
+
+def test_bootstrap_runtime_does_not_restore_memory_implicitly(tmp_path: Path) -> None:
+    memory_store = MemoryStore(tmp_path / "memory")
+    working = WorkingMemory()
+    episodic = EpisodicMemory()
+    working.store(
+        MemoryEntry(
+            entry_id="w-1",
+            tier=MemoryTier.WORKING,
+            category="observation",
+            content={"value": 1},
+            source_ids=("src-1",),
+        )
+    )
+    episodic.admit(
+        MemoryEntry(
+            entry_id="e-1",
+            tier=MemoryTier.EPISODIC,
+            category="trace",
+            content={"value": 2},
+            source_ids=("trace-1",),
+        )
+    )
+    before_hashes = memory_store.save_all(working=working, episodic=episodic)
+
+    runtime = bootstrap_runtime(memory_store=memory_store)
+
+    after_hashes = memory_store.save_all(working=working, episodic=episodic)
+    assert runtime.memory_store is memory_store
+    assert runtime.working_memory.size == 0
+    assert runtime.episodic_memory.size == 0
+    assert before_hashes == after_hashes
+
+
+def test_bootstrap_runtime_restores_memory_only_when_explicit(tmp_path: Path) -> None:
+    memory_store = MemoryStore(tmp_path / "memory")
+    working = WorkingMemory(max_entries=5)
+    episodic = EpisodicMemory()
+    working.store(
+        MemoryEntry(
+            entry_id="w-1",
+            tier=MemoryTier.WORKING,
+            category="observation",
+            content={"value": 1},
+            source_ids=("src-1",),
+        )
+    )
+    episodic.admit(
+        MemoryEntry(
+            entry_id="e-1",
+            tier=MemoryTier.EPISODIC,
+            category="trace",
+            content={"value": 2},
+            source_ids=("trace-1",),
+        )
+    )
+    memory_store.save_all(working=working, episodic=episodic)
+
+    runtime = bootstrap_runtime(memory_store=memory_store, restore_memory=True)
+
+    assert runtime.memory_store is memory_store
+    assert runtime.working_memory.max_entries == 5
+    assert runtime.working_memory.get("w-1") is not None
+    assert runtime.episodic_memory.get("e-1") is not None
+
+
+def test_bootstrap_runtime_rejects_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="memory_store"):
+        bootstrap_runtime(restore_memory=True)

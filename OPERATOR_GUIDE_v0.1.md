@@ -209,8 +209,9 @@ This is an internal alpha with significant limitations. See
 [KNOWN_LIMITATIONS_v0.1.md](KNOWN_LIMITATIONS_v0.1.md) for the full list. Key
 points for operators:
 
-- Working/episodic memory is lost on restart (in-memory only).
-- Policy packs can be listed but are not yet enforced during evaluation.
+- Working/episodic memory persistence is available, but only when you wire a
+  local memory store and request restore explicitly.
+- Policy packs are enforced during evaluation through the runtime policy gate.
 - No web UI -- CLI only.
 - No background scheduling -- temporal contracts exist but no daemon monitors them.
 - Shell executor inherits OS permissions with no additional sandboxing.

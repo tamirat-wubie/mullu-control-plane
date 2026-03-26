@@ -1,7 +1,10 @@
 """Purpose: wire the local MCOI operator entry path without side effects.
 Governance scope: operator-loop bootstrap only.
 Dependencies: execution-slice adapters, runtime-core boundaries, and local app configuration.
-Invariants: bootstrap constructs deterministic wiring only and never executes commands or observes the live machine.
+Invariants:
+  - bootstrap constructs deterministic wiring only.
+  - bootstrap never executes commands or observes the live machine.
+  - persisted memory restore is explicit and read-only during bootstrap.
 """
 
 from __future__ import annotations
@@ -20,12 +23,14 @@ from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
+from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
 from mcoi_runtime.core.policy_engine import PolicyEngine
 from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine
 from mcoi_runtime.core.runtime_kernel import RuntimeKernel
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.contracts.autonomy import AutonomyMode
 from mcoi_runtime.core.autonomy import AutonomyEngine
 from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
@@ -36,6 +41,7 @@ from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.core.workflow import WorkflowEngine
 from mcoi_runtime.core.world_state import WorldStateEngine
 from mcoi_runtime.persistence.goal_store import GoalStore
+from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 from .config import AppConfig
@@ -67,6 +73,9 @@ class BootstrappedRuntime:
     workflow_engine: WorkflowEngine
     goal_store: GoalStore | None
     workflow_store: WorkflowStore | None
+    working_memory: WorkingMemory
+    episodic_memory: EpisodicMemory
+    memory_store: MemoryStore | None
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
 
@@ -104,9 +113,14 @@ def bootstrap_runtime(
     observers: Mapping[str, ObserverAdapter[object]] | None = None,
     goal_store: GoalStore | None = None,
     workflow_store: WorkflowStore | None = None,
+    memory_store: MemoryStore | None = None,
+    restore_memory: bool = False,
 ) -> BootstrappedRuntime:
     app_config = config or AppConfig()
     runtime_clock = clock or utc_now_text
+
+    if restore_memory and memory_store is None:
+        raise RuntimeCoreInvariantError("restore_memory requires a memory_store")
 
     registry_store: RegistryStore[TemplateReference] = RegistryStore()
     registry_index: RegistryIndex[TemplateReference] = RegistryIndex()
@@ -162,6 +176,12 @@ def bootstrap_runtime(
     goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
     workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
 
+    if restore_memory and memory_store is not None:
+        working_memory, episodic_memory = memory_store.load_all(allow_missing=True)
+    else:
+        working_memory = WorkingMemory()
+        episodic_memory = EpisodicMemory()
+
     return BootstrappedRuntime(
         config=app_config,
         clock=runtime_clock,
@@ -186,6 +206,9 @@ def bootstrap_runtime(
         workflow_engine=workflow_engine_inst,
         goal_store=goal_store,
         workflow_store=workflow_store,
+        working_memory=working_memory,
+        episodic_memory=episodic_memory,
+        memory_store=memory_store,
         executors=frozen_executors,
         observers=frozen_observers,
     )

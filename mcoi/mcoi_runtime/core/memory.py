@@ -10,9 +10,11 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Mapping
+
+from mcoi_runtime.contracts._base import freeze_value
 
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text
 
@@ -44,6 +46,19 @@ class MemoryEntry:
         object.__setattr__(self, "category", ensure_non_empty_text("category", self.category))
         if not isinstance(self.content, Mapping):
             raise RuntimeCoreInvariantError("content must be a mapping")
+        frozen_content = freeze_value(dict(self.content))
+        if not isinstance(frozen_content, Mapping):
+            raise RuntimeCoreInvariantError("content must freeze to a mapping")
+        object.__setattr__(self, "content", frozen_content)
+        frozen_source_ids = freeze_value(tuple(self.source_ids))
+        if not isinstance(frozen_source_ids, tuple):
+            raise RuntimeCoreInvariantError("source_ids must freeze to a tuple")
+        for index, source_id in enumerate(frozen_source_ids):
+            if not isinstance(source_id, str) or not source_id.strip():
+                raise RuntimeCoreInvariantError(
+                    f"source_ids[{index}] must be a non-empty string"
+                )
+        object.__setattr__(self, "source_ids", frozen_source_ids)
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +85,18 @@ class WorkingMemory:
             raise RuntimeCoreInvariantError("max_entries must be positive")
         self._entries: dict[str, MemoryEntry] = {}
         self._max_entries = max_entries
+
+    @classmethod
+    def from_entries(
+        cls,
+        entries: tuple[MemoryEntry, ...],
+        *,
+        max_entries: int = 1000,
+    ) -> WorkingMemory:
+        memory = cls(max_entries=max_entries)
+        for entry in entries:
+            memory.store(entry)
+        return memory
 
     def store(self, entry: MemoryEntry) -> MemoryEntry:
         if entry.tier is not MemoryTier.WORKING:
@@ -103,6 +130,10 @@ class WorkingMemory:
     def size(self) -> int:
         return len(self._entries)
 
+    @property
+    def max_entries(self) -> int:
+        return self._max_entries
+
 
 class EpisodicMemory:
     """Append-only memory for verified execution outcomes and closed traces.
@@ -117,6 +148,13 @@ class EpisodicMemory:
     def __init__(self) -> None:
         self._entries: dict[str, MemoryEntry] = {}
         self._order: list[str] = []
+
+    @classmethod
+    def from_entries(cls, entries: tuple[MemoryEntry, ...]) -> EpisodicMemory:
+        memory = cls()
+        for entry in entries:
+            memory.admit(entry)
+        return memory
 
     def admit(self, entry: MemoryEntry) -> MemoryEntry:
         """Admit a verified entry into episodic memory.

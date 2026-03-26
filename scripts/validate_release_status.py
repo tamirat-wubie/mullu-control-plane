@@ -75,8 +75,9 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     "coordination_persistence_limitation": (
         "Coordination state is in-memory only",
     ),
-    "working_memory_limitation": (
-        "Working and episodic memory are in-memory only",
+    "memory_persistence_limitation": (
+        "Working and episodic memory persistence is explicit and opt-in",
+        "does not auto-save or auto-restore",
     ),
     "http_connector_limitation": (
         "HTTP connector",
@@ -225,7 +226,7 @@ def validate_release_limitation_coverage(
     limitation_sources = {
         "registry_backend_limitation": known_limitations_text,
         "coordination_persistence_limitation": known_limitations_text,
-        "working_memory_limitation": known_limitations_text,
+        "memory_persistence_limitation": known_limitations_text,
         "http_connector_limitation": known_limitations_text,
         "auth_limitation": security_model_text,
         "encryption_limitation": security_model_text,

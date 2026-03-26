@@ -6,6 +6,8 @@ Invariants: working memory is session-scoped, episodic is append-only, promotion
 
 from __future__ import annotations
 
+from types import MappingProxyType
+
 import pytest
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -38,6 +40,22 @@ def test_working_memory_store_and_get() -> None:
     wm.store(entry)
     assert wm.get("w-1") is entry
     assert wm.size == 1
+
+
+def test_memory_entry_freezes_content_and_source_ids() -> None:
+    entry = MemoryEntry(
+        entry_id="w-freeze",
+        tier=MemoryTier.WORKING,
+        category="observation",
+        content={"nested": {"value": 1}},
+        source_ids=["src-1"],
+    )
+
+    assert isinstance(entry.content, MappingProxyType)
+    assert isinstance(entry.content["nested"], MappingProxyType)
+    assert entry.source_ids == ("src-1",)
+    with pytest.raises(TypeError):
+        entry.content["new"] = True  # type: ignore[index]
 
 
 def test_working_memory_rejects_episodic_tier() -> None:

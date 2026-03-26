@@ -13,6 +13,7 @@ from .errors import (
     TraceNotFoundError,
 )
 from .goal_store import GoalStore
+from .memory_store import MemoryStore
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
 from .skill_store import SkillStore
@@ -24,6 +25,7 @@ from ._serialization import deserialize_record, serialize_record
 __all__ = [
     "CorruptedDataError",
     "GoalStore",
+    "MemoryStore",
     "PathTraversalError",
     "PersistenceError",
     "PersistenceWriteError",
