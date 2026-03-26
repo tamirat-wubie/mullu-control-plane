@@ -1,7 +1,7 @@
 """Purpose: execute explicit argv-based shell requests for the MCOI runtime.
 Governance scope: execution-slice shell adapter only.
-Dependencies: Python subprocess, canonical execution contracts, and executor-base typing.
-Invariants: execution is argv-only, bounded by explicit input, and free of retries or policy logic.
+Dependencies: Python subprocess, canonical execution contracts, executor-base typing, and optional shell policy engine.
+Invariants: execution is argv-only, bounded by explicit input, policy-gated when engine is present, and free of retries.
 """
 
 from __future__ import annotations
@@ -37,9 +37,36 @@ class ShellExecutor:
     runner: Runner = field(default=subprocess.run)
     clock: Callable[[], str] = field(default=utc_now_text)
     max_output_bytes: int = field(default=_DEFAULT_MAX_OUTPUT_BYTES)
+    policy_engine: object | None = field(default=None)
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         started_at = self.clock()
+
+        # --- Policy gate: deny before any subprocess activity ---
+        if self.policy_engine is not None:
+            from mcoi_runtime.core.shell_policy_engine import ShellPolicyEngine
+
+            if isinstance(self.policy_engine, ShellPolicyEngine):
+                verdict = self.policy_engine.evaluate(request.argv)
+                if verdict.verdict != "allow":
+                    finished_at = self.clock()
+                    return build_failure_result(
+                        execution_id=request.execution_id,
+                        goal_id=request.goal_id,
+                        started_at=started_at,
+                        finished_at=finished_at,
+                        failure=ExecutionFailure(
+                            code="policy_denied",
+                            message=f"Shell policy denied: {verdict.verdict}",
+                            details={
+                                "verdict": verdict.verdict,
+                                "matched_rule": verdict.matched_rule,
+                                "argv_summary": list(verdict.argv_summary),
+                            },
+                        ),
+                        effect_name="policy_denied",
+                        metadata={"adapter": "shell"},
+                    )
 
         try:
             completed = self.runner(

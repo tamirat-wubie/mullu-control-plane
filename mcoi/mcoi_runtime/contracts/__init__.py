@@ -35,6 +35,7 @@ from .job import (
     SlaStatus,
     WorkQueueEntry,
 )
+from .integrity import HashChainEntry, HashChainValidationResult
 from .graph import (
     CausalPath,
     DecisionLink,
