@@ -2268,3 +2268,122 @@ def list_feature_flags():
 def check_flag(flag_id: str, tenant_id: str = ""):
     """Check if a feature flag is enabled."""
     return {"flag_id": flag_id, "enabled": feature_flags.is_enabled(flag_id, tenant_id=tenant_id)}
+
+
+# ═══ Phase 221A — Semantic Search Endpoint ═══
+
+from mcoi_runtime.core.semantic_search import SemanticSearchEngine
+
+semantic_search = SemanticSearchEngine()
+
+
+class SemanticSearchRequest(BaseModel):
+    query: str
+    limit: int = 10
+
+
+@app.post("/api/v1/search")
+def semantic_search_endpoint(req: SemanticSearchRequest):
+    """Semantic search across indexed documents."""
+    results = semantic_search.search(req.query, limit=req.limit)
+    return {
+        "results": [{"doc_id": r.doc_id, "score": r.score, "matched": list(r.matched_terms)} for r in results],
+        "count": len(results),
+    }
+
+
+@app.get("/api/v1/search/stats")
+def search_stats():
+    """Semantic search index statistics."""
+    return semantic_search.summary()
+
+
+# ═══ Phase 221B — Tenant Analytics Endpoint ═══
+
+from mcoi_runtime.core.tenant_analytics import TenantAnalyticsEngine
+
+tenant_analytics = TenantAnalyticsEngine(clock=_clock)
+tenant_analytics.register_collector("llm_calls", lambda tid: llm_bridge.invocation_count)
+tenant_analytics.register_collector("total_cost", lambda tid: llm_bridge.total_cost)
+
+
+@app.get("/api/v1/analytics/{tenant_id}")
+def tenant_analytics_endpoint(tenant_id: str):
+    """Per-tenant analytics dashboard."""
+    analytics = tenant_analytics.compute(tenant_id)
+    return {
+        "tenant_id": analytics.tenant_id,
+        "llm_calls": analytics.llm_calls,
+        "total_cost": analytics.total_cost,
+        "conversations": analytics.conversations,
+        "workflows": analytics.workflows,
+        "generated_at": analytics.generated_at,
+    }
+
+
+# ═══ Phase 221C — Workflow Templates Endpoint ═══
+
+from mcoi_runtime.core.workflow_templates import WorkflowTemplate, WorkflowTemplateRegistry
+from mcoi_runtime.core.agent_chain import ChainStep as _ChainStep
+
+wf_templates = WorkflowTemplateRegistry()
+wf_templates.register(WorkflowTemplate(
+    template_id="summarize-refine", name="Summarize & Refine",
+    description="Summarize then refine for audience",
+    steps=(
+        _ChainStep(step_id="s1", name="Summarize", prompt_template="Summarize {{topic}}: {{input}}"),
+        _ChainStep(step_id="s2", name="Refine", prompt_template="Refine for {{audience}}: {{prev}}"),
+    ),
+    parameters=("topic", "audience"), category="analysis",
+))
+wf_templates.register(WorkflowTemplate(
+    template_id="research-draft", name="Research & Draft",
+    description="Research a topic then draft a report",
+    steps=(
+        _ChainStep(step_id="s1", name="Research", prompt_template="Research {{topic}}: {{input}}"),
+        _ChainStep(step_id="s2", name="Draft", prompt_template="Draft a {{format}} report: {{prev}}"),
+    ),
+    parameters=("topic", "format"), category="research",
+))
+
+
+@app.get("/api/v1/templates")
+def list_workflow_templates(category: str | None = None):
+    """List workflow templates."""
+    templates = wf_templates.list_templates(category=category)
+    return {
+        "templates": [
+            {"id": t.template_id, "name": t.name, "description": t.description,
+             "parameters": list(t.parameters), "category": t.category}
+            for t in templates
+        ],
+        "summary": wf_templates.summary(),
+    }
+
+
+class TemplateExecuteRequest(BaseModel):
+    template_id: str
+    params: dict[str, str]
+    initial_input: str = ""
+    tenant_id: str = ""
+
+
+@app.post("/api/v1/templates/execute")
+def execute_workflow_template(req: TemplateExecuteRequest):
+    """Instantiate and execute a workflow template."""
+    metrics.inc("requests_governed")
+    try:
+        steps = wf_templates.instantiate(req.template_id, req.params)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+
+    result = agent_chain.execute(steps, initial_input=req.initial_input)
+    return {
+        "template_id": req.template_id,
+        "chain_id": result.chain_id,
+        "succeeded": result.succeeded,
+        "final_output": result.final_output,
+        "steps": len(result.steps),
+        "total_cost": result.total_cost,
+        "governed": True,
+    }
