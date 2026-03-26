@@ -32,7 +32,9 @@ from mcoi_runtime.core.webhook_system import WebhookManager, WebhookSubscription
 from mcoi_runtime.core.deep_health import DeepHealthChecker
 from mcoi_runtime.core.config_reload import ConfigManager
 from mcoi_runtime.core.observability import ObservabilityAggregator
-from mcoi_runtime.core.plugin_system import PluginRegistry
+from mcoi_runtime.core.plugin_system import HookPoint, PluginDescriptor, PluginRegistry
+from mcoi_runtime.core.event_bus import EventBus
+from mcoi_runtime.core.batch_pipeline import BatchPipeline, PipelineStep
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 from mcoi_runtime.persistence.postgres_store import InMemoryStore, create_store
 
@@ -162,7 +164,51 @@ observability.register_source("workflows", lambda: workflow_engine.summary())
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
 
-app = FastAPI(title="Mullu Platform", version="0.5.0", description="Governed AI Operating System")
+# Phase 206A: Event bus
+event_bus = EventBus(clock=_clock)
+# Wire event bus into observability
+observability.register_source("event_bus", lambda: event_bus.summary())
+# Wire event bus into deep health
+deep_health.register("event_bus", lambda: {"status": "healthy", "events": event_bus.event_count, "errors": event_bus.error_count})
+
+# Phase 206B: Batch pipeline
+batch_pipeline = BatchPipeline(
+    clock=_clock,
+    llm_complete_fn=lambda prompt, **kw: llm_bridge.complete(prompt, **kw),
+)
+observability.register_source("pipelines", lambda: batch_pipeline.summary())
+
+# Phase 206C: Register example plugins
+_logging_plugin = PluginDescriptor(
+    plugin_id="logging", name="Governance Logger", version="1.0.0",
+    description="Logs all governed operations to audit trail",
+    hooks=(HookPoint.POST_DISPATCH, HookPoint.POST_LLM_CALL),
+)
+plugin_registry.register(_logging_plugin)
+plugin_registry.load("logging", hooks={
+    HookPoint.POST_DISPATCH: lambda **kw: audit_trail.record(
+        action="plugin.log.dispatch", actor_id="logging-plugin",
+        tenant_id=kw.get("tenant_id", ""), target="dispatch", outcome="logged",
+    ),
+    HookPoint.POST_LLM_CALL: lambda **kw: metrics.inc("llm_calls_total"),
+})
+plugin_registry.activate("logging")
+
+_alert_plugin = PluginDescriptor(
+    plugin_id="cost-alert", name="Cost Alert Plugin", version="1.0.0",
+    description="Emits budget.warning events when utilization exceeds 80%",
+    hooks=(HookPoint.ON_BUDGET_CHECK,),
+)
+plugin_registry.register(_alert_plugin)
+plugin_registry.load("cost-alert", hooks={
+    HookPoint.ON_BUDGET_CHECK: lambda **kw: event_bus.publish(
+        "budget.warning", tenant_id=kw.get("tenant_id", ""),
+        source="cost-alert-plugin", payload=kw,
+    ) if kw.get("utilization_pct", 0) > 80 else None,
+})
+plugin_registry.activate("cost-alert")
+
+app = FastAPI(title="Mullu Platform", version="0.6.0", description="Governed AI Operating System")
 
 
 class ExecuteRequest(BaseModel):
@@ -697,4 +743,135 @@ def list_plugins():
             for p in plugin_registry.list_plugins()
         ],
         "summary": plugin_registry.summary(),
+    }
+
+
+# ═══ Phase 206A — Event Bus Endpoints ═══
+
+@app.get("/api/v1/events")
+def list_events(event_type: str | None = None, limit: int = 50):
+    """Query governed event bus history."""
+    events = event_bus.history(event_type=event_type, limit=limit)
+    return {
+        "events": [
+            {"id": e.event_id, "type": e.event_type, "tenant": e.tenant_id,
+             "source": e.source, "at": e.published_at}
+            for e in events
+        ],
+        "count": len(events),
+    }
+
+
+@app.get("/api/v1/events/summary")
+def events_summary():
+    """Event bus summary."""
+    return event_bus.summary()
+
+
+class EventPublishRequest(BaseModel):
+    event_type: str
+    tenant_id: str = ""
+    source: str = "api"
+    payload: dict[str, Any] = {}
+
+
+@app.post("/api/v1/events/publish")
+def publish_event(req: EventPublishRequest):
+    """Publish a governed event to the bus."""
+    metrics.inc("requests_governed")
+    event = event_bus.publish(
+        req.event_type, tenant_id=req.tenant_id,
+        source=req.source, payload=req.payload,
+    )
+    return {"event_id": event.event_id, "type": event.event_type, "hash": event.event_hash[:16]}
+
+
+# ═══ Phase 206B — Batch Pipeline Endpoint ═══
+
+class PipelineStepRequest(BaseModel):
+    step_id: str
+    name: str
+    prompt_template: str
+    model_name: str = "claude-sonnet-4-20250514"
+    max_tokens: int = 1024
+    system: str = ""
+
+
+class PipelineRequest(BaseModel):
+    steps: list[PipelineStepRequest]
+    initial_input: str = ""
+    budget_id: str = "default"
+    tenant_id: str = ""
+
+
+@app.post("/api/v1/pipeline/execute")
+def execute_pipeline(req: PipelineRequest):
+    """Execute a multi-step governed LLM pipeline."""
+    metrics.inc("requests_governed")
+    steps = [
+        PipelineStep(
+            step_id=s.step_id, name=s.name, prompt_template=s.prompt_template,
+            model_name=s.model_name, max_tokens=s.max_tokens, system=s.system,
+        )
+        for s in req.steps
+    ]
+    result = batch_pipeline.execute(
+        steps, initial_input=req.initial_input,
+        budget_id=req.budget_id, tenant_id=req.tenant_id,
+    )
+    # Emit event
+    event_bus.publish(
+        "pipeline.completed" if result.succeeded else "pipeline.failed",
+        tenant_id=req.tenant_id, source="batch_pipeline",
+        payload={"pipeline_id": result.pipeline_id, "succeeded": result.succeeded, "cost": result.total_cost},
+    )
+    return {
+        "pipeline_id": result.pipeline_id,
+        "succeeded": result.succeeded,
+        "steps": [
+            {"id": s.step_id, "name": s.name, "succeeded": s.succeeded, "cost": s.cost, "tokens": s.input_tokens + s.output_tokens}
+            for s in result.steps
+        ],
+        "final_output": result.final_output,
+        "total_cost": result.total_cost,
+        "total_tokens": result.total_tokens,
+        "error": result.error,
+    }
+
+
+@app.get("/api/v1/pipeline/history")
+def pipeline_history(limit: int = 50):
+    """Batch pipeline execution history."""
+    return {
+        "pipelines": [
+            {"id": p.pipeline_id, "succeeded": p.succeeded, "steps": len(p.steps), "cost": p.total_cost}
+            for p in batch_pipeline.history(limit=limit)
+        ],
+        "summary": batch_pipeline.summary(),
+    }
+
+
+# ═══ Phase 206D — System Snapshot ═══
+
+@app.get("/api/v1/snapshot")
+def system_snapshot():
+    """Full system state export — all subsystem summaries in one call."""
+    return {
+        "version": "0.6.0",
+        "environment": ENV,
+        "store": {"ledger_count": store.ledger_count()},
+        "llm": {"invocations": llm_bridge.invocation_count, "total_cost": llm_bridge.total_cost, **llm_bridge.budget_summary()},
+        "certification": cert_daemon.status(),
+        "tenants": {"count": tenant_budget_mgr.tenant_count(), "total_spent": tenant_budget_mgr.total_spent()},
+        "agents": {"count": agent_registry.count, "tasks": task_manager.task_count},
+        "workflows": workflow_engine.summary(),
+        "pipelines": batch_pipeline.summary(),
+        "metrics": metrics.to_dict(),
+        "audit": audit_trail.summary(),
+        "events": event_bus.summary(),
+        "webhooks": webhook_manager.summary(),
+        "config": config_manager.summary(),
+        "plugins": plugin_registry.summary(),
+        "rate_limiter": rate_limiter.status(),
+        "captured_at": _clock(),
     }
