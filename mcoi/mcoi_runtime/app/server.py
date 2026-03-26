@@ -2231,3 +2231,40 @@ backpressure = BackpressureEngine()
 def backpressure_status():
     """Current backpressure state."""
     return backpressure.status()
+
+
+# ═══ Phase 220 — Cache + Feature Flags ═══
+
+from mcoi_runtime.core.cache import GovernedCache
+from mcoi_runtime.core.feature_flags import FeatureFlag, FeatureFlagEngine
+
+governed_cache = GovernedCache(max_size=500, default_ttl=60.0)
+feature_flags = FeatureFlagEngine()
+feature_flags.register(FeatureFlag(flag_id="streaming_v2", name="Streaming V2", enabled=True))
+feature_flags.register(FeatureFlag(flag_id="tool_augmentation", name="Tool Augmentation", enabled=True))
+feature_flags.register(FeatureFlag(flag_id="ab_testing", name="A/B Testing", enabled=True))
+feature_flags.register(FeatureFlag(flag_id="agent_memory", name="Agent Memory", enabled=True))
+
+
+@app.get("/api/v1/cache/stats")
+def cache_stats():
+    """Cache statistics."""
+    return governed_cache.summary()
+
+
+@app.get("/api/v1/flags")
+def list_feature_flags():
+    """List feature flags."""
+    return {
+        "flags": [
+            {"id": f.flag_id, "name": f.name, "enabled": f.enabled}
+            for f in feature_flags.list_flags()
+        ],
+        "summary": feature_flags.summary(),
+    }
+
+
+@app.get("/api/v1/flags/{flag_id}")
+def check_flag(flag_id: str, tenant_id: str = ""):
+    """Check if a feature flag is enabled."""
+    return {"flag_id": flag_id, "enabled": feature_flags.is_enabled(flag_id, tenant_id=tenant_id)}
