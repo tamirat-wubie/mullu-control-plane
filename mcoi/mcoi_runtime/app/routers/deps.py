@@ -27,7 +27,7 @@ class _Deps:
         return v
 
     def __getattr__(self, name: str) -> Any:
-        if name.startswith("_"):
+        if name.startswith("__"):
             raise AttributeError(name)
         return self.get(name)
 
