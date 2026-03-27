@@ -412,7 +412,20 @@ from mcoi_runtime.core.rollback_snapshot import SnapshotManager
 snapshot_mgr = SnapshotManager(max_snapshots=50, clock=_clock)
 observability.register_source("snapshots", lambda: snapshot_mgr.summary())
 
-app = FastAPI(title="Mullu Platform", version="3.0.0", description="Governed AI Operating System")
+# Phase 229A: OpenTelemetry exporter
+from mcoi_runtime.core.otel_exporter import OtelExporter
+otel_exporter = OtelExporter(service_name="mullu-platform", batch_size=100)
+
+# Phase 229B: Circuit breaker dashboard
+from mcoi_runtime.core.circuit_dashboard import CircuitDashboard
+circuit_dashboard = CircuitDashboard()
+
+# Phase 229C: Tenant quota enforcement
+from mcoi_runtime.core.tenant_quota import TenantQuotaEngine
+tenant_quota = TenantQuotaEngine()
+observability.register_source("quotas", lambda: tenant_quota.summary())
+
+app = FastAPI(title="Mullu Platform", version="3.1.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2871,3 +2884,34 @@ def create_snapshot(req: CreateSnapshotRequest):
     metrics.inc("requests_governed")
     snap = snapshot_mgr.create_snapshot(req.snapshot_id, req.name, req.state)
     return {"snapshot": snap.to_dict(), "governed": True}
+
+
+# ── Phase 229A: OpenTelemetry endpoint ───────────────────────────────────
+@app.get("/api/v1/traces/summary")
+def get_traces_summary():
+    """Return OpenTelemetry trace exporter summary."""
+    metrics.inc("requests_governed")
+    return {"traces": otel_exporter.summary(), "governed": True}
+
+
+# ── Phase 229B: Circuit breaker dashboard endpoint ───────────────────────
+@app.get("/api/v1/circuits/dashboard")
+def get_circuit_dashboard():
+    """Return circuit breaker dashboard aggregate."""
+    metrics.inc("requests_governed")
+    return {"circuits": circuit_dashboard.summary(), "governed": True}
+
+
+# ── Phase 229C: Tenant quota endpoint ────────────────────────────────────
+@app.get("/api/v1/quotas/summary")
+def get_quotas_summary():
+    """Return tenant quota enforcement summary."""
+    metrics.inc("requests_governed")
+    return {"quotas": tenant_quota.summary(), "governed": True}
+
+
+@app.get("/api/v1/quotas/{tenant_id}")
+def get_tenant_quota_usage(tenant_id: str):
+    """Return quota usage for a specific tenant."""
+    metrics.inc("requests_governed")
+    return {"tenant_id": tenant_id, "usage": tenant_quota.get_usage(tenant_id), "governed": True}
