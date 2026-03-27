@@ -470,7 +470,20 @@ api_migration.register_version("v1", endpoints=["/api/v1/*"])
 from mcoi_runtime.core.retry_policy import RetryPolicyEngine
 retry_engine = RetryPolicyEngine()
 
-app = FastAPI(title="Mullu Platform", version="3.5.0", description="Governed AI Operating System")
+# Phase 231A: Event sourcing
+from mcoi_runtime.core.event_sourcing import EventStore
+event_store = EventStore(max_events=100_000)
+
+# Phase 231B: Multi-region routing
+from mcoi_runtime.core.region_router import RegionRouter, RoutingStrategy
+region_router = RegionRouter(strategy=RoutingStrategy.LATENCY)
+region_router.add_region("primary", latency_ms=20.0, is_primary=True)
+
+# Phase 231C: Config drift detection
+from mcoi_runtime.core.config_drift import ConfigDriftDetector
+config_drift = ConfigDriftDetector()
+
+app = FastAPI(title="Mullu Platform", version="3.7.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -3099,3 +3112,27 @@ def get_retries_summary():
     """Return governed retry policy summary."""
     metrics.inc("requests_governed")
     return {"retries": retry_engine.summary(), "governed": True}
+
+
+# ── Phase 231A: Event sourcing endpoint ──────────────────────────────────
+@app.get("/api/v1/events/store/summary")
+def get_event_store_summary():
+    """Return event sourcing store summary."""
+    metrics.inc("requests_governed")
+    return {"event_store": event_store.summary(), "governed": True}
+
+
+# ── Phase 231B: Region routing endpoint ──────────────────────────────────
+@app.get("/api/v1/regions")
+def get_regions():
+    """Return multi-region routing status."""
+    metrics.inc("requests_governed")
+    return {"regions": region_router.summary(), "governed": True}
+
+
+# ── Phase 231C: Config drift endpoint ────────────────────────────────────
+@app.get("/api/v1/config/drift")
+def get_config_drift():
+    """Return config drift detection summary."""
+    metrics.inc("requests_governed")
+    return {"drift": config_drift.summary(), "governed": True}
