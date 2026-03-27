@@ -208,9 +208,11 @@ plugin_registry.load("cost-alert", hooks={
 })
 plugin_registry.activate("cost-alert")
 
-# Phase 208A: Governance guard middleware
+# Phase 208A: Governance guard middleware (chain built after all subsystems init)
 from mcoi_runtime.app.middleware import GovernanceMiddleware, build_guard_chain
-guard_chain = build_guard_chain(rate_limiter=rate_limiter, budget_mgr=tenant_budget_mgr)
+guard_chain = build_guard_chain(
+    rate_limiter=rate_limiter, budget_mgr=tenant_budget_mgr,
+)
 
 # Phase 208B: Traced workflow engine
 from mcoi_runtime.core.traced_workflow import TracedWorkflowEngine
@@ -339,6 +341,9 @@ platform_logger = StructuredLogger(name="mullu-platform", min_level=LogLevel.INF
 from mcoi_runtime.core.api_key_auth import APIKeyManager
 api_key_mgr = APIKeyManager(clock=_clock)
 observability.register_source("api_keys", lambda: api_key_mgr.summary())
+# Wire API key guard as FIRST guard (auth before rate-limit/budget checks)
+from mcoi_runtime.core.governance_guard import create_api_key_guard
+guard_chain.insert(0, create_api_key_guard(api_key_mgr))
 
 # Phase 224C: Data export pipeline
 from mcoi_runtime.core.data_export import DataExportPipeline, ExportFormat, ExportRequest
@@ -440,7 +445,7 @@ api_migration.register_version("v1", endpoints=["/api/v1/*"])
 from mcoi_runtime.core.retry_policy import RetryPolicyEngine
 retry_engine = RetryPolicyEngine()
 
-app = FastAPI(title="Mullu Platform", version="3.2.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="3.3.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -453,6 +458,24 @@ app.add_middleware(
         outcome="denied", detail=ctx,
     ),
 )
+
+
+# ── Global error handler — prevents leaking internal details ─────────────
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import JSONResponse as StarletteJSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: StarletteRequest, exc: Exception):
+    """Catch unhandled exceptions, log, and return sanitized 500."""
+    metrics.inc("errors_total")
+    structured_logger.log("error", f"Unhandled exception on {request.url.path}: {type(exc).__name__}")
+    return StarletteJSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "governed": True,
+        },
+    )
 
 
 class ExecuteRequest(BaseModel):
@@ -525,18 +548,41 @@ def get_ledger(tenant_id: str = "system", limit: int = 50):
 
 @app.post("/api/v1/complete")
 def complete(req: CompletionRequest):
-    """Governed LLM completion — budgeted, ledgered, scoped."""
-    result = llm_bridge.complete(
-        req.prompt,
-        model_name=req.model_name,
-        max_tokens=req.max_tokens,
-        temperature=req.temperature,
-        tenant_id=req.tenant_id,
-        budget_id=req.budget_id,
-        system=req.system,
-    )
-    if not result.succeeded:
-        raise HTTPException(status_code=503, detail={"error": result.error, "governed": True})
+    """Governed LLM completion — budgeted, ledgered, circuit-protected."""
+    metrics.inc("requests_governed")
+    if not llm_circuit.allow_request():
+        metrics.inc("requests_rejected")
+        raise HTTPException(503, detail={
+            "error": "LLM circuit breaker is open",
+            "circuit_state": llm_circuit.state.value, "governed": True,
+        })
+    try:
+        result = llm_bridge.complete(
+            req.prompt,
+            model_name=req.model_name,
+            max_tokens=req.max_tokens,
+            temperature=req.temperature,
+            tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+            system=req.system,
+        )
+        if result.succeeded:
+            llm_circuit.record_success()
+            cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
+            audit_trail.record(
+                action="llm.complete", actor_id=req.tenant_id,
+                tenant_id=req.tenant_id, target=req.model_name,
+                outcome="success", detail={"cost": result.cost, "tokens": result.total_tokens},
+            )
+        else:
+            llm_circuit.record_failure()
+            raise HTTPException(status_code=503, detail={"error": result.error, "governed": True})
+    except HTTPException:
+        raise
+    except Exception as exc:
+        llm_circuit.record_failure()
+        metrics.inc("errors_total")
+        raise HTTPException(503, detail={"error": str(exc), "governed": True})
     return {
         "content": result.content,
         "model": result.model_name,
@@ -544,6 +590,7 @@ def complete(req: CompletionRequest):
         "input_tokens": result.input_tokens,
         "output_tokens": result.output_tokens,
         "cost": result.cost,
+        "circuit_state": llm_circuit.state.value,
         "governed": True,
     }
 
@@ -604,16 +651,37 @@ def certification_history():
 
 @app.post("/api/v1/stream")
 def stream_completion(req: CompletionRequest):
-    """SSE streaming LLM completion — governed, budgeted, ledgered."""
-    result = llm_bridge.complete(
-        req.prompt,
-        model_name=req.model_name,
-        max_tokens=req.max_tokens,
-        temperature=req.temperature,
-        tenant_id=req.tenant_id,
-        budget_id=req.budget_id,
-        system=req.system,
-    )
+    """SSE streaming LLM completion — governed, budgeted, circuit-protected."""
+    metrics.inc("requests_governed")
+    if not llm_circuit.allow_request():
+        metrics.inc("requests_rejected")
+        raise HTTPException(503, detail={
+            "error": "LLM circuit breaker is open",
+            "circuit_state": llm_circuit.state.value, "governed": True,
+        })
+    try:
+        result = llm_bridge.complete(
+            req.prompt,
+            model_name=req.model_name,
+            max_tokens=req.max_tokens,
+            temperature=req.temperature,
+            tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+            system=req.system,
+        )
+        if result.succeeded:
+            llm_circuit.record_success()
+            audit_trail.record(
+                action="llm.stream", actor_id=req.tenant_id,
+                tenant_id=req.tenant_id, target=req.model_name,
+                outcome="success",
+            )
+        else:
+            llm_circuit.record_failure()
+    except Exception as exc:
+        llm_circuit.record_failure()
+        metrics.inc("errors_total")
+        raise HTTPException(503, detail={"error": str(exc), "governed": True})
     return StreamingResponse(
         streaming_adapter.stream_to_sse(result, request_id=f"stream-{id(req)}"),
         media_type="text/event-stream",

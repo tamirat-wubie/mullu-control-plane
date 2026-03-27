@@ -23,6 +23,7 @@ from starlette.responses import JSONResponse
 from mcoi_runtime.core.governance_guard import (
     GovernanceGuardChain,
     GuardChainResult,
+    create_api_key_guard,
     create_budget_guard,
     create_rate_limit_guard,
     create_tenant_guard,
@@ -67,6 +68,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
             "tenant_id": tenant_id,
             "endpoint": path,
             "method": request.method,
+            "authorization": request.headers.get("authorization", ""),
         }
 
         # Evaluate guard chain
@@ -90,7 +92,12 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                     "reason": result.reason,
                 })
 
-            status_code = 429 if result.blocking_guard == "rate_limit" else 403
+            if result.blocking_guard == "rate_limit":
+                status_code = 429
+            elif result.blocking_guard == "api_key":
+                status_code = 401
+            else:
+                status_code = 403
             return JSONResponse(
                 status_code=status_code,
                 content={
@@ -110,9 +117,12 @@ def build_guard_chain(
     *,
     rate_limiter: Any,
     budget_mgr: Any,
+    api_key_mgr: Any | None = None,
 ) -> GovernanceGuardChain:
     """Build the standard governance guard chain."""
     chain = GovernanceGuardChain()
+    if api_key_mgr is not None:
+        chain.add(create_api_key_guard(api_key_mgr))
     chain.add(create_tenant_guard())
     chain.add(create_rate_limit_guard(rate_limiter))
     chain.add(create_budget_guard(budget_mgr))
