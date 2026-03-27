@@ -18,6 +18,7 @@ from mcoi_runtime.contracts.dmrs import (
     DMRSRule,
 )
 from mcoi_runtime.core.dmrs_kernel import DMRSKernel
+from mcoi_runtime.persistence._serialization import serialize_record, deserialize_record
 
 
 # ---------------------------------------------------------------------------
@@ -172,3 +173,15 @@ class TestProofConstruction:
         assert result.proof.rule_id is DMRSRule.RULE_RECALL_LIGHT
         assert result.proof.version_id is DMRSMemoryVersion.V1_LIGHT
         assert result.proof.demand is DMRSDemand.RECALL
+
+    def test_proof_serialization_round_trip(self) -> None:
+        result = DMRSKernel.route(_ctx(load="low"), DMRSDemand.RECALL)
+        assert isinstance(result, DMRSRouteResult)
+        proof = result.proof
+        json_str = serialize_record(proof)
+        restored = deserialize_record(json_str, DMRSProof)
+        assert restored == proof
+        assert isinstance(restored.rule_id, DMRSRule)
+        assert isinstance(restored.version_id, DMRSMemoryVersion)
+        assert isinstance(restored.demand, DMRSDemand)
+        assert all(isinstance(c, DMRSConstraint) for c in restored.constraints_verified)
