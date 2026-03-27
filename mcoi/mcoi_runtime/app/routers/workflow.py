@@ -32,6 +32,7 @@ class ExecuteRequest(BaseModel):
     goal_id: str
     action: str
     tenant_id: str
+    actor_id: str = "anonymous"
     body: dict[str, Any] = {}
 
 
@@ -41,6 +42,7 @@ class WorkflowRequest(BaseModel):
     capability: str = "llm.completion"
     payload: dict[str, Any] = {}
     tenant_id: str = "system"
+    actor_id: str = "anonymous"
     budget_id: str = "default"
 
 
@@ -194,7 +196,7 @@ def execute(req: ExecuteRequest, session_id: str = Header(default="")):
         request_id=f"http-{id(req)}",
         method="POST",
         path="/api/v1/execute",
-        actor_id=req.tenant_id,
+        actor_id=req.actor_id,
         tenant_id=req.tenant_id,
         body=req.body,
         headers={"session_id": session_id},
