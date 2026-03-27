@@ -15,13 +15,13 @@ class TestTokenBucket:
         assert bucket.remaining >= 9.0  # Allow for tiny time delta
 
     def test_consume(self):
-        bucket = TokenBucket(RateLimitConfig(max_tokens=10, refill_rate=0.0))
+        bucket = TokenBucket(RateLimitConfig(max_tokens=10, refill_rate=0.001))
         allowed, remaining = bucket.try_consume(1)
         assert allowed is True
         assert remaining < 10.0
 
     def test_exhaust(self):
-        bucket = TokenBucket(RateLimitConfig(max_tokens=3, refill_rate=0.0))
+        bucket = TokenBucket(RateLimitConfig(max_tokens=3, refill_rate=0.001))
         bucket.try_consume(1)
         bucket.try_consume(1)
         bucket.try_consume(1)
@@ -36,13 +36,13 @@ class TestTokenBucket:
 
 class TestRateLimiter:
     def test_allow(self):
-        limiter = RateLimiter(default_config=RateLimitConfig(max_tokens=10, refill_rate=0.0))
+        limiter = RateLimiter(default_config=RateLimitConfig(max_tokens=10, refill_rate=0.001))
         result = limiter.check("tenant-1", "/api/v1/complete")
         assert result.allowed is True
         assert result.tenant_id == "tenant-1"
 
     def test_deny_after_exhaustion(self):
-        config = RateLimitConfig(max_tokens=2, refill_rate=0.0)
+        config = RateLimitConfig(max_tokens=2, refill_rate=0.001)
         limiter = RateLimiter(default_config=config)
         limiter.check("t1", "/api")
         limiter.check("t1", "/api")
@@ -51,7 +51,7 @@ class TestRateLimiter:
         assert result.retry_after_seconds > 0
 
     def test_tenant_isolation(self):
-        config = RateLimitConfig(max_tokens=2, refill_rate=0.0)
+        config = RateLimitConfig(max_tokens=2, refill_rate=0.001)
         limiter = RateLimiter(default_config=config)
         limiter.check("t1", "/api")
         limiter.check("t1", "/api")
@@ -60,7 +60,7 @@ class TestRateLimiter:
         assert result.allowed is True
 
     def test_endpoint_isolation(self):
-        config = RateLimitConfig(max_tokens=1, refill_rate=0.0)
+        config = RateLimitConfig(max_tokens=1, refill_rate=0.001)
         limiter = RateLimiter(default_config=config)
         limiter.check("t1", "/api/a")
         result = limiter.check("t1", "/api/b")  # Different endpoint
@@ -69,7 +69,7 @@ class TestRateLimiter:
     def test_per_endpoint_config(self):
         limiter = RateLimiter()
         limiter.configure_endpoint("/api/fast", RateLimitConfig(max_tokens=100))
-        limiter.configure_endpoint("/api/slow", RateLimitConfig(max_tokens=2, refill_rate=0.0))
+        limiter.configure_endpoint("/api/slow", RateLimitConfig(max_tokens=2, refill_rate=0.001))
         # Fast endpoint allows many
         for _ in range(50):
             limiter.check("t1", "/api/fast")
@@ -80,7 +80,7 @@ class TestRateLimiter:
         assert result.allowed is False
 
     def test_counts(self):
-        config = RateLimitConfig(max_tokens=1, refill_rate=0.0)
+        config = RateLimitConfig(max_tokens=1, refill_rate=0.001)
         limiter = RateLimiter(default_config=config)
         limiter.check("t1", "/api")  # allowed
         limiter.check("t1", "/api")  # denied

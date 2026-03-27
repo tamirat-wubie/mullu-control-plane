@@ -26,6 +26,14 @@ class RateLimitConfig:
     refill_rate: float = 1.0  # Tokens per second
     burst_limit: int = 10  # Max tokens consumed in single burst
 
+    def __post_init__(self) -> None:
+        if self.max_tokens < 1:
+            raise ValueError("max_tokens must be >= 1")
+        if self.refill_rate <= 0.0:
+            raise ValueError("refill_rate must be > 0.0")
+        if self.burst_limit < 1:
+            raise ValueError("burst_limit must be >= 1")
+
 
 @dataclass(frozen=True, slots=True)
 class RateLimitResult:
@@ -87,10 +95,12 @@ class RateLimiter:
         self,
         *,
         default_config: RateLimitConfig | None = None,
+        max_buckets: int = 100_000,
     ) -> None:
         self._default_config = default_config or RateLimitConfig()
         self._configs: dict[str, RateLimitConfig] = {}  # endpoint -> config
         self._buckets: dict[str, TokenBucket] = {}  # "tenant:endpoint" -> bucket
+        self._max_buckets = max_buckets
         self._denied_count: int = 0
         self._allowed_count: int = 0
 
@@ -104,6 +114,10 @@ class RateLimiter:
     def _get_bucket(self, tenant_id: str, endpoint: str) -> TokenBucket:
         key = self._bucket_key(tenant_id, endpoint)
         if key not in self._buckets:
+            # Evict oldest bucket if at capacity
+            if len(self._buckets) >= self._max_buckets:
+                oldest_key = next(iter(self._buckets))
+                del self._buckets[oldest_key]
             config = self._configs.get(endpoint, self._default_config)
             self._buckets[key] = TokenBucket(config)
         return self._buckets[key]

@@ -45,11 +45,13 @@ class AuditTrail:
     by recomputing hashes from the beginning.
     """
 
-    def __init__(self, *, clock: Callable[[], str]) -> None:
+    def __init__(self, *, clock: Callable[[], str], max_entries: int = 500_000) -> None:
         self._clock = clock
         self._entries: list[AuditEntry] = []
+        self._max_entries = max_entries
         self._last_hash: str = sha256(b"genesis").hexdigest()
         self._sequence: int = 0
+        self._pruned_count: int = 0
 
     def record(
         self,
@@ -98,6 +100,11 @@ class AuditTrail:
 
         self._entries.append(entry)
         self._last_hash = entry_hash
+        # Prune oldest entries when at capacity (preserves recent history)
+        if len(self._entries) > self._max_entries:
+            prune_count = len(self._entries) - self._max_entries
+            self._entries = self._entries[prune_count:]
+            self._pruned_count += prune_count
         return entry
 
     def query(

@@ -44,42 +44,54 @@ class BackpressureEngine:
         elevated_threshold: float = 60.0,
         high_threshold: float = 80.0,
         critical_threshold: float = 95.0,
+        hysteresis_band: float = 5.0,
     ) -> None:
         self._elevated = elevated_threshold
         self._high = high_threshold
         self._critical = critical_threshold
+        self._hysteresis = hysteresis_band
         self._current_load: float = 0.0
+        self._previous_level: PressureLevel = PressureLevel.NORMAL
 
     def update_load(self, load_pct: float) -> None:
         """Update current system load percentage (0-100)."""
         self._current_load = max(0.0, min(100.0, load_pct))
 
     def evaluate(self, is_essential: bool = True) -> BackpressureState:
-        """Evaluate backpressure for a request."""
-        load = self._current_load
+        """Evaluate backpressure for a request.
 
+        Uses hysteresis to prevent oscillation at threshold boundaries.
+        A level only drops when load falls below (threshold - hysteresis_band).
+        """
+        load = self._current_load
+        h = self._hysteresis
+        prev = self._previous_level
+
+        # Determine new level with hysteresis on the downward transition
         if load >= self._critical:
-            return BackpressureState(
-                level=PressureLevel.CRITICAL, load_pct=load,
-                should_shed=not is_essential, delay_ms=1000.0,
-                reason=f"critical load ({load:.1f}%)",
-            )
-        if load >= self._high:
-            return BackpressureState(
-                level=PressureLevel.HIGH, load_pct=load,
-                should_shed=False, delay_ms=500.0,
-                reason=f"high load ({load:.1f}%)",
-            )
-        if load >= self._elevated:
-            return BackpressureState(
-                level=PressureLevel.ELEVATED, load_pct=load,
-                should_shed=False, delay_ms=100.0,
-                reason=f"elevated load ({load:.1f}%)",
-            )
+            level = PressureLevel.CRITICAL
+        elif load >= self._high or (prev == PressureLevel.CRITICAL and load >= self._critical - h):
+            level = PressureLevel.HIGH if prev != PressureLevel.CRITICAL else PressureLevel.CRITICAL if load >= self._critical - h else PressureLevel.HIGH
+        elif load >= self._elevated or (prev == PressureLevel.HIGH and load >= self._high - h):
+            level = PressureLevel.ELEVATED if prev != PressureLevel.HIGH else PressureLevel.HIGH if load >= self._high - h else PressureLevel.ELEVATED
+        elif prev == PressureLevel.ELEVATED and load >= self._elevated - h:
+            level = PressureLevel.ELEVATED
+        else:
+            level = PressureLevel.NORMAL
+
+        self._previous_level = level
+
+        delay_map = {
+            PressureLevel.CRITICAL: 1000.0,
+            PressureLevel.HIGH: 500.0,
+            PressureLevel.ELEVATED: 100.0,
+            PressureLevel.NORMAL: 0.0,
+        }
+        shed = level == PressureLevel.CRITICAL and not is_essential
         return BackpressureState(
-            level=PressureLevel.NORMAL, load_pct=load,
-            should_shed=False, delay_ms=0.0,
-            reason="normal",
+            level=level, load_pct=load,
+            should_shed=shed, delay_ms=delay_map[level],
+            reason=f"{level.value} load ({load:.1f}%)" if level != PressureLevel.NORMAL else "normal",
         )
 
     @property

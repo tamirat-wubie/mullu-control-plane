@@ -111,8 +111,10 @@ class TenantBudgetManager:
     def record_spend(self, tenant_id: str, cost: float, tokens: int = 0) -> LLMBudget:
         """Record spending against a tenant's budget.
 
-        Returns the updated budget. Raises if budget is exhausted.
+        Returns the updated budget. Raises if budget is exhausted or cost is invalid.
         """
+        if cost < 0.0:
+            raise ValueError(f"cost must be non-negative, got {cost}")
         budget = self.ensure_budget(tenant_id)
         if budget.exhausted:
             raise ValueError(f"budget exhausted for tenant {tenant_id}")
