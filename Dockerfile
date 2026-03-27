@@ -11,6 +11,10 @@ RUN pip install --no-cache-dir -e mcoi[dev] && \
 ENV MULLU_ENV=pilot
 ENV PYTHONPATH=/app/mcoi
 
+# Run as non-root for security
+RUN adduser --disabled-password --gecos "" mullu
+USER mullu
+
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
