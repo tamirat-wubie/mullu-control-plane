@@ -470,7 +470,7 @@ api_migration.register_version("v1", endpoints=["/api/v1/*"])
 from mcoi_runtime.core.retry_policy import RetryPolicyEngine
 retry_engine = RetryPolicyEngine()
 
-app = FastAPI(title="Mullu Platform", version="3.4.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="3.5.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -482,6 +482,20 @@ app.add_middleware(
         tenant_id=ctx.get("tenant_id", ""), target=ctx.get("path", ""),
         outcome="denied", detail=ctx,
     ),
+)
+
+
+# ── CORS middleware — allow cross-origin requests from web frontends ──────
+from starlette.middleware.cors import CORSMiddleware
+
+_cors_origins = os.environ.get("MULLU_CORS_ORIGINS", "*").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-Id", "X-Governed"],
 )
 
 
@@ -2107,9 +2121,30 @@ def active_correlations():
 from mcoi_runtime.core.graceful_shutdown import ShutdownManager
 
 shutdown_mgr = ShutdownManager()
-shutdown_mgr.register("save_state", lambda: {"saved": True}, priority=100)
+
+
+def _flush_state_on_shutdown():
+    """Flush critical in-memory state to persistence before exit."""
+    flushed = {}
+    try:
+        flushed["audit_entries"] = audit_trail.entry_count
+        flushed["budget_tenants"] = len(tenant_budget_mgr._budgets) if hasattr(tenant_budget_mgr, '_budgets') else 0
+        flushed["rate_limit_buckets"] = rate_limiter.bucket_count if hasattr(rate_limiter, 'bucket_count') else 0
+        structured_logger.log("info", f"Shutdown state flush: {flushed}")
+    except Exception as e:
+        structured_logger.log("error", f"Shutdown flush error: {e}")
+    return {"flushed": True, **flushed}
+
+
+shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
 shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 shutdown_mgr.register("close_connections", lambda: {"closed": True}, priority=10)
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    """Execute graceful shutdown: flush state, close connections."""
+    shutdown_mgr.execute()
 
 
 @app.get("/api/v1/shutdown/info")
