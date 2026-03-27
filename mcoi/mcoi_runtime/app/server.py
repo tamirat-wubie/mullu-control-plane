@@ -51,10 +51,23 @@ def _clock() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 # Persistence store (InMemoryStore for dev, PostgresStore for production)
+_db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
+if _db_backend == "memory" and os.environ.get("MULLU_ENV") not in ("local_dev", "test", ""):
+    import warnings
+    warnings.warn(
+        "MULLU_DB_BACKEND=memory in non-dev environment. "
+        "All state will be lost on restart. Set MULLU_DB_BACKEND=postgresql for production.",
+        stacklevel=1,
+    )
 store = create_store(
-    backend=os.environ.get("MULLU_DB_BACKEND", "memory"),
+    backend=_db_backend,
     connection_string=os.environ.get("MULLU_DB_URL", ""),
 )
+
+# State persistence for crash recovery (file-based snapshots)
+from mcoi_runtime.persistence.state_persistence import StatePersistence
+_state_dir = os.environ.get("MULLU_STATE_DIR", "")
+state_persistence = StatePersistence(clock=_clock, base_dir=_state_dir)
 
 # Phase 200A: LLM bootstrap wiring (env-driven backend selection)
 llm_bootstrap_result = bootstrap_llm(
@@ -498,7 +511,7 @@ health_v3.register("llm_bridge", lambda: ComponentHealth.HEALTHY, weight=3.0)
 health_v3.register("store", lambda: ComponentHealth.HEALTHY, weight=2.0)
 health_v3.register("rate_limiter", lambda: ComponentHealth.HEALTHY, weight=1.0)
 
-app = FastAPI(title="Mullu Platform", version="3.8.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="3.9.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -535,7 +548,7 @@ from starlette.responses import JSONResponse as StarletteJSONResponse
 async def global_exception_handler(request: StarletteRequest, exc: Exception):
     """Catch unhandled exceptions, log, and return sanitized 500."""
     metrics.inc("errors_total")
-    structured_logger.log("error", f"Unhandled exception on {request.url.path}: {type(exc).__name__}")
+    platform_logger.log(LogLevel.ERROR, f"Unhandled exception on {request.url.path}: {type(exc).__name__}")
     return StarletteJSONResponse(
         status_code=500,
         content={
@@ -2152,16 +2165,71 @@ shutdown_mgr = ShutdownManager()
 
 
 def _flush_state_on_shutdown():
-    """Flush critical in-memory state to persistence before exit."""
+    """Flush critical in-memory state to file-based snapshots before exit."""
     flushed = {}
     try:
-        flushed["audit_entries"] = audit_trail.entry_count
-        flushed["budget_tenants"] = len(tenant_budget_mgr._budgets) if hasattr(tenant_budget_mgr, '_budgets') else 0
-        flushed["rate_limit_buckets"] = rate_limiter.bucket_count if hasattr(rate_limiter, 'bucket_count') else 0
-        structured_logger.log("info", f"Shutdown state flush: {flushed}")
+        # Save budget state
+        budget_data = {}
+        if hasattr(tenant_budget_mgr, '_budgets'):
+            for tid, b in tenant_budget_mgr._budgets.items():
+                budget_data[tid] = {
+                    "spent": b.spent, "calls_made": b.calls_made,
+                    "max_cost": b.max_cost, "max_calls": b.max_calls,
+                }
+        state_persistence.save("budgets", budget_data)
+        flushed["budgets"] = len(budget_data)
+
+        # Save audit trail summary (not full entries — too large)
+        audit_summary = {
+            "entry_count": audit_trail.entry_count,
+            "last_hash": audit_trail._last_hash if hasattr(audit_trail, '_last_hash') else "",
+            "sequence": audit_trail._sequence if hasattr(audit_trail, '_sequence') else 0,
+        }
+        state_persistence.save("audit_summary", audit_summary)
+        flushed["audit_sequence"] = audit_summary["sequence"]
+
+        # Save cost analytics summary
+        cost_data = {"summary": cost_analytics.summary() if hasattr(cost_analytics, 'summary') else {}}
+        state_persistence.save("cost_analytics", cost_data)
+        flushed["cost_analytics"] = True
+
+        platform_logger.log(LogLevel.INFO, f"Shutdown state flush: {flushed}")
     except Exception as e:
-        structured_logger.log("error", f"Shutdown flush error: {e}")
+        platform_logger.log(LogLevel.ERROR, f"Shutdown flush error: {e}")
     return {"flushed": True, **flushed}
+
+
+def _restore_state_on_startup():
+    """Restore state from file-based snapshots on startup."""
+    restored = {}
+    try:
+        # Restore budgets
+        budget_snap = state_persistence.load("budgets")
+        if budget_snap and budget_snap.data:
+            for tid, bdata in budget_snap.data.items():
+                budget = tenant_budget_mgr.ensure_budget(tid)
+                # Replay spent amount
+                if bdata.get("spent", 0) > 0:
+                    try:
+                        tenant_budget_mgr.record_spend(tid, cost=bdata["spent"])
+                    except ValueError:
+                        pass  # budget exhausted, that's fine
+            restored["budgets"] = len(budget_snap.data)
+
+        # Restore audit trail sequence
+        audit_snap = state_persistence.load("audit_summary")
+        if audit_snap and audit_snap.data:
+            restored["audit_sequence"] = audit_snap.data.get("sequence", 0)
+
+        if restored:
+            platform_logger.log(LogLevel.INFO, f"Startup state restore: {restored}")
+    except Exception as e:
+        platform_logger.log(LogLevel.ERROR, f"Startup restore error: {e}")
+    return restored
+
+
+# Run startup restoration
+_startup_restored = _restore_state_on_startup()
 
 
 shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
