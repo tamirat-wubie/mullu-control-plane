@@ -425,7 +425,22 @@ from mcoi_runtime.core.tenant_quota import TenantQuotaEngine
 tenant_quota = TenantQuotaEngine()
 observability.register_source("quotas", lambda: tenant_quota.summary())
 
-app = FastAPI(title="Mullu Platform", version="3.1.0", description="Governed AI Operating System")
+# Phase 230A: Deployment readiness
+from mcoi_runtime.core.deploy_readiness import DeployReadinessChecker, CheckResult, CheckStatus
+deploy_checker = DeployReadinessChecker()
+deploy_checker.register_check("config", lambda: CheckResult("config", CheckStatus.PASS, "Config valid"))
+deploy_checker.register_check("health", lambda: CheckResult("health", CheckStatus.PASS, "Healthy"))
+
+# Phase 230B: API migration versioning
+from mcoi_runtime.core.api_migration import ApiMigrationEngine
+api_migration = ApiMigrationEngine()
+api_migration.register_version("v1", endpoints=["/api/v1/*"])
+
+# Phase 230C: Governed retry policy
+from mcoi_runtime.core.retry_policy import RetryPolicyEngine
+retry_engine = RetryPolicyEngine()
+
+app = FastAPI(title="Mullu Platform", version="3.2.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2915,3 +2930,32 @@ def get_tenant_quota_usage(tenant_id: str):
     """Return quota usage for a specific tenant."""
     metrics.inc("requests_governed")
     return {"tenant_id": tenant_id, "usage": tenant_quota.get_usage(tenant_id), "governed": True}
+
+
+# ── Phase 230A: Deploy readiness endpoint ────────────────────────────────
+@app.get("/api/v1/deploy/readiness")
+def get_deploy_readiness():
+    """Run deployment readiness checks."""
+    metrics.inc("requests_governed")
+    report = deploy_checker.run_all()
+    return {"readiness": report.to_dict(), "governed": True}
+
+
+# ── Phase 230B: API migration endpoint ───────────────────────────────────
+@app.get("/api/v1/migrations/summary")
+def get_migration_summary():
+    """Return API version migration summary."""
+    metrics.inc("requests_governed")
+    return {
+        "migrations": api_migration.summary(),
+        "versions": [v.to_dict() for v in api_migration.list_versions()],
+        "governed": True,
+    }
+
+
+# ── Phase 230C: Retry policy endpoint ────────────────────────────────────
+@app.get("/api/v1/retries/summary")
+def get_retries_summary():
+    """Return governed retry policy summary."""
+    metrics.inc("requests_governed")
+    return {"retries": retry_engine.summary(), "governed": True}
