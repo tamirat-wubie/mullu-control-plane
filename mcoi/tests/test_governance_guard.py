@@ -72,7 +72,7 @@ class TestBuiltInGuards:
         assert result.allowed is True
 
     def test_rate_limit_guard_denies(self):
-        limiter = RateLimiter(default_config=RateLimitConfig(max_tokens=1, refill_rate=0.0))
+        limiter = RateLimiter(default_config=RateLimitConfig(max_tokens=1, refill_rate=0.001))
         guard = create_rate_limit_guard(limiter)
         guard.check({"tenant_id": "t1", "endpoint": "/api"})
         result = guard.check({"tenant_id": "t1", "endpoint": "/api"})
