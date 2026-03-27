@@ -399,7 +399,20 @@ response_compressor = ResponseCompressor(min_size_bytes=1024)
 from mcoi_runtime.core.canary_controller import CanaryController
 canary_controller = CanaryController(health_threshold=90.0, clock=_clock)
 
-app = FastAPI(title="Mullu Platform", version="2.9.0", description="Governed AI Operating System")
+# Phase 228A: Secret rotation
+from mcoi_runtime.core.secret_rotation import SecretRotationEngine
+secret_rotation = SecretRotationEngine(clock=_clock)
+
+# Phase 228B: Request deduplication
+from mcoi_runtime.core.request_dedup import RequestDeduplicator
+request_dedup = RequestDeduplicator(window_seconds=300.0)
+
+# Phase 228C: Rollback snapshots
+from mcoi_runtime.core.rollback_snapshot import SnapshotManager
+snapshot_mgr = SnapshotManager(max_snapshots=50, clock=_clock)
+observability.register_source("snapshots", lambda: snapshot_mgr.summary())
+
+app = FastAPI(title="Mullu Platform", version="3.0.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2815,3 +2828,46 @@ def get_canary_status():
     """Return canary deployment status."""
     metrics.inc("requests_governed")
     return {"canary": canary_controller.summary(), "governed": True}
+
+
+# ── Phase 228A: Secret rotation endpoint ─────────────────────────────────
+@app.get("/api/v1/secrets/summary")
+def get_secrets_summary():
+    """Return secret rotation engine summary."""
+    metrics.inc("requests_governed")
+    return {"secrets": secret_rotation.summary(), "governed": True}
+
+
+# ── Phase 228B: Request deduplication endpoint ───────────────────────────
+@app.get("/api/v1/dedup/summary")
+def get_dedup_summary():
+    """Return request deduplication summary."""
+    metrics.inc("requests_governed")
+    return {"dedup": request_dedup.summary(), "governed": True}
+
+
+# ── Phase 228C: Rollback snapshot endpoints ──────────────────────────────
+@app.get("/api/v1/snapshots")
+def list_snapshots(limit: int = 10):
+    """List recent system snapshots."""
+    metrics.inc("requests_governed")
+    snaps = snapshot_mgr.list_snapshots(limit=limit)
+    return {
+        "snapshots": [s.to_dict() for s in snaps],
+        "summary": snapshot_mgr.summary(),
+        "governed": True,
+    }
+
+
+class CreateSnapshotRequest(BaseModel):
+    snapshot_id: str
+    name: str
+    state: dict[str, Any] = {}
+
+
+@app.post("/api/v1/snapshots")
+def create_snapshot(req: CreateSnapshotRequest):
+    """Create a system state snapshot."""
+    metrics.inc("requests_governed")
+    snap = snapshot_mgr.create_snapshot(req.snapshot_id, req.name, req.state)
+    return {"snapshot": snap.to_dict(), "governed": True}
