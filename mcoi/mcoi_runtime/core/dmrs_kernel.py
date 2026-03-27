@@ -143,16 +143,16 @@ def _build_result(
     context_hash: str,
 ) -> DMRSRouteResult:
     """Construct a DMRSRouteResult with full proof."""
-    constraints_verified = tuple(c.value for c in DMRSConstraint)
+    constraints_verified = tuple(DMRSConstraint)
     precedence_hash = _hash_precedence(version, rule, demand)
 
     proof = DMRSProof(
-        version_id=version.value,
-        rule_id=rule.value,
+        version_id=version,
+        rule_id=rule,
         constraints_verified=constraints_verified,
         recursion_depth=context.depth,
         context_hash=context_hash,
-        demand=demand.value,
+        demand=demand,
         precedence_hash=precedence_hash,
     )
 

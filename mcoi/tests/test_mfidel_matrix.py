@@ -35,6 +35,41 @@ class TestGebetaStructure:
         all_glyphs = [g for row in FIDEL_GEBETA for g in row]
         assert len(all_glyphs) == len(set(all_glyphs))
 
+    def test_row_11_is_ve_family(self) -> None:
+        assert FIDEL_GEBETA[10][0] == "ቨ"
+
+    def test_row_18_is_ke_family(self) -> None:
+        assert FIDEL_GEBETA[17][0] == "ከ"
+
+    def test_row_19_is_khe_family(self) -> None:
+        assert FIDEL_GEBETA[18][0] == "ኸ"
+
+    def test_row_9_col8_is_qwa(self) -> None:
+        assert FIDEL_GEBETA[8][7] == "ቋ"
+
+    def test_row_18_col8_is_kwa(self) -> None:
+        assert FIDEL_GEBETA[17][7] == "ኳ"
+
+    def test_row_27_col8_is_gwa(self) -> None:
+        assert FIDEL_GEBETA[26][7] == "ጓ"
+
+    def test_row_14_col8_is_xa_labialized(self) -> None:
+        assert FIDEL_GEBETA[13][7] == "ኈ"
+
+    def test_canonical_order_first_glyph_per_row(self) -> None:
+        expected_firsts = [
+            "ሀ", "ለ", "ሐ", "መ", "ሠ", "ረ", "ሰ", "ሸ",
+            "ቀ", "በ", "ቨ", "ተ", "ቸ", "ኀ", "ነ", "ኘ",
+            "ኧ", "ከ", "ኸ", "ወ", "ዐ", "ዘ", "ዠ", "የ",
+            "ደ", "ጀ", "ገ", "ጠ", "ጨ", "ጰ", "ጸ", "ፀ",
+            "ፈ", "ፐ",
+        ]
+        actual_firsts = [row[0] for row in FIDEL_GEBETA]
+        assert actual_firsts == expected_firsts
+
+    def test_vowel_row_is_row_17(self) -> None:
+        assert FIDEL_GEBETA[16] == ("ኧ", "ኡ", "ኢ", "ኣ", "ኤ", "እ", "ኦ", "አ")
+
 
 # ---------------------------------------------------------------------------
 # Lookup
@@ -49,7 +84,7 @@ class TestLookup:
 
     def test_lookup_row34_col8(self) -> None:
         fidel = MfidelMatrix.lookup(34, 8)
-        assert fidel.glyph == "኿"
+        assert fidel.glyph == "ፗ"  # Row 34 is Pe family
 
     def test_lookup_out_of_range_row(self) -> None:
         with pytest.raises(ValueError):
