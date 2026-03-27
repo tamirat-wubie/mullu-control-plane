@@ -387,7 +387,19 @@ health_agg_v2.register(HealthCheckDef("store", lambda: {"status": "healthy"}, we
 health_agg_v2.register(HealthCheckDef("llm", lambda: {"status": "healthy"}, weight=2.0, critical=True))
 health_agg_v2.register(HealthCheckDef("event_bus", lambda: {"status": "healthy" if event_bus.error_count == 0 else "degraded"}, weight=1.0))
 
-app = FastAPI(title="Mullu Platform", version="2.8.0", description="Governed AI Operating System")
+# Phase 227A: Idempotency store
+from mcoi_runtime.core.idempotency import IdempotencyStore
+idempotency_store = IdempotencyStore(max_entries=10_000, ttl_seconds=3600.0)
+
+# Phase 227B: Response compression
+from mcoi_runtime.core.response_compression import ResponseCompressor
+response_compressor = ResponseCompressor(min_size_bytes=1024)
+
+# Phase 227C: Canary deployment controller
+from mcoi_runtime.core.canary_controller import CanaryController
+canary_controller = CanaryController(health_threshold=90.0, clock=_clock)
+
+app = FastAPI(title="Mullu Platform", version="2.9.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -2779,3 +2791,27 @@ def health_check_v2():
     metrics.inc("requests_governed")
     result = health_agg_v2.run()
     return {"health": result.to_dict(), "governed": True}
+
+
+# ── Phase 227A: Idempotency endpoint ─────────────────────────────────────
+@app.get("/api/v1/idempotency/summary")
+def get_idempotency_summary():
+    """Return idempotency store summary."""
+    metrics.inc("requests_governed")
+    return {"idempotency": idempotency_store.summary(), "governed": True}
+
+
+# ── Phase 227B: Compression endpoint ─────────────────────────────────────
+@app.get("/api/v1/compression/summary")
+def get_compression_summary():
+    """Return response compression summary."""
+    metrics.inc("requests_governed")
+    return {"compression": response_compressor.summary(), "governed": True}
+
+
+# ── Phase 227C: Canary deployment endpoint ───────────────────────────────
+@app.get("/api/v1/canary")
+def get_canary_status():
+    """Return canary deployment status."""
+    metrics.inc("requests_governed")
+    return {"canary": canary_controller.summary(), "governed": True}

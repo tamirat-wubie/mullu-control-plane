@@ -27,7 +27,7 @@ class TestOpenAPISpec:
         assert resp.status_code == 200
         spec = resp.json()
         assert spec["info"]["title"] == "Mullu Platform"
-        assert spec["info"]["version"] == "2.8.0"
+        assert spec["info"]["version"] == "2.9.0"
 
     def test_openapi_has_paths(self, client):
         spec = client.get("/openapi.json").json()
