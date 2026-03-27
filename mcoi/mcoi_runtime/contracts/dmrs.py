@@ -94,34 +94,39 @@ class DMRSContext:
 
 @dataclass(frozen=True, slots=True)
 class DMRSProof:
-    """Cryptographic proof of a routing decision."""
+    """Cryptographic proof of a routing decision.
 
-    version_id: str
-    rule_id: str
-    constraints_verified: tuple[str, ...]
+    All governance-critical fields use enum types so that proofs are
+    verifiable at the type level — an arbitrary string cannot masquerade
+    as a valid rule or demand.
+    """
+
+    version_id: DMRSMemoryVersion
+    rule_id: DMRSRule
+    constraints_verified: tuple[DMRSConstraint, ...]
     recursion_depth: int
     context_hash: str
-    demand: str
+    demand: DMRSDemand
     precedence_hash: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.version_id, str) or not self.version_id.strip():
-            raise ValueError("version_id must be a non-empty string")
-        if not isinstance(self.rule_id, str) or not self.rule_id.strip():
-            raise ValueError("rule_id must be a non-empty string")
+        if not isinstance(self.version_id, DMRSMemoryVersion):
+            raise TypeError("version_id must be a DMRSMemoryVersion")
+        if not isinstance(self.rule_id, DMRSRule):
+            raise TypeError("rule_id must be a DMRSRule")
         if not isinstance(self.constraints_verified, tuple):
             raise TypeError("constraints_verified must be a tuple")
         for c in self.constraints_verified:
-            if not isinstance(c, str):
-                raise TypeError("each constraint must be a str")
+            if not isinstance(c, DMRSConstraint):
+                raise TypeError("each constraint must be a DMRSConstraint")
         if not isinstance(self.recursion_depth, int):
             raise TypeError("recursion_depth must be an int")
         if self.recursion_depth < 0:
             raise ValueError("recursion_depth must be non-negative")
         if not isinstance(self.context_hash, str) or not self.context_hash.strip():
             raise ValueError("context_hash must be a non-empty string")
-        if not isinstance(self.demand, str) or not self.demand.strip():
-            raise ValueError("demand must be a non-empty string")
+        if not isinstance(self.demand, DMRSDemand):
+            raise TypeError("demand must be a DMRSDemand")
         if not isinstance(self.precedence_hash, str) or not self.precedence_hash.strip():
             raise ValueError("precedence_hash must be a non-empty string")
 

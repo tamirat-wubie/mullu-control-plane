@@ -150,10 +150,25 @@ class TestProofConstruction:
 
     def test_proof_constraints_verified(self) -> None:
         result = DMRSKernel.route(_ctx(), DMRSDemand.RECALL)
-        expected = tuple(c.value for c in DMRSConstraint)
+        expected = tuple(DMRSConstraint)
         assert result.proof.constraints_verified == expected
 
     def test_routed_at_is_iso_string(self) -> None:
         result = DMRSKernel.route(_ctx(), DMRSDemand.RECALL)
         assert isinstance(result.routed_at, str)
         assert "T" in result.routed_at  # ISO format includes T separator
+
+    def test_proof_fields_are_enum_types(self) -> None:
+        result = DMRSKernel.route(_ctx(), DMRSDemand.RECALL)
+        assert isinstance(result, DMRSRouteResult)
+        proof = result.proof
+        assert isinstance(proof.rule_id, DMRSRule)
+        assert isinstance(proof.version_id, DMRSMemoryVersion)
+        assert isinstance(proof.demand, DMRSDemand)
+        assert all(isinstance(c, DMRSConstraint) for c in proof.constraints_verified)
+
+    def test_recall_light_proof_enums(self) -> None:
+        result = DMRSKernel.route(_ctx(load="low"), DMRSDemand.RECALL)
+        assert result.proof.rule_id is DMRSRule.RULE_RECALL_LIGHT
+        assert result.proof.version_id is DMRSMemoryVersion.V1_LIGHT
+        assert result.proof.demand is DMRSDemand.RECALL
