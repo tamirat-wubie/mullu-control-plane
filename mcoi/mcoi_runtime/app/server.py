@@ -376,6 +376,31 @@ input_validator.register(InputSchema("api_request", "API Request", rules=(
     ValidationRule("tenant_id", RuleType.REQUIRED),
     ValidationRule("tenant_id", RuleType.TYPE_CHECK, value=str),
 )))
+input_validator.register(InputSchema("completion", "LLM Completion", rules=(
+    ValidationRule("prompt", RuleType.REQUIRED),
+    ValidationRule("prompt", RuleType.MIN_LENGTH, value=1),
+    ValidationRule("prompt", RuleType.MAX_LENGTH, value=100_000),
+    ValidationRule("max_tokens", RuleType.MIN_VALUE, value=1),
+    ValidationRule("max_tokens", RuleType.MAX_VALUE, value=100_000),
+    ValidationRule("temperature", RuleType.MIN_VALUE, value=0.0),
+    ValidationRule("temperature", RuleType.MAX_VALUE, value=2.0),
+)))
+input_validator.register(InputSchema("webhook", "Webhook Subscribe", rules=(
+    ValidationRule("url", RuleType.REQUIRED),
+    ValidationRule("url", RuleType.PATTERN, value=r"^https?://"),
+    ValidationRule("event_types", RuleType.REQUIRED),
+)))
+
+
+def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
+    """Validate request data against a schema; raise 422 if invalid."""
+    result = input_validator.validate(schema_id, data)
+    if not result.valid:
+        raise HTTPException(422, detail={
+            "error": "Validation failed",
+            "validation_errors": result.to_dict()["errors"],
+            "governed": True,
+        })
 
 # Phase 226B: Prometheus exporter
 from mcoi_runtime.core.prometheus_exporter import PrometheusExporter
@@ -445,7 +470,7 @@ api_migration.register_version("v1", endpoints=["/api/v1/*"])
 from mcoi_runtime.core.retry_policy import RetryPolicyEngine
 retry_engine = RetryPolicyEngine()
 
-app = FastAPI(title="Mullu Platform", version="3.3.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="3.4.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -550,6 +575,7 @@ def get_ledger(tenant_id: str = "system", limit: int = 50):
 def complete(req: CompletionRequest):
     """Governed LLM completion — budgeted, ledgered, circuit-protected."""
     metrics.inc("requests_governed")
+    _validate_or_raise("completion", req.model_dump())
     if not llm_circuit.allow_request():
         metrics.inc("requests_rejected")
         raise HTTPException(503, detail={
@@ -653,6 +679,7 @@ def certification_history():
 def stream_completion(req: CompletionRequest):
     """SSE streaming LLM completion — governed, budgeted, circuit-protected."""
     metrics.inc("requests_governed")
+    _validate_or_raise("completion", req.model_dump())
     if not llm_circuit.allow_request():
         metrics.inc("requests_rejected")
         raise HTTPException(503, detail={
@@ -1897,8 +1924,13 @@ class ToolWorkflowRequest(BaseModel):
 
 @app.post("/api/v1/workflow/tools")
 def tool_augmented_workflow(req: ToolWorkflowRequest):
-    """Execute a tool-augmented workflow — LLM + tool invocations."""
+    """Execute a tool-augmented workflow — LLM + tool invocations (feature-gated)."""
     metrics.inc("requests_governed")
+    if not feature_flags.is_enabled("tool_augmentation", tenant_id=req.tenant_id):
+        raise HTTPException(403, detail={
+            "error": "Feature 'tool_augmentation' is not enabled for this tenant",
+            "governed": True,
+        })
     result = tool_agent.execute_with_tools(
         req.prompt, tool_ids=req.tool_ids, tenant_id=req.tenant_id,
     )
@@ -1919,8 +1951,13 @@ def tool_augmented_workflow(req: ToolWorkflowRequest):
 
 @app.post("/api/v1/chat/stream")
 def streaming_chat(req: ChatRequest):
-    """Streaming chat — SSE with conversation history."""
+    """Streaming chat — SSE with conversation history (feature-gated)."""
     metrics.inc("requests_governed")
+    if not feature_flags.is_enabled("streaming_v2", tenant_id=req.tenant_id):
+        raise HTTPException(403, detail={
+            "error": "Feature 'streaming_v2' is not enabled for this tenant",
+            "governed": True,
+        })
     conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
 
     if req.system_prompt and conv.message_count == 0:

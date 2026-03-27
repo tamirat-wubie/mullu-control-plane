@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: mullu
       POSTGRES_USER: mullu
-      POSTGRES_PASSWORD: mullu_dev_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     ports:
       - "5432:5432"
     volumes:
@@ -26,7 +26,7 @@ services:
     environment:
       MULLU_ENV: pilot
       MULLU_DB_BACKEND: memory  # Use 'postgresql' when psycopg2 wired
-      MULLU_DB_URL: "postgresql://mullu:mullu_dev_password@postgres:5432/mullu"
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:-changeme}@postgres:5432/mullu"
       MULLU_LLM_BACKEND: stub
       MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
       MULLU_LLM_BUDGET_MAX_COST: "100.0"
