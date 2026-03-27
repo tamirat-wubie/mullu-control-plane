@@ -41,21 +41,42 @@ mullu-platform/
 \- .github/
 ```
 
-## Current State
+## Current State (v3.9.1)
 
-- **Shared foundation** is implemented: canonical docs and schemas define
-  cross-runtime meaning.
-- **MCOI Runtime** is an internal-alpha governed runtime with contracts,
-  execution adapters, operator loop orchestration, explicit verification closure,
-  persistence, replay validation, runbooks, provider registry, workflows,
-  memory tiers, skills, and pilot/domain packs.
-- **MAF Core** is compileable and test-backed on the Rust side, with shared
-  kernel types, lifecycle/state-machine contracts, supervision surfaces, and
-  learning/governance type layers.
+- **MCOI Runtime** — governed AI operating system with 158 API endpoints,
+  multi-tenant budget enforcement, hash-chain audit trails, LLM orchestration
+  (Anthropic/OpenAI/stub), agent workflows, cost analytics, and full
+  governance guard chain. 44,500+ tests.
+- **MAF Core** — Rust substrate with kernel types, lifecycle contracts,
+  supervision surfaces, and governance type layers.
+- **Shared Contracts** — canonical schemas and docs defining cross-runtime
+  meaning.
+
+### Key Capabilities
+
+| Capability | Description |
+|------------|-------------|
+| LLM Governance | Budget enforcement, cost tracking, circuit breakers |
+| Multi-Tenant | Isolated budgets, ledgers, conversations per tenant |
+| Audit Trail | Hash-chain integrity, query by action/tenant/outcome |
+| Agent Orchestration | Workflows, chains, tool-augmented agents, A/B testing |
+| Observability | Health v3, Prometheus metrics, Grafana dashboards, tracing |
+| Security | API key auth, CORS lockdown, SSRF protection, read timeouts |
+
+## Quick Start
+
+```bash
+cd mcoi
+pip install -e ".[dev]"
+uvicorn mcoi_runtime.app.server:app --reload
+curl http://localhost:8000/health
+```
+
+See [`DEPLOYMENT.md`](DEPLOYMENT.md) for Docker, production setup, and environment variables.
 
 ## Practical Notes
 
 - The CLI entrypoint is `mcoi`.
 - Portable example requests live under `mcoi/examples/`.
-- Runtime limitations and intentional gaps are tracked in
-  `KNOWN_LIMITATIONS_v0.1.md`.
+- Runtime limitations are tracked in `KNOWN_LIMITATIONS_v0.1.md`.
+- Deployment profiles and env vars are documented in `DEPLOYMENT.md`.
