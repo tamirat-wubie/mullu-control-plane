@@ -483,7 +483,22 @@ region_router.add_region("primary", latency_ms=20.0, is_primary=True)
 from mcoi_runtime.core.config_drift import ConfigDriftDetector
 config_drift = ConfigDriftDetector()
 
-app = FastAPI(title="Mullu Platform", version="3.7.0", description="Governed AI Operating System")
+# Phase 232A: Request context propagation
+from mcoi_runtime.core.request_context import RequestContextFactory
+request_ctx_factory = RequestContextFactory()
+
+# Phase 232B: Tenant data partitioning
+from mcoi_runtime.core.tenant_partition import TenantPartitionManager
+tenant_partitions = TenantPartitionManager(max_partitions=10_000)
+
+# Phase 232C: Health check v3
+from mcoi_runtime.core.health_v3 import HealthAggregatorV3, ComponentHealth
+health_v3 = HealthAggregatorV3(recovery_threshold=3)
+health_v3.register("llm_bridge", lambda: ComponentHealth.HEALTHY, weight=3.0)
+health_v3.register("store", lambda: ComponentHealth.HEALTHY, weight=2.0)
+health_v3.register("rate_limiter", lambda: ComponentHealth.HEALTHY, weight=1.0)
+
+app = FastAPI(title="Mullu Platform", version="3.8.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -3136,3 +3151,31 @@ def get_config_drift():
     """Return config drift detection summary."""
     metrics.inc("requests_governed")
     return {"drift": config_drift.summary(), "governed": True}
+
+
+# ── Phase 232A: Request context endpoint ─────────────────────────────────
+@app.get("/api/v1/context/summary")
+def get_context_summary():
+    """Return request context factory summary."""
+    metrics.inc("requests_governed")
+    return {"context": request_ctx_factory.summary(), "governed": True}
+
+
+# ── Phase 232B: Tenant partition endpoint ────────────────────────────────
+@app.get("/api/v1/partitions")
+def get_partitions():
+    """Return tenant data partition summary."""
+    metrics.inc("requests_governed")
+    return {
+        "partitions": tenant_partitions.summary(),
+        "tenants": [p.to_dict() for p in tenant_partitions.list_partitions()],
+        "governed": True,
+    }
+
+
+# ── Phase 232C: Health v3 endpoint ───────────────────────────────────────
+@app.get("/api/v1/health/v3")
+def get_health_v3():
+    """Weighted health check with recovery tracking."""
+    metrics.inc("requests_governed")
+    return health_v3.check_all()
