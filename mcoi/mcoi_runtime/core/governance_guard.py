@@ -64,6 +64,10 @@ class GovernanceGuardChain:
     def add(self, guard: GovernanceGuard) -> None:
         self._guards.append(guard)
 
+    def insert(self, index: int, guard: GovernanceGuard) -> None:
+        """Insert a guard at a specific position in the chain."""
+        self._guards.insert(index, guard)
+
     def evaluate(self, context: dict[str, Any]) -> GuardChainResult:
         """Run all guards in order. Stops on first failure."""
         results: list[GuardResult] = []
@@ -138,3 +142,35 @@ def create_tenant_guard() -> GovernanceGuard:
             )
         return GuardResult(allowed=True, guard_name="tenant")
     return GovernanceGuard("tenant", check)
+
+
+def create_api_key_guard(
+    api_key_mgr: Any,
+) -> GovernanceGuard:
+    """Create an API-key authentication guard.
+
+    Extracts Bearer token from the ``authorization`` context field and
+    authenticates via the :class:`APIKeyManager`.  Requests without an
+    ``Authorization`` header are allowed through (opt-in auth) so that
+    health / public endpoints keep working.  When a key IS supplied it
+    must be valid — invalid keys are hard-rejected.
+    """
+    def check(ctx: dict[str, Any]) -> GuardResult:
+        auth_header: str = ctx.get("authorization", "")
+        if not auth_header:
+            return GuardResult(allowed=True, guard_name="api_key")
+        token = auth_header.removeprefix("Bearer ").strip()
+        if not token:
+            return GuardResult(allowed=True, guard_name="api_key")
+        result = api_key_mgr.authenticate(token)
+        if not result.authenticated:
+            return GuardResult(
+                allowed=False, guard_name="api_key",
+                reason=result.error or "Authentication failed",
+            )
+        # Propagate tenant from key into context so downstream guards
+        # use the key's tenant rather than a potentially spoofed header.
+        if result.tenant_id:
+            ctx["tenant_id"] = result.tenant_id
+        return GuardResult(allowed=True, guard_name="api_key")
+    return GovernanceGuard("api_key", check)
