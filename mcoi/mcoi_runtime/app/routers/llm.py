@@ -26,6 +26,7 @@ class CompletionRequest(BaseModel):
     max_tokens: int = 1024
     temperature: float = 0.0
     tenant_id: str = "system"
+    actor_id: str = "anonymous"
     budget_id: str = "default"
     system: str = ""
 
@@ -34,6 +35,7 @@ class ChatRequest(BaseModel):
     conversation_id: str
     message: str
     tenant_id: str = "system"
+    actor_id: str = "anonymous"
     budget_id: str = "default"
     model_name: str = "claude-sonnet-4-20250514"
     system_prompt: str = ""
@@ -43,6 +45,7 @@ class ChatWorkflowRequest(BaseModel):
     conversation_id: str
     message: str
     tenant_id: str = "system"
+    actor_id: str = "anonymous"
     capability: str = "llm.completion"
     system_prompt: str = ""
     budget_id: str = "default"
@@ -55,6 +58,7 @@ class AutoCompleteRequest(BaseModel):
     preferred_speed: str = ""
     force_model: str = ""
     tenant_id: str = "system"
+    actor_id: str = "anonymous"
     budget_id: str = "default"
 
 
@@ -106,7 +110,7 @@ def complete(req: CompletionRequest):
             deps.llm_circuit.record_success()
             deps.cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
             deps.audit_trail.record(
-                action="llm.complete", actor_id=req.tenant_id,
+                action="llm.complete", actor_id=req.actor_id,
                 tenant_id=req.tenant_id, target=req.model_name,
                 outcome="success", detail={"cost": result.cost, "tokens": result.total_tokens},
             )
@@ -173,7 +177,7 @@ def stream_completion(req: CompletionRequest):
         if result.succeeded:
             deps.llm_circuit.record_success()
             deps.audit_trail.record(
-                action="llm.stream", actor_id=req.tenant_id,
+                action="llm.stream", actor_id=req.actor_id,
                 tenant_id=req.tenant_id, target=req.model_name,
                 outcome="success",
             )

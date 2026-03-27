@@ -35,6 +35,7 @@ class HttpConnectorConfig:
     """Configuration for the governed HTTP connector."""
 
     timeout_seconds: float = 30.0
+    read_timeout_seconds: float = 60.0  # Max time for response body read
     max_response_bytes: int = 10 * 1024 * 1024  # 10MB
     allowed_methods: tuple[str, ...] = ("GET",)
     allowed_content_types: tuple[str, ...] = ()  # empty = no restriction
@@ -43,6 +44,8 @@ class HttpConnectorConfig:
     def __post_init__(self) -> None:
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if self.read_timeout_seconds <= 0:
+            raise ValueError("read_timeout_seconds must be positive")
         if self.max_response_bytes <= 0:
             raise ValueError("max_response_bytes must be positive")
 
@@ -221,11 +224,32 @@ class HttpConnector:
                         return self._failure(result_id, connector.connector_id, started_at,
                                              f"content_type_not_allowed:{ct_base}")
 
-                # Size-bounded read
-                body = response.read(max_bytes + 1)
-                if len(body) > max_bytes:
-                    return self._failure(result_id, connector.connector_id, started_at,
-                                         f"response_too_large:{len(body)}")
+                # Time-bounded and size-bounded read (defends against slow trickle)
+                import time as _time
+                read_deadline = _time.monotonic() + self._config.read_timeout_seconds
+                chunks: list[bytes] = []
+                total_read = 0
+                chunk_size = 65536
+                while True:
+                    if _time.monotonic() > read_deadline:
+                        return ConnectorResult(
+                            result_id=result_id,
+                            connector_id=connector.connector_id,
+                            status=ConnectorStatus.TIMEOUT,
+                            response_digest="none",
+                            started_at=started_at,
+                            finished_at=self._clock(),
+                            error_code="read_timeout",
+                        )
+                    chunk = response.read(min(chunk_size, max_bytes + 1 - total_read))
+                    if not chunk:
+                        break
+                    chunks.append(chunk)
+                    total_read += len(chunk)
+                    if total_read > max_bytes:
+                        return self._failure(result_id, connector.connector_id, started_at,
+                                             f"response_too_large:{total_read}")
+                body = b"".join(chunks)
 
                 digest = hashlib.sha256(body).hexdigest()
                 status = _map_status_code(response.status)
