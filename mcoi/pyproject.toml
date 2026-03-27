@@ -18,7 +18,10 @@ dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "fastapi>=0.115", "httpx>=0.27", "
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
-markers = ["soak: long-running soak/longevity tests"]
+markers = [
+    "soak: long-running soak/longevity tests",
+    "live_provider: requires real API keys (ANTHROPIC_API_KEY or OPENAI_API_KEY)",
+]
 asyncio_mode = "auto"
 
 [tool.setuptools.packages.find]
