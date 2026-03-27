@@ -498,7 +498,206 @@ health_v3.register("llm_bridge", lambda: ComponentHealth.HEALTHY, weight=3.0)
 health_v3.register("store", lambda: ComponentHealth.HEALTHY, weight=2.0)
 health_v3.register("rate_limiter", lambda: ComponentHealth.HEALTHY, weight=1.0)
 
-app = FastAPI(title="Mullu Platform", version="3.8.0", description="Governed AI Operating System")
+# ═══════════════════════════════════════════════════════════════════════════
+# Additional subsystem initialization (previously scattered in route sections)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Phase 212A: Tool registry
+from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
+tool_registry = ToolRegistry(clock=_clock)
+tool_registry.register(
+    ToolDefinition(
+        tool_id="calculator", name="Calculator",
+        description="Evaluate a math expression",
+        parameters=(ToolParameter(name="expression", param_type="string", description="Math expression"),),
+        category="utility",
+    ),
+    handler=lambda args: {"result": str(eval(args.get("expression", "0")))},
+)
+tool_registry.register(
+    ToolDefinition(
+        tool_id="get_time", name="Get Time",
+        description="Get the current time",
+        parameters=(),
+        category="utility",
+    ),
+    handler=lambda args: {"time": _clock()},
+)
+observability.register_source("tools", lambda: tool_registry.summary())
+
+# Phase 212A: Anthropic streaming adapter
+from mcoi_runtime.adapters.anthropic_streaming import AnthropicStreamingAdapter
+anthropic_stream = AnthropicStreamingAdapter(
+    api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+    clock=_clock,
+)
+
+# Phase 212A: Structured output engine
+from mcoi_runtime.core.structured_output import StructuredOutputEngine, OutputSchema
+structured_output = StructuredOutputEngine()
+structured_output.register(OutputSchema(
+    schema_id="analysis", name="Analysis Output",
+    fields={"summary": "string", "key_points": "array", "confidence": "number"},
+    required_fields=("summary", "key_points"),
+))
+
+# Phase 212A: State persistence (file-based)
+from mcoi_runtime.persistence.state_persistence import StatePersistence
+state_persistence = StatePersistence(clock=_clock)
+
+# Phase 212A: LLM circuit breaker
+from mcoi_runtime.core.retry_engine import CircuitBreaker
+llm_circuit = CircuitBreaker(failure_threshold=10, recovery_timeout_ms=60000)
+
+# Phase 213B: Tool-augmented agent
+from mcoi_runtime.core.tool_agent import ToolAugmentedAgent
+tool_agent = ToolAugmentedAgent(
+    tool_registry=tool_registry,
+    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
+    max_tool_calls=10,
+)
+
+# Phase 214A: Model router
+from mcoi_runtime.core.model_router import ModelProfile, ModelRouter
+model_router = ModelRouter()
+model_router.register(ModelProfile(
+    model_id="claude-haiku-4-5", name="Claude Haiku 4.5", provider="anthropic",
+    cost_per_1k_input=0.80, cost_per_1k_output=4.0,
+    max_context=200000, speed_tier="fast", capability_tier="basic",
+))
+model_router.register(ModelProfile(
+    model_id="claude-sonnet-4", name="Claude Sonnet 4", provider="anthropic",
+    cost_per_1k_input=3.0, cost_per_1k_output=15.0,
+    max_context=200000, speed_tier="medium", capability_tier="standard",
+))
+model_router.register(ModelProfile(
+    model_id="claude-opus-4-6", name="Claude Opus 4.6", provider="anthropic",
+    cost_per_1k_input=15.0, cost_per_1k_output=75.0,
+    max_context=1000000, speed_tier="slow", capability_tier="advanced",
+))
+model_router.register(ModelProfile(
+    model_id="gpt-4o-mini", name="GPT-4o Mini", provider="openai",
+    cost_per_1k_input=0.15, cost_per_1k_output=0.60,
+    max_context=128000, speed_tier="fast", capability_tier="basic",
+))
+observability.register_source("model_router", lambda: model_router.summary())
+
+# Phase 214B: Request correlation
+from mcoi_runtime.core.request_correlation import CorrelationManager
+correlation_mgr = CorrelationManager(clock=_clock)
+
+# Phase 214C: Shutdown manager
+from mcoi_runtime.core.graceful_shutdown import ShutdownManager
+shutdown_mgr = ShutdownManager()
+
+# Phase 215A: Agent chain
+from mcoi_runtime.core.agent_chain import AgentChainEngine, ChainStep
+agent_chain = AgentChainEngine(
+    clock=_clock,
+    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
+)
+
+# Phase 215B: Monitoring
+from mcoi_runtime.core.monitoring import MonitoringEngine
+monitor = MonitoringEngine(clock=_clock)
+
+# Phase 215C: Task queue
+from mcoi_runtime.core.task_queue import TaskQueue
+task_queue = TaskQueue(clock=_clock)
+
+# Phase 216A: Agent memory
+from mcoi_runtime.core.agent_memory import AgentMemoryStore
+agent_memory = AgentMemoryStore(clock=_clock)
+observability.register_source("agent_memory", lambda: agent_memory.summary())
+
+# Phase 216B: A/B testing
+from mcoi_runtime.core.ab_testing import ABTestEngine
+ab_engine = ABTestEngine(clock=_clock)
+
+# Phase 216C: Isolation verifier
+from mcoi_runtime.core.isolation_verifier import IsolationVerifier, IsolationProbe
+isolation_verifier = IsolationVerifier(clock=_clock)
+isolation_verifier.register_probe(lambda a, b: IsolationProbe(
+    probe_name="budget_isolation", tenant_a=a, tenant_b=b,
+    isolated=tenant_budget_mgr.get_budget(a) != tenant_budget_mgr.get_budget(b) or
+             (tenant_budget_mgr.get_budget(a) is None and tenant_budget_mgr.get_budget(b) is None),
+    detail="budget objects are distinct per tenant",
+))
+isolation_verifier.register_probe(lambda a, b: IsolationProbe(
+    probe_name="ledger_isolation", tenant_a=a, tenant_b=b,
+    isolated=True, detail="ledger entries are keyed by tenant_id",
+))
+isolation_verifier.register_probe(lambda a, b: IsolationProbe(
+    probe_name="conversation_isolation", tenant_a=a, tenant_b=b,
+    isolated=True, detail="conversations are filtered by tenant_id",
+))
+
+# Phase 217: Usage reporter
+from mcoi_runtime.core.usage_reporter import UsageReporter
+usage_reporter = UsageReporter(clock=_clock)
+usage_reporter.register_source("llm_calls", lambda tid: llm_bridge.invocation_count)
+usage_reporter.register_source("total_cost", lambda tid: llm_bridge.total_cost)
+
+# Phase 218B: Dependency graph
+from mcoi_runtime.core.dependency_graph import DependencyGraph, SubsystemNode
+dep_graph = DependencyGraph()
+dep_graph.add(SubsystemNode(name="store", version="1.0"))
+dep_graph.add(SubsystemNode(name="llm", version="1.0", dependencies=("store",)))
+dep_graph.add(SubsystemNode(name="agents", version="1.0", dependencies=("llm", "store")))
+dep_graph.add(SubsystemNode(name="workflows", version="1.0", dependencies=("agents", "llm")))
+dep_graph.add(SubsystemNode(name="conversations", version="1.0", dependencies=("llm",)))
+dep_graph.add(SubsystemNode(name="events", version="1.0", dependencies=("store",)))
+dep_graph.add(SubsystemNode(name="governance", version="1.0", dependencies=("store", "events")))
+dep_graph.add(SubsystemNode(name="api", version="1.0", dependencies=("governance", "workflows", "conversations")))
+
+# Phase 218C: Backpressure
+from mcoi_runtime.core.backpressure import BackpressureEngine
+backpressure = BackpressureEngine()
+
+# Phase 220: Cache + Feature flags
+from mcoi_runtime.core.cache import GovernedCache
+from mcoi_runtime.core.feature_flags import FeatureFlag, FeatureFlagEngine
+governed_cache = GovernedCache(max_size=500, default_ttl=60.0)
+feature_flags = FeatureFlagEngine()
+feature_flags.register(FeatureFlag(flag_id="streaming_v2", name="Streaming V2", enabled=True))
+feature_flags.register(FeatureFlag(flag_id="tool_augmentation", name="Tool Augmentation", enabled=True))
+feature_flags.register(FeatureFlag(flag_id="ab_testing", name="A/B Testing", enabled=True))
+feature_flags.register(FeatureFlag(flag_id="agent_memory", name="Agent Memory", enabled=True))
+
+# Phase 221A: Semantic search
+from mcoi_runtime.core.semantic_search import SemanticSearchEngine
+semantic_search = SemanticSearchEngine()
+
+# Phase 221B: Tenant analytics
+from mcoi_runtime.core.tenant_analytics import TenantAnalyticsEngine
+tenant_analytics = TenantAnalyticsEngine(clock=_clock)
+tenant_analytics.register_collector("llm_calls", lambda tid: llm_bridge.invocation_count)
+tenant_analytics.register_collector("total_cost", lambda tid: llm_bridge.total_cost)
+
+# Phase 221C: Workflow templates
+from mcoi_runtime.core.workflow_templates import WorkflowTemplate, WorkflowTemplateRegistry
+from mcoi_runtime.core.agent_chain import ChainStep as _ChainStep
+wf_templates = WorkflowTemplateRegistry()
+wf_templates.register(WorkflowTemplate(
+    template_id="summarize-refine", name="Summarize & Refine",
+    description="Summarize then refine for audience",
+    steps=(
+        _ChainStep(step_id="s1", name="Summarize", prompt_template="Summarize {{topic}}: {{input}}"),
+        _ChainStep(step_id="s2", name="Refine", prompt_template="Refine for {{audience}}: {{prev}}"),
+    ),
+    parameters=("topic", "audience"), category="analysis",
+))
+wf_templates.register(WorkflowTemplate(
+    template_id="research-draft", name="Research & Draft",
+    description="Research a topic then draft a report",
+    steps=(
+        _ChainStep(step_id="s1", name="Research", prompt_template="Research {{topic}}: {{input}}"),
+        _ChainStep(step_id="s2", name="Draft", prompt_template="Draft a {{format}} report: {{prev}}"),
+    ),
+    parameters=("topic", "format"), category="research",
+))
+
+app = FastAPI(title="Mullu Platform", version="3.9.0", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(
@@ -535,7 +734,7 @@ from starlette.responses import JSONResponse as StarletteJSONResponse
 async def global_exception_handler(request: StarletteRequest, exc: Exception):
     """Catch unhandled exceptions, log, and return sanitized 500."""
     metrics.inc("errors_total")
-    structured_logger.log("error", f"Unhandled exception on {request.url.path}: {type(exc).__name__}")
+    platform_logger.log(LogLevel.ERROR, f"Unhandled exception on {request.url.path}: {type(exc).__name__}")
     return StarletteJSONResponse(
         status_code=500,
         content={
@@ -545,1626 +744,146 @@ async def global_exception_handler(request: StarletteRequest, exc: Exception):
     )
 
 
-class ExecuteRequest(BaseModel):
-    goal_id: str
-    action: str
-    tenant_id: str
-    body: dict[str, Any] = {}
-
-
-class CompletionRequest(BaseModel):
-    prompt: str
-    model_name: str = "claude-sonnet-4-20250514"
-    max_tokens: int = 1024
-    temperature: float = 0.0
-    tenant_id: str = "system"
-    budget_id: str = "default"
-    system: str = ""
-
-
-@app.get("/health")
-def health():
-    h = surface.health()
-    h["llm_invocations"] = llm_bridge.invocation_count
-    h["llm_total_cost"] = round(llm_bridge.total_cost, 6)
-    h["certifications"] = certifier.chain_count
-    h["ledger_entries"] = store.ledger_count()
-    return h
-
-
-@app.get("/ready")
-def ready():
-    h = health()
-    return {"ready": h["status"] == "healthy", **h}
-
-
-@app.post("/api/v1/execute")
-def execute(req: ExecuteRequest, session_id: str = Header(default="")):
-    api_req = APIRequest(
-        request_id=f"http-{id(req)}",
-        method="POST",
-        path="/api/v1/execute",
-        actor_id=req.tenant_id,
-        tenant_id=req.tenant_id,
-        body=req.body,
-        headers={"session_id": session_id},
-    )
-    resp = surface.handle_request(api_req)
-    if resp.status_code >= 400:
-        raise HTTPException(status_code=resp.status_code, detail=resp.body)
-    return resp.body
-
-
-@app.post("/api/v1/session")
-def create_session(actor_id: str, tenant_id: str):
-    import time
-    sid = hashlib.sha256(f"{actor_id}:{tenant_id}:{time.time()}".encode()).hexdigest()[:16]
-    session = surface.auth.create_session(f"sess-{sid}", actor_id, tenant_id)
-    surface.tenants.register_tenant(tenant_id)
-    store.save_session(f"sess-{sid}", actor_id, tenant_id)
-    return {"session_id": session.session_id, "actor_id": actor_id, "tenant_id": tenant_id}
-
-
-@app.get("/api/v1/ledger")
-def get_ledger(tenant_id: str = "system", limit: int = 50):
-    entries = store.query_ledger(tenant_id, limit=limit)
-    return {"entries": entries, "count": len(entries), "governed": True}
-
-
-# ═══ Phase 199A — LLM Completion Endpoint ═══
-
-@app.post("/api/v1/complete")
-def complete(req: CompletionRequest):
-    """Governed LLM completion — budgeted, ledgered, circuit-protected."""
-    metrics.inc("requests_governed")
-    _validate_or_raise("completion", req.model_dump())
-    if not llm_circuit.allow_request():
-        metrics.inc("requests_rejected")
-        raise HTTPException(503, detail={
-            "error": "LLM circuit breaker is open",
-            "circuit_state": llm_circuit.state.value, "governed": True,
-        })
-    try:
-        result = llm_bridge.complete(
-            req.prompt,
-            model_name=req.model_name,
-            max_tokens=req.max_tokens,
-            temperature=req.temperature,
-            tenant_id=req.tenant_id,
-            budget_id=req.budget_id,
-            system=req.system,
-        )
-        if result.succeeded:
-            llm_circuit.record_success()
-            cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
-            audit_trail.record(
-                action="llm.complete", actor_id=req.tenant_id,
-                tenant_id=req.tenant_id, target=req.model_name,
-                outcome="success", detail={"cost": result.cost, "tokens": result.total_tokens},
-            )
-        else:
-            llm_circuit.record_failure()
-            raise HTTPException(status_code=503, detail={"error": result.error, "governed": True})
-    except HTTPException:
-        raise
-    except Exception as exc:
-        llm_circuit.record_failure()
-        metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
-    return {
-        "content": result.content,
-        "model": result.model_name,
-        "provider": result.provider.value,
-        "input_tokens": result.input_tokens,
-        "output_tokens": result.output_tokens,
-        "cost": result.cost,
-        "circuit_state": llm_circuit.state.value,
-        "governed": True,
-    }
-
-
-@app.get("/api/v1/budget")
-def budget_summary():
-    """Budget status for all registered LLM budgets."""
-    return llm_bridge.budget_summary()
-
-
-@app.get("/api/v1/llm/history")
-def llm_history(limit: int = 50):
-    """Recent LLM invocation history."""
-    return {"invocations": llm_bridge.invocation_history(limit=limit)}
-
-
-# ═══ Phase 199C — Certification Endpoint ═══
-
-@app.post("/api/v1/certify")
-def run_certification():
-    """Run full live-path certification: API → DB → LLM → Ledger → Restart."""
-    chain = certifier.run_full_certification(
-        api_handle_fn=lambda req: {"governed": True, "status": "ok"},
-        db_write_fn=lambda t, c: store.append_ledger(
-            "certification", "certifier", t, c,
-            hashlib.sha256(json.dumps(c, sort_keys=True).encode()).hexdigest(),
-        ),
-        db_read_fn=lambda t: store.query_ledger(t),
-        llm_invoke_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
-        ledger_entries=store.query_ledger("system", limit=100),
-        pre_state_fn=lambda: (
-            hashlib.sha256(str(store.ledger_count()).encode()).hexdigest(),
-            store.ledger_count(),
-        ),
-        post_state_fn=lambda: (
-            hashlib.sha256(str(store.ledger_count()).encode()).hexdigest(),
-            store.ledger_count(),
-        ),
-    )
-    return {
-        "chain_id": chain.chain_id,
-        "all_passed": chain.all_passed,
-        "chain_hash": chain.chain_hash,
-        "steps": [
-            {"name": s.name, "status": s.status.value, "proof_hash": s.proof_hash, "detail": s.detail}
-            for s in chain.steps
-        ],
-    }
-
-
-@app.get("/api/v1/certify/history")
-def certification_history():
-    """Certification chain history."""
-    return {"certifications": certifier.certification_history()}
-
-
-# ═══ Phase 200C — Streaming Completion Endpoint ═══
-
-@app.post("/api/v1/stream")
-def stream_completion(req: CompletionRequest):
-    """SSE streaming LLM completion — governed, budgeted, circuit-protected."""
-    metrics.inc("requests_governed")
-    _validate_or_raise("completion", req.model_dump())
-    if not llm_circuit.allow_request():
-        metrics.inc("requests_rejected")
-        raise HTTPException(503, detail={
-            "error": "LLM circuit breaker is open",
-            "circuit_state": llm_circuit.state.value, "governed": True,
-        })
-    try:
-        result = llm_bridge.complete(
-            req.prompt,
-            model_name=req.model_name,
-            max_tokens=req.max_tokens,
-            temperature=req.temperature,
-            tenant_id=req.tenant_id,
-            budget_id=req.budget_id,
-            system=req.system,
-        )
-        if result.succeeded:
-            llm_circuit.record_success()
-            audit_trail.record(
-                action="llm.stream", actor_id=req.tenant_id,
-                tenant_id=req.tenant_id, target=req.model_name,
-                outcome="success",
-            )
-        else:
-            llm_circuit.record_failure()
-    except Exception as exc:
-        llm_circuit.record_failure()
-        metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
-    return StreamingResponse(
-        streaming_adapter.stream_to_sse(result, request_id=f"stream-{id(req)}"),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
-
-
-# ═══ Phase 200D — Certification Daemon Endpoints ═══
-
-@app.get("/api/v1/daemon/status")
-def daemon_status():
-    """Certification daemon health and run status."""
-    return cert_daemon.status()
-
-
-@app.post("/api/v1/daemon/tick")
-def daemon_tick():
-    """Trigger a single certification daemon tick."""
-    chain = cert_daemon.tick()
-    if chain is None:
-        return {"ran": False, "reason": "disabled or interval not elapsed"}
-    return {
-        "ran": True,
-        "chain_id": chain.chain_id,
-        "all_passed": chain.all_passed,
-    }
-
-
-@app.post("/api/v1/daemon/force")
-def daemon_force():
-    """Force an immediate certification run regardless of interval."""
-    chain = cert_daemon.force_run()
-    if chain is None:
-        return {"ran": False}
-    return {
-        "ran": True,
-        "chain_id": chain.chain_id,
-        "all_passed": chain.all_passed,
-        "chain_hash": chain.chain_hash,
-    }
-
-
-# ═══ Phase 200A — Bootstrap Info Endpoint ═══
-
-@app.get("/api/v1/bootstrap")
-def bootstrap_info():
-    """LLM bootstrap configuration and registered backends."""
-    return {
-        "default_backend": llm_bootstrap_result.default_backend_name,
-        "available_backends": list(llm_bootstrap_result.backends.keys()),
-        "registered_models": llm_bootstrap_result.registered_models,
-        "registered_providers": llm_bootstrap_result.registered_providers,
-        "config": {
-            "default_model": llm_bootstrap_result.config.default_model,
-            "default_budget_max_cost": llm_bootstrap_result.config.default_budget_max_cost,
-            "max_tokens_per_call": llm_bootstrap_result.config.max_tokens_per_call,
-        },
-    }
-
-
-# ═══ Phase 202A — Tenant Budget & Ledger Endpoints ═══
-
-from dataclasses import asdict as _asdict
-from mcoi_runtime.core.tenant_budget import TenantBudgetReport as _TBR
-
-def _budget_report(r: _TBR) -> dict[str, Any]:
-    return {
-        "tenant_id": r.tenant_id, "budget_id": r.budget_id, "max_cost": r.max_cost,
-        "spent": r.spent, "remaining": r.remaining, "calls_made": r.calls_made,
-        "max_calls": r.max_calls, "exhausted": r.exhausted, "enabled": r.enabled,
-        "utilization_pct": r.utilization_pct,
-    }
-
-
-class TenantBudgetRequest(BaseModel):
-    tenant_id: str
-    max_cost: float = 10.0
-    max_calls: int = 1000
-
-
-@app.post("/api/v1/tenant/budget")
-def create_tenant_budget(req: TenantBudgetRequest):
-    """Create or update a tenant's budget policy."""
-    tenant_budget_mgr.set_policy(TenantBudgetPolicy(
-        tenant_id=req.tenant_id, max_cost=req.max_cost, max_calls=req.max_calls,
-    ))
-    budget = tenant_budget_mgr.ensure_budget(req.tenant_id)
-    audit_trail.record(
-        action="tenant.budget.create", actor_id="system",
-        tenant_id=req.tenant_id, target=req.tenant_id, outcome="success",
-    )
-    metrics.inc("requests_governed")
-    return _budget_report(tenant_budget_mgr.report(req.tenant_id))
-
-
-@app.get("/api/v1/tenant/{tenant_id}/budget")
-def get_tenant_budget(tenant_id: str):
-    """Get a tenant's budget report."""
-    metrics.inc("requests_governed")
-    return _budget_report(tenant_budget_mgr.report(tenant_id))
-
-
-@app.get("/api/v1/tenant/{tenant_id}/ledger")
-def get_tenant_ledger(tenant_id: str, entry_type: str | None = None, limit: int = 50):
-    """Get a tenant's scoped ledger entries."""
-    metrics.inc("requests_governed")
-    entries = tenant_ledger.query(tenant_id, entry_type=entry_type, limit=limit)
-    return {
-        "entries": [{"entry_id": e.entry_id, "type": e.entry_type, "actor": e.actor_id,
-                      "content": e.content, "at": e.recorded_at} for e in entries],
-        "count": len(entries),
-        "tenant_id": tenant_id,
-    }
-
-
-@app.get("/api/v1/tenant/{tenant_id}/summary")
-def get_tenant_summary(tenant_id: str):
-    """Get a tenant's ledger summary."""
-    metrics.inc("requests_governed")
-    summary = tenant_ledger.summary(tenant_id)
-    return {
-        "tenant_id": summary.tenant_id,
-        "total_entries": summary.total_entries,
-        "entry_types": summary.entry_types,
-        "total_cost": summary.total_cost,
-    }
-
-
-@app.get("/api/v1/tenants")
-def list_tenants():
-    """List all tenants with budgets and ledger activity."""
-    metrics.inc("requests_governed")
-    return {
-        "tenants": tenant_budget_mgr.all_reports(),
-        "ledger_tenants": tenant_ledger.all_tenant_ids(),
-        "total_spent": tenant_budget_mgr.total_spent(),
-    }
-
-
-# ═══ Phase 202B — Governance Metrics Endpoint ═══
-
-@app.get("/api/v1/metrics")
-def get_metrics():
-    """Governance metrics — counters, gauges, histograms."""
-    return metrics.to_dict()
-
-
-# ═══ Phase 202C — Rate Limiter Status ═══
-
-@app.get("/api/v1/rate-limit/status")
-def rate_limit_status():
-    """Rate limiter status."""
-    return rate_limiter.status()
-
-
-# ═══ Phase 202D — Audit Trail Endpoints ═══
-
-@app.get("/api/v1/audit")
-def get_audit_trail(
-    tenant_id: str | None = None,
-    action: str | None = None,
-    outcome: str | None = None,
-    limit: int = 50,
-):
-    """Query the audit trail with optional filters."""
-    metrics.inc("requests_governed")
-    entries = audit_trail.query(
-        tenant_id=tenant_id, action=action, outcome=outcome, limit=limit,
-    )
-    return {
-        "entries": [
-            {"id": e.entry_id, "action": e.action, "actor": e.actor_id,
-             "tenant": e.tenant_id, "target": e.target, "outcome": e.outcome,
-             "at": e.recorded_at}
-            for e in entries
-        ],
-        "count": len(entries),
-    }
-
-
-@app.get("/api/v1/audit/verify")
-def verify_audit_chain():
-    """Verify audit trail hash-chain integrity."""
-    valid, checked = audit_trail.verify_chain()
-    return {"valid": valid, "entries_checked": checked, "last_hash": audit_trail.last_hash[:16]}
-
-
-@app.get("/api/v1/audit/summary")
-def audit_summary():
-    """Audit trail summary."""
-    return audit_trail.summary()
-
-
-# ═══ Phase 205A — Agent Workflow Endpoints ═══
-
-class WorkflowRequest(BaseModel):
-    task_id: str
-    description: str
-    capability: str = "llm.completion"
-    payload: dict[str, Any] = {}
-    tenant_id: str = "system"
-    budget_id: str = "default"
-
-
-@app.post("/api/v1/workflow/execute")
-def execute_workflow(req: WorkflowRequest):
-    """Execute a governed multi-agent workflow."""
-    metrics.inc("requests_governed")
-    try:
-        cap = AgentCapability(req.capability)
-    except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
-
-    result = workflow_engine.execute(
-        task_id=req.task_id, description=req.description,
-        capability=cap, payload=req.payload,
-        tenant_id=req.tenant_id, budget_id=req.budget_id,
-    )
-    metrics.inc("llm_calls_total" if result.status == "completed" else "errors_total")
-    return {
-        "workflow_id": result.workflow_id,
-        "task_id": result.task_id,
-        "agent_id": result.agent_id,
-        "status": result.status,
-        "steps": [{"name": s.step_name, "status": s.status, "detail": s.detail} for s in result.steps],
-        "output": result.output,
-        "error": result.error,
-    }
-
-
-@app.get("/api/v1/workflow/history")
-def workflow_history(limit: int = 50):
-    """Workflow execution history."""
-    return {
-        "workflows": [
-            {"id": r.workflow_id, "task": r.task_id, "agent": r.agent_id, "status": r.status}
-            for r in workflow_engine.history(limit=limit)
-        ],
-        "summary": workflow_engine.summary(),
-    }
-
-
-# ═══ Phase 205A — Agent Registry Endpoints ═══
-
-@app.get("/api/v1/agents")
-def list_agents():
-    """List registered agents and their capabilities."""
-    agents = agent_registry.list_agents()
-    return {
-        "agents": [
-            {"id": a.agent_id, "name": a.name, "capabilities": [c.value for c in a.capabilities], "enabled": a.enabled}
-            for a in agents
-        ],
-        "count": len(agents),
-    }
-
-
-@app.get("/api/v1/agents/{agent_id}/tasks")
-def agent_tasks(agent_id: str):
-    """Get tasks assigned to an agent."""
-    metrics.inc("requests_governed")
-    return {"agent_id": agent_id, "task_count": task_manager.task_count, "summary": task_manager.summary()}
-
-
-# ═══ Phase 205A — Webhook Endpoints ═══
-
-class WebhookSubscribeRequest(BaseModel):
-    subscription_id: str
-    tenant_id: str
-    url: str
-    events: list[str]
-    secret: str = ""
-
-
-@app.post("/api/v1/webhooks/subscribe")
-def webhook_subscribe(req: WebhookSubscribeRequest):
-    """Subscribe to webhook events."""
-    metrics.inc("requests_governed")
-    sub = WebhookSubscription(
-        subscription_id=req.subscription_id, tenant_id=req.tenant_id,
-        url=req.url, events=tuple(req.events), secret=req.secret,
-    )
-    webhook_manager.subscribe(sub)
-    audit_trail.record(
-        action="webhook.subscribe", actor_id="system",
-        tenant_id=req.tenant_id, target=req.subscription_id, outcome="success",
-    )
-    return {"subscription_id": sub.subscription_id, "events": list(sub.events)}
-
-
-@app.get("/api/v1/webhooks")
-def list_webhooks(tenant_id: str | None = None):
-    """List webhook subscriptions."""
-    subs = webhook_manager.list_subscriptions(tenant_id=tenant_id)
-    return {
-        "subscriptions": [
-            {"id": s.subscription_id, "tenant": s.tenant_id, "url": s.url, "events": list(s.events), "enabled": s.enabled}
-            for s in subs
-        ],
-        "count": len(subs),
-    }
-
-
-@app.get("/api/v1/webhooks/deliveries")
-def webhook_deliveries(limit: int = 50):
-    """Recent webhook delivery history."""
-    return {
-        "deliveries": [
-            {"id": d.delivery_id, "subscription": d.subscription_id, "event": d.event, "status": d.status, "at": d.created_at}
-            for d in webhook_manager.delivery_history(limit=limit)
-        ],
-    }
-
-
-# ═══ Phase 205A — Deep Health Endpoint ═══
-
-@app.get("/api/v1/health/deep")
-def deep_health_check():
-    """System-wide deep health diagnostic."""
-    result = deep_health.run()
-    return {
-        "overall": result.overall.value,
-        "components": [
-            {"name": c.name, "status": c.status.value, "latency_ms": c.latency_ms, "detail": c.detail}
-            for c in result.components
-        ],
-        "total_latency_ms": result.total_latency_ms,
-        "checked_at": result.checked_at,
-    }
-
-
-# ═══ Phase 205A — Config Endpoints ═══
-
-@app.get("/api/v1/config")
-def get_config():
-    """Current runtime configuration."""
-    return {
-        "version": config_manager.version,
-        "config": config_manager.get_all(),
-        "hash": config_manager.config_hash[:16] if config_manager.config_hash else "",
-    }
-
-
-@app.get("/api/v1/config/history")
-def config_history(limit: int = 10):
-    """Configuration change history."""
-    return {
-        "versions": [
-            {"version": v.version, "hash": v.config_hash[:16], "by": v.applied_by, "at": v.applied_at, "desc": v.description}
-            for v in config_manager.history(limit=limit)
-        ],
-    }
-
-
-# ═══ Phase 205A — Observability Dashboard ═══
-
-@app.get("/api/v1/dashboard")
-def dashboard():
-    """Aggregated observability dashboard data."""
-    return observability.collect_all()
-
-
-# ═══ Phase 205A — Plugin Endpoints ═══
-
-@app.get("/api/v1/plugins")
-def list_plugins():
-    """List registered plugins."""
-    return {
-        "plugins": [
-            {"id": p.descriptor.plugin_id, "name": p.descriptor.name, "version": p.descriptor.version, "status": p.status.value}
-            for p in plugin_registry.list_plugins()
-        ],
-        "summary": plugin_registry.summary(),
-    }
-
-
-# ═══ Phase 206A — Event Bus Endpoints ═══
-
-@app.get("/api/v1/events")
-def list_events(event_type: str | None = None, limit: int = 50):
-    """Query governed event bus history."""
-    events = event_bus.history(event_type=event_type, limit=limit)
-    return {
-        "events": [
-            {"id": e.event_id, "type": e.event_type, "tenant": e.tenant_id,
-             "source": e.source, "at": e.published_at}
-            for e in events
-        ],
-        "count": len(events),
-    }
-
-
-@app.get("/api/v1/events/summary")
-def events_summary():
-    """Event bus summary."""
-    return event_bus.summary()
-
-
-class EventPublishRequest(BaseModel):
-    event_type: str
-    tenant_id: str = ""
-    source: str = "api"
-    payload: dict[str, Any] = {}
-
-
-@app.post("/api/v1/events/publish")
-def publish_event(req: EventPublishRequest):
-    """Publish a governed event to the bus."""
-    metrics.inc("requests_governed")
-    event = event_bus.publish(
-        req.event_type, tenant_id=req.tenant_id,
-        source=req.source, payload=req.payload,
-    )
-    return {"event_id": event.event_id, "type": event.event_type, "hash": event.event_hash[:16]}
-
-
-# ═══ Phase 206B — Batch Pipeline Endpoint ═══
-
-class PipelineStepRequest(BaseModel):
-    step_id: str
-    name: str
-    prompt_template: str
-    model_name: str = "claude-sonnet-4-20250514"
-    max_tokens: int = 1024
-    system: str = ""
-
-
-class PipelineRequest(BaseModel):
-    steps: list[PipelineStepRequest]
-    initial_input: str = ""
-    budget_id: str = "default"
-    tenant_id: str = ""
-
-
-@app.post("/api/v1/pipeline/execute")
-def execute_pipeline(req: PipelineRequest):
-    """Execute a multi-step governed LLM pipeline."""
-    metrics.inc("requests_governed")
-    steps = [
-        PipelineStep(
-            step_id=s.step_id, name=s.name, prompt_template=s.prompt_template,
-            model_name=s.model_name, max_tokens=s.max_tokens, system=s.system,
-        )
-        for s in req.steps
-    ]
-    result = batch_pipeline.execute(
-        steps, initial_input=req.initial_input,
-        budget_id=req.budget_id, tenant_id=req.tenant_id,
-    )
-    # Emit event
-    event_bus.publish(
-        "pipeline.completed" if result.succeeded else "pipeline.failed",
-        tenant_id=req.tenant_id, source="batch_pipeline",
-        payload={"pipeline_id": result.pipeline_id, "succeeded": result.succeeded, "cost": result.total_cost},
-    )
-    return {
-        "pipeline_id": result.pipeline_id,
-        "succeeded": result.succeeded,
-        "steps": [
-            {"id": s.step_id, "name": s.name, "succeeded": s.succeeded, "cost": s.cost, "tokens": s.input_tokens + s.output_tokens}
-            for s in result.steps
-        ],
-        "final_output": result.final_output,
-        "total_cost": result.total_cost,
-        "total_tokens": result.total_tokens,
-        "error": result.error,
-    }
-
-
-@app.get("/api/v1/pipeline/history")
-def pipeline_history(limit: int = 50):
-    """Batch pipeline execution history."""
-    return {
-        "pipelines": [
-            {"id": p.pipeline_id, "succeeded": p.succeeded, "steps": len(p.steps), "cost": p.total_cost}
-            for p in batch_pipeline.history(limit=limit)
-        ],
-        "summary": batch_pipeline.summary(),
-    }
-
-
-# ═══ Phase 206D — System Snapshot ═══
-
-@app.get("/api/v1/snapshot")
-def system_snapshot():
-    """Full system state export — all subsystem summaries in one call."""
-    return {
-        "version": "0.6.0",
-        "environment": ENV,
-        "store": {"ledger_count": store.ledger_count()},
-        "llm": {"invocations": llm_bridge.invocation_count, "total_cost": llm_bridge.total_cost, **llm_bridge.budget_summary()},
-        "certification": cert_daemon.status(),
-        "tenants": {"count": tenant_budget_mgr.tenant_count(), "total_spent": tenant_budget_mgr.total_spent()},
-        "agents": {"count": agent_registry.count, "tasks": task_manager.task_count},
-        "workflows": workflow_engine.summary(),
-        "pipelines": batch_pipeline.summary(),
-        "metrics": metrics.to_dict(),
-        "audit": audit_trail.summary(),
-        "events": event_bus.summary(),
-        "webhooks": webhook_manager.summary(),
-        "config": config_manager.summary(),
-        "plugins": plugin_registry.summary(),
-        "rate_limiter": rate_limiter.status(),
-        "captured_at": _clock(),
-    }
-
-
-# ═══ Phase 207A — Config Update API ═══
-
-class ConfigUpdateRequest(BaseModel):
-    changes: dict[str, Any]
-    applied_by: str = "api"
-    description: str = ""
-
-
-@app.post("/api/v1/config/update")
-def update_config(req: ConfigUpdateRequest):
-    """Hot-reload configuration via REST API."""
-    metrics.inc("requests_governed")
-    result = config_manager.update(
-        req.changes, applied_by=req.applied_by, description=req.description,
-    )
-    audit_trail.record(
-        action="config.update", actor_id=req.applied_by,
-        tenant_id="system", target="config",
-        outcome="success" if result.success else "denied",
-        detail={"version": result.version, "changes": list(req.changes.keys())},
-    )
-    event_bus.publish(
-        "config.updated" if result.success else "config.rejected",
-        source="config_manager",
-        payload={"version": result.version, "success": result.success},
-    )
-    return {
-        "success": result.success,
-        "version": result.version,
-        "previous_version": result.previous_version,
-        "error": result.error,
-    }
-
-
-class ConfigRollbackRequest(BaseModel):
-    to_version: int
-    applied_by: str = "api"
-
-
-@app.post("/api/v1/config/rollback")
-def rollback_config(req: ConfigRollbackRequest):
-    """Rollback configuration to a previous version."""
-    metrics.inc("requests_governed")
-    result = config_manager.rollback(req.to_version, applied_by=req.applied_by)
-    audit_trail.record(
-        action="config.rollback", actor_id=req.applied_by,
-        tenant_id="system", target="config",
-        outcome="success" if result.success else "denied",
-        detail={"to_version": req.to_version},
-    )
-    return {
-        "success": result.success,
-        "version": result.version,
-        "error": result.error,
-    }
-
-
-# ═══ Phase 207B — Governance Guards Info ═══
-
-@app.get("/api/v1/guards")
-def list_guards():
-    """List governance guard chain."""
-    from mcoi_runtime.core.governance_guard import (
-        GovernanceGuardChain, create_rate_limit_guard,
-        create_budget_guard, create_tenant_guard,
-    )
-    chain = GovernanceGuardChain()
-    chain.add(create_tenant_guard())
-    chain.add(create_rate_limit_guard(rate_limiter))
-    chain.add(create_budget_guard(tenant_budget_mgr))
-    return {
-        "guards": chain.guard_names(),
-        "count": chain.guard_count,
-    }
-
-
-# ═══ Phase 207C — Capabilities Info ═══
-
-@app.get("/api/v1/capabilities")
-def list_capabilities():
-    """List available agent capabilities."""
-    from mcoi_runtime.core.agent_protocol import AgentCapability
-    return {
-        "capabilities": [
-            {"id": c.value, "name": c.name}
-            for c in AgentCapability
-        ],
-    }
-
-
-# ═══ Phase 207D — Replay Info ═══
-
-@app.get("/api/v1/replay/traces")
-def list_traces(limit: int = 50):
-    """Execution replay traces."""
-    traces = replay_recorder.list_traces(limit=limit)
-    return {
-        "traces": [
-            {"id": t.trace_id, "frames": len(t.frames), "hash": t.trace_hash[:16], "at": t.recorded_at}
-            for t in traces
-        ],
-        "count": len(traces),
-        "summary": replay_recorder.summary(),
-    }
-
-
-# ═══ Phase 208B — Traced Workflow Endpoint ═══
-
-@app.post("/api/v1/workflow/traced")
-def execute_traced_workflow(req: WorkflowRequest):
-    """Execute a workflow with automatic replay trace recording."""
-    metrics.inc("requests_governed")
-    try:
-        cap = AgentCapability(req.capability)
-    except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
-
-    result, trace = traced_workflow.execute(
-        task_id=req.task_id, description=req.description,
-        capability=cap, payload=req.payload,
-        tenant_id=req.tenant_id, budget_id=req.budget_id,
-    )
-    return {
-        "workflow_id": result.workflow_id,
-        "status": result.status,
-        "agent_id": result.agent_id,
-        "output": result.output,
-        "trace_id": trace.trace_id if trace else None,
-        "trace_frames": len(trace.frames) if trace else 0,
-        "trace_hash": trace.trace_hash[:16] if trace else None,
-    }
-
-
-# ═══ Phase 208C — Conversation Endpoints ═══
-
-class ConversationMessageRequest(BaseModel):
-    conversation_id: str
-    role: str = "user"
-    content: str = ""
-    tenant_id: str = ""
-
-
-@app.post("/api/v1/conversation/message")
-def add_conversation_message(req: ConversationMessageRequest):
-    """Add a message to a conversation."""
-    metrics.inc("requests_governed")
-    conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
-    msg = conv.add_message(req.role, req.content)
-    return {
-        "conversation_id": conv.conversation_id,
-        "message_id": msg.message_id,
-        "message_count": conv.message_count,
-    }
-
-
-@app.get("/api/v1/conversation/{conversation_id}")
-def get_conversation(conversation_id: str):
-    """Get conversation history."""
-    conv = conversation_store.get(conversation_id)
-    if conv is None:
-        raise HTTPException(404, detail="conversation not found")
-    return {
-        "conversation_id": conv.conversation_id,
-        "messages": [{"role": m.role, "content": m.content, "id": m.message_id} for m in conv.messages],
-        "summary": conv.summary(),
-    }
-
-
-@app.get("/api/v1/conversations")
-def list_conversations(tenant_id: str | None = None):
-    """List conversations."""
-    convs = conversation_store.list_conversations(tenant_id=tenant_id)
-    return {
-        "conversations": [c.summary() for c in convs],
-        "count": len(convs),
-    }
-
-
-# ═══ Phase 208D — Schema Validation Endpoint ═══
-
-@app.get("/api/v1/schemas")
-def list_schemas():
-    """List registered validation schemas."""
-    return {
-        "schemas": [
-            {"id": s.schema_id, "name": s.name, "rules": len(s.rules)}
-            for s in schema_validator.list_schemas()
-        ],
-        "summary": schema_validator.summary(),
-    }
-
-
-class ValidateRequest(BaseModel):
-    schema_id: str
-    data: dict[str, Any]
-
-
-@app.post("/api/v1/schemas/validate")
-def validate_data(req: ValidateRequest):
-    """Validate data against a registered schema."""
-    result = schema_validator.validate(req.schema_id, req.data)
-    return {
-        "schema_id": result.schema_id,
-        "valid": result.valid,
-        "errors": [
-            {"field": e.field, "rule": e.rule_type, "message": e.message}
-            for e in result.errors
-        ],
-    }
-
-
-# ═══ Phase 209A — Conversation-Aware Chat Endpoint ═══
-
-class ChatRequest(BaseModel):
-    conversation_id: str
-    message: str
-    tenant_id: str = "system"
-    budget_id: str = "default"
-    model_name: str = "claude-sonnet-4-20250514"
-    system_prompt: str = ""
-
-
-@app.post("/api/v1/chat")
-def chat_completion(req: ChatRequest):
-    """Multi-turn chat — uses conversation history for context."""
-    metrics.inc("requests_governed")
-    metrics.inc("llm_calls_total")
-
-    conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
-
-    # Add system prompt on first message
-    if req.system_prompt and conv.message_count == 0:
-        conv.add_system(req.system_prompt)
-
-    # Add user message
-    conv.add_user(req.message)
-
-    # Call LLM with full conversation history
-    result = llm_bridge.chat(
-        conv.to_chat_messages(),
-        model_name=req.model_name,
-        budget_id=req.budget_id,
-        tenant_id=req.tenant_id,
-    )
-
-    if result.succeeded:
-        conv.add_assistant(result.content)
-        metrics.inc("llm_calls_succeeded")
-        # Record cost analytics
-        cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
-    else:
-        metrics.inc("llm_calls_failed")
-
-    return {
-        "conversation_id": conv.conversation_id,
-        "content": result.content,
-        "model": result.model_name,
-        "tokens": result.total_tokens,
-        "cost": result.cost,
-        "succeeded": result.succeeded,
-        "message_count": conv.message_count,
-        "governed": True,
-    }
-
-
-# ═══ Phase 209C — Prompt Template Endpoints ═══
-
-@app.get("/api/v1/prompts")
-def list_prompt_templates(category: str | None = None):
-    """List registered prompt templates."""
-    templates = prompt_engine.list_templates(category=category)
-    return {
-        "templates": [
-            {"id": t.template_id, "name": t.name, "variables": list(t.variables),
-             "category": t.category, "version": t.version}
-            for t in templates
-        ],
-        "summary": prompt_engine.summary(),
-    }
-
-
-class PromptRenderRequest(BaseModel):
-    template_id: str
-    variables: dict[str, str]
-    tenant_id: str = "system"
-    budget_id: str = "default"
-    execute: bool = False  # If True, also run the rendered prompt through LLM
-
-
-@app.post("/api/v1/prompts/render")
-def render_prompt(req: PromptRenderRequest):
-    """Render a prompt template with variables, optionally execute via LLM."""
-    metrics.inc("requests_governed")
-    try:
-        rendered = prompt_engine.render(req.template_id, req.variables)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
-
-    response: dict[str, Any] = {
-        "template_id": rendered.template_id,
-        "prompt": rendered.prompt,
-        "system_prompt": rendered.system_prompt,
-        "version": rendered.version,
-    }
-
-    if req.execute:
-        metrics.inc("llm_calls_total")
-        result = llm_bridge.complete(
-            rendered.prompt, system=rendered.system_prompt,
-            budget_id=req.budget_id, tenant_id=req.tenant_id,
-        )
-        response["llm_result"] = {
-            "content": result.content,
-            "model": result.model_name,
-            "tokens": result.total_tokens,
-            "cost": result.cost,
-            "succeeded": result.succeeded,
-        }
-        if result.succeeded:
-            cost_analytics.record(req.tenant_id, result.model_name, result.cost, result.total_tokens)
-
-    return response
-
-
-# ═══ Phase 209D — Cost Analytics Endpoints ═══
-
-@app.get("/api/v1/costs")
-def cost_summary():
-    """Overall cost analytics summary."""
-    return cost_analytics.summary()
-
-
-@app.get("/api/v1/costs/top-spenders")
-def top_spenders(limit: int = 10):
-    """Top spending tenants."""
-    return {
-        "spenders": [
-            {"tenant_id": b.tenant_id, "total_cost": b.total_cost, "calls": b.call_count}
-            for b in cost_analytics.top_spenders(limit=limit)
-        ],
-    }
-
-
-@app.get("/api/v1/costs/by-model")
-def costs_by_model():
-    """Cost breakdown by LLM model."""
-    return {"models": cost_analytics.model_usage()}
-
-
-@app.get("/api/v1/costs/{tenant_id}")
-def tenant_costs(tenant_id: str):
-    """Cost breakdown for a specific tenant."""
-    breakdown = cost_analytics.tenant_breakdown(tenant_id)
-    return {
-        "tenant_id": breakdown.tenant_id,
-        "total_cost": breakdown.total_cost,
-        "total_tokens": breakdown.total_tokens,
-        "call_count": breakdown.call_count,
-        "avg_cost_per_call": breakdown.avg_cost_per_call,
-        "by_model": breakdown.by_model,
-        "most_expensive_model": breakdown.most_expensive_model,
-    }
-
-
-@app.get("/api/v1/costs/{tenant_id}/projection")
-def cost_projection(tenant_id: str, budget: float = 0.0, days_elapsed: float = 1.0):
-    """Cost projection for a tenant."""
-    proj = cost_analytics.project(tenant_id, budget=budget, days_elapsed=days_elapsed)
-    return {
-        "tenant_id": proj.tenant_id,
-        "current_daily_rate": proj.current_daily_rate,
-        "projected_monthly": proj.projected_monthly,
-        "budget_remaining": proj.budget_remaining,
-        "days_until_exhaustion": proj.days_until_exhaustion,
-    }
-
-
-# ═══ Phase 210A — Chat Workflow Endpoint ═══
-
-class ChatWorkflowRequest(BaseModel):
-    conversation_id: str
-    message: str
-    tenant_id: str = "system"
-    capability: str = "llm.completion"
-    system_prompt: str = ""
-    budget_id: str = "default"
-
-
-@app.post("/api/v1/chat/workflow")
-def chat_workflow_endpoint(req: ChatWorkflowRequest):
-    """Chat-triggered governed workflow — conversation + agent + trace."""
-    metrics.inc("requests_governed")
-    try:
-        cap = AgentCapability(req.capability)
-    except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
-
-    result = chat_workflow.execute(
-        conversation_id=req.conversation_id,
-        message=req.message,
-        tenant_id=req.tenant_id,
-        capability=cap,
-        system_prompt=req.system_prompt,
-        budget_id=req.budget_id,
-    )
-    return {
-        "conversation_id": result.conversation_id,
-        "workflow_id": result.workflow_id,
-        "agent_id": result.agent_id,
-        "status": result.status,
-        "response": result.response_content,
-        "trace_id": result.trace_id,
-        "message_count": result.message_count,
-        "cost": result.cost,
-        "governed": True,
-    }
-
-
-@app.get("/api/v1/chat/workflow/history")
-def chat_workflow_history(limit: int = 50):
-    """Chat workflow execution history."""
-    return {
-        "history": [
-            {"conversation": r.conversation_id, "workflow": r.workflow_id,
-             "status": r.status, "cost": r.cost}
-            for r in chat_workflow.history(limit=limit)
-        ],
-        "summary": chat_workflow.summary(),
-    }
-
-
-# ═══ Phase 210B — Health Aggregation Endpoint ═══
-
-@app.get("/api/v1/health/score")
-def health_score():
-    """Unified system health score (0.0-1.0)."""
-    result = health_agg.compute()
-    return {
-        "score": result.overall_score,
-        "status": result.status,
-        "components": [
-            {"name": c.name, "score": c.score, "weight": c.weight, "status": c.status}
-            for c in result.components
-        ],
-        "checked_at": result.checked_at,
-    }
-
-
-# ═══ Phase 210C — API Version Endpoint ═══
-
-@app.get("/api/v1/version")
-def api_version():
-    """API version info."""
-    return {
-        "version": "1.0.0",
-        "api_version": "v1",
-        "endpoints": api_versions.endpoint_count,
-        "summary": api_versions.summary(),
-        "governed": True,
-    }
-
-
-# ═══ Phase 210D — Release Info ═══
-
-@app.get("/api/v1/release")
-def release_info():
-    """v1.0.0 release information."""
-    return {
-        "version": "1.0.0",
-        "phase": 210,
-        "endpoints": 80,
-        "tests": 43800,
-        "components": {
-            "llm": "GovernedLLMAdapter (Anthropic/OpenAI/Stub)",
-            "agents": "AgentWorkflowEngine + TracedWorkflowEngine",
-            "conversations": "ConversationStore + ChatWorkflowEngine",
-            "governance": "GuardChain + AuditTrail + RateLimiter + MetricsEngine",
-            "observability": "ObservabilityAggregator + HealthAggregator + CostAnalytics",
-            "events": "EventBus + WebhookManager",
-            "pipelines": "BatchPipeline + PromptTemplateEngine",
-            "plugins": "PluginRegistry (2 active)",
-            "config": "ConfigManager (versioned, hot-reload, rollback)",
-            "persistence": "InMemoryStore / SQLiteStore / PostgresStore",
-            "replay": "ReplayRecorder + ReplayExecutor",
-            "schemas": "SchemaValidator (7 rule types)",
-            "tools": "ToolRegistry + ToolAugmentedAgent",
-            "streaming": "AnthropicStreamingAdapter",
-            "state": "StatePersistence (atomic JSON)",
-            "structured_output": "StructuredOutputEngine",
-            "retry": "RetryExecutor + CircuitBreaker",
-        },
-        "governed": True,
-    }
-
-
-# ═══ Phase 212A — Tool-Use, Streaming, State Endpoints ═══
-
-from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
-from mcoi_runtime.adapters.anthropic_streaming import AnthropicStreamingAdapter
-from mcoi_runtime.persistence.state_persistence import StatePersistence
-from mcoi_runtime.core.structured_output import StructuredOutputEngine, OutputSchema
-from mcoi_runtime.core.retry_engine import CircuitBreaker
-
-# Tool registry with example tools
-tool_registry = ToolRegistry(clock=_clock)
-tool_registry.register(
-    ToolDefinition(
-        tool_id="calculator", name="Calculator",
-        description="Evaluate a math expression",
-        parameters=(ToolParameter(name="expression", param_type="string", description="Math expression"),),
-        category="utility",
-    ),
-    handler=lambda args: {"result": str(eval(args.get("expression", "0")))},
-)
-tool_registry.register(
-    ToolDefinition(
-        tool_id="get_time", name="Get Time",
-        description="Get the current time",
-        parameters=(),
-        category="utility",
-    ),
-    handler=lambda args: {"time": _clock()},
-)
-observability.register_source("tools", lambda: tool_registry.summary())
-
-# Anthropic streaming adapter
-anthropic_stream = AnthropicStreamingAdapter(
-    api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
-    clock=_clock,
-)
-
-# State persistence
-state_persistence = StatePersistence(clock=_clock)
-
-# Structured output engine
-structured_output = StructuredOutputEngine()
-structured_output.register(OutputSchema(
-    schema_id="analysis", name="Analysis Output",
-    fields={"summary": "string", "key_points": "array", "confidence": "number"},
-    required_fields=("summary", "key_points"),
-))
-
-# LLM circuit breaker
-llm_circuit = CircuitBreaker(failure_threshold=10, recovery_timeout_ms=60000)
-
-
-@app.get("/api/v1/tools")
-def list_tools(category: str | None = None):
-    """List registered tools."""
-    tools = tool_registry.list_tools(category=category)
-    return {
-        "tools": [
-            {"id": t.tool_id, "name": t.name, "description": t.description,
-             "parameters": [{"name": p.name, "type": p.param_type, "required": p.required} for p in t.parameters],
-             "category": t.category}
-            for t in tools
-        ],
-        "count": len(tools),
-    }
-
-
-class ToolInvokeRequest(BaseModel):
-    tool_id: str
-    arguments: dict[str, Any] = {}
-    tenant_id: str = ""
-
-
-@app.post("/api/v1/tools/invoke")
-def invoke_tool(req: ToolInvokeRequest):
-    """Invoke a registered tool."""
-    metrics.inc("requests_governed")
-    result = tool_registry.invoke(req.tool_id, req.arguments, tenant_id=req.tenant_id)
-    audit_trail.record(
-        action="tool.invoke", actor_id="api", tenant_id=req.tenant_id,
-        target=req.tool_id, outcome="success" if result.succeeded else "error",
-    )
-    return {
-        "invocation_id": result.invocation_id, "tool_id": result.tool_id,
-        "output": result.output, "succeeded": result.succeeded, "error": result.error,
-    }
-
-
-@app.get("/api/v1/tools/llm-format")
-def tools_llm_format():
-    """Export tools in LLM-compatible format."""
-    return {"tools": tool_registry.to_llm_tools()}
-
-
-@app.get("/api/v1/tools/history")
-def tool_history(limit: int = 50):
-    """Tool invocation history."""
-    return {"history": [
-        {"id": r.invocation_id, "tool": r.tool_id, "succeeded": r.succeeded}
-        for r in tool_registry.invocation_history(limit=limit)
-    ], "summary": tool_registry.summary()}
-
-
-class StateSaveRequest(BaseModel):
-    state_type: str
-    data: dict[str, Any]
-
-
-@app.post("/api/v1/state/save")
-def save_state(req: StateSaveRequest):
-    """Save runtime state."""
-    metrics.inc("requests_governed")
-    snap = state_persistence.save(req.state_type, req.data)
-    return {"state_type": snap.state_type, "hash": snap.state_hash[:16], "saved_at": snap.saved_at}
-
-
-@app.get("/api/v1/state/{state_type}")
-def load_state(state_type: str):
-    """Load runtime state."""
-    snap = state_persistence.load(state_type)
-    if snap is None:
-        raise HTTPException(404, detail=f"state not found: {state_type}")
-    return {"state_type": snap.state_type, "data": snap.data, "hash": snap.state_hash[:16]}
-
-
-@app.get("/api/v1/state")
-def list_states():
-    """List saved states."""
-    return {"states": state_persistence.list_states(), "summary": state_persistence.summary()}
-
-
-class ParseOutputRequest(BaseModel):
-    schema_id: str
-    text: str
-
-
-@app.post("/api/v1/output/parse")
-def parse_structured_output(req: ParseOutputRequest):
-    """Parse LLM output against a schema."""
-    result = structured_output.parse(req.schema_id, req.text)
-    return {"schema_id": result.schema_id, "valid": result.valid, "parsed": result.parsed, "errors": list(result.errors)}
-
-
-@app.get("/api/v1/output/schemas")
-def list_output_schemas():
-    """List output schemas."""
-    return {"schemas": [{"id": s.schema_id, "name": s.name, "fields": s.fields} for s in structured_output.list_schemas()]}
-
-
-@app.get("/api/v1/circuit-breaker")
-def circuit_breaker_status():
-    """LLM circuit breaker status."""
-    return llm_circuit.status()
-
-
-# ═══ Phase 213A — Circuit-Breaker Protected LLM Completion ═══
-
-@app.post("/api/v1/complete/safe")
-def safe_completion(req: CompletionRequest):
-    """LLM completion with circuit-breaker protection."""
-    metrics.inc("requests_governed")
-    if not llm_circuit.allow_request():
-        metrics.inc("requests_rejected")
-        raise HTTPException(503, detail={
-            "error": "LLM circuit breaker is open — service temporarily unavailable",
-            "circuit_state": llm_circuit.state.value,
-            "governed": True,
-        })
-
-    try:
-        result = llm_bridge.complete(
-            req.prompt, model_name=req.model_name, max_tokens=req.max_tokens,
-            temperature=req.temperature, tenant_id=req.tenant_id,
-            budget_id=req.budget_id, system=req.system,
-        )
-        if result.succeeded:
-            llm_circuit.record_success()
-            metrics.inc("llm_calls_succeeded")
-            cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
-        else:
-            llm_circuit.record_failure()
-            metrics.inc("llm_calls_failed")
-
-        return {
-            "content": result.content, "model": result.model_name,
-            "provider": result.provider.value, "tokens": result.total_tokens,
-            "cost": result.cost, "succeeded": result.succeeded,
-            "circuit_state": llm_circuit.state.value, "governed": True,
-        }
-    except Exception as exc:
-        llm_circuit.record_failure()
-        metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
-
-
-# ═══ Phase 213B — Tool-Augmented Workflow Endpoint ═══
-
-from mcoi_runtime.core.tool_agent import ToolAugmentedAgent
-
-tool_agent = ToolAugmentedAgent(
-    tool_registry=tool_registry,
-    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
-    max_tool_calls=10,
-)
-
-
-class ToolWorkflowRequest(BaseModel):
-    prompt: str
-    tool_ids: list[str] | None = None
-    tenant_id: str = "system"
-
-
-@app.post("/api/v1/workflow/tools")
-def tool_augmented_workflow(req: ToolWorkflowRequest):
-    """Execute a tool-augmented workflow — LLM + tool invocations (feature-gated)."""
-    metrics.inc("requests_governed")
-    if not feature_flags.is_enabled("tool_augmentation", tenant_id=req.tenant_id):
-        raise HTTPException(403, detail={
-            "error": "Feature 'tool_augmentation' is not enabled for this tenant",
-            "governed": True,
-        })
-    result = tool_agent.execute_with_tools(
-        req.prompt, tool_ids=req.tool_ids, tenant_id=req.tenant_id,
-    )
-    return {
-        "content": result.content,
-        "tool_calls": [
-            {"tool_id": tc.tool_id, "arguments": tc.arguments,
-             "succeeded": tc.result.succeeded, "output": tc.result.output}
-            for tc in result.tool_calls
-        ],
-        "total_tool_calls": result.total_tool_calls,
-        "all_succeeded": result.all_succeeded,
-        "governed": True,
-    }
-
-
-# ═══ Phase 213C — Streaming Chat Endpoint (SSE + Conversation) ═══
-
-@app.post("/api/v1/chat/stream")
-def streaming_chat(req: ChatRequest):
-    """Streaming chat — SSE with conversation history (feature-gated)."""
-    metrics.inc("requests_governed")
-    if not feature_flags.is_enabled("streaming_v2", tenant_id=req.tenant_id):
-        raise HTTPException(403, detail={
-            "error": "Feature 'streaming_v2' is not enabled for this tenant",
-            "governed": True,
-        })
-    conv = conversation_store.get_or_create(req.conversation_id, tenant_id=req.tenant_id)
-
-    if req.system_prompt and conv.message_count == 0:
-        conv.add_system(req.system_prompt)
-    conv.add_user(req.message)
-
-    # Get completion (non-streaming internally, streamed to client)
-    result = llm_bridge.chat(
-        conv.to_chat_messages(), model_name=req.model_name,
-        budget_id=req.budget_id, tenant_id=req.tenant_id,
-    )
-
-    if result.succeeded:
-        conv.add_assistant(result.content)
-        cost_analytics.record(req.tenant_id, req.model_name, result.cost, result.total_tokens)
-
-    # Stream as SSE
-    return StreamingResponse(
-        streaming_adapter.stream_to_sse(result, request_id=f"chat-{req.conversation_id}"),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
-
-
-# ═══ Phase 213D — v1.1.0 Release Info ═══
-
-@app.get("/api/v1/release/latest")
-def latest_release():
-    """Latest release information."""
-    return {
-        "version": "1.2.0",
-        "phase": 214,
-        "endpoints": 105,
-        "tests": 43950,
-        "highlights": [
-            "Multi-model routing (auto-select by task complexity)",
-            "Request correlation (trace-ID propagation)",
-            "Graceful shutdown contracts",
-            "Production readiness checks",
-        ],
-        "governed": True,
-    }
-
-
-# ═══ Phase 214A — Model Routing Endpoint ═══
-
-from mcoi_runtime.core.model_router import ModelProfile, ModelRouter
-
-model_router = ModelRouter()
-model_router.register(ModelProfile(
-    model_id="claude-haiku-4-5", name="Claude Haiku 4.5", provider="anthropic",
-    cost_per_1k_input=0.80, cost_per_1k_output=4.0,
-    max_context=200000, speed_tier="fast", capability_tier="basic",
-))
-model_router.register(ModelProfile(
-    model_id="claude-sonnet-4", name="Claude Sonnet 4", provider="anthropic",
-    cost_per_1k_input=3.0, cost_per_1k_output=15.0,
-    max_context=200000, speed_tier="medium", capability_tier="standard",
-))
-model_router.register(ModelProfile(
-    model_id="claude-opus-4-6", name="Claude Opus 4.6", provider="anthropic",
-    cost_per_1k_input=15.0, cost_per_1k_output=75.0,
-    max_context=1000000, speed_tier="slow", capability_tier="advanced",
-))
-model_router.register(ModelProfile(
-    model_id="gpt-4o-mini", name="GPT-4o Mini", provider="openai",
-    cost_per_1k_input=0.15, cost_per_1k_output=0.60,
-    max_context=128000, speed_tier="fast", capability_tier="basic",
-))
-observability.register_source("model_router", lambda: model_router.summary())
-
-
-class AutoCompleteRequest(BaseModel):
-    prompt: str
-    max_tokens: int = 1024
-    max_cost: float = 0.0
-    preferred_speed: str = ""
-    force_model: str = ""
-    tenant_id: str = "system"
-    budget_id: str = "default"
-
-
-@app.post("/api/v1/complete/auto")
-def auto_routed_completion(req: AutoCompleteRequest):
-    """LLM completion with automatic model routing."""
-    metrics.inc("requests_governed")
-    decision = model_router.route(
-        req.prompt, max_tokens=req.max_tokens,
-        max_cost=req.max_cost, preferred_speed=req.preferred_speed,
-        force_model=req.force_model,
-    )
-    if not decision.model_id:
-        raise HTTPException(503, detail="no models available for routing")
-
-    result = llm_bridge.complete(
-        req.prompt, model_name=decision.model_id,
-        max_tokens=req.max_tokens, tenant_id=req.tenant_id,
-        budget_id=req.budget_id,
-    )
-    if result.succeeded:
-        cost_analytics.record(req.tenant_id, decision.model_id, result.cost, result.total_tokens)
-
-    return {
-        "content": result.content,
-        "model": decision.model_id,
-        "routing": {
-            "reason": decision.reason,
-            "complexity": decision.complexity.value,
-            "estimated_cost": decision.estimated_cost,
-            "alternatives": list(decision.alternatives),
-        },
-        "tokens": result.total_tokens,
-        "cost": result.cost,
-        "succeeded": result.succeeded,
-        "governed": True,
-    }
-
-
-@app.get("/api/v1/models")
-def list_models():
-    """List available models for routing."""
-    return {
-        "models": [
-            {"id": p.model_id, "name": p.name, "provider": p.provider,
-             "speed": p.speed_tier, "capability": p.capability_tier, "enabled": p.enabled}
-            for p in sorted(model_router._profiles.values(), key=lambda p: p.model_id)
-        ],
-        "summary": model_router.summary(),
-    }
-
-
-# ═══ Phase 214B — Request Correlation Endpoint ═══
-
-from mcoi_runtime.core.request_correlation import CorrelationManager
-
-correlation_mgr = CorrelationManager(clock=_clock)
-
-
-@app.get("/api/v1/correlation/active")
-def active_correlations():
-    """Active request correlations."""
-    return correlation_mgr.summary()
-
-
-# ═══ Phase 214C — Shutdown Info ═══
-
-from mcoi_runtime.core.graceful_shutdown import ShutdownManager
-
-shutdown_mgr = ShutdownManager()
-
-
-def _flush_state_on_shutdown():
-    """Flush critical in-memory state to persistence before exit."""
-    flushed = {}
-    try:
-        flushed["audit_entries"] = audit_trail.entry_count
-        flushed["budget_tenants"] = len(tenant_budget_mgr._budgets) if hasattr(tenant_budget_mgr, '_budgets') else 0
-        flushed["rate_limit_buckets"] = rate_limiter.bucket_count if hasattr(rate_limiter, 'bucket_count') else 0
-        structured_logger.log("info", f"Shutdown state flush: {flushed}")
-    except Exception as e:
-        structured_logger.log("error", f"Shutdown flush error: {e}")
-    return {"flushed": True, **flushed}
-
-
-shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
+# ═══════════════════════════════════════════════════════════════════════════
+# Dependency injection — register all subsystems into deps container
+# ═══════════════════════════════════════════════════════════════════════════
+
+from mcoi_runtime.app.routers.deps import deps
+
+# Core
+deps.set("surface", surface)
+deps.set("store", store)
+deps.set("_clock", _clock)
+deps.set("ENV", ENV)
+
+# LLM
+deps.set("llm_bridge", llm_bridge)
+deps.set("llm_bootstrap_result", llm_bootstrap_result)
+deps.set("llm_circuit", llm_circuit)
+deps.set("streaming_adapter", streaming_adapter)
+deps.set("model_router", model_router)
+
+# Governance
+deps.set("metrics", metrics)
+deps.set("rate_limiter", rate_limiter)
+deps.set("rate_limit_headers", rate_limit_headers)
+deps.set("guard_chain", guard_chain)
+deps.set("audit_trail", audit_trail)
+deps.set("input_validator", input_validator)
+
+# Tenants
+deps.set("tenant_budget_mgr", tenant_budget_mgr)
+deps.set("tenant_ledger", tenant_ledger)
+deps.set("tenant_isolation", tenant_isolation)
+deps.set("tenant_quota", tenant_quota)
+deps.set("tenant_partitions", tenant_partitions)
+deps.set("tenant_analytics", tenant_analytics)
+deps.set("usage_reporter", usage_reporter)
+deps.set("isolation_verifier", isolation_verifier)
+
+# Agents & workflows
+deps.set("agent_registry", agent_registry)
+deps.set("task_manager", task_manager)
+deps.set("workflow_engine", workflow_engine)
+deps.set("traced_workflow", traced_workflow)
+deps.set("replay_recorder", replay_recorder)
+deps.set("chat_workflow", chat_workflow)
+deps.set("agent_chain", agent_chain)
+deps.set("agent_orchestrator", agent_orchestrator)
+deps.set("tool_registry", tool_registry)
+deps.set("tool_agent", tool_agent)
+deps.set("agent_memory", agent_memory)
+deps.set("task_queue", task_queue)
+deps.set("batch_pipeline", batch_pipeline)
+deps.set("wf_templates", wf_templates)
+deps.set("semantic_search", semantic_search)
+
+# Conversations & prompts
+deps.set("conversation_store", conversation_store)
+deps.set("prompt_engine", prompt_engine)
+deps.set("schema_validator", schema_validator)
+
+# Persistence & state
+deps.set("state_persistence", state_persistence)
+deps.set("structured_output", structured_output)
+deps.set("cost_analytics", cost_analytics)
+
+# Health
+deps.set("deep_health", deep_health)
+deps.set("health_agg", health_agg)
+deps.set("health_agg_v2", health_agg_v2)
+deps.set("health_v3", health_v3)
+deps.set("certifier", certifier)
+deps.set("cert_daemon", cert_daemon)
+
+# Events & webhooks
+deps.set("event_bus", event_bus)
+deps.set("event_store", event_store)
+deps.set("webhook_manager", webhook_manager)
+deps.set("webhook_retry", webhook_retry)
+
+# Ops & infra
+deps.set("config_manager", config_manager)
+deps.set("config_watcher", config_watcher)
+deps.set("config_drift", config_drift)
+deps.set("observability", observability)
+deps.set("plugin_registry", plugin_registry)
+deps.set("api_versions", api_versions)
+deps.set("platform_logger", platform_logger)
+deps.set("api_key_mgr", api_key_mgr)
+deps.set("data_export", data_export)
+deps.set("sla_monitor", sla_monitor)
+deps.set("notification_dispatcher", notification_dispatcher)
+deps.set("prom_exporter", prom_exporter)
+deps.set("grafana_dashboard", grafana_dashboard)
+deps.set("request_tracer", request_tracer)
+deps.set("monitor", monitor)
+deps.set("shutdown_mgr", shutdown_mgr)
+deps.set("correlation_mgr", correlation_mgr)
+deps.set("idempotency_store", idempotency_store)
+deps.set("response_compressor", response_compressor)
+deps.set("canary_controller", canary_controller)
+deps.set("secret_rotation", secret_rotation)
+deps.set("request_dedup", request_dedup)
+deps.set("snapshot_mgr", snapshot_mgr)
+deps.set("otel_exporter", otel_exporter)
+deps.set("circuit_dashboard", circuit_dashboard)
+deps.set("deploy_checker", deploy_checker)
+deps.set("api_migration", api_migration)
+deps.set("retry_engine", retry_engine)
+deps.set("region_router", region_router)
+deps.set("request_ctx_factory", request_ctx_factory)
+deps.set("governed_cache", governed_cache)
+deps.set("feature_flags", feature_flags)
+deps.set("dep_graph", dep_graph)
+deps.set("backpressure", backpressure)
+deps.set("ab_engine", ab_engine)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Include routers — all route handlers live in routers/ modules
+# ═══════════════════════════════════════════════════════════════════════════
+
+from mcoi_runtime.app.routers.health import router as health_router
+from mcoi_runtime.app.routers.llm import router as llm_router
+from mcoi_runtime.app.routers.tenant import router as tenant_router
+from mcoi_runtime.app.routers.audit import router as audit_router
+from mcoi_runtime.app.routers.workflow import router as workflow_router
+from mcoi_runtime.app.routers.ops import router as ops_router
+
+app.include_router(health_router)
+app.include_router(llm_router)
+app.include_router(tenant_router)
+app.include_router(audit_router)
+app.include_router(workflow_router)
+app.include_router(ops_router)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Shutdown handler — stays in server.py (needs direct access to subsystems)
+# ═══════════════════════════════════════════════════════════════════════════
+
+shutdown_mgr.register("save_state", lambda: {"flushed": True, "audit_entries": audit_trail.entry_count}, priority=100)
 shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 shutdown_mgr.register("close_connections", lambda: {"closed": True}, priority=10)
 
@@ -2174,1008 +893,3 @@ def on_shutdown():
     """Execute graceful shutdown: flush state, close connections."""
     shutdown_mgr.execute()
 
-
-@app.get("/api/v1/shutdown/info")
-def shutdown_info():
-    """Graceful shutdown configuration."""
-    return shutdown_mgr.summary()
-
-
-# ═══ Phase 214D — Production Readiness Checks ═══
-
-@app.get("/api/v1/readiness")
-def production_readiness():
-    """Production readiness checks — verifies all subsystems are operational."""
-    checks = {
-        "llm_bridge": llm_bridge.invocation_count >= 0,
-        "store": store.ledger_count() >= 0,
-        "audit_trail": audit_trail.entry_count >= 0,
-        "event_bus": event_bus.event_count >= 0,
-        "metrics": metrics.counter("requests_total") >= 0,
-        "config": config_manager.version >= 1,
-        "tool_registry": tool_registry.tool_count >= 1,
-        "model_router": model_router.model_count >= 1,
-        "plugins": plugin_registry.count >= 1,
-        "health_agg": health_agg.component_count >= 1,
-        "schema_validator": schema_validator.count >= 1,
-        "guard_chain": guard_chain.guard_count >= 1,
-    }
-    all_ready = all(checks.values())
-    return {
-        "ready": all_ready,
-        "checks": checks,
-        "version": "1.3.0",
-        "subsystems": len(checks),
-        "governed": True,
-    }
-
-
-# ═══ Phase 215A — Agent Chain Endpoint ═══
-
-from mcoi_runtime.core.agent_chain import AgentChainEngine, ChainStep
-
-agent_chain = AgentChainEngine(
-    clock=_clock,
-    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
-)
-
-
-class ChainStepRequest(BaseModel):
-    step_id: str
-    name: str
-    prompt_template: str
-    on_failure: str = "halt"
-
-
-class ChainRequest(BaseModel):
-    steps: list[ChainStepRequest]
-    initial_input: str = ""
-    tenant_id: str = ""
-
-
-@app.post("/api/v1/chain/execute")
-def execute_chain(req: ChainRequest):
-    """Execute a multi-agent chain."""
-    metrics.inc("requests_governed")
-    steps = [ChainStep(step_id=s.step_id, name=s.name, prompt_template=s.prompt_template, on_failure=s.on_failure) for s in req.steps]
-    result = agent_chain.execute(steps, initial_input=req.initial_input)
-    event_bus.publish("chain.completed" if result.succeeded else "chain.failed",
-                      tenant_id=req.tenant_id, source="agent_chain",
-                      payload={"chain_id": result.chain_id, "succeeded": result.succeeded})
-    return {
-        "chain_id": result.chain_id, "succeeded": result.succeeded,
-        "steps": [{"id": s.step_id, "name": s.name, "succeeded": s.succeeded, "cost": s.cost} for s in result.steps],
-        "final_output": result.final_output, "total_cost": result.total_cost,
-        "error": result.error, "governed": True,
-    }
-
-
-@app.get("/api/v1/chain/history")
-def chain_history(limit: int = 50):
-    """Agent chain execution history."""
-    return {"chains": [
-        {"id": c.chain_id, "succeeded": c.succeeded, "steps": len(c.steps), "cost": c.total_cost}
-        for c in agent_chain.history(limit=limit)
-    ], "summary": agent_chain.summary()}
-
-
-# ═══ Phase 215B — Monitoring Endpoint ═══
-
-from mcoi_runtime.core.monitoring import MonitoringEngine
-
-monitor = MonitoringEngine(clock=_clock)
-
-
-@app.get("/api/v1/monitor")
-def monitoring_dashboard():
-    """Real-time monitoring vitals."""
-    vitals = monitor.compute_vitals(
-        active_tenants=tenant_budget_mgr.tenant_count(),
-        llm_calls=llm_bridge.invocation_count,
-        total_cost=llm_bridge.total_cost,
-        health_score=health_agg.compute().overall_score,
-        circuit_state=llm_circuit.state.value,
-        event_count=event_bus.event_count,
-    )
-    return {
-        "uptime_seconds": vitals.uptime_seconds,
-        "requests_per_minute": vitals.requests_per_minute,
-        "errors_per_minute": vitals.errors_per_minute,
-        "error_rate_pct": vitals.error_rate_pct,
-        "active_tenants": vitals.active_tenants,
-        "llm_calls_total": vitals.llm_calls_total,
-        "total_cost": vitals.total_cost,
-        "health_score": vitals.health_score,
-        "circuit_breaker": vitals.circuit_breaker_state,
-        "events": vitals.event_bus_events,
-        "captured_at": vitals.captured_at,
-    }
-
-
-# ═══ Phase 215C — Task Queue Endpoint ═══
-
-from mcoi_runtime.core.task_queue import TaskQueue
-
-task_queue = TaskQueue(clock=_clock)
-
-
-class QueueSubmitRequest(BaseModel):
-    task_id: str
-    payload: dict[str, Any] = {}
-    priority: int = 0
-    tenant_id: str = ""
-
-
-@app.post("/api/v1/queue/submit")
-def queue_submit(req: QueueSubmitRequest):
-    """Submit a task to the async queue."""
-    metrics.inc("requests_governed")
-    task = task_queue.submit(req.task_id, req.payload, priority=req.priority, tenant_id=req.tenant_id)
-    return {"task_id": task.task_id, "priority": task.priority, "queued_at": task.submitted_at}
-
-
-@app.post("/api/v1/queue/process")
-def queue_process():
-    """Process one task from the queue."""
-    metrics.inc("requests_governed")
-    result = task_queue.process_one(lambda payload: {"processed": True, **payload})
-    if result is None:
-        return {"processed": False, "reason": "queue empty"}
-    return {"processed": True, "task_id": result.task_id, "succeeded": result.succeeded, "output": result.output}
-
-
-@app.get("/api/v1/queue/status")
-def queue_status():
-    """Task queue status."""
-    return task_queue.summary()
-
-
-@app.get("/api/v1/queue/result/{task_id}")
-def queue_result(task_id: str):
-    """Get task result."""
-    result = task_queue.get_result(task_id)
-    if result is None:
-        raise HTTPException(404, detail="task result not found")
-    return {"task_id": result.task_id, "output": result.output, "succeeded": result.succeeded}
-
-
-# ═══ Phase 216A — Agent Memory Endpoints ═══
-
-from mcoi_runtime.core.agent_memory import AgentMemoryStore
-
-agent_memory = AgentMemoryStore(clock=_clock)
-observability.register_source("agent_memory", lambda: agent_memory.summary())
-
-
-class MemoryStoreRequest(BaseModel):
-    agent_id: str
-    tenant_id: str
-    category: str = "fact"
-    content: str = ""
-    keywords: list[str] | None = None
-    confidence: float = 1.0
-
-
-@app.post("/api/v1/memory/store")
-def store_memory(req: MemoryStoreRequest):
-    """Store a long-term memory for an agent."""
-    metrics.inc("requests_governed")
-    entry = agent_memory.store(
-        req.agent_id, req.tenant_id, req.category,
-        req.content, keywords=req.keywords, confidence=req.confidence,
-    )
-    return {"memory_id": entry.memory_id, "agent_id": entry.agent_id, "category": entry.category}
-
-
-class MemorySearchRequest(BaseModel):
-    agent_id: str
-    tenant_id: str
-    query: str
-    limit: int = 5
-
-
-@app.post("/api/v1/memory/search")
-def search_memory(req: MemorySearchRequest):
-    """Search agent memories by relevance."""
-    results = agent_memory.search(req.agent_id, req.tenant_id, req.query, limit=req.limit)
-    return {
-        "results": [
-            {"memory_id": r.memory.memory_id, "content": r.memory.content,
-             "category": r.memory.category, "relevance": r.relevance_score}
-            for r in results
-        ],
-        "count": len(results),
-    }
-
-
-@app.get("/api/v1/memory/summary")
-def memory_summary():
-    """Agent memory summary."""
-    return agent_memory.summary()
-
-
-# ═══ Phase 216B — A/B Testing Endpoint ═══
-
-from mcoi_runtime.core.ab_testing import ABTestEngine
-
-ab_engine = ABTestEngine(clock=_clock)
-
-
-class ABTestRequest(BaseModel):
-    prompt: str
-    model_ids: list[str] = []
-    criteria: str = "cost"
-
-
-@app.post("/api/v1/ab-test")
-def run_ab_test(req: ABTestRequest):
-    """Run an A/B test across models."""
-    metrics.inc("requests_governed")
-    model_fns = {}
-    for mid in (req.model_ids or ["default"]):
-        model_fns[mid] = lambda p, m=mid: llm_bridge.complete(p, model_name=m, budget_id="default")
-
-    result = ab_engine.run_experiment(req.prompt, model_fns, criteria=req.criteria)
-    return {
-        "experiment_id": result.experiment_id,
-        "winner": result.winner,
-        "criteria": result.criteria,
-        "variants": [
-            {"id": v.variant_id, "model": v.model_id, "cost": v.cost,
-             "tokens": v.tokens, "latency_ms": v.latency_ms, "succeeded": v.succeeded}
-            for v in result.variants
-        ],
-    }
-
-
-@app.get("/api/v1/ab-test/summary")
-def ab_test_summary():
-    """A/B testing summary with win rates."""
-    return ab_engine.summary()
-
-
-# ═══ Phase 216C — Isolation Verification Endpoint ═══
-
-from mcoi_runtime.core.isolation_verifier import IsolationVerifier, IsolationProbe
-
-isolation_verifier = IsolationVerifier(clock=_clock)
-
-# Register built-in probes
-isolation_verifier.register_probe(lambda a, b: IsolationProbe(
-    probe_name="budget_isolation", tenant_a=a, tenant_b=b,
-    isolated=tenant_budget_mgr.get_budget(a) != tenant_budget_mgr.get_budget(b) or
-             (tenant_budget_mgr.get_budget(a) is None and tenant_budget_mgr.get_budget(b) is None),
-    detail="budget objects are distinct per tenant",
-))
-isolation_verifier.register_probe(lambda a, b: IsolationProbe(
-    probe_name="ledger_isolation", tenant_a=a, tenant_b=b,
-    isolated=True,  # TenantLedger structurally isolates by tenant_id key
-    detail="ledger entries are keyed by tenant_id",
-))
-isolation_verifier.register_probe(lambda a, b: IsolationProbe(
-    probe_name="conversation_isolation", tenant_a=a, tenant_b=b,
-    isolated=True,  # ConversationStore filters by tenant_id
-    detail="conversations are filtered by tenant_id",
-))
-
-
-@app.post("/api/v1/isolation/verify")
-def verify_isolation(tenant_a: str = "probe-a", tenant_b: str = "probe-b"):
-    """Verify tenant isolation between two tenants."""
-    metrics.inc("requests_governed")
-    report = isolation_verifier.verify(tenant_a, tenant_b)
-    return {
-        "all_isolated": report.all_isolated,
-        "probes_run": report.probes_run,
-        "probes_passed": report.probes_passed,
-        "probes": [
-            {"name": p.probe_name, "isolated": p.isolated, "detail": p.detail}
-            for p in report.probes
-        ],
-        "verified_at": report.verified_at,
-    }
-
-
-@app.get("/api/v1/isolation/summary")
-def isolation_summary():
-    """Isolation verification summary."""
-    return isolation_verifier.summary()
-
-
-# ═══ Phase 217 — Usage Reports ═══
-
-from mcoi_runtime.core.usage_reporter import UsageReporter
-
-usage_reporter = UsageReporter(clock=_clock)
-usage_reporter.register_source("llm_calls", lambda tid: llm_bridge.invocation_count)
-usage_reporter.register_source("total_cost", lambda tid: llm_bridge.total_cost)
-
-
-@app.get("/api/v1/usage/{tenant_id}")
-def tenant_usage(tenant_id: str):
-    """Per-tenant usage report."""
-    report = usage_reporter.generate(tenant_id)
-    return {
-        "tenant_id": report.tenant_id,
-        "llm_calls": report.llm_calls,
-        "total_cost": report.total_cost,
-        "generated_at": report.generated_at,
-    }
-
-
-# ═══ Phase 218B — Dependency Graph Endpoint ═══
-
-from mcoi_runtime.core.dependency_graph import DependencyGraph, SubsystemNode
-
-dep_graph = DependencyGraph()
-dep_graph.add(SubsystemNode(name="store", version="1.0"))
-dep_graph.add(SubsystemNode(name="llm", version="1.0", dependencies=("store",)))
-dep_graph.add(SubsystemNode(name="agents", version="1.0", dependencies=("llm", "store")))
-dep_graph.add(SubsystemNode(name="workflows", version="1.0", dependencies=("agents", "llm")))
-dep_graph.add(SubsystemNode(name="conversations", version="1.0", dependencies=("llm",)))
-dep_graph.add(SubsystemNode(name="events", version="1.0", dependencies=("store",)))
-dep_graph.add(SubsystemNode(name="governance", version="1.0", dependencies=("store", "events")))
-dep_graph.add(SubsystemNode(name="api", version="1.0", dependencies=("governance", "workflows", "conversations")))
-
-
-@app.get("/api/v1/dependencies")
-def dependency_graph_endpoint():
-    """Subsystem dependency graph."""
-    return {
-        "startup_order": dep_graph.topological_sort(),
-        "summary": dep_graph.summary(),
-    }
-
-
-@app.get("/api/v1/dependencies/{name}/impact")
-def dependency_impact(name: str):
-    """Impact analysis if a subsystem fails."""
-    impacted = dep_graph.impact_of_failure(name)
-    return {"subsystem": name, "impacted": impacted, "count": len(impacted)}
-
-
-# ═══ Phase 218C — Backpressure Endpoint ═══
-
-from mcoi_runtime.core.backpressure import BackpressureEngine
-
-backpressure = BackpressureEngine()
-
-
-@app.get("/api/v1/backpressure")
-def backpressure_status():
-    """Current backpressure state."""
-    return backpressure.status()
-
-
-# ═══ Phase 220 — Cache + Feature Flags ═══
-
-from mcoi_runtime.core.cache import GovernedCache
-from mcoi_runtime.core.feature_flags import FeatureFlag, FeatureFlagEngine
-
-governed_cache = GovernedCache(max_size=500, default_ttl=60.0)
-feature_flags = FeatureFlagEngine()
-feature_flags.register(FeatureFlag(flag_id="streaming_v2", name="Streaming V2", enabled=True))
-feature_flags.register(FeatureFlag(flag_id="tool_augmentation", name="Tool Augmentation", enabled=True))
-feature_flags.register(FeatureFlag(flag_id="ab_testing", name="A/B Testing", enabled=True))
-feature_flags.register(FeatureFlag(flag_id="agent_memory", name="Agent Memory", enabled=True))
-
-
-@app.get("/api/v1/cache/stats")
-def cache_stats():
-    """Cache statistics."""
-    return governed_cache.summary()
-
-
-@app.get("/api/v1/flags")
-def list_feature_flags():
-    """List feature flags."""
-    return {
-        "flags": [
-            {"id": f.flag_id, "name": f.name, "enabled": f.enabled}
-            for f in feature_flags.list_flags()
-        ],
-        "summary": feature_flags.summary(),
-    }
-
-
-@app.get("/api/v1/flags/{flag_id}")
-def check_flag(flag_id: str, tenant_id: str = ""):
-    """Check if a feature flag is enabled."""
-    return {"flag_id": flag_id, "enabled": feature_flags.is_enabled(flag_id, tenant_id=tenant_id)}
-
-
-# ═══ Phase 221A — Semantic Search Endpoint ═══
-
-from mcoi_runtime.core.semantic_search import SemanticSearchEngine
-
-semantic_search = SemanticSearchEngine()
-
-
-class SemanticSearchRequest(BaseModel):
-    query: str
-    limit: int = 10
-
-
-@app.post("/api/v1/search")
-def semantic_search_endpoint(req: SemanticSearchRequest):
-    """Semantic search across indexed documents."""
-    results = semantic_search.search(req.query, limit=req.limit)
-    return {
-        "results": [{"doc_id": r.doc_id, "score": r.score, "matched": list(r.matched_terms)} for r in results],
-        "count": len(results),
-    }
-
-
-@app.get("/api/v1/search/stats")
-def search_stats():
-    """Semantic search index statistics."""
-    return semantic_search.summary()
-
-
-# ═══ Phase 221B — Tenant Analytics Endpoint ═══
-
-from mcoi_runtime.core.tenant_analytics import TenantAnalyticsEngine
-
-tenant_analytics = TenantAnalyticsEngine(clock=_clock)
-tenant_analytics.register_collector("llm_calls", lambda tid: llm_bridge.invocation_count)
-tenant_analytics.register_collector("total_cost", lambda tid: llm_bridge.total_cost)
-
-
-@app.get("/api/v1/analytics/{tenant_id}")
-def tenant_analytics_endpoint(tenant_id: str):
-    """Per-tenant analytics dashboard."""
-    analytics = tenant_analytics.compute(tenant_id)
-    return {
-        "tenant_id": analytics.tenant_id,
-        "llm_calls": analytics.llm_calls,
-        "total_cost": analytics.total_cost,
-        "conversations": analytics.conversations,
-        "workflows": analytics.workflows,
-        "generated_at": analytics.generated_at,
-    }
-
-
-# ═══ Phase 221C — Workflow Templates Endpoint ═══
-
-from mcoi_runtime.core.workflow_templates import WorkflowTemplate, WorkflowTemplateRegistry
-from mcoi_runtime.core.agent_chain import ChainStep as _ChainStep
-
-wf_templates = WorkflowTemplateRegistry()
-wf_templates.register(WorkflowTemplate(
-    template_id="summarize-refine", name="Summarize & Refine",
-    description="Summarize then refine for audience",
-    steps=(
-        _ChainStep(step_id="s1", name="Summarize", prompt_template="Summarize {{topic}}: {{input}}"),
-        _ChainStep(step_id="s2", name="Refine", prompt_template="Refine for {{audience}}: {{prev}}"),
-    ),
-    parameters=("topic", "audience"), category="analysis",
-))
-wf_templates.register(WorkflowTemplate(
-    template_id="research-draft", name="Research & Draft",
-    description="Research a topic then draft a report",
-    steps=(
-        _ChainStep(step_id="s1", name="Research", prompt_template="Research {{topic}}: {{input}}"),
-        _ChainStep(step_id="s2", name="Draft", prompt_template="Draft a {{format}} report: {{prev}}"),
-    ),
-    parameters=("topic", "format"), category="research",
-))
-
-
-@app.get("/api/v1/templates")
-def list_workflow_templates(category: str | None = None):
-    """List workflow templates."""
-    templates = wf_templates.list_templates(category=category)
-    return {
-        "templates": [
-            {"id": t.template_id, "name": t.name, "description": t.description,
-             "parameters": list(t.parameters), "category": t.category}
-            for t in templates
-        ],
-        "summary": wf_templates.summary(),
-    }
-
-
-class TemplateExecuteRequest(BaseModel):
-    template_id: str
-    params: dict[str, str]
-    initial_input: str = ""
-    tenant_id: str = ""
-
-
-@app.post("/api/v1/templates/execute")
-def execute_workflow_template(req: TemplateExecuteRequest):
-    """Instantiate and execute a workflow template."""
-    metrics.inc("requests_governed")
-    try:
-        steps = wf_templates.instantiate(req.template_id, req.params)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
-
-    result = agent_chain.execute(steps, initial_input=req.initial_input)
-    return {
-        "template_id": req.template_id,
-        "chain_id": result.chain_id,
-        "succeeded": result.succeeded,
-        "final_output": result.final_output,
-        "steps": len(result.steps),
-        "total_cost": result.total_cost,
-        "governed": True,
-    }
-
-
-# ── Phase 222A: Grafana dashboard endpoint ──────────────────────────────
-@app.get("/api/v1/grafana/dashboard")
-def get_grafana_dashboard():
-    """Export the default Grafana dashboard JSON."""
-    metrics.inc("requests_governed")
-    return grafana_dashboard.generate()
-
-
-# ── Phase 222B: Request tracing endpoints ────────────────────────────────
-@app.get("/api/v1/traces")
-def get_tracing_summary():
-    """Return tracing summary statistics."""
-    metrics.inc("requests_governed")
-    return {"tracing": request_tracer.summary(), "governed": True}
-
-
-@app.get("/api/v1/traces/{trace_id}")
-def get_trace(trace_id: str):
-    """Return spans for a specific trace."""
-    metrics.inc("requests_governed")
-    spans = request_tracer.get_trace(trace_id)
-    if not spans:
-        raise HTTPException(404, detail=f"Trace not found: {trace_id}")
-    return {
-        "trace_id": trace_id,
-        "spans": [s.to_dict() for s in spans],
-        "governed": True,
-    }
-
-
-@app.get("/api/v1/traces/slow")
-def get_slow_traces(threshold_ms: float = 1000.0):
-    """Return traces exceeding latency threshold."""
-    metrics.inc("requests_governed")
-    return {"slow_traces": request_tracer.slow_traces(threshold_ms), "governed": True}
-
-
-# ── Phase 222C: Agent orchestration endpoints ────────────────────────────
-@app.get("/api/v1/orchestration")
-def get_orchestration_summary():
-    """Return orchestration summary."""
-    metrics.inc("requests_governed")
-    return {"orchestration": agent_orchestrator.summary(), "governed": True}
-
-
-class OrchestrationPlanRequest(BaseModel):
-    initiator_id: str
-    goal: str
-
-
-@app.post("/api/v1/orchestration/plans")
-def create_orchestration_plan(req: OrchestrationPlanRequest):
-    """Create a new multi-agent orchestration plan."""
-    metrics.inc("requests_governed")
-    try:
-        plan = agent_orchestrator.create_plan(req.initiator_id, req.goal)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
-    return {"plan": plan.to_dict(), "governed": True}
-
-
-@app.get("/api/v1/orchestration/plans/{plan_id}")
-def get_orchestration_plan(plan_id: str):
-    """Get orchestration plan details."""
-    metrics.inc("requests_governed")
-    plan = agent_orchestrator.get_plan(plan_id)
-    if not plan:
-        raise HTTPException(404, detail=f"Plan not found: {plan_id}")
-    return {"plan": plan.to_dict(), "governed": True}
-
-
-class HandoffRequest(BaseModel):
-    from_agent: str
-    to_agent: str
-    required_capabilities: list[str] = []
-    payload: dict[str, Any] = {}
-
-
-@app.post("/api/v1/orchestration/handoff")
-def agent_handoff(req: HandoffRequest):
-    """Execute an agent-to-agent handoff."""
-    metrics.inc("requests_governed")
-    result = agent_orchestrator.handoff(
-        req.from_agent, req.to_agent,
-        required_capabilities=tuple(req.required_capabilities),
-        payload=req.payload,
-    )
-    return {
-        "from_agent": result.from_agent,
-        "to_agent": result.to_agent,
-        "success": result.success,
-        "error": result.error,
-        "governed": True,
-    }
-
-
-# ── Phase 223A: Rate limit headers endpoint ──────────────────────────────
-@app.get("/api/v1/rate-limits/{client_id}")
-def get_rate_limit_info(client_id: str):
-    """Return rate limit headers for a client."""
-    metrics.inc("requests_governed")
-    info = rate_limit_headers.peek(client_id)
-    return {"headers": info.to_headers(), "is_exhausted": info.is_exhausted, "governed": True}
-
-
-# ── Phase 223B: Webhook retry endpoint ───────────────────────────────────
-@app.get("/api/v1/webhooks/retry/summary")
-def get_webhook_retry_summary():
-    """Return webhook retry engine summary."""
-    metrics.inc("requests_governed")
-    return {"webhook_retry": webhook_retry.summary(), "governed": True}
-
-
-@app.get("/api/v1/webhooks/retry/dead-letters")
-def get_dead_letters():
-    """Return dead-lettered webhook deliveries."""
-    metrics.inc("requests_governed")
-    return {
-        "dead_letters": [d.to_dict() for d in webhook_retry.dead_letters],
-        "count": webhook_retry.dead_letter_count,
-        "governed": True,
-    }
-
-
-# ── Phase 223C: Config watcher endpoint ──────────────────────────────────
-@app.get("/api/v1/config/watcher")
-def get_config_watcher_status():
-    """Return config file watcher status."""
-    metrics.inc("requests_governed")
-    return {"config_watcher": config_watcher.summary(), "governed": True}
-
-
-# ── Phase 224A: Structured logging endpoints ─────────────────────────────
-@app.get("/api/v1/logs")
-def get_logs(count: int = 50, min_level: str = "INFO"):
-    """Return recent structured log entries."""
-    metrics.inc("requests_governed")
-    level = LogLevel[min_level.upper()] if min_level.upper() in LogLevel.__members__ else LogLevel.INFO
-    entries = platform_logger.recent(count=count, min_level=level)
-    return {
-        "logs": [e.to_dict() for e in entries],
-        "summary": platform_logger.summary(),
-        "governed": True,
-    }
-
-
-# ── Phase 224B: API key management endpoints ─────────────────────────────
-class CreateAPIKeyRequest(BaseModel):
-    tenant_id: str
-    scopes: list[str]
-    description: str = ""
-    ttl_seconds: float | None = None
-
-
-@app.post("/api/v1/api-keys")
-def create_api_key(req: CreateAPIKeyRequest):
-    """Create a new API key."""
-    metrics.inc("requests_governed")
-    raw_key, api_key = api_key_mgr.create_key(
-        req.tenant_id, frozenset(req.scopes),
-        description=req.description, ttl_seconds=req.ttl_seconds,
-    )
-    return {
-        "raw_key": raw_key,
-        "key": api_key.to_dict(),
-        "governed": True,
-    }
-
-
-@app.get("/api/v1/api-keys")
-def list_api_keys(tenant_id: str | None = None):
-    """List API keys."""
-    metrics.inc("requests_governed")
-    keys = api_key_mgr.list_keys(tenant_id=tenant_id)
-    return {"keys": [k.to_dict() for k in keys], "governed": True}
-
-
-@app.delete("/api/v1/api-keys/{key_id}")
-def revoke_api_key(key_id: str):
-    """Revoke an API key."""
-    metrics.inc("requests_governed")
-    if not api_key_mgr.revoke(key_id):
-        raise HTTPException(404, detail=f"Key not found: {key_id}")
-    return {"revoked": True, "key_id": key_id, "governed": True}
-
-
-# ── Phase 224C: Data export endpoints ────────────────────────────────────
-@app.get("/api/v1/export/sources")
-def list_export_sources():
-    """List available data export sources."""
-    metrics.inc("requests_governed")
-    return {"sources": data_export.list_sources(), "governed": True}
-
-
-class DataExportRequest(BaseModel):
-    source: str
-    format: str = "json"
-    fields: list[str] = []
-    filters: dict[str, Any] = {}
-    limit: int = 10_000
-
-
-@app.post("/api/v1/export")
-def export_data(req: DataExportRequest):
-    """Export data in CSV, JSON, or JSONL format."""
-    metrics.inc("requests_governed")
-    try:
-        fmt = ExportFormat(req.format)
-    except ValueError:
-        raise HTTPException(400, detail=f"Unsupported format: {req.format}")
-    try:
-        result = data_export.export(ExportRequest(
-            source=req.source, format=fmt,
-            fields=tuple(req.fields), filters=req.filters, limit=req.limit,
-        ))
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
-    return {
-        "export": result.to_dict(),
-        "content": result.content,
-        "governed": True,
-    }
-
-
-# ── Phase 225A: SLA monitoring endpoints ─────────────────────────────────
-@app.get("/api/v1/sla")
-def get_sla_summary():
-    """Return SLA monitoring summary."""
-    metrics.inc("requests_governed")
-    return {"sla": sla_monitor.summary(), "governed": True}
-
-
-@app.get("/api/v1/sla/violations")
-def get_sla_violations(sla_id: str | None = None):
-    """Return SLA violations."""
-    metrics.inc("requests_governed")
-    violations = sla_monitor.violations(sla_id)
-    return {
-        "violations": [{"sla_id": v.sla_id, "actual": v.actual_value,
-                         "threshold": v.threshold} for v in violations],
-        "count": len(violations),
-        "governed": True,
-    }
-
-
-# ── Phase 225B: Notification endpoints ───────────────────────────────────
-@app.get("/api/v1/notifications/summary")
-def get_notification_summary():
-    """Return notification dispatcher summary."""
-    metrics.inc("requests_governed")
-    return {"notifications": notification_dispatcher.summary(), "governed": True}
-
-
-# ── Phase 225C: Tenant isolation audit endpoints ─────────────────────────
-@app.get("/api/v1/tenant-isolation")
-def get_tenant_isolation_summary():
-    """Return tenant isolation audit summary."""
-    metrics.inc("requests_governed")
-    return {"tenant_isolation": tenant_isolation.summary(), "governed": True}
-
-
-@app.get("/api/v1/tenant-isolation/audits")
-def get_recent_isolation_audits(count: int = 10):
-    """Return recent tenant isolation audit results."""
-    metrics.inc("requests_governed")
-    audits = tenant_isolation.recent_audits(count)
-    return {
-        "audits": [a.to_dict() for a in audits],
-        "count": len(audits),
-        "governed": True,
-    }
-
-
-# ── Phase 226A: Input validation endpoint ────────────────────────────────
-@app.get("/api/v1/validation/schemas")
-def list_validation_schemas():
-    """List registered validation schemas."""
-    metrics.inc("requests_governed")
-    return {"validation": input_validator.summary(), "governed": True}
-
-
-# ── Phase 226B: Prometheus metrics endpoint ──────────────────────────────
-@app.get("/metrics")
-def prometheus_metrics():
-    """Export metrics in Prometheus text exposition format."""
-    from fastapi.responses import PlainTextResponse
-    prom_exporter.inc_counter("requests_governed_total")
-    return PlainTextResponse(content=prom_exporter.export(), media_type="text/plain")
-
-
-# ── Phase 226C: Health check v2 endpoint ─────────────────────────────────
-@app.get("/api/v1/health/v2")
-def health_check_v2():
-    """Run health checks with degraded state support."""
-    metrics.inc("requests_governed")
-    result = health_agg_v2.run()
-    return {"health": result.to_dict(), "governed": True}
-
-
-# ── Phase 227A: Idempotency endpoint ─────────────────────────────────────
-@app.get("/api/v1/idempotency/summary")
-def get_idempotency_summary():
-    """Return idempotency store summary."""
-    metrics.inc("requests_governed")
-    return {"idempotency": idempotency_store.summary(), "governed": True}
-
-
-# ── Phase 227B: Compression endpoint ─────────────────────────────────────
-@app.get("/api/v1/compression/summary")
-def get_compression_summary():
-    """Return response compression summary."""
-    metrics.inc("requests_governed")
-    return {"compression": response_compressor.summary(), "governed": True}
-
-
-# ── Phase 227C: Canary deployment endpoint ───────────────────────────────
-@app.get("/api/v1/canary")
-def get_canary_status():
-    """Return canary deployment status."""
-    metrics.inc("requests_governed")
-    return {"canary": canary_controller.summary(), "governed": True}
-
-
-# ── Phase 228A: Secret rotation endpoint ─────────────────────────────────
-@app.get("/api/v1/secrets/summary")
-def get_secrets_summary():
-    """Return secret rotation engine summary."""
-    metrics.inc("requests_governed")
-    return {"secrets": secret_rotation.summary(), "governed": True}
-
-
-# ── Phase 228B: Request deduplication endpoint ───────────────────────────
-@app.get("/api/v1/dedup/summary")
-def get_dedup_summary():
-    """Return request deduplication summary."""
-    metrics.inc("requests_governed")
-    return {"dedup": request_dedup.summary(), "governed": True}
-
-
-# ── Phase 228C: Rollback snapshot endpoints ──────────────────────────────
-@app.get("/api/v1/snapshots")
-def list_snapshots(limit: int = 10):
-    """List recent system snapshots."""
-    metrics.inc("requests_governed")
-    snaps = snapshot_mgr.list_snapshots(limit=limit)
-    return {
-        "snapshots": [s.to_dict() for s in snaps],
-        "summary": snapshot_mgr.summary(),
-        "governed": True,
-    }
-
-
-class CreateSnapshotRequest(BaseModel):
-    snapshot_id: str
-    name: str
-    state: dict[str, Any] = {}
-
-
-@app.post("/api/v1/snapshots")
-def create_snapshot(req: CreateSnapshotRequest):
-    """Create a system state snapshot."""
-    metrics.inc("requests_governed")
-    snap = snapshot_mgr.create_snapshot(req.snapshot_id, req.name, req.state)
-    return {"snapshot": snap.to_dict(), "governed": True}
-
-
-# ── Phase 229A: OpenTelemetry endpoint ───────────────────────────────────
-@app.get("/api/v1/traces/summary")
-def get_traces_summary():
-    """Return OpenTelemetry trace exporter summary."""
-    metrics.inc("requests_governed")
-    return {"traces": otel_exporter.summary(), "governed": True}
-
-
-# ── Phase 229B: Circuit breaker dashboard endpoint ───────────────────────
-@app.get("/api/v1/circuits/dashboard")
-def get_circuit_dashboard():
-    """Return circuit breaker dashboard aggregate."""
-    metrics.inc("requests_governed")
-    return {"circuits": circuit_dashboard.summary(), "governed": True}
-
-
-# ── Phase 229C: Tenant quota endpoint ────────────────────────────────────
-@app.get("/api/v1/quotas/summary")
-def get_quotas_summary():
-    """Return tenant quota enforcement summary."""
-    metrics.inc("requests_governed")
-    return {"quotas": tenant_quota.summary(), "governed": True}
-
-
-@app.get("/api/v1/quotas/{tenant_id}")
-def get_tenant_quota_usage(tenant_id: str):
-    """Return quota usage for a specific tenant."""
-    metrics.inc("requests_governed")
-    return {"tenant_id": tenant_id, "usage": tenant_quota.get_usage(tenant_id), "governed": True}
-
-
-# ── Phase 230A: Deploy readiness endpoint ────────────────────────────────
-@app.get("/api/v1/deploy/readiness")
-def get_deploy_readiness():
-    """Run deployment readiness checks."""
-    metrics.inc("requests_governed")
-    report = deploy_checker.run_all()
-    return {"readiness": report.to_dict(), "governed": True}
-
-
-# ── Phase 230B: API migration endpoint ───────────────────────────────────
-@app.get("/api/v1/migrations/summary")
-def get_migration_summary():
-    """Return API version migration summary."""
-    metrics.inc("requests_governed")
-    return {
-        "migrations": api_migration.summary(),
-        "versions": [v.to_dict() for v in api_migration.list_versions()],
-        "governed": True,
-    }
-
-
-# ── Phase 230C: Retry policy endpoint ────────────────────────────────────
-@app.get("/api/v1/retries/summary")
-def get_retries_summary():
-    """Return governed retry policy summary."""
-    metrics.inc("requests_governed")
-    return {"retries": retry_engine.summary(), "governed": True}
-
-
-# ── Phase 231A: Event sourcing endpoint ──────────────────────────────────
-@app.get("/api/v1/events/store/summary")
-def get_event_store_summary():
-    """Return event sourcing store summary."""
-    metrics.inc("requests_governed")
-    return {"event_store": event_store.summary(), "governed": True}
-
-
-# ── Phase 231B: Region routing endpoint ──────────────────────────────────
-@app.get("/api/v1/regions")
-def get_regions():
-    """Return multi-region routing status."""
-    metrics.inc("requests_governed")
-    return {"regions": region_router.summary(), "governed": True}
-
-
-# ── Phase 231C: Config drift endpoint ────────────────────────────────────
-@app.get("/api/v1/config/drift")
-def get_config_drift():
-    """Return config drift detection summary."""
-    metrics.inc("requests_governed")
-    return {"drift": config_drift.summary(), "governed": True}
-
-
-# ── Phase 232A: Request context endpoint ─────────────────────────────────
-@app.get("/api/v1/context/summary")
-def get_context_summary():
-    """Return request context factory summary."""
-    metrics.inc("requests_governed")
-    return {"context": request_ctx_factory.summary(), "governed": True}
-
-
-# ── Phase 232B: Tenant partition endpoint ────────────────────────────────
-@app.get("/api/v1/partitions")
-def get_partitions():
-    """Return tenant data partition summary."""
-    metrics.inc("requests_governed")
-    return {
-        "partitions": tenant_partitions.summary(),
-        "tenants": [p.to_dict() for p in tenant_partitions.list_partitions()],
-        "governed": True,
-    }
-
-
-# ── Phase 232C: Health v3 endpoint ───────────────────────────────────────
-@app.get("/api/v1/health/v3")
-def get_health_v3():
-    """Weighted health check with recovery tracking."""
-    metrics.inc("requests_governed")
-    return health_v3.check_all()
