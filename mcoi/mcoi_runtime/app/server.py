@@ -51,8 +51,16 @@ def _clock() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 # Persistence store (InMemoryStore for dev, PostgresStore for production)
+_db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
+if _db_backend == "memory" and os.environ.get("MULLU_ENV") not in ("local_dev", "test", ""):
+    import warnings
+    warnings.warn(
+        "MULLU_DB_BACKEND=memory in non-dev environment. "
+        "All state will be lost on restart. Set MULLU_DB_BACKEND=postgresql for production.",
+        stacklevel=1,
+    )
 store = create_store(
-    backend=os.environ.get("MULLU_DB_BACKEND", "memory"),
+    backend=_db_backend,
     connection_string=os.environ.get("MULLU_DB_URL", ""),
 )
 
@@ -543,7 +551,8 @@ structured_output.register(OutputSchema(
 
 # Phase 212A: State persistence (file-based)
 from mcoi_runtime.persistence.state_persistence import StatePersistence
-state_persistence = StatePersistence(clock=_clock)
+_state_dir = os.environ.get("MULLU_STATE_DIR", "")
+state_persistence = StatePersistence(clock=_clock, base_dir=_state_dir)
 
 # Phase 212A: LLM circuit breaker
 from mcoi_runtime.core.retry_engine import CircuitBreaker
@@ -715,10 +724,19 @@ app.add_middleware(
 # ── CORS middleware — allow cross-origin requests from web frontends ──────
 from starlette.middleware.cors import CORSMiddleware
 
-_cors_origins = os.environ.get("MULLU_CORS_ORIGINS", "*").split(",")
+_cors_default = "http://localhost:3000,http://localhost:8080" if ENV in ("local_dev", "test") else ""
+_cors_origins = os.environ.get("MULLU_CORS_ORIGINS", _cors_default).split(",")
+_cors_origins = [o.strip() for o in _cors_origins if o.strip()]
+if not _cors_origins and ENV not in ("local_dev", "test"):
+    import warnings
+    warnings.warn(
+        "MULLU_CORS_ORIGINS is empty in non-dev environment. "
+        "Set explicit origins (e.g. https://app.mullu.io) for production CORS.",
+        stacklevel=1,
+    )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_cors_origins,
+    allow_origins=_cors_origins or ["*"],  # fallback to * only if truly empty
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -883,7 +901,67 @@ app.include_router(ops_router)
 # Shutdown handler — stays in server.py (needs direct access to subsystems)
 # ═══════════════════════════════════════════════════════════════════════════
 
-shutdown_mgr.register("save_state", lambda: {"flushed": True, "audit_entries": audit_trail.entry_count}, priority=100)
+def _flush_state_on_shutdown():
+    """Flush critical in-memory state to file-based snapshots before exit."""
+    flushed = {}
+    try:
+        budget_data = {}
+        if hasattr(tenant_budget_mgr, '_budgets'):
+            for tid, b in tenant_budget_mgr._budgets.items():
+                budget_data[tid] = {
+                    "spent": b.spent, "calls_made": b.calls_made,
+                    "max_cost": b.max_cost, "max_calls": b.max_calls,
+                }
+        state_persistence.save("budgets", budget_data)
+        flushed["budgets"] = len(budget_data)
+
+        audit_summary_data = {
+            "entry_count": audit_trail.entry_count,
+            "last_hash": audit_trail._last_hash if hasattr(audit_trail, '_last_hash') else "",
+            "sequence": audit_trail._sequence if hasattr(audit_trail, '_sequence') else 0,
+        }
+        state_persistence.save("audit_summary", audit_summary_data)
+        flushed["audit_sequence"] = audit_summary_data["sequence"]
+
+        cost_data = {"summary": cost_analytics.summary() if hasattr(cost_analytics, 'summary') else {}}
+        state_persistence.save("cost_analytics", cost_data)
+        flushed["cost_analytics"] = True
+
+        platform_logger.log(LogLevel.INFO, f"Shutdown state flush: {flushed}")
+    except Exception as e:
+        platform_logger.log(LogLevel.ERROR, f"Shutdown flush error: {e}")
+    return {"flushed": True, **flushed}
+
+
+def _restore_state_on_startup():
+    """Restore state from file-based snapshots on startup."""
+    restored = {}
+    try:
+        budget_snap = state_persistence.load("budgets")
+        if budget_snap and budget_snap.data:
+            for tid, bdata in budget_snap.data.items():
+                tenant_budget_mgr.ensure_budget(tid)
+                if bdata.get("spent", 0) > 0:
+                    try:
+                        tenant_budget_mgr.record_spend(tid, cost=bdata["spent"])
+                    except ValueError:
+                        pass
+            restored["budgets"] = len(budget_snap.data)
+
+        audit_snap = state_persistence.load("audit_summary")
+        if audit_snap and audit_snap.data:
+            restored["audit_sequence"] = audit_snap.data.get("sequence", 0)
+
+        if restored:
+            platform_logger.log(LogLevel.INFO, f"Startup state restore: {restored}")
+    except Exception as e:
+        platform_logger.log(LogLevel.ERROR, f"Startup restore error: {e}")
+    return restored
+
+
+_startup_restored = _restore_state_on_startup()
+
+shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
 shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 shutdown_mgr.register("close_connections", lambda: {"closed": True}, priority=10)
 
