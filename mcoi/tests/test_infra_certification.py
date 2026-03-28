@@ -29,6 +29,28 @@ from mcoi_runtime.persistence.migrations import create_platform_migration_engine
 CLOCK = lambda: "2026-03-27T12:00:00Z"
 
 
+class _PgAdapterImpl:
+    """Adapts psycopg2 connection to MigrationEngine's DBConnection protocol."""
+    def __init__(self, conn):
+        self._conn = conn
+        self._cur = None
+    def execute(self, sql, params=()):
+        self._cur = self._conn.cursor()
+        self._cur.execute(sql, params)
+        return self._cur
+    def executescript(self, sql):
+        self._cur = self._conn.cursor()
+        self._cur.execute(sql)
+    def commit(self):
+        self._conn.commit()
+    def fetchone(self):
+        return self._cur.fetchone() if self._cur else None
+
+
+def _make_pg_adapter(conn):
+    return _PgAdapterImpl(conn)
+
+
 def _pg_available() -> bool:
     """Check if PostgreSQL is reachable."""
     try:
@@ -82,32 +104,17 @@ class TestPostgreSQLMigrations:
         conn.close()
 
     def test_migrations_apply_on_postgresql(self, pg_conn):
-        engine = create_platform_migration_engine(CLOCK)
+        engine = create_platform_migration_engine(CLOCK, dialect="postgresql")
 
         # psycopg2 cursor adapts to the Migration engine's DBConnection protocol
-        class PgAdapter:
-            def __init__(self, conn):
-                self._conn = conn
-            def execute(self, sql, params=()):
-                cur = self._conn.cursor()
-                cur.execute(sql, params)
-                return cur
-            def executescript(self, sql):
-                cur = self._conn.cursor()
-                cur.execute(sql)
-            def commit(self):
-                self._conn.commit()
-            def fetchone(self):
-                return self._conn.cursor().fetchone()
-
-        adapter = PgAdapter(pg_conn)
+        adapter = _make_pg_adapter(pg_conn)
         results = engine.apply_all(adapter)
         assert len(results) == 4
         assert all(r.success for r in results)
 
     def test_migrations_idempotent_on_postgresql(self, pg_conn):
-        adapter = _PgAdapter(pg_conn)
-        engine = create_platform_migration_engine(CLOCK)
+        engine = create_platform_migration_engine(CLOCK, dialect="postgresql")
+        adapter = _make_pg_adapter(pg_conn)
         engine.apply_all(adapter)
         results = engine.apply_all(adapter)  # Second run
         assert len(results) == 0
