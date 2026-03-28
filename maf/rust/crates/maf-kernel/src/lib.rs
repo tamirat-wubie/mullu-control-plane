@@ -387,82 +387,85 @@ pub struct ProofCapsule {
     pub lineage_depth: u32,
 }
 
+/// Parameters for certifying a state transition.
+#[derive(Debug, Clone)]
+pub struct CertifyParams<'a> {
+    pub entity_id: &'a str,
+    pub from_state: &'a str,
+    pub to_state: &'a str,
+    pub action: &'a str,
+    pub before_state_hash: &'a str,
+    pub after_state_hash: &'a str,
+    pub guards: &'a [GuardVerdict],
+    pub actor_id: &'a str,
+    pub reason: &'a str,
+    pub causal_parent: &'a str,
+    pub timestamp: &'a str,
+}
+
 impl StateMachineSpec {
     /// Certify a transition: check legality, produce a receipt.
     ///
     /// This is the core substrate certification function. Every governed
     /// transition should go through this rather than raw `is_legal()`.
-    pub fn certify_transition(
-        &self,
-        entity_id: &str,
-        from_state: &str,
-        to_state: &str,
-        action: &str,
-        before_state_hash: &str,
-        after_state_hash: &str,
-        guards: &[GuardVerdict],
-        actor_id: &str,
-        reason: &str,
-        causal_parent: &str,
-        timestamp: &str,
-    ) -> Result<ProofCapsule, TransitionVerdict> {
+    pub fn certify_transition(&self, p: &CertifyParams<'_>) -> Result<ProofCapsule, TransitionVerdict> {
         // Check legality
-        let verdict = self.is_legal(from_state, to_state, action);
+        let verdict = self.is_legal(p.from_state, p.to_state, p.action);
         if verdict != TransitionVerdict::Allowed {
             return Err(verdict);
         }
 
         // Check all guards passed
-        if guards.iter().any(|g| !g.passed) {
+        if p.guards.iter().any(|g| !g.passed) {
             return Err(TransitionVerdict::DeniedGuardFailed);
         }
 
         // Build receipt
         let receipt_content = format!(
             "{}:{}:{}:{}:{}:{}:{}",
-            entity_id,
-            from_state,
-            to_state,
-            action,
-            before_state_hash,
-            after_state_hash,
-            causal_parent,
+            p.entity_id,
+            p.from_state,
+            p.to_state,
+            p.action,
+            p.before_state_hash,
+            p.after_state_hash,
+            p.causal_parent,
         );
         let receipt_hash = sha256_hex(&receipt_content);
         let receipt_id = format!("rcpt-{}", &receipt_hash[..16]);
         let replay_token = format!(
             "replay-{}",
-            &sha256_hex(&format!("{}:{}", receipt_content, timestamp))[..16]
+            &sha256_hex(&format!("{}:{}", receipt_content, p.timestamp))[..16]
         );
 
         let receipt = TransitionReceipt {
             receipt_id: receipt_id.clone(),
             machine_id: self.machine_id.clone(),
-            entity_id: entity_id.to_string(),
-            from_state: from_state.to_string(),
-            to_state: to_state.to_string(),
-            action: action.to_string(),
-            before_state_hash: before_state_hash.to_string(),
-            after_state_hash: after_state_hash.to_string(),
-            guard_verdicts: guards.to_vec(),
+            entity_id: p.entity_id.to_string(),
+            from_state: p.from_state.to_string(),
+            to_state: p.to_state.to_string(),
+            action: p.action.to_string(),
+            before_state_hash: p.before_state_hash.to_string(),
+            after_state_hash: p.after_state_hash.to_string(),
+            guard_verdicts: p.guards.to_vec(),
             verdict,
             replay_token,
-            causal_parent: causal_parent.to_string(),
-            issued_at: timestamp.to_string(),
+            causal_parent: p.causal_parent.to_string(),
+            issued_at: p.timestamp.to_string(),
             receipt_hash: receipt_hash.clone(),
         };
 
         let audit_record = TransitionAuditRecord {
             audit_id: format!("audit-{}", &receipt_hash[..12]),
             machine_id: self.machine_id.clone(),
-            entity_id: entity_id.to_string(),
-            from_state: from_state.to_string(),
-            to_state: to_state.to_string(),
-            action: action.to_string(),
+            entity_id: p.entity_id.to_string(),
+            from_state: p.from_state.to_string(),
+            to_state: p.to_state.to_string(),
+            action: p.action.to_string(),
             verdict,
-            actor_id: actor_id.to_string(),
-            reason: reason.to_string(),
-            transitioned_at: timestamp.to_string(),
+            actor_id: p.actor_id.to_string(),
+            reason: p.reason.to_string(),
+            transitioned_at: p.timestamp.to_string(),
             metadata: std::collections::HashMap::new(),
         };
 
@@ -2305,19 +2308,19 @@ mod tests {
     #[test]
     fn certify_legal_transition_produces_receipt() {
         let m = example_machine();
-        let result = m.certify_transition(
-            "entity-1",
-            "idle",
-            "running",
-            "start",
-            "hash-before",
-            "hash-after",
-            &[],
-            "actor-1",
-            "starting work",
-            "genesis",
-            "2026-03-27T12:00:00Z",
-        );
+        let result = m.certify_transition(&CertifyParams {
+            entity_id: "entity-1",
+            from_state: "idle",
+            to_state: "running",
+            action: "start",
+            before_state_hash: "hash-before",
+            after_state_hash: "hash-after",
+            guards: &[],
+            actor_id: "actor-1",
+            reason: "starting work",
+            causal_parent: "genesis",
+            timestamp: "2026-03-27T12:00:00Z",
+        });
         assert!(result.is_ok());
         let capsule = result.unwrap();
         assert_eq!(capsule.receipt.from_state, "idle");
@@ -2331,19 +2334,19 @@ mod tests {
     #[test]
     fn certify_illegal_transition_returns_error() {
         let m = example_machine();
-        let result = m.certify_transition(
-            "entity-1",
-            "idle",
-            "done",
-            "skip",
-            "h1",
-            "h2",
-            &[],
-            "actor",
-            "trying to skip",
-            "genesis",
-            "2026-03-27T12:00:00Z",
-        );
+        let result = m.certify_transition(&CertifyParams {
+            entity_id: "entity-1",
+            from_state: "idle",
+            to_state: "done",
+            action: "skip",
+            before_state_hash: "h1",
+            after_state_hash: "h2",
+            guards: &[],
+            actor_id: "actor",
+            reason: "trying to skip",
+            causal_parent: "genesis",
+            timestamp: "2026-03-27T12:00:00Z",
+        });
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedIllegalEdge);
     }
@@ -2351,19 +2354,19 @@ mod tests {
     #[test]
     fn certify_terminal_state_transition_returns_error() {
         let m = example_machine();
-        let result = m.certify_transition(
-            "entity-1",
-            "done",
-            "idle",
-            "reset",
-            "h1",
-            "h2",
-            &[],
-            "actor",
-            "reset from done",
-            "genesis",
-            "2026-03-27T12:00:00Z",
-        );
+        let result = m.certify_transition(&CertifyParams {
+            entity_id: "entity-1",
+            from_state: "done",
+            to_state: "idle",
+            action: "reset",
+            before_state_hash: "h1",
+            after_state_hash: "h2",
+            guards: &[],
+            actor_id: "actor",
+            reason: "reset from done",
+            causal_parent: "genesis",
+            timestamp: "2026-03-27T12:00:00Z",
+        });
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedTerminalState);
     }
@@ -2383,19 +2386,19 @@ mod tests {
                 reason: "unauthorized".into(),
             },
         ];
-        let result = m.certify_transition(
-            "entity-1",
-            "idle",
-            "running",
-            "start",
-            "h1",
-            "h2",
-            &guards,
-            "actor",
-            "start with guards",
-            "genesis",
-            "2026-03-27T12:00:00Z",
-        );
+        let result = m.certify_transition(&CertifyParams {
+            entity_id: "entity-1",
+            from_state: "idle",
+            to_state: "running",
+            action: "start",
+            before_state_hash: "h1",
+            after_state_hash: "h2",
+            guards: &guards,
+            actor_id: "actor",
+            reason: "start with guards",
+            causal_parent: "genesis",
+            timestamp: "2026-03-27T12:00:00Z",
+        });
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedGuardFailed);
     }
@@ -2404,34 +2407,34 @@ mod tests {
     fn receipt_hash_is_deterministic() {
         let m = example_machine();
         let r1 = m
-            .certify_transition(
-                "e1",
-                "idle",
-                "running",
-                "start",
-                "h1",
-                "h2",
-                &[],
-                "a",
-                "r",
-                "g",
-                "t",
-            )
+            .certify_transition(&CertifyParams {
+                entity_id: "e1",
+                from_state: "idle",
+                to_state: "running",
+                action: "start",
+                before_state_hash: "h1",
+                after_state_hash: "h2",
+                guards: &[],
+                actor_id: "a",
+                reason: "r",
+                causal_parent: "g",
+                timestamp: "t",
+            })
             .unwrap();
         let r2 = m
-            .certify_transition(
-                "e1",
-                "idle",
-                "running",
-                "start",
-                "h1",
-                "h2",
-                &[],
-                "a",
-                "r",
-                "g",
-                "t",
-            )
+            .certify_transition(&CertifyParams {
+                entity_id: "e1",
+                from_state: "idle",
+                to_state: "running",
+                action: "start",
+                before_state_hash: "h1",
+                after_state_hash: "h2",
+                guards: &[],
+                actor_id: "a",
+                reason: "r",
+                causal_parent: "g",
+                timestamp: "t",
+            })
             .unwrap();
         assert_eq!(r1.receipt.receipt_hash, r2.receipt.receipt_hash);
     }
@@ -2440,23 +2443,23 @@ mod tests {
     fn receipt_serialization_round_trip() {
         let m = example_machine();
         let capsule = m
-            .certify_transition(
-                "e1",
-                "idle",
-                "running",
-                "start",
-                "h1",
-                "h2",
-                &[GuardVerdict {
+            .certify_transition(&CertifyParams {
+                entity_id: "e1",
+                from_state: "idle",
+                to_state: "running",
+                action: "start",
+                before_state_hash: "h1",
+                after_state_hash: "h2",
+                guards: &[GuardVerdict {
                     guard_id: "g1".into(),
                     passed: true,
                     reason: "ok".into(),
                 }],
-                "actor",
-                "reason",
-                "parent",
-                "2026-03-27T12:00:00Z",
-            )
+                actor_id: "actor",
+                reason: "reason",
+                causal_parent: "parent",
+                timestamp: "2026-03-27T12:00:00Z",
+            })
             .unwrap();
         let json = serde_json::to_string(&capsule).unwrap();
         let restored: ProofCapsule = serde_json::from_str(&json).unwrap();
