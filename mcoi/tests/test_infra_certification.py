@@ -39,8 +39,12 @@ class _PgAdapterImpl:
         self._cur.execute(sql, params)
         return self._cur
     def executescript(self, sql):
+        """Execute multi-statement SQL — psycopg2 needs each statement separately."""
         self._cur = self._conn.cursor()
-        self._cur.execute(sql)
+        for stmt in sql.split(";"):
+            stmt = stmt.strip()
+            if stmt:
+                self._cur.execute(stmt)
     def commit(self):
         self._conn.commit()
     def fetchone(self):
