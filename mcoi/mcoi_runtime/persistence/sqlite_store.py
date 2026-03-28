@@ -68,6 +68,14 @@ class SQLiteStore:
             return self._conn.execute("SELECT COUNT(*) FROM ledger WHERE tenant_id = ?", (tenant_id,)).fetchone()[0]
         return self._conn.execute("SELECT COUNT(*) FROM ledger").fetchone()[0]
 
+    def save_session(self, session_id: str, actor_id: str, tenant_id: str) -> None:
+        from datetime import datetime, timezone
+        self._conn.execute(
+            "INSERT OR REPLACE INTO sessions (session_id, actor_id, tenant_id, active, created_at) VALUES (?, ?, ?, 1, ?)",
+            (session_id, actor_id, tenant_id, datetime.now(timezone.utc).isoformat()),
+        )
+        self._conn.commit()
+
     def save_request(self, request_id: str, tenant_id: str, method: str, path: str, status_code: int, governed: bool) -> None:
         from datetime import datetime, timezone
         self._conn.execute(
