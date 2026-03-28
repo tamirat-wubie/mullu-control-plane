@@ -433,6 +433,7 @@ class TestConcurrentSQLiteStore:
 
             store.close()
 
+    @pytest.mark.skipif(os.name == "nt", reason="SQLite file locking on Windows prevents concurrent connections in tmpdir cleanup")
     def test_concurrent_separate_connections(self):
         """Multiple threads with separate DB connections write safely."""
         with tempfile.TemporaryDirectory() as d:
