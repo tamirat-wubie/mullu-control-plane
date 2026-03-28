@@ -484,6 +484,9 @@ def create_store(backend: str = "memory", connection_string: str = "", **kwargs:
     """
     if backend == "memory":
         return InMemoryStore()
+    if backend == "sqlite":
+        from mcoi_runtime.persistence.sqlite_store import SQLiteStore
+        return SQLiteStore(db_path=connection_string or "mullu.db")
     if backend == "postgresql":
         return PostgresStore(connection_string, **kwargs)
     raise ValueError(f"unsupported persistence backend: {backend}")
