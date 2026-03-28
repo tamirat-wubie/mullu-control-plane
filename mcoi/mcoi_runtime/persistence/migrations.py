@@ -100,8 +100,9 @@ class MigrationEngine:
                 sql = (migration.sql_pg if self._dialect == "postgresql" and migration.sql_pg else migration.sql)
                 conn.executescript(sql)
                 checksum = hashlib.sha256(migration.sql.encode()).hexdigest()[:16]
+                placeholder = "%s" if self._dialect == "postgresql" else "?"
                 conn.execute(
-                    "INSERT INTO schema_version (version, name, applied_at, checksum) VALUES (?, ?, ?, ?)",
+                    f"INSERT INTO schema_version (version, name, applied_at, checksum) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})",
                     (migration.version, migration.name, self._clock(), checksum),
                 )
                 conn.commit()
