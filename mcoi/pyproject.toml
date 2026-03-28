@@ -21,6 +21,8 @@ filterwarnings = ["ignore::pytest.PytestCollectionWarning"]
 markers = [
     "soak: long-running soak/longevity tests",
     "live_provider: requires real API keys (ANTHROPIC_API_KEY or OPENAI_API_KEY)",
+    "infra_pg: requires real PostgreSQL (docker run postgres:16-alpine)",
+    "infra_smtp: requires MailHog SMTP (docker run mailhog/mailhog)",
 ]
 asyncio_mode = "auto"
 
