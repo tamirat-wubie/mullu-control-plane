@@ -75,7 +75,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: mcoi
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev]" anthropic openai
 
       - name: Run Anthropic certification
         if: env.ANTHROPIC_API_KEY != ''
