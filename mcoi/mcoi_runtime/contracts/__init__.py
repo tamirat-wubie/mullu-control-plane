@@ -146,6 +146,28 @@ from .dashboard import (
     ReliabilityPillarSummary,
     WorldStateSummary,
 )
+from .state_machine import (
+    TransitionVerdict,
+    TransitionRule,
+    StateMachineSpec,
+    TransitionAuditRecord,
+    JournalEntry,
+    JournalEntryKind,
+    CheckpointScope,
+    SubsystemSnapshot,
+    CompositeCheckpoint,
+    RestoreVerdict,
+    RestoreVerification,
+    JournalValidationVerdict,
+    JournalValidationResult,
+)
+from .proof import (
+    GuardVerdict,
+    TransitionReceipt,
+    CausalLineage,
+    ProofCapsule,
+    certify_transition,
+)
 from .meta_reasoning import (
     CapabilityConfidence,
     ConfidenceEnvelope,

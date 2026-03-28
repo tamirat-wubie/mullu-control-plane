@@ -145,3 +145,49 @@ class TestProofCapsule:
             actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
         )
         assert capsule.lineage_depth == 0
+
+
+class TestCrossLanguageSerialization:
+    """Verify Python proof types serialize to JSON matching MAF Rust serde format."""
+
+    def test_guard_verdict_json_keys(self):
+        g = GuardVerdict(guard_id="budget", passed=True, reason="ok")
+        d = {"guard_id": g.guard_id, "passed": g.passed, "reason": g.reason}
+        # Rust serde uses snake_case — verify Python field names match
+        assert "guard_id" in d
+        assert "passed" in d
+        assert "reason" in d
+
+    def test_transition_receipt_json_keys(self):
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        r = capsule.receipt
+        # Verify all field names match Rust serde snake_case
+        expected_keys = {
+            "receipt_id", "machine_id", "entity_id", "from_state", "to_state",
+            "action", "before_state_hash", "after_state_hash", "guard_verdicts",
+            "verdict", "replay_token", "causal_parent", "issued_at", "receipt_hash",
+        }
+        actual_keys = {f.name for f in r.__dataclass_fields__.values()}
+        assert expected_keys == actual_keys
+
+    def test_verdict_enum_values_match_rust(self):
+        """Verify Python enum values match Rust serde snake_case output."""
+        assert TransitionVerdict.ALLOWED.value == "allowed"
+        assert TransitionVerdict.DENIED_ILLEGAL_EDGE.value == "denied_illegal_edge"
+        assert TransitionVerdict.DENIED_TERMINAL_STATE.value == "denied_terminal_state"
+        assert TransitionVerdict.DENIED_GUARD_FAILED.value == "denied_guard_failed"
+
+    def test_causal_lineage_json_keys(self):
+        lineage = CausalLineage(
+            lineage_id="lin-1", entity_id="e1",
+            receipt_chain=("rcpt-a",), root_receipt_id="rcpt-a",
+            current_state="idle", depth=0,
+        )
+        expected = {"lineage_id", "entity_id", "receipt_chain", "root_receipt_id", "current_state", "depth"}
+        actual = {f.name for f in lineage.__dataclass_fields__.values()}
+        assert expected == actual

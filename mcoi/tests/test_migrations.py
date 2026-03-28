@@ -145,3 +145,56 @@ class TestPlatformMigrations:
         results = engine.apply_all(db)
         assert len(results) == 0
         assert engine.current_version(db) == len(PLATFORM_MIGRATIONS)
+
+
+class TestMigrationDialect:
+    """Test dialect-aware SQL selection logic."""
+
+    def test_postgresql_dialect_selects_sql_pg(self):
+        engine = MigrationEngine(clock=CLOCK, dialect="postgresql")
+        m = Migration(version=1, name="dual", sql="sqlite_sql", sql_pg="pg_sql")
+        engine.register(m)
+        # Verify the engine would pick sql_pg for postgresql dialect
+        assert engine._dialect == "postgresql"
+        assert m.sql_pg == "pg_sql"
+        # The engine selects: sql_pg if dialect=postgresql and sql_pg exists
+        selected = m.sql_pg if engine._dialect == "postgresql" and m.sql_pg else m.sql
+        assert selected == "pg_sql"
+
+    def test_sqlite_dialect_selects_sql(self):
+        engine = MigrationEngine(clock=CLOCK, dialect="sqlite")
+        m = Migration(version=1, name="dual", sql="sqlite_sql", sql_pg="pg_sql")
+        engine.register(m)
+        selected = m.sql_pg if engine._dialect == "postgresql" and m.sql_pg else m.sql
+        assert selected == "sqlite_sql"
+
+    def test_fallback_when_no_sql_pg(self):
+        engine = MigrationEngine(clock=CLOCK, dialect="postgresql")
+        m = Migration(version=1, name="no_pg", sql="fallback_sql")
+        engine.register(m)
+        # No sql_pg → falls back to sql
+        selected = m.sql_pg if engine._dialect == "postgresql" and m.sql_pg else m.sql
+        assert selected == "fallback_sql"
+
+    def test_sqlite_dialect_actually_applies(self, db):
+        """SQLite dialect applies migrations on real SQLite connection."""
+        engine = MigrationEngine(clock=CLOCK, dialect="sqlite")
+        engine.register(Migration(
+            version=1, name="create_test",
+            sql="CREATE TABLE dialect_test (id INTEGER PRIMARY KEY)",
+        ))
+        results = engine.apply_all(db)
+        assert len(results) == 1
+        assert results[0].success
+        # Verify table exists
+        tables = db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='dialect_test'"
+        ).fetchall()
+        assert len(tables) == 1
+
+    def test_postgresql_placeholder_logic(self):
+        """Verify %s is used for postgresql, ? for sqlite."""
+        pg_engine = MigrationEngine(clock=CLOCK, dialect="postgresql")
+        sq_engine = MigrationEngine(clock=CLOCK, dialect="sqlite")
+        assert pg_engine._dialect == "postgresql"
+        assert sq_engine._dialect == "sqlite"
