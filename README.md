@@ -41,16 +41,18 @@ mullu-platform/
 \- .github/
 ```
 
-## Current State (v3.9.1)
+## Current State (v3.10.1)
 
-- **MCOI Runtime** — governed AI operating system with 158 API endpoints,
-  multi-tenant budget enforcement, hash-chain audit trails, LLM orchestration
-  (Anthropic/OpenAI/stub), agent workflows, cost analytics, and full
-  governance guard chain. 44,500+ tests.
-- **MAF Core** — Rust substrate with kernel types, lifecycle contracts,
-  supervision surfaces, and governance type layers.
+**Stage: production-candidate in final activation**
+
+- **MCOI Runtime** — governed AI operating system with 162 API endpoints
+  across 8 router modules, multi-tenant budget enforcement, hash-chain audit
+  trails, LLM orchestration (Anthropic/OpenAI/stub), agent workflows, cost
+  analytics, and full governance guard chain. 44,500+ Python tests.
+- **MAF Core** — certifying Rust substrate with transition receipts, proof
+  capsules, causal lineage, benchmark gates, and 180 tests.
 - **Shared Contracts** — canonical schemas and docs defining cross-runtime
-  meaning.
+  meaning, with serde-compatible Python↔Rust proof objects.
 
 ### Key Capabilities
 
@@ -62,6 +64,8 @@ mullu-platform/
 | Agent Orchestration | Workflows, chains, tool-augmented agents, A/B testing |
 | Observability | Health v3, Prometheus metrics, Grafana dashboards, tracing |
 | Security | API key auth, CORS lockdown, SSRF protection, read timeouts |
+| MAF Proof Substrate | Transition receipts, guard verdicts, causal lineage |
+| Operational Certification | Persistence lifecycle, concurrency stress, staging drill |
 
 ## Quick Start
 
