@@ -1,10 +1,20 @@
-# Mullu Platform MCOI Runtime -- Known Limitations v0.1.0
+# Mullu Platform MCOI Runtime -- Known Limitations v0.2.0
 
-**Version:** 0.1.0 (internal alpha)
-**Date:** 2026-03-19
+**Version:** 0.2.0 (v3.9.2)
+**Date:** 2026-03-27
 
 This document lists known limitations, incomplete features, and areas where the
 runtime does not yet behave as intended by the architecture specification.
+
+## Resolved in v3.9.x
+
+- ~~**HTTP connector read timeout (urllib):**~~ Read timeout enforcement added (v3.9.1).
+  Slow trickle responses are now terminated by `read_timeout_seconds` deadline.
+- ~~**No HTTP integration testing:**~~ 29 live-path integration tests added (v3.9.0).
+- ~~**server.py god object:**~~ Split into 6 router modules (v3.9.0).
+- ~~**CORS wildcard default:**~~ Locked to localhost in dev, explicit origins required
+  in production (v3.9.0).
+- ~~**Memory DB in compose:**~~ Default changed to PostgreSQL (v3.9.0).
 
 ## Serialization
 
@@ -15,14 +25,9 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Integration Adapters
 
-- **HTTP connector:** Uses `urllib` (standard library). No per-read timeout
-  enforcement on slow responses -- a server that sends headers promptly but trickles
-  body bytes can hold a connection open past the intended timeout.
 - **No real SMTP testing in CI:** SMTP connector logic is unit-tested with mocks.
-  Sending actual email requires a live SMTP server, which is not part of the CI
-  environment.
-- **No real HTTP integration testing in CI:** HTTP connector is tested against
-  synthetic responses. No live endpoint tests run in CI.
+  Sending actual email requires a live SMTP server (e.g. containerized MailHog),
+  which is not part of the CI environment.
 - **No browser adapter:** No Selenium, Playwright, or CDP integration.
 - **No document adapter:** No PDF, Office, or structured-document manipulation.
 - **No voice adapter:** No speech-to-text or text-to-speech integration.
