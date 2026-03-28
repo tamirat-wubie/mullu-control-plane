@@ -543,13 +543,6 @@ tool_registry.register(
 )
 observability.register_source("tools", lambda: tool_registry.summary())
 
-# Phase 212A: Anthropic streaming adapter
-from mcoi_runtime.adapters.anthropic_streaming import AnthropicStreamingAdapter
-anthropic_stream = AnthropicStreamingAdapter(
-    api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
-    clock=_clock,
-)
-
 # Phase 212A: Structured output engine
 from mcoi_runtime.core.structured_output import StructuredOutputEngine, OutputSchema
 structured_output = StructuredOutputEngine()
@@ -716,7 +709,7 @@ wf_templates.register(WorkflowTemplate(
     parameters=("topic", "format"), category="research",
 ))
 
-app = FastAPI(title="Mullu Platform", version="3.9.0", description="Governed AI Operating System")
+app = FastAPI(title="Mullu Platform", version="3.10.2", description="Governed AI Operating System")
 
 # Wire middleware
 app.add_middleware(

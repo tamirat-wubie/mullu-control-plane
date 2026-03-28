@@ -74,7 +74,7 @@ On startup, the platform:
 3. Warns if `MULLU_CORS_ORIGINS` is empty in production
 4. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
 5. Registers all subsystems into the dependency container
-6. Mounts 6 router modules (158 endpoints)
+6. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
 
 On shutdown:
 
