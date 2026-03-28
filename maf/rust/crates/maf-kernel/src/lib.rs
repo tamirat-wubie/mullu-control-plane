@@ -420,12 +420,20 @@ impl StateMachineSpec {
         // Build receipt
         let receipt_content = format!(
             "{}:{}:{}:{}:{}:{}:{}",
-            entity_id, from_state, to_state, action,
-            before_state_hash, after_state_hash, causal_parent,
+            entity_id,
+            from_state,
+            to_state,
+            action,
+            before_state_hash,
+            after_state_hash,
+            causal_parent,
         );
         let receipt_hash = sha256_hex(&receipt_content);
         let receipt_id = format!("rcpt-{}", &receipt_hash[..16]);
-        let replay_token = format!("replay-{}", &sha256_hex(&format!("{}:{}", receipt_content, timestamp))[..16]);
+        let replay_token = format!(
+            "replay-{}",
+            &sha256_hex(&format!("{}:{}", receipt_content, timestamp))[..16]
+        );
 
         let receipt = TransitionReceipt {
             receipt_id: receipt_id.clone(),
@@ -2298,9 +2306,17 @@ mod tests {
     fn certify_legal_transition_produces_receipt() {
         let m = example_machine();
         let result = m.certify_transition(
-            "entity-1", "idle", "running", "start",
-            "hash-before", "hash-after",
-            &[], "actor-1", "starting work", "genesis", "2026-03-27T12:00:00Z",
+            "entity-1",
+            "idle",
+            "running",
+            "start",
+            "hash-before",
+            "hash-after",
+            &[],
+            "actor-1",
+            "starting work",
+            "genesis",
+            "2026-03-27T12:00:00Z",
         );
         assert!(result.is_ok());
         let capsule = result.unwrap();
@@ -2316,8 +2332,17 @@ mod tests {
     fn certify_illegal_transition_returns_error() {
         let m = example_machine();
         let result = m.certify_transition(
-            "entity-1", "idle", "done", "skip",
-            "h1", "h2", &[], "actor", "trying to skip", "genesis", "2026-03-27T12:00:00Z",
+            "entity-1",
+            "idle",
+            "done",
+            "skip",
+            "h1",
+            "h2",
+            &[],
+            "actor",
+            "trying to skip",
+            "genesis",
+            "2026-03-27T12:00:00Z",
         );
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedIllegalEdge);
@@ -2327,8 +2352,17 @@ mod tests {
     fn certify_terminal_state_transition_returns_error() {
         let m = example_machine();
         let result = m.certify_transition(
-            "entity-1", "done", "idle", "reset",
-            "h1", "h2", &[], "actor", "reset from done", "genesis", "2026-03-27T12:00:00Z",
+            "entity-1",
+            "done",
+            "idle",
+            "reset",
+            "h1",
+            "h2",
+            &[],
+            "actor",
+            "reset from done",
+            "genesis",
+            "2026-03-27T12:00:00Z",
         );
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedTerminalState);
@@ -2338,12 +2372,29 @@ mod tests {
     fn certify_with_failed_guard_returns_error() {
         let m = example_machine();
         let guards = vec![
-            GuardVerdict { guard_id: "budget".into(), passed: true, reason: "ok".into() },
-            GuardVerdict { guard_id: "auth".into(), passed: false, reason: "unauthorized".into() },
+            GuardVerdict {
+                guard_id: "budget".into(),
+                passed: true,
+                reason: "ok".into(),
+            },
+            GuardVerdict {
+                guard_id: "auth".into(),
+                passed: false,
+                reason: "unauthorized".into(),
+            },
         ];
         let result = m.certify_transition(
-            "entity-1", "idle", "running", "start",
-            "h1", "h2", &guards, "actor", "start with guards", "genesis", "2026-03-27T12:00:00Z",
+            "entity-1",
+            "idle",
+            "running",
+            "start",
+            "h1",
+            "h2",
+            &guards,
+            "actor",
+            "start with guards",
+            "genesis",
+            "2026-03-27T12:00:00Z",
         );
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedGuardFailed);
@@ -2352,25 +2403,61 @@ mod tests {
     #[test]
     fn receipt_hash_is_deterministic() {
         let m = example_machine();
-        let r1 = m.certify_transition(
-            "e1", "idle", "running", "start", "h1", "h2",
-            &[], "a", "r", "g", "t",
-        ).unwrap();
-        let r2 = m.certify_transition(
-            "e1", "idle", "running", "start", "h1", "h2",
-            &[], "a", "r", "g", "t",
-        ).unwrap();
+        let r1 = m
+            .certify_transition(
+                "e1",
+                "idle",
+                "running",
+                "start",
+                "h1",
+                "h2",
+                &[],
+                "a",
+                "r",
+                "g",
+                "t",
+            )
+            .unwrap();
+        let r2 = m
+            .certify_transition(
+                "e1",
+                "idle",
+                "running",
+                "start",
+                "h1",
+                "h2",
+                &[],
+                "a",
+                "r",
+                "g",
+                "t",
+            )
+            .unwrap();
         assert_eq!(r1.receipt.receipt_hash, r2.receipt.receipt_hash);
     }
 
     #[test]
     fn receipt_serialization_round_trip() {
         let m = example_machine();
-        let capsule = m.certify_transition(
-            "e1", "idle", "running", "start", "h1", "h2",
-            &[GuardVerdict { guard_id: "g1".into(), passed: true, reason: "ok".into() }],
-            "actor", "reason", "parent", "2026-03-27T12:00:00Z",
-        ).unwrap();
+        let capsule = m
+            .certify_transition(
+                "e1",
+                "idle",
+                "running",
+                "start",
+                "h1",
+                "h2",
+                &[GuardVerdict {
+                    guard_id: "g1".into(),
+                    passed: true,
+                    reason: "ok".into(),
+                }],
+                "actor",
+                "reason",
+                "parent",
+                "2026-03-27T12:00:00Z",
+            )
+            .unwrap();
         let json = serde_json::to_string(&capsule).unwrap();
         let restored: ProofCapsule = serde_json::from_str(&json).unwrap();
         assert_eq!(capsule, restored);

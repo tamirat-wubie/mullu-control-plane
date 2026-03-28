@@ -52,15 +52,21 @@ mod bench_tests {
             iterations, elapsed, per_op_ns
         );
         // Regression gate: under 100μs in debug, under 10μs in release
-        assert!(per_op_ns < 100_000, "is_legal too slow: {} ns/op", per_op_ns);
+        assert!(
+            per_op_ns < 100_000,
+            "is_legal too slow: {} ns/op",
+            per_op_ns
+        );
     }
 
     #[test]
     fn bench_certify_transition() {
         let m = build_machine();
-        let guards = vec![
-            GuardVerdict { guard_id: "g1".into(), passed: true, reason: "ok".into() },
-        ];
+        let guards = vec![GuardVerdict {
+            guard_id: "g1".into(),
+            passed: true,
+            reason: "ok".into(),
+        }];
         let start = Instant::now();
         let iterations = 10_000;
         for i in 0..iterations {
@@ -68,9 +74,17 @@ mod bench_tests {
             let to = format!("s{}", (i % 99) + 1);
             let action = format!("step_{}", i % 99);
             let _ = m.certify_transition(
-                "entity-1", &from, &to, &action,
-                "hash-before", "hash-after",
-                &guards, "actor", "reason", "parent", "2026-03-27T12:00:00Z",
+                "entity-1",
+                &from,
+                &to,
+                &action,
+                "hash-before",
+                "hash-after",
+                &guards,
+                "actor",
+                "reason",
+                "parent",
+                "2026-03-27T12:00:00Z",
             );
         }
         let elapsed = start.elapsed();
@@ -80,16 +94,31 @@ mod bench_tests {
             iterations, elapsed, per_op_ns
         );
         // Regression gate: under 200μs in debug, under 50μs in release
-        assert!(per_op_ns < 200_000, "certify_transition too slow: {} ns/op", per_op_ns);
+        assert!(
+            per_op_ns < 200_000,
+            "certify_transition too slow: {} ns/op",
+            per_op_ns
+        );
     }
 
     #[test]
     fn bench_receipt_serialization() {
         let m = build_machine();
-        let capsule = m.certify_transition(
-            "e1", "s0", "s1", "step_0", "h1", "h2",
-            &[], "actor", "reason", "parent", "2026-03-27T12:00:00Z",
-        ).unwrap();
+        let capsule = m
+            .certify_transition(
+                "e1",
+                "s0",
+                "s1",
+                "step_0",
+                "h1",
+                "h2",
+                &[],
+                "actor",
+                "reason",
+                "parent",
+                "2026-03-27T12:00:00Z",
+            )
+            .unwrap();
 
         let start = Instant::now();
         let iterations = 10_000;
@@ -104,6 +133,10 @@ mod bench_tests {
             iterations, elapsed, per_op_ns
         );
         // Regression gate: under 100μs in debug, under 20μs in release
-        assert!(per_op_ns < 100_000, "receipt round-trip too slow: {} ns/op", per_op_ns);
+        assert!(
+            per_op_ns < 100_000,
+            "receipt round-trip too slow: {} ns/op",
+            per_op_ns
+        );
     }
 }
