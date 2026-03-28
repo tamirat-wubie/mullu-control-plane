@@ -42,7 +42,11 @@ fn bench_is_legal_100_state_machine() {
         "is_legal: {} ops in {:?} ({} ns/op)",
         iterations, elapsed, per_op_ns
     );
-    assert!(per_op_ns < 100_000, "is_legal too slow: {} ns/op", per_op_ns);
+    assert!(
+        per_op_ns < 100_000,
+        "is_legal too slow: {} ns/op",
+        per_op_ns
+    );
 }
 
 #[test]

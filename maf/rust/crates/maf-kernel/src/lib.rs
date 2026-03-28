@@ -408,7 +408,10 @@ impl StateMachineSpec {
     ///
     /// This is the core substrate certification function. Every governed
     /// transition should go through this rather than raw `is_legal()`.
-    pub fn certify_transition(&self, p: &CertifyParams<'_>) -> Result<ProofCapsule, TransitionVerdict> {
+    pub fn certify_transition(
+        &self,
+        p: &CertifyParams<'_>,
+    ) -> Result<ProofCapsule, TransitionVerdict> {
         // Check legality
         let verdict = self.is_legal(p.from_state, p.to_state, p.action);
         if verdict != TransitionVerdict::Allowed {
