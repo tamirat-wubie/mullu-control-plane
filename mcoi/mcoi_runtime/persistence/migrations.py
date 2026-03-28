@@ -21,7 +21,8 @@ class Migration:
     """A single schema migration."""
     version: int
     name: str
-    sql: str
+    sql: str  # SQLite-compatible SQL (default)
+    sql_pg: str = ""  # PostgreSQL-specific SQL (used when dialect="postgresql")
     description: str = ""
 
 
@@ -53,8 +54,9 @@ class MigrationEngine:
         )
     """
 
-    def __init__(self, *, clock: Callable[[], str]) -> None:
+    def __init__(self, *, clock: Callable[[], str], dialect: str = "sqlite") -> None:
         self._clock = clock
+        self._dialect = dialect  # "sqlite" or "postgresql"
         self._migrations: list[Migration] = []
 
     def register(self, migration: Migration) -> None:
@@ -95,7 +97,8 @@ class MigrationEngine:
         results: list[MigrationResult] = []
         for migration in self.pending(conn):
             try:
-                conn.executescript(migration.sql)
+                sql = (migration.sql_pg if self._dialect == "postgresql" and migration.sql_pg else migration.sql)
+                conn.executescript(sql)
                 checksum = hashlib.sha256(migration.sql.encode()).hexdigest()[:16]
                 conn.execute(
                     "INSERT INTO schema_version (version, name, applied_at, checksum) VALUES (?, ?, ?, ?)",
@@ -150,7 +153,36 @@ PLATFORM_MIGRATIONS = [
         description="Create core tables: ledger, sessions, requests",
         sql="""
             CREATE TABLE IF NOT EXISTS ledger (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY,
+                entry_type TEXT NOT NULL,
+                actor_id TEXT NOT NULL,
+                tenant_id TEXT NOT NULL,
+                content TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id TEXT PRIMARY KEY,
+                actor_id TEXT NOT NULL,
+                tenant_id TEXT NOT NULL,
+                active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS requests (
+                request_id TEXT PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                method TEXT NOT NULL,
+                path TEXT NOT NULL,
+                status_code INTEGER,
+                governed INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_ledger_tenant ON ledger(tenant_id);
+            CREATE INDEX IF NOT EXISTS idx_requests_tenant ON requests(tenant_id);
+        """,
+        sql_pg="""
+            CREATE TABLE IF NOT EXISTS ledger (
+                id SERIAL PRIMARY KEY,
                 entry_type TEXT NOT NULL,
                 actor_id TEXT NOT NULL,
                 tenant_id TEXT NOT NULL,
@@ -192,7 +224,26 @@ PLATFORM_MIGRATIONS = [
         description="Dedicated audit trail table with hash-chain columns",
         sql="""
             CREATE TABLE IF NOT EXISTS audit_trail (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY,
+                entry_id TEXT NOT NULL UNIQUE,
+                sequence INTEGER NOT NULL,
+                action TEXT NOT NULL,
+                actor_id TEXT NOT NULL,
+                tenant_id TEXT NOT NULL,
+                target TEXT NOT NULL,
+                outcome TEXT NOT NULL,
+                detail TEXT NOT NULL DEFAULT '{}',
+                entry_hash TEXT NOT NULL,
+                previous_hash TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_trail(tenant_id);
+            CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_trail(action);
+            CREATE INDEX IF NOT EXISTS idx_audit_outcome ON audit_trail(outcome);
+        """,
+        sql_pg="""
+            CREATE TABLE IF NOT EXISTS audit_trail (
+                id SERIAL PRIMARY KEY,
                 entry_id TEXT NOT NULL UNIQUE,
                 sequence INTEGER NOT NULL,
                 action TEXT NOT NULL,
@@ -216,7 +267,19 @@ PLATFORM_MIGRATIONS = [
         description="Cost events for analytics",
         sql="""
             CREATE TABLE IF NOT EXISTS cost_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                model TEXT NOT NULL,
+                cost REAL NOT NULL,
+                tokens INTEGER NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_cost_tenant ON cost_events(tenant_id);
+            CREATE INDEX IF NOT EXISTS idx_cost_model ON cost_events(model);
+        """,
+        sql_pg="""
+            CREATE TABLE IF NOT EXISTS cost_events (
+                id SERIAL PRIMARY KEY,
                 tenant_id TEXT NOT NULL,
                 model TEXT NOT NULL,
                 cost REAL NOT NULL,
@@ -230,9 +293,9 @@ PLATFORM_MIGRATIONS = [
 ]
 
 
-def create_platform_migration_engine(clock: Callable[[], str]) -> MigrationEngine:
+def create_platform_migration_engine(clock: Callable[[], str], dialect: str = "sqlite") -> MigrationEngine:
     """Create a MigrationEngine pre-loaded with platform migrations."""
-    engine = MigrationEngine(clock=clock)
+    engine = MigrationEngine(clock=clock, dialect=dialect)
     for m in PLATFORM_MIGRATIONS:
         engine.register(m)
     return engine
