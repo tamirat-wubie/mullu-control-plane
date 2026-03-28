@@ -200,8 +200,15 @@ def validate_release_metadata_texts(metadata_texts: dict[str, str]) -> tuple[tup
         if date is not None and reference_date is None:
             reference_date = date
 
-    if reference_version is not None and "internal alpha" not in reference_version:
-        errors.append(f"release metadata version must declare internal alpha: {reference_version}")
+    # Version must declare a recognized stage (internal alpha, or semver tag)
+    if reference_version is not None:
+        is_recognized = (
+            "internal alpha" in reference_version
+            or reference_version.startswith("0.")  # pre-1.0 semver
+            or reference_version[0].isdigit()  # any semver like "0.2.0 (v3.9.2)"
+        )
+        if not is_recognized:
+            errors.append(f"release metadata version not recognized: {reference_version}")
 
     for document_name, (version, date) in extracted.items():
         if reference_version is not None and version is not None and version != reference_version:

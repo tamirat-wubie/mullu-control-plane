@@ -1,7 +1,7 @@
 # Mullu Platform MCOI Runtime -- Security Model v0.1.0
 
-**Version:** 0.1.0 (internal alpha)
-**Date:** 2026-03-19
+**Version:** 0.2.0 (v3.9.2)
+**Date:** 2026-03-27
 **Audience:** Internal developers and operators evaluating this alpha.
 
 This document describes what security properties the runtime provides today and,

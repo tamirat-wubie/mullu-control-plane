@@ -64,6 +64,16 @@ store = create_store(
     connection_string=os.environ.get("MULLU_DB_URL", ""),
 )
 
+# Run schema migrations for SQLite backend
+if _db_backend == "sqlite" and hasattr(store, '_conn'):
+    from mcoi_runtime.persistence.migrations import create_platform_migration_engine
+    _migration_engine = create_platform_migration_engine(clock=_clock)
+    _migration_results = _migration_engine.apply_all(store._conn)
+    if _migration_results:
+        _applied = [r.name for r in _migration_results if r.success]
+        if _applied:
+            pass  # Migrations applied silently — logged at startup below
+
 # Phase 200A: LLM bootstrap wiring (env-driven backend selection)
 llm_bootstrap_result = bootstrap_llm(
     clock=_clock,
@@ -887,6 +897,8 @@ from mcoi_runtime.app.routers.llm import router as llm_router
 from mcoi_runtime.app.routers.tenant import router as tenant_router
 from mcoi_runtime.app.routers.audit import router as audit_router
 from mcoi_runtime.app.routers.workflow import router as workflow_router
+from mcoi_runtime.app.routers.agent import router as agent_router
+from mcoi_runtime.app.routers.data import router as data_router
 from mcoi_runtime.app.routers.ops import router as ops_router
 
 app.include_router(health_router)
@@ -894,6 +906,8 @@ app.include_router(llm_router)
 app.include_router(tenant_router)
 app.include_router(audit_router)
 app.include_router(workflow_router)
+app.include_router(agent_router)
+app.include_router(data_router)
 app.include_router(ops_router)
 
 
