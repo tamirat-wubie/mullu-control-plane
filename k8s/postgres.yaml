@@ -7,7 +7,7 @@ type: Opaque
 stringData:
   POSTGRES_DB: mullu
   POSTGRES_USER: mullu
-  POSTGRES_PASSWORD: mullu-prod-password
+  POSTGRES_PASSWORD: CHANGE_ME_BEFORE_DEPLOY  # Replace via: kubectl create secret generic postgres-secret --from-literal=...
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
