@@ -86,10 +86,25 @@ class ToolRegistry:
     def get(self, tool_id: str) -> ToolDefinition | None:
         return self._tools.get(tool_id)
 
-    def invoke(self, tool_id: str, arguments: dict[str, Any], tenant_id: str = "") -> ToolResult:
+    def invoke(
+        self,
+        tool_id: str,
+        arguments: dict[str, Any],
+        tenant_id: str = "",
+        *,
+        allowed_tool_ids: set[str] | None = None,
+    ) -> ToolResult:
         """Invoke a registered tool."""
         self._counter += 1
         invocation_id = f"inv-{self._counter}"
+
+        if allowed_tool_ids is not None and tool_id not in allowed_tool_ids:
+            result = ToolResult(
+                invocation_id=invocation_id, tool_id=tool_id,
+                output={}, succeeded=False, error=f"tool not allowed: {tool_id}",
+            )
+            self._invocation_log.append(result)
+            return result
 
         tool = self._tools.get(tool_id)
         if tool is None:

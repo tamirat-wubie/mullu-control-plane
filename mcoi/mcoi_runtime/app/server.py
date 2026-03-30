@@ -7,6 +7,7 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
+from contextlib import asynccontextmanager
 from typing import Any
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import StreamingResponse
@@ -33,6 +34,7 @@ from mcoi_runtime.core.deep_health import DeepHealthChecker
 from mcoi_runtime.core.config_reload import ConfigManager
 from mcoi_runtime.core.observability import ObservabilityAggregator
 from mcoi_runtime.core.plugin_system import HookPoint, PluginDescriptor, PluginRegistry
+from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.event_bus import EventBus
 from mcoi_runtime.core.batch_pipeline import BatchPipeline, PipelineStep
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
@@ -45,6 +47,18 @@ from datetime import datetime, timezone
 
 ENV = os.environ.get("MULLU_ENV", "local_dev")
 surface = ProductionSurface(DEPLOYMENT_MANIFESTS.get(ENV, DEPLOYMENT_MANIFESTS["local_dev"]))
+
+
+def _env_flag(name: str) -> bool | None:
+    raw = os.environ.get(name)
+    if raw is None:
+        return None
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be a boolean flag")
 
 # Clock
 def _clock() -> str:
@@ -359,9 +373,12 @@ platform_logger = StructuredLogger(name="mullu-platform", min_level=LogLevel.INF
 from mcoi_runtime.core.api_key_auth import APIKeyManager
 api_key_mgr = APIKeyManager(clock=_clock)
 observability.register_source("api_keys", lambda: api_key_mgr.summary())
+api_auth_required = _env_flag("MULLU_API_AUTH_REQUIRED")
+if api_auth_required is None:
+    api_auth_required = ENV in ("pilot", "production")
 # Wire API key guard as FIRST guard (auth before rate-limit/budget checks)
 from mcoi_runtime.core.governance_guard import create_api_key_guard
-guard_chain.insert(0, create_api_key_guard(api_key_mgr))
+guard_chain.insert(0, create_api_key_guard(api_key_mgr, require_auth=api_auth_required))
 
 # Phase 224C: Data export pipeline
 from mcoi_runtime.core.data_export import DataExportPipeline, ExportFormat, ExportRequest
@@ -523,6 +540,13 @@ health_v3.register("rate_limiter", lambda: ComponentHealth.HEALTHY, weight=1.0)
 # Phase 212A: Tool registry
 from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
 tool_registry = ToolRegistry(clock=_clock)
+
+
+def _calculator_handler(args: dict[str, Any]) -> dict[str, str]:
+    expression = str(args.get("expression", "0"))
+    return {"result": str(evaluate_expression(expression))}
+
+
 tool_registry.register(
     ToolDefinition(
         tool_id="calculator", name="Calculator",
@@ -530,7 +554,7 @@ tool_registry.register(
         parameters=(ToolParameter(name="expression", param_type="string", description="Math expression"),),
         category="utility",
     ),
-    handler=lambda args: {"result": str(eval(args.get("expression", "0")))},
+    handler=_calculator_handler,
 )
 tool_registry.register(
     ToolDefinition(
@@ -709,7 +733,20 @@ wf_templates.register(WorkflowTemplate(
     parameters=("topic", "format"), category="research",
 ))
 
-app = FastAPI(title="Mullu Platform", version="3.10.2", description="Governed AI Operating System")
+@asynccontextmanager
+async def _app_lifespan(_app: FastAPI):
+    try:
+        yield
+    finally:
+        shutdown_mgr.execute()
+
+
+app = FastAPI(
+    title="Mullu Platform",
+    version="3.10.2",
+    description="Governed AI Operating System",
+    lifespan=_app_lifespan,
+)
 
 # Wire middleware
 app.add_middleware(
@@ -971,10 +1008,4 @@ _startup_restored = _restore_state_on_startup()
 shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
 shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 shutdown_mgr.register("close_connections", lambda: {"closed": True}, priority=10)
-
-
-@app.on_event("shutdown")
-def on_shutdown():
-    """Execute graceful shutdown: flush state, close connections."""
-    shutdown_mgr.execute()
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.structured_logging import LogLevel
@@ -82,7 +82,7 @@ class EventPublishRequest(BaseModel):
     event_type: str
     tenant_id: str = ""
     source: str = "api"
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 @router.post("/api/v1/events/publish")

@@ -5,16 +5,18 @@ Extracted from workflow.py to keep route files focused.
 """
 from __future__ import annotations
 
+from typing import NoReturn
 from typing import Any
 
 import hashlib
 import json
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.data_export import ExportFormat, ExportRequest
+from mcoi_runtime.persistence import PathTraversalError
 
 router = APIRouter()
 
@@ -44,7 +46,7 @@ class PromptRenderRequest(BaseModel):
 
 class ToolInvokeRequest(BaseModel):
     tool_id: str
-    arguments: dict[str, Any] = {}
+    arguments: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str = ""
 
 
@@ -73,9 +75,39 @@ class CreateAPIKeyRequest(BaseModel):
 class DataExportRequest(BaseModel):
     source: str
     format: str = "json"
-    fields: list[str] = []
-    filters: dict[str, Any] = {}
+    fields: list[str] = Field(default_factory=list)
+    filters: dict[str, Any] = Field(default_factory=dict)
     limit: int = 10_000
+
+
+def _raise_prompt_execution_unavailable(
+    *,
+    template_id: str,
+    tenant_id: str,
+    exc: Exception,
+) -> NoReturn:
+    """Raise a sanitized prompt-execution failure."""
+    deps.llm_circuit.record_failure()
+    deps.metrics.inc("errors_total")
+    deps.audit_trail.record(
+        action="prompt.render",
+        actor_id="api",
+        tenant_id=tenant_id,
+        target=template_id,
+        outcome="error",
+        detail={
+            "error_type": type(exc).__name__,
+            "reason": "llm_service_unavailable",
+        },
+    )
+    raise HTTPException(
+        503,
+        detail={
+            "error": "LLM service unavailable",
+            "error_code": "llm_service_unavailable",
+            "governed": True,
+        },
+    )
 
 
 # ═══ Conversation Endpoints ══════════════════════════════════════════════
@@ -181,10 +213,17 @@ def render_prompt(req: PromptRenderRequest):
 
     if req.execute:
         deps.metrics.inc("llm_calls_total")
-        result = deps.llm_bridge.complete(
-            rendered.prompt, system=rendered.system_prompt,
-            budget_id=req.budget_id, tenant_id=req.tenant_id,
-        )
+        try:
+            result = deps.llm_bridge.complete(
+                rendered.prompt, system=rendered.system_prompt,
+                budget_id=req.budget_id, tenant_id=req.tenant_id,
+            )
+        except Exception as exc:
+            _raise_prompt_execution_unavailable(
+                template_id=rendered.template_id,
+                tenant_id=req.tenant_id,
+                exc=exc,
+            )
         response["llm_result"] = {
             "content": result.content,
             "model": result.model_name,
@@ -253,14 +292,28 @@ def tool_history(limit: int = 50):
 def save_state(req: StateSaveRequest):
     """Save runtime state."""
     deps.metrics.inc("requests_governed")
-    snap = deps.state_persistence.save(req.state_type, req.data)
+    try:
+        snap = deps.state_persistence.save(req.state_type, req.data)
+    except PathTraversalError:
+        raise HTTPException(400, detail={
+            "error": "invalid state_type",
+            "error_code": "invalid_state_type",
+            "governed": True,
+        })
     return {"state_type": snap.state_type, "hash": snap.state_hash[:16], "saved_at": snap.saved_at}
 
 
 @router.get("/api/v1/state/{state_type}")
 def load_state(state_type: str):
     """Load runtime state."""
-    snap = deps.state_persistence.load(state_type)
+    try:
+        snap = deps.state_persistence.load(state_type)
+    except PathTraversalError:
+        raise HTTPException(400, detail={
+            "error": "invalid state_type",
+            "error_code": "invalid_state_type",
+            "governed": True,
+        })
     if snap is None:
         raise HTTPException(404, detail=f"state not found: {state_type}")
     return {"state_type": snap.state_type, "data": snap.data, "hash": snap.state_hash[:16]}

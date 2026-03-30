@@ -1,6 +1,7 @@
 """Phase 211C — Tool-use contract tests."""
 
 import pytest
+from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.tool_use import (
     ToolDefinition, ToolParameter, ToolRegistry, ToolResult,
 )
@@ -18,7 +19,7 @@ def _registry():
                 ToolParameter(name="expression", param_type="string", description="Math expression"),
             ),
         ),
-        handler=lambda args: {"result": eval(args["expression"])},
+        handler=lambda args: {"result": evaluate_expression(args["expression"])},
     )
     reg.register(
         ToolDefinition(
@@ -66,6 +67,12 @@ class TestToolRegistry:
         assert result.succeeded is False
         assert "unknown tool" in result.error
 
+    def test_invoke_disallowed_tool(self):
+        reg = _registry()
+        result = reg.invoke("calculator", {"expression": "2+3"}, allowed_tool_ids={"greeting"})
+        assert result.succeeded is False
+        assert "tool not allowed" in result.error
+
     def test_invoke_disabled_tool(self):
         reg = ToolRegistry(clock=FIXED_CLOCK)
         reg.register(
@@ -85,6 +92,12 @@ class TestToolRegistry:
         result = reg.invoke("broken", {})
         assert result.succeeded is False
         assert "boom" in result.error
+
+    def test_invoke_unsafe_expression_rejected(self):
+        reg = _registry()
+        result = reg.invoke("calculator", {"expression": "__import__('os').system('whoami')"})
+        assert result.succeeded is False
+        assert "unsupported expression node" in result.error
 
     def test_optional_params(self):
         reg = _registry()

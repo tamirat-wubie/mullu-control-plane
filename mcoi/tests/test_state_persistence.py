@@ -1,11 +1,22 @@
-"""Phase 211D — State persistence tests."""
+"""Phase 211D - State persistence tests."""
 
+import json
 import os
 import tempfile
+
 import pytest
+
+from mcoi_runtime.persistence import PathTraversalError
 from mcoi_runtime.persistence.state_persistence import StatePersistence
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+MALICIOUS_STATE_TYPES = [
+    "../../etc/passwd",
+    "foo/bar",
+    "foo\\bar",
+    "foo\0bar",
+    "..\\..\\windows\\system32\\config\\sam",
+]
 
 
 class TestStatePersistence:
@@ -42,7 +53,7 @@ class TestStatePersistence:
         sp.save("config", {"x": 1})
         assert sp.delete("config") is True
         assert sp.exists("config") is False
-        assert sp.delete("config") is False  # Already deleted
+        assert sp.delete("config") is False
 
     def test_list_states(self):
         sp, _ = self._persistence()
@@ -85,10 +96,50 @@ class TestStatePersistence:
         assert s["saved_states"] == 1
 
     def test_atomic_write(self):
-        """Verify no partial files are left on disk."""
         sp, tmp_dir = self._persistence()
         sp.save("atomic_test", {"safe": True})
         files = os.listdir(tmp_dir)
-        # Should only have the final file, no .tmp files
         tmp_files = [f for f in files if f.endswith(".tmp")]
         assert len(tmp_files) == 0
+
+    @pytest.mark.parametrize("bad_state_type", MALICIOUS_STATE_TYPES)
+    def test_save_rejects_path_traversal(self, bad_state_type):
+        sp, _ = self._persistence()
+        with pytest.raises(PathTraversalError):
+            sp.save(bad_state_type, {"safe": True})
+
+    @pytest.mark.parametrize("bad_state_type", MALICIOUS_STATE_TYPES)
+    def test_load_rejects_path_traversal(self, bad_state_type):
+        sp, _ = self._persistence()
+        with pytest.raises(PathTraversalError):
+            sp.load(bad_state_type)
+
+    @pytest.mark.parametrize("bad_state_type", MALICIOUS_STATE_TYPES)
+    def test_exists_rejects_path_traversal(self, bad_state_type):
+        sp, _ = self._persistence()
+        with pytest.raises(PathTraversalError):
+            sp.exists(bad_state_type)
+
+    @pytest.mark.parametrize("bad_state_type", MALICIOUS_STATE_TYPES)
+    def test_delete_rejects_path_traversal(self, bad_state_type):
+        sp, _ = self._persistence()
+        with pytest.raises(PathTraversalError):
+            sp.delete(bad_state_type)
+
+    def test_load_rejects_hash_mismatch(self):
+        sp, tmp_dir = self._persistence()
+        sp.save("config", {"key": "value"})
+        file_path = os.path.join(tmp_dir, "mullu_state_config.json")
+        with open(file_path, "r") as f:
+            wrapper = json.load(f)
+        wrapper["data"]["key"] = "tampered"
+        with open(file_path, "w") as f:
+            json.dump(wrapper, f, sort_keys=True, default=str, indent=2)
+        assert sp.load("config") is None
+
+    def test_list_states_missing_base_dir(self):
+        missing_dir = os.path.join(tempfile.gettempdir(), "mullu-state-missing-dir")
+        if os.path.isdir(missing_dir):
+            os.rmdir(missing_dir)
+        sp = StatePersistence(clock=FIXED_CLOCK, base_dir=missing_dir)
+        assert sp.list_states() == []

@@ -146,6 +146,8 @@ def create_tenant_guard() -> GovernanceGuard:
 
 def create_api_key_guard(
     api_key_mgr: Any,
+    *,
+    require_auth: bool = False,
 ) -> GovernanceGuard:
     """Create an API-key authentication guard.
 
@@ -158,9 +160,19 @@ def create_api_key_guard(
     def check(ctx: dict[str, Any]) -> GuardResult:
         auth_header: str = ctx.get("authorization", "")
         if not auth_header:
+            if require_auth:
+                return GuardResult(
+                    allowed=False, guard_name="api_key",
+                    reason="missing Authorization header",
+                )
             return GuardResult(allowed=True, guard_name="api_key")
         token = auth_header.removeprefix("Bearer ").strip()
         if not token:
+            if require_auth:
+                return GuardResult(
+                    allowed=False, guard_name="api_key",
+                    reason="missing bearer token",
+                )
             return GuardResult(allowed=True, guard_name="api_key")
         result = api_key_mgr.authenticate(token)
         if not result.authenticated:
