@@ -19,9 +19,11 @@ from typing import Any, Callable
 
 from mcoi_runtime.adapters.llm_adapter import (
     AnthropicBackend,
+    GeminiBackend,
     GovernedLLMAdapter,
     LLMBackend,
     LLMBudgetManager,
+    OllamaBackend,
     OpenAIBackend,
     StubLLMBackend,
 )
@@ -43,9 +45,11 @@ from mcoi_runtime.core.provider_registry import ProviderRegistry
 class LLMConfig:
     """Environment-driven LLM configuration."""
 
-    default_backend: str = "stub"  # "anthropic", "openai", "stub"
+    default_backend: str = "stub"  # "anthropic", "openai", "gemini", "ollama", "stub"
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    gemini_api_key: str = ""
+    ollama_base_url: str = ""
     default_model: str = "claude-sonnet-4-20250514"
     default_budget_max_cost: float = 100.0
     default_budget_max_calls: int = 10000
@@ -56,14 +60,20 @@ class LLMConfig:
         """Build LLM config from environment variables."""
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
         openai_key = os.environ.get("OPENAI_API_KEY", "")
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        ollama_url = os.environ.get("OLLAMA_BASE_URL", "")
 
-        # Auto-detect default backend from available keys
+        # Auto-detect default backend from available keys (Tier 1 first)
         default_backend = os.environ.get("MULLU_LLM_BACKEND", "")
         if not default_backend:
             if anthropic_key:
                 default_backend = "anthropic"
             elif openai_key:
                 default_backend = "openai"
+            elif gemini_key:
+                default_backend = "gemini"
+            elif ollama_url:
+                default_backend = "ollama"
             else:
                 default_backend = "stub"
 
@@ -71,6 +81,8 @@ class LLMConfig:
             default_backend=default_backend,
             anthropic_api_key=anthropic_key,
             openai_api_key=openai_key,
+            gemini_api_key=gemini_key,
+            ollama_base_url=ollama_url,
             default_model=os.environ.get("MULLU_LLM_MODEL", "claude-sonnet-4-20250514"),
             default_budget_max_cost=float(os.environ.get("MULLU_LLM_BUDGET_MAX_COST", "100.0")),
             default_budget_max_calls=int(os.environ.get("MULLU_LLM_BUDGET_MAX_CALLS", "10000")),
@@ -132,6 +144,22 @@ def bootstrap_llm(
             default_model=llm_config.default_model if "gpt" in llm_config.default_model else "gpt-4o",
         )
         backends["openai"] = openai
+
+    # Register Gemini backend if key available (Tier 2)
+    if llm_config.gemini_api_key:
+        gemini = GeminiBackend(
+            api_key=llm_config.gemini_api_key,
+            default_model=llm_config.default_model if "gemini" in llm_config.default_model else "gemini-2.0-flash",
+        )
+        backends["gemini"] = gemini
+
+    # Register Ollama backend if URL configured (Tier 3)
+    if llm_config.ollama_base_url:
+        ollama = OllamaBackend(
+            base_url=llm_config.ollama_base_url,
+            default_model=llm_config.default_model if llm_config.default_backend == "ollama" else "llama3.2",
+        )
+        backends["ollama"] = ollama
 
     # Determine default backend
     default_name = llm_config.default_backend

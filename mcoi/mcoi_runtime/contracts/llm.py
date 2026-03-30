@@ -21,6 +21,8 @@ class LLMProvider(StrEnum):
 
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
+    GEMINI = "gemini"
+    OLLAMA = "ollama"
     STUB = "stub"
 
 
