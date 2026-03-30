@@ -217,6 +217,15 @@ scheduler = GovernedScheduler(
 )
 observability.register_source("scheduler", lambda: scheduler.summary())
 
+# Governed connector framework
+from mcoi_runtime.core.connector_framework import GovernedConnectorFramework
+connector_framework = GovernedConnectorFramework(
+    clock=_clock,
+    guard_chain=None,  # Wired after guard_chain is built
+    audit_trail=None,  # Wired after audit_trail is built
+)
+observability.register_source("connectors", lambda: connector_framework.summary())
+
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
 
@@ -878,6 +887,9 @@ deps.set("coordination_store", coordination_store)
 scheduler._guard_chain = guard_chain
 scheduler._audit_trail = audit_trail
 deps.set("scheduler", scheduler)
+connector_framework._guard_chain = guard_chain
+connector_framework._audit_trail = audit_trail
+deps.set("connector_framework", connector_framework)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)
@@ -964,6 +976,7 @@ from mcoi_runtime.app.routers.adapter import router as adapter_router
 from mcoi_runtime.app.routers.compliance import router as compliance_router
 from mcoi_runtime.app.routers.scheduler import router as scheduler_router
 from mcoi_runtime.app.routers.console import router as console_router
+from mcoi_runtime.app.routers.connectors import router as connectors_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -977,6 +990,7 @@ app.include_router(adapter_router)
 app.include_router(compliance_router)
 app.include_router(scheduler_router)
 app.include_router(console_router)
+app.include_router(connectors_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
