@@ -110,11 +110,18 @@ def create_rate_limit_guard(
 
 def create_budget_guard(
     budget_mgr: Any,
+    *,
+    require_tenant: bool = False,
 ) -> GovernanceGuard:
     """Create a budget-enforcement guard."""
     def check(ctx: dict[str, Any]) -> GuardResult:
         tenant_id = ctx.get("tenant_id", "")
         if not tenant_id:
+            if require_tenant:
+                return GuardResult(
+                    allowed=False, guard_name="budget",
+                    reason="tenant_id is required",
+                )
             return GuardResult(allowed=True, guard_name="budget")
         report = budget_mgr.report(tenant_id)
         if report.exhausted:

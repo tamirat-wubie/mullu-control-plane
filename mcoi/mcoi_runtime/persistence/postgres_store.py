@@ -278,86 +278,79 @@ class PostgresStore:
         """Run idempotent schema migrations."""
         if self._conn is None:
             return
-        cur = self._conn.cursor()
-        for migration_sql in MIGRATIONS:
-            try:
-                cur.execute(migration_sql)
-                self._conn.commit()
-            except Exception:
-                self._conn.rollback()
-                # Migration already applied or table exists — idempotent
-        cur.close()
+        with self._conn.cursor() as cur:
+            for migration_sql in MIGRATIONS:
+                try:
+                    cur.execute(migration_sql)
+                    self._conn.commit()
+                except Exception:
+                    self._conn.rollback()
+                    # Migration already applied or table exists — idempotent
 
     def append_ledger(
         self, entry_type: str, actor_id: str, tenant_id: str, content: dict[str, Any], content_hash: str
     ) -> int:
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO ledger (entry_type, actor_id, tenant_id, content, content_hash, created_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-            (entry_type, actor_id, tenant_id, json.dumps(content, sort_keys=True),
-             content_hash, datetime.now(timezone.utc).isoformat()),
-        )
-        row_id = cur.fetchone()[0]
-        self._conn.commit()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO ledger (entry_type, actor_id, tenant_id, content, content_hash, created_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                (entry_type, actor_id, tenant_id, json.dumps(content, sort_keys=True),
+                 content_hash, datetime.now(timezone.utc).isoformat()),
+            )
+            row_id = cur.fetchone()[0]
+            self._conn.commit()
         return row_id
 
     def query_ledger(self, tenant_id: str, limit: int = 100) -> list[dict[str, Any]]:
-        cur = self._conn.cursor()
-        cur.execute(
-            "SELECT id, entry_type, actor_id, content, content_hash, created_at "
-            "FROM ledger WHERE tenant_id = %s ORDER BY id DESC LIMIT %s",
-            (tenant_id, limit),
-        )
-        rows = cur.fetchall()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, entry_type, actor_id, content, content_hash, created_at "
+                "FROM ledger WHERE tenant_id = %s ORDER BY id DESC LIMIT %s",
+                (tenant_id, limit),
+            )
+            rows = cur.fetchall()
         return [
             {"id": r[0], "type": r[1], "actor": r[2], "content": json.loads(r[3]), "hash": r[4], "at": r[5]}
             for r in rows
         ]
 
     def ledger_count(self, tenant_id: str | None = None) -> int:
-        cur = self._conn.cursor()
-        if tenant_id:
-            cur.execute("SELECT COUNT(*) FROM ledger WHERE tenant_id = %s", (tenant_id,))
-        else:
-            cur.execute("SELECT COUNT(*) FROM ledger")
-        count = cur.fetchone()[0]
-        cur.close()
+        with self._conn.cursor() as cur:
+            if tenant_id:
+                cur.execute("SELECT COUNT(*) FROM ledger WHERE tenant_id = %s", (tenant_id,))
+            else:
+                cur.execute("SELECT COUNT(*) FROM ledger")
+            count = cur.fetchone()[0]
         return count
 
     def save_request(
         self, request_id: str, tenant_id: str, method: str, path: str, status_code: int, governed: bool
     ) -> None:
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO requests (request_id, tenant_id, method, path, status_code, governed, created_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (request_id) DO UPDATE SET status_code = EXCLUDED.status_code",
-            (request_id, tenant_id, method, path, status_code, 1 if governed else 0,
-             datetime.now(timezone.utc).isoformat()),
-        )
-        self._conn.commit()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO requests (request_id, tenant_id, method, path, status_code, governed, created_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (request_id) DO UPDATE SET status_code = EXCLUDED.status_code",
+                (request_id, tenant_id, method, path, status_code, 1 if governed else 0,
+                 datetime.now(timezone.utc).isoformat()),
+            )
+            self._conn.commit()
 
     def save_session(self, session_id: str, actor_id: str, tenant_id: str) -> None:
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO sessions (session_id, actor_id, tenant_id, active, created_at) "
-            "VALUES (%s, %s, %s, 1, %s) ON CONFLICT (session_id) DO UPDATE SET active = 1",
-            (session_id, actor_id, tenant_id, datetime.now(timezone.utc).isoformat()),
-        )
-        self._conn.commit()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO sessions (session_id, actor_id, tenant_id, active, created_at) "
+                "VALUES (%s, %s, %s, 1, %s) ON CONFLICT (session_id) DO UPDATE SET active = 1",
+                (session_id, actor_id, tenant_id, datetime.now(timezone.utc).isoformat()),
+            )
+            self._conn.commit()
 
     def get_session(self, session_id: str) -> dict[str, Any] | None:
-        cur = self._conn.cursor()
-        cur.execute(
-            "SELECT session_id, actor_id, tenant_id, active, created_at FROM sessions WHERE session_id = %s",
-            (session_id,),
-        )
-        row = cur.fetchone()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "SELECT session_id, actor_id, tenant_id, active, created_at FROM sessions WHERE session_id = %s",
+                (session_id,),
+            )
+            row = cur.fetchone()
         if row is None:
             return None
         return {
@@ -366,28 +359,25 @@ class PostgresStore:
         }
 
     def deactivate_session(self, session_id: str) -> bool:
-        cur = self._conn.cursor()
-        cur.execute("UPDATE sessions SET active = 0 WHERE session_id = %s", (session_id,))
-        affected = cur.rowcount
-        self._conn.commit()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute("UPDATE sessions SET active = 0 WHERE session_id = %s", (session_id,))
+            affected = cur.rowcount
+            self._conn.commit()
         return affected > 0
 
     def active_session_count(self) -> int:
-        cur = self._conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM sessions WHERE active = 1")
-        count = cur.fetchone()[0]
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM sessions WHERE active = 1")
+            count = cur.fetchone()[0]
         return count
 
     def request_count(self, tenant_id: str | None = None) -> int:
-        cur = self._conn.cursor()
-        if tenant_id:
-            cur.execute("SELECT COUNT(*) FROM requests WHERE tenant_id = %s", (tenant_id,))
-        else:
-            cur.execute("SELECT COUNT(*) FROM requests")
-        count = cur.fetchone()[0]
-        cur.close()
+        with self._conn.cursor() as cur:
+            if tenant_id:
+                cur.execute("SELECT COUNT(*) FROM requests WHERE tenant_id = %s", (tenant_id,))
+            else:
+                cur.execute("SELECT COUNT(*) FROM requests")
+            count = cur.fetchone()[0]
         return count
 
     def save_llm_invocation(
@@ -403,38 +393,36 @@ class PostgresStore:
         tenant_id: str = "",
         content_hash: str = "",
     ) -> int:
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO llm_invocations (invocation_id, model_name, provider, input_tokens, output_tokens, "
-            "cost, succeeded, budget_id, tenant_id, content_hash, created_at) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
-            (invocation_id, model_name, provider, input_tokens, output_tokens,
-             cost, 1 if succeeded else 0, budget_id, tenant_id, content_hash,
-             datetime.now(timezone.utc).isoformat()),
-        )
-        row_id = cur.fetchone()[0]
-        self._conn.commit()
-        cur.close()
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO llm_invocations (invocation_id, model_name, provider, input_tokens, output_tokens, "
+                "cost, succeeded, budget_id, tenant_id, content_hash, created_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                (invocation_id, model_name, provider, input_tokens, output_tokens,
+                 cost, 1 if succeeded else 0, budget_id, tenant_id, content_hash,
+                 datetime.now(timezone.utc).isoformat()),
+            )
+            row_id = cur.fetchone()[0]
+            self._conn.commit()
         return row_id
 
     def query_llm_invocations(self, tenant_id: str = "", limit: int = 100) -> list[dict[str, Any]]:
-        cur = self._conn.cursor()
-        if tenant_id:
-            cur.execute(
-                "SELECT id, invocation_id, model_name, provider, input_tokens, output_tokens, "
-                "cost, succeeded, budget_id, tenant_id, content_hash, created_at "
-                "FROM llm_invocations WHERE tenant_id = %s ORDER BY id DESC LIMIT %s",
-                (tenant_id, limit),
-            )
-        else:
-            cur.execute(
-                "SELECT id, invocation_id, model_name, provider, input_tokens, output_tokens, "
-                "cost, succeeded, budget_id, tenant_id, content_hash, created_at "
-                "FROM llm_invocations ORDER BY id DESC LIMIT %s",
-                (limit,),
-            )
-        rows = cur.fetchall()
-        cur.close()
+        with self._conn.cursor() as cur:
+            if tenant_id:
+                cur.execute(
+                    "SELECT id, invocation_id, model_name, provider, input_tokens, output_tokens, "
+                    "cost, succeeded, budget_id, tenant_id, content_hash, created_at "
+                    "FROM llm_invocations WHERE tenant_id = %s ORDER BY id DESC LIMIT %s",
+                    (tenant_id, limit),
+                )
+            else:
+                cur.execute(
+                    "SELECT id, invocation_id, model_name, provider, input_tokens, output_tokens, "
+                    "cost, succeeded, budget_id, tenant_id, content_hash, created_at "
+                    "FROM llm_invocations ORDER BY id DESC LIMIT %s",
+                    (limit,),
+                )
+            rows = cur.fetchall()
         return [
             {
                 "id": r[0], "invocation_id": r[1], "model_name": r[2], "provider": r[3],
@@ -446,23 +434,21 @@ class PostgresStore:
         ]
 
     def llm_total_cost(self, tenant_id: str = "") -> float:
-        cur = self._conn.cursor()
-        if tenant_id:
-            cur.execute("SELECT COALESCE(SUM(cost), 0) FROM llm_invocations WHERE tenant_id = %s", (tenant_id,))
-        else:
-            cur.execute("SELECT COALESCE(SUM(cost), 0) FROM llm_invocations")
-        cost = cur.fetchone()[0]
-        cur.close()
+        with self._conn.cursor() as cur:
+            if tenant_id:
+                cur.execute("SELECT COALESCE(SUM(cost), 0) FROM llm_invocations WHERE tenant_id = %s", (tenant_id,))
+            else:
+                cur.execute("SELECT COALESCE(SUM(cost), 0) FROM llm_invocations")
+            cost = cur.fetchone()[0]
         return float(cost)
 
     def llm_invocation_count(self, tenant_id: str = "") -> int:
-        cur = self._conn.cursor()
-        if tenant_id:
-            cur.execute("SELECT COUNT(*) FROM llm_invocations WHERE tenant_id = %s", (tenant_id,))
-        else:
-            cur.execute("SELECT COUNT(*) FROM llm_invocations")
-        count = cur.fetchone()[0]
-        cur.close()
+        with self._conn.cursor() as cur:
+            if tenant_id:
+                cur.execute("SELECT COUNT(*) FROM llm_invocations WHERE tenant_id = %s", (tenant_id,))
+            else:
+                cur.execute("SELECT COUNT(*) FROM llm_invocations")
+            count = cur.fetchone()[0]
         return count
 
     def close(self) -> None:

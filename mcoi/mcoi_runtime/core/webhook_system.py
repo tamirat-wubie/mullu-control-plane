@@ -65,12 +65,42 @@ class WebhookDelivery:
     created_at: str
 
 
+_PRIVATE_IP_PREFIXES = (
+    "127.", "10.", "0.", "192.168.", "169.254.",
+    "172.16.", "172.17.", "172.18.", "172.19.",
+    "172.20.", "172.21.", "172.22.", "172.23.",
+    "172.24.", "172.25.", "172.26.", "172.27.",
+    "172.28.", "172.29.", "172.30.", "172.31.",
+)
+
+_BLOCKED_HOSTS = frozenset({"localhost", "metadata.google.internal"})
+
+
+def _is_private_url(url: str) -> bool:
+    """Check if a URL points to a private/internal address (SSRF prevention)."""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        if host in _BLOCKED_HOSTS:
+            return True
+        if any(host.startswith(prefix) for prefix in _PRIVATE_IP_PREFIXES):
+            return True
+        if host in ("[::1]", "::1"):
+            return True
+    except Exception:
+        return True  # Fail closed
+    return False
+
+
 class WebhookManager:
     """Manages webhook subscriptions and delivery queue.
 
     Does not perform actual HTTP delivery — instead queues deliveries
     for a background worker. This keeps the governance loop non-blocking.
     """
+
+    _MAX_DELIVERIES = 100_000
 
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
@@ -79,9 +109,11 @@ class WebhookManager:
         self._delivery_counter: int = 0
 
     def subscribe(self, sub: WebhookSubscription) -> WebhookSubscription:
-        """Register a webhook subscription."""
+        """Register a webhook subscription. Rejects private/internal URLs (SSRF prevention)."""
         if sub.subscription_id in self._subscriptions:
             raise ValueError(f"subscription already exists: {sub.subscription_id}")
+        if _is_private_url(sub.url):
+            raise ValueError("webhook URL rejected: private/internal address not allowed")
         self._subscriptions[sub.subscription_id] = sub
         return sub
 
@@ -131,6 +163,9 @@ class WebhookManager:
             )
             self._deliveries.append(delivery)
             deliveries.append(delivery)
+
+        if len(self._deliveries) > self._MAX_DELIVERIES:
+            self._deliveries = self._deliveries[-self._MAX_DELIVERIES:]
 
         return deliveries
 
