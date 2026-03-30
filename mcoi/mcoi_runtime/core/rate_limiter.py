@@ -13,6 +13,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -53,9 +54,10 @@ class TokenBucket:
         self._config = config
         self._tokens: float = float(config.max_tokens)
         self._last_refill: float = time.monotonic()
+        self._lock = threading.Lock()
 
     def _refill(self) -> None:
-        """Add tokens based on elapsed time."""
+        """Add tokens based on elapsed time. Caller must hold _lock."""
         now = time.monotonic()
         elapsed = now - self._last_refill
         self._tokens = min(
@@ -66,18 +68,20 @@ class TokenBucket:
 
     def try_consume(self, tokens: int = 1) -> tuple[bool, float]:
         """Try to consume tokens. Returns (allowed, remaining_tokens)."""
-        self._refill()
-        if tokens > self._config.burst_limit:
+        with self._lock:
+            self._refill()
+            if tokens > self._config.burst_limit:
+                return False, self._tokens
+            if self._tokens >= tokens:
+                self._tokens -= tokens
+                return True, self._tokens
             return False, self._tokens
-        if self._tokens >= tokens:
-            self._tokens -= tokens
-            return True, self._tokens
-        return False, self._tokens
 
     @property
     def remaining(self) -> float:
-        self._refill()
-        return self._tokens
+        with self._lock:
+            self._refill()
+            return self._tokens
 
 
 class RateLimiter:
