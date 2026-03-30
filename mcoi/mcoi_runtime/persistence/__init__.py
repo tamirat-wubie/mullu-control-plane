@@ -22,6 +22,7 @@ from .skill_store import SkillStore
 from .snapshot_store import SnapshotMetadata, SnapshotStore
 from .trace_store import TraceStore
 from .workflow_store import WorkflowStore
+from .state_persistence import StatePersistence, StateSnapshot
 from ._serialization import deserialize_record, serialize_record
 
 __all__ = [
@@ -41,6 +42,8 @@ __all__ = [
     "SkillStore",
     "SnapshotNotFoundError",
     "SnapshotStore",
+    "StatePersistence",
+    "StateSnapshot",
     "TraceNotFoundError",
     "TraceStore",
     "WorkflowStore",

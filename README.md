@@ -41,7 +41,7 @@ mullu-platform/
 \- .github/
 ```
 
-## Current State (v3.10.1)
+## Current State (v3.10.2)
 
 **Stage: production-candidate in final activation**
 
