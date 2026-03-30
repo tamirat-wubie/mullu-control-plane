@@ -159,3 +159,23 @@ def test_full_governed_flow(client: TestClient) -> None:
     }).json()
     assert result["outcome"] == "success"
     assert result["governed"] is True
+
+
+# --- Goal Hierarchy ---
+
+
+def test_action_request_propagates_goal_hierarchy(client: TestClient) -> None:
+    """mission_id and goal_id propagate through action-request response and audit."""
+    reg = client.post("/api/v1/agent/register", json={"agent_name": "goal-agent"}).json()
+    resp = client.post("/api/v1/agent/action-request", json={
+        "agent_id": reg["agent_id"],
+        "action_type": "analyze",
+        "target": "report-q4",
+        "mission_id": "mission-001",
+        "goal_id": "goal-042",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["decision"] == "allow"
+    assert data["mission_id"] == "mission-001"
+    assert data["goal_id"] == "goal-042"
