@@ -18,17 +18,13 @@ from pathlib import Path
 from typing import Callable
 
 from mcoi_runtime.contracts.code import (
-    BuildResult,
-    BuildStatus,
     PatchApplicationResult,
     PatchStatus,
     RepositoryDescriptor,
     SourceFile,
-    TestResult,
-    TestStatus,
     WorkspaceState,
 )
-from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
+from mcoi_runtime.core.invariants import ensure_non_empty_text
 
 
 def _is_within_root(root: Path, target: Path) -> bool:

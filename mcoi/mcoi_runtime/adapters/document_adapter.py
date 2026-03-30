@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from mcoi_runtime.contracts.document import DocumentContent, DocumentFormat
-from mcoi_runtime.core.document import detect_format, ingest_document
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
+from mcoi_runtime.contracts.document import DocumentContent
+from mcoi_runtime.core.document import ingest_document
+from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
 
 
 class DocumentLoadStatus(StrEnum):
