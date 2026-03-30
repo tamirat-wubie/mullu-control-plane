@@ -1,86 +1,88 @@
-# Mullu Platform
+# Mullu Control Plane
 
-Mullu Platform is the umbrella repository for the shared substrate and the
-computer-operations vertical.
+**Govern and verify any AI agent before it touches the real world.**
 
-- **MAF Core** is the general agentic substrate.
-- **MCOI Runtime** is the computer operating intelligence vertical.
-- **Mullu Control Plane** is the operator-facing gateway, status, approvals, and
-  trace surface.
-- **Shared Contracts** are the canonical schemas and invariants used by both
-  runtimes.
+Connect your existing agents (Claude Code, OpenAI, scripts, tools), enforce policy on every action, preserve audit trails, and recover safely across restarts.
 
-The repository keeps the substrate and the computer-operations vertical in a hard
-split. Shared meaning lives once in `docs/` and `schemas/`.
+## What It Does
 
-## Repository Tree
-
-```text
-mullu-platform/
-|- README.md
-|- LICENSE
-|- .gitignore
-|- docs/
-|- schemas/
-|- maf/
-|  \- rust/
-|- mcoi/
-|  |- pyproject.toml
-|  |- examples/
-|  |- mcoi_runtime/
-|  |  |- contracts/
-|  |  |- core/
-|  |  |- adapters/
-|  |  |- app/
-|  |  |- persistence/
-|  |  \- pilot/
-|  \- tests/
-|- integration/
-|- scripts/
-|- tests/
-\- .github/
-```
-
-## Current State (v3.10.2)
-
-**Stage: production-candidate in final activation**
-
-- **MCOI Runtime** — governed AI operating system with 162 API endpoints
-  across 8 router modules, multi-tenant budget enforcement, hash-chain audit
-  trails, LLM orchestration (Anthropic/OpenAI/stub), agent workflows, cost
-  analytics, and full governance guard chain. 44,500+ Python tests.
-- **MAF Core** — certifying Rust substrate with transition receipts, proof
-  capsules, causal lineage, benchmark gates, and 180 tests.
-- **Shared Contracts** — canonical schemas and docs defining cross-runtime
-  meaning, with serde-compatible Python↔Rust proof objects.
-
-### Key Capabilities
-
-| Capability | Description |
-|------------|-------------|
-| LLM Governance | Budget enforcement, cost tracking, circuit breakers |
-| Multi-Tenant | Isolated budgets, ledgers, conversations per tenant |
-| Audit Trail | Hash-chain integrity, query by action/tenant/outcome |
-| Agent Orchestration | Workflows, chains, tool-augmented agents, A/B testing |
-| Observability | Health v3, Prometheus metrics, Grafana dashboards, tracing |
-| Security | API key auth, CORS lockdown, SSRF protection, read timeouts |
-| MAF Proof Substrate | Transition receipts, guard verdicts, causal lineage |
-| Operational Certification | Persistence lifecycle, concurrency stress, staging drill |
+- **Govern** — every agent action goes through a guard chain (auth, rate-limit, budget, policy) before it runs
+- **Verify** — hash-chained audit trail proves what happened, who did it, and why it was allowed
+- **Replay** — deterministic replay lets you re-examine any governed execution
+- **Recover** — coordination checkpoints survive restarts with governed restore (lease expiry, policy drift detection)
 
 ## Quick Start
 
 ```bash
 cd mcoi
 pip install -e ".[dev]"
-uvicorn mcoi_runtime.app.server:app --reload
-curl http://localhost:8000/health
+mcoi init
 ```
 
-See [`DEPLOYMENT.md`](DEPLOYMENT.md) for Docker, production setup, and environment variables.
+Start the server and run the demo:
 
-## Practical Notes
+```bash
+uvicorn mcoi_runtime.app.server:app --port 8000
+mcoi demo
+```
 
-- The CLI entrypoint is `mcoi`.
-- Portable example requests live under `mcoi/examples/`.
-- Runtime limitations are tracked in `KNOWN_LIMITATIONS_v0.1.md`.
-- Deployment profiles and env vars are documented in `DEPLOYMENT.md`.
+## Connect Your Agent
+
+Any agent can register, request permission, and submit results through 4 HTTP calls:
+
+```bash
+# Register
+curl -X POST localhost:8000/api/v1/agent/register \
+  -H "Content-Type: application/json" \
+  -d '{"agent_name": "my-agent", "capabilities": ["file_read", "shell"]}'
+
+# Request permission for an action
+curl -X POST localhost:8000/api/v1/agent/action-request \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id": "agent-xxx", "action_type": "shell", "target": "ls -la"}'
+
+# Submit result
+curl -X POST localhost:8000/api/v1/agent/action-result \
+  -H "Content-Type: application/json" \
+  -d '{"agent_id": "agent-xxx", "action_id": "act-000001", "outcome": "success", "result": {}}'
+
+# Check audit trail
+curl localhost:8000/api/v1/audit?action=agent.adapter.action_request
+```
+
+## What You Get
+
+| Layer | Capability |
+|-------|-----------|
+| **Governance** | Guard chain, policy packs, budget enforcement, rate limiting |
+| **Audit** | Hash-chain integrity, searchable by tenant/action/outcome |
+| **Providers** | Anthropic, OpenAI, Gemini, Ollama, Stub (3-tier stack) |
+| **Coordination** | Checkpoint/restore with lease expiry, retry caps, policy drift detection |
+| **Observability** | Health v3, Prometheus metrics, Grafana dashboards, request tracing |
+| **Security** | API key auth, SSRF protection, thread-safe caches, bounded queues |
+
+## Architecture
+
+```
+mullu-control-plane/
+|- mcoi/              # MCOI Runtime (Python)
+|  |- mcoi_runtime/
+|  |  |- app/         # FastAPI server, CLI, 9 router modules
+|  |  |- core/        # Engines (governance, LLM, coordination, workflow)
+|  |  |- contracts/   # Frozen dataclass contracts (160+ types)
+|  |  |- adapters/    # LLM backends, filesystem, code, document
+|  |  |- persistence/ # Stores (trace, snapshot, coordination, memory)
+|  |  \- pilot/       # Deployment paths
+|  \- tests/          # 44,700+ tests
+|- maf/               # MAF Core (Rust certifying substrate)
+|- schemas/           # Canonical JSON schemas
+|- scripts/           # Validation, staging drill
+\- .github/           # CI workflows (nightly + provider certification)
+```
+
+## Docs
+
+- [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) — profiles, CLI, env vars, provider config
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Docker, production setup, K8s manifests
+- [KNOWN_LIMITATIONS_v0.1.md](KNOWN_LIMITATIONS_v0.1.md) — documented limitations
+- [SECURITY_MODEL_v0.1.md](SECURITY_MODEL_v0.1.md) — security model and boundaries
