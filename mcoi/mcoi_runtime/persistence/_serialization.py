@@ -21,6 +21,8 @@ from .errors import CorruptedDataError
 
 RecordT = TypeVar("RecordT")
 
+_MAX_DESERIALIZATION_DEPTH = 32
+
 
 def serialize_record(record: Any) -> str:
     """Deterministic JSON serialization for a ContractRecord or frozen dataclass.
@@ -87,7 +89,7 @@ def deserialize_record(json_str: str, record_type: Type[RecordT]) -> RecordT:
         raise CorruptedDataError(f"expected JSON object, got {type(raw).__name__}")
 
     try:
-        return _reconstruct_dataclass(raw, record_type)
+        return _reconstruct_dataclass(raw, record_type, depth=0)
     except CorruptedDataError:
         raise
     except (TypeError, ValueError) as exc:
@@ -96,8 +98,12 @@ def deserialize_record(json_str: str, record_type: Type[RecordT]) -> RecordT:
         ) from exc
 
 
-def _reconstruct_dataclass(raw: dict[str, Any], dc_type: type) -> Any:
+def _reconstruct_dataclass(raw: dict[str, Any], dc_type: type, *, depth: int = 0) -> Any:
     """Recursively reconstruct a dataclass from a raw dict."""
+    if depth > _MAX_DESERIALIZATION_DEPTH:
+        raise CorruptedDataError(
+            f"deserialization depth limit ({_MAX_DESERIALIZATION_DEPTH}) exceeded"
+        )
     try:
         hints = get_type_hints(dc_type)
     except (TypeError, NameError, AttributeError) as exc:
@@ -112,15 +118,19 @@ def _reconstruct_dataclass(raw: dict[str, Any], dc_type: type) -> Any:
         value = raw[f.name]
         field_type = hints.get(f.name)
         if field_type is not None:
-            reconstructed[f.name] = _reconstruct_value(value, field_type, f"field '{f.name}'")
+            reconstructed[f.name] = _reconstruct_value(value, field_type, f"field '{f.name}'", depth=depth + 1)
         else:
             reconstructed[f.name] = value
 
     return dc_type(**reconstructed)
 
 
-def _reconstruct_value(value: Any, target_type: type, context: str) -> Any:
+def _reconstruct_value(value: Any, target_type: type, context: str, *, depth: int = 0) -> Any:
     """Reconstruct a single value to match the declared target type."""
+    if depth > _MAX_DESERIALIZATION_DEPTH:
+        raise CorruptedDataError(
+            f"deserialization depth limit ({_MAX_DESERIALIZATION_DEPTH}) exceeded at {context}"
+        )
 
     # Handle None
     if value is None:
@@ -137,11 +147,11 @@ def _reconstruct_value(value: Any, target_type: type, context: str) -> Any:
         if value is None:
             return None
         if len(non_none_args) == 1:
-            return _reconstruct_value(value, non_none_args[0], context)
+            return _reconstruct_value(value, non_none_args[0], context, depth=depth + 1)
         # Ambiguous union — try each non-None arg, fail if none works
         for arg in non_none_args:
             try:
-                return _reconstruct_value(value, arg, context)
+                return _reconstruct_value(value, arg, context, depth=depth + 1)
             except (CorruptedDataError, TypeError, ValueError):
                 continue
         raise CorruptedDataError(f"cannot reconstruct {context}: ambiguous union type {target_type}")
@@ -149,7 +159,7 @@ def _reconstruct_value(value: Any, target_type: type, context: str) -> Any:
     # Dataclass — recursive reconstruction
     if is_dataclass(target_type) and isinstance(target_type, type):
         if isinstance(value, dict):
-            return _reconstruct_dataclass(value, target_type)
+            return _reconstruct_dataclass(value, target_type, depth=depth + 1)
         # Already the right type (shouldn't happen from JSON, but defensive)
         if is_dataclass(value) and isinstance(value, target_type):
             return value
@@ -170,12 +180,12 @@ def _reconstruct_value(value: Any, target_type: type, context: str) -> Any:
             if len(args) == 2 and args[1] is Ellipsis:
                 # tuple[X, ...] — homogeneous tuple
                 elem_type = args[0]
-                return tuple(_reconstruct_value(v, elem_type, f"{context}[{i}]") for i, v in enumerate(value))
+                return tuple(_reconstruct_value(v, elem_type, f"{context}[{i}]", depth=depth + 1) for i, v in enumerate(value))
             else:
                 # Fixed-length tuple — tuple[X, Y, Z]
                 if len(value) != len(args):
                     raise CorruptedDataError(f"cannot reconstruct {context}: expected {len(args)} elements, got {len(value)}")
-                return tuple(_reconstruct_value(v, t, f"{context}[{i}]") for i, (v, t) in enumerate(zip(value, args)))
+                return tuple(_reconstruct_value(v, t, f"{context}[{i}]", depth=depth + 1) for i, (v, t) in enumerate(zip(value, args)))
         return tuple(value)
 
     # list — reconstruct elements
@@ -184,7 +194,7 @@ def _reconstruct_value(value: Any, target_type: type, context: str) -> Any:
             raise CorruptedDataError(f"cannot reconstruct {context}: expected list, got {type(value).__name__}")
         if args:
             elem_type = args[0]
-            return [_reconstruct_value(v, elem_type, f"{context}[{i}]") for i, v in enumerate(value)]
+            return [_reconstruct_value(v, elem_type, f"{context}[{i}]", depth=depth + 1) for i, v in enumerate(value)]
         return list(value)
 
     # dict/Mapping — reconstruct values if value type is known
@@ -193,7 +203,7 @@ def _reconstruct_value(value: Any, target_type: type, context: str) -> Any:
             raise CorruptedDataError(f"cannot reconstruct {context}: expected dict, got {type(value).__name__}")
         if args and len(args) == 2:
             _, val_type = args
-            return {k: _reconstruct_value(v, val_type, f"{context}[{k}]") for k, v in value.items()}
+            return {k: _reconstruct_value(v, val_type, f"{context}[{k}]", depth=depth + 1) for k, v in value.items()}
         return dict(value)
 
     # Mapping type from typing — pass through

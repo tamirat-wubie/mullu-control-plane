@@ -155,9 +155,6 @@ class CircuitBreaker:
         if not self.allow_request():
             raise RuntimeError(f"circuit breaker is {self.state}")
 
-        if self._state == CircuitState.HALF_OPEN:
-            self._half_open_attempts += 1
-
         try:
             result = fn()
             self.record_success()
