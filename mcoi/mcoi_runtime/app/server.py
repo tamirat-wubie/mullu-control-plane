@@ -7,6 +7,7 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
+import tempfile
 from contextlib import asynccontextmanager
 from typing import Any
 from fastapi import FastAPI, HTTPException, Header
@@ -192,6 +193,23 @@ observability.register_source("agents", lambda: {"agents": agent_registry.count,
 observability.register_source("audit", lambda: audit_trail.summary())
 observability.register_source("certification", lambda: cert_daemon.status())
 observability.register_source("workflows", lambda: workflow_engine.summary())
+
+# Coordination engine with checkpoint persistence
+from mcoi_runtime.core.coordination import CoordinationEngine
+from mcoi_runtime.persistence import CoordinationStore
+from pathlib import Path as _Path
+
+_coordination_base = _Path(os.environ.get(
+    "MULLU_COORDINATION_DIR",
+    os.path.join(os.environ.get("MULLU_DATA_DIR", tempfile.gettempdir()), "mullu-coordination"),
+))
+coordination_store = CoordinationStore(_coordination_base)
+coordination_engine = CoordinationEngine(
+    clock=_clock,
+    coordination_store=coordination_store,
+    policy_pack_id="default",
+)
+observability.register_source("coordination", lambda: coordination_engine.summary())
 
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
@@ -848,6 +866,8 @@ deps.set("replay_recorder", replay_recorder)
 deps.set("chat_workflow", chat_workflow)
 deps.set("agent_chain", agent_chain)
 deps.set("agent_orchestrator", agent_orchestrator)
+deps.set("coordination_engine", coordination_engine)
+deps.set("coordination_store", coordination_store)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)

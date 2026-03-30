@@ -1,10 +1,12 @@
-"""Purpose: canonical coordination contracts for delegation, handoff, merge, and conflict.
+"""Purpose: canonical coordination contracts for delegation, handoff, merge, conflict, and checkpoint.
 Governance scope: coordination plane contract typing only.
 Dependencies: shared contract base helpers.
 Invariants:
   - All coordination preserves provenance and identity.
   - Delegation is explicit with named target.
   - Conflicts are recorded, never silently discarded.
+  - Checkpoints carry lease expiration and retry counts.
+  - Restore is governed: expired, drifted, or over-retried checkpoints are rejected.
 """
 
 from __future__ import annotations
@@ -13,7 +15,13 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
+from ._base import (
+    ContractRecord,
+    freeze_value,
+    require_datetime_text,
+    require_non_empty_text,
+    require_non_negative_int,
+)
 
 
 class DelegationStatus(StrEnum):
@@ -154,3 +162,82 @@ class ConflictRecord(ContractRecord):
         if self.resolution_id is not None:
             object.__setattr__(self, "resolution_id", require_non_empty_text(self.resolution_id, "resolution_id"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
+
+
+class RestoreStatus(StrEnum):
+    """Outcome of attempting to restore a coordination checkpoint."""
+
+    RESUMED = "resumed"
+    EXPIRED = "expired"
+    INVALID = "invalid"
+    NEEDS_REVIEW = "needs_review"
+    ABORTED = "aborted"
+
+
+@dataclass(frozen=True, slots=True)
+class CoordinationCheckpoint(ContractRecord):
+    """Snapshot of coordination engine state for persistence and governed restore."""
+
+    checkpoint_id: str
+    delegations: tuple[DelegationRequest, ...]
+    delegation_results: tuple[DelegationResult, ...]
+    handoffs: tuple[HandoffRecord, ...]
+    merges: tuple[MergeDecision, ...]
+    conflicts: tuple[ConflictRecord, ...]
+    created_at: str
+    lease_expires_at: str
+    retry_count: int
+    policy_pack_id: str
+    restore_conditions: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "checkpoint_id",
+            require_non_empty_text(self.checkpoint_id, "checkpoint_id"),
+        )
+        object.__setattr__(
+            self, "created_at",
+            require_datetime_text(self.created_at, "created_at"),
+        )
+        object.__setattr__(
+            self, "lease_expires_at",
+            require_datetime_text(self.lease_expires_at, "lease_expires_at"),
+        )
+        object.__setattr__(
+            self, "retry_count",
+            require_non_negative_int(self.retry_count, "retry_count"),
+        )
+        object.__setattr__(
+            self, "policy_pack_id",
+            require_non_empty_text(self.policy_pack_id, "policy_pack_id"),
+        )
+        object.__setattr__(
+            self, "restore_conditions",
+            freeze_value(self.restore_conditions),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class RestoreOutcome(ContractRecord):
+    """Result of attempting to restore a coordination checkpoint."""
+
+    checkpoint_id: str
+    status: RestoreStatus
+    reason: str
+    restored_at: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "checkpoint_id",
+            require_non_empty_text(self.checkpoint_id, "checkpoint_id"),
+        )
+        if not isinstance(self.status, RestoreStatus):
+            raise ValueError("status must be a RestoreStatus value")
+        object.__setattr__(
+            self, "reason",
+            require_non_empty_text(self.reason, "reason"),
+        )
+        object.__setattr__(
+            self, "restored_at",
+            require_datetime_text(self.restored_at, "restored_at"),
+        )
