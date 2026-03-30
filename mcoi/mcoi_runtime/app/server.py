@@ -963,6 +963,7 @@ from mcoi_runtime.app.routers.ops import router as ops_router
 from mcoi_runtime.app.routers.adapter import router as adapter_router
 from mcoi_runtime.app.routers.compliance import router as compliance_router
 from mcoi_runtime.app.routers.scheduler import router as scheduler_router
+from mcoi_runtime.app.routers.console import router as console_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -975,6 +976,7 @@ app.include_router(ops_router)
 app.include_router(adapter_router)
 app.include_router(compliance_router)
 app.include_router(scheduler_router)
+app.include_router(console_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
