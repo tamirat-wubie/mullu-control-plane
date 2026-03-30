@@ -10,6 +10,7 @@ Invariants:
 """
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -38,48 +39,52 @@ class IdempotencyStore:
         self._cache: dict[str, CachedResponse] = {}
         self._hits = 0
         self._misses = 0
+        self._lock = threading.Lock()
 
     def get(self, key: str) -> CachedResponse | None:
         """Look up a cached response by idempotency key."""
-        entry = self._cache.get(key)
-        if entry is None:
-            self._misses += 1
-            return None
-        if entry.age_seconds > self._ttl:
-            del self._cache[key]
-            self._misses += 1
-            return None
-        self._hits += 1
-        return entry
+        with self._lock:
+            entry = self._cache.get(key)
+            if entry is None:
+                self._misses += 1
+                return None
+            if entry.age_seconds > self._ttl:
+                del self._cache[key]
+                self._misses += 1
+                return None
+            self._hits += 1
+            return entry
 
     def store(self, key: str, status_code: int, body: dict[str, Any],
               endpoint: str = "") -> CachedResponse:
         """Store a response for an idempotency key."""
-        if len(self._cache) >= self._max_entries:
-            # Evict oldest entry
-            oldest_key = min(self._cache, key=lambda k: self._cache[k].created_at)
-            del self._cache[oldest_key]
+        with self._lock:
+            if len(self._cache) >= self._max_entries:
+                oldest_key = min(self._cache, key=lambda k: self._cache[k].created_at)
+                del self._cache[oldest_key]
 
-        entry = CachedResponse(
-            key=key, status_code=status_code, body=body,
-            created_at=time.time(), endpoint=endpoint,
-        )
-        self._cache[key] = entry
-        return entry
+            entry = CachedResponse(
+                key=key, status_code=status_code, body=body,
+                created_at=time.time(), endpoint=endpoint,
+            )
+            self._cache[key] = entry
+            return entry
 
     def invalidate(self, key: str) -> bool:
-        if key in self._cache:
-            del self._cache[key]
-            return True
-        return False
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+                return True
+            return False
 
     def cleanup_expired(self) -> int:
         """Remove expired entries. Returns count removed."""
-        now = time.time()
-        expired = [k for k, v in self._cache.items() if now - v.created_at > self._ttl]
-        for k in expired:
-            del self._cache[k]
-        return len(expired)
+        with self._lock:
+            now = time.time()
+            expired = [k for k, v in self._cache.items() if now - v.created_at > self._ttl]
+            for k in expired:
+                del self._cache[k]
+            return len(expired)
 
     @property
     def size(self) -> int:
