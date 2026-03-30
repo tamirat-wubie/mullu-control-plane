@@ -138,11 +138,12 @@ def bootstrap_llm(
     if default_name not in backends:
         default_name = "stub"
 
-    # Create bridge with default backend
+    # Create bridge with default backend and shared budget manager
     bridge = LLMIntegrationBridge(
         clock=clock,
         default_backend=backends[default_name],
         ledger_sink=ledger_sink,
+        budget_manager=budget_manager,
     )
 
     # Register all other backends
@@ -159,7 +160,6 @@ def bootstrap_llm(
         max_tokens_per_call=llm_config.max_tokens_per_call,
     )
     bridge.register_budget(default_budget)
-    budget_manager.register(default_budget)
 
     result = LLMBootstrapResult(
         bridge=bridge,

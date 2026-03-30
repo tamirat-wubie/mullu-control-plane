@@ -63,9 +63,10 @@ class LLMIntegrationBridge:
         clock: Callable[[], str],
         default_backend: LLMBackend | None = None,
         ledger_sink: Callable[[dict[str, Any]], None] | None = None,
+        budget_manager: LLMBudgetManager | None = None,
     ) -> None:
         self._clock = clock
-        self._budget_manager = LLMBudgetManager()
+        self._budget_manager = budget_manager or LLMBudgetManager()
         self._backends: dict[str, LLMBackend] = {}
         self._adapters: dict[str, GovernedLLMAdapter] = {}
         self._invocation_records: list[LLMInvocationRecord] = []
