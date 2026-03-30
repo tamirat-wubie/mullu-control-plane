@@ -6,6 +6,19 @@ Invariants: canonical shared contracts are adopted without reinterpretation.
 
 from .capability import CapabilityDescriptor
 from .connector import ConnectorDescriptor, ConnectorResult, ConnectorStatus
+from .coordination import (
+    ConflictRecord,
+    ConflictStrategy,
+    CoordinationCheckpoint,
+    DelegationRequest,
+    DelegationResult,
+    DelegationStatus as CoordinationDelegationStatus,
+    HandoffRecord as CoordinationHandoffRecord,
+    MergeDecision,
+    MergeOutcome,
+    RestoreOutcome,
+    RestoreStatus,
+)
 from .environment import EnvironmentFingerprint, PlatformDescriptor, RuntimeDescriptor
 from .evidence import EvidenceRecord
 from .execution import AcceptedRiskState, EffectRecord, ExecutionClosure, ExecutionOutcome, ExecutionResult
@@ -1915,6 +1928,17 @@ __all__ = [
     "ConnectorDescriptor",
     "ConnectorResult",
     "ConnectorStatus",
+    "ConflictRecord",
+    "ConflictStrategy",
+    "CoordinationCheckpoint",
+    "CoordinationDelegationStatus",
+    "CoordinationHandoffRecord",
+    "DelegationRequest",
+    "DelegationResult",
+    "MergeDecision",
+    "MergeOutcome",
+    "RestoreOutcome",
+    "RestoreStatus",
     "DecisionReason",
     "EffectRecord",
     "EnvironmentFingerprint",

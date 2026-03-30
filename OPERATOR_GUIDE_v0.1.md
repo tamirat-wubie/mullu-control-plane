@@ -211,6 +211,12 @@ points for operators:
 
 - Working/episodic memory persistence is available, but only when you wire a
   local memory store and request restore explicitly.
+- Coordination state persistence is available via explicit checkpoint/restore.
+  Set `MULLU_COORDINATION_DIR` to control storage location (defaults to
+  `$MULLU_DATA_DIR/mullu-coordination` or system temp). Checkpoints carry lease
+  expiration (default 1 hour), retry counts (max 3), and policy pack identity.
+  On restore, expired leases are rejected, policy pack drift triggers operator
+  review, and excessive retries cause abort.
 - Policy packs are enforced during evaluation through the runtime policy gate.
 - No web UI -- CLI only.
 - No background scheduling -- temporal contracts exist but no daemon monitors them.

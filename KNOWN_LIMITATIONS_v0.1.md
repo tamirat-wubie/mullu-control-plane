@@ -49,9 +49,12 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Coordination
 
-- **Coordination state is in-memory only.** Active workflow coordination, delegation,
-  and handoff context are not persisted. Restarting the runtime loses in-flight
-  coordination state and requires operator restart from a governed entry point.
+- **Coordination state persistence is explicit and opt-in.** The runtime supports
+  deterministic checkpoint/restore for coordination state (delegations, handoffs,
+  merges, conflicts), but it does not auto-save or auto-restore. A caller must
+  configure a coordination store and request checkpoint/restore explicitly. Restore
+  is governed: expired leases are rejected, policy pack drift triggers review, and
+  retry counts are tracked to prevent zombie workflows.
 
 ## Replay
 

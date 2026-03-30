@@ -73,7 +73,8 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
         "make_dataclass",
     ),
     "coordination_persistence_limitation": (
-        "Coordination state is in-memory only",
+        "Coordination state persistence is explicit and opt-in",
+        "does not auto-save or auto-restore",
     ),
     "memory_persistence_limitation": (
         "Working and episodic memory persistence is explicit and opt-in",
