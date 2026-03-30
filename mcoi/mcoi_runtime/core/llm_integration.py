@@ -27,7 +27,6 @@ from mcoi_runtime.adapters.llm_adapter import (
     GovernedLLMAdapter,
     LLMBackend,
     LLMBudgetManager,
-    StubLLMBackend,
 )
 
 

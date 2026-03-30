@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,9 +72,6 @@ class TokenBucket:
         if self._tokens >= tokens:
             self._tokens -= tokens
             return True, self._tokens
-        # Calculate retry-after
-        deficit = tokens - self._tokens
-        retry_after = deficit / self._config.refill_rate if self._config.refill_rate > 0 else 999.0
         return False, self._tokens
 
     @property

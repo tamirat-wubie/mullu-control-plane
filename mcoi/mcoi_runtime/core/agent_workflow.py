@@ -14,15 +14,12 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from mcoi_runtime.core.agent_protocol import (
     AgentCapability,
-    AgentDescriptor,
-    AgentRegistry,
     TaskManager,
-    TaskResult,
     TaskSpec,
     TaskStatus,
 )
