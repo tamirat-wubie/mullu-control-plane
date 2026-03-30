@@ -201,8 +201,8 @@ def render_prompt(req: PromptRenderRequest):
     deps.metrics.inc("requests_governed")
     try:
         rendered = deps.prompt_engine.render(req.template_id, req.variables)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
+    except ValueError:
+        raise HTTPException(400, detail={"error": "invalid request", "error_code": "validation_error", "governed": True})
 
     response: dict[str, Any] = {
         "template_id": rendered.template_id,
@@ -495,8 +495,8 @@ def export_data(req: DataExportRequest):
             source=req.source, format=fmt,
             fields=tuple(req.fields), filters=req.filters, limit=req.limit,
         ))
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
+    except ValueError:
+        raise HTTPException(400, detail={"error": "invalid request", "error_code": "validation_error", "governed": True})
     return {
         "export": result.to_dict(),
         "content": result.content,

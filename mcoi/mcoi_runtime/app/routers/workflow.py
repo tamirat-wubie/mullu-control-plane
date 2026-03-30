@@ -274,8 +274,8 @@ def execute_workflow_template(req: TemplateExecuteRequest):
     deps.metrics.inc("requests_governed")
     try:
         steps = deps.wf_templates.instantiate(req.template_id, req.params)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
+    except ValueError:
+        raise HTTPException(400, detail={"error": "invalid template request", "error_code": "validation_error", "governed": True})
 
     result = deps.agent_chain.execute(steps, initial_input=req.initial_input)
     return {
