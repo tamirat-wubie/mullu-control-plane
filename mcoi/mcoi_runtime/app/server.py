@@ -948,6 +948,7 @@ from mcoi_runtime.app.routers.agent import router as agent_router
 from mcoi_runtime.app.routers.data import router as data_router
 from mcoi_runtime.app.routers.ops import router as ops_router
 from mcoi_runtime.app.routers.adapter import router as adapter_router
+from mcoi_runtime.app.routers.compliance import router as compliance_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -958,6 +959,7 @@ app.include_router(agent_router)
 app.include_router(data_router)
 app.include_router(ops_router)
 app.include_router(adapter_router)
+app.include_router(compliance_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
