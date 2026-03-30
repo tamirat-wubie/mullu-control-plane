@@ -2,7 +2,8 @@
 """Staging Drill — automated end-to-end validation of the governed platform.
 
 Proves the full lifecycle: start → authenticate → execute → persist →
-provider call → inspect ledger → restart → verify continuity.
+provider call → inspect ledger → coordination checkpoint → restore →
+state persistence → verify continuity.
 
 Usage:
   python scripts/staging_drill.py [--base-url http://localhost:8000]
@@ -187,6 +188,50 @@ def run_drill(base: str = "http://localhost:8000") -> list[DrillResult]:
             return False, f"shutdown returned {code}"
         return True, f"handlers registered"
     step("13. Shutdown config", check_shutdown)
+
+    # 14. Coordination checkpoint save
+    def save_coordination_checkpoint():
+        code, data = _post(f"{base}/api/v1/coordination/checkpoint", {
+            "checkpoint_id": "drill-checkpoint",
+            "lease_duration_seconds": 3600,
+        })
+        if code != 200:
+            return False, f"checkpoint save returned {code}: {data}"
+        return data.get("governed", False), (
+            f"delegations={data.get('delegations', 0)}, "
+            f"handoffs={data.get('handoffs', 0)}, "
+            f"lease={data.get('lease_expires_at', 'unknown')}"
+        )
+    step("14. Save coordination checkpoint", save_coordination_checkpoint)
+
+    # 15. Coordination checkpoint restore
+    def restore_coordination_checkpoint():
+        code, data = _post(f"{base}/api/v1/coordination/restore", {
+            "checkpoint_id": "drill-checkpoint",
+        })
+        if code != 200:
+            return False, f"checkpoint restore returned {code}: {data}"
+        return data.get("status") == "resumed", (
+            f"status={data.get('status', 'unknown')}, "
+            f"reason={data.get('reason', 'none')}"
+        )
+    step("15. Restore coordination checkpoint", restore_coordination_checkpoint)
+
+    # 16. State persistence save/load
+    def check_state_persistence():
+        code, data = _post(f"{base}/api/v1/state/save", {
+            "state_type": "drill_state",
+            "data": {"drill": True, "step": 16, "ts": time.time()},
+        })
+        if code != 200:
+            return False, f"state save returned {code}: {data}"
+        code2, data2 = _get(f"{base}/api/v1/state/drill_state")
+        if code2 != 200:
+            return False, f"state load returned {code2}: {data2}"
+        return data2.get("data", {}).get("drill") is True, (
+            f"hash={data.get('state_hash', 'none')[:16]}"
+        )
+    step("16. State persistence round-trip", check_state_persistence)
 
     return results
 
