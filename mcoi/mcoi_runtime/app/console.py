@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from .view_models import (
     CoordinationSummaryView,
-    ErrorView,
     ExecutionSummaryView,
     GoalSummaryView,
     GraphSummaryView,

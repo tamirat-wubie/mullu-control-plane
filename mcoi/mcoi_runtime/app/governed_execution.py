@@ -7,11 +7,9 @@ Dependencies: governed_dispatcher, dispatcher.
 Invariants: all operator dispatches flow through governed spine.
 """
 from __future__ import annotations
-from typing import Any
-
-from mcoi_runtime.core.dispatcher import Dispatcher, DispatchRequest
+from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.governed_dispatcher import (
-    GovernedDispatcher, GovernedDispatchContext, GovernedDispatchResult,
+    GovernedDispatcher, GovernedDispatchContext,
 )
 from mcoi_runtime.contracts.execution import ExecutionResult
 

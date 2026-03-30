@@ -43,7 +43,7 @@ def create_tenant_budget(req: TenantBudgetRequest):
     deps.tenant_budget_mgr.set_policy(TenantBudgetPolicy(
         tenant_id=req.tenant_id, max_cost=req.max_cost, max_calls=req.max_calls,
     ))
-    budget = deps.tenant_budget_mgr.ensure_budget(req.tenant_id)
+    deps.tenant_budget_mgr.ensure_budget(req.tenant_id)
     deps.audit_trail.record(
         action="tenant.budget.create", actor_id="system",
         tenant_id=req.tenant_id, target=req.tenant_id, outcome="success",

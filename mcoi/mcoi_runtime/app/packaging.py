@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from mcoi_runtime.app.deployment_profiles import DeploymentProfile, get_profile, BUILTIN_PROFILES
+from mcoi_runtime.app.deployment_profiles import get_profile, BUILTIN_PROFILES
 from mcoi_runtime.contracts.autonomy import AutonomyMode
 
 
