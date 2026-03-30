@@ -3,8 +3,9 @@
 import pytest
 from mcoi_runtime.core.governance_guard import (
     GovernanceGuard, GovernanceGuardChain, GuardResult,
-    create_rate_limit_guard, create_budget_guard, create_tenant_guard,
+    create_rate_limit_guard, create_budget_guard, create_tenant_guard, create_api_key_guard,
 )
+from mcoi_runtime.core.api_key_auth import APIKeyManager
 from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
 from mcoi_runtime.core.tenant_budget import TenantBudgetManager
 
@@ -111,3 +112,32 @@ class TestBuiltInGuards:
         guard = create_tenant_guard()
         result = guard.check({"tenant_id": "x" * 200})
         assert result.allowed is False
+
+    def test_api_key_guard_allows_missing_header_when_optional(self):
+        mgr = APIKeyManager()
+        guard = create_api_key_guard(mgr, require_auth=False)
+        result = guard.check({})
+        assert result.allowed is True
+
+    def test_api_key_guard_rejects_missing_header_when_required(self):
+        mgr = APIKeyManager()
+        guard = create_api_key_guard(mgr, require_auth=True)
+        result = guard.check({})
+        assert result.allowed is False
+        assert "missing Authorization" in result.reason
+
+    def test_api_key_guard_rejects_blank_bearer_when_required(self):
+        mgr = APIKeyManager()
+        guard = create_api_key_guard(mgr, require_auth=True)
+        result = guard.check({"authorization": "Bearer   "})
+        assert result.allowed is False
+        assert "missing bearer token" in result.reason
+
+    def test_api_key_guard_propagates_tenant_from_key(self):
+        mgr = APIKeyManager()
+        raw_key, _ = mgr.create_key("tenant-123", frozenset({"read"}))
+        guard = create_api_key_guard(mgr, require_auth=True)
+        ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": "spoofed"}
+        result = guard.check(ctx)
+        assert result.allowed is True
+        assert ctx["tenant_id"] == "tenant-123"

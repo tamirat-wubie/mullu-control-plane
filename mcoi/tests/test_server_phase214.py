@@ -53,6 +53,20 @@ class TestAutoRoutedCompletion:
         assert "claude-haiku-4-5" in ids
         assert "claude-opus-4-6" in ids
 
+    def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("auto-route-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/complete/auto", json={"prompt": "hello"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "auto-route-secret" not in str(resp.json())
+
 
 class TestCorrelationEndpoint:
     def test_active_correlations(self, client):

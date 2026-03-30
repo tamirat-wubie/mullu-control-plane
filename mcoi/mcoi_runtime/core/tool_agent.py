@@ -14,6 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -78,6 +79,7 @@ class ToolAugmentedAgent:
         available = self._tools.list_tools()
         if tool_ids is not None:
             available = [t for t in available if t.tool_id in tool_ids]
+        allowed_tool_ids = {tool.tool_id for tool in available}
 
         # Build tool-augmented prompt
         tool_descriptions = "\n".join(
@@ -106,7 +108,12 @@ class ToolAugmentedAgent:
                 parsed = self._parse_tool_call(line)
                 if parsed:
                     tool_id, args = parsed
-                    result = self._tools.invoke(tool_id, args, tenant_id=tenant_id)
+                    result = self._tools.invoke(
+                        tool_id,
+                        args,
+                        tenant_id=tenant_id,
+                        allowed_tool_ids=allowed_tool_ids,
+                    )
                     tool_calls.append(ToolCallRecord(
                         tool_id=tool_id, arguments=args,
                         result=result, step_index=step_idx,
@@ -128,16 +135,28 @@ class ToolAugmentedAgent:
         """Parse a TOOL_CALL line. Returns (tool_id, arguments) or None."""
         try:
             call_str = line.strip().replace("TOOL_CALL:", "").strip()
-            if "(" not in call_str:
+            if "(" not in call_str or not call_str.endswith(")"):
                 return None
             tool_id = call_str[:call_str.index("(")].strip()
+            if not tool_id:
+                return None
             args_str = call_str[call_str.index("(") + 1:call_str.rindex(")")].strip()
             args: dict[str, Any] = {}
             if args_str:
-                for pair in args_str.split(","):
-                    if "=" in pair:
-                        key, val = pair.split("=", 1)
-                        args[key.strip()] = val.strip().strip("'\"")
+                synthetic_call = f"_tool({args_str})"
+                parsed = ast.parse(synthetic_call, mode="eval")
+                if not isinstance(parsed.body, ast.Call) or parsed.body.args:
+                    return None
+                for keyword in parsed.body.keywords:
+                    if keyword.arg is None:
+                        return None
+                    source = ast.get_source_segment(synthetic_call, keyword.value)
+                    if source is None:
+                        return None
+                    if isinstance(keyword.value, ast.Constant) and isinstance(keyword.value.value, str):
+                        args[keyword.arg] = keyword.value.value
+                    else:
+                        args[keyword.arg] = source
             return tool_id, args
         except Exception:
             return None

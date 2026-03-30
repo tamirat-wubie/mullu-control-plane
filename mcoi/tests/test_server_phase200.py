@@ -45,6 +45,20 @@ class TestStreamingEndpoint:
         assert resp.status_code == 200
         assert "event: done" in resp.text
 
+    def test_stream_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("stream-backend-secret")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/stream", json={"prompt": "explode"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "stream-backend-secret" not in str(resp.json())
+
 
 class TestDaemonEndpoints:
     def test_daemon_status(self, client):

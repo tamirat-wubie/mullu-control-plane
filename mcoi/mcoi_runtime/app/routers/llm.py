@@ -5,11 +5,12 @@ circuit-breaker status, A/B testing, and bootstrap info.
 """
 from __future__ import annotations
 
+from typing import NoReturn
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
@@ -64,7 +65,7 @@ class AutoCompleteRequest(BaseModel):
 
 class ABTestRequest(BaseModel):
     prompt: str
-    model_ids: list[str] = []
+    model_ids: list[str] = Field(default_factory=list)
     criteria: str = "cost"
 
 
@@ -80,6 +81,38 @@ def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
             "validation_errors": result.to_dict()["errors"],
             "governed": True,
         })
+
+
+def _raise_llm_service_unavailable(
+    *,
+    action: str,
+    actor_id: str,
+    tenant_id: str,
+    target: str,
+    exc: Exception,
+) -> NoReturn:
+    """Record internal LLM route failures and raise a sanitized HTTP error."""
+    deps.llm_circuit.record_failure()
+    deps.metrics.inc("errors_total")
+    deps.audit_trail.record(
+        action=action,
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        target=target,
+        outcome="error",
+        detail={
+            "error_type": type(exc).__name__,
+            "reason": "llm_service_unavailable",
+        },
+    )
+    raise HTTPException(
+        503,
+        detail={
+            "error": "LLM service unavailable",
+            "error_code": "llm_service_unavailable",
+            "governed": True,
+        },
+    )
 
 
 # ═══ Phase 199A — LLM Completion Endpoint ═══
@@ -120,9 +153,13 @@ def complete(req: CompletionRequest):
     except HTTPException:
         raise
     except Exception as exc:
-        deps.llm_circuit.record_failure()
-        deps.metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+        _raise_llm_service_unavailable(
+            action="llm.complete",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
     return {
         "content": result.content,
         "model": result.model_name,
@@ -184,9 +221,13 @@ def stream_completion(req: CompletionRequest):
         else:
             deps.llm_circuit.record_failure()
     except Exception as exc:
-        deps.llm_circuit.record_failure()
-        deps.metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+        _raise_llm_service_unavailable(
+            action="llm.stream",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
     return StreamingResponse(
         deps.streaming_adapter.stream_to_sse(result, request_id=f"stream-{id(req)}"),
         media_type="text/event-stream",
@@ -232,12 +273,21 @@ def chat_completion(req: ChatRequest):
     conv.add_user(req.message)
 
     # Call LLM with full conversation history
-    result = deps.llm_bridge.chat(
-        conv.to_chat_messages(),
-        model_name=req.model_name,
-        budget_id=req.budget_id,
-        tenant_id=req.tenant_id,
-    )
+    try:
+        result = deps.llm_bridge.chat(
+            conv.to_chat_messages(),
+            model_name=req.model_name,
+            budget_id=req.budget_id,
+            tenant_id=req.tenant_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.chat",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
 
     if result.succeeded:
         conv.add_assistant(result.content)
@@ -278,10 +328,19 @@ def streaming_chat(req: ChatRequest):
     conv.add_user(req.message)
 
     # Get completion (non-streaming internally, streamed to client)
-    result = deps.llm_bridge.chat(
-        conv.to_chat_messages(), model_name=req.model_name,
-        budget_id=req.budget_id, tenant_id=req.tenant_id,
-    )
+    try:
+        result = deps.llm_bridge.chat(
+            conv.to_chat_messages(), model_name=req.model_name,
+            budget_id=req.budget_id, tenant_id=req.tenant_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.chat.stream",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
 
     if result.succeeded:
         conv.add_assistant(result.content)
@@ -307,14 +366,23 @@ def chat_workflow_endpoint(req: ChatWorkflowRequest):
     except ValueError:
         raise HTTPException(400, detail=f"unknown capability: {req.capability}")
 
-    result = deps.chat_workflow.execute(
-        conversation_id=req.conversation_id,
-        message=req.message,
-        tenant_id=req.tenant_id,
-        capability=cap,
-        system_prompt=req.system_prompt,
-        budget_id=req.budget_id,
-    )
+    try:
+        result = deps.chat_workflow.execute(
+            conversation_id=req.conversation_id,
+            message=req.message,
+            tenant_id=req.tenant_id,
+            capability=cap,
+            system_prompt=req.system_prompt,
+            budget_id=req.budget_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.chat.workflow",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.capability,
+            exc=exc,
+        )
     return {
         "conversation_id": result.conversation_id,
         "workflow_id": result.workflow_id,
@@ -440,9 +508,13 @@ def safe_completion(req: CompletionRequest):
             "circuit_state": deps.llm_circuit.state.value, "governed": True,
         }
     except Exception as exc:
-        deps.llm_circuit.record_failure()
-        deps.metrics.inc("errors_total")
-        raise HTTPException(503, detail={"error": str(exc), "governed": True})
+        _raise_llm_service_unavailable(
+            action="llm.complete.safe",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=req.model_name,
+            exc=exc,
+        )
 
 
 # ═══ Phase 214A — Auto-Routed Completion ═══
@@ -460,11 +532,20 @@ def auto_routed_completion(req: AutoCompleteRequest):
     if not decision.model_id:
         raise HTTPException(503, detail="no models available for routing")
 
-    result = deps.llm_bridge.complete(
-        req.prompt, model_name=decision.model_id,
-        max_tokens=req.max_tokens, tenant_id=req.tenant_id,
-        budget_id=req.budget_id,
-    )
+    try:
+        result = deps.llm_bridge.complete(
+            req.prompt, model_name=decision.model_id,
+            max_tokens=req.max_tokens, tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+        )
+    except Exception as exc:
+        _raise_llm_service_unavailable(
+            action="llm.complete.auto",
+            actor_id=req.actor_id,
+            tenant_id=req.tenant_id,
+            target=decision.model_id,
+            exc=exc,
+        )
     if result.succeeded:
         deps.cost_analytics.record(req.tenant_id, decision.model_id, result.cost, result.total_tokens)
 

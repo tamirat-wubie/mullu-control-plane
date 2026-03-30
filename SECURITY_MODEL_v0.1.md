@@ -49,16 +49,27 @@ The runtime fails closed in the following situations:
 In all cases, the run terminates with a structured error rather than proceeding in a
 degraded or permissive state.
 
+### HTTP API Key Authentication
+
+The FastAPI HTTP boundary supports bearer API-key authentication through the
+governance middleware. Invalid keys fail closed, authenticated keys bind the
+request tenant, and stricter deployment profiles can require authentication on
+all `/api/*` routes. By default, `local_dev` and `test` remain permissive for
+developer workflow compatibility, while `pilot` and `production` require auth
+unless explicitly overridden.
+
 ## What Is NOT Implemented
 
-This is an internal alpha. The following security capabilities are absent:
+This is an internal alpha. The following security capabilities are still absent
+or incomplete:
 
-### No Authentication or Authorization
+### No End-User Identity or RBAC
 
-There is no user authentication, role-based access control, or authorization system.
-Any process that can invoke the CLI or import the runtime module has full access to
-all operations. This is acceptable for single-operator internal use; it is not
-acceptable for shared or production environments.
+There is still no user authentication, role-based access control, or delegated
+authorization model for human operators. Any process that can invoke the CLI or
+import the runtime module still has full local access to all operations. Shared
+or production environments should front the runtime with authenticated gateways
+and least-privilege operating-system controls.
 
 ### No Encryption at Rest
 
@@ -66,11 +77,13 @@ Persistence stores (traces, snapshots, replay records, registry data) write JSON
 files to the local filesystem with no encryption. Anyone with filesystem access can
 read persisted data.
 
-### No Audit Log Signing or Tamper Detection
+### No External Audit Log Signing
 
-Trace and replay records are stored as plain JSON. There is no cryptographic signing,
-hash chaining, or tamper-detection mechanism. A modified trace file is
-indistinguishable from an unmodified one.
+The in-memory audit trail is hash-chained and supports integrity verification,
+but persisted JSON snapshots and replay exports are not externally signed or
+anchored in an immutable store. An attacker with filesystem write access can
+still replace persisted files unless the host environment provides stronger
+storage guarantees.
 
 ### Shell Executor Permissions
 
