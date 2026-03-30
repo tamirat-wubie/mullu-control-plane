@@ -45,6 +45,8 @@ class ActionRequest(BaseModel):
     parameters: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str = ""
     budget_id: str = ""
+    mission_id: str = ""
+    goal_id: str = ""
 
 
 class ActionResultRequest(BaseModel):
@@ -91,7 +93,11 @@ class _AdapterRegistry:
     def get(self, agent_id: str) -> dict[str, Any] | None:
         return self._agents.get(agent_id)
 
-    def create_action(self, agent_id: str, action_type: str, target: str, parameters: dict[str, Any]) -> dict[str, Any]:
+    def create_action(
+        self, agent_id: str, action_type: str, target: str,
+        parameters: dict[str, Any],
+        mission_id: str = "", goal_id: str = "",
+    ) -> dict[str, Any]:
         self._action_counter += 1
         action_id = f"act-{self._action_counter:06d}"
         action = {
@@ -100,6 +106,8 @@ class _AdapterRegistry:
             "action_type": action_type,
             "target": target,
             "parameters": dict(parameters),
+            "mission_id": mission_id,
+            "goal_id": goal_id,
             "status": "pending",
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -195,6 +203,13 @@ def request_action(req: ActionRequest):
     }
     guard_result = deps.guard_chain.evaluate(guard_ctx)
 
+    # Goal hierarchy context for traceability
+    goal_ctx = {}
+    if req.mission_id:
+        goal_ctx["mission_id"] = req.mission_id
+    if req.goal_id:
+        goal_ctx["goal_id"] = req.goal_id
+
     if not guard_result.allowed:
         deps.audit_trail.record(
             action="agent.adapter.action_request",
@@ -206,28 +221,38 @@ def request_action(req: ActionRequest):
                 "action_type": req.action_type,
                 "reason": guard_result.reason,
                 "guard": guard_result.guard_name,
+                **goal_ctx,
             },
         )
         return {
             "decision": "deny",
             "reason": guard_result.reason,
             "guard": guard_result.guard_name,
+            **goal_ctx,
             "governed": True,
         }
 
-    # Action allowed — create tracking record
-    action = _registry.create_action(req.agent_id, req.action_type, req.target, req.parameters)
+    # Action allowed — create tracking record with goal hierarchy
+    action = _registry.create_action(
+        req.agent_id, req.action_type, req.target, req.parameters,
+        mission_id=req.mission_id, goal_id=req.goal_id,
+    )
     deps.audit_trail.record(
         action="agent.adapter.action_request",
         actor_id=req.agent_id,
         tenant_id=req.tenant_id,
         target=req.target,
         outcome="allowed",
-        detail={"action_type": req.action_type, "action_id": action["action_id"]},
+        detail={
+            "action_type": req.action_type,
+            "action_id": action["action_id"],
+            **goal_ctx,
+        },
     )
     return {
         "decision": "allow",
         "action_id": action["action_id"],
+        **goal_ctx,
         "governed": True,
     }
 
