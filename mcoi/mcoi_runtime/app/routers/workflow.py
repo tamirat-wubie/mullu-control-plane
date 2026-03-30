@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
@@ -27,14 +27,14 @@ class ExecuteRequest(BaseModel):
     action: str
     tenant_id: str
     actor_id: str = "anonymous"
-    body: dict[str, Any] = {}
+    body: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowRequest(BaseModel):
     task_id: str
     description: str
     capability: str = "llm.completion"
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str = "system"
     actor_id: str = "anonymous"
     budget_id: str = "default"

@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.webhook_system import WebhookSubscription
@@ -42,7 +42,7 @@ class ChainRequest(BaseModel):
 
 class QueueSubmitRequest(BaseModel):
     task_id: str
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
     priority: int = 0
     tenant_id: str = ""
 
@@ -71,8 +71,8 @@ class OrchestrationPlanRequest(BaseModel):
 class HandoffRequest(BaseModel):
     from_agent: str
     to_agent: str
-    required_capabilities: list[str] = []
-    payload: dict[str, Any] = {}
+    required_capabilities: list[str] = Field(default_factory=list)
+    payload: dict[str, Any] = Field(default_factory=dict)
 
 
 # ═══ Agent Registry ══════════════════════════════════════════════════════

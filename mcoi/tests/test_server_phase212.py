@@ -39,6 +39,16 @@ class TestToolEndpoints:
         assert data["succeeded"] is True
         assert data["output"]["result"] == "5"
 
+    def test_invoke_tool_rejects_unsafe_expression(self, client):
+        resp = client.post("/api/v1/tools/invoke", json={
+            "tool_id": "calculator",
+            "arguments": {"expression": "__import__('os').system('whoami')"},
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["succeeded"] is False
+        assert "unsupported expression node" in data["error"]
+
     def test_invoke_unknown_tool(self, client):
         resp = client.post("/api/v1/tools/invoke", json={
             "tool_id": "nonexistent", "arguments": {},
@@ -85,6 +95,25 @@ class TestStateEndpoints:
         })
         resp = client.get("/api/v1/state")
         assert resp.status_code == 200
+
+    def test_save_rejects_invalid_state_type(self, client):
+        resp = client.post("/api/v1/state/save", json={
+            "state_type": "../../etc/passwd",
+            "data": {"key": "value"},
+        })
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid state_type"
+        assert data["error_code"] == "invalid_state_type"
+        assert data["governed"] is True
+
+    def test_load_rejects_invalid_state_type(self, client):
+        resp = client.get("/api/v1/state/..%5C..%5Cwindows%5Csystem32")
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid state_type"
+        assert data["error_code"] == "invalid_state_type"
+        assert data["governed"] is True
 
 
 class TestStructuredOutputEndpoints:

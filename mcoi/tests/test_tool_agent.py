@@ -1,6 +1,7 @@
 """Phase 212B — Tool-augmented agent tests."""
 
 import pytest
+from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.tool_agent import ToolAugmentedAgent
 from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
 
@@ -13,7 +14,7 @@ def _setup():
         ToolDefinition(tool_id="calc", name="Calc", description="Math", parameters=(
             ToolParameter(name="expression", param_type="string"),
         )),
-        handler=lambda args: {"result": str(eval(args.get("expression", "0")))},
+        handler=lambda args: {"result": str(evaluate_expression(args.get("expression", "0")))},
     )
     reg.register(
         ToolDefinition(tool_id="echo", name="Echo", description="Echo input", parameters=(
@@ -48,9 +49,9 @@ class TestToolAugmentedAgent:
 
     def test_tool_call_parsing_with_quotes(self):
         agent = ToolAugmentedAgent(tool_registry=_setup())
-        parsed = agent._parse_tool_call("TOOL_CALL: echo(text='hello world')")
+        parsed = agent._parse_tool_call("TOOL_CALL: echo(text='hello, world')")
         assert parsed is not None
-        assert parsed[1]["text"] == "hello world"
+        assert parsed[1]["text"] == "hello, world"
 
     def test_invalid_tool_call_returns_none(self):
         agent = ToolAugmentedAgent(tool_registry=_setup())
@@ -62,6 +63,18 @@ class TestToolAugmentedAgent:
         result = agent.execute_with_tools("test", tool_ids=["calc"])
         # Only calc should be mentioned in prompt
         assert result.content
+
+    def test_filtered_tools_are_enforced(self):
+        reg = _setup()
+        agent = ToolAugmentedAgent(
+            tool_registry=reg,
+            llm_fn=lambda _: "TOOL_CALL: echo(text='blocked')",
+        )
+        result = agent.execute_with_tools("test", tool_ids=["calc"])
+        assert result.total_tool_calls == 1
+        assert result.all_succeeded is False
+        assert result.tool_calls[0].tool_id == "echo"
+        assert "tool not allowed" in result.tool_calls[0].result.error
 
     def test_max_tool_calls(self):
         reg = _setup()

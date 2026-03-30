@@ -78,6 +78,31 @@ class TestCompletionEndpoint:
         data = resp.json()
         assert data["model"] == "custom-model"
 
+    def test_completion_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("secret-provider-detail")
+
+        monkeypatch.setattr(deps.llm_bridge, "complete", boom)
+        resp = client.post("/api/v1/complete", json={
+            "prompt": "boom",
+            "tenant_id": "err-tenant",
+            "actor_id": "err-actor",
+        })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert "secret-provider-detail" not in str(resp.json())
+        entries = deps.audit_trail.query(
+            tenant_id="err-tenant",
+            action="llm.complete",
+            outcome="error",
+            limit=5,
+        )
+        assert any(e.detail["error_type"] == "RuntimeError" for e in entries)
+
 
 class TestBudgetEndpoint:
     def test_budget_summary(self, client):

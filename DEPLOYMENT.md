@@ -32,6 +32,7 @@
 | `MULLU_STATE_DIR` | system temp | Directory for state snapshots |
 | `MULLU_CERT_INTERVAL` | `300` | Certification daemon interval (seconds) |
 | `MULLU_CERT_ENABLED` | `true` | Enable certification daemon |
+| `MULLU_API_AUTH_REQUIRED` | profile-based | Require `Authorization: Bearer <api-key>` on `/api/*`. Defaults to `false` in `local_dev` and `test`, `true` in `pilot` and `production` |
 | `ANTHROPIC_API_KEY` | — | Anthropic API key (when backend=anthropic) |
 | `OPENAI_API_KEY` | — | OpenAI API key (when backend=openai) |
 
@@ -64,6 +65,7 @@ curl http://localhost:8000/health
 4. Set `POSTGRES_PASSWORD` via secrets manager (not `.env`)
 5. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` for real LLM
 6. Verify with `curl /api/v1/readiness`
+7. Confirm API-key auth is enabled for `/api/*` or enforced by a trusted upstream gateway
 
 ## Startup Behavior
 
@@ -75,6 +77,7 @@ On startup, the platform:
 4. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
 5. Registers all subsystems into the dependency container
 6. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
+7. Applies profile-aware API auth defaults to `/api/*` routes
 
 On shutdown:
 

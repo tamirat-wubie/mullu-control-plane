@@ -10,7 +10,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 
@@ -34,7 +34,7 @@ class ConfigRollbackRequest(BaseModel):
 class CreateSnapshotRequest(BaseModel):
     snapshot_id: str
     name: str
-    state: dict[str, Any] = {}
+    state: dict[str, Any] = Field(default_factory=dict)
 
 
 # ═══ Governance Metrics ═══

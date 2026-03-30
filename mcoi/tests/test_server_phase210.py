@@ -57,6 +57,26 @@ class TestChatWorkflowEndpoint:
         })
         assert resp.status_code == 400
 
+    def test_chat_workflow_exception_is_sanitized(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("workflow-provider-secret")
+
+        monkeypatch.setattr(deps.chat_workflow, "execute", boom)
+        resp = client.post("/api/v1/chat/workflow", json={
+            "conversation_id": "cw-fail",
+            "message": "test",
+            "tenant_id": "workflow-tenant",
+            "actor_id": "workflow-actor",
+        })
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error"] == "LLM service unavailable"
+        assert data["error_code"] == "llm_service_unavailable"
+        assert data["governed"] is True
+        assert "workflow-provider-secret" not in str(resp.json())
+
 
 class TestHealthScoreEndpoint:
     def test_health_score(self, client):

@@ -1,4 +1,4 @@
-"""Phase 211D — State Persistence.
+"""Phase 211D - State Persistence.
 
 Purpose: Save and restore runtime state (conversations, workflows,
     config) across server restarts. JSON-based file persistence
@@ -18,8 +18,11 @@ import json
 import os
 import tempfile
 from dataclasses import dataclass
-from typing import Any, Callable
 from hashlib import sha256
+from pathlib import Path
+from typing import Any, Callable
+
+from .errors import PathTraversalError
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,8 +41,21 @@ class StatePersistence:
 
     def __init__(self, *, clock: Callable[[], str], base_dir: str = "") -> None:
         self._clock = clock
-        self._base_dir = base_dir or tempfile.gettempdir()
+        self._base_dir = Path(base_dir or tempfile.gettempdir()).resolve()
         self._snapshots: dict[str, StateSnapshot] = {}
+
+    def _safe_path(self, state_type: str) -> Path:
+        """Construct a validated state file path within the configured base directory."""
+        if not isinstance(state_type, str) or not state_type.strip():
+            raise PathTraversalError("state_type must be a non-empty string")
+        if "\0" in state_type:
+            raise PathTraversalError(f"state_type contains null byte: {state_type!r}")
+        if "/" in state_type or "\\" in state_type or ".." in state_type:
+            raise PathTraversalError(f"state_type contains forbidden characters: {state_type!r}")
+        candidate = (self._base_dir / f"mullu_state_{state_type}.json").resolve()
+        if not candidate.is_relative_to(self._base_dir):
+            raise PathTraversalError(f"state path escapes base directory: {state_type!r}")
+        return candidate
 
     def save(self, state_type: str, data: dict[str, Any]) -> StateSnapshot:
         """Save state to file (atomic write)."""
@@ -54,9 +70,9 @@ class StatePersistence:
             saved_at=self._clock(),
         )
 
-        file_path = os.path.join(self._base_dir, f"mullu_state_{state_type}.json")
+        self._base_dir.mkdir(parents=True, exist_ok=True)
+        file_path = self._safe_path(state_type)
 
-        # Atomic write: temp file → rename
         wrapper = {
             "version": snapshot.version,
             "state_type": state_type,
@@ -66,16 +82,12 @@ class StatePersistence:
         }
 
         tmp_fd, tmp_path = tempfile.mkstemp(
-            dir=self._base_dir, suffix=".tmp", prefix="mullu_state_",
+            dir=str(self._base_dir), suffix=".tmp", prefix="mullu_state_",
         )
         try:
             with os.fdopen(tmp_fd, "w") as f:
                 json.dump(wrapper, f, sort_keys=True, default=str, indent=2)
-            # Atomic rename (on same filesystem)
-            if os.path.exists(file_path):
-                os.replace(tmp_path, file_path)
-            else:
-                os.rename(tmp_path, file_path)
+            os.replace(tmp_path, str(file_path))
         except Exception:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
@@ -86,40 +98,51 @@ class StatePersistence:
 
     def load(self, state_type: str) -> StateSnapshot | None:
         """Load state from file."""
-        file_path = os.path.join(self._base_dir, f"mullu_state_{state_type}.json")
-        if not os.path.exists(file_path):
+        file_path = self._safe_path(state_type)
+        if not file_path.exists():
             return None
 
         try:
-            with open(file_path, "r") as f:
+            with file_path.open("r") as f:
                 wrapper = json.load(f)
+            data = wrapper.get("data", {})
+            if wrapper.get("state_type") != state_type or not isinstance(data, dict):
+                return None
+            expected_hash = wrapper.get("state_hash", "")
+            actual_hash = sha256(
+                json.dumps(data, sort_keys=True, default=str, indent=2).encode()
+            ).hexdigest()
+            if not isinstance(expected_hash, str) or expected_hash != actual_hash:
+                return None
 
             snapshot = StateSnapshot(
                 version=wrapper.get("version", "1.0.0"),
                 state_type=state_type,
-                data=wrapper.get("data", {}),
-                state_hash=wrapper.get("state_hash", ""),
+                data=data,
+                state_hash=expected_hash,
                 saved_at=wrapper.get("saved_at", ""),
             )
             self._snapshots[state_type] = snapshot
             return snapshot
-        except (json.JSONDecodeError, KeyError):
+        except (json.JSONDecodeError, KeyError, TypeError):
             return None
 
     def exists(self, state_type: str) -> bool:
-        file_path = os.path.join(self._base_dir, f"mullu_state_{state_type}.json")
-        return os.path.exists(file_path)
+        file_path = self._safe_path(state_type)
+        return file_path.exists()
 
     def delete(self, state_type: str) -> bool:
-        file_path = os.path.join(self._base_dir, f"mullu_state_{state_type}.json")
-        if os.path.exists(file_path):
-            os.unlink(file_path)
+        file_path = self._safe_path(state_type)
+        if file_path.exists():
+            file_path.unlink()
             self._snapshots.pop(state_type, None)
             return True
         return False
 
     def list_states(self) -> list[str]:
         """List all saved state types."""
+        if not self._base_dir.exists():
+            return []
         states = []
         for filename in os.listdir(self._base_dir):
             if filename.startswith("mullu_state_") and filename.endswith(".json"):
@@ -131,5 +154,5 @@ class StatePersistence:
         return {
             "saved_states": len(self._snapshots),
             "state_types": list(self._snapshots.keys()),
-            "base_dir": self._base_dir,
+            "base_dir": str(self._base_dir),
         }
