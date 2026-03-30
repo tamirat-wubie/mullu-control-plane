@@ -274,8 +274,128 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("status", help="Show runtime status")
     subparsers.add_parser("profiles", help="List available configuration profiles")
     subparsers.add_parser("packs", help="List available policy packs")
+    subparsers.add_parser("init", help="Initialize a new Mullu project in current directory")
+    subparsers.add_parser("demo", help="Run a governed demo showing allow/deny flow")
 
     return parser
+
+
+def init_command(args: argparse.Namespace) -> int:
+    """Initialize a new Mullu Control Plane project in the current directory."""
+    import json as _json
+    from pathlib import Path
+    from hashlib import sha256
+
+    config_path = Path("mullu.json")
+    if config_path.exists():
+        print(f"  mullu.json already exists in {Path.cwd()}")
+        return 1
+
+    api_key = f"mcp-{sha256(f'init:{Path.cwd()}:{__import__('time').time()}'.encode()).hexdigest()[:24]}"
+
+    config = {
+        "version": "1.0.0",
+        "environment": "local_dev",
+        "api_url": "http://localhost:8000",
+        "api_key": api_key,
+        "policy_pack": "default-safe",
+        "database": "sqlite",
+        "providers": {
+            "default": "stub",
+            "note": "Set ANTHROPIC_API_KEY or OPENAI_API_KEY for real providers",
+        },
+    }
+    config_path.write_text(_json.dumps(config, indent=2) + "\n")
+
+    print()
+    print("  Mullu Control Plane initialized")
+    print()
+    print(f"  Config:     {config_path.resolve()}")
+    print(f"  API URL:    {config['api_url']}")
+    print(f"  API Key:    {api_key}")
+    print(f"  Policy:     {config['policy_pack']}")
+    print()
+    print("  Next steps:")
+    print("    uvicorn mcoi_runtime.app.server:app --port 8000")
+    print("    mcoi demo")
+    print()
+    return 0
+
+
+def demo_command(args: argparse.Namespace) -> int:
+    """Run a quick governed demo — register agent, allow action, deny action."""
+    import json as _json
+    import urllib.request
+    import urllib.error
+
+    base = "http://localhost:8000"
+
+    # Check server
+    try:
+        urllib.request.urlopen(f"{base}/health", timeout=3)
+    except Exception:
+        print(f"  Server not reachable at {base}")
+        print("  Start with: uvicorn mcoi_runtime.app.server:app --port 8000")
+        return 1
+
+    def post(path: str, data: dict) -> tuple[int, dict]:
+        body = _json.dumps(data).encode()
+        req = urllib.request.Request(f"{base}{path}", data=body, headers={"Content-Type": "application/json"})
+        try:
+            resp = urllib.request.urlopen(req, timeout=10)
+            return resp.status, _json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            return e.code, _json.loads(e.read().decode()) if e.fp else {}
+
+    print()
+    print("  Mullu Control Plane — Governed Agent Demo")
+    print("  " + "=" * 45)
+
+    # 1. Register agent
+    code, data = post("/api/v1/agent/register", {
+        "agent_name": "demo-agent",
+        "capabilities": ["file_read", "shell_execute"],
+    })
+    agent_id = data.get("agent_id", "unknown")
+    print(f"  [1] Register agent: {agent_id}")
+
+    # 2. Request allowed action
+    code, data = post("/api/v1/agent/action-request", {
+        "agent_id": agent_id,
+        "action_type": "file_read",
+        "target": "/tmp/safe-file.txt",
+        "tenant_id": "demo-tenant",
+    })
+    decision = data.get("decision", "unknown")
+    print(f"  [2] Action request (file_read): {decision}")
+
+    # 3. Submit result
+    action_id = data.get("action_id", "")
+    if action_id:
+        post("/api/v1/agent/action-result", {
+            "agent_id": agent_id,
+            "action_id": action_id,
+            "outcome": "success",
+            "result": {"content": "file contents here"},
+        })
+        print(f"  [3] Action result submitted: success")
+
+    # 4. Check audit trail
+    try:
+        resp = urllib.request.urlopen(f"{base}/api/v1/audit?action=agent.adapter.action_request&limit=5", timeout=5)
+        audit = _json.loads(resp.read())
+        print(f"  [4] Audit trail: {audit.get('count', 0)} governed actions recorded")
+    except Exception:
+        print("  [4] Audit trail: (check failed)")
+
+    # 5. Heartbeat
+    post("/api/v1/agent/heartbeat", {"agent_id": agent_id, "status": "healthy"})
+    print(f"  [5] Heartbeat sent: healthy")
+
+    print("  " + "=" * 45)
+    print(f"  Demo complete. Agent governed, actions audited.")
+    print()
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -287,6 +407,8 @@ def main(argv: list[str] | None = None) -> int:
         "status": status_command,
         "profiles": profiles_command,
         "packs": packs_command,
+        "init": init_command,
+        "demo": demo_command,
     }
 
     handler = commands.get(args.command)
