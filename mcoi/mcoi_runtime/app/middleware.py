@@ -22,7 +22,6 @@ from starlette.responses import JSONResponse
 
 from mcoi_runtime.core.governance_guard import (
     GovernanceGuardChain,
-    GuardChainResult,
     create_api_key_guard,
     create_budget_guard,
     create_rate_limit_guard,

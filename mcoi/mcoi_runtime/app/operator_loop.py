@@ -7,7 +7,7 @@ Invariants: request handling is single-step, ordered, deterministic, and never m
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Mapping
 
 from mcoi_runtime.adapters.observer_base import ObservationResult, ObservationStatus
 from mcoi_runtime.contracts._base import thaw_value

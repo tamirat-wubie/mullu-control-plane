@@ -48,7 +48,7 @@ class APIBoundary:
             response = APIResponse(request.request_id, 403, {"error": str(e)}, True)
         except ValueError as e:
             response = APIResponse(request.request_id, 400, {"error": str(e)}, True)
-        except Exception as e:
+        except Exception:
             response = APIResponse(request.request_id, 500, {"error": "internal_error"}, True)
         self._responses.append(response)
         return response
@@ -219,7 +219,7 @@ class ProductionSurface:
         # Auth gate
         if self.manifest.auth_required:
             try:
-                session = self.auth.validate(request.headers.get("session_id", ""))
+                self.auth.validate(request.headers.get("session_id", ""))
             except PermissionError:
                 self._total_errors += 1
                 self.observability.record("error", "auth_denied", request.tenant_id, trace_id)
