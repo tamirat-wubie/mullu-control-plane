@@ -663,11 +663,20 @@ def save_coordination_checkpoint(req: CoordinationCheckpointRequest):
 @router.post("/api/v1/coordination/restore")
 def restore_coordination_checkpoint(req: CoordinationRestoreRequest):
     """Restore coordination engine state from a governed checkpoint."""
+    from mcoi_runtime.persistence.errors import PersistenceError
     deps.metrics.inc("requests_governed")
-    outcome = deps.coordination_engine.restore_checkpoint(
-        req.checkpoint_id,
-        current_policy_pack_id=req.current_policy_pack_id or None,
-    )
+    try:
+        outcome = deps.coordination_engine.restore_checkpoint(
+            req.checkpoint_id,
+            current_policy_pack_id=req.current_policy_pack_id or None,
+        )
+    except PersistenceError:
+        from fastapi import HTTPException
+        raise HTTPException(404, detail={
+            "error": f"checkpoint not found: {req.checkpoint_id}",
+            "error_code": "checkpoint_not_found",
+            "governed": True,
+        })
     deps.audit_trail.record(
         action="coordination.checkpoint.restore",
         actor_id="api",
