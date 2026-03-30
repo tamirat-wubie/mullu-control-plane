@@ -319,6 +319,210 @@ class OpenAIBackend:
         return (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
 
 
+# ═══ Gemini Backend (Tier 2 — hosted free-tier) ═══
+
+
+class GeminiBackend:
+    """Google Gemini API backend using the google-generativeai SDK.
+
+    Tier 2 provider: cheap bulk inference, dev/testing, overflow fallback.
+    Resolves API key from GEMINI_API_KEY env var.
+    Falls back gracefully if SDK not installed.
+    """
+
+    def __init__(self, *, api_key: str | None = None, default_model: str = "gemini-2.0-flash") -> None:
+        self._api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
+        self._default_model = default_model
+        self._client: Any = None
+        self._sdk_available = False
+        try:
+            import google.generativeai  # noqa: F401
+            self._sdk_available = True
+        except ImportError:
+            pass
+
+    @property
+    def provider(self) -> LLMProvider:
+        return LLMProvider.GEMINI
+
+    def _get_model(self, model_name: str) -> Any:
+        if not self._sdk_available:
+            raise RuntimeCoreInvariantError("google-generativeai SDK not installed — pip install google-generativeai")
+        if not self._api_key:
+            raise RuntimeCoreInvariantError("GEMINI_API_KEY not set")
+        import google.generativeai as genai
+        genai.configure(api_key=self._api_key)
+        return genai.GenerativeModel(model_name)
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        model_name = params.model_name or self._default_model
+
+        # Build content from messages
+        contents: list[dict[str, Any]] = []
+        system_instruction = ""
+        for msg in params.messages:
+            if msg.role == LLMRole.SYSTEM:
+                system_instruction = msg.content
+            else:
+                role = "model" if msg.role == LLMRole.ASSISTANT else "user"
+                contents.append({"role": role, "parts": [{"text": msg.content}]})
+
+        if not contents:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.GEMINI,
+                finished=True,
+                error="no user/assistant messages provided",
+            )
+
+        try:
+            model = self._get_model(model_name)
+            gen_config: dict[str, Any] = {"max_output_tokens": params.max_tokens}
+            if params.temperature > 0:
+                gen_config["temperature"] = params.temperature
+
+            response = model.generate_content(
+                contents,
+                generation_config=gen_config,
+                **({"system_instruction": system_instruction} if system_instruction else {}),
+            )
+
+            content = response.text if hasattr(response, "text") else ""
+            usage = getattr(response, "usage_metadata", None)
+            input_tokens = getattr(usage, "prompt_token_count", 0) if usage else 0
+            output_tokens = getattr(usage, "candidates_token_count", 0) if usage else 0
+            cost = self._estimate_cost(model_name, input_tokens, output_tokens)
+
+            return LLMResult(
+                content=content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=cost,
+                model_name=model_name,
+                provider=LLMProvider.GEMINI,
+                finished=True,
+            )
+
+        except RuntimeCoreInvariantError:
+            raise
+        except Exception as exc:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.GEMINI,
+                finished=False,
+                error=f"{type(exc).__name__}: {exc}",
+            )
+
+    def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
+        """Estimate cost based on Gemini pricing (per million tokens).
+
+        Flash models on the free tier are effectively zero cost.
+        """
+        pricing = {
+            "gemini-2.0-flash": (0.10, 0.40),
+            "gemini-2.0-flash-lite": (0.0, 0.0),
+            "gemini-1.5-flash": (0.075, 0.30),
+            "gemini-1.5-pro": (1.25, 5.0),
+            "gemini-2.5-pro-preview-05-06": (1.25, 10.0),
+        }
+        input_rate, output_rate = pricing.get(model, (0.10, 0.40))
+        return (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
+
+
+# ═══ Ollama Backend (Tier 3 — local/private fallback) ═══
+
+
+class OllamaBackend:
+    """Ollama local model backend using the HTTP API.
+
+    Tier 3 provider: private/internal workloads, offline fallback, local experiments.
+    No SDK dependency — uses urllib for HTTP requests.
+    Cost is always zero (local inference).
+    """
+
+    def __init__(self, *, base_url: str = "", default_model: str = "llama3.2") -> None:
+        self._base_url = (base_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip("/")
+        self._default_model = default_model
+
+    @property
+    def provider(self) -> LLMProvider:
+        return LLMProvider.OLLAMA
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        model_name = params.model_name or self._default_model
+
+        messages: list[dict[str, str]] = []
+        for msg in params.messages:
+            messages.append({"role": msg.role.value, "content": msg.content})
+
+        if not messages:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.OLLAMA,
+                finished=True,
+                error="no messages provided",
+            )
+
+        try:
+            import json as _json
+            import urllib.request
+            import urllib.error
+
+            payload = _json.dumps({
+                "model": model_name,
+                "messages": messages,
+                "stream": False,
+                **({"options": {"num_predict": params.max_tokens}} if params.max_tokens else {}),
+                **({"options": {"temperature": params.temperature}} if params.temperature > 0 else {}),
+            }).encode("utf-8")
+
+            req = urllib.request.Request(
+                f"{self._base_url}/api/chat",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            resp = urllib.request.urlopen(req, timeout=60)
+            data = _json.loads(resp.read())
+
+            content = data.get("message", {}).get("content", "")
+            input_tokens = data.get("prompt_eval_count", 0)
+            output_tokens = data.get("eval_count", 0)
+
+            return LLMResult(
+                content=content,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.OLLAMA,
+                finished=True,
+            )
+
+        except Exception as exc:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model_name,
+                provider=LLMProvider.OLLAMA,
+                finished=False,
+                error=f"{type(exc).__name__}: {exc}",
+            )
+
+
 # ═══ Stub Backend (for testing without real API) ═══
 
 
