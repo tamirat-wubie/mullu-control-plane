@@ -41,6 +41,9 @@ class EventBus:
     block others.
     """
 
+    _MAX_HISTORY = 100_000
+    _MAX_ERRORS = 10_000
+
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
         self._subscribers: dict[str, list[Callable[[GovernedEvent], Any]]] = {}
@@ -89,6 +92,8 @@ class EventBus:
             published_at=now,
         )
         self._history.append(event)
+        if len(self._history) > self._MAX_HISTORY:
+            self._history = self._history[-self._MAX_HISTORY:]
 
         # Deliver to type-specific subscribers
         for handler in self._subscribers.get(event_type, []):
@@ -113,6 +118,9 @@ class EventBus:
                     "error": str(exc),
                     "at": now,
                 })
+
+        if len(self._errors) > self._MAX_ERRORS:
+            self._errors = self._errors[-self._MAX_ERRORS:]
 
         return event
 
