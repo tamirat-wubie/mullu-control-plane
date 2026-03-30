@@ -12,6 +12,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -41,46 +42,51 @@ class GovernedCache:
         self._entries: dict[str, CacheEntry] = {}
         self._total_hits = 0
         self._total_misses = 0
+        self._lock = threading.Lock()
 
     def get(self, key: str) -> Any | None:
         """Get a cached value. Returns None if missing or expired."""
-        entry = self._entries.get(key)
-        if entry is None:
-            self._total_misses += 1
-            return None
-        if entry.expired:
-            del self._entries[key]
-            self._total_misses += 1
-            return None
-        entry.hits += 1
-        self._total_hits += 1
-        return entry.value
+        with self._lock:
+            entry = self._entries.get(key)
+            if entry is None:
+                self._total_misses += 1
+                return None
+            if entry.expired:
+                del self._entries[key]
+                self._total_misses += 1
+                return None
+            entry.hits += 1
+            self._total_hits += 1
+            return entry.value
 
     def set(self, key: str, value: Any, ttl: float | None = None) -> None:
         """Set a cache value with optional TTL override."""
-        if len(self._entries) >= self._max_size and key not in self._entries:
-            self._evict_lru()
-        self._entries[key] = CacheEntry(
-            key=key, value=value,
-            created_at=time.monotonic(),
-            ttl_seconds=ttl if ttl is not None else self._default_ttl,
-        )
+        with self._lock:
+            if len(self._entries) >= self._max_size and key not in self._entries:
+                self._evict_lru()
+            self._entries[key] = CacheEntry(
+                key=key, value=value,
+                created_at=time.monotonic(),
+                ttl_seconds=ttl if ttl is not None else self._default_ttl,
+            )
 
     def delete(self, key: str) -> bool:
-        return self._entries.pop(key, None) is not None
+        with self._lock:
+            return self._entries.pop(key, None) is not None
 
     def clear(self) -> None:
-        self._entries.clear()
+        with self._lock:
+            self._entries.clear()
 
     def _evict_lru(self) -> None:
-        """Evict least recently used (lowest hits) entry."""
+        """Evict least recently used (lowest hits) entry. Caller must hold _lock."""
         if not self._entries:
             return
         lru_key = min(self._entries, key=lambda k: self._entries[k].hits)
         del self._entries[lru_key]
 
     def get_or_compute(self, key: str, compute_fn: Callable[[], Any], ttl: float | None = None) -> Any:
-        """Get cached value or compute and cache it."""
+        """Get cached value or compute and cache it (thread-safe)."""
         cached = self.get(key)
         if cached is not None:
             return cached

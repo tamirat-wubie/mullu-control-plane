@@ -292,7 +292,7 @@ def get_trace(trace_id: str):
     deps.metrics.inc("requests_governed")
     spans = deps.request_tracer.get_trace(trace_id)
     if not spans:
-        raise HTTPException(404, detail=f"Trace not found: {trace_id}")
+        raise HTTPException(404, detail={"error": "trace not found", "error_code": "trace_not_found", "governed": True})
     return {
         "trace_id": trace_id,
         "spans": [s.to_dict() for s in spans],
@@ -323,8 +323,8 @@ def create_orchestration_plan(req: OrchestrationPlanRequest):
     deps.metrics.inc("requests_governed")
     try:
         plan = deps.agent_orchestrator.create_plan(req.initiator_id, req.goal)
-    except ValueError as e:
-        raise HTTPException(400, detail=str(e))
+    except ValueError:
+        raise HTTPException(400, detail={"error": "invalid orchestration request", "error_code": "invalid_request", "governed": True})
     return {"plan": plan.to_dict(), "governed": True}
 
 
