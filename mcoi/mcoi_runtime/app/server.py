@@ -262,6 +262,11 @@ explanation_engine = ExplanationEngine(
 )
 observability.register_source("explanations", lambda: explanation_engine.summary())
 
+# Knowledge graph
+from mcoi_runtime.core.knowledge_graph import KnowledgeGraph
+knowledge_graph = KnowledgeGraph(clock=_clock)
+observability.register_source("knowledge", lambda: knowledge_graph.summary())
+
 # Phase 206A: Event bus
 event_bus = EventBus(clock=_clock)
 # Wire event bus into observability
@@ -930,6 +935,7 @@ deps.set("runbook_learning", runbook_learning)
 explanation_engine._audit_trail = audit_trail
 explanation_engine._guard_chain = guard_chain
 deps.set("explanation_engine", explanation_engine)
+deps.set("knowledge_graph", knowledge_graph)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)
@@ -1022,6 +1028,7 @@ from mcoi_runtime.app.routers.simulation import router as simulation_router
 from mcoi_runtime.app.routers.runbooks import router as runbooks_router
 from mcoi_runtime.app.routers.explain import router as explain_router
 from mcoi_runtime.app.routers.multi_agent import router as multi_agent_router
+from mcoi_runtime.app.routers.knowledge import router as knowledge_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -1041,6 +1048,7 @@ app.include_router(simulation_router)
 app.include_router(runbooks_router)
 app.include_router(explain_router)
 app.include_router(multi_agent_router)
+app.include_router(knowledge_router)
 
 
 # ════��════════════════���═════════════════════════��═══════════════════════════
