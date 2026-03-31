@@ -48,11 +48,35 @@ class TenantBudgetReport:
     utilization_pct: float  # spent/max_cost * 100
 
 
+class BudgetStore:
+    """Optional persistent backend for tenant budgets.
+
+    When provided to TenantBudgetManager, budget state is written through
+    to the store on every mutation, making governance consistent across
+    replicas. In-memory state acts as a hot cache; the store is the
+    source of truth.
+
+    Implementations: InMemoryBudgetStore (default), PostgresBudgetStore (production).
+    """
+
+    def load(self, tenant_id: str) -> LLMBudget | None:
+        return None
+
+    def save(self, budget: LLMBudget) -> None:
+        pass
+
+    def load_all(self) -> list[LLMBudget]:
+        return []
+
+
 class TenantBudgetManager:
     """Manages per-tenant budget isolation.
 
     Each tenant gets their own LLMBudget with independent tracking.
     Cross-tenant spending is structurally impossible.
+
+    When a BudgetStore is provided, all mutations are written through
+    to the persistent store for cross-replica consistency.
     """
 
     def __init__(
@@ -60,10 +84,12 @@ class TenantBudgetManager:
         *,
         clock: Callable[[], str],
         default_policy: TenantBudgetPolicy | None = None,
+        store: BudgetStore | None = None,
     ) -> None:
         self._clock = clock
         self._policies: dict[str, TenantBudgetPolicy] = {}
         self._budgets: dict[str, LLMBudget] = {}
+        self._store = store
         self._default_policy = default_policy or TenantBudgetPolicy(tenant_id="__default__")
 
     def set_policy(self, policy: TenantBudgetPolicy) -> None:
@@ -86,9 +112,17 @@ class TenantBudgetManager:
 
         If auto_create is True in the tenant's policy, creates the budget
         on first access. Otherwise raises if no budget exists.
+        Checks persistent store before creating new budget.
         """
         if tenant_id in self._budgets:
             return self._budgets[tenant_id]
+
+        # Check persistent store if available
+        if self._store is not None:
+            stored = self._store.load(tenant_id)
+            if stored is not None:
+                self._budgets[tenant_id] = stored
+                return stored
 
         policy = self.get_policy(tenant_id)
         if not policy.auto_create:
@@ -102,6 +136,8 @@ class TenantBudgetManager:
             max_tokens_per_call=policy.max_tokens_per_call,
         )
         self._budgets[tenant_id] = budget
+        if self._store is not None:
+            self._store.save(budget)
         return budget
 
     def get_budget(self, tenant_id: str) -> LLMBudget | None:
@@ -129,6 +165,8 @@ class TenantBudgetManager:
             calls_made=budget.calls_made + 1,
         )
         self._budgets[tenant_id] = updated
+        if self._store is not None:
+            self._store.save(updated)
         return updated
 
     def report(self, tenant_id: str) -> TenantBudgetReport:
