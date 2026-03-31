@@ -84,12 +84,31 @@ class TokenBucket:
             return self._tokens
 
 
+class RateLimitStore:
+    """Optional persistent backend for rate limit counters.
+
+    When provided to RateLimiter, denied/allowed counts and bucket
+    configurations are persisted for cross-replica observability.
+    Token bucket state remains in-memory (time-based, not shareable),
+    but counter aggregation becomes consistent across replicas.
+    """
+
+    def record_decision(self, bucket_key: str, allowed: bool) -> None:
+        pass
+
+    def get_counters(self) -> dict[str, int]:
+        return {"allowed": 0, "denied": 0}
+
+
 class RateLimiter:
     """Multi-tenant rate limiter with per-endpoint buckets.
 
     Each tenant+endpoint combination gets its own token bucket.
     Limits are independently enforced — cross-tenant interference
     is structurally impossible.
+
+    When a RateLimitStore is provided, decisions are written through
+    for cross-replica observability.
     """
 
     def __init__(
@@ -97,6 +116,7 @@ class RateLimiter:
         *,
         default_config: RateLimitConfig | None = None,
         max_buckets: int = 100_000,
+        store: RateLimitStore | None = None,
     ) -> None:
         self._default_config = default_config or RateLimitConfig()
         self._configs: dict[str, RateLimitConfig] = {}  # endpoint -> config
@@ -104,6 +124,7 @@ class RateLimiter:
         self._max_buckets = max_buckets
         self._denied_count: int = 0
         self._allowed_count: int = 0
+        self._store = store
 
     def configure_endpoint(self, endpoint: str, config: RateLimitConfig) -> None:
         """Set rate limit config for a specific endpoint."""
@@ -132,6 +153,8 @@ class RateLimiter:
             self._allowed_count += 1
         else:
             self._denied_count += 1
+        if self._store is not None:
+            self._store.record_decision(self._bucket_key(tenant_id, endpoint), allowed)
 
         retry_after = 0.0
         if not allowed:
