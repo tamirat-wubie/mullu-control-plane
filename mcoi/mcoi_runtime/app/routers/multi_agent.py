@@ -81,7 +81,7 @@ def delegate_work(req: DelegateRequest):
             metadata=req.metadata,
         )
         result = deps.coordination_engine.request_delegation(delegation)
-    except (ValueError, Exception) as exc:
+    except (ValueError, Exception):
         raise HTTPException(400, detail={
             "error": "delegation failed",
             "error_code": "delegation_error",

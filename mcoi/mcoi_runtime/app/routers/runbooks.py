@@ -1,8 +1,6 @@
 """Runbook learning endpoints — detect patterns, promote, approve, activate."""
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -108,7 +106,7 @@ def activate_runbook(runbook_id: str):
     """Activate an approved runbook."""
     deps.metrics.inc("requests_governed")
     try:
-        runbook = deps.runbook_learning.activate(runbook_id)
+        deps.runbook_learning.activate(runbook_id)
     except ValueError as exc:
         raise HTTPException(400, detail={
             "error": str(exc),
@@ -123,7 +121,7 @@ def retire_runbook(runbook_id: str):
     """Retire an active runbook."""
     deps.metrics.inc("requests_governed")
     try:
-        runbook = deps.runbook_learning.retire(runbook_id)
+        deps.runbook_learning.retire(runbook_id)
     except ValueError as exc:
         raise HTTPException(400, detail={
             "error": str(exc),
