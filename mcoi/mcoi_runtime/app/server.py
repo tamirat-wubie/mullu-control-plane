@@ -245,6 +245,11 @@ policy_sandbox = PolicySandbox(
 )
 observability.register_source("simulation", lambda: policy_sandbox.summary())
 
+# Runbook learning engine
+from mcoi_runtime.core.runbook_learning import RunbookLearningEngine
+runbook_learning = RunbookLearningEngine(clock=_clock)
+observability.register_source("runbooks", lambda: runbook_learning.summary())
+
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
 
@@ -912,6 +917,7 @@ deps.set("connector_framework", connector_framework)
 deps.set("access_runtime", access_runtime)
 policy_sandbox._guard_chain = guard_chain
 deps.set("policy_sandbox", policy_sandbox)
+deps.set("runbook_learning", runbook_learning)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)
@@ -1001,6 +1007,7 @@ from mcoi_runtime.app.routers.console import router as console_router
 from mcoi_runtime.app.routers.connectors import router as connectors_router
 from mcoi_runtime.app.routers.rbac import router as rbac_router
 from mcoi_runtime.app.routers.simulation import router as simulation_router
+from mcoi_runtime.app.routers.runbooks import router as runbooks_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -1017,6 +1024,7 @@ app.include_router(console_router)
 app.include_router(connectors_router)
 app.include_router(rbac_router)
 app.include_router(simulation_router)
+app.include_router(runbooks_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
