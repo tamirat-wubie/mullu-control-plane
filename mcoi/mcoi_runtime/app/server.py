@@ -237,6 +237,14 @@ observability.register_source("rbac", lambda: {
     "bindings": access_runtime.binding_count,
 })
 
+# Policy sandbox — dry-run simulation
+from mcoi_runtime.core.policy_sandbox import PolicySandbox
+policy_sandbox = PolicySandbox(
+    clock=_clock,
+    guard_chain=None,  # Wired after guard_chain is built
+)
+observability.register_source("simulation", lambda: policy_sandbox.summary())
+
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
 
@@ -902,6 +910,8 @@ connector_framework._guard_chain = guard_chain
 connector_framework._audit_trail = audit_trail
 deps.set("connector_framework", connector_framework)
 deps.set("access_runtime", access_runtime)
+policy_sandbox._guard_chain = guard_chain
+deps.set("policy_sandbox", policy_sandbox)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)
@@ -990,6 +1000,7 @@ from mcoi_runtime.app.routers.scheduler import router as scheduler_router
 from mcoi_runtime.app.routers.console import router as console_router
 from mcoi_runtime.app.routers.connectors import router as connectors_router
 from mcoi_runtime.app.routers.rbac import router as rbac_router
+from mcoi_runtime.app.routers.simulation import router as simulation_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -1005,6 +1016,7 @@ app.include_router(scheduler_router)
 app.include_router(console_router)
 app.include_router(connectors_router)
 app.include_router(rbac_router)
+app.include_router(simulation_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
