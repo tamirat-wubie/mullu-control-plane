@@ -68,9 +68,10 @@ runtime does not yet behave as intended by the architecture specification.
 The following features are described in architecture documents but have no runtime
 implementation in this release:
 
-- **Autonomous background scheduling daemon:** Temporal plane defines task and
-  deadline contracts, but no background process monitors or fires scheduled tasks.
 - **Multi-agent live runtime:** Coordination plane defines delegation and handoff
-  contracts, but no multi-process or networked agent execution exists.
-- **Web UI:** All operator interaction is through the CLI and console renderer.
-  No browser-based dashboard or monitoring interface.
+  contracts, but no multi-process or networked agent execution exists. External
+  agents can connect via the agent adapter protocol.
+- **Web UI:** Operator console provides structured JSON dashboard views (home,
+  runs, audit, checkpoints, providers, scheduler) but no browser-based frontend.
+- **RBAC / human governance:** API key auth exists but no user identity, roles,
+  team ownership, approval chains, or escalation rights.
