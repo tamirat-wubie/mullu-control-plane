@@ -6,7 +6,6 @@ roles, permissions, and role bindings.
 from __future__ import annotations
 
 from hashlib import sha256
-from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field

@@ -18,7 +18,7 @@ from hashlib import sha256
 from typing import Any
 
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.deps import deps
 

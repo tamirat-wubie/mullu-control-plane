@@ -1,7 +1,7 @@
 # Mullu Platform MCOI Runtime -- Known Limitations v0.2.0
 
-**Version:** 0.3.0 (v3.10.2)
-**Date:** 2026-03-27
+**Version:** 0.4.0 (v3.12.0)
+**Date:** 2026-03-30
 
 This document lists known limitations, incomplete features, and areas where the
 runtime does not yet behave as intended by the architecture specification.

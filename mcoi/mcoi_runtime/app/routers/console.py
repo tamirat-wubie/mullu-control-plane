@@ -11,10 +11,7 @@ frontend can consume. Five views cover the core operational needs:
 """
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.deps import deps
 
@@ -32,7 +29,6 @@ def console_home():
     # Collect vitals from subsystems
     audit_summary = deps.audit_trail.summary()
     scheduler_summary = deps.scheduler.summary()
-    llm_summary = deps.llm_bridge.budget_summary()
 
     # Count outcomes from recent audit entries
     recent = deps.audit_trail.query(limit=200)

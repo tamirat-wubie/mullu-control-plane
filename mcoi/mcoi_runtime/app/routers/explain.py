@@ -1,8 +1,6 @@
 """Explanation endpoints — why was this action allowed/denied?"""
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
