@@ -253,6 +253,15 @@ observability.register_source("runbooks", lambda: runbook_learning.summary())
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
 
+# Explanation engine
+from mcoi_runtime.core.explanation_engine import ExplanationEngine
+explanation_engine = ExplanationEngine(
+    clock=_clock,
+    audit_trail=None,
+    guard_chain=None,
+)
+observability.register_source("explanations", lambda: explanation_engine.summary())
+
 # Phase 206A: Event bus
 event_bus = EventBus(clock=_clock)
 # Wire event bus into observability
@@ -918,6 +927,9 @@ deps.set("access_runtime", access_runtime)
 policy_sandbox._guard_chain = guard_chain
 deps.set("policy_sandbox", policy_sandbox)
 deps.set("runbook_learning", runbook_learning)
+explanation_engine._audit_trail = audit_trail
+explanation_engine._guard_chain = guard_chain
+deps.set("explanation_engine", explanation_engine)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)
@@ -1008,6 +1020,7 @@ from mcoi_runtime.app.routers.connectors import router as connectors_router
 from mcoi_runtime.app.routers.rbac import router as rbac_router
 from mcoi_runtime.app.routers.simulation import router as simulation_router
 from mcoi_runtime.app.routers.runbooks import router as runbooks_router
+from mcoi_runtime.app.routers.explain import router as explain_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -1025,6 +1038,7 @@ app.include_router(connectors_router)
 app.include_router(rbac_router)
 app.include_router(simulation_router)
 app.include_router(runbooks_router)
+app.include_router(explain_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
