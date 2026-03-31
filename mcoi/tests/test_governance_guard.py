@@ -137,7 +137,17 @@ class TestBuiltInGuards:
         mgr = APIKeyManager()
         raw_key, _ = mgr.create_key("tenant-123", frozenset({"read"}))
         guard = create_api_key_guard(mgr, require_auth=True)
-        ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": "spoofed"}
+        # Without spoofed tenant — key tenant propagates
+        ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": ""}
         result = guard.check(ctx)
         assert result.allowed is True
         assert ctx["tenant_id"] == "tenant-123"
+
+    def test_api_key_guard_rejects_spoofed_tenant(self):
+        mgr = APIKeyManager()
+        raw_key, _ = mgr.create_key("tenant-123", frozenset({"read"}))
+        guard = create_api_key_guard(mgr, require_auth=True)
+        ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": "spoofed"}
+        result = guard.check(ctx)
+        assert result.allowed is False
+        assert "mismatch" in result.reason
