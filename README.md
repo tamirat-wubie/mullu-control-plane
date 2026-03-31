@@ -73,7 +73,7 @@ mullu-control-plane/
 |  |  |- adapters/    # LLM backends, filesystem, code, document
 |  |  |- persistence/ # Stores (trace, snapshot, coordination, memory)
 |  |  \- pilot/       # Deployment paths
-|  \- tests/          # 44,780+ tests
+|  \- tests/          # 44,820+ tests
 |- maf/               # MAF Core (Rust certifying substrate)
 |- schemas/           # Canonical JSON schemas
 |- scripts/           # Validation, staging drill
