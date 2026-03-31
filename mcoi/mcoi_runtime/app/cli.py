@@ -378,7 +378,7 @@ def demo_command(args: argparse.Namespace) -> int:
             "outcome": "success",
             "result": {"content": "file contents here"},
         })
-        print(f"  [3] Action result submitted: success")
+        print("  [3] Action result submitted: success")
 
     # 4. Check audit trail
     try:
@@ -390,10 +390,10 @@ def demo_command(args: argparse.Namespace) -> int:
 
     # 5. Heartbeat
     post("/api/v1/agent/heartbeat", {"agent_id": agent_id, "status": "healthy"})
-    print(f"  [5] Heartbeat sent: healthy")
+    print("  [5] Heartbeat sent: healthy")
 
     print("  " + "=" * 45)
-    print(f"  Demo complete. Agent governed, actions audited.")
+    print("  Demo complete. Agent governed, actions audited.")
     print()
     return 0
 
