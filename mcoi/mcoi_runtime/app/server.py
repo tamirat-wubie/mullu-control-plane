@@ -795,7 +795,7 @@ async def _app_lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="Mullu Platform",
-    version="3.10.2",
+    version="3.11.0",
     description="Governed AI Operating System",
     lifespan=_app_lifespan,
 )
