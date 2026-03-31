@@ -219,7 +219,7 @@ class RunbookLearningEngine:
             if runbook is None:
                 raise ValueError(f"runbook not found: {runbook_id}")
             if runbook.status != RunbookStatus.APPROVED:
-                raise ValueError(f"runbook must be approved before activation")
+                raise ValueError("runbook must be approved before activation")
             runbook.status = RunbookStatus.ACTIVE
         return runbook
 
