@@ -37,21 +37,50 @@ class AuditEntry:
     recorded_at: str
 
 
+class AuditStore:
+    """Optional persistent backend for audit entries.
+
+    When provided to AuditTrail, entries are written through to the
+    store on every record(), making the audit trail consistent across
+    replicas. In-memory entries act as a hot cache; the store is the
+    source of truth.
+    """
+
+    def append(self, entry: AuditEntry) -> None:
+        pass
+
+    def query(self, **kwargs: Any) -> list[AuditEntry]:
+        return []
+
+    def count(self) -> int:
+        return 0
+
+
 class AuditTrail:
     """Hash-chain linked audit trail.
 
     Every entry is linked to the previous via hash chain,
     making tampering detectable. The chain can be verified
     by recomputing hashes from the beginning.
+
+    When an AuditStore is provided, all entries are written through
+    for cross-replica consistency.
     """
 
-    def __init__(self, *, clock: Callable[[], str], max_entries: int = 500_000) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], str],
+        max_entries: int = 500_000,
+        store: AuditStore | None = None,
+    ) -> None:
         self._clock = clock
         self._entries: list[AuditEntry] = []
         self._max_entries = max_entries
         self._last_hash: str = sha256(b"genesis").hexdigest()
         self._sequence: int = 0
         self._pruned_count: int = 0
+        self._store = store
 
     def record(
         self,
@@ -100,6 +129,9 @@ class AuditTrail:
 
         self._entries.append(entry)
         self._last_hash = entry_hash
+        # Write through to persistent store if available
+        if self._store is not None:
+            self._store.append(entry)
         # Prune oldest entries when at capacity (preserves recent history)
         if len(self._entries) > self._max_entries:
             prune_count = len(self._entries) - self._max_entries
