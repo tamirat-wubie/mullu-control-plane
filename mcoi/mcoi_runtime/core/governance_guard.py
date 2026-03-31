@@ -187,9 +187,18 @@ def create_api_key_guard(
                 allowed=False, guard_name="api_key",
                 reason=result.error or "Authentication failed",
             )
-        # Propagate tenant from key into context so downstream guards
-        # use the key's tenant rather than a potentially spoofed header.
+        # Bind tenant from authenticated key — prevents header spoofing.
+        # In require_auth mode, reject if request supplies a different tenant.
         if result.tenant_id:
+            request_tenant = ctx.get("tenant_id", "")
+            if require_auth and request_tenant and request_tenant != result.tenant_id:
+                return GuardResult(
+                    allowed=False, guard_name="api_key",
+                    reason=f"tenant mismatch: key bound to {result.tenant_id}, request claims {request_tenant}",
+                )
             ctx["tenant_id"] = result.tenant_id
+        # Propagate principal identity for audit attribution
+        ctx["authenticated_key_id"] = result.key_id
+        ctx["authenticated_tenant_id"] = result.tenant_id
         return GuardResult(allowed=True, guard_name="api_key")
     return GovernanceGuard("api_key", check)

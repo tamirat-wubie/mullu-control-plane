@@ -64,7 +64,12 @@ def _clock() -> str:
 
 # Persistence store (InMemoryStore for dev, PostgresStore for production)
 _db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
-if _db_backend == "memory" and os.environ.get("MULLU_ENV") not in ("local_dev", "test", ""):
+if _db_backend == "memory" and ENV in ("pilot", "production"):
+    raise RuntimeError(
+        f"MULLU_DB_BACKEND=memory is not allowed in {ENV} environment. "
+        "Set MULLU_DB_BACKEND=postgresql to ensure governance state survives restarts."
+    )
+elif _db_backend == "memory" and os.environ.get("MULLU_ENV") not in ("local_dev", "test", ""):
     import warnings
     warnings.warn(
         "MULLU_DB_BACKEND=memory in non-dev environment. "
@@ -261,6 +266,11 @@ explanation_engine = ExplanationEngine(
     guard_chain=None,
 )
 observability.register_source("explanations", lambda: explanation_engine.summary())
+
+# Audit chain anchoring
+from mcoi_runtime.core.audit_anchor import AuditAnchorStore
+audit_anchor = AuditAnchorStore(clock=_clock)
+observability.register_source("audit_anchors", lambda: audit_anchor.summary())
 
 # Knowledge graph
 from mcoi_runtime.core.knowledge_graph import KnowledgeGraph
@@ -936,6 +946,7 @@ explanation_engine._audit_trail = audit_trail
 explanation_engine._guard_chain = guard_chain
 deps.set("explanation_engine", explanation_engine)
 deps.set("knowledge_graph", knowledge_graph)
+deps.set("audit_anchor", audit_anchor)
 deps.set("tool_registry", tool_registry)
 deps.set("tool_agent", tool_agent)
 deps.set("agent_memory", agent_memory)
