@@ -1021,6 +1021,7 @@ from mcoi_runtime.app.routers.rbac import router as rbac_router
 from mcoi_runtime.app.routers.simulation import router as simulation_router
 from mcoi_runtime.app.routers.runbooks import router as runbooks_router
 from mcoi_runtime.app.routers.explain import router as explain_router
+from mcoi_runtime.app.routers.multi_agent import router as multi_agent_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -1039,9 +1040,10 @@ app.include_router(rbac_router)
 app.include_router(simulation_router)
 app.include_router(runbooks_router)
 app.include_router(explain_router)
+app.include_router(multi_agent_router)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ════��════════════════���═════════════════════════��═══════════════════════════
 # Shutdown handler — stays in server.py (needs direct access to subsystems)
 # ═══════════════════════════════════════════════════════════════════════════
 
