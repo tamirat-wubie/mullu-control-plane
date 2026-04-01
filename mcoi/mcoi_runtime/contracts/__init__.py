@@ -1968,6 +1968,7 @@ __all__ = [
     "PauseReason",
     "SlaStatus",
     "WorkQueueEntry",
+    "CausalLineage",
     "CausalPath",
     "DecisionLink",
     "EdgeType",
@@ -1986,6 +1987,7 @@ __all__ = [
     "GoalPriority",
     "GoalReplanRecord",
     "GoalStatus",
+    "GuardVerdict",
     "SubGoal",
     "SubGoalStatus",
     "KnowledgeRecord",
@@ -2047,6 +2049,7 @@ __all__ = [
     "StateReference",
     "TemplateReference",
     "TraceEntry",
+    "TransitionReceipt",
     "TransitionRecord",
     "VerificationCheck",
     "VerificationResult",
@@ -3347,6 +3350,7 @@ __all__ = [
     "LogicSnapshot",
     "LogicalStatement",
     "LogicalStatus",
+    "ProofCapsule",
     "ProofRecord",
     "ProofStatus",
     "RevisionDisposition",
@@ -3574,4 +3578,6 @@ __all__ = [
     "RunbookEntry",
     "SloDefinition",
     "TenantBootstrap",
+    # --- proof substrate ---
+    "certify_transition",
 ]
