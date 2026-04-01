@@ -49,5 +49,36 @@ services:
       timeout: 5s
       retries: 3
 
+  # Mullu Gateway — channel webhook server
+  gateway:
+    build: .
+    command: ["python", "-m", "uvicorn", "gateway.server:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "8001:8001"
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DB_BACKEND: postgresql
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_LLM_BACKEND: stub
+      MULLU_PII_SCAN: "true"
+      # Channel credentials (set in .env):
+      # WHATSAPP_PHONE_NUMBER_ID: ""
+      # WHATSAPP_ACCESS_TOKEN: ""
+      # WHATSAPP_VERIFY_TOKEN: ""
+      # WHATSAPP_APP_SECRET: ""
+      # TELEGRAM_BOT_TOKEN: ""
+      # SLACK_BOT_TOKEN: ""
+      # SLACK_SIGNING_SECRET: ""
+      # DISCORD_BOT_TOKEN: ""
+      # DISCORD_PUBLIC_KEY: ""
+    depends_on:
+      mullu:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
 volumes:
   pgdata:
