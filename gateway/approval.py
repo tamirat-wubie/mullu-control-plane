@@ -91,6 +91,9 @@ class ApprovalRouter:
     High-risk: block and require explicit confirmation before proceeding.
     """
 
+    MAX_PENDING = 10_000
+    MAX_HISTORY = 100_000
+
     def __init__(
         self,
         *,
@@ -136,6 +139,15 @@ class ApprovalRouter:
             )
             self._history.append(request)
             return request
+
+        # Evict oldest pending if at capacity
+        if len(self._pending) >= self.MAX_PENDING:
+            oldest_id = next(iter(self._pending))
+            self._pending.pop(oldest_id)
+
+        # Prune history if over limit
+        if len(self._history) > self.MAX_HISTORY:
+            self._history = self._history[-self.MAX_HISTORY:]
 
         # Medium or High — create pending request
         request = ApprovalRequest(
