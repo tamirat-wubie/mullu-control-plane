@@ -328,9 +328,15 @@ def create_rbac_guard(
                     allowed=False, guard_name="rbac",
                     reason=f"approval required: {evaluation.reason}",
                 )
-        except Exception:
+        except Exception as _rbac_exc:
             # If RBAC evaluation fails, fail-open for backward compatibility
             # when require_identity is False, fail-closed when True
+            import logging as _rbac_log
+            _rbac_log.getLogger("mcoi_runtime.core.governance_guard").warning(
+                "RBAC evaluation failed for %s on %s: %s (fail-%s)",
+                identity_id, endpoint, _rbac_exc,
+                "closed" if require_identity else "open",
+            )
             if require_identity:
                 return GuardResult(
                     allowed=False, guard_name="rbac",

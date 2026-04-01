@@ -38,6 +38,9 @@ _log = logging.getLogger(__name__)
 # Paths exempt from governance guards
 EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/redoc"})
 
+# Max body size to parse for content safety (1MB). Larger bodies skip content extraction.
+MAX_BODY_PARSE_SIZE = 1_048_576
+
 
 class GovernanceMiddleware(BaseHTTPMiddleware):
     """FastAPI middleware that enforces governance guards."""
@@ -84,7 +87,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         if "json" in content_type and request.method in ("POST", "PUT", "PATCH"):
             try:
                 body = await request.body()
-                if body:
+                if body and len(body) <= MAX_BODY_PARSE_SIZE:
                     parsed = json.loads(body)
                     if isinstance(parsed, dict):
                         context["prompt"] = parsed.get("prompt", "")

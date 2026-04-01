@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -78,6 +79,8 @@ class ProofBridge:
     with guard verdicts, maintaining a causal lineage across decisions.
     """
 
+    MAX_LINEAGE_ENTRIES = 10_000  # Evict oldest lineages beyond this
+
     def __init__(
         self,
         *,
@@ -89,6 +92,7 @@ class ProofBridge:
         self._lineage: dict[str, CausalLineage] = {}  # entity_id -> lineage
         self._receipt_count: int = 0
         self._last_receipt_hash: str = "genesis"
+        self._lock = threading.Lock()
 
     def certify_governance_decision(
         self,
@@ -113,6 +117,24 @@ class ProofBridge:
         Returns:
             GovernanceProof with receipt, verdicts, and lineage.
         """
+        with self._lock:
+            return self._certify_locked(
+                tenant_id=tenant_id, endpoint=endpoint,
+                guard_results=guard_results, decision=decision,
+                actor_id=actor_id, reason=reason,
+            )
+
+    def _certify_locked(
+        self,
+        *,
+        tenant_id: str,
+        endpoint: str,
+        guard_results: list[dict[str, Any]],
+        decision: str,
+        actor_id: str,
+        reason: str,
+    ) -> GovernanceProof:
+        """Internal: must be called under self._lock."""
         timestamp = self._clock()
         entity_id = f"request:{tenant_id}:{endpoint}"
 
@@ -273,7 +295,12 @@ class ProofBridge:
         return hashlib.sha256(content.encode()).hexdigest()
 
     def _update_lineage(self, entity_id: str, receipt: TransitionReceipt, current_state: str) -> None:
-        """Update causal lineage for an entity."""
+        """Update causal lineage for an entity. Evicts oldest if at capacity."""
+        # Evict oldest lineages if at capacity
+        if len(self._lineage) >= self.MAX_LINEAGE_ENTRIES and entity_id not in self._lineage:
+            oldest_key = next(iter(self._lineage))
+            del self._lineage[oldest_key]
+
         existing = self._lineage.get(entity_id)
         if existing:
             new_chain = existing.receipt_chain + (receipt.receipt_id,)
