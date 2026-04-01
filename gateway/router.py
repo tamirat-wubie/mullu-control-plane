@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
+from gateway.approval import ApprovalRouter, ApprovalStatus
+
 
 @dataclass(frozen=True, slots=True)
 class GatewayMessage:
@@ -81,9 +83,11 @@ class GatewayRouter:
         *,
         platform: Any,  # Platform instance from governed_session.py
         clock: Callable[[], str] | None = None,
+        approval_router: ApprovalRouter | None = None,
     ) -> None:
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
+        self._approval = approval_router or ApprovalRouter(clock=self._clock)
         self._tenant_mappings: dict[str, TenantMapping] = {}  # "channel:sender_id" -> mapping
         self._channels: dict[str, ChannelAdapter] = {}
         self._message_count = 0
@@ -141,7 +145,31 @@ class GatewayRouter:
                 metadata={"error": "access_denied"},
             )
 
-        # 3. Execute through LLM (governed)
+        # 3. Risk classification + approval
+        approval = self._approval.request_approval(
+            tenant_id=mapping.tenant_id,
+            identity_id=mapping.identity_id,
+            channel=message.channel,
+            action_description="llm_completion",
+            body=message.body,
+        )
+        if approval.status == ApprovalStatus.PENDING:
+            # Medium/high risk — return pending message, wait for approval
+            try:
+                session.close()
+            except Exception:
+                pass
+            return GatewayResponse(
+                message_id=self._gen_id("resp", message.message_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body=f"This action requires approval (risk: {approval.risk_tier.value}). "
+                     f"Request ID: {approval.request_id}",
+                governed=True,
+                metadata={"approval_required": True, "request_id": approval.request_id},
+            )
+
+        # 4. Execute through LLM (governed — approved)
         try:
             result = session.llm(message.body)
             response_body = result.content if result.succeeded else f"I couldn't process that: {result.error}"
@@ -188,6 +216,28 @@ class GatewayRouter:
                 pass  # Channel send failure — response still returned
 
         return response
+
+    def handle_approval_callback(self, request_id: str, approved: bool, resolved_by: str = "user") -> GatewayResponse | None:
+        """Handle an approval callback from a channel button press.
+
+        Returns a GatewayResponse if the approval resolves successfully, None otherwise.
+        """
+        result = self._approval.resolve(request_id, approved=approved, resolved_by=resolved_by)
+        if result is None:
+            return None
+        status = "approved" if result.status == ApprovalStatus.APPROVED else "denied"
+        return GatewayResponse(
+            message_id=self._gen_id("apr-resp", request_id),
+            channel=result.channel,
+            recipient_id=result.identity_id,
+            body=f"Request {request_id} has been {status}.",
+            governed=True,
+            metadata={"approval_resolved": True, "status": status},
+        )
+
+    @property
+    def pending_approvals(self) -> int:
+        return self._approval.pending_count
 
     def _gen_id(self, prefix: str, ref: str) -> str:
         return f"{prefix}-{hashlib.sha256(f'{ref}:{self._message_count}'.encode()).hexdigest()[:12]}"
