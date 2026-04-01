@@ -135,10 +135,22 @@ cert_daemon = CertificationDaemon(
     ),
 )
 
-# Phase 1A: Governance stores (env-driven backend selection)
+# Phase 2B: Field encryption (optional — enabled when MULLU_ENCRYPTION_KEY is set)
+_field_encryptor = None
+if os.environ.get("MULLU_ENCRYPTION_KEY", ""):
+    from mcoi_runtime.core.field_encryption import FieldEncryptor, EnvKeyProvider
+    try:
+        _enc_provider = EnvKeyProvider()
+        if _enc_provider.available:
+            _field_encryptor = FieldEncryptor(_enc_provider)
+    except ValueError:
+        pass  # Invalid key length — encryption disabled
+
+# Phase 1A: Governance stores (env-driven backend selection, with optional encryption)
 _gov_stores = create_governance_stores(
     backend=_db_backend,
     connection_string=os.environ.get("MULLU_DB_URL", ""),
+    field_encryptor=_field_encryptor,
 )
 
 # Phase 202A: Tenant budget manager (with persistent store)
@@ -190,17 +202,6 @@ shell_policy = _shell_policy_map.get(ENV, SANDBOXED)
 # Phase 4C: Proof bridge (governance decision → MAF transition receipts)
 from mcoi_runtime.core.proof_bridge import ProofBridge
 proof_bridge = ProofBridge(clock=_clock)
-
-# Phase 2B: Field encryption (optional — enabled when MULLU_ENCRYPTION_KEY is set)
-_field_encryptor = None
-if os.environ.get("MULLU_ENCRYPTION_KEY", ""):
-    from mcoi_runtime.core.field_encryption import FieldEncryptor, EnvKeyProvider
-    try:
-        _enc_provider = EnvKeyProvider()
-        if _enc_provider.available:
-            _field_encryptor = FieldEncryptor(_enc_provider)
-    except ValueError:
-        pass  # Invalid key length — encryption disabled
 
 # Phase 201D: Tenant-scoped ledger
 tenant_ledger = TenantLedger(clock=_clock)

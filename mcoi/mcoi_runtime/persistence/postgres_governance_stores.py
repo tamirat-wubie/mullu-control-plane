@@ -293,6 +293,10 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
     Append-only: entries are inserted, never updated or deleted.
     Hash chain integrity is preserved exactly as provided by AuditTrail.
     Thread-safe via cursor-per-operation.
+
+    When a field_encryptor is provided, the detail JSONB field is encrypted
+    at rest. The entry_hash and previous_hash remain unencrypted for chain
+    verification without decryption.
     """
 
     def __init__(
@@ -300,12 +304,37 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
         connection_string: str = "postgresql://localhost:5432/mullu",
         *,
         auto_migrate: bool = True,
+        field_encryptor: Any | None = None,
     ) -> None:
+        self._field_encryptor = field_encryptor
         self._base_init(connection_string, migration_index=1, auto_migrate=auto_migrate)
+
+    def _encrypt_detail(self, detail: dict[str, Any]) -> str:
+        """Encrypt detail dict if encryptor is available, else return JSON."""
+        detail_json = json.dumps(detail, sort_keys=True, default=str)
+        if self._field_encryptor is not None:
+            try:
+                return self._field_encryptor.encrypt(detail_json)
+            except Exception:
+                pass  # Encryption failure — fall back to plaintext
+        return detail_json
+
+    def _decrypt_detail(self, stored: str) -> dict[str, Any]:
+        """Decrypt detail string if encrypted, else parse as JSON."""
+        if self._field_encryptor is not None and self._field_encryptor.is_encrypted(stored):
+            try:
+                decrypted = self._field_encryptor.decrypt(stored)
+                return json.loads(decrypted)
+            except Exception:
+                pass  # Decryption failure — try as plaintext
+        if isinstance(stored, str):
+            return json.loads(stored)
+        return stored  # Already parsed (psycopg2 JSONB)
 
     def append(self, entry: AuditEntry) -> None:
         if self._conn is None:
             return
+        detail_stored = self._encrypt_detail(entry.detail)
         with self._lock:
             with self._conn.cursor() as cur:
                 cur.execute(
@@ -317,7 +346,7 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
                     (
                         entry.entry_id, entry.sequence, entry.action,
                         entry.actor_id, entry.tenant_id, entry.target,
-                        entry.outcome, json.dumps(entry.detail, sort_keys=True, default=str),
+                        entry.outcome, detail_stored,
                         entry.entry_hash, entry.previous_hash, entry.recorded_at,
                     ),
                 )
@@ -354,7 +383,7 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
             AuditEntry(
                 entry_id=r[0], sequence=r[1], action=r[2], actor_id=r[3],
                 tenant_id=r[4], target=r[5], outcome=r[6],
-                detail=json.loads(r[7]) if isinstance(r[7], str) else r[7],
+                detail=self._decrypt_detail(r[7]),
                 entry_hash=r[8], previous_hash=r[9], recorded_at=r[10],
             )
             for r in rows
@@ -611,6 +640,8 @@ class GovernanceStoreBundle:
 def create_governance_stores(
     backend: str = "memory",
     connection_string: str = "",
+    *,
+    field_encryptor: Any | None = None,
 ) -> GovernanceStoreBundle:
     """Factory for creating governance stores.
 
@@ -619,6 +650,8 @@ def create_governance_stores(
     Backends:
     - "memory" → In-memory stores (testing/development)
     - "postgresql" → PostgreSQL stores (production)
+
+    When field_encryptor is provided, audit entry detail fields are encrypted at rest.
     """
     if backend == "memory":
         return GovernanceStoreBundle({
@@ -631,7 +664,7 @@ def create_governance_stores(
         conn = connection_string or "postgresql://localhost:5432/mullu"
         return GovernanceStoreBundle({
             "budget": PostgresBudgetStore(conn),
-            "audit": PostgresAuditStore(conn),
+            "audit": PostgresAuditStore(conn, field_encryptor=field_encryptor),
             "rate_limit": PostgresRateLimitStore(conn),
             "tenant_gating": PostgresTenantGatingStore(conn),
         })
