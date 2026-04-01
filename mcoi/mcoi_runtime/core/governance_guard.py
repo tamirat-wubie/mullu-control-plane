@@ -271,3 +271,74 @@ def create_api_key_guard(
         ctx["authenticated_tenant_id"] = result.tenant_id
         return GuardResult(allowed=True, guard_name="api_key")
     return GovernanceGuard("api_key", check)
+
+
+def create_rbac_guard(
+    access_runtime: Any,
+    *,
+    require_identity: bool = False,
+) -> GovernanceGuard:
+    """Create an RBAC access-control guard.
+
+    Resolves identity from auth context (JWT subject or API key ID),
+    evaluates access via AccessRuntimeEngine, and blocks if denied.
+    Unknown/unauthenticated requests pass through when require_identity=False.
+    """
+    import hashlib as _hashlib
+
+    def check(ctx: dict[str, Any]) -> GuardResult:
+        # Resolve identity from auth guards
+        identity_id = ctx.get("authenticated_subject", "") or ctx.get("authenticated_key_id", "")
+        if not identity_id:
+            if require_identity:
+                return GuardResult(
+                    allowed=False, guard_name="rbac",
+                    reason="no authenticated identity for RBAC evaluation",
+                )
+            return GuardResult(allowed=True, guard_name="rbac")
+
+        endpoint = ctx.get("endpoint", "/unknown")
+        method = ctx.get("method", "GET")
+
+        # Map endpoint to resource_type (e.g., "/api/v1/llm/complete" → "llm")
+        parts = endpoint.strip("/").split("/")
+        resource_type = parts[2] if len(parts) > 2 else "api"
+
+        # Generate deterministic request_id
+        req_hash = _hashlib.sha256(f"{identity_id}:{endpoint}:{method}".encode()).hexdigest()[:12]
+        request_id = f"rbac-{req_hash}"
+
+        try:
+            from mcoi_runtime.contracts.access_runtime import AccessDecision
+            evaluation = access_runtime.evaluate_access(
+                request_id,
+                identity_id,
+                resource_type=resource_type,
+                action=method,
+                scope_ref_id=ctx.get("tenant_id", "*"),
+            )
+
+            if evaluation.decision == AccessDecision.DENIED:
+                return GuardResult(
+                    allowed=False, guard_name="rbac",
+                    reason=f"access denied: {evaluation.reason}",
+                )
+            if evaluation.decision == AccessDecision.REQUIRES_APPROVAL:
+                return GuardResult(
+                    allowed=False, guard_name="rbac",
+                    reason=f"approval required: {evaluation.reason}",
+                )
+        except Exception:
+            # If RBAC evaluation fails, fail-open for backward compatibility
+            # when require_identity is False, fail-closed when True
+            if require_identity:
+                return GuardResult(
+                    allowed=False, guard_name="rbac",
+                    reason="RBAC evaluation failed",
+                )
+
+        # Propagate resolved identity for downstream audit
+        ctx["rbac_identity_id"] = identity_id
+        ctx["rbac_resource_type"] = resource_type
+        return GuardResult(allowed=True, guard_name="rbac")
+    return GovernanceGuard("rbac", check)

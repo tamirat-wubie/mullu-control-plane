@@ -27,6 +27,7 @@ from mcoi_runtime.core.governance_guard import (
     create_api_key_guard,
     create_budget_guard,
     create_jwt_guard,
+    create_rbac_guard,
     create_rate_limit_guard,
     create_tenant_guard,
 )
@@ -157,6 +158,7 @@ def build_guard_chain(
     api_key_mgr: Any | None = None,
     jwt_authenticator: Any | None = None,
     tenant_gating_registry: Any | None = None,
+    access_runtime: Any | None = None,
     content_safety_chain: ContentSafetyChain | None = None,
 ) -> GovernanceGuardChain:
     """Build the standard governance guard chain.
@@ -165,9 +167,10 @@ def build_guard_chain(
     1. API Key / JWT auth (who are you?)
     2. Tenant validation (is tenant_id valid?)
     3. Tenant gating (is tenant active?)
-    4. Content safety (is the prompt safe?)
-    5. Rate limit (within limits?)
-    6. Budget (can you afford this?)
+    4. RBAC (does this identity have permission?)
+    5. Content safety (is the prompt safe?)
+    6. Rate limit (within limits?)
+    7. Budget (can you afford this?)
     """
     chain = GovernanceGuardChain()
     if api_key_mgr is not None:
@@ -178,6 +181,8 @@ def build_guard_chain(
     if tenant_gating_registry is not None:
         from mcoi_runtime.core.tenant_gating import create_tenant_gating_guard
         chain.add(create_tenant_gating_guard(tenant_gating_registry))
+    if access_runtime is not None:
+        chain.add(create_rbac_guard(access_runtime))
     if content_safety_chain is not None:
         chain.add(create_content_safety_guard(content_safety_chain))
     chain.add(create_rate_limit_guard(rate_limiter))
