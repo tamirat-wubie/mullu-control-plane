@@ -125,9 +125,9 @@ class TestSessionManager:
     def test_add_message(self):
         mgr = SessionManager()
         mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
-        mgr.add_message("web", "u1", "user", "hello")
-        mgr.add_message("web", "u1", "assistant", "hi there")
-        ctx = mgr.get_context("web", "u1")
+        mgr.add_message("web", "u1", "user", "hello", tenant_id="t1")
+        mgr.add_message("web", "u1", "assistant", "hi there", tenant_id="t1")
+        ctx = mgr.get_context("web", "u1", tenant_id="t1")
         assert ctx.message_count == 2
         assert ctx.messages[0]["role"] == "user"
         assert ctx.messages[1]["role"] == "assistant"
@@ -136,8 +136,8 @@ class TestSessionManager:
         mgr = SessionManager(max_context_messages=5)
         mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
         for i in range(10):
-            mgr.add_message("web", "u1", "user", f"msg-{i}")
-        ctx = mgr.get_context("web", "u1")
+            mgr.add_message("web", "u1", "user", f"msg-{i}", tenant_id="t1")
+        ctx = mgr.get_context("web", "u1", tenant_id="t1")
         assert ctx.message_count == 5
         assert ctx.messages[0]["content"] == "msg-5"  # Oldest pruned
 
@@ -145,7 +145,7 @@ class TestSessionManager:
         mgr = SessionManager()
         mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
         assert mgr.active_sessions == 1
-        mgr.clear_context("web", "u1")
+        mgr.clear_context("web", "u1", tenant_id="t1")
         assert mgr.active_sessions == 0
 
     def test_different_users_separate_contexts(self):

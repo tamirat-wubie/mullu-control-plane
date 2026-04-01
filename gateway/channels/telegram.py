@@ -30,7 +30,8 @@ class TelegramAdapter:
 
     def verify_webhook(self, secret_token: str, header_token: str) -> bool:
         """Verify Telegram webhook using X-Telegram-Bot-Api-Secret-Token header."""
-        return secret_token == header_token
+        import hmac
+        return hmac.compare_digest(secret_token, header_token)
 
     def parse_message(self, update: dict[str, Any]) -> GatewayMessage | None:
         """Parse Telegram Update into canonical GatewayMessage."""
