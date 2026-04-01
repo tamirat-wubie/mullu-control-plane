@@ -66,6 +66,7 @@ class GovernedSession:
         audit_trail: Any | None = None,
         proof_bridge: Any | None = None,
         tenant_gating: Any | None = None,
+        governed_dispatcher: Any | None = None,
     ) -> None:
         self._session_id = session_id
         self._identity_id = identity_id
@@ -79,6 +80,7 @@ class GovernedSession:
         self._audit_trail = audit_trail
         self._proof_bridge = proof_bridge
         self._tenant_gating = tenant_gating
+        self._governed_dispatcher = governed_dispatcher
         self._closed = False
         self._operations = 0
         self._llm_calls = 0
@@ -236,22 +238,48 @@ class GovernedSession:
     def execute(self, action_type: str, **bindings: Any) -> dict[str, Any]:
         """Governed action execution (shell, tool, etc).
 
-        Pipeline: RBAC → tenant gating → execute → audit → proof.
+        Pipeline: RBAC → tenant gating → dispatch → audit → proof.
+
+        When a GovernedDispatcher is available, routes through the full
+        governed execution pipeline. Otherwise returns governed metadata.
         """
         self._require_open()
         self._check_tenant_gating()
         self._check_rbac("execute", "POST")
+
+        result_detail: dict[str, Any] = {"action_type": action_type, "bindings": dict(bindings)}
+
+        # Route through GovernedDispatcher if available
+        if self._governed_dispatcher is not None:
+            try:
+                from mcoi_runtime.core.governed_dispatcher import GovernedDispatchContext
+                from mcoi_runtime.contracts.execution import DispatchRequest
+                context = GovernedDispatchContext(
+                    actor_id=self._identity_id,
+                    intent_id=f"session-{self._session_id}-{self._operations}",
+                    request=DispatchRequest(action_type=action_type, bindings=bindings),
+                    mode="reality",
+                    budget_remaining=0.0,
+                    current_load=0.0,
+                )
+                dispatch_result = self._governed_dispatcher.governed_dispatch(context)
+                result_detail["dispatched"] = True
+                result_detail["blocked"] = dispatch_result.blocked
+                if dispatch_result.blocked:
+                    result_detail["block_reason"] = dispatch_result.block_reason
+            except Exception:
+                result_detail["dispatched"] = False
 
         self._operations += 1
         self._record_audit(
             action="session.execute",
             target=action_type,
             outcome="dispatched",
-            detail={"action_type": action_type, "bindings": dict(bindings)},
+            detail=result_detail,
         )
         self._certify_proof("session/execute", "allowed")
 
-        return {"action_type": action_type, "bindings": bindings, "governed": True}
+        return {**result_detail, "governed": True}
 
     def query(self, resource_type: str, **filters: Any) -> dict[str, Any]:
         """Governed read-only query.
@@ -346,6 +374,7 @@ class Platform:
         audit_trail: Any | None = None,
         proof_bridge: Any | None = None,
         tenant_gating: Any | None = None,
+        governed_dispatcher: Any | None = None,
     ) -> None:
         self._clock = clock
         self._access_runtime = access_runtime
@@ -356,6 +385,7 @@ class Platform:
         self._audit_trail = audit_trail
         self._proof_bridge = proof_bridge
         self._tenant_gating = tenant_gating
+        self._governed_dispatcher = governed_dispatcher
         self._session_count = 0
 
     @classmethod
@@ -470,6 +500,7 @@ class Platform:
             audit_trail=self._audit_trail,
             proof_bridge=self._proof_bridge,
             tenant_gating=self._tenant_gating,
+            governed_dispatcher=self._governed_dispatcher,
         )
 
     @property
