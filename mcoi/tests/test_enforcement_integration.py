@@ -135,10 +135,11 @@ class TestGuardChainComposition:
         names = guard_chain.guard_names()
         assert "tenant" in names
         assert "tenant_gating" in names
+        assert "rbac" in names
         assert "content_safety" in names
         assert "rate_limit" in names
         assert "budget" in names
-        assert len(names) == 6
+        assert len(names) == 7
 
     def test_api_key_guard_runs_first(self):
         os.environ["MULLU_ENV"] = "local_dev"

@@ -171,19 +171,21 @@ class TestGuardChainIntegration:
         from mcoi_runtime.app.server import guard_chain
         names = guard_chain.guard_names()
         assert "content_safety" in names
+        assert "rbac" in names
 
     def test_guard_chain_order(self):
-        """Verify guard chain order: tenant → gating → safety → rate → budget."""
+        """Verify guard chain order: tenant → gating → rbac → safety → rate → budget."""
         os.environ["MULLU_ENV"] = "local_dev"
         os.environ["MULLU_DB_BACKEND"] = "memory"
         from mcoi_runtime.app.server import guard_chain
         names = guard_chain.guard_names()
         tenant_idx = names.index("tenant")
         gating_idx = names.index("tenant_gating")
+        rbac_idx = names.index("rbac")
         safety_idx = names.index("content_safety")
         rate_idx = names.index("rate_limit")
         budget_idx = names.index("budget")
-        assert tenant_idx < gating_idx < safety_idx < rate_idx < budget_idx
+        assert tenant_idx < gating_idx < rbac_idx < safety_idx < rate_idx < budget_idx
 
 
 # ═══ Observability Registration ═══

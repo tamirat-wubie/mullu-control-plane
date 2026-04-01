@@ -299,10 +299,16 @@ from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
 _rbac_spine = EventSpineEngine(clock=_clock)
 access_runtime = AccessRuntimeEngine(_rbac_spine)
+
+# Phase 5: Seed default RBAC roles and permission rules
+from mcoi_runtime.core.rbac_defaults import seed_default_permissions
+_rbac_rules_seeded = seed_default_permissions(access_runtime)
+
 observability.register_source("rbac", lambda: {
     "identities": access_runtime.identity_count,
     "roles": access_runtime.role_count,
     "bindings": access_runtime.binding_count,
+    "rules_seeded": _rbac_rules_seeded,
 })
 
 # Policy sandbox — dry-run simulation
@@ -390,6 +396,7 @@ guard_chain = build_guard_chain(
     rate_limiter=rate_limiter, budget_mgr=tenant_budget_mgr,
     jwt_authenticator=_jwt_authenticator,
     tenant_gating_registry=_tenant_gating,
+    access_runtime=access_runtime,
     content_safety_chain=content_safety_chain,
 )
 
