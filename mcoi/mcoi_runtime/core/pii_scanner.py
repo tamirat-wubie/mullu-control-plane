@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -195,6 +196,11 @@ class PIIScanner:
         # Truncate to prevent regex DoS on very large texts
         if len(text) > self.MAX_SCAN_LENGTH:
             text = text[:self.MAX_SCAN_LENGTH]
+
+        # Normalize Unicode to defeat bypass techniques
+        text = unicodedata.normalize("NFKC", text)
+        # Strip zero-width and invisible characters
+        text = re.sub(r"[\u200b\u200c\u200d\u00ad\u2060\ufeff]", "", text)
 
         all_matches: list[tuple[int, int, PIIPattern, str]] = []
         for pattern_def, compiled in self._compiled:
