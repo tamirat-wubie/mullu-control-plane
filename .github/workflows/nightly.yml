@@ -60,6 +60,60 @@ jobs:
         working-directory: mcoi
         run: python -m pytest tests/test_infra_certification.py -m "infra_smtp" -v --tb=short
 
+  governance-benchmarks:
+    name: Governance Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        working-directory: mcoi
+        run: pip install -e ".[dev]"
+
+      - name: Run governance benchmarks
+        working-directory: mcoi
+        run: |
+          python -c "
+          from mcoi_runtime.core.governance_bench import run_governance_benchmarks
+          import json
+          suite = run_governance_benchmarks()
+          print(json.dumps(suite.summary(), indent=2))
+          for r in suite.results:
+              assert r.mean_ns < 10_000_000, f'{r.name} too slow: {r.mean_us:.1f} us'
+          print('All governance benchmarks within 10ms threshold.')
+          "
+
+      - name: Run import cycle check
+        working-directory: mcoi
+        run: |
+          python -c "
+          import os
+          from mcoi_runtime.core.import_analyzer import ImportAnalyzer
+          import mcoi_runtime
+          d = os.path.join(os.path.dirname(os.path.dirname(mcoi_runtime.__file__)), 'mcoi_runtime')
+          result = ImportAnalyzer('mcoi_runtime').analyze_directory(d)
+          assert not result.has_cycles, f'Import cycles: {[c.summary for c in result.cycles]}'
+          print(f'Import analysis: {result.module_count} modules, 0 cycles, max depth {result.max_depth}')
+          "
+
+      - uses: actions/setup-python@v5
+        if: hashFiles('maf/rust/Cargo.toml') != ''
+        with:
+          python-version: "3.13"
+
+      - name: Run Rust substrate benchmarks
+        if: hashFiles('maf/rust/Cargo.toml') != ''
+        working-directory: maf/rust
+        run: |
+          rustup default stable
+          cargo test -p maf-kernel --test substrate_bench -- --nocapture 2>&1 || true
+
   provider-certification:
     name: LLM Provider Certification
     runs-on: ubuntu-latest

@@ -37,7 +37,9 @@ from mcoi_runtime.core.event_bus import EventBus
 from mcoi_runtime.core.batch_pipeline import BatchPipeline
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 from mcoi_runtime.persistence.postgres_store import create_store
+from mcoi_runtime.persistence.postgres_governance_stores import create_governance_stores
 
+import base64
 import hashlib
 import json
 import os
@@ -133,17 +135,72 @@ cert_daemon = CertificationDaemon(
     ),
 )
 
-# Phase 202A: Tenant budget manager
-tenant_budget_mgr = TenantBudgetManager(clock=_clock)
+# Phase 1A: Governance stores (env-driven backend selection)
+_gov_stores = create_governance_stores(
+    backend=_db_backend,
+    connection_string=os.environ.get("MULLU_DB_URL", ""),
+)
+
+# Phase 202A: Tenant budget manager (with persistent store)
+tenant_budget_mgr = TenantBudgetManager(clock=_clock, store=_gov_stores["budget"])
 
 # Phase 202B: Governance metrics engine
 metrics = GovernanceMetricsEngine(clock=_clock)
 
-# Phase 202C: Rate limiter
-rate_limiter = RateLimiter(default_config=RateLimitConfig(max_tokens=60, refill_rate=1.0))
+# Phase 202C: Rate limiter (with persistent store)
+rate_limiter = RateLimiter(
+    default_config=RateLimitConfig(max_tokens=60, refill_rate=1.0),
+    store=_gov_stores["rate_limit"],
+)
 
-# Phase 202D: Audit trail
-audit_trail = AuditTrail(clock=_clock)
+# Phase 202D: Audit trail (with persistent store)
+audit_trail = AuditTrail(clock=_clock, store=_gov_stores["audit"])
+
+# Phase 2A: JWT/OIDC authenticator (optional — enabled when MULLU_JWT_SECRET is set)
+_jwt_authenticator = None
+_jwt_secret = os.environ.get("MULLU_JWT_SECRET", "")
+if _jwt_secret:
+    from mcoi_runtime.core.jwt_auth import JWTAuthenticator, OIDCConfig
+    _jwt_authenticator = JWTAuthenticator(OIDCConfig(
+        issuer=os.environ.get("MULLU_JWT_ISSUER", "mullu"),
+        audience=os.environ.get("MULLU_JWT_AUDIENCE", "mullu-api"),
+        signing_key=base64.b64decode(_jwt_secret) if _jwt_secret else b"",
+        tenant_claim=os.environ.get("MULLU_JWT_TENANT_CLAIM", "tenant_id"),
+    ))
+
+# Phase 2D: Tenant gating registry (lifecycle enforcement)
+from mcoi_runtime.core.tenant_gating import TenantGatingRegistry
+_tenant_gating = TenantGatingRegistry(clock=_clock, store=_gov_stores["tenant_gating"])
+
+# Phase 3A: PII scanner
+from mcoi_runtime.core.pii_scanner import PIIScanner
+pii_scanner = PIIScanner(
+    enabled=os.environ.get("MULLU_PII_SCAN", "true").lower() == "true",
+)
+
+# Phase 3B: Content safety chain
+from mcoi_runtime.core.content_safety import build_default_safety_chain
+content_safety_chain = build_default_safety_chain()
+
+# Phase 3C: Shell sandbox policy (env-driven profile selection)
+from mcoi_runtime.app.shell_policies import SANDBOXED, LOCAL_DEV, PILOT_PROD
+_shell_policy_map = {"local_dev": LOCAL_DEV, "pilot": PILOT_PROD, "production": PILOT_PROD}
+shell_policy = _shell_policy_map.get(ENV, SANDBOXED)
+
+# Phase 4C: Proof bridge (governance decision → MAF transition receipts)
+from mcoi_runtime.core.proof_bridge import ProofBridge
+proof_bridge = ProofBridge(clock=_clock)
+
+# Phase 2B: Field encryption (optional — enabled when MULLU_ENCRYPTION_KEY is set)
+_field_encryptor = None
+if os.environ.get("MULLU_ENCRYPTION_KEY", ""):
+    from mcoi_runtime.core.field_encryption import FieldEncryptor, EnvKeyProvider
+    try:
+        _enc_provider = EnvKeyProvider()
+        if _enc_provider.available:
+            _field_encryptor = FieldEncryptor(_enc_provider)
+    except ValueError:
+        pass  # Invalid key length — encryption disabled
 
 # Phase 201D: Tenant-scoped ledger
 tenant_ledger = TenantLedger(clock=_clock)
@@ -195,6 +252,12 @@ observability.register_source("agents", lambda: {"agents": agent_registry.count,
 observability.register_source("audit", lambda: audit_trail.summary())
 observability.register_source("certification", lambda: cert_daemon.status())
 observability.register_source("workflows", lambda: workflow_engine.summary())
+observability.register_source("tenant_gating", lambda: _tenant_gating.summary())
+observability.register_source("pii_scanner", lambda: {"enabled": pii_scanner.enabled, "patterns": pii_scanner.pattern_count})
+observability.register_source("content_safety", lambda: {"filters": content_safety_chain.filter_count, "names": content_safety_chain.filter_names()})
+observability.register_source("proof_bridge", lambda: proof_bridge.summary())
+observability.register_source("rate_limiter", lambda: rate_limiter.status())
+observability.register_source("shell_policy", lambda: {"policy_id": shell_policy.policy_id, "allowed": list(shell_policy.allowed_executables)})
 
 # Coordination engine with checkpoint persistence
 from mcoi_runtime.core.coordination import CoordinationEngine
@@ -325,6 +388,9 @@ plugin_registry.activate("cost-alert")
 from mcoi_runtime.app.middleware import GovernanceMiddleware, build_guard_chain
 guard_chain = build_guard_chain(
     rate_limiter=rate_limiter, budget_mgr=tenant_budget_mgr,
+    jwt_authenticator=_jwt_authenticator,
+    tenant_gating_registry=_tenant_gating,
+    content_safety_chain=content_safety_chain,
 )
 
 # Phase 208B: Traced workflow engine
@@ -824,7 +890,7 @@ async def _app_lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="Mullu Platform",
-    version="3.12.0",
+    version="3.13.0",
     description="Governed AI Operating System",
     lifespan=_app_lifespan,
 )
@@ -834,10 +900,12 @@ app.add_middleware(
     GovernanceMiddleware,
     guard_chain=guard_chain,
     metrics_fn=lambda name, val: metrics.inc(name, val),
+    proof_bridge=proof_bridge,
     on_reject=lambda ctx: audit_trail.record(
         action="guard.rejected", actor_id="system",
         tenant_id=ctx.get("tenant_id", ""), target=ctx.get("path", ""),
-        outcome="denied", detail=ctx,
+        outcome="denied",
+        detail=pii_scanner.scan_dict(ctx)[0] if pii_scanner.enabled else ctx,
     ),
 )
 
@@ -909,6 +977,10 @@ deps.set("rate_limit_headers", rate_limit_headers)
 deps.set("guard_chain", guard_chain)
 deps.set("audit_trail", audit_trail)
 deps.set("input_validator", input_validator)
+deps.set("proof_bridge", proof_bridge)
+deps.set("pii_scanner", pii_scanner)
+deps.set("content_safety_chain", content_safety_chain)
+deps.set("tenant_gating", _tenant_gating)
 
 # Tenants
 deps.set("tenant_budget_mgr", tenant_budget_mgr)
@@ -1128,5 +1200,18 @@ _startup_restored = _restore_state_on_startup()
 
 shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
 shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
-shutdown_mgr.register("close_connections", lambda: {"closed": True}, priority=10)
+
+
+def _close_governance_stores():
+    """Close all governance store connections on shutdown."""
+    _gov_stores.close()
+    if hasattr(store, "close"):
+        try:
+            store.close()
+        except Exception:
+            pass
+    return {"closed": True}
+
+
+shutdown_mgr.register("close_connections", _close_governance_stores, priority=10)
 

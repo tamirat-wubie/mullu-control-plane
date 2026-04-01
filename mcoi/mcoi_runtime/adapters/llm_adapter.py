@@ -591,11 +591,15 @@ class GovernedLLMAdapter:
         budget_manager: LLMBudgetManager,
         clock: Callable[[], str],
         ledger_sink: Callable[[dict[str, Any]], None] | None = None,
+        pii_scanner: Any | None = None,
+        content_safety_chain: Any | None = None,
     ) -> None:
         self._backend = backend
         self._budget_manager = budget_manager
         self._clock = clock
         self._ledger_sink = ledger_sink
+        self._pii_scanner = pii_scanner
+        self._content_safety_chain = content_safety_chain
         self._invocations: list[dict[str, Any]] = []
 
     @property
@@ -626,8 +630,34 @@ class GovernedLLMAdapter:
                     error=f"budget_rejected: {reason}",
                 )
 
+        # Content safety gate (pre-call)
+        if self._content_safety_chain is not None:
+            prompt_text = " ".join(
+                m.content if hasattr(m, "content") else m.get("content", "") if isinstance(m, dict) else str(m)
+                for m in params.messages
+            )
+            safety_result = self._content_safety_chain.evaluate(prompt_text)
+            if safety_result.verdict.value == "blocked":
+                return LLMResult(
+                    content="",
+                    input_tokens=0,
+                    output_tokens=0,
+                    cost=0.0,
+                    model_name=params.model_name,
+                    provider=self._backend.provider,
+                    finished=False,
+                    error=f"content_safety_blocked: {safety_result.reason}",
+                )
+
         # Backend call
         result = self._backend.call(params)
+
+        # PII redaction on output (post-call)
+        if self._pii_scanner is not None and result.succeeded and result.content:
+            scan_result = self._pii_scanner.scan(result.content)
+            if scan_result.pii_detected:
+                from dataclasses import replace
+                result = replace(result, content=scan_result.redacted_text)
 
         # Record cost
         if params.budget_id and result.succeeded:

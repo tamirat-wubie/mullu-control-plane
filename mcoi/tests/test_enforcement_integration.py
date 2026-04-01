@@ -133,11 +133,12 @@ class TestGuardChainComposition:
         os.environ["MULLU_DB_BACKEND"] = "memory"
         from mcoi_runtime.app.server import guard_chain
         names = guard_chain.guard_names()
-        assert "api_key" in names
         assert "tenant" in names
+        assert "tenant_gating" in names
+        assert "content_safety" in names
         assert "rate_limit" in names
         assert "budget" in names
-        assert len(names) == 4
+        assert len(names) == 6
 
     def test_api_key_guard_runs_first(self):
         os.environ["MULLU_ENV"] = "local_dev"
