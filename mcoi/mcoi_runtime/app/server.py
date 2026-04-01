@@ -989,6 +989,21 @@ deps.set("pii_scanner", pii_scanner)
 deps.set("content_safety_chain", content_safety_chain)
 deps.set("tenant_gating", _tenant_gating)
 
+# GovernedSession Platform harness
+from mcoi_runtime.core.governed_session import Platform as _Platform
+platform = _Platform(
+    clock=_clock,
+    access_runtime=access_runtime,
+    content_safety_chain=content_safety_chain,
+    pii_scanner=pii_scanner,
+    budget_mgr=tenant_budget_mgr,
+    llm_bridge=llm_bootstrap_result.bridge,
+    audit_trail=audit_trail,
+    proof_bridge=proof_bridge,
+    tenant_gating=_tenant_gating,
+)
+deps.set("platform", platform)
+
 # Tenants
 deps.set("tenant_budget_mgr", tenant_budget_mgr)
 deps.set("tenant_ledger", tenant_ledger)
