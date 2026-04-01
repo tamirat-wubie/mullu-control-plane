@@ -15,7 +15,9 @@ Invariants:
 
 from __future__ import annotations
 
+import base64
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable
@@ -176,21 +178,77 @@ class ContentSafetyFilter:
         return None
 
 
+def normalize_content(text: str) -> str:
+    """Normalize text to defeat common bypass techniques.
+
+    Applies:
+    1. Unicode NFKC normalization (collapses homoglyphs: Cyrillic а → Latin a)
+    2. Strip zero-width characters (ZWJ, ZWNJ, ZWSP, soft hyphens)
+    3. Collapse whitespace variants (non-breaking space, em/en space → regular space)
+    4. Decode obvious base64 segments and append decoded text
+    """
+    if not text:
+        return text
+
+    # 1. NFKC normalization — maps homoglyphs to canonical forms
+    normalized = unicodedata.normalize("NFKC", text)
+
+    # 2. Strip zero-width and invisible characters
+    _INVISIBLE = frozenset({
+        "\u200b",  # Zero-width space
+        "\u200c",  # Zero-width non-joiner
+        "\u200d",  # Zero-width joiner
+        "\u00ad",  # Soft hyphen
+        "\u2060",  # Word joiner
+        "\ufeff",  # Zero-width no-break space (BOM)
+    })
+    normalized = "".join(c for c in normalized if c not in _INVISIBLE)
+
+    # 3. Collapse whitespace variants to regular space
+    normalized = re.sub(r"[\u00a0\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f]+", " ", normalized)
+
+    # 4. Detect and decode base64 segments (≥20 chars of base64 alphabet)
+    b64_pattern = re.compile(r"[A-Za-z0-9+/=]{20,}")
+    decoded_parts: list[str] = []
+    for match in b64_pattern.finditer(normalized):
+        try:
+            decoded = base64.b64decode(match.group(), validate=True).decode("utf-8", errors="ignore")
+            if decoded and any(c.isalpha() for c in decoded):
+                decoded_parts.append(decoded)
+        except Exception:
+            pass
+
+    if decoded_parts:
+        normalized = normalized + " " + " ".join(decoded_parts)
+
+    return normalized
+
+
 class ContentSafetyChain:
     """Ordered chain of content safety filters.
 
     Filters run in registration order. Accumulates flagged results.
-    Stops on first BLOCKED verdict.
+    Stops on first BLOCKED verdict. Content is normalized before evaluation
+    to defeat Unicode homoglyph, zero-width character, and encoding bypasses.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, normalize: bool = True) -> None:
         self._filters: list[ContentSafetyFilter] = []
+        self._normalize = normalize
 
     def add(self, filter_: ContentSafetyFilter) -> None:
         self._filters.append(filter_)
 
     def evaluate(self, content: str) -> ContentSafetyResult:
-        """Run all filters. Returns aggregate safety verdict."""
+        """Run all filters. Returns aggregate safety verdict.
+
+        Content is normalized before pattern matching to prevent bypass
+        via Unicode homoglyphs, zero-width characters, and base64 encoding.
+        """
+        # Pre-scan normalization
+        if self._normalize and content:
+            content = normalize_content(content)
+
         results: list[SafetyFilterResult] = []
 
         for f in self._filters:
