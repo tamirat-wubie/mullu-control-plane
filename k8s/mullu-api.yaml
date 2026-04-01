@@ -126,3 +126,58 @@ spec:
         target:
           type: Utilization
           averageUtilization: 70
+---
+# ── Gateway Deployment ──
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mullu-gateway
+  namespace: mullu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mullu-gateway
+  template:
+    metadata:
+      labels:
+        app: mullu-gateway
+        governed: "true"
+    spec:
+      containers:
+        - name: mullu-gateway
+          image: mullu-control-plane:latest
+          command: ["python", "-m", "uvicorn", "gateway.server:app", "--host", "0.0.0.0", "--port", "8001"]
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: mullu-config
+            - secretRef:
+                name: mullu-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mullu-gateway
+  namespace: mullu
+spec:
+  selector:
+    app: mullu-gateway
+  ports:
+    - port: 80
+      targetPort: 8001
+  type: ClusterIP
