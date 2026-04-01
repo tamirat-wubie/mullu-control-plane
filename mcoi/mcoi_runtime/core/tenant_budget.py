@@ -230,6 +230,8 @@ class TenantBudgetManager:
             calls_made=0,
         )
         self._budgets[tenant_id] = reset
+        if self._store is not None:
+            self._store.save(reset)
         return reset
 
     def disable_tenant(self, tenant_id: str) -> None:

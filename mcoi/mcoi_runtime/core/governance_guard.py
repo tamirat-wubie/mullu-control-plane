@@ -15,7 +15,29 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, TypedDict
+
+
+class GuardContext(TypedDict, total=False):
+    """Typed context passed through the governance guard chain.
+
+    All fields are optional — guards check for presence before use.
+    Mutable: guards may enrich context (e.g., tenant_id from JWT).
+    """
+
+    tenant_id: str
+    endpoint: str
+    method: str
+    authorization: str
+    prompt: str
+    content: str
+    # Set by auth guards
+    authenticated_key_id: str
+    authenticated_subject: str
+    authenticated_tenant_id: str
+    jwt_scopes: frozenset[str]
+    # Set by content safety guard
+    content_safety_flags: list[dict[str, str]]
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,6 +171,53 @@ def create_tenant_guard() -> GovernanceGuard:
             )
         return GuardResult(allowed=True, guard_name="tenant")
     return GovernanceGuard("tenant", check)
+
+
+def create_jwt_guard(
+    jwt_authenticator: Any,
+    *,
+    require_auth: bool = False,
+) -> GovernanceGuard:
+    """Create a JWT authentication guard.
+
+    Extracts Bearer token from the ``authorization`` context field and
+    validates via the :class:`JWTAuthenticator`.  When a valid JWT is
+    supplied, tenant_id and identity are propagated into context.
+    """
+    def check(ctx: dict[str, Any]) -> GuardResult:
+        auth_header: str = ctx.get("authorization", "")
+        if not auth_header:
+            if require_auth:
+                return GuardResult(
+                    allowed=False, guard_name="jwt",
+                    reason="missing Authorization header",
+                )
+            return GuardResult(allowed=True, guard_name="jwt")
+        token = auth_header.removeprefix("Bearer ").strip()
+        if not token or token == auth_header:
+            # Not a Bearer token — skip JWT validation (may be API key)
+            return GuardResult(allowed=True, guard_name="jwt")
+        result = jwt_authenticator.validate(token)
+        if not result.authenticated:
+            return GuardResult(
+                allowed=False, guard_name="jwt",
+                reason=result.error or "JWT authentication failed",
+            )
+        # Bind tenant from JWT claims — prevents header spoofing.
+        if result.tenant_id:
+            request_tenant = ctx.get("tenant_id", "")
+            if require_auth and request_tenant and request_tenant != result.tenant_id:
+                return GuardResult(
+                    allowed=False, guard_name="jwt",
+                    reason=f"tenant mismatch: JWT claims {result.tenant_id}, request claims {request_tenant}",
+                )
+            ctx["tenant_id"] = result.tenant_id
+        # Propagate identity for audit attribution
+        ctx["authenticated_subject"] = result.subject
+        ctx["authenticated_tenant_id"] = result.tenant_id
+        ctx["jwt_scopes"] = result.scopes
+        return GuardResult(allowed=True, guard_name="jwt")
+    return GovernanceGuard("jwt", check)
 
 
 def create_api_key_guard(

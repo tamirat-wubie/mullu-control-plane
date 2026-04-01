@@ -31,9 +31,15 @@ services:
       MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
       MULLU_LLM_BUDGET_MAX_COST: "100.0"
       MULLU_LLM_BUDGET_MAX_CALLS: "10000"
+      MULLU_PII_SCAN: "true"
       # Set these to enable real LLM backends:
       # ANTHROPIC_API_KEY: ""
       # OPENAI_API_KEY: ""
+      # Governance (optional):
+      # MULLU_JWT_SECRET: ""  # base64-encoded 32-byte key for JWT auth
+      # MULLU_JWT_ISSUER: "mullu"
+      # MULLU_JWT_AUDIENCE: "mullu-api"
+      # MULLU_ENCRYPTION_KEY: ""  # base64-encoded 32-byte AES key for field encryption
     depends_on:
       postgres:
         condition: service_healthy

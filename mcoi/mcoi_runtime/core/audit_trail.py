@@ -67,6 +67,8 @@ class AuditTrail:
     for cross-replica consistency.
     """
 
+    MAX_DETAIL_SIZE = 65_536  # 64KB max for audit detail JSON
+
     def __init__(
         self,
         *,
@@ -96,6 +98,11 @@ class AuditTrail:
         self._sequence += 1
         now = self._clock()
         detail = detail or {}
+
+        # Enforce detail size limit to prevent memory bloat
+        detail_json = json.dumps(detail, sort_keys=True, default=str)
+        if len(detail_json) > self.MAX_DETAIL_SIZE:
+            detail = {"_truncated": True, "_original_size": len(detail_json)}
 
         # Compute content hash
         content = {

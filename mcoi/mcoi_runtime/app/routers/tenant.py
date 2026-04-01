@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from mcoi_runtime.core.tenant_budget import TenantBudgetPolicy, TenantBudgetReport
+from mcoi_runtime.core.tenant_gating import TenantStatus
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -23,6 +24,17 @@ class TenantBudgetRequest(BaseModel):
     tenant_id: str
     max_cost: float = 10.0
     max_calls: int = 1000
+
+
+class TenantRegisterRequest(BaseModel):
+    tenant_id: str
+    status: str = "onboarding"
+    reason: str = ""
+
+
+class TenantStatusUpdateRequest(BaseModel):
+    status: str
+    reason: str = ""
 
 
 def _budget_report(r: TenantBudgetReport) -> dict[str, Any]:
@@ -209,5 +221,98 @@ def get_partitions():
     return {
         "partitions": deps.tenant_partitions.summary(),
         "tenants": [p.to_dict() for p in deps.tenant_partitions.list_partitions()],
+        "governed": True,
+    }
+
+
+# ── Tenant gating / lifecycle ──────────────────────────────────────────
+
+
+def _require_gating():
+    """Get tenant gating registry or raise 503."""
+    gating = deps.get("tenant_gating")
+    if gating is None:
+        raise HTTPException(503, detail={"error": "tenant gating not initialized", "governed": True})
+    return gating
+
+
+@router.post("/api/v1/tenant/register")
+def register_tenant(req: TenantRegisterRequest):
+    """Register a new tenant with initial lifecycle status."""
+    gating = _require_gating()
+    try:
+        status = TenantStatus(req.status)
+    except ValueError:
+        raise HTTPException(422, detail={"error": f"invalid status: {req.status}", "governed": True})
+    try:
+        gate = gating.register(req.tenant_id, status=status, reason=req.reason)
+    except ValueError as exc:
+        raise HTTPException(409, detail={"error": str(exc), "governed": True})
+    deps.audit_trail.record(
+        action="tenant.register", actor_id="api",
+        tenant_id=req.tenant_id, target=req.tenant_id,
+        outcome="success", detail={"status": gate.status.value},
+    )
+    return {
+        "tenant_id": gate.tenant_id,
+        "status": gate.status.value,
+        "reason": gate.reason,
+        "gated_at": gate.gated_at,
+        "governed": True,
+    }
+
+
+@router.patch("/api/v1/tenant/{tenant_id}/status")
+def update_tenant_status(tenant_id: str, req: TenantStatusUpdateRequest):
+    """Update tenant lifecycle status (suspend, terminate, reactivate)."""
+    gating = _require_gating()
+    try:
+        new_status = TenantStatus(req.status)
+    except ValueError:
+        raise HTTPException(422, detail={"error": f"invalid status: {req.status}", "governed": True})
+    try:
+        gate = gating.update_status(tenant_id, new_status, reason=req.reason)
+    except ValueError as exc:
+        raise HTTPException(422, detail={"error": str(exc), "governed": True})
+    deps.audit_trail.record(
+        action="tenant.status.update", actor_id="api",
+        tenant_id=tenant_id, target=tenant_id,
+        outcome="success", detail={"new_status": gate.status.value, "reason": gate.reason},
+    )
+    return {
+        "tenant_id": gate.tenant_id,
+        "status": gate.status.value,
+        "reason": gate.reason,
+        "gated_at": gate.gated_at,
+        "governed": True,
+    }
+
+
+@router.get("/api/v1/tenant/{tenant_id}/gate")
+def get_tenant_gate(tenant_id: str):
+    """Get tenant lifecycle gating status."""
+    gating = _require_gating()
+    gate = gating.get_status(tenant_id)
+    if gate is None:
+        return {"tenant_id": tenant_id, "status": "unknown", "governed": True}
+    return {
+        "tenant_id": gate.tenant_id,
+        "status": gate.status.value,
+        "reason": gate.reason,
+        "gated_at": gate.gated_at,
+        "governed": True,
+    }
+
+
+@router.get("/api/v1/tenant/gates")
+def list_tenant_gates():
+    """List all tenant lifecycle gates."""
+    gating = _require_gating()
+    return {
+        "gates": [
+            {"tenant_id": g.tenant_id, "status": g.status.value, "reason": g.reason}
+            for g in gating.all_gates()
+        ],
+        "summary": gating.summary(),
         "governed": True,
     }
