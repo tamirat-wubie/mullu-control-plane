@@ -914,6 +914,11 @@ app.add_middleware(
         outcome="denied",
         detail=pii_scanner.scan_dict(ctx)[0] if pii_scanner.enabled else ctx,
     ),
+    on_allow=lambda ctx: audit_trail.record(
+        action="guard.allowed", actor_id=ctx.get("tenant_id", "system"),
+        tenant_id=ctx.get("tenant_id", ""), target=ctx.get("path", ""),
+        outcome="success",
+    ),
 )
 
 
@@ -1001,6 +1006,7 @@ platform = _Platform(
     audit_trail=audit_trail,
     proof_bridge=proof_bridge,
     tenant_gating=_tenant_gating,
+    rate_limiter=rate_limiter,
 )
 deps.set("platform", platform)
 
