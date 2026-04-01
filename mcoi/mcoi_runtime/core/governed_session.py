@@ -67,6 +67,7 @@ class GovernedSession:
         proof_bridge: Any | None = None,
         tenant_gating: Any | None = None,
         governed_dispatcher: Any | None = None,
+        rate_limiter: Any | None = None,
     ) -> None:
         self._session_id = session_id
         self._identity_id = identity_id
@@ -81,6 +82,7 @@ class GovernedSession:
         self._proof_bridge = proof_bridge
         self._tenant_gating = tenant_gating
         self._governed_dispatcher = governed_dispatcher
+        self._rate_limiter = rate_limiter
         self._closed = False
         self._operations = 0
         self._llm_calls = 0
@@ -150,6 +152,15 @@ class GovernedSession:
         if result.verdict.value == "blocked":
             raise ValueError(f"content blocked: {result.reason}")
 
+    def _check_rate_limit(self, endpoint: str) -> None:
+        if self._rate_limiter is None:
+            return
+        result = self._rate_limiter.check(self._tenant_id, endpoint)
+        if not result.allowed:
+            raise RuntimeError(
+                f"rate limited: retry after {result.retry_after_seconds}s"
+            )
+
     def _check_budget(self) -> None:
         if self._budget_mgr is None:
             return
@@ -199,6 +210,7 @@ class GovernedSession:
         self._require_open()
         self._check_tenant_gating()
         self._check_rbac("llm", "POST")
+        self._check_rate_limit("session/llm")
         self._check_content_safety(prompt)
         self._check_budget()
 
@@ -246,6 +258,7 @@ class GovernedSession:
         self._require_open()
         self._check_tenant_gating()
         self._check_rbac("execute", "POST")
+        self._check_rate_limit("session/execute")
 
         result_detail: dict[str, Any] = {"action_type": action_type, "bindings": dict(bindings)}
 
@@ -267,8 +280,11 @@ class GovernedSession:
                 result_detail["blocked"] = dispatch_result.blocked
                 if dispatch_result.blocked:
                     result_detail["block_reason"] = dispatch_result.block_reason
-            except Exception:
+            except ImportError:
                 result_detail["dispatched"] = False
+            except Exception as exc:
+                result_detail["dispatched"] = False
+                result_detail["dispatch_error"] = str(exc)
 
         self._operations += 1
         self._record_audit(
@@ -288,6 +304,7 @@ class GovernedSession:
         """
         self._require_open()
         self._check_rbac(resource_type, "GET")
+        self._check_rate_limit("session/query")
 
         self._operations += 1
         self._record_audit(
@@ -375,6 +392,7 @@ class Platform:
         proof_bridge: Any | None = None,
         tenant_gating: Any | None = None,
         governed_dispatcher: Any | None = None,
+        rate_limiter: Any | None = None,
     ) -> None:
         self._clock = clock
         self._access_runtime = access_runtime
@@ -386,6 +404,7 @@ class Platform:
         self._proof_bridge = proof_bridge
         self._tenant_gating = tenant_gating
         self._governed_dispatcher = governed_dispatcher
+        self._rate_limiter = rate_limiter
         self._session_count = 0
 
     @classmethod
@@ -501,6 +520,7 @@ class Platform:
             proof_bridge=self._proof_bridge,
             tenant_gating=self._tenant_gating,
             governed_dispatcher=self._governed_dispatcher,
+            rate_limiter=self._rate_limiter,
         )
 
     @property

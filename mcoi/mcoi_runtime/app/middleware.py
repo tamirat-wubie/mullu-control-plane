@@ -52,12 +52,14 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         guard_chain: GovernanceGuardChain,
         metrics_fn: Callable[[str, int], None] | None = None,
         on_reject: Callable[[dict[str, Any]], None] | None = None,
+        on_allow: Callable[[dict[str, Any]], None] | None = None,
         proof_bridge: Any | None = None,
     ) -> None:
         super().__init__(app)
         self._chain = guard_chain
         self._metrics_fn = metrics_fn
         self._on_reject = on_reject
+        self._on_allow = on_allow
         self._proof_bridge = proof_bridge
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
@@ -148,6 +150,15 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                     "latency_ms": round(latency_ms, 2),
                 },
             )
+
+        # Guards passed — record allowed request for audit completeness
+        if self._on_allow:
+            self._on_allow({
+                "path": path,
+                "tenant_id": context.get("tenant_id", ""),
+                "method": request.method,
+                "latency_ms": round(latency_ms, 2),
+            })
 
         # Guards passed — proceed to endpoint
         response = await call_next(request)
