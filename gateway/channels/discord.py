@@ -39,13 +39,25 @@ class DiscordAdapter:
         """Verify Discord interaction signature using Ed25519 public key.
 
         Discord sends X-Signature-Ed25519 and X-Signature-Timestamp headers.
-        Production requires nacl.signing for Ed25519 verification.
+        Uses nacl.signing if available, otherwise rejects when public_key is set.
         """
         if not self._public_key:
             return True  # No key configured — skip verification
-        # Production implementation uses nacl.signing.VerifyKey
-        # For now, signature presence is required
-        return bool(signature and timestamp)
+        if not signature or not timestamp:
+            return False
+
+        try:
+            from nacl.signing import VerifyKey
+            verify_key = VerifyKey(bytes.fromhex(self._public_key))
+            message = f"{timestamp}{body}".encode()
+            verify_key.verify(message, bytes.fromhex(signature))
+            return True
+        except ImportError:
+            # nacl not installed — reject all interactions when key is configured
+            # This is fail-closed: if you configure a key, you must install nacl
+            return False
+        except Exception:
+            return False
 
     def parse_interaction(self, payload: dict[str, Any]) -> GatewayMessage | None:
         """Parse Discord interaction payload into GatewayMessage.

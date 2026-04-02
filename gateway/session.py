@@ -78,8 +78,21 @@ class SessionManager:
         now = self._clock()
 
         if ctx is not None:
-            ctx.last_active_at = now
-            return ctx
+            # TTL enforcement: expire stale sessions
+            if self._ttl > 0 and ctx.last_active_at and now:
+                try:
+                    from datetime import datetime as _dt
+                    last = _dt.fromisoformat(ctx.last_active_at.replace("Z", "+00:00"))
+                    current = _dt.fromisoformat(now.replace("Z", "+00:00"))
+                    if (current - last).total_seconds() > self._ttl:
+                        # Session expired — remove and create fresh
+                        del self._contexts[key]
+                        ctx = None
+                except Exception:
+                    pass
+            if ctx is not None:
+                ctx.last_active_at = now
+                return ctx
 
         # Evict oldest if at capacity
         if len(self._contexts) >= self.MAX_SESSIONS:

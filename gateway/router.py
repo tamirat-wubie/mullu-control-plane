@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
 from gateway.approval import ApprovalRouter, ApprovalStatus
+from gateway.skill_dispatch import SkillDispatcher, detect_intent
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,10 +85,12 @@ class GatewayRouter:
         platform: Any,  # Platform instance from governed_session.py
         clock: Callable[[], str] | None = None,
         approval_router: ApprovalRouter | None = None,
+        skill_dispatcher: SkillDispatcher | None = None,
     ) -> None:
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._approval = approval_router or ApprovalRouter(clock=self._clock)
+        self._skills = skill_dispatcher or SkillDispatcher()
         self._tenant_mappings: dict[str, TenantMapping] = {}  # "channel:sender_id" -> mapping
         self._channels: dict[str, ChannelAdapter] = {}
         self._message_count = 0
@@ -169,7 +172,33 @@ class GatewayRouter:
                 metadata={"approval_required": True, "request_id": approval.request_id},
             )
 
-        # 4. Execute through LLM (governed — approved)
+        # 4. Check for skill intent (financial, etc.) before LLM
+        intent = detect_intent(message.body)
+        if intent is not None:
+            skill_result = self._skills.dispatch(intent, mapping.tenant_id, mapping.identity_id)
+            if skill_result is not None:
+                response_body = skill_result.get("response", "Skill executed.")
+                try:
+                    session.close()
+                except Exception:
+                    pass
+                response = GatewayResponse(
+                    message_id=self._gen_id("resp", message.message_id),
+                    channel=message.channel,
+                    recipient_id=message.sender_id,
+                    body=response_body,
+                    governed=True,
+                    metadata=skill_result,
+                )
+                adapter = self._channels.get(message.channel)
+                if adapter is not None:
+                    try:
+                        adapter.send(message.sender_id, response_body)
+                    except Exception:
+                        pass
+                return response
+
+        # 5. Execute through LLM (governed — no skill match)
         try:
             result = session.llm(message.body)
             response_body = result.content if result.succeeded else f"I couldn't process that: {result.error}"

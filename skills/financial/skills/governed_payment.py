@@ -71,12 +71,14 @@ class GovernedPaymentExecutor:
         ledger: TransactionLedger,
         idempotency: IdempotencyStore,
         clock: Callable[[], str],
+        on_approval_needed: Callable[[str, str, str, str], None] | None = None,
     ) -> None:
         self._provider = provider
         self._spend_mgr = spend_mgr
         self._ledger = ledger
         self._idempotency = idempotency
         self._clock = clock
+        self._on_approval_needed = on_approval_needed  # callback(tx_id, tenant_id, amount, currency)
         self._tx_counter = 0
 
     def initiate_payment(
@@ -145,6 +147,13 @@ class GovernedPaymentExecutor:
 
         # 5. Move to PENDING_APPROVAL
         self._ledger.advance(tx_id, TxState.PENDING_APPROVAL, reason="requires human approval", actor_id=actor_id, timestamp=now)
+
+        # Notify external approval system (e.g., gateway ApprovalRouter)
+        if self._on_approval_needed is not None:
+            try:
+                self._on_approval_needed(tx_id, tenant_id, str(amount), currency)
+            except Exception:
+                pass  # Approval notification must not block
 
         return GovernedPaymentResult(
             success=True, tx_id=tx_id, state=TxState.PENDING_APPROVAL.value,
