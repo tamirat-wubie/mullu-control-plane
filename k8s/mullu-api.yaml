@@ -57,9 +57,16 @@ spec:
         app: mullu-api
         governed: "true"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: mullu-api
           image: mullu-control-plane:latest  # Pin to specific tag in production
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
           ports:
             - containerPort: 8000
           envFrom:
@@ -144,9 +151,14 @@ spec:
         app: mullu-gateway
         governed: "true"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
         - name: mullu-gateway
           image: mullu-control-plane:latest
+          securityContext:
+            allowPrivilegeEscalation: false
           command: ["python", "-m", "uvicorn", "gateway.server:app", "--host", "0.0.0.0", "--port", "8001"]
           ports:
             - containerPort: 8001
@@ -181,3 +193,52 @@ spec:
     - port: 80
       targetPort: 8001
   type: ClusterIP
+---
+# ── Network Policy (restrict inter-pod traffic) ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mullu-network-policy
+  namespace: mullu
+spec:
+  podSelector:
+    matchLabels:
+      governed: "true"
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              governed: "true"
+  egress:
+    - to:
+        - podSelector: {}
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16]
+      ports:
+        - port: 443
+          protocol: TCP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mullu-api-pdb
+  namespace: mullu
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mullu-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mullu-gateway-pdb
+  namespace: mullu
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mullu-gateway

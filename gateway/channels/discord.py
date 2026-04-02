@@ -24,6 +24,7 @@ class DiscordAdapter:
     """
 
     channel_name = "discord"
+    MAX_MESSAGE_SIZE = 4096
 
     def __init__(
         self,

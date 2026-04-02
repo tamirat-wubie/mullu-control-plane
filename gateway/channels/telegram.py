@@ -23,6 +23,7 @@ class TelegramAdapter:
     """
 
     channel_name = "telegram"
+    MAX_MESSAGE_SIZE = 4096
 
     def __init__(self, *, bot_token: str) -> None:
         self._bot_token = bot_token
@@ -51,6 +52,8 @@ class TelegramAdapter:
 
             if not text or not user_id:
                 return None
+            if len(text) > self.MAX_MESSAGE_SIZE:
+                text = text[:self.MAX_MESSAGE_SIZE]
 
             return GatewayMessage(
                 message_id=f"tg-{msg_id}",
