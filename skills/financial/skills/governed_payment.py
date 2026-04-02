@@ -118,8 +118,13 @@ class GovernedPaymentExecutor:
                     metadata={"idempotency": "in_flight"},
                 )
 
-        # 3. Mark in-flight
-        self._idempotency.mark_in_flight(idem_key, created_at=now)
+        # 3. Mark in-flight (protected against race condition)
+        try:
+            self._idempotency.mark_in_flight(idem_key, created_at=now)
+        except ValueError:
+            return GovernedPaymentResult(
+                success=False, error="payment already in progress (race condition)",
+            )
 
         # 4. Create transaction in ledger
         self._tx_counter += 1

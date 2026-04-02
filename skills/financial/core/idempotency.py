@@ -65,9 +65,18 @@ class IdempotencyStore:
         return self._records.get(key)
 
     def mark_in_flight(self, key: str, created_at: str = "") -> IdempotencyRecord:
-        """Mark a key as in-flight (execution started)."""
+        """Mark a key as in-flight (execution started).
+
+        Raises ValueError if key is already IN_FLIGHT or COMPLETED.
+        """
+        existing = self._records.get(key)
+        if existing is not None:
+            if existing.status == IdempotencyStatus.IN_FLIGHT:
+                raise ValueError(f"idempotency key {key} already in-flight")
+            if existing.status == IdempotencyStatus.COMPLETED:
+                raise ValueError(f"idempotency key {key} already completed")
+
         if len(self._records) >= self.MAX_RECORDS:
-            # Evict oldest
             oldest_key = next(iter(self._records))
             del self._records[oldest_key]
 
