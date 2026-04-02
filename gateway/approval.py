@@ -63,22 +63,32 @@ _MEDIUM_RISK_KEYWORDS = frozenset({
 })
 
 
+import re as _re
+
+# Precompiled word-boundary patterns for risk classification
+_HIGH_RISK_RE = _re.compile(
+    r"\b(?:" + "|".join(_re.escape(k) for k in _HIGH_RISK_KEYWORDS) + r")\b",
+    _re.IGNORECASE,
+)
+_MEDIUM_RISK_RE = _re.compile(
+    r"\b(?:" + "|".join(_re.escape(k) for k in _MEDIUM_RISK_KEYWORDS) + r")\b",
+    _re.IGNORECASE,
+)
+
+
 def classify_risk(action: str, body: str) -> RiskTier:
-    """Classify the risk tier of an action based on keywords and intent.
+    """Classify the risk tier of an action based on word-boundary keyword matching.
 
-    This is the lightweight risk classifier. Production systems should
-    use LLM-based classification with confidence scoring.
+    Uses regex word boundaries to avoid false positives on substrings
+    (e.g., "deleted_at" won't match "delete").
     """
-    lower_body = body.lower()
-    lower_action = action.lower()
+    text = f"{action} {body}"
 
-    for keyword in _HIGH_RISK_KEYWORDS:
-        if keyword in lower_body or keyword in lower_action:
-            return RiskTier.HIGH
+    if _HIGH_RISK_RE.search(text):
+        return RiskTier.HIGH
 
-    for keyword in _MEDIUM_RISK_KEYWORDS:
-        if keyword in lower_body or keyword in lower_action:
-            return RiskTier.MEDIUM
+    if _MEDIUM_RISK_RE.search(text):
+        return RiskTier.MEDIUM
 
     return RiskTier.LOW
 

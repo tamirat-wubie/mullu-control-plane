@@ -1,9 +1,14 @@
 version: "3.9"
 
+networks:
+  mullu-net:
+    driver: bridge
+
 services:
   # PostgreSQL production database
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: mullu
       POSTGRES_USER: mullu
@@ -12,15 +17,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - mullu-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mullu -d mullu"]
       interval: 5s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
 
   # Mullu Platform API server
   mullu:
     build: .
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
@@ -43,15 +56,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - mullu-net
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
 
   # Mullu Gateway — channel webhook server
   gateway:
     build: .
+    restart: unless-stopped
     command: ["python", "-m", "uvicorn", "gateway.server:app", "--host", "0.0.0.0", "--port", "8001"]
     ports:
       - "8001:8001"
@@ -74,11 +95,18 @@ services:
     depends_on:
       mullu:
         condition: service_healthy
+    networks:
+      - mullu-net
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
 volumes:
   pgdata:

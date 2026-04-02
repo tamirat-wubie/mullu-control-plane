@@ -25,6 +25,7 @@ class WhatsAppAdapter:
     """
 
     channel_name = "whatsapp"
+    MAX_MESSAGE_SIZE = 4096
 
     def __init__(
         self,
@@ -92,6 +93,8 @@ class WhatsAppAdapter:
 
             if not body or not sender:
                 return None
+            if len(body) > self.MAX_MESSAGE_SIZE:
+                body = body[:self.MAX_MESSAGE_SIZE]
 
             return GatewayMessage(
                 message_id=msg_id,

@@ -21,6 +21,7 @@ class WebChatAdapter:
     """
 
     channel_name = "web"
+    MAX_MESSAGE_SIZE = 4096
 
     def __init__(self) -> None:
         self._sent_count = 0
@@ -31,6 +32,8 @@ class WebChatAdapter:
         body = data.get("body", "") or data.get("text", "") or data.get("message", "")
         if not body:
             return None
+        if len(body) > self.MAX_MESSAGE_SIZE:
+            body = body[:self.MAX_MESSAGE_SIZE]
 
         sender_id = data.get("user_id", session_token)
         msg_id = data.get("message_id", f"web-{hashlib.sha256(f'{sender_id}:{body}'.encode()).hexdigest()[:12]}")

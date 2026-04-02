@@ -26,6 +26,7 @@ class SlackAdapter:
     """
 
     channel_name = "slack"
+    MAX_MESSAGE_SIZE = 4096
 
     def __init__(
         self,
@@ -91,6 +92,8 @@ class SlackAdapter:
 
             if not text or not user:
                 return None
+            if len(text) > self.MAX_MESSAGE_SIZE:
+                text = text[:self.MAX_MESSAGE_SIZE]
 
             return GatewayMessage(
                 message_id=f"slack-{ts}",
