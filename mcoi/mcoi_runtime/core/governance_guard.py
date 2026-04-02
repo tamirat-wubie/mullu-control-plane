@@ -90,12 +90,39 @@ class GovernanceGuardChain:
         """Insert a guard at a specific position in the chain."""
         self._guards.insert(index, guard)
 
+    # Guards whose output (tenant_id, identity) is frozen after evaluation
+    _AUTH_GUARD_NAMES = frozenset({"api_key", "jwt"})
+
     def evaluate(self, context: dict[str, Any]) -> GuardChainResult:
-        """Run all guards in order. Stops on first failure."""
+        """Run all guards in order. Stops on first failure.
+
+        Auth guard outputs (tenant_id, identity) are frozen after auth
+        guards complete — downstream guards cannot overwrite them.
+        """
         results: list[GuardResult] = []
+        auth_phase_complete = False
+        frozen_keys: dict[str, Any] = {}
+
         for guard in self._guards:
+            # Freeze auth fields after auth guards complete
+            if not auth_phase_complete and guard.name not in self._AUTH_GUARD_NAMES and frozen_keys:
+                auth_phase_complete = True
+
             result = guard.check(context)
             results.append(result)
+
+            # Snapshot auth fields after auth guards
+            if guard.name in self._AUTH_GUARD_NAMES and not auth_phase_complete:
+                for key in ("tenant_id", "authenticated_subject", "authenticated_key_id", "authenticated_tenant_id"):
+                    if key in context:
+                        frozen_keys[key] = context[key]
+
+            # Restore frozen auth fields if tampered by non-auth guard
+            if auth_phase_complete:
+                for key, value in frozen_keys.items():
+                    if context.get(key) != value:
+                        context[key] = value  # Restore original auth binding
+
             if not result.allowed:
                 return GuardChainResult(
                     allowed=False,
