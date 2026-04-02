@@ -40,6 +40,20 @@ class AuditPackage:
     settled_at: str
     package_hash: str  # Hash of entire package for integrity verification
 
+    def to_dict(self) -> dict[str, Any]:
+        """JSON-serializable dict representation."""
+        return {
+            "tx_id": self.tx_id, "tenant_id": self.tenant_id,
+            "amount": self.amount, "currency": self.currency,
+            "state": self.state, "provider": self.provider,
+            "provider_tx_id": self.provider_tx_id,
+            "transitions": [dict(t) for t in self.transitions],
+            "proof_hash": self.proof_hash,
+            "idempotency_key": self.idempotency_key,
+            "created_at": self.created_at, "settled_at": self.settled_at,
+            "package_hash": self.package_hash,
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class ComplianceReport:
@@ -56,6 +70,22 @@ class ComplianceReport:
     packages: tuple[AuditPackage, ...]
     report_hash: str
     generated_at: str
+
+    def to_dict(self) -> dict[str, Any]:
+        """JSON-serializable dict representation."""
+        return {
+            "tenant_id": self.tenant_id,
+            "total_transactions": self.total_transactions,
+            "total_settled": self.total_settled,
+            "total_refunded": self.total_refunded,
+            "total_failed": self.total_failed,
+            "total_pending": self.total_pending,
+            "total_amount_settled": self.total_amount_settled,
+            "total_amount_refunded": self.total_amount_refunded,
+            "packages": [p.to_dict() for p in self.packages],
+            "report_hash": self.report_hash,
+            "generated_at": self.generated_at,
+        }
 
 
 class ComplianceExporter:
