@@ -52,6 +52,19 @@ def seed_default_permissions(access_runtime: Any) -> int:
         ("auditor", "Auditor", RoleKind.AUDITOR, [
             "audit:*", "ops:GET", "tenant:GET",
         ]),
+        # ── Financial Roles ──
+        ("financial_viewer", "Financial Viewer", RoleKind.VIEWER, [
+            "financial:GET",
+        ]),
+        ("financial_operator", "Financial Operator", RoleKind.OPERATOR, [
+            "financial:GET", "financial:POST",
+        ]),
+        ("financial_approver", "Financial Approver", RoleKind.OPERATOR, [
+            "financial:GET", "financial:POST", "financial_approve:POST",
+        ]),
+        ("financial_admin", "Financial Admin", RoleKind.ADMIN, [
+            "financial:*", "financial_approve:*", "financial_config:*",
+        ]),
     ]
 
     for role_id, name, kind, permissions in _roles:
@@ -81,6 +94,11 @@ def seed_default_permissions(access_runtime: Any) -> int:
         ("rule-viewer-read", "*", "GET", PermissionEffect.ALLOW, AuthContextKind.TENANT),
         # RBAC admin operations require approval
         ("rule-rbac-approval", "rbac", "POST", PermissionEffect.REQUIRE_APPROVAL, AuthContextKind.GLOBAL),
+        # ── Financial Permission Rules ──
+        ("rule-fin-read", "financial", "GET", PermissionEffect.ALLOW, AuthContextKind.TENANT),
+        ("rule-fin-write", "financial", "POST", PermissionEffect.ALLOW, AuthContextKind.TENANT),
+        ("rule-fin-approve", "financial_approve", "POST", PermissionEffect.REQUIRE_APPROVAL, AuthContextKind.TENANT),
+        ("rule-fin-config", "financial_config", "POST", PermissionEffect.REQUIRE_APPROVAL, AuthContextKind.GLOBAL),
     ]
 
     for rule_id, resource, action, effect, scope in _rules:
