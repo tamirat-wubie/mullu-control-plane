@@ -22,6 +22,11 @@ class LLMProvider(StrEnum):
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
     GEMINI = "gemini"
+    GROQ = "groq"
+    DEEPSEEK = "deepseek"
+    GROK = "grok"
+    MISTRAL = "mistral"
+    OPENROUTER = "openrouter"
     OLLAMA = "ollama"
     STUB = "stub"
 
