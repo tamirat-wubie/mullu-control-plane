@@ -52,6 +52,10 @@ class MulluConfig:
             "MULLU_DB_BACKEND": self.db_backend,
             "MULLU_LLM_BACKEND": self.llm_provider,
             "MULLU_PII_SCAN": "true",
+            "MULLU_CERT_ENABLED": "true",
+            "MULLU_CERT_INTERVAL": "300",
+            "MULLU_LLM_BUDGET_MAX_COST": "100.0",
+            "MULLU_LLM_BUDGET_MAX_CALLS": "10000",
         }
         if self.llm_api_key:
             if self.llm_provider == "anthropic":
@@ -66,6 +70,8 @@ class MulluConfig:
             env["POSTGRES_PASSWORD"] = self.postgres_password
         if self.jwt_secret:
             env["MULLU_JWT_SECRET"] = self.jwt_secret
+            env["MULLU_JWT_ISSUER"] = "mullu"
+            env["MULLU_JWT_AUDIENCE"] = "mullu-api"
         if self.encryption_key:
             env["MULLU_ENCRYPTION_KEY"] = self.encryption_key
 

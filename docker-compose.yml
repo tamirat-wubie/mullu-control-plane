@@ -45,9 +45,20 @@ services:
       MULLU_LLM_BUDGET_MAX_COST: "100.0"
       MULLU_LLM_BUDGET_MAX_CALLS: "10000"
       MULLU_PII_SCAN: "true"
+      MULLU_CERT_ENABLED: "true"
+      MULLU_CERT_INTERVAL: "300"
+      MULLU_STATE_DIR: "/data/state"
+      # MULLU_CORS_ORIGINS: ""  # Set to frontend URL in production
       # Set these to enable real LLM backends:
       # ANTHROPIC_API_KEY: ""
       # OPENAI_API_KEY: ""
+      # Additional providers (optional):
+      # GROQ_API_KEY: ""
+      # GEMINI_API_KEY: ""
+      # DEEPSEEK_API_KEY: ""
+      # XAI_API_KEY: ""
+      # MISTRAL_API_KEY: ""
+      # OPENROUTER_API_KEY: ""
       # Governance (optional):
       # MULLU_JWT_SECRET: ""  # base64-encoded 32-byte key for JWT auth
       # MULLU_JWT_ISSUER: "mullu"
