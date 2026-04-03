@@ -47,7 +47,8 @@ class TestToolEndpoints:
         assert resp.status_code == 200
         data = resp.json()
         assert data["succeeded"] is False
-        assert "unsupported expression node" in data["error"]
+        assert data["error"] == "tool validation error (SafeArithmeticError)"
+        assert "unsupported expression node" not in data["error"]
 
     def test_invoke_unknown_tool(self, client):
         resp = client.post("/api/v1/tools/invoke", json={

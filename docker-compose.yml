@@ -38,6 +38,7 @@ services:
       - "8000:8000"
     environment:
       MULLU_ENV: pilot
+      MULLU_API_AUTH_REQUIRED: "true"
       MULLU_DB_BACKEND: postgresql
       MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
       MULLU_LLM_BACKEND: stub
@@ -67,6 +68,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - state-data:/data/state
     networks:
       - mullu-net
     healthcheck:
@@ -121,3 +124,4 @@ services:
 
 volumes:
   pgdata:
+  state-data:

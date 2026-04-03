@@ -7,7 +7,10 @@ from mcoi_runtime.app.llm_bootstrap import (
     LLMBootstrapResult,
     bootstrap_llm,
 )
-from mcoi_runtime.core.model_orchestration import ModelOrchestrationEngine
+from mcoi_runtime.core.model_orchestration import (
+    ModelAlreadyRegisteredError,
+    ModelOrchestrationEngine,
+)
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
@@ -106,6 +109,47 @@ class TestBootstrapLLM:
         )
         # Stub backend registered — stub models should be available
         assert len(result.registered_models) >= 0  # May or may not match model names
+
+    def test_duplicate_model_registration_recorded_as_skip(self):
+        class PreRegisteredEngine(ModelOrchestrationEngine):
+            def register(self, descriptor, adapter, validator=None, *, provider_id=None):
+                if descriptor.model_id == "claude-sonnet-4-20250514":
+                    raise ModelAlreadyRegisteredError(f"model already registered: {descriptor.model_id}")
+                return super().register(descriptor, adapter, validator, provider_id=provider_id)
+
+        engine = PreRegisteredEngine(clock=FIXED_CLOCK)
+        result = bootstrap_llm(
+            clock=FIXED_CLOCK,
+            config=LLMConfig(anthropic_api_key="ak"),
+            model_engine=engine,
+        )
+
+        assert any(
+            issue["model_id"] == "claude-sonnet-4-20250514"
+            and issue["error_code"] == "model_already_registered"
+            for issue in result.skipped_model_registrations
+        )
+
+    def test_unexpected_model_registration_failure_recorded(self):
+        class FailingEngine:
+            def register(self, descriptor, adapter, validator=None, *, provider_id=None):
+                if descriptor.model_id == "claude-sonnet-4-20250514":
+                    raise RuntimeError("provider-bootstrap-secret")
+                return descriptor
+
+        result = bootstrap_llm(
+            clock=FIXED_CLOCK,
+            config=LLMConfig(anthropic_api_key="ak"),
+            model_engine=FailingEngine(),  # type: ignore[arg-type]
+        )
+
+        assert any(
+            issue["model_id"] == "claude-sonnet-4-20250514"
+            and issue["error_code"] == "model_registration_failed"
+            and issue["error_type"] == "RuntimeError"
+            for issue in result.model_registration_failures
+        )
+        assert "provider-bootstrap-secret" not in str(result.model_registration_failures)
 
     def test_with_ledger_sink(self):
         entries = []

@@ -34,7 +34,11 @@ from mcoi_runtime.app.governed_execution import governed_operator_dispatch
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult
 from mcoi_runtime.core.policy_engine import PolicyInput
-from mcoi_runtime.core.template_validator import TemplateValidationError
+from mcoi_runtime.core.template_validator import (
+    TemplateValidationError,
+    format_template_validation_error,
+    summarize_template_validation_error,
+)
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 from .operator_models import (
@@ -164,11 +168,11 @@ class OperatorLoop:
                 merged_state=merged_state,
                 planning_result=planning_result,
                 policy_decision=policy_decision,
-                validation_error_text=f"{exc.code}:{exc}",
+                validation_error_text=format_template_validation_error(exc),
                 structured_errors=(
                     validation_error(
                         error_code=exc.code,
-                        message=str(exc),
+                        message=summarize_template_validation_error(exc),
                         source_plane=SourcePlane.EXECUTION,
                     ),
                 ),
@@ -424,7 +428,7 @@ class OperatorLoop:
         except (RuntimeCoreInvariantError, ValueError) as exc:
             return execution_error(
                 error_code="entity_registration_warning",
-                message=f"best-effort entity registration failed: {type(exc).__name__}: {exc}",
+                message=f"best-effort entity registration failed ({type(exc).__name__})",
                 recoverability=Recoverability.RETRYABLE,
                 related_ids=(execution_result.execution_id,),
                 context={"entity_id": entity_id, "exception_type": type(exc).__name__},

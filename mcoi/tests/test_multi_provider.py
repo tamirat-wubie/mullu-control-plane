@@ -5,6 +5,9 @@ Uses stub mode (no httpx) — validates protocol compliance, message formatting,
 cost estimation, and error handling.
 """
 
+import sys
+import types
+
 import pytest
 from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvider, LLMRole
 from mcoi_runtime.adapters.multi_provider import (
@@ -19,6 +22,10 @@ from mcoi_runtime.adapters.multi_provider import (
     available_providers,
     _params_to_messages,
 )
+
+
+def _install_fake_httpx(monkeypatch, post_fn) -> None:
+    monkeypatch.setitem(sys.modules, "httpx", types.SimpleNamespace(post=post_fn))
 
 
 def _params(prompt: str = "Hello", model: str = "test-model") -> LLMInvocationParams:
@@ -92,6 +99,28 @@ class TestGroqBackend:
         backend = GroqBackend()
         result = backend.call(_params())
         assert result.cost == 0.0  # Free tier
+
+    def test_remote_error_payload_redacted(self, monkeypatch):
+        backend = GroqBackend()
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+        class _Response:
+            @staticmethod
+            def json():
+                return {"error": {"type": "authentication_error", "message": "invalid API key sk-secret"}}
+
+        _install_fake_httpx(monkeypatch, lambda *args, **kwargs: _Response())
+        result = backend.call(_params("test"))
+        assert result.error == "provider authentication failed"
+        assert "sk-secret" not in result.error
+
+    def test_transport_exception_redacted(self, monkeypatch):
+        backend = GroqBackend()
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        _install_fake_httpx(monkeypatch, lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("upstream secret")))
+        result = backend.call(_params("test"))
+        assert result.error == "provider error (RuntimeError)"
+        assert "upstream secret" not in result.error
 
 
 class TestGeminiBackend:

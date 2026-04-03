@@ -35,6 +35,25 @@ from mcoi_runtime.contracts.model import (
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
 
+def _classify_provider_exception(exc: Exception) -> str:
+    """Collapse provider exceptions into stable, non-leaking error strings."""
+    error_type = type(exc).__name__
+    normalized_type = error_type.lower()
+    if isinstance(exc, TimeoutError) or "timeout" in normalized_type:
+        return f"provider timeout ({error_type})"
+    if isinstance(exc, PermissionError) or any(
+        token in normalized_type for token in ("auth", "permission", "forbidden", "unauthorized")
+    ):
+        return f"provider access error ({error_type})"
+    if isinstance(exc, ConnectionError) or isinstance(exc, OSError) or any(
+        token in normalized_type for token in ("connect", "network", "request", "transport", "socket", "http", "url")
+    ):
+        return f"provider network error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"provider validation error ({error_type})"
+    return f"provider error ({error_type})"
+
+
 class LLMBackend(Protocol):
     """Protocol for raw LLM API backends.
 
@@ -202,7 +221,7 @@ class AnthropicBackend:
                 model_name=model,
                 provider=LLMProvider.ANTHROPIC,
                 finished=False,
-                error=f"{type(exc).__name__}: {exc}",
+                error=_classify_provider_exception(exc),
             )
 
     def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
@@ -305,7 +324,7 @@ class OpenAIBackend:
                 model_name=model,
                 provider=LLMProvider.OPENAI,
                 finished=False,
-                error=f"{type(exc).__name__}: {exc}",
+                error=_classify_provider_exception(exc),
             )
 
     def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
@@ -418,7 +437,7 @@ class GeminiBackend:
                 model_name=model_name,
                 provider=LLMProvider.GEMINI,
                 finished=False,
-                error=f"{type(exc).__name__}: {exc}",
+                error=_classify_provider_exception(exc),
             )
 
     def _estimate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
@@ -519,7 +538,7 @@ class OllamaBackend:
                 model_name=model_name,
                 provider=LLMProvider.OLLAMA,
                 finished=False,
-                error=f"{type(exc).__name__}: {exc}",
+                error=_classify_provider_exception(exc),
             )
 
 

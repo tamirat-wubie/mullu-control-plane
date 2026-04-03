@@ -18,6 +18,19 @@ from enum import Enum, unique
 from typing import Any, Callable
 
 
+def _classify_orchestration_exception(exc: Exception) -> str:
+    error_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"proposal timeout ({error_type})"
+    if isinstance(exc, ConnectionError):
+        return f"proposal network error ({error_type})"
+    if isinstance(exc, PermissionError):
+        return f"proposal access error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"proposal validation error ({error_type})"
+    return f"proposal execution error ({error_type})"
+
+
 @unique
 class OrchestrationPhase(Enum):
     PLANNING = "planning"
@@ -183,7 +196,9 @@ class AgentOrchestrator:
                 plan.results.append({"proposal_id": proposal.proposal_id, "success": True, **result})
             except Exception as e:
                 plan.results.append({
-                    "proposal_id": proposal.proposal_id, "success": False, "error": str(e),
+                    "proposal_id": proposal.proposal_id,
+                    "success": False,
+                    "error": _classify_orchestration_exception(e),
                 })
 
         all_ok = all(r.get("success") for r in plan.results)

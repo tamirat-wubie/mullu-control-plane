@@ -32,12 +32,17 @@ class TestAPIBoundary:
         api = APIBoundary()
         resp = api.handle(_req(), lambda r: (_ for _ in ()).throw(ValueError("bad")))
         assert resp.status_code == 400
-        assert "bad" in resp.body["error"]
+        assert resp.body["error"] == "invalid_request"
+        assert resp.body["error_code"] == "invalid_request"
+        assert "bad" not in str(resp.body)
 
     def test_handle_permission_error_returns_403(self):
         api = APIBoundary()
         resp = api.handle(_req(), lambda r: (_ for _ in ()).throw(PermissionError("denied")))
         assert resp.status_code == 403
+        assert resp.body["error"] == "forbidden"
+        assert resp.body["error_code"] == "forbidden"
+        assert "denied" not in str(resp.body)
 
     def test_error_rate(self):
         api = APIBoundary()
@@ -180,3 +185,4 @@ class TestProductionSurfaceGolden:
 
         assert resp.status_code == 401
         assert resp.body["error"] == "unauthorized"
+        assert resp.body["error_code"] == "unauthorized"

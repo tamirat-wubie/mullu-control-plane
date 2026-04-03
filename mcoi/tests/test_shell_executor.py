@@ -75,3 +75,22 @@ def test_shell_executor_maps_nonzero_exit_to_failed_result() -> None:
     assert result.actual_effects[0].name == "process_failed"
     assert result.actual_effects[0].details["returncode"] == 3
     assert result.actual_effects[0].details["stderr"] == "failure"
+
+
+def test_shell_executor_sanitizes_spawn_failure() -> None:
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise FileNotFoundError("secret executable path")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-4",
+            goal_id="goal-4",
+            argv=("missing-tool", "--flag"),
+        )
+    )
+
+    assert result.status is ExecutionOutcome.FAILED
+    assert result.actual_effects[0].details["code"] == "spawn_failed"
+    assert result.actual_effects[0].details["message"] == "shell command not found (FileNotFoundError)"
+    assert "secret executable path" not in result.actual_effects[0].details["message"]

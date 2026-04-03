@@ -19,6 +19,11 @@ from enum import StrEnum
 from typing import Any, Callable
 
 
+def _classify_plugin_exception(exc: Exception) -> str:
+    """Return a bounded plugin hook failure message."""
+    return f"plugin hook error ({type(exc).__name__})"
+
+
 class PluginStatus(StrEnum):
     REGISTERED = "registered"
     LOADED = "loaded"
@@ -143,9 +148,10 @@ class PluginRegistry:
                 result = fn(**kwargs)
                 results.append(result)
             except Exception as exc:
-                instance.error = str(exc)
+                error_message = _classify_plugin_exception(exc)
+                instance.error = error_message
                 instance.status = PluginStatus.ERRORED
-                results.append({"error": str(exc), "plugin": instance.descriptor.plugin_id})
+                results.append({"error": error_message, "plugin": instance.descriptor.plugin_id})
         return results
 
     def list_plugins(self) -> list[PluginInstance]:

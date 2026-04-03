@@ -94,7 +94,8 @@ def test_gemini_call_error_returns_llm_result() -> None:
     with patch.object(backend, "_get_model", side_effect=RuntimeError("connection failed")):
         result = backend.call(_make_params())
         assert not result.succeeded
-        assert "connection failed" in result.error
+        assert result.error == "provider error (RuntimeError)"
+        assert "connection failed" not in result.error
         assert result.provider == LLMProvider.GEMINI
 
 
@@ -143,6 +144,15 @@ def test_ollama_connection_error_returns_llm_result() -> None:
     assert result.error  # Some connection error
     assert result.provider == LLMProvider.OLLAMA
     assert result.cost == 0.0
+
+
+def test_ollama_timeout_error_is_redacted() -> None:
+    backend = OllamaBackend()
+    with patch("urllib.request.urlopen", side_effect=TimeoutError("secret timeout detail")):
+        result = backend.call(_make_params())
+    assert not result.succeeded
+    assert result.error == "provider timeout (TimeoutError)"
+    assert "secret timeout detail" not in result.error
 
 
 # --- Bootstrap wiring ---

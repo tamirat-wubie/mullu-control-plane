@@ -19,6 +19,10 @@ from enum import StrEnum
 from typing import Any, Callable
 
 
+def _classify_health_exception(exc: Exception) -> str:
+    return f"health check error ({type(exc).__name__})"
+
+
 class HealthStatus(StrEnum):
     HEALTHY = "healthy"
     DEGRADED = "degraded"
@@ -83,7 +87,7 @@ class DeepHealthChecker:
                     name=name,
                     status=HealthStatus.UNHEALTHY,
                     latency_ms=round(latency, 2),
-                    detail={"error": str(exc)},
+                    detail={"error": _classify_health_exception(exc)},
                 ))
 
         total_latency = (time.monotonic() - total_start) * 1000

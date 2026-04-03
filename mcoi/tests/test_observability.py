@@ -29,7 +29,8 @@ class TestObservabilityAggregator:
         agg.register_source("broken", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
         data = agg.collect("broken")
         assert "error" in data
-        assert "boom" in data["error"]
+        assert data["error"] == "observability source error (RuntimeError)"
+        assert "boom" not in data["error"]
 
     def test_collect_all(self):
         agg = ObservabilityAggregator(clock=FIXED_CLOCK)

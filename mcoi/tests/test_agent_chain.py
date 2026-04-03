@@ -4,7 +4,7 @@ import pytest
 from mcoi_runtime.core.agent_chain import AgentChainEngine, ChainStep
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
-from mcoi_runtime.contracts.llm import LLMBudget
+from mcoi_runtime.contracts.llm import LLMBudget, LLMProvider, LLMResult
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 
@@ -58,6 +58,9 @@ class TestAgentChain:
         ])
         assert result.succeeded is False
         assert len(result.steps) == 2  # s3 never ran
+        assert result.steps[1].error == "chain execution error (RuntimeError)"
+        assert result.error == "step s2 failed: chain execution error (RuntimeError)"
+        assert "step 2 fails" not in result.error
 
     def test_skip_on_failure(self):
         call_count = {"n": 0}
@@ -77,6 +80,31 @@ class TestAgentChain:
         ])
         assert result.succeeded is True
         assert len(result.steps) == 3
+        assert result.steps[1].succeeded is False
+        assert result.steps[1].error == "chain execution error (RuntimeError)"
+        assert "step 2 fails" not in result.steps[1].error
+
+    def test_returned_failure_error_redacted(self):
+        def failed_result(prompt):
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name="stub-model",
+                provider=LLMProvider.STUB,
+                finished=False,
+                error="provider secret detail",
+            )
+
+        eng = AgentChainEngine(clock=FIXED_CLOCK, llm_fn=failed_result)
+        result = eng.execute([
+            ChainStep(step_id="s1", name="A", prompt_template="a", on_failure="halt"),
+        ])
+        assert result.succeeded is False
+        assert result.steps[0].error == "chain step failed"
+        assert result.error == "step s1 failed: chain step failed"
+        assert "provider secret detail" not in result.error
 
     def test_history(self):
         eng = _engine()

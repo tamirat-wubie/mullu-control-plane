@@ -60,6 +60,16 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     return event
 
 
+def _classify_campaign_exception(exc: Exception) -> str:
+    """Return a bounded campaign step failure message."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"campaign step timeout ({exc_type})"
+    if isinstance(exc, (ValueError, TypeError)):
+        return f"campaign step validation error ({exc_type})"
+    return f"campaign step handler error ({exc_type})"
+
+
 # Step handler type: receives step + context, returns (success, output_payload)
 StepHandler = Callable[
     [CampaignStep, dict[str, Any]],
@@ -345,7 +355,7 @@ class WorkCampaignEngine:
                 # Track counters
                 self._track_counters(run_id, step.step_type, success)
             except Exception as exc:
-                error_msg = str(exc)
+                error_msg = _classify_campaign_exception(exc)
                 success = False
         else:
             # Default: auto-succeed for unhandled step types

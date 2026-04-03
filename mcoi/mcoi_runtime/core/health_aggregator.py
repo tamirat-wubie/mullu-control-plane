@@ -18,6 +18,10 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 
+def _classify_health_exception(exc: Exception) -> str:
+    return f"health check error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class ComponentScore:
     """Health score for a single component."""
@@ -66,7 +70,7 @@ class HealthAggregator:
             except Exception as exc:
                 score = 0.0
                 raw_status = "unhealthy"
-                detail = str(exc)
+                detail = _classify_health_exception(exc)
 
             scores.append(ComponentScore(
                 name=name, score=score, weight=weight,

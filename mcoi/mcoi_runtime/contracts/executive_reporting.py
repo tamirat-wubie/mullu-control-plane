@@ -28,6 +28,22 @@ from ._base import (
 )
 
 
+def _parse_datetime_text(value: str, field_name: str) -> datetime:
+    """Parse a validated datetime text deterministically."""
+    require_datetime_text(value, field_name)
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def _require_period_start_before_end(period_start: str, period_end: str) -> None:
+    """Validate that a reporting period has a strict forward ordering."""
+    start_dt = _parse_datetime_text(period_start, "period_start")
+    end_dt = _parse_datetime_text(period_end, "period_end")
+    if start_dt >= end_dt:
+        raise ValueError(
+            f"period_start ({period_start}) must be before period_end ({period_end})"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
@@ -150,17 +166,7 @@ class KPIValue(ContractRecord):
         if not isinstance(self.scope, RollupScope):
             raise ValueError("scope must be a RollupScope")
         object.__setattr__(self, "sample_count", require_non_negative_int(self.sample_count, "sample_count"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
-        # Validate period ordering
-        try:
-            s = datetime.fromisoformat(self.period_start.replace("Z", "+00:00"))
-            e = datetime.fromisoformat(self.period_end.replace("Z", "+00:00"))
-            if s >= e:
-                raise ValueError(f"period_start ({self.period_start}) must be before period_end ({self.period_end})")
-        except (ValueError, TypeError) as exc:
-            if "must be before" in str(exc):
-                raise
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.recorded_at, "recorded_at")
 
 
@@ -219,8 +225,7 @@ class RollupRecord(ContractRecord):
         if not isinstance(self.window, MetricWindow):
             raise ValueError("window must be a MetricWindow")
         object.__setattr__(self, "count", require_non_negative_int(self.count, "count"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.computed_at, "computed_at")
 
 
@@ -263,8 +268,7 @@ class OutcomeReport(ContractRecord):
         object.__setattr__(self, "avg_duration_seconds", require_non_negative_float(self.avg_duration_seconds, "avg_duration_seconds"))
         object.__setattr__(self, "escalation_count", require_non_negative_int(self.escalation_count, "escalation_count"))
         object.__setattr__(self, "overdue_count", require_non_negative_int(self.overdue_count, "overdue_count"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.generated_at, "generated_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -306,8 +310,7 @@ class EfficiencyReport(ContractRecord):
         object.__setattr__(self, "avg_latency_seconds", require_non_negative_float(self.avg_latency_seconds, "avg_latency_seconds"))
         object.__setattr__(self, "waiting_on_human_seconds", require_non_negative_float(self.waiting_on_human_seconds, "waiting_on_human_seconds"))
         object.__setattr__(self, "utilization", require_unit_float(self.utilization, "utilization"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.generated_at, "generated_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -345,8 +348,7 @@ class CostEffectivenessReport(ContractRecord):
         object.__setattr__(self, "burn_rate", require_unit_float(self.burn_rate, "burn_rate"))
         object.__setattr__(self, "completed_campaigns", require_non_negative_int(self.completed_campaigns, "completed_campaigns"))
         object.__setattr__(self, "cost_per_completion", require_non_negative_float(self.cost_per_completion, "cost_per_completion"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.generated_at, "generated_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -394,8 +396,7 @@ class ReliabilityReport(ContractRecord):
         object.__setattr__(self, "fault_drill_success_rate", require_unit_float(self.fault_drill_success_rate, "fault_drill_success_rate"))
         object.__setattr__(self, "recovery_count", require_non_negative_int(self.recovery_count, "recovery_count"))
         object.__setattr__(self, "mean_time_to_recovery_seconds", require_non_negative_float(self.mean_time_to_recovery_seconds, "mean_time_to_recovery_seconds"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.generated_at, "generated_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -442,8 +443,7 @@ class ExecutiveDashboardSnapshot(ContractRecord):
         object.__setattr__(self, "total_spend", require_non_negative_float(self.total_spend, "total_spend"))
         object.__setattr__(self, "budget_utilization", require_unit_float(self.budget_utilization, "budget_utilization"))
         object.__setattr__(self, "connector_health_pct", require_unit_float(self.connector_health_pct, "connector_health_pct"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
+        _require_period_start_before_end(self.period_start, self.period_end)
         require_datetime_text(self.generated_at, "generated_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 

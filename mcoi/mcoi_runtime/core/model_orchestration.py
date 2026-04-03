@@ -23,6 +23,22 @@ from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable
 from .provider_registry import ProviderRegistry
 
 
+def _classify_model_exception(exc: Exception) -> str:
+    """Return a bounded adapter failure detail."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"model adapter timeout ({exc_type})"
+    return f"model adapter error ({exc_type})"
+
+
+class ModelRegistrationError(RuntimeCoreInvariantError):
+    """Base class for model registration failures."""
+
+
+class ModelAlreadyRegisteredError(ModelRegistrationError):
+    """Raised when a model is registered more than once."""
+
+
 class ModelAdapter(Protocol):
     """Protocol for model-specific invocation adapters."""
 
@@ -84,7 +100,7 @@ class ModelOrchestrationEngine:
         provider_id: str | None = None,
     ) -> ModelDescriptor:
         if descriptor.model_id in self._models:
-            raise RuntimeCoreInvariantError(
+            raise ModelAlreadyRegisteredError(
                 f"model already registered: {descriptor.model_id}"
             )
         self._models[descriptor.model_id] = descriptor
@@ -141,7 +157,10 @@ class ModelOrchestrationEngine:
                 invocation,
                 error_status=ModelStatus.FAILED,
                 validation=ValidationStatus.FAILED,
-                failure_metadata={"exception_type": type(exc).__name__, "detail": str(exc)},
+                failure_metadata={
+                    "exception_type": type(exc).__name__,
+                    "detail": _classify_model_exception(exc),
+                },
             )
 
         # Update provider health

@@ -18,6 +18,14 @@ from dataclasses import dataclass
 from typing import Any, Callable, TypedDict
 
 
+def _classify_guard_exception(exc: Exception) -> str:
+    """Return a bounded guard failure reason."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"guard timeout ({exc_type})"
+    return f"guard error ({exc_type})"
+
+
 class GuardContext(TypedDict, total=False):
     """Typed context passed through the governance guard chain.
 
@@ -71,7 +79,12 @@ class GovernanceGuard:
         try:
             return self._check_fn(context)
         except Exception as exc:
-            return GuardResult(allowed=False, guard_name=self.name, reason=f"guard error: {exc}")
+            return GuardResult(
+                allowed=False,
+                guard_name=self.name,
+                reason=_classify_guard_exception(exc),
+                detail={"error_type": type(exc).__name__},
+            )
 
 
 class GovernanceGuardChain:

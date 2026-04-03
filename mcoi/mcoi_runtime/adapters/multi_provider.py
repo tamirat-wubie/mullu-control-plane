@@ -27,6 +27,44 @@ from mcoi_runtime.contracts.llm import (
 )
 
 
+def _classify_provider_exception(exc: Exception) -> str:
+    error_type = type(exc).__name__
+    normalized_type = error_type.lower()
+    if isinstance(exc, TimeoutError) or "timeout" in normalized_type:
+        return f"provider timeout ({error_type})"
+    if isinstance(exc, PermissionError) or any(
+        token in normalized_type for token in ("auth", "permission", "forbidden", "unauthorized")
+    ):
+        return f"provider access error ({error_type})"
+    if isinstance(exc, ConnectionError) or isinstance(exc, OSError) or any(
+        token in normalized_type for token in ("connect", "network", "request", "transport", "socket", "http", "url")
+    ):
+        return f"provider network error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"provider validation error ({error_type})"
+    return f"provider error ({error_type})"
+
+
+def _classify_provider_payload_error(error_payload: Any) -> str:
+    if isinstance(error_payload, dict):
+        normalized = " ".join(
+            str(error_payload.get(field, ""))
+            for field in ("type", "code", "message")
+        ).lower()
+    else:
+        normalized = str(error_payload).lower()
+    if "timeout" in normalized or "timed out" in normalized:
+        return "provider timeout"
+    if ("rate" in normalized and "limit" in normalized) or "quota" in normalized:
+        return "provider rate limited request"
+    if any(
+        token in normalized
+        for token in ("auth", "api key", "apikey", "unauthorized", "forbidden", "invalid key", "authentication")
+    ):
+        return "provider authentication failed"
+    return "provider rejected request"
+
+
 def _openai_compatible_call(
     *,
     base_url: str,
@@ -70,7 +108,7 @@ def _openai_compatible_call(
             return LLMResult(
                 content="", input_tokens=0, output_tokens=0, cost=0.0,
                 model_name=model, provider=provider, finished=False,
-                error=data["error"].get("message", str(data["error"])),
+                error=_classify_provider_payload_error(data["error"]),
             )
 
         choice = data.get("choices", [{}])[0]
@@ -102,12 +140,10 @@ def _openai_compatible_call(
             model_name=model, provider=provider, finished=True,
         )
     except Exception as exc:
-        # Sanitize error — never expose URLs, keys, or internal details
-        error_type = type(exc).__name__
         return LLMResult(
             content="", input_tokens=0, output_tokens=0, cost=0.0,
             model_name=model, provider=provider, finished=False,
-            error=f"provider call failed ({error_type})",
+            error=_classify_provider_exception(exc),
         )
 
 

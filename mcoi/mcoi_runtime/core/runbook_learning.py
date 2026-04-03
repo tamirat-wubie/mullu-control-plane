@@ -31,6 +31,81 @@ class RunbookStatus(StrEnum):
     RETIRED = "retired"
 
 
+class RunbookLearningError(ValueError):
+    """Base governed error for runbook learning lifecycle operations."""
+
+    error_code = "runbook_error"
+    public_error = "runbook request failed"
+    http_status_code = 400
+
+
+class PatternNotFoundError(RunbookLearningError):
+    """Raised when a requested execution pattern does not exist."""
+
+    error_code = "pattern_not_found"
+    public_error = "pattern not found"
+    http_status_code = 404
+
+    def __init__(self, pattern_id: str) -> None:
+        self.pattern_id = pattern_id
+        super().__init__(f"pattern not found: {pattern_id}")
+
+
+class RunbookNotFoundError(RunbookLearningError):
+    """Raised when a requested learned runbook does not exist."""
+
+    error_code = "runbook_not_found"
+    public_error = "runbook not found"
+    http_status_code = 404
+
+    def __init__(self, runbook_id: str) -> None:
+        self.runbook_id = runbook_id
+        super().__init__(f"runbook not found: {runbook_id}")
+
+
+class RunbookNotPendingApprovalError(RunbookLearningError):
+    """Raised when approval is attempted for a non-candidate runbook."""
+
+    error_code = "invalid_runbook_state"
+    public_error = "runbook is not pending approval"
+    http_status_code = 409
+
+    def __init__(self, runbook_id: str, current_status: RunbookStatus) -> None:
+        self.runbook_id = runbook_id
+        self.current_status = current_status
+        super().__init__(
+            f"runbook {runbook_id} is not a candidate (status: {current_status.value})"
+        )
+
+
+class RunbookApprovalRequiredError(RunbookLearningError):
+    """Raised when activation is attempted before approval."""
+
+    error_code = "approval_required"
+    public_error = "runbook approval required"
+    http_status_code = 409
+
+    def __init__(self, runbook_id: str, current_status: RunbookStatus) -> None:
+        self.runbook_id = runbook_id
+        self.current_status = current_status
+        super().__init__("runbook must be approved before activation")
+
+
+class RunbookRetirementStateError(RunbookLearningError):
+    """Raised when retirement is attempted outside the active state."""
+
+    error_code = "invalid_runbook_state"
+    public_error = "runbook must be active before retirement"
+    http_status_code = 409
+
+    def __init__(self, runbook_id: str, current_status: RunbookStatus) -> None:
+        self.runbook_id = runbook_id
+        self.current_status = current_status
+        super().__init__(
+            f"runbook must be active before retirement (status: {current_status.value})"
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ExecutionPattern:
     """A detected repeated execution pattern."""
@@ -178,7 +253,7 @@ class RunbookLearningEngine:
         with self._lock:
             pattern = self._patterns.get(pattern_id)
         if pattern is None:
-            raise ValueError(f"pattern not found: {pattern_id}")
+            raise PatternNotFoundError(pattern_id)
 
         now = self._clock()
         runbook_id = f"rb-{sha256(f'{pattern_id}:{now}'.encode()).hexdigest()[:12]}"
@@ -204,9 +279,9 @@ class RunbookLearningEngine:
         with self._lock:
             runbook = self._runbooks.get(runbook_id)
             if runbook is None:
-                raise ValueError(f"runbook not found: {runbook_id}")
+                raise RunbookNotFoundError(runbook_id)
             if runbook.status != RunbookStatus.CANDIDATE:
-                raise ValueError(f"runbook {runbook_id} is not a candidate (status: {runbook.status.value})")
+                raise RunbookNotPendingApprovalError(runbook_id, runbook.status)
             runbook.status = RunbookStatus.APPROVED
             runbook.approved_at = self._clock()
             runbook.approved_by = approved_by
@@ -217,9 +292,9 @@ class RunbookLearningEngine:
         with self._lock:
             runbook = self._runbooks.get(runbook_id)
             if runbook is None:
-                raise ValueError(f"runbook not found: {runbook_id}")
+                raise RunbookNotFoundError(runbook_id)
             if runbook.status != RunbookStatus.APPROVED:
-                raise ValueError("runbook must be approved before activation")
+                raise RunbookApprovalRequiredError(runbook_id, runbook.status)
             runbook.status = RunbookStatus.ACTIVE
         return runbook
 
@@ -228,7 +303,9 @@ class RunbookLearningEngine:
         with self._lock:
             runbook = self._runbooks.get(runbook_id)
             if runbook is None:
-                raise ValueError(f"runbook not found: {runbook_id}")
+                raise RunbookNotFoundError(runbook_id)
+            if runbook.status != RunbookStatus.ACTIVE:
+                raise RunbookRetirementStateError(runbook_id, runbook.status)
             runbook.status = RunbookStatus.RETIRED
         return runbook
 

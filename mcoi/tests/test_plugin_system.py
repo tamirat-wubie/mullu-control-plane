@@ -114,7 +114,9 @@ class TestPluginRegistry:
         reg.activate("p1")
         results = reg.dispatch_hook(HookPoint.ON_ERROR)
         assert reg.get("p1").status == PluginStatus.ERRORED
-        assert reg.get("p1").error == "boom"
+        assert reg.get("p1").error == "plugin hook error (RuntimeError)"
+        assert results[0]["error"] == "plugin hook error (RuntimeError)"
+        assert "boom" not in reg.get("p1").error
 
     def test_list_plugins(self):
         reg = PluginRegistry()

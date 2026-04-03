@@ -11,13 +11,21 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from mcoi_runtime.core.tenant_budget import TenantBudgetPolicy, TenantBudgetReport
-from mcoi_runtime.core.tenant_gating import TenantStatus
+from mcoi_runtime.core.tenant_gating import TenantGatingError, TenantStatus
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
 
 
 # ── Helpers & request models ─────────────────────────────────────────────
+
+
+def _tenant_error_detail(error: str, error_code: str) -> dict[str, Any]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _tenant_error_response(exc: TenantGatingError) -> tuple[int, dict[str, Any]]:
+    return exc.http_status_code, _tenant_error_detail(exc.public_error, exc.error_code)
 
 
 class TenantBudgetRequest(BaseModel):
@@ -232,7 +240,10 @@ def _require_gating():
     """Get tenant gating registry or raise 503."""
     gating = deps.get("tenant_gating")
     if gating is None:
-        raise HTTPException(503, detail={"error": "tenant gating not initialized", "governed": True})
+        raise HTTPException(
+            503,
+            detail=_tenant_error_detail("tenant gating not initialized", "tenant_gating_unavailable"),
+        )
     return gating
 
 
@@ -243,11 +254,15 @@ def register_tenant(req: TenantRegisterRequest):
     try:
         status = TenantStatus(req.status)
     except ValueError:
-        raise HTTPException(422, detail={"error": f"invalid status: {req.status}", "governed": True})
+        raise HTTPException(422, detail=_tenant_error_detail("invalid status", "invalid_status")) from None
     try:
         gate = gating.register(req.tenant_id, status=status, reason=req.reason)
+    except TenantGatingError as exc:
+        status_code, detail = _tenant_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
     except ValueError as exc:
-        raise HTTPException(409, detail={"error": str(exc), "governed": True})
+        status_code, detail = 400, _tenant_error_detail("tenant lifecycle request failed", "tenant_lifecycle_error")
+        raise HTTPException(status_code, detail=detail) from exc
     deps.audit_trail.record(
         action="tenant.register", actor_id="api",
         tenant_id=req.tenant_id, target=req.tenant_id,
@@ -269,11 +284,15 @@ def update_tenant_status(tenant_id: str, req: TenantStatusUpdateRequest):
     try:
         new_status = TenantStatus(req.status)
     except ValueError:
-        raise HTTPException(422, detail={"error": f"invalid status: {req.status}", "governed": True})
+        raise HTTPException(422, detail=_tenant_error_detail("invalid status", "invalid_status")) from None
     try:
         gate = gating.update_status(tenant_id, new_status, reason=req.reason)
+    except TenantGatingError as exc:
+        status_code, detail = _tenant_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
     except ValueError as exc:
-        raise HTTPException(422, detail={"error": str(exc), "governed": True})
+        status_code, detail = 400, _tenant_error_detail("tenant lifecycle request failed", "tenant_lifecycle_error")
+        raise HTTPException(status_code, detail=detail) from exc
     deps.audit_trail.record(
         action="tenant.status.update", actor_id="api",
         tenant_id=tenant_id, target=tenant_id,

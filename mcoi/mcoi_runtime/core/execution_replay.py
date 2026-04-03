@@ -20,6 +20,14 @@ from typing import Any, Callable
 import json
 
 
+def _classify_replay_exception(exc: Exception) -> str:
+    """Return a bounded replay failure reason."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"replay operation timeout ({exc_type})"
+    return f"replay operation error ({exc_type})"
+
+
 @dataclass(frozen=True, slots=True)
 class ReplayFrame:
     """Single frame in a replay trace."""
@@ -182,7 +190,7 @@ class ReplayExecutor:
                 results.append({
                     "frame_id": frame.frame_id,
                     "matched": False,
-                    "reason": str(exc),
+                    "reason": _classify_replay_exception(exc),
                 })
 
         return results

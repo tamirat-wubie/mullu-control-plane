@@ -4,11 +4,17 @@ Tests: TenantGatingRegistry lifecycle management, status transitions,
     guard integration, store persistence, error cases.
 """
 
+import threading
+import time
+
 import pytest
 from mcoi_runtime.core.tenant_gating import (
+    InvalidTenantStatusTransitionError,
     TenantGate,
+    TenantAlreadyRegisteredError,
     TenantGatingRegistry,
     TenantGatingStore,
+    TenantNotRegisteredError,
     TenantStatus,
     create_tenant_gating_guard,
 )
@@ -62,8 +68,9 @@ class TestRegistration:
     def test_duplicate_registration_raises(self):
         reg = TenantGatingRegistry(clock=_clock)
         reg.register("t1")
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(TenantAlreadyRegisteredError) as excinfo:
             reg.register("t1")
+        assert excinfo.value.tenant_id == "t1"
 
     def test_tenant_count(self):
         reg = TenantGatingRegistry(clock=_clock)
@@ -106,19 +113,26 @@ class TestStatusTransitions:
         reg = TenantGatingRegistry(clock=_clock)
         reg.register("t1", status=TenantStatus.ACTIVE)
         reg.update_status("t1", TenantStatus.TERMINATED)
-        with pytest.raises(ValueError, match="invalid transition"):
+        with pytest.raises(InvalidTenantStatusTransitionError) as excinfo:
             reg.update_status("t1", TenantStatus.ACTIVE)
+        assert excinfo.value.tenant_id == "t1"
+        assert excinfo.value.current_status == TenantStatus.TERMINATED
+        assert excinfo.value.new_status == TenantStatus.ACTIVE
 
     def test_invalid_backward_transition(self):
         reg = TenantGatingRegistry(clock=_clock)
         reg.register("t1", status=TenantStatus.ACTIVE)
-        with pytest.raises(ValueError, match="invalid transition"):
+        with pytest.raises(InvalidTenantStatusTransitionError) as excinfo:
             reg.update_status("t1", TenantStatus.ONBOARDING)
+        assert excinfo.value.tenant_id == "t1"
+        assert excinfo.value.current_status == TenantStatus.ACTIVE
+        assert excinfo.value.new_status == TenantStatus.ONBOARDING
 
     def test_unknown_tenant_raises(self):
         reg = TenantGatingRegistry(clock=_clock)
-        with pytest.raises(ValueError, match="not registered"):
+        with pytest.raises(TenantNotRegisteredError) as excinfo:
             reg.update_status("unknown", TenantStatus.ACTIVE)
+        assert excinfo.value.tenant_id == "unknown"
 
 
 # ═══ TenantGatingRegistry — Query ═══
@@ -280,6 +294,28 @@ class TestStoreIntegration:
         assert gate is not None
         assert gate.status == TenantStatus.ACTIVE
 
+    def test_register_rejects_existing_store_tenant(self):
+        store = InMemoryTenantGatingStore()
+        store.save(TenantGate(
+            tenant_id="t1", status=TenantStatus.ACTIVE,
+            reason="pre-existing", gated_at="2026-01-01",
+        ))
+        reg = TenantGatingRegistry(clock=_clock, store=store)
+        with pytest.raises(TenantAlreadyRegisteredError):
+            reg.register("t1", status=TenantStatus.ONBOARDING)
+
+    def test_all_gates_hydrates_prepopulated_store(self):
+        store = InMemoryTenantGatingStore()
+        store.save(TenantGate(tenant_id="t2", status=TenantStatus.ACTIVE, gated_at="now"))
+        store.save(TenantGate(tenant_id="t1", status=TenantStatus.ONBOARDING, gated_at="now"))
+        reg = TenantGatingRegistry(clock=_clock, store=store)
+
+        gates = reg.all_gates()
+
+        assert [gate.tenant_id for gate in gates] == ["t1", "t2"]
+        assert reg.tenant_count == 2
+        assert reg.summary()["total_tenants"] == 2
+
     def test_inmemory_store_load_all(self):
         store = InMemoryTenantGatingStore()
         store.save(TenantGate(tenant_id="t2", status=TenantStatus.ACTIVE, gated_at="now"))
@@ -287,6 +323,36 @@ class TestStoreIntegration:
         all_gates = store.load_all()
         assert len(all_gates) == 2
         assert all_gates[0].tenant_id == "t1"  # Sorted
+
+    def test_all_gates_snapshot_stable_during_register(self):
+        iter_started = threading.Event()
+
+        class _CoordinatedGateDict(dict[str, TenantGate]):
+            def values(self):  # type: ignore[override]
+                first = True
+                for value in super().values():
+                    if first:
+                        first = False
+                        iter_started.set()
+                        time.sleep(0.05)
+                    yield value
+
+        reg = TenantGatingRegistry(clock=_clock)
+        reg._gates = _CoordinatedGateDict()
+        reg.register("t1", status=TenantStatus.ACTIVE)
+
+        def _register() -> None:
+            assert iter_started.wait(timeout=1.0)
+            reg.register("t2", status=TenantStatus.ONBOARDING)
+
+        worker = threading.Thread(target=_register)
+        worker.start()
+        snapshot = reg.all_gates()
+        worker.join(timeout=1.0)
+
+        assert not worker.is_alive()
+        assert [gate.tenant_id for gate in snapshot] == ["t1"]
+        assert [gate.tenant_id for gate in reg.all_gates()] == ["t1", "t2"]
 
 
 # ═══ PostgresTenantGatingStore Structural ═══

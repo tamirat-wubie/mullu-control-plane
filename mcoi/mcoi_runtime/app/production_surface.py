@@ -15,6 +15,14 @@ import json
 
 # ═══ 196A — Server/API Boundary ═══
 
+def _boundary_error_body(exc: Exception) -> tuple[int, dict[str, str]]:
+    if isinstance(exc, PermissionError):
+        return 403, {"error": "forbidden", "error_code": "forbidden"}
+    if isinstance(exc, ValueError):
+        return 400, {"error": "invalid_request", "error_code": "invalid_request"}
+    return 500, {"error": "internal_error", "error_code": "internal_error"}
+
+
 @dataclass(frozen=True)
 class APIRequest:
     request_id: str
@@ -44,12 +52,15 @@ class APIBoundary:
         try:
             result = handler(request)
             response = APIResponse(request.request_id, 200, result, True, sha256(json.dumps(result, sort_keys=True).encode()).hexdigest())
-        except PermissionError as e:
-            response = APIResponse(request.request_id, 403, {"error": str(e)}, True)
-        except ValueError as e:
-            response = APIResponse(request.request_id, 400, {"error": str(e)}, True)
-        except Exception:
-            response = APIResponse(request.request_id, 500, {"error": "internal_error"}, True)
+        except PermissionError as exc:
+            status_code, body = _boundary_error_body(exc)
+            response = APIResponse(request.request_id, status_code, body, True)
+        except ValueError as exc:
+            status_code, body = _boundary_error_body(exc)
+            response = APIResponse(request.request_id, status_code, body, True)
+        except Exception as exc:
+            status_code, body = _boundary_error_body(exc)
+            response = APIResponse(request.request_id, status_code, body, True)
         self._responses.append(response)
         return response
 
@@ -223,14 +234,24 @@ class ProductionSurface:
             except PermissionError:
                 self._total_errors += 1
                 self.observability.record("error", "auth_denied", request.tenant_id, trace_id)
-                return APIResponse(request.request_id, 401, {"error": "unauthorized"}, True)
+                return APIResponse(
+                    request.request_id,
+                    401,
+                    {"error": "unauthorized", "error_code": "unauthorized"},
+                    True,
+                )
 
         # Tenant gate
         if self.manifest.tenant_isolation:
             if not self.tenants.validate_access(request.tenant_id, request.tenant_id):
                 self._total_errors += 1
                 self.observability.record("error", "tenant_violation", request.tenant_id, trace_id)
-                return APIResponse(request.request_id, 403, {"error": "tenant_violation"}, True)
+                return APIResponse(
+                    request.request_id,
+                    403,
+                    {"error": "tenant_violation", "error_code": "tenant_violation"},
+                    True,
+                )
 
         # Governed execution
         self.observability.record("dispatch", "governed_execution", request.tenant_id, trace_id)

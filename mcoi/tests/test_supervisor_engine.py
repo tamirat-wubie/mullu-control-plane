@@ -323,6 +323,8 @@ class TestHaltBehavior:
         tick2 = eng.tick()  # error 2 — should halt
         assert tick2.outcome == TickOutcome.HALTED
         assert eng.is_halted
+        assert tick2.errors[-1] == "supervisor tick error (RuntimeError)"
+        assert "spine down" not in tick2.errors[-1]
 
 
 # =====================================================================

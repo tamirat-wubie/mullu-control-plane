@@ -32,6 +32,8 @@ class TestRetryExecutor:
         result = executor.execute(lambda: (_ for _ in ()).throw(RuntimeError("always fail")))
         assert result.succeeded is False
         assert result.attempts == 3
+        assert result.error == "retry execution error (RuntimeError)"
+        assert "always fail" not in result.error
 
     def test_backoff_delay(self):
         executor = RetryExecutor(RetryPolicy(max_retries=3, base_delay_ms=100, backoff_multiplier=2.0))

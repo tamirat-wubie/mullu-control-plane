@@ -35,6 +35,12 @@ from ._base import (
 )
 
 
+def _parse_datetime_text(value: str, field_name: str) -> datetime:
+    """Parse a validated datetime text deterministically."""
+    require_datetime_text(value, field_name)
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
 def _require_hour(value: int, field_name: str) -> int:
     """Validate that an hour value is in range 0-23."""
     v = require_non_negative_int(value, field_name)
@@ -53,17 +59,12 @@ def _require_positive_int(value: int, field_name: str) -> int:
 
 def _require_starts_before_ends(starts_at: str, ends_at: str) -> None:
     """Validate that starts_at is chronologically before ends_at."""
-    try:
-        s = datetime.fromisoformat(starts_at.replace("Z", "+00:00"))
-        e = datetime.fromisoformat(ends_at.replace("Z", "+00:00"))
-        if s >= e:
-            raise ValueError(
-                f"starts_at ({starts_at}) must be before ends_at ({ends_at})"
-            )
-    except (ValueError, TypeError) as exc:
-        if "must be before" in str(exc):
-            raise
-        # datetime parsing errors are caught by require_datetime_text
+    s = _parse_datetime_text(starts_at, "starts_at")
+    e = _parse_datetime_text(ends_at, "ends_at")
+    if s >= e:
+        raise ValueError(
+            f"starts_at ({starts_at}) must be before ends_at ({ends_at})"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -341,6 +342,7 @@ class MeetingRecord(ContractRecord):
             raise ValueError("status must be a MeetingStatus")
         require_datetime_text(self.starts_at, "starts_at")
         require_datetime_text(self.ends_at, "ends_at")
+        _require_starts_before_ends(self.starts_at, self.ends_at)
         object.__setattr__(
             self, "timezone",
             require_non_empty_text(self.timezone, "timezone"),

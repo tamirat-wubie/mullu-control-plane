@@ -91,13 +91,28 @@ class TestToolRegistry:
         )
         result = reg.invoke("broken", {})
         assert result.succeeded is False
-        assert "boom" in result.error
+        assert result.error == "tool handler error (RuntimeError)"
+        assert "boom" not in result.error
+        assert reg.invocation_history()[-1].error == "tool handler error (RuntimeError)"
 
     def test_invoke_unsafe_expression_rejected(self):
         reg = _registry()
         result = reg.invoke("calculator", {"expression": "__import__('os').system('whoami')"})
         assert result.succeeded is False
-        assert "unsupported expression node" in result.error
+        assert result.error == "tool validation error (SafeArithmeticError)"
+        assert "unsupported expression node" not in result.error
+        assert reg.invocation_history()[-1].error == "tool validation error (SafeArithmeticError)"
+
+    def test_invoke_handler_timeout_redacted(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(tool_id="slow", name="S", description="x", parameters=()),
+            handler=lambda args: (_ for _ in ()).throw(TimeoutError("secret timeout detail")),
+        )
+        result = reg.invoke("slow", {})
+        assert result.succeeded is False
+        assert result.error == "tool timeout (TimeoutError)"
+        assert "secret timeout detail" not in result.error
 
     def test_optional_params(self):
         reg = _registry()

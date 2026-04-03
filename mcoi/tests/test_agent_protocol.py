@@ -1,5 +1,8 @@
 """Phase 203A — Agent protocol tests."""
 
+import threading
+import time
+
 import pytest
 from mcoi_runtime.core.agent_protocol import (
     AgentCapability, AgentDescriptor, AgentRegistry,
@@ -48,6 +51,36 @@ class TestAgentRegistry:
         reg.register(AgentDescriptor(agent_id="a1", name="A1", capabilities=(AgentCapability.CODE_EXECUTION,)))
         agents = reg.list_agents()
         assert agents[0].agent_id == "a1"  # Sorted
+
+    def test_list_agents_snapshot_stable_under_concurrent_register(self):
+        iter_started = threading.Event()
+
+        class _CoordinatedAgentDict(dict[str, AgentDescriptor]):
+            def values(self):  # type: ignore[override]
+                first = True
+                for value in super().values():
+                    if first:
+                        first = False
+                        iter_started.set()
+                        time.sleep(0.05)
+                    yield value
+
+        reg = AgentRegistry()
+        reg._agents = _CoordinatedAgentDict()
+        reg.register(AgentDescriptor(agent_id="a1", name="A1", capabilities=(AgentCapability.LLM_COMPLETION,)))
+
+        def _register() -> None:
+            assert iter_started.wait(timeout=1.0)
+            reg.register(AgentDescriptor(agent_id="a2", name="A2", capabilities=(AgentCapability.CODE_EXECUTION,)))
+
+        worker = threading.Thread(target=_register)
+        worker.start()
+        snapshot = reg.list_agents()
+        worker.join(timeout=1.0)
+
+        assert not worker.is_alive()
+        assert [agent.agent_id for agent in snapshot] == ["a1"]
+        assert [agent.agent_id for agent in reg.list_agents()] == ["a1", "a2"]
 
 
 class TestTaskManager:
@@ -145,3 +178,33 @@ class TestTaskManager:
         summary = mgr.summary()
         assert summary["total_tasks"] == 1
         assert summary["agents"] == 2
+
+    def test_pending_tasks_snapshot_stable_under_concurrent_submit(self):
+        iter_started = threading.Event()
+
+        class _CoordinatedStatusDict(dict[str, TaskStatus]):
+            def items(self):  # type: ignore[override]
+                first = True
+                for item in super().items():
+                    if first:
+                        first = False
+                        iter_started.set()
+                        time.sleep(0.05)
+                    yield item
+
+        mgr = self._setup()
+        mgr._statuses = _CoordinatedStatusDict()
+        mgr.submit(TaskSpec(task_id="t1", description="a", required_capability=AgentCapability.LLM_COMPLETION, payload={}))
+
+        def _submit() -> None:
+            assert iter_started.wait(timeout=1.0)
+            mgr.submit(TaskSpec(task_id="t2", description="b", required_capability=AgentCapability.CODE_EXECUTION, payload={}))
+
+        worker = threading.Thread(target=_submit)
+        worker.start()
+        snapshot = mgr.pending_tasks()
+        worker.join(timeout=1.0)
+
+        assert not worker.is_alive()
+        assert [task.task_id for task in snapshot] == ["t1"]
+        assert sorted(task.task_id for task in mgr.pending_tasks()) == ["t1", "t2"]

@@ -14,7 +14,7 @@ from mcoi_runtime.contracts.llm import LLMBudget
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 
 
-def _setup(with_llm=True, with_webhook=True, with_audit=True):
+def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=None):
     reg = AgentRegistry()
     reg.register(AgentDescriptor(
         agent_id="llm-agent", name="LLM Agent",
@@ -31,6 +31,8 @@ def _setup(with_llm=True, with_webhook=True, with_audit=True):
         bridge = LLMIntegrationBridge(clock=FIXED_CLOCK, default_backend=StubLLMBackend())
         bridge.register_budget(LLMBudget(budget_id="default", tenant_id="system", max_cost=100.0))
         llm_fn = lambda prompt, budget_id: bridge.complete(prompt, budget_id=budget_id)
+    if llm_fn_override is not None:
+        llm_fn = llm_fn_override
 
     webhook_mgr = None
     if with_webhook:
@@ -77,14 +79,48 @@ class TestAgentWorkflowEngine:
         assert any(s.step_name == "llm_invoke" and s.status == "skipped" for s in result.steps)
 
     def test_workflow_no_capable_agent(self):
-        engine, _, _ = _setup()
+        engine, audit, webhook = _setup()
         result = engine.execute(
             task_id="t1", description="test",
             capability=AgentCapability.WEB_SEARCH,  # No agent has this
             payload={}, tenant_id="t1",
         )
         assert result.status == "failed"
-        assert "no capable agent" in result.error
+        assert result.error == "no capable agent available"
+        assert AgentCapability.WEB_SEARCH.value not in result.error
+        assert audit.query(action="workflow.failed")[-1].detail["error"] == "no capable agent available"
+        assert webhook.delivery_history()[-1].payload["error"] == "no capable agent available"
+
+    def test_workflow_runtime_error_redacted(self):
+        engine, audit, webhook = _setup(
+            llm_fn_override=lambda prompt, budget_id: (_ for _ in ()).throw(RuntimeError("secret llm detail")),
+        )
+        result = engine.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION,
+            payload={"prompt": "hello"}, tenant_id="t1",
+        )
+        assert result.status == "failed"
+        assert result.error == "workflow execution error (RuntimeError)"
+        assert "secret llm detail" not in result.error
+        assert audit.query(action="workflow.failed")[-1].detail["error"] == "workflow execution error (RuntimeError)"
+        assert webhook.delivery_history()[-1].payload["error"] == "workflow execution error (RuntimeError)"
+        assert "secret llm detail" not in webhook.delivery_history()[-1].payload["error"]
+
+    def test_plain_value_error_does_not_trigger_no_capable_classification(self):
+        engine, audit, webhook = _setup(
+            llm_fn_override=lambda prompt, budget_id: (_ for _ in ()).throw(ValueError("no capable agent secret detail")),
+        )
+        result = engine.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION,
+            payload={"prompt": "hello"}, tenant_id="t1",
+        )
+        assert result.status == "failed"
+        assert result.error == "workflow validation error (ValueError)"
+        assert audit.query(action="workflow.failed")[-1].detail["error"] == "workflow validation error (ValueError)"
+        assert webhook.delivery_history()[-1].payload["error"] == "workflow validation error (ValueError)"
+        assert "no capable agent secret detail" not in webhook.delivery_history()[-1].payload["error"]
 
     def test_audit_on_success(self):
         engine, audit, _ = _setup()

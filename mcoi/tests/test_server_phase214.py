@@ -2,6 +2,7 @@
 
 import pytest
 import os
+from types import SimpleNamespace
 
 try:
     from fastapi.testclient import TestClient
@@ -66,6 +67,16 @@ class TestAutoRoutedCompletion:
         assert data["error"] == "LLM service unavailable"
         assert data["error_code"] == "llm_service_unavailable"
         assert "auto-route-secret" not in str(resp.json())
+
+    def test_no_routable_model_returns_structured_error(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        monkeypatch.setattr(deps.model_router, "route", lambda *args, **kwargs: SimpleNamespace(model_id=""))
+        resp = client.post("/api/v1/complete/auto", json={"prompt": "hello"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error_code"] == "no_routable_model"
+        assert data["governed"] is True
 
 
 class TestCorrelationEndpoint:

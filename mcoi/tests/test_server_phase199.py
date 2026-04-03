@@ -6,6 +6,7 @@ Uses FastAPI TestClient when available, falls back to structural tests.
 
 import pytest
 import os
+from types import SimpleNamespace
 
 # Try to import FastAPI test client
 try:
@@ -102,6 +103,23 @@ class TestCompletionEndpoint:
             limit=5,
         )
         assert any(e.detail["error_type"] == "RuntimeError" for e in entries)
+
+    def test_completion_failure_result_is_structured(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        monkeypatch.setattr(
+            deps.llm_bridge,
+            "complete",
+            lambda *args, **kwargs: SimpleNamespace(
+                succeeded=False,
+                error="provider timeout (TimeoutError)",
+            ),
+        )
+        resp = client.post("/api/v1/complete", json={"prompt": "fail"})
+        assert resp.status_code == 503
+        data = resp.json()["detail"]
+        assert data["error_code"] == "llm_completion_failed"
+        assert data["governed"] is True
 
 
 class TestBudgetEndpoint:

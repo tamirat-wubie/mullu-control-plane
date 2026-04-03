@@ -103,6 +103,8 @@ class TestBootstrapEndpoint:
         assert "default_backend" in data
         assert "available_backends" in data
         assert "stub" in data["available_backends"]
+        assert "skipped_model_registrations" in data
+        assert "model_registration_failures" in data
         assert "config" in data
         assert data["config"]["default_model"]
 

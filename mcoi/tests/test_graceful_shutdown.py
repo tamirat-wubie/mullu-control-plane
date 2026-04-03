@@ -26,8 +26,11 @@ class TestShutdownManager:
         mgr.register("ok", lambda: {"ok": True})
         mgr.register("fail", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
         result = mgr.execute()
+        failed_result = next(item for item in result.results if item["hook"] == "fail")
         assert result.hooks_succeeded == 1
         assert result.hooks_failed == 1
+        assert failed_result["error"] == "shutdown hook error (RuntimeError)"
+        assert "boom" not in failed_result["error"]
 
     def test_is_shutdown(self):
         mgr = ShutdownManager()

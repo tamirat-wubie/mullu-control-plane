@@ -5,8 +5,17 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.core.runbook_learning import RunbookLearningError
 
 router = APIRouter()
+
+
+def _runbook_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _runbook_error_response(exc: RunbookLearningError) -> tuple[int, dict[str, object]]:
+    return exc.http_status_code, _runbook_error_detail(exc.public_error, exc.error_code)
 
 
 class PromoteRunbookRequest(BaseModel):
@@ -51,12 +60,12 @@ def promote_pattern(req: PromoteRunbookRequest):
         runbook = deps.runbook_learning.promote(
             req.pattern_id, req.name, req.description, req.policy_pack_id,
         )
+    except RunbookLearningError as exc:
+        status_code, detail = _runbook_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
     except ValueError as exc:
-        raise HTTPException(404, detail={
-            "error": str(exc),
-            "error_code": "pattern_not_found",
-            "governed": True,
-        })
+        status_code, detail = 400, _runbook_error_detail("runbook request failed", "runbook_error")
+        raise HTTPException(status_code, detail=detail) from exc
     deps.audit_trail.record(
         action="runbook.promote",
         actor_id="api",
@@ -80,12 +89,12 @@ def approve_runbook(req: ApproveRunbookRequest):
     deps.metrics.inc("requests_governed")
     try:
         runbook = deps.runbook_learning.approve(req.runbook_id, req.approved_by)
+    except RunbookLearningError as exc:
+        status_code, detail = _runbook_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
     except ValueError as exc:
-        raise HTTPException(400, detail={
-            "error": str(exc),
-            "error_code": "approval_failed",
-            "governed": True,
-        })
+        status_code, detail = 400, _runbook_error_detail("runbook approval failed", "approval_failed")
+        raise HTTPException(status_code, detail=detail) from exc
     deps.audit_trail.record(
         action="runbook.approve",
         actor_id=req.approved_by,
@@ -107,12 +116,12 @@ def activate_runbook(runbook_id: str):
     deps.metrics.inc("requests_governed")
     try:
         deps.runbook_learning.activate(runbook_id)
+    except RunbookLearningError as exc:
+        status_code, detail = _runbook_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
     except ValueError as exc:
-        raise HTTPException(400, detail={
-            "error": str(exc),
-            "error_code": "activation_failed",
-            "governed": True,
-        })
+        status_code, detail = 400, _runbook_error_detail("runbook activation failed", "activation_failed")
+        raise HTTPException(status_code, detail=detail) from exc
     return {"runbook_id": runbook_id, "status": "active", "governed": True}
 
 
@@ -122,12 +131,12 @@ def retire_runbook(runbook_id: str):
     deps.metrics.inc("requests_governed")
     try:
         deps.runbook_learning.retire(runbook_id)
+    except RunbookLearningError as exc:
+        status_code, detail = _runbook_error_response(exc)
+        raise HTTPException(status_code, detail=detail) from exc
     except ValueError as exc:
-        raise HTTPException(400, detail={
-            "error": str(exc),
-            "error_code": "retire_failed",
-            "governed": True,
-        })
+        status_code, detail = 400, _runbook_error_detail("runbook retire failed", "retire_failed")
+        raise HTTPException(status_code, detail=detail) from exc
     return {"runbook_id": runbook_id, "status": "retired", "governed": True}
 
 
@@ -141,7 +150,10 @@ def list_runbooks(status: str = ""):
         try:
             filter_status = RunbookStatus(status)
         except ValueError:
-            pass
+            raise HTTPException(
+                422,
+                detail=_runbook_error_detail("invalid runbook status", "invalid_status"),
+            ) from None
     runbooks = deps.runbook_learning.list_runbooks(status=filter_status)
     return {
         "runbooks": [

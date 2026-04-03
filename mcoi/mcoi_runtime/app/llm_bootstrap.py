@@ -1,4 +1,4 @@
-"""Phase 200A — LLM Bootstrap Wiring.
+"""Phase 200A - LLM Bootstrap Wiring.
 
 Purpose: Wire LLM backends into the runtime based on environment configuration.
     Registers model adapters with ModelOrchestrationEngine and provider registry.
@@ -6,9 +6,9 @@ Governance scope: LLM wiring at bootstrap time only.
 Dependencies: llm_adapter, llm_integration, model_orchestration, provider_registry.
 Invariants:
   - Backend selection is explicit and environment-driven.
-  - No API calls at bootstrap time — adapters are created but not invoked.
+  - No API calls at bootstrap time - adapters are created but not invoked.
   - Stub backend is always available as fallback.
-  - Budget registration is explicit — no implicit spending authority.
+  - Budget registration is explicit - no implicit spending authority.
 """
 
 from __future__ import annotations
@@ -33,8 +33,10 @@ from mcoi_runtime.contracts.provider import (
     ProviderClass,
     ProviderDescriptor,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.core.model_orchestration import (
+    ModelAlreadyRegisteredError,
     ModelDescriptor,
     ModelOrchestrationEngine,
 )
@@ -101,6 +103,16 @@ class LLMBootstrapResult:
     config: LLMConfig
     registered_models: list[str] = field(default_factory=list)
     registered_providers: list[str] = field(default_factory=list)
+    skipped_model_registrations: list[dict[str, str]] = field(default_factory=list)
+    model_registration_failures: list[dict[str, str]] = field(default_factory=list)
+
+
+def _classify_bootstrap_exception(exc: Exception) -> str:
+    """Return a bounded bootstrap wiring failure detail."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"model registration timeout ({exc_type})"
+    return f"model registration error ({exc_type})"
 
 
 def bootstrap_llm(
@@ -304,5 +316,20 @@ def _register_models(
         try:
             engine.register(descriptor, adapter, provider_id=provider_id)
             result.registered_models.append(model_id)
-        except Exception:
-            pass  # Model may already be registered — skip silently
+        except ModelAlreadyRegisteredError:
+            result.skipped_model_registrations.append({
+                "model_id": model_id,
+                "provider": provider_name,
+                "error_code": "model_already_registered",
+                "reason": "model already registered",
+            })
+        except RuntimeCoreInvariantError:
+            raise
+        except Exception as exc:
+            result.model_registration_failures.append({
+                "model_id": model_id,
+                "provider": provider_name,
+                "error_code": "model_registration_failed",
+                "error_type": type(exc).__name__,
+                "reason": _classify_bootstrap_exception(exc),
+            })

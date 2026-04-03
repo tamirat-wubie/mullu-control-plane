@@ -4,7 +4,7 @@ import pytest
 from mcoi_runtime.core.batch_pipeline import BatchPipeline, PipelineStep
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
-from mcoi_runtime.contracts.llm import LLMBudget
+from mcoi_runtime.contracts.llm import LLMBudget, LLMProvider, LLMResult
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 
@@ -77,7 +77,9 @@ class TestBatchPipeline:
             PipelineStep(step_id="s1", name="Fail", prompt_template="test"),
         ])
         assert result.succeeded is False
-        assert "LLM down" in result.error
+        assert result.steps[0].error == "pipeline execution error (RuntimeError)"
+        assert result.error == "step s1 failed: pipeline execution error (RuntimeError)"
+        assert "LLM down" not in result.error
 
     def test_fail_fast(self):
         call_count = 0
@@ -97,6 +99,31 @@ class TestBatchPipeline:
         ])
         assert result.succeeded is False
         assert len(result.steps) == 2  # s3 never ran
+        assert result.steps[1].error == "pipeline execution error (RuntimeError)"
+        assert result.error == "step s2 failed: pipeline execution error (RuntimeError)"
+        assert "step 2 fails" not in result.error
+
+    def test_returned_failure_error_redacted(self):
+        def failed_result(prompt, **kw):
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name="stub-model",
+                provider=LLMProvider.STUB,
+                finished=False,
+                error="provider secret detail",
+            )
+
+        pipe = BatchPipeline(clock=FIXED_CLOCK, llm_complete_fn=failed_result)
+        result = pipe.execute([
+            PipelineStep(step_id="s1", name="Fail", prompt_template="test"),
+        ])
+        assert result.succeeded is False
+        assert result.steps[0].error == "pipeline step failed"
+        assert result.error == "step s1 failed: pipeline step failed"
+        assert "provider secret detail" not in result.error
 
     def test_history(self):
         pipe = _pipeline()

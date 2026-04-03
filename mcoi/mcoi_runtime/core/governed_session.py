@@ -19,7 +19,65 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
+
+
+def _classify_session_dispatch_exception(exc: Exception) -> str:
+    """Return a bounded dispatch error for session-level execution."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"session dispatch timeout ({exc_type})"
+    return f"session dispatch error ({exc_type})"
+
+
+def _build_session_dispatch_request(
+    *,
+    session_id: str,
+    operation_index: int,
+    action_type: str,
+    bindings: Mapping[str, Any],
+):
+    """Build a canonical dispatch request for supported governed session actions."""
+    from mcoi_runtime.core.dispatcher import DispatchRequest
+
+    if action_type != "shell_command":
+        raise ValueError(f"unsupported governed session action: {action_type}")
+
+    argv = bindings.get("argv")
+    if not isinstance(argv, (list, tuple)) or not argv:
+        raise ValueError("shell_command requires non-empty argv")
+    if not all(isinstance(item, str) and item.strip() for item in argv):
+        raise ValueError("shell_command argv items must be non-empty strings")
+
+    template: dict[str, Any] = {
+        "template_id": f"{session_id}-{operation_index}-{action_type}",
+        "action_type": action_type,
+        "command_argv": list(argv),
+    }
+
+    cwd = bindings.get("cwd")
+    if isinstance(cwd, str) and cwd.strip():
+        template["cwd"] = cwd
+
+    environment = bindings.get("environment")
+    if isinstance(environment, Mapping) and all(
+        isinstance(key, str)
+        and key.strip()
+        and isinstance(value, str)
+        for key, value in environment.items()
+    ):
+        template["environment"] = dict(environment)
+
+    timeout_seconds = bindings.get("timeout_seconds")
+    if isinstance(timeout_seconds, (int, float)) and not isinstance(timeout_seconds, bool):
+        template["timeout_seconds"] = float(timeout_seconds)
+
+    return DispatchRequest(
+        goal_id=f"session-{session_id}-{operation_index}",
+        route=action_type,
+        template=template,
+        bindings={},
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -319,11 +377,15 @@ class GovernedSession:
         if self._governed_dispatcher is not None:
             try:
                 from mcoi_runtime.core.governed_dispatcher import GovernedDispatchContext
-                from mcoi_runtime.contracts.execution import DispatchRequest
                 context = GovernedDispatchContext(
                     actor_id=self._identity_id,
                     intent_id=f"session-{self._session_id}-{self._operations}",
-                    request=DispatchRequest(action_type=action_type, bindings=bindings),
+                    request=_build_session_dispatch_request(
+                        session_id=self._session_id,
+                        operation_index=self._operations,
+                        action_type=action_type,
+                        bindings=bindings,
+                    ),
                     mode="reality",
                     budget_remaining=0.0,
                     current_load=0.0,
@@ -337,7 +399,7 @@ class GovernedSession:
                 result_detail["dispatched"] = False
             except Exception as exc:
                 result_detail["dispatched"] = False
-                result_detail["dispatch_error"] = str(exc)
+                result_detail["dispatch_error"] = _classify_session_dispatch_exception(exc)
 
         self._operations += 1
         self._record_audit(

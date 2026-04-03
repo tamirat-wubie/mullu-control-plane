@@ -16,6 +16,15 @@ from .invariants import RuntimeCoreInvariantError, freeze_mapping
 
 
 _FIELD_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_TEMPLATE_VALIDATION_SUMMARIES = {
+    "malformed_template": "template is malformed",
+    "unsupported_template_field": "template contains unsupported fields",
+    "unsupported_action_type": "template action type is not supported",
+    "missing_parameter": "required parameters are missing",
+    "malformed_bindings": "bindings are malformed",
+    "missing_binding": "binding resolution failed",
+    "unsupported_binding_expression": "binding expression is not supported",
+}
 
 
 class ExecutionActionType(StrEnum):
@@ -58,6 +67,16 @@ class TemplateValidationError(ValueError):
     def __init__(self, code: str, message: str) -> None:
         self.code = code
         super().__init__(message)
+
+
+def summarize_template_validation_error(exc: TemplateValidationError) -> str:
+    """Return a bounded summary for template validation failures."""
+    return _TEMPLATE_VALIDATION_SUMMARIES.get(exc.code, "template validation failed")
+
+
+def format_template_validation_error(exc: TemplateValidationError) -> str:
+    """Return a stable code-prefixed validation summary."""
+    return f"{exc.code}:{summarize_template_validation_error(exc)}"
 
 
 class TemplateValidator:

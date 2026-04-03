@@ -40,6 +40,28 @@ class ProfileLoadResult:
 class ProfileLoadError(ValueError):
     """Raised when a profile cannot be loaded."""
 
+    def __init__(self, message: str, *, public_message: str | None = None) -> None:
+        self.public_message = public_message or message
+        super().__init__(message)
+
+
+class UnknownProfileError(ProfileLoadError):
+    """Raised when a requested named profile does not exist."""
+
+    def __init__(self, profile_name: str) -> None:
+        self.profile_name = profile_name
+        message = f"unknown profile: {profile_name}"
+        super().__init__(message, public_message=message)
+
+
+class UnknownProfileOverrideError(ProfileLoadError):
+    """Raised when a profile override targets an unknown config key."""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+        message = f"unknown config key in overrides: {key}"
+        super().__init__(message, public_message=message)
+
 
 def load_profile(
     name: str,
@@ -53,7 +75,7 @@ def load_profile(
     """
     deployment_profile = BUILTIN_PROFILES.get(name)
     if deployment_profile is None:
-        raise ProfileLoadError(f"unknown profile: {name}")
+        raise UnknownProfileError(name)
 
     base = deployment_profile.to_config_dict()
     override_count = 0
@@ -64,7 +86,7 @@ def load_profile(
                 base[key] = value
                 override_count += 1
             else:
-                raise ProfileLoadError(f"unknown config key in overrides: {key}")
+                raise UnknownProfileOverrideError(key)
 
     config = AppConfig.from_mapping(base)
 

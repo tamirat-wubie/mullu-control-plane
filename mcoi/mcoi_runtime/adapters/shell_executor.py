@@ -21,6 +21,16 @@ _DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
 _TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
 
 
+def _classify_spawn_exception(exc: OSError) -> str:
+    """Return a bounded shell spawn failure message without OS detail leakage."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, FileNotFoundError):
+        return f"shell command not found ({exc_type})"
+    if isinstance(exc, PermissionError):
+        return f"shell access denied ({exc_type})"
+    return f"shell spawn failed ({exc_type})"
+
+
 def _truncate_output(text: str | None, max_bytes: int) -> str:
     """Truncate output to max_bytes, appending a marker if truncated."""
     if text is None:
@@ -109,7 +119,7 @@ class ShellExecutor:
                 finished_at=finished_at,
                 failure=ExecutionFailure(
                     code="spawn_failed",
-                    message=str(exc),
+                    message=_classify_spawn_exception(exc),
                     details={"argv": list(request.argv)},
                 ),
                 effect_name="process_start_failed",

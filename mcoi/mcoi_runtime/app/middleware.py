@@ -1,4 +1,4 @@
-"""Phase 208A — Governance Guard Middleware.
+"""Phase 208A - Governance Guard Middleware.
 
 Purpose: FastAPI middleware that runs the governance guard chain
     on every governed request before endpoint logic executes.
@@ -22,6 +22,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from mcoi_runtime.core.content_safety import ContentSafetyChain, create_content_safety_guard
 from mcoi_runtime.core.governance_guard import (
     GovernanceGuardChain,
     create_api_key_guard,
@@ -31,7 +32,6 @@ from mcoi_runtime.core.governance_guard import (
     create_rate_limit_guard,
     create_tenant_guard,
 )
-from mcoi_runtime.core.content_safety import ContentSafetyChain, create_content_safety_guard
 
 _log = logging.getLogger(__name__)
 
@@ -40,6 +40,27 @@ EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/redoc
 
 # Max body size to parse for content safety (1MB). Larger bodies skip content extraction.
 MAX_BODY_PARSE_SIZE = 1_048_576
+
+
+def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
+    """Extract prompt/content fields for safety checks from a JSON body."""
+    if not body or len(body) > MAX_BODY_PARSE_SIZE:
+        return {}
+    try:
+        parsed = json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+
+    extracted: dict[str, str] = {}
+    prompt = parsed.get("prompt")
+    content = parsed.get("content")
+    if isinstance(prompt, str):
+        extracted["prompt"] = prompt
+    if isinstance(content, str):
+        extracted["content"] = content
+    return extracted
 
 
 class GovernanceMiddleware(BaseHTTPMiddleware):
@@ -70,8 +91,6 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Build guard context from request
-        tenant_id = ""
-        # Try to extract tenant_id from query params or headers
         tenant_id = request.query_params.get("tenant_id", "")
         if not tenant_id:
             tenant_id = request.headers.get("x-tenant-id", "system")
@@ -89,13 +108,9 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         if "json" in content_type and request.method in ("POST", "PUT", "PATCH"):
             try:
                 body = await request.body()
-                if body and len(body) <= MAX_BODY_PARSE_SIZE:
-                    parsed = json.loads(body)
-                    if isinstance(parsed, dict):
-                        context["prompt"] = parsed.get("prompt", "")
-                        context["content"] = parsed.get("content", "")
-            except Exception:
-                pass  # Non-JSON or malformed body — skip content extraction
+                context.update(_extract_content_safety_fields(body))
+            except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
+                pass  # Non-JSON or malformed body - skip content extraction
 
         # Evaluate guard chain
         start = time.monotonic()
@@ -151,7 +166,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        # Guards passed — record allowed request for audit completeness
+        # Guards passed - record allowed request for audit completeness
         if self._on_allow:
             self._on_allow({
                 "path": path,
@@ -160,7 +175,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                 "latency_ms": round(latency_ms, 2),
             })
 
-        # Guards passed — proceed to endpoint
+        # Guards passed - proceed to endpoint
         response = await call_next(request)
         return response
 
