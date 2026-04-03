@@ -191,11 +191,11 @@ class TestCertificationDaemon:
             certifier=certifier,
             clock=FIXED_CLOCK,
             config=CertificationConfig(interval_seconds=0),
-            # All functions raise
-            api_handle_fn=lambda req: (_ for _ in ()).throw(RuntimeError("fail")),
-            db_write_fn=lambda t, c: (_ for _ in ()).throw(RuntimeError("db fail")),
+            ledger_fn=lambda tenant_id: (_ for _ in ()).throw(RuntimeError("secret ledger failure")),
         )
         # Should not raise
         chain = daemon.tick()
-        # May or may not get a chain depending on which step fails
+        assert chain is None
         assert daemon.health.total_runs >= 1
+        assert daemon.history[-1]["error"] == "certification run error (RuntimeError)"
+        assert "secret ledger failure" not in daemon.history[-1]["error"]

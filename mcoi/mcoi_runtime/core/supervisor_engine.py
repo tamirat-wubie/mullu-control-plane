@@ -53,6 +53,14 @@ injects this callback to check policy before every action.
 """
 
 
+def _classify_supervisor_exception(exc: Exception) -> str:
+    """Return a bounded supervisor tick error message."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"supervisor tick timeout ({exc_type})"
+    return f"supervisor tick error ({exc_type})"
+
+
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
@@ -226,7 +234,7 @@ class SupervisorEngine:
             self._consecutive_errors = 0
 
         except Exception as exc:
-            errors.append(str(exc))
+            errors.append(_classify_supervisor_exception(exc))
             outcome = TickOutcome.ERROR
             self._consecutive_errors += 1
             if self._consecutive_errors >= self._policy.max_consecutive_errors:

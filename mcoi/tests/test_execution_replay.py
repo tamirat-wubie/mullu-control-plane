@@ -133,3 +133,17 @@ class TestReplayExecutor:
         assert all_ok is True
         assert matched == 1
         assert total == 1
+
+    def test_replay_exception_is_sanitized(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        rec.start_trace("t1")
+        rec.record_frame("t1", "explode", {"msg": "hi"}, {"msg": "hi"})
+        trace = rec.complete_trace("t1")
+
+        executor = ReplayExecutor(operations={
+            "explode": lambda data: (_ for _ in ()).throw(RuntimeError("secret replay failure")),
+        })
+        results = executor.replay(trace)
+        assert results[0]["matched"] is False
+        assert results[0]["reason"] == "replay operation error (RuntimeError)"
+        assert "secret replay failure" not in results[0]["reason"]

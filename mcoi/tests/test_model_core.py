@@ -150,3 +150,20 @@ def test_get_model() -> None:
 
     assert engine.get_model("m-1") is not None
     assert engine.get_model("nonexistent") is None
+
+
+def test_adapter_exception_is_sanitized() -> None:
+    class FailingAdapter:
+        def invoke(self, invocation: ModelInvocation) -> ModelResponse:
+            raise RuntimeError("secret provider detail")
+
+    engine = ModelOrchestrationEngine(clock=lambda: _CLOCK)
+    engine.register(_descriptor(), FailingAdapter())
+
+    response = engine.invoke(_invocation())
+
+    assert response.status is ModelStatus.FAILED
+    assert response.validation_status is ValidationStatus.FAILED
+    assert response.metadata["exception_type"] == "RuntimeError"
+    assert response.metadata["detail"] == "model adapter error (RuntimeError)"
+    assert "secret provider detail" not in response.metadata["detail"]

@@ -41,6 +41,41 @@ _REQUEST_ALLOWED_KEYS = frozenset(
 )
 
 
+class CLIRequestPayloadError(ValueError):
+    """Raised for request payload validation failures safe to echo locally."""
+
+    def __init__(self, public_message: str) -> None:
+        self.public_message = public_message
+        super().__init__(public_message)
+
+
+def _classify_cli_os_error(exc: OSError) -> str:
+    """Return a bounded local file-access failure message."""
+    exc_type = type(exc).__name__
+    if isinstance(exc, PermissionError):
+        return f"file access denied ({exc_type})"
+    if isinstance(exc, FileNotFoundError):
+        return f"file not found ({exc_type})"
+    return f"file access error ({exc_type})"
+
+
+def _classify_cli_value_error(exc: ValueError) -> str:
+    """Preserve safe request-validation messages and bound everything else."""
+    if isinstance(exc, CLIRequestPayloadError):
+        return exc.public_message
+    return f"invalid request payload ({type(exc).__name__})"
+
+
+def _classify_profile_load_error(exc: ProfileLoadError) -> str:
+    """Preserve known profile-load messages and bound everything else."""
+    return exc.public_message
+
+
+def _classify_request_contract_error(exc: RuntimeCoreInvariantError) -> str:
+    """Return a bounded request contract failure message."""
+    return f"request payload failed contract validation ({type(exc).__name__})"
+
+
 def _fatal(message: str) -> NoReturn:
     """Print a CLI error and terminate deterministically."""
     print(f"error: {message}", file=sys.stderr)
@@ -82,7 +117,9 @@ def _required_text_field(
 ) -> str:
     value = payload.get(field_name)
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{kind} field '{field_name}' must be a non-empty string in {source_name}")
+        raise CLIRequestPayloadError(
+            f"{kind} field '{field_name}' must be a non-empty string in {source_name}"
+        )
     return value
 
 
@@ -92,27 +129,27 @@ def _build_operator_request(
     source_name: str,
 ) -> OperatorRequest:
     if not isinstance(payload, Mapping):
-        raise ValueError(f"request payload must be an object in {source_name}")
+        raise CLIRequestPayloadError(f"request payload must be an object in {source_name}")
 
     unknown_keys = sorted(set(payload) - _REQUEST_ALLOWED_KEYS)
     if unknown_keys:
         joined = ", ".join(unknown_keys)
-        raise ValueError(f"unsupported request fields in {source_name}: {joined}")
+        raise CLIRequestPayloadError(f"unsupported request fields in {source_name}: {joined}")
 
     template = payload.get("template")
     if not isinstance(template, Mapping):
-        raise ValueError(f"request field 'template' must be an object in {source_name}")
+        raise CLIRequestPayloadError(f"request field 'template' must be an object in {source_name}")
 
     if "bindings" not in payload:
-        raise ValueError(f"request field 'bindings' is required in {source_name}")
+        raise CLIRequestPayloadError(f"request field 'bindings' is required in {source_name}")
 
     bindings = payload.get("bindings")
     if not isinstance(bindings, Mapping):
-        raise ValueError(f"request field 'bindings' must be an object in {source_name}")
+        raise CLIRequestPayloadError(f"request field 'bindings' must be an object in {source_name}")
 
     resolved_bindings = _resolve_bindings(dict(payload))
     if not isinstance(resolved_bindings, Mapping):
-        raise ValueError(f"request field 'bindings' must be an object in {source_name}")
+        raise CLIRequestPayloadError(f"request field 'bindings' must be an object in {source_name}")
 
     try:
         return OperatorRequest(
@@ -138,7 +175,7 @@ def _build_operator_request(
             bindings=resolved_bindings,
         )
     except RuntimeCoreInvariantError as exc:
-        raise ValueError(str(exc)) from exc
+        raise CLIRequestPayloadError(_classify_request_contract_error(exc)) from exc
 
 
 def _resolve_config(args: argparse.Namespace) -> AppConfig:
@@ -148,7 +185,7 @@ def _resolve_config(args: argparse.Namespace) -> AppConfig:
             result = load_profile(args.profile)
             return result.config
         except ProfileLoadError as exc:
-            _fatal(str(exc))
+            _fatal(_classify_profile_load_error(exc))
     if hasattr(args, "config") and args.config:
         return _load_config(args.config)
     return AppConfig()
@@ -165,7 +202,7 @@ def run_command(args: argparse.Namespace) -> int:
     try:
         request = _build_operator_request(request_data, source_name=request_source)
     except ValueError as exc:
-        _fatal(str(exc))
+        _fatal(_classify_cli_value_error(exc))
 
     report = loop.run_step(request)
 
@@ -233,7 +270,7 @@ def _load_config(path: str) -> AppConfig:
     try:
         content = config_path.read_text(encoding="utf-8")
     except OSError as exc:
-        _fatal(f"cannot read config file {path}: {exc}")
+        _fatal(f"cannot read config file {path}: {_classify_cli_os_error(exc)}")
     data = _load_json_object(content=content, kind="config", source_name=path)
     try:
         return AppConfig.from_mapping(data)
@@ -251,7 +288,7 @@ def _load_request(source: str) -> dict:
     try:
         content = path.read_text(encoding="utf-8")
     except OSError as exc:
-        _fatal(f"cannot read request file {source}: {exc}")
+        _fatal(f"cannot read request file {source}: {_classify_cli_os_error(exc)}")
     return _load_json_object(content=content, kind="request", source_name=source)
 
 

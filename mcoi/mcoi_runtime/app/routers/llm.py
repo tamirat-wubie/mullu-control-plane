@@ -115,6 +115,23 @@ def _raise_llm_service_unavailable(
     )
 
 
+def _raise_governed_http_error(
+    *,
+    status_code: int,
+    error: str,
+    error_code: str,
+) -> NoReturn:
+    """Raise a structured governed HTTP error."""
+    raise HTTPException(
+        status_code,
+        detail={
+            "error": error,
+            "error_code": error_code,
+            "governed": True,
+        },
+    )
+
+
 # ═══ Phase 199A — LLM Completion Endpoint ═══
 
 
@@ -149,7 +166,11 @@ def complete(req: CompletionRequest):
             )
         else:
             deps.llm_circuit.record_failure()
-            raise HTTPException(status_code=503, detail={"error": result.error, "governed": True})
+            _raise_governed_http_error(
+                status_code=503,
+                error=result.error or "LLM completion failed",
+                error_code="llm_completion_failed",
+            )
     except HTTPException:
         raise
     except Exception as exc:
@@ -246,6 +267,8 @@ def bootstrap_info():
         "available_backends": list(deps.llm_bootstrap_result.backends.keys()),
         "registered_models": deps.llm_bootstrap_result.registered_models,
         "registered_providers": deps.llm_bootstrap_result.registered_providers,
+        "skipped_model_registrations": deps.llm_bootstrap_result.skipped_model_registrations,
+        "model_registration_failures": deps.llm_bootstrap_result.model_registration_failures,
         "config": {
             "default_model": deps.llm_bootstrap_result.config.default_model,
             "default_budget_max_cost": deps.llm_bootstrap_result.config.default_budget_max_cost,
@@ -364,7 +387,11 @@ def chat_workflow_endpoint(req: ChatWorkflowRequest):
     try:
         cap = AgentCapability(req.capability)
     except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+        _raise_governed_http_error(
+            status_code=400,
+            error="Unknown agent capability",
+            error_code="invalid_capability",
+        )
 
     try:
         result = deps.chat_workflow.execute(
@@ -530,7 +557,11 @@ def auto_routed_completion(req: AutoCompleteRequest):
         force_model=req.force_model,
     )
     if not decision.model_id:
-        raise HTTPException(503, detail="no models available for routing")
+        _raise_governed_http_error(
+            status_code=503,
+            error="No models available for routing",
+            error_code="no_routable_model",
+        )
 
     try:
         result = deps.llm_bridge.complete(

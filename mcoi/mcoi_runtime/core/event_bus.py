@@ -20,6 +20,11 @@ from hashlib import sha256
 import json
 
 
+def _classify_subscriber_exception(exc: Exception) -> str:
+    """Return a bounded subscriber failure message without payload leakage."""
+    return f"subscriber error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class GovernedEvent:
     """Typed, immutable event on the governed bus."""
@@ -103,7 +108,7 @@ class EventBus:
                 self._errors.append({
                     "event_id": event.event_id,
                     "event_type": event_type,
-                    "error": str(exc),
+                    "error": _classify_subscriber_exception(exc),
                     "at": now,
                 })
 
@@ -115,7 +120,7 @@ class EventBus:
                 self._errors.append({
                     "event_id": event.event_id,
                     "event_type": event_type,
-                    "error": str(exc),
+                    "error": _classify_subscriber_exception(exc),
                     "at": now,
                 })
 

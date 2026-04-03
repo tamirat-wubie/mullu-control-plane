@@ -13,9 +13,12 @@ RUN pip install --no-cache-dir -e mcoi[dev] && \
 
 ENV MULLU_ENV=pilot
 ENV PYTHONPATH=/app:/app/mcoi
+ENV MULLU_STATE_DIR=/data/state
 
 # Run as non-root for security
-RUN adduser --disabled-password --gecos "" mullu
+RUN adduser --disabled-password --gecos "" mullu && \
+    mkdir -p /data/state && \
+    chown -R mullu:mullu /data
 USER mullu
 
 EXPOSE 8000 8001

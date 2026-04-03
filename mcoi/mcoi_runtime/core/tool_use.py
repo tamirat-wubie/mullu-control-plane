@@ -20,6 +20,18 @@ from hashlib import sha256
 import json
 
 
+def _classify_tool_exception(exc: Exception) -> str:
+    """Collapse handler failures into stable, non-leaking error strings."""
+    error_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"tool timeout ({error_type})"
+    if isinstance(exc, ConnectionError):
+        return f"tool network error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"tool validation error ({error_type})"
+    return f"tool handler error ({error_type})"
+
+
 @dataclass(frozen=True, slots=True)
 class ToolParameter:
     """Single parameter in a tool definition."""
@@ -148,7 +160,7 @@ class ToolRegistry:
         except Exception as exc:
             result = ToolResult(
                 invocation_id=invocation_id, tool_id=tool_id,
-                output={}, succeeded=False, error=str(exc),
+                output={}, succeeded=False, error=_classify_tool_exception(exc),
             )
 
         self._invocation_log.append(result)

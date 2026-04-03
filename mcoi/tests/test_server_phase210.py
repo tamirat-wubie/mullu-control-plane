@@ -56,6 +56,9 @@ class TestChatWorkflowEndpoint:
             "capability": "nonexistent",
         })
         assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error_code"] == "invalid_capability"
+        assert data["governed"] is True
 
     def test_chat_workflow_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps

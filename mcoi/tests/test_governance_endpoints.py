@@ -51,7 +51,8 @@ class TestTenantRegister:
             "status": "nonexistent",
         })
         assert resp.status_code == 422
-        assert "invalid status" in resp.json()["detail"]["error"]
+        assert resp.json()["detail"]["error"] == "invalid status"
+        assert resp.json()["detail"]["error_code"] == "invalid_status"
 
     def test_register_duplicate_tenant(self, client):
         client.post("/api/v1/tenant/register", json={
@@ -63,7 +64,9 @@ class TestTenantRegister:
             "status": "active",
         })
         assert resp.status_code == 409
-        assert "already registered" in resp.json()["detail"]["error"]
+        assert resp.json()["detail"]["error"] == "tenant already registered"
+        assert resp.json()["detail"]["error_code"] == "tenant_exists"
+        assert "test-dup" not in str(resp.json())
 
 
 class TestTenantStatusUpdate:
@@ -100,15 +103,19 @@ class TestTenantStatusUpdate:
         resp = client.patch("/api/v1/tenant/test-invalid-trans/status", json={
             "status": "onboarding",
         })
-        assert resp.status_code == 422
-        assert "invalid transition" in resp.json()["detail"]["error"]
+        assert resp.status_code == 409
+        assert resp.json()["detail"]["error"] == "invalid status transition"
+        assert resp.json()["detail"]["error_code"] == "invalid_status_transition"
+        assert "test-invalid-trans" not in str(resp.json())
 
     def test_update_unknown_tenant(self, client):
         resp = client.patch("/api/v1/tenant/unknown-tenant-xyz/status", json={
             "status": "suspended",
         })
-        assert resp.status_code == 422
-        assert "not registered" in resp.json()["detail"]["error"]
+        assert resp.status_code == 404
+        assert resp.json()["detail"]["error"] == "tenant not registered"
+        assert resp.json()["detail"]["error_code"] == "tenant_not_found"
+        assert "unknown-tenant-xyz" not in str(resp.json())
 
 
 class TestTenantGateGet:
@@ -138,6 +145,26 @@ class TestTenantGatesList:
         assert "gates" in data
         assert "summary" in data
         assert data["governed"] is True
+
+    def test_list_gates_includes_store_backed_entries(self, client):
+        from mcoi_runtime.app.routers.deps import deps
+        from mcoi_runtime.core.tenant_gating import TenantGate, TenantGatingRegistry, TenantStatus
+        from mcoi_runtime.persistence.postgres_governance_stores import InMemoryTenantGatingStore
+
+        original_gating = deps.get("tenant_gating")
+        store = InMemoryTenantGatingStore()
+        store.save(TenantGate(tenant_id="persisted-a", status=TenantStatus.ACTIVE, reason="a", gated_at="now"))
+        store.save(TenantGate(tenant_id="persisted-b", status=TenantStatus.SUSPENDED, reason="b", gated_at="now"))
+        deps.set("tenant_gating", TenantGatingRegistry(clock=lambda: "2026-01-01T00:00:00Z", store=store))
+        try:
+            resp = client.get("/api/v1/tenant/gates")
+        finally:
+            deps.set("tenant_gating", original_gating)
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert {gate["tenant_id"] for gate in data["gates"]} == {"persisted-a", "persisted-b"}
+        assert data["summary"]["total_tenants"] == 2
 
 
 # ═══ Ops Endpoints ═══

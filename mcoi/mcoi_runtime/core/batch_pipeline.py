@@ -18,6 +18,30 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 
+def _classify_pipeline_exception(exc: Exception) -> str:
+    error_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"pipeline timeout ({error_type})"
+    if isinstance(exc, ConnectionError):
+        return f"pipeline network error ({error_type})"
+    if isinstance(exc, PermissionError):
+        return f"pipeline access error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"pipeline validation error ({error_type})"
+    return f"pipeline execution error ({error_type})"
+
+
+def _sanitize_pipeline_failure(error: str) -> str:
+    normalized = error.strip()
+    if not normalized:
+        return "pipeline step failed"
+    if normalized.startswith("budget_rejected:"):
+        return "pipeline budget rejected"
+    if normalized.startswith("unknown backend:"):
+        return "pipeline backend unavailable"
+    return "pipeline step failed"
+
+
 @dataclass(frozen=True, slots=True)
 class PipelineStep:
     """Definition of a single step in a pipeline."""
@@ -114,7 +138,8 @@ class BatchPipeline:
                 input_tokens = getattr(result, "input_tokens", 0)
                 output_tokens = getattr(result, "output_tokens", 0)
                 cost = getattr(result, "cost", 0.0)
-                error = getattr(result, "error", "")
+                raw_error = getattr(result, "error", "")
+                error = _sanitize_pipeline_failure(raw_error) if not succeeded else ""
 
                 step_result = StepResult(
                     step_id=step.step_id,
@@ -146,10 +171,11 @@ class BatchPipeline:
                 current_input = content
 
             except Exception as exc:
+                error = _classify_pipeline_exception(exc)
                 step_results.append(StepResult(
                     step_id=step.step_id, name=step.name,
                     content="", input_tokens=0, output_tokens=0,
-                    cost=0.0, succeeded=False, error=str(exc),
+                    cost=0.0, succeeded=False, error=error,
                 ))
                 pipe_result = PipelineResult(
                     pipeline_id=pipeline_id,
@@ -158,7 +184,7 @@ class BatchPipeline:
                     total_cost=total_cost,
                     total_tokens=total_tokens,
                     succeeded=False,
-                    error=str(exc),
+                    error=f"step {step.step_id} failed: {error}",
                 )
                 self._history.append(pipe_result)
                 return pipe_result

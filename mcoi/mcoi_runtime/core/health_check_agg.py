@@ -18,6 +18,10 @@ from enum import IntEnum
 from typing import Any, Callable
 
 
+def _classify_health_exception(exc: Exception) -> str:
+    return f"health check error ({type(exc).__name__})"
+
+
 class HealthStatus(IntEnum):
     HEALTHY = 0
     DEGRADED = 1
@@ -108,7 +112,7 @@ class HealthCheckAggregator:
                 message = output.get("message", "")
             except Exception as e:
                 status = HealthStatus.UNHEALTHY
-                message = str(e)
+                message = _classify_health_exception(e)
                 output = {}
 
             latency = (time.monotonic() - start) * 1000

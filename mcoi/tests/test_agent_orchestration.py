@@ -187,6 +187,8 @@ class TestPlanExecution:
             executor=lambda p: (_ for _ in ()).throw(RuntimeError("boom")),
         )
         assert result.phase == OrchestrationPhase.FAILED
+        assert result.results[0]["error"] == "proposal execution error (RuntimeError)"
+        assert "boom" not in result.results[0]["error"]
 
 
 class TestHandoffs:

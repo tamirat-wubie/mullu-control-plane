@@ -340,6 +340,22 @@ class TestAnthropicBackendStructure:
         cost = backend._estimate_cost("unknown-model", 1000, 500)
         assert cost > 0  # Falls back to default pricing
 
+    def test_runtime_error_redacted(self):
+        backend = AnthropicBackend(api_key="fake")
+
+        class _Messages:
+            @staticmethod
+            def create(**kwargs):
+                raise RuntimeError("provider secret detail")
+
+        class _Client:
+            messages = _Messages()
+
+        backend._get_client = lambda: _Client()
+        result = backend.call(_params(model="claude-sonnet-4-20250514"))
+        assert result.error == "provider error (RuntimeError)"
+        assert "provider secret detail" not in result.error
+
 
 # ═══ OpenAIBackend (structural tests — no API key required) ═══
 
@@ -371,3 +387,22 @@ class TestOpenAIBackendStructure:
             assert isinstance(result, LLMResult)
         except RuntimeCoreInvariantError:
             pass  # SDK not installed — expected
+
+    def test_timeout_error_redacted(self):
+        backend = OpenAIBackend(api_key="fake")
+
+        class _Completions:
+            @staticmethod
+            def create(**kwargs):
+                raise TimeoutError("provider timeout detail")
+
+        class _Chat:
+            completions = _Completions()
+
+        class _Client:
+            chat = _Chat()
+
+        backend._get_client = lambda: _Client()
+        result = backend.call(_params(model="gpt-4o"))
+        assert result.error == "provider timeout (TimeoutError)"
+        assert "provider timeout detail" not in result.error

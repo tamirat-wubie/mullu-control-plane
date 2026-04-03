@@ -18,6 +18,11 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 
+def _classify_shutdown_exception(exc: Exception) -> str:
+    """Return a bounded shutdown hook failure message."""
+    return f"shutdown hook error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class ShutdownHook:
     """A named shutdown hook with priority."""
@@ -77,7 +82,11 @@ class ShutdownManager:
                 results.append({"hook": hook.name, "status": "ok", **result})
                 succeeded += 1
             except Exception as exc:
-                results.append({"hook": hook.name, "status": "error", "error": str(exc)})
+                results.append({
+                    "hook": hook.name,
+                    "status": "error",
+                    "error": _classify_shutdown_exception(exc),
+                })
                 failed += 1
 
         total_ms = (time.monotonic() - start) * 1000

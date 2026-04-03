@@ -203,7 +203,9 @@ def test_operator_loop_stops_before_dispatch_on_validation_failure() -> None:
     assert report.execution_result is None
     assert report.validation_passed is False
     assert report.validation_error is not None
-    assert report.validation_error.startswith("missing_parameter:")
+    assert report.validation_error == "missing_parameter:required parameters are missing"
+    assert report.structured_errors[0].message == "required parameters are missing"
+    assert "message" not in report.validation_error
     assert report.verification_error is None
 
 
@@ -415,3 +417,40 @@ def test_operator_loop_fails_closed_on_mismatched_verification() -> None:
     assert report.verification_closed is False
     assert report.completed is False
     assert report.verification_error == "verification_execution_mismatch"
+
+
+def test_operator_loop_sanitizes_entity_registration_warning() -> None:
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        executors={"shell_command": executor},
+        observers={},
+    )
+    loop = OperatorLoop(runtime)
+
+    def _fail_add_entity(entity):
+        raise ValueError("secret entity registration detail")
+
+    loop.runtime.world_state.add_entity = _fail_add_entity  # type: ignore[method-assign]
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-entity-warning-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template={
+                "template_id": "template-entity-warning-1",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('{message}')"),
+                "required_parameters": ("message",),
+            },
+            bindings={"message": "hello"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+        )
+    )
+
+    warning = next(error for error in report.structured_errors if error.error_code == "entity_registration_warning")
+    assert warning.message == "best-effort entity registration failed (ValueError)"
+    assert "secret entity registration detail" not in warning.message

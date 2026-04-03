@@ -19,6 +19,30 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 
+def _classify_task_exception(exc: Exception) -> str:
+    exc_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"task timeout ({exc_type})"
+    if isinstance(exc, ConnectionError):
+        return f"task network error ({exc_type})"
+    if isinstance(exc, ValueError):
+        return f"task validation error ({exc_type})"
+    return f"task handler error ({exc_type})"
+
+
+def _sanitize_recorded_task_error(error: str) -> str:
+    if not error:
+        return "task failed"
+    if error.startswith((
+        "task timeout (",
+        "task network error (",
+        "task validation error (",
+        "task handler error (",
+    )):
+        return error
+    return "task failed"
+
+
 @dataclass(frozen=True, slots=True)
 class QueuedTask:
     """Task in the queue."""
@@ -83,7 +107,8 @@ class TaskQueue:
         """Record a task's result."""
         result = TaskQueueResult(
             task_id=task_id, output=output, succeeded=succeeded,
-            error=error, processed_at=self._clock(),
+            error="" if succeeded else _sanitize_recorded_task_error(error),
+            processed_at=self._clock(),
         )
         self._results[task_id] = result
         self._processed += 1
@@ -101,7 +126,12 @@ class TaskQueue:
             output = handler(task.payload)
             return self.record_result(task.task_id, output, succeeded=True)
         except Exception as exc:
-            return self.record_result(task.task_id, {}, succeeded=False, error=str(exc))
+            return self.record_result(
+                task.task_id,
+                {},
+                succeeded=False,
+                error=_classify_task_exception(exc),
+            )
 
     @property
     def depth(self) -> int:

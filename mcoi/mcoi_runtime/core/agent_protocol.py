@@ -17,8 +17,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from hashlib import sha256
-from typing import Any, Callable
 import json
+import threading
+from typing import Any, Callable
 
 
 class TaskStatus(StrEnum):
@@ -82,31 +83,38 @@ class AgentRegistry:
 
     def __init__(self) -> None:
         self._agents: dict[str, AgentDescriptor] = {}
+        self._lock = threading.RLock()
 
     def register(self, agent: AgentDescriptor) -> None:
-        if agent.agent_id in self._agents:
-            raise ValueError(f"agent already registered: {agent.agent_id}")
-        self._agents[agent.agent_id] = agent
+        with self._lock:
+            if agent.agent_id in self._agents:
+                raise ValueError(f"agent already registered: {agent.agent_id}")
+            self._agents[agent.agent_id] = agent
 
     def unregister(self, agent_id: str) -> bool:
-        return self._agents.pop(agent_id, None) is not None
+        with self._lock:
+            return self._agents.pop(agent_id, None) is not None
 
     def get(self, agent_id: str) -> AgentDescriptor | None:
-        return self._agents.get(agent_id)
+        with self._lock:
+            return self._agents.get(agent_id)
 
     def find_capable(self, capability: AgentCapability) -> list[AgentDescriptor]:
         """Find all agents with a given capability."""
-        return [
-            a for a in self._agents.values()
-            if a.enabled and capability in a.capabilities
-        ]
+        with self._lock:
+            return [
+                a for a in self._agents.values()
+                if a.enabled and capability in a.capabilities
+            ]
 
     def list_agents(self) -> list[AgentDescriptor]:
-        return sorted(self._agents.values(), key=lambda a: a.agent_id)
+        with self._lock:
+            return sorted(self._agents.values(), key=lambda a: a.agent_id)
 
     @property
     def count(self) -> int:
-        return len(self._agents)
+        with self._lock:
+            return len(self._agents)
 
 
 class TaskManager:
@@ -119,20 +127,9 @@ class TaskManager:
         self._assignments: dict[str, str] = {}  # task_id -> agent_id
         self._statuses: dict[str, TaskStatus] = {}
         self._results: dict[str, TaskResult] = {}
+        self._lock = threading.RLock()
 
-    def submit(self, spec: TaskSpec) -> TaskSpec:
-        """Submit a task for delegation."""
-        if spec.task_id in self._tasks:
-            raise ValueError(f"task already exists: {spec.task_id}")
-        self._tasks[spec.task_id] = spec
-        self._statuses[spec.task_id] = TaskStatus.PENDING
-        return spec
-
-    def assign(self, task_id: str, agent_id: str) -> bool:
-        """Assign a task to a specific agent.
-
-        Validates that the agent has the required capability.
-        """
+    def _assign_locked(self, task_id: str, agent_id: str) -> bool:
         task = self._tasks.get(task_id)
         if task is None:
             raise ValueError(f"task not found: {task_id}")
@@ -153,109 +150,139 @@ class TaskManager:
         self._statuses[task_id] = TaskStatus.ASSIGNED
         return True
 
+    def submit(self, spec: TaskSpec) -> TaskSpec:
+        """Submit a task for delegation."""
+        with self._lock:
+            if spec.task_id in self._tasks:
+                raise ValueError(f"task already exists: {spec.task_id}")
+            self._tasks[spec.task_id] = spec
+            self._statuses[spec.task_id] = TaskStatus.PENDING
+            return spec
+
+    def assign(self, task_id: str, agent_id: str) -> bool:
+        """Assign a task to a specific agent.
+
+        Validates that the agent has the required capability.
+        """
+        with self._lock:
+            return self._assign_locked(task_id, agent_id)
+
     def auto_assign(self, task_id: str) -> str | None:
         """Auto-assign a task to a capable agent."""
-        task = self._tasks.get(task_id)
-        if task is None:
-            return None
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task is None:
+                return None
 
-        candidates = self._registry.find_capable(task.required_capability)
-        if not candidates:
-            return None
+            candidates = self._registry.find_capable(task.required_capability)
+            if not candidates:
+                return None
 
-        # Simple: pick the first capable agent
-        agent = candidates[0]
-        self.assign(task_id, agent.agent_id)
-        return agent.agent_id
+            # Simple: pick the first capable agent
+            agent = candidates[0]
+            self._assign_locked(task_id, agent.agent_id)
+            return agent.agent_id
 
     def start(self, task_id: str) -> bool:
         """Mark a task as running."""
-        if self._statuses.get(task_id) != TaskStatus.ASSIGNED:
-            return False
-        self._statuses[task_id] = TaskStatus.RUNNING
-        return True
+        with self._lock:
+            if self._statuses.get(task_id) != TaskStatus.ASSIGNED:
+                return False
+            self._statuses[task_id] = TaskStatus.RUNNING
+            return True
 
     def complete(self, task_id: str, output: dict[str, Any], duration_ms: float = 0.0) -> TaskResult:
         """Record task completion."""
-        task = self._tasks.get(task_id)
-        if task is None:
-            raise ValueError(f"task not found: {task_id}")
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task is None:
+                raise ValueError(f"task not found: {task_id}")
 
-        agent_id = self._assignments.get(task_id, "unknown")
-        result_hash = sha256(
-            json.dumps(output, sort_keys=True, default=str).encode()
-        ).hexdigest()
+            agent_id = self._assignments.get(task_id, "unknown")
+            result_hash = sha256(
+                json.dumps(output, sort_keys=True, default=str).encode()
+            ).hexdigest()
 
-        result = TaskResult(
-            task_id=task_id,
-            agent_id=agent_id,
-            status=TaskStatus.COMPLETED,
-            output=output,
-            duration_ms=duration_ms,
-            result_hash=result_hash,
-        )
-        self._results[task_id] = result
-        self._statuses[task_id] = TaskStatus.COMPLETED
-        return result
+            result = TaskResult(
+                task_id=task_id,
+                agent_id=agent_id,
+                status=TaskStatus.COMPLETED,
+                output=output,
+                duration_ms=duration_ms,
+                result_hash=result_hash,
+            )
+            self._results[task_id] = result
+            self._statuses[task_id] = TaskStatus.COMPLETED
+            return result
 
     def fail(self, task_id: str, error: str) -> TaskResult:
         """Record task failure."""
-        agent_id = self._assignments.get(task_id, "unknown")
-        result = TaskResult(
-            task_id=task_id,
-            agent_id=agent_id,
-            status=TaskStatus.FAILED,
-            output={},
-            error=error,
-        )
-        self._results[task_id] = result
-        self._statuses[task_id] = TaskStatus.FAILED
-        return result
+        with self._lock:
+            agent_id = self._assignments.get(task_id, "unknown")
+            result = TaskResult(
+                task_id=task_id,
+                agent_id=agent_id,
+                status=TaskStatus.FAILED,
+                output={},
+                error=error,
+            )
+            self._results[task_id] = result
+            self._statuses[task_id] = TaskStatus.FAILED
+            return result
 
     def cancel(self, task_id: str) -> bool:
         """Cancel a pending or assigned task."""
-        status = self._statuses.get(task_id)
-        if status not in (TaskStatus.PENDING, TaskStatus.ASSIGNED):
-            return False
-        self._statuses[task_id] = TaskStatus.CANCELLED
-        return True
+        with self._lock:
+            status = self._statuses.get(task_id)
+            if status not in (TaskStatus.PENDING, TaskStatus.ASSIGNED):
+                return False
+            self._statuses[task_id] = TaskStatus.CANCELLED
+            return True
 
     def get_result(self, task_id: str) -> TaskResult | None:
-        return self._results.get(task_id)
+        with self._lock:
+            return self._results.get(task_id)
 
     def get_status(self, task_id: str) -> TaskStatus | None:
-        return self._statuses.get(task_id)
+        with self._lock:
+            return self._statuses.get(task_id)
 
     def pending_tasks(self) -> list[TaskSpec]:
-        return [
-            self._tasks[tid] for tid, status in self._statuses.items()
-            if status == TaskStatus.PENDING
-        ]
+        with self._lock:
+            return [
+                self._tasks[tid] for tid, status in self._statuses.items()
+                if status == TaskStatus.PENDING
+            ]
 
     def running_tasks(self) -> list[TaskSpec]:
-        return [
-            self._tasks[tid] for tid, status in self._statuses.items()
-            if status == TaskStatus.RUNNING
-        ]
+        with self._lock:
+            return [
+                self._tasks[tid] for tid, status in self._statuses.items()
+                if status == TaskStatus.RUNNING
+            ]
 
     @property
     def task_count(self) -> int:
-        return len(self._tasks)
+        with self._lock:
+            return len(self._tasks)
 
     @property
     def completed_count(self) -> int:
-        return sum(1 for s in self._statuses.values() if s == TaskStatus.COMPLETED)
+        with self._lock:
+            return sum(1 for s in self._statuses.values() if s == TaskStatus.COMPLETED)
 
     @property
     def failed_count(self) -> int:
-        return sum(1 for s in self._statuses.values() if s == TaskStatus.FAILED)
+        with self._lock:
+            return sum(1 for s in self._statuses.values() if s == TaskStatus.FAILED)
 
     def summary(self) -> dict[str, Any]:
-        status_counts: dict[str, int] = {}
-        for status in self._statuses.values():
-            status_counts[status.value] = status_counts.get(status.value, 0) + 1
-        return {
-            "total_tasks": self.task_count,
-            "status_counts": status_counts,
-            "agents": self._registry.count,
-        }
+        with self._lock:
+            status_counts: dict[str, int] = {}
+            for status in self._statuses.values():
+                status_counts[status.value] = status_counts.get(status.value, 0) + 1
+            return {
+                "total_tasks": len(self._tasks),
+                "status_counts": status_counts,
+                "agents": self._registry.count,
+            }

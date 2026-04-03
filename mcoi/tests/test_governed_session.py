@@ -280,6 +280,19 @@ class TestSessionReturnValues:
         assert result["governed"] is True
         assert result["action_type"] == "shell_command"
 
+    def test_execute_sanitizes_dispatch_error(self):
+        class BrokenDispatcher:
+            def governed_dispatch(self, context):
+                raise RuntimeError("secret dispatch failure")
+
+        p = _platform(governed_dispatcher=BrokenDispatcher())
+        session = p.connect(identity_id="user1", tenant_id="t1")
+        result = session.execute("shell_command", argv=("echo", "hi"))
+        assert result["governed"] is True
+        assert result["dispatched"] is False
+        assert result["dispatch_error"] == "session dispatch error (RuntimeError)"
+        assert "secret dispatch failure" not in result["dispatch_error"]
+
 
 # ═══ Platform.from_server ═══
 

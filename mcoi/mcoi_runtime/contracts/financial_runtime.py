@@ -32,6 +32,22 @@ from ._base import (
 )
 
 
+def _parse_datetime_text(value: str, field_name: str) -> datetime:
+    """Parse a validated datetime text deterministically."""
+    require_datetime_text(value, field_name)
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def _require_period_start_before_end(period_start: str, period_end: str) -> None:
+    """Validate that a financial period has a strict forward ordering."""
+    start_dt = _parse_datetime_text(period_start, "period_start")
+    end_dt = _parse_datetime_text(period_end, "period_end")
+    if start_dt >= end_dt:
+        raise ValueError(
+            f"period_start ({period_start}) must be before period_end ({period_end})"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
@@ -361,17 +377,7 @@ class SpendForecast(ContractRecord):
         object.__setattr__(self, "budget_id", require_non_empty_text(self.budget_id, "budget_id"))
         object.__setattr__(self, "projected_amount", require_non_negative_float(self.projected_amount, "projected_amount"))
         object.__setattr__(self, "currency", _require_currency(self.currency, "currency"))
-        require_datetime_text(self.period_start, "period_start")
-        require_datetime_text(self.period_end, "period_end")
-        # Validate period_start < period_end
-        try:
-            s = datetime.fromisoformat(self.period_start.replace("Z", "+00:00"))
-            e = datetime.fromisoformat(self.period_end.replace("Z", "+00:00"))
-            if s >= e:
-                raise ValueError(f"period_start ({self.period_start}) must be before period_end ({self.period_end})")
-        except (ValueError, TypeError) as exc:
-            if "must be before" in str(exc):
-                raise
+        _require_period_start_before_end(self.period_start, self.period_end)
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         object.__setattr__(self, "breakdown", freeze_value(dict(self.breakdown)))
         require_datetime_text(self.created_at, "created_at")

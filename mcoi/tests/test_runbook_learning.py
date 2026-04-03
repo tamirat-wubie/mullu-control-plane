@@ -12,7 +12,10 @@ from typing import Any
 import pytest
 
 from mcoi_runtime.core.runbook_learning import (
+    PatternNotFoundError,
     RunbookLearningEngine,
+    RunbookApprovalRequiredError,
+    RunbookRetirementStateError,
     RunbookStatus,
 )
 
@@ -87,8 +90,10 @@ def test_cannot_activate_candidate() -> None:
     engine = _make_engine()
     patterns = engine.analyze(_make_entries())
     runbook = engine.promote(patterns[0].pattern_id, "Test")
-    with pytest.raises(ValueError, match="approved"):
+    with pytest.raises(RunbookApprovalRequiredError) as excinfo:
         engine.activate(runbook.runbook_id)
+    assert excinfo.value.runbook_id == runbook.runbook_id
+    assert excinfo.value.current_status == RunbookStatus.CANDIDATE
 
 
 def test_retire_runbook() -> None:
@@ -101,10 +106,34 @@ def test_retire_runbook() -> None:
     assert retired.status == RunbookStatus.RETIRED
 
 
+def test_cannot_retire_non_active_runbook() -> None:
+    engine = _make_engine()
+    patterns = engine.analyze(_make_entries())
+    runbook = engine.promote(patterns[0].pattern_id, "Test")
+    with pytest.raises(RunbookRetirementStateError) as excinfo:
+        engine.retire(runbook.runbook_id)
+    assert excinfo.value.runbook_id == runbook.runbook_id
+    assert excinfo.value.current_status == RunbookStatus.CANDIDATE
+
+
+def test_cannot_retire_already_retired_runbook() -> None:
+    engine = _make_engine()
+    patterns = engine.analyze(_make_entries())
+    runbook = engine.promote(patterns[0].pattern_id, "Test")
+    engine.approve(runbook.runbook_id, "op")
+    engine.activate(runbook.runbook_id)
+    engine.retire(runbook.runbook_id)
+    with pytest.raises(RunbookRetirementStateError) as excinfo:
+        engine.retire(runbook.runbook_id)
+    assert excinfo.value.runbook_id == runbook.runbook_id
+    assert excinfo.value.current_status == RunbookStatus.RETIRED
+
+
 def test_promote_unknown_pattern_raises() -> None:
     engine = _make_engine()
-    with pytest.raises(ValueError, match="pattern not found"):
+    with pytest.raises(PatternNotFoundError) as excinfo:
         engine.promote("nonexistent", "Test")
+    assert excinfo.value.pattern_id == "nonexistent"
 
 
 def test_summary() -> None:
@@ -146,3 +175,54 @@ def test_runbooks_summary_endpoint(client) -> None:
     data = resp.json()
     assert "patterns_detected" in data
     assert data["governed"] is True
+
+
+def test_promote_endpoint_sanitizes_unknown_pattern(client) -> None:
+    resp = client.post("/api/v1/runbooks/promote", json={
+        "pattern_id": "pat-secret-do-not-echo",
+        "name": "Secret Pattern",
+    })
+    assert resp.status_code == 404
+    assert resp.json()["detail"]["error"] == "pattern not found"
+    assert resp.json()["detail"]["error_code"] == "pattern_not_found"
+    assert "pat-secret-do-not-echo" not in str(resp.json())
+
+
+def test_approve_endpoint_sanitizes_unknown_runbook(client) -> None:
+    resp = client.post("/api/v1/runbooks/approve", json={
+        "runbook_id": "rb-secret-do-not-echo",
+        "approved_by": "operator-1",
+    })
+    assert resp.status_code == 404
+    assert resp.json()["detail"]["error"] == "runbook not found"
+    assert resp.json()["detail"]["error_code"] == "runbook_not_found"
+    assert "rb-secret-do-not-echo" not in str(resp.json())
+
+
+def test_activate_endpoint_sanitizes_unknown_runbook(client) -> None:
+    resp = client.post("/api/v1/runbooks/rb-secret-activate/activate")
+    assert resp.status_code == 404
+    assert resp.json()["detail"]["error"] == "runbook not found"
+    assert resp.json()["detail"]["error_code"] == "runbook_not_found"
+    assert "rb-secret-activate" not in str(resp.json())
+
+
+def test_list_runbooks_invalid_status_fails_closed(client) -> None:
+    resp = client.get("/api/v1/runbooks?status=definitely-not-valid")
+    assert resp.status_code == 422
+    assert resp.json()["detail"]["error"] == "invalid runbook status"
+    assert resp.json()["detail"]["error_code"] == "invalid_status"
+
+
+def test_retire_endpoint_rejects_non_active_runbook(client) -> None:
+    from mcoi_runtime.app.routers.deps import deps
+
+    pattern = deps.runbook_learning.analyze(_make_entries())[0]
+    runbook = deps.runbook_learning.promote(pattern.pattern_id, "Retire Candidate")
+
+    resp = client.post(f"/api/v1/runbooks/{runbook.runbook_id}/retire")
+
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["error"] == "runbook must be active before retirement"
+    assert resp.json()["detail"]["error_code"] == "invalid_runbook_state"
+    assert runbook.runbook_id not in str(resp.json())

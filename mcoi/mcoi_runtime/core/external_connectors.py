@@ -52,6 +52,18 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _classify_execution_exception(
+    exc: Exception,
+) -> tuple[ConnectorFailureCategory, str]:
+    """Map provider exceptions to a governed category and sanitized message."""
+    error_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return ConnectorFailureCategory.TIMEOUT, f"connector timeout ({error_type})"
+    if isinstance(exc, ConnectionError):
+        return ConnectorFailureCategory.NETWORK_ERROR, f"network error ({error_type})"
+    return ConnectorFailureCategory.PROVIDER_ERROR, f"provider error ({error_type})"
+
+
 # ---------------------------------------------------------------------------
 # Abstract connector base
 # ---------------------------------------------------------------------------
@@ -453,10 +465,11 @@ class ExternalConnectorRegistry:
                 )
             return record
         except Exception as exc:
+            category, safe_message = _classify_execution_exception(exc)
             return self._record_failure(
                 connector_id, operation,
-                ConnectorFailureCategory.PROVIDER_ERROR,
-                str(exc),
+                category,
+                safe_message,
             )
 
     def execute_with_fallback(

@@ -509,6 +509,14 @@ class TestMeetingRecord:
         with pytest.raises(ValueError):
             _meeting_record(ends_at=BAD_DT)
 
+    def test_starts_equals_ends_raises(self):
+        with pytest.raises(ValueError, match="must be before"):
+            _meeting_record(starts_at=DT, ends_at=DT)
+
+    def test_starts_after_ends_raises(self):
+        with pytest.raises(ValueError, match="must be before"):
+            _meeting_record(starts_at=DT2, ends_at=DT)
+
     def test_created_at_bad_raises(self):
         with pytest.raises(ValueError):
             _meeting_record(created_at=BAD_DT)

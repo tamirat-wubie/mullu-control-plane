@@ -77,6 +77,78 @@ def _set_valid_secret(reg: ExternalConnectorRegistry, connector_id: str) -> Secr
     return scope
 
 
+class SecretRaisingConnector(ExternalConnector):
+    """Connector that raises a sensitive provider error for sanitization tests."""
+
+    def __init__(self, connector_id: str = "secret-raising") -> None:
+        self._id = connector_id
+
+    def connector_id(self) -> str:
+        return self._id
+
+    def connector_type(self) -> ExternalConnectorType:
+        return ExternalConnectorType.GENERIC_API
+
+    def auth_mode(self) -> ConnectorAuthMode:
+        return ConnectorAuthMode.NONE
+
+    def descriptor(self) -> ExternalConnectorDescriptor:
+        return ExternalConnectorDescriptor(
+            connector_id=self._id,
+            name="Secret Raising Connector",
+            connector_type=ExternalConnectorType.GENERIC_API,
+            auth_mode=ConnectorAuthMode.NONE,
+            health_state=ConnectorHealthState.HEALTHY,
+            provider_name="secret-test",
+            version="1.0.0",
+            enabled=True,
+            created_at=NOW,
+        )
+
+    def execute(
+        self, operation: str, payload: dict[str, str],
+    ) -> ConnectorExecutionRecord:
+        raise RuntimeError(f"provider-secret-token leaked during {operation}")
+
+    def health_check(self) -> ConnectorHealthSnapshot:
+        return ConnectorHealthSnapshot(
+            snapshot_id="health-secret-raising",
+            connector_id=self._id,
+            health_state=ConnectorHealthState.HEALTHY,
+            reliability_score=1.0,
+            total_executions=0,
+            failed_executions=0,
+            avg_latency_ms=0.0,
+            circuit_breaker_trips=0,
+            consecutive_failures=0,
+            last_success_at=NOW,
+            last_failure_at=NOW,
+            reported_at=NOW,
+        )
+
+
+class TimeoutRaisingConnector(SecretRaisingConnector):
+    """Connector that raises timeout errors for classification tests."""
+
+    def execute(
+        self, operation: str, payload: dict[str, str],
+    ) -> ConnectorExecutionRecord:
+        raise TimeoutError(f"timeout-secret during {operation}")
+
+    def descriptor(self) -> ExternalConnectorDescriptor:
+        return ExternalConnectorDescriptor(
+            connector_id=self._id,
+            name="Timeout Raising Connector",
+            connector_type=ExternalConnectorType.GENERIC_API,
+            auth_mode=ConnectorAuthMode.NONE,
+            health_state=ConnectorHealthState.HEALTHY,
+            provider_name="timeout-test",
+            version="1.0.0",
+            enabled=True,
+            created_at=NOW,
+        )
+
+
 # ===================================================================
 # Registration
 # ===================================================================
@@ -704,6 +776,38 @@ class TestExecution:
         record = reg.execute(cid, "send", {"body": "x"})
         assert record.success is False
         assert "disabled" in record.error_message
+
+    def test_execute_provider_exception_is_sanitized(self):
+        reg = ExternalConnectorRegistry()
+        conn = SecretRaisingConnector()
+        reg.register(conn)
+
+        record = reg.execute(conn.connector_id(), "send", {"body": "hello"})
+
+        assert record.success is False
+        assert record.error_message == "provider error (RuntimeError)"
+        assert "provider-secret-token" not in record.error_message
+
+        failures = reg.get_failures(conn.connector_id())
+        assert len(failures) == 1
+        assert failures[0].category == ConnectorFailureCategory.PROVIDER_ERROR
+        assert failures[0].error_message == "provider error (RuntimeError)"
+
+    def test_execute_timeout_exception_is_classified_and_sanitized(self):
+        reg = ExternalConnectorRegistry()
+        conn = TimeoutRaisingConnector("timeout-raising")
+        reg.register(conn)
+
+        record = reg.execute(conn.connector_id(), "send", {"body": "hello"})
+
+        assert record.success is False
+        assert record.error_message == "connector timeout (TimeoutError)"
+        assert "timeout-secret" not in record.error_message
+
+        failures = reg.get_failures(conn.connector_id())
+        assert len(failures) == 1
+        assert failures[0].category == ConnectorFailureCategory.TIMEOUT
+        assert failures[0].error_message == "connector timeout (TimeoutError)"
 
 
 # ===================================================================

@@ -293,7 +293,8 @@ class TestExecuteNextStep:
         eng.start_run("camp-1", run_id="r1")
         rec = eng.execute_next_step("r1")
         assert rec.success is False
-        assert "boom" in rec.error_message
+        assert rec.error_message == "campaign step handler error (RuntimeError)"
+        assert "boom" not in rec.error_message
 
     def test_no_more_steps_completes_run(self):
         eng = _make_engine()
@@ -430,6 +431,7 @@ class TestEscalation:
         escs = eng.get_escalations("r1")
         assert len(escs) == 1
         assert escs[0].reason == CampaignEscalationReason.STEP_FAILURE
+        assert "failed:" in escs[0].description
 
     def test_non_escalating_failure_sets_failed(self):
         eng = _make_engine()
@@ -1121,7 +1123,20 @@ class TestExecutionRecords:
         eng.start_run("camp-1", run_id="r1")
         rec = eng.execute_next_step("r1")
         assert rec.success is False
-        assert "boom" in rec.error_message
+        assert rec.error_message == "campaign step handler error (RuntimeError)"
+        assert "boom" not in rec.error_message
+
+    def test_escalation_description_redacts_handler_exception(self):
+        eng = _make_engine()
+        eng.register_step_handler(CampaignStepType.SEND_COMMUNICATION, _raise_handler)
+        steps = [_step("s1", step_type=CampaignStepType.SEND_COMMUNICATION, max_retries=0)]
+        eng.register_campaign("camp-1", "C1", steps)
+        eng.start_run("camp-1", run_id="r1")
+        eng.execute_next_step("r1")
+        escalation = eng.get_escalations("r1")[0]
+        assert escalation.reason == CampaignEscalationReason.STEP_FAILURE
+        assert "campaign step handler error (RuntimeError)" in escalation.description
+        assert "boom" not in escalation.description
 
 
 # ===================================================================

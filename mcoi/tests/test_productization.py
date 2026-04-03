@@ -326,3 +326,55 @@ def test_cli_rejects_request_missing_identity_fields(
     assert exc_info.value.code == 1
     assert "request field 'request_id' must be a non-empty string" in captured.err
     assert "inline input" in captured.err
+
+
+def test_cli_redacts_config_file_access_errors(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config_file = tmp_path / "config-protected.json"
+    config_file.write_text("{}", encoding="utf-8")
+    original_read_text = Path.read_text
+
+    def _denied(self: Path, *args, **kwargs):
+        if self == config_file:
+            raise PermissionError("secret filesystem detail")
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", _denied)
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--config", str(config_file), "status"])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "cannot read config file" in captured.err
+    assert "file access denied (PermissionError)" in captured.err
+    assert "secret filesystem detail" not in captured.err
+
+
+def test_cli_redacts_request_file_access_errors(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    request_file = tmp_path / "request-protected.json"
+    request_file.write_text("{}", encoding="utf-8")
+    original_read_text = Path.read_text
+
+    def _denied(self: Path, *args, **kwargs):
+        if self == request_file:
+            raise PermissionError("secret request detail")
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", _denied)
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["run", str(request_file)])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "cannot read request file" in captured.err
+    assert "file access denied (PermissionError)" in captured.err
+    assert "secret request detail" not in captured.err

@@ -18,6 +18,30 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 
+def _classify_chain_exception(exc: Exception) -> str:
+    error_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"chain timeout ({error_type})"
+    if isinstance(exc, ConnectionError):
+        return f"chain network error ({error_type})"
+    if isinstance(exc, PermissionError):
+        return f"chain access error ({error_type})"
+    if isinstance(exc, ValueError):
+        return f"chain validation error ({error_type})"
+    return f"chain execution error ({error_type})"
+
+
+def _sanitize_chain_failure(error: str) -> str:
+    normalized = error.strip()
+    if not normalized:
+        return "chain step failed"
+    if normalized.startswith("budget_rejected:"):
+        return "chain budget rejected"
+    if normalized.startswith("unknown backend:"):
+        return "chain backend unavailable"
+    return "chain step failed"
+
+
 @dataclass(frozen=True, slots=True)
 class ChainStep:
     """Single step in an agent chain."""
@@ -88,7 +112,8 @@ class AgentChainEngine:
                 content = getattr(result, "content", str(result))
                 cost = getattr(result, "cost", 0.0)
                 succeeded = getattr(result, "succeeded", True)
-                error = getattr(result, "error", "")
+                raw_error = getattr(result, "error", "")
+                error = _sanitize_chain_failure(raw_error) if not succeeded else ""
 
                 sr = ChainStepResult(
                     step_id=step.step_id, name=step.name,
@@ -112,16 +137,17 @@ class AgentChainEngine:
                     prev_output = content
 
             except Exception as exc:
+                error = _classify_chain_exception(exc)
                 sr = ChainStepResult(
                     step_id=step.step_id, name=step.name,
-                    output="", succeeded=False, cost=0.0, error=str(exc),
+                    output="", succeeded=False, cost=0.0, error=error,
                 )
                 step_results.append(sr)
                 if step.on_failure == "halt":
                     cr = AgentChainResult(
                         chain_id=chain_id, steps=tuple(step_results),
                         final_output="", total_cost=total_cost,
-                        succeeded=False, error=str(exc),
+                        succeeded=False, error=f"step {step.step_id} failed: {error}",
                     )
                     self._history.append(cr)
                     return cr

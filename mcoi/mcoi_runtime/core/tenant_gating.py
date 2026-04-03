@@ -14,6 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -27,6 +28,54 @@ class TenantStatus(str, Enum):
     ONBOARDING = "onboarding"
     SUSPENDED = "suspended"
     TERMINATED = "terminated"
+
+
+class TenantGatingError(ValueError):
+    """Base governed error for tenant lifecycle operations."""
+
+    error_code = "tenant_lifecycle_error"
+    public_error = "tenant lifecycle request failed"
+    http_status_code = 400
+
+
+class TenantAlreadyRegisteredError(TenantGatingError):
+    """Raised when a tenant registration collides with an existing entry."""
+
+    error_code = "tenant_exists"
+    public_error = "tenant already registered"
+    http_status_code = 409
+
+    def __init__(self, tenant_id: str) -> None:
+        self.tenant_id = tenant_id
+        super().__init__(f"tenant {tenant_id} already registered")
+
+
+class TenantNotRegisteredError(TenantGatingError):
+    """Raised when a tenant lifecycle operation targets an unknown tenant."""
+
+    error_code = "tenant_not_found"
+    public_error = "tenant not registered"
+    http_status_code = 404
+
+    def __init__(self, tenant_id: str) -> None:
+        self.tenant_id = tenant_id
+        super().__init__(f"tenant {tenant_id} not registered")
+
+
+class InvalidTenantStatusTransitionError(TenantGatingError):
+    """Raised when a lifecycle transition violates the allowed state graph."""
+
+    error_code = "invalid_status_transition"
+    public_error = "invalid status transition"
+    http_status_code = 409
+
+    def __init__(self, tenant_id: str, current_status: TenantStatus, new_status: TenantStatus) -> None:
+        self.tenant_id = tenant_id
+        self.current_status = current_status
+        self.new_status = new_status
+        super().__init__(
+            f"invalid transition: {current_status.value} -> {new_status.value} for tenant {tenant_id}"
+        )
 
 
 # Valid transitions: current -> set of allowed next states
@@ -87,21 +136,37 @@ class TenantGatingRegistry:
         self._gates: dict[str, TenantGate] = {}
         self._store = store
         self._default_status = default_status
+        self._lock = threading.RLock()
+
+    def _load_gate_locked(self, tenant_id: str) -> TenantGate | None:
+        gate = self._gates.get(tenant_id)
+        if gate is None and self._store is not None:
+            gate = self._store.load(tenant_id)
+            if gate is not None:
+                self._gates[tenant_id] = gate
+        return gate
+
+    def _load_all_gates_locked(self) -> None:
+        if self._store is None:
+            return
+        for gate in self._store.load_all():
+            self._gates[gate.tenant_id] = gate
 
     def register(self, tenant_id: str, status: TenantStatus = TenantStatus.ONBOARDING, reason: str = "") -> TenantGate:
         """Register a new tenant with initial status."""
-        if tenant_id in self._gates:
-            raise ValueError(f"tenant {tenant_id} already registered")
-        gate = TenantGate(
-            tenant_id=tenant_id,
-            status=status,
-            reason=reason,
-            gated_at=self._clock(),
-        )
-        self._gates[tenant_id] = gate
-        if self._store is not None:
-            self._store.save(gate)
-        return gate
+        with self._lock:
+            if self._load_gate_locked(tenant_id) is not None:
+                raise TenantAlreadyRegisteredError(tenant_id)
+            gate = TenantGate(
+                tenant_id=tenant_id,
+                status=status,
+                reason=reason,
+                gated_at=self._clock(),
+            )
+            self._gates[tenant_id] = gate
+            if self._store is not None:
+                self._store.save(gate)
+            return gate
 
     def update_status(self, tenant_id: str, new_status: TenantStatus, reason: str = "") -> TenantGate:
         """Update a tenant's lifecycle status.
@@ -109,42 +174,30 @@ class TenantGatingRegistry:
         Validates that the transition is allowed. Raises ValueError for
         invalid transitions or unknown tenants.
         """
-        current = self._gates.get(tenant_id)
-        if current is None:
-            # Check persistent store
-            if self._store is not None:
-                current = self._store.load(tenant_id)
-                if current is not None:
-                    self._gates[tenant_id] = current
-        if current is None:
-            raise ValueError(f"tenant {tenant_id} not registered")
+        with self._lock:
+            current = self._load_gate_locked(tenant_id)
+            if current is None:
+                raise TenantNotRegisteredError(tenant_id)
 
-        allowed = _VALID_TRANSITIONS.get(current.status, frozenset())
-        if new_status not in allowed:
-            raise ValueError(
-                f"invalid transition: {current.status.value} -> {new_status.value} "
-                f"for tenant {tenant_id}"
+            allowed = _VALID_TRANSITIONS.get(current.status, frozenset())
+            if new_status not in allowed:
+                raise InvalidTenantStatusTransitionError(tenant_id, current.status, new_status)
+
+            gate = TenantGate(
+                tenant_id=tenant_id,
+                status=new_status,
+                reason=reason,
+                gated_at=self._clock(),
             )
-
-        gate = TenantGate(
-            tenant_id=tenant_id,
-            status=new_status,
-            reason=reason,
-            gated_at=self._clock(),
-        )
-        self._gates[tenant_id] = gate
-        if self._store is not None:
-            self._store.save(gate)
-        return gate
+            self._gates[tenant_id] = gate
+            if self._store is not None:
+                self._store.save(gate)
+            return gate
 
     def get_status(self, tenant_id: str) -> TenantGate | None:
         """Get a tenant's current gating state."""
-        gate = self._gates.get(tenant_id)
-        if gate is None and self._store is not None:
-            gate = self._store.load(tenant_id)
-            if gate is not None:
-                self._gates[tenant_id] = gate
-        return gate
+        with self._lock:
+            return self._load_gate_locked(tenant_id)
 
     def is_allowed(self, tenant_id: str) -> bool:
         """Check if a tenant is allowed to make requests.
@@ -158,22 +211,28 @@ class TenantGatingRegistry:
 
     def all_gates(self) -> list[TenantGate]:
         """All registered tenant gates, sorted by tenant_id."""
-        return sorted(self._gates.values(), key=lambda g: g.tenant_id)
+        with self._lock:
+            self._load_all_gates_locked()
+            return sorted(self._gates.values(), key=lambda g: g.tenant_id)
 
     @property
     def tenant_count(self) -> int:
-        return len(self._gates)
+        with self._lock:
+            self._load_all_gates_locked()
+            return len(self._gates)
 
     def summary(self) -> dict[str, Any]:
         """Gating summary for health endpoint."""
-        status_counts: dict[str, int] = {}
-        for gate in self._gates.values():
-            status_counts[gate.status.value] = status_counts.get(gate.status.value, 0) + 1
-        return {
-            "total_tenants": self.tenant_count,
-            "status_counts": status_counts,
-            "blocked_states": [s.value for s in _BLOCKED_STATES],
-        }
+        with self._lock:
+            self._load_all_gates_locked()
+            status_counts: dict[str, int] = {}
+            for gate in self._gates.values():
+                status_counts[gate.status.value] = status_counts.get(gate.status.value, 0) + 1
+            return {
+                "total_tenants": len(self._gates),
+                "status_counts": status_counts,
+                "blocked_states": [s.value for s in _BLOCKED_STATES],
+            }
 
 
 def create_tenant_gating_guard(

@@ -1194,6 +1194,15 @@ class TestExecutiveDashboardSnapshot:
         assert obj.total_spend == 0.0
 
 
+@pytest.mark.parametrize(
+    "factory",
+    (_rollup, _outcome, _efficiency, _cost_eff, _reliability, _dashboard),
+)
+def test_period_models_require_start_before_end(factory):
+    with pytest.raises((ValueError, TypeError), match="must be before"):
+        factory(period_start=DT2, period_end=DT)
+
+
 # ===================================================================
 # ReportingDecision tests
 # ===================================================================

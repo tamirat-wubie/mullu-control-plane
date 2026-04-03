@@ -27,6 +27,30 @@ from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.webhook_system import WebhookManager
 
 
+class NoCapableAgentError(ValueError):
+    """Raised when no registered agent can satisfy a workflow capability."""
+
+    def __init__(self, capability: AgentCapability) -> None:
+        self.capability = capability
+        super().__init__(f"no capable agent for {capability}")
+
+
+def _classify_workflow_exception(exc: Exception) -> str:
+    """Collapse workflow exceptions into stable, non-leaking error strings."""
+    error_type = type(exc).__name__
+    if isinstance(exc, TimeoutError):
+        return f"workflow timeout ({error_type})"
+    if isinstance(exc, ConnectionError):
+        return f"workflow network error ({error_type})"
+    if isinstance(exc, PermissionError):
+        return f"workflow access error ({error_type})"
+    if isinstance(exc, NoCapableAgentError):
+        return "no capable agent available"
+    if isinstance(exc, ValueError):
+        return f"workflow validation error ({error_type})"
+    return f"workflow execution error ({error_type})"
+
+
 @dataclass(frozen=True, slots=True)
 class WorkflowStep:
     """Single step in a workflow execution trace."""
@@ -112,7 +136,7 @@ class AgentWorkflowEngine:
             # Step 2: Auto-assign
             agent_id = self._task_mgr.auto_assign(task_id) or ""
             if not agent_id:
-                raise ValueError(f"no capable agent for {capability}")
+                raise NoCapableAgentError(capability)
             steps.append(WorkflowStep("assign", "ok", {"agent_id": agent_id}))
 
             # Step 3: Start
@@ -176,8 +200,9 @@ class AgentWorkflowEngine:
             return result
 
         except Exception as exc:
+            error_message = _classify_workflow_exception(exc)
             # Record failure
-            self._task_mgr.fail(task_id, str(exc)) if task_id in {s.task_id for s in self._task_mgr.pending_tasks()} or self._task_mgr.get_status(task_id) in (TaskStatus.PENDING, TaskStatus.ASSIGNED, TaskStatus.RUNNING) else None
+            self._task_mgr.fail(task_id, error_message) if task_id in {s.task_id for s in self._task_mgr.pending_tasks()} or self._task_mgr.get_status(task_id) in (TaskStatus.PENDING, TaskStatus.ASSIGNED, TaskStatus.RUNNING) else None
 
             if self._audit is not None:
                 self._audit.record(
@@ -186,13 +211,13 @@ class AgentWorkflowEngine:
                     tenant_id=tenant_id,
                     target=task_id,
                     outcome="error",
-                    detail={"error": str(exc), "workflow_id": workflow_id},
+                    detail={"error": error_message, "workflow_id": workflow_id},
                 )
 
             if self._webhook_mgr is not None:
                 self._webhook_mgr.emit(
                     "task.failed",
-                    {"task_id": task_id, "error": str(exc), "workflow_id": workflow_id},
+                    {"task_id": task_id, "error": error_message, "workflow_id": workflow_id},
                     tenant_id=tenant_id,
                 )
 
@@ -203,7 +228,7 @@ class AgentWorkflowEngine:
                 status="failed",
                 steps=tuple(steps),
                 output={},
-                error=str(exc),
+                error=error_message,
             )
             self._history.append(result)
             return result
