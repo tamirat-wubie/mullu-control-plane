@@ -66,7 +66,15 @@ def detect_intent(message: str) -> SkillIntent | None:
     """
     if _PAYMENT_PATTERNS.search(message):
         amount = _extract_amount(message)
-        return SkillIntent("financial", "send_payment", {"amount": amount})
+        # Only dispatch payment if a valid positive amount was found
+        try:
+            from decimal import Decimal, InvalidOperation
+            parsed = Decimal(amount)
+            if parsed > 0:
+                return SkillIntent("financial", "send_payment", {"amount": amount})
+        except (InvalidOperation, ValueError):
+            pass
+        # No valid amount — fall through to LLM for clarification
 
     if _REFUND_PATTERNS.search(message):
         return SkillIntent("financial", "refund", {})

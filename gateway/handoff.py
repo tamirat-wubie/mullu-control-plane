@@ -127,12 +127,15 @@ class HandoffRouter:
     ) -> dict[str, Any]:
         """Transfer control from one agent to another.
 
-        Detects and blocks handoff loops.
+        Detects and blocks handoff loops by checking the full recent chain.
         """
-        # Loop detection: check last 5 handoffs for cycle
-        recent = self._handoff_history[-5:]
-        chain = [h.to_agent for h in recent if h.from_agent == from_agent_id]
-        if to_agent_id in chain:
+        # Loop detection: build the recent chain of all agents involved
+        recent = self._handoff_history[-20:]  # Check last 20 handoffs
+        visited_agents: set[str] = set()
+        for h in recent:
+            visited_agents.add(h.from_agent)
+            visited_agents.add(h.to_agent)
+        if to_agent_id in visited_agents and from_agent_id in visited_agents:
             return {
                 "response": "Handoff loop detected — routing to general agent.",
                 "agent": self._general_agent_id,

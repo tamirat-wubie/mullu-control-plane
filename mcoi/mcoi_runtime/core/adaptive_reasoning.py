@@ -159,24 +159,13 @@ class AdaptiveRouter:
         self,
         *,
         model_tiers: dict[ComplexityLevel, ModelTier] | None = None,
-        override_model: str = "",
     ) -> None:
         self._tiers = model_tiers or DEFAULT_MODEL_TIERS
-        self._override = override_model
         self._routing_history: list[dict[str, Any]] = []
 
     def select_model(self, prompt: str, context_length: int = 0) -> ComplexityAssessment:
-        """Select model based on prompt complexity."""
+        """Select model based on prompt complexity. No override — governance enforced."""
         assessment = classify_complexity(prompt, context_length=context_length)
-
-        if self._override:
-            return ComplexityAssessment(
-                level=assessment.level,
-                confidence=assessment.confidence,
-                reason=f"override: {self._override}",
-                suggested_model=self._override,
-                suggested_max_tokens=assessment.suggested_max_tokens,
-            )
 
         self._routing_history.append({
             "level": assessment.level.value,
