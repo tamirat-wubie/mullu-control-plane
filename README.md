@@ -1,88 +1,182 @@
-# Mullu Control Plane
+# Mullu — Governed Autonomous Agent Platform
 
-**Govern and verify any AI agent before it touches the real world.**
+**Every agent action is auditable, budget-controlled, policy-enforced, and approval-gated.**
 
-Connect your existing agents (Claude Code, OpenAI, scripts, tools), enforce policy on every action, preserve audit trails, and recover safely across restarts.
-
-## What It Does
-
-- **Govern** — every agent action goes through a guard chain (auth, rate-limit, budget, policy) before it runs
-- **Verify** — hash-chained audit trail proves what happened, who did it, and why it was allowed
-- **Replay** — deterministic replay lets you re-examine any governed execution
-- **Recover** — coordination checkpoints survive restarts with governed restore (lease expiry, policy drift detection)
+Mullu is a governed operational intelligence platform. Users interact via messaging channels (WhatsApp, Telegram, Slack, Discord, Web). The agent executes real-world tasks — email, payments, document generation, data analysis — under deterministic governance: 7-guard chain, hash-chain audit trails, financial spend budgets, and skill boundary enforcement.
 
 ## Quick Start
 
 ```bash
-cd mcoi
-pip install -e ".[dev]"
-mcoi init
+# Setup
+python -m installer.cli init
+
+# Start (3 services: PostgreSQL + API + Gateway)
+docker-compose up
+
+# Gateway health
+curl http://localhost:8001/health
+
+# API health
+curl http://localhost:8000/health
 ```
 
-Start the server and run the demo:
+## What It Does
 
-```bash
-uvicorn mcoi_runtime.app.server:app --port 8000
-mcoi demo
+```
+User (WhatsApp/Telegram/Slack/Discord/Web)
+  → Channel Adapter (normalize + verify signature)
+  → Gateway Router (resolve tenant + risk classify + approval gate)
+  → GovernedSession (RBAC → content safety → budget → LLM → PII redaction → audit → proof)
+  → Response
 ```
 
-## Connect Your Agent
+Every message flows through the full governance pipeline. No bypass path.
 
-Any agent can register, request permission, and submit results through 4 HTTP calls:
+## Platform Capabilities
 
-```bash
-# Register
-curl -X POST localhost:8000/api/v1/agent/register \
-  -H "Content-Type: application/json" \
-  -d '{"agent_name": "my-agent", "capabilities": ["file_read", "shell"]}'
+### Governance Engine (45,300+ tests)
 
-# Request permission for an action
-curl -X POST localhost:8000/api/v1/agent/action-request \
-  -H "Content-Type: application/json" \
-  -d '{"agent_id": "agent-xxx", "action_type": "shell", "target": "ls -la"}'
+| Capability | What |
+|---|---|
+| **7-Guard Chain** | API key → JWT → tenant → gating → RBAC → content safety → rate limit → budget |
+| **GovernedSession** | `session = platform.connect(identity_id, tenant_id)` then `session.llm("prompt")` |
+| **ProofBridge** | Every governance decision produces a cryptographic TransitionReceipt |
+| **Content Safety** | 6 prompt injection patterns + Unicode normalization + base64 decode |
+| **PII Scanner** | 7 patterns (email, phone, SSN, credit card, IP, API key, password) |
+| **Field Encryption** | AES-256-GCM on audit store detail fields |
+| **RBAC** | 9 roles (admin → financial_admin) + permission rules |
 
-# Submit result
-curl -X POST localhost:8000/api/v1/agent/action-result \
-  -H "Content-Type: application/json" \
-  -d '{"agent_id": "agent-xxx", "action_id": "act-000001", "outcome": "success", "result": {}}'
+### 10 LLM Providers
 
-# Check audit trail
-curl localhost:8000/api/v1/audit?action=agent.adapter.action_request
+| Provider | Free Tier | Best For |
+|---|---|---|
+| Anthropic (Claude) | No | Complex reasoning |
+| OpenAI (GPT) | No | General purpose |
+| Groq (Llama 4) | Yes | Fast inference, simple queries |
+| Google Gemini | 1K/day free | Balanced |
+| DeepSeek (V3.2) | $5 credit | Best price-performance |
+| xAI Grok | $25 credit | Real-time X/Twitter data |
+| Mistral | Limited | Cheapest ($0.02/M) |
+| OpenRouter | Community | Multi-provider routing |
+| Ollama | Self-hosted | Local/private |
+| Stub | Always | Testing |
+
+**Adaptive reasoning** routes simple queries to free providers, complex tasks to premium models.
+
+### Channel Gateway (5 channels)
+
+| Channel | Features |
+|---|---|
+| WhatsApp | Cloud API, signature verification, media handling |
+| Telegram | Bot API, inline keyboards for approval prompts |
+| Slack | Events API, thread tracking, HMAC verification |
+| Discord | Interactions, Ed25519 verification, slash commands |
+| Web | WebSocket chat, session management |
+
+Plus: approval routing (LOW/MEDIUM/HIGH risk), session manager with TTL, skill dispatcher for financial intents, multi-agent handoff with loop detection.
+
+### Financial Operations
+
+| Capability | What |
+|---|---|
+| **Decimal-Safe Currency** | Never float — ISO 4217, banker's rounding |
+| **Spend Budgets** | Per-tx/daily/weekly/monthly limits with auto-reset |
+| **Transaction State Machine** | 10 states: CREATED → SETTLED → REFUNDED |
+| **Idempotency** | Same request = same result (no duplicate payments) |
+| **Governed Payments** | Budget → approval → idempotency → Stripe → settlement → ledger → proof |
+| **Compliance Export** | Audit packages with integrity hashes for external review |
+
+### Creative Skills
+
+| Skill | What |
+|---|---|
+| Document Generation | Invoice, memo, receipt, summary templates + LLM wrapping |
+| Data Analysis | CSV stats, insights, numeric/text detection |
+| Image Generation | DALL-E integration with content safety + cost tracking |
+| Translation | 20 languages including Amharic, Swahili, Yoruba |
+| Summarization | Compression ratio tracking |
+
+### Enterprise Skills
+
+| Skill | What |
+|---|---|
+| **RAG Knowledge Base** | Tenant-scoped document ingestion → chunking → embedding → retrieval → LLM prompt injection |
+| **Notification System** | Slack/email/webhook alerts on governance events (approval, budget, payment, security) |
+| **Task Scheduler** | Cron-based governed execution with concurrency prevention + failure tracking |
+
+### MCP Server
+
+External agents (Claude Code, Cursor, etc.) connect to Mullu as a governed tool provider:
+
+```json
+{"method": "tools/call", "params": {"name": "mullu_llm", "arguments": {"prompt": "What is 2+2?"}}}
 ```
 
-## What You Get
-
-| Layer | Capability |
-|-------|-----------|
-| **Governance** | Guard chain, policy packs, budget enforcement, rate limiting |
-| **Audit** | Hash-chain integrity, searchable by tenant/action/outcome |
-| **Providers** | Anthropic, OpenAI, Gemini, Ollama, Stub (3-tier stack) |
-| **Coordination** | Checkpoint/restore with lease expiry, retry caps, policy drift detection |
-| **Observability** | Health v3, Prometheus metrics, Grafana dashboards, request tracing |
-| **Security** | API key auth, SSRF protection, thread-safe caches, bounded queues |
+6 governed tools: `mullu_llm`, `mullu_query`, `mullu_execute`, `mullu_balance`, `mullu_transactions`, `mullu_pay`.
 
 ## Architecture
 
 ```
 mullu-control-plane/
-|- mcoi/              # MCOI Runtime (Python)
-|  |- mcoi_runtime/
-|  |  |- app/         # FastAPI server, CLI, 9 router modules
-|  |  |- core/        # Engines (governance, LLM, coordination, workflow)
-|  |  |- contracts/   # Frozen dataclass contracts (160+ types)
-|  |  |- adapters/    # LLM backends, filesystem, code, document
-|  |  |- persistence/ # Stores (trace, snapshot, coordination, memory)
-|  |  \- pilot/       # Deployment paths
-|  \- tests/          # 45,231+ tests
-|- maf/               # MAF Core (Rust certifying substrate)
-|- schemas/           # Canonical JSON schemas
-|- scripts/           # Validation, staging drill
-\- .github/           # CI workflows (nightly + provider certification)
+├── mcoi/                   # MCOI Runtime (Python, 45,300+ tests)
+│   ├── mcoi_runtime/
+│   │   ├── app/            # FastAPI server, 19 routers, CLI
+│   │   ├── core/           # 380+ engines (governance, LLM, coordination)
+│   │   ├── contracts/      # 160+ frozen dataclass types
+│   │   ├── adapters/       # 10 LLM backends, shell, browser, HTTP
+│   │   ├── persistence/    # PostgreSQL + SQLite + memory stores
+│   │   ├── mcp/            # MCP server (tool provider for external agents)
+│   │   └── pilot/          # Deployment profiles
+│   └── tests/
+├── gateway/                # Channel Gateway (WhatsApp, Telegram, Slack, Discord, Web)
+│   ├── channels/           # 5 channel adapters
+│   ├── router.py           # Unified message routing
+│   ├── approval.py         # Risk classification + approval lifecycle
+│   ├── session.py          # Conversation context management
+│   ├── skill_dispatch.py   # Financial intent detection
+│   ├── handoff.py          # Multi-agent handoff with loop detection
+│   └── server.py           # FastAPI webhook server (port 8001)
+├── skills/
+│   ├── financial/          # Currency, budgets, Stripe, payments, compliance
+│   ├── creative/           # Documents, data analysis, images, translation
+│   └── enterprise/         # RAG, notifications, scheduler
+├── installer/              # mullusi init interactive setup wizard
+├── maf/                    # MAF Rust certifying substrate
+├── schemas/                # 17 canonical JSON schemas
+├── k8s/                    # Kubernetes manifests (security hardened)
+└── docker-compose.yml      # 3-service deployment (postgres + API + gateway)
 ```
+
+## Deployment
+
+```bash
+# Interactive setup
+python -m installer.cli init
+
+# Docker (3 services)
+docker-compose up
+
+# Kubernetes
+kubectl apply -f k8s/
+```
+
+**Security hardened:** restart policies, resource limits, network isolation, securityContext (runAsNonRoot), NetworkPolicy, PodDisruptionBudget.
 
 ## Docs
 
-- [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) — profiles, CLI, env vars, provider config
-- [DEPLOYMENT.md](DEPLOYMENT.md) — Docker, production setup, K8s manifests
+- [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) — profiles, CLI, env vars
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Docker, K8s, production setup
+- [SECURITY_MODEL_v0.1.md](SECURITY_MODEL_v0.1.md) — security model, 5 DCA audits
 - [KNOWN_LIMITATIONS_v0.1.md](KNOWN_LIMITATIONS_v0.1.md) — documented limitations
-- [SECURITY_MODEL_v0.1.md](SECURITY_MODEL_v0.1.md) — security model and boundaries
+- [RUNBOOK.md](RUNBOOK.md) — operational procedures
+
+## Tests
+
+```bash
+cd mcoi && python -m pytest tests/ -q          # 45,300+ tests
+cd .. && python -m pytest tests/ -q             # Gateway + financial + creative + enterprise
+```
+
+## License
+
+See [LICENSE](LICENSE).
