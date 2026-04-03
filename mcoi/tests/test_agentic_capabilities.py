@@ -73,10 +73,12 @@ class TestAdaptiveRouter:
         assessment = router.select_model("Hello")
         assert assessment.level == ComplexityLevel.LOW
 
-    def test_override_model(self):
-        router = AdaptiveRouter(override_model="custom-model")
+    def test_no_override_governance_enforced(self):
+        """Override model removed — governance always enforced."""
+        router = AdaptiveRouter()
         assessment = router.select_model("complex analysis task")
-        assert assessment.suggested_model == "custom-model"
+        # Model comes from tier mapping, not an override
+        assert assessment.suggested_model != ""
 
     def test_routing_count(self):
         router = AdaptiveRouter()

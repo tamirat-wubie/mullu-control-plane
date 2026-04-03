@@ -102,10 +102,12 @@ def _openai_compatible_call(
             model_name=model, provider=provider, finished=True,
         )
     except Exception as exc:
+        # Sanitize error — never expose URLs, keys, or internal details
+        error_type = type(exc).__name__
         return LLMResult(
             content="", input_tokens=0, output_tokens=0, cost=0.0,
             model_name=model, provider=provider, finished=False,
-            error=f"{type(exc).__name__}: {exc}",
+            error=f"provider call failed ({error_type})",
         )
 
 

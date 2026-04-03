@@ -146,10 +146,19 @@ class MulluMCPServer:
         ]
 
     def call_tool(self, name: str, arguments: dict[str, Any]) -> MCPToolResult:
-        """Execute an MCP tool call through the governance pipeline."""
+        """Execute an MCP tool call through the governance pipeline.
+
+        Identity is bound to the MCP server's configured default — callers
+        cannot spoof identity_id via arguments.
+        """
         self._call_count += 1
-        tenant_id = arguments.get("tenant_id", self._default_tenant)
-        identity_id = arguments.get("identity_id", self._default_identity)
+        tenant_id = arguments.get("tenant_id", "")
+        if not tenant_id:
+            if not self._default_tenant:
+                return MCPToolResult(content="tenant_id is required", is_error=True)
+            tenant_id = self._default_tenant
+        # Identity is ALWAYS server-bound — never from arguments (prevents spoofing)
+        identity_id = self._default_identity
 
         try:
             session = self._platform.connect(
