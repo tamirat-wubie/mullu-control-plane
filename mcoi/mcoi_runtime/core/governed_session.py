@@ -87,6 +87,52 @@ class GovernedSession:
         self._operations = 0
         self._llm_calls = 0
         self._total_cost = 0.0
+        self._context_messages: list[dict[str, str]] = []
+        self._max_context_messages = 50
+        self._compaction_count = 0
+
+    # ── Context Compaction ──
+
+    def _add_context(self, role: str, content: str) -> None:
+        """Add a message to the session context (for multi-turn conversations)."""
+        self._context_messages.append({"role": role, "content": content})
+        # Auto-compact when approaching limit
+        if len(self._context_messages) > self._max_context_messages:
+            self._compact_context()
+
+    def _compact_context(self) -> None:
+        """Compact older context by summarizing into a single system message.
+
+        Preserves the last 10 messages verbatim; summarizes everything older.
+        Governance state (audit, proof) is NOT compacted — only LLM context.
+        """
+        if len(self._context_messages) <= 10:
+            return
+
+        # Keep last 10 messages, summarize the rest
+        old_messages = self._context_messages[:-10]
+        recent_messages = self._context_messages[-10:]
+
+        summary_parts = []
+        for msg in old_messages:
+            role = msg["role"]
+            content = msg["content"][:200]  # Truncate each to 200 chars for summary
+            summary_parts.append(f"[{role}]: {content}")
+
+        summary = "Previous conversation summary:\n" + "\n".join(summary_parts)
+        self._context_messages = [
+            {"role": "system", "content": summary},
+            *recent_messages,
+        ]
+        self._compaction_count += 1
+
+    @property
+    def context_message_count(self) -> int:
+        return len(self._context_messages)
+
+    @property
+    def compaction_count(self) -> int:
+        return self._compaction_count
 
     # ── Properties ──
 
@@ -217,12 +263,19 @@ class GovernedSession:
         if self._llm_bridge is None:
             raise RuntimeError("no LLM bridge configured")
 
+        # Track context for multi-turn conversations
+        self._add_context("user", prompt)
+
         result = self._llm_bridge.complete(
             prompt,
             tenant_id=self._tenant_id,
             budget_id=f"tenant-{self._tenant_id}",
             **kwargs,
         )
+
+        # Track response in context
+        if result.succeeded and result.content:
+            self._add_context("assistant", result.content)
 
         # PII redaction on response
         if result.succeeded and result.content:
