@@ -18,7 +18,7 @@ from typing import Any, Callable, Protocol
 
 def _bounded_migration_error(operation: str, exc: Exception) -> RuntimeError:
     """Return a bounded migration failure without leaking backend detail."""
-    return RuntimeError(f"{operation} failed ({type(exc).__name__})")
+    return RuntimeError(f"{operation} failed")
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,9 +67,7 @@ class MigrationEngine:
     def register(self, migration: Migration) -> None:
         """Register a migration. Must be called in version order."""
         if self._migrations and migration.version <= self._migrations[-1].version:
-            raise ValueError(
-                f"Migration version {migration.version} must be > {self._migrations[-1].version}"
-            )
+            raise ValueError("migration versions must increase monotonically")
         self._migrations.append(migration)
 
     @property
@@ -115,14 +113,12 @@ class MigrationEngine:
                     version=migration.version, name=migration.name, success=True,
                 ))
             except Exception as e:
-                bounded_error = f"migration execution failed ({type(e).__name__})"
+                bounded_error = "migration execution failed"
                 results.append(MigrationResult(
                     version=migration.version, name=migration.name,
                     success=False, error=bounded_error,
                 ))
-                raise RuntimeError(
-                    f"Migration {migration.version} ({migration.name}) failed ({type(e).__name__})"
-                ) from e
+                raise RuntimeError("migration execution failed") from e
 
         return results
 
