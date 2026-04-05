@@ -478,7 +478,7 @@ class TestFullUtilityAnalysis:
             budgets=budgets,
         )
         assert verdict.approved is True
-        assert "approved" in tradeoff.rationale
+        assert tradeoff.rationale == "tradeoff recorded with approved verdict"
 
     def test_full_analysis_budget_overrun(self) -> None:
         engine = _make_engine()
@@ -502,6 +502,11 @@ class TestFullUtilityAnalysis:
         )
         assert verdict.approved is False
         assert any("budget" in r.lower() for r in verdict.reasons)
+        assert tradeoff.rationale == (
+            "tradeoff recorded with budget constraints and rejected verdict"
+        )
+        assert "opt-a" not in tradeoff.rationale
+        assert "5000" not in tradeoff.rationale
 
     def test_full_analysis_empty_options_raises(self) -> None:
         engine = _make_engine()

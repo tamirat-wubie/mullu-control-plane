@@ -195,6 +195,16 @@ class TestCompilation:
         assert len(result.conflicts) >= 1
         kinds = {c.kind for c in result.conflicts}
         assert PolicyConflictKind.CONTRADICTORY_EFFECTS in kinds
+        contradictory = [
+            c for c in result.conflicts
+            if c.kind == PolicyConflictKind.CONTRADICTORY_EFFECTS
+        ]
+        assert len(contradictory) == 1
+        assert contradictory[0].description == (
+            "overlapping rules have contradictory effects at the same priority"
+        )
+        assert "r1" not in contradictory[0].description
+        assert "r2" not in contradictory[0].description
 
     def test_priority_tie_detected(self) -> None:
         compiler = GovernanceCompiler(clock=CLOCK)
@@ -205,6 +215,14 @@ class TestCompilation:
         result = compiler.compile(b)
         kinds = {c.kind for c in result.conflicts}
         assert PolicyConflictKind.PRIORITY_TIE in kinds
+        ties = [c for c in result.conflicts if c.kind == PolicyConflictKind.PRIORITY_TIE]
+        assert len(ties) == 1
+        assert ties[0].description == (
+            "overlapping rules with the same priority have different effects; "
+            "resolution uses effect precedence"
+        )
+        assert "r1" not in ties[0].description
+        assert "r2" not in ties[0].description
 
     def test_no_conflict_different_priorities(self) -> None:
         compiler = GovernanceCompiler(clock=CLOCK)

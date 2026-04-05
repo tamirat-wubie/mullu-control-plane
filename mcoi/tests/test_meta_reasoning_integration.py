@@ -358,6 +358,11 @@ class TestEscalateFromReliability:
         assert isinstance(result[0], EscalationRecommendation)
         assert result[0].reason == "confidence below escalation threshold"
         assert "simulation" not in result[0].reason
+        assert (
+            result[0].suggested_action
+            == "review affected decision context before proceeding"
+        )
+        assert "simulation" not in result[0].suggested_action
         # Verify recorded in engine
         assert len(engine.list_escalation_recommendations()) == 1
 
@@ -396,6 +401,9 @@ class TestReportUncertaintyFromReliability:
         )
         assert len(result) == 1
         assert isinstance(result[0], UncertaintyReport)
+        assert result[0].description == "decision reliability below uncertainty threshold"
+        assert "simulation" not in result[0].description
+        assert "0.10" not in result[0].description
         # Verify recorded in engine
         assert len(engine.list_uncertainty()) == 1
 
