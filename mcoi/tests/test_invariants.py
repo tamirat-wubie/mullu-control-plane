@@ -57,6 +57,10 @@ class TestEnsureNonEmptyText:
             ensure_non_empty_text("my_field", "")
         assert "my_field" not in str(exc_info.value)
 
+    def test_known_field_label_is_preserved(self) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^job_id must be a non-empty string$"):
+            ensure_non_empty_text("job_id", "")
+
     def test_string_with_spaces_valid(self) -> None:
         assert ensure_non_empty_text("f", "  hello  ") == "  hello  "
 

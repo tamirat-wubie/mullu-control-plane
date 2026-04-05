@@ -14,6 +14,8 @@ import json
 from types import MappingProxyType
 from typing import Any, Mapping, TypeVar
 
+from ._invariant_field_labels import KNOWN_INVARIANT_FIELD_LABELS
+
 ValueT = TypeVar("ValueT")
 
 
@@ -25,9 +27,26 @@ class DuplicateRuntimeIdentifierError(RuntimeCoreInvariantError):
     """Raised when a runtime-core identifier is registered more than once."""
 
 
+_GENERIC_FIELD_LABEL = "value"
+
+
+def _bounded_field_label(field_name: Any) -> str:
+    if isinstance(field_name, str):
+        base = field_name.split("[")[0] if "[" in field_name else field_name
+        if field_name in KNOWN_INVARIANT_FIELD_LABELS or base in KNOWN_INVARIANT_FIELD_LABELS:
+            return field_name
+    return _GENERIC_FIELD_LABEL
+
+
+def _field_validation_message(field_name: Any, suffix: str) -> str:
+    return _bounded_field_label(field_name) + suffix
+
+
 def ensure_non_empty_text(field_name: str, value: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise RuntimeCoreInvariantError("value must be a non-empty string")
+        raise RuntimeCoreInvariantError(
+            _field_validation_message(field_name, " must be a non-empty string")
+        )
     return value
 
 
@@ -36,13 +55,17 @@ def ensure_iso_timestamp(field_name: str, value: str) -> str:
     try:
         datetime.fromisoformat(normalized)
     except ValueError as exc:
-        raise RuntimeCoreInvariantError("value must be an ISO-8601 timestamp") from exc
+        raise RuntimeCoreInvariantError(
+            _field_validation_message(field_name, " must be an ISO-8601 timestamp")
+        ) from exc
     return value
 
 
 def ensure_dataclass_instance(field_name: str, value: Any) -> Any:
     if not is_dataclass(value) or isinstance(value, type):
-        raise RuntimeCoreInvariantError("value must be a dataclass instance")
+        raise RuntimeCoreInvariantError(
+            _field_validation_message(field_name, " must be a dataclass instance")
+        )
     return value
 
 
