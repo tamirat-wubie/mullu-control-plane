@@ -19,10 +19,6 @@ from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 from mcoi_runtime.app.streaming import StreamingAdapter
 from mcoi_runtime.core.live_path_certification import LivePathCertifier
 from mcoi_runtime.core.certification_daemon import CertificationConfig, CertificationDaemon
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager
-from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine
-from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
-from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.agent_protocol import (
     AgentCapability, AgentDescriptor, AgentRegistry, TaskManager,
 )
@@ -36,10 +32,7 @@ from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.event_bus import EventBus
 from mcoi_runtime.core.batch_pipeline import BatchPipeline
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
-from mcoi_runtime.persistence.postgres_store import create_store
-from mcoi_runtime.persistence.postgres_governance_stores import create_governance_stores
 
-import base64
 import hashlib
 import json
 import os
@@ -61,6 +54,10 @@ from mcoi_runtime.app.server_http import (
 from mcoi_runtime.app.server_deps import (
     register_dependency_groups,
     wire_runtime_dependencies,
+)
+from mcoi_runtime.app.server_platform import (
+    bootstrap_governance_runtime,
+    bootstrap_primary_store,
 )
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
@@ -100,28 +97,15 @@ def _clock() -> str:
     return _utc_clock()
 
 # Persistence store (InMemoryStore for dev, PostgresStore for production)
-_db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
-_db_backend_warning = _validate_db_backend_for_env(_db_backend, ENV)
-if _db_backend_warning:
-    import warnings
-    warnings.warn(
-        _db_backend_warning,
-        stacklevel=1,
-    )
-store = create_store(
-    backend=_db_backend,
-    connection_string=os.environ.get("MULLU_DB_URL", ""),
+_primary_store_bootstrap = bootstrap_primary_store(
+    env=ENV,
+    runtime_env=os.environ,
+    clock=_clock,
+    validate_db_backend_for_env=_validate_db_backend_for_env,
 )
-
-# Run schema migrations for SQLite backend
-if _db_backend == "sqlite" and hasattr(store, '_conn'):
-    from mcoi_runtime.persistence.migrations import create_platform_migration_engine
-    _migration_engine = create_platform_migration_engine(clock=_clock)
-    _migration_results = _migration_engine.apply_all(store._conn)
-    if _migration_results:
-        _applied = [r.name for r in _migration_results if r.success]
-        if _applied:
-            pass  # Migrations applied silently â€” logged at startup below
+_db_backend = _primary_store_bootstrap.db_backend
+_db_backend_warning = _primary_store_bootstrap.warning
+store = _primary_store_bootstrap.store
 
 # Phase 200A: LLM bootstrap wiring (env-driven backend selection)
 llm_bootstrap_result = bootstrap_llm(
@@ -168,47 +152,21 @@ cert_daemon = CertificationDaemon(
 # Phase 2B: Field encryption (optional â€” enabled when MULLU_ENCRYPTION_KEY is set)
 _field_encryptor, _field_encryption_bootstrap = _init_field_encryption_from_env()
 
-# Phase 1A: Governance stores (env-driven backend selection, with optional encryption)
-_gov_stores = create_governance_stores(
-    backend=_db_backend,
-    connection_string=os.environ.get("MULLU_DB_URL", ""),
-    field_encryptor=_field_encryptor,
-)
-
-# Phase 202A: Tenant budget manager (with persistent store)
-tenant_budget_mgr = TenantBudgetManager(clock=_clock, store=_gov_stores["budget"])
-
-# Phase 202B: Governance metrics engine
-metrics = GovernanceMetricsEngine(clock=_clock)
-
-# Phase 202C: Rate limiter (with persistent store)
-rate_limiter = RateLimiter(
-    default_config=RateLimitConfig(max_tokens=60, refill_rate=1.0),
-    store=_gov_stores["rate_limit"],
-)
-
-# Phase 202D: Audit trail (with persistent store)
-audit_trail = AuditTrail(clock=_clock, store=_gov_stores["audit"])
-
-# Phase 2A: JWT/OIDC authenticator (optional â€” enabled when MULLU_JWT_SECRET is set)
-_jwt_authenticator = None
-_jwt_secret = os.environ.get("MULLU_JWT_SECRET", "")
-if _jwt_secret:
-    from mcoi_runtime.core.jwt_auth import JWTAuthenticator, OIDCConfig
-    _jwt_authenticator = JWTAuthenticator(OIDCConfig(
-        issuer=os.environ.get("MULLU_JWT_ISSUER", "mullu"),
-        audience=os.environ.get("MULLU_JWT_AUDIENCE", "mullu-api"),
-        signing_key=base64.b64decode(_jwt_secret) if _jwt_secret else b"",
-        tenant_claim=os.environ.get("MULLU_JWT_TENANT_CLAIM", "tenant_id"),
-    ))
-
-# Phase 2D: Tenant gating registry (lifecycle enforcement)
-from mcoi_runtime.core.tenant_gating import TenantGatingRegistry
-_tenant_gating = TenantGatingRegistry(
+_governance_bootstrap = bootstrap_governance_runtime(
+    env=ENV,
+    runtime_env=os.environ,
+    db_backend=_db_backend,
     clock=_clock,
-    store=_gov_stores["tenant_gating"],
+    field_encryptor=_field_encryptor,
     allow_unknown_tenants=_tenant_allow_unknown,
 )
+_gov_stores = _governance_bootstrap.governance_stores
+tenant_budget_mgr = _governance_bootstrap.tenant_budget_mgr
+metrics = _governance_bootstrap.metrics
+rate_limiter = _governance_bootstrap.rate_limiter
+audit_trail = _governance_bootstrap.audit_trail
+_jwt_authenticator = _governance_bootstrap.jwt_authenticator
+_tenant_gating = _governance_bootstrap.tenant_gating
 
 # Phase 3A: PII scanner
 from mcoi_runtime.core.pii_scanner import PIIScanner
@@ -221,9 +179,7 @@ from mcoi_runtime.core.content_safety import build_default_safety_chain
 content_safety_chain = build_default_safety_chain()
 
 # Phase 3C: Shell sandbox policy (env-driven profile selection)
-from mcoi_runtime.app.shell_policies import SANDBOXED, LOCAL_DEV, PILOT_PROD
-_shell_policy_map = {"local_dev": LOCAL_DEV, "pilot": PILOT_PROD, "production": PILOT_PROD}
-shell_policy = _shell_policy_map.get(ENV, SANDBOXED)
+shell_policy = _governance_bootstrap.shell_policy
 
 # Phase 4C: Proof bridge (governance decision â†’ MAF transition receipts)
 from mcoi_runtime.core.proof_bridge import ProofBridge
