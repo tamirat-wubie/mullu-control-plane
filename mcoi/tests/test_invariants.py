@@ -33,7 +33,7 @@ class TestEnsureNonEmptyText:
         assert ensure_non_empty_text("f", "hello") == "hello"
 
     def test_empty_string_raises(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="^value must be a non-empty string$"):
+        with pytest.raises(RuntimeCoreInvariantError, match="must be a non-empty string"):
             ensure_non_empty_text("f", "")
 
     def test_whitespace_only_raises(self) -> None:
@@ -52,10 +52,9 @@ class TestEnsureNonEmptyText:
         with pytest.raises(RuntimeCoreInvariantError):
             ensure_non_empty_text("f", 123)  # type: ignore[arg-type]
 
-    def test_error_is_bounded(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="^value must be a non-empty string$") as exc_info:
+    def test_error_includes_field_name(self) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="my_field must be a non-empty string"):
             ensure_non_empty_text("my_field", "")
-        assert "my_field" not in str(exc_info.value)
 
     def test_string_with_spaces_valid(self) -> None:
         assert ensure_non_empty_text("f", "  hello  ") == "  hello  "

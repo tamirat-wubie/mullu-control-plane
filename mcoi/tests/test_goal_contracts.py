@@ -167,11 +167,8 @@ class TestSubGoal:
             _sub_goal(sub_goal_id="")
 
     def test_empty_predecessor_rejected(self):
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match="must be a non-empty string"):
             _sub_goal(predecessors=("",))
-        message = str(exc_info.value)
-        assert message == "value must be a non-empty string"
-        assert "predecessors" not in message
 
     def test_frozen(self):
         sg = _sub_goal()

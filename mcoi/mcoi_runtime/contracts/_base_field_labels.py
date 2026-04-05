@@ -1904,6 +1904,18 @@ y_max
 y_min
 yield_rate
 z
+completed_sub_goals
+replay_id
+source_hash
+predecessors
+fact_id
+resolver_id
+sender_id
+recipient_id
+question
+answer
+responded_by_id
+summary
 """.splitlines()
     if label
 )

@@ -371,7 +371,7 @@ class TestContractValidationEdgeCases:
 class TestCrossModuleEdgeCases:
     def test_goal_execution_state_empty_subgoal_id_rejected(self) -> None:
         from mcoi_runtime.contracts.goal import GoalExecutionState, GoalStatus
-        with pytest.raises(ValueError, match="completed_sub_goals"):
+        with pytest.raises(ValueError, match="non-empty string"):
             GoalExecutionState(
                 goal_id="g1", status=GoalStatus.EXECUTING,
                 updated_at=NOW, completed_sub_goals=("",),

@@ -22,8 +22,11 @@ _GENERIC_FIELD_LABEL = "value"
 
 
 def _bounded_field_label(field_name: Any) -> str:
-    if isinstance(field_name, str) and field_name in KNOWN_CONTRACT_FIELD_LABELS:
-        return field_name
+    if isinstance(field_name, str):
+        # Check exact match or base name (for indexed fields like "errors[0]")
+        base = field_name.split("[")[0] if "[" in field_name else field_name
+        if field_name in KNOWN_CONTRACT_FIELD_LABELS or base in KNOWN_CONTRACT_FIELD_LABELS:
+            return field_name
     return _GENERIC_FIELD_LABEL
 
 
