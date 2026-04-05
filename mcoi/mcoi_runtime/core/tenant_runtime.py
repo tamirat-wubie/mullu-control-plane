@@ -395,11 +395,7 @@ class TenantRuntimeEngine:
                     if (existing.resource_ref_id == resource_ref_id
                             and existing.resource_type == resource_type
                             and existing.workspace_id != workspace_id):
-                        raise RuntimeCoreInvariantError(
-                            f"Isolation violation: resource {resource_ref_id} "
-                            f"already bound to workspace {existing.workspace_id} "
-                            f"under STRICT {resource_type.value} policy"
-                        )
+                        raise RuntimeCoreInvariantError("Isolation violation")
 
         now = _now_iso()
         binding = WorkspaceBinding(
@@ -475,9 +471,7 @@ class TenantRuntimeEngine:
             (EnvironmentKind.SANDBOX, EnvironmentKind.STAGING),
         }
         if (source.kind, target.kind) not in valid_paths:
-            raise RuntimeCoreInvariantError(
-                f"Invalid promotion path: {source.kind.value} → {target.kind.value}"
-            )
+            raise RuntimeCoreInvariantError("invalid promotion path")
 
         # Block promotion to prod without compliance check
         if target.kind == EnvironmentKind.PRODUCTION and not compliance_check_passed:

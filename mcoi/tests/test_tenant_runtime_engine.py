@@ -506,8 +506,11 @@ class TestWorkspaceBindings:
             isolation_level=IsolationLevel.STRICT, enforced=True,
         )
         eng.bind_workspace_resource("b1", "ws1", "budget-1", ScopeBoundaryKind.BUDGET)
-        with pytest.raises(RuntimeCoreInvariantError, match="Isolation violation"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^Isolation violation$") as exc_info:
             eng.bind_workspace_resource("b2", "ws2", "budget-1", ScopeBoundaryKind.BUDGET)
+        assert "budget-1" not in str(exc_info.value)
+        assert "ws1" not in str(exc_info.value)
+        assert "ws2" not in str(exc_info.value)
 
     def test_standard_isolation_allows_cross_workspace(self, env):
         _, eng = env
@@ -656,31 +659,33 @@ class TestEnvironmentPromotion:
     def test_invalid_path_dev_to_prod_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.DEVELOPMENT, EnvironmentKind.PRODUCTION])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$") as exc_info:
             eng.promote_environment("p1", "env0", "env1", compliance_check_passed=True)
+        assert "development" not in str(exc_info.value)
+        assert "production" not in str(exc_info.value)
 
     def test_invalid_path_prod_to_dev_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.PRODUCTION, EnvironmentKind.DEVELOPMENT])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1")
 
     def test_invalid_path_staging_to_dev_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.STAGING, EnvironmentKind.DEVELOPMENT])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1")
 
     def test_invalid_path_sandbox_to_prod_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.SANDBOX, EnvironmentKind.PRODUCTION])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1", compliance_check_passed=True)
 
     def test_invalid_path_prod_to_staging_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.PRODUCTION, EnvironmentKind.STAGING])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1")
 
     def test_dup_promotion_raises(self, env):

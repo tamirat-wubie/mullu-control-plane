@@ -27,7 +27,7 @@ class DuplicateRuntimeIdentifierError(RuntimeCoreInvariantError):
 
 def ensure_non_empty_text(field_name: str, value: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        raise RuntimeCoreInvariantError("value must be a non-empty string")
     return value
 
 
