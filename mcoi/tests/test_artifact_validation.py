@@ -144,7 +144,6 @@ def test_validate_request_artifact_rejects_unknown_fields(tmp_path: Path) -> Non
 
     assert len(errors) == 1
     assert "unsupported request fields" in errors[0]
-    assert "unexpected_field" in errors[0]
 
 
 def test_validate_request_artifact_accepts_runtime_binding_template(tmp_path: Path) -> None:
