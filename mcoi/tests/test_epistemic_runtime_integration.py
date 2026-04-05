@@ -140,6 +140,14 @@ class TestBridgeMethods:
         expected = {"claim_id", "source_type", "tenant_id", "status", "trust_level"}
         assert set(result.keys()) == expected
 
+    def test_bridge_claim_content_is_bounded(self):
+        integ, ep, _, _ = _make_integration()
+        result = integ.epistemic_from_logic(_T1, "logic-ref-1")
+        claim = ep.get_claim(result["claim_id"])
+        assert claim.content == "epistemic source claim"
+        assert "logic-ref-1" not in claim.content
+        assert "logic" not in claim.content
+
     def test_multiple_same_bridge(self):
         integ, ep, _, _ = _make_integration()
         for i in range(5):

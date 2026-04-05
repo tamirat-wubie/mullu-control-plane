@@ -347,7 +347,9 @@ class TestWorkflowEngineParallel:
         assert len(record.stage_results) == 2
         assert record.stage_results[1].stage_id == "B"
         assert record.stage_results[1].status is StageStatus.FAILED
-        assert "missing source output" in str(record.stage_results[1].error)
+        assert record.stage_results[1].error == "binding source output is unavailable"
+        assert "payload" not in str(record.stage_results[1].error)
+        assert "A" not in str(record.stage_results[1].error)
         assert executor.executed == ["A"]
 
 
@@ -361,8 +363,9 @@ class TestWorkflowEngineCycleDetection:
         ))
         clock = _make_clock(["t0"])
         engine = WorkflowEngine(clock=clock)
-        with pytest.raises(RuntimeCoreInvariantError, match="cycle"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^workflow validation failed$") as exc_info:
             engine.start_workflow(d)
+        assert "cycle" not in str(exc_info.value)
 
     def test_validate_returns_cycle_error(self):
         d = _descriptor(stages=(
@@ -384,8 +387,9 @@ class TestWorkflowEngineMissingPredecessor:
         ))
         clock = _make_clock(["t0"])
         engine = WorkflowEngine(clock=clock)
-        with pytest.raises(RuntimeCoreInvariantError, match="validation failed"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^workflow validation failed$") as exc_info:
             engine.start_workflow(d)
+        assert "nonexistent" not in str(exc_info.value)
 
 
 class TestWorkflowEngineFailure:
@@ -459,8 +463,9 @@ class TestWorkflowEngineSuspend:
         record = engine.execute_next_stage(d, record, executor)
         assert record.status is WorkflowStatus.COMPLETED
 
-        with pytest.raises(RuntimeCoreInvariantError, match="cannot suspend"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^cannot suspend workflow in current status$") as exc_info:
             engine.suspend_workflow(record, reason="too late")
+        assert WorkflowStatus.COMPLETED.value not in str(exc_info.value)
 
 
 class TestWorkflowEngineClockDeterminism:

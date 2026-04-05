@@ -178,7 +178,7 @@ class GovernedDispatcher:
             # Trigger compensation
             self._recovery.register_compensation(
                 f"comp-{context.intent_id}", context.intent_id, "rollback",
-                detail=f"verification failed: expected={expected}, actual={actual}"
+                detail="execution verification failed"
             )
 
         # --- Post: Action Binding ---

@@ -100,9 +100,7 @@ class ModelOrchestrationEngine:
         provider_id: str | None = None,
     ) -> ModelDescriptor:
         if descriptor.model_id in self._models:
-            raise ModelAlreadyRegisteredError(
-                f"model already registered: {descriptor.model_id}"
-            )
+            raise ModelAlreadyRegisteredError("model already registered")
         self._models[descriptor.model_id] = descriptor
         self._adapters[descriptor.model_id] = adapter
         if validator is not None:

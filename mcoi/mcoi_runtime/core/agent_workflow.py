@@ -160,7 +160,7 @@ class AgentWorkflowEngine:
                     llm_output = {"result": str(result)}
                 steps.append(WorkflowStep("llm_invoke", "ok", {"model": llm_output.get("model", "")}))
             else:
-                llm_output = {"content": f"stub result for: {description}"}
+                llm_output = {"content": "stub result"}
                 steps.append(WorkflowStep("llm_invoke", "skipped", {"reason": "no LLM function"}))
 
             # Step 5: Complete task

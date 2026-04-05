@@ -50,7 +50,7 @@ class UnknownProfileError(ProfileLoadError):
 
     def __init__(self, profile_name: str) -> None:
         self.profile_name = profile_name
-        message = f"unknown profile: {profile_name}"
+        message = "unknown profile"
         super().__init__(message, public_message=message)
 
 
@@ -59,7 +59,7 @@ class UnknownProfileOverrideError(ProfileLoadError):
 
     def __init__(self, key: str) -> None:
         self.key = key
-        message = f"unknown config key in overrides: {key}"
+        message = "unknown config key in overrides"
         super().__init__(message, public_message=message)
 
 

@@ -304,12 +304,26 @@ class TestViolationDetection:
         viols = engine.detect_causal_violations("t1")
         ops = [v["operation"] for v in viols]
         assert "unresolved_intervention" in ops
+        unresolved = [v for v in viols if v["operation"] == "unresolved_intervention"]
+        assert unresolved[0]["reason"] == "Intervention remains unresolved"
+        assert "i1" not in unresolved[0]["reason"]
 
     def test_violations_idempotent(self, engine):
         engine.register_intervention("i1", "t1", "n1", "effect")
         engine.detect_causal_violations("t1")
         viols2 = engine.detect_causal_violations("t1")
         assert len(viols2) == 0
+
+    def test_orphan_edge_reason_is_bounded(self, engine):
+        engine.register_causal_node("n1", "t1", "A")
+        engine.register_causal_node("n2", "t1", "B")
+        engine.register_causal_edge("e1", "t1", "n1", "n2")
+        del engine._nodes["n2"]
+        viols = engine.detect_causal_violations("t1")
+        orphan = [v for v in viols if v["operation"] == "orphan_edge"]
+        assert len(orphan) == 1
+        assert orphan[0]["reason"] == "Causal edge references missing node"
+        assert "e1" not in orphan[0]["reason"]
 
     def test_no_cycle_no_violation(self, engine):
         engine.register_causal_node("n1", "t1", "A")

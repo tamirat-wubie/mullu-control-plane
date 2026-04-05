@@ -156,7 +156,7 @@ class LivePathCertifier:
                         name="db_persistence",
                         status=CertificationStatus.PASSED,
                         proof_hash=content_hash,
-                        detail=f"Written entry_id={entry_id}, verified on read-back",
+                        detail="Entry verified on read-back",
                     )
                 else:
                     return CertificationStep(
@@ -210,7 +210,7 @@ class LivePathCertifier:
                     name="llm_invocation",
                     status=status,
                     proof_hash=proof_hash,
-                    detail=f"LLM call {'succeeded' if succeeded else 'failed'}, cost={cost:.6f}",
+                    detail="LLM invocation succeeded" if succeeded else "LLM invocation failed",
                 )
             else:
                 return CertificationStep(
@@ -250,7 +250,7 @@ class LivePathCertifier:
                     name="ledger_integrity",
                     status=status,
                     proof_hash=chain_hash,
-                    detail=f"Verified {len(ledger_entries)} ledger entries, all_hashed={valid}",
+                    detail="Ledger entries verified" if valid else "Ledger entries missing required hashes",
                 )
             else:
                 return CertificationStep(
@@ -311,7 +311,7 @@ class LivePathCertifier:
                     name="restart_proof",
                     status=status,
                     proof_hash=proof_hash,
-                    detail=f"Pre={pre_count} entries, Post={post_count} entries, preserved={preserved}",
+                    detail="Restart state preserved" if preserved else "Restart state not preserved",
                 )
                 return step, proof
             else:

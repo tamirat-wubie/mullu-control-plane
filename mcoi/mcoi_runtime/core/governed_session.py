@@ -266,9 +266,7 @@ class GovernedSession:
             return
         result = self._rate_limiter.check(self._tenant_id, endpoint)
         if not result.allowed:
-            raise RuntimeError(
-                f"rate limited: retry after {result.retry_after_seconds}s"
-            )
+            raise RuntimeError("rate limited")
 
     def _check_budget(self) -> None:
         if self._budget_mgr is None:

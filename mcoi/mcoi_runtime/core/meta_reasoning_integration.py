@@ -230,10 +230,7 @@ class MetaReasoningBridge:
                         "context": rel.decision_context,
                         "at": now,
                     }),
-                    reason=(
-                        f"{rel.decision_context} confidence {point:.2f} "
-                        f"below escalation threshold {escalation_threshold}"
-                    ),
+                    reason="confidence below escalation threshold",
                     severity=severity,
                     affected_ids=affected_ids,
                     suggested_action=f"review {rel.decision_context} before proceeding",

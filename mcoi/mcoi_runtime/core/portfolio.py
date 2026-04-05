@@ -133,9 +133,7 @@ class PortfolioEngine:
         metadata: dict[str, Any] | None = None,
     ) -> PortfolioDescriptor:
         if portfolio_id in self._portfolios:
-            raise RuntimeCoreInvariantError(
-                f"portfolio '{portfolio_id}' already registered"
-            )
+            raise RuntimeCoreInvariantError("portfolio already registered")
         now = _now_iso()
         desc = PortfolioDescriptor(
             portfolio_id=portfolio_id,
@@ -162,9 +160,7 @@ class PortfolioEngine:
 
     def get_portfolio(self, portfolio_id: str) -> PortfolioDescriptor:
         if portfolio_id not in self._portfolios:
-            raise RuntimeCoreInvariantError(
-                f"portfolio '{portfolio_id}' not found"
-            )
+            raise RuntimeCoreInvariantError("portfolio not found")
         return self._portfolios[portfolio_id]
 
     # ------------------------------------------------------------------
@@ -185,9 +181,7 @@ class PortfolioEngine:
         portfolio = self.get_portfolio(portfolio_id)
 
         if campaign_id in self._campaign_reservations:
-            raise RuntimeCoreInvariantError(
-                f"campaign '{campaign_id}' already registered in portfolio"
-            )
+            raise RuntimeCoreInvariantError("campaign already registered in portfolio")
 
         # Get campaign descriptor for priority
         desc = self._campaigns.get_campaign(campaign_id)
@@ -390,9 +384,7 @@ class PortfolioEngine:
     ) -> ScheduleWindow:
         """Add a scheduling window for a resource."""
         if window_id in self._schedule_windows:
-            raise RuntimeCoreInvariantError(
-                f"schedule window '{window_id}' already exists"
-            )
+            raise RuntimeCoreInvariantError("schedule window already exists")
         window = ScheduleWindow(
             window_id=window_id,
             resource_ref=resource_ref,

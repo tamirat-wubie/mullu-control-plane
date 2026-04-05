@@ -57,23 +57,26 @@ class TestStructuredOutputEngine:
 
     def test_register_rejects_unsupported_field_type(self):
         eng = StructuredOutputEngine()
-        with pytest.raises(ValueError, match="unsupported field type"):
+        with pytest.raises(ValueError, match="^unsupported field type$") as exc_info:
             eng.register(OutputSchema(
                 schema_id="bad",
                 name="Bad",
                 fields={"summary": "mystery"},
                 required_fields=("summary",),
             ))
+        assert "summary" not in str(exc_info.value)
+        assert "mystery" not in str(exc_info.value)
 
     def test_register_rejects_required_field_missing_from_schema(self):
         eng = StructuredOutputEngine()
-        with pytest.raises(ValueError, match="required field not declared"):
+        with pytest.raises(ValueError, match="^required field not declared in schema fields$") as exc_info:
             eng.register(OutputSchema(
                 schema_id="bad-required",
                 name="Bad Required",
                 fields={"summary": "string"},
                 required_fields=("summary", "score"),
             ))
+        assert "score" not in str(exc_info.value)
 
     def test_parse_fails_closed_for_unknown_runtime_field_type(self):
         eng = StructuredOutputEngine()

@@ -180,7 +180,7 @@ class ResearchLabDemoGenerator:
 
         # Seed remediations linked to first 5 cases
         rems = [
-            {"remediation_id": f"rl-rem-{i:03d}", "case_ref": f"rl-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"rl-rem-{i:03d}", "case_ref": f"rl-case-{i:03d}", "title": "Research lab remediation"}
             for i in range(5)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

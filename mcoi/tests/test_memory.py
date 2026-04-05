@@ -58,6 +58,19 @@ def test_memory_entry_freezes_content_and_source_ids() -> None:
         entry.content["new"] = True  # type: ignore[index]
 
 
+def test_memory_entry_rejects_blank_source_ids_under_bounded_contract() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="^source_ids must contain non-empty strings$") as exc_info:
+        MemoryEntry(
+            entry_id="w-bad-source",
+            tier=MemoryTier.WORKING,
+            category="observation",
+            content={"key": "value"},
+            source_ids=("src-1", " "),
+        )
+
+    assert "[1]" not in str(exc_info.value)
+
+
 def test_working_memory_rejects_episodic_tier() -> None:
     wm = WorkingMemory()
     with pytest.raises(RuntimeCoreInvariantError, match="working-tier"):

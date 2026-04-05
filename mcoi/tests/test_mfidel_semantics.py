@@ -241,6 +241,18 @@ class TestClusteringRelated:
             all_members.update(f.members)
         assert {"c3", "c4", "c5"}.issubset(all_members)
 
+    def test_family_description_is_bounded(
+        self, index: MfidelSemanticIndex
+    ) -> None:
+        tags = (_tag("t1", "deploy"), _tag("t2", "infra"))
+        a = index.annotate("c6", "skill", "deploy service production", tags=tags)
+        b = index.annotate("c7", "skill", "deploy service staging", tags=tags)
+        families = index.cluster_into_families([a, b], threshold=0.3)
+        assert len(families) == 1
+        assert families[0].description == "Semantic family"
+        assert "deploy" not in families[0].description
+        assert "c6" not in families[0].description
+
 
 # ---------------------------------------------------------------------------
 # 8. Clustering -- keeps unrelated annotations separate

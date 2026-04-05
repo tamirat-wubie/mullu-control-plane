@@ -71,9 +71,7 @@ def _assert_transition(current: JobStatus, target: JobStatus) -> None:
     """Validate that a state transition is legal."""
     allowed = _VALID_TRANSITIONS.get(current, frozenset())
     if target not in allowed:
-        raise RuntimeCoreInvariantError(
-            f"invalid job state transition: {current.value} -> {target.value}"
-        )
+        raise RuntimeCoreInvariantError("invalid job state transition")
 
 
 class WorkQueue:

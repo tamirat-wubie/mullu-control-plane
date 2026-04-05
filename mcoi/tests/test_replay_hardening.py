@@ -400,6 +400,45 @@ class TestJournalValidation:
         assert entries[0].sequence == 0
         assert entries[1].sequence == 1
 
+    def test_epoch_mismatch_detail_is_bounded(self) -> None:
+        mgr, _, _, _ = _mgr()
+        mgr.append_journal(JournalEntryKind.TICK, "t-1", {})
+        mgr.append_journal(JournalEntryKind.TICK, "t-2", {})
+        object.__setattr__(mgr.journal_entries()[1], "epoch_id", "epoch-secret")
+
+        result = mgr.validate_journal()
+
+        assert result.verdict == JournalValidationVerdict.EPOCH_MISMATCH
+        assert result.detail == "journal epoch mismatch detected"
+        assert "epoch-secret" not in result.detail
+        assert "2" not in result.detail
+
+    def test_ordering_violation_detail_is_bounded(self) -> None:
+        mgr, _, _, _ = _mgr()
+        mgr.append_journal(JournalEntryKind.TICK, "t-1", {})
+        mgr.append_journal(JournalEntryKind.TICK, "t-2", {})
+        object.__setattr__(mgr.journal_entries()[1], "sequence", 0)
+
+        result = mgr.validate_journal()
+
+        assert result.verdict == JournalValidationVerdict.ORDERING_VIOLATION
+        assert result.detail == "journal ordering violation detected"
+        assert "<=" not in result.detail
+        assert "0" not in result.detail
+
+    def test_sequence_gap_detail_is_bounded(self) -> None:
+        mgr, _, _, _ = _mgr()
+        mgr.append_journal(JournalEntryKind.TICK, "t-1", {})
+        mgr.append_journal(JournalEntryKind.TICK, "t-2", {})
+        object.__setattr__(mgr.journal_entries()[1], "sequence", 2)
+
+        result = mgr.validate_journal()
+
+        assert result.verdict == JournalValidationVerdict.SEQUENCE_GAP
+        assert result.detail == "journal sequence gap detected"
+        assert "gap(" not in result.detail
+        assert "1" not in result.detail
+
 
 # =====================================================================
 # Epoch management
@@ -636,6 +675,8 @@ class TestJournalReplayDeterministic:
         assert result.verdict == ReplaySessionVerdict.SUCCESS
         assert result.entries_skipped == 2
         assert result.entries_matched == 0
+        assert all(step.detail == "entry not re-executed during replay" for step in result.steps)
+        assert all("heartbeat" not in step.detail for step in result.steps)
 
     def test_replay_mixed_entries(self) -> None:
         """Mix of tick and non-tick entries — ticks matched, others skipped."""
@@ -770,6 +811,8 @@ class TestReplayDivergenceDetection:
         # Should stop at first divergence
         assert result.entries_replayed == 1
         assert result.entries_diverged == 1
+        assert result.steps[0].detail == "tick number diverged"
+        assert "100" not in result.steps[0].detail
 
     def test_continue_past_divergence(self) -> None:
         """When halt_on_divergence=False, replay continues past mismatches."""
@@ -826,6 +869,8 @@ class TestReplayDivergenceDetection:
         result = replay.replay_from_checkpoint(cp, (entry,))
         assert result.verdict == ReplaySessionVerdict.DIVERGENCE_DETECTED
         assert result.steps[0].verdict == ReplayStepVerdict.OUTCOME_DIVERGED
+        assert result.steps[0].detail == "tick outcome diverged"
+        assert "work_done" not in result.steps[0].detail
 
 
 # =====================================================================

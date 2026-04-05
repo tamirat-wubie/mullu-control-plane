@@ -215,6 +215,26 @@ class TestSessionBudgetEnforcement:
         assert "t1" not in str(exc_info.value)
 
 
+class TestSessionRateLimiting:
+    def test_rate_limit_reason_is_bounded(self):
+        class RejectingLimiter:
+            def check(self, tenant_id, endpoint):
+                class _Result:
+                    allowed = False
+                    retry_after_seconds = 47
+
+                return _Result()
+
+        p = _platform(rate_limiter=RejectingLimiter())
+        session = p.connect(identity_id="user1", tenant_id="tenant-secret")
+
+        with pytest.raises(RuntimeError, match="^rate limited$") as exc_info:
+            session.query("tenants")
+
+        assert "47" not in str(exc_info.value)
+        assert "tenant-secret" not in str(exc_info.value)
+
+
 # ═══ Audit Recording ═══
 
 

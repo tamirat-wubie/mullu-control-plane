@@ -130,8 +130,9 @@ class TestPortfolioRegistration:
     def test_register_portfolio_rejects_duplicate(self, engines):
         _, _, _, _, pe, _ = engines
         pe.register_portfolio("p1", "P1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="^portfolio already registered$") as exc_info:
             pe.register_portfolio("p1", "P1 again")
+        assert "p1" not in str(exc_info.value)
 
     def test_register_portfolio_max_concurrent(self, engines):
         _, _, _, _, pe, _ = engines
@@ -164,8 +165,9 @@ class TestPortfolioRegistration:
 
     def test_get_portfolio_unknown_raises(self, engines):
         _, _, _, _, pe, _ = engines
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="^portfolio not found$") as exc_info:
             pe.get_portfolio("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
 
 # ======================================================================
@@ -211,8 +213,9 @@ class TestCampaignRegistrationInPortfolio:
         pe.register_portfolio("p1", "P1")
         _register_campaign(wce, "c1")
         pe.register_campaign("p1", "c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="^campaign already registered in portfolio$") as exc_info:
             pe.register_campaign("p1", "c1")
+        assert "c1" not in str(exc_info.value)
 
     def test_register_campaign_with_deadline_boost_near(self, engines):
         _, _, wce, _, pe, _ = engines
@@ -558,8 +561,9 @@ class TestScheduleWindows:
         now = datetime.now(timezone.utc).isoformat()
         later = _future_iso(3600)
         pe.add_schedule_window("w1", "agent-1", now, later)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="^schedule window already exists$") as exc_info:
             pe.add_schedule_window("w1", "agent-1", now, later)
+        assert "w1" not in str(exc_info.value)
 
     def test_add_schedule_window_custom_class(self, engines):
         _, _, _, _, pe, _ = engines

@@ -67,7 +67,7 @@ class ShellExecutor:
                         finished_at=finished_at,
                         failure=ExecutionFailure(
                             code="policy_denied",
-                            message=f"Shell policy denied: {verdict.verdict}",
+                            message="Shell policy denied",
                             details={
                                 "verdict": verdict.verdict,
                                 "matched_rule": verdict.matched_rule,

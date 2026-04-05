@@ -124,6 +124,7 @@ class TestCertifyDBPersistence:
         step = certifier.certify_db_persistence(write_fn=write_fn, read_fn=read_fn)
         assert step.status == CertificationStatus.PASSED
         assert step.proof_hash
+        assert step.detail == "Entry verified on read-back"
         assert store.ledger_count() >= 1
 
     def test_skipped_without_functions(self):
@@ -159,6 +160,7 @@ class TestCertifyLLMInvocation:
         )
         assert step.status == CertificationStatus.PASSED
         assert step.proof_hash
+        assert step.detail == "LLM invocation succeeded"
 
     def test_skipped_without_fn(self):
         certifier = LivePathCertifier(clock=FIXED_CLOCK)
@@ -194,6 +196,7 @@ class TestCertifyLedgerIntegrity:
         ]
         step = certifier.certify_ledger_integrity(ledger_entries=entries)
         assert step.status == CertificationStatus.FAILED
+        assert step.detail == "Ledger entries missing required hashes"
 
     def test_skipped_without_entries(self):
         certifier = LivePathCertifier(clock=FIXED_CLOCK)
@@ -229,6 +232,7 @@ class TestCertifyRestartProof:
             post_state_fn=lambda: ("hash-post", 5),
         )
         assert step.status == CertificationStatus.PASSED
+        assert step.detail == "Restart state preserved"
         assert proof is not None
         assert proof.state_preserved is True
         assert proof.entries_before == 5
@@ -242,6 +246,7 @@ class TestCertifyRestartProof:
             post_state_fn=lambda: ("hash-post", 3),  # Lost entries
         )
         assert step.status == CertificationStatus.FAILED
+        assert step.detail == "Restart state not preserved"
         assert proof is not None
         assert proof.state_preserved is False
 

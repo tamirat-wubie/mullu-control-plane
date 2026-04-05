@@ -7,6 +7,7 @@ Invariants: policy evaluation returns typed decisions only and remains side-effe
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 from mcoi_runtime.app.policy_packs import PolicyPackRegistry
 from mcoi_runtime.core.policy_engine import PolicyEngine, PolicyInput, PolicyReason
@@ -137,3 +138,35 @@ def test_policy_engine_fails_closed_on_unknown_policy_pack() -> None:
     assert decision.reasons[0].code == "unknown_policy_pack"
     assert decision.reasons[0].message == "policy pack unavailable"
     assert "missing-pack" not in decision.reasons[0].message
+
+
+def test_policy_engine_bounds_no_matching_rule_message() -> None:
+    resolver = SimpleNamespace(
+        get=lambda pack_id: SimpleNamespace(
+            pack_id=pack_id,
+            rules=(
+                SimpleNamespace(
+                    rule_id="never-match",
+                    description="unused rule",
+                    condition="unknown_condition",
+                    action="deny",
+                ),
+            ),
+        )
+    )
+    engine: PolicyEngine[PolicyDecision] = PolicyEngine(pack_resolver=resolver)
+
+    decision = engine.evaluate(
+        PolicyInput(
+            subject_id="subject-1",
+            goal_id="goal-1",
+            issued_at="2026-03-18T12:00:00+00:00",
+            policy_pack_id="custom-pack",
+        ),
+        build_decision,
+    )
+
+    assert decision.status == "deny"
+    assert decision.reasons[0].code == "no_policy_rule_matched"
+    assert decision.reasons[0].message == "no policy rule matched"
+    assert "custom-pack" not in decision.reasons[0].message

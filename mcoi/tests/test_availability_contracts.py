@@ -1156,8 +1156,8 @@ class TestCrossFieldValidationEdgeCases:
     def test_biz_hour_error_is_bounded(self):
         with pytest.raises(ValueError, match="0-23") as excinfo:
             _biz_profile(weekday_start_hour=24)
-        assert "weekday_start_hour" in str(excinfo.value)
-        assert "0-23" in str(excinfo.value)
+        assert str(excinfo.value) == "weekday_start_hour must be 0-23"
+        assert "24" not in str(excinfo.value)
         assert "24" not in str(excinfo.value)
 
     def test_biz_hour_negative_raises(self):
@@ -1192,8 +1192,7 @@ class TestCrossFieldValidationEdgeCases:
     def test_meeting_request_duration_error_is_bounded(self):
         with pytest.raises(ValueError, match=">= 1") as excinfo:
             _meeting_request(duration_minutes=0)
-        assert "duration_minutes" in str(excinfo.value)
-        assert ">= 1" in str(excinfo.value)
+        assert str(excinfo.value) == "duration_minutes must be >= 1"
         assert "0" not in str(excinfo.value)
 
     def test_meeting_request_duration_negative_raises(self):

@@ -151,7 +151,7 @@ class _WorkflowStageExecutor:
             status=StageStatus.FAILED,
             error=execution_error(
                 error_code="workflow_stage_handler_missing",
-                message=f"workflow stage type {stage_type} has no governed runtime handler",
+                message="workflow stage has no governed runtime handler",
                 recoverability=Recoverability.FATAL_FOR_RUN,
                 context={"stage_type": stage_type},
             ),

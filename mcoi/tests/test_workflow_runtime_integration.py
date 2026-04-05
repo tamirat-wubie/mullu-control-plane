@@ -167,6 +167,8 @@ class TestWorkflowRuntimeGoldenScenarios:
         assert report.stage_summaries[0].status.value == "failed"
         assert len(report.errors) >= 1
         assert report.errors[0].error_code == "workflow_stage_handler_missing"
+        assert report.errors[0].message == "workflow stage has no governed runtime handler"
+        assert "observation" not in report.errors[0].message
 
     def test_failed_stage_stops_workflow(self):
         """A failed stage stops the workflow and marks it failed."""
@@ -209,7 +211,8 @@ class TestWorkflowRuntimeGoldenScenarios:
         assert report.status is WorkflowStatus.FAILED
         assert len(report.errors) == 1
         assert report.errors[0].error_code == "autonomy_blocked"
-        assert "observe_only" in report.errors[0].message
+        assert report.errors[0].message == "autonomy blocked workflow execution"
+        assert "observe_only" not in report.errors[0].message
         status = loop.runtime.autonomy.get_status()
         assert len(status.violations) == 1
         assert status.violations[0].attempted_action == "workflow execution"
@@ -256,6 +259,8 @@ class TestWorkflowGovernanceChecks:
 
         assert report.status is WorkflowStatus.FAILED
         assert report.errors[0].error_code == "autonomy_blocked"
+        assert report.errors[0].message == "autonomy blocked workflow execution"
+        assert "suggest_only" not in report.errors[0].message
 
     def test_workflow_blocked_when_policy_denies(self):
         """Workflow blocked when policy engine denies."""
@@ -281,6 +286,8 @@ class TestWorkflowGovernanceChecks:
 
         assert report.status is WorkflowStatus.FAILED
         assert "policy_deny" in report.errors[0].error_code
+        assert report.errors[0].message == "policy gate blocked workflow execution"
+        assert "deny" not in report.errors[0].message
 
         loop.runtime.policy_engine.evaluate = original_evaluate
 

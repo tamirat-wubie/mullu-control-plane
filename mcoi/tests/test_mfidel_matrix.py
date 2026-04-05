@@ -157,8 +157,13 @@ class TestVectorize:
         assert all(w == 0.0 for w in vec.fidel_weights)
 
     def test_non_fidel_chars_rejected(self) -> None:
-        with pytest.raises(ValueError, match="non-fidel characters"):
+        with pytest.raises(
+            ValueError,
+            match="^text contains non-fidel characters$",
+        ) as exc_info:
             MfidelMatrix.vectorize("abc")
+        assert "0" not in str(exc_info.value)
+        assert "positions" not in str(exc_info.value).lower()
 
     def test_text_to_fidel_sequence(self) -> None:
         seq = MfidelMatrix.text_to_fidel_sequence("ሀለ")
@@ -172,8 +177,12 @@ class TestVectorize:
         assert len(seq) == 2
 
     def test_text_to_fidel_sequence_rejects_mixed_non_fidel_input(self) -> None:
-        with pytest.raises(ValueError, match="positions 1"):
+        with pytest.raises(
+            ValueError,
+            match="^text contains non-fidel characters$",
+        ) as exc_info:
             MfidelMatrix.text_to_fidel_sequence("\u1200a")
+        assert "1" not in str(exc_info.value)
 
 
 class TestSimilarity:

@@ -41,38 +41,22 @@ def _parse_datetime_text(value: str, field_name: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-_HOUR_FIELD_LABELS = frozenset({
-    "weekday_start_hour",
-    "weekday_end_hour",
-    "quiet_start_hour",
-    "quiet_end_hour",
-})
-
-_POSITIVE_INT_FIELD_LABELS = frozenset({"duration_minutes"})
-
-
-def _bounded_validation_label(
-    field_name: str,
-    *,
-    allowed_labels: frozenset[str],
-    fallback: str,
-) -> str:
-    """Return a bounded label for outward-facing validation errors."""
-    if field_name in allowed_labels:
-        return field_name
-    return fallback
+_HOUR_VALIDATION_MESSAGES = {
+    "weekday_start_hour": "weekday_start_hour must be 0-23",
+    "weekday_end_hour": "weekday_end_hour must be 0-23",
+    "quiet_start_hour": "quiet_start_hour must be 0-23",
+    "quiet_end_hour": "quiet_end_hour must be 0-23",
+}
+_POSITIVE_INT_VALIDATION_MESSAGES = {
+    "duration_minutes": "duration_minutes must be >= 1",
+}
 
 
 def _require_hour(value: int, field_name: str) -> int:
     """Validate that an hour value is in range 0-23."""
     v = require_non_negative_int(value, field_name)
     if v > 23:
-        label = _bounded_validation_label(
-            field_name,
-            allowed_labels=_HOUR_FIELD_LABELS,
-            fallback="hour",
-        )
-        raise ValueError("{} must be 0-23".format(label))
+        raise ValueError(_HOUR_VALIDATION_MESSAGES.get(field_name, "hour must be 0-23"))
     return v
 
 
@@ -80,12 +64,7 @@ def _require_positive_int(value: int, field_name: str) -> int:
     """Validate that an integer is strictly positive (>= 1)."""
     v = require_non_negative_int(value, field_name)
     if v < 1:
-        label = _bounded_validation_label(
-            field_name,
-            allowed_labels=_POSITIVE_INT_FIELD_LABELS,
-            fallback="value",
-        )
-        raise ValueError("{} must be >= 1".format(label))
+        raise ValueError(_POSITIVE_INT_VALIDATION_MESSAGES.get(field_name, "value must be >= 1"))
     return v
 
 

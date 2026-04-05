@@ -541,9 +541,7 @@ class SupervisorEngine:
         allows the supervisor to continue ticking from where it left off.
         """
         if checkpoint.status != CheckpointStatus.VALID:
-            raise RuntimeCoreInvariantError(
-                f"cannot resume from {checkpoint.status.value} checkpoint"
-            )
+            raise RuntimeCoreInvariantError("cannot resume from invalid checkpoint")
         self._tick_number = checkpoint.tick_number
         self._consecutive_errors = checkpoint.consecutive_errors
         self._consecutive_idle_ticks = checkpoint.consecutive_idle_ticks
@@ -567,9 +565,7 @@ class SupervisorEngine:
         validated: set[str] = set()
         for eid in event_ids:
             if not isinstance(eid, str) or not eid.strip():
-                raise RuntimeCoreInvariantError(
-                    f"processed event ID must be a non-empty string, got {eid!r}"
-                )
+                raise RuntimeCoreInvariantError("processed event IDs must be non-empty strings")
             validated.add(eid)
         self._processed_event_ids = validated
 

@@ -556,6 +556,16 @@ class TestUnknownOperatorRaises:
             # Should not raise — result correctness varies by op/type
             ReactionEngine.evaluate_condition(cond, {"val": 5})
 
+    def test_unknown_operator_runtime_error_is_bounded(self) -> None:
+        cond = _cond()
+        object.__setattr__(cond, "operator", "MATCHES")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="^unknown condition operator$") as exc_info:
+            ReactionEngine.evaluate_condition(cond, {"state": "active"})
+
+        assert "MATCHES" not in str(exc_info.value)
+        assert "eq" not in str(exc_info.value)
+
 
 class TestBackpressureAutoReset:
     """Backpressure window should auto-reset after window_seconds elapse."""

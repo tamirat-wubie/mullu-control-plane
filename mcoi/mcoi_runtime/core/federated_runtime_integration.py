@@ -91,7 +91,7 @@ class FederatedRuntimeIntegration:
         claim = self._fed.register_claim(
             claim_id=claim_id, tenant_id=tenant_id,
             origin_node_ref=node_id,
-            content=f"{source_type} bridge claim",
+            content="federated bridge claim",
         )
         _emit(self._events, f"federate_for_{source_type}", {
             "tenant_id": tenant_id, "node_id": node_id, "claim_id": claim_id,

@@ -88,6 +88,8 @@ class TestSkillRuntimeGoldenScenarios:
         assert report.completed is False
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "skill_not_found"
+        assert report.structured_errors[0].message == "skill not found"
+        assert "missing-skill" not in report.structured_errors[0].message
 
     def test_03_blocked_skill_cannot_execute(self):
         """A blocked skill is rejected with a policy error."""
@@ -104,6 +106,8 @@ class TestSkillRuntimeGoldenScenarios:
         assert report.status is SkillOutcomeStatus.POLICY_DENIED
         assert report.completed is False
         assert report.structured_errors[0].error_code == "skill_blocked"
+        assert report.structured_errors[0].message == "skill is blocked"
+        assert "sk-blocked" not in report.structured_errors[0].message
 
     def test_04_skill_selection_deterministic(self):
         """When no skill_id given, selection picks deterministically from registry."""
@@ -258,7 +262,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "autonomy_blocked"
-        assert "observe_only" in report.structured_errors[0].message
+        assert report.structured_errors[0].message == "autonomy blocked skill execution"
+        assert "observe_only" not in report.structured_errors[0].message
         status = loop.runtime.autonomy.get_status()
         assert len(status.violations) == 1
         assert status.violations[0].attempted_action == "skill execution"
@@ -281,7 +286,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "autonomy_blocked"
-        assert "suggest_only" in report.structured_errors[0].message
+        assert report.structured_errors[0].message == "autonomy blocked skill execution"
+        assert "suggest_only" not in report.structured_errors[0].message
 
     def test_skill_blocked_when_policy_denies(self):
         """Skill execution is blocked when the policy engine returns deny."""
@@ -315,6 +321,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert "policy_deny" in report.structured_errors[0].error_code
+        assert report.structured_errors[0].message == "policy gate blocked skill execution"
+        assert "deny" not in report.structured_errors[0].message
 
         # Restore
         loop.runtime.policy_engine.evaluate = original_evaluate
@@ -344,7 +352,8 @@ class TestSkillGovernanceChecks:
         assert report.execution_record is None
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "policy_escalate"
-        assert "escalate" in report.structured_errors[0].message
+        assert report.structured_errors[0].message == "policy gate blocked skill execution"
+        assert "escalate" not in report.structured_errors[0].message
 
     def test_skill_proceeds_when_autonomy_and_policy_allow(self):
         """Skill execution proceeds when both autonomy and policy permit it."""

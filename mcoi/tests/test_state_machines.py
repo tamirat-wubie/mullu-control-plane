@@ -161,12 +161,21 @@ class TestEnforceTransition:
         assert v == TransitionVerdict.ALLOWED
 
     def test_enforce_illegal_raises(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="illegal transition"):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^illegal transition$",
+        ) as exc_info:
             enforce_transition(OBLIGATION_MACHINE, "active", "pending", "activate")
+        assert "active" not in str(exc_info.value)
+        assert "activate" not in str(exc_info.value)
 
     def test_enforce_terminal_raises(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="illegal transition"):
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^illegal transition$",
+        ) as exc_info:
             enforce_transition(OBLIGATION_MACHINE, "completed", "active", "activate")
+        assert "completed" not in str(exc_info.value)
 
 
 class TestTerminalInvariant:

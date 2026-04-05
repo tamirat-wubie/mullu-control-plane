@@ -251,10 +251,7 @@ class ReactionEngine:
             return current in expected if hasattr(expected, "__contains__") else False
         if op == "exists":
             return True  # we got here, so field exists
-        raise RuntimeCoreInvariantError(
-            f"unknown condition operator {op!r} — "
-            f"valid operators: eq, neq, gt, gte, lt, lte, contains, in, exists"
-        )
+        raise RuntimeCoreInvariantError("unknown condition operator")
 
     def match_rules(self, event: EventRecord) -> tuple[ReactionRule, ...]:
         """Find all enabled rules whose event_type and conditions match."""

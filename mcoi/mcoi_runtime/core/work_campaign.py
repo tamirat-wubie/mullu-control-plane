@@ -192,9 +192,7 @@ class WorkCampaignEngine:
     ) -> CampaignRun:
         """Start a new run of a campaign."""
         if campaign_id not in self._campaigns:
-            raise RuntimeCoreInvariantError(
-                f"campaign '{campaign_id}' not found"
-            )
+            raise RuntimeCoreInvariantError("campaign not found")
         now = _now_iso()
         rid = run_id or stable_identifier("run", {
             "cid": campaign_id, "ts": now,

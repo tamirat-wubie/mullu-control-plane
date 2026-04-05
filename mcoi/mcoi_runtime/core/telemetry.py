@@ -41,6 +41,13 @@ MAX_RUN_HISTORY = 10_000
 MAX_ALERTS = 1_000
 
 
+def _bounded_alert_message(template: str) -> str:
+    """Collapse dynamic threshold templates into bounded operator-facing text."""
+    if "{" in template or "}" in template:
+        return "telemetry threshold exceeded"
+    return template
+
+
 class TelemetryCollector:
     """Collects and aggregates telemetry from runtime outcomes.
 
@@ -233,7 +240,7 @@ class TelemetryCollector:
                         severity=t.severity,
                         status=AlertStatus.ACTIVE,
                         source=t.source,
-                        message=t.message_template.format(value=value, threshold=t.threshold),
+                        message=_bounded_alert_message(t.message_template),
                         metric_name=t.metric_name,
                         metric_value=value,
                         threshold=t.threshold,

@@ -356,6 +356,8 @@ class TestEscalateFromReliability:
         )
         assert len(result) == 1
         assert isinstance(result[0], EscalationRecommendation)
+        assert result[0].reason == "confidence below escalation threshold"
+        assert "simulation" not in result[0].reason
         # Verify recorded in engine
         assert len(engine.list_escalation_recommendations()) == 1
 

@@ -122,10 +122,7 @@ def _validate_fidel_text(text: str) -> None:
         if char not in _GLYPH_INDEX:
             invalid_positions.append(str(index))
     if invalid_positions:
-        raise ValueError(
-            "text contains non-fidel characters at positions "
-            + ", ".join(invalid_positions)
-        )
+        raise ValueError("text contains non-fidel characters")
 
 
 class MfidelMatrix:

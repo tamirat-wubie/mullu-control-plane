@@ -98,7 +98,7 @@ class EpistemicRuntimeIntegration:
         claim = self._epistemic.register_claim(
             claim_id=claim_id,
             tenant_id=tenant_id,
-            content=f"{source_type}_{ref}",
+            content="epistemic source claim",
             status=status,
             assertion_mode=assertion_mode,
             source_ref=ref,

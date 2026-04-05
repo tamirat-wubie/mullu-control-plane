@@ -481,8 +481,9 @@ class TestResumeFromCheckpoint:
             state_hash="hash",
             created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="corrupted"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^cannot resume from invalid checkpoint$") as exc_info:
             eng.resume_from_checkpoint(cp)
+        assert CheckpointStatus.CORRUPTED.value not in str(exc_info.value)
 
 
 # =====================================================================
@@ -579,13 +580,14 @@ class TestProcessedEventIdValidation:
 
     def test_non_string_event_id_rejected(self) -> None:
         eng = _engine()
-        with pytest.raises(Exception, match="non-empty string"):
+        with pytest.raises(Exception, match="^processed event IDs must be non-empty strings$"):
             eng.restore_processed_event_ids({123})  # type: ignore[arg-type]
 
     def test_empty_string_event_id_rejected(self) -> None:
         eng = _engine()
-        with pytest.raises(Exception, match="non-empty string"):
+        with pytest.raises(Exception, match="^processed event IDs must be non-empty strings$") as exc_info:
             eng.restore_processed_event_ids({"valid-id", ""})
+        assert "valid-id" not in str(exc_info.value)
 
     def test_valid_event_ids_accepted(self) -> None:
         eng = _engine()

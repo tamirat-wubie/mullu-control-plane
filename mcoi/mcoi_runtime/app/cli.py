@@ -143,7 +143,7 @@ def _load_demo_json_object(raw: bytes) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         raise CLIDemoError(_classify_cli_http_error(exc)) from exc
     if not isinstance(payload, dict):
-        raise CLIDemoError(f"invalid JSON response root ({type(payload).__name__})")
+        raise CLIDemoError("invalid JSON response root")
     return payload
 
 

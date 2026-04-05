@@ -984,7 +984,10 @@ class TestDetectContractViolations:
         active_contract.schedule_renewal("rw1", "c1", _PAST, _PAST)
         violations = active_contract.detect_contract_violations()
         assert len(violations) >= 1
-        assert any(v["operation"] == "overdue_renewal" for v in violations)
+        overdue = [v for v in violations if v["operation"] == "overdue_renewal"]
+        assert len(overdue) >= 1
+        assert overdue[0]["reason"] == "Renewal window overdue"
+        assert "rw1" not in overdue[0]["reason"]
 
     def test_active_past_expires_at(self, es):
         eng = ContractRuntimeEngine(es)
@@ -992,7 +995,10 @@ class TestDetectContractViolations:
         eng.activate_contract("c1")
         violations = eng.detect_contract_violations()
         assert len(violations) >= 1
-        assert any(v["operation"] == "expired_active_contract" for v in violations)
+        expired = [v for v in violations if v["operation"] == "expired_active_contract"]
+        assert len(expired) >= 1
+        assert expired[0]["reason"] == "Active contract has expired"
+        assert _PAST not in expired[0]["reason"]
 
     def test_idempotent(self, active_contract):
         active_contract.schedule_renewal("rw1", "c1", _PAST, _PAST)
@@ -1541,6 +1547,7 @@ class TestGoldenScenario5RenewalWindowEscalatesBeforeExpiry:
         assert len(overdue) == 1
         assert overdue[0]["contract_id"] == "c-annual"
         assert overdue[0]["window_id"] == "rw-annual"
+        assert overdue[0]["reason"] == "Renewal window overdue"
 
         # Idempotent: second call returns no new violations
         v2 = eng.detect_contract_violations()
@@ -1562,6 +1569,7 @@ class TestGoldenScenario5RenewalWindowEscalatesBeforeExpiry:
         expired_active = [v for v in violations if v["operation"] == "expired_active_contract"]
         assert len(expired_active) == 1
         assert expired_active[0]["contract_id"] == "c-expired-active"
+        assert expired_active[0]["reason"] == "Active contract has expired"
 
 
 class TestGoldenScenario6FullLifecycleSnapshotAndHash:

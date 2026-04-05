@@ -69,7 +69,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
                 structured_errors=(
                     execution_error(
                         error_code="skill_not_found",
-                        message=f"skill not found: {request.skill_id}",
+                        message="skill not found",
                     ),
                 ),
             )
@@ -85,7 +85,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
                 structured_errors=(
                     policy_error(
                         error_code="skill_blocked",
-                        message=f"skill is blocked: {request.skill_id}",
+                        message="skill is blocked",
                         recoverability=Recoverability.FATAL_FOR_RUN,
                     ),
                 ),
@@ -127,10 +127,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
             structured_errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked skill execution: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy blocked skill execution",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
@@ -164,7 +161,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
             structured_errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=f"policy gate returned {policy_decision.status.value} for skill execution",
+                    message="policy gate blocked skill execution",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -224,7 +221,7 @@ def run_workflow(
             errors=(
                 validation_error(
                     error_code="workflow_validation_failed",
-                    message=f"workflow validation failed: {'; '.join(validation_errors)}",
+                    message="workflow validation failed",
                     source_plane=SourcePlane.EXECUTION,
                 ),
             ),
@@ -245,10 +242,7 @@ def run_workflow(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked workflow execution: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy blocked workflow execution",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
@@ -281,10 +275,7 @@ def run_workflow(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        f"policy gate returned {policy_decision.status.value} "
-                        "for workflow execution"
-                    ),
+                    message="policy gate blocked workflow execution",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -373,10 +364,7 @@ def run_goal(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked goal execution: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy blocked goal execution",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
@@ -408,7 +396,7 @@ def run_goal(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=f"policy gate returned {policy_decision.status.value} for goal execution",
+                    message="policy gate blocked goal execution",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -497,7 +485,7 @@ def run_goal(
             errors.append(
                 execution_error(
                     error_code="goal_sub_goal_failed",
-                    message=f"goal failed: sub-goals {', '.join(state.failed_sub_goals)} failed",
+                    message="goal failed due to sub-goal failure",
                     related_ids=state.failed_sub_goals,
                 )
             )

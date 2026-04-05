@@ -336,10 +336,7 @@ class MfidelSemanticIndex:
             tag_part = ", ".join(all_tags[:5]) if all_tags else "untagged"
             family_id = f"family-{first.artifact_id}"
             name = f"Family: {tag_part}"
-            description = (
-                f"Semantic family of {len(members)} artifact(s) "
-                f"sharing tags: {tag_part}"
-            )
+            description = "Semantic family"
             families.append(SemanticFamily(
                 family_id=family_id,
                 name=name,

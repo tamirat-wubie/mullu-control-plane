@@ -268,7 +268,7 @@ class JournalReplayEngine:
             kind=entry.kind,
             verdict=ReplayStepVerdict.SKIPPED,
             expected_payload=entry.payload,
-            detail=f"{entry.kind.value} entry not re-executed during replay",
+            detail="entry not re-executed during replay",
         )
 
     def _replay_tick(self, entry: JournalEntry, step_id: str) -> ReplayStepResult:
@@ -299,7 +299,7 @@ class JournalReplayEngine:
                 verdict=ReplayStepVerdict.TICK_NUMBER_DIVERGED,
                 expected_payload=entry.payload,
                 actual_payload={"tick_number": actual_tick, "outcome": actual_outcome},
-                detail=f"expected tick {expected_tick}, got {actual_tick}",
+                detail="tick number diverged",
             )
 
         if expected_outcome is not None and actual_outcome != expected_outcome:
@@ -310,7 +310,7 @@ class JournalReplayEngine:
                 verdict=ReplayStepVerdict.OUTCOME_DIVERGED,
                 expected_payload=entry.payload,
                 actual_payload={"tick_number": actual_tick, "outcome": actual_outcome},
-                detail=f"expected outcome {expected_outcome}, got {actual_outcome}",
+                detail="tick outcome diverged",
             )
 
         return ReplayStepResult(

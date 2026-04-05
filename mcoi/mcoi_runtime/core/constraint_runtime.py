@@ -221,9 +221,7 @@ class ConstraintRuntimeEngine:
         if old is None:
             raise RuntimeCoreInvariantError("Unknown problem_id")
         if old.status != SolveStatus.PENDING:
-            raise RuntimeCoreInvariantError(
-                f"Cannot start problem in {old.status.value} state (must be PENDING)"
-            )
+            raise RuntimeCoreInvariantError("problem must be pending before start")
         updated = self._replace_problem(problem_id, status=SolveStatus.RUNNING)
         _emit(self._events, "problem_started", {
             "problem_id": problem_id,
@@ -647,7 +645,7 @@ class ConstraintRuntimeEngine:
                         v = {
                             "tenant_id": tenant_id,
                             "operation": "unsolved_problem",
-                            "reason": f"Problem {problem.problem_id} is {problem.status.value} with no solution",
+                            "reason": "Problem has no solution",
                             "detected_at": now,
                         }
                         self._violations.append(v)
@@ -685,7 +683,7 @@ class ConstraintRuntimeEngine:
                         v = {
                             "tenant_id": tenant_id,
                             "operation": "cycle_in_dependencies",
-                            "reason": f"Circular dependency detected in tenant {tenant_id}",
+                            "reason": "Circular dependency detected",
                             "detected_at": now,
                         }
                         self._violations.append(v)
@@ -711,7 +709,7 @@ class ConstraintRuntimeEngine:
                             v = {
                                 "tenant_id": tenant_id,
                                 "operation": "schedule_conflict",
-                                "reason": f"Schedule conflict between {a.slot_id} and {b.slot_id} for resource {resource_ref}",
+                                "reason": "Schedule conflict detected for resource",
                                 "detected_at": now,
                             }
                             self._violations.append(v)

@@ -391,9 +391,7 @@ class LiveChannelBindingEngine:
 
     def get_live_adapter(self, adapter_id: str) -> _LiveChannelAdapter:
         if adapter_id not in self._live_adapters:
-            raise RuntimeCoreInvariantError(
-                f"live adapter '{adapter_id}' not found"
-            )
+            raise RuntimeCoreInvariantError("live adapter not found")
         return self._live_adapters[adapter_id]
 
     def list_live_adapters(self) -> tuple[str, ...]:

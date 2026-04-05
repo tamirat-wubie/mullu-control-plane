@@ -96,13 +96,13 @@ class AuditAnchorStore:
         with self._lock:
             anchor = next((a for a in self._anchors if a.anchor_id == anchor_id), None)
         if anchor is None:
-            return {"valid": False, "reason": f"anchor not found: {anchor_id}"}
+            return {"valid": False, "reason": "anchor not found"}
 
         hashes = [getattr(e, "entry_hash", "") for e in audit_entries if getattr(e, "entry_hash", "")]
         if len(hashes) != anchor.entry_count:
             return {
                 "valid": False,
-                "reason": f"entry count mismatch: expected {anchor.entry_count}, got {len(hashes)}",
+                "reason": "entry count mismatch",
                 "anchor_id": anchor_id,
             }
 

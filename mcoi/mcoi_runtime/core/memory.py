@@ -53,11 +53,9 @@ class MemoryEntry:
         frozen_source_ids = freeze_value(tuple(self.source_ids))
         if not isinstance(frozen_source_ids, tuple):
             raise RuntimeCoreInvariantError("source_ids must freeze to a tuple")
-        for index, source_id in enumerate(frozen_source_ids):
+        for source_id in frozen_source_ids:
             if not isinstance(source_id, str) or not source_id.strip():
-                raise RuntimeCoreInvariantError(
-                    f"source_ids[{index}] must be a non-empty string"
-                )
+                raise RuntimeCoreInvariantError("source_ids must contain non-empty strings")
         object.__setattr__(self, "source_ids", frozen_source_ids)
 
 

@@ -90,7 +90,8 @@ class TestMCPToolCalls:
         server = MulluMCPServer(platform=_platform())
         result = server.call_tool("nonexistent", {})
         assert result.is_error
-        assert "Unknown tool" in result.content
+        assert result.content == "Unknown tool"
+        assert "nonexistent" not in result.content
 
     def test_llm_without_bridge(self):
         server = MulluMCPServer(platform=_platform())
@@ -191,3 +192,5 @@ class TestMCPJsonRPC:
         resp = server.handle_jsonrpc({"jsonrpc": "2.0", "id": 4, "method": "unknown/method"})
         assert "error" in resp
         assert resp["error"]["code"] == -32601
+        assert resp["error"]["message"] == "Method not found"
+        assert "unknown/method" not in resp["error"]["message"]

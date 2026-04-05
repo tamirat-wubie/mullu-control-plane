@@ -158,15 +158,11 @@ class StructuredOutputEngine:
             if not isinstance(field_name, str) or not field_name.strip():
                 raise ValueError("schema field names must be non-empty strings")
             if expected_type not in _SUPPORTED_FIELD_TYPES:
-                raise ValueError(
-                    f"unsupported field type for '{field_name}': {expected_type}"
-                )
+                raise ValueError("unsupported field type")
 
         for field_name in schema.required_fields:
             if field_name not in schema.fields:
-                raise ValueError(
-                    f"required field not declared in schema fields: {field_name}"
-                )
+                raise ValueError("required field not declared in schema fields")
 
     def list_schemas(self) -> list[OutputSchema]:
         return sorted(self._schemas.values(), key=lambda schema: schema.schema_id)

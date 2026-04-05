@@ -325,8 +325,10 @@ class TestInvalidTransitions:
             sla_status=SlaStatus.NOT_APPLICABLE,
             updated_at=_T3,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="invalid job state transition"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid job state transition$") as exc_info:
             engine.start_job(desc.job_id)
+        assert JobStatus.ARCHIVED.value not in str(exc_info.value)
+        assert JobStatus.IN_PROGRESS.value not in str(exc_info.value)
 
     def test_complete_created_raises(self):
         """Cannot complete a job that hasn't started."""

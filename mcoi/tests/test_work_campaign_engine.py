@@ -236,8 +236,9 @@ class TestStartRun:
 
     def test_start_run_unknown_campaign(self):
         eng = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^campaign not found$") as exc_info:
             eng.start_run("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_run_count_increments(self):
         eng = _make_engine()

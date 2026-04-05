@@ -123,6 +123,13 @@ class TestBridgeMethods:
         expected_keys = {"node_id", "claim_id", "tenant_id", "node_status", "claim_sync", "source_type"}
         assert set(result.keys()) == expected_keys
 
+    def test_bridge_claim_content_is_bounded(self):
+        integ, fed, _, _ = _make_integration()
+        result = integ.federated_from_partner(_T1)
+        claim = fed._claims[result["claim_id"]]
+        assert claim.content == "federated bridge claim"
+        assert "partner" not in claim.content
+
     def test_multiple_bridges_same_tenant(self):
         integ, fed, _, _ = _make_integration()
         for _ in range(5):

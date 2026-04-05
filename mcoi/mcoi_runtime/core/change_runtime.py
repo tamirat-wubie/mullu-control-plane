@@ -639,7 +639,5 @@ class ChangeRuntimeEngine:
             raise RuntimeCoreInvariantError("change not found")
         valid = _VALID_TRANSITIONS.get(current, set())
         if new_status not in valid:
-            raise RuntimeCoreInvariantError(
-                f"invalid transition for '{change_id}': {current.value} → {new_status.value}"
-            )
+            raise RuntimeCoreInvariantError("invalid transition")
         self._status[change_id] = new_status

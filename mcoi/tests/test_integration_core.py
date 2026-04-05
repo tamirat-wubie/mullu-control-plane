@@ -100,8 +100,9 @@ def test_duplicate_registration_rejected() -> None:
     engine = IntegrationEngine(clock=lambda: _CLOCK)
     engine.register(_descriptor(), FakeConnectorAdapter())
 
-    with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+    with pytest.raises(RuntimeCoreInvariantError, match="^connector already registered$") as exc_info:
         engine.register(_descriptor(), FakeConnectorAdapter())
+    assert "conn-1" not in str(exc_info.value)
 
 
 def test_list_connectors() -> None:

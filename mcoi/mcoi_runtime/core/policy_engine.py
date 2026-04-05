@@ -179,7 +179,7 @@ class PolicyEngine(Generic[DecisionT]):
             (
                 PolicyReason(
                     code="no_policy_rule_matched",
-                    message=f"no policy rule matched for pack: {pack.pack_id}",
+                    message="no policy rule matched",
                 ),
             ),
         )

@@ -336,8 +336,10 @@ class TestSubmitForApproval:
         cre, _ = _engine()
         _make_change(cre)
         cre.submit_for_approval("chg-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="invalid transition"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid transition$") as exc_info:
             cre.submit_for_approval("chg-1")
+        assert "chg-1" not in str(exc_info.value)
+        assert "pending_approval" not in str(exc_info.value)
 
     def test_submit_emits_event(self):
         cre, es = _engine()

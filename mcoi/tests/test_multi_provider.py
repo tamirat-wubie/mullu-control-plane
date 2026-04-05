@@ -5,6 +5,7 @@ Uses stub mode (no httpx) — validates protocol compliance, message formatting,
 cost estimation, and error handling.
 """
 
+import builtins
 import sys
 import types
 
@@ -87,7 +88,7 @@ class TestGroqBackend:
         backend = GroqBackend()
         result = backend.call(_params("test"))
         # Without httpx or API key, returns stub response
-        assert result.finished or result.error == "provider credentials unavailable" or "groq" in result.content
+        assert result.finished or result.error == "provider credentials unavailable" or result.content == "provider stub response"
         assert "groq" not in result.error.lower()
 
     def test_call_count(self):
@@ -122,6 +123,25 @@ class TestGroqBackend:
         result = backend.call(_params("test"))
         assert result.error == "provider error (RuntimeError)"
         assert "upstream secret" not in result.error
+
+    def test_stub_response_is_bounded_when_httpx_missing(self, monkeypatch):
+        backend = GroqBackend()
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        original_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "httpx":
+                raise ImportError("httpx unavailable")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+
+        result = backend.call(_params("secret prompt"))
+
+        assert result.finished is True
+        assert result.content == "provider stub response"
+        assert "secret prompt" not in result.content
+        assert "groq" not in result.content.lower()
 
 
 class TestGeminiBackend:

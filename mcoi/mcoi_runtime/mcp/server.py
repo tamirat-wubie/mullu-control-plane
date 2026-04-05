@@ -195,7 +195,7 @@ class MulluMCPServer:
             elif name == "mullu_pay":
                 return self._tool_pay(session, arguments)
             else:
-                return MCPToolResult(content=f"Unknown tool: {name}", is_error=True)
+                return MCPToolResult(content="Unknown tool", is_error=True)
         except Exception as exc:
             return MCPToolResult(
                 content=_bounded_mcp_error("Tool error", "mcp tool execution failed", exc),
@@ -308,7 +308,7 @@ class MulluMCPServer:
 
         return {
             "jsonrpc": "2.0", "id": req_id,
-            "error": {"code": -32601, "message": f"Method not found: {method}"},
+            "error": {"code": -32601, "message": "Method not found"},
         }
 
     def run_stdio(self) -> None:

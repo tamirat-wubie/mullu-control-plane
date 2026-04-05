@@ -59,13 +59,15 @@ def test_load_profile_with_overrides() -> None:
 
 
 def test_unknown_profile_fails() -> None:
-    with pytest.raises(ProfileLoadError, match="unknown profile"):
+    with pytest.raises(ProfileLoadError, match="^unknown profile$") as exc_info:
         load_profile("nonexistent-profile")
+    assert "nonexistent-profile" not in str(exc_info.value)
 
 
 def test_unknown_override_key_fails() -> None:
-    with pytest.raises(ProfileLoadError, match="unknown config key"):
+    with pytest.raises(ProfileLoadError, match="^unknown config key in overrides$") as exc_info:
         load_profile(ProfileName.LOCAL_DEV, overrides={"bad_key": "value"})
+    assert "bad_key" not in str(exc_info.value)
 
 
 def test_list_profiles_returns_all() -> None:

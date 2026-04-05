@@ -51,7 +51,7 @@ class CSAutomationEngine:
             account_id=account_id,
             signal_type="adoption_weak",
             severity=severity,
-            detail=f"Low activity: views={dashboard_views}, workflows={workflow_completions}, copilot={copilot_queries}",
+            detail="Low activity detected",
         )
         self._signals.append(sig)
         return sig
@@ -79,7 +79,7 @@ class CSAutomationEngine:
             account_id=account_id,
             signal_type="renewal_risk",
             severity=severity,
-            detail=f"satisfaction={satisfaction}, tickets={support_tickets}, days_to_renewal={days_to_renewal}",
+            detail="Renewal risk indicators present",
         )
         self._signals.append(sig)
         return sig
@@ -98,7 +98,7 @@ class CSAutomationEngine:
             account_id=account_id,
             signal_type="expansion_ready",
             severity=severity,
-            detail=f"activation={activation_rate:.0%}, months={months_active}, pack={current_pack}",
+            detail="Expansion readiness indicators present",
         )
         self._signals.append(sig)
         return sig
@@ -120,7 +120,7 @@ class CSAutomationEngine:
             account_id=account_id,
             signal_type="stakeholder_disengaged",
             severity=severity,
-            detail=f"exec_logins_30d={executive_logins_30d}, last_review={last_review_days_ago}d ago",
+            detail="Stakeholder disengagement indicators present",
         )
         self._signals.append(sig)
         return sig

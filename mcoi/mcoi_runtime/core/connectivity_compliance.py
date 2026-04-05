@@ -143,7 +143,7 @@ class ConnectivityComplianceEngine:
         ):
             return {
                 "needs_rotation": True,
-                "reason": f"credential is {scope.rotation_state.value}",
+                "reason": "credential requires urgent rotation",
                 "urgent": True,
             }
 
@@ -164,7 +164,7 @@ class ConnectivityComplianceEngine:
             if hours_remaining <= hours_until_expiry:
                 return {
                     "needs_rotation": True,
-                    "reason": f"expires in {hours_remaining:.1f} hours",
+                    "reason": "credential nearing expiry",
                     "urgent": hours_remaining <= 1,
                 }
         except (ValueError, TypeError):
@@ -429,7 +429,11 @@ class ConnectivityComplianceEngine:
         )
         results["checks"]["health"] = {
             "passed": health_ok,
-            "reason": f"state={desc.health_state.value}, enabled={desc.enabled}",
+            "reason": (
+                "connector health check passed"
+                if health_ok
+                else "connector health check failed"
+            ),
         }
         if not health_ok:
             results["passed"] = False

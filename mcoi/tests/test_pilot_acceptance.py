@@ -116,6 +116,30 @@ class TestDataImport:
         assert result.conflicts == 1
         assert result.errors == []
 
+    def test_acceptance_seed_titles_are_bounded(self):
+        importer = Mock()
+        captured: dict[str, list[dict[str, str]]] = {}
+
+        def _import_all(tenant_id: str, sample: dict[str, list[dict[str, str]]]):
+            captured.update(sample)
+            return {
+                "cases": Mock(accepted=3),
+                "remediations": Mock(accepted=2),
+                "records": Mock(accepted=3),
+            }
+
+        importer.import_all = _import_all
+        acceptance = PilotAcceptanceTest(Mock(), importer)
+
+        acceptance._test_3_data_import(TENANT)
+
+        assert {item["title"] for item in captured["cases"]} == {"Acceptance test case"}
+        assert {item["title"] for item in captured["remediations"]} == {"Acceptance remediation"}
+        assert {item["title"] for item in captured["records"]} == {"Acceptance record"}
+        assert "accept-case-0" not in captured["cases"][0]["title"]
+        assert "accept-rem-0" not in captured["remediations"][0]["title"]
+        assert "accept-rec-0" not in captured["records"][0]["title"]
+
 class TestSloConfig:
     def test_slo_definitions(self):
         assert len(PILOT_SLOS) == 5

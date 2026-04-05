@@ -516,7 +516,7 @@ class CausalRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": tenant_id,
                         "operation": "unresolved_intervention",
-                        "reason": f"Intervention {iid} is still PROPOSED",
+                        "reason": "Intervention remains unresolved",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -534,7 +534,7 @@ class CausalRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": tenant_id,
                             "operation": "orphan_edge",
-                            "reason": f"Edge {eid} references non-existent node(s)",
+                            "reason": "Causal edge references missing node",
                             "detected_at": now,
                         }
                         self._violations[vid] = v

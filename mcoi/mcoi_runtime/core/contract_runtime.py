@@ -672,7 +672,7 @@ class ContractRuntimeEngine:
                                 "contract_id": window.contract_id,
                                 "window_id": window.window_id,
                                 "operation": "overdue_renewal",
-                                "reason": f"Renewal window {window.window_id} overdue",
+                                "reason": "Renewal window overdue",
                                 "detected_at": now,
                             }
                             self._violations[vid] = v
@@ -694,7 +694,7 @@ class ContractRuntimeEngine:
                                 "violation_id": vid,
                                 "contract_id": contract.contract_id,
                                 "operation": "expired_active_contract",
-                                "reason": f"Contract expired at {contract.expires_at} but still active",
+                                "reason": "Active contract has expired",
                                 "detected_at": now,
                             }
                             self._violations[vid] = v

@@ -135,7 +135,7 @@ def _openai_compatible_call(
         output_tokens = max(1, 20)
         cost = (input_tokens * cost_per_1k_input + output_tokens * cost_per_1k_output) / 1000
         return LLMResult(
-            content=f"{provider.value}-response:{content_hash}",
+            content="provider stub response",
             input_tokens=input_tokens, output_tokens=output_tokens, cost=cost,
             model_name=model, provider=provider, finished=True,
         )

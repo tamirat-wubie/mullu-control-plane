@@ -286,6 +286,8 @@ def test_verification_triggers_compensation() -> None:
     # Compensation was registered
     assert recovery.count == 1
     assert recovery.pending_count() == 1
+    assert recovery._compensations["comp-intent-1"].detail == "execution verification failed"
+    assert "expected=" not in recovery._compensations["comp-intent-1"].detail
 
 
 # ── 8. Action binding creates non-repudiable record ──

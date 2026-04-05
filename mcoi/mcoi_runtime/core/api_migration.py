@@ -103,7 +103,7 @@ class ApiMigrationEngine:
         if not v:
             return {"status": "not_found", "code": 404}
         if v.status == VersionStatus.RETIRED:
-            return {"status": "gone", "code": 410, "message": f"API {version} retired"}
+            return {"status": "gone", "code": 410, "message": "API version retired"}
         headers: dict[str, str] = {}
         if v.status == VersionStatus.DEPRECATED:
             headers["Sunset"] = str(v.sunset_at) if v.sunset_at else "TBD"

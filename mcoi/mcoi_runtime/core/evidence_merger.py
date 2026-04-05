@@ -88,9 +88,7 @@ class EvidenceMerger:
             existing = target.get(entry.state_key)
 
             if existing is not None and existing.value != entry.value:
-                raise RuntimeCoreInvariantError(
-                    f"{entry.category.value} state conflict for {entry.state_key}: explicit reconciliation required"
-                )
+                raise RuntimeCoreInvariantError("state conflict requires explicit reconciliation")
 
             if existing is None:
                 target[entry.state_key] = StateAtom(
