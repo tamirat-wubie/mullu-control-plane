@@ -1,12 +1,15 @@
-"""Purpose: governance DSL compiler and evaluator — compiles policy bundles,
-detects conflicts, and evaluates rules against request contexts to produce
-deterministic, auditable governance decisions.
+"""Purpose: governance DSL compiler and evaluator.
+
+Compiles policy bundles, detects conflicts, and evaluates rules against
+request contexts to produce deterministic, auditable governance decisions.
+
 Governance scope: governance plane core logic only.
 Dependencies: governance contracts, autonomy contracts, invariant helpers.
 Invariants:
   - Compilation detects conflicts before rules are active.
   - Evaluation is deterministic and side-effect free.
-  - Higher-priority rules override lower-priority rules (DENY > ESCALATE > ALLOW).
+  - Higher-priority rules override lower-priority rules
+    (DENY > ESCALATE > ALLOW).
   - Every evaluation produces an auditable trace.
   - Clock is injected for deterministic timestamps.
 """
@@ -36,7 +39,7 @@ from .invariants import stable_identifier
 
 
 # ---------------------------------------------------------------------------
-# Effect precedence — used to resolve which effect wins when multiple rules fire
+# Effect precedence - used to resolve which effect wins when multiple rules fire
 # ---------------------------------------------------------------------------
 
 _EFFECT_PRECEDENCE: dict[PolicyEffect, int] = {
@@ -70,7 +73,7 @@ def evaluate_condition(condition: PolicyCondition, context: Mapping[str, Any]) -
         if isinstance(current, Mapping) and part in current:
             current = current[part]
         else:
-            # Field not found — exists/not_exists handle this; others fail
+            # Field not found - exists/not_exists handle this; others fail
             if condition.operator == PolicyConditionOperator.NOT_EXISTS:
                 return True
             return False
@@ -106,7 +109,7 @@ def evaluate_condition(condition: PolicyCondition, context: Mapping[str, Any]) -
                 return False
         return False
 
-    # Comparison operators — type-safe
+    # Comparison operators - type-safe
     try:
         if op == PolicyConditionOperator.GT:
             return current > expected
@@ -164,9 +167,8 @@ def _detect_conflicts(
                             severity=PolicyConflictSeverity.ERROR,
                             rule_ids=(ra.rule_id, rb.rule_id),
                             description=(
-                                f"Rules '{ra.rule_id}' and '{rb.rule_id}' have contradictory "
-                                f"effects ({ra.effect.value} vs {rb.effect.value}) at the same "
-                                f"priority in overlapping scopes"
+                                "overlapping rules have contradictory effects at the same "
+                                "priority"
                             ),
                             detected_at=clock(),
                         ))
@@ -181,9 +183,8 @@ def _detect_conflicts(
                         severity=PolicyConflictSeverity.WARNING,
                         rule_ids=(ra.rule_id, rb.rule_id),
                         description=(
-                            f"Rules '{ra.rule_id}' and '{rb.rule_id}' have the same priority "
-                            f"({ra.priority}) but different effects — resolution uses effect "
-                            f"precedence (DENY > ESCALATE > ALLOW)"
+                            "overlapping rules with the same priority have different effects; "
+                            "resolution uses effect precedence"
                         ),
                         detected_at=clock(),
                     ))
@@ -197,9 +198,9 @@ def _detect_conflicts(
 
 
 class GovernanceCompiler:
-    """Compiles governance bundles — validates rules, detects conflicts,
-    and produces a compilation result.
+    """Compiles governance bundles.
 
+    Validates rules, detects conflicts, and produces a compilation result.
     The compiler is stateless. It takes a bundle and returns a result.
     """
 
@@ -288,7 +289,7 @@ class GovernanceEvaluator:
         winning_effect = PolicyEffect.ALLOW  # default if no rules match
 
         for rule in rules:
-            # Evaluate all conditions — all must pass for a match
+            # Evaluate all conditions - all must pass for a match
             all_pass = all(
                 evaluate_condition(cond, context)
                 for cond in rule.conditions

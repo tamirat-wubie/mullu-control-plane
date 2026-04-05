@@ -233,7 +233,7 @@ class MetaReasoningBridge:
                     reason="confidence below escalation threshold",
                     severity=severity,
                     affected_ids=affected_ids,
-                    suggested_action=f"review {rel.decision_context} before proceeding",
+                    suggested_action="review affected decision context before proceeding",
                     created_at=now,
                 )
                 engine.recommend_escalation(rec)
@@ -267,10 +267,7 @@ class MetaReasoningBridge:
                     }),
                     subject=rel.decision_context,
                     source=UncertaintySource.LOW_CONFIDENCE,
-                    description=(
-                        f"{rel.decision_context} reliability {point:.2f} "
-                        f"below uncertainty threshold {uncertainty_threshold}"
-                    ),
+                    description="decision reliability below uncertainty threshold",
                     affected_ids=affected_ids,
                     created_at=now,
                 )

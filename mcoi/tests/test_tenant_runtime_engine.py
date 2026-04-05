@@ -765,6 +765,10 @@ class TestIsolationViolationDetection:
         violations = eng.detect_isolation_violations()
         assert len(violations) >= 1
         assert violations[0].violating_resource_ref == "shared-mem"
+        assert violations[0].description == "resource shared across tenant boundaries"
+        assert "shared-mem" not in violations[0].description
+        assert "t1" not in violations[0].description
+        assert "t2" not in violations[0].description
         assert violations[0].escalated is True
         assert eng.violation_count >= 1
         assert len(es.list_events()) > before
@@ -831,8 +835,9 @@ class TestIsolationViolationDetection:
         eng.bind_workspace_resource("b2", "ws2", "graph-1", ScopeBoundaryKind.GRAPH)
         viols = eng.detect_isolation_violations()
         assert len(viols) >= 1
-        assert "t1" in viols[0].description
-        assert "t2" in viols[0].description
+        assert viols[0].description == "resource shared across tenant boundaries"
+        assert "t1" not in viols[0].description
+        assert "t2" not in viols[0].description
 
     def test_empty_engine_no_violations(self, env):
         _, eng = env

@@ -574,10 +574,7 @@ class TenantRuntimeEngine:
                                 workspace_id=binding.workspace_id,
                                 boundary_kind=policy.boundary_kind,
                                 violating_resource_ref=binding.resource_ref_id,
-                                description=(
-                                    f"Resource {binding.resource_ref_id} shared across "
-                                    f"tenants {tenant_id} and {other_ws.tenant_id}"
-                                ),
+                                description="resource shared across tenant boundaries",
                                 escalated=True,
                                 detected_at=now,
                             )

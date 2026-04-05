@@ -104,11 +104,26 @@ jobs:
       - name: Validate release status
         run: python scripts/validate_release_status.py
 
+  reflective-contract-guard:
+    name: Reflective Contract Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate outward-facing contract strings
+        run: python scripts/validate_reflective_contracts.py
+
   build-verification:
     name: Build Verification
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [python-tests, rust-tests, schema-validation]
+    needs: [python-tests, rust-tests, schema-validation, reflective-contract-guard]
     steps:
       - uses: actions/checkout@v4
 
