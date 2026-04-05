@@ -2419,3 +2419,46 @@ class TestGoldenEndToEnd:
         assert "evidence_free_synthesis" in ops
         assert "incomplete_study" in ops
         assert "unreviewed_closure" in ops
+
+
+class TestBoundedContracts:
+    def test_duplicate_question_error_is_bounded(self, engine):
+        engine.register_question("question-secret", "tenant-secret", "Sensitive", "Desc")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_question("question-secret", "tenant-secret", "Sensitive", "Desc")
+
+        message = str(excinfo.value)
+        assert message == "Duplicate question_id"
+        assert "question-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_violation_reasons_are_bounded(self, engine):
+        engine.register_question("q-evidence", "tenant-secret", "Evidence", "Desc")
+        engine.register_hypothesis("h-evidence", "tenant-secret", "q-evidence", "Statement")
+        engine.build_evidence_synthesis("syn-secret", "tenant-secret", "h-evidence")
+
+        engine.register_question("q-study", "tenant-secret", "Study", "Desc")
+        engine.register_hypothesis("h-study", "tenant-secret", "q-study", "Statement")
+        engine.register_study_protocol("study-secret", "tenant-secret", "h-study", "Study")
+        engine.approve_study("study-secret")
+        engine.start_study("study-secret")
+
+        engine.register_question("q-review", "tenant-secret", "Review", "Desc")
+        engine.register_hypothesis("h-review", "tenant-secret", "q-review", "Statement")
+        engine.register_study_protocol("study-review", "tenant-secret", "h-review", "Review Study")
+        engine.approve_study("study-review")
+        engine.start_study("study-review")
+        engine.start_experiment("experiment-secret", "tenant-secret", "study-review", "pending")
+        engine.complete_study("study-review")
+
+        violations = engine.detect_research_violations()
+        reasons = {violation["operation"]: violation["reason"] for violation in violations}
+        joined = " ".join(reasons.values())
+
+        assert reasons["evidence_free_synthesis"] == "Evidence synthesis has no supporting evidence"
+        assert reasons["incomplete_study"] == "Study is in progress with no experiments"
+        assert reasons["unreviewed_closure"] == "Completed study has no peer reviews"
+        assert "syn-secret" not in joined
+        assert "study-secret" not in joined
+        assert "experiment-secret" not in joined

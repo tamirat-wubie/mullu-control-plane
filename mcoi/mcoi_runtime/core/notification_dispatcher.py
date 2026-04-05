@@ -19,6 +19,11 @@ from enum import Enum, unique
 from typing import Any, Callable
 
 
+def _bounded_notification_error(exc: Exception) -> str:
+    """Return a stable handler failure without raw backend detail."""
+    return f"notification handler error ({type(exc).__name__})"
+
+
 @unique
 class NotificationChannel(Enum):
     WEBHOOK = "webhook"
@@ -119,7 +124,9 @@ class NotificationDispatcher:
                 notification_id=notification.notification_id,
                 channel=notification.channel,
                 recipient=notification.recipient,
-                delivered=False, timestamp=now, error=str(e),
+                delivered=False,
+                timestamp=now,
+                error=_bounded_notification_error(e),
             )
             self._deliveries.append(record)
             self._total_failed += 1

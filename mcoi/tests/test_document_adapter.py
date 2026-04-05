@@ -75,7 +75,7 @@ class TestMissingFile:
         result = adapter.load("/nonexistent/path/to/file.txt")
         assert result.status is DocumentLoadStatus.NOT_FOUND
         assert result.document is None
-        assert result.error_message is not None
+        assert result.error_message == "file not found"
 
     def test_empty_path_raises(self, adapter: LocalDocumentAdapter) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -105,6 +105,29 @@ class TestUnsupportedExtension:
         p.write_text("all: build", encoding="utf-8")
         result = adapter.load(str(p))
         assert result.status is DocumentLoadStatus.UNSUPPORTED
+
+
+class TestReadErrors:
+    def test_read_error_is_bounded(self, adapter: LocalDocumentAdapter, monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
+        import pathlib
+
+        p = pathlib.Path(str(tmp_path)) / "sample.txt"
+        p.write_text("hello world", encoding="utf-8")
+        original_read_text = pathlib.Path.read_text
+
+        def crashing_read_text(self: pathlib.Path, *args, **kwargs):
+            if self == p:
+                raise OSError("secret document failure")
+            return original_read_text(self, *args, **kwargs)
+
+        monkeypatch.setattr(pathlib.Path, "read_text", crashing_read_text)
+
+        result = adapter.load(str(p))
+
+        assert result.status is DocumentLoadStatus.READ_ERROR
+        assert result.document is None
+        assert result.error_message == "read error (OSError)"
+        assert "secret document failure" not in (result.error_message or "")
 
 
 # --- Fingerprinting tests ---

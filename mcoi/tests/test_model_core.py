@@ -131,8 +131,12 @@ def test_duplicate_registration_rejected() -> None:
     engine = ModelOrchestrationEngine(clock=lambda: _CLOCK)
     engine.register(_descriptor(), FakeModelAdapter())
 
-    with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+    with pytest.raises(
+        RuntimeCoreInvariantError,
+        match="^model already registered$",
+    ) as exc_info:
         engine.register(_descriptor(), FakeModelAdapter())
+    assert "m-1" not in str(exc_info.value)
 
 
 def test_list_models() -> None:

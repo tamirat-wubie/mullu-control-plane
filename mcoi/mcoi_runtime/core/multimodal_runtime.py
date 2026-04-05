@@ -133,7 +133,7 @@ class MultimodalRuntimeEngine:
     ) -> VoiceSession:
         """Start a new voice session."""
         if session_id in self._sessions:
-            raise RuntimeCoreInvariantError(f"Duplicate session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Duplicate session_id")
         now = self._now()
         session = VoiceSession(
             session_id=session_id,
@@ -154,7 +154,7 @@ class MultimodalRuntimeEngine:
     def get_session(self, session_id: str) -> VoiceSession:
         s = self._sessions.get(session_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         return s
 
     def sessions_for_tenant(self, tenant_id: str) -> tuple[VoiceSession, ...]:
@@ -183,13 +183,9 @@ class MultimodalRuntimeEngine:
         """Pause an active session."""
         old = self.get_session(session_id)
         if old.status == "ended":
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state ended"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         if old.status != "active":
-            raise RuntimeCoreInvariantError(
-                f"Cannot pause session in {old.status} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot pause session in current state")
         updated = self._replace_session(session_id, status="paused")
         _emit(self._events, "voice_session_paused", {
             "session_id": session_id,
@@ -200,13 +196,9 @@ class MultimodalRuntimeEngine:
         """Resume a paused session."""
         old = self.get_session(session_id)
         if old.status == "ended":
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state ended"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         if old.status != "paused":
-            raise RuntimeCoreInvariantError(
-                f"Cannot resume session in {old.status} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot resume session in current state")
         updated = self._replace_session(session_id, status="active")
         _emit(self._events, "voice_session_resumed", {
             "session_id": session_id,
@@ -217,9 +209,7 @@ class MultimodalRuntimeEngine:
         """End a session. Terminal state."""
         old = self.get_session(session_id)
         if old.status == "ended":
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state ended"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         updated = self._replace_session(session_id, status="ended")
         _emit(self._events, "voice_session_ended", {
             "session_id": session_id,
@@ -257,7 +247,7 @@ class MultimodalRuntimeEngine:
     def get_presence(self, presence_id: str) -> PresenceRecord:
         p = self._presence.get(presence_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown presence_id: {presence_id}")
+            raise RuntimeCoreInvariantError("Unknown presence_id")
         return p
 
     def presence_for_tenant(self, tenant_id: str) -> tuple[PresenceRecord, ...]:
@@ -279,12 +269,10 @@ class MultimodalRuntimeEngine:
     ) -> SpeechTurn:
         """Record a speech turn. Session must exist and be active."""
         if turn_id in self._turns:
-            raise RuntimeCoreInvariantError(f"Duplicate turn_id: {turn_id}")
+            raise RuntimeCoreInvariantError("Duplicate turn_id")
         session = self.get_session(session_ref)
         if session.status != "active":
-            raise RuntimeCoreInvariantError(
-                f"Session {session_ref} is not active (status: {session.status})"
-            )
+            raise RuntimeCoreInvariantError("Session is not active")
         now = self._now()
         turn = SpeechTurn(
             turn_id=turn_id,
@@ -317,7 +305,7 @@ class MultimodalRuntimeEngine:
     ) -> StreamingTranscript:
         """Record a streaming transcript fragment."""
         if transcript_id in self._transcripts:
-            raise RuntimeCoreInvariantError(f"Duplicate transcript_id: {transcript_id}")
+            raise RuntimeCoreInvariantError("Duplicate transcript_id")
         self.get_session(session_ref)  # validates existence
         now = self._now()
         transcript = StreamingTranscript(
@@ -350,7 +338,7 @@ class MultimodalRuntimeEngine:
     ) -> VoiceActionPlan:
         """Build a voice action plan."""
         if plan_id in self._plans:
-            raise RuntimeCoreInvariantError(f"Duplicate plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("Duplicate plan_id")
         self.get_session(session_ref)  # validates existence
         now = self._now()
         plan = VoiceActionPlan(
@@ -381,7 +369,7 @@ class MultimodalRuntimeEngine:
     ) -> InterruptionRecord:
         """Record an interruption. Starts as DETECTED."""
         if interruption_id in self._interruptions:
-            raise RuntimeCoreInvariantError(f"Duplicate interruption_id: {interruption_id}")
+            raise RuntimeCoreInvariantError("Duplicate interruption_id")
         self.get_session(session_ref)  # validates existence
         now = self._now()
         record = InterruptionRecord(
@@ -401,7 +389,7 @@ class MultimodalRuntimeEngine:
     def _replace_interruption(self, interruption_id: str, **kwargs: Any) -> InterruptionRecord:
         old = self._interruptions.get(interruption_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown interruption_id: {interruption_id}")
+            raise RuntimeCoreInvariantError("Unknown interruption_id")
         fields = {
             "interruption_id": old.interruption_id,
             "tenant_id": old.tenant_id,
@@ -420,11 +408,9 @@ class MultimodalRuntimeEngine:
         """Acknowledge a DETECTED interruption."""
         old = self._interruptions.get(interruption_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown interruption_id: {interruption_id}")
+            raise RuntimeCoreInvariantError("Unknown interruption_id")
         if old.status != InterruptionStatus.DETECTED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot acknowledge interruption in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot acknowledge interruption in current state")
         updated = self._replace_interruption(interruption_id, status=InterruptionStatus.ACKNOWLEDGED)
         _emit(self._events, "interruption_acknowledged", {
             "interruption_id": interruption_id,
@@ -435,11 +421,9 @@ class MultimodalRuntimeEngine:
         """Resume from an ACKNOWLEDGED interruption."""
         old = self._interruptions.get(interruption_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown interruption_id: {interruption_id}")
+            raise RuntimeCoreInvariantError("Unknown interruption_id")
         if old.status != InterruptionStatus.ACKNOWLEDGED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot resume from interruption in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot resume interruption in current state")
         updated = self._replace_interruption(interruption_id, status=InterruptionStatus.RESUMED)
         _emit(self._events, "interruption_resumed", {
             "interruption_id": interruption_id,
@@ -450,11 +434,9 @@ class MultimodalRuntimeEngine:
         """Dismiss a DETECTED or ACKNOWLEDGED interruption."""
         old = self._interruptions.get(interruption_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown interruption_id: {interruption_id}")
+            raise RuntimeCoreInvariantError("Unknown interruption_id")
         if old.status not in (InterruptionStatus.DETECTED, InterruptionStatus.ACKNOWLEDGED):
-            raise RuntimeCoreInvariantError(
-                f"Cannot dismiss interruption in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot dismiss interruption in current state")
         updated = self._replace_interruption(interruption_id, status=InterruptionStatus.DISMISSED)
         _emit(self._events, "interruption_dismissed", {
             "interruption_id": interruption_id,
@@ -475,7 +457,7 @@ class MultimodalRuntimeEngine:
     ) -> MultimodalDecision:
         """Record a multimodal decision."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         self.get_session(session_ref)  # validates existence
         now = self._now()
         dec = MultimodalDecision(
@@ -500,9 +482,7 @@ class MultimodalRuntimeEngine:
         """Handoff a session to a new channel."""
         old = self.get_session(session_id)
         if old.status == "ended":
-            raise RuntimeCoreInvariantError(
-                f"Session {session_id} is in terminal state ended"
-            )
+            raise RuntimeCoreInvariantError("Session is in terminal state")
         updated = self._replace_session(session_id, channel=new_channel)
         self._handoff_sessions.add(session_id)
         _emit(self._events, "session_handoff", {
@@ -562,7 +542,7 @@ class MultimodalRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="session_no_turns",
-                            reason=f"Session {sess.session_id} is active with zero speech turns",
+                            reason="Active session has zero speech turns",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -599,7 +579,7 @@ class MultimodalRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="stale_presence",
-                            reason=f"Presence {pres.presence_id} is AVAILABLE but no active session for {pres.identity_ref}",
+                            reason="Available presence has no active session",
                             detected_at=now,
                         )
                         self._violations[vid] = v

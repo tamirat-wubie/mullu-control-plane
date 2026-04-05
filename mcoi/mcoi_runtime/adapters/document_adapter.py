@@ -18,6 +18,11 @@ from mcoi_runtime.core.document import ingest_document
 from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
 
 
+def _bounded_document_error(summary: str, exc: Exception) -> str:
+    """Return a stable document-load failure without raw filesystem detail."""
+    return f"{summary} ({type(exc).__name__})"
+
+
 class DocumentLoadStatus(StrEnum):
     LOADED = "loaded"
     NOT_FOUND = "not_found"
@@ -50,7 +55,7 @@ class LocalDocumentAdapter:
         if not path.exists():
             return DocumentLoadResult(
                 status=DocumentLoadStatus.NOT_FOUND,
-                error_message=f"file not found: {source_path}",
+                error_message="file not found",
             )
 
         ext = path.suffix.lower()
@@ -65,7 +70,7 @@ class LocalDocumentAdapter:
         except OSError as exc:
             return DocumentLoadResult(
                 status=DocumentLoadStatus.READ_ERROR,
-                error_message=f"read error: {exc}",
+                error_message=_bounded_document_error("read error", exc),
             )
 
         document_id = stable_identifier("doc", {

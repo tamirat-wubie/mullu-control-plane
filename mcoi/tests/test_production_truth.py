@@ -40,7 +40,9 @@ def test_tenant_spoofing_rejected_in_require_auth() -> None:
     ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": "spoofed-tenant"}
     result = guard.check(ctx)
     assert not result.allowed
-    assert "mismatch" in result.reason
+    assert result.reason == "tenant mismatch"
+    assert "tenant-a" not in result.reason
+    assert "spoofed-tenant" not in result.reason
 
 
 def test_tenant_spoofing_overridden_in_permissive_mode() -> None:
@@ -96,13 +98,16 @@ def test_missing_entries_detected() -> None:
     # Verify with fewer entries
     result = store.verify_anchor(anchor.anchor_id, entries[:5])
     assert result["valid"] is False
-    assert "count mismatch" in result["reason"]
+    assert result["reason"] == "entry count mismatch"
+    assert "10" not in result["reason"]
 
 
 def test_anchor_not_found() -> None:
     store = AuditAnchorStore(clock=lambda: _CLOCK)
     result = store.verify_anchor("nonexistent", [])
     assert result["valid"] is False
+    assert result["reason"] == "anchor not found"
+    assert "nonexistent" not in result["reason"]
 
 
 def test_list_anchors() -> None:

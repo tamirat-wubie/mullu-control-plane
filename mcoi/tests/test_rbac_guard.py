@@ -11,6 +11,7 @@ from mcoi_runtime.core.governance_guard import (
 )
 from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
 from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.invariants import DuplicateRuntimeIdentifierError, RuntimeCoreInvariantError
 from mcoi_runtime.contracts.access_runtime import (
     AccessDecision,
     AuthContextKind,
@@ -128,7 +129,8 @@ class TestRBACGuardPermissions:
         ctx = {"authenticated_subject": "unknown-user", "endpoint": "/api/v1/test", "method": "GET"}
         result = guard.check(ctx)
         assert not result.allowed
-        assert "denied" in result.reason
+        assert result.reason == "access denied"
+        assert "unknown-user" not in result.reason
 
     def test_disabled_identity_denied(self):
         engine = _engine()
@@ -138,7 +140,39 @@ class TestRBACGuardPermissions:
         ctx = {"authenticated_subject": "disabled1", "endpoint": "/api/v1/test", "method": "GET"}
         result = guard.check(ctx)
         assert not result.allowed
-        assert "denied" in result.reason
+        assert result.reason == "access denied"
+        assert "disabled1" not in result.reason
+
+    def test_authenticated_approval_requirement_is_bounded(self):
+        class ApprovalRuntime:
+            def evaluate_access(self, *_args, **_kwargs):
+                return type(
+                    "ApprovalResult",
+                    (),
+                    {
+                        "decision": AccessDecision.REQUIRES_APPROVAL,
+                        "reason": "secret approval routing detail",
+                    },
+                )()
+
+        guard = create_rbac_guard(ApprovalRuntime())
+        ctx = {"authenticated_subject": "user1", "endpoint": "/api/v1/test", "method": "GET"}
+        result = guard.check(ctx)
+        assert not result.allowed
+        assert result.reason == "approval required"
+        assert "secret approval routing detail" not in result.reason
+
+    def test_authenticated_evaluation_failure_fails_closed(self):
+        class BrokenAccessRuntime:
+            def evaluate_access(self, *_args, **_kwargs):
+                raise RuntimeError("secret policy backend detail")
+
+        guard = create_rbac_guard(BrokenAccessRuntime())
+        ctx = {"authenticated_subject": "user1", "endpoint": "/api/v1/test", "method": "GET"}
+        result = guard.check(ctx)
+        assert not result.allowed
+        assert result.reason == "RBAC evaluation failed"
+        assert "secret policy backend detail" not in result.reason
 
 
 # ═══ RBAC Guard — Resource Type Extraction ═══
@@ -206,6 +240,9 @@ class TestDefaultPermissionSeeding:
         engine = _engine()
         seed_default_permissions(engine)
         assert engine.role_count >= 5  # admin, operator, developer, viewer, auditor
+        roles = {r.role_id: r for r in engine._roles.values()}
+        assert roles["admin"].description == "Default role"
+        assert "Admin" not in roles["admin"].description
 
     def test_seed_idempotent(self):
         engine = _engine()
@@ -220,3 +257,81 @@ class TestDefaultPermissionSeeding:
         roles = {r.role_id: r for r in engine._roles.values()}
         assert "admin" in roles
         assert "*:*" in roles["admin"].permissions
+
+    def test_seed_skips_typed_duplicates_without_message_shape_dependency(self):
+        class DuplicateWitnessEngine:
+            def __init__(self) -> None:
+                self._roles: set[str] = set()
+                self._rules: set[str] = set()
+
+            def has_role(self, _role_id: str) -> bool:
+                return False
+
+            def has_permission_rule(self, _rule_id: str) -> bool:
+                return False
+
+            def register_role(self, role_id, *_args, **_kwargs):
+                if role_id in self._roles:
+                    raise DuplicateRuntimeIdentifierError("role already present under a changed contract")
+                self._roles.add(role_id)
+
+            def add_permission_rule(self, rule_id, *_args, **_kwargs):
+                if rule_id in self._rules:
+                    raise DuplicateRuntimeIdentifierError("rule already present under a changed contract")
+                self._rules.add(rule_id)
+
+        engine = DuplicateWitnessEngine()
+        first = seed_default_permissions(engine)
+        second = seed_default_permissions(engine)
+
+        assert first >= 8
+        assert second == 0
+
+    def test_seed_raises_on_non_duplicate_role_failure(self):
+        class BrokenRoleSeedEngine:
+            def __init__(self) -> None:
+                self.role_calls: list[str] = []
+                self.rule_calls: list[str] = []
+
+            def register_role(self, role_id, *_args, **_kwargs):
+                self.role_calls.append(role_id)
+                if role_id == "developer":
+                    raise RuntimeCoreInvariantError("role registry unavailable")
+
+            def add_permission_rule(self, rule_id, *_args, **_kwargs):
+                self.rule_calls.append(rule_id)
+
+        engine = BrokenRoleSeedEngine()
+        with pytest.raises(RuntimeCoreInvariantError, match="role registry unavailable"):
+            seed_default_permissions(engine)
+        assert engine.role_calls[:3] == ["admin", "operator", "developer"]
+        assert engine.rule_calls == []
+        assert "developer" in engine.role_calls
+
+    def test_seed_raises_on_non_duplicate_rule_failure(self):
+        class BrokenRuleSeedEngine:
+            def __init__(self) -> None:
+                self.role_calls: list[str] = []
+                self.rule_calls: list[str] = []
+
+            def register_role(self, role_id, *_args, **_kwargs):
+                self.role_calls.append(role_id)
+
+            def add_permission_rule(self, rule_id, *_args, **_kwargs):
+                self.rule_calls.append(rule_id)
+                if rule_id == "rule-dev-llm":
+                    raise RuntimeCoreInvariantError("permission graph unavailable")
+
+        engine = BrokenRuleSeedEngine()
+        with pytest.raises(RuntimeCoreInvariantError, match="permission graph unavailable"):
+            seed_default_permissions(engine)
+        assert len(engine.role_calls) >= 5
+        assert engine.rule_calls[:6] == [
+            "rule-admin-all",
+            "rule-operator-llm",
+            "rule-operator-tenant",
+            "rule-operator-ops",
+            "rule-operator-audit",
+            "rule-dev-llm",
+        ]
+        assert "rule-dev-llm" in engine.rule_calls

@@ -71,9 +71,7 @@ def _assert_transition(current: JobStatus, target: JobStatus) -> None:
     """Validate that a state transition is legal."""
     allowed = _VALID_TRANSITIONS.get(current, frozenset())
     if target not in allowed:
-        raise RuntimeCoreInvariantError(
-            f"invalid job state transition: {current.value} -> {target.value}"
-        )
+        raise RuntimeCoreInvariantError("invalid job state transition")
 
 
 class WorkQueue:
@@ -104,7 +102,7 @@ class WorkQueue:
             enqueued_at=now,
         )
         if entry_id in self._entries:
-            raise RuntimeCoreInvariantError(f"duplicate queue entry: {entry_id}")
+            raise RuntimeCoreInvariantError("duplicate queue entry")
         self._entries[entry_id] = entry
         self._order.append(entry_id)
         return entry
@@ -149,7 +147,7 @@ class WorkQueue:
         ensure_non_empty_text("assigned_by_id", assigned_by_id)
         ensure_non_empty_text("reason", reason)
         if entry_id not in self._entries:
-            raise RuntimeCoreInvariantError(f"queue entry not found: {entry_id}")
+            raise RuntimeCoreInvariantError("queue entry not found")
         entry = self._entries[entry_id]
         now = self._clock()
         assignment_id = stable_identifier("assignment", {
@@ -235,13 +233,13 @@ class JobEngine:
         ensure_non_empty_text("job_id", job_id)
         state = self._states.get(job_id)
         if state is None:
-            raise RuntimeCoreInvariantError(f"job not found: {job_id}")
+            raise RuntimeCoreInvariantError("job not found")
         return state
 
     def _get_descriptor(self, job_id: str) -> JobDescriptor:
         descriptor = self._jobs.get(job_id)
         if descriptor is None:
-            raise RuntimeCoreInvariantError(f"job not found: {job_id}")
+            raise RuntimeCoreInvariantError("job not found")
         return descriptor
 
     def _transition(self, job_id: str, target: JobStatus) -> JobState:

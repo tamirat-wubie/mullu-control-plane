@@ -125,7 +125,7 @@ class ResearchRuntimeEngine:
     ) -> ResearchQuestion:
         """Register a new research question."""
         if question_id in self._questions:
-            raise RuntimeCoreInvariantError(f"Duplicate question_id: {question_id}")
+            raise RuntimeCoreInvariantError("Duplicate question_id")
         now = _now_iso()
         q = ResearchQuestion(
             question_id=question_id,
@@ -146,7 +146,7 @@ class ResearchRuntimeEngine:
         """Get a question by ID."""
         q = self._questions.get(question_id)
         if q is None:
-            raise RuntimeCoreInvariantError(f"Unknown question_id: {question_id}")
+            raise RuntimeCoreInvariantError("Unknown question_id")
         return q
 
     def questions_for_tenant(self, tenant_id: str) -> tuple[ResearchQuestion, ...]:
@@ -166,10 +166,10 @@ class ResearchRuntimeEngine:
     ) -> HypothesisRecord:
         """Register a hypothesis linked to a question."""
         if hypothesis_id in self._hypotheses:
-            raise RuntimeCoreInvariantError(f"Duplicate hypothesis_id: {hypothesis_id}")
+            raise RuntimeCoreInvariantError("Duplicate hypothesis_id")
         q = self._questions.get(question_id)
         if q is None:
-            raise RuntimeCoreInvariantError(f"Unknown question_id: {question_id}")
+            raise RuntimeCoreInvariantError("Unknown question_id")
         now = _now_iso()
         h = HypothesisRecord(
             hypothesis_id=hypothesis_id,
@@ -203,7 +203,7 @@ class ResearchRuntimeEngine:
         """Get a hypothesis by ID."""
         h = self._hypotheses.get(hypothesis_id)
         if h is None:
-            raise RuntimeCoreInvariantError(f"Unknown hypothesis_id: {hypothesis_id}")
+            raise RuntimeCoreInvariantError("Unknown hypothesis_id")
         return h
 
     # ------------------------------------------------------------------
@@ -219,9 +219,9 @@ class ResearchRuntimeEngine:
     ) -> StudyProtocol:
         """Register a study protocol linked to a hypothesis."""
         if study_id in self._studies:
-            raise RuntimeCoreInvariantError(f"Duplicate study_id: {study_id}")
+            raise RuntimeCoreInvariantError("Duplicate study_id")
         if hypothesis_id not in self._hypotheses:
-            raise RuntimeCoreInvariantError(f"Unknown hypothesis_id: {hypothesis_id}")
+            raise RuntimeCoreInvariantError("Unknown hypothesis_id")
         now = _now_iso()
         s = StudyProtocol(
             study_id=study_id,
@@ -242,18 +242,16 @@ class ResearchRuntimeEngine:
         """Get a study protocol by ID."""
         s = self._studies.get(study_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown study_id: {study_id}")
+            raise RuntimeCoreInvariantError("Unknown study_id")
         return s
 
     def _update_study_status(self, study_id: str, new_status: StudyStatus) -> StudyProtocol:
         """Update a study's status with terminal-state guard."""
         old = self._studies.get(study_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown study_id: {study_id}")
+            raise RuntimeCoreInvariantError("Unknown study_id")
         if old.status in (StudyStatus.COMPLETED, StudyStatus.CANCELLED):
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition study from terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot transition study from terminal state")
         updated = StudyProtocol(
             study_id=old.study_id,
             tenant_id=old.tenant_id,
@@ -299,10 +297,10 @@ class ResearchRuntimeEngine:
     ) -> ExperimentRun:
         """Start an experiment linked to a study."""
         if experiment_id in self._experiments:
-            raise RuntimeCoreInvariantError(f"Duplicate experiment_id: {experiment_id}")
+            raise RuntimeCoreInvariantError("Duplicate experiment_id")
         s = self._studies.get(study_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown study_id: {study_id}")
+            raise RuntimeCoreInvariantError("Unknown study_id")
         now = _now_iso()
         exp = ExperimentRun(
             experiment_id=experiment_id,
@@ -341,11 +339,9 @@ class ResearchRuntimeEngine:
         """Record an experiment result (COMPLETED or FAILED)."""
         old = self._experiments.get(experiment_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown experiment_id: {experiment_id}")
+            raise RuntimeCoreInvariantError("Unknown experiment_id")
         if old.status in (ExperimentStatus.COMPLETED, ExperimentStatus.FAILED, ExperimentStatus.CANCELLED):
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition experiment from terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot transition experiment from terminal state")
         if status not in (ExperimentStatus.COMPLETED, ExperimentStatus.FAILED):
             raise RuntimeCoreInvariantError("Result status must be COMPLETED or FAILED")
         updated = ExperimentRun(
@@ -369,7 +365,7 @@ class ResearchRuntimeEngine:
         """Get an experiment by ID."""
         e = self._experiments.get(experiment_id)
         if e is None:
-            raise RuntimeCoreInvariantError(f"Unknown experiment_id: {experiment_id}")
+            raise RuntimeCoreInvariantError("Unknown experiment_id")
         return e
 
     # ------------------------------------------------------------------
@@ -387,9 +383,9 @@ class ResearchRuntimeEngine:
     ) -> LiteraturePacket:
         """Attach a literature review packet to a hypothesis."""
         if packet_id in self._literature:
-            raise RuntimeCoreInvariantError(f"Duplicate packet_id: {packet_id}")
+            raise RuntimeCoreInvariantError("Duplicate packet_id")
         if hypothesis_id not in self._hypotheses:
-            raise RuntimeCoreInvariantError(f"Unknown hypothesis_id: {hypothesis_id}")
+            raise RuntimeCoreInvariantError("Unknown hypothesis_id")
         now = _now_iso()
         pkt = LiteraturePacket(
             packet_id=packet_id,
@@ -422,9 +418,9 @@ class ResearchRuntimeEngine:
         Derives strength from confidence and contradiction count.
         """
         if synthesis_id in self._syntheses:
-            raise RuntimeCoreInvariantError(f"Duplicate synthesis_id: {synthesis_id}")
+            raise RuntimeCoreInvariantError("Duplicate synthesis_id")
         if hypothesis_id not in self._hypotheses:
-            raise RuntimeCoreInvariantError(f"Unknown hypothesis_id: {hypothesis_id}")
+            raise RuntimeCoreInvariantError("Unknown hypothesis_id")
 
         # Count experiments linked to hypothesis via studies
         hyp_studies = [s for s in self._studies.values() if s.hypothesis_ref == hypothesis_id]
@@ -493,7 +489,7 @@ class ResearchRuntimeEngine:
     ) -> PeerReviewRecord:
         """Request a peer review."""
         if review_id in self._reviews:
-            raise RuntimeCoreInvariantError(f"Duplicate review_id: {review_id}")
+            raise RuntimeCoreInvariantError("Duplicate review_id")
         now = _now_iso()
         rev = PeerReviewRecord(
             review_id=review_id,
@@ -521,11 +517,9 @@ class ResearchRuntimeEngine:
         """Complete a peer review with disposition and comments."""
         old = self._reviews.get(review_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown review_id: {review_id}")
+            raise RuntimeCoreInvariantError("Unknown review_id")
         if old.disposition not in (PublicationDisposition.IN_REVIEW, PublicationDisposition.DRAFT):
-            raise RuntimeCoreInvariantError(
-                f"Cannot complete review in state {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot complete review from non-reviewable state")
         now = _now_iso()
         updated = PeerReviewRecord(
             review_id=old.review_id,
@@ -555,7 +549,7 @@ class ResearchRuntimeEngine:
     ) -> ResearchSnapshot:
         """Capture a point-in-time research state snapshot (tenant-scoped counts)."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
 
         t_questions = sum(1 for q in self._questions.values() if q.tenant_id == tenant_id)
@@ -614,7 +608,7 @@ class ResearchRuntimeEngine:
                         "violation_id": vid,
                         "tenant_id": syn.tenant_id,
                         "operation": "evidence_free_synthesis",
-                        "reason": f"Synthesis {syn.synthesis_id} has 0 experiments and 0 literature",
+                        "reason": "Evidence synthesis has no supporting evidence",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -635,7 +629,7 @@ class ResearchRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": study.tenant_id,
                             "operation": "incomplete_study",
-                            "reason": f"Study {study.study_id} is IN_PROGRESS with no experiments",
+                            "reason": "Study is in progress with no experiments",
                             "detected_at": now,
                         }
                         self._violations[vid] = v
@@ -656,7 +650,7 @@ class ResearchRuntimeEngine:
                             "violation_id": vid,
                             "tenant_id": study.tenant_id,
                             "operation": "unreviewed_closure",
-                            "reason": f"Study {study.study_id} completed with no peer reviews",
+                            "reason": "Completed study has no peer reviews",
                             "detected_at": now,
                         }
                         self._violations[vid] = v

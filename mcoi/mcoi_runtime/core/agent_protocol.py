@@ -88,7 +88,7 @@ class AgentRegistry:
     def register(self, agent: AgentDescriptor) -> None:
         with self._lock:
             if agent.agent_id in self._agents:
-                raise ValueError(f"agent already registered: {agent.agent_id}")
+                raise ValueError("agent already registered")
             self._agents[agent.agent_id] = agent
 
     def unregister(self, agent_id: str) -> bool:
@@ -132,19 +132,17 @@ class TaskManager:
     def _assign_locked(self, task_id: str, agent_id: str) -> bool:
         task = self._tasks.get(task_id)
         if task is None:
-            raise ValueError(f"task not found: {task_id}")
+            raise ValueError("task unavailable")
 
         agent = self._registry.get(agent_id)
         if agent is None:
-            raise ValueError(f"agent not found: {agent_id}")
+            raise ValueError("agent unavailable")
 
         if not agent.enabled:
-            raise ValueError(f"agent disabled: {agent_id}")
+            raise ValueError("agent unavailable")
 
         if task.required_capability not in agent.capabilities:
-            raise ValueError(
-                f"agent {agent_id} lacks capability {task.required_capability}"
-            )
+            raise ValueError("assigned agent lacks required capability")
 
         self._assignments[task_id] = agent_id
         self._statuses[task_id] = TaskStatus.ASSIGNED
@@ -154,7 +152,7 @@ class TaskManager:
         """Submit a task for delegation."""
         with self._lock:
             if spec.task_id in self._tasks:
-                raise ValueError(f"task already exists: {spec.task_id}")
+                raise ValueError("task already exists")
             self._tasks[spec.task_id] = spec
             self._statuses[spec.task_id] = TaskStatus.PENDING
             return spec
@@ -196,7 +194,7 @@ class TaskManager:
         with self._lock:
             task = self._tasks.get(task_id)
             if task is None:
-                raise ValueError(f"task not found: {task_id}")
+                raise ValueError("task unavailable")
 
             agent_id = self._assignments.get(task_id, "unknown")
             result_hash = sha256(

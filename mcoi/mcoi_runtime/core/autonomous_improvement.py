@@ -95,7 +95,7 @@ class AutonomousImprovementEngine:
         enabled: bool = True,
     ) -> AutonomyPolicy:
         if policy_id in self._policies:
-            raise RuntimeCoreInvariantError(f"policy '{policy_id}' already exists")
+            raise RuntimeCoreInvariantError("policy already exists")
         now = _now_iso()
         policy = AutonomyPolicy(
             policy_id=policy_id,
@@ -153,7 +153,7 @@ class AutonomousImprovementEngine:
     ) -> ImprovementCandidate:
         """Evaluate a recommendation and determine its disposition."""
         if candidate_id in self._candidates:
-            raise RuntimeCoreInvariantError(f"candidate '{candidate_id}' already exists")
+            raise RuntimeCoreInvariantError("candidate already exists")
 
         now = _now_iso()
         policy = self.find_policy_for_type(change_type)
@@ -277,9 +277,9 @@ class AutonomousImprovementEngine:
         change_id: str = "",
     ) -> ImprovementSession:
         if session_id in self._sessions:
-            raise RuntimeCoreInvariantError(f"session '{session_id}' already exists")
+            raise RuntimeCoreInvariantError("session already exists")
         if candidate_id not in self._candidates:
-            raise RuntimeCoreInvariantError(f"candidate '{candidate_id}' not found")
+            raise RuntimeCoreInvariantError("candidate not found")
 
         candidate = self._candidates[candidate_id]
         now = _now_iso()
@@ -318,7 +318,7 @@ class AutonomousImprovementEngine:
         duration_seconds: float = 3600.0,
     ) -> LearningWindow:
         if window_id in self._windows:
-            raise RuntimeCoreInvariantError(f"window '{window_id}' already exists")
+            raise RuntimeCoreInvariantError("window already exists")
         now = _now_iso()
         window = LearningWindow(
             window_id=window_id,
@@ -347,10 +347,10 @@ class AutonomousImprovementEngine:
         observed_value: float,
     ) -> LearningWindow:
         if window_id not in self._windows:
-            raise RuntimeCoreInvariantError(f"window '{window_id}' not found")
+            raise RuntimeCoreInvariantError("window not found")
         old = self._windows[window_id]
         if old.status != LearningWindowStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(f"window '{window_id}' is not active")
+            raise RuntimeCoreInvariantError("window not active")
 
         baseline = old.baseline_value
         improvement = ((observed_value - baseline) / abs(baseline) * 100) if baseline != 0 else 0.0
@@ -378,7 +378,7 @@ class AutonomousImprovementEngine:
         status: LearningWindowStatus = LearningWindowStatus.COMPLETED,
     ) -> LearningWindow:
         if window_id not in self._windows:
-            raise RuntimeCoreInvariantError(f"window '{window_id}' not found")
+            raise RuntimeCoreInvariantError("window not found")
         old = self._windows[window_id]
         now = _now_iso()
         updated = LearningWindow(
@@ -540,7 +540,7 @@ class AutonomousImprovementEngine:
         confidence: float = 0.8,
     ) -> ImprovementOutcome:
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"session '{session_id}' not found")
+            raise RuntimeCoreInvariantError("session not found")
         session = self._sessions[session_id]
         candidate = self._candidates.get(session.candidate_id)
         change_id = session.change_id

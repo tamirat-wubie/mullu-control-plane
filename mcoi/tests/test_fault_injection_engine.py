@@ -422,3 +422,30 @@ class TestStateHash:
     def test_length(self):
         engine = FaultInjectionEngine()
         assert len(engine.state_hash()) == 64
+
+
+class TestBoundedFaultContracts:
+    def test_missing_session_does_not_echo_session_id(self):
+        engine = FaultInjectionEngine()
+        with pytest.raises(RuntimeCoreInvariantError, match="session not found") as exc:
+            engine.complete_session("session-secret")
+        assert "session-secret" not in str(exc.value)
+
+    @pytest.mark.parametrize(
+        ("register", "expected_description"),
+        [
+            ("register_provider_storm", "provider failure storm"),
+            ("register_event_flood", "event flood"),
+            ("register_checkpoint_corruption", "checkpoint corruption"),
+            ("register_communication_failure", "communication failure"),
+            ("register_artifact_corruption", "artifact corruption"),
+            ("register_obligation_escalation_stress", "obligation escalation stress"),
+            ("register_governance_conflict_storm", "governance conflict storm"),
+            ("register_domain_pack_conflict_stress", "domain pack conflict stress"),
+        ],
+    )
+    def test_builtin_fault_family_descriptions_are_bounded(self, register: str, expected_description: str):
+        engine = FaultInjectionEngine()
+        specs = getattr(engine, register)()
+        assert specs
+        assert {spec.description for spec in specs} == {expected_description}

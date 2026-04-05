@@ -246,6 +246,8 @@ class TestMemoryMeshAttachment:
     def test_tags(self):
         ri, re, es, mm = _setup_with_requirement()
         mem = ri.attach_reporting_package_to_memory_mesh("scope-1")
+        assert mem.title == "Regulatory reporting state"
+        assert "scope-1" not in mem.title
         assert mem.tags == ("regulatory", "reporting", "submission")
 
     def test_memory_stored_in_mesh(self):
@@ -258,6 +260,8 @@ class TestMemoryMeshAttachment:
     def test_scope_ref_id_in_content(self):
         ri, re, es, mm = _setup_with_requirement()
         mem = ri.attach_reporting_package_to_memory_mesh("scope-ref-42")
+        assert mem.title == "Regulatory reporting state"
+        assert "scope-ref-42" not in mem.title
         assert mem.scope_ref_id == "scope-ref-42"
 
 
@@ -402,6 +406,8 @@ class TestGoldenPath:
 
         # Attach to memory mesh
         mem = ri.attach_reporting_package_to_memory_mesh("scope-gold")
+        assert mem.title == "Regulatory reporting state"
+        assert "scope-gold" not in mem.title
         assert mem.tags == ("regulatory", "reporting", "submission")
         assert mm.get_memory(mem.memory_id) is not None
 

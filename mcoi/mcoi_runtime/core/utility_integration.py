@@ -132,7 +132,7 @@ class UtilityBridge:
             request_id=request_id,
             context_type=context_type,
             context_id=context_id,
-            description=f"Utility-enhanced simulation for {context_type} {context_id}",
+            description="Utility-enhanced simulation",
             options=tuple(options),
         )
         sim_comparison, sim_verdict = simulation_engine.full_simulation(request)

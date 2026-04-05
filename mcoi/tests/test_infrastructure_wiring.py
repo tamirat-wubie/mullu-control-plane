@@ -88,5 +88,7 @@ class TestRouterDeps:
     def test_deps_missing_raises(self):
         from mcoi_runtime.app.routers.deps import _Deps
         d = _Deps()
-        with pytest.raises(RuntimeError, match="not registered"):
+        with pytest.raises(RuntimeError) as exc:
             d.get("nonexistent")
+        assert str(exc.value) == "dependency not registered"
+        assert "nonexistent" not in str(exc.value)

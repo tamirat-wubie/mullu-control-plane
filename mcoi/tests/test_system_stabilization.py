@@ -42,13 +42,23 @@ class TestIdentityBindingEngine:
     def test_duplicate_intent_blocked(self):
         eng = IdentityBindingEngine()
         eng.sign_intent("i1", "actor-a", "deploy", "runtime-x")
-        with pytest.raises(ValueError, match="Duplicate intent"):
+        with pytest.raises(ValueError, match="^intent already registered$") as exc_info:
             eng.sign_intent("i1", "actor-b", "scale", "runtime-y")
+        assert "i1" not in str(exc_info.value)
 
     def test_unknown_intent_blocked(self):
         eng = IdentityBindingEngine()
-        with pytest.raises(ValueError, match="Unknown intent"):
+        with pytest.raises(ValueError, match="^intent unavailable$") as exc_info:
             eng.bind_action("b1", "no-such-intent", "exec-001")
+        assert "no-such-intent" not in str(exc_info.value)
+
+    def test_duplicate_binding_blocked(self):
+        eng = IdentityBindingEngine()
+        eng.sign_intent("i1", "actor-a", "deploy", "runtime-x")
+        eng.bind_action("b1", "i1", "exec-001")
+        with pytest.raises(ValueError, match="^binding already registered$") as exc_info:
+            eng.bind_action("b1", "i1", "exec-002")
+        assert "b1" not in str(exc_info.value)
 
 
 # ═══ Phase 187 — Global Ontology Enforcement ═══
@@ -172,6 +182,12 @@ class TestAdversarialDefenseEngine:
             ade.record_contradiction("s1")
         # At 3rd contradiction, anomaly is recorded
         assert ade.anomaly_count >= 1
+
+    def test_unknown_source_blocked(self):
+        ade = AdversarialDefenseEngine()
+        with pytest.raises(ValueError, match="^source unavailable$") as exc_info:
+            ade.record_contradiction("ghost-source")
+        assert "ghost-source" not in str(exc_info.value)
 
 
 # ═══ Phase 190 — Predictive Failure Engine ═══

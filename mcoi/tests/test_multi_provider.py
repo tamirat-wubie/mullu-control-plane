@@ -5,6 +5,7 @@ Uses stub mode (no httpx) — validates protocol compliance, message formatting,
 cost estimation, and error handling.
 """
 
+import builtins
 import sys
 import types
 
@@ -87,7 +88,8 @@ class TestGroqBackend:
         backend = GroqBackend()
         result = backend.call(_params("test"))
         # Without httpx or API key, returns stub response
-        assert result.finished or "no API key" in result.error or "groq" in result.content
+        assert result.finished or result.error == "provider credentials unavailable" or result.content == "provider stub response"
+        assert "groq" not in result.error.lower()
 
     def test_call_count(self):
         backend = GroqBackend()
@@ -122,6 +124,25 @@ class TestGroqBackend:
         assert result.error == "provider error (RuntimeError)"
         assert "upstream secret" not in result.error
 
+    def test_stub_response_is_bounded_when_httpx_missing(self, monkeypatch):
+        backend = GroqBackend()
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        original_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "httpx":
+                raise ImportError("httpx unavailable")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+
+        result = backend.call(_params("secret prompt"))
+
+        assert result.finished is True
+        assert result.content == "provider stub response"
+        assert "secret prompt" not in result.content
+        assert "groq" not in result.content.lower()
+
 
 class TestGeminiBackend:
     def test_provider_type(self):
@@ -134,6 +155,13 @@ class TestGeminiBackend:
         backend = GeminiBackend()
         result = backend.call(_params())
         assert result.provider == LLMProvider.GEMINI
+
+    def test_call_without_key_returns_bounded_error(self):
+        backend = GeminiBackend()
+        result = backend.call(_params())
+        if not result.finished:
+            assert result.error == "provider credentials unavailable"
+            assert "gemini" not in result.error.lower()
 
 
 class TestDeepSeekBackend:
@@ -233,8 +261,10 @@ class TestProviderRegistry:
         assert backend.provider == LLMProvider.GROQ
 
     def test_create_unknown_raises(self):
-        with pytest.raises(ValueError, match="unknown provider"):
+        with pytest.raises(ValueError, match="^unsupported provider$") as exc_info:
             create_provider("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
+        assert "groq" not in str(exc_info.value).lower()
 
     def test_available_providers_empty(self):
         # No API keys set in test environment

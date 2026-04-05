@@ -20,6 +20,11 @@ PLATFORM_NAME = "Mullu Platform MCOI Runtime"
 PLATFORM_VERSION = "0.1.0"
 
 
+def _bounded_validation_error(summary: str, exc: Exception) -> str:
+    """Return a stable validation failure without raw backend detail."""
+    return f"{summary} ({type(exc).__name__})"
+
+
 class ValidationStatus(StrEnum):
     VALID = "valid"
     INVALID = "invalid"
@@ -113,14 +118,14 @@ def validate_environment() -> EnvironmentValidation:
         profile_count = len(BUILTIN_PROFILES)
         checks.append(ValidationCheck("profiles_loaded", True, f"{profile_count} profiles available"))
     except Exception as exc:
-        checks.append(ValidationCheck("profiles_loaded", False, f"profile load error: {exc}"))
+        checks.append(ValidationCheck("profiles_loaded", False, _bounded_validation_error("profile load error", exc)))
 
     # Check imports
     try:
         from mcoi_runtime.app.bootstrap import bootstrap_runtime
         checks.append(ValidationCheck("bootstrap_importable", True, "bootstrap module loads"))
-    except ImportError as exc:
-        checks.append(ValidationCheck("bootstrap_importable", False, f"import error: {exc}"))
+    except Exception as exc:
+        checks.append(ValidationCheck("bootstrap_importable", False, _bounded_validation_error("import error", exc)))
 
     all_passed = all(c.passed for c in checks)
     return EnvironmentValidation(

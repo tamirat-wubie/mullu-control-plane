@@ -242,7 +242,7 @@ class DecisionReliability(ContractRecord):
         object.__setattr__(self, "dominant_risk", require_non_empty_text(self.dominant_risk, "dominant_risk"))
         object.__setattr__(self, "recommendation", require_non_empty_text(self.recommendation, "recommendation"))
         if self.recommendation not in _VALID_RECOMMENDATIONS:
-            raise ValueError(f"recommendation must be one of {_VALID_RECOMMENDATIONS}")
+            raise ValueError("recommendation has unsupported value")
         object.__setattr__(self, "assessed_at", require_datetime_text(self.assessed_at, "assessed_at"))
 
 

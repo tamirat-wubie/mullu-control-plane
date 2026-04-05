@@ -94,7 +94,7 @@ class GoalReasoningEngine:
 
         if state.status not in (GoalStatus.EXECUTING, GoalStatus.ACCEPTED, GoalStatus.PLANNING):
             raise RuntimeCoreInvariantError(
-                f"goal is in {state.status.value} state; cannot execute sub-goals"
+                "goal is not executable in current state; cannot execute sub-goals"
             )
 
         completed = set(state.completed_sub_goals)

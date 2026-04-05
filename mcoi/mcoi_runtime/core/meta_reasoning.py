@@ -93,7 +93,7 @@ class MetaReasoningEngine:
                         "entered_at": self._clock(),
                     }),
                     capability_id=confidence.capability_id,
-                    reason=f"confidence {confidence.overall_confidence:.4f} below threshold {threshold}",
+                    reason="confidence below threshold",
                     confidence_at_entry=confidence.overall_confidence,
                     threshold=threshold,
                     entered_at=self._clock(),
@@ -124,7 +124,7 @@ class MetaReasoningEngine:
 
     def report_uncertainty(self, report: UncertaintyReport) -> UncertaintyReport:
         if report.report_id in self._uncertainty:
-            raise RuntimeCoreInvariantError(f"uncertainty report already exists: {report.report_id}")
+            raise RuntimeCoreInvariantError("uncertainty report already exists")
         self._uncertainty[report.report_id] = report
         return report
 
@@ -232,9 +232,9 @@ class MetaReasoningEngine:
         margin = 0.15 if base >= min_confidence else 0.25
         uncertainty: list[str] = []
         if verdict.confidence < min_confidence:
-            uncertainty.append(f"simulation confidence {verdict.confidence:.2f} below threshold {min_confidence}")
+            uncertainty.append("low simulation confidence")
         if verdict.verdict_type in (VerdictType.ESCALATE, VerdictType.ABORT):
-            uncertainty.append(f"verdict type is {verdict.verdict_type.value}")
+            uncertainty.append("high-risk verdict type")
 
         envelope = self._make_envelope("simulation", base, margin, sample_count=1)
         return self._make_reliability(
@@ -265,10 +265,7 @@ class MetaReasoningEngine:
         margin = 0.1 if comparison.spread >= min_spread else 0.2
         uncertainty: list[str] = []
         if comparison.spread < min_spread:
-            uncertainty.append(
-                f"utility spread {comparison.spread:.4f} below threshold {min_spread} "
-                f"across {option_count} options"
-            )
+            uncertainty.append("utility ambiguity detected")
 
         envelope = self._make_envelope("utility", base, margin, sample_count=option_count)
         return self._make_reliability(
@@ -316,9 +313,7 @@ class MetaReasoningEngine:
             s = successes.get(pid, 0)
             if c > 0 and s / c < min_success_rate:
                 volatile_providers.append(pid)
-                uncertainty.append(
-                    f"provider {pid} success rate {s / c:.2f} below {min_success_rate}"
-                )
+                uncertainty.append("provider volatility detected")
 
         base = _clamp(overall_rate)
         margin = 0.1 if not volatile_providers else 0.2
@@ -356,15 +351,11 @@ class MetaReasoningEngine:
 
         uncertainty: list[str] = []
         if count < min_sample_count:
-            uncertainty.append(f"only {count} adjustments (need {min_sample_count}+)")
+            uncertainty.append("insufficient learning history")
         if max_observed > max_magnitude:
-            uncertainty.append(
-                f"largest adjustment {max_observed:.6f} exceeds {max_magnitude}"
-            )
+            uncertainty.append("learning adjustment exceeds limit")
         if avg_magnitude > max_magnitude * 0.5:
-            uncertainty.append(
-                f"average magnitude {avg_magnitude:.6f} is high"
-            )
+            uncertainty.append("learning adjustment instability detected")
 
         # Derive confidence from stability
         if count >= min_sample_count and avg_magnitude <= max_magnitude * 0.5:
@@ -425,10 +416,7 @@ class MetaReasoningEngine:
                         "at": now,
                     }),
                     reason=reason,
-                    description=(
-                        f"{rel.decision_context} confidence {point:.2f} "
-                        f"below replan threshold {replan_threshold}"
-                    ),
+                    description="replan threshold breached",
                     affected_entity_id=affected_entity_id,
                     severity=severity,
                     confidence_at_assessment=_clamp(1.0 - point),

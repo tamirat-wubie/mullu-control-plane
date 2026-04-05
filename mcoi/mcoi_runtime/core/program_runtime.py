@@ -94,7 +94,7 @@ class ProgramRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ObjectiveRecord:
         if objective_id in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' already exists")
+            raise RuntimeCoreInvariantError("objective already exists")
         now = _now_iso()
         obj = ObjectiveRecord(
             objective_id=objective_id,
@@ -128,7 +128,7 @@ class ProgramRuntimeEngine:
         current_value: float,
     ) -> ObjectiveRecord:
         if objective_id not in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' not found")
+            raise RuntimeCoreInvariantError("objective not found")
         old = self._objectives[objective_id]
         attainment = self._compute_attainment_level(old.target_value, current_value)
         now = _now_iso()
@@ -187,7 +187,7 @@ class ProgramRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ProgramRecord:
         if program_id in self._programs:
-            raise RuntimeCoreInvariantError(f"program '{program_id}' already exists")
+            raise RuntimeCoreInvariantError("program already exists")
         now = _now_iso()
         prog = ProgramRecord(
             program_id=program_id,
@@ -213,7 +213,7 @@ class ProgramRuntimeEngine:
 
     def set_program_status(self, program_id: str, status: ProgramStatus) -> ProgramRecord:
         if program_id not in self._programs:
-            raise RuntimeCoreInvariantError(f"program '{program_id}' not found")
+            raise RuntimeCoreInvariantError("program not found")
         old = self._programs[program_id]
         now = _now_iso()
         updated = ProgramRecord(
@@ -252,9 +252,9 @@ class ProgramRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> InitiativeRecord:
         if initiative_id in self._initiatives:
-            raise RuntimeCoreInvariantError(f"initiative '{initiative_id}' already exists")
+            raise RuntimeCoreInvariantError("initiative already exists")
         if program_id not in self._programs:
-            raise RuntimeCoreInvariantError(f"program '{program_id}' not found")
+            raise RuntimeCoreInvariantError("program not found")
         now = _now_iso()
         ini = InitiativeRecord(
             initiative_id=initiative_id,
@@ -301,7 +301,7 @@ class ProgramRuntimeEngine:
 
     def set_initiative_status(self, initiative_id: str, status: InitiativeStatus) -> InitiativeRecord:
         if initiative_id not in self._initiatives:
-            raise RuntimeCoreInvariantError(f"initiative '{initiative_id}' not found")
+            raise RuntimeCoreInvariantError("initiative not found")
         old = self._initiatives[initiative_id]
         now = _now_iso()
         updated = InitiativeRecord(
@@ -330,7 +330,7 @@ class ProgramRuntimeEngine:
 
     def update_initiative_progress(self, initiative_id: str, progress_pct: float) -> InitiativeRecord:
         if initiative_id not in self._initiatives:
-            raise RuntimeCoreInvariantError(f"initiative '{initiative_id}' not found")
+            raise RuntimeCoreInvariantError("initiative not found")
         old = self._initiatives[initiative_id]
         now = _now_iso()
         updated = InitiativeRecord(
@@ -368,9 +368,9 @@ class ProgramRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> MilestoneRecord:
         if milestone_id in self._milestones:
-            raise RuntimeCoreInvariantError(f"milestone '{milestone_id}' already exists")
+            raise RuntimeCoreInvariantError("milestone already exists")
         if initiative_id not in self._initiatives:
-            raise RuntimeCoreInvariantError(f"initiative '{initiative_id}' not found")
+            raise RuntimeCoreInvariantError("initiative not found")
         now = _now_iso()
         ms = MilestoneRecord(
             milestone_id=milestone_id,
@@ -424,7 +424,7 @@ class ProgramRuntimeEngine:
         status: MilestoneStatus | None = None,
     ) -> MilestoneRecord:
         if milestone_id not in self._milestones:
-            raise RuntimeCoreInvariantError(f"milestone '{milestone_id}' not found")
+            raise RuntimeCoreInvariantError("milestone not found")
         old = self._milestones[milestone_id]
         new_status = status if status is not None else old.status
         if status is None and progress_pct >= 100.0:
@@ -465,7 +465,7 @@ class ProgramRuntimeEngine:
         weight: float = 1.0,
     ) -> ObjectiveBinding:
         if initiative_id not in self._initiatives:
-            raise RuntimeCoreInvariantError(f"initiative '{initiative_id}' not found")
+            raise RuntimeCoreInvariantError("initiative not found")
         now = _now_iso()
         binding = ObjectiveBinding(
             binding_id=binding_id,
@@ -517,7 +517,7 @@ class ProgramRuntimeEngine:
         weight: float = 1.0,
     ) -> ObjectiveBinding:
         if initiative_id not in self._initiatives:
-            raise RuntimeCoreInvariantError(f"initiative '{initiative_id}' not found")
+            raise RuntimeCoreInvariantError("initiative not found")
         now = _now_iso()
         binding = ObjectiveBinding(
             binding_id=binding_id,
@@ -596,7 +596,7 @@ class ProgramRuntimeEngine:
 
     def compute_attainment(self, objective_id: str, snapshot_id: str) -> AttainmentSnapshot:
         if objective_id not in self._objectives:
-            raise RuntimeCoreInvariantError(f"objective '{objective_id}' not found")
+            raise RuntimeCoreInvariantError("objective not found")
         obj = self._objectives[objective_id]
 
         # Find initiatives for this objective
@@ -659,7 +659,7 @@ class ProgramRuntimeEngine:
 
     def program_health(self, program_id: str, health_id: str) -> ProgramHealth:
         if program_id not in self._programs:
-            raise RuntimeCoreInvariantError(f"program '{program_id}' not found")
+            raise RuntimeCoreInvariantError("program not found")
         prog = self._programs[program_id]
 
         initiatives = [self._initiatives[iid] for iid in prog.initiative_ids if iid in self._initiatives]
@@ -721,7 +721,7 @@ class ProgramRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ProgramDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"decision '{decision_id}' already exists")
+            raise RuntimeCoreInvariantError("decision already exists")
         now = _now_iso()
         dec = ProgramDecision(
             decision_id=decision_id,
@@ -758,7 +758,7 @@ class ProgramRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ProgramClosureReport:
         if program_id not in self._programs:
-            raise RuntimeCoreInvariantError(f"program '{program_id}' not found")
+            raise RuntimeCoreInvariantError("program not found")
         prog = self._programs[program_id]
 
         initiatives = [self._initiatives[iid] for iid in prog.initiative_ids if iid in self._initiatives]

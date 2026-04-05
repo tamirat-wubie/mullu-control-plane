@@ -127,8 +127,10 @@ class TestClaims:
     def test_duplicate_rejected(self):
         eng, _ = _make_engine()
         eng.register_claim("cl1", _T1, "fact")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             eng.register_claim("cl1", _T1, "fact")
+        assert str(exc_info.value) == "Duplicate claim_id"
+        assert "cl1" not in str(exc_info.value)
 
     def test_count_increments(self):
         eng, _ = _make_engine()
@@ -144,8 +146,10 @@ class TestClaims:
 
     def test_get_claim_unknown_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.get_claim("missing")
+        assert str(exc_info.value) == "Unknown claim_id"
+        assert "missing" not in str(exc_info.value)
 
     def test_claims_for_tenant(self):
         eng, _ = _make_engine()
@@ -171,8 +175,10 @@ class TestClaims:
 
     def test_retract_unknown_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.retract_claim("missing")
+        assert str(exc_info.value) == "Unknown claim_id"
+        assert "missing" not in str(exc_info.value)
 
     def test_emits_event(self):
         eng, es = _make_engine()
@@ -207,8 +213,10 @@ class TestEvidenceSources:
     def test_duplicate_rejected(self):
         eng, _ = _make_engine()
         eng.register_evidence_source("src1", _T1, "Sensor", EvidenceOrigin.INSTRUMENT)
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             eng.register_evidence_source("src1", _T1, "Sensor", EvidenceOrigin.INSTRUMENT)
+        assert str(exc_info.value) == "Duplicate source_id"
+        assert "src1" not in str(exc_info.value)
 
     def test_count_increments(self):
         eng, _ = _make_engine()
@@ -224,8 +232,10 @@ class TestEvidenceSources:
 
     def test_get_source_unknown_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.get_source("missing")
+        assert str(exc_info.value) == "Unknown source_id"
+        assert "missing" not in str(exc_info.value)
 
     def test_sources_for_tenant(self):
         eng, _ = _make_engine()
@@ -259,13 +269,17 @@ class TestSourceReliability:
         eng, _ = _make_engine()
         eng.register_evidence_source("src1", _T1, "Sensor", EvidenceOrigin.INSTRUMENT)
         eng.update_source_reliability("rel1", _T1, "src1", 0.8, "improved")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             eng.update_source_reliability("rel1", _T1, "src1", 0.9, "again")
+        assert str(exc_info.value) == "Duplicate record_id"
+        assert "rel1" not in str(exc_info.value)
 
     def test_unknown_source_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.update_source_reliability("rel1", _T1, "missing", 0.8, "fail")
+        assert str(exc_info.value) == "Unknown source_ref"
+        assert "missing" not in str(exc_info.value)
 
     def test_count_increments(self):
         eng, _ = _make_engine()
@@ -310,20 +324,26 @@ class TestTrustAssessmentEngine:
         eng.register_claim("cl1", _T1, "fact")
         eng.register_evidence_source("src1", _T1, "Sensor", EvidenceOrigin.INSTRUMENT)
         eng.assess_trust("ta1", _T1, "cl1", "src1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             eng.assess_trust("ta1", _T1, "cl1", "src1")
+        assert str(exc_info.value) == "Duplicate assessment_id"
+        assert "ta1" not in str(exc_info.value)
 
     def test_unknown_claim_rejected(self):
         eng, _ = _make_engine()
         eng.register_evidence_source("src1", _T1, "Sensor", EvidenceOrigin.INSTRUMENT)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.assess_trust("ta1", _T1, "missing", "src1")
+        assert str(exc_info.value) == "Unknown claim_ref"
+        assert "missing" not in str(exc_info.value)
 
     def test_unknown_source_rejected(self):
         eng, _ = _make_engine()
         eng.register_claim("cl1", _T1, "fact")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.assess_trust("ta1", _T1, "cl1", "missing")
+        assert str(exc_info.value) == "Unknown source_ref"
+        assert "missing" not in str(exc_info.value)
 
     def test_count_increments(self):
         eng, _ = _make_engine()
@@ -389,8 +409,10 @@ class TestClaimConflicts:
 
     def test_resolve_unknown_rejected(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.resolve_conflict("missing", ConflictDisposition.FIRST_WINS, "basis")
+        assert str(exc_info.value) == "Unknown conflict_id"
+        assert "missing" not in str(exc_info.value)
 
     def test_conflict_count_increments(self):
         eng, _ = _make_engine()
@@ -491,6 +513,10 @@ class TestEpistemicViolations:
         eng.register_claim("cl1", _T1, "fact", status=KnowledgeStatus.OBSERVED)
         viols = eng.detect_epistemic_violations(_T1)
         assert any(v.operation == "insufficient_basis" for v in viols)
+        violation = next(v for v in viols if v.operation == "insufficient_basis")
+        assert violation.reason == "high-trust claim lacks trust assessment"
+        assert "cl1" not in violation.reason
+        assert TrustLevel.VERIFIED.value not in violation.reason
 
     def test_unresolved_conflict_violation(self):
         eng, _ = _make_engine()
@@ -499,6 +525,10 @@ class TestEpistemicViolations:
         eng.detect_claim_conflicts(_T1)
         viols = eng.detect_epistemic_violations(_T1)
         assert any(v.operation == "unresolved_conflict" for v in viols)
+        violation = next(v for v in viols if v.operation == "unresolved_conflict")
+        assert violation.reason == "conflict is unresolved"
+        assert "cl1" not in violation.reason
+        assert "cl2" not in violation.reason
 
     def test_untrusted_source_high_claim_violation(self):
         eng, _ = _make_engine()
@@ -506,6 +536,12 @@ class TestEpistemicViolations:
         eng.register_claim("cl1", _T1, "fact", confidence=0.9, source_ref="src1")
         viols = eng.detect_epistemic_violations(_T1)
         assert any(v.operation == "untrusted_source_high_claim" for v in viols)
+        violation = next(v for v in viols if v.operation == "untrusted_source_high_claim")
+        assert violation.reason == "high-confidence claim depends on untrusted source"
+        assert "src1" not in violation.reason
+        assert "cl1" not in violation.reason
+        assert "0.2" not in violation.reason
+        assert "0.9" not in violation.reason
 
     def test_violation_idempotent(self):
         eng, _ = _make_engine()

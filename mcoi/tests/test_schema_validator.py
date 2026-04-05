@@ -68,12 +68,15 @@ class TestSchemaValidator:
         v = SchemaValidator()
         result = v.validate("nonexistent", {})
         assert result.valid is False
+        assert result.errors[0].message == "schema unavailable"
+        assert "nonexistent" not in result.errors[0].message
 
     def test_duplicate_register(self):
         v = SchemaValidator()
         v.register(SchemaDefinition(schema_id="x", name="X", rules=()))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^schema already registered$") as exc_info:
             v.register(SchemaDefinition(schema_id="x", name="X2", rules=()))
+        assert "x" not in str(exc_info.value)
 
     def test_max_length(self):
         v = SchemaValidator()

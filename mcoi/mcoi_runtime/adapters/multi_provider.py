@@ -86,7 +86,7 @@ def _openai_compatible_call(
         return LLMResult(
             content="", input_tokens=0, output_tokens=0, cost=0.0,
             model_name=model, provider=provider, finished=False,
-            error=f"no API key configured for {provider.value}",
+            error="provider credentials unavailable",
         )
 
     try:
@@ -135,7 +135,7 @@ def _openai_compatible_call(
         output_tokens = max(1, 20)
         cost = (input_tokens * cost_per_1k_input + output_tokens * cost_per_1k_output) / 1000
         return LLMResult(
-            content=f"{provider.value}-response:{content_hash}",
+            content="provider stub response",
             input_tokens=input_tokens, output_tokens=output_tokens, cost=cost,
             model_name=model, provider=provider, finished=True,
         )
@@ -394,7 +394,7 @@ def create_provider(name: str, **kwargs: Any) -> Any:
     """Create a provider backend by name."""
     cls = ALL_PROVIDERS.get(name)
     if cls is None:
-        raise ValueError(f"unknown provider: {name}. Available: {list(ALL_PROVIDERS.keys())}")
+        raise ValueError("unsupported provider")
     return cls(**kwargs)
 
 

@@ -89,7 +89,7 @@ class HumanWorkflowIntegration:
         """Create an approval board for a change request."""
         board = self._workflow.create_approval_board(
             board_id, tenant_id,
-            f"Change approval: {change_ref}",
+            "Change approval",
             approval_mode=approval_mode,
             quorum_required=quorum_required,
             scope=CollaborationScope.CHANGE,
@@ -121,7 +121,7 @@ class HumanWorkflowIntegration:
             scope=CollaborationScope.CASE,
             scope_ref_id=case_ref,
             review_mode=review_mode,
-            title=f"Case review: {case_ref}",
+            title="Case review",
         )
         _emit(self._events, "workflow_from_case_review", {
             "packet_id": packet_id, "case_ref": case_ref,
@@ -149,7 +149,7 @@ class HumanWorkflowIntegration:
             scope=CollaborationScope.REGULATORY,
             scope_ref_id=submission_ref,
             review_mode=review_mode,
-            title=f"Regulatory review: {submission_ref}",
+            title="Regulatory review",
         )
         _emit(self._events, "workflow_from_regulatory_submission", {
             "packet_id": packet_id, "submission_ref": submission_ref,
@@ -175,7 +175,7 @@ class HumanWorkflowIntegration:
         """Create an approval board for procurement request."""
         board = self._workflow.create_approval_board(
             board_id, tenant_id,
-            f"Procurement approval: {procurement_ref}",
+            "Procurement approval",
             approval_mode=approval_mode,
             quorum_required=quorum_required,
             scope=CollaborationScope.PROCUREMENT,
@@ -208,7 +208,7 @@ class HumanWorkflowIntegration:
             scope=CollaborationScope.SERVICE,
             scope_ref_id=service_ref,
             to_ref=to_ref or "service_team",
-            reason=reason or f"Service request requires human action: {service_ref}",
+            reason=reason or "Service request requires human action",
         )
         _emit(self._events, "workflow_from_service_request", {
             "handoff_id": handoff_id, "service_ref": service_ref,
@@ -234,7 +234,7 @@ class HumanWorkflowIntegration:
         """Create an override board for executive decisions."""
         board = self._workflow.create_approval_board(
             board_id, tenant_id,
-            f"Executive decision: {directive_ref}",
+            "Executive decision",
             approval_mode=approval_mode,
             quorum_required=quorum_required,
             scope=CollaborationScope.EXECUTIVE,
@@ -280,7 +280,7 @@ class HumanWorkflowIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Human workflow state: {scope_ref_id}",
+            title="Human workflow state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("human_workflow", "approvals", "collaboration"),

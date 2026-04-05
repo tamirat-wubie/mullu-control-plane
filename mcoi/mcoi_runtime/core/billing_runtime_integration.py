@@ -164,7 +164,7 @@ class BillingRuntimeIntegration:
         self._billing.add_charge(
             charge_id, invoice_id, amount,
             kind=ChargeKind.SERVICE,
-            description=f"Campaign {campaign_id} completion",
+            description="Campaign completion",
             scope_ref_id=campaign_id,
             scope_ref_type="campaign",
         )
@@ -201,7 +201,7 @@ class BillingRuntimeIntegration:
         self._billing.add_charge(
             charge_id, invoice_id, amount,
             kind=ChargeKind.PROFESSIONAL_SERVICES,
-            description=f"Reporting requirement {requirement_id}",
+            description="Reporting requirement",
             scope_ref_id=requirement_id,
             scope_ref_type="reporting_requirement",
         )
@@ -248,7 +248,7 @@ class BillingRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Billing state: {scope_ref_id}",
+            title="Billing state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("billing", "revenue", "credit"),

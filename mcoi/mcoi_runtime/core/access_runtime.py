@@ -38,7 +38,11 @@ from ..contracts.access_runtime import (
 )
 from ..contracts.event import EventRecord, EventSource, EventType
 from .event_spine import EventSpineEngine
-from .invariants import RuntimeCoreInvariantError, stable_identifier
+from .invariants import (
+    DuplicateRuntimeIdentifierError,
+    RuntimeCoreInvariantError,
+    stable_identifier,
+)
 
 
 def _now_iso() -> str:
@@ -93,6 +97,14 @@ class AccessRuntimeEngine:
     def rule_count(self) -> int:
         return len(self._rules)
 
+    def has_role(self, role_id: str) -> bool:
+        """Return whether a role is registered."""
+        return role_id in self._roles
+
+    def has_permission_rule(self, rule_id: str) -> bool:
+        """Return whether a permission rule is registered."""
+        return rule_id in self._rules
+
     @property
     def binding_count(self) -> int:
         return len(self._bindings)
@@ -128,7 +140,7 @@ class AccessRuntimeEngine:
     ) -> IdentityRecord:
         """Register a new identity."""
         if identity_id in self._identities:
-            raise RuntimeCoreInvariantError(f"Duplicate identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("Duplicate identity_id")
         now = _now_iso()
         identity = IdentityRecord(
             identity_id=identity_id,
@@ -146,7 +158,7 @@ class AccessRuntimeEngine:
         """Disable an identity."""
         old = self._identities.get(identity_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("Unknown identity_id")
         updated = IdentityRecord(
             identity_id=old.identity_id,
             name=old.name,
@@ -164,7 +176,7 @@ class AccessRuntimeEngine:
         """Enable an identity."""
         old = self._identities.get(identity_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("Unknown identity_id")
         updated = IdentityRecord(
             identity_id=old.identity_id,
             name=old.name,
@@ -182,7 +194,7 @@ class AccessRuntimeEngine:
         """Get an identity by ID."""
         i = self._identities.get(identity_id)
         if i is None:
-            raise RuntimeCoreInvariantError(f"Unknown identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("Unknown identity_id")
         return i
 
     def identities_for_tenant(self, tenant_id: str) -> tuple[IdentityRecord, ...]:
@@ -204,7 +216,7 @@ class AccessRuntimeEngine:
     ) -> RoleRecord:
         """Register a new role."""
         if role_id in self._roles:
-            raise RuntimeCoreInvariantError(f"Duplicate role_id: {role_id}")
+            raise DuplicateRuntimeIdentifierError("Duplicate role_id")
         now = _now_iso()
         role = RoleRecord(
             role_id=role_id,
@@ -235,7 +247,7 @@ class AccessRuntimeEngine:
     ) -> PermissionRule:
         """Add a permission rule."""
         if rule_id in self._rules:
-            raise RuntimeCoreInvariantError(f"Duplicate rule_id: {rule_id}")
+            raise DuplicateRuntimeIdentifierError("Duplicate rule_id")
         now = _now_iso()
         rule = PermissionRule(
             rule_id=rule_id,
@@ -266,11 +278,11 @@ class AccessRuntimeEngine:
     ) -> RoleBinding:
         """Bind a role to an identity within a scope."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         if identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"Unknown identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("Unknown identity_id")
         if role_id not in self._roles:
-            raise RuntimeCoreInvariantError(f"Unknown role_id: {role_id}")
+            raise RuntimeCoreInvariantError("Unknown role_id")
         now = _now_iso()
         binding = RoleBinding(
             binding_id=binding_id,
@@ -312,13 +324,13 @@ class AccessRuntimeEngine:
     ) -> DelegationRecord:
         """Delegate a role to another identity."""
         if delegation_id in self._delegations:
-            raise RuntimeCoreInvariantError(f"Duplicate delegation_id: {delegation_id}")
+            raise RuntimeCoreInvariantError("Duplicate delegation_id")
         if from_identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"Unknown from_identity_id: {from_identity_id}")
+            raise RuntimeCoreInvariantError("Unknown from_identity_id")
         if to_identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"Unknown to_identity_id: {to_identity_id}")
+            raise RuntimeCoreInvariantError("Unknown to_identity_id")
         if role_id not in self._roles:
-            raise RuntimeCoreInvariantError(f"Unknown role_id: {role_id}")
+            raise RuntimeCoreInvariantError("Unknown role_id")
         now = _now_iso()
         delegation = DelegationRecord(
             delegation_id=delegation_id,
@@ -342,10 +354,10 @@ class AccessRuntimeEngine:
         """Revoke a delegation."""
         old = self._delegations.get(delegation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown delegation_id: {delegation_id}")
+            raise RuntimeCoreInvariantError("Unknown delegation_id")
         if old.status != DelegationStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"Cannot revoke delegation in status {old.status.value}"
+                "cannot revoke delegation from current status"
             )
         now = _now_iso()
         updated = DelegationRecord(
@@ -369,10 +381,10 @@ class AccessRuntimeEngine:
         """Mark a delegation as expired."""
         old = self._delegations.get(delegation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown delegation_id: {delegation_id}")
+            raise RuntimeCoreInvariantError("Unknown delegation_id")
         if old.status != DelegationStatus.ACTIVE:
             raise RuntimeCoreInvariantError(
-                f"Cannot expire delegation in status {old.status.value}"
+                "cannot expire delegation from current status"
             )
         now = _now_iso()
         updated = DelegationRecord(
@@ -458,7 +470,7 @@ class AccessRuntimeEngine:
     ) -> tuple[str, ...]:
         """List all effective permissions for an identity in a scope."""
         if identity_id not in self._identities:
-            raise RuntimeCoreInvariantError(f"Unknown identity_id: {identity_id}")
+            raise RuntimeCoreInvariantError("Unknown identity_id")
         identity = self._identities[identity_id]
         if not identity.enabled:
             return ()
@@ -680,7 +692,7 @@ class AccessRuntimeEngine:
             reason = "denied access attempt"
             if identity and identity.tenant_id and audit.scope_ref_id:
                 if identity.tenant_id != audit.scope_ref_id:
-                    reason = f"cross-tenant access attempt from {identity.tenant_id}"
+                    reason = "cross-tenant access attempt"
 
             violation = AccessViolation(
                 violation_id=vid,
@@ -716,7 +728,7 @@ class AccessRuntimeEngine:
     ) -> AccessSnapshot:
         """Capture a point-in-time access snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
 
         active_delegations = sum(
             1 for d in self._delegations.values()

@@ -136,7 +136,7 @@ class MarketplaceRuntimeEngine:
         status: OfferingStatus = OfferingStatus.DRAFT,
     ) -> OfferingRecord:
         if offering_id in self._offerings:
-            raise RuntimeCoreInvariantError(f"offering already registered: {offering_id}")
+            raise RuntimeCoreInvariantError("offering already registered")
         now = self._now()
         record = OfferingRecord(
             offering_id=offering_id, product_id=product_id, tenant_id=tenant_id,
@@ -150,15 +150,15 @@ class MarketplaceRuntimeEngine:
 
     def get_offering(self, offering_id: str) -> OfferingRecord:
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         return self._offerings[offering_id]
 
     def activate_offering(self, offering_id: str) -> OfferingRecord:
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         old = self._offerings[offering_id]
         if old.status in _OFFERING_TERMINAL:
-            raise RuntimeCoreInvariantError(f"offering is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("offering is in terminal state")
         updated = OfferingRecord(
             offering_id=old.offering_id, product_id=old.product_id, tenant_id=old.tenant_id,
             display_name=old.display_name, kind=old.kind, status=OfferingStatus.ACTIVE,
@@ -170,10 +170,10 @@ class MarketplaceRuntimeEngine:
 
     def suspend_offering(self, offering_id: str) -> OfferingRecord:
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         old = self._offerings[offering_id]
         if old.status in _OFFERING_TERMINAL:
-            raise RuntimeCoreInvariantError(f"offering is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("offering is in terminal state")
         updated = OfferingRecord(
             offering_id=old.offering_id, product_id=old.product_id, tenant_id=old.tenant_id,
             display_name=old.display_name, kind=old.kind, status=OfferingStatus.SUSPENDED,
@@ -185,10 +185,10 @@ class MarketplaceRuntimeEngine:
 
     def retire_offering(self, offering_id: str) -> OfferingRecord:
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         old = self._offerings[offering_id]
         if old.status in _OFFERING_TERMINAL:
-            raise RuntimeCoreInvariantError(f"offering already retired: {offering_id}")
+            raise RuntimeCoreInvariantError("offering already retired")
         updated = OfferingRecord(
             offering_id=old.offering_id, product_id=old.product_id, tenant_id=old.tenant_id,
             display_name=old.display_name, kind=old.kind, status=OfferingStatus.RETIRED,
@@ -216,7 +216,7 @@ class MarketplaceRuntimeEngine:
         status: OfferingStatus = OfferingStatus.DRAFT,
     ) -> PackageRecord:
         if package_id in self._packages:
-            raise RuntimeCoreInvariantError(f"package already registered: {package_id}")
+            raise RuntimeCoreInvariantError("package already registered")
         now = self._now()
         record = PackageRecord(
             package_id=package_id, tenant_id=tenant_id, display_name=display_name,
@@ -228,7 +228,7 @@ class MarketplaceRuntimeEngine:
 
     def get_package(self, package_id: str) -> PackageRecord:
         if package_id not in self._packages:
-            raise RuntimeCoreInvariantError(f"unknown package: {package_id}")
+            raise RuntimeCoreInvariantError("unknown package")
         return self._packages[package_id]
 
     def packages_for_tenant(self, tenant_id: str) -> tuple[PackageRecord, ...]:
@@ -246,11 +246,11 @@ class MarketplaceRuntimeEngine:
         tenant_id: str,
     ) -> BundleRecord:
         if bundle_id in self._bundles:
-            raise RuntimeCoreInvariantError(f"bundle entry already exists: {bundle_id}")
+            raise RuntimeCoreInvariantError("bundle entry already exists")
         if package_id not in self._packages:
-            raise RuntimeCoreInvariantError(f"unknown package: {package_id}")
+            raise RuntimeCoreInvariantError("unknown package")
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         offering = self._offerings[offering_id]
         now = self._now()
         # Determine disposition
@@ -289,12 +289,12 @@ class MarketplaceRuntimeEngine:
         channel: MarketplaceChannel = MarketplaceChannel.DIRECT,
     ) -> ListingRecord:
         if listing_id in self._listings:
-            raise RuntimeCoreInvariantError(f"listing already exists: {listing_id}")
+            raise RuntimeCoreInvariantError("listing already exists")
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         offering = self._offerings[offering_id]
         if offering.status in _OFFERING_TERMINAL:
-            raise RuntimeCoreInvariantError(f"offering is retired: {offering_id}")
+            raise RuntimeCoreInvariantError("offering is retired")
         now = self._now()
         listing = ListingRecord(
             listing_id=listing_id, offering_id=offering_id, tenant_id=tenant_id,
@@ -306,7 +306,7 @@ class MarketplaceRuntimeEngine:
 
     def deactivate_listing(self, listing_id: str) -> ListingRecord:
         if listing_id not in self._listings:
-            raise RuntimeCoreInvariantError(f"unknown listing: {listing_id}")
+            raise RuntimeCoreInvariantError("unknown listing")
         old = self._listings[listing_id]
         updated = ListingRecord(
             listing_id=old.listing_id, offering_id=old.offering_id, tenant_id=old.tenant_id,
@@ -335,9 +335,9 @@ class MarketplaceRuntimeEngine:
         has_entitlement: bool = True,
     ) -> EligibilityRule:
         if rule_id in self._eligibility_rules:
-            raise RuntimeCoreInvariantError(f"eligibility rule already exists: {rule_id}")
+            raise RuntimeCoreInvariantError("eligibility rule already exists")
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         now = self._now()
         if has_entitlement:
             status = EligibilityStatus.ELIGIBLE
@@ -372,9 +372,9 @@ class MarketplaceRuntimeEngine:
         contract_ref: str = "",
     ) -> PricingBinding:
         if binding_id in self._pricing_bindings:
-            raise RuntimeCoreInvariantError(f"pricing binding already exists: {binding_id}")
+            raise RuntimeCoreInvariantError("pricing binding already exists")
         if offering_id not in self._offerings:
-            raise RuntimeCoreInvariantError(f"unknown offering: {offering_id}")
+            raise RuntimeCoreInvariantError("unknown offering")
         now = self._now()
         eff = effective_price if effective_price > 0 else base_price
         binding = PricingBinding(
@@ -396,7 +396,7 @@ class MarketplaceRuntimeEngine:
 
     def marketplace_assessment(self, assessment_id: str, tenant_id: str) -> MarketplaceAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"assessment already exists: {assessment_id}")
+            raise RuntimeCoreInvariantError("assessment already exists")
         now = self._now()
         tenant_offerings = [o for o in self._offerings.values() if o.tenant_id == tenant_id]
         active_offerings = [o for o in tenant_offerings if o.status == OfferingStatus.ACTIVE]
@@ -454,7 +454,7 @@ class MarketplaceRuntimeEngine:
                         v = MarketplaceViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="no_pricing",
-                            reason=f"active offering {o.offering_id} has no pricing binding",
+                            reason="active offering has no pricing binding",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -468,7 +468,7 @@ class MarketplaceRuntimeEngine:
                     v = MarketplaceViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="invalid_bundle",
-                        reason=f"bundle {b.bundle_id} has disposition {b.disposition.value}",
+                        reason="bundle has invalid disposition",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -484,7 +484,7 @@ class MarketplaceRuntimeEngine:
                         v = MarketplaceViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="listing_inactive_offering",
-                            reason=f"listing {l.listing_id} is active but offering {l.offering_id} is {offering.status.value}",
+                            reason="listing is active on non-active offering",
                             detected_at=now,
                         )
                         self._violations[vid] = v

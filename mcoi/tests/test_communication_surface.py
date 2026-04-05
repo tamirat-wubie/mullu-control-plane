@@ -82,8 +82,9 @@ class TestCommunicationSurfaceEngine:
     def test_duplicate_identity_rejected(self):
         e = self._engine()
         e.register_identity(_identity("id-1"))
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             e.register_identity(_identity("id-1"))
+        assert "id-1" not in str(exc_info.value)
 
     def test_get_identities_for_contact(self):
         e = self._engine()
@@ -104,8 +105,9 @@ class TestCommunicationSurfaceEngine:
     def test_duplicate_conversation_rejected(self):
         e = self._engine()
         e.create_conversation(_conversation("conv-1"))
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             e.create_conversation(_conversation("conv-1"))
+        assert "conv-1" not in str(exc_info.value)
 
     # -- inbound --
 
@@ -165,8 +167,9 @@ class TestCommunicationSurfaceEngine:
             status=DeliveryStatus.DELIVERED, channel_type=ChannelType.EMAIL,
             created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             e.record_receipt(r)
+        assert "msg-nope" not in str(exc_info.value)
 
     # -- contact preferences --
 
@@ -216,8 +219,9 @@ class TestCommunicationSurfaceEngine:
 
     def test_complete_missing_session_rejected(self):
         e = self._engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             e.complete_call_session("nope", CallSessionState.COMPLETED, LATER, 0)
+        assert "nope" not in str(exc_info.value)
 
     def test_complete_terminal_session_rejected(self):
         e = self._engine()
@@ -229,8 +233,10 @@ class TestCommunicationSurfaceEngine:
             started_at=NOW, ended_at=LATER, duration_seconds=100,
         )
         e.start_call_session(session)
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             e.complete_call_session("call-1", CallSessionState.FAILED, LATER, 0)
+        assert "call-1" not in str(exc_info.value)
+        assert "completed" not in str(exc_info.value).lower()
 
     # -- transcripts --
 
@@ -259,8 +265,9 @@ class TestCommunicationSurfaceEngine:
             transcript_id="tx-1", session_id="nope",
             segments=(), created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             e.add_transcript(tx)
+        assert "nope" not in str(exc_info.value)
 
     # -- policy evaluation --
 
@@ -274,6 +281,8 @@ class TestCommunicationSurfaceEngine:
         e.register_policy(pol)
         decision = e.evaluate_policy("pol-1", ChannelType.EMAIL)
         assert decision.effect == CommunicationPolicyEffect.ALLOW
+        assert decision.reason == "channel allowed"
+        assert "Standard" not in decision.reason
 
     def test_policy_deny_explicit(self):
         e = self._engine()
@@ -286,6 +295,9 @@ class TestCommunicationSurfaceEngine:
         e.register_policy(pol)
         decision = e.evaluate_policy("pol-1", ChannelType.FAX)
         assert decision.effect == CommunicationPolicyEffect.DENY
+        assert decision.reason == "channel denied"
+        assert "Strict" not in decision.reason
+        assert "FAX" not in decision.reason
 
     def test_policy_deny_fail_closed(self):
         e = self._engine()
@@ -297,12 +309,15 @@ class TestCommunicationSurfaceEngine:
         e.register_policy(pol)
         decision = e.evaluate_policy("pol-1", ChannelType.VOICE)
         assert decision.effect == CommunicationPolicyEffect.DENY
-        assert "fail-closed" in decision.reason
+        assert decision.reason == "channel denied"
+        assert "Limited" not in decision.reason
+        assert "VOICE" not in decision.reason
 
     def test_policy_missing_fail_closed(self):
         e = self._engine()
         decision = e.evaluate_policy("nope", ChannelType.EMAIL)
         assert decision.effect == CommunicationPolicyEffect.DENY
+        assert decision.reason == "no policy found"
 
     def test_policy_require_approval(self):
         e = self._engine()
@@ -315,6 +330,32 @@ class TestCommunicationSurfaceEngine:
         e.register_policy(pol)
         decision = e.evaluate_policy("pol-1", ChannelType.VOICE)
         assert decision.effect == CommunicationPolicyEffect.REQUIRE_APPROVAL
+        assert decision.reason == "channel requires approval"
+        assert "Cautious" not in decision.reason
+        assert "VOICE" not in decision.reason
+
+    def test_policy_rate_limit_reason_is_bounded(self):
+        e = self._engine()
+        pol = CommunicationPolicy(
+            policy_id="pol-1", name="Metered",
+            allowed_channels=(ChannelType.EMAIL,),
+            max_outbound_per_hour=1,
+            created_at=NOW,
+        )
+        e.register_policy(pol)
+        e.send_outbound(OutboundMessage(
+            message_id="out-1",
+            conversation_id="conv-1",
+            channel_type=ChannelType.EMAIL,
+            recipient_identity_id="id-1",
+            body="hello",
+            scheduled_at=NOW,
+        ))
+        decision = e.evaluate_policy("pol-1", ChannelType.EMAIL)
+        assert decision.effect == CommunicationPolicyEffect.RATE_LIMITED
+        assert decision.reason == "rate limit exceeded"
+        assert "Metered" not in decision.reason
+        assert "/" not in decision.reason
 
     # -- channel manifests --
 

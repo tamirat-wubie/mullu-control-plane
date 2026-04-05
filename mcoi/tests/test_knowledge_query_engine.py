@@ -1499,3 +1499,67 @@ class TestEdgeCases:
         engine.register_query("q1", "t1")
         result = engine.search_graph("q1", "t1")
         assert result == ()
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids_or_statuses(self, engine):
+        engine.register_query("q-secret", "t1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            engine.register_query("q-secret", "t1")
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate query_id"
+        assert "q-secret" not in duplicate_message
+        assert "query_id" in duplicate_message
+
+        engine.cancel_query("q-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as cancel_exc:
+            engine.cancel_query("q-secret")
+        cancel_message = str(cancel_exc.value)
+        assert cancel_message == "Cannot cancel query in current status"
+        assert "cancelled" not in cancel_message
+        assert "q-secret" not in cancel_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as bundle_exc:
+            engine.build_evidence_bundle("bundle-secret", "q-secret", "other-tenant")
+        bundle_message = str(bundle_exc.value)
+        assert bundle_message == "Bundle tenant does not match query tenant"
+        assert "other-tenant" not in bundle_message
+        assert "t1" not in bundle_message
+
+    def test_violation_reasons_are_bounded(self, engine):
+        engine.register_query("q-cross", "t1")
+        engine.search_memory("q-cross", "t2")
+
+        engine.register_query("q-empty", "t1", search_text="nothing-here")
+        engine.execute_query("ex-empty", "q-empty")
+
+        engine.register_query("q-stuck", "t1")
+        old = engine.get_query("q-stuck")
+        engine._queries["q-stuck"] = KnowledgeQuery(
+            query_id=old.query_id,
+            tenant_id=old.tenant_id,
+            scope=old.scope,
+            scope_ref_id=old.scope_ref_id,
+            search_text=old.search_text,
+            status=QueryStatus.EXECUTING,
+            max_results=old.max_results,
+            created_at=old.created_at,
+            metadata=old.metadata,
+        )
+
+        violations = {
+            (v.query_id, v.operation): v.reason
+            for v in engine.detect_query_violations() + tuple(engine._violations.values())
+        }
+        assert violations[("q-cross", "cross_tenant")] == "Cross-tenant search attempt"
+        assert "q-cross" not in violations[("q-cross", "cross_tenant")]
+        assert "t2" not in violations[("q-cross", "cross_tenant")]
+
+        assert violations[("q-empty", "empty_results")] == "Query returned zero results"
+        assert "q-empty" not in violations[("q-empty", "empty_results")]
+        assert "zero results" in violations[("q-empty", "empty_results")]
+
+        assert violations[("q-stuck", "stuck_executing")] == "Query stuck in executing status"
+        assert "q-stuck" not in violations[("q-stuck", "stuck_executing")]
+        assert "executing status" in violations[("q-stuck", "stuck_executing")]

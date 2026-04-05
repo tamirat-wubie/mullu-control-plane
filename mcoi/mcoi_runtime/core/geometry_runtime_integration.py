@@ -317,7 +317,7 @@ class GeometryRuntimeIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Geometry state for {scope_ref_id}",
+            title="Geometry state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

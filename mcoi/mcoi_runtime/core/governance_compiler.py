@@ -341,8 +341,8 @@ class GovernanceEvaluator:
             if isinstance(current, Mapping) and part in current:
                 current = current[part]
             else:
-                # No scope info in context → scope applies (fail-open for scope matching)
-                return True
+                # Missing scope context means the scoped rule does not apply.
+                return False
 
         # If scope has a specific ref_id, check it matches
         if scope.ref_id is not None:

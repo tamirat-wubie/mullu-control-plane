@@ -383,14 +383,16 @@ class TestBindRole:
     def test_unknown_identity_raises(self, env):
         _, eng = env
         _setup_role(eng)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown identity"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown identity") as exc_info:
             eng.bind_role("bind-1", "ghost", "role-admin")
+        assert "ghost" not in str(exc_info.value)
 
     def test_unknown_role_raises(self, env):
         _, eng = env
         _setup_identity(eng)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown role"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown role") as exc_info:
             eng.bind_role("bind-1", "id-1", "ghost-role")
+        assert "ghost-role" not in str(exc_info.value)
 
     def test_binding_emits_event(self, env):
         es, eng = env
@@ -482,8 +484,9 @@ class TestDelegatePermission:
         _, eng = env
         eng.register_identity("f", "F", tenant_id="t1")
         eng.register_role("r", "R", permissions=[])
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown to"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown to") as exc_info:
             eng.delegate_permission("del-1", "f", "ghost", "r")
+        assert "ghost" not in str(exc_info.value)
 
     def test_unknown_role_raises(self, env):
         _, eng = env
@@ -533,8 +536,10 @@ class TestRevokeDelegation:
         eng.register_role("r", "R", permissions=[])
         eng.delegate_permission("del-1", "f", "t", "r")
         eng.revoke_delegation("del-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot revoke"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.revoke_delegation("del-1")
+        assert str(exc_info.value) == "cannot revoke delegation from current status"
+        assert "revoked" not in str(exc_info.value)
 
     def test_revoke_expired_raises(self, env):
         _, eng = env
@@ -543,8 +548,10 @@ class TestRevokeDelegation:
         eng.register_role("r", "R", permissions=[])
         eng.delegate_permission("del-1", "f", "t", "r")
         eng.expire_delegation("del-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot revoke"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.revoke_delegation("del-1")
+        assert str(exc_info.value) == "cannot revoke delegation from current status"
+        assert "expired" not in str(exc_info.value)
 
     def test_revoke_emits_event(self, env):
         es, eng = env
@@ -579,8 +586,10 @@ class TestExpireDelegation:
         eng.register_role("r", "R", permissions=[])
         eng.delegate_permission("del-1", "f", "t", "r")
         eng.expire_delegation("del-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot expire"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.expire_delegation("del-1")
+        assert str(exc_info.value) == "cannot expire delegation from current status"
+        assert "expired" not in str(exc_info.value)
 
     def test_expire_revoked_raises(self, env):
         _, eng = env
@@ -589,8 +598,10 @@ class TestExpireDelegation:
         eng.register_role("r", "R", permissions=[])
         eng.delegate_permission("del-1", "f", "t", "r")
         eng.revoke_delegation("del-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot expire"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.expire_delegation("del-1")
+        assert str(exc_info.value) == "cannot expire delegation from current status"
+        assert "revoked" not in str(exc_info.value)
 
 
 class TestActiveDelegationsForIdentity:
@@ -1805,4 +1816,5 @@ class TestEdgeCases:
         assert len(violations) >= 1
         cross_v = [v for v in violations if v.identity_id == "cross"]
         assert len(cross_v) >= 1
-        assert "cross-tenant" in cross_v[0].reason
+        assert cross_v[0].reason == "cross-tenant access attempt"
+        assert "t2" not in cross_v[0].reason

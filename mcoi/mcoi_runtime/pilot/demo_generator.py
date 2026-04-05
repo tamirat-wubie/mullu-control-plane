@@ -44,7 +44,7 @@ class DemoTenantGenerator:
 
         # 3. Seed remediations
         demo_remediations = [
-            {"remediation_id": f"demo-rem-{i:03d}", "case_ref": f"demo-case-{i:03d}", "title": f"Remediate: {demo_cases[i]['title']}"}
+            {"remediation_id": f"demo-rem-{i:03d}", "case_ref": f"demo-case-{i:03d}", "title": "Demo remediation"}
             for i in range(5)
         ]
         rem_result = self._importer.import_remediations(tenant_id, demo_remediations)

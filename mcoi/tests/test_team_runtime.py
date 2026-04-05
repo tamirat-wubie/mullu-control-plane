@@ -745,3 +745,43 @@ class TestEdgeCases:
         engine = TeamEngine(registry=reg, clock=_fixed_clock())
         record = engine.handoff_job("j-1", "w-1", "w-2", HandoffReason.SHIFT_CHANGE)
         assert record.reason == HandoffReason.SHIFT_CHANGE
+
+
+class TestBoundedTeamContracts:
+    def test_registry_messages_are_bounded(self):
+        reg = WorkerRegistry(clock=_fixed_clock())
+        reg.register_worker(_make_worker(worker_id="worker-secret"))
+        with pytest.raises(RuntimeCoreInvariantError, match="worker already registered") as worker_exc:
+            reg.register_worker(_make_worker(worker_id="worker-secret", name="Duplicate"))
+
+        reg.register_role(_make_role(role_id="role-secret"))
+        with pytest.raises(RuntimeCoreInvariantError, match="role already registered") as role_exc:
+            reg.register_role(_make_role(role_id="role-secret", name="Duplicate"))
+
+        reg.register_policy(_make_policy(policy_id="policy-secret"))
+        with pytest.raises(RuntimeCoreInvariantError, match="policy already registered") as policy_exc:
+            reg.register_policy(_make_policy(policy_id="policy-secret"))
+
+        with pytest.raises(RuntimeCoreInvariantError, match="worker not found") as missing_exc:
+            reg.update_capacity("worker-missing", current_load=1)
+
+        assert "worker-secret" not in str(worker_exc.value)
+        assert "role-secret" not in str(role_exc.value)
+        assert "policy-secret" not in str(policy_exc.value)
+        assert "worker-missing" not in str(missing_exc.value)
+
+    def test_assignment_reason_is_bounded(self):
+        clock = _fixed_clock()
+        reg = WorkerRegistry(clock=clock)
+        reg.register_worker(_make_worker(worker_id="w-busy", max_concurrent_jobs=5))
+        reg.register_worker(_make_worker(worker_id="w-light", name="Light", max_concurrent_jobs=5))
+        reg.update_capacity("w-busy", current_load=4)
+        reg.update_capacity("w-light", current_load=1)
+        engine = TeamEngine(registry=reg, clock=clock)
+
+        decision = engine.assign_job("job-secret", "role-dev")
+        assert decision is not None
+        assert decision.reason == "least loaded available worker"
+        assert "slots" not in decision.reason
+        assert "4" not in decision.reason
+        assert "1" not in decision.reason

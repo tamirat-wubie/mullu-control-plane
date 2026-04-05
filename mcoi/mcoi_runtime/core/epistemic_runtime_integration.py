@@ -98,7 +98,7 @@ class EpistemicRuntimeIntegration:
         claim = self._epistemic.register_claim(
             claim_id=claim_id,
             tenant_id=tenant_id,
-            content=f"{source_type}_{ref}",
+            content="epistemic source claim",
             status=status,
             assertion_mode=assertion_mode,
             source_ref=ref,
@@ -260,7 +260,7 @@ class EpistemicRuntimeIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Epistemic state for {scope_ref_id}",
+            title="Epistemic state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

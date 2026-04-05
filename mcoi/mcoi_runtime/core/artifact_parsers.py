@@ -88,7 +88,7 @@ class ArtifactParserRegistry:
             raise RuntimeCoreInvariantError("parser must be an ArtifactParser")
         pid = parser.parser_id()
         if pid in self._parsers:
-            raise RuntimeCoreInvariantError(f"parser '{pid}' already registered")
+            raise RuntimeCoreInvariantError("parser already registered")
         desc = parser.descriptor()
         manifest = parser.manifest()
         self._parsers[pid] = parser
@@ -98,17 +98,17 @@ class ArtifactParserRegistry:
 
     def get_parser(self, parser_id: str) -> ArtifactParser:
         if parser_id not in self._parsers:
-            raise RuntimeCoreInvariantError(f"parser '{parser_id}' not found")
+            raise RuntimeCoreInvariantError("parser not found")
         return self._parsers[parser_id]
 
     def get_descriptor(self, parser_id: str) -> ArtifactParserDescriptor:
         if parser_id not in self._descriptors:
-            raise RuntimeCoreInvariantError(f"parser '{parser_id}' not found")
+            raise RuntimeCoreInvariantError("parser not found")
         return self._descriptors[parser_id]
 
     def get_manifest(self, parser_id: str) -> ParserCapabilityManifest:
         if parser_id not in self._manifests:
-            raise RuntimeCoreInvariantError(f"parser '{parser_id}' not found")
+            raise RuntimeCoreInvariantError("parser not found")
         return self._manifests[parser_id]
 
     def list_parsers(

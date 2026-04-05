@@ -138,7 +138,7 @@ class MigrationTracker:
             migration_type: "clock" or "snapshot"
         """
         if migration_type not in ("clock", "snapshot"):
-            raise ValueError(f"migration_type must be 'clock' or 'snapshot', got {migration_type!r}")
+            raise ValueError("migration_type must be 'clock' or 'snapshot'")
         key = f"{name}:{migration_type}"
         entry = {
             "name": name,
@@ -160,8 +160,7 @@ class MigrationTracker:
                     entry["status"] = "complete"
                     completed.append(key)
         if not completed:
-            raise KeyError(f"No tracked migration for {name!r}" +
-                           (f" type={migration_type!r}" if migration_type else ""))
+            raise KeyError("no tracked migration")
         return {"name": name, "completed": len(completed), "status": "complete"}
 
     def progress(self) -> dict[str, Any]:

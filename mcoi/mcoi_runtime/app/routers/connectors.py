@@ -11,6 +11,10 @@ from mcoi_runtime.app.routers.deps import deps
 router = APIRouter()
 
 
+def _connector_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 class RegisterConnectorRequest(BaseModel):
     connector_id: str
     name: str
@@ -41,11 +45,7 @@ def register_connector(req: RegisterConnectorRequest):
     try:
         ctype = ConnectorType(req.connector_type)
     except ValueError:
-        raise HTTPException(400, detail={
-            "error": f"invalid connector_type: {req.connector_type}",
-            "error_code": "invalid_connector_type",
-            "governed": True,
-        })
+        raise HTTPException(400, detail=_connector_error_detail("invalid connector type", "invalid_connector_type"))
     definition = ConnectorDefinition(
         connector_id=req.connector_id,
         name=req.name,

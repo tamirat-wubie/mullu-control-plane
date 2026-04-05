@@ -554,7 +554,7 @@ class TestParameterAdjustments:
     def test_cannot_apply_from_proposed(self, engine):
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.MEDIUM)
-        with pytest.raises(RuntimeCoreInvariantError, match="must be APPROVED or APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="eligible for application"):
             engine.apply_parameter_adjustment(
                 "adj-1", TENANT, "prop-1", "comp-a", "timeout", "30", "60",
             )
@@ -563,7 +563,7 @@ class TestParameterAdjustments:
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.MEDIUM)
         engine.reject_improvement("prop-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="must be APPROVED or APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="eligible for application"):
             engine.apply_parameter_adjustment(
                 "adj-1", TENANT, "prop-1", "comp-a", "timeout", "30", "60",
             )
@@ -759,38 +759,51 @@ class TestRollback:
         engine.rollback_improvement("prop-1")
         assert es.event_count > before
 
+    def test_rollback_decision_reason_is_bounded(self, engine):
+        _register_signal(engine, signal_id="sig-secret")
+        _propose(engine, proposal_id="prop-secret", signal_ref="sig-secret",
+                 risk_level=ImprovementRiskLevel.LOW)
+        engine.rollback_improvement("prop-secret")
+        decision = next(
+            d for d in engine._decisions.values()
+            if d.proposal_ref == "prop-secret" and d.disposition == ApprovalDisposition.REJECTED
+        )
+        assert decision.reason == "Improvement rolled back"
+        assert "prop-secret" not in decision.reason
+        assert "sig-secret" not in decision.reason
+
     def test_cannot_rollback_proposed(self, engine):
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.MEDIUM)
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only rollback APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="rollback applied"):
             engine.rollback_improvement("prop-1")
 
     def test_cannot_rollback_approved(self, engine):
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.MEDIUM)
         engine.approve_improvement("prop-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only rollback APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="rollback applied"):
             engine.rollback_improvement("prop-1")
 
     def test_cannot_rollback_rejected(self, engine):
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.MEDIUM)
         engine.reject_improvement("prop-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only rollback APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="rollback applied"):
             engine.rollback_improvement("prop-1")
 
     def test_cannot_rollback_deferred(self, engine):
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.MEDIUM)
         engine.defer_improvement("prop-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only rollback APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="rollback applied"):
             engine.rollback_improvement("prop-1")
 
     def test_double_rollback_blocked(self, engine):
         _register_signal(engine)
         _propose(engine, risk_level=ImprovementRiskLevel.LOW)
         engine.rollback_improvement("prop-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Can only rollback APPLIED"):
+        with pytest.raises(RuntimeCoreInvariantError, match="rollback applied"):
             engine.rollback_improvement("prop-1")
 
     def test_rollback_unknown_proposal(self, engine):
@@ -926,6 +939,17 @@ class TestViolationDetection:
         engine.rollback_improvement("p1")
         viols = engine.detect_improvement_violations(TENANT)
         assert any(v.operation == "excessive_rollbacks" for v in viols)
+
+    def test_excessive_rollback_reason_is_bounded(self, engine):
+        _register_signal(engine, signal_id="sig-secret")
+        _propose(engine, proposal_id="prop-secret", signal_ref="sig-secret",
+                 risk_level=ImprovementRiskLevel.LOW)
+        engine.rollback_improvement("prop-secret")
+        violation = next(v for v in engine.detect_improvement_violations(TENANT)
+                         if v.operation == "excessive_rollbacks")
+        assert violation.reason == "Rollback count exceeds applied count"
+        assert "prop-secret" not in violation.reason
+        assert "1" not in violation.reason
 
     def test_excessive_rollbacks_idempotent(self, engine):
         _register_signal(engine, signal_id="sig-1")

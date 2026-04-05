@@ -16,6 +16,11 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
 
+def _bounded_migration_error(operation: str, exc: Exception) -> RuntimeError:
+    """Return a bounded migration failure without leaking backend detail."""
+    return RuntimeError(f"{operation} failed")
+
+
 @dataclass(frozen=True, slots=True)
 class Migration:
     """A single schema migration."""
@@ -62,9 +67,7 @@ class MigrationEngine:
     def register(self, migration: Migration) -> None:
         """Register a migration. Must be called in version order."""
         if self._migrations and migration.version <= self._migrations[-1].version:
-            raise ValueError(
-                f"Migration version {migration.version} must be > {self._migrations[-1].version}"
-            )
+            raise ValueError("migration versions must increase monotonically")
         self._migrations.append(migration)
 
     @property
@@ -78,8 +81,8 @@ class MigrationEngine:
             conn.commit()
             row = conn.execute("SELECT MAX(version) FROM schema_version").fetchone()
             return row[0] if row and row[0] is not None else 0
-        except Exception:
-            return 0
+        except Exception as exc:
+            raise _bounded_migration_error("migration state lookup", exc) from exc
 
     def pending(self, conn: DBConnection) -> list[Migration]:
         """List migrations that haven't been applied yet."""
@@ -110,19 +113,20 @@ class MigrationEngine:
                     version=migration.version, name=migration.name, success=True,
                 ))
             except Exception as e:
+                bounded_error = "migration execution failed"
                 results.append(MigrationResult(
                     version=migration.version, name=migration.name,
-                    success=False, error=str(e),
+                    success=False, error=bounded_error,
                 ))
-                raise RuntimeError(
-                    f"Migration {migration.version} ({migration.name}) failed: {e}"
-                ) from e
+                raise RuntimeError("migration execution failed") from e
 
         return results
 
     def history(self, conn: DBConnection) -> list[dict[str, Any]]:
         """Get migration history from the database."""
         try:
+            conn.execute(self.VERSION_TABLE_SQL)
+            conn.commit()
             rows = conn.execute(
                 "SELECT version, name, applied_at, checksum FROM schema_version ORDER BY version"
             ).fetchall()
@@ -130,8 +134,8 @@ class MigrationEngine:
                 {"version": r[0], "name": r[1], "applied_at": r[2], "checksum": r[3]}
                 for r in rows
             ]
-        except Exception:
-            return []
+        except Exception as exc:
+            raise _bounded_migration_error("migration history lookup", exc) from exc
 
     def summary(self) -> dict[str, Any]:
         return {

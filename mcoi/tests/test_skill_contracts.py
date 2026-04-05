@@ -121,8 +121,11 @@ class TestSkillStep:
             SkillStep(step_id="", name="x", action_type="shell")
 
     def test_empty_dependency_rejected(self):
-        with pytest.raises(ValueError, match="depends_on"):
+        with pytest.raises(ValueError) as exc_info:
             SkillStep(step_id="s1", name="x", action_type="shell", depends_on=("",))
+        message = str(exc_info.value)
+        assert message == "value must be a non-empty string"
+        assert "depends_on" not in message
 
 
 # --- SkillDescriptor ---
@@ -186,18 +189,34 @@ class TestSkillDescriptor:
         with pytest.raises(ValueError, match="confidence"):
             _primitive_descriptor(confidence=-0.1)
 
+    def test_invalid_lifecycle_message_is_bounded(self):
+        with pytest.raises(ValueError) as exc_info:
+            _primitive_descriptor(lifecycle="rogue")
+        message = str(exc_info.value)
+        assert message == "lifecycle must be a SkillLifecycle value"
+        assert "rogue" not in message
+        assert "str" not in message
+
     def test_circular_dependency_rejected(self):
-        with pytest.raises(ValueError, match="circular"):
+        with pytest.raises(ValueError) as exc_info:
             _composite_descriptor(steps=(
-                SkillStep(step_id="a", name="a", action_type="x", depends_on=("b",)),
-                SkillStep(step_id="b", name="b", action_type="x", depends_on=("a",)),
+                SkillStep(step_id="step-secret-a", name="a", action_type="x", depends_on=("step-secret-b",)),
+                SkillStep(step_id="step-secret-b", name="b", action_type="x", depends_on=("step-secret-a",)),
             ))
+        message = str(exc_info.value)
+        assert message == "circular step dependency detected"
+        assert "step-secret-a" not in message
+        assert "step-secret-b" not in message
 
     def test_unknown_dependency_rejected(self):
-        with pytest.raises(ValueError, match="unknown step"):
+        with pytest.raises(ValueError) as exc_info:
             _composite_descriptor(steps=(
-                SkillStep(step_id="a", name="a", action_type="x", depends_on=("missing",)),
+                SkillStep(step_id="step-secret-a", name="a", action_type="x", depends_on=("step-secret-missing",)),
             ))
+        message = str(exc_info.value)
+        assert message == "step dependency references an unknown step"
+        assert "step-secret-a" not in message
+        assert "step-secret-missing" not in message
 
     def test_three_step_chain_valid(self):
         d = _composite_descriptor(steps=(

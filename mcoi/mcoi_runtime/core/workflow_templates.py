@@ -38,7 +38,7 @@ class WorkflowTemplateRegistry:
 
     def register(self, template: WorkflowTemplate) -> None:
         if template.template_id in self._templates:
-            raise ValueError(f"template already registered: {template.template_id}")
+            raise ValueError("template already registered")
         self._templates[template.template_id] = template
 
     def get(self, template_id: str) -> WorkflowTemplate | None:
@@ -48,11 +48,11 @@ class WorkflowTemplateRegistry:
         """Create chain steps from a template with parameter substitution."""
         template = self._templates.get(template_id)
         if template is None:
-            raise ValueError(f"unknown template: {template_id}")
+            raise ValueError("template unavailable")
 
         missing = [p for p in template.parameters if p not in params]
         if missing:
-            raise ValueError(f"missing parameters: {', '.join(missing)}")
+            raise ValueError("missing required workflow parameters")
 
         steps: list[ChainStep] = []
         for step in template.steps:

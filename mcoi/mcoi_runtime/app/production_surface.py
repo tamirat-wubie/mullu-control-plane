@@ -102,7 +102,7 @@ class AuthGate:
         session = self._sessions.get(session_id)
         if not session or not session.active:
             self._denied += 1
-            raise PermissionError(f"Invalid or expired session: {session_id}")
+            raise PermissionError("invalid or expired session")
         return session
 
     def revoke(self, session_id: str) -> None:

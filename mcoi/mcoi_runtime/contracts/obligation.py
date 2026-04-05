@@ -182,7 +182,7 @@ class ObligationClosure(ContractRecord):
             ObligationState.CANCELLED,
         ):
             raise ValueError(
-                f"final_state must be completed, expired, or cancelled, got {self.final_state}"
+                "final_state must be a terminal closure state"
             )
         object.__setattr__(
             self, "closed_at",

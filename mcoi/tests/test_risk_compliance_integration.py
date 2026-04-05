@@ -342,6 +342,8 @@ class TestAttachRiskStateToMemoryMesh:
         )
         mem = integ.attach_risk_state_to_memory_mesh("scope-mm")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Risk/compliance state"
+        assert "scope-mm" not in mem.title
         assert "risk" in mem.tags
         assert "compliance" in mem.tags
         assert "controls" in mem.tags

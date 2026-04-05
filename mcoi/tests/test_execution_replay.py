@@ -28,13 +28,15 @@ class TestReplayRecorder:
     def test_duplicate_start(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
         rec.start_trace("t1")
-        with pytest.raises(ValueError, match="already started"):
+        with pytest.raises(ValueError, match="^trace already started$") as excinfo:
             rec.start_trace("t1")
+        assert "t1" not in str(excinfo.value)
 
     def test_record_without_start(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
-        with pytest.raises(ValueError, match="not started"):
+        with pytest.raises(ValueError, match="^trace not started$") as excinfo:
             rec.record_frame("t1", "a", {}, {})
+        assert "t1" not in str(excinfo.value)
 
     def test_max_frames(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK, max_frames=3)
@@ -42,8 +44,16 @@ class TestReplayRecorder:
         rec.record_frame("t1", "a", {}, {})
         rec.record_frame("t1", "b", {}, {})
         rec.record_frame("t1", "c", {}, {})
-        with pytest.raises(ValueError, match="exceeded max frames"):
+        with pytest.raises(ValueError, match="^trace exceeded max frames$") as excinfo:
             rec.record_frame("t1", "d", {}, {})
+        assert "t1" not in str(excinfo.value)
+        assert "3" not in str(excinfo.value)
+
+    def test_complete_missing_trace_is_bounded(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        with pytest.raises(ValueError, match="^trace not found$") as excinfo:
+            rec.complete_trace("t1")
+        assert "t1" not in str(excinfo.value)
 
     def test_get_trace(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
@@ -119,6 +129,8 @@ class TestReplayExecutor:
         executor = ReplayExecutor(operations={})
         results = executor.replay(trace)
         assert results[0]["matched"] is False
+        assert results[0]["reason"] == "unknown operation"
+        assert "unknown_op" not in results[0]["reason"]
 
     def test_verify(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)

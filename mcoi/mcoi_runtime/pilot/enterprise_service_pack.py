@@ -176,7 +176,7 @@ class EnterpriseServiceDemoGenerator:
 
         # Seed remediations
         rems = [
-            {"remediation_id": f"es-rem-{i:03d}", "case_ref": f"es-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"es-rem-{i:03d}", "case_ref": f"es-case-{i:03d}", "title": "Enterprise service remediation"}
             for i in range(4)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

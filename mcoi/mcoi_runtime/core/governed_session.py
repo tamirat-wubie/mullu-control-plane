@@ -41,7 +41,7 @@ def _build_session_dispatch_request(
     from mcoi_runtime.core.dispatcher import DispatchRequest
 
     if action_type != "shell_command":
-        raise ValueError(f"unsupported governed session action: {action_type}")
+        raise ValueError("unsupported governed session action")
 
     argv = bindings.get("argv")
     if not isinstance(argv, (list, tuple)) or not argv:
@@ -222,12 +222,17 @@ class GovernedSession:
 
     def _require_open(self) -> None:
         if self._closed:
-            raise RuntimeError(f"session {self._session_id} is closed")
+            raise RuntimeError("session is closed")
 
     def _check_tenant_gating(self) -> None:
         if self._tenant_gating is not None:
-            if not self._tenant_gating.is_allowed(self._tenant_id):
-                raise PermissionError(f"tenant {self._tenant_id} is suspended or terminated")
+            reason = None
+            if hasattr(self._tenant_gating, "denial_reason"):
+                reason = self._tenant_gating.denial_reason(self._tenant_id)
+            elif not self._tenant_gating.is_allowed(self._tenant_id):
+                reason = "tenant access denied"
+            if reason is not None:
+                raise PermissionError(reason)
 
     def _check_rbac(self, resource_type: str, action: str) -> None:
         if self._access_runtime is None:
@@ -241,36 +246,34 @@ class GovernedSession:
                 scope_ref_id=self._tenant_id,
             )
             if evaluation.decision == AccessDecision.DENIED:
-                raise PermissionError(f"access denied: {evaluation.reason}")
+                raise PermissionError("access denied")
             if evaluation.decision == AccessDecision.REQUIRES_APPROVAL:
-                raise PermissionError(f"approval required: {evaluation.reason}")
+                raise PermissionError("approval required")
         except PermissionError:
             raise
         except Exception:
-            pass  # RBAC evaluation failure — fail-open for session operations
+            raise PermissionError("access evaluation failed")
 
     def _check_content_safety(self, content: str) -> None:
         if self._content_safety is None or not content:
             return
         result = self._content_safety.evaluate(content)
         if result.verdict.value == "blocked":
-            raise ValueError(f"content blocked: {result.reason}")
+            raise ValueError("content blocked")
 
     def _check_rate_limit(self, endpoint: str) -> None:
         if self._rate_limiter is None:
             return
         result = self._rate_limiter.check(self._tenant_id, endpoint)
         if not result.allowed:
-            raise RuntimeError(
-                f"rate limited: retry after {result.retry_after_seconds}s"
-            )
+            raise RuntimeError("rate limited")
 
     def _check_budget(self) -> None:
         if self._budget_mgr is None:
             return
         report = self._budget_mgr.report(self._tenant_id)
         if report.exhausted:
-            raise RuntimeError(f"budget exhausted for tenant {self._tenant_id}")
+            raise RuntimeError("budget exhausted")
 
     def _redact_pii(self, text: str) -> str:
         if self._pii_scanner is None or not text:
@@ -301,8 +304,14 @@ class GovernedSession:
                 decision=decision,
                 actor_id=self._identity_id,
             )
-        except Exception:
-            pass  # Proof generation must not block operations
+        except Exception as exc:
+            self._record_audit(
+                action="session.proof",
+                target=endpoint,
+                outcome="error",
+                detail={"error": f"proof certification failed ({type(exc).__name__})"},
+            )
+            raise RuntimeError("proof certification failed")
 
     # ── Core operations ──
 
@@ -320,6 +329,8 @@ class GovernedSession:
 
         if self._llm_bridge is None:
             raise RuntimeError("no LLM bridge configured")
+
+        self._certify_proof("session/llm", "allowed")
 
         # Track context for multi-turn conversations
         self._add_context("user", prompt)
@@ -354,7 +365,6 @@ class GovernedSession:
             outcome=outcome,
             detail={"model": result.model_name, "cost": result.cost, "tokens": result.input_tokens + result.output_tokens},
         )
-        self._certify_proof("session/llm", "allowed" if result.succeeded else "denied")
 
         return result
 
@@ -370,6 +380,7 @@ class GovernedSession:
         self._check_tenant_gating()
         self._check_rbac("execute", "POST")
         self._check_rate_limit("session/execute")
+        self._certify_proof("session/execute", "allowed")
 
         result_detail: dict[str, Any] = {"action_type": action_type, "bindings": dict(bindings)}
 
@@ -408,7 +419,6 @@ class GovernedSession:
             outcome="dispatched",
             detail=result_detail,
         )
-        self._certify_proof("session/execute", "allowed")
 
         return {**result_detail, "governed": True}
 
@@ -420,6 +430,7 @@ class GovernedSession:
         self._require_open()
         self._check_rbac(resource_type, "GET")
         self._check_rate_limit("session/query")
+        self._certify_proof("session/query", "allowed")
 
         self._operations += 1
         self._record_audit(
@@ -428,7 +439,6 @@ class GovernedSession:
             outcome="success",
             detail={"filters": filters},
         )
-        self._certify_proof("session/query", "allowed")
 
         return {"resource_type": resource_type, "filters": filters, "governed": True}
 
@@ -447,7 +457,16 @@ class GovernedSession:
                 scope_ref_id=self._tenant_id,
             )
             return evaluation.decision == AccessDecision.ALLOWED
-        except Exception:
+        except Exception as exc:
+            self._record_audit(
+                action="session.has_permission",
+                target=resource,
+                outcome="error",
+                detail={
+                    "action": action,
+                    "error": f"access evaluation failed ({type(exc).__name__})",
+                },
+            )
             return False
 
     # ── Session lifecycle ──
@@ -455,7 +474,7 @@ class GovernedSession:
     def close(self) -> SessionClosureReport:
         """Close the session and produce an immutable closure report."""
         if self._closed:
-            raise RuntimeError(f"session {self._session_id} already closed")
+            raise RuntimeError("session already closed")
 
         self._closed = True
         closed_at = self._clock()
@@ -508,6 +527,8 @@ class Platform:
         tenant_gating: Any | None = None,
         governed_dispatcher: Any | None = None,
         rate_limiter: Any | None = None,
+        bootstrap_warnings: tuple[str, ...] = (),
+        bootstrap_components: dict[str, bool] | None = None,
     ) -> None:
         self._clock = clock
         self._access_runtime = access_runtime
@@ -520,7 +541,54 @@ class Platform:
         self._tenant_gating = tenant_gating
         self._governed_dispatcher = governed_dispatcher
         self._rate_limiter = rate_limiter
+        self._bootstrap_warnings = tuple(bootstrap_warnings)
+        self._bootstrap_components = dict(bootstrap_components or {})
         self._session_count = 0
+
+    def _record_platform_audit(
+        self,
+        *,
+        identity_id: str,
+        tenant_id: str,
+        target: str,
+        outcome: str,
+        detail: dict[str, Any] | None = None,
+    ) -> None:
+        if self._audit_trail is None:
+            return
+        self._audit_trail.record(
+            action="platform.connect",
+            actor_id=identity_id,
+            tenant_id=tenant_id,
+            target=target,
+            outcome=outcome,
+            detail=detail or {},
+        )
+
+    def _resolve_identity_for_connect(self, identity_id: str, tenant_id: str) -> Any | None:
+        if self._access_runtime is None:
+            return None
+
+        from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+        try:
+            if hasattr(self._access_runtime, "get_identity"):
+                return self._access_runtime.get_identity(identity_id)
+            identities = getattr(self._access_runtime, "_identities", None)
+            if isinstance(identities, dict):
+                return identities.get(identity_id)
+        except RuntimeCoreInvariantError:
+            return None
+        except Exception as exc:
+            self._record_platform_audit(
+                identity_id=identity_id,
+                tenant_id=tenant_id,
+                target="identity",
+                outcome="error",
+                detail={"error": f"identity resolution failed ({type(exc).__name__})"},
+            )
+            raise PermissionError("identity resolution failed")
+        return None
 
     @classmethod
     def from_server(cls) -> Platform:
@@ -540,6 +608,20 @@ class Platform:
             audit_trail=server.audit_trail,
             proof_bridge=server.proof_bridge,
             tenant_gating=server._tenant_gating,
+            bootstrap_warnings=tuple(
+                warning
+                for warning in (getattr(server, "_field_encryption_bootstrap", {}).get("warning", ""),)
+                if warning
+            ),
+            bootstrap_components={
+                "access_runtime": server.access_runtime is not None,
+                "llm_bridge": server.llm_bootstrap_result.bridge is not None,
+                "tenant_gating": server._tenant_gating is not None,
+                "proof_bridge": server.proof_bridge is not None,
+                "field_encryption": bool(
+                    getattr(server, "_field_encryption_bootstrap", {}).get("enabled", False)
+                ),
+            },
         )
 
     @classmethod
@@ -554,6 +636,17 @@ class Platform:
         def _clock() -> str:
             return datetime.now(timezone.utc).isoformat()
 
+        def _env_flag(name: str) -> bool | None:
+            raw = os.environ.get(name)
+            if raw is None:
+                return None
+            normalized = raw.strip().lower()
+            if normalized in {"1", "true", "yes", "on"}:
+                return True
+            if normalized in {"0", "false", "no", "off"}:
+                return False
+            raise ValueError("value must be a boolean flag")
+
         from mcoi_runtime.core.audit_trail import AuditTrail
         from mcoi_runtime.core.content_safety import build_default_safety_chain
         from mcoi_runtime.core.pii_scanner import PIIScanner
@@ -563,7 +656,12 @@ class Platform:
         from mcoi_runtime.persistence.postgres_governance_stores import create_governance_stores
 
         db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
+        env = os.environ.get("MULLU_ENV", "local_dev")
         stores = create_governance_stores(backend=db_backend, connection_string=os.environ.get("MULLU_DB_URL", ""))
+        allow_unknown_tenants = _env_flag("MULLU_ALLOW_UNKNOWN_TENANTS")
+        if allow_unknown_tenants is None:
+            allow_unknown_tenants = env in ("local_dev", "test")
+        bootstrap_warnings: list[str] = []
 
         # Optional: RBAC
         access_runtime = None
@@ -574,8 +672,11 @@ class Platform:
             spine = EventSpineEngine(clock=_clock)
             access_runtime = AccessRuntimeEngine(spine)
             seed_default_permissions(access_runtime)
-        except Exception:
-            pass
+        except Exception as exc:
+            access_runtime = None
+            bootstrap_warnings.append(
+                f"access runtime bootstrap failed ({type(exc).__name__})"
+            )
 
         # Optional: LLM
         llm_bridge = None
@@ -583,8 +684,11 @@ class Platform:
             from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
             result = bootstrap_llm(clock=_clock, config=LLMConfig.from_env())
             llm_bridge = result.bridge
-        except Exception:
-            pass
+        except Exception as exc:
+            llm_bridge = None
+            bootstrap_warnings.append(
+                f"llm bootstrap failed ({type(exc).__name__})"
+            )
 
         return cls(
             clock=_clock,
@@ -595,7 +699,18 @@ class Platform:
             llm_bridge=llm_bridge,
             audit_trail=AuditTrail(clock=_clock, store=stores["audit"]),
             proof_bridge=ProofBridge(clock=_clock),
-            tenant_gating=TenantGatingRegistry(clock=_clock, store=stores["tenant_gating"]),
+            tenant_gating=TenantGatingRegistry(
+                clock=_clock,
+                store=stores["tenant_gating"],
+                allow_unknown_tenants=allow_unknown_tenants,
+            ),
+            bootstrap_warnings=tuple(bootstrap_warnings),
+            bootstrap_components={
+                "access_runtime": access_runtime is not None,
+                "llm_bridge": llm_bridge is not None,
+                "tenant_gating": True,
+                "proof_bridge": True,
+            },
         )
 
     def connect(
@@ -609,14 +724,46 @@ class Platform:
         Validates tenant gating and identity status before creating session.
         """
         # Validate tenant is not suspended/terminated
-        if self._tenant_gating is not None and not self._tenant_gating.is_allowed(tenant_id):
-            raise PermissionError(f"tenant {tenant_id} is suspended or terminated")
+        if self._tenant_gating is not None:
+            reason = None
+            if hasattr(self._tenant_gating, "denial_reason"):
+                reason = self._tenant_gating.denial_reason(tenant_id)
+            elif not self._tenant_gating.is_allowed(tenant_id):
+                reason = "tenant access denied"
+            if reason is not None:
+                raise PermissionError(reason)
 
         # Validate identity exists and is enabled (if RBAC is available)
         if self._access_runtime is not None:
-            identity = self._access_runtime._identities.get(identity_id)
-            if identity is not None and not identity.enabled:
-                raise PermissionError(f"identity {identity_id} is disabled")
+            identity = self._resolve_identity_for_connect(identity_id, tenant_id)
+            if identity is None:
+                self._record_platform_audit(
+                    identity_id=identity_id,
+                    tenant_id=tenant_id,
+                    target="identity",
+                    outcome="denied",
+                    detail={"error": "identity not registered"},
+                )
+                raise PermissionError("identity not registered")
+            identity_tenant_id = getattr(identity, "tenant_id", "")
+            if isinstance(identity_tenant_id, str) and identity_tenant_id and identity_tenant_id != tenant_id:
+                self._record_platform_audit(
+                    identity_id=identity_id,
+                    tenant_id=tenant_id,
+                    target="identity",
+                    outcome="denied",
+                    detail={"error": "identity tenant mismatch"},
+                )
+                raise PermissionError("identity tenant mismatch")
+            if getattr(identity, "enabled", False) is not True:
+                self._record_platform_audit(
+                    identity_id=identity_id,
+                    tenant_id=tenant_id,
+                    target="identity",
+                    outcome="denied",
+                    detail={"error": "identity disabled"},
+                )
+                raise PermissionError("identity disabled")
 
         self._session_count += 1
         session_id = f"gs-{hashlib.sha256(f'{identity_id}:{tenant_id}:{self._session_count}'.encode()).hexdigest()[:12]}"
@@ -641,3 +788,11 @@ class Platform:
     @property
     def session_count(self) -> int:
         return self._session_count
+
+    @property
+    def bootstrap_warnings(self) -> tuple[str, ...]:
+        return self._bootstrap_warnings
+
+    @property
+    def bootstrap_components(self) -> dict[str, bool]:
+        return dict(self._bootstrap_components)

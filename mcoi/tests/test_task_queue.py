@@ -40,6 +40,15 @@ class TestTaskQueue:
         with pytest.raises(ValueError, match="queue full"):
             q.submit("t3", {})
 
+    def test_max_depth_error_is_bounded(self):
+        q = TaskQueue(clock=FIXED_CLOCK, max_depth=2)
+        q.submit("t1", {})
+        q.submit("t2", {})
+        with pytest.raises(ValueError, match="queue full") as excinfo:
+            q.submit("t3", {})
+        assert str(excinfo.value) == "queue full"
+        assert "2" not in str(excinfo.value)
+
     def test_process_one(self):
         q = TaskQueue(clock=FIXED_CLOCK)
         q.submit("t1", {"x": 1})

@@ -1952,3 +1952,26 @@ class TestEventEmission:
         initial = es.event_count
         engine.procurement_snapshot("snap-1")
         assert es.event_count > initial
+
+
+class TestBoundedContracts:
+    def test_duplicate_vendor_error_is_bounded(self, engine):
+        engine.register_vendor("vendor-secret", "Sensitive Vendor", "tenant-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_vendor("vendor-secret", "Sensitive Vendor", "tenant-secret")
+
+        message = str(excinfo.value)
+        assert message == "Duplicate vendor_id"
+        assert "vendor-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_procurement_violation_reason_is_bounded(self, po_engine):
+        po_engine.assess_vendor("assessment-secret", "v-1", 0.4, 3)
+
+        violations = po_engine.detect_procurement_violations()
+        assert len(violations) == 1
+        assert violations[0].reason == "Vendor has elevated risk with active purchase orders"
+        assert "v-1" not in violations[0].reason
+        assert "HIGH" not in violations[0].reason
+        assert "3" not in violations[0].reason

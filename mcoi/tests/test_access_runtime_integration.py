@@ -297,6 +297,13 @@ class TestMemoryMeshAttachment:
         assert mem.content["total_bindings"] >= 1
         assert mem.content["total_evaluations"] >= 1
 
+    def test_memory_title_redacts_scope_ref(self, env):
+        _es, _mm, eng, integ = env
+        _setup_admin(eng)
+        mem = integ.attach_access_audit_to_memory_mesh("tenant-secret")
+        assert mem.title == "Access audit state"
+        assert "tenant-secret" not in mem.title
+
 
 # -----------------------------------------------------------------------
 # 9. Graph attachment (1 test)

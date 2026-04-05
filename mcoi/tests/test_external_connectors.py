@@ -785,13 +785,15 @@ class TestExecution:
         record = reg.execute(conn.connector_id(), "send", {"body": "hello"})
 
         assert record.success is False
-        assert record.error_message == "provider error (RuntimeError)"
+        assert record.error_message == "provider error"
         assert "provider-secret-token" not in record.error_message
+        assert "RuntimeError" not in record.error_message
 
         failures = reg.get_failures(conn.connector_id())
         assert len(failures) == 1
         assert failures[0].category == ConnectorFailureCategory.PROVIDER_ERROR
-        assert failures[0].error_message == "provider error (RuntimeError)"
+        assert failures[0].error_message == "provider error"
+        assert "RuntimeError" not in failures[0].error_message
 
     def test_execute_timeout_exception_is_classified_and_sanitized(self):
         reg = ExternalConnectorRegistry()
@@ -801,13 +803,15 @@ class TestExecution:
         record = reg.execute(conn.connector_id(), "send", {"body": "hello"})
 
         assert record.success is False
-        assert record.error_message == "connector timeout (TimeoutError)"
+        assert record.error_message == "connector timeout"
         assert "timeout-secret" not in record.error_message
+        assert "TimeoutError" not in record.error_message
 
         failures = reg.get_failures(conn.connector_id())
         assert len(failures) == 1
         assert failures[0].category == ConnectorFailureCategory.TIMEOUT
-        assert failures[0].error_message == "connector timeout (TimeoutError)"
+        assert failures[0].error_message == "connector timeout"
+        assert "TimeoutError" not in failures[0].error_message
 
 
 # ===================================================================
@@ -1093,8 +1097,11 @@ class TestPerTypeConnectors:
 class TestFailingTestConnector:
     def test_always_raises_on_execute(self):
         conn = FailingTestConnector()
-        with pytest.raises(RuntimeError, match="Simulated failure"):
+        with pytest.raises(RuntimeError, match="^simulated failure$") as exc_info:
             conn.execute("send", {"body": "test"})
+        message = str(exc_info.value)
+        assert "send" not in message
+        assert message == "simulated failure"
 
     def test_health_check_unhealthy(self):
         conn = FailingTestConnector()
@@ -1115,3 +1122,18 @@ class TestFailingTestConnector:
     def test_custom_id(self):
         conn = FailingTestConnector("my-failing")
         assert conn.connector_id() == "my-failing"
+
+
+class TestBoundedConnectorContracts:
+    def test_duplicate_registration_does_not_echo_connector_id(self):
+        reg = ExternalConnectorRegistry()
+        reg.register(FailingTestConnector("sensitive-connector"))
+        with pytest.raises(RuntimeCoreInvariantError, match="connector already registered") as exc:
+            reg.register(FailingTestConnector("sensitive-connector"))
+        assert "sensitive-connector" not in str(exc.value)
+
+    def test_missing_fallback_chain_does_not_echo_chain_id(self):
+        reg = ExternalConnectorRegistry()
+        with pytest.raises(RuntimeCoreInvariantError, match="fallback chain not found") as exc:
+            reg.execute_with_fallback("chain-secret", "send", {"body": "test"})
+        assert "chain-secret" not in str(exc.value)

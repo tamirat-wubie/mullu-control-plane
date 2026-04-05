@@ -79,7 +79,7 @@ class TaskQueue:
     def submit(self, task_id: str, payload: dict[str, Any], priority: int = 0, tenant_id: str = "") -> QueuedTask:
         """Submit a task to the queue."""
         if len(self._heap) >= self._max_depth:
-            raise ValueError(f"queue full (max {self._max_depth})")
+            raise ValueError("queue full")
 
         task = QueuedTask(
             task_id=task_id, priority=priority,

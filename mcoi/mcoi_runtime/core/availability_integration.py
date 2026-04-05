@@ -414,7 +414,7 @@ class AvailabilityIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=identity_ref,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Availability state: {identity_ref}",
+            title="Availability state",
             content=content,
             source_ids=(identity_ref,),
             tags=("availability", "state"),

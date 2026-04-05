@@ -181,7 +181,7 @@ class FactoryQualityDemoGenerator:
 
         # Seed remediations linked to first 5 cases
         rems = [
-            {"remediation_id": f"fq-rem-{i:03d}", "case_ref": f"fq-case-{i:03d}", "title": f"Remediate: {cases[i]['title']}"}
+            {"remediation_id": f"fq-rem-{i:03d}", "case_ref": f"fq-case-{i:03d}", "title": "Factory quality remediation"}
             for i in range(5)
         ]
         rem_result = self._importer.import_remediations(tenant_id, rems)

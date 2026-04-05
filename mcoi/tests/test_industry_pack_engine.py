@@ -375,3 +375,42 @@ class TestStateHash:
         assert "configurations" in cols
         assert "bindings" in cols
         assert "violations" in cols
+
+
+class TestBoundedIndustryPackContracts:
+    def test_registry_and_lifecycle_errors_are_bounded(self, engine: IndustryPackEngine):
+        engine.register_pack("pack-secret", "t1", "Test", PackDomain.CUSTOM)
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_pack:
+            engine.register_pack("pack-secret", "t1", "Other", PackDomain.CUSTOM)
+        with pytest.raises(RuntimeCoreInvariantError) as unknown_pack:
+            engine.get_pack("pack-secret-missing")
+        with pytest.raises(RuntimeCoreInvariantError) as deploy_error:
+            engine.deploy_pack("pack-secret")
+        engine.retire_pack("pack-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as terminal_suspend:
+            engine.suspend_pack("pack-secret")
+
+        assert str(duplicate_pack.value) == "Duplicate pack_id"
+        assert str(unknown_pack.value) == "Unknown pack_id"
+        assert str(deploy_error.value) == "Only VALIDATED packs can be deployed"
+        assert str(terminal_suspend.value) == "Cannot suspend pack in current status"
+        assert "pack-secret" not in str(duplicate_pack.value)
+        assert "pack-secret-missing" not in str(unknown_pack.value)
+        assert "draft" not in str(deploy_error.value).lower()
+        assert "retired" not in str(terminal_suspend.value).lower()
+
+    def test_component_errors_and_violation_reasons_are_bounded(self, engine: IndustryPackEngine):
+        engine.register_pack("pack-secret", "t1", "Test", PackDomain.REGULATED_OPS)
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_capability:
+            engine.add_capability("cap-secret", "t1", "missing-pack", PackCapabilityKind.INTAKE, "rt-1")
+
+        engine.add_binding("binding-secret", "t1", "pack-secret", "missing-runtime", "primary")
+        violations = engine.detect_pack_violations("t1")
+
+        assert str(duplicate_capability.value) == "Unknown pack_ref"
+        assert "missing-pack" not in str(duplicate_capability.value)
+        assert any(v.reason == "pack is missing required capability" for v in violations)
+        assert any(v.reason == "binding references unknown runtime" for v in violations)
+        assert all("pack-secret" not in v.reason for v in violations)
+        assert all("binding-secret" not in v.reason for v in violations)
+        assert all("missing-runtime" not in v.reason for v in violations)

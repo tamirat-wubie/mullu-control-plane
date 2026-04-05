@@ -5,6 +5,9 @@ Tests: InMemory governance stores (same API as PostgreSQL versions),
 PostgreSQL structural tests run without a real database.
 """
 
+import sys
+from types import SimpleNamespace
+
 import pytest
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.core.audit_trail import AuditEntry, AuditTrail, AuditStore
@@ -398,6 +401,54 @@ class TestPostgresAuditStoreStructure:
         assert store.query() == []
         assert store.count() == 0
 
+    def test_encrypt_detail_fails_closed_when_encryptor_breaks(self):
+        class BrokenEncryptor:
+            def encrypt(self, _detail_json: str) -> str:
+                raise RuntimeError("secret encryption backend failure")
+
+        store = PostgresAuditStore.__new__(PostgresAuditStore)
+        store._field_encryptor = BrokenEncryptor()
+
+        with pytest.raises(RuntimeError, match="audit detail encryption failed \\(RuntimeError\\)") as exc_info:
+            store._encrypt_detail({"secret": "value"})
+
+        assert "RuntimeError" in str(exc_info.value)
+        assert "secret encryption backend failure" not in str(exc_info.value)
+        assert "encryption failed" in str(exc_info.value)
+
+    def test_decrypt_detail_fails_closed_when_ciphertext_is_broken(self):
+        class BrokenDecryptor:
+            def is_encrypted(self, _stored: str) -> bool:
+                return True
+
+            def decrypt(self, _stored: str) -> str:
+                raise ValueError("ciphertext backend failure")
+
+        store = PostgresAuditStore.__new__(PostgresAuditStore)
+        store._field_encryptor = BrokenDecryptor()
+
+        with pytest.raises(RuntimeError, match="audit detail decryption failed \\(ValueError\\)") as exc_info:
+            store._decrypt_detail("enc:v1:broken")
+
+        assert "ValueError" in str(exc_info.value)
+        assert "ciphertext backend failure" not in str(exc_info.value)
+        assert "decryption failed" in str(exc_info.value)
+
+    def test_decrypt_detail_bounds_invalid_plaintext_json(self):
+        class PlaintextEncryptor:
+            def is_encrypted(self, _stored: str) -> bool:
+                return False
+
+        store = PostgresAuditStore.__new__(PostgresAuditStore)
+        store._field_encryptor = PlaintextEncryptor()
+
+        with pytest.raises(RuntimeError, match="audit detail parse failed \\(JSONDecodeError\\)") as exc_info:
+            store._decrypt_detail("not-json")
+
+        assert "JSONDecodeError" in str(exc_info.value)
+        assert "not-json" not in str(exc_info.value)
+        assert "parse failed" in str(exc_info.value)
+
 
 class TestPostgresRateLimitStoreStructure:
     def test_inherits_rate_limit_store(self):
@@ -410,6 +461,73 @@ class TestPostgresRateLimitStoreStructure:
         store._lock = __import__("threading").Lock()
         store.record_decision("key", True)  # Should not raise
         assert store.get_counters() == {"allowed": 0, "denied": 0}
+
+
+class TestPostgresBaseWarnings:
+    def test_base_init_bounds_connection_warning(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_governance_stores as pg
+
+        warnings: list[str] = []
+
+        class DummyStore(pg._PostgresBase):
+            def _connect(self) -> None:
+                raise RuntimeError("postgres://secret-backend")
+
+        monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace())
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        store = DummyStore()
+        store._base_init("postgresql://secret-host/db", migration_index=0, auto_migrate=False)
+
+        assert store._conn is None
+        assert warnings
+        assert "RuntimeError" in warnings[0]
+        assert "secret-backend" not in warnings[0]
+        assert "secret-host" not in warnings[0]
+
+    def test_reconnect_bounds_warning(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_governance_stores as pg
+
+        warnings: list[str] = []
+
+        class BrokenConn:
+            def close(self) -> None:
+                return None
+
+        class DummyStore(pg._PostgresBase):
+            def _connect(self) -> None:
+                raise RuntimeError("postgres://secret-reconnect")
+
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        store = DummyStore()
+        store._conn = BrokenConn()
+
+        assert store._reconnect() is False
+        assert warnings
+        assert "RuntimeError" in warnings[0]
+        assert "secret-reconnect" not in warnings[0]
+
+    def test_safe_execute_bounds_reconnect_failure_warning(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_governance_stores as pg
+
+        warnings: list[str] = []
+
+        class DummyStore(pg._PostgresBase):
+            def _reconnect(self) -> bool:
+                return True
+
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        store = DummyStore()
+
+        def boom():
+            raise RuntimeError("query-secret")
+
+        assert store._safe_execute(boom) is None
+        assert warnings
+        assert "RuntimeError" in warnings[0]
+        assert "query-secret" not in warnings[0]
 
 
 # ═══ Schema Definitions ═══
@@ -449,8 +567,9 @@ class TestCreateGovernanceStores:
         assert set(stores.keys()) == {"budget", "audit", "rate_limit", "tenant_gating"}
 
     def test_invalid_backend_raises(self):
-        with pytest.raises(ValueError, match="unsupported"):
+        with pytest.raises(ValueError, match=r"^unsupported governance store backend$") as excinfo:
             create_governance_stores("redis")
+        assert "redis" not in str(excinfo.value)
 
     def test_memory_stores_are_independent(self):
         stores = create_governance_stores("memory")

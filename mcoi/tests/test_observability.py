@@ -22,7 +22,8 @@ class TestObservabilityAggregator:
     def test_collect_unknown(self):
         agg = ObservabilityAggregator(clock=FIXED_CLOCK)
         data = agg.collect("nonexistent")
-        assert "error" in data
+        assert data["error"] == "observability source unavailable"
+        assert "nonexistent" not in data["error"]
 
     def test_collect_error(self):
         agg = ObservabilityAggregator(clock=FIXED_CLOCK)

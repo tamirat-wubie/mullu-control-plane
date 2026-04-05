@@ -107,7 +107,7 @@ class ProcessSimulationRuntimeIntegration:
             tenant_id=tenant_id,
             model_ref=model_id,
             disposition=disposition,
-            description=f"Simulation from {source_type} ref={ref}",
+            description="Process simulation scenario",
         )
         run = self._simulation.run_simulation(
             run_id=run_id,
@@ -261,7 +261,7 @@ class ProcessSimulationRuntimeIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Process simulation state for {scope_ref_id}",
+            title="Process simulation state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

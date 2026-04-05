@@ -235,7 +235,7 @@ class DataQualityIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Data quality state: {scope_ref_id}",
+            title="Data quality state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("data_quality", "schema_evolution", "lineage"),

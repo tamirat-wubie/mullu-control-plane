@@ -135,8 +135,9 @@ class TestProblemLifecycle:
     def test_start_non_pending_raises(self, engine):
         engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
         engine.start_problem("p-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError, match="^problem must be pending before start$") as exc_info:
             engine.start_problem("p-1")
+        assert SolveStatus.RUNNING.value not in str(exc_info.value)
 
     def test_solve_problem(self, engine):
         engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
@@ -158,12 +159,14 @@ class TestProblemLifecycle:
 
     def test_duplicate_problem_raises(self, engine):
         engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
+        assert "p-1" not in str(exc_info.value)
 
     def test_solve_unknown_problem_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.solve_problem("s-1", "t-1", "unknown")
+        assert "unknown" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -186,8 +189,9 @@ class TestGraph:
 
     def test_add_edge_missing_from_node_raises(self, engine):
         engine.add_graph_node("n-2", "t-1", "End")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.add_graph_edge("e-1", "t-1", "missing", "n-2")
+        assert "missing" not in str(exc_info.value)
 
     def test_add_edge_missing_to_node_raises(self, engine):
         engine.add_graph_node("n-1", "t-1", "Start")
@@ -326,8 +330,9 @@ class TestAssignments:
 
     def test_duplicate_assignment_raises(self, engine):
         engine.assign_resource("a-1", "t-1", "r-1", "task-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.assign_resource("a-1", "t-1", "r-1", "task-2")
+        assert "a-1" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -371,6 +376,8 @@ class TestViolationDetection:
         violations = engine.detect_constraint_violations("t-1")
         assert len(violations) == 1
         assert violations[0]["operation"] == "unsolved_problem"
+        assert violations[0]["reason"] == "Problem has no solution"
+        assert "p-1" not in violations[0]["reason"]
 
     def test_unsolved_problem_idempotent(self, engine):
         engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
@@ -392,6 +399,8 @@ class TestViolationDetection:
         violations = engine.detect_constraint_violations("t-1")
         cycle_violations = [v for v in violations if v["operation"] == "cycle_in_dependencies"]
         assert len(cycle_violations) == 1
+        assert cycle_violations[0]["reason"] == "Circular dependency detected"
+        assert "t-1" not in cycle_violations[0]["reason"]
 
     def test_schedule_conflict_violation(self, engine):
         engine.create_schedule_slot(
@@ -405,6 +414,9 @@ class TestViolationDetection:
         violations = engine.detect_constraint_violations("t-1")
         conflict_violations = [v for v in violations if v["operation"] == "schedule_conflict"]
         assert len(conflict_violations) == 1
+        assert conflict_violations[0]["reason"] == "Schedule conflict detected for resource"
+        assert "sl-1" not in conflict_violations[0]["reason"]
+        assert "r-1" not in conflict_violations[0]["reason"]
 
     def test_no_conflict_for_different_resources(self, engine):
         engine.create_schedule_slot(

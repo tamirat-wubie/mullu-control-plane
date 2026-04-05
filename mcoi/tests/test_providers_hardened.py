@@ -89,7 +89,7 @@ def test_smtp_config_rejects_bad_port() -> None:
 
 
 def test_smtp_config_rejects_empty_host() -> None:
-    with pytest.raises(ValueError, match="host"):
+    with pytest.raises((ValueError, RuntimeError), match="must be a non-empty string"):
         SmtpConfig(host="", port=587, sender_email="a@b.com")
 
 
@@ -214,7 +214,8 @@ def test_cli_rejects_malformed_inline_request_json(capsys: pytest.CaptureFixture
 
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
-    assert "invalid request JSON in inline input" in captured.err
+    assert "invalid request JSON" in captured.err
+    assert "inline input" not in captured.err
 
 
 def test_cli_rejects_non_object_inline_request_json(capsys: pytest.CaptureFixture[str]) -> None:
@@ -239,7 +240,7 @@ def test_cli_rejects_malformed_request_file_json(
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
     assert "invalid request JSON" in captured.err
-    assert str(request_file) in captured.err
+    assert str(request_file) not in captured.err
 
 
 def test_cli_no_command_returns_zero() -> None:

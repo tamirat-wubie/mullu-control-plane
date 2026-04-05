@@ -96,8 +96,9 @@ class TestTenantRegistration:
     def test_register_dup_raises(self, env):
         _, eng = env
         eng.register_tenant("t1", "T1", owner="x")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             eng.register_tenant("t1", "T1 again", owner="y")
+        assert "t1" not in str(exc_info.value)
 
     def test_get_tenant_returns_record(self, env):
         _, eng = env
@@ -107,8 +108,9 @@ class TestTenantRegistration:
 
     def test_get_unknown_tenant_raises(self, env):
         _, eng = env
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.get_tenant("no-such")
+        assert "no-such" not in str(exc_info.value)
 
     def test_set_tenant_status(self, env):
         es, eng = env
@@ -184,8 +186,9 @@ class TestWorkspaceRegistration:
 
     def test_unknown_tenant_raises(self, env):
         _, eng = env
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown tenant"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown tenant") as exc_info:
             eng.register_workspace("ws1", "no-tenant", "WS1")
+        assert "no-tenant" not in str(exc_info.value)
 
     def test_get_workspace(self, env):
         _, eng = env
@@ -503,8 +506,11 @@ class TestWorkspaceBindings:
             isolation_level=IsolationLevel.STRICT, enforced=True,
         )
         eng.bind_workspace_resource("b1", "ws1", "budget-1", ScopeBoundaryKind.BUDGET)
-        with pytest.raises(RuntimeCoreInvariantError, match="Isolation violation"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^Isolation violation$") as exc_info:
             eng.bind_workspace_resource("b2", "ws2", "budget-1", ScopeBoundaryKind.BUDGET)
+        assert "budget-1" not in str(exc_info.value)
+        assert "ws1" not in str(exc_info.value)
+        assert "ws2" not in str(exc_info.value)
 
     def test_standard_isolation_allows_cross_workspace(self, env):
         _, eng = env
@@ -653,31 +659,33 @@ class TestEnvironmentPromotion:
     def test_invalid_path_dev_to_prod_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.DEVELOPMENT, EnvironmentKind.PRODUCTION])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$") as exc_info:
             eng.promote_environment("p1", "env0", "env1", compliance_check_passed=True)
+        assert "development" not in str(exc_info.value)
+        assert "production" not in str(exc_info.value)
 
     def test_invalid_path_prod_to_dev_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.PRODUCTION, EnvironmentKind.DEVELOPMENT])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1")
 
     def test_invalid_path_staging_to_dev_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.STAGING, EnvironmentKind.DEVELOPMENT])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1")
 
     def test_invalid_path_sandbox_to_prod_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.SANDBOX, EnvironmentKind.PRODUCTION])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1", compliance_check_passed=True)
 
     def test_invalid_path_prod_to_staging_raises(self, env):
         _, eng = env
         self._setup_envs(eng, [EnvironmentKind.PRODUCTION, EnvironmentKind.STAGING])
-        with pytest.raises(RuntimeCoreInvariantError, match="Invalid promotion path"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid promotion path$"):
             eng.promote_environment("p1", "env0", "env1")
 
     def test_dup_promotion_raises(self, env):
@@ -692,16 +700,18 @@ class TestEnvironmentPromotion:
         eng.register_tenant("t1", "T1", owner="x")
         eng.register_workspace("ws1", "t1", "WS1")
         eng.register_environment("env1", "ws1", EnvironmentKind.STAGING)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown source"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown source") as exc_info:
             eng.promote_environment("p1", "no-env", "env1")
+        assert "no-env" not in str(exc_info.value)
 
     def test_unknown_target_raises(self, env):
         _, eng = env
         eng.register_tenant("t1", "T1", owner="x")
         eng.register_workspace("ws1", "t1", "WS1")
         eng.register_environment("env0", "ws1", EnvironmentKind.DEVELOPMENT)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown target"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown target") as exc_info:
             eng.promote_environment("p1", "env0", "no-env")
+        assert "no-env" not in str(exc_info.value)
 
     def test_promotion_updates_target_promoted_from(self, env):
         _, eng = env

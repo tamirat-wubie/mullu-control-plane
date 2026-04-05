@@ -40,13 +40,21 @@ class TestModelRouter:
         r = _router()
         decision = r.route("hello", force_model="powerful")
         assert decision.model_id == "powerful"
-        assert "forced" in decision.reason
+        assert decision.reason == "forced model override"
+        assert "powerful" not in decision.reason
 
     def test_no_models(self):
         r = ModelRouter()
         decision = r.route("test")
         assert decision.model_id == ""
         assert "no models" in decision.reason
+
+    def test_policy_selected_reason_bounded(self):
+        r = _router()
+        decision = r.route("Implement a recursive function for tree traversal and debug it")
+        assert decision.reason == "selected by routing policy"
+        assert TaskComplexity.COMPLEX.value not in decision.reason
+        assert "Powerful" not in decision.reason
 
     def test_alternatives(self):
         r = _router()

@@ -113,16 +113,20 @@ class TestLLMBudgetManager:
 
     def test_check_unknown_budget(self):
         mgr = LLMBudgetManager()
-        ok, reason = mgr.check("unknown")
+        ok, reason = mgr.check("missing-budget")
         assert ok is False
-        assert "unknown budget" in reason
+        assert reason == "unknown budget"
+        assert "missing-budget" not in reason
+        assert "budget" in reason
 
     def test_check_would_exceed(self):
         mgr = LLMBudgetManager()
         mgr.register(self._budget(max_cost=1.0))
         ok, reason = mgr.check("b1", estimated_cost=2.0)
         assert ok is False
-        assert "would exceed" in reason
+        assert reason == "budget limit exceeded"
+        assert "1.0" not in reason
+        assert "limit exceeded" in reason
 
     def test_check_exhausted(self):
         mgr = LLMBudgetManager()
@@ -130,6 +134,8 @@ class TestLLMBudgetManager:
         mgr.record_spend("b1", 0.01)
         ok, reason = mgr.check("b1")
         assert ok is False
+        assert reason == "budget exhausted"
+        assert "0.01" not in reason
         assert "exhausted" in reason
 
     def test_check_exhausted_by_calls(self):
@@ -139,7 +145,9 @@ class TestLLMBudgetManager:
         mgr.record_spend("b1", 0.001)
         ok, reason = mgr.check("b1")
         assert ok is False
-        assert "exhausted" in reason
+        assert reason == "budget exhausted"
+        assert "2" not in reason
+        assert "budget" in reason
 
     def test_record_spend(self):
         mgr = LLMBudgetManager()
@@ -158,8 +166,12 @@ class TestLLMBudgetManager:
 
     def test_record_spend_unknown_budget_raises(self):
         mgr = LLMBudgetManager()
-        with pytest.raises(Exception, match="unknown budget"):
-            mgr.record_spend("unknown", 1.0)
+        with pytest.raises(Exception, match="^cannot record spend for unknown budget$") as exc_info:
+            mgr.record_spend("missing-budget", 1.0)
+        message = str(exc_info.value)
+        assert message == "cannot record spend for unknown budget"
+        assert "missing-budget" not in message
+        assert "record spend" in message
 
     def test_list_budgets(self):
         mgr = LLMBudgetManager()
@@ -206,6 +218,29 @@ class TestGovernedLLMAdapter:
         r2 = adapter.invoke_llm(_params(budget_id="b1"))
         assert r2.succeeded is False
         assert "budget" in r2.error.lower()
+
+    def test_budget_rejection_is_bounded(self):
+        bm = LLMBudgetManager()
+        bm.register(LLMBudget(budget_id="b1", tenant_id="t1", max_cost=0.001, max_calls=1))
+        adapter, _ = self._adapter(budget_manager=bm)
+
+        first = adapter.invoke_llm(_params(budget_id="b1"))
+        second = adapter.invoke_llm(_params(budget_id="b1"))
+
+        assert first.succeeded is True
+        assert second.error == "budget_rejected: budget exhausted"
+        assert "spent=" not in second.error
+        assert "max=" not in second.error
+        assert "calls=" not in second.error
+
+    def test_unknown_budget_rejection_is_bounded(self):
+        adapter, _ = self._adapter()
+
+        result = adapter.invoke_llm(_params(budget_id="missing-budget"))
+
+        assert result.succeeded is False
+        assert result.error == "budget_rejected: unknown budget"
+        assert "missing-budget" not in result.error
 
     def test_no_budget_id_skips_check(self):
         adapter, _ = self._adapter()

@@ -16,6 +16,10 @@ from mcoi_runtime.core.webhook_system import WebhookSubscription
 router = APIRouter()
 
 
+def _agent_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # ── Pydantic request models ──────────────────────────────────────────────
 
 
@@ -334,7 +338,7 @@ def get_orchestration_plan(plan_id: str):
     deps.metrics.inc("requests_governed")
     plan = deps.agent_orchestrator.get_plan(plan_id)
     if not plan:
-        raise HTTPException(404, detail=f"Plan not found: {plan_id}")
+        raise HTTPException(404, detail=_agent_error_detail("plan not found", "plan_not_found"))
     return {"plan": plan.to_dict(), "governed": True}
 
 

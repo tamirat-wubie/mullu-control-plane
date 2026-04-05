@@ -144,7 +144,7 @@ class RemediationRuntimeEngine:
     ) -> RemediationRecord:
         """Create a new remediation item."""
         if remediation_id in self._remediations:
-            raise RuntimeCoreInvariantError(f"Duplicate remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Duplicate remediation_id")
         now = _now_iso()
         rec = RemediationRecord(
             remediation_id=remediation_id,
@@ -172,7 +172,7 @@ class RemediationRuntimeEngine:
         """Get a remediation by ID."""
         r = self._remediations.get(remediation_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Unknown remediation_id")
         return r
 
     def remediations_for_tenant(self, tenant_id: str) -> tuple[RemediationRecord, ...]:
@@ -267,9 +267,9 @@ class RemediationRuntimeEngine:
     ) -> RemediationAssignment:
         """Assign an owner to a remediation item."""
         if assignment_id in self._assignments:
-            raise RuntimeCoreInvariantError(f"Duplicate assignment_id: {assignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assignment_id")
         if remediation_id not in self._remediations:
-            raise RuntimeCoreInvariantError(f"Unknown remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Unknown remediation_id")
         now = _now_iso()
         assignment = RemediationAssignment(
             assignment_id=assignment_id,
@@ -306,9 +306,9 @@ class RemediationRuntimeEngine:
     ) -> CorrectiveAction:
         """Add a corrective action to a remediation."""
         if action_id in self._corrective:
-            raise RuntimeCoreInvariantError(f"Duplicate corrective action_id: {action_id}")
+            raise RuntimeCoreInvariantError("Duplicate corrective action_id")
         if remediation_id not in self._remediations:
-            raise RuntimeCoreInvariantError(f"Unknown remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Unknown remediation_id")
         now = _now_iso()
         action = CorrectiveAction(
             action_id=action_id,
@@ -331,7 +331,7 @@ class RemediationRuntimeEngine:
         """Mark a corrective action as completed (PENDING_VERIFICATION)."""
         old = self._corrective.get(action_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown corrective action_id: {action_id}")
+            raise RuntimeCoreInvariantError("Unknown corrective action_id")
         now = _now_iso()
         updated = CorrectiveAction(
             action_id=old.action_id,
@@ -372,9 +372,9 @@ class RemediationRuntimeEngine:
     ) -> PreventiveAction:
         """Add a preventive action linked to a target (program/control/campaign)."""
         if action_id in self._preventive:
-            raise RuntimeCoreInvariantError(f"Duplicate preventive action_id: {action_id}")
+            raise RuntimeCoreInvariantError("Duplicate preventive action_id")
         if remediation_id not in self._remediations:
-            raise RuntimeCoreInvariantError(f"Unknown remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Unknown remediation_id")
         now = _now_iso()
         action = PreventiveAction(
             action_id=action_id,
@@ -400,11 +400,9 @@ class RemediationRuntimeEngine:
         """Approve a preventive action."""
         old = self._preventive.get(action_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown preventive action_id: {action_id}")
+            raise RuntimeCoreInvariantError("Unknown preventive action_id")
         if old.status != PreventiveActionStatus.PROPOSED:
-            raise RuntimeCoreInvariantError(
-                f"Can only approve PROPOSED preventive actions, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only approve PROPOSED preventive actions")
         updated = PreventiveAction(
             action_id=old.action_id,
             remediation_id=old.remediation_id,
@@ -427,11 +425,9 @@ class RemediationRuntimeEngine:
         """Mark a preventive action as implemented."""
         old = self._preventive.get(action_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown preventive action_id: {action_id}")
+            raise RuntimeCoreInvariantError("Unknown preventive action_id")
         if old.status != PreventiveActionStatus.APPROVED:
-            raise RuntimeCoreInvariantError(
-                f"Can only implement APPROVED preventive actions, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only implement APPROVED preventive actions")
         updated = PreventiveAction(
             action_id=old.action_id,
             remediation_id=old.remediation_id,
@@ -469,9 +465,9 @@ class RemediationRuntimeEngine:
     ) -> VerificationRecord:
         """Record a verification check for a remediation."""
         if verification_id in self._verifications:
-            raise RuntimeCoreInvariantError(f"Duplicate verification_id: {verification_id}")
+            raise RuntimeCoreInvariantError("Duplicate verification_id")
         if remediation_id not in self._remediations:
-            raise RuntimeCoreInvariantError(f"Unknown remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Unknown remediation_id")
         now = _now_iso()
         verification = VerificationRecord(
             verification_id=verification_id,
@@ -494,7 +490,7 @@ class RemediationRuntimeEngine:
             reopen = ReopenRecord(
                 reopen_id=reopen_id,
                 remediation_id=remediation_id,
-                reason=f"Verification failed: {notes}" if notes else "Verification failed",
+                reason="Verification failed",
                 reopened_by=verifier_id,
                 reopened_at=now,
             )
@@ -525,7 +521,7 @@ class RemediationRuntimeEngine:
     ) -> ReopenRecord:
         """Manually reopen a remediation item."""
         if reopen_id in self._reopens:
-            raise RuntimeCoreInvariantError(f"Duplicate reopen_id: {reopen_id}")
+            raise RuntimeCoreInvariantError("Duplicate reopen_id")
         rem = self.get_remediation(remediation_id)
         if rem.status == RemediationStatus.CLOSED:
             raise RuntimeCoreInvariantError("Cannot reopen a closed remediation")
@@ -564,9 +560,9 @@ class RemediationRuntimeEngine:
     ) -> RemediationDecision:
         """Make a formal decision on a remediation."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         if remediation_id not in self._remediations:
-            raise RuntimeCoreInvariantError(f"Unknown remediation_id: {remediation_id}")
+            raise RuntimeCoreInvariantError("Unknown remediation_id")
         now = _now_iso()
         decision = RemediationDecision(
             decision_id=decision_id,
@@ -676,7 +672,7 @@ class RemediationRuntimeEngine:
                                 remediation_id=rem.remediation_id,
                                 tenant_id=rem.tenant_id,
                                 operation="overdue",
-                                reason=f"Remediation overdue: deadline {rem.deadline}",
+                                reason="Remediation overdue",
                                 detected_at=now,
                             )
                             self._violations[vid] = v
@@ -729,7 +725,7 @@ class RemediationRuntimeEngine:
     ) -> RemediationSnapshot:
         """Capture a point-in-time remediation state snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snapshot = RemediationSnapshot(
             snapshot_id=snapshot_id,

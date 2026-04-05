@@ -91,7 +91,7 @@ class ToolRegistry:
     def register(self, tool: ToolDefinition, handler: Callable[[dict[str, Any]], dict[str, Any]]) -> None:
         """Register a tool with its handler function."""
         if tool.tool_id in self._tools:
-            raise ValueError(f"tool already registered: {tool.tool_id}")
+            raise ValueError("tool already registered")
         self._tools[tool.tool_id] = tool
         self._handlers[tool.tool_id] = handler
 
@@ -113,7 +113,7 @@ class ToolRegistry:
         if allowed_tool_ids is not None and tool_id not in allowed_tool_ids:
             result = ToolResult(
                 invocation_id=invocation_id, tool_id=tool_id,
-                output={}, succeeded=False, error=f"tool not allowed: {tool_id}",
+                output={}, succeeded=False, error="tool not allowed",
             )
             self._invocation_log.append(result)
             return result
@@ -122,7 +122,7 @@ class ToolRegistry:
         if tool is None:
             result = ToolResult(
                 invocation_id=invocation_id, tool_id=tool_id,
-                output={}, succeeded=False, error=f"unknown tool: {tool_id}",
+                output={}, succeeded=False, error="unknown tool",
             )
             self._invocation_log.append(result)
             return result
@@ -130,7 +130,7 @@ class ToolRegistry:
         if not tool.enabled:
             result = ToolResult(
                 invocation_id=invocation_id, tool_id=tool_id,
-                output={}, succeeded=False, error=f"tool disabled: {tool_id}",
+                output={}, succeeded=False, error="tool disabled",
             )
             self._invocation_log.append(result)
             return result
@@ -141,7 +141,7 @@ class ToolRegistry:
                 result = ToolResult(
                     invocation_id=invocation_id, tool_id=tool_id,
                     output={}, succeeded=False,
-                    error=f"missing required parameter: {param.name}",
+                    error="missing required parameter",
                 )
                 self._invocation_log.append(result)
                 return result

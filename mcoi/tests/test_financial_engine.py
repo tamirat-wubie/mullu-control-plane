@@ -1613,3 +1613,58 @@ class TestGoldenScenarios:
         )
         assert est.estimated_amount == 11.0
         assert est.confidence == 1.0
+
+
+class TestBoundedFinancialContracts:
+    def test_duplicate_budget_message_bounded(self):
+        _, eng = _engine()
+        _register_budget(eng, budget_id="budget-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            _register_budget(eng, budget_id="budget-secret")
+
+        assert str(excinfo.value) == "budget already exists"
+        assert "budget-secret" not in str(excinfo.value)
+
+    def test_reservation_decision_reasons_bounded(self):
+        _, eng = _engine()
+        _register_budget(eng, limit_amount=100.0)
+        _reserve(eng, reservation_id="r-1", amount=80.0)
+
+        hard_stop = _reserve(eng, reservation_id="r-2", amount=30.0)
+        assert hard_stop.reason == "hard stop threshold exceeded"
+
+        _, approval_eng = _engine()
+        _register_budget(approval_eng, limit_amount=10000.0)
+        approval_eng.set_approval_threshold(
+            "th-1",
+            "b-1",
+            ApprovalThresholdMode.PER_TRANSACTION,
+            500.0,
+            "manager-secret",
+        )
+        pending = _reserve(approval_eng, reservation_id="r-1", amount=600.0)
+        assert pending.reason == "approval required"
+        assert "manager-secret" not in pending.reason
+
+    def test_gate_reasons_bounded(self):
+        _, eng = _engine()
+        _register_budget(eng, limit_amount=100.0, warning_threshold=0.8, hard_stop_threshold=1.0)
+
+        warning = eng.budget_gate("b-1", 85.0)
+        assert warning.reason == "approved with warning"
+
+        eng.close_budget("b-1")
+        inactive = eng.budget_gate("b-1", 10.0)
+        assert inactive.reason == "budget inactive"
+
+    def test_conflict_descriptions_bounded(self):
+        _, eng = _engine()
+        _register_budget(eng, limit_amount=100.0, hard_stop_threshold=0.8)
+        _reserve(eng, reservation_id="r-1", amount=80.0)
+
+        conflicts = eng.find_budget_conflicts("b-1")
+        descriptions = {c.description for c in conflicts}
+
+        assert "utilization exceeds hard stop threshold" in descriptions
+        assert all("%" not in description for description in descriptions)

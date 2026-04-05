@@ -76,6 +76,8 @@ class TestAgentWorkflowEngine:
             payload={}, tenant_id="t1",
         )
         assert result.status == "completed"
+        assert result.output["content"] == "stub result"
+        assert "test" not in result.output["content"]
         assert any(s.step_name == "llm_invoke" and s.status == "skipped" for s in result.steps)
 
     def test_workflow_no_capable_agent(self):

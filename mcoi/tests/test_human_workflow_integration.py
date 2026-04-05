@@ -111,6 +111,8 @@ class TestWorkflowFromChangeRequest:
         integration.workflow_from_change_request("b7", "t1", "cr-007")
         board = workflow_engine.get_board("b7")
         assert board.scope_ref_id == "cr-007"
+        assert board.name == "Change approval"
+        assert "cr-007" not in board.name
 
     def test_emits_event(
         self,
@@ -163,6 +165,8 @@ class TestWorkflowFromCaseReview:
         integration.workflow_from_case_review("p5", "t1", "case-005")
         packet = workflow_engine.get_review_packet("p5")
         assert packet.scope_ref_id == "case-005"
+        assert packet.title == "Case review"
+        assert "case-005" not in packet.title
 
     def test_emits_event(
         self,
@@ -211,6 +215,8 @@ class TestWorkflowFromRegulatorySubmission:
         integration.workflow_from_regulatory_submission("r5", "t1", "reg-005")
         packet = workflow_engine.get_review_packet("r5")
         assert packet.scope_ref_id == "reg-005"
+        assert packet.title == "Regulatory review"
+        assert "reg-005" not in packet.title
 
     def test_emits_event(
         self,
@@ -265,6 +271,8 @@ class TestWorkflowFromProcurementRequest:
         integration.workflow_from_procurement_request("pb6", "t1", "proc-006")
         board = workflow_engine.get_board("pb6")
         assert board.scope_ref_id == "proc-006"
+        assert board.name == "Procurement approval"
+        assert "proc-006" not in board.name
 
     def test_emits_event(
         self,
@@ -325,6 +333,8 @@ class TestWorkflowFromServiceRequest:
         integration.workflow_from_service_request("h7", "t1", "svc-007")
         handoff = workflow_engine.get_handoff("h7")
         assert handoff.scope_ref_id == "svc-007"
+        assert handoff.reason == "Service request requires human action"
+        assert "svc-007" not in handoff.reason
 
     def test_emits_event(
         self,
@@ -385,6 +395,8 @@ class TestWorkflowFromExecutiveDecision:
         integration.workflow_from_executive_decision("e6", "t1", "dir-006")
         board = workflow_engine.get_board("e6")
         assert board.scope_ref_id == "dir-006"
+        assert board.name == "Executive decision"
+        assert "dir-006" not in board.name
 
     def test_emits_event(
         self,
@@ -428,6 +440,9 @@ class TestAttachHumanWorkflowToMemoryMesh:
     def test_returns_memory_record(self, integration: HumanWorkflowIntegration) -> None:
         mem = integration.attach_human_workflow_to_memory_mesh("ref-001")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Human workflow state"
+        assert "ref-001" not in mem.title
+        assert mem.scope_ref_id == "ref-001"
 
     def test_correct_tags(self, integration: HumanWorkflowIntegration) -> None:
         mem = integration.attach_human_workflow_to_memory_mesh("ref-002")

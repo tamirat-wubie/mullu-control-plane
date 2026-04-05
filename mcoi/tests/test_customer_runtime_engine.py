@@ -105,8 +105,9 @@ class TestRegisterCustomer:
 
     def test_duplicate_raises(self, engine):
         engine.register_customer("c1", "t1", "Acme")
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as exc_info:
             engine.register_customer("c1", "t1", "Acme2")
+        assert "c1" not in str(exc_info.value)
 
     def test_increments_count(self, engine):
         engine.register_customer("c1", "t1", "A")
@@ -146,8 +147,9 @@ class TestGetCustomer:
         assert rec.customer_id == "c1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown customer"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown customer") as exc_info:
             engine.get_customer("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_returns_correct_record_among_many(self, engine):
         engine.register_customer("c1", "t1", "A")
@@ -173,8 +175,10 @@ class TestUpdateCustomerStatus:
     def test_churned_is_terminal(self, engine):
         engine.register_customer("c1", "t1", "A")
         engine.update_customer_status("c1", CustomerStatus.CHURNED)
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             engine.update_customer_status("c1", CustomerStatus.ACTIVE)
+        assert "c1" not in str(exc_info.value)
+        assert "churned" not in str(exc_info.value).lower()
 
     def test_unknown_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError, match="unknown customer"):
@@ -267,12 +271,14 @@ class TestRegisterAccount:
         assert rec.contract_ref == "none"
 
     def test_duplicate_raises(self, seeded):
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as exc_info:
             seeded.register_account("a1", "c1", "t1", "Dup")
+        assert "a1" not in str(exc_info.value)
 
     def test_unknown_customer_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown customer"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown customer") as exc_info:
             engine.register_account("a1", "no-cust", "t1", "Acc")
+        assert "no-cust" not in str(exc_info.value)
 
     def test_churned_customer_raises(self, engine):
         engine.register_customer("c1", "t1", "A")
@@ -322,8 +328,9 @@ class TestGetAccount:
         assert rec.account_id == "a1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown account"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown account") as exc_info:
             engine.get_account("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -341,8 +348,10 @@ class TestUpdateAccountStatus:
 
     def test_closed_is_terminal(self, seeded):
         seeded.update_account_status("a1", AccountStatus.CLOSED)
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             seeded.update_account_status("a1", AccountStatus.ACTIVE)
+        assert "a1" not in str(exc_info.value)
+        assert "closed" not in str(exc_info.value).lower()
 
     def test_unknown_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError, match="unknown account"):
@@ -435,8 +444,9 @@ class TestRegisterProduct:
 
     def test_duplicate_raises(self, engine):
         engine.register_product("p1", "t1", "W")
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as exc_info:
             engine.register_product("p1", "t1", "W2")
+        assert "p1" not in str(exc_info.value)
 
     def test_increments_count(self, engine):
         engine.register_product("p1", "t1", "A")
@@ -454,8 +464,9 @@ class TestGetProduct:
         assert engine.get_product("p1").product_id == "p1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown product"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown product") as exc_info:
             engine.get_product("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -475,8 +486,10 @@ class TestDeprecateProduct:
     def test_retired_is_terminal(self, engine):
         engine.register_product("p1", "t1", "W")
         engine.retire_product("p1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal") as exc_info:
             engine.deprecate_product("p1")
+        assert "p1" not in str(exc_info.value)
+        assert "retired" not in str(exc_info.value).lower()
 
     def test_preserves_fields(self, engine):
         engine.register_product("p1", "t1", "W", category="saas", base_price=10.0)
@@ -507,8 +520,9 @@ class TestRetireProduct:
     def test_already_retired_raises(self, engine):
         engine.register_product("p1", "t1", "W")
         engine.retire_product("p1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already retired"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already retired") as exc_info:
             engine.retire_product("p1")
+        assert "p1" not in str(exc_info.value)
 
     def test_can_retire_deprecated(self, engine):
         engine.register_product("p1", "t1", "W")
@@ -576,17 +590,20 @@ class TestRegisterSubscription:
 
     def test_duplicate_raises(self, seeded):
         seeded.register_subscription("s1", "a1", "p1", "t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as exc_info:
             seeded.register_subscription("s1", "a1", "p1", "t1")
+        assert "s1" not in str(exc_info.value)
 
     def test_unknown_account_raises(self, engine):
         engine.register_product("p1", "t1", "W")
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown account"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown account") as exc_info:
             engine.register_subscription("s1", "no-acct", "p1", "t1")
+        assert "no-acct" not in str(exc_info.value)
 
     def test_unknown_product_raises(self, seeded):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown product"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown product") as exc_info:
             seeded.register_subscription("s1", "a1", "no-prod", "t1")
+        assert "no-prod" not in str(exc_info.value)
 
     def test_closed_account_raises(self, seeded):
         seeded.update_account_status("a1", AccountStatus.CLOSED)
@@ -625,8 +642,9 @@ class TestGetSubscription:
         assert rec.subscription_id == "s1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown subscription"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown subscription") as exc_info:
             engine.get_subscription("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -685,12 +703,14 @@ class TestGrantEntitlement:
 
     def test_duplicate_raises(self, seeded):
         seeded.grant_entitlement("e1", "a1", "t1", "svc-api")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             seeded.grant_entitlement("e1", "a1", "t1", "svc-api")
+        assert "e1" not in str(exc_info.value)
 
     def test_unknown_account_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown account"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown account") as exc_info:
             engine.grant_entitlement("e1", "no-acct", "t1", "svc")
+        assert "no-acct" not in str(exc_info.value)
 
     def test_closed_account_raises(self, seeded):
         seeded.update_account_status("a1", AccountStatus.CLOSED)
@@ -731,14 +751,17 @@ class TestRevokeEntitlement:
         assert rec.status == EntitlementStatus.REVOKED
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown entitlement"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown entitlement") as exc_info:
             engine.revoke_entitlement("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_already_revoked_raises(self, seeded):
         seeded.grant_entitlement("e1", "a1", "t1", "svc")
         seeded.revoke_entitlement("e1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already inactive"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already inactive") as exc_info:
             seeded.revoke_entitlement("e1")
+        assert "e1" not in str(exc_info.value)
+        assert "revoked" not in str(exc_info.value).lower()
 
     def test_get_reflects_revocation(self, seeded):
         seeded.grant_entitlement("e1", "a1", "t1", "svc")
@@ -762,8 +785,9 @@ class TestGetEntitlement:
         assert rec.entitlement_id == "e1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown entitlement"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown entitlement") as exc_info:
             engine.get_entitlement("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -920,12 +944,14 @@ class TestAccountHealth:
 
     def test_duplicate_raises(self, seeded):
         seeded.account_health("h1", "a1", "t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             seeded.account_health("h1", "a1", "t1")
+        assert "h1" not in str(exc_info.value)
 
     def test_unknown_account_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown account"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown account") as exc_info:
             engine.account_health("h1", "no-acct", "t1")
+        assert "no-acct" not in str(exc_info.value)
 
     def test_entitlement_count_in_snapshot(self, seeded):
         seeded.grant_entitlement("e1", "a1", "t1", "svc1")
@@ -976,8 +1002,9 @@ class TestGetHealthSnapshot:
         assert snap.snapshot_id == "h1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown health snapshot"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown health snapshot") as exc_info:
             engine.get_health_snapshot("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 class TestHealthSnapshotsForAccount:
@@ -2358,23 +2385,25 @@ class TestViolationDetectionAdditional:
         violations = engine.detect_customer_violations("t1")
         assert any(v.operation == "delinquent_account" for v in violations)
 
-    def test_retired_subscription_violation_reason_contains_ids(self, seeded):
+    def test_retired_subscription_violation_reason_is_bounded(self, seeded):
         seeded.grant_entitlement("e1", "a1", "t1", "svc")
         seeded.register_subscription("s1", "a1", "p1", "t1")
         seeded.retire_product("p1")
         violations = seeded.detect_customer_violations("t1")
         retired_v = [v for v in violations if v.operation == "retired_product_subscription"]
         assert len(retired_v) == 1
-        assert "s1" in retired_v[0].reason
-        assert "p1" in retired_v[0].reason
+        assert retired_v[0].reason == "subscription on retired product"
+        assert "s1" not in retired_v[0].reason
+        assert "p1" not in retired_v[0].reason
 
-    def test_no_entitlements_violation_reason_contains_account_id(self, seeded):
+    def test_no_entitlements_violation_reason_is_bounded(self, seeded):
         violations = seeded.detect_customer_violations("t1")
         no_ent = [v for v in violations if v.operation == "no_entitlements"]
         assert len(no_ent) == 1
-        assert "a1" in no_ent[0].reason
+        assert no_ent[0].reason == "active account has no active entitlements"
+        assert "a1" not in no_ent[0].reason
 
-    def test_delinquent_violation_reason_contains_account_id(self, engine):
+    def test_delinquent_violation_reason_is_bounded(self, engine):
         engine.register_customer("c1", "t1", "A")
         engine.register_account("a1", "c1", "t1", "Acc")
         engine.grant_entitlement("e1", "a1", "t1", "svc")
@@ -2382,7 +2411,8 @@ class TestViolationDetectionAdditional:
         violations = engine.detect_customer_violations("t1")
         del_v = [v for v in violations if v.operation == "delinquent_account"]
         assert len(del_v) == 1
-        assert "a1" in del_v[0].reason
+        assert del_v[0].reason == "account is delinquent"
+        assert "a1" not in del_v[0].reason
 
     def test_multiple_no_entitlement_accounts(self, engine):
         engine.register_customer("c1", "t1", "A")

@@ -147,6 +147,9 @@ class TestMemoryMeshAttachment:
         integ, _, _, mem = _make_integration()
         record = integ.attach_verification_state_to_memory_mesh("scope-1")
         assert isinstance(record, MemoryRecord)
+        assert record.title == "Formal verification state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
         assert mem.memory_count == 1
 
     def test_content_reflects_state(self):
@@ -159,7 +162,8 @@ class TestMemoryMeshAttachment:
     def test_title(self):
         integ, _, _, _ = _make_integration()
         record = integ.attach_verification_state_to_memory_mesh("scope-1")
-        assert "scope-1" in record.title
+        assert record.title == "Formal verification state"
+        assert "scope-1" not in record.title
 
     def test_tags(self):
         integ, _, _, _ = _make_integration()

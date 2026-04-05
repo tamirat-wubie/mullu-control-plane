@@ -129,7 +129,7 @@ class PersonaRuntimeEngine:
     ) -> PersonaProfile:
         """Register a new persona. Duplicate persona_id raises."""
         if persona_id in self._personas:
-            raise RuntimeCoreInvariantError(f"Duplicate persona_id: {persona_id}")
+            raise RuntimeCoreInvariantError("Duplicate persona_id")
         now = self._now()
         persona = PersonaProfile(
             persona_id=persona_id,
@@ -150,7 +150,7 @@ class PersonaRuntimeEngine:
     def get_persona(self, persona_id: str) -> PersonaProfile:
         p = self._personas.get(persona_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown persona_id: {persona_id}")
+            raise RuntimeCoreInvariantError("Unknown persona_id")
         return p
 
     def personas_for_tenant(self, tenant_id: str) -> tuple[PersonaProfile, ...]:
@@ -179,13 +179,9 @@ class PersonaRuntimeEngine:
         """Suspend an ACTIVE persona."""
         old = self.get_persona(persona_id)
         if old.status in _PERSONA_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Persona {persona_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Persona is in terminal state")
         if old.status != PersonaStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot suspend persona in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot suspend persona in current state")
         updated = self._replace_persona(persona_id, status=PersonaStatus.SUSPENDED)
         _emit(self._events, "persona_suspended", {
             "persona_id": persona_id,
@@ -196,9 +192,7 @@ class PersonaRuntimeEngine:
         """Retire a persona. Terminal state."""
         old = self.get_persona(persona_id)
         if old.status in _PERSONA_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Persona {persona_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Persona is in terminal state")
         updated = self._replace_persona(persona_id, status=PersonaStatus.RETIRED)
         _emit(self._events, "persona_retired", {
             "persona_id": persona_id,
@@ -209,13 +203,9 @@ class PersonaRuntimeEngine:
         """Activate a SUSPENDED persona."""
         old = self.get_persona(persona_id)
         if old.status in _PERSONA_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Persona {persona_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Persona is in terminal state")
         if old.status != PersonaStatus.SUSPENDED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot activate persona in {old.status.value} state"
-            )
+            raise RuntimeCoreInvariantError("Cannot activate persona in current state")
         updated = self._replace_persona(persona_id, status=PersonaStatus.ACTIVE)
         _emit(self._events, "persona_activated", {
             "persona_id": persona_id,
@@ -237,7 +227,7 @@ class PersonaRuntimeEngine:
     ) -> RoleBehaviorPolicy:
         """Register a role behavior policy. Validates persona exists."""
         if policy_id in self._policies:
-            raise RuntimeCoreInvariantError(f"Duplicate policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("Duplicate policy_id")
         self.get_persona(persona_ref)  # validates existence
         now = self._now()
         policy = RoleBehaviorPolicy(
@@ -258,7 +248,7 @@ class PersonaRuntimeEngine:
     def get_policy(self, policy_id: str) -> RoleBehaviorPolicy:
         p = self._policies.get(policy_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("Unknown policy_id")
         return p
 
     def policies_for_persona(self, persona_ref: str) -> tuple[RoleBehaviorPolicy, ...]:
@@ -279,7 +269,7 @@ class PersonaRuntimeEngine:
     ) -> StyleDirective:
         """Add a style directive for a persona."""
         if directive_id in self._style_directives:
-            raise RuntimeCoreInvariantError(f"Duplicate directive_id: {directive_id}")
+            raise RuntimeCoreInvariantError("Duplicate directive_id")
         self.get_persona(persona_ref)  # validates existence
         now = self._now()
         directive = StyleDirective(
@@ -311,7 +301,7 @@ class PersonaRuntimeEngine:
     ) -> EscalationDirective:
         """Add an escalation directive for a persona."""
         if directive_id in self._escalation_directives:
-            raise RuntimeCoreInvariantError(f"Duplicate directive_id: {directive_id}")
+            raise RuntimeCoreInvariantError("Duplicate directive_id")
         self.get_persona(persona_ref)  # validates existence
         now = self._now()
         directive = EscalationDirective(
@@ -342,7 +332,7 @@ class PersonaRuntimeEngine:
         """Bind a persona to a session. Persona must be ACTIVE.
         Duplicate binding_id raises. Cross-tenant produces a violation."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         persona = self.get_persona(persona_ref)
         now = self._now()
 
@@ -356,18 +346,14 @@ class PersonaRuntimeEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="cross_tenant_binding",
-                    reason=f"Binding {binding_id} targets tenant {tenant_id} but persona {persona_ref} belongs to {persona.tenant_id}",
+                    reason="Cross-tenant persona binding",
                     detected_at=now,
                 )
                 self._violations[vid] = v
-            raise RuntimeCoreInvariantError(
-                f"Cross-tenant binding: persona {persona_ref} belongs to {persona.tenant_id}, not {tenant_id}"
-            )
+            raise RuntimeCoreInvariantError("Cross-tenant persona binding")
 
         if persona.status != PersonaStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Persona {persona_ref} is not ACTIVE (status: {persona.status.value})"
-            )
+            raise RuntimeCoreInvariantError("Persona is not active")
 
         binding = PersonaSessionBinding(
             binding_id=binding_id,
@@ -456,7 +442,7 @@ class PersonaRuntimeEngine:
     ) -> PersonaDecision:
         """Record a decision made under persona authority."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         now = self._now()
         dec = PersonaDecision(
             decision_id=decision_id,
@@ -578,7 +564,7 @@ class PersonaRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="persona_no_policy",
-                            reason=f"Persona {persona.persona_id} is ACTIVE with no role behavior policy",
+                            reason="Active persona has no role behavior policy",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -596,7 +582,7 @@ class PersonaRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="binding_to_retired_persona",
-                        reason=f"Binding {binding.binding_id} references retired persona {binding.persona_ref}",
+                        reason="Binding references retired persona",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -617,7 +603,7 @@ class PersonaRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="authority_exceeded",
-                            reason=f"Decision {dec.decision_id} uses AUTONOMOUS authority but persona {dec.persona_ref} has {persona.authority_mode.value} mode",
+                            reason="Autonomous authority exceeds persona mode",
                             detected_at=now,
                         )
                         self._violations[vid] = v

@@ -210,7 +210,7 @@ class RegulatoryReportingIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Regulatory reporting state: {scope_ref_id}",
+            title="Regulatory reporting state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("regulatory", "reporting", "submission"),

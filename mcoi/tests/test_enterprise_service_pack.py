@@ -57,6 +57,23 @@ class TestDemoGenerator:
         assert result["remediations"]["imported"] == 4
         assert result["records"]["imported"] == 6
 
+    def test_remediation_titles_are_bounded(self, monkeypatch):
+        gen = EnterpriseServiceDemoGenerator()
+        captured: dict[str, list[dict[str, str]]] = {}
+        original_import = gen._importer.import_remediations
+
+        def _capture(tenant_id: str, remediations: list[dict[str, str]]):
+            captured["remediations"] = remediations
+            return original_import(tenant_id, remediations)
+
+        monkeypatch.setattr(gen._importer, "import_remediations", _capture)
+
+        result = gen.generate("es-bounded")
+
+        assert result["remediations"]["imported"] == 4
+        assert {item["title"] for item in captured["remediations"]} == {"Enterprise service remediation"}
+        assert "Email service degradation - Outlook" not in captured["remediations"][0]["title"]
+
 class TestDeploymentFactoryIntegration:
     def test_deploy_through_factory(self):
         factory = DeploymentFactory()

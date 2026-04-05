@@ -50,6 +50,8 @@ class TestApiMigrationEngine:
         engine.retire("v1")
         result = engine.route("v1")
         assert result["code"] == 410
+        assert result["message"] == "API version retired"
+        assert "v1" not in result["message"]
 
     def test_route_not_found(self):
         engine = ApiMigrationEngine()

@@ -135,7 +135,7 @@ class EngineeringRuntimeEngine:
     ) -> EngineeringQuantity:
         """Register a new engineering quantity. Duplicate quantity_id raises."""
         if quantity_id in self._quantities:
-            raise RuntimeCoreInvariantError(f"Duplicate quantity_id: {quantity_id}")
+            raise RuntimeCoreInvariantError("Duplicate quantity_id")
         now = self._now()
         qty = EngineeringQuantity(
             quantity_id=quantity_id,
@@ -156,7 +156,7 @@ class EngineeringRuntimeEngine:
     def get_quantity(self, quantity_id: str) -> EngineeringQuantity:
         q = self._quantities.get(quantity_id)
         if q is None:
-            raise RuntimeCoreInvariantError(f"Unknown quantity_id: {quantity_id}")
+            raise RuntimeCoreInvariantError("Unknown quantity_id")
         return q
 
     def quantities_for_tenant(self, tenant_id: str) -> tuple[EngineeringQuantity, ...]:
@@ -177,7 +177,7 @@ class EngineeringRuntimeEngine:
     ) -> ToleranceRecord:
         """Check tolerance for a quantity. Auto-computes status."""
         if tolerance_id in self._tolerances:
-            raise RuntimeCoreInvariantError(f"Duplicate tolerance_id: {tolerance_id}")
+            raise RuntimeCoreInvariantError("Duplicate tolerance_id")
         now = self._now()
 
         # Look up current quantity value
@@ -230,7 +230,7 @@ class EngineeringRuntimeEngine:
     ) -> ReliabilityTarget:
         """Register a reliability target. Duplicate target_id raises."""
         if target_id in self._targets:
-            raise RuntimeCoreInvariantError(f"Duplicate target_id: {target_id}")
+            raise RuntimeCoreInvariantError("Duplicate target_id")
         now = self._now()
         tgt = ReliabilityTarget(
             target_id=target_id,
@@ -261,7 +261,7 @@ class EngineeringRuntimeEngine:
     ) -> SafetyMargin:
         """Assess safety margin. Auto-computes margin_ratio and status."""
         if margin_id in self._margins:
-            raise RuntimeCoreInvariantError(f"Duplicate margin_id: {margin_id}")
+            raise RuntimeCoreInvariantError("Duplicate margin_id")
         now = self._now()
 
         # margin_ratio = (design - actual) / design if design > 0 else 0
@@ -311,7 +311,7 @@ class EngineeringRuntimeEngine:
     ) -> LoadEnvelope:
         """Measure load envelope. Auto-computes status."""
         if envelope_id in self._envelopes:
-            raise RuntimeCoreInvariantError(f"Duplicate envelope_id: {envelope_id}")
+            raise RuntimeCoreInvariantError("Duplicate envelope_id")
         now = self._now()
 
         # Auto status
@@ -360,7 +360,7 @@ class EngineeringRuntimeEngine:
     ) -> ProcessWindow:
         """Measure process window. Auto-computes status."""
         if window_id in self._windows:
-            raise RuntimeCoreInvariantError(f"Duplicate window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Duplicate window_id")
         now = self._now()
 
         # Auto status
@@ -409,7 +409,7 @@ class EngineeringRuntimeEngine:
     ) -> CapacityCurve:
         """Register a capacity curve. Duplicate curve_id raises."""
         if curve_id in self._curves:
-            raise RuntimeCoreInvariantError(f"Duplicate curve_id: {curve_id}")
+            raise RuntimeCoreInvariantError("Duplicate curve_id")
         now = self._now()
         cc = CapacityCurve(
             curve_id=curve_id,
@@ -470,7 +470,7 @@ class EngineeringRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="tolerance_exceeded",
-                        reason=f"Tolerance {tol.tolerance_id} for quantity {tol.quantity_ref} is EXCEEDED",
+                        reason="tolerance is exceeded",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -487,7 +487,7 @@ class EngineeringRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="safety_margin_insufficient",
-                        reason=f"Safety margin {margin.margin_id} for component {margin.component_ref} is INSUFFICIENT",
+                        reason="safety margin is insufficient",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -504,7 +504,7 @@ class EngineeringRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="load_envelope_failure",
-                        reason=f"Load envelope {env.envelope_id} for component {env.component_ref} is in FAILURE",
+                        reason="load envelope is in failure",
                         detected_at=now,
                     )
                     self._violations[vid] = v

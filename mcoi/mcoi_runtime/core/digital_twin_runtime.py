@@ -116,13 +116,13 @@ class DigitalTwinRuntimeEngine:
     def _get_model(self, model_id: str) -> TwinModel:
         m = self._models.get(model_id)
         if m is None:
-            raise RuntimeCoreInvariantError(f"Unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("Unknown model_id")
         return m
 
     def _get_object(self, object_id: str) -> TwinObject:
         o = self._objects.get(object_id)
         if o is None:
-            raise RuntimeCoreInvariantError(f"Unknown object_id: {object_id}")
+            raise RuntimeCoreInvariantError("Unknown object_id")
         return o
 
     def _replace_model(self, model_id: str, **kwargs: Any) -> TwinModel:
@@ -192,7 +192,7 @@ class DigitalTwinRuntimeEngine:
     ) -> TwinModel:
         """Register a new digital twin model."""
         if model_id in self._models:
-            raise RuntimeCoreInvariantError(f"Duplicate model_id: {model_id}")
+            raise RuntimeCoreInvariantError("Duplicate model_id")
         now = self._now()
         model = TwinModel(
             model_id=model_id,
@@ -223,7 +223,7 @@ class DigitalTwinRuntimeEngine:
     ) -> TwinObject:
         """Register a new twin object. Validates model exists, increments object_count."""
         if object_id in self._objects:
-            raise RuntimeCoreInvariantError(f"Duplicate object_id: {object_id}")
+            raise RuntimeCoreInvariantError("Duplicate object_id")
         self._get_model(model_ref)  # validates existence
         now = self._now()
         obj = TwinObject(
@@ -258,7 +258,7 @@ class DigitalTwinRuntimeEngine:
     ) -> TwinAssembly:
         """Register an assembly between two objects. Validates both exist."""
         if assembly_id in self._assemblies:
-            raise RuntimeCoreInvariantError(f"Duplicate assembly_id: {assembly_id}")
+            raise RuntimeCoreInvariantError("Duplicate assembly_id")
         self._get_object(parent_object_ref)
         self._get_object(child_object_ref)
         depth = self._compute_depth(parent_object_ref) + 1
@@ -291,7 +291,7 @@ class DigitalTwinRuntimeEngine:
     ) -> TwinStateRecord:
         """Bind a runtime state to a twin object. Updates object state."""
         if state_id in self._states:
-            raise RuntimeCoreInvariantError(f"Duplicate state_id: {state_id}")
+            raise RuntimeCoreInvariantError("Duplicate state_id")
         self._get_object(object_ref)  # validates existence
         now = self._now()
         rec = TwinStateRecord(
@@ -337,7 +337,7 @@ class DigitalTwinRuntimeEngine:
     ) -> TwinTelemetryBinding:
         """Bind a telemetry source to a twin object."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         now = self._now()
         binding = TwinTelemetryBinding(
             binding_id=binding_id,
@@ -366,7 +366,7 @@ class DigitalTwinRuntimeEngine:
     ) -> TwinSyncRecord:
         """Record a sync event for a twin object."""
         if sync_id in self._syncs:
-            raise RuntimeCoreInvariantError(f"Duplicate sync_id: {sync_id}")
+            raise RuntimeCoreInvariantError("Duplicate sync_id")
         now = self._now()
         rec = TwinSyncRecord(
             sync_id=sync_id,
@@ -483,7 +483,7 @@ class DigitalTwinRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="stale_sync",
-                        reason=f"Sync {sync.sync_id} for object {sync.object_ref} has status {sync.status.value}",
+                        reason="sync has non-nominal status",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -501,7 +501,7 @@ class DigitalTwinRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="missing_assembly",
-                        reason=f"Object {obj.object_id} has parent_ref={obj.parent_ref} but no assembly record",
+                        reason="object missing assembly record",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -519,7 +519,7 @@ class DigitalTwinRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="degraded_no_state",
-                        reason=f"Object {obj.object_id} is DEGRADED but has no TwinStateRecord",
+                        reason="degraded object missing state record",
                         detected_at=now,
                     )
                     self._violations[vid] = v

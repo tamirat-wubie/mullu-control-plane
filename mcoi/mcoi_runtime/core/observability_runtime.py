@@ -124,7 +124,7 @@ class ObservabilityRuntimeEngine:
         scope: ObservabilityScope = ObservabilityScope.RUNTIME,
     ) -> MetricRecord:
         if metric_id in self._metrics:
-            raise RuntimeCoreInvariantError(f"duplicate metric_id: {metric_id}")
+            raise RuntimeCoreInvariantError("duplicate metric_id")
         now = _now_iso()
         metric = MetricRecord(
             metric_id=metric_id, tenant_id=tenant_id, metric_name=metric_name,
@@ -137,7 +137,7 @@ class ObservabilityRuntimeEngine:
 
     def get_metric(self, metric_id: str) -> MetricRecord:
         if metric_id not in self._metrics:
-            raise RuntimeCoreInvariantError(f"unknown metric_id: {metric_id}")
+            raise RuntimeCoreInvariantError("unknown metric_id")
         return self._metrics[metric_id]
 
     def metrics_for_tenant(self, tenant_id: str) -> tuple[MetricRecord, ...]:
@@ -158,7 +158,7 @@ class ObservabilityRuntimeEngine:
         trace_id: str = "none",
     ) -> LogRecord:
         if log_id in self._logs:
-            raise RuntimeCoreInvariantError(f"duplicate log_id: {log_id}")
+            raise RuntimeCoreInvariantError("duplicate log_id")
         now = _now_iso()
         log = LogRecord(
             log_id=log_id, tenant_id=tenant_id, level=level,
@@ -171,7 +171,7 @@ class ObservabilityRuntimeEngine:
 
     def get_log(self, log_id: str) -> LogRecord:
         if log_id not in self._logs:
-            raise RuntimeCoreInvariantError(f"unknown log_id: {log_id}")
+            raise RuntimeCoreInvariantError("unknown log_id")
         return self._logs[log_id]
 
     def logs_for_tenant(self, tenant_id: str) -> tuple[LogRecord, ...]:
@@ -190,7 +190,7 @@ class ObservabilityRuntimeEngine:
         source_runtime: str,
     ) -> TraceRecord:
         if trace_id in self._traces:
-            raise RuntimeCoreInvariantError(f"duplicate trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("duplicate trace_id")
         now = _now_iso()
         trace = TraceRecord(
             trace_id=trace_id, tenant_id=tenant_id, display_name=display_name,
@@ -204,7 +204,7 @@ class ObservabilityRuntimeEngine:
     def close_trace(self, trace_id: str, duration_ms: float = 0.0) -> TraceRecord:
         trace = self._get_trace(trace_id)
         if trace.status in _TRACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"trace {trace_id} is in terminal state")
+            raise RuntimeCoreInvariantError("trace is in terminal state")
         now = _now_iso()
         updated = TraceRecord(
             trace_id=trace.trace_id, tenant_id=trace.tenant_id,
@@ -219,7 +219,7 @@ class ObservabilityRuntimeEngine:
     def error_trace(self, trace_id: str, duration_ms: float = 0.0) -> TraceRecord:
         trace = self._get_trace(trace_id)
         if trace.status in _TRACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"trace {trace_id} is in terminal state")
+            raise RuntimeCoreInvariantError("trace is in terminal state")
         now = _now_iso()
         updated = TraceRecord(
             trace_id=trace.trace_id, tenant_id=trace.tenant_id,
@@ -234,7 +234,7 @@ class ObservabilityRuntimeEngine:
     def timeout_trace(self, trace_id: str, duration_ms: float = 0.0) -> TraceRecord:
         trace = self._get_trace(trace_id)
         if trace.status in _TRACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"trace {trace_id} is in terminal state")
+            raise RuntimeCoreInvariantError("trace is in terminal state")
         updated = TraceRecord(
             trace_id=trace.trace_id, tenant_id=trace.tenant_id,
             display_name=trace.display_name, source_runtime=trace.source_runtime,
@@ -247,7 +247,7 @@ class ObservabilityRuntimeEngine:
 
     def _get_trace(self, trace_id: str) -> TraceRecord:
         if trace_id not in self._traces:
-            raise RuntimeCoreInvariantError(f"unknown trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("unknown trace_id")
         return self._traces[trace_id]
 
     def get_trace(self, trace_id: str) -> TraceRecord:
@@ -269,9 +269,9 @@ class ObservabilityRuntimeEngine:
         duration_ms: float = 0.0,
     ) -> SpanRecord:
         if span_id in self._spans:
-            raise RuntimeCoreInvariantError(f"duplicate span_id: {span_id}")
+            raise RuntimeCoreInvariantError("duplicate span_id")
         if trace_id not in self._traces:
-            raise RuntimeCoreInvariantError(f"unknown trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("unknown trace_id")
         trace = self._traces[trace_id]
         if trace.tenant_id != tenant_id:
             raise RuntimeCoreInvariantError("cross-tenant span access denied")
@@ -296,10 +296,10 @@ class ObservabilityRuntimeEngine:
 
     def close_span(self, span_id: str, duration_ms: float = 0.0) -> SpanRecord:
         if span_id not in self._spans:
-            raise RuntimeCoreInvariantError(f"unknown span_id: {span_id}")
+            raise RuntimeCoreInvariantError("unknown span_id")
         span = self._spans[span_id]
         if span.status in _TRACE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"span {span_id} is in terminal state")
+            raise RuntimeCoreInvariantError("span is in terminal state")
         updated = SpanRecord(
             span_id=span.span_id, trace_id=span.trace_id, tenant_id=span.tenant_id,
             display_name=span.display_name, source_runtime=span.source_runtime,
@@ -325,7 +325,7 @@ class ObservabilityRuntimeEngine:
         trace_id: str = "none",
     ) -> AnomalyRecord:
         if anomaly_id in self._anomalies:
-            raise RuntimeCoreInvariantError(f"duplicate anomaly_id: {anomaly_id}")
+            raise RuntimeCoreInvariantError("duplicate anomaly_id")
         now = _now_iso()
         anomaly = AnomalyRecord(
             anomaly_id=anomaly_id, tenant_id=tenant_id,
@@ -338,7 +338,7 @@ class ObservabilityRuntimeEngine:
 
     def get_anomaly(self, anomaly_id: str) -> AnomalyRecord:
         if anomaly_id not in self._anomalies:
-            raise RuntimeCoreInvariantError(f"unknown anomaly_id: {anomaly_id}")
+            raise RuntimeCoreInvariantError("unknown anomaly_id")
         return self._anomalies[anomaly_id]
 
     def anomalies_for_tenant(self, tenant_id: str) -> tuple[AnomalyRecord, ...]:
@@ -358,7 +358,7 @@ class ObservabilityRuntimeEngine:
         trace_id: str = "none",
     ) -> DebugSession:
         if session_id in self._debug_sessions:
-            raise RuntimeCoreInvariantError(f"duplicate session_id: {session_id}")
+            raise RuntimeCoreInvariantError("duplicate session_id")
         now = _now_iso()
         session = DebugSession(
             session_id=session_id, tenant_id=tenant_id,
@@ -373,7 +373,7 @@ class ObservabilityRuntimeEngine:
     def investigate_session(self, session_id: str) -> DebugSession:
         session = self._get_session(session_id)
         if session.disposition in _DEBUG_TERMINAL:
-            raise RuntimeCoreInvariantError(f"session {session_id} is in terminal state")
+            raise RuntimeCoreInvariantError("session is in terminal state")
         now = _now_iso()
         updated = DebugSession(
             session_id=session.session_id, tenant_id=session.tenant_id,
@@ -388,7 +388,7 @@ class ObservabilityRuntimeEngine:
     def resolve_session(self, session_id: str) -> DebugSession:
         session = self._get_session(session_id)
         if session.disposition in _DEBUG_TERMINAL:
-            raise RuntimeCoreInvariantError(f"session {session_id} is in terminal state")
+            raise RuntimeCoreInvariantError("session is in terminal state")
         now = _now_iso()
         updated = DebugSession(
             session_id=session.session_id, tenant_id=session.tenant_id,
@@ -403,7 +403,7 @@ class ObservabilityRuntimeEngine:
     def abandon_session(self, session_id: str) -> DebugSession:
         session = self._get_session(session_id)
         if session.disposition in _DEBUG_TERMINAL:
-            raise RuntimeCoreInvariantError(f"session {session_id} is in terminal state")
+            raise RuntimeCoreInvariantError("session is in terminal state")
         now = _now_iso()
         updated = DebugSession(
             session_id=session.session_id, tenant_id=session.tenant_id,
@@ -417,7 +417,7 @@ class ObservabilityRuntimeEngine:
 
     def _get_session(self, session_id: str) -> DebugSession:
         if session_id not in self._debug_sessions:
-            raise RuntimeCoreInvariantError(f"unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("unknown session_id")
         return self._debug_sessions[session_id]
 
     def get_debug_session(self, session_id: str) -> DebugSession:
@@ -452,7 +452,7 @@ class ObservabilityRuntimeEngine:
 
     def observability_assessment(self, assessment_id: str, tenant_id: str) -> ObservabilityAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         now = _now_iso()
         metrics = self.metrics_for_tenant(tenant_id)
         logs = self.logs_for_tenant(tenant_id)
@@ -498,7 +498,7 @@ class ObservabilityRuntimeEngine:
                         v = ObservabilityViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="stale_open_trace",
-                            reason=f"trace {trace.trace_id} is open but all spans are closed",
+                            reason="trace is open but all spans are closed",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -519,7 +519,7 @@ class ObservabilityRuntimeEngine:
                         v = ObservabilityViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="critical_no_debug",
-                            reason=f"critical anomaly {anomaly.anomaly_id} has no debug session",
+                            reason="critical anomaly has no debug session",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -535,7 +535,7 @@ class ObservabilityRuntimeEngine:
                     v = ObservabilityViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="high_trace_error_rate",
-                        reason=f"trace error rate above 50% for tenant {tenant_id}",
+                        reason="trace error rate above threshold",
                         detected_at=now,
                     )
                     self._violations[vid] = v

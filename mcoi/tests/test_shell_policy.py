@@ -66,8 +66,19 @@ class TestShellCommandPolicyContract:
             _basic_policy(allowed_executables=())
 
     def test_invalid_regex_denied_pattern_rejected(self) -> None:
-        with pytest.raises(ValueError, match="not a valid regex"):
+        with pytest.raises(ValueError, match=r"^denied pattern must be a valid regex$") as exc_info:
             _basic_policy(denied_patterns=("[invalid",))
+        assert "[invalid" not in str(exc_info.value)
+
+    def test_blank_allowed_executable_entry_rejected(self) -> None:
+        with pytest.raises(ValueError, match=r"^allowed executable entry must be a non-empty string$") as exc_info:
+            _basic_policy(allowed_executables=("python3", ""))
+        assert "[1]" not in str(exc_info.value)
+
+    def test_blank_denied_pattern_entry_rejected(self) -> None:
+        with pytest.raises(ValueError, match=r"^denied pattern entry must be a non-empty string$") as exc_info:
+            _basic_policy(denied_patterns=("",))
+        assert "[0]" not in str(exc_info.value)
 
     def test_frozen(self) -> None:
         policy = _basic_policy()
@@ -81,8 +92,11 @@ class TestShellPolicyVerdictContract:
         assert v.verdict == "allow"
 
     def test_invalid_verdict_rejected(self) -> None:
-        with pytest.raises(ValueError, match="verdict must be one of"):
+        with pytest.raises(ValueError, match="^verdict has unsupported value$") as exc_info:
             ShellPolicyVerdict(verdict="bogus", matched_rule="x")
+        message = str(exc_info.value)
+        assert "bogus" not in message
+        assert "allow" not in message
 
     def test_argv_summary_truncated_to_three(self) -> None:
         v = ShellPolicyVerdict(

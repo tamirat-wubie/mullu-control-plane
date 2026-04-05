@@ -228,8 +228,9 @@ class TestQualityRecordRegistration:
 
     def test_duplicate_id_rejected(self, engine):
         engine.register_quality_record("r1", "t1", "src1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_quality_record("r1", "t1", "src2")
+        assert "r1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -244,8 +245,9 @@ class TestGetRecord:
         assert r.record_id == "r1"
 
     def test_get_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.get_record("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 class TestRecordsForTenant:
@@ -294,8 +296,9 @@ class TestSchemaVersionRegistration:
 
     def test_duplicate_rejected(self, engine):
         engine.register_schema_version("v1", "t1", "sch1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_schema_version("v1", "t1", "sch2")
+        assert "v1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -310,8 +313,9 @@ class TestSchemaDeprecation:
         assert s.status is SchemaEvolutionStatus.DEPRECATED
 
     def test_deprecate_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.deprecate_schema("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_deprecate_retired_raises(self, engine):
         engine.register_schema_version("v1", "t1", "sch1")
@@ -345,8 +349,9 @@ class TestSchemaRetirement:
         assert s.status is SchemaEvolutionStatus.RETIRED
 
     def test_retire_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.retire_schema("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_retire_already_retired_raises(self, engine):
         engine.register_schema_version("v1", "t1", "sch1")
@@ -420,8 +425,9 @@ class TestDriftDetection:
 
     def test_duplicate_rejected(self, engine):
         engine.detect_drift("d1", "t1", "sch1", "col_a", "str", "int")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.detect_drift("d1", "t1", "sch1", "col_b", "str", "int")
+        assert "d1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -470,8 +476,9 @@ class TestLineageRegistration:
 
     def test_duplicate_rejected(self, engine):
         engine.register_lineage("l1", "t1", "src1", "tgt1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_lineage("l1", "t1", "src2", "tgt2")
+        assert "l1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -486,8 +493,9 @@ class TestGetLineage:
         assert lr.lineage_id == "l1"
 
     def test_get_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.get_lineage("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 class TestVerifyLineage:
@@ -507,8 +515,9 @@ class TestVerifyLineage:
         assert lr.disposition is LineageDisposition.VERIFIED
 
     def test_verify_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.verify_lineage("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_verify_preserves_hop_count(self, engine):
         engine.register_lineage("l1", "t1", "src1", "tgt1", hop_count=3)
@@ -567,8 +576,9 @@ class TestDuplicateDetection:
 
     def test_duplicate_id_rejected(self, engine):
         engine.detect_duplicate("dup1", "t1", "ra", "rb")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.detect_duplicate("dup1", "t1", "rc", "rd")
+        assert "dup1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -589,8 +599,9 @@ class TestMergeDuplicate:
             engine.merge_duplicate("dup1")
 
     def test_merge_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.merge_duplicate("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_merge_preserves_confidence(self, engine):
         engine.detect_duplicate("dup1", "t1", "ra", "rb", confidence=0.95)
@@ -613,8 +624,9 @@ class TestDismissDuplicate:
         assert d.disposition is DuplicateDisposition.UNIQUE
 
     def test_dismiss_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.dismiss_duplicate("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_dismiss_emits_event(self, engine, es):
         engine.detect_duplicate("dup1", "t1", "ra", "rb")
@@ -630,8 +642,9 @@ class TestConfirmDuplicate:
         assert d.disposition is DuplicateDisposition.CONFIRMED
 
     def test_confirm_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine._confirm_duplicate("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 class TestDuplicateLifecycle:
@@ -673,8 +686,9 @@ class TestReconciliation:
 
     def test_duplicate_rejected(self, engine):
         engine.reconcile_record("rec1", "t1", "src1", "can1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.reconcile_record("rec1", "t1", "src2", "can2")
+        assert "rec1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -715,8 +729,9 @@ class TestSourceQualityPolicy:
 
     def test_duplicate_rejected(self, engine):
         engine.register_source_policy("pol1", "t1", "src1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_source_policy("pol1", "t1", "src2")
+        assert "pol1" not in str(exc_info.value)
 
     def test_emits_event(self, engine, es):
         before = es.event_count
@@ -766,8 +781,9 @@ class TestSnapshot:
 
     def test_duplicate_snapshot_id_rejected(self, engine):
         engine.data_quality_snapshot("snap1", "t1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.data_quality_snapshot("snap1", "t1")
+        assert "snap1" not in str(exc_info.value)
 
     def test_snapshot_emits_event(self, engine, es):
         before = es.event_count
@@ -790,6 +806,8 @@ class TestViolationDetection:
         v = engine.detect_data_quality_violations("t1")
         assert len(v) == 1
         assert v[0].operation == "dirty_no_quarantine"
+        assert v[0].reason == "dirty record not quarantined"
+        assert "r1" not in v[0].reason
 
     def test_clean_no_violation(self, engine):
         engine.register_quality_record("r1", "t1", "src1", status=DataQualityStatus.CLEAN)
@@ -801,6 +819,9 @@ class TestViolationDetection:
         v = engine.detect_data_quality_violations("t1")
         assert len(v) == 1
         assert v[0].operation == "breaking_drift_unresolved"
+        assert v[0].reason == "breaking drift unresolved"
+        assert "d1" not in v[0].reason
+        assert "col_a" not in v[0].reason
 
     def test_minor_drift_no_violation(self, engine):
         engine.detect_drift("d1", "t1", "sch1", "col_a", "int", "number")
@@ -813,6 +834,8 @@ class TestViolationDetection:
         v = engine.detect_data_quality_violations("t1")
         assert len(v) == 1
         assert v[0].operation == "broken_lineage"
+        assert v[0].reason == "lineage is broken"
+        assert "l1" not in v[0].reason
 
     def test_verified_lineage_no_violation(self, engine):
         engine.register_lineage("l1", "t1", "src1", "tgt1")

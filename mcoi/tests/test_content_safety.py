@@ -16,6 +16,7 @@ from mcoi_runtime.core.content_safety import (
     ThreatCategory,
     build_default_safety_chain,
     create_content_safety_guard,
+    normalize_content,
 )
 from mcoi_runtime.core.governance_guard import GovernanceGuardChain
 
@@ -155,6 +156,24 @@ class TestContentSafetyChain:
         result = chain.evaluate("anything at all")
         assert result.is_safe
 
+    def test_normalize_content_preserves_ethiopic_runs(self, monkeypatch):
+        import mcoi_runtime.core.content_safety as content_safety
+
+        original_normalize = content_safety.unicodedata.normalize
+
+        def guarded_normalize(form: str, value: str) -> str:
+            assert all(not content_safety._is_ethiopic_char(char) for char in value)
+            return original_normalize(form, value)
+
+        monkeypatch.setattr(content_safety.unicodedata, "normalize", guarded_normalize)
+
+        normalized = normalize_content("ＡሀＢ")
+        assert normalized == "AሀB"
+
+    def test_normalize_content_keeps_ethiopic_text_byte_stable(self):
+        text = "ሀሁሂ መሙሚ"
+        assert normalize_content(text) == text
+
 
 # ═══ Default Chain ═══
 
@@ -187,7 +206,9 @@ class TestContentSafetyGuard:
             "tenant_id": "t1",
         })
         assert not result.allowed
-        assert "content blocked" in result.reason
+        assert result.reason == "content blocked"
+        assert "prompt injection attempt" not in result.reason
+        assert "prompt_injection" not in result.reason
 
     def test_guard_skips_without_prompt(self):
         chain = build_default_safety_chain()
@@ -223,6 +244,7 @@ class TestContentSafetyGuard:
             "tenant_id": "t1",
         })
         assert not result.allowed
+        assert result.reason == "content blocked"
 
 
 # ═══ Custom Patterns ═══

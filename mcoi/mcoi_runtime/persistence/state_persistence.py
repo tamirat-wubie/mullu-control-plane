@@ -49,12 +49,12 @@ class StatePersistence:
         if not isinstance(state_type, str) or not state_type.strip():
             raise PathTraversalError("state_type must be a non-empty string")
         if "\0" in state_type:
-            raise PathTraversalError(f"state_type contains null byte: {state_type!r}")
+            raise PathTraversalError("state_type contains null byte")
         if "/" in state_type or "\\" in state_type or ".." in state_type:
-            raise PathTraversalError(f"state_type contains forbidden characters: {state_type!r}")
+            raise PathTraversalError("state_type contains forbidden characters")
         candidate = (self._base_dir / f"mullu_state_{state_type}.json").resolve()
         if not candidate.is_relative_to(self._base_dir):
-            raise PathTraversalError(f"state path escapes base directory: {state_type!r}")
+            raise PathTraversalError("state path escapes base directory")
         return candidate
 
     def save(self, state_type: str, data: dict[str, Any]) -> StateSnapshot:

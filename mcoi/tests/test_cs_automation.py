@@ -14,12 +14,18 @@ class TestCustomerHealthSignal:
         assert s.signal_type == "adoption_weak"
 
     def test_invalid_signal_type(self):
-        with pytest.raises(ValueError, match="Invalid signal_type"):
+        with pytest.raises(ValueError) as exc_info:
             CustomerHealthSignal("acct1", "bad_type", "low", "x")
+        message = str(exc_info.value)
+        assert message == "invalid signal_type"
+        assert "bad_type" not in message
 
     def test_invalid_severity(self):
-        with pytest.raises(ValueError, match="Invalid severity"):
+        with pytest.raises(ValueError) as exc_info:
             CustomerHealthSignal("acct1", "adoption_weak", "extreme", "x")
+        message = str(exc_info.value)
+        assert message == "invalid severity"
+        assert "extreme" not in message
 
 
 class TestCSAutomationEngine:
@@ -29,6 +35,8 @@ class TestCSAutomationEngine:
         assert sig is not None
         assert sig.signal_type == "adoption_weak"
         assert sig.severity == "critical"
+        assert sig.detail == "Low activity detected"
+        assert "1" not in sig.detail
 
     def test_detect_weak_adoption_healthy(self):
         eng = CSAutomationEngine()
@@ -41,6 +49,8 @@ class TestCSAutomationEngine:
         assert sig is not None
         assert sig.signal_type == "renewal_risk"
         assert sig.severity == "critical"
+        assert sig.detail == "Renewal risk indicators present"
+        assert "3.0" not in sig.detail
 
     def test_detect_renewal_risk_safe(self):
         eng = CSAutomationEngine()
@@ -53,6 +63,8 @@ class TestCSAutomationEngine:
         assert sig is not None
         assert sig.signal_type == "expansion_ready"
         assert sig.severity == "medium"
+        assert sig.detail == "Expansion readiness indicators present"
+        assert "core" not in sig.detail
 
     def test_suggest_expansion_too_early(self):
         eng = CSAutomationEngine()
@@ -64,6 +76,8 @@ class TestCSAutomationEngine:
         sig = eng.detect_stakeholder_risk("a1", executive_logins_30d=0, last_review_days_ago=90)
         assert sig is not None
         assert sig.severity == "critical"
+        assert sig.detail == "Stakeholder disengagement indicators present"
+        assert "90" not in sig.detail
 
     def test_track_maturity_stages(self):
         eng = CSAutomationEngine()

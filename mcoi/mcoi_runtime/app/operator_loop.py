@@ -146,7 +146,7 @@ class OperatorLoop:
                 structured_errors=(
                     policy_error(
                         error_code=f"policy_{policy_decision.status.value}",
-                        message=f"policy gate returned {policy_decision.status.value}",
+                        message="policy gate blocked operator request",
                         recoverability=(
                             Recoverability.APPROVAL_REQUIRED
                             if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -428,7 +428,7 @@ class OperatorLoop:
         except (RuntimeCoreInvariantError, ValueError) as exc:
             return execution_error(
                 error_code="entity_registration_warning",
-                message=f"best-effort entity registration failed ({type(exc).__name__})",
+                message="best-effort entity registration failed",
                 recoverability=Recoverability.RETRYABLE,
                 related_ids=(execution_result.execution_id,),
                 context={"entity_id": entity_id, "exception_type": type(exc).__name__},

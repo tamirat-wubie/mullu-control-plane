@@ -916,7 +916,8 @@ class TestAttachChangeToMemoryMesh:
             "mem-10", "Title test", ChangeType.CONFIGURATION,
         )
         mem = integration.attach_change_to_memory_mesh("my-scope-ref")
-        assert "my-scope-ref" in mem.title
+        assert mem.title == "Change state"
+        assert "my-scope-ref" not in mem.title
 
     def test_source_ids(self, integration):
         integration.change_from_governance(
@@ -1705,3 +1706,70 @@ class TestGoldenRolloutModeVariations:
                 rollout_mode=mode, approval_required=False,
             )
             assert result["rollout_mode"] == mode.value
+
+
+class TestBoundedContracts:
+    def test_portfolio_evidence_redacts_ref_and_action(self, integration, change_engine):
+        integration.change_from_governance(
+            "bound-port", "Portfolio bounded", ChangeType.CONFIGURATION,
+            steps=_two_steps(),
+        )
+        integration.apply_change_to_portfolio(
+            "bound-port", portfolio_ref_id="portfolio-secret", action="delete-secret"
+        )
+        evidence = change_engine.get_evidence("bound-port")
+        assert evidence[-1].description == "Portfolio change applied"
+        assert "portfolio-secret" not in evidence[-1].description
+        assert "delete-secret" not in evidence[-1].description
+
+    def test_availability_evidence_redacts_ref_and_action(self, integration, change_engine):
+        integration.change_from_governance(
+            "bound-avail", "Availability bounded", ChangeType.CONFIGURATION,
+            steps=_two_steps(),
+        )
+        integration.apply_change_to_availability(
+            "bound-avail", identity_ref_id="identity-secret", action="rotate-secret"
+        )
+        evidence = change_engine.get_evidence("bound-avail")
+        assert evidence[-1].description == "Availability change applied"
+        assert "identity-secret" not in evidence[-1].description
+        assert "rotate-secret" not in evidence[-1].description
+
+    def test_financial_evidence_redacts_ref_and_action(self, integration, change_engine):
+        integration.change_from_governance(
+            "bound-fin", "Financial bounded", ChangeType.CONFIGURATION,
+            steps=_two_steps(),
+        )
+        integration.apply_change_to_financials(
+            "bound-fin", budget_ref_id="budget-secret", action="throttle-secret"
+        )
+        evidence = change_engine.get_evidence("bound-fin")
+        assert evidence[-1].description == "Financial change applied"
+        assert "budget-secret" not in evidence[-1].description
+        assert "throttle-secret" not in evidence[-1].description
+
+    def test_connector_evidence_redacts_ref_and_action(self, integration, change_engine):
+        integration.change_from_governance(
+            "bound-conn", "Connector bounded", ChangeType.CONFIGURATION,
+            steps=_two_steps(),
+        )
+        integration.apply_change_to_connector_routing(
+            "bound-conn", connector_ref_id="connector-secret", action="reroute-secret"
+        )
+        evidence = change_engine.get_evidence("bound-conn")
+        assert evidence[-1].description == "Connector routing change applied"
+        assert "connector-secret" not in evidence[-1].description
+        assert "reroute-secret" not in evidence[-1].description
+
+    def test_domain_pack_evidence_redacts_ref_and_action(self, integration, change_engine):
+        integration.change_from_governance(
+            "bound-pack", "Domain bounded", ChangeType.CONFIGURATION,
+            steps=_two_steps(),
+        )
+        integration.apply_change_to_domain_pack_resolution(
+            "bound-pack", domain_pack_ref_id="domain-pack-secret", action="activate-secret"
+        )
+        evidence = change_engine.get_evidence("bound-pack")
+        assert evidence[-1].description == "Domain pack change applied"
+        assert "domain-pack-secret" not in evidence[-1].description
+        assert "activate-secret" not in evidence[-1].description

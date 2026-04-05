@@ -7,6 +7,7 @@ Invariants: all jobs go through guard chain; history is bounded; thread-safe.
 from __future__ import annotations
 
 import pytest
+from types import SimpleNamespace
 
 from mcoi_runtime.core.scheduler import (
     GovernedScheduler,
@@ -77,7 +78,8 @@ def test_execute_job_handler_not_found() -> None:
     s.schedule(_sample_job(handler_name="missing"))
     execution = s.execute_job("job-1")
     assert execution.status == JobStatus.FAILED
-    assert "handler not found" in execution.error
+    assert execution.error == "handler not found"
+    assert "missing" not in execution.error
 
 
 def test_execute_disabled_job() -> None:
@@ -98,13 +100,36 @@ def test_execute_job_handler_raises() -> None:
     s.schedule(_sample_job())
     execution = s.execute_job("job-1")
     assert execution.status == JobStatus.FAILED
-    assert "boom" in execution.error
+    assert execution.error == "handler error (RuntimeError)"
+
+
+def test_execute_job_guard_denied_is_bounded() -> None:
+    class GuardChain:
+        def evaluate(self, ctx):
+            return SimpleNamespace(allowed=False, reason="budget b1 denied for tenant t1")
+
+    s = _make_scheduler(guard_chain=GuardChain())
+    s.register_handler("test_handler", lambda job: {"result": "ok"})
+    s.schedule(_sample_job())
+    execution = s.execute_job("job-1")
+    assert execution.status == JobStatus.FAILED
+    assert execution.error == "job execution denied"
+    assert "budget b1" not in execution.error
+    assert "tenant t1" not in execution.error
 
 
 def test_execute_nonexistent_job_raises() -> None:
     s = _make_scheduler()
     with pytest.raises(ValueError, match="job not found"):
         s.execute_job("nonexistent")
+
+
+def test_execute_nonexistent_job_error_is_bounded() -> None:
+    s = _make_scheduler()
+    with pytest.raises(ValueError, match="job not found") as excinfo:
+        s.execute_job("nonexistent")
+    assert str(excinfo.value) == "job not found"
+    assert "nonexistent" not in str(excinfo.value)
 
 
 def test_history_bounded() -> None:

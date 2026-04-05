@@ -201,6 +201,8 @@ class TestCandidateBuilding:
         approval_candidates = [c for c in result.candidates if c.commitment_type == CommitmentType.APPROVAL]
         assert len(approval_candidates) >= 1
         assert approval_candidates[0].disposition == CommitmentDisposition.ACCEPTED
+        assert approval_candidates[0].reason == "approval signal detected"
+        assert "approved" not in approval_candidates[0].reason
 
     def test_rejection_creates_rejected_candidate(self):
         engine = CommitmentExtractionEngine()
@@ -208,6 +210,8 @@ class TestCandidateBuilding:
         rejection_candidates = [c for c in result.candidates if c.commitment_type == CommitmentType.APPROVAL]
         assert len(rejection_candidates) >= 1
         assert rejection_candidates[0].disposition == CommitmentDisposition.REJECTED
+        assert rejection_candidates[0].reason == "rejection signal detected"
+        assert "msg-c2" not in rejection_candidates[0].reason
 
     def test_follow_up_candidate(self):
         engine = CommitmentExtractionEngine()
@@ -270,6 +274,8 @@ class TestRouting:
         decisions = engine.route_commitments(result, "default-id")
         assert len(decisions) >= 1
         assert decisions[0].routed_to_identity_id == "alice"
+        assert decisions[0].reason == "commitment routed"
+        assert engine.get_candidate(decisions[0].commitment_id).commitment_type.value not in decisions[0].reason
 
     def test_route_uses_default(self):
         engine = CommitmentExtractionEngine()
@@ -309,16 +315,18 @@ class TestPromotion:
 
     def test_promote_missing_rejected(self):
         engine = CommitmentExtractionEngine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             engine.promote_commitment("missing", "obl-1")
+        assert "missing" not in str(exc_info.value)
 
     def test_promote_rejected_commitment_rejected(self):
         engine = CommitmentExtractionEngine()
         result = engine.extract_from_message("msg-p2", "This is rejected")
         if result.candidates:
             cid = result.candidates[0].commitment_id
-            with pytest.raises(RuntimeCoreInvariantError, match="cannot promote"):
+            with pytest.raises(RuntimeCoreInvariantError, match="cannot promote") as exc_info:
                 engine.promote_commitment(cid, "obl-1")
+            assert cid not in str(exc_info.value)
 
     def test_double_promote_rejected(self):
         engine = CommitmentExtractionEngine()
@@ -326,8 +334,9 @@ class TestPromotion:
         if result.candidates:
             cid = result.candidates[0].commitment_id
             engine.promote_commitment(cid, "obl-1")
-            with pytest.raises(RuntimeCoreInvariantError, match="already promoted"):
+            with pytest.raises(RuntimeCoreInvariantError, match="already promoted") as exc_info:
                 engine.promote_commitment(cid, "obl-2")
+            assert cid not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------

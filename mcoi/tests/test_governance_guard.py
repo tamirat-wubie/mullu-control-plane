@@ -78,6 +78,8 @@ class TestBuiltInGuards:
         guard.check({"tenant_id": "t1", "endpoint": "/api"})
         result = guard.check({"tenant_id": "t1", "endpoint": "/api"})
         assert result.allowed is False
+        assert result.reason == "rate limited"
+        assert "retry" not in result.reason
 
     def test_budget_guard_allows(self):
         mgr = TenantBudgetManager(clock=FIXED_CLOCK)
@@ -94,6 +96,8 @@ class TestBuiltInGuards:
         guard = create_budget_guard(mgr)
         result = guard.check({"tenant_id": "t1"})
         assert result.allowed is False
+        assert result.reason == "budget exhausted"
+        assert "t1" not in result.reason
 
     def test_budget_guard_denies_disabled(self):
         mgr = TenantBudgetManager(clock=FIXED_CLOCK)
@@ -102,6 +106,8 @@ class TestBuiltInGuards:
         guard = create_budget_guard(mgr)
         result = guard.check({"tenant_id": "t1"})
         assert result.allowed is False
+        assert result.reason == "tenant disabled"
+        assert "t1" not in result.reason
 
     def test_tenant_guard_allows(self):
         guard = create_tenant_guard()
@@ -150,4 +156,6 @@ class TestBuiltInGuards:
         ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": "spoofed"}
         result = guard.check(ctx)
         assert result.allowed is False
-        assert "mismatch" in result.reason
+        assert result.reason == "tenant mismatch"
+        assert "tenant-123" not in result.reason
+        assert "spoofed" not in result.reason

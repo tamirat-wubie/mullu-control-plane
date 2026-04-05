@@ -1561,7 +1561,7 @@ class TestViolationDetection:
         engine.start_order("o1")
         engine.complete_order("o1")
         result = engine.detect_factory_violations()
-        assert "o1" in result[0]["reason"]
+        assert result[0]["reason"] == "completed order has no batches"
 
     def test_order_no_batches_has_detected_at(self, engine: FactoryRuntimeEngine, order: WorkOrder) -> None:
         engine.release_order("o1")
@@ -1644,7 +1644,7 @@ class TestViolationDetection:
             engine.record_downtime(f"dt{i}", "t1", "m1", f"r{i}", 10)
         result = engine.detect_factory_violations()
         dt_violations = [v for v in result if v["operation"] == "machine_excessive_downtime"]
-        assert "m1" in dt_violations[0]["reason"]
+        assert dt_violations[0]["reason"] == "machine has excessive downtime"
 
     # --- idempotency ---
     def test_idempotent_second_call_empty(self, engine: FactoryRuntimeEngine, order: WorkOrder) -> None:
@@ -2569,3 +2569,17 @@ class TestEdgeCases:
         original = batch.created_at
         sb = engine.scrap_batch("b1")
         assert sb.created_at == original
+
+
+class TestBoundedFactoryContracts:
+    def test_duplicate_plant_does_not_echo_id(self, engine: FactoryRuntimeEngine) -> None:
+        engine.register_plant("plant-secret", "t1", "Plant")
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate plant_id") as exc:
+            engine.register_plant("plant-secret", "t1", "Plant")
+        assert "plant-secret" not in str(exc.value)
+
+    def test_terminal_batch_transition_does_not_echo_status(self, engine: FactoryRuntimeEngine, batch: BatchRecord) -> None:
+        engine.reject_batch("b1")
+        with pytest.raises(RuntimeCoreInvariantError, match="Cannot complete batch in terminal status") as exc:
+            engine.complete_batch("b1")
+        assert "rejected" not in str(exc.value).lower()

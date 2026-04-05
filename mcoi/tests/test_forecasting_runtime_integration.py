@@ -418,6 +418,12 @@ class TestAttachForecastToMemoryMesh:
         mem = integration.attach_forecast_to_memory_mesh("scope-1")
         assert isinstance(mem, MemoryRecord)
 
+    def test_title_is_bounded(self, integration: ForecastingRuntimeIntegration) -> None:
+        mem = integration.attach_forecast_to_memory_mesh("scope-title")
+        assert mem.title == "Forecasting state"
+        assert "scope-title" not in mem.title
+        assert mem.scope_ref_id == "scope-title"
+
     def test_correct_tags(self, integration: ForecastingRuntimeIntegration) -> None:
         mem = integration.attach_forecast_to_memory_mesh("scope-2")
         assert set(mem.tags) == {"forecasting", "demand", "allocation"}

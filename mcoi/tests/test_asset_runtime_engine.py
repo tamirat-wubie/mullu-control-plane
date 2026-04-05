@@ -227,8 +227,9 @@ class TestRegisterAsset:
 
     def test_duplicate_asset_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-dup")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate asset_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate asset_id") as exc_info:
             _register_default_asset(engine, asset_id="a-dup", name="Another")
+        assert "a-dup" not in str(exc_info.value)
 
     def test_multiple_assets_different_ids(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
@@ -246,8 +247,9 @@ class TestGetAsset:
         assert rec.asset_id == "a-1"
 
     def test_unknown_asset_raises(self, engine: AssetRuntimeEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown asset_id") as exc_info:
             engine.get_asset("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_get_returns_same_data(self, engine: AssetRuntimeEngine) -> None:
         original = _register_default_asset(engine, asset_id="a-1", name="Alpha", value=100.0)
@@ -342,14 +344,18 @@ class TestMaintainAsset:
     def test_retired_cannot_maintain(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.retire_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot maintain"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.maintain_asset("a-1")
+        assert str(exc_info.value) == "cannot maintain asset from current status"
+        assert "retired" not in str(exc_info.value)
 
     def test_disposed_cannot_maintain(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.dispose_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot maintain"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.maintain_asset("a-1")
+        assert str(exc_info.value) == "cannot maintain asset from current status"
+        assert "disposed" not in str(exc_info.value)
 
     def test_maintain_unknown_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -384,14 +390,18 @@ class TestRetireAsset:
     def test_retired_cannot_retire_again(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.retire_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.retire_asset("a-1")
+        assert str(exc_info.value) == "asset already in terminal status"
+        assert "retired" not in str(exc_info.value)
 
     def test_disposed_cannot_retire(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.dispose_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.retire_asset("a-1")
+        assert str(exc_info.value) == "asset already in terminal status"
+        assert "disposed" not in str(exc_info.value)
 
     def test_retire_unknown_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -597,15 +607,19 @@ class TestDeprecateConfigItem:
         _register_default_asset(engine)
         engine.register_config_item("ci-1", "a-1", "db-config")
         engine.deprecate_config_item("ci-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.deprecate_config_item("ci-1")
+        assert str(exc_info.value) == "config item already in terminal status"
+        assert "deprecated" not in str(exc_info.value)
 
     def test_archived_cannot_deprecate(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.register_config_item("ci-1", "a-1", "db-config")
         engine.archive_config_item("ci-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in status"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.deprecate_config_item("ci-1")
+        assert str(exc_info.value) == "config item already in terminal status"
+        assert "archived" not in str(exc_info.value)
 
     def test_deprecate_unknown_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -994,14 +1008,18 @@ class TestAssignAsset:
     def test_retired_asset_cannot_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.retire_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        assert str(exc_info.value) == "cannot assign asset from current status"
+        assert "retired" not in str(exc_info.value)
 
     def test_disposed_asset_cannot_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
         engine.dispose_asset("a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.assign_asset("asgn-1", "a-1", "campaign-1", "campaign")
+        assert str(exc_info.value) == "cannot assign asset from current status"
+        assert "disposed" not in str(exc_info.value)
 
     def test_inactive_asset_can_be_assigned(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine)
@@ -1121,8 +1139,9 @@ class TestRegisterDependency:
 
     def test_unknown_depends_on_asset_id_raises(self, engine: AssetRuntimeEngine) -> None:
         _register_default_asset(engine, asset_id="a-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown depends_on_asset_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown depends_on_asset_id") as exc_info:
             engine.register_dependency("dep-1", "a-1", "nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_both_unknown_asset_id_raises(self, engine: AssetRuntimeEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -2020,7 +2039,7 @@ class TestGoldenScenarios:
         dep_violations = [v for v in violations if v.operation == "depends_on_retired"]
         assert len(dep_violations) == 1
         assert dep_violations[0].asset_id == "a-app"
-        assert "a-db" in dep_violations[0].reason
+        assert dep_violations[0].reason == "asset depends on terminal dependency"
 
     def test_gs3_retired_with_assignments_violation(
         self, engine: AssetRuntimeEngine,
@@ -2034,7 +2053,7 @@ class TestGoldenScenarios:
         assign_violations = [v for v in violations if v.operation == "retired_with_assignments"]
         assert len(assign_violations) == 1
         assert assign_violations[0].asset_id == "a-1"
-        assert "1 active assignments" in assign_violations[0].reason
+        assert assign_violations[0].reason == "terminal asset has active assignments"
 
     def test_gs4_depleted_inventory_violation_then_release(
         self, engine: AssetRuntimeEngine,
@@ -2072,8 +2091,10 @@ class TestGoldenScenarios:
         engine.retire_asset("a-1")
         assert engine.get_asset("a-1").status == AssetStatus.RETIRED
 
-        with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.assign_asset("asgn-1", "a-1", "scope-1", "campaign")
+        assert str(exc_info.value) == "cannot assign asset from current status"
+        assert "retired" not in str(exc_info.value)
 
     def test_gs6_multi_tenant_isolation(self, engine: AssetRuntimeEngine) -> None:
         """GS-6: Multi-tenant isolation. Each tenant sees only its own assets."""
@@ -2382,7 +2403,7 @@ class TestEdgeCases:
         violations = engine.detect_asset_violations()
         v = [x for x in violations if x.operation == "retired_with_assignments"]
         assert len(v) == 1
-        assert "3 active assignments" in v[0].reason
+        assert v[0].reason == "terminal asset has active assignments"
 
     def test_two_engines_independent(self, spine: EventSpineEngine) -> None:
         s1 = EventSpineEngine()
@@ -2472,3 +2493,36 @@ class TestEdgeCases:
         events = engine.lifecycle_events_for_asset("a-1")
         dispositions = {e.disposition for e in events}
         assert dispositions == set(LifecycleDisposition)
+
+
+class TestBoundedAssetContracts:
+    def test_dependency_violation_reason_is_bounded(self, engine: AssetRuntimeEngine) -> None:
+        engine.register_asset("a-app", "App", "t-1")
+        engine.register_asset("a-secret", "Database", "t-1")
+        engine.register_dependency("dep-1", "a-app", "a-secret")
+        engine.retire_asset("a-secret")
+        violations = engine.detect_asset_violations()
+        dependency_violation = next(v for v in violations if v.operation == "depends_on_retired")
+        assert dependency_violation.reason == "asset depends on terminal dependency"
+        assert "a-secret" not in dependency_violation.reason
+        assert "retired" not in dependency_violation.reason.lower()
+
+    def test_assignment_violation_reason_is_bounded(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine, asset_id="asset-secret")
+        engine.assign_asset("asgn-1", "asset-secret", "scope-1", "campaign")
+        engine.retire_asset("asset-secret")
+        violations = engine.detect_asset_violations()
+        assignment_violation = next(v for v in violations if v.operation == "retired_with_assignments")
+        assert assignment_violation.reason == "terminal asset has active assignments"
+        assert "asset-secret" not in assignment_violation.reason
+        assert "assignments" in assignment_violation.reason
+
+    def test_depleted_inventory_reason_is_bounded(self, engine: AssetRuntimeEngine) -> None:
+        _register_default_asset(engine)
+        engine.register_inventory("inv-secret", "a-1", "t-1", 5)
+        engine.assign_inventory("inv-secret", 5)
+        violations = engine.detect_asset_violations()
+        depleted_violation = next(v for v in violations if v.operation == "depleted_inventory")
+        assert depleted_violation.reason == "inventory is depleted"
+        assert "inv-secret" not in depleted_violation.reason
+        assert "depleted" in depleted_violation.reason

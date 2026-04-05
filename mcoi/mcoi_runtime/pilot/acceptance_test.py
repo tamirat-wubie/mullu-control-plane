@@ -48,9 +48,9 @@ class PilotAcceptanceTest:
 
     def _test_3_data_import(self, tid: str) -> None:
         sample = {
-            "cases": [{"case_id": f"accept-case-{i}", "title": f"Test Case {i}"} for i in range(3)],
-            "remediations": [{"remediation_id": f"accept-rem-{i}", "case_ref": f"accept-case-{i}", "title": f"Rem {i}"} for i in range(2)],
-            "records": [{"record_id": f"accept-rec-{i}", "title": f"Record {i}"} for i in range(3)],
+            "cases": [{"case_id": f"accept-case-{i}", "title": "Acceptance test case"} for i in range(3)],
+            "remediations": [{"remediation_id": f"accept-rem-{i}", "case_ref": f"accept-case-{i}", "title": "Acceptance remediation"} for i in range(2)],
+            "records": [{"record_id": f"accept-rec-{i}", "title": "Acceptance record"} for i in range(3)],
         }
         results = self._importer.import_all(tid, sample)
         total_accepted = sum(r.accepted for r in results.values())

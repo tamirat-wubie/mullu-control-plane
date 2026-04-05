@@ -39,21 +39,17 @@ class ShellCommandPolicy(ContractRecord):
             raise ValueError("allowed_executables must contain at least one entry")
         for idx, exe in enumerate(self.allowed_executables):
             if not isinstance(exe, str) or not exe.strip():
-                raise ValueError(
-                    f"allowed_executables[{idx}] must be a non-empty string"
-                )
+                raise ValueError("allowed executable entry must be a non-empty string")
         object.__setattr__(
             self, "denied_patterns", freeze_value(list(self.denied_patterns))
         )
         for idx, pat in enumerate(self.denied_patterns):
             if not isinstance(pat, str) or not pat.strip():
-                raise ValueError(f"denied_patterns[{idx}] must be a non-empty string")
+                raise ValueError("denied pattern entry must be a non-empty string")
             try:
                 re.compile(pat)
             except re.error as exc:
-                raise ValueError(
-                    f"denied_patterns[{idx}] is not a valid regex: {exc}"
-                ) from exc
+                raise ValueError("denied pattern must be a valid regex") from exc
         object.__setattr__(
             self,
             "max_argv_length",
@@ -92,9 +88,7 @@ class ShellPolicyVerdict(ContractRecord):
             self, "verdict", require_non_empty_text(self.verdict, "verdict")
         )
         if self.verdict not in self._VALID_VERDICTS:
-            raise ValueError(
-                f"verdict must be one of {sorted(self._VALID_VERDICTS)}"
-            )
+            raise ValueError("verdict has unsupported value")
         object.__setattr__(
             self, "matched_rule", require_non_empty_text(self.matched_rule, "matched_rule")
         )

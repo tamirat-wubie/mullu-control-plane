@@ -1,6 +1,7 @@
 """Phase 211B — Anthropic streaming adapter tests."""
 
 import pytest
+from types import SimpleNamespace
 from mcoi_runtime.adapters.anthropic_streaming import (
     AnthropicStreamingAdapter, StreamChunk,
 )
@@ -77,3 +78,19 @@ class TestAnthropicStreamingAdapter:
         events = list(adapter.stream_to_events("test"))
         meta = events[0]
         assert meta.data["model"] == "claude-haiku-4-5-20251001"
+
+    def test_streaming_error_is_bounded(self):
+        class CrashingMessages:
+            def stream(self, **kwargs):
+                raise RuntimeError("secret streaming failure")
+
+        adapter = AnthropicStreamingAdapter(api_key="fake-key", clock=FIXED_CLOCK)
+        adapter._available = True
+        adapter._client = SimpleNamespace(messages=CrashingMessages())
+
+        chunks = list(adapter.stream_completion("test"))
+
+        assert len(chunks) == 1
+        assert chunks[0].is_final is True
+        assert chunks[0].text == "[streaming error (RuntimeError)]"
+        assert "secret streaming failure" not in chunks[0].text

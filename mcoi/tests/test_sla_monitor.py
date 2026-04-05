@@ -61,8 +61,9 @@ class TestSLAMonitor:
         assert len(monitor.violations()) == 2
 
     def test_unknown_sla(self, monitor):
-        with pytest.raises(ValueError, match="Unknown SLA"):
+        with pytest.raises(ValueError, match="^unknown SLA$") as exc_info:
             monitor.check("nonexistent", 1.0)
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_summary(self, monitor):
         monitor.check("uptime", 99.95)

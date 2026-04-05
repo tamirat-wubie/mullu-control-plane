@@ -165,7 +165,7 @@ class WorkCampaignIntegration:
                 step_type=CampaignStepType.CREATE_OBLIGATION,
                 status=CampaignStepStatus.PENDING,
                 order=i,
-                name=f"Create obligation: {c.get('description', 'commitment')}",
+                name="Create obligation",
                 input_payload=c,
             ))
         # Final close step
@@ -198,7 +198,7 @@ class WorkCampaignIntegration:
                 campaign_id=campaign_id,
                 step_type=CampaignStepType.INGEST_ARTIFACT,
                 order=0,
-                name=f"Ingest artifact: {artifact_ref}",
+                name="Ingest artifact",
                 target_ref=artifact_ref,
             ),
             CampaignStep(
@@ -246,7 +246,7 @@ class WorkCampaignIntegration:
                 campaign_id=campaign_id,
                 step_type=CampaignStepType.ROUTE_TO_IDENTITY,
                 order=i + 1,
-                name=f"Route to: {identity}",
+                name="Route to identity",
                 target_ref=identity,
             ))
         steps.append(CampaignStep(
@@ -298,7 +298,7 @@ class WorkCampaignIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=run.campaign_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Campaign {event_type}: {run.campaign_id}",
+            title="Campaign state",
             content={
                 "run_id": run.run_id,
                 "campaign_id": run.campaign_id,
@@ -326,7 +326,7 @@ class WorkCampaignIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=report.campaign_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Campaign closure: {report.campaign_id} ({report.outcome.value})",
+            title="Campaign closure",
             content={
                 "run_id": report.run_id,
                 "campaign_id": report.campaign_id,

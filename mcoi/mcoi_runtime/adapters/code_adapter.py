@@ -60,6 +60,11 @@ def _content_hash(content: str) -> str:
     return sha256(content.encode("utf-8")).hexdigest()
 
 
+def _bounded_code_error(summary: str, exc: Exception) -> str:
+    """Return a stable code-adapter failure without raw backend detail."""
+    return f"{summary} ({type(exc).__name__})"
+
+
 class LocalCodeAdapter:
     """Bounded local code workspace adapter.
 
@@ -72,7 +77,7 @@ class LocalCodeAdapter:
         self._root = Path(root_path).resolve()
         self._clock = clock
         if not self._root.is_dir():
-            raise ValueError(f"workspace root is not a directory: {root_path}")
+            raise ValueError("workspace root is not a directory")
 
     @property
     def root(self) -> Path:
@@ -230,7 +235,8 @@ class LocalCodeAdapter:
         except (OSError, ValueError, IndexError) as exc:
             return PatchApplicationResult(
                 patch_id=patch_id, status=PatchStatus.MALFORMED,
-                target_file=target_file, error_message=f"patch error: {exc}",
+                target_file=target_file,
+                error_message=_bounded_code_error("patch error", exc),
             )
 
     def run_command(
@@ -266,4 +272,4 @@ class LocalCodeAdapter:
             return -1, "", "timeout", duration_ms
         except OSError as exc:
             duration_ms = int((time.monotonic() - start) * 1000)
-            return -1, "", f"error: {exc}", duration_ms
+            return -1, "", _bounded_code_error("command error", exc), duration_ms

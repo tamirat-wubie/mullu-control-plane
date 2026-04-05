@@ -75,6 +75,7 @@ def test_registry_store_rejects_duplicate_entry_ids() -> None:
     with pytest.raises(RuntimeCoreInvariantError) as exc_info:
         store.add(entry)
 
-    assert "entry_id already exists" in str(exc_info.value)
+    assert str(exc_info.value) == "entry_id already exists"
+    assert "capability-1" not in str(exc_info.value)
     assert store.get("capability-1") is not None
     assert len(store.list()) == 1

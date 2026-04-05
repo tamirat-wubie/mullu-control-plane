@@ -39,7 +39,7 @@ class AgentSwarmOrchestrator:
 
     def propose_action(self, action_id: str, agent_id: str, target: str) -> SwarmAction:
         if agent_id not in self._agents:
-            raise ValueError(f"Unknown agent: {agent_id}")
+            raise ValueError("unknown agent")
         action = SwarmAction(action_id, agent_id, target)
         self._actions.append(action)
         return action
@@ -49,14 +49,14 @@ class AgentSwarmOrchestrator:
             if a.action_id == action_id:
                 a.status = "completed"
                 return a
-        raise ValueError(f"Unknown action: {action_id}")
+        raise ValueError("unknown action")
 
     def deny_action(self, action_id: str) -> SwarmAction:
         for a in self._actions:
             if a.action_id == action_id:
                 a.status = "denied"
                 return a
-        raise ValueError(f"Unknown action: {action_id}")
+        raise ValueError("unknown action")
 
     @property
     def agent_count(self) -> int:

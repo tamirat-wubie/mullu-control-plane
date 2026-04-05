@@ -423,7 +423,9 @@ class TestAttachSimulationStateToMemoryMesh:
 
     def test_title_contains_scope_ref_id(self, bridge: PolicySimulationIntegration) -> None:
         mem = bridge.attach_simulation_state_to_memory_mesh("abc-scope")
-        assert "abc-scope" in mem.title
+        assert mem.title == "Policy simulation state"
+        assert "abc-scope" not in mem.title
+        assert mem.scope_ref_id == "abc-scope"
 
 
 # ---------------------------------------------------------------------------

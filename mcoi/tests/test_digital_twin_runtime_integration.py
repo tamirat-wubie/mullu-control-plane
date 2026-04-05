@@ -146,6 +146,13 @@ class TestMemoryMeshAttachment:
         assert isinstance(record, MemoryRecord)
         assert mem.memory_count == 1
 
+    def test_memory_title_is_bounded(self, integration, mem):
+        integration.twin_from_factory_runtime("t-1", "f-1")
+        record = integration.attach_twin_state_to_memory_mesh("scope-title")
+        assert record.title == "Digital twin state"
+        assert "scope-title" not in record.title
+        assert record.scope_ref_id == "scope-title"
+
     def test_memory_tags(self, integration, mem):
         integration.twin_from_factory_runtime("t-1", "f-1")
         record = integration.attach_twin_state_to_memory_mesh("scope-1")

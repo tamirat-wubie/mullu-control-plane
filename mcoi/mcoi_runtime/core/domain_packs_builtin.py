@@ -73,7 +73,7 @@ def register_software_delivery_pack(
             pattern=pattern,
             commitment_type=ctype,
             priority=10 + i,
-            description=f"Software delivery extraction: {ctype}",
+            description="Software delivery extraction rule",
             created_at=NOW,
         ))
 
@@ -91,7 +91,7 @@ def register_software_delivery_pack(
             target_role=target,
             channel_type=channel,
             priority=10 + i,
-            description=f"Route from {source} to {target} via {channel}",
+            description="Software delivery routing rule",
             created_at=NOW,
         ))
 
@@ -196,7 +196,7 @@ def register_support_pack(
             pattern=pattern,
             commitment_type=ctype,
             priority=10 + i,
-            description=f"Support extraction: {ctype}",
+            description="Support extraction rule",
             created_at=NOW,
         ))
 
@@ -212,7 +212,7 @@ def register_support_pack(
             target_role=target,
             channel_type=channel,
             priority=10 + i,
-            description=f"Support route from {source} to {target}",
+            description="Support routing rule",
             created_at=NOW,
         ))
 
@@ -228,7 +228,7 @@ def register_support_pack(
             trust_level=trust,
             decay_mode=decay,
             ttl_seconds=ttl,
-            description=f"Support memory: {mtype} patterns",
+            description="Support memory rule",
             created_at=NOW,
         ))
 
@@ -299,7 +299,7 @@ def register_internal_ops_pack(
             pattern=pattern,
             commitment_type=ctype,
             priority=10 + i,
-            description=f"Internal ops extraction: {ctype}",
+            description="Internal ops extraction rule",
             created_at=NOW,
         ))
 
@@ -317,7 +317,7 @@ def register_internal_ops_pack(
             target_role=target,
             channel_type=channel,
             priority=10 + i,
-            description=f"Internal ops route from {source} to {target}",
+            description="Internal ops routing rule",
             created_at=NOW,
         ))
 

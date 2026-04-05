@@ -112,6 +112,42 @@ def test_rejects_result_exceeding_max() -> None:
         evaluate_expression("999999999999 * 999999999999")
 
 
+def test_bounded_scalar_validation_message() -> None:
+    with pytest.raises(SafeArithmeticError) as exc_info:
+        evaluate_expression("True")
+    message = str(exc_info.value)
+    assert message == "numeric value must be a scalar"
+    assert "literal" not in message
+    assert "bool" not in message
+
+
+def test_bounded_finite_validation_message() -> None:
+    with pytest.raises(SafeArithmeticError) as exc_info:
+        evaluate_expression("1e309")
+    message = str(exc_info.value)
+    assert message == "numeric value must be finite"
+    assert "literal" not in message
+    assert "inf" not in message
+
+
+def test_bounded_unsupported_expression_message() -> None:
+    with pytest.raises(SafeArithmeticError) as exc_info:
+        evaluate_expression("__import__('os')")
+    message = str(exc_info.value)
+    assert message == "unsupported expression"
+    assert "Call" not in message
+    assert "__import__" not in message
+
+
+def test_bounded_safe_bounds_message() -> None:
+    with pytest.raises(SafeArithmeticError) as exc_info:
+        evaluate_expression("2 ** 100")
+    message = str(exc_info.value)
+    assert message == "numeric value exceeds safe bounds"
+    assert "exponent" not in message
+    assert "100" not in message
+
+
 # --- Edge cases ---
 
 

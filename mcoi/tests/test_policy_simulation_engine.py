@@ -1167,7 +1167,9 @@ class TestDetectSandboxViolations:
         _register(engine, "r1", T, "A")
         engine.start_simulation("r1")
         vs = engine.detect_sandbox_violations(T)
-        assert "r1" in vs[0].reason
+        assert vs[0].reason == "simulation stuck in RUNNING state"
+        assert "r1" not in vs[0].reason
+        assert T not in vs[0].reason
 
     def test_violations_for_tenant(self, engine):
         _register(engine, "r1", T, "A")
@@ -2723,7 +2725,9 @@ class TestViolationDetails:
         v = vs[0]
         assert v.tenant_id == T
         assert v.operation == "completed_no_result"
-        assert "r1" in v.reason
+        assert v.reason == "completed simulation has no result"
+        assert "r1" not in v.reason
+        assert T not in v.reason
 
     def test_blocked_no_rec_violation_fields(self, engine):
         _register(engine, "r1", T, "A")
@@ -2734,7 +2738,9 @@ class TestViolationDetails:
         v = vs[0]
         assert v.tenant_id == T
         assert v.operation == "blocked_no_recommendation"
-        assert res.result_id in v.reason
+        assert v.reason == "blocked simulation result has no recommendation"
+        assert res.result_id not in v.reason
+        assert T not in v.reason
 
     def test_violation_ids_are_deterministic(self, engine):
         _register(engine, "r1", T, "A")
@@ -2882,3 +2888,46 @@ class TestEventPayloadContent:
         events = es.list_events()
         payloads = [e.payload for e in events]
         assert any(p.get("count") == 1 for p in payloads)
+
+
+class TestBoundedContracts:
+    def test_duplicate_request_error_is_bounded(self, engine):
+        _register(engine, "request-secret", "tenant-secret", "Sensitive")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            _register(engine, "request-secret", "tenant-secret", "Sensitive")
+
+        message = str(excinfo.value)
+        assert message == "duplicate request_id"
+        assert "request-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_violation_reasons_are_bounded(self, engine):
+        _register(engine, "request-running", "tenant-secret", "Running")
+        engine.start_simulation("request-running")
+        _register(engine, "request-completed", "tenant-secret", "Completed")
+        engine.start_simulation("request-completed")
+        engine.complete_simulation("request-completed")
+        _register(engine, "request-blocked", "tenant-secret", "Blocked")
+        engine.add_scenario(
+            "scenario-secret",
+            "request-blocked",
+            "tenant-secret",
+            "Scenario",
+            "runtime-secret",
+            "allow",
+            "deny",
+            PolicyImpactLevel.CRITICAL,
+        )
+        engine.produce_result("request-blocked")
+
+        violations = engine.detect_sandbox_violations("tenant-secret")
+        reasons = {violation.operation: violation.reason for violation in violations}
+        joined = " ".join(reasons.values())
+
+        assert reasons["stuck_running"] == "simulation stuck in RUNNING state"
+        assert reasons["completed_no_result"] == "completed simulation has no result"
+        assert reasons["blocked_no_recommendation"] == "blocked simulation result has no recommendation"
+        assert "request-running" not in joined
+        assert "request-completed" not in joined
+        assert "scenario-secret" not in joined

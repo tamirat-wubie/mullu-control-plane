@@ -138,7 +138,7 @@ class PolicyPackRegistry:
 
     def register(self, pack: PolicyPack) -> PolicyPack:
         if pack.pack_id in self._packs:
-            raise ValueError(f"policy pack already registered: {pack.pack_id}")
+            raise ValueError("policy pack already registered")
         self._packs[pack.pack_id] = pack
         return pack
 
@@ -152,7 +152,7 @@ class PolicyPackRegistry:
         """Load named policy packs. Unknown pack IDs fail closed."""
         for pid in pack_ids:
             if pid not in self._packs:
-                raise ValueError(f"unknown policy pack: {pid}")
+                raise ValueError("policy pack unavailable")
         total_rules = sum(len(self._packs[pid].rules) for pid in pack_ids)
         return PolicyPackLoadResult(
             packs_loaded=pack_ids,

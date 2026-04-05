@@ -134,7 +134,7 @@ class LlmRuntimeEngine:
         cost_per_token: float = 0.0,
     ) -> ModelDescriptor:
         if model_id in self._models:
-            raise RuntimeCoreInvariantError(f"duplicate model_id: {model_id}")
+            raise RuntimeCoreInvariantError("duplicate model_id")
         now = _now_iso()
         model = ModelDescriptor(
             model_id=model_id, tenant_id=tenant_id, display_name=display_name,
@@ -148,13 +148,13 @@ class LlmRuntimeEngine:
 
     def get_model(self, model_id: str) -> ModelDescriptor:
         if model_id not in self._models:
-            raise RuntimeCoreInvariantError(f"unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("unknown model_id")
         return self._models[model_id]
 
     def deprecate_model(self, model_id: str) -> ModelDescriptor:
         model = self.get_model(model_id)
         if model.status == ModelStatus.RETIRED:
-            raise RuntimeCoreInvariantError(f"model {model_id} is RETIRED")
+            raise RuntimeCoreInvariantError("model is RETIRED")
         now = _now_iso()
         updated = ModelDescriptor(
             model_id=model.model_id, tenant_id=model.tenant_id,
@@ -169,7 +169,7 @@ class LlmRuntimeEngine:
     def disable_model(self, model_id: str) -> ModelDescriptor:
         model = self.get_model(model_id)
         if model.status == ModelStatus.RETIRED:
-            raise RuntimeCoreInvariantError(f"model {model_id} is RETIRED")
+            raise RuntimeCoreInvariantError("model is RETIRED")
         now = _now_iso()
         updated = ModelDescriptor(
             model_id=model.model_id, tenant_id=model.tenant_id,
@@ -184,7 +184,7 @@ class LlmRuntimeEngine:
     def retire_model(self, model_id: str) -> ModelDescriptor:
         model = self.get_model(model_id)
         if model.status == ModelStatus.RETIRED:
-            raise RuntimeCoreInvariantError(f"model {model_id} is already RETIRED")
+            raise RuntimeCoreInvariantError("model is already RETIRED")
         now = _now_iso()
         updated = ModelDescriptor(
             model_id=model.model_id, tenant_id=model.tenant_id,
@@ -211,9 +211,9 @@ class LlmRuntimeEngine:
         cost_budget: float = 1.0,
     ) -> ProviderRoute:
         if route_id in self._routes:
-            raise RuntimeCoreInvariantError(f"duplicate route_id: {route_id}")
+            raise RuntimeCoreInvariantError("duplicate route_id")
         if model_id not in self._models:
-            raise RuntimeCoreInvariantError(f"unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("unknown model_id")
         now = _now_iso()
         route = ProviderRoute(
             route_id=route_id, tenant_id=tenant_id, provider_ref=provider_ref,
@@ -227,7 +227,7 @@ class LlmRuntimeEngine:
 
     def mark_route_degraded(self, route_id: str) -> ProviderRoute:
         if route_id not in self._routes:
-            raise RuntimeCoreInvariantError(f"unknown route_id: {route_id}")
+            raise RuntimeCoreInvariantError("unknown route_id")
         route = self._routes[route_id]
         now = _now_iso()
         updated = ProviderRoute(
@@ -243,7 +243,7 @@ class LlmRuntimeEngine:
 
     def mark_route_unavailable(self, route_id: str) -> ProviderRoute:
         if route_id not in self._routes:
-            raise RuntimeCoreInvariantError(f"unknown route_id: {route_id}")
+            raise RuntimeCoreInvariantError("unknown route_id")
         route = self._routes[route_id]
         now = _now_iso()
         updated = ProviderRoute(
@@ -287,7 +287,7 @@ class LlmRuntimeEngine:
         version: int = 1,
     ) -> PromptTemplate:
         if template_id in self._templates:
-            raise RuntimeCoreInvariantError(f"duplicate template_id: {template_id}")
+            raise RuntimeCoreInvariantError("duplicate template_id")
         now = _now_iso()
         template = PromptTemplate(
             template_id=template_id, tenant_id=tenant_id,
@@ -301,10 +301,10 @@ class LlmRuntimeEngine:
 
     def approve_template(self, template_id: str) -> PromptTemplate:
         if template_id not in self._templates:
-            raise RuntimeCoreInvariantError(f"unknown template_id: {template_id}")
+            raise RuntimeCoreInvariantError("unknown template_id")
         t = self._templates[template_id]
         if t.disposition == PromptDisposition.ARCHIVED:
-            raise RuntimeCoreInvariantError(f"template {template_id} is ARCHIVED")
+            raise RuntimeCoreInvariantError("template is ARCHIVED")
         now = _now_iso()
         updated = PromptTemplate(
             template_id=t.template_id, tenant_id=t.tenant_id,
@@ -318,7 +318,7 @@ class LlmRuntimeEngine:
 
     def get_template(self, template_id: str) -> PromptTemplate:
         if template_id not in self._templates:
-            raise RuntimeCoreInvariantError(f"unknown template_id: {template_id}")
+            raise RuntimeCoreInvariantError("unknown template_id")
         return self._templates[template_id]
 
     # -- Context Packs --
@@ -332,17 +332,15 @@ class LlmRuntimeEngine:
         source_count: int = 0,
     ) -> ContextPack:
         if pack_id in self._packs:
-            raise RuntimeCoreInvariantError(f"duplicate pack_id: {pack_id}")
+            raise RuntimeCoreInvariantError("duplicate pack_id")
         if template_id not in self._templates:
-            raise RuntimeCoreInvariantError(f"unknown template_id: {template_id}")
+            raise RuntimeCoreInvariantError("unknown template_id")
         if model_id not in self._models:
-            raise RuntimeCoreInvariantError(f"unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("unknown model_id")
         # Budget check: token count must not exceed model max
         model = self._models[model_id]
         if model.max_tokens > 0 and token_count > model.max_tokens:
-            raise RuntimeCoreInvariantError(
-                f"token_count {token_count} exceeds model max_tokens {model.max_tokens}"
-            )
+            raise RuntimeCoreInvariantError("token_count exceeds model max_tokens")
         now = _now_iso()
         pack = ContextPack(
             pack_id=pack_id, tenant_id=tenant_id, template_id=template_id,
@@ -355,7 +353,7 @@ class LlmRuntimeEngine:
 
     def get_pack(self, pack_id: str) -> ContextPack:
         if pack_id not in self._packs:
-            raise RuntimeCoreInvariantError(f"unknown pack_id: {pack_id}")
+            raise RuntimeCoreInvariantError("unknown pack_id")
         return self._packs[pack_id]
 
     # -- Tool Permissions --
@@ -369,9 +367,9 @@ class LlmRuntimeEngine:
         scope_ref: str = "global",
     ) -> ToolPermission:
         if permission_id in self._permissions:
-            raise RuntimeCoreInvariantError(f"duplicate permission_id: {permission_id}")
+            raise RuntimeCoreInvariantError("duplicate permission_id")
         if model_id not in self._models:
-            raise RuntimeCoreInvariantError(f"unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("unknown model_id")
         now = _now_iso()
         perm = ToolPermission(
             permission_id=permission_id, tenant_id=tenant_id, model_id=model_id,
@@ -404,14 +402,16 @@ class LlmRuntimeEngine:
         latency_budget_ms: int = 30000,
     ) -> GenerationRequest:
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("duplicate request_id")
         if model_id not in self._models:
-            raise RuntimeCoreInvariantError(f"unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("unknown model_id")
         model = self._models[model_id]
-        if model.status in (ModelStatus.DISABLED, ModelStatus.RETIRED):
-            raise RuntimeCoreInvariantError(f"model {model_id} is {model.status.value}")
+        if model.status == ModelStatus.DISABLED:
+            raise RuntimeCoreInvariantError("model is disabled")
+        if model.status == ModelStatus.RETIRED:
+            raise RuntimeCoreInvariantError("model is retired")
         if pack_id not in self._packs:
-            raise RuntimeCoreInvariantError(f"unknown pack_id: {pack_id}")
+            raise RuntimeCoreInvariantError("unknown pack_id")
         now = _now_iso()
         req = GenerationRequest(
             request_id=request_id, tenant_id=tenant_id, model_id=model_id,
@@ -425,13 +425,13 @@ class LlmRuntimeEngine:
 
     def get_request(self, request_id: str) -> GenerationRequest:
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         return self._requests[request_id]
 
     def start_generation(self, request_id: str) -> GenerationRequest:
         req = self.get_request(request_id)
         if req.status in _GENERATION_TERMINAL:
-            raise RuntimeCoreInvariantError(f"request {request_id} is terminal: {req.status.value}")
+            raise RuntimeCoreInvariantError("request is terminal")
         now = _now_iso()
         updated = GenerationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id,
@@ -447,7 +447,7 @@ class LlmRuntimeEngine:
     def block_generation(self, request_id: str) -> GenerationRequest:
         req = self.get_request(request_id)
         if req.status in _GENERATION_TERMINAL:
-            raise RuntimeCoreInvariantError(f"request {request_id} is terminal: {req.status.value}")
+            raise RuntimeCoreInvariantError("request is terminal")
         now = _now_iso()
         updated = GenerationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id,
@@ -463,7 +463,7 @@ class LlmRuntimeEngine:
     def timeout_generation(self, request_id: str) -> GenerationRequest:
         req = self.get_request(request_id)
         if req.status != GenerationStatus.RUNNING:
-            raise RuntimeCoreInvariantError(f"request {request_id} must be RUNNING to timeout")
+            raise RuntimeCoreInvariantError("request must be RUNNING to timeout")
         now = _now_iso()
         updated = GenerationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id,
@@ -492,9 +492,9 @@ class LlmRuntimeEngine:
         confidence: float = 0.5,
     ) -> GenerationResult:
         if result_id in self._results:
-            raise RuntimeCoreInvariantError(f"duplicate result_id: {result_id}")
+            raise RuntimeCoreInvariantError("duplicate result_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         req = self._requests[request_id]
         # Auto-complete the request
         now = _now_iso()
@@ -520,7 +520,7 @@ class LlmRuntimeEngine:
                 self._violations[vid] = {
                     "violation_id": vid, "tenant_id": tenant_id,
                     "request_id": request_id, "operation": "budget_exceeded",
-                    "reason": f"tokens_used={tokens_used} cost={cost_incurred}",
+                    "reason": "budget exceeded",
                 }
 
         result = GenerationResult(
@@ -538,7 +538,7 @@ class LlmRuntimeEngine:
 
     def get_result(self, result_id: str) -> GenerationResult:
         if result_id not in self._results:
-            raise RuntimeCoreInvariantError(f"unknown result_id: {result_id}")
+            raise RuntimeCoreInvariantError("unknown result_id")
         return self._results[result_id]
 
     def results_for_request(self, request_id: str) -> tuple[GenerationResult, ...]:
@@ -555,9 +555,9 @@ class LlmRuntimeEngine:
         grounding_status: GroundingStatus = GroundingStatus.GROUNDED,
     ) -> GroundingEvidence:
         if evidence_id in self._evidence:
-            raise RuntimeCoreInvariantError(f"duplicate evidence_id: {evidence_id}")
+            raise RuntimeCoreInvariantError("duplicate evidence_id")
         if result_id not in self._results:
-            raise RuntimeCoreInvariantError(f"unknown result_id: {result_id}")
+            raise RuntimeCoreInvariantError("unknown result_id")
         now = _now_iso()
         evidence = GroundingEvidence(
             evidence_id=evidence_id, result_id=result_id, tenant_id=tenant_id,
@@ -596,9 +596,9 @@ class LlmRuntimeEngine:
         confidence: float = 1.0,
     ) -> SafetyAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         if result_id not in self._results:
-            raise RuntimeCoreInvariantError(f"unknown result_id: {result_id}")
+            raise RuntimeCoreInvariantError("unknown result_id")
         now = _now_iso()
         assessment = SafetyAssessment(
             assessment_id=assessment_id, result_id=result_id, tenant_id=tenant_id,
@@ -627,7 +627,7 @@ class LlmRuntimeEngine:
                 self._violations[vid] = {
                     "violation_id": vid, "tenant_id": tenant_id,
                     "result_id": result_id, "operation": "unsafe_output",
-                    "reason": reason,
+                    "reason": "unsafe output",
                 }
 
         _emit(self._events, "assess_safety", {"assessment_id": assessment_id}, assessment_id)
@@ -669,7 +669,7 @@ class LlmRuntimeEngine:
                     v = {
                         "violation_id": vid, "tenant_id": tenant_id,
                         "result_id": result.result_id, "operation": "ungrounded_result",
-                        "reason": f"result {result.result_id} has no grounding check",
+                        "reason": "result has no grounding check",
                     }
                     self._violations[vid] = v
                     new_violations.append(v)
@@ -686,7 +686,7 @@ class LlmRuntimeEngine:
                     v = {
                         "violation_id": vid, "tenant_id": tenant_id,
                         "result_id": result.result_id, "operation": "blocked_safety",
-                        "reason": f"result {result.result_id} blocked by safety assessment",
+                        "reason": "result blocked by safety assessment",
                     }
                     self._violations[vid] = v
                     new_violations.append(v)
@@ -705,7 +705,7 @@ class LlmRuntimeEngine:
                         v = {
                             "violation_id": vid, "tenant_id": tenant_id,
                             "model_id": model.model_id, "operation": "no_routes",
-                            "reason": f"active model {model.model_id} has no provider routes",
+                            "reason": "active model has no provider routes",
                         }
                         self._violations[vid] = v
                         new_violations.append(v)

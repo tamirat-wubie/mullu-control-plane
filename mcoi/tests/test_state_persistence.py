@@ -105,8 +105,15 @@ class TestStatePersistence:
     @pytest.mark.parametrize("bad_state_type", MALICIOUS_STATE_TYPES)
     def test_save_rejects_path_traversal(self, bad_state_type):
         sp, _ = self._persistence()
-        with pytest.raises(PathTraversalError):
+        with pytest.raises(PathTraversalError) as excinfo:
             sp.save(bad_state_type, {"safe": True})
+        expected = (
+            "state_type contains null byte"
+            if "\0" in bad_state_type
+            else "state_type contains forbidden characters"
+        )
+        assert str(excinfo.value) == expected
+        assert bad_state_type not in str(excinfo.value)
 
     @pytest.mark.parametrize("bad_state_type", MALICIOUS_STATE_TYPES)
     def test_load_rejects_path_traversal(self, bad_state_type):

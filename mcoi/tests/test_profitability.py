@@ -84,6 +84,8 @@ class TestExpansion:
         rec = engine.recommend_expansion("c1", "financial_control", 3000.0)
         assert rec.profit_aware is True
         assert rec.support_risk == "low"
+        assert rec.reason == "supported expansion indicators present"
+        assert "Current margin" not in rec.reason
 
     def test_high_risk_expansion(self):
         engine = ProfitabilityEngine()
@@ -91,6 +93,8 @@ class TestExpansion:
         rec = engine.recommend_expansion("c2", "financial_control", 3000.0)
         assert rec.support_risk == "high"
         assert rec.profit_aware is False
+        assert rec.reason == "supported expansion indicators present"
+        assert "support risk" not in rec.reason
 
 class TestDeliveryEfficiency:
     def test_efficiency_report(self):

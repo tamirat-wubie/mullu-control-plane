@@ -138,8 +138,13 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                     decision="allowed" if result.allowed else "denied",
                     reason=result.reason,
                 )
-            except Exception:
-                _log.debug("proof bridge certification failed", exc_info=True)
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("proof_bridge_certification_failures", 1)
+                _log.warning(
+                    "proof bridge certification failed (%s)",
+                    type(exc).__name__,
+                )
 
         if not result.allowed:
             if self._on_reject:

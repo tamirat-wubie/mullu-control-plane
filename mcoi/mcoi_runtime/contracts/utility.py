@@ -154,7 +154,7 @@ class OptionUtility(ContractRecord):
         for key, val in frozen_contribs.items():
             if isinstance(val, (int, float)) and not isinstance(val, bool):
                 if not math.isfinite(float(val)):
-                    raise ValueError(f"factor_contributions[{key!r}] must be finite")
+                    raise ValueError("factor contribution must be finite")
         object.__setattr__(self, "factor_contributions", frozen_contribs)
         object.__setattr__(self, "rank", require_positive_int(self.rank, "rank"))
 

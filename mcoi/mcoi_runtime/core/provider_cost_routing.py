@@ -84,7 +84,7 @@ class ProviderCostRouter:
         elif strategy == RoutingStrategy.LEARNED:
             raw = 0.2 * cost_score + 0.3 * health_score + 0.5 * preference_score
         else:
-            raise ValueError(f"unknown routing strategy: {strategy}")
+            raise ValueError("unsupported routing strategy")
 
         return _clamp(raw)
 
@@ -188,7 +188,7 @@ class ProviderCostRouter:
             candidates=candidates,
             selected_provider_id=selected.provider_id,
             selected_cost=selected.estimated_cost,
-            rationale=f"top-ranked by {constraints.strategy} strategy (score={selected.composite_score:.4f})",
+            rationale="top-ranked provider selected",
             decided_at=now,
         )
 

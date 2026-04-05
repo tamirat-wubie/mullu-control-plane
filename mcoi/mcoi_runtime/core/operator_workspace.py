@@ -124,7 +124,7 @@ class OperatorWorkspaceEngine:
         scope: WorkspaceScope = WorkspaceScope.PERSONAL,
     ) -> WorkspaceView:
         if view_id in self._views:
-            raise RuntimeCoreInvariantError(f"duplicate view_id: {view_id}")
+            raise RuntimeCoreInvariantError("duplicate view_id")
         now = _now_iso()
         view = WorkspaceView(
             view_id=view_id, tenant_id=tenant_id, operator_ref=operator_ref,
@@ -138,13 +138,13 @@ class OperatorWorkspaceEngine:
 
     def get_view(self, view_id: str) -> WorkspaceView:
         if view_id not in self._views:
-            raise RuntimeCoreInvariantError(f"unknown view_id: {view_id}")
+            raise RuntimeCoreInvariantError("unknown view_id")
         return self._views[view_id]
 
     def suspend_view(self, view_id: str) -> WorkspaceView:
         view = self.get_view(view_id)
         if view.status in _VIEW_TERMINAL:
-            raise RuntimeCoreInvariantError(f"view {view_id} is retired")
+            raise RuntimeCoreInvariantError("view is retired")
         now = _now_iso()
         updated = WorkspaceView(
             view_id=view.view_id, tenant_id=view.tenant_id, operator_ref=view.operator_ref,
@@ -159,7 +159,7 @@ class OperatorWorkspaceEngine:
     def retire_view(self, view_id: str) -> WorkspaceView:
         view = self.get_view(view_id)
         if view.status == WorkspaceStatus.RETIRED:
-            raise RuntimeCoreInvariantError(f"view {view_id} already retired")
+            raise RuntimeCoreInvariantError("view already retired")
         now = _now_iso()
         updated = WorkspaceView(
             view_id=view.view_id, tenant_id=view.tenant_id, operator_ref=view.operator_ref,
@@ -189,15 +189,15 @@ class OperatorWorkspaceEngine:
         target_runtime: str = "unknown",
     ) -> WorkspacePanel:
         if panel_id in self._panels:
-            raise RuntimeCoreInvariantError(f"duplicate panel_id: {panel_id}")
+            raise RuntimeCoreInvariantError("duplicate panel_id")
         if view_id not in self._views:
-            raise RuntimeCoreInvariantError(f"unknown view_id: {view_id}")
+            raise RuntimeCoreInvariantError("unknown view_id")
         view = self._views[view_id]
         if view.status in _VIEW_TERMINAL:
-            raise RuntimeCoreInvariantError(f"view {view_id} is retired")
+            raise RuntimeCoreInvariantError("view is retired")
         # Cross-tenant check
         if view.tenant_id != tenant_id:
-            raise RuntimeCoreInvariantError(f"cross-tenant panel creation denied")
+            raise RuntimeCoreInvariantError("cross-tenant panel creation denied")
         now = _now_iso()
         panel = WorkspacePanel(
             panel_id=panel_id, view_id=view_id, tenant_id=tenant_id,
@@ -218,7 +218,7 @@ class OperatorWorkspaceEngine:
 
     def get_panel(self, panel_id: str) -> WorkspacePanel:
         if panel_id not in self._panels:
-            raise RuntimeCoreInvariantError(f"unknown panel_id: {panel_id}")
+            raise RuntimeCoreInvariantError("unknown panel_id")
         return self._panels[panel_id]
 
     def panels_for_view(self, view_id: str) -> tuple[WorkspacePanel, ...]:
@@ -237,9 +237,9 @@ class OperatorWorkspaceEngine:
         priority: int = 0,
     ) -> QueueRecord:
         if queue_id in self._queues:
-            raise RuntimeCoreInvariantError(f"duplicate queue_id: {queue_id}")
+            raise RuntimeCoreInvariantError("duplicate queue_id")
         if panel_id not in self._panels:
-            raise RuntimeCoreInvariantError(f"unknown panel_id: {panel_id}")
+            raise RuntimeCoreInvariantError("unknown panel_id")
         panel = self._panels[panel_id]
         if panel.tenant_id != tenant_id:
             raise RuntimeCoreInvariantError("cross-tenant queue access denied")
@@ -265,7 +265,7 @@ class OperatorWorkspaceEngine:
     def assign_queue_item(self, queue_id: str, assignee_ref: str) -> QueueRecord:
         item = self._get_queue(queue_id)
         if item.status in _QUEUE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"queue item {queue_id} is completed")
+            raise RuntimeCoreInvariantError("queue item is completed")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=item.queue_id, panel_id=item.panel_id, tenant_id=item.tenant_id,
@@ -280,7 +280,7 @@ class OperatorWorkspaceEngine:
     def start_queue_item(self, queue_id: str) -> QueueRecord:
         item = self._get_queue(queue_id)
         if item.status in _QUEUE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"queue item {queue_id} is completed")
+            raise RuntimeCoreInvariantError("queue item is completed")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=item.queue_id, panel_id=item.panel_id, tenant_id=item.tenant_id,
@@ -295,7 +295,7 @@ class OperatorWorkspaceEngine:
     def complete_queue_item(self, queue_id: str) -> QueueRecord:
         item = self._get_queue(queue_id)
         if item.status in _QUEUE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"queue item {queue_id} already completed")
+            raise RuntimeCoreInvariantError("queue item already completed")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=item.queue_id, panel_id=item.panel_id, tenant_id=item.tenant_id,
@@ -310,7 +310,7 @@ class OperatorWorkspaceEngine:
     def escalate_queue_item(self, queue_id: str) -> QueueRecord:
         item = self._get_queue(queue_id)
         if item.status in _QUEUE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"queue item {queue_id} is completed")
+            raise RuntimeCoreInvariantError("queue item is completed")
         now = _now_iso()
         updated = QueueRecord(
             queue_id=item.queue_id, panel_id=item.panel_id, tenant_id=item.tenant_id,
@@ -324,7 +324,7 @@ class OperatorWorkspaceEngine:
 
     def _get_queue(self, queue_id: str) -> QueueRecord:
         if queue_id not in self._queues:
-            raise RuntimeCoreInvariantError(f"unknown queue_id: {queue_id}")
+            raise RuntimeCoreInvariantError("unknown queue_id")
         return self._queues[queue_id]
 
     def queue_items_for_panel(self, panel_id: str) -> tuple[QueueRecord, ...]:
@@ -348,7 +348,7 @@ class OperatorWorkspaceEngine:
         priority: int = 0,
     ) -> WorklistItem:
         if item_id in self._worklist:
-            raise RuntimeCoreInvariantError(f"duplicate item_id: {item_id}")
+            raise RuntimeCoreInvariantError("duplicate item_id")
         now = _now_iso()
         item = WorklistItem(
             item_id=item_id, tenant_id=tenant_id, operator_ref=operator_ref,
@@ -362,10 +362,10 @@ class OperatorWorkspaceEngine:
 
     def complete_worklist_item(self, item_id: str) -> WorklistItem:
         if item_id not in self._worklist:
-            raise RuntimeCoreInvariantError(f"unknown item_id: {item_id}")
+            raise RuntimeCoreInvariantError("unknown item_id")
         item = self._worklist[item_id]
         if item.status == QueueStatus.COMPLETED:
-            raise RuntimeCoreInvariantError(f"worklist item {item_id} already completed")
+            raise RuntimeCoreInvariantError("worklist item already completed")
         now = _now_iso()
         updated = WorklistItem(
             item_id=item.item_id, tenant_id=item.tenant_id, operator_ref=item.operator_ref,
@@ -394,7 +394,7 @@ class OperatorWorkspaceEngine:
         action_name: str,
     ) -> OperatorAction:
         if action_id in self._actions:
-            raise RuntimeCoreInvariantError(f"duplicate action_id: {action_id}")
+            raise RuntimeCoreInvariantError("duplicate action_id")
         now = _now_iso()
         action = OperatorAction(
             action_id=action_id, tenant_id=tenant_id, operator_ref=operator_ref,
@@ -408,10 +408,10 @@ class OperatorWorkspaceEngine:
 
     def complete_action(self, action_id: str) -> OperatorAction:
         if action_id not in self._actions:
-            raise RuntimeCoreInvariantError(f"unknown action_id: {action_id}")
+            raise RuntimeCoreInvariantError("unknown action_id")
         action = self._actions[action_id]
         if action.status in _ACTION_TERMINAL:
-            raise RuntimeCoreInvariantError(f"action {action_id} is in terminal state")
+            raise RuntimeCoreInvariantError("action is in terminal state")
         now = _now_iso()
         updated = OperatorAction(
             action_id=action.action_id, tenant_id=action.tenant_id,
@@ -425,10 +425,10 @@ class OperatorWorkspaceEngine:
 
     def fail_action(self, action_id: str) -> OperatorAction:
         if action_id not in self._actions:
-            raise RuntimeCoreInvariantError(f"unknown action_id: {action_id}")
+            raise RuntimeCoreInvariantError("unknown action_id")
         action = self._actions[action_id]
         if action.status in _ACTION_TERMINAL:
-            raise RuntimeCoreInvariantError(f"action {action_id} is in terminal state")
+            raise RuntimeCoreInvariantError("action is in terminal state")
         now = _now_iso()
         updated = OperatorAction(
             action_id=action.action_id, tenant_id=action.tenant_id,
@@ -455,7 +455,7 @@ class OperatorWorkspaceEngine:
         reason: str = "operator decision",
     ) -> WorkspaceDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("duplicate decision_id")
         now = _now_iso()
         decision = WorkspaceDecision(
             decision_id=decision_id, tenant_id=tenant_id,
@@ -492,7 +492,7 @@ class OperatorWorkspaceEngine:
 
     def workspace_assessment(self, assessment_id: str, tenant_id: str) -> WorkspaceAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         now = _now_iso()
         views = self.views_for_tenant(tenant_id)
         active = [v for v in views if v.status == WorkspaceStatus.ACTIVE]
@@ -531,7 +531,7 @@ class OperatorWorkspaceEngine:
                     v = WorkspaceViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="empty_panel",
-                        reason=f"active panel {panel.panel_id} has no items",
+                        reason="active panel has no items",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -547,7 +547,7 @@ class OperatorWorkspaceEngine:
                     v = WorkspaceViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="high_priority_pending",
-                        reason=f"high-priority queue item {q.queue_id} still pending",
+                        reason="high-priority queue item still pending",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -565,7 +565,7 @@ class OperatorWorkspaceEngine:
                         v = WorkspaceViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="failed_no_decision",
-                            reason=f"failed action {action.action_id} has no decision record",
+                            reason="failed action has no decision record",
                             detected_at=now,
                         )
                         self._violations[vid] = v

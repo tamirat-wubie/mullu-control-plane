@@ -21,6 +21,11 @@ from mcoi_runtime.contracts.llm import LLMProvider, LLMResult
 from mcoi_runtime.app.streaming import StreamEvent
 
 
+def _bounded_stream_error(exc: Exception) -> str:
+    """Return a stable streaming error without raw backend detail."""
+    return f"[streaming error ({type(exc).__name__})]"
+
+
 @dataclass(frozen=True, slots=True)
 class StreamChunk:
     """Single chunk from a streaming response."""
@@ -135,7 +140,7 @@ class AnthropicStreamingAdapter:
             )
 
         except Exception as exc:
-            yield StreamChunk(text=f"[streaming error: {exc}]", index=0, is_final=True)
+            yield StreamChunk(text=_bounded_stream_error(exc), index=0, is_final=True)
 
     def _stub_stream(self, prompt: str, *, model: str) -> Iterator[StreamChunk]:
         """Simulated streaming for development/testing."""

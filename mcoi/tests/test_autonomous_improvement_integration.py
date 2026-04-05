@@ -525,7 +525,8 @@ class TestMemoryMeshAttachment:
 
         assert isinstance(record, MemoryRecord)
         assert record.scope_ref_id == "scope-mem-1"
-        assert record.title == "Improvement state: scope-mem-1"
+        assert record.title == "Improvement state"
+        assert "scope-mem-1" not in record.title
         assert record.confidence == 1.0
         assert "improvement" in record.tags
         assert "autonomous" in record.tags

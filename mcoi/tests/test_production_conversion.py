@@ -83,6 +83,13 @@ class TestDeploymentPath:
         with pytest.raises(ValueError):
             path.complete_milestone(99)
 
+    def test_invalid_step_error_is_bounded(self):
+        path = PaidDeploymentPath("c1", "o1")
+        with pytest.raises(ValueError, match="no milestone") as excinfo:
+            path.complete_milestone(99)
+        assert str(excinfo.value) == "no milestone with that step"
+        assert "99" not in str(excinfo.value)
+
 class TestReferenceDeployment:
     def test_reference(self):
         ref = ReferenceDeployment()

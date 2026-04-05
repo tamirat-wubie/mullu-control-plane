@@ -41,7 +41,7 @@ class DeploymentFactory:
 
     def deploy_customer(self, profile: PilotCustomerProfile, template_id: str = "tmpl-regulated-ops-v1") -> FactoryDeployment:
         if template_id not in self._templates:
-            raise ValueError(f"Unknown template: {template_id}")
+            raise ValueError("unknown template")
         deployment = LivePilotDeployment()
         report = deployment.deploy(profile)
         fd = FactoryDeployment(

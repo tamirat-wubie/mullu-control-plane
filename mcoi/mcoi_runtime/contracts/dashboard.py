@@ -110,7 +110,7 @@ class LearningInsight(ContractRecord):
         )
         object.__setattr__(self, "direction", require_non_empty_text(self.direction, "direction"))
         if self.direction not in _VALID_DIRECTIONS:
-            raise ValueError(f"direction must be one of {_VALID_DIRECTIONS}, got {self.direction!r}")
+            raise ValueError("direction has unsupported value")
         object.__setattr__(self, "sample_count", require_non_negative_int(self.sample_count, "sample_count"))
         object.__setattr__(self, "explanation", require_non_empty_text(self.explanation, "explanation"))
 

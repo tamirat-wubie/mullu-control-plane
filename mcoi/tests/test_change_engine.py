@@ -117,8 +117,9 @@ class TestCreateChangeRequest:
     def test_duplicate_raises(self):
         cre, _ = _engine()
         _make_change(cre)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             _make_change(cre)
+        assert "chg-1" not in str(exc_info.value)
 
     def test_change_count_increments(self):
         cre, _ = _engine()
@@ -231,15 +232,17 @@ class TestPlanChange:
 
     def test_unknown_change_raises(self):
         cre, _ = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             cre.plan_change("p1", "no-such", "title", [])
+        assert "no-such" not in str(exc_info.value)
 
     def test_duplicate_plan_raises(self):
         cre, _ = _engine()
         _make_change(cre)
         _two_step_plan(cre)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             _two_step_plan(cre)
+        assert "plan-1" not in str(exc_info.value)
 
     def test_plan_count(self):
         cre, _ = _engine()
@@ -333,8 +336,10 @@ class TestSubmitForApproval:
         cre, _ = _engine()
         _make_change(cre)
         cre.submit_for_approval("chg-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="invalid transition"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^invalid transition$") as exc_info:
             cre.submit_for_approval("chg-1")
+        assert "chg-1" not in str(exc_info.value)
+        assert "pending_approval" not in str(exc_info.value)
 
     def test_submit_emits_event(self):
         cre, es = _engine()
@@ -439,8 +444,11 @@ class TestExecuteChangeStep:
         cre, _ = _engine()
         _make_change(cre)
         _two_step_plan(cre)
-        with pytest.raises(RuntimeCoreInvariantError, match="requires approval"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             cre.execute_change_step("chg-1", "s1")
+        assert str(exc_info.value) == "change requires approval before execution from current status"
+        assert "chg-1" not in str(exc_info.value)
+        assert "draft" not in str(exc_info.value)
 
     def test_no_approval_required_executes_from_draft(self):
         cre, _ = _engine()
@@ -522,8 +530,9 @@ class TestExecuteChangeStep:
         _make_change(cre)
         _two_step_plan(cre)
         _approve(cre)
-        with pytest.raises(RuntimeCoreInvariantError, match="step .* not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="step not found") as exc_info:
             cre.execute_change_step("chg-1", "no-such-step")
+        assert "no-such-step" not in str(exc_info.value)
 
     def test_execute_emits_event(self):
         cre, es = _engine()
@@ -840,8 +849,11 @@ class TestCompleteChange:
         """DRAFT -> COMPLETED is not a valid transition."""
         cre, _ = _engine()
         _make_change(cre)
-        with pytest.raises(RuntimeCoreInvariantError, match="cannot complete"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             cre.complete_change("chg-1")
+        assert str(exc_info.value) == "cannot complete change from current status"
+        assert "chg-1" not in str(exc_info.value)
+        assert "draft" not in str(exc_info.value)
 
     def test_complete_terminal(self):
         cre, _ = _engine()

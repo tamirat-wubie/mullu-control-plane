@@ -481,8 +481,18 @@ class TestSessionBindings:
     def test_bind_requires_active_persona(self, engine):
         _register_default_persona(engine, "p-1")
         engine.suspend_persona("p-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="not ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not active"):
             engine.bind_persona_to_session("b-1", "t-1", "p-1", "sess-1")
+
+    def test_bind_inactive_persona_message_is_bounded(self, engine):
+        _register_default_persona(engine, "persona-secret")
+        engine.suspend_persona("persona-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="not active") as exc_info:
+            engine.bind_persona_to_session("bind-secret", "t-1", "persona-secret", "sess-secret")
+        message = str(exc_info.value)
+        assert "not active" in message
+        assert "persona-secret" not in message
+        assert PersonaStatus.SUSPENDED.value not in message
 
     def test_bind_requires_existing_persona(self, engine):
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
@@ -493,6 +503,16 @@ class TestSessionBindings:
         with pytest.raises(RuntimeCoreInvariantError, match="Cross-tenant"):
             engine.bind_persona_to_session("b-1", "t-2", "p-1", "sess-1")
         assert engine.violation_count == 1
+
+    def test_cross_tenant_binding_messages_are_bounded(self, engine):
+        _register_default_persona(engine, "persona-secret", tenant_id="tenant-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="Cross-tenant") as exc_info:
+            engine.bind_persona_to_session("binding-secret", "tenant-other", "persona-secret", "sess-secret")
+        violation = next(iter(engine._violations.values()))
+        message = str(exc_info.value)
+        assert message == "Cross-tenant persona binding"
+        assert "persona-secret" not in message
+        assert violation.reason == "Cross-tenant persona binding"
 
     def test_cross_tenant_violation_is_idempotent(self, engine):
         _register_default_persona(engine, "p-1", tenant_id="t-1")
@@ -507,7 +527,7 @@ class TestSessionBindings:
         _register_default_persona(engine, "p-1")
         engine.retire_persona("p-1")
         # Cross-tenant check happens first; same tenant will fail on ACTIVE check
-        with pytest.raises(RuntimeCoreInvariantError, match="not ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not active"):
             engine.bind_persona_to_session("b-1", "t-1", "p-1", "sess-1")
 
     def test_bind_uses_clock_time(self, engine, clock):
@@ -852,6 +872,22 @@ class TestViolationDetection:
         violations = engine.detect_persona_violations("t-1")
         has_retired = any(v.operation == "binding_to_retired_persona" for v in violations)
         assert has_retired
+
+    def test_violation_reasons_are_bounded(self, engine):
+        _register_default_persona(engine, "persona-no-policy")
+        _register_default_persona(engine, "persona-retired")
+        _register_default_persona(engine, "persona-secret", authority_mode=AuthorityMode.READ_ONLY)
+        engine.bind_persona_to_session("binding-secret", "t-1", "persona-retired", "sess-retired")
+        engine.retire_persona("persona-retired")
+        engine.record_persona_decision(
+            "decision-secret", "t-1", "persona-secret", "sess-secret", "force-action",
+            InteractionStyle.CONCISE, AuthorityMode.AUTONOMOUS,
+        )
+        violations = engine.detect_persona_violations("t-1")
+        reasons = {v.operation: v.reason for v in violations}
+        assert reasons["persona_no_policy"] == "Active persona has no role behavior policy"
+        assert reasons["binding_to_retired_persona"] == "Binding references retired persona"
+        assert reasons["authority_exceeded"] == "Autonomous authority exceeds persona mode"
 
     # Golden scenario 5: authority exceeded creates violation
     def test_detect_authority_exceeded(self, engine):

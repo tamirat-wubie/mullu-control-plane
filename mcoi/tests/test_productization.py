@@ -59,13 +59,15 @@ def test_load_profile_with_overrides() -> None:
 
 
 def test_unknown_profile_fails() -> None:
-    with pytest.raises(ProfileLoadError, match="unknown profile"):
+    with pytest.raises(ProfileLoadError, match="^unknown profile$") as exc_info:
         load_profile("nonexistent-profile")
+    assert "nonexistent-profile" not in str(exc_info.value)
 
 
 def test_unknown_override_key_fails() -> None:
-    with pytest.raises(ProfileLoadError, match="unknown config key"):
+    with pytest.raises(ProfileLoadError, match="^unknown config key in overrides$") as exc_info:
         load_profile(ProfileName.LOCAL_DEV, overrides={"bad_key": "value"})
+    assert "bad_key" not in str(exc_info.value)
 
 
 def test_list_profiles_returns_all() -> None:
@@ -106,8 +108,9 @@ def test_load_packs() -> None:
 
 def test_load_unknown_pack_fails() -> None:
     registry = PolicyPackRegistry()
-    with pytest.raises(ValueError, match="unknown policy pack"):
+    with pytest.raises(ValueError, match="^policy pack unavailable$") as exc_info:
         registry.load_packs(("nonexistent",))
+    assert "nonexistent" not in str(exc_info.value)
 
 
 def test_register_custom_pack() -> None:
@@ -126,13 +129,14 @@ def test_register_custom_pack() -> None:
 
 def test_duplicate_pack_fails() -> None:
     registry = PolicyPackRegistry()
-    with pytest.raises(ValueError, match="already registered"):
+    with pytest.raises(ValueError, match="^policy pack already registered$") as exc_info:
         registry.register(PolicyPack(
             pack_id="default-safe",
             name="dup",
             description="dup",
             rules=(PolicyRule(rule_id="r", description="d", condition="c", action="allow"),),
         ))
+    assert "default-safe" not in str(exc_info.value)
 
 
 def test_policy_rule_validates() -> None:
@@ -199,7 +203,9 @@ def test_cli_rejects_malformed_config_json(
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
     assert "invalid config JSON" in captured.err
-    assert str(config_file) in captured.err
+    assert "malformed JSON (JSONDecodeError)" in captured.err
+    assert str(config_file) not in captured.err
+    assert "Expecting" not in captured.err
 
 
 def test_cli_rejects_non_object_config_json(
@@ -215,6 +221,32 @@ def test_cli_rejects_non_object_config_json(
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
     assert "config JSON root must be an object" in captured.err
+    assert str(config_file) not in captured.err
+
+
+def test_cli_bounds_unexpected_config_validation_error(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from mcoi_runtime.app import cli as cli_module
+
+    config_file = tmp_path / "bad-config-value.json"
+    config_file.write_text('{"enabled_executor_routes": ["shell_command"]}', encoding="utf-8")
+
+    def _raise_unexpected(_data: object) -> AppConfig:
+        raise ValueError("secret backend invariant detail")
+
+    monkeypatch.setattr(cli_module.AppConfig, "from_mapping", _raise_unexpected)
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--config", str(config_file), "status"])
+
+    captured = capsys.readouterr()
+    assert exc_info.value.code == 1
+    assert "invalid config file (ValueError)" in captured.err
+    assert "secret backend invariant detail" not in captured.err
+    assert str(config_file) not in captured.err
 
 
 def test_cli_rejects_config_with_unknown_keys(
@@ -240,7 +272,7 @@ def test_cli_rejects_config_with_unknown_keys(
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
     assert "unknown config keys" in captured.err
-    assert str(config_file) in captured.err
+    assert str(config_file) not in captured.err
 
 
 def test_cli_run_with_profile() -> None:
@@ -300,7 +332,7 @@ def test_cli_rejects_request_with_unknown_top_level_fields(
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
     assert "unsupported request fields" in captured.err
-    assert "unexpected_field" in captured.err
+    assert "unexpected_field" not in captured.err
 
 
 def test_cli_rejects_request_missing_identity_fields(
@@ -324,8 +356,9 @@ def test_cli_rejects_request_missing_identity_fields(
 
     captured = capsys.readouterr()
     assert exc_info.value.code == 1
-    assert "request field 'request_id' must be a non-empty string" in captured.err
-    assert "inline input" in captured.err
+    assert "request identity fields must be non-empty strings" in captured.err
+    assert "request_id" not in captured.err
+    assert "inline input" not in captured.err
 
 
 def test_cli_redacts_config_file_access_errors(
@@ -352,6 +385,7 @@ def test_cli_redacts_config_file_access_errors(
     assert "cannot read config file" in captured.err
     assert "file access denied (PermissionError)" in captured.err
     assert "secret filesystem detail" not in captured.err
+    assert str(config_file) not in captured.err
 
 
 def test_cli_redacts_request_file_access_errors(
@@ -378,3 +412,101 @@ def test_cli_redacts_request_file_access_errors(
     assert "cannot read request file" in captured.err
     assert "file access denied (PermissionError)" in captured.err
     assert "secret request detail" not in captured.err
+    assert str(request_file) not in captured.err
+
+
+class _FakeHTTPResponse:
+    def __init__(self, *, status: int, body: bytes) -> None:
+        self.status = status
+        self._body = body
+
+    def read(self) -> bytes:
+        return self._body
+
+    def __enter__(self) -> "_FakeHTTPResponse":
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        return False
+
+
+def test_cli_demo_redacts_unreachable_server_error(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import urllib.error
+    import urllib.request
+
+    def _urlopen(*args, **kwargs):
+        raise urllib.error.URLError(ConnectionRefusedError("secret socket detail"))
+
+    monkeypatch.setattr(urllib.request, "urlopen", _urlopen)
+
+    exit_code = main(["demo"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "Server not reachable at http://localhost:8000" in captured.out
+    assert "http transport failed (ConnectionRefusedError)" in captured.out
+    assert "secret socket detail" not in captured.out
+
+
+def test_cli_demo_bounds_invalid_register_response(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import urllib.request
+
+    def _urlopen(request, timeout=0):
+        url = request.full_url if hasattr(request, "full_url") else request
+        if url == "http://localhost:8000/health":
+            return _FakeHTTPResponse(status=200, body=b"{}")
+        if url == "http://localhost:8000/api/v1/agent/register":
+            return _FakeHTTPResponse(status=200, body=b"not-json")
+        raise AssertionError(f"unexpected URL: {url}")
+
+    monkeypatch.setattr(urllib.request, "urlopen", _urlopen)
+
+    exit_code = main(["demo"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "[1] Register agent: failed (invalid JSON response (JSONDecodeError))" in captured.out
+    assert "not-json" not in captured.out
+
+
+def test_cli_demo_bounds_audit_check_and_completes(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import json as _json
+    import urllib.request
+
+    def _urlopen(request, timeout=0):
+        url = request.full_url if hasattr(request, "full_url") else request
+        if url == "http://localhost:8000/health":
+            return _FakeHTTPResponse(status=200, body=b"{}")
+        if url == "http://localhost:8000/api/v1/agent/register":
+            return _FakeHTTPResponse(status=200, body=_json.dumps({"agent_id": "demo-agent"}).encode("utf-8"))
+        if url == "http://localhost:8000/api/v1/agent/action-request":
+            return _FakeHTTPResponse(
+                status=200,
+                body=_json.dumps({"decision": "allow", "action_id": "action-1"}).encode("utf-8"),
+            )
+        if url == "http://localhost:8000/api/v1/agent/action-result":
+            return _FakeHTTPResponse(status=200, body=b"{}")
+        if url == "http://localhost:8000/api/v1/audit?action=agent.adapter.action_request&limit=5":
+            return _FakeHTTPResponse(status=200, body=b"not-json")
+        if url == "http://localhost:8000/api/v1/agent/heartbeat":
+            return _FakeHTTPResponse(status=200, body=b"{}")
+        raise AssertionError(f"unexpected URL: {url}")
+
+    monkeypatch.setattr(urllib.request, "urlopen", _urlopen)
+
+    exit_code = main(["demo"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "[4] Audit trail: check failed (invalid JSON response (JSONDecodeError))" in captured.out
+    assert "[5] Heartbeat sent: healthy" in captured.out
+    assert "not-json" not in captured.out

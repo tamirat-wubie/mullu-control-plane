@@ -188,6 +188,8 @@ class TestVerification:
         result = verify_extraction(extraction, ("name", "email"))
         assert result.status is DocumentVerificationStatus.PARTIAL
         assert "email" in result.missing_fields
+        assert result.reason == "missing required fields"
+        assert "email" not in result.reason
 
     def test_all_fields_missing(self):
         doc = ingest_document("doc-1", "data.json", json.dumps({}))
@@ -203,6 +205,21 @@ class TestVerification:
         )
         assert result.status is DocumentVerificationStatus.FAIL
         assert "name" in result.mismatched_fields
+        assert result.reason == "field values did not match expectations"
+        assert "name" not in result.reason
+
+    def test_missing_and_mismatch_reason_is_combined_and_bounded(self):
+        doc = ingest_document("doc-1", "data.json", json.dumps({"name": "Bob"}))
+        extraction = extract_json_fields(doc, ("name", "email"))
+        result = verify_extraction(
+            extraction,
+            ("name", "email"),
+            expected_values={"name": "Alice"},
+        )
+        assert result.status is DocumentVerificationStatus.FAIL
+        assert result.reason == "missing required fields; field values did not match expectations"
+        assert "name" not in result.reason
+        assert "email" not in result.reason
 
     def test_pass_with_expected_values(self):
         doc = ingest_document("doc-1", "data.json", json.dumps({"name": "Alice"}))

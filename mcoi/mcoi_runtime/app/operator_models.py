@@ -73,7 +73,7 @@ class OperatorRequest:
         for field_name in ("request_id", "subject_id", "goal_id"):
             value = getattr(self, field_name)
             if not isinstance(value, str) or not value.strip():
-                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+                raise RuntimeCoreInvariantError("request identity fields must be non-empty strings")
         if not isinstance(self.template, Mapping):
             raise RuntimeCoreInvariantError("template must be a mapping")
         if not isinstance(self.bindings, Mapping):
@@ -109,7 +109,7 @@ class SkillRequest:
         for field_name in ("request_id", "subject_id", "goal_id"):
             value = getattr(self, field_name)
             if not isinstance(value, str) or not value.strip():
-                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+                raise RuntimeCoreInvariantError("request identity fields must be non-empty strings")
 
 
 @dataclass(frozen=True, slots=True)

@@ -125,7 +125,7 @@ class TenantRuntimeEngine:
     ) -> TenantRecord:
         """Register a new tenant."""
         if tenant_id in self._tenants:
-            raise RuntimeCoreInvariantError(f"Duplicate tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Duplicate tenant_id")
         now = _now_iso()
         tenant = TenantRecord(
             tenant_id=tenant_id,
@@ -145,7 +145,7 @@ class TenantRuntimeEngine:
         """Update a tenant's status."""
         old = self._tenants.get(tenant_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
         now = _now_iso()
         updated = TenantRecord(
             tenant_id=old.tenant_id,
@@ -168,7 +168,7 @@ class TenantRuntimeEngine:
         """Get a tenant by ID."""
         t = self._tenants.get(tenant_id)
         if t is None:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
         return t
 
     # ------------------------------------------------------------------
@@ -185,10 +185,10 @@ class TenantRuntimeEngine:
     ) -> WorkspaceRecord:
         """Register a new workspace within a tenant."""
         if workspace_id in self._workspaces:
-            raise RuntimeCoreInvariantError(f"Duplicate workspace_id: {workspace_id}")
+            raise RuntimeCoreInvariantError("Duplicate workspace_id")
         tenant = self._tenants.get(tenant_id)
         if tenant is None:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
         now = _now_iso()
         workspace = WorkspaceRecord(
             workspace_id=workspace_id,
@@ -223,7 +223,7 @@ class TenantRuntimeEngine:
         """Update a workspace's status."""
         old = self._workspaces.get(workspace_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown workspace_id: {workspace_id}")
+            raise RuntimeCoreInvariantError("Unknown workspace_id")
         now = _now_iso()
         updated = WorkspaceRecord(
             workspace_id=old.workspace_id,
@@ -247,7 +247,7 @@ class TenantRuntimeEngine:
         """Get a workspace by ID."""
         w = self._workspaces.get(workspace_id)
         if w is None:
-            raise RuntimeCoreInvariantError(f"Unknown workspace_id: {workspace_id}")
+            raise RuntimeCoreInvariantError("Unknown workspace_id")
         return w
 
     def workspaces_for_tenant(self, tenant_id: str) -> tuple[WorkspaceRecord, ...]:
@@ -268,10 +268,10 @@ class TenantRuntimeEngine:
     ) -> EnvironmentRecord:
         """Register a new environment within a workspace."""
         if environment_id in self._environments:
-            raise RuntimeCoreInvariantError(f"Duplicate environment_id: {environment_id}")
+            raise RuntimeCoreInvariantError("Duplicate environment_id")
         workspace = self._workspaces.get(workspace_id)
         if workspace is None:
-            raise RuntimeCoreInvariantError(f"Unknown workspace_id: {workspace_id}")
+            raise RuntimeCoreInvariantError("Unknown workspace_id")
         now = _now_iso()
         env = EnvironmentRecord(
             environment_id=environment_id,
@@ -305,7 +305,7 @@ class TenantRuntimeEngine:
         """Get an environment by ID."""
         e = self._environments.get(environment_id)
         if e is None:
-            raise RuntimeCoreInvariantError(f"Unknown environment_id: {environment_id}")
+            raise RuntimeCoreInvariantError("Unknown environment_id")
         return e
 
     def environments_for_workspace(self, workspace_id: str) -> tuple[EnvironmentRecord, ...]:
@@ -328,9 +328,9 @@ class TenantRuntimeEngine:
     ) -> BoundaryPolicy:
         """Add a boundary policy for a tenant."""
         if policy_id in self._policies:
-            raise RuntimeCoreInvariantError(f"Duplicate policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("Duplicate policy_id")
         if tenant_id not in self._tenants:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
         now = _now_iso()
         policy = BoundaryPolicy(
             policy_id=policy_id,
@@ -377,12 +377,12 @@ class TenantRuntimeEngine:
     ) -> WorkspaceBinding:
         """Bind a resource to a workspace, checking boundary policies."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         workspace = self._workspaces.get(workspace_id)
         if workspace is None:
-            raise RuntimeCoreInvariantError(f"Unknown workspace_id: {workspace_id}")
+            raise RuntimeCoreInvariantError("Unknown workspace_id")
         if environment_id and environment_id not in self._environments:
-            raise RuntimeCoreInvariantError(f"Unknown environment_id: {environment_id}")
+            raise RuntimeCoreInvariantError("Unknown environment_id")
 
         # Check isolation: resource must not already be bound to a different
         # workspace under STRICT isolation
@@ -395,11 +395,7 @@ class TenantRuntimeEngine:
                     if (existing.resource_ref_id == resource_ref_id
                             and existing.resource_type == resource_type
                             and existing.workspace_id != workspace_id):
-                        raise RuntimeCoreInvariantError(
-                            f"Isolation violation: resource {resource_ref_id} "
-                            f"already bound to workspace {existing.workspace_id} "
-                            f"under STRICT {resource_type.value} policy"
-                        )
+                        raise RuntimeCoreInvariantError("Isolation violation")
 
         now = _now_iso()
         binding = WorkspaceBinding(
@@ -459,13 +455,13 @@ class TenantRuntimeEngine:
     ) -> EnvironmentPromotion:
         """Promote an environment (e.g., dev → staging)."""
         if promotion_id in self._promotions:
-            raise RuntimeCoreInvariantError(f"Duplicate promotion_id: {promotion_id}")
+            raise RuntimeCoreInvariantError("Duplicate promotion_id")
         source = self._environments.get(source_environment_id)
         if source is None:
-            raise RuntimeCoreInvariantError(f"Unknown source environment_id: {source_environment_id}")
+            raise RuntimeCoreInvariantError("Unknown source environment_id")
         target = self._environments.get(target_environment_id)
         if target is None:
-            raise RuntimeCoreInvariantError(f"Unknown target environment_id: {target_environment_id}")
+            raise RuntimeCoreInvariantError("Unknown target environment_id")
 
         # Validate promotion path: dev→staging, staging→prod, dev→sandbox, sandbox→staging
         valid_paths = {
@@ -475,9 +471,7 @@ class TenantRuntimeEngine:
             (EnvironmentKind.SANDBOX, EnvironmentKind.STAGING),
         }
         if (source.kind, target.kind) not in valid_paths:
-            raise RuntimeCoreInvariantError(
-                f"Invalid promotion path: {source.kind.value} → {target.kind.value}"
-            )
+            raise RuntimeCoreInvariantError("invalid promotion path")
 
         # Block promotion to prod without compliance check
         if target.kind == EnvironmentKind.PRODUCTION and not compliance_check_passed:
@@ -608,7 +602,7 @@ class TenantRuntimeEngine:
         """Produce a health snapshot for a tenant."""
         tenant = self._tenants.get(tenant_id)
         if tenant is None:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
 
         workspaces = self.workspaces_for_tenant(tenant_id)
         active_ws = sum(1 for w in workspaces if w.status == WorkspaceStatus.ACTIVE)
@@ -662,9 +656,9 @@ class TenantRuntimeEngine:
     ) -> TenantDecision:
         """Record a tenant-level decision."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         if tenant_id not in self._tenants:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
         now = _now_iso()
         decision = TenantDecision(
             decision_id=decision_id,
@@ -693,9 +687,9 @@ class TenantRuntimeEngine:
         """Close a tenant and produce a closure report."""
         tenant = self._tenants.get(tenant_id)
         if tenant is None:
-            raise RuntimeCoreInvariantError(f"Unknown tenant_id: {tenant_id}")
+            raise RuntimeCoreInvariantError("Unknown tenant_id")
         if report_id in {d.decision_id for d in self._decisions.values()}:
-            raise RuntimeCoreInvariantError(f"Duplicate report_id: {report_id}")
+            raise RuntimeCoreInvariantError("Duplicate report_id")
 
         workspaces = self.workspaces_for_tenant(tenant_id)
         tenant_ws_ids = {w.workspace_id for w in workspaces}

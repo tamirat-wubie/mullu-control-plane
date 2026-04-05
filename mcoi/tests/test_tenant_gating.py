@@ -176,6 +176,11 @@ class TestQuery:
         reg = TenantGatingRegistry(clock=_clock)
         assert reg.is_allowed("unknown") is True
 
+    def test_unknown_tenant_is_blocked_when_strict(self):
+        reg = TenantGatingRegistry(clock=_clock, allow_unknown_tenants=False)
+        assert reg.is_allowed("unknown") is False
+        assert reg.denial_reason("unknown") == "tenant unknown is not registered"
+
     def test_all_gates(self):
         reg = TenantGatingRegistry(clock=_clock)
         reg.register("t2", status=TenantStatus.ACTIVE)
@@ -194,6 +199,7 @@ class TestQuery:
         assert summary["total_tenants"] == 3
         assert summary["status_counts"]["active"] == 2
         assert summary["status_counts"]["onboarding"] == 1
+        assert summary["allow_unknown_tenants"] is True
 
 
 # ═══ Tenant Gating Guard ═══
@@ -237,6 +243,13 @@ class TestTenantGatingGuard:
         guard = create_tenant_gating_guard(reg)
         result = guard.check({"tenant_id": "new-tenant", "endpoint": "/api/test"})
         assert result.allowed
+
+    def test_blocks_unknown_tenant_when_strict(self):
+        reg = TenantGatingRegistry(clock=_clock, allow_unknown_tenants=False)
+        guard = create_tenant_gating_guard(reg)
+        result = guard.check({"tenant_id": "new-tenant", "endpoint": "/api/test"})
+        assert not result.allowed
+        assert result.reason == "tenant new-tenant is not registered"
 
     def test_allows_system_tenant(self):
         reg = TenantGatingRegistry(clock=_clock)

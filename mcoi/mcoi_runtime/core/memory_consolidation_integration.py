@@ -248,7 +248,7 @@ class MemoryConsolidationIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Memory consolidation state for {scope_ref_id}",
+            title="Memory consolidation state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

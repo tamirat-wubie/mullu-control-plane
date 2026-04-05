@@ -175,7 +175,7 @@ class ProofBridge:
             after_state_hash=before_hash,
             guards=(),
             actor_id=actor_id,
-            reason=f"evaluating request to {endpoint}",
+            reason="evaluating governed request",
             causal_parent=self._last_receipt_hash,
             timestamp=timestamp,
         )

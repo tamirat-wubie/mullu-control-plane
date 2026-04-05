@@ -168,6 +168,8 @@ def test_operator_loop_stops_before_dispatch_on_policy_denial() -> None:
     assert report.execution_result is None
     assert report.policy_decision.status.value == "deny"
     assert report.validation_error == "policy_denied_or_escalated"
+    assert report.structured_errors[0].message == "policy gate blocked operator request"
+    assert "deny" not in report.structured_errors[0].message
     assert report.verification_error is None
 
 
@@ -452,5 +454,6 @@ def test_operator_loop_sanitizes_entity_registration_warning() -> None:
     )
 
     warning = next(error for error in report.structured_errors if error.error_code == "entity_registration_warning")
-    assert warning.message == "best-effort entity registration failed (ValueError)"
+    assert warning.message == "best-effort entity registration failed"
     assert "secret entity registration detail" not in warning.message
+    assert "ValueError" not in warning.message

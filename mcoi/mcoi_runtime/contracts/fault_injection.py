@@ -119,13 +119,13 @@ class FaultSpec(ContractRecord):
     def __post_init__(self) -> None:
         require_non_empty_text(self.spec_id, "spec_id")
         if not isinstance(self.fault_type, FaultType):
-            raise ValueError(f"fault_type must be FaultType, got {type(self.fault_type)}")
+            raise ValueError("fault_type must be a FaultType value")
         if not isinstance(self.target_kind, FaultTargetKind):
-            raise ValueError(f"target_kind must be FaultTargetKind, got {type(self.target_kind)}")
+            raise ValueError("target_kind must be a FaultTargetKind value")
         if not isinstance(self.severity, FaultSeverity):
-            raise ValueError(f"severity must be FaultSeverity, got {type(self.severity)}")
+            raise ValueError("severity must be a FaultSeverity value")
         if not isinstance(self.injection_mode, InjectionMode):
-            raise ValueError(f"injection_mode must be InjectionMode, got {type(self.injection_mode)}")
+            raise ValueError("injection_mode must be an InjectionMode value")
         require_non_negative_int(self.repeat_count, "repeat_count")
         if self.repeat_count == 0:
             raise ValueError("repeat_count must be positive")

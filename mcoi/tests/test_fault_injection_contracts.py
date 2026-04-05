@@ -71,12 +71,36 @@ class TestFaultSpec:
             self._make(spec_id="")
 
     def test_invalid_fault_type(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             self._make(fault_type="magic")
+        message = str(exc_info.value)
+        assert message == "fault_type must be a FaultType value"
+        assert "magic" not in message
+        assert "str" not in message
 
     def test_invalid_target_kind(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             self._make(target_kind="mars")
+        message = str(exc_info.value)
+        assert message == "target_kind must be a FaultTargetKind value"
+        assert "mars" not in message
+        assert "str" not in message
+
+    def test_invalid_severity(self):
+        with pytest.raises(ValueError) as exc_info:
+            self._make(severity="extreme")
+        message = str(exc_info.value)
+        assert message == "severity must be a FaultSeverity value"
+        assert "extreme" not in message
+        assert "str" not in message
+
+    def test_invalid_injection_mode(self):
+        with pytest.raises(ValueError) as exc_info:
+            self._make(injection_mode="loop")
+        message = str(exc_info.value)
+        assert message == "injection_mode must be an InjectionMode value"
+        assert "loop" not in message
+        assert "str" not in message
 
     def test_zero_repeat_rejected(self):
         with pytest.raises(ValueError):

@@ -95,7 +95,7 @@ class ReactionBridge:
                 owner=default_owner,
                 deadline=default_deadline,
                 trigger=trigger,
-                description=f"reactive obligation from rule {exe.rule_id}",
+                description="reactive obligation",
             )
             created.append(obl)
         return tuple(created)
@@ -127,7 +127,7 @@ class ReactionBridge:
                 obligation_engine,
                 obl_id,
                 escalated_to=escalation_owner,
-                reason=f"reactive escalation from rule {exe.rule_id}",
+                reason="reactive escalation",
                 severity="high",
             )
             escalated.append(updated)
@@ -155,7 +155,7 @@ class ReactionBridge:
                 obligation_engine,
                 obl_id,
                 final_state=ObligationState.COMPLETED,
-                reason=f"reactive closure from rule {exe.rule_id}",
+                reason="reactive closure",
                 closed_by="reaction_engine",
             )
             closed.append(updated)
@@ -185,7 +185,7 @@ class ReactionBridge:
                 obligation_engine,
                 obl_id,
                 to_owner=transfer_to,
-                reason=f"reactive transfer from rule {exe.rule_id}",
+                reason="reactive transfer",
             )
             transferred.append(updated)
         return tuple(transferred)

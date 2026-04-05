@@ -146,11 +146,9 @@ class SettlementRuntimeEngine:
     ) -> SettlementRecord:
         """Create a settlement record for an invoice."""
         if settlement_id in self._settlements:
-            raise RuntimeCoreInvariantError(f"Duplicate settlement_id: {settlement_id}")
+            raise RuntimeCoreInvariantError("Duplicate settlement_id")
         if invoice_id in self._invoice_settlement:
-            raise RuntimeCoreInvariantError(
-                f"Invoice {invoice_id} already has a settlement"
-            )
+            raise RuntimeCoreInvariantError("Invoice already has a settlement")
         now = self._now()
         s = SettlementRecord(
             settlement_id=settlement_id,
@@ -176,16 +174,14 @@ class SettlementRuntimeEngine:
         """Get a settlement by ID."""
         s = self._settlements.get(settlement_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown settlement_id: {settlement_id}")
+            raise RuntimeCoreInvariantError("Unknown settlement_id")
         return s
 
     def settlement_for_invoice(self, invoice_id: str) -> SettlementRecord:
         """Get the settlement for an invoice."""
         sid = self._invoice_settlement.get(invoice_id)
         if sid is None:
-            raise RuntimeCoreInvariantError(
-                f"No settlement for invoice: {invoice_id}"
-            )
+            raise RuntimeCoreInvariantError("No settlement for invoice")
         return self._settlements[sid]
 
     def settlements_for_account(self, account_id: str) -> tuple[SettlementRecord, ...]:
@@ -238,7 +234,7 @@ class SettlementRuntimeEngine:
     ) -> PaymentRecord:
         """Record a payment received."""
         if payment_id in self._payments:
-            raise RuntimeCoreInvariantError(f"Duplicate payment_id: {payment_id}")
+            raise RuntimeCoreInvariantError("Duplicate payment_id")
         now = self._now()
         p = PaymentRecord(
             payment_id=payment_id,
@@ -262,7 +258,7 @@ class SettlementRuntimeEngine:
         """Get a payment by ID."""
         p = self._payments.get(payment_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown payment_id: {payment_id}")
+            raise RuntimeCoreInvariantError("Unknown payment_id")
         return p
 
     def payments_for_invoice(self, invoice_id: str) -> tuple[PaymentRecord, ...]:
@@ -284,16 +280,12 @@ class SettlementRuntimeEngine:
     ) -> CashApplication:
         """Apply a payment to a settlement."""
         if application_id in self._applications:
-            raise RuntimeCoreInvariantError(
-                f"Duplicate application_id: {application_id}"
-            )
+            raise RuntimeCoreInvariantError("Duplicate application_id")
         s = self.get_settlement(settlement_id)
         if s.status in _SETTLEMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot apply cash to settlement in status {s.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot apply cash to settlement in current status")
         if payment_id not in self._payments:
-            raise RuntimeCoreInvariantError(f"Unknown payment_id: {payment_id}")
+            raise RuntimeCoreInvariantError("Unknown payment_id")
 
         # Cap application at outstanding amount
         effective = min(amount, s.outstanding)
@@ -341,14 +333,10 @@ class SettlementRuntimeEngine:
     ) -> CashApplication:
         """Apply a credit against a settlement balance."""
         if application_id in self._applications:
-            raise RuntimeCoreInvariantError(
-                f"Duplicate application_id: {application_id}"
-            )
+            raise RuntimeCoreInvariantError("Duplicate application_id")
         s = self.get_settlement(settlement_id)
         if s.status in _SETTLEMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot apply credit to settlement in status {s.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot apply credit to settlement in current status")
 
         effective = min(amount, s.outstanding)
         now = self._now()
@@ -407,7 +395,7 @@ class SettlementRuntimeEngine:
     ) -> CollectionCase:
         """Open a collection case for an unpaid invoice."""
         if case_id in self._collections:
-            raise RuntimeCoreInvariantError(f"Duplicate case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Duplicate case_id")
         now = self._now()
         c = CollectionCase(
             case_id=case_id,
@@ -429,16 +417,14 @@ class SettlementRuntimeEngine:
         """Get a collection case by ID."""
         c = self._collections.get(case_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown case_id: {case_id}")
+            raise RuntimeCoreInvariantError("Unknown case_id")
         return c
 
     def escalate_collection(self, case_id: str) -> CollectionCase:
         """Escalate a collection case."""
         old = self.get_collection_case(case_id)
         if old.status in _COLLECTION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot escalate collection in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot escalate collection in current status")
         updated = CollectionCase(
             case_id=old.case_id,
             invoice_id=old.invoice_id,
@@ -460,9 +446,7 @@ class SettlementRuntimeEngine:
         """Pause a collection case (e.g., due to dispute)."""
         old = self.get_collection_case(case_id)
         if old.status in _COLLECTION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot pause collection in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot pause collection in current status")
         updated = CollectionCase(
             case_id=old.case_id,
             invoice_id=old.invoice_id,
@@ -484,7 +468,7 @@ class SettlementRuntimeEngine:
         """Resume a paused collection case."""
         old = self.get_collection_case(case_id)
         if old.status != CollectionStatus.PAUSED:
-            raise RuntimeCoreInvariantError("Can only resume PAUSED collections")
+            raise RuntimeCoreInvariantError("Can only resume paused collections")
         updated = CollectionCase(
             case_id=old.case_id,
             invoice_id=old.invoice_id,
@@ -506,9 +490,7 @@ class SettlementRuntimeEngine:
         """Resolve a collection case (payment received)."""
         old = self.get_collection_case(case_id)
         if old.status in _COLLECTION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot resolve collection in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot resolve collection in current status")
         now = self._now()
         updated = CollectionCase(
             case_id=old.case_id,
@@ -573,12 +555,10 @@ class SettlementRuntimeEngine:
     ) -> DunningNotice:
         """Issue a dunning notice for a collection case."""
         if notice_id in self._dunning:
-            raise RuntimeCoreInvariantError(f"Duplicate notice_id: {notice_id}")
+            raise RuntimeCoreInvariantError("Duplicate notice_id")
         cc = self.get_collection_case(case_id)
         if cc.status in _COLLECTION_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot issue dunning for collection in status {cc.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot issue dunning for collection in current status")
         now = self._now()
         notice = DunningNotice(
             notice_id=notice_id,
@@ -631,9 +611,9 @@ class SettlementRuntimeEngine:
     ) -> RefundRecord:
         """Record a refund against a payment."""
         if refund_id in self._refunds:
-            raise RuntimeCoreInvariantError(f"Duplicate refund_id: {refund_id}")
+            raise RuntimeCoreInvariantError("Duplicate refund_id")
         if payment_id not in self._payments:
-            raise RuntimeCoreInvariantError(f"Unknown payment_id: {payment_id}")
+            raise RuntimeCoreInvariantError("Unknown payment_id")
         now = self._now()
         refund = RefundRecord(
             refund_id=refund_id,
@@ -692,12 +672,10 @@ class SettlementRuntimeEngine:
     ) -> WriteoffRecord:
         """Record a writeoff of uncollectable balance."""
         if writeoff_id in self._writeoffs:
-            raise RuntimeCoreInvariantError(f"Duplicate writeoff_id: {writeoff_id}")
+            raise RuntimeCoreInvariantError("Duplicate writeoff_id")
         s = self.get_settlement(settlement_id)
         if s.status in _SETTLEMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot write off settlement in status {s.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot write off settlement in current status")
         now = self._now()
         effective = min(amount, s.outstanding)
         wo = WriteoffRecord(
@@ -751,9 +729,7 @@ class SettlementRuntimeEngine:
         """Mark a settlement as disputed (pauses collection)."""
         old = self.get_settlement(settlement_id)
         if old.status in _SETTLEMENT_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot dispute settlement in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot dispute settlement in current status")
         updated = SettlementRecord(
             settlement_id=old.settlement_id,
             invoice_id=old.invoice_id,
@@ -819,7 +795,7 @@ class SettlementRuntimeEngine:
                     d = SettlementDecision(
                         decision_id=did,
                         settlement_id=cc.case_id,
-                        description=f"Collection case {cc.case_id} has {cc.dunning_count} dunning notices without resolution",
+                        description="Collection case requires dunning escalation",
                         decided_by="settlement_engine",
                         decided_at=now,
                     )
@@ -840,7 +816,7 @@ class SettlementRuntimeEngine:
                     d = SettlementDecision(
                         decision_id=did,
                         settlement_id=s.settlement_id,
-                        description=f"Settlement {s.settlement_id} has no payments applied",
+                        description="Settlement has no payments applied",
                         decided_by="settlement_engine",
                         decided_at=now,
                     )
@@ -868,7 +844,7 @@ class SettlementRuntimeEngine:
     def aging_snapshot(self, snapshot_id: str) -> AgingSnapshot:
         """Capture a point-in-time aging snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._now()
         snap = AgingSnapshot(
             snapshot_id=snapshot_id,

@@ -95,28 +95,26 @@ class StateMachineSpec(ContractRecord):
         object.__setattr__(self, "initial_state", require_non_empty_text(self.initial_state, "initial_state"))
         # initial_state must be in states
         if self.initial_state not in self.states:
-            raise ValueError(f"initial_state {self.initial_state!r} not in states")
+            raise ValueError("initial state must be declared in states")
         # terminal_states must be subset of states
         object.__setattr__(self, "terminal_states", freeze_value(list(self.terminal_states)))
         for ts in self.terminal_states:
             if ts not in self.states:
-                raise ValueError(f"terminal_state {ts!r} not in states")
+                raise ValueError("terminal state must be declared in states")
         # transitions must reference declared states
         object.__setattr__(self, "transitions", freeze_value(list(self.transitions)))
         for tr in self.transitions:
             if not isinstance(tr, TransitionRule):
                 raise ValueError("each transition must be a TransitionRule instance")
             if tr.from_state not in self.states:
-                raise ValueError(f"transition from_state {tr.from_state!r} not in states")
+                raise ValueError("transition source state must be declared in states")
             if tr.to_state not in self.states:
-                raise ValueError(f"transition to_state {tr.to_state!r} not in states")
+                raise ValueError("transition target state must be declared in states")
         # terminal states must have no outgoing transitions
         for ts in self.terminal_states:
             outgoing = [t for t in self.transitions if t.from_state == ts]
             if outgoing:
-                raise ValueError(
-                    f"terminal state {ts!r} has {len(outgoing)} outgoing transition(s)"
-                )
+                raise ValueError("terminal state cannot have outgoing transitions")
 
     @property
     def transition_count(self) -> int:

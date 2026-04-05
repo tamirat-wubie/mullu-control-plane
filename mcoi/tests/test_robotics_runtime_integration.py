@@ -150,13 +150,16 @@ class TestMemoryMeshAttachment:
         eng.register_workcell("c1", "t1", "Cell A")
         record = integ.attach_robotics_state_to_memory_mesh("scope-1")
         assert record.memory_id
+        assert record.title == "Robotics state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
         assert mem.memory_count >= 1
 
     def test_memory_content(self):
         integ, eng, _, _ = _make_integration()
         eng.register_workcell("c1", "t1", "Cell A")
         record = integ.attach_robotics_state_to_memory_mesh("scope-1")
-        assert record.title.startswith("Robotics state:")
+        assert record.title == "Robotics state"
 
     def test_emits_event(self):
         integ, eng, es, _ = _make_integration()

@@ -53,8 +53,9 @@ class TestReviewLifecycle:
     def test_duplicate_rejected(self):
         engine = _engine()
         engine.submit(_request())
-        with pytest.raises(ValueError, match="already exists"):
+        with pytest.raises(ValueError, match="^review request already exists$") as exc_info:
             engine.submit(_request())
+        assert "rev-1" not in str(exc_info.value)
 
     def test_approve(self):
         engine = _engine()
@@ -77,8 +78,9 @@ class TestReviewLifecycle:
 
     def test_request_not_found(self):
         engine = _engine()
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="^review request unavailable$") as exc_info:
             engine.decide(request_id="missing", reviewer_id="reviewer-1", approved=True)
+        assert "missing" not in str(exc_info.value)
 
     def test_list_pending(self):
         engine = _engine()

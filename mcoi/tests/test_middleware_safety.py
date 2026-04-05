@@ -22,7 +22,10 @@ from mcoi_runtime.core.governance_guard import (
 )
 
 
-def _client_with_chain(chain: GovernanceGuardChain) -> TestClient:
+def _client_with_chain(
+    chain: GovernanceGuardChain,
+    **middleware_kwargs: object,
+) -> TestClient:
     if not FASTAPI_AVAILABLE:
         pytest.skip("FastAPI not installed")
     app = FastAPI()
@@ -31,7 +34,7 @@ def _client_with_chain(chain: GovernanceGuardChain) -> TestClient:
     def echo():
         return {"ok": True}
 
-    app.add_middleware(GovernanceMiddleware, guard_chain=chain)
+    app.add_middleware(GovernanceMiddleware, guard_chain=chain, **middleware_kwargs)
     return TestClient(app)
 
 
@@ -85,3 +88,28 @@ def test_extract_content_safety_fields_only_keeps_strings() -> None:
     )
 
     assert extracted == {"prompt": "safe"}
+
+
+def test_middleware_witnesses_proof_bridge_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    class BrokenProofBridge:
+        def certify_governance_decision(self, **_kwargs: object) -> None:
+            raise RuntimeError("secret-proof-failure")
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        proof_bridge=BrokenProofBridge(),
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("proof_bridge_certification_failures", 1) in metric_calls

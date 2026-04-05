@@ -13,8 +13,15 @@ class TestCapabilityEngine:
     def test_duplicate_register(self):
         eng = CapabilityEngine()
         eng.register(CapabilityDescriptor(capability_id="llm", name="LLM", description="x"))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             eng.register(CapabilityDescriptor(capability_id="llm", name="LLM2", description="y"))
+        assert "llm" not in str(exc_info.value)
+
+    def test_assign_unknown_capability_raises(self):
+        eng = CapabilityEngine()
+        with pytest.raises(ValueError) as exc_info:
+            eng.assign_to_agent("a1", "missing")
+        assert "missing" not in str(exc_info.value)
 
     def test_assign_and_find(self):
         eng = CapabilityEngine()

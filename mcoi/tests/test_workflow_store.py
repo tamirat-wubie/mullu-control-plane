@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import mcoi_runtime.persistence.workflow_store as workflow_store_module
 from mcoi_runtime.contracts.workflow import (
     StageExecutionResult,
     StageStatus,
@@ -130,14 +131,15 @@ class TestWorkflowStore:
 
     def test_load_nonexistent_raises(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
-        with pytest.raises(PersistenceError, match="not found"):
+        with pytest.raises(PersistenceError, match=r"^workflow execution record not found$") as excinfo:
             store.load_execution_record("missing")
+        assert "missing" not in str(excinfo.value)
 
     def test_malformed_file_fails_closed(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
         (tmp_path / "workflows").mkdir(parents=True, exist_ok=True)
         (tmp_path / "workflows" / "bad.json").write_text("not json!!")
-        with pytest.raises(CorruptedDataError):
+        with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load_execution_record("bad")
 
     def test_invalid_type_rejected(self, tmp_path: Path):
@@ -187,18 +189,39 @@ class TestWorkflowStore:
 
     def test_load_missing_descriptor_raises(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
-        with pytest.raises(PersistenceError, match="workflow descriptor not found"):
+        with pytest.raises(PersistenceError, match=r"^workflow descriptor not found$") as excinfo:
             store.load_descriptor("missing")
+        assert "missing" not in str(excinfo.value)
 
     def test_malformed_descriptor_fails_closed(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
         (tmp_path / "workflows").mkdir(parents=True, exist_ok=True)
         (tmp_path / "workflows" / "workflow-descriptor--bad.json").write_text("not json!!")
 
-        with pytest.raises(CorruptedDataError):
+        with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load_descriptor("bad")
 
     def test_invalid_descriptor_type_rejected(self, tmp_path: Path):
         store = WorkflowStore(tmp_path / "workflows")
         with pytest.raises(PersistenceError, match="WorkflowDescriptor"):
             store.save_descriptor("not a descriptor")
+
+    def test_descriptor_load_bounds_invalid_artifact_errors(
+        self, tmp_path: Path, monkeypatch
+    ):
+        store = WorkflowStore(tmp_path / "workflows")
+        descriptor = _make_descriptor()
+        store.save_descriptor(descriptor)
+
+        def _raise_value_error(_content, _record_type):
+            raise ValueError("workflow descriptor internal detail")
+
+        monkeypatch.setattr(workflow_store_module, "deserialize_record", _raise_value_error)
+
+        with pytest.raises(
+            CorruptedDataError,
+            match=r"^invalid workflow artifact \(ValueError\)$",
+        ) as excinfo:
+            store.load_descriptor("wf-1")
+        assert "workflow descriptor" not in str(excinfo.value)
+        assert "internal detail" not in str(excinfo.value)

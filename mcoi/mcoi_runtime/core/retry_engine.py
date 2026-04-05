@@ -161,7 +161,7 @@ class CircuitBreaker:
     def execute(self, fn: Callable[[], Any]) -> Any:
         """Execute with circuit breaker protection."""
         if not self.allow_request():
-            raise RuntimeError(f"circuit breaker is {self.state}")
+            raise RuntimeError("circuit breaker unavailable")
 
         try:
             result = fn()

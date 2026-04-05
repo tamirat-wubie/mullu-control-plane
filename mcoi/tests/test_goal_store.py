@@ -107,8 +107,9 @@ class TestGoalStoreState:
 
     def test_load_nonexistent_raises(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
-        with pytest.raises(PersistenceError, match="not found"):
+        with pytest.raises(PersistenceError, match=r"^goal state not found$") as excinfo:
             store.load_goal_state("missing")
+        assert "missing" not in str(excinfo.value)
 
     def test_invalid_type_rejected(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
@@ -120,7 +121,7 @@ class TestGoalStoreState:
         goals_dir = tmp_path / "goal-data" / "goals"
         goals_dir.mkdir(parents=True)
         (goals_dir / "bad.json").write_text("not json!!")
-        with pytest.raises(CorruptedDataError):
+        with pytest.raises(CorruptedDataError, match=r"^malformed JSON \(JSONDecodeError\)$"):
             store.load_goal_state("bad")
 
     def test_overwrite_same_id(self, tmp_path: Path):
@@ -170,8 +171,9 @@ class TestGoalStorePlan:
 
     def test_load_nonexistent_plan_raises(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
-        with pytest.raises(PersistenceError, match="not found"):
+        with pytest.raises(PersistenceError, match=r"^plan not found$") as excinfo:
             store.load_plan("missing")
+        assert "missing" not in str(excinfo.value)
 
     def test_invalid_type_rejected(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")

@@ -1112,6 +1112,13 @@ class TestCrossFieldValidationEdgeCases:
         with pytest.raises(ValueError, match="must be before"):
             _avail_record(starts_at=DT2, ends_at=DT)
 
+    def test_record_start_end_error_is_bounded(self):
+        with pytest.raises(ValueError, match="must be before") as excinfo:
+            _avail_record(starts_at=DT2, ends_at=DT)
+        assert "starts_at" in str(excinfo.value)
+        assert DT not in str(excinfo.value)
+        assert DT2 not in str(excinfo.value)
+
     def test_record_one_second_gap_ok(self):
         rec = _avail_record(
             starts_at="2025-01-01T00:00:00+00:00",
@@ -1129,6 +1136,13 @@ class TestCrossFieldValidationEdgeCases:
         with pytest.raises(ValueError):
             _avail_window(capacity=3, reserved=4)
 
+    def test_window_reserved_exceeds_capacity_error_is_bounded(self):
+        with pytest.raises(ValueError, match="must not exceed") as excinfo:
+            _avail_window(capacity=3, reserved=4)
+        assert str(excinfo.value) == "reserved must not exceed capacity"
+        assert "3" not in str(excinfo.value)
+        assert "4" not in str(excinfo.value)
+
     def test_window_reserved_equals_capacity_ok(self):
         w = _avail_window(capacity=5, reserved=5)
         assert w.reserved == 5
@@ -1138,6 +1152,13 @@ class TestCrossFieldValidationEdgeCases:
     def test_biz_hour_24_raises(self):
         with pytest.raises(ValueError, match="0-23"):
             _biz_profile(weekday_start_hour=24)
+
+    def test_biz_hour_error_is_bounded(self):
+        with pytest.raises(ValueError, match="0-23") as excinfo:
+            _biz_profile(weekday_start_hour=24)
+        assert str(excinfo.value) == "weekday_start_hour must be 0-23"
+        assert "24" not in str(excinfo.value)
+        assert "24" not in str(excinfo.value)
 
     def test_biz_hour_negative_raises(self):
         with pytest.raises(ValueError):
@@ -1155,11 +1176,24 @@ class TestCrossFieldValidationEdgeCases:
         with pytest.raises(ValueError):
             _biz_profile(weekday_start_hour=17, weekday_end_hour=9)
 
+    def test_biz_start_after_end_error_is_bounded(self):
+        with pytest.raises(ValueError, match="must be before") as excinfo:
+            _biz_profile(weekday_start_hour=17, weekday_end_hour=9)
+        assert "weekday_start_hour" in str(excinfo.value)
+        assert "weekday_end_hour" in str(excinfo.value)
+        assert "17" not in str(excinfo.value)
+
     # --- MeetingRequest: duration >= 1, earliest < latest ---
 
     def test_meeting_request_duration_zero_raises(self):
         with pytest.raises(ValueError):
             _meeting_request(duration_minutes=0)
+
+    def test_meeting_request_duration_error_is_bounded(self):
+        with pytest.raises(ValueError, match=">= 1") as excinfo:
+            _meeting_request(duration_minutes=0)
+        assert str(excinfo.value) == "duration_minutes must be >= 1"
+        assert "0" not in str(excinfo.value)
 
     def test_meeting_request_duration_negative_raises(self):
         with pytest.raises(ValueError):
@@ -1186,6 +1220,17 @@ class TestCrossFieldValidationEdgeCases:
                 escalation_after_seconds=7200,
                 escalation_target="boss",
             )
+
+    def test_sla_escalation_after_exceeds_max_error_is_bounded(self):
+        with pytest.raises(ValueError, match="must not exceed") as excinfo:
+            _response_sla(
+                max_response_seconds=3600,
+                escalation_after_seconds=7200,
+                escalation_target="boss",
+            )
+        assert "escalation_after_seconds" in str(excinfo.value)
+        assert "3600" not in str(excinfo.value)
+        assert "7200" not in str(excinfo.value)
 
     def test_sla_escalation_after_equals_max_ok(self):
         s = _response_sla(

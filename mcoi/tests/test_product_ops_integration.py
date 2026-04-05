@@ -104,7 +104,7 @@ class TestConstructorValidation:
 
 
 class TestReleaseFromAssurance:
-    def test_basic_return_keys(self, integration):
+    def test_basic_return_keys(self, integration, ops_engine):
         result = integration.release_from_assurance(
             "rel1", "g1", "v1", "T1", "asr1", True
         )
@@ -115,6 +115,9 @@ class TestReleaseFromAssurance:
         assert result["assurance_ref"] == "asr1"
         assert result["passed"] is True
         assert result["source_type"] == "assurance"
+        gate = ops_engine.gates_for_release("rel1")[0]
+        assert gate.reason == "assurance gate"
+        assert "asr1" not in gate.reason
 
     def test_passed_false(self, integration):
         result = integration.release_from_assurance(
@@ -174,7 +177,7 @@ class TestReleaseFromAssurance:
 
 
 class TestReleaseFromContinuity:
-    def test_basic_return_keys(self, integration):
+    def test_basic_return_keys(self, integration, ops_engine):
         result = integration.release_from_continuity(
             "rel20", "g20", "v1", "T1", "cont1", True
         )
@@ -185,6 +188,9 @@ class TestReleaseFromContinuity:
         assert result["continuity_ref"] == "cont1"
         assert result["passed"] is True
         assert result["source_type"] == "continuity"
+        gate = ops_engine.gates_for_release("rel20")[0]
+        assert gate.reason == "continuity gate"
+        assert "cont1" not in gate.reason
 
     def test_passed_false(self, integration):
         result = integration.release_from_continuity(
@@ -236,7 +242,7 @@ class TestReleaseFromContinuity:
 
 
 class TestReleaseFromServiceHealth:
-    def test_basic_return_keys(self, integration):
+    def test_basic_return_keys(self, integration, ops_engine):
         result = integration.release_from_service_health(
             "rel30", "g30", "v1", "T1", "svc1", True
         )
@@ -247,6 +253,9 @@ class TestReleaseFromServiceHealth:
         assert result["service_ref"] == "svc1"
         assert result["passed"] is True
         assert result["source_type"] == "service_health"
+        gate = ops_engine.gates_for_release("rel30")[0]
+        assert gate.reason == "service health gate"
+        assert "svc1" not in gate.reason
 
     def test_passed_false(self, integration):
         result = integration.release_from_service_health(
@@ -404,7 +413,7 @@ class TestReleaseFromCustomerImpact:
 
 
 class TestReleaseFromChangeRuntime:
-    def test_basic_return_keys(self, integration):
+    def test_basic_return_keys(self, integration, ops_engine):
         result = integration.release_from_change_runtime(
             "rel40", "g40", "v1", "T1", "chg1", True
         )
@@ -415,6 +424,9 @@ class TestReleaseFromChangeRuntime:
         assert result["change_ref"] == "chg1"
         assert result["passed"] is True
         assert result["source_type"] == "change_runtime"
+        gate = ops_engine.gates_for_release("rel40")[0]
+        assert gate.reason == "change approval gate"
+        assert "chg1" not in gate.reason
 
     def test_passed_false(self, integration):
         result = integration.release_from_change_runtime(

@@ -124,6 +124,9 @@ class GovernedConnectorFramework:
         self._invocation_counter = 0
         self._lock = threading.Lock()
 
+    def _bounded_connector_error(self, exc: BaseException) -> str:
+        return f"connector error ({type(exc).__name__})"
+
     def register(
         self,
         definition: ConnectorDefinition,
@@ -207,7 +210,7 @@ class GovernedConnectorFramework:
                 return self._record_invocation(
                     connector_id, action, InvocationOutcome.DENIED,
                     payload, {}, 0.0, now,
-                    error=f"guard denied: {guard_result.reason}",
+                    error="connector access denied",
                 )
 
         # Execute handler
@@ -242,7 +245,7 @@ class GovernedConnectorFramework:
             invocation = self._record_invocation(
                 connector_id, action, InvocationOutcome.FAILURE,
                 payload, {}, duration_ms, now,
-                error=f"{type(exc).__name__}: {exc}",
+                error=self._bounded_connector_error(exc),
             )
 
         # Audit trail

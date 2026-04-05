@@ -262,7 +262,9 @@ class TestAttachMultimodalStateToMemoryMesh:
 
     def test_memory_title(self, integration):
         result = integration.attach_multimodal_state_to_memory_mesh("scope-1")
-        assert "scope-1" in result.title
+        assert result.title == "Multimodal state"
+        assert "scope-1" not in result.title
+        assert result.scope_ref_id == "scope-1"
 
     def test_memory_content_keys(self, integration):
         integration.multimodal_from_copilot_session("t-1", "cop-1")

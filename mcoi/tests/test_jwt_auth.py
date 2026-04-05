@@ -67,6 +67,16 @@ class TestOIDCConfig:
                 allowed_algorithms=frozenset({"RS256"}),
             )
 
+    def test_unsupported_algorithm_error_is_bounded(self):
+        with pytest.raises(ValueError, match="unsupported algorithm") as excinfo:
+            OIDCConfig(
+                issuer="iss", audience="aud", signing_key=b"key",
+                allowed_algorithms=frozenset({"RS256"}),
+            )
+        assert str(excinfo.value) == "unsupported algorithm"
+        assert "RS256" not in str(excinfo.value)
+        assert ":" not in str(excinfo.value)
+
     def test_custom_claims(self):
         cfg = _config(tenant_claim="org_id", scope_claim="permissions")
         assert cfg.tenant_claim == "org_id"
@@ -127,6 +137,14 @@ class TestTokenCreation:
         auth = _auth()
         with pytest.raises(ValueError, match="unsupported"):
             auth.create_token(subject="user1", algorithm="RS256")
+
+    def test_unsupported_token_algorithm_error_is_bounded(self):
+        auth = _auth()
+        with pytest.raises(ValueError, match="unsupported algorithm") as excinfo:
+            auth.create_token(subject="user1", algorithm="RS256")
+        assert str(excinfo.value) == "unsupported algorithm"
+        assert "RS256" not in str(excinfo.value)
+        assert ":" not in str(excinfo.value)
 
 
 # ═══ Token Validation — Happy Path ═══
@@ -214,7 +232,9 @@ class TestTokenValidationErrors:
         token = bad_auth.create_token(subject="user1")
         result = auth.validate(token)
         assert not result.authenticated
-        assert "issuer mismatch" in result.error
+        assert result.error == "issuer mismatch"
+        assert "https://good.io" not in result.error
+        assert "https://evil.io" not in result.error
 
     def test_audience_mismatch(self):
         auth = _auth(_config(audience="good-api"))
@@ -222,7 +242,26 @@ class TestTokenValidationErrors:
         token = bad_auth.create_token(subject="user1")
         result = auth.validate(token)
         assert not result.authenticated
-        assert "audience mismatch" in result.error
+        assert result.error == "audience mismatch"
+        assert "good-api" not in result.error
+        assert "evil-api" not in result.error
+
+    def test_audience_list_mismatch_is_bounded(self):
+        auth = _auth(_config(audience="good-api"))
+        token = auth.create_token(subject="user1")
+        parts = token.split(".")
+        payload = json.loads(_b64url_decode(parts[1]))
+        payload["aud"] = ["evil-api", "other-api"]
+        new_payload_b64 = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode())
+        import hmac as hmac_mod
+        signing_input = f"{parts[0]}.{new_payload_b64}".encode("ascii")
+        sig = hmac_mod.new(auth.config.signing_key, signing_input, "sha256").digest()
+        mismatched = f"{parts[0]}.{new_payload_b64}.{_b64url_encode(sig)}"
+        result = auth.validate(mismatched)
+        assert not result.authenticated
+        assert result.error == "audience mismatch"
+        assert "evil-api" not in result.error
+        assert "other-api" not in result.error
 
     def test_expired_token(self):
         auth = _auth()
@@ -382,7 +421,9 @@ class TestJWTGuard:
         }
         result = guard.check(ctx)
         assert not result.allowed
-        assert "tenant mismatch" in result.reason
+        assert result.reason == "tenant mismatch"
+        assert "t1" not in result.reason
+        assert "t2" not in result.reason
 
     def test_guard_in_chain(self):
         auth = _auth()

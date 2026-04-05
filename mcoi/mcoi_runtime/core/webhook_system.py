@@ -111,7 +111,7 @@ class WebhookManager:
     def subscribe(self, sub: WebhookSubscription) -> WebhookSubscription:
         """Register a webhook subscription. Rejects private/internal URLs (SSRF prevention)."""
         if sub.subscription_id in self._subscriptions:
-            raise ValueError(f"subscription already exists: {sub.subscription_id}")
+            raise ValueError("subscription already exists")
         if _is_private_url(sub.url):
             raise ValueError("webhook URL rejected: private/internal address not allowed")
         self._subscriptions[sub.subscription_id] = sub

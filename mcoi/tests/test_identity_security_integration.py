@@ -266,6 +266,9 @@ class TestAttachSecurityStateToMemoryMesh:
     def test_basic(self, integration) -> None:
         record = integration.attach_security_state_to_memory_mesh("scope-1")
         assert isinstance(record, MemoryRecord)
+        assert record.title == "Identity/security state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
         assert "identity" in record.tags or "identity" in list(record.tags)
 
     def test_content_keys(self, integration) -> None:

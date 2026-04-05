@@ -141,8 +141,9 @@ class TestRegisterRule:
 
     def test_duplicate_raises(self, engine):
         engine.register_rule("r1", "t1", "A")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate rule_id") as exc_info:
             engine.register_rule("r1", "t1", "B")
+        assert "r1" not in str(exc_info.value)
 
     def test_created_at_is_iso(self, engine):
         r = engine.register_rule("r1", "t1", "A")
@@ -180,8 +181,9 @@ class TestGetRule:
         assert r.rule_id == "r1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id") as exc_info:
             engine.get_rule("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_returns_updated_rule_after_suspend(self, engine):
         engine.register_rule("r1", "t1", "Test")
@@ -207,14 +209,17 @@ class TestSuspendRule:
         assert r.status == ConstitutionStatus.SUSPENDED
 
     def test_suspend_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id") as exc_info:
             engine.suspend_rule("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_suspend_retired_raises(self, engine):
         engine.register_rule("r1", "t1", "Test")
         engine.retire_rule("r1")
-        with pytest.raises(RuntimeCoreInvariantError, match="terminal state"):
+        with pytest.raises(RuntimeCoreInvariantError, match="terminal state") as exc_info:
             engine.suspend_rule("r1")
+        assert "r1" not in str(exc_info.value)
+        assert "retired" not in str(exc_info.value).lower()
 
     def test_suspend_already_suspended_ok(self, engine):
         engine.register_rule("r1", "t1", "Test")
@@ -263,8 +268,9 @@ class TestRetireRule:
     def test_retire_already_retired_raises(self, engine):
         engine.register_rule("r1", "t1", "Test")
         engine.retire_rule("r1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already retired"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already retired") as exc_info:
             engine.retire_rule("r1")
+        assert "r1" not in str(exc_info.value)
 
     def test_retire_unknown_raises(self, engine):
         with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id"):
@@ -402,20 +408,24 @@ class TestAddRuleToBundle:
 
     def test_unknown_bundle_raises(self, engine):
         engine.register_rule("r1", "t1", "Rule")
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown bundle_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown bundle_id") as exc_info:
             engine.add_rule_to_bundle("nope", "r1")
+        assert "nope" not in str(exc_info.value)
 
     def test_unknown_rule_raises(self, engine):
         engine.register_bundle("b1", "t1", "Bundle")
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id") as exc_info:
             engine.add_rule_to_bundle("b1", "nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_duplicate_rule_in_bundle_raises(self, engine):
         engine.register_rule("r1", "t1", "Rule")
         engine.register_bundle("b1", "t1", "Bundle")
         engine.add_rule_to_bundle("b1", "r1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already in bundle"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already in bundle") as exc_info:
             engine.add_rule_to_bundle("b1", "r1")
+        assert "r1" not in str(exc_info.value)
+        assert "b1" not in str(exc_info.value)
 
     def test_emits_event(self, es, engine):
         engine.register_rule("r1", "t1", "Rule")
@@ -621,8 +631,9 @@ class TestGetDecision:
         assert d.decision_id == "d1"
 
     def test_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown decision_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown decision_id") as exc_info:
             engine.get_decision("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 class TestDecisionsForTenant:
@@ -688,8 +699,9 @@ class TestResolvePrecedence:
         engine.register_rule("r1", "t1", "A")
         engine.register_rule("r2", "t1", "B")
         engine.resolve_precedence("p1", "t1", "r1", "r2")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate resolution_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate resolution_id") as exc_info:
             engine.resolve_precedence("p1", "t1", "r1", "r2")
+        assert "p1" not in str(exc_info.value)
 
     def test_unknown_rule_a_raises(self, engine):
         engine.register_rule("r1", "t1", "A")
@@ -789,8 +801,9 @@ class TestApplyOverride:
             engine.apply_override("o1", "r1", "t1", "admin", "reason")
 
     def test_unknown_rule_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown rule_id") as exc_info:
             engine.apply_override("o1", "nope", "t1", "admin", "reason")
+        assert "nope" not in str(exc_info.value)
 
     def test_increments_override_count(self, engine):
         engine.register_rule("r1", "t1", "Soft", ConstitutionRuleKind.SOFT_DENY)
@@ -810,7 +823,7 @@ class TestApplyOverride:
         engine.register_rule("r1", "t1", "Hard", ConstitutionRuleKind.HARD_DENY)
         ov = engine.apply_override("o1", "r1", "t1", "admin", "custom reason")
         assert "hard_deny rule cannot be overridden" in ov.reason
-        assert "custom reason" in ov.reason
+        assert "custom reason" not in ov.reason
 
     def test_emits_event(self, es, engine):
         engine.register_rule("r1", "t1", "Soft", ConstitutionRuleKind.SOFT_DENY)
@@ -869,8 +882,9 @@ class TestEnterEmergencyMode:
 
     def test_duplicate_raises(self, engine):
         engine.enter_emergency_mode("e1", "t1", EmergencyMode.LOCKDOWN, "auth", "reason")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate emergency_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate emergency_id") as exc_info:
             engine.enter_emergency_mode("e1", "t1", EmergencyMode.LOCKDOWN, "auth", "reason")
+        assert "e1" not in str(exc_info.value)
 
     def test_updates_tenant_mode(self, engine):
         engine.enter_emergency_mode("e1", "t1", EmergencyMode.LOCKDOWN, "auth", "reason")
@@ -918,8 +932,9 @@ class TestExitEmergencyMode:
         assert engine.get_emergency_mode("t1") == EmergencyMode.NORMAL
 
     def test_exit_not_in_emergency_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="not in emergency mode"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not in emergency mode") as exc_info:
             engine.exit_emergency_mode("e1", "t1", "auth", "resolved")
+        assert "t1" not in str(exc_info.value)
 
     def test_exit_duplicate_id_raises(self, engine):
         engine.enter_emergency_mode("e1", "t1", EmergencyMode.LOCKDOWN, "auth", "reason")
@@ -1089,8 +1104,9 @@ class TestConstitutionAssessment:
 
     def test_duplicate_assessment_raises(self, engine):
         engine.constitution_assessment("a1", "t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate assessment_id"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate assessment_id") as exc_info:
             engine.constitution_assessment("a1", "t1")
+        assert "a1" not in str(exc_info.value)
 
     def test_assessment_fields(self, engine):
         engine.register_rule("r1", "t1", "A")
@@ -2097,3 +2113,36 @@ class TestImmutability:
     def test_resolutions_for_tenant_returns_tuple(self, engine):
         result = engine.resolutions_for_tenant("t1")
         assert isinstance(result, tuple)
+
+
+class TestBoundedContracts:
+    def test_hard_deny_violation_reason_redacts_rule_id(self, engine):
+        engine.register_rule("rule-secret", "t1", "Hard", ConstitutionRuleKind.HARD_DENY)
+        engine.apply_override("o1", "rule-secret", "t1", "admin", "custom reason")
+        violations = engine.violations_for_tenant("t1")
+        assert len(violations) == 1
+        assert violations[0].operation == "override_hard_deny"
+        assert violations[0].reason == "attempted override of hard_deny rule"
+        assert "rule-secret" not in violations[0].reason
+
+    def test_suspended_no_override_reason_redacts_rule_id(self, engine):
+        engine.register_rule("rule-secret", "t1", "Rule")
+        engine.suspend_rule("rule-secret")
+        violation = engine.detect_constitution_violations("t1")[0]
+        assert violation.operation == "suspended_no_override"
+        assert violation.reason == "rule suspended without override record"
+        assert "rule-secret" not in violation.reason
+
+    def test_empty_bundle_reason_redacts_bundle_id(self, engine):
+        engine.register_bundle("bundle-secret", "t1", "Bundle")
+        violation = engine.detect_constitution_violations("t1")[0]
+        assert violation.operation == "empty_bundle"
+        assert violation.reason == "active bundle has no rules"
+        assert "bundle-secret" not in violation.reason
+
+    def test_policy_denied_reason_redacts_rule_id(self, engine):
+        engine.register_rule("rule-secret", "t1", "Hard", ConstitutionRuleKind.HARD_DENY)
+        engine.evaluate_global_policy("d1", "t1", "all", "all")
+        violation = next(v for v in engine.detect_constitution_violations("t1") if v.operation == "policy_denied")
+        assert violation.reason == "action denied by rule"
+        assert "rule-secret" not in violation.reason

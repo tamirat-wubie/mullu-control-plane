@@ -22,21 +22,21 @@ _APP_CONFIG_KEYS = frozenset(
 )
 
 
-def _require_text(value: Any, field_name: str) -> str:
+def _require_text(value: Any, _field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{field_name} must be a non-empty string")
+        raise ValueError("config values must be non-empty strings")
     return value
 
 
-def _require_text_tuple(value: Any, field_name: str) -> tuple[str, ...]:
+def _require_text_tuple(value: Any, _field_name: str) -> tuple[str, ...]:
     if not isinstance(value, (tuple, list)):
-        raise ValueError(f"{field_name} must be a sequence of strings")
+        raise ValueError("config values must be sequences of non-empty strings")
     items = tuple(value)
     if not items:
-        raise ValueError(f"{field_name} must contain at least one item")
-    for index, item in enumerate(items):
+        raise ValueError("config values must contain at least one item")
+    for item in items:
         if not isinstance(item, str) or not item.strip():
-            raise ValueError(f"{field_name}[{index}] must be a non-empty string")
+            raise ValueError("config values must contain non-empty strings")
     return items
 
 
@@ -86,8 +86,7 @@ class AppConfig:
 
         unknown_keys = sorted(set(normalized) - _APP_CONFIG_KEYS)
         if unknown_keys:
-            joined = ", ".join(unknown_keys)
-            raise ValueError(f"unknown config keys: {joined}")
+            raise ValueError("unknown config keys")
 
         return cls(
             allowed_planning_classes=tuple(

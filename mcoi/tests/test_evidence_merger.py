@@ -79,7 +79,9 @@ def test_evidence_merger_rejects_conflicting_committed_state_writes() -> None:
             ),
         )
 
-    assert "committed state conflict" in str(exc_info.value)
+    assert str(exc_info.value) == "state conflict requires explicit reconciliation"
+    assert "committed" not in str(exc_info.value)
+    assert "workspace.root" not in str(exc_info.value)
     assert state.committed["workspace.root"].value == "C:/workspace"
     assert state.committed["workspace.root"].provenance_ids == ("seed-1",)
 
@@ -109,6 +111,8 @@ def test_evidence_merger_rejects_conflicting_observed_state_writes() -> None:
             ),
         )
 
-    assert "observed state conflict" in str(exc_info.value)
+    assert str(exc_info.value) == "state conflict requires explicit reconciliation"
+    assert "observed" not in str(exc_info.value)
+    assert "workspace.files" not in str(exc_info.value)
     assert state.observed["workspace.files"].value == 12
     assert state.observed["workspace.files"].provenance_ids == ("seed-1",)

@@ -41,7 +41,7 @@ class IdentityBindingEngine:
 
     def sign_intent(self, intent_id: str, actor_id: str, action: str, target: str) -> SignedIntent:
         if intent_id in self._intents:
-            raise ValueError(f"Duplicate intent: {intent_id}")
+            raise ValueError("intent already registered")
         intent_hash = sha256(f"{actor_id}:{action}:{target}".encode()).hexdigest()
         si = SignedIntent(intent_id, actor_id, action, target, intent_hash, datetime.now(timezone.utc).isoformat())
         self._intents[intent_id] = si
@@ -49,10 +49,10 @@ class IdentityBindingEngine:
 
     def bind_action(self, binding_id: str, intent_id: str, execution_id: str) -> ActionBinding:
         if binding_id in self._bindings:
-            raise ValueError(f"Duplicate binding: {binding_id}")
+            raise ValueError("binding already registered")
         intent = self._intents.get(intent_id)
         if not intent:
-            raise ValueError(f"Unknown intent: {intent_id}")
+            raise ValueError("intent unavailable")
         verification_hash = sha256(f"{intent.intent_hash}:{execution_id}".encode()).hexdigest()
         ab = ActionBinding(binding_id, intent, execution_id, verification_hash, True, datetime.now(timezone.utc).isoformat())
         self._bindings[binding_id] = ab
@@ -194,7 +194,7 @@ class AdversarialDefenseEngine:
     def record_contradiction(self, source_id: str) -> TrustDecayRecord:
         r = self._sources.get(source_id)
         if not r:
-            raise ValueError(f"Unknown source: {source_id}")
+            raise ValueError("source unavailable")
         r.contradictions += 1
         r.current_trust = max(0.0, r.current_trust - 0.15)
         r.decay_events += 1

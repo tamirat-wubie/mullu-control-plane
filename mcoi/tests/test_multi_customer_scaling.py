@@ -16,6 +16,13 @@ class TestDeploymentFactory:
         assert fd.verification_passed
         assert factory.deployment_count == 1
 
+    def test_unknown_template_error_is_bounded(self):
+        factory = DeploymentFactory()
+        with pytest.raises(ValueError, match="unknown template") as excinfo:
+            factory.deploy_customer(_profile("c1", "Acme Corp"), template_id="tmpl-404")
+        assert str(excinfo.value) == "unknown template"
+        assert "tmpl-404" not in str(excinfo.value)
+
     def test_deploy_three_customers(self):
         factory = DeploymentFactory()
         for i in range(3):
@@ -38,6 +45,13 @@ class TestMultiTenantOps:
         ops.register_tenant("t1")
         ops.register_tenant("t2")
         assert ops.tenant_count == 2
+
+    def test_unknown_tenant_error_is_bounded(self):
+        ops = MultiTenantOperations()
+        with pytest.raises(ValueError, match="unknown tenant") as excinfo:
+            ops.update_health("tenant-404", connector_health=0.4)
+        assert str(excinfo.value) == "unknown tenant"
+        assert "tenant-404" not in str(excinfo.value)
 
     def test_health_scoring(self):
         h = TenantHealthScore("t1", connector_health=1.0, workflow_completion_rate=0.95, slo_compliance=1.0, operator_satisfaction=9.0)

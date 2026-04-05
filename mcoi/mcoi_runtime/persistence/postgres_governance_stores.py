@@ -1,11 +1,11 @@
-"""Phase 1A/2D — PostgreSQL Governance Stores.
+﻿"""Phase 1A/2D â€” PostgreSQL Governance Stores.
 
 Purpose: Production-grade PostgreSQL implementations for governance
     externalization stores: BudgetStore, AuditStore, RateLimitStore,
     and TenantGatingStore. These replace the in-memory stubs, making
     governance state durable and consistent across replicas.
 Governance scope: persistence backend only.
-Dependencies: psycopg2 (optional — graceful fallback to no-op stubs).
+Dependencies: psycopg2 (optional â€” graceful fallback to no-op stubs).
 Invariants:
   - Same interface contracts as the stub base classes.
   - All writes are transactional (auto-commit per operation).
@@ -29,7 +29,7 @@ from mcoi_runtime.core.tenant_budget import BudgetStore
 from mcoi_runtime.core.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
 
 
-# ═══ Schema Definitions ═══
+# â•â•â• Schema Definitions â•â•â•
 
 GOVERNANCE_MIGRATIONS: list[str] = [
     # Migration 1: Budget table
@@ -104,6 +104,16 @@ import logging as _logging
 _log = _logging.getLogger(__name__)
 
 
+def _bounded_detail_crypto_error(phase: str, exc: Exception) -> RuntimeError:
+    """Return a bounded audit-detail failure without leaking backend text."""
+    return RuntimeError(f"audit detail {phase} failed ({type(exc).__name__})")
+
+
+def _bounded_store_failure(exc: Exception) -> str:
+    """Return a type-only failure label for operator-visible store warnings."""
+    return type(exc).__name__
+
+
 class _PostgresBase:
     """Shared base for PostgreSQL governance stores.
 
@@ -140,7 +150,10 @@ class _PostgresBase:
                 if auto_migrate:
                     self._run_migration()
             except Exception as exc:
-                _log.warning("governance store connection failed: %s", exc)
+                _log.warning(
+                    "governance store connection failed (%s)",
+                    _bounded_store_failure(exc),
+                )
                 self._conn = None
 
     def _connect(self) -> None:
@@ -159,7 +172,10 @@ class _PostgresBase:
             self._connect()
             return True
         except Exception as exc:
-            _log.warning("governance store reconnection failed: %s", exc)
+            _log.warning(
+                "governance store reconnection failed (%s)",
+                _bounded_store_failure(exc),
+            )
             self._conn = None
             return False
 
@@ -172,7 +188,11 @@ class _PostgresBase:
                 self._conn.commit()
             except Exception as exc:
                 self._conn.rollback()
-                _log.warning("governance migration %d failed (may already exist): %s", self._migration_index, exc)
+                _log.warning(
+                    "governance migration %d failed (%s)",
+                    self._migration_index,
+                    _bounded_store_failure(exc),
+                )
 
     def _safe_execute(self, fn: Any) -> Any:
         """Execute a function with automatic reconnection on failure."""
@@ -183,7 +203,10 @@ class _PostgresBase:
                 try:
                     return fn()
                 except Exception as exc:
-                    _log.warning("governance store operation failed after reconnect: %s", exc)
+                    _log.warning(
+                        "governance store operation failed after reconnect (%s)",
+                        _bounded_store_failure(exc),
+                    )
             return None
 
     def close(self) -> None:
@@ -195,7 +218,7 @@ class _PostgresBase:
             self._conn = None
 
 
-# ═══ PostgresBudgetStore ═══
+# â•â•â• PostgresBudgetStore â•â•â•
 
 
 class PostgresBudgetStore(_PostgresBase, BudgetStore):
@@ -284,7 +307,7 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
         ]
 
 
-# ═══ PostgresAuditStore ═══
+# â•â•â• PostgresAuditStore â•â•â•
 
 
 class PostgresAuditStore(_PostgresBase, AuditStore):
@@ -315,20 +338,24 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
         if self._field_encryptor is not None:
             try:
                 return self._field_encryptor.encrypt(detail_json)
-            except Exception:
-                pass  # Encryption failure — fall back to plaintext
+            except Exception as exc:
+                raise _bounded_detail_crypto_error("encryption", exc) from exc
         return detail_json
 
     def _decrypt_detail(self, stored: str) -> dict[str, Any]:
         """Decrypt detail string if encrypted, else parse as JSON."""
-        if self._field_encryptor is not None and self._field_encryptor.is_encrypted(stored):
+        if self._field_encryptor is not None:
             try:
-                decrypted = self._field_encryptor.decrypt(stored)
-                return json.loads(decrypted)
-            except Exception:
-                pass  # Decryption failure — try as plaintext
+                if self._field_encryptor.is_encrypted(stored):
+                    decrypted = self._field_encryptor.decrypt(stored)
+                    return json.loads(decrypted)
+            except Exception as exc:
+                raise _bounded_detail_crypto_error("decryption", exc) from exc
         if isinstance(stored, str):
-            return json.loads(stored)
+            try:
+                return json.loads(stored)
+            except Exception as exc:
+                raise _bounded_detail_crypto_error("parse", exc) from exc
         return stored  # Already parsed (psycopg2 JSONB)
 
     def append(self, entry: AuditEntry) -> None:
@@ -400,7 +427,7 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
                 return cur.fetchone()[0]
 
 
-# ═══ PostgresRateLimitStore ═══
+# â•â•â• PostgresRateLimitStore â•â•â•
 
 
 class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
@@ -454,7 +481,7 @@ class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
         return {"allowed": int(row[0]), "denied": int(row[1])}
 
 
-# ═══ PostgresTenantGatingStore ═══
+# â•â•â• PostgresTenantGatingStore â•â•â•
 
 
 class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
@@ -527,7 +554,7 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
         ]
 
 
-# ═══ In-Memory Governance Stores (for testing without PostgreSQL) ═══
+# â•â•â• In-Memory Governance Stores (for testing without PostgreSQL) â•â•â•
 
 
 class InMemoryBudgetStore(BudgetStore):
@@ -603,7 +630,7 @@ class InMemoryTenantGatingStore(TenantGatingStore):
         return sorted(self._gates.values(), key=lambda g: g.tenant_id)
 
 
-# ═══ Factory ═══
+# â•â•â• Factory â•â•â•
 
 
 class GovernanceStoreBundle:
@@ -648,8 +675,8 @@ def create_governance_stores(
     Returns GovernanceStoreBundle with keys: "budget", "audit", "rate_limit", "tenant_gating".
 
     Backends:
-    - "memory" → In-memory stores (testing/development)
-    - "postgresql" → PostgreSQL stores (production)
+    - "memory" â†’ In-memory stores (testing/development)
+    - "postgresql" â†’ PostgreSQL stores (production)
 
     When field_encryptor is provided, audit entry detail fields are encrypted at rest.
     """
@@ -668,4 +695,6 @@ def create_governance_stores(
             "rate_limit": PostgresRateLimitStore(conn),
             "tenant_gating": PostgresTenantGatingStore(conn),
         })
-    raise ValueError(f"unsupported governance store backend: {backend}")
+    raise ValueError("unsupported governance store backend")
+
+

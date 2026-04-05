@@ -27,6 +27,11 @@ from mcoi_runtime.core.system_stabilization import (
 )
 
 
+def _bounded_gate_error(summary: str, _exc: Exception) -> str:
+    """Return a stable gate failure summary without raw backend detail."""
+    return summary
+
+
 @dataclass(frozen=True, slots=True)
 class GovernedDispatchContext:
     """Enriched context that flows through every gate."""
@@ -107,10 +112,11 @@ class GovernedDispatcher:
                 context.request.route, context.request.goal_id,
             )
             result.gates_passed.append(GateResult("identity_binding", True))
-        except Exception as e:
-            result.gates_failed.append(GateResult("identity_binding", False, str(e)))
+        except Exception as exc:
+            bounded_error = _bounded_gate_error("identity binding failed", exc)
+            result.gates_failed.append(GateResult("identity_binding", False, bounded_error))
             result.blocked = True
-            result.block_reason = f"identity_binding: {e}"
+            result.block_reason = "identity_binding blocked"
             self._emit_ledger(context, result, now)
             return result
 
@@ -119,12 +125,12 @@ class GovernedDispatcher:
             f"pred-{context.intent_id}", context.request.route, context.current_load
         )
         if prediction.recommendation == "abort":
-            result.gates_failed.append(GateResult("predictive_failure", False, f"risk={prediction.risk_score}, rec=abort"))
+            result.gates_failed.append(GateResult("predictive_failure", False, "predictive failure blocked dispatch"))
             result.blocked = True
-            result.block_reason = f"predictive_failure: risk {prediction.risk_score} -> abort"
+            result.block_reason = "predictive_failure blocked"
             self._emit_ledger(context, result, now)
             return result
-        result.gates_passed.append(GateResult("predictive_failure", True, f"risk={prediction.risk_score}, rec={prediction.recommendation}"))
+        result.gates_passed.append(GateResult("predictive_failure", True, "predictive failure check passed"))
 
         # --- Gate 3: Economic Optimization ---
         estimate = self._optimizer.estimate(
@@ -172,7 +178,7 @@ class GovernedDispatcher:
             # Trigger compensation
             self._recovery.register_compensation(
                 f"comp-{context.intent_id}", context.intent_id, "rollback",
-                detail=f"verification failed: expected={expected}, actual={actual}"
+                detail="execution verification failed"
             )
 
         # --- Post: Action Binding ---

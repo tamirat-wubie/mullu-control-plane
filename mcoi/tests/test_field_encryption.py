@@ -51,8 +51,9 @@ class TestStaticKeyProvider:
         assert p.current_key_id() == "k2"
 
     def test_invalid_current_raises(self):
-        with pytest.raises(ValueError, match="current key"):
+        with pytest.raises(ValueError, match="^current encryption key must exist in keys$") as exc_info:
             StaticKeyProvider({"k1": _test_key()}, "missing")
+        assert "missing" not in str(exc_info.value)
 
     def test_multiple_keys(self):
         p = _provider()
@@ -80,8 +81,10 @@ class TestEnvKeyProvider:
 
     def test_wrong_key_length_raises(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENCRYPTION_KEY", base64.b64encode(b"short").decode())
-        with pytest.raises(ValueError, match="32 bytes"):
+        with pytest.raises(ValueError, match="^encryption key must decode to exactly 32 bytes$") as exc_info:
             EnvKeyProvider()
+        assert "MULLU_ENCRYPTION_KEY" not in str(exc_info.value)
+        assert "5" not in str(exc_info.value)
 
     def test_custom_env_var(self, monkeypatch):
         key = _test_key()
@@ -187,8 +190,9 @@ class TestEncryptionErrors:
         # Replace key_id with unknown
         parts = token.split(":")
         tampered = f"unknown:{parts[1]}:{parts[2]}"
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="^decryption key not found$") as exc_info:
             enc.decrypt(tampered)
+        assert "unknown" not in str(exc_info.value)
 
     def test_decrypt_tampered_ciphertext(self):
         enc = _encryptor()
@@ -198,8 +202,17 @@ class TestEncryptionErrors:
         ct = base64.b64decode(parts[2])
         tampered_ct = bytes([b ^ 0xFF for b in ct])
         tampered = f"{parts[0]}:{parts[1]}:{base64.b64encode(tampered_ct).decode()}"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             enc.decrypt(tampered)
+        assert "decryption failed:" not in str(exc_info.value)
+
+    def test_encrypt_missing_current_key_is_bounded(self):
+        p = StaticKeyProvider({"k1": _test_key()}, "k1")
+        enc = FieldEncryptor(p)
+        p._keys.pop("k1")
+        with pytest.raises(ValueError, match="^encryption key not found$") as exc_info:
+            enc.encrypt("test")
+        assert "k1" not in str(exc_info.value)
 
 
 # ═══ Key Rotation ═══

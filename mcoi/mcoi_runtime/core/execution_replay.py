@@ -65,7 +65,7 @@ class ReplayRecorder:
     def start_trace(self, trace_id: str) -> None:
         """Start recording a new trace."""
         if trace_id in self._traces:
-            raise ValueError(f"trace already started: {trace_id}")
+            raise ValueError("trace already started")
         self._traces[trace_id] = []
 
     def record_frame(
@@ -79,9 +79,9 @@ class ReplayRecorder:
         """Record a single frame in a trace."""
         frames = self._traces.get(trace_id)
         if frames is None:
-            raise ValueError(f"trace not started: {trace_id}")
+            raise ValueError("trace not started")
         if len(frames) >= self._max_frames:
-            raise ValueError(f"trace {trace_id} exceeded max frames ({self._max_frames})")
+            raise ValueError("trace exceeded max frames")
 
         self._frame_counter += 1
         content = json.dumps(
@@ -106,7 +106,7 @@ class ReplayRecorder:
         """Finalize a trace — makes it immutable."""
         frames = self._traces.pop(trace_id, None)
         if frames is None:
-            raise ValueError(f"trace not found: {trace_id}")
+            raise ValueError("trace not found")
 
         total_duration = sum(f.duration_ms for f in frames)
         all_hashes = "".join(f.frame_hash for f in frames)
@@ -166,7 +166,7 @@ class ReplayExecutor:
                 results.append({
                     "frame_id": frame.frame_id,
                     "matched": False,
-                    "reason": f"unknown operation: {frame.operation}",
+                    "reason": "unknown operation",
                 })
                 continue
 

@@ -23,6 +23,50 @@ from enum import Enum
 from typing import Any, Callable
 
 
+_ETHIOPIC_RANGES: tuple[tuple[int, int], ...] = (
+    (0x1200, 0x137F),
+    (0x1380, 0x139F),
+    (0x2D80, 0x2DDF),
+    (0xAB00, 0xAB2F),
+)
+
+
+def _is_ethiopic_char(char: str) -> bool:
+    codepoint = ord(char)
+    return any(start <= codepoint <= end for start, end in _ETHIOPIC_RANGES)
+
+
+def _normalize_non_ethiopic_runs(text: str) -> str:
+    """Normalize only non-Ethiopic segments."""
+    if not text:
+        return text
+
+    pieces: list[str] = []
+    current_run: list[str] = []
+    current_is_ethiopic: bool | None = None
+
+    for char in text:
+        char_is_ethiopic = _is_ethiopic_char(char)
+        if current_is_ethiopic is None:
+            current_is_ethiopic = char_is_ethiopic
+        elif char_is_ethiopic != current_is_ethiopic:
+            segment = "".join(current_run)
+            pieces.append(
+                segment if current_is_ethiopic else unicodedata.normalize("NFKC", segment)
+            )
+            current_run = []
+            current_is_ethiopic = char_is_ethiopic
+        current_run.append(char)
+
+    if current_run:
+        segment = "".join(current_run)
+        pieces.append(
+            segment if current_is_ethiopic else unicodedata.normalize("NFKC", segment)
+        )
+
+    return "".join(pieces)
+
+
 class SafetyVerdict(str, Enum):
     """Verdict from content safety evaluation."""
 
@@ -191,7 +235,7 @@ def normalize_content(text: str) -> str:
         return text
 
     # 1. NFKC normalization — maps homoglyphs to canonical forms
-    normalized = unicodedata.normalize("NFKC", text)
+    normalized = _normalize_non_ethiopic_runs(text)
 
     # 2. Strip zero-width and invisible characters
     _INVISIBLE = frozenset({
@@ -323,7 +367,7 @@ def create_content_safety_guard(
         if result.verdict == SafetyVerdict.BLOCKED:
             return GuardResult(
                 allowed=False, guard_name="content_safety",
-                reason=f"content blocked: {result.reason} (filter: {result.blocking_filter})",
+                reason="content blocked",
             )
 
         # Flagged content is allowed but noted in context for audit

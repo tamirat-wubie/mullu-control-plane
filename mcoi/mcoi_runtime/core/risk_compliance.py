@@ -142,7 +142,7 @@ class RiskComplianceEngine:
     ) -> RiskRecord:
         """Register a new risk in the risk register."""
         if risk_id in self._risks:
-            raise RuntimeCoreInvariantError(f"Duplicate risk_id: {risk_id}")
+            raise RuntimeCoreInvariantError("Duplicate risk_id")
         now = _now_iso()
         risk = RiskRecord(
             risk_id=risk_id,
@@ -166,7 +166,7 @@ class RiskComplianceEngine:
         """Update the severity of an existing risk."""
         old = self._risks.get(risk_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown risk_id: {risk_id}")
+            raise RuntimeCoreInvariantError("Unknown risk_id")
         now = _now_iso()
         updated = RiskRecord(
             risk_id=old.risk_id,
@@ -213,7 +213,7 @@ class RiskComplianceEngine:
     ) -> ComplianceRequirement:
         """Register a compliance requirement."""
         if requirement_id in self._requirements:
-            raise RuntimeCoreInvariantError(f"Duplicate requirement_id: {requirement_id}")
+            raise RuntimeCoreInvariantError("Duplicate requirement_id")
         now = _now_iso()
         req = ComplianceRequirement(
             requirement_id=requirement_id,
@@ -243,7 +243,7 @@ class RiskComplianceEngine:
     ) -> ControlRecord:
         """Register a new control."""
         if control_id in self._controls:
-            raise RuntimeCoreInvariantError(f"Duplicate control_id: {control_id}")
+            raise RuntimeCoreInvariantError("Duplicate control_id")
         now = _now_iso()
         ctrl = ControlRecord(
             control_id=control_id,
@@ -264,7 +264,7 @@ class RiskComplianceEngine:
         """Update a control's status."""
         old = self._controls.get(control_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown control_id: {control_id}")
+            raise RuntimeCoreInvariantError("Unknown control_id")
         updated = ControlRecord(
             control_id=old.control_id,
             title=old.title,
@@ -298,9 +298,9 @@ class RiskComplianceEngine:
     ) -> ControlBinding:
         """Bind a control to a scoped entity."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         if control_id not in self._controls:
-            raise RuntimeCoreInvariantError(f"Unknown control_id: {control_id}")
+            raise RuntimeCoreInvariantError("Unknown control_id")
         now = _now_iso()
         binding = ControlBinding(
             binding_id=binding_id,
@@ -340,9 +340,9 @@ class RiskComplianceEngine:
     ) -> ControlTestRecord:
         """Record the outcome of a control test."""
         if test_id in self._tests:
-            raise RuntimeCoreInvariantError(f"Duplicate test_id: {test_id}")
+            raise RuntimeCoreInvariantError("Duplicate test_id")
         if control_id not in self._controls:
-            raise RuntimeCoreInvariantError(f"Unknown control_id: {control_id}")
+            raise RuntimeCoreInvariantError("Unknown control_id")
         now = _now_iso()
         test = ControlTestRecord(
             test_id=test_id,
@@ -408,9 +408,9 @@ class RiskComplianceEngine:
     ) -> ExceptionRequest:
         """Request a compliance exception."""
         if exception_id in self._exceptions:
-            raise RuntimeCoreInvariantError(f"Duplicate exception_id: {exception_id}")
+            raise RuntimeCoreInvariantError("Duplicate exception_id")
         if control_id not in self._controls:
-            raise RuntimeCoreInvariantError(f"Unknown control_id: {control_id}")
+            raise RuntimeCoreInvariantError("Unknown control_id")
         now = _now_iso()
         exc = ExceptionRequest(
             exception_id=exception_id,
@@ -437,11 +437,9 @@ class RiskComplianceEngine:
         """Approve an exception request."""
         old = self._exceptions.get(exception_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown exception_id: {exception_id}")
+            raise RuntimeCoreInvariantError("Unknown exception_id")
         if old.status != ExceptionStatus.REQUESTED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot approve exception in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot approve exception in current status")
         now = _now_iso()
         updated = ExceptionRequest(
             exception_id=old.exception_id,
@@ -464,11 +462,9 @@ class RiskComplianceEngine:
         """Deny an exception request."""
         old = self._exceptions.get(exception_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown exception_id: {exception_id}")
+            raise RuntimeCoreInvariantError("Unknown exception_id")
         if old.status != ExceptionStatus.REQUESTED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot deny exception in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot deny exception in current status")
         now = _now_iso()
         updated = ExceptionRequest(
             exception_id=old.exception_id,
@@ -491,11 +487,9 @@ class RiskComplianceEngine:
         """Revoke an approved exception."""
         old = self._exceptions.get(exception_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown exception_id: {exception_id}")
+            raise RuntimeCoreInvariantError("Unknown exception_id")
         if old.status != ExceptionStatus.APPROVED:
-            raise RuntimeCoreInvariantError(
-                f"Cannot revoke exception in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot revoke exception in current status")
         now = _now_iso()
         updated = ExceptionRequest(
             exception_id=old.exception_id,
@@ -546,7 +540,7 @@ class RiskComplianceEngine:
     ) -> ControlFailure:
         """Record a control failure."""
         if failure_id in self._failures:
-            raise RuntimeCoreInvariantError(f"Duplicate failure_id: {failure_id}")
+            raise RuntimeCoreInvariantError("Duplicate failure_id")
         now = _now_iso()
         failure = ControlFailure(
             failure_id=failure_id,
@@ -584,7 +578,7 @@ class RiskComplianceEngine:
     ) -> RiskAssessment:
         """Assess risk posture for a scope, aggregating from registered risks."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
 
         scope_risks = self.risks_for_scope(scope_ref_id)
         risk_count = len(scope_risks)
@@ -639,7 +633,7 @@ class RiskComplianceEngine:
     ) -> ComplianceSnapshot:
         """Capture a point-in-time compliance snapshot for a scope."""
         if snapshot_id in self._snapshots:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
 
         scope_bindings = self.bindings_for_scope(scope_ref_id)
         bound_control_ids = {b.control_id for b in scope_bindings if b.enforced}
@@ -701,7 +695,7 @@ class RiskComplianceEngine:
     ) -> AssuranceReport:
         """Generate an assurance report for a scope."""
         if report_id in self._reports:
-            raise RuntimeCoreInvariantError(f"Duplicate report_id: {report_id}")
+            raise RuntimeCoreInvariantError("Duplicate report_id")
 
         # Requirements
         total_requirements = len(self._requirements)

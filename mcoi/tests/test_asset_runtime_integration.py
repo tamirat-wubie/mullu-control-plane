@@ -439,6 +439,12 @@ class TestAttachAssetStateToMemoryMesh:
         mem = integration.attach_asset_state_to_memory_mesh("scope-1")
         assert isinstance(mem, MemoryRecord)
 
+    def test_memory_title_redacts_scope_ref(self, integration):
+        integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
+        mem = integration.attach_asset_state_to_memory_mesh("asset-scope-secret")
+        assert mem.title == "Asset state"
+        assert "asset-scope-secret" not in mem.title
+
     def test_tags_contain_expected_values(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
         mem = integration.attach_asset_state_to_memory_mesh("scope-1")

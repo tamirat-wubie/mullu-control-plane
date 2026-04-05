@@ -26,6 +26,11 @@ def _classify_guard_exception(exc: Exception) -> str:
     return f"guard error ({exc_type})"
 
 
+def _bounded_tenant_mismatch_reason() -> str:
+    """Return a bounded tenant mismatch reason."""
+    return "tenant mismatch"
+
+
 class GuardContext(TypedDict, total=False):
     """Typed context passed through the governance guard chain.
 
@@ -165,7 +170,7 @@ def create_rate_limit_guard(
             return GuardResult(allowed=True, guard_name="rate_limit")
         return GuardResult(
             allowed=False, guard_name="rate_limit",
-            reason=f"rate limited: retry after {result.retry_after_seconds}s",
+            reason="rate limited",
         )
     return GovernanceGuard("rate_limit", check)
 
@@ -189,12 +194,12 @@ def create_budget_guard(
         if report.exhausted:
             return GuardResult(
                 allowed=False, guard_name="budget",
-                reason=f"budget exhausted for tenant {tenant_id}",
+                reason="budget exhausted",
             )
         if not report.enabled:
             return GuardResult(
                 allowed=False, guard_name="budget",
-                reason=f"tenant {tenant_id} is disabled",
+                reason="tenant disabled",
             )
         return GuardResult(allowed=True, guard_name="budget")
     return GovernanceGuard("budget", check)
@@ -249,7 +254,7 @@ def create_jwt_guard(
             if require_auth and request_tenant and request_tenant != result.tenant_id:
                 return GuardResult(
                     allowed=False, guard_name="jwt",
-                    reason=f"tenant mismatch: JWT claims {result.tenant_id}, request claims {request_tenant}",
+                    reason=_bounded_tenant_mismatch_reason(),
                 )
             ctx["tenant_id"] = result.tenant_id
         # Propagate identity for audit attribution
@@ -303,7 +308,7 @@ def create_api_key_guard(
             if require_auth and request_tenant and request_tenant != result.tenant_id:
                 return GuardResult(
                     allowed=False, guard_name="api_key",
-                    reason=f"tenant mismatch: key bound to {result.tenant_id}, request claims {request_tenant}",
+                    reason=_bounded_tenant_mismatch_reason(),
                 )
             ctx["tenant_id"] = result.tenant_id
         # Propagate principal identity for audit attribution
@@ -361,27 +366,27 @@ def create_rbac_guard(
             if evaluation.decision == AccessDecision.DENIED:
                 return GuardResult(
                     allowed=False, guard_name="rbac",
-                    reason=f"access denied: {evaluation.reason}",
+                    reason="access denied",
                 )
             if evaluation.decision == AccessDecision.REQUIRES_APPROVAL:
                 return GuardResult(
                     allowed=False, guard_name="rbac",
-                    reason=f"approval required: {evaluation.reason}",
+                    reason="approval required",
                 )
         except Exception as _rbac_exc:
-            # If RBAC evaluation fails, fail-open for backward compatibility
-            # when require_identity is False, fail-closed when True
+            # Once an identity is present, RBAC evaluation failures must
+            # fail closed rather than silently bypassing authorization.
             import logging as _rbac_log
             _rbac_log.getLogger("mcoi_runtime.core.governance_guard").warning(
-                "RBAC evaluation failed for %s on %s: %s (fail-%s)",
-                identity_id, endpoint, _rbac_exc,
-                "closed" if require_identity else "open",
+                "RBAC evaluation failed for %s on %s (%s) [fail-closed]",
+                identity_id,
+                endpoint,
+                type(_rbac_exc).__name__,
             )
-            if require_identity:
-                return GuardResult(
-                    allowed=False, guard_name="rbac",
-                    reason="RBAC evaluation failed",
-                )
+            return GuardResult(
+                allowed=False, guard_name="rbac",
+                reason="RBAC evaluation failed",
+            )
 
         # Propagate resolved identity for downstream audit
         ctx["rbac_identity_id"] = identity_id

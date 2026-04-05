@@ -125,7 +125,7 @@ class TemporalRuntimeEngine:
     ) -> TemporalEvent:
         """Register a temporal event."""
         if event_id in self._temporal_events:
-            raise RuntimeCoreInvariantError(f"Duplicate event_id: {event_id}")
+            raise RuntimeCoreInvariantError("Duplicate event_id")
         now = self._clock()
         te = TemporalEvent(
             event_id=event_id, tenant_id=tenant_id,
@@ -142,7 +142,7 @@ class TemporalRuntimeEngine:
         """Get a temporal event by ID."""
         te = self._temporal_events.get(event_id)
         if te is None:
-            raise RuntimeCoreInvariantError(f"Unknown event_id: {event_id}")
+            raise RuntimeCoreInvariantError("Unknown event_id")
         return te
 
     # ------------------------------------------------------------------
@@ -160,7 +160,7 @@ class TemporalRuntimeEngine:
     ) -> TemporalInterval:
         """Register a temporal interval. Auto OPEN if end_at empty, CLOSED if both present."""
         if interval_id in self._intervals:
-            raise RuntimeCoreInvariantError(f"Duplicate interval_id: {interval_id}")
+            raise RuntimeCoreInvariantError("Duplicate interval_id")
         disposition = IntervalDisposition.OPEN if not end_at else IntervalDisposition.CLOSED
         now = self._clock()
         ti = TemporalInterval(
@@ -190,11 +190,11 @@ class TemporalRuntimeEngine:
     ) -> TemporalConstraint:
         """Register a temporal constraint between two events."""
         if constraint_id in self._constraints:
-            raise RuntimeCoreInvariantError(f"Duplicate constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Duplicate constraint_id")
         if event_a_ref not in self._temporal_events:
-            raise RuntimeCoreInvariantError(f"Unknown event_a_ref: {event_a_ref}")
+            raise RuntimeCoreInvariantError("Unknown event_a_ref")
         if event_b_ref not in self._temporal_events:
-            raise RuntimeCoreInvariantError(f"Unknown event_b_ref: {event_b_ref}")
+            raise RuntimeCoreInvariantError("Unknown event_b_ref")
         now = self._clock()
         tc = TemporalConstraint(
             constraint_id=constraint_id, tenant_id=tenant_id,
@@ -243,7 +243,7 @@ class TemporalRuntimeEngine:
     ) -> PersistenceRecord:
         """Record a persisting fact (PERSISTING status)."""
         if persistence_id in self._persistence:
-            raise RuntimeCoreInvariantError(f"Duplicate persistence_id: {persistence_id}")
+            raise RuntimeCoreInvariantError("Duplicate persistence_id")
         now = self._clock()
         pr = PersistenceRecord(
             persistence_id=persistence_id, tenant_id=tenant_id,
@@ -261,7 +261,7 @@ class TemporalRuntimeEngine:
         """Mark a persistence record as CEASED."""
         old = self._persistence.get(persistence_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown persistence_id: {persistence_id}")
+            raise RuntimeCoreInvariantError("Unknown persistence_id")
         now = self._clock()
         updated = PersistenceRecord(
             persistence_id=old.persistence_id, tenant_id=old.tenant_id,
@@ -279,7 +279,7 @@ class TemporalRuntimeEngine:
         """Check current persistence status."""
         pr = self._persistence.get(persistence_id)
         if pr is None:
-            raise RuntimeCoreInvariantError(f"Unknown persistence_id: {persistence_id}")
+            raise RuntimeCoreInvariantError("Unknown persistence_id")
         return pr.status
 
     # ------------------------------------------------------------------
@@ -294,7 +294,7 @@ class TemporalRuntimeEngine:
     ) -> TemporalSequence:
         """Register a temporal event sequence."""
         if sequence_id in self._sequences:
-            raise RuntimeCoreInvariantError(f"Duplicate sequence_id: {sequence_id}")
+            raise RuntimeCoreInvariantError("Duplicate sequence_id")
         now = self._clock()
         ts = TemporalSequence(
             sequence_id=sequence_id, tenant_id=tenant_id,
@@ -316,9 +316,9 @@ class TemporalRuntimeEngine:
         """Add an event to a sequence, incrementing event_count."""
         old = self._sequences.get(sequence_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown sequence_id: {sequence_id}")
+            raise RuntimeCoreInvariantError("Unknown sequence_id")
         if event_id not in self._temporal_events:
-            raise RuntimeCoreInvariantError(f"Unknown event_id: {event_id}")
+            raise RuntimeCoreInvariantError("Unknown event_id")
         self._sequence_events[sequence_id].append(event_id)
         new_count = old.event_count + 1
         updated = TemporalSequence(
@@ -377,7 +377,7 @@ class TemporalRuntimeEngine:
     ) -> TemporalSnapshot:
         """Capture a point-in-time temporal snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._clock()
         snap = TemporalSnapshot(
             snapshot_id=snapshot_id, tenant_id=tenant_id,
@@ -441,10 +441,7 @@ class TemporalRuntimeEngine:
                         "constraint_id": c.constraint_id,
                         "tenant_id": c.tenant_id,
                         "operation": "constraint_violated",
-                        "reason": (
-                            f"Constraint {c.constraint_id} requires {c.relation.value} "
-                            f"but actual relation is {actual.value}"
-                        ),
+                        "reason": "Constraint relation mismatch",
                         "detected_at": now,
                     }
                     self._violations[vid] = v
@@ -456,7 +453,7 @@ class TemporalRuntimeEngine:
                             decision_id=did, tenant_id=c.tenant_id,
                             constraint_ref=c.constraint_id,
                             satisfied=False,
-                            reason=f"Actual relation {actual.value} != required {c.relation.value}",
+                            reason="Constraint relation mismatch",
                             decided_at=now,
                         )
                         self._decisions[did] = decision
@@ -468,7 +465,7 @@ class TemporalRuntimeEngine:
                         decision_id=did, tenant_id=c.tenant_id,
                         constraint_ref=c.constraint_id,
                         satisfied=True,
-                        reason=f"Constraint satisfied: {c.relation.value}",
+                        reason="Constraint satisfied",
                         decided_at=now,
                     )
                     self._decisions[did] = decision
@@ -491,10 +488,7 @@ class TemporalRuntimeEngine:
                                 "sequence_id": seq_id,
                                 "tenant_id": seq.tenant_id,
                                 "operation": "sequence_disordered",
-                                "reason": (
-                                    f"Sequence {seq_id} event {event_ids[i]} at {ea.occurred_at} "
-                                    f"is after event {event_ids[i+1]} at {eb.occurred_at}"
-                                ),
+                                "reason": "Sequence events out of order",
                                 "detected_at": now,
                             }
                             self._violations[vid] = v
@@ -518,7 +512,7 @@ class TemporalRuntimeEngine:
                             "fact_ref": fact_ref,
                             "tenant_id": records[0].tenant_id,
                             "operation": "persistence_gap",
-                            "reason": f"Fact {fact_ref} has both CEASED and PERSISTING records without explanation",
+                            "reason": "Fact has inconsistent persistence records",
                             "detected_at": now,
                         }
                         self._violations[vid] = v

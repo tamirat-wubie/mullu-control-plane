@@ -157,12 +157,12 @@ def certify_transition(
     # Check legality
     verdict = spec.is_legal(from_state, to_state, action)
     if verdict != TransitionVerdict.ALLOWED:
-        raise ValueError(f"Transition denied: {verdict.value}")
+        raise ValueError("transition denied")
 
     # Check all guards
     failed = [g for g in guards if not g.passed]
     if failed:
-        raise ValueError(f"Guard failed: {failed[0].guard_id} — {failed[0].reason}")
+        raise ValueError("guard failed")
 
     # Build receipt
     content = f"{entity_id}:{from_state}:{to_state}:{action}:{before_state_hash}:{after_state_hash}:{causal_parent}"

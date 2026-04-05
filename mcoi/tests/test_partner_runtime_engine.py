@@ -888,7 +888,9 @@ class TestDetectPartnerViolations:
         violations = engine.detect_partner_violations("t1")
         assert len(violations) == 1
         assert violations[0].operation == "no_agreement"
-        assert "p1" in violations[0].reason
+        assert violations[0].reason == "active partner has no ecosystem agreement"
+        assert "p1" not in violations[0].reason
+        assert "t1" not in violations[0].reason
 
     def test_disputed_revenue_violation(self, seeded: PartnerRuntimeEngine):
         seeded.record_revenue_share("rs1", "p1", "ag1", "t1", 100.0)
@@ -1716,3 +1718,36 @@ class TestComplexFlows:
                 engine.link_partner_to_account(f"lk-{i}-{j}", pid, f"acc-{i}-{j}", "t1", role=role)
         assert engine.partner_count == len(PartnerKind)
         assert engine.link_count == len(PartnerKind) * len(EcosystemRole)
+
+
+class TestBoundedContracts:
+    def test_duplicate_partner_error_is_bounded(self, engine: PartnerRuntimeEngine):
+        engine.register_partner("partner-secret", "tenant-secret", "Acme")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_partner("partner-secret", "tenant-secret", "Acme")
+
+        message = str(excinfo.value)
+        assert message == "partner already registered"
+        assert "partner-secret" not in message
+        assert "tenant-secret" not in message
+
+    def test_violation_reasons_are_bounded(self, engine: PartnerRuntimeEngine):
+        engine.register_partner("partner-secret", "tenant-secret", "No Agreement")
+        engine.register_partner("partner-revenue", "tenant-secret", "Revenue Partner")
+        engine.register_agreement("agreement-secret", "partner-revenue", "tenant-secret", "Main Agreement", revenue_share_pct=0.10)
+        engine.record_revenue_share("share-secret", "partner-revenue", "agreement-secret", "tenant-secret", 100.0)
+        engine.dispute_revenue_share("share-secret")
+        engine.register_partner("partner-commitment", "tenant-secret", "Commitment Partner")
+        engine.record_commitment("commitment-secret", "partner-commitment", "tenant-secret", "Quota", 100.0, 10.0)
+
+        violations = engine.detect_partner_violations("tenant-secret")
+        reasons = {violation.operation: violation.reason for violation in violations}
+        joined = " ".join(reasons.values())
+
+        assert reasons["no_agreement"] == "active partner has no ecosystem agreement"
+        assert reasons["disputed_revenue"] == "revenue share is disputed"
+        assert reasons["unmet_commitment"] == "commitment unmet"
+        assert "partner-secret" not in joined
+        assert "share-secret" not in joined
+        assert "commitment-secret" not in joined

@@ -42,6 +42,18 @@ class TestPerson:
         assert RoleType.OWNER in p.roles
         assert RoleType.APPROVER in p.roles
 
+    def test_invalid_role_error_is_bounded(self):
+        with pytest.raises(ValueError, match="^roles must contain only RoleType values$") as exc_info:
+            Person(
+                person_id="p-4",
+                name="Dora",
+                email="dora@example.com",
+                roles=(RoleType.OWNER, "secret-role"),  # type: ignore[arg-type]
+            )
+        message = str(exc_info.value)
+        assert "secret-role" not in message
+        assert "OWNER" not in message
+
     def test_person_with_metadata(self):
         p = Person(
             person_id="p-3", name="Carol", email="carol@example.com",
@@ -221,8 +233,11 @@ class TestEscalationChain:
             EscalationStep(step_order=1, target_person_id="p-1", timeout_minutes=15),
             EscalationStep(step_order=3, target_person_id="p-2", timeout_minutes=30),
         )
-        with pytest.raises(ValueError, match="sequential"):
+        with pytest.raises(ValueError, match="^step order must be sequential starting at 1$") as exc_info:
             EscalationChain(chain_id="esc-1", name="X", steps=steps, created_at=T0)
+        message = str(exc_info.value)
+        assert "expected" not in message
+        assert "3" not in message
 
     def test_empty_chain_id_rejected(self):
         with pytest.raises(ValueError, match="chain_id"):

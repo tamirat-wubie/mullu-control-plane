@@ -52,7 +52,7 @@ class CustomerSuccessEngine:
 
     def update_health(self, customer_id: str, **kwargs: Any) -> CustomerHealthRecord:
         if customer_id not in self._customers:
-            raise ValueError(f"Unknown customer: {customer_id}")
+            raise ValueError("unknown customer")
         rec = self._customers[customer_id]
         for k, v in kwargs.items():
             if hasattr(rec, k):

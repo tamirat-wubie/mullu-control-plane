@@ -47,7 +47,7 @@ class DemoCatalog:
 
     def generate_demo(self, pack_domain: str, tenant_id: str | None = None) -> dict[str, Any]:
         if pack_domain not in self.GENERATORS:
-            raise ValueError(f"Unknown pack: {pack_domain}. Available: {list(self.GENERATORS.keys())}")
+            raise ValueError("unknown pack")
         gen = self.GENERATORS[pack_domain]()
         tid = tenant_id or f"demo-{pack_domain}-001"
         return gen.generate(tid)

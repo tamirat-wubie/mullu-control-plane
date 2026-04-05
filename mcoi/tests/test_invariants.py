@@ -52,9 +52,14 @@ class TestEnsureNonEmptyText:
         with pytest.raises(RuntimeCoreInvariantError):
             ensure_non_empty_text("f", 123)  # type: ignore[arg-type]
 
-    def test_field_name_in_error(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="my_field"):
+    def test_error_is_bounded(self) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^value must be a non-empty string$") as exc_info:
             ensure_non_empty_text("my_field", "")
+        assert "my_field" not in str(exc_info.value)
+
+    def test_known_field_label_is_preserved(self) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^job_id must be a non-empty string$"):
+            ensure_non_empty_text("job_id", "")
 
     def test_string_with_spaces_valid(self) -> None:
         assert ensure_non_empty_text("f", "  hello  ") == "  hello  "
@@ -78,7 +83,7 @@ class TestEnsureIsoTimestamp:
         assert ensure_iso_timestamp("f", "2026-03-20") == "2026-03-20"
 
     def test_malformed_raises(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="ISO-8601"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^value must be an ISO-8601 timestamp$"):
             ensure_iso_timestamp("f", "not-a-date")
 
     def test_empty_raises(self) -> None:
@@ -110,7 +115,7 @@ class TestEnsureDataclassInstance:
         assert ensure_dataclass_instance("f", dc) is dc
 
     def test_class_itself_raises(self) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="dataclass instance"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^value must be a dataclass instance$"):
             ensure_dataclass_instance("f", _SampleDC)
 
     def test_plain_dict_raises(self) -> None:

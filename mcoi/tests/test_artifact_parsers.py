@@ -62,8 +62,9 @@ class TestRegistration:
 
     def test_reject_duplicate(self, registry: ArtifactParserRegistry) -> None:
         registry.register(PdfTestParser())
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already registered") as exc_info:
             registry.register(PdfTestParser())
+        assert "test-pdf" not in str(exc_info.value)
 
     def test_reject_non_artifact_parser(self, registry: ArtifactParserRegistry) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="must be an ArtifactParser"):
@@ -93,16 +94,19 @@ class TestRetrieval:
         assert manifest.parser_id == "test-pdf"
 
     def test_missing_parser_raises(self, registry: ArtifactParserRegistry) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             registry.get_parser("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_missing_descriptor_raises(self, registry: ArtifactParserRegistry) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             registry.get_descriptor("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_missing_manifest_raises(self, registry: ArtifactParserRegistry) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             registry.get_manifest("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
 
 # ---- listing ----------------------------------------------------------------

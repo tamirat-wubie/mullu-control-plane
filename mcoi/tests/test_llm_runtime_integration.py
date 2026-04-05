@@ -506,10 +506,12 @@ class TestAttachLlmStateToMemoryMesh:
         b.attach_llm_state_to_memory_mesh("scope-8")
         assert mem.memory_count == before + 1
 
-    def test_title_contains_scope_ref(self, full):
+    def test_title_is_bounded(self, full):
         b, *_ = full
         rec = b.attach_llm_state_to_memory_mesh("scope-9")
-        assert "scope-9" in rec.title
+        assert rec.title == "LLM runtime state"
+        assert "scope-9" not in rec.title
+        assert rec.scope_ref_id == "scope-9"
 
     def test_after_generation_counts_update(self, full):
         b, eng, es, mem = full

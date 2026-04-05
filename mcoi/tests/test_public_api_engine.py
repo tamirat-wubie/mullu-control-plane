@@ -182,6 +182,14 @@ class TestGetEndpoint:
         with pytest.raises(RuntimeCoreInvariantError, match="unknown"):
             eng.get_endpoint("no-such")
 
+    def test_unknown_message_is_bounded(self, eng):
+        with pytest.raises(RuntimeCoreInvariantError, match="unknown endpoint_id") as exc_info:
+            eng.get_endpoint("ep-secret")
+        message = str(exc_info.value)
+        assert message == "unknown endpoint_id"
+        assert "ep-secret" not in message
+        assert "endpoint_id" in message
+
     def test_get_after_deprecate(self, eng):
         _reg(eng)
         eng.deprecate_endpoint("ep-1")
@@ -307,6 +315,16 @@ class TestRetireEndpoint:
         eng.retire_endpoint("ep-1")
         with pytest.raises(RuntimeCoreInvariantError, match="already retired"):
             eng.retire_endpoint("ep-1")
+
+    def test_already_retired_message_is_bounded(self, eng):
+        _reg(eng, eid="ep-secret")
+        eng.retire_endpoint("ep-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="already retired") as exc_info:
+            eng.retire_endpoint("ep-secret")
+        message = str(exc_info.value)
+        assert message == "endpoint already retired"
+        assert "ep-secret" not in message
+        assert "retired" in message
 
     def test_emits_event(self, eng, spine):
         _reg(eng)
@@ -1186,6 +1204,9 @@ class TestDetectApiViolations:
         viols = eng.detect_api_violations("t-1")
         ops = [v.operation for v in viols]
         assert "disabled_endpoint_hit" in ops
+        disabled = next(v for v in viols if v.operation == "disabled_endpoint_hit")
+        assert disabled.reason == "disabled endpoint received requests"
+        assert "ep-1" not in disabled.reason
 
     def test_cross_tenant_attempt(self, eng):
         _reg(eng, tid="t-1")
@@ -1193,6 +1214,9 @@ class TestDetectApiViolations:
         viols = eng.detect_api_violations("t-2")
         ops = [v.operation for v in viols]
         assert "cross_tenant_attempt" in ops
+        cross = next(v for v in viols if v.operation == "cross_tenant_attempt")
+        assert cross.reason == "cross-tenant access attempts detected"
+        assert "t-2" not in cross.reason
 
     def test_high_error_rate(self, eng):
         """Error rate > 50% with >= 5 requests triggers violation."""
@@ -1201,6 +1225,9 @@ class TestDetectApiViolations:
         viols = eng.detect_api_violations("t-1")
         ops = [v.operation for v in viols]
         assert "high_error_rate" in ops
+        high = next(v for v in viols if v.operation == "high_error_rate")
+        assert high.reason == "error rate above threshold"
+        assert "t-1" not in high.reason
 
     def test_idempotent_second_call_empty(self, eng):
         _reg(eng, tid="t-1")
@@ -2191,6 +2218,15 @@ class TestAdditionalCoverage:
         _req(eng, tid="t-1")
         errs = eng.errors_for_tenant("t-1")
         assert "retired" in errs[0].error_message
+
+    def test_error_message_for_retired_endpoint_is_bounded(self, eng):
+        _reg(eng, eid="ep-secret", tid="t-1")
+        eng.retire_endpoint("ep-secret")
+        _req(eng, rid="req-secret", tid="t-1", eid="ep-secret")
+        err = eng.errors_for_tenant("t-1")[0]
+        assert err.error_message == "endpoint is retired"
+        assert "ep-secret" not in err.error_message
+        assert "req-secret" not in err.error_message
 
     def test_get_request_after_dedup(self, eng):
         _reg(eng)

@@ -40,9 +40,33 @@ _REQUEST_ALLOWED_KEYS = frozenset(
     }
 )
 
+_SAFE_CONFIG_ERROR_PREFIXES = (
+    "config values must be a mapping",
+    "unknown config keys",
+    "config values must be non-empty strings",
+    "config values must be sequences of non-empty strings",
+    "config values must contain at least one item",
+    "config values must contain non-empty strings",
+)
+
+_REQUEST_REQUIRED_TEXT_ERROR = "request identity fields must be non-empty strings"
+_REQUEST_PAYLOAD_OBJECT_ERROR = "request payload must be an object"
+_REQUEST_UNSUPPORTED_FIELDS_ERROR = "unsupported request fields"
+_REQUEST_TEMPLATE_OBJECT_ERROR = "request template must be an object"
+_REQUEST_BINDINGS_REQUIRED_ERROR = "request bindings are required"
+_REQUEST_BINDINGS_OBJECT_ERROR = "request bindings must be an object"
+
 
 class CLIRequestPayloadError(ValueError):
     """Raised for request payload validation failures safe to echo locally."""
+
+    def __init__(self, public_message: str) -> None:
+        self.public_message = public_message
+        super().__init__(public_message)
+
+
+class CLIDemoError(RuntimeError):
+    """Raised for bounded demo failures safe to echo locally."""
 
     def __init__(self, public_message: str) -> None:
         self.public_message = public_message
@@ -74,6 +98,53 @@ def _classify_profile_load_error(exc: ProfileLoadError) -> str:
 def _classify_request_contract_error(exc: RuntimeCoreInvariantError) -> str:
     """Return a bounded request contract failure message."""
     return f"request payload failed contract validation ({type(exc).__name__})"
+
+
+def _classify_cli_http_error(exc: Exception) -> str:
+    """Return a bounded HTTP or transport failure message."""
+    import urllib.error
+
+    if isinstance(exc, urllib.error.HTTPError):
+        return f"http request failed ({exc.code})"
+    if isinstance(exc, TimeoutError):
+        return f"http request timed out ({type(exc).__name__})"
+    if isinstance(exc, urllib.error.URLError):
+        reason = exc.reason
+        if isinstance(reason, TimeoutError):
+            return f"http request timed out ({type(reason).__name__})"
+        if isinstance(reason, BaseException):
+            return f"http transport failed ({type(reason).__name__})"
+        return "http transport failed (URLError)"
+    if isinstance(exc, json.JSONDecodeError):
+        return f"invalid JSON response ({type(exc).__name__})"
+    if isinstance(exc, OSError):
+        return f"http transport failed ({type(exc).__name__})"
+    return f"http request failed ({type(exc).__name__})"
+
+
+def _classify_cli_json_error(exc: json.JSONDecodeError) -> str:
+    """Return a bounded JSON parsing failure message."""
+    return f"malformed JSON ({type(exc).__name__})"
+
+
+def _classify_config_validation_error(exc: Exception) -> str:
+    """Preserve safe config-contract messages and bound unexpected failures."""
+    if isinstance(exc, (TypeError, ValueError)):
+        message = str(exc)
+        if any(message.startswith(prefix) for prefix in _SAFE_CONFIG_ERROR_PREFIXES):
+            return message
+    return f"invalid config file ({type(exc).__name__})"
+
+
+def _load_demo_json_object(raw: bytes) -> dict[str, Any]:
+    """Load a demo HTTP response body as a JSON object."""
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise CLIDemoError(_classify_cli_http_error(exc)) from exc
+    if not isinstance(payload, dict):
+        raise CLIDemoError("invalid JSON response root")
+    return payload
 
 
 def _fatal(message: str) -> NoReturn:
@@ -117,9 +188,7 @@ def _required_text_field(
 ) -> str:
     value = payload.get(field_name)
     if not isinstance(value, str) or not value.strip():
-        raise CLIRequestPayloadError(
-            f"{kind} field '{field_name}' must be a non-empty string in {source_name}"
-        )
+        raise CLIRequestPayloadError(_REQUEST_REQUIRED_TEXT_ERROR)
     return value
 
 
@@ -129,27 +198,26 @@ def _build_operator_request(
     source_name: str,
 ) -> OperatorRequest:
     if not isinstance(payload, Mapping):
-        raise CLIRequestPayloadError(f"request payload must be an object in {source_name}")
+        raise CLIRequestPayloadError(_REQUEST_PAYLOAD_OBJECT_ERROR)
 
     unknown_keys = sorted(set(payload) - _REQUEST_ALLOWED_KEYS)
     if unknown_keys:
-        joined = ", ".join(unknown_keys)
-        raise CLIRequestPayloadError(f"unsupported request fields in {source_name}: {joined}")
+        raise CLIRequestPayloadError(_REQUEST_UNSUPPORTED_FIELDS_ERROR)
 
     template = payload.get("template")
     if not isinstance(template, Mapping):
-        raise CLIRequestPayloadError(f"request field 'template' must be an object in {source_name}")
+        raise CLIRequestPayloadError(_REQUEST_TEMPLATE_OBJECT_ERROR)
 
     if "bindings" not in payload:
-        raise CLIRequestPayloadError(f"request field 'bindings' is required in {source_name}")
+        raise CLIRequestPayloadError(_REQUEST_BINDINGS_REQUIRED_ERROR)
 
     bindings = payload.get("bindings")
     if not isinstance(bindings, Mapping):
-        raise CLIRequestPayloadError(f"request field 'bindings' must be an object in {source_name}")
+        raise CLIRequestPayloadError(_REQUEST_BINDINGS_OBJECT_ERROR)
 
     resolved_bindings = _resolve_bindings(dict(payload))
     if not isinstance(resolved_bindings, Mapping):
-        raise CLIRequestPayloadError(f"request field 'bindings' must be an object in {source_name}")
+        raise CLIRequestPayloadError(_REQUEST_BINDINGS_OBJECT_ERROR)
 
     try:
         return OperatorRequest(
@@ -257,25 +325,25 @@ def _load_json_object(*, content: str, kind: str, source_name: str) -> dict:
     try:
         payload = json.loads(content)
     except json.JSONDecodeError as exc:
-        _fatal(f"invalid {kind} JSON in {source_name}: {exc.msg}")
+        _fatal(f"invalid {kind} JSON: {_classify_cli_json_error(exc)}")
     if not isinstance(payload, dict):
-        _fatal(f"{kind} JSON root must be an object in {source_name}")
+        _fatal(f"{kind} JSON root must be an object")
     return payload
 
 
 def _load_config(path: str) -> AppConfig:
     config_path = Path(path)
     if not config_path.exists():
-        _fatal(f"config file not found: {path}")
+        _fatal("config file not found")
     try:
         content = config_path.read_text(encoding="utf-8")
     except OSError as exc:
-        _fatal(f"cannot read config file {path}: {_classify_cli_os_error(exc)}")
+        _fatal(f"cannot read config file: {_classify_cli_os_error(exc)}")
     data = _load_json_object(content=content, kind="config", source_name=path)
     try:
         return AppConfig.from_mapping(data)
     except (TypeError, ValueError) as exc:
-        _fatal(f"invalid config file {path}: {exc}")
+        _fatal(f"invalid config file: {_classify_config_validation_error(exc)}")
 
 
 def _load_request(source: str) -> dict:
@@ -284,11 +352,11 @@ def _load_request(source: str) -> dict:
         return _load_json_object(content=source, kind="request", source_name="inline input")
     path = Path(source)
     if not path.exists():
-        _fatal(f"request file not found: {source}")
+        _fatal("request file not found")
     try:
         content = path.read_text(encoding="utf-8")
     except OSError as exc:
-        _fatal(f"cannot read request file {source}: {_classify_cli_os_error(exc)}")
+        _fatal(f"cannot read request file: {_classify_cli_os_error(exc)}")
     return _load_json_object(content=content, kind="request", source_name=source)
 
 
@@ -367,11 +435,19 @@ def demo_command(args: argparse.Namespace) -> int:
 
     base = "http://localhost:8000"
 
+    def _fail_step(step: int, label: str, message: str) -> int:
+        print(f"  [{step}] {label}: failed ({message})")
+        return 1
+
+    def _is_success_status(code: int) -> bool:
+        return 200 <= code < 300
+
     # Check server
     try:
-        urllib.request.urlopen(f"{base}/health", timeout=3)
-    except Exception:
-        print(f"  Server not reachable at {base}")
+        with urllib.request.urlopen(f"{base}/health", timeout=3) as resp:
+            resp.read()
+    except Exception as exc:
+        print(f"  Server not reachable at {base}: {_classify_cli_http_error(exc)}")
         print("  Start with: uvicorn mcoi_runtime.app.server:app --port 8000")
         return 1
 
@@ -379,54 +455,94 @@ def demo_command(args: argparse.Namespace) -> int:
         body = _json.dumps(data).encode()
         req = urllib.request.Request(f"{base}{path}", data=body, headers={"Content-Type": "application/json"})
         try:
-            resp = urllib.request.urlopen(req, timeout=10)
-            return resp.status, _json.loads(resp.read())
-        except urllib.error.HTTPError as e:
-            return e.code, _json.loads(e.read().decode()) if e.fp else {}
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return resp.status, _load_demo_json_object(resp.read())
+        except urllib.error.HTTPError as exc:
+            body = exc.read() if exc.fp else b"{}"
+            if not body:
+                return exc.code, {}
+            try:
+                return exc.code, _load_demo_json_object(body)
+            except CLIDemoError as parse_exc:
+                raise CLIDemoError(parse_exc.public_message) from exc
+        except CLIDemoError:
+            raise
+        except Exception as exc:
+            raise CLIDemoError(_classify_cli_http_error(exc)) from exc
 
     print()
     print("  Mullu Control Plane — Governed Agent Demo")
     print("  " + "=" * 45)
 
     # 1. Register agent
-    code, data = post("/api/v1/agent/register", {
-        "agent_name": "demo-agent",
-        "capabilities": ["file_read", "shell_execute"],
-    })
-    agent_id = data.get("agent_id", "unknown")
+    try:
+        code, data = post("/api/v1/agent/register", {
+            "agent_name": "demo-agent",
+            "capabilities": ["file_read", "shell_execute"],
+        })
+    except CLIDemoError as exc:
+        return _fail_step(1, "Register agent", exc.public_message)
+    if not _is_success_status(code):
+        return _fail_step(1, "Register agent", f"http request failed ({code})")
+    agent_id = data.get("agent_id", "")
+    if not isinstance(agent_id, str) or not agent_id:
+        return _fail_step(1, "Register agent", "invalid JSON response body")
     print(f"  [1] Register agent: {agent_id}")
 
     # 2. Request allowed action
-    code, data = post("/api/v1/agent/action-request", {
-        "agent_id": agent_id,
-        "action_type": "file_read",
-        "target": "/tmp/safe-file.txt",
-        "tenant_id": "demo-tenant",
-    })
-    decision = data.get("decision", "unknown")
+    try:
+        code, data = post("/api/v1/agent/action-request", {
+            "agent_id": agent_id,
+            "action_type": "file_read",
+            "target": "/tmp/safe-file.txt",
+            "tenant_id": "demo-tenant",
+        })
+    except CLIDemoError as exc:
+        return _fail_step(2, "Action request (file_read)", exc.public_message)
+    if not _is_success_status(code):
+        return _fail_step(2, "Action request (file_read)", f"http request failed ({code})")
+    decision = data.get("decision", "")
+    if not isinstance(decision, str) or not decision:
+        return _fail_step(2, "Action request (file_read)", "invalid JSON response body")
     print(f"  [2] Action request (file_read): {decision}")
 
     # 3. Submit result
     action_id = data.get("action_id", "")
-    if action_id:
-        post("/api/v1/agent/action-result", {
+    if not isinstance(action_id, str) or not action_id:
+        return _fail_step(3, "Action result submission", "invalid JSON response body")
+    try:
+        code, _ = post("/api/v1/agent/action-result", {
             "agent_id": agent_id,
             "action_id": action_id,
             "outcome": "success",
             "result": {"content": "file contents here"},
         })
-        print("  [3] Action result submitted: success")
+    except CLIDemoError as exc:
+        return _fail_step(3, "Action result submission", exc.public_message)
+    if not _is_success_status(code):
+        return _fail_step(3, "Action result submission", f"http request failed ({code})")
+    print("  [3] Action result submitted: success")
 
     # 4. Check audit trail
     try:
-        resp = urllib.request.urlopen(f"{base}/api/v1/audit?action=agent.adapter.action_request&limit=5", timeout=5)
-        audit = _json.loads(resp.read())
+        with urllib.request.urlopen(
+            f"{base}/api/v1/audit?action=agent.adapter.action_request&limit=5",
+            timeout=5,
+        ) as resp:
+            audit = _load_demo_json_object(resp.read())
         print(f"  [4] Audit trail: {audit.get('count', 0)} governed actions recorded")
-    except Exception:
-        print("  [4] Audit trail: (check failed)")
+    except CLIDemoError as exc:
+        print(f"  [4] Audit trail: check failed ({exc.public_message})")
+    except Exception as exc:
+        print(f"  [4] Audit trail: check failed ({_classify_cli_http_error(exc)})")
 
     # 5. Heartbeat
-    post("/api/v1/agent/heartbeat", {"agent_id": agent_id, "status": "healthy"})
+    try:
+        code, _ = post("/api/v1/agent/heartbeat", {"agent_id": agent_id, "status": "healthy"})
+    except CLIDemoError as exc:
+        return _fail_step(5, "Heartbeat", exc.public_message)
+    if not _is_success_status(code):
+        return _fail_step(5, "Heartbeat", f"http request failed ({code})")
     print("  [5] Heartbeat sent: healthy")
 
     print("  " + "=" * 45)

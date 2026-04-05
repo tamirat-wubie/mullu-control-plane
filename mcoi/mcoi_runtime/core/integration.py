@@ -68,9 +68,7 @@ class IntegrationEngine:
         provider_id: str | None = None,
     ) -> ConnectorDescriptor:
         if descriptor.connector_id in self._connectors:
-            raise RuntimeCoreInvariantError(
-                f"connector already registered: {descriptor.connector_id}"
-            )
+            raise RuntimeCoreInvariantError("connector already registered")
         self._connectors[descriptor.connector_id] = descriptor
         self._adapters[descriptor.connector_id] = adapter
         if provider_id is not None:

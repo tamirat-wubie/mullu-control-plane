@@ -146,7 +146,7 @@ class TestIngestAndRemember:
         result = integration.ingest_and_remember(desc, b'{"key": "value"}')
 
         assert "memory" in result
-        assert result["memory"].title == "Event: artifact_ingested"
+        assert result["memory"].title.startswith("Event")
         assert result["memory"].content["artifact_id"] == "art-mem"
 
     def test_accepted_has_verified_trust(self):

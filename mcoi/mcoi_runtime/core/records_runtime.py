@@ -135,7 +135,7 @@ class RecordsRuntimeEngine:
     ) -> RecordDescriptor:
         """Register an official record."""
         if record_id in self._records:
-            raise RuntimeCoreInvariantError(f"Duplicate record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Duplicate record_id")
         now = _now_iso()
         record = RecordDescriptor(
             record_id=record_id,
@@ -159,7 +159,7 @@ class RecordsRuntimeEngine:
         """Get a record by ID."""
         r = self._records.get(record_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         return r
 
     def records_for_tenant(self, tenant_id: str) -> tuple[RecordDescriptor, ...]:
@@ -180,9 +180,9 @@ class RecordsRuntimeEngine:
     ) -> RecordLink:
         """Add an immutable link between a record and its source."""
         if link_id in self._links:
-            raise RuntimeCoreInvariantError(f"Duplicate link_id: {link_id}")
+            raise RuntimeCoreInvariantError("Duplicate link_id")
         if record_id not in self._records:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         now = _now_iso()
         link = RecordLink(
             link_id=link_id,
@@ -220,9 +220,9 @@ class RecordsRuntimeEngine:
     ) -> RetentionSchedule:
         """Bind a retention schedule to a record."""
         if schedule_id in self._schedules:
-            raise RuntimeCoreInvariantError(f"Duplicate schedule_id: {schedule_id}")
+            raise RuntimeCoreInvariantError("Duplicate schedule_id")
         if record_id not in self._records:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         now = _now_iso()
         schedule = RetentionSchedule(
             schedule_id=schedule_id,
@@ -261,9 +261,9 @@ class RecordsRuntimeEngine:
     ) -> LegalHoldRecord:
         """Place a legal hold on a record."""
         if hold_id in self._holds:
-            raise RuntimeCoreInvariantError(f"Duplicate hold_id: {hold_id}")
+            raise RuntimeCoreInvariantError("Duplicate hold_id")
         if record_id not in self._records:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         now = _now_iso()
         hold = LegalHoldRecord(
             hold_id=hold_id,
@@ -302,11 +302,9 @@ class RecordsRuntimeEngine:
         """Release a legal hold."""
         old = self._holds.get(hold_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown hold_id: {hold_id}")
+            raise RuntimeCoreInvariantError("Unknown hold_id")
         if old.status != HoldStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot release hold in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot release hold in current status")
         now = _now_iso()
         updated = LegalHoldRecord(
             hold_id=old.hold_id,
@@ -381,7 +379,7 @@ class RecordsRuntimeEngine:
         """Evaluate whether a record may be disposed. Fail-closed: default DENY."""
         record = self._records.get(record_id)
         if record is None:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
 
         now = _now_iso()
 
@@ -519,7 +517,7 @@ class RecordsRuntimeEngine:
     ) -> PreservationDecision:
         """Record a preservation decision."""
         if record_id not in self._records:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         now = _now_iso()
         did = stable_identifier("pres", {"rec": record_id, "ts": now})
         dec = PreservationDecision(
@@ -551,9 +549,9 @@ class RecordsRuntimeEngine:
     ) -> DispositionReview:
         """Submit a disposition review."""
         if review_id in self._reviews:
-            raise RuntimeCoreInvariantError(f"Duplicate review_id: {review_id}")
+            raise RuntimeCoreInvariantError("Duplicate review_id")
         if record_id not in self._records:
-            raise RuntimeCoreInvariantError(f"Unknown record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Unknown record_id")
         now = _now_iso()
         review = DispositionReview(
             review_id=review_id,
@@ -618,7 +616,7 @@ class RecordsRuntimeEngine:
     ) -> RecordSnapshot:
         """Capture a point-in-time records snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snapshot = RecordSnapshot(
             snapshot_id=snapshot_id,

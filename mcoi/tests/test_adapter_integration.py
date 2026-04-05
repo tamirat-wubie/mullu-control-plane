@@ -151,6 +151,15 @@ class TestIngestViaAdapter:
         assert mem.scope == MemoryScope.GLOBAL
         assert me.get_memory(mem.memory_id) is not None
 
+    def test_inbound_memory_title_redacts_family_and_sender(self):
+        _cr, _pr, _es, _me, _ce, bridge = _build()
+        raw = {"from": "secret@example.com", "body": "Hello from chat"}
+        result = bridge.ingest_via_adapter("test-email", raw)
+        mem = result["memory"]
+        assert mem.title == "Inbound message"
+        assert "email" not in mem.title
+        assert "secret@example.com" not in mem.title
+
 
 # ===================================================================
 # ingest_and_extract_commitments
@@ -314,6 +323,16 @@ class TestParseArtifact:
         assert mem.memory_type == MemoryType.ARTIFACT
         assert me.get_memory(mem.memory_id) is not None
 
+    def test_parsed_memory_title_redacts_family_and_filename(self):
+        _cr, _pr, _es, _me, _ce, bridge = _build()
+        result = bridge.parse_artifact(
+            "test-pdf", "art-secret", "secret-report.pdf", b"test content",
+        )
+        mem = result["memory"]
+        assert mem.title == "Parsed artifact"
+        assert "document" not in mem.title
+        assert "secret-report.pdf" not in mem.title
+
 
 # ===================================================================
 # auto_parse_artifact
@@ -341,6 +360,15 @@ class TestAutoParseArtifact:
         mem = result["memory"]
         assert isinstance(mem, MemoryRecord)
         assert me.get_memory(mem.memory_id) is not None
+
+    def test_auto_parsed_memory_title_redacts_family_and_filename(self):
+        _cr, _pr, _es, _me, _ce, bridge = _build()
+        csv_content = b"name,age,city\nAlice,30,NYC\nBob,25,LA"
+        result = bridge.auto_parse_artifact("art-secret", "secret-data.csv", csv_content)
+        mem = result["memory"]
+        assert mem.title == "Auto-parsed artifact"
+        assert "spreadsheet" not in mem.title
+        assert "secret-data.csv" not in mem.title
 
     def test_returns_none_for_unknown_format(self):
         _cr, _pr, es, _me, _ce, bridge = _build()

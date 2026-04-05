@@ -247,8 +247,11 @@ class TestDecisionReliability:
             _reliability(dominant_risk="")
 
     def test_invalid_recommendation_string_raises(self) -> None:
-        with pytest.raises(ValueError, match="recommendation"):
+        with pytest.raises(ValueError) as exc:
             _reliability(recommendation="abort")
+        assert str(exc.value) == "recommendation has unsupported value"
+        assert "abort" not in str(exc.value)
+        assert "proceed_with_caution" not in str(exc.value)
 
     def test_all_valid_recommendations_accepted(self) -> None:
         for rec in ("proceed", "proceed_with_caution", "defer_to_review", "replan"):

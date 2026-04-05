@@ -130,7 +130,7 @@ class ProcessSimulationRuntimeEngine:
     ) -> ProcessModel:
         """Register a new process model. Duplicate model_id raises."""
         if model_id in self._models:
-            raise RuntimeCoreInvariantError(f"Duplicate model_id: {model_id}")
+            raise RuntimeCoreInvariantError("Duplicate model_id")
         now = self._now()
         model = ProcessModel(
             model_id=model_id,
@@ -149,7 +149,7 @@ class ProcessSimulationRuntimeEngine:
     def get_model(self, model_id: str) -> ProcessModel:
         m = self._models.get(model_id)
         if m is None:
-            raise RuntimeCoreInvariantError(f"Unknown model_id: {model_id}")
+            raise RuntimeCoreInvariantError("Unknown model_id")
         return m
 
     def _replace_model(self, model_id: str, **kwargs: Any) -> ProcessModel:
@@ -183,7 +183,7 @@ class ProcessSimulationRuntimeEngine:
     ) -> PhysicalParameter:
         """Register a physical parameter. Validates model exists and increments parameter_count."""
         if parameter_id in self._parameters:
-            raise RuntimeCoreInvariantError(f"Duplicate parameter_id: {parameter_id}")
+            raise RuntimeCoreInvariantError("Duplicate parameter_id")
         model = self.get_model(model_ref)
         now = self._now()
         param = PhysicalParameter(
@@ -206,7 +206,7 @@ class ProcessSimulationRuntimeEngine:
     def get_parameter(self, parameter_id: str) -> PhysicalParameter:
         p = self._parameters.get(parameter_id)
         if p is None:
-            raise RuntimeCoreInvariantError(f"Unknown parameter_id: {parameter_id}")
+            raise RuntimeCoreInvariantError("Unknown parameter_id")
         return p
 
     # ------------------------------------------------------------------
@@ -248,7 +248,7 @@ class ProcessSimulationRuntimeEngine:
     ) -> ConstraintEnvelope:
         """Register a constraint envelope. Auto-computes status."""
         if envelope_id in self._envelopes:
-            raise RuntimeCoreInvariantError(f"Duplicate envelope_id: {envelope_id}")
+            raise RuntimeCoreInvariantError("Duplicate envelope_id")
         self.get_parameter(parameter_ref)  # validates existence
         now = self._now()
         status = self._compute_envelope_status(min_value, max_value, target_value)
@@ -282,7 +282,7 @@ class ProcessSimulationRuntimeEngine:
     ) -> SimulationScenario:
         """Register a simulation scenario. Validates model exists."""
         if scenario_id in self._scenarios:
-            raise RuntimeCoreInvariantError(f"Duplicate scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Duplicate scenario_id")
         self.get_model(model_ref)
         now = self._now()
         scenario = SimulationScenario(
@@ -302,7 +302,7 @@ class ProcessSimulationRuntimeEngine:
     def get_scenario(self, scenario_id: str) -> SimulationScenario:
         s = self._scenarios.get(scenario_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Unknown scenario_id")
         return s
 
     # ------------------------------------------------------------------
@@ -317,7 +317,7 @@ class ProcessSimulationRuntimeEngine:
     ) -> SimulationRun:
         """Start a simulation run. Status = RUNNING, duration_ms = 0.0."""
         if run_id in self._runs:
-            raise RuntimeCoreInvariantError(f"Duplicate run_id: {run_id}")
+            raise RuntimeCoreInvariantError("Duplicate run_id")
         self.get_scenario(scenario_ref)
         now = self._now()
         run = SimulationRun(
@@ -337,7 +337,7 @@ class ProcessSimulationRuntimeEngine:
     def get_run(self, run_id: str) -> SimulationRun:
         r = self._runs.get(run_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown run_id: {run_id}")
+            raise RuntimeCoreInvariantError("Unknown run_id")
         return r
 
     def _replace_run(self, run_id: str, **kwargs: Any) -> SimulationRun:
@@ -360,9 +360,7 @@ class ProcessSimulationRuntimeEngine:
         """Complete a running simulation. Terminal guard."""
         old = self.get_run(run_id)
         if old.status in _RUN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Run {run_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Run is in terminal state")
         updated = self._replace_run(
             run_id,
             status=ProcessSimulationStatus.COMPLETED,
@@ -377,9 +375,7 @@ class ProcessSimulationRuntimeEngine:
         """Fail a running simulation. Terminal guard."""
         old = self.get_run(run_id)
         if old.status in _RUN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Run {run_id} is in terminal state {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Run is in terminal state")
         updated = self._replace_run(
             run_id,
             status=ProcessSimulationStatus.FAILED,
@@ -404,7 +400,7 @@ class ProcessSimulationRuntimeEngine:
     ) -> SimulationResult:
         """Record a simulation result. Auto-computes deviation = actual - expected."""
         if result_id in self._results:
-            raise RuntimeCoreInvariantError(f"Duplicate result_id: {result_id}")
+            raise RuntimeCoreInvariantError("Duplicate result_id")
         self.get_run(run_ref)
         now = self._now()
         deviation = actual_value - expected_value
@@ -442,7 +438,7 @@ class ProcessSimulationRuntimeEngine:
                 envelope = env
                 break
         if envelope is None:
-            raise RuntimeCoreInvariantError(f"No envelope for parameter_id: {parameter_id}")
+            raise RuntimeCoreInvariantError("No envelope for parameter_id")
 
         span = envelope.max_value - envelope.min_value
         if span == 0:
@@ -594,7 +590,7 @@ class ProcessSimulationRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="envelope_breach",
-                        reason=f"Parameter {env.parameter_ref} value {param.value} outside envelope [{env.min_value}, {env.max_value}]",
+                        reason="Parameter value outside envelope",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -616,7 +612,7 @@ class ProcessSimulationRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="failed_run_no_result",
-                            reason=f"Run {run.run_id} FAILED with no result recorded",
+                            reason="Failed run has no result recorded",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -634,7 +630,7 @@ class ProcessSimulationRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="unsafe_outcome",
-                        reason=f"Result {result.result_id} has UNSAFE outcome",
+                        reason="Result has unsafe outcome",
                         detected_at=now,
                     )
                     self._violations[vid] = v

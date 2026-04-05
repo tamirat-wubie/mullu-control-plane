@@ -280,8 +280,9 @@ class TestChannelListingRetrieval:
 
     def test_get_live_adapter_missing_raises(self):
         engine, ch_reg, conn_reg, es = _make_channel_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^live adapter not found$") as exc_info:
             engine.get_live_adapter("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_binding_count(self):
         engine, ch_reg, conn_reg, es = _make_channel_engine()
@@ -466,8 +467,9 @@ class TestParserListingRetrieval:
 
     def test_get_live_parser_missing_raises(self):
         engine, ps_reg, conn_reg, es = _make_parser_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^live parser not found$") as exc_info:
             engine.get_live_parser("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_binding_count(self):
         engine, ps_reg, conn_reg, es = _make_parser_engine()

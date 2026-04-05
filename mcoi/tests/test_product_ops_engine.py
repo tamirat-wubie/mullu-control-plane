@@ -2125,3 +2125,24 @@ class TestCombinedFlows:
         p2 = engine.promote_release("p2", "r1", "t1", "staging", "prod")
         assert p2.disposition == PromotionDisposition.PROMOTED
         assert engine.get_release("r1").target_environment == "prod"
+
+
+class TestBoundedContracts:
+    def test_duplicate_release_message_hides_release_id(self, engine: ProductOpsEngine):
+        _ver(engine)
+        _rel(engine, "release-secret")
+        with pytest.raises(RuntimeCoreInvariantError, match="release already exists") as exc_info:
+            _rel(engine, "release-secret")
+        assert "release-secret" not in str(exc_info.value)
+
+    def test_release_violation_reasons_hide_ids_and_counts(self, engine: ProductOpsEngine):
+        _ver(engine)
+        _rel(engine, "release-secret")
+        engine.evaluate_gate("gate-secret", "release-secret", "t1", "security", False)
+        engine.start_release("release-secret")
+        violations = engine.detect_release_violations("t1")
+        assert any(v.reason == "release in progress with failed gates" for v in violations)
+        for violation in violations:
+            assert "release-secret" not in violation.reason
+            assert "gate-secret" not in violation.reason
+            assert "1" not in violation.reason

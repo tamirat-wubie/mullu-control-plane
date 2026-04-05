@@ -91,7 +91,7 @@ class OptimizationRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> OptimizationRequest:
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"optimization request '{request_id}' already exists")
+            raise RuntimeCoreInvariantError("optimization request already exists")
         now = _now_iso()
         request = OptimizationRequest(
             request_id=request_id,
@@ -132,7 +132,7 @@ class OptimizationRuntimeEngine:
         hard: bool = True,
     ) -> OptimizationConstraint:
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"request '{request_id}' not found")
+            raise RuntimeCoreInvariantError("request not found")
         now = _now_iso()
         constraint = OptimizationConstraint(
             constraint_id=constraint_id,
@@ -184,8 +184,8 @@ class OptimizationRuntimeEngine:
                 score = max(0.0, min(1.0, 1.0 - sr))
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"Replace degraded connector: {ref}",
-                    description=f"Connector {ref} has {sr:.0%} success rate. Consider alternative.",
+                    title="Replace degraded connector",
+                    description="Connector success rate is below threshold. Consider alternative.",
                     target=OptimizationTarget.CONNECTOR_SELECTION,
                     severity=severity,
                     score=score,
@@ -194,7 +194,7 @@ class OptimizationRuntimeEngine:
                     scope_ref_id=ref,
                     estimated_improvement_pct=(1.0 - sr) * 100,
                     estimated_cost_delta=-cost * (1.0 - sr),
-                    rationale=f"Success rate {sr:.0%} below 90% threshold",
+                    rationale="Success rate is below threshold",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -226,8 +226,8 @@ class OptimizationRuntimeEngine:
             score = min(1.0, len(blocked) / max(1, len(campaign_metrics)))
             rec = self._create_recommendation(
                 request_id=request_id,
-                title=f"Rebalance portfolio: {len(blocked)} blocked campaigns",
-                description=f"{len(blocked)} campaigns are blocked. Rebalance priorities or resources.",
+                title="Rebalance blocked campaigns",
+                description="Campaign backlog requires rebalancing.",
                 target=OptimizationTarget.PORTFOLIO_BALANCE,
                 severity=RecommendationSeverity.URGENT if len(blocked) > 2 else RecommendationSeverity.RECOMMENDED,
                 score=score,
@@ -235,7 +235,7 @@ class OptimizationRuntimeEngine:
                 scope=OptimizationScope.PORTFOLIO,
                 scope_ref_id=request.scope_ref_id,
                 estimated_improvement_pct=score * 50,
-                rationale=f"{len(blocked)} blocked out of {len(campaign_metrics)} campaigns",
+                rationale="Blocked campaigns detected",
                 now=now,
             )
             recommendations.append(rec)
@@ -244,8 +244,8 @@ class OptimizationRuntimeEngine:
             score = min(1.0, len(overdue) / max(1, len(campaign_metrics)))
             rec = self._create_recommendation(
                 request_id=request_id,
-                title=f"Escalate overdue campaigns: {len(overdue)} past deadline",
-                description=f"{len(overdue)} campaigns are overdue. Escalate or reassign.",
+                title="Escalate overdue campaigns",
+                description="Campaign schedule requires escalation.",
                 target=OptimizationTarget.CAMPAIGN_DURATION,
                 severity=RecommendationSeverity.URGENT,
                 score=score,
@@ -253,7 +253,7 @@ class OptimizationRuntimeEngine:
                 scope=OptimizationScope.PORTFOLIO,
                 scope_ref_id=request.scope_ref_id,
                 estimated_improvement_pct=score * 30,
-                rationale=f"{len(overdue)} overdue campaigns",
+                rationale="Overdue campaigns detected",
                 now=now,
             )
             recommendations.append(rec)
@@ -289,8 +289,8 @@ class OptimizationRuntimeEngine:
             if burn > 0.9:
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"Budget burn critical: {bid}",
-                    description=f"Budget {bid} at {burn:.0%} burn rate. Reduce spend or increase limit.",
+                    title="Budget burn critical",
+                    description="Budget burn rate is above threshold. Reduce spend or increase limit.",
                     target=OptimizationTarget.BUDGET_ALLOCATION,
                     severity=RecommendationSeverity.CRITICAL if burn > 0.95 else RecommendationSeverity.URGENT,
                     score=min(1.0, burn),
@@ -299,7 +299,7 @@ class OptimizationRuntimeEngine:
                     scope_ref_id=bid,
                     estimated_improvement_pct=(burn - 0.8) * 100,
                     estimated_cost_delta=0.0,
-                    rationale=f"Burn rate {burn:.0%} exceeds 90% threshold",
+                    rationale="Burn rate exceeds threshold",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -310,8 +310,8 @@ class OptimizationRuntimeEngine:
                 if score > 0.3:
                     rec = self._create_recommendation(
                         request_id=request_id,
-                        title=f"High cost per completion: {bid}",
-                        description=f"Budget {bid} has cost/completion of {cpc:.2f}. Seek cheaper paths.",
+                        title="High cost per completion",
+                        description="Budget cost efficiency is below target. Seek cheaper paths.",
                         target=OptimizationTarget.CAMPAIGN_COST,
                         severity=RecommendationSeverity.ADVISORY,
                         score=score,
@@ -320,7 +320,7 @@ class OptimizationRuntimeEngine:
                         scope_ref_id=bid,
                         estimated_improvement_pct=score * 20,
                         estimated_cost_delta=-cpc * 0.1,
-                        rationale=f"Cost per completion {cpc:.2f} with {util:.0%} utilization",
+                        rationale="Cost per completion exceeds threshold",
                         now=now,
                     )
                     recommendations.append(rec)
@@ -356,8 +356,8 @@ class OptimizationRuntimeEngine:
                 score = min(1.0, woh / 86400)
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"High human wait time: {cid}",
-                    description=f"Campaign {cid} has {woh/3600:.1f}h waiting on human. Adjust contact window.",
+                    title="High human wait time",
+                    description="Campaign is waiting on human intervention. Adjust contact window.",
                     target=OptimizationTarget.SCHEDULE_EFFICIENCY,
                     severity=RecommendationSeverity.RECOMMENDED,
                     score=score,
@@ -365,7 +365,7 @@ class OptimizationRuntimeEngine:
                     scope=OptimizationScope.CAMPAIGN,
                     scope_ref_id=cid,
                     estimated_improvement_pct=score * 40,
-                    rationale=f"Waiting on human {woh/3600:.1f}h exceeds 1h threshold",
+                    rationale="Waiting on human exceeds threshold",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -374,8 +374,8 @@ class OptimizationRuntimeEngine:
                 score = min(1.0, esc / 10)
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"Excessive escalations: {cid}",
-                    description=f"Campaign {cid} has {esc} escalations. Tighten routing rules.",
+                    title="Excessive escalations",
+                    description="Campaign escalation rate is above threshold. Tighten routing rules.",
                     target=OptimizationTarget.ESCALATION_POLICY,
                     severity=RecommendationSeverity.URGENT if esc > 5 else RecommendationSeverity.RECOMMENDED,
                     score=score,
@@ -383,7 +383,7 @@ class OptimizationRuntimeEngine:
                     scope=OptimizationScope.CAMPAIGN,
                     scope_ref_id=cid,
                     estimated_improvement_pct=score * 30,
-                    rationale=f"{esc} escalations exceeds threshold of 3",
+                    rationale="Escalation count exceeds threshold",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -419,8 +419,8 @@ class OptimizationRuntimeEngine:
                 score = min(1.0, qhv / 5)
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"Quiet hours violations for {ref}",
-                    description=f"{qhv} quiet hours violations. Use quiet-hours-aware channel routing.",
+                    title="Quiet hours violations",
+                    description="Quiet hours violations detected. Use quiet-hours-aware channel routing.",
                     target=OptimizationTarget.CHANNEL_ROUTING,
                     severity=RecommendationSeverity.RECOMMENDED,
                     score=score,
@@ -428,7 +428,7 @@ class OptimizationRuntimeEngine:
                     scope=OptimizationScope.CHANNEL,
                     scope_ref_id=ref,
                     estimated_improvement_pct=score * 25,
-                    rationale=f"{qhv} quiet hours violations detected",
+                    rationale="Quiet hours violations detected",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -464,8 +464,8 @@ class OptimizationRuntimeEngine:
                 score = min(1.0, fp_rate)
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"High false positive escalation rate: {ref}",
-                    description=f"Policy {ref} has {fp_rate:.0%} false positive rate. Adjust thresholds.",
+                    title="High false positive escalation rate",
+                    description="Escalation policy false positive rate is above threshold. Adjust thresholds.",
                     target=OptimizationTarget.ESCALATION_POLICY,
                     severity=RecommendationSeverity.RECOMMENDED,
                     score=score,
@@ -473,7 +473,7 @@ class OptimizationRuntimeEngine:
                     scope=OptimizationScope.GLOBAL,
                     scope_ref_id=ref,
                     estimated_improvement_pct=fp_rate * 40,
-                    rationale=f"False positive rate {fp_rate:.0%} exceeds 30% threshold",
+                    rationale="False positive rate exceeds threshold",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -507,8 +507,8 @@ class OptimizationRuntimeEngine:
                 score = min(1.0, fault_rate)
                 rec = self._create_recommendation(
                     request_id=request_id,
-                    title=f"Fault-prone domain pack: {dpid}",
-                    description=f"Domain pack {dpid} has {fault_rate:.0%} fault rate. Avoid or replace.",
+                    title="Fault-prone domain pack",
+                    description="Domain pack fault rate is above threshold. Avoid or replace.",
                     target=OptimizationTarget.FAULT_AVOIDANCE,
                     severity=RecommendationSeverity.URGENT if fault_rate > 0.3 else RecommendationSeverity.RECOMMENDED,
                     score=score,
@@ -516,7 +516,7 @@ class OptimizationRuntimeEngine:
                     scope=OptimizationScope.DOMAIN_PACK,
                     scope_ref_id=dpid,
                     estimated_improvement_pct=fault_rate * 50,
-                    rationale=f"Fault rate {fault_rate:.0%} exceeds 10% threshold",
+                    rationale="Fault rate exceeds threshold",
                     now=now,
                 )
                 recommendations.append(rec)
@@ -539,7 +539,7 @@ class OptimizationRuntimeEngine:
     ) -> OptimizationPlan:
         """Build an optimization plan from all recommendations for a request."""
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"request '{request_id}' not found")
+            raise RuntimeCoreInvariantError("request not found")
         now = _now_iso()
 
         rec_ids = self._recommendations_by_request.get(request_id, [])
@@ -601,7 +601,7 @@ class OptimizationRuntimeEngine:
         risk_level: str = "low",
     ) -> OptimizationImpactEstimate:
         if recommendation_id not in self._recommendations:
-            raise RuntimeCoreInvariantError(f"recommendation '{recommendation_id}' not found")
+            raise RuntimeCoreInvariantError("recommendation not found")
         now = _now_iso()
         improvement = ((projected_value - current_value) / abs(current_value) * 100) if current_value != 0 else 0.0
 
@@ -633,7 +633,7 @@ class OptimizationRuntimeEngine:
         reason: str = "",
     ) -> RecommendationDecision:
         if recommendation_id not in self._recommendations:
-            raise RuntimeCoreInvariantError(f"recommendation '{recommendation_id}' not found")
+            raise RuntimeCoreInvariantError("recommendation not found")
         now = _now_iso()
         decision = RecommendationDecision(
             decision_id=decision_id,
@@ -711,7 +711,7 @@ class OptimizationRuntimeEngine:
     def _get_request(self, request_id: str) -> OptimizationRequest:
         request = self._requests.get(request_id)
         if request is None:
-            raise RuntimeCoreInvariantError(f"request '{request_id}' not found")
+            raise RuntimeCoreInvariantError("request not found")
         return request
 
     def _create_recommendation(

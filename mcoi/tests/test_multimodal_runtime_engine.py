@@ -1302,3 +1302,44 @@ class TestEdgeCases:
         engine.end_session("s1")
         r = engine.record_interruption("i1", "t-1", "s1", "reason")
         assert r.interruption_id == "i1"
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids_or_statuses(self, engine):
+        _start(engine, sid="s-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            _start(engine, sid="s-secret")
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate session_id"
+        assert "s-secret" not in duplicate_message
+        assert "session_id" in duplicate_message
+
+        engine.pause_session("s-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as active_exc:
+            engine.record_speech_turn("turn-secret", "t-1", "s-secret", "u1", "hello")
+        active_message = str(active_exc.value)
+        assert active_message == "Session is not active"
+        assert "paused" not in active_message
+        assert "s-secret" not in active_message
+
+        engine.end_session("s-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as terminal_exc:
+            engine.handoff_session("s-secret", SessionChannel.PHONE)
+        terminal_message = str(terminal_exc.value)
+        assert terminal_message == "Session is in terminal state"
+        assert "ended" not in terminal_message
+        assert "s-secret" not in terminal_message
+
+    def test_violation_reasons_are_bounded(self, engine):
+        _start(engine, sid="s-no-turns", tid="t-1", iref="u-no-turns")
+        engine.update_presence("p-stale", "t-1", "u-stale", status=PresenceStatus.AVAILABLE)
+
+        violations = {v.operation: v.reason for v in engine.detect_multimodal_violations("t-1")}
+        assert violations["session_no_turns"] == "Active session has zero speech turns"
+        assert "s-no-turns" not in violations["session_no_turns"]
+        assert "zero speech turns" in violations["session_no_turns"]
+
+        assert violations["stale_presence"] == "Available presence has no active session"
+        assert "p-stale" not in violations["stale_presence"]
+        assert "u-stale" not in violations["stale_presence"]

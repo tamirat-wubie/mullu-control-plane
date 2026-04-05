@@ -183,6 +183,8 @@ class TestCheckRotationNeeded(unittest.TestCase):
         result = self.compliance.check_rotation_needed("sms-expired")
         self.assertTrue(result["needs_rotation"])
         self.assertTrue(result["urgent"])
+        self.assertEqual(result["reason"], "credential requires urgent rotation")
+        self.assertNotIn("expired", result["reason"].lower())
 
     def test_pending_rotation(self):
         c = SmsProviderTestConnector("sms-pending")
@@ -215,6 +217,8 @@ class TestCheckRotationNeeded(unittest.TestCase):
         ))
         result = self.compliance.check_rotation_needed("sms-near", hours_until_expiry=48)
         self.assertTrue(result["needs_rotation"])
+        self.assertEqual(result["reason"], "credential nearing expiry")
+        self.assertNotIn("hour", result["reason"].lower())
 
     def test_no_scope(self):
         c = SmsProviderTestConnector("sms-noscope")
@@ -406,7 +410,9 @@ class TestRecordOutboundCall(unittest.TestCase):
 
         # Memory record
         self.assertIn("memory", result)
-        self.assertIn("Outbound", result["memory"].title)
+        self.assertEqual(result["memory"].title, "Outbound connectivity audit")
+        self.assertNotIn("send_message", result["memory"].title)
+        self.assertNotIn("api-audit", result["memory"].title)
 
         # Event
         self.assertIn("event", result)
@@ -560,6 +566,11 @@ class TestPreFlightCheck(unittest.TestCase):
         result = self.compliance.pre_flight_check("conn-healthfail")
         self.assertFalse(result["passed"])
         self.assertFalse(result["checks"]["health"]["passed"])
+        self.assertEqual(
+            result["checks"]["health"]["reason"],
+            "connector health check failed",
+        )
+        self.assertNotIn("unhealthy", result["checks"]["health"]["reason"].lower())
 
     def test_consent_fail(self):
         self._register_healthy_connector("conn-consentfail")

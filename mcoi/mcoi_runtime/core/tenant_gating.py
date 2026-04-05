@@ -8,7 +8,7 @@ Dependencies: none (pure data structures).
 Invariants:
   - Tenant status transitions are validated (no backward transitions).
   - Suspended/terminated tenants are always rejected.
-  - Unknown tenants are allowed through (auto-provisioning compatible).
+  - Unknown-tenant admission is explicit and governed by registry policy.
   - Status changes are auditable via the returned TenantGate record.
 """
 
@@ -122,7 +122,7 @@ class TenantGatingRegistry:
 
     Each tenant has a status (active, onboarding, suspended, terminated).
     Status transitions are validated — invalid transitions are rejected.
-    Unknown tenants default to allowed (auto-provisioning compatible).
+    Unknown-tenant admission is explicit and configurable.
     """
 
     def __init__(
@@ -131,11 +131,13 @@ class TenantGatingRegistry:
         clock: Callable[[], str] | None = None,
         store: TenantGatingStore | None = None,
         default_status: TenantStatus = TenantStatus.ACTIVE,
+        allow_unknown_tenants: bool = True,
     ) -> None:
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._gates: dict[str, TenantGate] = {}
         self._store = store
         self._default_status = default_status
+        self._allow_unknown_tenants = allow_unknown_tenants
         self._lock = threading.RLock()
 
     def _load_gate_locked(self, tenant_id: str) -> TenantGate | None:
@@ -202,12 +204,30 @@ class TenantGatingRegistry:
     def is_allowed(self, tenant_id: str) -> bool:
         """Check if a tenant is allowed to make requests.
 
-        Unknown tenants are allowed (auto-provisioning compatible).
+        Unknown-tenant admission depends on registry policy.
         """
         gate = self.get_status(tenant_id)
         if gate is None:
-            return True  # Unknown tenants allowed through
+            return self._allow_unknown_tenants
         return gate.status not in _BLOCKED_STATES
+
+    def denial_reason(self, tenant_id: str) -> str | None:
+        """Return a stable denial reason for the current tenant posture."""
+        gate = self.get_status(tenant_id)
+        if gate is None:
+            if self._allow_unknown_tenants:
+                return None
+            return f"tenant {tenant_id} is not registered"
+
+        if gate.status in _BLOCKED_STATES:
+            if gate.reason:
+                return f"tenant {tenant_id} is {gate.status.value}: {gate.reason}"
+            return f"tenant {tenant_id} is {gate.status.value}"
+        return None
+
+    @property
+    def allow_unknown_tenants(self) -> bool:
+        return self._allow_unknown_tenants
 
     def all_gates(self) -> list[TenantGate]:
         """All registered tenant gates, sorted by tenant_id."""
@@ -232,6 +252,7 @@ class TenantGatingRegistry:
                 "total_tenants": len(self._gates),
                 "status_counts": status_counts,
                 "blocked_states": [s.value for s in _BLOCKED_STATES],
+                "allow_unknown_tenants": self._allow_unknown_tenants,
             }
 
 
@@ -240,8 +261,7 @@ def create_tenant_gating_guard(
 ) -> "GovernanceGuard":
     """Create a tenant gating guard for the governance guard chain.
 
-    Blocks requests from suspended or terminated tenants.
-    Unknown tenants are allowed through.
+    Blocks requests from suspended, terminated, or strict-mode unknown tenants.
     """
     from mcoi_runtime.core.governance_guard import GovernanceGuard, GuardResult
 
@@ -250,15 +270,11 @@ def create_tenant_gating_guard(
         if not tenant_id or tenant_id == "system":
             return GuardResult(allowed=True, guard_name="tenant_gating")
 
-        gate = registry.get_status(tenant_id)
-        if gate is None:
-            # Unknown tenant — allow through (auto-provisioning compatible)
-            return GuardResult(allowed=True, guard_name="tenant_gating")
-
-        if gate.status in _BLOCKED_STATES:
+        reason = registry.denial_reason(tenant_id)
+        if reason is not None:
             return GuardResult(
                 allowed=False, guard_name="tenant_gating",
-                reason=f"tenant {tenant_id} is {gate.status.value}: {gate.reason}",
+                reason=reason,
             )
 
         return GuardResult(allowed=True, guard_name="tenant_gating")

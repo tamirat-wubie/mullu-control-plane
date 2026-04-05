@@ -140,7 +140,7 @@ class PilotDeploymentEngine:
     ) -> TenantBootstrap:
         """Create a new tenant bootstrap in PENDING status."""
         if bootstrap_id in self._bootstraps:
-            raise RuntimeCoreInvariantError(f"Duplicate bootstrap_id: {bootstrap_id}")
+            raise RuntimeCoreInvariantError("Duplicate bootstrap_id")
         now = self._now()
         record = TenantBootstrap(
             bootstrap_id=bootstrap_id,
@@ -159,10 +159,9 @@ class PilotDeploymentEngine:
                                   allowed_from: frozenset[BootstrapStatus] | None = None) -> TenantBootstrap:
         old = self._bootstraps.get(bootstrap_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown bootstrap_id: {bootstrap_id}")
+            raise RuntimeCoreInvariantError("Unknown bootstrap_id")
         if allowed_from is not None and old.status not in allowed_from:
-            raise RuntimeCoreInvariantError(
-                f"Cannot transition bootstrap from {old.status.value} to {target.value}")
+            raise RuntimeCoreInvariantError("Cannot transition bootstrap from current status")
         now = self._now()
         updated = TenantBootstrap(
             bootstrap_id=old.bootstrap_id,
@@ -212,7 +211,7 @@ class PilotDeploymentEngine:
     ) -> ConnectorActivation:
         """Create a new connector activation in ACTIVATING status."""
         if activation_id in self._connectors:
-            raise RuntimeCoreInvariantError(f"Duplicate activation_id: {activation_id}")
+            raise RuntimeCoreInvariantError("Duplicate activation_id")
         now = self._now()
         record = ConnectorActivation(
             activation_id=activation_id,
@@ -231,7 +230,7 @@ class PilotDeploymentEngine:
         """Complete connector activation: ACTIVE if health_passed, FAILED otherwise."""
         old = self._connectors.get(activation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown activation_id: {activation_id}")
+            raise RuntimeCoreInvariantError("Unknown activation_id")
         now = self._now()
         target_status = ConnectorActivationStatus.ACTIVE if health_passed else ConnectorActivationStatus.FAILED
         updated = ConnectorActivation(
@@ -252,7 +251,7 @@ class PilotDeploymentEngine:
         """Transition connector to DEGRADED."""
         old = self._connectors.get(activation_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown activation_id: {activation_id}")
+            raise RuntimeCoreInvariantError("Unknown activation_id")
         now = self._now()
         updated = ConnectorActivation(
             activation_id=old.activation_id,
@@ -277,7 +276,7 @@ class PilotDeploymentEngine:
     ) -> DataMigration:
         """Create a new data migration in PENDING status."""
         if migration_id in self._migrations:
-            raise RuntimeCoreInvariantError(f"Duplicate migration_id: {migration_id}")
+            raise RuntimeCoreInvariantError("Duplicate migration_id")
         now = self._now()
         record = DataMigration(
             migration_id=migration_id,
@@ -297,7 +296,7 @@ class PilotDeploymentEngine:
                                   **overrides: Any) -> DataMigration:
         old = self._migrations.get(migration_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown migration_id: {migration_id}")
+            raise RuntimeCoreInvariantError("Unknown migration_id")
         now = self._now()
         updated = DataMigration(
             migration_id=old.migration_id,
@@ -342,7 +341,7 @@ class PilotDeploymentEngine:
     ) -> PilotRecord:
         """Register a new pilot in SETUP phase."""
         if pilot_id in self._pilots:
-            raise RuntimeCoreInvariantError(f"Duplicate pilot_id: {pilot_id}")
+            raise RuntimeCoreInvariantError("Duplicate pilot_id")
         now = self._now()
         record = PilotRecord(
             pilot_id=pilot_id,
@@ -359,11 +358,10 @@ class PilotDeploymentEngine:
         """Advance pilot to the next phase."""
         old = self._pilots.get(pilot_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown pilot_id: {pilot_id}")
+            raise RuntimeCoreInvariantError("Unknown pilot_id")
         idx = _PILOT_PHASE_ORDER.index(old.phase)
         if idx >= len(_PILOT_PHASE_ORDER) - 1:
-            raise RuntimeCoreInvariantError(
-                f"Pilot {pilot_id} is already in terminal phase: {old.phase.value}")
+            raise RuntimeCoreInvariantError("Pilot already in terminal phase")
         next_phase = _PILOT_PHASE_ORDER[idx + 1]
         now = self._now()
         updated = PilotRecord(
@@ -387,7 +385,7 @@ class PilotDeploymentEngine:
     ) -> GoLiveChecklist:
         """Assess go-live readiness for a tenant."""
         if checklist_id in self._checklists:
-            raise RuntimeCoreInvariantError(f"Duplicate checklist_id: {checklist_id}")
+            raise RuntimeCoreInvariantError("Duplicate checklist_id")
 
         # Count total items from bootstraps, connectors, migrations for this tenant
         tenant_bootstraps = [b for b in self._bootstraps.values() if b.tenant_id == tenant_id]
@@ -437,7 +435,7 @@ class PilotDeploymentEngine:
     ) -> RunbookEntry:
         """Register a runbook entry."""
         if entry_id in self._runbooks:
-            raise RuntimeCoreInvariantError(f"Duplicate entry_id: {entry_id}")
+            raise RuntimeCoreInvariantError("Duplicate entry_id")
         now = self._now()
         record = RunbookEntry(
             entry_id=entry_id,
@@ -461,7 +459,7 @@ class PilotDeploymentEngine:
     ) -> SloDefinition:
         """Register a service-level objective."""
         if slo_id in self._slos:
-            raise RuntimeCoreInvariantError(f"Duplicate slo_id: {slo_id}")
+            raise RuntimeCoreInvariantError("Duplicate slo_id")
         now = self._now()
         record = SloDefinition(
             slo_id=slo_id,
@@ -581,7 +579,7 @@ class PilotDeploymentEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="failed_connector_in_live_pilot",
-                        reason=f"Connector {c.activation_id} failed during live pilot",
+                        reason="Connector failed during live pilot",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -597,7 +595,7 @@ class PilotDeploymentEngine:
                     violation_id=vid,
                     tenant_id=tenant_id,
                     operation="incomplete_migration",
-                    reason=f"Migration {m.migration_id} failed",
+                    reason="Migration failed",
                     detected_at=now,
                 )
                 self._violations[vid] = v
@@ -613,7 +611,7 @@ class PilotDeploymentEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="slo_breach",
-                        reason=f"SLO {s.slo_id} breached: {s.current_value} < {s.target_value * 0.9}",
+                        reason="SLO breached",
                         detected_at=now,
                     )
                     self._violations[vid] = v

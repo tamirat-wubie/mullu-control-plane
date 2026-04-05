@@ -105,7 +105,8 @@ class TestCertifyAPIBoundary:
             handle_fn=lambda req: (_ for _ in ()).throw(RuntimeError("boom"))
         )
         assert step.status == CertificationStatus.FAILED
-        assert "boom" in step.detail
+        assert step.detail == "API boundary failed: RuntimeError"
+        assert "boom" not in step.detail
 
 
 class TestCertifyDBPersistence:
@@ -123,6 +124,7 @@ class TestCertifyDBPersistence:
         step = certifier.certify_db_persistence(write_fn=write_fn, read_fn=read_fn)
         assert step.status == CertificationStatus.PASSED
         assert step.proof_hash
+        assert step.detail == "Entry verified on read-back"
         assert store.ledger_count() >= 1
 
     def test_skipped_without_functions(self):
@@ -138,6 +140,16 @@ class TestCertifyDBPersistence:
         )
         assert step.status == CertificationStatus.FAILED
 
+    def test_exception_is_bounded(self):
+        certifier = LivePathCertifier(clock=FIXED_CLOCK)
+        step = certifier.certify_db_persistence(
+            write_fn=lambda t, c: (_ for _ in ()).throw(RuntimeError("db secret detail")),
+            read_fn=lambda t: [],
+        )
+        assert step.status == CertificationStatus.FAILED
+        assert step.detail == "DB persistence failed: RuntimeError"
+        assert "db secret detail" not in step.detail
+
 
 class TestCertifyLLMInvocation:
     def test_passed_with_stub(self):
@@ -148,6 +160,7 @@ class TestCertifyLLMInvocation:
         )
         assert step.status == CertificationStatus.PASSED
         assert step.proof_hash
+        assert step.detail == "LLM invocation succeeded"
 
     def test_skipped_without_fn(self):
         certifier = LivePathCertifier(clock=FIXED_CLOCK)
@@ -160,7 +173,8 @@ class TestCertifyLLMInvocation:
             invoke_fn=lambda prompt: (_ for _ in ()).throw(RuntimeError("llm down"))
         )
         assert step.status == CertificationStatus.FAILED
-        assert "llm down" in step.detail
+        assert step.detail == "LLM invocation failed: RuntimeError"
+        assert "llm down" not in step.detail
 
 
 class TestCertifyLedgerIntegrity:
@@ -182,6 +196,7 @@ class TestCertifyLedgerIntegrity:
         ]
         step = certifier.certify_ledger_integrity(ledger_entries=entries)
         assert step.status == CertificationStatus.FAILED
+        assert step.detail == "Ledger entries missing required hashes"
 
     def test_skipped_without_entries(self):
         certifier = LivePathCertifier(clock=FIXED_CLOCK)
@@ -193,6 +208,20 @@ class TestCertifyLedgerIntegrity:
         step = certifier.certify_ledger_integrity(ledger_entries=[])
         assert step.status == CertificationStatus.SKIPPED
 
+    def test_exception_is_bounded(self):
+        certifier = LivePathCertifier(clock=FIXED_CLOCK)
+
+        class _BrokenLedgerEntry(dict):
+            def get(self, key, default=None):
+                raise RuntimeError("ledger secret detail")
+
+        step = certifier.certify_ledger_integrity(
+            ledger_entries=[_BrokenLedgerEntry(hash="abc123")],
+        )
+        assert step.status == CertificationStatus.FAILED
+        assert step.detail == "Ledger integrity check failed: RuntimeError"
+        assert "ledger secret detail" not in step.detail
+
 
 class TestCertifyRestartProof:
     def test_passed_with_preserved_state(self):
@@ -203,6 +232,7 @@ class TestCertifyRestartProof:
             post_state_fn=lambda: ("hash-post", 5),
         )
         assert step.status == CertificationStatus.PASSED
+        assert step.detail == "Restart state preserved"
         assert proof is not None
         assert proof.state_preserved is True
         assert proof.entries_before == 5
@@ -216,6 +246,7 @@ class TestCertifyRestartProof:
             post_state_fn=lambda: ("hash-post", 3),  # Lost entries
         )
         assert step.status == CertificationStatus.FAILED
+        assert step.detail == "Restart state not preserved"
         assert proof is not None
         assert proof.state_preserved is False
 
@@ -235,6 +266,19 @@ class TestCertifyRestartProof:
 
 
 # ═══ Full Certification ═══
+
+class TestRestartBoundedFailures:
+    def test_exception_is_bounded(self):
+        certifier = LivePathCertifier(clock=FIXED_CLOCK)
+        step, proof = certifier.certify_restart_proof(
+            pre_state_fn=lambda: (_ for _ in ()).throw(RuntimeError("restart secret detail")),
+            post_state_fn=lambda: ("hash-post", 1),
+        )
+        assert step.status == CertificationStatus.FAILED
+        assert proof is None
+        assert step.detail == "Restart proof failed: RuntimeError"
+        assert "restart secret detail" not in step.detail
+
 
 class TestFullCertification:
     def _setup_full(self):

@@ -309,3 +309,41 @@ class TestBuiltinPacks:
         # 4 base + 2 governance = 6
         assert pe.extraction_rule_count == 6
         assert pe.routing_rule_count == 4
+
+
+class TestBuiltinDescriptionsAreBounded:
+    def test_software_delivery_descriptions_redact_rule_values(self):
+        pe = DomainPackEngine()
+        register_software_delivery_pack(pe, activate=True)
+        extraction_rules = pe.get_extraction_rules_for_pack("pack-software-delivery")
+        routing_rules = pe.get_routing_rules_for_pack("pack-software-delivery")
+
+        assert all(rule.description == "Software delivery extraction rule" for rule in extraction_rules)
+        assert all(route.description == "Software delivery routing rule" for route in routing_rules)
+        assert all("developer" not in route.description.lower() for route in routing_rules)
+        assert all("ops" not in route.description.lower() for route in routing_rules)
+
+    def test_support_descriptions_redact_rule_values(self):
+        pe = DomainPackEngine()
+        register_support_pack(pe, activate=True)
+        extraction_rules = pe.get_extraction_rules_for_pack("pack-support-ticketing")
+        routing_rules = pe.get_routing_rules_for_pack("pack-support-ticketing")
+        memory_rules = pe.resolve_memory_rules(PackScope.GLOBAL)
+
+        assert all(rule.description == "Support extraction rule" for rule in extraction_rules)
+        assert all(route.description == "Support routing rule" for route in routing_rules)
+        assert all(rule.description == "Support memory rule" for rule in memory_rules)
+        assert all("customer" not in route.description.lower() for route in routing_rules)
+        assert all("support-queue" not in route.description.lower() for route in routing_rules)
+
+    def test_internal_ops_descriptions_redact_rule_values(self):
+        pe = DomainPackEngine()
+        register_internal_ops_pack(pe, activate=True)
+        extraction_rules = pe.get_extraction_rules_for_pack("pack-internal-ops")
+        routing_rules = pe.get_routing_rules_for_pack("pack-internal-ops")
+
+        base_extraction_rules = [rule for rule in extraction_rules if rule.rule_id.startswith("iop-extr-") and not rule.rule_id.startswith("iop-extr-gov")]
+        assert all(rule.description == "Internal ops extraction rule" for rule in base_extraction_rules)
+        assert all(route.description == "Internal ops routing rule" for route in routing_rules)
+        assert all("employee" not in route.description.lower() for route in routing_rules)
+        assert all("manager" not in route.description.lower() for route in routing_rules)

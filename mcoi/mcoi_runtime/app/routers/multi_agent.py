@@ -16,6 +16,10 @@ from mcoi_runtime.app.routers.deps import deps
 router = APIRouter()
 
 
+def _multi_agent_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # ── Request Models ────────────────────────────────────────────────────
 
 
@@ -113,11 +117,7 @@ def resolve_delegation(req: ResolveDelegationRequest):
     try:
         status = DelegationStatus(req.status)
     except ValueError:
-        raise HTTPException(400, detail={
-            "error": f"invalid status: {req.status}",
-            "error_code": "invalid_status",
-            "governed": True,
-        })
+        raise HTTPException(400, detail=_multi_agent_error_detail("invalid status", "invalid_status"))
     try:
         result = DelegationResult(
             delegation_id=req.delegation_id,
@@ -195,11 +195,7 @@ def record_merge(req: RecordMergeRequest):
     try:
         outcome = MergeOutcome(req.outcome)
     except ValueError:
-        raise HTTPException(400, detail={
-            "error": f"invalid outcome: {req.outcome}",
-            "error_code": "invalid_outcome",
-            "governed": True,
-        })
+        raise HTTPException(400, detail=_multi_agent_error_detail("invalid outcome", "invalid_outcome"))
     try:
         merge = MergeDecision(
             merge_id=req.merge_id,
@@ -231,11 +227,7 @@ def record_conflict(req: RecordConflictRequest):
     try:
         strategy = ConflictStrategy(req.strategy)
     except ValueError:
-        raise HTTPException(400, detail={
-            "error": f"invalid strategy: {req.strategy}",
-            "error_code": "invalid_strategy",
-            "governed": True,
-        })
+        raise HTTPException(400, detail=_multi_agent_error_detail("invalid strategy", "invalid_strategy"))
     try:
         conflict = ConflictRecord(
             conflict_id=req.conflict_id,

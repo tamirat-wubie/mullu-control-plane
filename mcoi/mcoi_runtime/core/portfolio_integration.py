@@ -352,7 +352,7 @@ class PortfolioIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=portfolio_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Portfolio state: {portfolio.name}",
+            title="Portfolio state",
             content={
                 "portfolio_id": portfolio_id,
                 "name": portfolio.name,

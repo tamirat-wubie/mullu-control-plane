@@ -241,6 +241,13 @@ class TestMemoryMeshAttachment:
         record = integration.attach_copilot_state_to_memory_mesh("scope1")
         assert record.scope_ref_id == "scope1"
 
+    def test_attach_uses_bounded_title(self, integration):
+        integration.copilot_for_operator_workspace("t1", "ws1")
+        record = integration.attach_copilot_state_to_memory_mesh("scope-title")
+        assert record.title == "Copilot state"
+        assert "scope-title" not in record.title
+        assert record.scope_ref_id == "scope-title"
+
     def test_attach_emits_event(self, integration, es):
         integration.copilot_for_operator_workspace("t1", "ws1")
         before = es.event_count

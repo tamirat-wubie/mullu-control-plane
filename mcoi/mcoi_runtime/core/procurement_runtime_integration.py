@@ -86,7 +86,7 @@ class ProcurementRuntimeIntegration:
         req = self._procurement.create_request(
             request_id, vendor_id, tenant_id, amount,
             currency=currency,
-            description=f"Budget need: {budget_ref}",
+            description="Budget need",
         )
         _emit(self._events, "procurement_from_budget_need", {
             "request_id": request_id, "budget_ref": budget_ref,
@@ -139,7 +139,7 @@ class ProcurementRuntimeIntegration:
         req = self._procurement.create_request(
             request_id, vendor_id, tenant_id, amount,
             currency=currency,
-            description=f"Connector requirement: {connector_ref}",
+            description="Connector requirement",
         )
         _emit(self._events, "procurement_from_connector_requirement", {
             "request_id": request_id, "connector_ref": connector_ref,
@@ -168,7 +168,7 @@ class ProcurementRuntimeIntegration:
         req = self._procurement.create_request(
             request_id, vendor_id, tenant_id, amount,
             currency=currency,
-            description=f"Asset need: {asset_ref}",
+            description="Asset need",
         )
         _emit(self._events, "procurement_from_asset_need", {
             "request_id": request_id, "asset_ref": asset_ref,
@@ -281,7 +281,7 @@ class ProcurementRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Procurement state: {scope_ref_id}",
+            title="Procurement state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("procurement", "vendor", "purchasing"),

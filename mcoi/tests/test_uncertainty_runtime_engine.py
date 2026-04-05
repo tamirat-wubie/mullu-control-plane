@@ -296,3 +296,39 @@ class TestStateHash:
     def test_snapshot_method(self, engine_with_belief: UncertaintyRuntimeEngine) -> None:
         snap = engine_with_belief.snapshot()
         assert snap["beliefs"] == 1
+
+
+class TestBoundedUncertaintyContracts:
+    def test_duplicate_unknown_and_interval_messages_are_bounded(self, engine: UncertaintyRuntimeEngine) -> None:
+        engine.register_belief("belief-secret", "t-1", "test")
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate belief_id") as duplicate_exc:
+            engine.register_belief("belief-secret", "t-1", "test")
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown belief_id") as unknown_exc:
+            engine.get_belief("belief-missing")
+        with pytest.raises(RuntimeCoreInvariantError, match="Confidence interval lower must be <= upper") as interval_exc:
+            engine.register_confidence_interval("ci-secret", "t-1", "belief-secret", lower=0.9, upper=0.1)
+
+        assert "belief-secret" not in str(duplicate_exc.value)
+        assert "belief-missing" not in str(unknown_exc.value)
+        assert "0.9" not in str(interval_exc.value)
+        assert "0.1" not in str(interval_exc.value)
+
+    def test_violation_reasons_are_bounded(self, engine: UncertaintyRuntimeEngine) -> None:
+        engine.register_belief("belief-high", "t-1", "high", confidence=0.9)
+        engine.register_belief("belief-stale", "t-1", "stale")
+        now = engine._clock()
+        engine._intervals["ci-secret"] = ConfidenceInterval(
+            interval_id="ci-secret",
+            tenant_id="t-1",
+            belief_ref="belief-stale",
+            lower=0.9,
+            upper=0.1,
+            confidence_level=0.95,
+            created_at=now,
+        )
+
+        reasons = {violation["reason"] for violation in engine.detect_uncertainty_violations()}
+        assert "confidence interval bounds are inverted" in reasons
+        assert "belief has high confidence without evidence" in reasons
+        assert "belief has no updates" in reasons
+        assert all("secret" not in reason for reason in reasons)

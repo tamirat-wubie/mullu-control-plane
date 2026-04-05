@@ -40,8 +40,9 @@ class TestTenantBudgetManager:
     def test_no_auto_create_raises(self):
         mgr = TenantBudgetManager(clock=FIXED_CLOCK)
         mgr.set_policy(TenantBudgetPolicy(tenant_id="t1", auto_create=False))
-        with pytest.raises(ValueError, match="auto_create"):
+        with pytest.raises(ValueError, match="^no budget available and auto_create is disabled$") as exc_info:
             mgr.ensure_budget("t1")
+        assert "t1" not in str(exc_info.value)
 
     def test_record_spend(self):
         mgr = TenantBudgetManager(clock=FIXED_CLOCK)
@@ -64,8 +65,9 @@ class TestTenantBudgetManager:
         mgr.set_policy(TenantBudgetPolicy(tenant_id="t1", max_cost=1.0))
         mgr.ensure_budget("t1")
         mgr.record_spend("t1", 1.0)
-        with pytest.raises(ValueError, match="exhausted"):
+        with pytest.raises(ValueError, match="^budget exhausted$") as exc_info:
             mgr.record_spend("t1", 0.01)
+        assert "t1" not in str(exc_info.value)
 
     def test_isolation_between_tenants(self):
         mgr = TenantBudgetManager(clock=FIXED_CLOCK)

@@ -61,6 +61,15 @@ class TestTenantBudgetNegativeCost:
         with pytest.raises(ValueError, match="cost must be non-negative"):
             mgr.record_spend("t1", cost=-5.0)
 
+    def test_negative_cost_error_is_bounded(self):
+        from mcoi_runtime.core.tenant_budget import TenantBudgetManager
+        mgr = TenantBudgetManager(clock=lambda: "2026-01-01T00:00:00Z")
+        mgr.ensure_budget("t1")
+        with pytest.raises(ValueError, match="cost must be non-negative") as excinfo:
+            mgr.record_spend("t1", cost=-5.0)
+        assert str(excinfo.value) == "cost must be non-negative"
+        assert "-5.0" not in str(excinfo.value)
+
     def test_zero_cost_allowed(self):
         from mcoi_runtime.core.tenant_budget import TenantBudgetManager
         mgr = TenantBudgetManager(clock=lambda: "2026-01-01T00:00:00Z")
