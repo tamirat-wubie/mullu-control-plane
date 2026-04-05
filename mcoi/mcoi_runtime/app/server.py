@@ -62,6 +62,13 @@ from mcoi_runtime.app.server_deps import (
     register_dependency_groups,
     wire_runtime_dependencies,
 )
+from mcoi_runtime.app.server_runtime import (
+    build_default_input_validator,
+    calculator_handler as _calculator_handler_impl,
+    register_default_output_schemas,
+    register_default_tools,
+    validate_or_raise as _validate_or_raise_impl,
+)
 from mcoi_runtime.app.server_state import (
     close_governance_stores as _close_governance_stores_impl,
     flush_state_on_shutdown as _flush_state_on_shutdown_impl,
@@ -594,37 +601,16 @@ tenant_isolation = TenantIsolationAuditor(clock=_clock)
 observability.register_source("tenant_isolation", lambda: tenant_isolation.summary())
 
 # Phase 226A: Input validation
-from mcoi_runtime.core.input_validation import InputValidator, InputSchema, ValidationRule, RuleType
-input_validator = InputValidator()
-input_validator.register(InputSchema("api_request", "API Request", rules=(
-    ValidationRule("tenant_id", RuleType.REQUIRED),
-    ValidationRule("tenant_id", RuleType.TYPE_CHECK, value=str),
-)))
-input_validator.register(InputSchema("completion", "LLM Completion", rules=(
-    ValidationRule("prompt", RuleType.REQUIRED),
-    ValidationRule("prompt", RuleType.MIN_LENGTH, value=1),
-    ValidationRule("prompt", RuleType.MAX_LENGTH, value=100_000),
-    ValidationRule("max_tokens", RuleType.MIN_VALUE, value=1),
-    ValidationRule("max_tokens", RuleType.MAX_VALUE, value=100_000),
-    ValidationRule("temperature", RuleType.MIN_VALUE, value=0.0),
-    ValidationRule("temperature", RuleType.MAX_VALUE, value=2.0),
-)))
-input_validator.register(InputSchema("webhook", "Webhook Subscribe", rules=(
-    ValidationRule("url", RuleType.REQUIRED),
-    ValidationRule("url", RuleType.PATTERN, value=r"^https?://"),
-    ValidationRule("event_types", RuleType.REQUIRED),
-)))
+input_validator = build_default_input_validator()
 
 
 def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
     """Validate request data against a schema; raise 422 if invalid."""
-    result = input_validator.validate(schema_id, data)
-    if not result.valid:
-        raise HTTPException(422, detail={
-            "error": "Validation failed",
-            "validation_errors": result.to_dict()["errors"],
-            "governed": True,
-        })
+    _validate_or_raise_impl(
+        input_validator=input_validator,
+        schema_id=schema_id,
+        data=data,
+    )
 
 # Phase 226B: Prometheus exporter
 from mcoi_runtime.core.prometheus_exporter import PrometheusExporter
@@ -732,38 +718,23 @@ tool_registry = ToolRegistry(clock=_clock)
 
 
 def _calculator_handler(args: dict[str, Any]) -> dict[str, str]:
-    expression = str(args.get("expression", "0"))
-    return {"result": str(evaluate_expression(expression))}
+    return _calculator_handler_impl(
+        args,
+        evaluate_expression_fn=evaluate_expression,
+    )
 
 
-tool_registry.register(
-    ToolDefinition(
-        tool_id="calculator", name="Calculator",
-        description="Evaluate a math expression",
-        parameters=(ToolParameter(name="expression", param_type="string", description="Math expression"),),
-        category="utility",
-    ),
-    handler=_calculator_handler,
-)
-tool_registry.register(
-    ToolDefinition(
-        tool_id="get_time", name="Get Time",
-        description="Get the current time",
-        parameters=(),
-        category="utility",
-    ),
-    handler=lambda args: {"time": _clock()},
+register_default_tools(
+    tool_registry=tool_registry,
+    clock=_clock,
+    evaluate_expression_fn=evaluate_expression,
 )
 observability.register_source("tools", lambda: tool_registry.summary())
 
 # Phase 212A: Structured output engine
 from mcoi_runtime.core.structured_output import StructuredOutputEngine, OutputSchema
 structured_output = StructuredOutputEngine()
-structured_output.register(OutputSchema(
-    schema_id="analysis", name="Analysis Output",
-    fields={"summary": "string", "key_points": "array", "confidence": "number"},
-    required_fields=("summary", "key_points"),
-))
+register_default_output_schemas(structured_output)
 
 # Phase 212A: State persistence (file-based)
 from mcoi_runtime.persistence.state_persistence import StatePersistence
