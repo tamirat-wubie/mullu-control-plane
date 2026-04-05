@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+from types import SimpleNamespace
+
 import pytest
 
 try:
@@ -92,3 +94,53 @@ class TestRouterDeps:
             d.get("nonexistent")
         assert str(exc.value) == "dependency not registered"
         assert "nonexistent" not in str(exc.value)
+
+
+class TestServerDependencyHelpers:
+    def test_register_dependency_groups_sets_all_values(self):
+        from mcoi_runtime.app.server_deps import register_dependency_groups
+
+        class FakeDeps:
+            def __init__(self):
+                self.values = {}
+
+            def set(self, name, value):
+                self.values[name] = value
+
+        deps = FakeDeps()
+        register_dependency_groups(
+            deps,
+            {"alpha": 1, "beta": 2},
+            {"gamma": 3},
+        )
+
+        assert deps.values["alpha"] == 1
+        assert deps.values["beta"] == 2
+        assert deps.values["gamma"] == 3
+
+    def test_wire_runtime_dependencies_sets_late_bound_fields(self):
+        from mcoi_runtime.app.server_deps import wire_runtime_dependencies
+
+        guard_chain = object()
+        audit_trail = object()
+        scheduler = SimpleNamespace(_guard_chain=None, _audit_trail=None)
+        connector_framework = SimpleNamespace(_guard_chain=None, _audit_trail=None)
+        policy_sandbox = SimpleNamespace(_guard_chain=None)
+        explanation_engine = SimpleNamespace(_guard_chain=None, _audit_trail=None)
+
+        wire_runtime_dependencies(
+            guard_chain=guard_chain,
+            audit_trail=audit_trail,
+            scheduler=scheduler,
+            connector_framework=connector_framework,
+            policy_sandbox=policy_sandbox,
+            explanation_engine=explanation_engine,
+        )
+
+        assert scheduler._guard_chain is guard_chain
+        assert scheduler._audit_trail is audit_trail
+        assert connector_framework._guard_chain is guard_chain
+        assert connector_framework._audit_trail is audit_trail
+        assert policy_sandbox._guard_chain is guard_chain
+        assert explanation_engine._guard_chain is guard_chain
+        assert explanation_engine._audit_trail is audit_trail

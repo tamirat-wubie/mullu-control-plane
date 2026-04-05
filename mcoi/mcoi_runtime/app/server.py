@@ -58,6 +58,10 @@ from mcoi_runtime.app.server_http import (
     include_default_routers,
     install_global_exception_handler,
 )
+from mcoi_runtime.app.server_deps import (
+    register_dependency_groups,
+    wire_runtime_dependencies,
+)
 from mcoi_runtime.app.server_state import (
     close_governance_stores as _close_governance_stores_impl,
     flush_state_on_shutdown as _flush_state_on_shutdown_impl,
@@ -979,32 +983,6 @@ install_global_exception_handler(
 
 from mcoi_runtime.app.routers.deps import deps
 
-# Core
-deps.set("surface", surface)
-deps.set("store", store)
-deps.set("_clock", _clock)
-deps.set("ENV", ENV)
-
-# LLM
-deps.set("llm_bridge", llm_bridge)
-deps.set("llm_bootstrap_result", llm_bootstrap_result)
-deps.set("llm_circuit", llm_circuit)
-deps.set("streaming_adapter", streaming_adapter)
-deps.set("model_router", model_router)
-
-# Governance
-deps.set("metrics", metrics)
-deps.set("rate_limiter", rate_limiter)
-deps.set("rate_limit_headers", rate_limit_headers)
-deps.set("guard_chain", guard_chain)
-deps.set("audit_trail", audit_trail)
-deps.set("input_validator", input_validator)
-deps.set("proof_bridge", proof_bridge)
-deps.set("pii_scanner", pii_scanner)
-deps.set("content_safety_chain", content_safety_chain)
-deps.set("tenant_gating", _tenant_gating)
-deps.set("field_encryption_bootstrap", dict(_field_encryption_bootstrap))
-
 # GovernedSession Platform harness
 from mcoi_runtime.core.governed_session import Platform as _Platform
 platform = _Platform(
@@ -1029,113 +1007,143 @@ platform = _Platform(
         "field_encryption": bool(_field_encryption_bootstrap.get("enabled", False)),
     },
 )
-deps.set("platform", platform)
+wire_runtime_dependencies(
+    guard_chain=guard_chain,
+    audit_trail=audit_trail,
+    scheduler=scheduler,
+    connector_framework=connector_framework,
+    policy_sandbox=policy_sandbox,
+    explanation_engine=explanation_engine,
+)
 
-# Tenants
-deps.set("tenant_budget_mgr", tenant_budget_mgr)
-deps.set("tenant_ledger", tenant_ledger)
-deps.set("tenant_isolation", tenant_isolation)
-deps.set("tenant_quota", tenant_quota)
-deps.set("tenant_partitions", tenant_partitions)
-deps.set("tenant_analytics", tenant_analytics)
-deps.set("usage_reporter", usage_reporter)
-deps.set("isolation_verifier", isolation_verifier)
-
-# Agents & workflows
-deps.set("agent_registry", agent_registry)
-deps.set("task_manager", task_manager)
-deps.set("workflow_engine", workflow_engine)
-deps.set("traced_workflow", traced_workflow)
-deps.set("replay_recorder", replay_recorder)
-deps.set("chat_workflow", chat_workflow)
-deps.set("agent_chain", agent_chain)
-deps.set("agent_orchestrator", agent_orchestrator)
-deps.set("coordination_engine", coordination_engine)
-deps.set("coordination_store", coordination_store)
-# Late-wire scheduler with guard chain and audit trail
-scheduler._guard_chain = guard_chain
-scheduler._audit_trail = audit_trail
-deps.set("scheduler", scheduler)
-connector_framework._guard_chain = guard_chain
-connector_framework._audit_trail = audit_trail
-deps.set("connector_framework", connector_framework)
-deps.set("access_runtime", access_runtime)
-policy_sandbox._guard_chain = guard_chain
-deps.set("policy_sandbox", policy_sandbox)
-deps.set("runbook_learning", runbook_learning)
-explanation_engine._audit_trail = audit_trail
-explanation_engine._guard_chain = guard_chain
-deps.set("explanation_engine", explanation_engine)
-deps.set("knowledge_graph", knowledge_graph)
-deps.set("audit_anchor", audit_anchor)
-deps.set("tool_registry", tool_registry)
-deps.set("tool_agent", tool_agent)
-deps.set("agent_memory", agent_memory)
-deps.set("task_queue", task_queue)
-deps.set("batch_pipeline", batch_pipeline)
-deps.set("wf_templates", wf_templates)
-deps.set("semantic_search", semantic_search)
-
-# Conversations & prompts
-deps.set("conversation_store", conversation_store)
-deps.set("prompt_engine", prompt_engine)
-deps.set("schema_validator", schema_validator)
-
-# Persistence & state
-deps.set("state_persistence", state_persistence)
-deps.set("structured_output", structured_output)
-deps.set("cost_analytics", cost_analytics)
-
-# Health
-deps.set("deep_health", deep_health)
-deps.set("health_agg", health_agg)
-deps.set("health_agg_v2", health_agg_v2)
-deps.set("health_v3", health_v3)
-deps.set("certifier", certifier)
-deps.set("cert_daemon", cert_daemon)
-
-# Events & webhooks
-deps.set("event_bus", event_bus)
-deps.set("event_store", event_store)
-deps.set("webhook_manager", webhook_manager)
-deps.set("webhook_retry", webhook_retry)
-
-# Ops & infra
-deps.set("config_manager", config_manager)
-deps.set("config_watcher", config_watcher)
-deps.set("config_drift", config_drift)
-deps.set("observability", observability)
-deps.set("plugin_registry", plugin_registry)
-deps.set("api_versions", api_versions)
-deps.set("platform_logger", platform_logger)
-deps.set("api_key_mgr", api_key_mgr)
-deps.set("data_export", data_export)
-deps.set("sla_monitor", sla_monitor)
-deps.set("notification_dispatcher", notification_dispatcher)
-deps.set("prom_exporter", prom_exporter)
-deps.set("grafana_dashboard", grafana_dashboard)
-deps.set("request_tracer", request_tracer)
-deps.set("monitor", monitor)
-deps.set("shutdown_mgr", shutdown_mgr)
-deps.set("correlation_mgr", correlation_mgr)
-deps.set("idempotency_store", idempotency_store)
-deps.set("response_compressor", response_compressor)
-deps.set("canary_controller", canary_controller)
-deps.set("secret_rotation", secret_rotation)
-deps.set("request_dedup", request_dedup)
-deps.set("snapshot_mgr", snapshot_mgr)
-deps.set("otel_exporter", otel_exporter)
-deps.set("circuit_dashboard", circuit_dashboard)
-deps.set("deploy_checker", deploy_checker)
-deps.set("api_migration", api_migration)
-deps.set("retry_engine", retry_engine)
-deps.set("region_router", region_router)
-deps.set("request_ctx_factory", request_ctx_factory)
-deps.set("governed_cache", governed_cache)
-deps.set("feature_flags", feature_flags)
-deps.set("dep_graph", dep_graph)
-deps.set("backpressure", backpressure)
-deps.set("ab_engine", ab_engine)
+register_dependency_groups(
+    deps,
+    {
+        "surface": surface,
+        "store": store,
+        "_clock": _clock,
+        "ENV": ENV,
+    },
+    {
+        "llm_bridge": llm_bridge,
+        "llm_bootstrap_result": llm_bootstrap_result,
+        "llm_circuit": llm_circuit,
+        "streaming_adapter": streaming_adapter,
+        "model_router": model_router,
+    },
+    {
+        "metrics": metrics,
+        "rate_limiter": rate_limiter,
+        "rate_limit_headers": rate_limit_headers,
+        "guard_chain": guard_chain,
+        "audit_trail": audit_trail,
+        "input_validator": input_validator,
+        "proof_bridge": proof_bridge,
+        "pii_scanner": pii_scanner,
+        "content_safety_chain": content_safety_chain,
+        "tenant_gating": _tenant_gating,
+        "field_encryption_bootstrap": dict(_field_encryption_bootstrap),
+        "platform": platform,
+    },
+    {
+        "tenant_budget_mgr": tenant_budget_mgr,
+        "tenant_ledger": tenant_ledger,
+        "tenant_isolation": tenant_isolation,
+        "tenant_quota": tenant_quota,
+        "tenant_partitions": tenant_partitions,
+        "tenant_analytics": tenant_analytics,
+        "usage_reporter": usage_reporter,
+        "isolation_verifier": isolation_verifier,
+    },
+    {
+        "agent_registry": agent_registry,
+        "task_manager": task_manager,
+        "workflow_engine": workflow_engine,
+        "traced_workflow": traced_workflow,
+        "replay_recorder": replay_recorder,
+        "chat_workflow": chat_workflow,
+        "agent_chain": agent_chain,
+        "agent_orchestrator": agent_orchestrator,
+        "coordination_engine": coordination_engine,
+        "coordination_store": coordination_store,
+        "scheduler": scheduler,
+        "connector_framework": connector_framework,
+        "access_runtime": access_runtime,
+        "policy_sandbox": policy_sandbox,
+        "runbook_learning": runbook_learning,
+        "explanation_engine": explanation_engine,
+        "knowledge_graph": knowledge_graph,
+        "audit_anchor": audit_anchor,
+        "tool_registry": tool_registry,
+        "tool_agent": tool_agent,
+        "agent_memory": agent_memory,
+        "task_queue": task_queue,
+        "batch_pipeline": batch_pipeline,
+        "wf_templates": wf_templates,
+        "semantic_search": semantic_search,
+    },
+    {
+        "conversation_store": conversation_store,
+        "prompt_engine": prompt_engine,
+        "schema_validator": schema_validator,
+    },
+    {
+        "state_persistence": state_persistence,
+        "structured_output": structured_output,
+        "cost_analytics": cost_analytics,
+    },
+    {
+        "deep_health": deep_health,
+        "health_agg": health_agg,
+        "health_agg_v2": health_agg_v2,
+        "health_v3": health_v3,
+        "certifier": certifier,
+        "cert_daemon": cert_daemon,
+    },
+    {
+        "event_bus": event_bus,
+        "event_store": event_store,
+        "webhook_manager": webhook_manager,
+        "webhook_retry": webhook_retry,
+    },
+    {
+        "config_manager": config_manager,
+        "config_watcher": config_watcher,
+        "config_drift": config_drift,
+        "observability": observability,
+        "plugin_registry": plugin_registry,
+        "api_versions": api_versions,
+        "platform_logger": platform_logger,
+        "api_key_mgr": api_key_mgr,
+        "data_export": data_export,
+        "sla_monitor": sla_monitor,
+        "notification_dispatcher": notification_dispatcher,
+        "prom_exporter": prom_exporter,
+        "grafana_dashboard": grafana_dashboard,
+        "request_tracer": request_tracer,
+        "monitor": monitor,
+        "shutdown_mgr": shutdown_mgr,
+        "correlation_mgr": correlation_mgr,
+        "idempotency_store": idempotency_store,
+        "response_compressor": response_compressor,
+        "canary_controller": canary_controller,
+        "secret_rotation": secret_rotation,
+        "request_dedup": request_dedup,
+        "snapshot_mgr": snapshot_mgr,
+        "otel_exporter": otel_exporter,
+        "circuit_dashboard": circuit_dashboard,
+        "deploy_checker": deploy_checker,
+        "api_migration": api_migration,
+        "retry_engine": retry_engine,
+        "region_router": region_router,
+        "request_ctx_factory": request_ctx_factory,
+        "governed_cache": governed_cache,
+        "feature_flags": feature_flags,
+        "dep_graph": dep_graph,
+        "backpressure": backpressure,
+        "ab_engine": ab_engine,
+    },
+)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
