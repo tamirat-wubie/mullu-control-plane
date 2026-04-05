@@ -53,6 +53,11 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
+from mcoi_runtime.app.server_http import (
+    configure_cors_middleware,
+    include_default_routers,
+    install_global_exception_handler,
+)
 from mcoi_runtime.app.server_state import (
     close_governance_stores as _close_governance_stores_impl,
     flush_state_on_shutdown as _flush_state_on_shutdown_impl,
@@ -948,43 +953,24 @@ app.add_middleware(
 )
 
 
-# â”€â”€ CORS middleware â€” allow cross-origin requests from web frontends â”€â”€â”€â”€â”€â”€
-from starlette.middleware.cors import CORSMiddleware
+import warnings
 
-_cors_origins = _resolve_cors_origins(os.environ.get("MULLU_CORS_ORIGINS"), ENV)
-_cors_warning = _validate_cors_origins_for_env(_cors_origins, ENV)
-if _cors_warning:
-    import warnings
-    warnings.warn(
-        _cors_warning,
-        stacklevel=1,
-    )
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors_origins or ["*"],  # fallback to * only if truly empty
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Request-Id", "X-Governed"],
+configure_cors_middleware(
+    app=app,
+    env=ENV,
+    cors_origins_raw=os.environ.get("MULLU_CORS_ORIGINS"),
+    resolve_cors_origins=_resolve_cors_origins,
+    validate_cors_origins_for_env=_validate_cors_origins_for_env,
+    warnings_module=warnings,
 )
 
 
-# â”€â”€ Global error handler â€” prevents leaking internal details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import JSONResponse as StarletteJSONResponse
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: StarletteRequest, exc: Exception):
-    """Catch unhandled exceptions, log, and return sanitized 500."""
-    metrics.inc("errors_total")
-    platform_logger.log(LogLevel.ERROR, f"Unhandled exception on {request.url.path}: {type(exc).__name__}")
-    return StarletteJSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "governed": True,
-        },
-    )
+install_global_exception_handler(
+    app=app,
+    metrics=metrics,
+    platform_logger=platform_logger,
+    log_levels=LogLevel,
+)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1156,45 +1142,7 @@ deps.set("ab_engine", ab_engine)
 # Include routers â€” all route handlers live in routers/ modules
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-from mcoi_runtime.app.routers.health import router as health_router
-from mcoi_runtime.app.routers.llm import router as llm_router
-from mcoi_runtime.app.routers.tenant import router as tenant_router
-from mcoi_runtime.app.routers.audit import router as audit_router
-from mcoi_runtime.app.routers.workflow import router as workflow_router
-from mcoi_runtime.app.routers.agent import router as agent_router
-from mcoi_runtime.app.routers.data import router as data_router
-from mcoi_runtime.app.routers.ops import router as ops_router
-from mcoi_runtime.app.routers.adapter import router as adapter_router
-from mcoi_runtime.app.routers.compliance import router as compliance_router
-from mcoi_runtime.app.routers.scheduler import router as scheduler_router
-from mcoi_runtime.app.routers.console import router as console_router
-from mcoi_runtime.app.routers.connectors import router as connectors_router
-from mcoi_runtime.app.routers.rbac import router as rbac_router
-from mcoi_runtime.app.routers.simulation import router as simulation_router
-from mcoi_runtime.app.routers.runbooks import router as runbooks_router
-from mcoi_runtime.app.routers.explain import router as explain_router
-from mcoi_runtime.app.routers.multi_agent import router as multi_agent_router
-from mcoi_runtime.app.routers.knowledge import router as knowledge_router
-
-app.include_router(health_router)
-app.include_router(llm_router)
-app.include_router(tenant_router)
-app.include_router(audit_router)
-app.include_router(workflow_router)
-app.include_router(agent_router)
-app.include_router(data_router)
-app.include_router(ops_router)
-app.include_router(adapter_router)
-app.include_router(compliance_router)
-app.include_router(scheduler_router)
-app.include_router(console_router)
-app.include_router(connectors_router)
-app.include_router(rbac_router)
-app.include_router(simulation_router)
-app.include_router(runbooks_router)
-app.include_router(explain_router)
-app.include_router(multi_agent_router)
-app.include_router(knowledge_router)
+include_default_routers(app)
 
 
 # â•â•â•â•ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ï¿½ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
