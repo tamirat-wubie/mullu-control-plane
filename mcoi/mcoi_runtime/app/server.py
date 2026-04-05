@@ -71,6 +71,49 @@ def _bounded_lifecycle_warning(component: str, exc: Exception) -> str:
     return f"{component} failed ({type(exc).__name__})"
 
 
+def _validate_db_backend_for_env(db_backend: str, env: str) -> str | None:
+    """Validate the persistence backend against environment posture."""
+    if db_backend == "memory" and env in ("pilot", "production"):
+        raise RuntimeError(
+            f"MULLU_DB_BACKEND=memory is not allowed in {env} environment. "
+            "Set MULLU_DB_BACKEND=postgresql to ensure governance state survives restarts."
+        )
+    if db_backend == "memory" and env not in ("local_dev", "test", ""):
+        return (
+            "MULLU_DB_BACKEND=memory in non-dev environment. "
+            "All state will be lost on restart. Set MULLU_DB_BACKEND=postgresql for production."
+        )
+    return None
+
+
+def _resolve_cors_origins(raw_value: str | None, env: str) -> list[str]:
+    """Resolve the configured CORS origins for the current environment."""
+    default = (
+        "http://localhost:3000,http://localhost:8080"
+        if env in ("local_dev", "test")
+        else ""
+    )
+    configured = raw_value if raw_value is not None else default
+    return [origin.strip() for origin in configured.split(",") if origin.strip()]
+
+
+def _validate_cors_origins_for_env(origins: list[str], env: str) -> str | None:
+    """Validate CORS posture against environment expectations."""
+    if origins:
+        return None
+    if env in ("pilot", "production"):
+        raise RuntimeError(
+            "MULLU_CORS_ORIGINS must be set in pilot or production environment. "
+            "Set explicit origins (for example https://app.mullu.io) for governed CORS."
+        )
+    if env not in ("local_dev", "test", ""):
+        return (
+            "MULLU_CORS_ORIGINS is empty in non-dev environment. "
+            "Set explicit origins (for example https://app.mullu.io) for production CORS."
+        )
+    return None
+
+
 def _append_bounded_warning(warnings: list[str], component: str, exc: Exception) -> None:
     """Record a bounded warning once per component/error class pair."""
     warning = _bounded_lifecycle_warning(component, exc)
@@ -115,16 +158,11 @@ def _clock() -> str:
 
 # Persistence store (InMemoryStore for dev, PostgresStore for production)
 _db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
-if _db_backend == "memory" and ENV in ("pilot", "production"):
-    raise RuntimeError(
-        f"MULLU_DB_BACKEND=memory is not allowed in {ENV} environment. "
-        "Set MULLU_DB_BACKEND=postgresql to ensure governance state survives restarts."
-    )
-elif _db_backend == "memory" and os.environ.get("MULLU_ENV") not in ("local_dev", "test", ""):
+_db_backend_warning = _validate_db_backend_for_env(_db_backend, ENV)
+if _db_backend_warning:
     import warnings
     warnings.warn(
-        "MULLU_DB_BACKEND=memory in non-dev environment. "
-        "All state will be lost on restart. Set MULLU_DB_BACKEND=postgresql for production.",
+        _db_backend_warning,
         stacklevel=1,
     )
 store = create_store(
@@ -971,14 +1009,12 @@ app.add_middleware(
 # â”€â”€ CORS middleware â€” allow cross-origin requests from web frontends â”€â”€â”€â”€â”€â”€
 from starlette.middleware.cors import CORSMiddleware
 
-_cors_default = "http://localhost:3000,http://localhost:8080" if ENV in ("local_dev", "test") else ""
-_cors_origins = os.environ.get("MULLU_CORS_ORIGINS", _cors_default).split(",")
-_cors_origins = [o.strip() for o in _cors_origins if o.strip()]
-if not _cors_origins and ENV not in ("local_dev", "test"):
+_cors_origins = _resolve_cors_origins(os.environ.get("MULLU_CORS_ORIGINS"), ENV)
+_cors_warning = _validate_cors_origins_for_env(_cors_origins, ENV)
+if _cors_warning:
     import warnings
     warnings.warn(
-        "MULLU_CORS_ORIGINS is empty in non-dev environment. "
-        "Set explicit origins (e.g. https://app.mullu.io) for production CORS.",
+        _cors_warning,
         stacklevel=1,
     )
 app.add_middleware(
