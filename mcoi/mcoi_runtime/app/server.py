@@ -59,6 +59,7 @@ from mcoi_runtime.app.server_platform import (
     bootstrap_governance_runtime,
     bootstrap_primary_store,
 )
+from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
@@ -188,59 +189,29 @@ proof_bridge = ProofBridge(clock=_clock)
 # Phase 201D: Tenant-scoped ledger
 tenant_ledger = TenantLedger(clock=_clock)
 
-# Phase 203A: Agent registry + task manager
-agent_registry = AgentRegistry()
-agent_registry.register(AgentDescriptor(
-    agent_id="llm-agent", name="LLM Completion Agent",
-    capabilities=(AgentCapability.LLM_COMPLETION, AgentCapability.TOOL_USE),
-))
-agent_registry.register(AgentDescriptor(
-    agent_id="code-agent", name="Code Execution Agent",
-    capabilities=(AgentCapability.CODE_EXECUTION,),
-))
-task_manager = TaskManager(clock=_clock, registry=agent_registry)
-
-# Phase 203B: Webhook manager
-webhook_manager = WebhookManager(clock=_clock)
-
-# Phase 203C: Deep health checker
-deep_health = DeepHealthChecker(clock=_clock)
-deep_health.register("store", lambda: {"status": "healthy", "ledger_count": store.ledger_count()})
-deep_health.register("llm", lambda: {"status": "healthy", "invocations": llm_bridge.invocation_count})
-deep_health.register("certification", lambda: {"status": "healthy", **cert_daemon.status()})
-deep_health.register("metrics", lambda: {"status": "healthy", "counters": len(metrics.KNOWN_COUNTERS)})
-
-# Phase 203D: Config manager
-config_manager = ConfigManager(clock=_clock, initial={
-    "llm": {"default_model": llm_bootstrap_result.config.default_model},
-    "rate_limits": {"max_tokens": 60, "refill_rate": 1.0},
-    "certification": {"interval_seconds": 300, "enabled": True},
-})
-
-# Phase 204B: Agent workflow engine
-workflow_engine = AgentWorkflowEngine(
+_agent_bootstrap = bootstrap_agent_runtime(
     clock=_clock,
-    task_manager=task_manager,
-    llm_complete_fn=lambda prompt, budget_id: llm_bridge.complete(prompt, budget_id=budget_id),
-    webhook_manager=webhook_manager,
+    store=store,
+    llm_bridge=llm_bridge,
+    cert_daemon=cert_daemon,
+    metrics=metrics,
+    default_model=llm_bootstrap_result.config.default_model,
     audit_trail=audit_trail,
+    tenant_budget_mgr=tenant_budget_mgr,
+    tenant_gating=_tenant_gating,
+    pii_scanner=pii_scanner,
+    content_safety_chain=content_safety_chain,
+    proof_bridge=proof_bridge,
+    rate_limiter=rate_limiter,
+    shell_policy=shell_policy,
 )
-
-# Phase 204C: Observability aggregator
-observability = ObservabilityAggregator(clock=_clock)
-observability.register_source("health", lambda: {"status": "healthy"})
-observability.register_source("llm", lambda: llm_bridge.budget_summary())
-observability.register_source("tenants", lambda: {"count": tenant_budget_mgr.tenant_count(), "total_spent": tenant_budget_mgr.total_spent()})
-observability.register_source("agents", lambda: {"agents": agent_registry.count, "tasks": task_manager.task_count})
-observability.register_source("audit", lambda: audit_trail.summary())
-observability.register_source("certification", lambda: cert_daemon.status())
-observability.register_source("workflows", lambda: workflow_engine.summary())
-observability.register_source("tenant_gating", lambda: _tenant_gating.summary())
-observability.register_source("pii_scanner", lambda: {"enabled": pii_scanner.enabled, "patterns": pii_scanner.pattern_count})
-observability.register_source("content_safety", lambda: {"filters": content_safety_chain.filter_count, "names": content_safety_chain.filter_names()})
-observability.register_source("proof_bridge", lambda: proof_bridge.summary())
-observability.register_source("rate_limiter", lambda: rate_limiter.status())
-observability.register_source("shell_policy", lambda: {"policy_id": shell_policy.policy_id, "allowed": list(shell_policy.allowed_executables)})
+agent_registry = _agent_bootstrap.agent_registry
+task_manager = _agent_bootstrap.task_manager
+webhook_manager = _agent_bootstrap.webhook_manager
+deep_health = _agent_bootstrap.deep_health
+config_manager = _agent_bootstrap.config_manager
+workflow_engine = _agent_bootstrap.workflow_engine
+observability = _agent_bootstrap.observability
 
 # Coordination engine with checkpoint persistence
 from mcoi_runtime.core.coordination import CoordinationEngine
