@@ -420,10 +420,10 @@ class TestReplan:
         )
         with pytest.raises(
             RuntimeCoreInvariantError,
-            match="^value must be a non-empty string$",
+            match="^reason must be a non-empty string$",
         ) as exc_info:
             engine.replan(state, old_plan, (_sub_goal(sub_goal_id="sg-x"),), "")
-        assert "reason" not in str(exc_info.value)
+        assert str(exc_info.value) == "reason must be a non-empty string"
 
 
 # --- Clock injection determinism ---
