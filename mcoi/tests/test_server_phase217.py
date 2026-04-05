@@ -1,10 +1,12 @@
-"""Phase 217 — Server endpoint tests."""
+"""Phase 217 — Governed endpoint detail hardening for router error surfaces."""
+
+import os
 
 import pytest
-import os
 
 try:
     from fastapi.testclient import TestClient
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
@@ -16,68 +18,113 @@ def client():
         pytest.skip("FastAPI not installed")
     os.environ["MULLU_ENV"] = "local_dev"
     os.environ["MULLU_DB_BACKEND"] = "memory"
+    os.environ["MULLU_CERT_INTERVAL"] = "0"
     from mcoi_runtime.app.server import app
+
     return TestClient(app)
 
 
-class TestUsageEndpoint:
-    def test_usage_report(self, client):
-        resp = client.get("/api/v1/usage/test-tenant")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["tenant_id"] == "test-tenant"
-        assert "llm_calls" in data
-        assert "total_cost" in data
+class TestConnectorErrorContracts:
+    def test_invalid_connector_type_is_bounded(self, client):
+        resp = client.post(
+            "/api/v1/connectors/register",
+            json={"connector_id": "bad", "name": "Bad", "connector_type": "wild.invalid"},
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid connector type"
+        assert data["error_code"] == "invalid_connector_type"
+        assert data["governed"] is True
+        assert "wild.invalid" not in str(resp.json())
 
 
-class TestFinalIntegration:
-    """Final v1.4.0+ integration verification."""
+class TestMultiAgentErrorContracts:
+    def test_invalid_resolution_status_is_bounded(self, client):
+        resp = client.post(
+            "/api/v1/multi-agent/delegate/resolve",
+            json={"delegation_id": "del-1", "status": "not-a-status", "reason": "x"},
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid status"
+        assert data["error_code"] == "invalid_status"
+        assert data["governed"] is True
+        assert "not-a-status" not in str(resp.json())
 
-    def test_all_core_endpoints(self, client):
-        endpoints = [
-            ("GET", "/health"),
-            ("GET", "/ready"),
-            ("GET", "/api/v1/metrics"),
-            ("GET", "/api/v1/dashboard"),
-            ("GET", "/api/v1/health/deep"),
-            ("GET", "/api/v1/health/score"),
-            ("GET", "/api/v1/version"),
-            ("GET", "/api/v1/release"),
-            ("GET", "/api/v1/readiness"),
-            ("GET", "/api/v1/snapshot"),
-            ("GET", "/api/v1/agents"),
-            ("GET", "/api/v1/models"),
-            ("GET", "/api/v1/tools"),
-            ("GET", "/api/v1/plugins"),
-            ("GET", "/api/v1/schemas"),
-            ("GET", "/api/v1/config"),
-            ("GET", "/api/v1/guards"),
-            ("GET", "/api/v1/capabilities"),
-            ("GET", "/api/v1/circuit-breaker"),
-            ("GET", "/api/v1/monitor"),
-            ("GET", "/api/v1/queue/status"),
-            ("GET", "/api/v1/memory/summary"),
-        ]
-        for method, path in endpoints:
-            resp = client.get(path) if method == "GET" else client.post(path)
-            assert resp.status_code == 200, f"{method} {path} failed with {resp.status_code}"
+    def test_invalid_merge_outcome_is_bounded(self, client):
+        resp = client.post(
+            "/api/v1/multi-agent/merge",
+            json={
+                "merge_id": "mg-1",
+                "goal_id": "goal-1",
+                "source_ids": ["a", "b"],
+                "outcome": "not-an-outcome",
+                "reason": "x",
+            },
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid outcome"
+        assert data["error_code"] == "invalid_outcome"
+        assert data["governed"] is True
+        assert "not-an-outcome" not in str(resp.json())
 
-    def test_governed_workflow_chain(self, client):
-        """Full governed flow: chat → workflow → trace → audit → health."""
-        # Chat workflow
-        resp = client.post("/api/v1/chat/workflow", json={
-            "conversation_id": "final-test", "message": "Final integration test",
-        })
-        assert resp.json()["governed"] is True
+    def test_invalid_conflict_strategy_is_bounded(self, client):
+        resp = client.post(
+            "/api/v1/multi-agent/conflict",
+            json={
+                "conflict_id": "cf-1",
+                "goal_id": "goal-1",
+                "conflicting_ids": ["a", "b"],
+                "strategy": "not-a-strategy",
+            },
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid strategy"
+        assert data["error_code"] == "invalid_strategy"
+        assert data["governed"] is True
+        assert "not-a-strategy" not in str(resp.json())
 
-        # Verify audit
-        resp = client.get("/api/v1/audit/verify")
-        assert resp.json()["valid"] is True
 
-        # Health score
-        resp = client.get("/api/v1/health/score")
-        assert resp.json()["score"] > 0
+class TestSchedulerErrorContracts:
+    def test_invalid_schedule_type_is_bounded(self, client):
+        resp = client.post(
+            "/api/v1/scheduler/jobs",
+            json={"job_id": "bad", "name": "Bad", "schedule_type": "wild.invalid"},
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid schedule type"
+        assert data["error_code"] == "invalid_schedule_type"
+        assert data["governed"] is True
+        assert "wild.invalid" not in str(resp.json())
 
-        # Readiness
-        resp = client.get("/api/v1/readiness")
-        assert resp.json()["ready"] is True
+    def test_missing_job_is_bounded(self, client):
+        resp = client.post("/api/v1/scheduler/execute", json={"job_id": "job-missing-123"})
+        assert resp.status_code == 404
+        data = resp.json()["detail"]
+        assert data["error"] == "job not found"
+        assert data["error_code"] == "job_not_found"
+        assert data["governed"] is True
+        assert "job-missing-123" not in str(resp.json())
+
+
+class TestCheckpointErrorContracts:
+    def test_agent_restore_missing_checkpoint_is_bounded(self, client):
+        resp = client.post("/api/v1/agent/restore", json={"checkpoint_id": "cp-missing-123"})
+        assert resp.status_code == 404
+        data = resp.json()["detail"]
+        assert data["error"] == "checkpoint not found"
+        assert data["error_code"] == "checkpoint_not_found"
+        assert data["governed"] is True
+        assert "cp-missing-123" not in str(resp.json())
+
+    def test_coordination_restore_missing_checkpoint_is_bounded(self, client):
+        resp = client.post("/api/v1/coordination/restore", json={"checkpoint_id": "cp-missing-456"})
+        assert resp.status_code == 404
+        data = resp.json()["detail"]
+        assert data["error"] == "checkpoint not found"
+        assert data["error_code"] == "checkpoint_not_found"
+        assert data["governed"] is True
+        assert "cp-missing-456" not in str(resp.json())

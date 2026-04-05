@@ -495,7 +495,8 @@ class TestAttachRequestStateToMemoryMesh:
 
     def test_title_contains_scope_ref_id(self, integration):
         mem = integration.attach_request_state_to_memory_mesh("scope-4")
-        assert "scope-4" in mem.title
+        assert mem.title == "Service catalog state"
+        assert "scope-4" not in mem.title
 
     def test_content_has_catalog_count_key(self, integration):
         mem = integration.attach_request_state_to_memory_mesh("scope-5")
@@ -709,3 +710,43 @@ class TestEventEmission:
         # Each request_from_* triggers submit_request (1 event) + _emit (1 event) = 2
         # 3 calls => at least 6 new events
         assert after - before >= 6
+
+
+class TestBoundedContracts:
+    def test_campaign_need_description_redacts_campaign_ref(self, engines):
+        ce, es, mm = engines
+        ce.register_catalog_item("svc-1", "VM Provisioning", "t1")
+        sci = ServiceCatalogIntegration(ce, es, mm)
+        sci.request_from_campaign_need("req-camp", "svc-1", "t1", "usr-1", "campaign-secret")
+        req = ce.get_request("req-camp")
+        assert req.description == "Campaign need"
+        assert "campaign-secret" not in req.description
+
+    def test_program_need_description_redacts_program_ref(self, engines):
+        ce, es, mm = engines
+        ce.register_catalog_item("svc-1", "VM Provisioning", "t1")
+        sci = ServiceCatalogIntegration(ce, es, mm)
+        sci.request_from_program_need("req-prog", "svc-1", "t1", "usr-1", "program-secret")
+        req = ce.get_request("req-prog")
+        assert req.description == "Program need"
+        assert "program-secret" not in req.description
+
+    def test_asset_gap_description_redacts_asset_ref(self, engines):
+        ce, es, mm = engines
+        ce.register_catalog_item("svc-1", "VM Provisioning", "t1")
+        sci = ServiceCatalogIntegration(ce, es, mm)
+        sci.request_from_asset_gap("req-asset", "svc-1", "t1", "usr-1", "asset-secret")
+        req = ce.get_request("req-asset")
+        assert req.description == "Asset gap"
+        assert "asset-secret" not in req.description
+
+    def test_procurement_need_description_redacts_procurement_ref(self, engines):
+        ce, es, mm = engines
+        ce.register_catalog_item("svc-1", "VM Provisioning", "t1")
+        sci = ServiceCatalogIntegration(ce, es, mm)
+        sci.request_from_procurement_need(
+            "req-proc", "svc-1", "t1", "usr-1", "procurement-secret"
+        )
+        req = ce.get_request("req-proc")
+        assert req.description == "Procurement need"
+        assert "procurement-secret" not in req.description

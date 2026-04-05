@@ -109,6 +109,25 @@ _VOWEL_ORDERS = ("ge'ez", "ka'ib", "salis", "rabi'", "hamis", "sadis", "sabi'", 
 _DIMENSION = 34 * 8  # 272
 
 
+def _validate_fidel_text(text: str) -> None:
+    """Reject non-fidel, non-whitespace characters.
+
+    Mfidel processing is fail-closed: operational callers must supply either
+    fidel symbols from the gebeta or plain whitespace separators.
+    """
+    invalid_positions: list[str] = []
+    for index, char in enumerate(text):
+        if char.isspace():
+            continue
+        if char not in _GLYPH_INDEX:
+            invalid_positions.append(str(index))
+    if invalid_positions:
+        raise ValueError(
+            "text contains non-fidel characters at positions "
+            + ", ".join(invalid_positions)
+        )
+
+
 class MfidelMatrix:
     """Stateless Ge'ez fidel matrix operations: lookup, audio, vectorize, similarity."""
 
@@ -172,8 +191,10 @@ class MfidelMatrix:
     def text_to_fidel_sequence(text: str) -> tuple[Fidel, ...]:
         """Convert a string of Ge'ez characters to a tuple of Fidel objects.
 
-        Non-fidel characters are silently skipped.
+        Whitespace separators are ignored. Any other non-fidel character is
+        rejected to preserve explicit symbolic boundaries.
         """
+        _validate_fidel_text(text)
         result: list[Fidel] = []
         for ch in text:
             pos = _GLYPH_INDEX.get(ch)
@@ -187,6 +208,7 @@ class MfidelMatrix:
     @staticmethod
     def vectorize(text: str) -> MfidelVector:
         """Produce a 272-dimensional normalized bag-of-fidels vector from text."""
+        _validate_fidel_text(text)
         weights = [0.0] * _DIMENSION
         for ch in text:
             pos = _GLYPH_INDEX.get(ch)

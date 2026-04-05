@@ -25,6 +25,7 @@ from mcoi_runtime.core.replay_engine import (
     ReplayVerdict,
 )
 from mcoi_runtime.persistence import ReplayStore, TraceStore
+from mcoi_runtime.persistence.errors import PersistenceError
 
 
 def _make_replay_record(
@@ -154,6 +155,21 @@ def test_persisted_replay_missing_record(tmp_path: Path) -> None:
     assert result.validation.ready is False
     assert result.validation.verdict is ReplayVerdict.INVALID_RECORD
     assert any("persistence_load_failed" in r for r in result.validation.reasons)
+
+
+def test_persisted_replay_load_error_is_bounded(tmp_path: Path) -> None:
+    replay_store, _, validator = _setup(tmp_path)
+
+    def _boom(_: str) -> ReplayRecord:
+        raise PersistenceError("secret persistence detail")
+
+    replay_store.load = _boom  # type: ignore[method-assign]
+
+    result = validator.validate("replay-1")
+
+    assert result.validation.ready is False
+    assert result.validation.verdict is ReplayVerdict.INVALID_RECORD
+    assert result.validation.reasons == ("persistence_load_failed:PersistenceError",)
 
 
 def test_persisted_replay_corrupted_record(tmp_path: Path) -> None:

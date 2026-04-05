@@ -45,11 +45,11 @@ _UNARY_OPERATORS: dict[type[ast.unaryop], Callable[[float], float]] = {
 def _validate_numeric(value: object, *, label: str, limit: int) -> int | float:
     """Validate that a value is a bounded numeric scalar."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise SafeArithmeticError(f"{label} must be a numeric scalar")
+        raise SafeArithmeticError("numeric value must be a scalar")
     if isinstance(value, float) and not math.isfinite(value):
-        raise SafeArithmeticError(f"{label} must be finite")
+        raise SafeArithmeticError("numeric value must be finite")
     if abs(value) > limit:
-        raise SafeArithmeticError(f"{label} exceeds safe bounds")
+        raise SafeArithmeticError("numeric value exceeds safe bounds")
     return value
 
 
@@ -83,7 +83,7 @@ def _evaluate_node(node: ast.AST) -> int | float:
             raise SafeArithmeticError("division by zero") from exc
         return _validate_numeric(value, label="result", limit=_MAX_ABS_RESULT)
 
-    raise SafeArithmeticError(f"unsupported expression node: {type(node).__name__}")
+    raise SafeArithmeticError("unsupported expression")
 
 
 def evaluate_expression(expression: str) -> int | float:

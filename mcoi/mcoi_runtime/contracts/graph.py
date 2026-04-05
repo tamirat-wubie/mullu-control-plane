@@ -253,8 +253,8 @@ class GraphQueryResult(ContractRecord):
             object.__setattr__(self, "matched_edges", tuple(self.matched_edges))
         for node in self.matched_nodes:
             if not isinstance(node, OperationalNode):
-                raise ValueError(f"matched_nodes must contain OperationalNode instances, got {type(node).__name__}")
+                raise ValueError("matched_nodes must contain OperationalNode instances")
         for edge in self.matched_edges:
             if not isinstance(edge, OperationalEdge):
-                raise ValueError(f"matched_edges must contain OperationalEdge instances, got {type(edge).__name__}")
+                raise ValueError("matched_edges must contain OperationalEdge instances")
         object.__setattr__(self, "executed_at", require_datetime_text(self.executed_at, "executed_at"))

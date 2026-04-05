@@ -142,7 +142,7 @@ class ContractRuntimeEngine:
     ) -> GovernanceContractRecord:
         """Register a governance contract."""
         if contract_id in self._contracts:
-            raise RuntimeCoreInvariantError(f"Duplicate contract_id: {contract_id}")
+            raise RuntimeCoreInvariantError("Duplicate contract_id")
         now = _now_iso()
         if not effective_at:
             effective_at = now
@@ -166,7 +166,7 @@ class ContractRuntimeEngine:
         """Get a contract by ID."""
         c = self._contracts.get(contract_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown contract_id: {contract_id}")
+            raise RuntimeCoreInvariantError("Unknown contract_id")
         return c
 
     def activate_contract(self, contract_id: str) -> GovernanceContractRecord:
@@ -174,7 +174,7 @@ class ContractRuntimeEngine:
         old = self.get_contract(contract_id)
         if old.status in _CONTRACT_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot activate contract in status {old.status.value}"
+                "cannot activate contract from current status"
             )
         updated = GovernanceContractRecord(
             contract_id=old.contract_id,
@@ -220,7 +220,7 @@ class ContractRuntimeEngine:
         old = self.get_contract(contract_id)
         if old.status in _CONTRACT_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot terminate contract in status {old.status.value}"
+                "cannot terminate contract from current status"
             )
         updated = GovernanceContractRecord(
             contract_id=old.contract_id,
@@ -244,7 +244,7 @@ class ContractRuntimeEngine:
         old = self.get_contract(contract_id)
         if old.status in _CONTRACT_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot expire contract in status {old.status.value}"
+                "cannot expire contract from current status"
             )
         updated = GovernanceContractRecord(
             contract_id=old.contract_id,
@@ -282,9 +282,9 @@ class ContractRuntimeEngine:
     ) -> ContractClause:
         """Register a clause within a contract."""
         if clause_id in self._clauses:
-            raise RuntimeCoreInvariantError(f"Duplicate clause_id: {clause_id}")
+            raise RuntimeCoreInvariantError("Duplicate clause_id")
         if contract_id not in self._contracts:
-            raise RuntimeCoreInvariantError(f"Unknown contract_id: {contract_id}")
+            raise RuntimeCoreInvariantError("Unknown contract_id")
         clause = ContractClause(
             clause_id=clause_id,
             contract_id=contract_id,
@@ -320,11 +320,11 @@ class ContractRuntimeEngine:
     ) -> CommitmentRecord:
         """Register a contractual commitment."""
         if commitment_id in self._commitments:
-            raise RuntimeCoreInvariantError(f"Duplicate commitment_id: {commitment_id}")
+            raise RuntimeCoreInvariantError("Duplicate commitment_id")
         if contract_id not in self._contracts:
-            raise RuntimeCoreInvariantError(f"Unknown contract_id: {contract_id}")
+            raise RuntimeCoreInvariantError("Unknown contract_id")
         if clause_id not in self._clauses:
-            raise RuntimeCoreInvariantError(f"Unknown clause_id: {clause_id}")
+            raise RuntimeCoreInvariantError("Unknown clause_id")
         now = _now_iso()
         rec = CommitmentRecord(
             commitment_id=commitment_id,
@@ -363,9 +363,9 @@ class ContractRuntimeEngine:
     ) -> SLAWindow:
         """Evaluate an SLA measurement window."""
         if window_id in self._sla_windows:
-            raise RuntimeCoreInvariantError(f"Duplicate window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Duplicate window_id")
         if commitment_id not in self._commitments:
-            raise RuntimeCoreInvariantError(f"Unknown commitment_id: {commitment_id}")
+            raise RuntimeCoreInvariantError("Unknown commitment_id")
 
         # Determine status based on compliance
         if compliance >= 0.95:
@@ -400,7 +400,7 @@ class ContractRuntimeEngine:
                     contract_id=commitment.contract_id,
                     tenant_id=commitment.tenant_id,
                     severity=BreachSeverity.MAJOR if compliance >= 0.5 else BreachSeverity.CRITICAL,
-                    description=f"SLA breached: compliance={compliance:.2f}",
+                    description="SLA breached",
                     detected_at=now,
                 )
                 self._breaches[breach_id] = breach
@@ -415,7 +415,7 @@ class ContractRuntimeEngine:
         """Get an SLA window by ID."""
         w = self._sla_windows.get(window_id)
         if w is None:
-            raise RuntimeCoreInvariantError(f"Unknown window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Unknown window_id")
         return w
 
     def sla_windows_for_commitment(self, commitment_id: str) -> tuple[SLAWindow, ...]:
@@ -436,9 +436,9 @@ class ContractRuntimeEngine:
     ) -> BreachRecord:
         """Record a contract breach."""
         if breach_id in self._breaches:
-            raise RuntimeCoreInvariantError(f"Duplicate breach_id: {breach_id}")
+            raise RuntimeCoreInvariantError("Duplicate breach_id")
         if commitment_id not in self._commitments:
-            raise RuntimeCoreInvariantError(f"Unknown commitment_id: {commitment_id}")
+            raise RuntimeCoreInvariantError("Unknown commitment_id")
         commitment = self._commitments[commitment_id]
         now = _now_iso()
         breach = BreachRecord(
@@ -479,9 +479,9 @@ class ContractRuntimeEngine:
     ) -> RemedyRecord:
         """Record a remedy for a breach."""
         if remedy_id in self._remedies:
-            raise RuntimeCoreInvariantError(f"Duplicate remedy_id: {remedy_id}")
+            raise RuntimeCoreInvariantError("Duplicate remedy_id")
         if breach_id not in self._breaches:
-            raise RuntimeCoreInvariantError(f"Unknown breach_id: {breach_id}")
+            raise RuntimeCoreInvariantError("Unknown breach_id")
         breach = self._breaches[breach_id]
         now = _now_iso()
         remedy = RemedyRecord(
@@ -516,9 +516,9 @@ class ContractRuntimeEngine:
     ) -> RenewalWindow:
         """Schedule a renewal window for a contract."""
         if window_id in self._renewals:
-            raise RuntimeCoreInvariantError(f"Duplicate window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Duplicate window_id")
         if contract_id not in self._contracts:
-            raise RuntimeCoreInvariantError(f"Unknown contract_id: {contract_id}")
+            raise RuntimeCoreInvariantError("Unknown contract_id")
         window = RenewalWindow(
             window_id=window_id,
             contract_id=contract_id,
@@ -536,7 +536,7 @@ class ContractRuntimeEngine:
         """Mark a renewal window as completed."""
         old = self._renewals.get(window_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Unknown window_id")
         now = _now_iso()
         updated = RenewalWindow(
             window_id=old.window_id,
@@ -574,7 +574,7 @@ class ContractRuntimeEngine:
         """Decline a renewal window."""
         old = self._renewals.get(window_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Unknown window_id")
         updated = RenewalWindow(
             window_id=old.window_id,
             contract_id=old.contract_id,
@@ -604,7 +604,7 @@ class ContractRuntimeEngine:
     ) -> ContractAssessment:
         """Assess a contract's compliance status."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
         contract = self.get_contract(contract_id)
         commitments = self.commitments_for_contract(contract_id)
         total = len(commitments)
@@ -715,7 +715,7 @@ class ContractRuntimeEngine:
     def contract_snapshot(self, snapshot_id: str) -> ContractSnapshot:
         """Capture a point-in-time contract governance snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snap = ContractSnapshot(
             snapshot_id=snapshot_id,

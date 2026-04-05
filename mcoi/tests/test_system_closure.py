@@ -161,7 +161,7 @@ class TestFailureRecoveryEngine:
 
     def test_invalid_type_blocked(self):
         e = FailureRecoveryEngine()
-        with pytest.raises(ValueError, match="Invalid type"):
+        with pytest.raises(ValueError, match="Invalid compensation type"):
             e.register_compensation("c1", "f1", "nuke")
 
     def test_duplicate_blocked(self):
@@ -251,3 +251,61 @@ class TestSystemClosureGolden:
         boundary.promote_to_reality("go-live", "deploy-scope")
         assert boundary.is_real() is True
         assert boundary.declaration_count == 1
+
+
+class TestBoundedSystemClosureContracts:
+    def test_ingestion_and_scheduler_errors_are_bounded(self):
+        validator = IngestionValidator()
+        validator.ingest("rec-secret", "sensor-a", "payload")
+        with pytest.raises(ValueError) as duplicate_ingestion:
+            validator.ingest("rec-secret", "sensor-a", "payload")
+
+        scheduler = TemporalScheduler()
+        scheduler.schedule("task-secret", "runtime", "op", "2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z")
+        with pytest.raises(ValueError) as duplicate_task:
+            scheduler.schedule("task-secret", "runtime", "op", "2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z")
+        scheduler.start("task-secret")
+        with pytest.raises(ValueError) as invalid_start:
+            scheduler.start("task-secret")
+
+        assert str(duplicate_ingestion.value) == "Duplicate ingestion"
+        assert str(duplicate_task.value) == "Duplicate task"
+        assert str(invalid_start.value) == "Cannot start task in current status"
+        assert "rec-secret" not in str(duplicate_ingestion.value)
+        assert "task-secret" not in str(duplicate_task.value)
+        assert "running" not in str(invalid_start.value).lower()
+
+    def test_recovery_and_mode_errors_are_bounded(self):
+        recovery = FailureRecoveryEngine()
+        with pytest.raises(ValueError) as invalid_type:
+            recovery.register_compensation("comp-secret", "failed-ref", "nuke")
+
+        boundary = SimRealityBoundary()
+        boundary.declare_mode("decl-1", "reality", "prod")
+        with pytest.raises(ValueError) as promote_error:
+            boundary.promote_to_reality("decl-2", "prod")
+
+        assert str(invalid_type.value) == "Invalid compensation type"
+        assert str(promote_error.value) == "Cannot promote from current mode"
+        assert "nuke" not in str(invalid_type.value)
+        assert "reality" not in str(promote_error.value).lower()
+
+    def test_task_and_compensation_followup_errors_are_bounded(self):
+        scheduler = TemporalScheduler()
+        scheduler.schedule("task-secret", "runtime", "op", "2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z")
+        with pytest.raises(ValueError, match="^Unknown task$") as unknown_task:
+            scheduler.timeout("missing-task")
+        assert "missing-task" not in str(unknown_task.value)
+
+        scheduler.start("task-secret")
+        scheduler.complete("task-secret")
+        with pytest.raises(ValueError, match="^Cannot fail$") as cannot_fail:
+            scheduler.fail("task-secret")
+        assert "completed" not in str(cannot_fail.value).lower()
+
+        recovery = FailureRecoveryEngine()
+        recovery.register_compensation("comp-secret", "failed-ref", "rollback")
+        recovery.execute_compensation("comp-secret")
+        with pytest.raises(ValueError, match="^Cannot fail$") as compensation_fail:
+            recovery.fail_compensation("comp-secret")
+        assert "executed" not in str(compensation_fail.value).lower()

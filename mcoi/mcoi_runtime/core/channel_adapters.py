@@ -91,7 +91,7 @@ class ChannelAdapterRegistry:
         aid = adapter.adapter_id()
         if aid in self._adapters:
             raise RuntimeCoreInvariantError(
-                f"adapter '{aid}' already registered"
+                "adapter already registered"
             )
         desc = adapter.descriptor()
         manifest = adapter.manifest()
@@ -102,17 +102,17 @@ class ChannelAdapterRegistry:
 
     def get_adapter(self, adapter_id: str) -> ChannelAdapter:
         if adapter_id not in self._adapters:
-            raise RuntimeCoreInvariantError(f"adapter '{adapter_id}' not found")
+            raise RuntimeCoreInvariantError("adapter not found")
         return self._adapters[adapter_id]
 
     def get_descriptor(self, adapter_id: str) -> ChannelAdapterDescriptor:
         if adapter_id not in self._descriptors:
-            raise RuntimeCoreInvariantError(f"adapter '{adapter_id}' not found")
+            raise RuntimeCoreInvariantError("adapter not found")
         return self._descriptors[adapter_id]
 
     def get_manifest(self, adapter_id: str) -> AdapterCapabilityManifest:
         if adapter_id not in self._manifests:
-            raise RuntimeCoreInvariantError(f"adapter '{adapter_id}' not found")
+            raise RuntimeCoreInvariantError("adapter not found")
         return self._manifests[adapter_id]
 
     def list_adapters(

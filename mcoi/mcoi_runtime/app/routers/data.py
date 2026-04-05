@@ -21,6 +21,10 @@ from mcoi_runtime.persistence import PathTraversalError
 router = APIRouter()
 
 
+def _data_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # ── Pydantic request models ──────────────────────────────────────────────
 
 
@@ -309,13 +313,9 @@ def load_state(state_type: str):
     try:
         snap = deps.state_persistence.load(state_type)
     except PathTraversalError:
-        raise HTTPException(400, detail={
-            "error": "invalid state_type",
-            "error_code": "invalid_state_type",
-            "governed": True,
-        })
+        raise HTTPException(400, detail=_data_error_detail("invalid state_type", "invalid_state_type"))
     if snap is None:
-        raise HTTPException(404, detail=f"state not found: {state_type}")
+        raise HTTPException(404, detail=_data_error_detail("state not found", "state_not_found"))
     return {"state_type": snap.state_type, "data": snap.data, "hash": snap.state_hash[:16]}
 
 
@@ -468,7 +468,7 @@ def revoke_api_key(key_id: str):
     """Revoke an API key."""
     deps.metrics.inc("requests_governed")
     if not deps.api_key_mgr.revoke(key_id):
-        raise HTTPException(404, detail=f"Key not found: {key_id}")
+        raise HTTPException(404, detail=_data_error_detail("api key not found", "api_key_not_found"))
     return {"revoked": True, "key_id": key_id, "governed": True}
 
 
@@ -489,7 +489,7 @@ def export_data(req: DataExportRequest):
     try:
         fmt = ExportFormat(req.format)
     except ValueError:
-        raise HTTPException(400, detail=f"Unsupported format: {req.format}")
+        raise HTTPException(400, detail=_data_error_detail("unsupported export format", "unsupported_export_format"))
     try:
         result = deps.data_export.export(ExportRequest(
             source=req.source, format=fmt,

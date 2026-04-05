@@ -57,8 +57,10 @@ class TestRegistration:
     def test_duplicate_rejected(self):
         engine = DomainPackEngine()
         engine.register_pack(_make_pack())
-        with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_pack(_make_pack())
+        assert str(exc_info.value) == "pack already registered"
+        assert "pk-1" not in str(exc_info.value)
 
     def test_invalid_descriptor(self):
         engine = DomainPackEngine()
@@ -72,8 +74,10 @@ class TestRegistration:
 
     def test_get_missing_pack(self):
         engine = DomainPackEngine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.get_pack("missing")
+        assert str(exc_info.value) == "pack not found"
+        assert "missing" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -96,14 +100,18 @@ class TestActivation:
 
     def test_activate_already_active(self):
         engine = _make_engine_with_pack(activate=True)
-        with pytest.raises(RuntimeCoreInvariantError, match="already ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.activate_pack("pk-1")
+        assert str(exc_info.value) == "pack already active"
+        assert "pk-1" not in str(exc_info.value)
 
     def test_activate_deprecated(self):
         engine = _make_engine_with_pack(activate=True)
         engine.deprecate_pack("pk-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="DEPRECATED"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.activate_pack("pk-1")
+        assert str(exc_info.value) == "deprecated pack cannot be activated"
+        assert "pk-1" not in str(exc_info.value)
 
     def test_deprecate(self):
         engine = _make_engine_with_pack(activate=True)
@@ -113,8 +121,10 @@ class TestActivation:
 
     def test_deprecate_non_active(self):
         engine = _make_engine_with_pack(activate=False)
-        with pytest.raises(RuntimeCoreInvariantError, match="must be ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.deprecate_pack("pk-1")
+        assert str(exc_info.value) == "pack must be active before deprecation"
+        assert "draft" not in str(exc_info.value).lower()
 
     def test_disable(self):
         engine = _make_engine_with_pack(activate=True)
@@ -123,8 +133,10 @@ class TestActivation:
 
     def test_disable_non_active(self):
         engine = _make_engine_with_pack(activate=False)
-        with pytest.raises(RuntimeCoreInvariantError, match="must be ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.disable_pack("pk-1")
+        assert str(exc_info.value) == "pack must be active before disable"
+        assert "draft" not in str(exc_info.value).lower()
 
 
 # ---------------------------------------------------------------------------
@@ -200,8 +212,10 @@ class TestRuleRegistration:
             created_at=NOW,
         )
         engine.add_extraction_rule(rule)
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.add_extraction_rule(rule)
+        assert str(exc_info.value) == "duplicate extraction rule"
+        assert "r-1" not in str(exc_info.value)
 
     def test_add_routing_rule(self):
         engine = _make_engine_with_pack()
@@ -425,6 +439,9 @@ class TestConflicts:
         engine.resolve_for_scope(PackScope.GLOBAL)
         conflicts = engine.find_conflicts()
         assert len(conflicts) >= 1
+        assert conflicts[0].description == "Conflicting domain pack rules"
+        assert "pk-1" not in conflicts[0].description
+        assert "pk-2" not in conflicts[0].description
 
     def test_find_conflicts_by_scope(self):
         engine = DomainPackEngine()

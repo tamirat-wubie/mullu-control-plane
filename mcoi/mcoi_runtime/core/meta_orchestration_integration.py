@@ -367,7 +367,7 @@ class MetaOrchestrationIntegration:
         mem = MemoryRecord(
             memory_id=stable_identifier("mem-orch", {"scope": scope_ref_id, "seq": str(self._memory.memory_count)}),
             scope_ref_id=scope_ref_id,
-            title=f"Meta-orchestration state for {scope_ref_id}",
+            title="Meta-orchestration state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

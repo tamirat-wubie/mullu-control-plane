@@ -343,7 +343,8 @@ class TestAttachLedgerStateToMemoryMesh:
         integ, _, _, _ = _make_integration()
         mem = integ.attach_ledger_state_to_memory_mesh("scope-001")
         assert mem.scope_ref_id == "scope-001"
-        assert "Ledger state" in mem.title
+        assert mem.title == "Ledger state"
+        assert "scope-001" not in mem.title
         assert mem.confidence == 1.0
 
     def test_memory_content_reflects_ledger_state(self):

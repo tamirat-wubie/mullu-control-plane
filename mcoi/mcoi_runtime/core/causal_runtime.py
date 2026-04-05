@@ -125,7 +125,7 @@ class CausalRuntimeEngine:
     ) -> CausalNode:
         """Register a new causal node. Duplicate node_id raises."""
         if node_id in self._nodes:
-            raise RuntimeCoreInvariantError(f"Duplicate node_id: {node_id}")
+            raise RuntimeCoreInvariantError("Duplicate node_id")
         now = self._now()
         node = CausalNode(
             node_id=node_id,
@@ -155,11 +155,11 @@ class CausalRuntimeEngine:
     ) -> CausalEdge:
         """Register a causal edge. Both nodes must exist. Duplicate edge_id raises."""
         if edge_id in self._edges:
-            raise RuntimeCoreInvariantError(f"Duplicate edge_id: {edge_id}")
+            raise RuntimeCoreInvariantError("Duplicate edge_id")
         if cause_ref not in self._nodes:
-            raise RuntimeCoreInvariantError(f"Unknown cause node: {cause_ref}")
+            raise RuntimeCoreInvariantError("Unknown cause node")
         if effect_ref not in self._nodes:
-            raise RuntimeCoreInvariantError(f"Unknown effect node: {effect_ref}")
+            raise RuntimeCoreInvariantError("Unknown effect node")
         now = self._now()
         edge = CausalEdge(
             edge_id=edge_id,
@@ -190,7 +190,7 @@ class CausalRuntimeEngine:
     ) -> InterventionRecord:
         """Register an intervention. Duplicate intervention_id raises."""
         if intervention_id in self._interventions:
-            raise RuntimeCoreInvariantError(f"Duplicate intervention_id: {intervention_id}")
+            raise RuntimeCoreInvariantError("Duplicate intervention_id")
         now = self._now()
         intervention = InterventionRecord(
             intervention_id=intervention_id,
@@ -219,9 +219,9 @@ class CausalRuntimeEngine:
     ) -> CounterfactualScenario:
         """Run a counterfactual scenario (PENDING -> EVALUATED)."""
         if scenario_id in self._counterfactuals:
-            raise RuntimeCoreInvariantError(f"Duplicate scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Duplicate scenario_id")
         if intervention_ref not in self._interventions:
-            raise RuntimeCoreInvariantError(f"Unknown intervention_ref: {intervention_ref}")
+            raise RuntimeCoreInvariantError("Unknown intervention_ref")
         now = self._now()
         scenario = CounterfactualScenario(
             scenario_id=scenario_id,
@@ -241,7 +241,7 @@ class CausalRuntimeEngine:
         """Confirm a counterfactual scenario."""
         old = self._counterfactuals.get(scenario_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Unknown scenario_id")
         now = self._now()
         confirmed = CounterfactualScenario(
             scenario_id=old.scenario_id,
@@ -261,7 +261,7 @@ class CausalRuntimeEngine:
         """Reject a counterfactual scenario."""
         old = self._counterfactuals.get(scenario_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("Unknown scenario_id")
         now = self._now()
         rejected = CounterfactualScenario(
             scenario_id=old.scenario_id,
@@ -288,7 +288,7 @@ class CausalRuntimeEngine:
     ) -> tuple[PropagationRecord, ...]:
         """BFS from source through edges, creating PropagationRecords with hop_count."""
         if source_node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"Unknown source node: {source_node_id}")
+            raise RuntimeCoreInvariantError("Unknown source node")
 
         now = self._now()
         records: list[PropagationRecord] = []
@@ -348,7 +348,7 @@ class CausalRuntimeEngine:
     ) -> CausalAttribution:
         """Create a causal attribution. Duplicate attribution_id raises."""
         if attribution_id in self._attributions:
-            raise RuntimeCoreInvariantError(f"Duplicate attribution_id: {attribution_id}")
+            raise RuntimeCoreInvariantError("Duplicate attribution_id")
         now = self._now()
         attr = CausalAttribution(
             attribution_id=attribution_id,

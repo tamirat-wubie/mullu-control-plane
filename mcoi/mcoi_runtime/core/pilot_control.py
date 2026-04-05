@@ -223,12 +223,12 @@ class PilotControlPlane:
         authority = self._operator_authorities.get(operator_id)
         if authority is None:
             raise RuntimeCoreInvariantError(
-                f"operator {operator_id!r} is not registered"
+                "operator is not registered"
             )
         permitted = AUTHORITY_ACTIONS.get(authority, frozenset())
         if action not in permitted:
             raise RuntimeCoreInvariantError(
-                f"operator {operator_id!r} ({authority.value}) lacks authority for {action!r}"
+                "operator lacks authority for requested action"
             )
 
     # -----------------------------------------------------------------------
@@ -384,15 +384,14 @@ class PilotControlPlane:
         self._check_authority(operator_id, "start")
         if self._status not in (RuntimeStatus.STOPPED, RuntimeStatus.ERROR):
             raise RuntimeCoreInvariantError(
-                f"cannot start from {self._status.value} state"
+                "cannot start from current runtime state"
             )
 
         # Fail-closed startup validation
         validation = self.validate_startup()
         if validation.verdict != StartupVerdict.PASSED:
             raise RuntimeCoreInvariantError(
-                f"startup validation failed: {validation.verdict.value} — "
-                f"failed checks: {', '.join(validation.checks_failed)}"
+                "startup validation failed"
             )
 
         self._last_error = ""
@@ -420,7 +419,7 @@ class PilotControlPlane:
         self._check_authority(operator_id, "pause")
         if self._status != RuntimeStatus.RUNNING:
             raise RuntimeCoreInvariantError(
-                f"cannot pause from {self._status.value} state"
+                "cannot pause from current runtime state"
             )
         self._status = RuntimeStatus.PAUSED
         return self._record_action(operator_id, "pause", "runtime", reason)
@@ -430,7 +429,7 @@ class PilotControlPlane:
         self._check_authority(operator_id, "resume")
         if self._status != RuntimeStatus.PAUSED:
             raise RuntimeCoreInvariantError(
-                f"cannot resume from {self._status.value} state"
+                "cannot resume from current runtime state"
             )
         self._status = RuntimeStatus.RUNNING
         return self._record_action(operator_id, "resume", "runtime", reason)
@@ -444,7 +443,7 @@ class PilotControlPlane:
         self._check_authority(operator_id, "mark_error")
         if self._status in (RuntimeStatus.STOPPED, RuntimeStatus.ERROR):
             raise RuntimeCoreInvariantError(
-                f"cannot mark error from {self._status.value} state"
+                "cannot mark error from current runtime state"
             )
         self._last_error = reason
         self._status = RuntimeStatus.ERROR
@@ -466,7 +465,7 @@ class PilotControlPlane:
         """
         if self._status != RuntimeStatus.RUNNING:
             raise RuntimeCoreInvariantError(
-                f"cannot tick in {self._status.value} state"
+                "cannot tick from current runtime state"
             )
         tick_result = self._supervisor.tick()
         # Journal the tick
@@ -646,8 +645,7 @@ class PilotControlPlane:
         result = self.verify_checkpoint_import(checkpoint)
         if not result.accepted:
             raise RuntimeCoreInvariantError(
-                f"checkpoint import rejected: {result.verdict.value} — "
-                f"failed checks: {', '.join(result.checks_failed)}"
+                "checkpoint import rejected"
             )
         self._checkpoint_mgr.restore_checkpoint(checkpoint, verify=True)
         self._record_action(
@@ -862,7 +860,7 @@ class PilotControlPlane:
         next_mode = promotion_map.get(self._canary_mode)
         if next_mode is None:
             raise RuntimeCoreInvariantError(
-                f"cannot promote from {self._canary_mode.value} — already at terminal stage"
+                "cannot promote canary mode beyond terminal stage"
             )
         action = self.set_canary_mode(next_mode, operator_id, reason)
         return (action,)

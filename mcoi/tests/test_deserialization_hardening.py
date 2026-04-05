@@ -195,8 +195,9 @@ def test_malformed_nested_dataclass_fails() -> None:
     """Inner field is a string instead of a dict — should fail."""
     import json
     raw = json.dumps({"outer_id": "o-1", "inner": "not-a-dict", "label": "x"})
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^expected object for dataclass field$") as excinfo:
         deserialize_record(raw, Outer)
+    assert "inner" not in str(excinfo.value)
 
 
 def test_invalid_enum_value_fails() -> None:
@@ -207,8 +208,9 @@ def test_invalid_enum_value_fails() -> None:
         "trust_class": "bounded_external",
         "credential_scope_id": "s-1", "enabled": True,
     })
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^invalid enum value$") as excinfo:
         deserialize_record(raw, ConnectorDescriptor)
+    assert "nonexistent_class" not in str(excinfo.value)
 
 
 def test_wrong_type_in_tuple_fails() -> None:
@@ -217,8 +219,9 @@ def test_wrong_type_in_tuple_fails() -> None:
         "container_id": "c-1",
         "items": ["not-a-dict", "also-not-a-dict"],
     })
-    with pytest.raises(CorruptedDataError):
+    with pytest.raises(CorruptedDataError, match=r"^expected object for dataclass field$") as excinfo:
         deserialize_record(raw, Container)
+    assert "not-a-dict" not in str(excinfo.value)
 
 
 # --- Verify no raw dict leakage ---

@@ -259,6 +259,10 @@ class TestSkillGovernanceChecks:
         assert len(report.structured_errors) == 1
         assert report.structured_errors[0].error_code == "autonomy_blocked"
         assert "observe_only" in report.structured_errors[0].message
+        status = loop.runtime.autonomy.get_status()
+        assert len(status.violations) == 1
+        assert status.violations[0].attempted_action == "skill execution"
+        assert "sk-obs-block" not in status.violations[0].attempted_action
 
     def test_skill_blocked_in_suggest_only_mode(self):
         """Skill execution is blocked when autonomy mode is SUGGEST_ONLY."""

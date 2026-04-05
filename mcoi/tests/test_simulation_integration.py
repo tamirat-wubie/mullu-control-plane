@@ -149,6 +149,25 @@ class TestSimulateBeforeGoal:
         )
         assert comparison.request_id.startswith("sim-req-goal-")
 
+    def test_goal_request_description_is_bounded(self) -> None:
+        graph, engine = _make_graph_and_engine()
+        graph.add_node("goal-bounded", NodeType.GOAL, "Deploy service")
+        captured: dict[str, str] = {}
+        original = engine.full_simulation
+
+        def capture(request, *args, **kwargs):
+            captured["description"] = request.description
+            return original(request, *args, **kwargs)
+
+        engine.full_simulation = capture
+        SimulationBridge.simulate_before_goal(
+            engine, graph, "goal-bounded", [_safe_option()],
+        )
+
+        assert captured["description"] == "Goal simulation"
+        assert "goal-bounded" not in captured["description"]
+        assert "Deploy service" not in captured["description"]
+
 
 # ---------------------------------------------------------------------------
 # simulate_before_recovery tests
@@ -191,6 +210,25 @@ class TestSimulateBeforeRecovery:
             engine, graph, "inc-3", options,
         )
         assert comparison.request_id.startswith("sim-req-recovery-")
+
+    def test_recovery_request_description_is_bounded(self) -> None:
+        graph, engine = _make_graph_and_engine()
+        graph.add_node("inc-bounded", NodeType.INCIDENT, "Server outage")
+        captured: dict[str, str] = {}
+        original = engine.full_simulation
+
+        def capture(request, *args, **kwargs):
+            captured["description"] = request.description
+            return original(request, *args, **kwargs)
+
+        engine.full_simulation = capture
+        SimulationBridge.simulate_before_recovery(
+            engine, graph, "inc-bounded", [_low_risk_option()],
+        )
+
+        assert captured["description"] == "Recovery simulation"
+        assert "inc-bounded" not in captured["description"]
+        assert "Server outage" not in captured["description"]
 
 
 # ---------------------------------------------------------------------------
@@ -252,6 +290,25 @@ class TestSimulateBeforeApproval:
             engine, graph, "action-3", options,
         )
         assert comparison.request_id.startswith("sim-req-approval-")
+
+    def test_approval_request_description_is_bounded(self) -> None:
+        graph, engine = _make_graph_and_engine()
+        graph.add_node("action-bounded", NodeType.APPROVAL, "Deploy to prod")
+        captured: dict[str, str] = {}
+        original = engine.full_simulation
+
+        def capture(request, *args, **kwargs):
+            captured["description"] = request.description
+            return original(request, *args, **kwargs)
+
+        engine.full_simulation = capture
+        SimulationBridge.simulate_before_approval(
+            engine, graph, "action-bounded", [_safe_option("opt-approve")],
+        )
+
+        assert captured["description"] == "Approval simulation"
+        assert "action-bounded" not in captured["description"]
+        assert "Deploy to prod" not in captured["description"]
 
 
 # ---------------------------------------------------------------------------

@@ -48,7 +48,7 @@ class ObservabilityAggregator:
         """Collect data from a single named source."""
         fn = self._sources.get(source_name)
         if fn is None:
-            return {"error": f"unknown source: {source_name}"}
+            return {"error": "observability source unavailable"}
         try:
             return fn()
         except Exception as exc:

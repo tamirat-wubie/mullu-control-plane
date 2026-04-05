@@ -888,8 +888,8 @@ class TestAttachAvailabilityToMemoryMesh:
     def test_memory_record_title(self):
         ai, ae, es, mm = _full_setup()
         mem = ai.attach_availability_to_memory_mesh("user-1")
-        assert "user-1" in mem.title
-        assert "Availability" in mem.title
+        assert mem.title == "Availability state"
+        assert "user-1" not in mem.title
 
     def test_memory_record_scope_ref(self):
         ai, ae, es, mm = _full_setup()

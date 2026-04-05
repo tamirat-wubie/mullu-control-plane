@@ -39,6 +39,10 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _bounded_parse_error(summary: str, exc: Exception) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 # ---------------------------------------------------------------------------
 # Parser / detector / mapper protocols
 # ---------------------------------------------------------------------------
@@ -175,13 +179,13 @@ def _parse_json(artifact_id: str, content: bytes, fmt: ArtifactFormat, _meta: Ma
             content_preview=preview,
             metadata={"key_count": len(data) if isinstance(data, dict) else 0},
         )
-    except (json.JSONDecodeError, ValueError) as e:
+    except (json.JSONDecodeError, ValueError) as exc:
         return ArtifactParseResult(
             parse_id=stable_identifier("parse", {"aid": artifact_id}),
             artifact_id=artifact_id,
             format_detected=ArtifactFormat.JSON,
             status=ArtifactParseStatus.MALFORMED,
-            reason=f"Invalid JSON: {e}",
+            reason=_bounded_parse_error("Invalid JSON", exc),
             parsed_at=now,
         )
 
@@ -246,7 +250,7 @@ def _parse_csv(artifact_id: str, content: bytes, fmt: ArtifactFormat, _meta: Map
         artifact_id=artifact_id,
         format_detected=ArtifactFormat.CSV,
         status=ArtifactParseStatus.ACCEPTED,
-        reason=f"CSV parsed: {row_count} rows, {col_count} columns",
+        reason="CSV parsed successfully",
         parsed_at=now,
         content_preview=text[:500],
         metadata={"row_count": row_count, "col_count": col_count},
@@ -259,7 +263,7 @@ def _parse_unsupported(artifact_id: str, content: bytes, fmt: ArtifactFormat, _m
         artifact_id=artifact_id,
         format_detected=fmt,
         status=ArtifactParseStatus.UNSUPPORTED,
-        reason=f"Format {fmt.value} is not supported by any registered parser",
+        reason="format unsupported",
         parsed_at=_now_iso(),
     )
 
@@ -364,7 +368,7 @@ class ArtifactIngestionEngine:
                 decision_id=stable_identifier("apd", {"aid": descriptor.artifact_id}),
                 artifact_id=descriptor.artifact_id,
                 allowed=False,
-                reason=f"Artifact too large: {descriptor.size_bytes} bytes exceeds limit of {self._max_size_bytes}",
+                reason="artifact exceeds size limit",
                 checks_passed=tuple(checks_passed),
                 checks_failed=tuple(checks_failed),
                 evaluated_at=now,
@@ -378,7 +382,7 @@ class ArtifactIngestionEngine:
                 decision_id=stable_identifier("apd", {"aid": descriptor.artifact_id}),
                 artifact_id=descriptor.artifact_id,
                 allowed=False,
-                reason=f"Format {detected_format.value} is not in allowed formats",
+                reason="format not allowed",
                 checks_passed=tuple(checks_passed),
                 checks_failed=tuple(checks_failed),
                 evaluated_at=now,
@@ -392,7 +396,7 @@ class ArtifactIngestionEngine:
                 decision_id=stable_identifier("apd", {"aid": descriptor.artifact_id}),
                 artifact_id=descriptor.artifact_id,
                 allowed=False,
-                reason=f"Source type {descriptor.source_type.value} is not allowed",
+                reason="source type not allowed",
                 checks_passed=tuple(checks_passed),
                 checks_failed=tuple(checks_failed),
                 evaluated_at=now,
@@ -510,7 +514,7 @@ class ArtifactIngestionEngine:
     ) -> ArtifactIngestionRecord:
         """Full pipeline: detect → fingerprint → gate → parse → structure → map → record."""
         if descriptor.artifact_id in self._records:
-            raise RuntimeCoreInvariantError(f"duplicate artifact_id: {descriptor.artifact_id}")
+            raise RuntimeCoreInvariantError("duplicate artifact_id")
 
         now = _now_iso()
         aid = descriptor.artifact_id

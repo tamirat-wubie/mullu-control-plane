@@ -305,3 +305,54 @@ class TestStateHash:
     def test_snapshot_method(self, engine_with_events: TemporalRuntimeEngine) -> None:
         snap = engine_with_events.snapshot()
         assert snap["events"] == 2
+
+
+class TestBoundedContracts:
+    def test_duplicate_and_unknown_contracts_do_not_reflect_ids(
+        self, engine_with_events: TemporalRuntimeEngine
+    ) -> None:
+        with pytest.raises(RuntimeCoreInvariantError) as dup_exc:
+            engine_with_events.register_temporal_event("e-1", "t-1", "dup", T1)
+        dup_message = str(dup_exc.value)
+        assert dup_message == "Duplicate event_id"
+        assert "e-1" not in dup_message
+        assert "Duplicate event_id" in dup_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as unknown_exc:
+            engine_with_events.check_persistence("p-secret")
+        unknown_message = str(unknown_exc.value)
+        assert unknown_message == "Unknown persistence_id"
+        assert "p-secret" not in unknown_message
+        assert "Unknown persistence_id" in unknown_message
+
+    def test_violation_reasons_do_not_reflect_ids_or_relation_values(
+        self, engine_with_events: TemporalRuntimeEngine
+    ) -> None:
+        engine_with_events.register_temporal_constraint(
+            "constraint-secret", "t-1", "e-1", "e-2", relation=TemporalRelation.AFTER,
+        )
+        reasons = {
+            violation["operation"]: violation["reason"]
+            for violation in engine_with_events.detect_temporal_violations()
+        }
+        assert reasons["constraint_violated"] == "Constraint relation mismatch"
+        assert "constraint-secret" not in reasons["constraint_violated"]
+        assert "after" not in reasons["constraint_violated"].lower()
+
+    def test_sequence_and_persistence_reasons_are_bounded(
+        self, engine: TemporalRuntimeEngine
+    ) -> None:
+        engine.register_temporal_event("e-1", "t-1", "late", T2)
+        engine.register_temporal_event("e-2", "t-1", "early", T1)
+        engine.register_sequence("sequence-secret", "t-1", "seq")
+        engine.add_event_to_sequence("sequence-secret", "e-1")
+        engine.add_event_to_sequence("sequence-secret", "e-2")
+        engine.record_persistence("p-1", "t-1", "fact-secret", T1)
+        engine.cease_persistence("p-1")
+        engine.record_persistence("p-2", "t-1", "fact-secret", T2)
+
+        reasons = [violation["reason"] for violation in engine.detect_temporal_violations()]
+        assert "Sequence events out of order" in reasons
+        assert "Fact has inconsistent persistence records" in reasons
+        assert all("sequence-secret" not in reason for reason in reasons)
+        assert all("fact-secret" not in reason for reason in reasons)

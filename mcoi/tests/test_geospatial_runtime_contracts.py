@@ -228,24 +228,40 @@ class TestGeoFeature:
             _feature(status="not_a_status")
 
     def test_bool_latitude_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             _feature(latitude=True)
+        message = str(exc_info.value)
+        assert message == "numeric value must be a number"
+        assert "latitude" not in message
+        assert "bool" not in message
 
     def test_inf_latitude_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             _feature(latitude=float("inf"))
+        message = str(exc_info.value)
+        assert message == "numeric value must be finite"
+        assert "latitude" not in message
+        assert "inf" not in message
 
     def test_nan_latitude_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _feature(latitude=float("nan"))
 
     def test_bool_longitude_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             _feature(longitude=True)
+        message = str(exc_info.value)
+        assert message == "numeric value must be a number"
+        assert "longitude" not in message
+        assert "bool" not in message
 
     def test_inf_longitude_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             _feature(longitude=float("inf"))
+        message = str(exc_info.value)
+        assert message == "numeric value must be finite"
+        assert "longitude" not in message
+        assert "inf" not in message
 
     def test_negative_latitude_accepted(self):
         f = _feature(latitude=-33.8688)

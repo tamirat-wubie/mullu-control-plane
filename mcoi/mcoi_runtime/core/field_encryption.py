@@ -57,7 +57,7 @@ class EnvKeyProvider:
         if raw:
             self._key = base64.b64decode(raw)
             if len(self._key) != 32:
-                raise ValueError(f"{env_var} must decode to exactly 32 bytes (got {len(self._key)})")
+                raise ValueError("encryption key must decode to exactly 32 bytes")
             self._key_id = hashlib.sha256(self._key).hexdigest()[:8]
             _log.warning(
                 "EnvKeyProvider loaded encryption key from environment variable %s. "
@@ -86,7 +86,7 @@ class StaticKeyProvider:
 
     def __init__(self, keys: dict[str, bytes], current: str) -> None:
         if current not in keys:
-            raise ValueError(f"current key '{current}' not in keys dict")
+            raise ValueError("current encryption key must exist in keys")
         self._keys = keys
         self._current = current
 
@@ -136,7 +136,7 @@ class FieldEncryptor:
             raise ValueError("no encryption key available")
         key = self._provider.get_key(key_id)
         if key is None:
-            raise ValueError(f"key {key_id} not found")
+            raise ValueError("encryption key not found")
 
         plaintext_bytes = plaintext.encode("utf-8")
         nonce = os.urandom(12)
@@ -167,7 +167,7 @@ class FieldEncryptor:
         key_id, nonce_b64, ct_b64 = parts
         key = self._provider.get_key(key_id)
         if key is None:
-            raise ValueError(f"decryption key {key_id} not found")
+            raise ValueError("decryption key not found")
 
         nonce = base64.b64decode(nonce_b64)
         ciphertext = base64.b64decode(ct_b64)
@@ -178,7 +178,7 @@ class FieldEncryptor:
             try:
                 plaintext_bytes = aesgcm.decrypt(nonce, ciphertext, None)
             except Exception as exc:
-                raise ValueError(f"decryption failed: {exc}") from exc
+                raise ValueError("decryption failed") from exc
         else:
             # Fallback: HMAC integrity check
             if len(ciphertext) < 32:

@@ -78,7 +78,7 @@ class PluginRegistry:
     def register(self, descriptor: PluginDescriptor) -> PluginInstance:
         """Register a plugin descriptor."""
         if descriptor.plugin_id in self._plugins:
-            raise ValueError(f"plugin already registered: {descriptor.plugin_id}")
+            raise ValueError("plugin already registered")
 
         instance = PluginInstance(descriptor=descriptor)
         self._plugins[descriptor.plugin_id] = instance
@@ -92,20 +92,18 @@ class PluginRegistry:
         """Load a plugin — register its hook implementations."""
         instance = self._plugins.get(plugin_id)
         if instance is None:
-            raise ValueError(f"plugin not found: {plugin_id}")
+            raise ValueError("plugin not found")
 
         # Check dependencies
         for dep_id in instance.descriptor.dependencies:
             dep = self._plugins.get(dep_id)
             if dep is None or dep.status not in (PluginStatus.LOADED, PluginStatus.ACTIVE):
-                raise ValueError(f"dependency not loaded: {dep_id}")
+                raise ValueError("plugin dependency not loaded")
 
         if hooks:
             for hook_point, fn in hooks.items():
                 if hook_point not in instance.descriptor.hooks:
-                    raise ValueError(
-                        f"plugin {plugin_id} didn't declare hook {hook_point}"
-                    )
+                    raise ValueError("plugin hook not declared")
                 instance.hooks[hook_point] = fn
 
         instance.status = PluginStatus.LOADED
@@ -115,9 +113,9 @@ class PluginRegistry:
         """Activate a loaded plugin."""
         instance = self._plugins.get(plugin_id)
         if instance is None:
-            raise ValueError(f"plugin not found: {plugin_id}")
+            raise ValueError("plugin not found")
         if instance.status != PluginStatus.LOADED:
-            raise ValueError(f"plugin not loaded: {plugin_id} (status: {instance.status})")
+            raise ValueError("plugin must be loaded before activation")
         instance.status = PluginStatus.ACTIVE
         return instance
 

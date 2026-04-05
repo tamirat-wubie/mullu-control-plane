@@ -164,7 +164,7 @@ class EpisodicMemory:
         if entry.tier is not MemoryTier.EPISODIC:
             raise RuntimeCoreInvariantError("only episodic-tier entries may be admitted to episodic memory")
         if entry.entry_id in self._entries:
-            raise RuntimeCoreInvariantError(f"entry_id already exists in episodic memory: {entry.entry_id}")
+            raise RuntimeCoreInvariantError("entry_id already exists in episodic memory")
         self._entries[entry.entry_id] = entry
         self._order.append(entry.entry_id)
         return entry

@@ -156,15 +156,24 @@ class TestVectorize:
         assert vec.normalized is False
         assert all(w == 0.0 for w in vec.fidel_weights)
 
-    def test_non_fidel_chars_ignored(self) -> None:
-        vec = MfidelMatrix.vectorize("abc")
-        assert vec.normalized is False
+    def test_non_fidel_chars_rejected(self) -> None:
+        with pytest.raises(ValueError, match="non-fidel characters"):
+            MfidelMatrix.vectorize("abc")
 
     def test_text_to_fidel_sequence(self) -> None:
         seq = MfidelMatrix.text_to_fidel_sequence("ሀለ")
         assert len(seq) == 2
         assert seq[0].glyph == "ሀ"
         assert seq[1].glyph == "ለ"
+
+
+    def test_text_to_fidel_sequence_allows_whitespace_separators(self) -> None:
+        seq = MfidelMatrix.text_to_fidel_sequence("\u1200 \u1208")
+        assert len(seq) == 2
+
+    def test_text_to_fidel_sequence_rejects_mixed_non_fidel_input(self) -> None:
+        with pytest.raises(ValueError, match="positions 1"):
+            MfidelMatrix.text_to_fidel_sequence("\u1200a")
 
 
 class TestSimilarity:

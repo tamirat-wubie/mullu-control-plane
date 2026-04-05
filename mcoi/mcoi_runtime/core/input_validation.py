@@ -86,7 +86,7 @@ class InputValidator:
     def validate(self, schema_id: str, data: dict[str, Any]) -> ValidationResult:
         schema = self._schemas.get(schema_id)
         if not schema:
-            raise ValueError(f"Unknown schema: {schema_id}")
+            raise ValueError("unknown schema")
 
         self._total_validations += 1
         errors: list[ValidationError] = []
@@ -107,56 +107,55 @@ class InputValidator:
 
         if rule.rule_type == RuleType.REQUIRED:
             if value is None or (isinstance(value, str) and not value.strip()):
-                return ValidationError(rule.field, "required", msg or f"{rule.field} is required")
+                return ValidationError(rule.field, "required", msg or "required field is missing")
 
         elif rule.rule_type == RuleType.TYPE_CHECK:
             if value is not None and not isinstance(value, rule.value):
                 return ValidationError(
                     rule.field, "type_check",
-                    msg or f"{rule.field} must be {rule.value.__name__}",
-                    actual_value=type(value).__name__,
+                    msg or "field has invalid type",
                 )
 
         elif rule.rule_type == RuleType.MIN_LENGTH:
             if value is not None and isinstance(value, (str, list)) and len(value) < rule.value:
                 return ValidationError(
                     rule.field, "min_length",
-                    msg or f"{rule.field} must be at least {rule.value} characters",
+                    msg or "field is shorter than allowed",
                 )
 
         elif rule.rule_type == RuleType.MAX_LENGTH:
             if value is not None and isinstance(value, (str, list)) and len(value) > rule.value:
                 return ValidationError(
                     rule.field, "max_length",
-                    msg or f"{rule.field} must be at most {rule.value} characters",
+                    msg or "field is longer than allowed",
                 )
 
         elif rule.rule_type == RuleType.MIN_VALUE:
             if value is not None and isinstance(value, (int, float)) and value < rule.value:
                 return ValidationError(
                     rule.field, "min_value",
-                    msg or f"{rule.field} must be >= {rule.value}",
+                    msg or "field is below minimum",
                 )
 
         elif rule.rule_type == RuleType.MAX_VALUE:
             if value is not None and isinstance(value, (int, float)) and value > rule.value:
                 return ValidationError(
                     rule.field, "max_value",
-                    msg or f"{rule.field} must be <= {rule.value}",
+                    msg or "field exceeds maximum",
                 )
 
         elif rule.rule_type == RuleType.PATTERN:
             if value is not None and isinstance(value, str) and not re.match(rule.value, value):
                 return ValidationError(
                     rule.field, "pattern",
-                    msg or f"{rule.field} does not match pattern {rule.value}",
+                    msg or "field has invalid format",
                 )
 
         elif rule.rule_type == RuleType.ENUM:
             if value is not None and value not in rule.value:
                 return ValidationError(
                     rule.field, "enum",
-                    msg or f"{rule.field} must be one of {rule.value}",
+                    msg or "field has unsupported value",
                 )
 
         elif rule.rule_type == RuleType.CUSTOM:

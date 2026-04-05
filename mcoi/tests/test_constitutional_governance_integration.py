@@ -458,7 +458,8 @@ class TestAttachConstitutionStateToMemoryMesh:
     def test_title_contains_scope(self):
         bridge, *_ = _make_integration()
         mem = bridge.attach_constitution_state_to_memory_mesh("scope-2")
-        assert "scope-2" in mem.title
+        assert mem.title == "Constitutional governance state"
+        assert "scope-2" not in mem.title
 
     def test_tags_include_constitutional_governance(self):
         bridge, *_ = _make_integration()

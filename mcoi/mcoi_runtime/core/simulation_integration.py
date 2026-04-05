@@ -48,9 +48,7 @@ class SimulationBridge:
             A tuple of (comparison, verdict).
         """
         goal_node = graph.get_node(goal_id)
-        description = f"Goal simulation for {goal_id}"
-        if goal_node is not None:
-            description = f"Goal simulation: {goal_node.label}"
+        description = "Goal simulation"
 
         request_id = stable_identifier("sim-req-goal", {"goal_id": goal_id})
         request = SimulationRequest(
@@ -81,9 +79,7 @@ class SimulationBridge:
             A tuple of (comparison, verdict).
         """
         incident_node = graph.get_node(incident_id)
-        description = f"Recovery simulation for incident {incident_id}"
-        if incident_node is not None:
-            description = f"Recovery simulation: {incident_node.label}"
+        description = "Recovery simulation"
 
         request_id = stable_identifier("sim-req-recovery", {"incident_id": incident_id})
         request = SimulationRequest(
@@ -116,9 +112,7 @@ class SimulationBridge:
             A tuple of (comparison, verdict).
         """
         action_node = graph.get_node(action_id)
-        description = f"Approval simulation for action {action_id}"
-        if action_node is not None:
-            description = f"Approval simulation: {action_node.label}"
+        description = "Approval simulation"
 
         request_id = stable_identifier("sim-req-approval", {"action_id": action_id})
         request = SimulationRequest(

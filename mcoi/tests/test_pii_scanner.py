@@ -204,6 +204,29 @@ class TestScannerBehavior:
         assert result.pii_detected
         assert "[REDACTED:custom]" in result.redacted_text
 
+    def test_scan_preserves_ethiopic_runs_during_normalization(self, monkeypatch):
+        import mcoi_runtime.core.pii_scanner as pii_scanner
+
+        original_normalize = pii_scanner.unicodedata.normalize
+
+        def guarded_normalize(form: str, value: str) -> str:
+            assert all(not pii_scanner._is_ethiopic_char(char) for char in value)
+            return original_normalize(form, value)
+
+        monkeypatch.setattr(pii_scanner.unicodedata, "normalize", guarded_normalize)
+
+        scanner = PIIScanner()
+        result = scanner.scan("ＡሀＢ user@test.com")
+        assert result.pii_detected
+        assert "AሀB" in result.redacted_text
+
+    def test_scan_keeps_ethiopic_text_byte_stable_when_no_pii(self):
+        scanner = PIIScanner()
+        text = "ሀሁሂ መሙሚ"
+        result = scanner.scan(text)
+        assert not result.pii_detected
+        assert result.redacted_text == text
+
 
 # ═══ Dict Scanning ═══
 

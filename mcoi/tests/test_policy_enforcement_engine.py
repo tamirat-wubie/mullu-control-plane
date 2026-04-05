@@ -1651,3 +1651,90 @@ class TestEdgeCases:
                 assert ev.decision == EnforcementDecision.STEP_UP_REQUIRED, (
                     f"{level} should require step-up for {levels[j]}"
                 )
+
+
+class TestBoundedContracts:
+    def test_duplicate_and_unknown_contracts_do_not_reflect_ids(
+        self, engine: PolicyEnforcementEngine
+    ) -> None:
+        engine.open_session("session-secret", "identity-1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as dup_session_exc:
+            engine.open_session("session-secret", "identity-1")
+        dup_session_message = str(dup_session_exc.value)
+        assert dup_session_message == "Duplicate session_id"
+        assert "session-secret" not in dup_session_message
+        assert "Duplicate session_id" in dup_session_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as missing_session_exc:
+            engine.get_session("session-missing")
+        missing_session_message = str(missing_session_exc.value)
+        assert missing_session_message == "Unknown session_id"
+        assert "session-missing" not in missing_session_message
+        assert "Unknown session_id" in missing_session_message
+
+        engine.session_snapshot("snapshot-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as dup_snapshot_exc:
+            engine.session_snapshot("snapshot-secret")
+        dup_snapshot_message = str(dup_snapshot_exc.value)
+        assert dup_snapshot_message == "Duplicate snapshot_id"
+        assert "snapshot-secret" not in dup_snapshot_message
+        assert "Duplicate snapshot_id" in dup_snapshot_message
+
+    def test_state_contracts_do_not_reflect_status_values(
+        self, engine: PolicyEnforcementEngine
+    ) -> None:
+        engine.open_session("session-secret", "identity-1")
+        engine.request_step_up(
+            "request-secret",
+            "session-secret",
+            "identity-1",
+            requested_level=PrivilegeLevel.ADMIN,
+        )
+        engine.approve_step_up("decision-1", "request-secret", "approver-1")
+        with pytest.raises(RuntimeCoreInvariantError) as approve_exc:
+            engine.approve_step_up("decision-2", "request-secret", "approver-2")
+        approve_message = str(approve_exc.value)
+        assert approve_message == "Cannot approve step-up in current status"
+        assert "APPROVED" not in approve_message
+        assert "request-secret" not in approve_message
+
+        engine.expire_session("session-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as revoke_exc:
+            engine.revoke_session("session-secret", RevocationReason.MANUAL_REVOCATION)
+        revoke_message = str(revoke_exc.value)
+        assert revoke_message == "Cannot revoke session in current status"
+        assert "EXPIRED" not in revoke_message
+        assert "session-secret" not in revoke_message
+
+    def test_enforcement_reasons_do_not_reflect_status_or_constraint_values(
+        self, engine: PolicyEnforcementEngine
+    ) -> None:
+        engine.open_session("session-secret", "identity-1")
+        engine.suspend_session("session-secret")
+        suspended = engine.evaluate_session_action("session-secret", "file", "read")
+        assert suspended.reason == "session suspended"
+        assert "SUSPENDED" not in suspended.reason
+        assert "session-secret" not in suspended.reason
+
+        engine.open_session("constraint-session", "identity-2")
+        engine.add_constraint("constraint-secret", "constraint-session", environment_id="staging-secret")
+        constrained = engine.evaluate_session_action(
+            "constraint-session",
+            "file",
+            "read",
+            environment_id="prod-secret",
+        )
+        assert constrained.reason == "environment constraint"
+        assert "staging-secret" not in constrained.reason
+        assert "prod-secret" not in constrained.reason
+
+        elevated = engine.evaluate_session_action(
+            "constraint-session",
+            "file",
+            "read",
+            required_privilege=PrivilegeLevel.ADMIN,
+        )
+        assert elevated.reason == "additional privilege required"
+        assert "admin" not in elevated.reason.lower()
+        assert elevated.decision == EnforcementDecision.STEP_UP_REQUIRED

@@ -75,7 +75,7 @@ class OIDCConfig:
             raise ValueError("allowed_algorithms must not be empty")
         for alg in self.allowed_algorithms:
             if alg not in _HMAC_HASH_MAP:
-                raise ValueError(f"unsupported algorithm: {alg}")
+                raise ValueError(_unsupported_algorithm_error())
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,6 +102,21 @@ def _b64url_decode(data: str) -> bytes:
 def _b64url_encode(data: bytes) -> str:
     """Encode bytes as base64url (no padding)."""
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _bounded_algorithm_rejection() -> str:
+    """Return a bounded algorithm rejection error."""
+    return "algorithm not allowed"
+
+
+def _unsupported_algorithm_error() -> str:
+    """Return a bounded unsupported algorithm error."""
+    return "unsupported algorithm"
+
+
+def _bounded_claim_mismatch(claim_name: str) -> str:
+    """Return a bounded claim mismatch error."""
+    return f"{claim_name} mismatch"
 
 
 class JWTAuthenticator:
@@ -150,7 +165,7 @@ class JWTAuthenticator:
         if alg not in self._config.allowed_algorithms:
             return JWTAuthResult(
                 authenticated=False,
-                error=f"algorithm not allowed: {alg}",
+                error=_bounded_algorithm_rejection(),
             )
         if alg == "none":
             return JWTAuthResult(authenticated=False, error="unsigned tokens are rejected")
@@ -183,7 +198,7 @@ class JWTAuthenticator:
         if iss != self._config.issuer:
             return JWTAuthResult(
                 authenticated=False,
-                error=f"issuer mismatch: expected {self._config.issuer}, got {iss}",
+                error=_bounded_claim_mismatch("issuer"),
             )
 
         # Audience
@@ -192,12 +207,12 @@ class JWTAuthenticator:
             if self._config.audience not in aud:
                 return JWTAuthResult(
                     authenticated=False,
-                    error=f"audience mismatch: {self._config.audience} not in {aud}",
+                    error=_bounded_claim_mismatch("audience"),
                 )
         elif aud != self._config.audience:
             return JWTAuthResult(
                 authenticated=False,
-                error=f"audience mismatch: expected {self._config.audience}, got {aud}",
+                error=_bounded_claim_mismatch("audience"),
             )
 
         # Expiry
@@ -262,7 +277,7 @@ class JWTAuthenticator:
         NOT for production token issuance — use an OIDC provider for that.
         """
         if algorithm not in _HMAC_HASH_MAP:
-            raise ValueError(f"unsupported algorithm: {algorithm}")
+            raise ValueError(_unsupported_algorithm_error())
 
         now = int(time.time())
         header = {"alg": algorithm, "typ": "JWT"}

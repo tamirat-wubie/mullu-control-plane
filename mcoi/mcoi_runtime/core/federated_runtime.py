@@ -116,7 +116,7 @@ class FederatedRuntimeEngine:
         role: NodeRole = NodeRole.SECONDARY,
     ) -> FederatedNode:
         if node_id in self._nodes:
-            raise RuntimeCoreInvariantError(f"duplicate node_id: {node_id}")
+            raise RuntimeCoreInvariantError("duplicate node_id")
         now = self._now()
         node = FederatedNode(
             node_id=node_id, tenant_id=tenant_id, display_name=display_name,
@@ -128,7 +128,7 @@ class FederatedRuntimeEngine:
 
     def _get_node(self, node_id: str) -> FederatedNode:
         if node_id not in self._nodes:
-            raise RuntimeCoreInvariantError(f"unknown node_id: {node_id}")
+            raise RuntimeCoreInvariantError("unknown node_id")
         return self._nodes[node_id]
 
     def _transition_node(self, node_id: str, target: FederationStatus) -> FederatedNode:
@@ -165,7 +165,7 @@ class FederatedRuntimeEngine:
         trust_level: float = 0.5,
     ) -> FederatedClaim:
         if claim_id in self._claims:
-            raise RuntimeCoreInvariantError(f"duplicate claim_id: {claim_id}")
+            raise RuntimeCoreInvariantError("duplicate claim_id")
         now = self._now()
         claim = FederatedClaim(
             claim_id=claim_id, tenant_id=tenant_id, origin_node_ref=origin_node_ref,
@@ -188,7 +188,7 @@ class FederatedRuntimeEngine:
         target_node_ref: str,
     ) -> SyncRecord:
         if sync_id in self._syncs:
-            raise RuntimeCoreInvariantError(f"duplicate sync_id: {sync_id}")
+            raise RuntimeCoreInvariantError("duplicate sync_id")
         now = self._now()
         # Count claims from source node that are PENDING
         relevant = [
@@ -262,7 +262,7 @@ class FederatedRuntimeEngine:
         mode: ReconciliationMode = ReconciliationMode.LAST_WRITE_WINS,
     ) -> ReconciliationRecord:
         if reconciliation_id in self._reconciliations:
-            raise RuntimeCoreInvariantError(f"duplicate reconciliation_id: {reconciliation_id}")
+            raise RuntimeCoreInvariantError("duplicate reconciliation_id")
         now = self._now()
         rec = ReconciliationRecord(
             reconciliation_id=reconciliation_id, tenant_id=tenant_id,
@@ -286,7 +286,7 @@ class FederatedRuntimeEngine:
         duration_ms: float = 0.0,
     ) -> PartitionRecord:
         if partition_id in self._partitions:
-            raise RuntimeCoreInvariantError(f"duplicate partition_id: {partition_id}")
+            raise RuntimeCoreInvariantError("duplicate partition_id")
         now = self._now()
         pr = PartitionRecord(
             partition_id=partition_id, tenant_id=tenant_id,
@@ -378,7 +378,7 @@ class FederatedRuntimeEngine:
                     v = FederatedViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="stale_sync",
-                        reason=f"claim {c.claim_id} has stale sync",
+                        reason="claim has stale sync",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -395,7 +395,7 @@ class FederatedRuntimeEngine:
                     v = FederatedViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="unresolved_partition",
-                        reason=f"partition {p.partition_id} unresolved for node {p.node_ref}",
+                        reason="partition remains unresolved",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -411,7 +411,7 @@ class FederatedRuntimeEngine:
                     v = FederatedViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="conflicted_claim",
-                        reason=f"claim {c.claim_id} is conflicted",
+                        reason="claim is conflicted",
                         detected_at=now,
                     )
                     self._violations[vid] = v

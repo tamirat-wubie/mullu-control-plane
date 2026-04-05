@@ -19,13 +19,29 @@ class TestCanaryController:
         assert dep.status == DeploymentStatus.CANARY
 
     def test_invalid_traffic_pct(self, controller):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="0-100") as exc_info:
             controller.create_canary("d1", "v1.0", "v1.1", initial_traffic_pct=150.0)
+        assert "150.0" not in str(exc_info.value)
 
     def test_duplicate_active(self, controller):
         controller.create_canary("d1", "v1.0", "v1.1")
         with pytest.raises(ValueError, match="Active canary"):
             controller.create_canary("d2", "v1.0", "v1.2")
+
+    def test_unknown_deployment_reason_is_bounded(self, controller):
+        with pytest.raises(ValueError, match="not found") as exc_info:
+            controller.promote("ghost")
+        assert "ghost" not in str(exc_info.value)
+
+    def test_inactive_deployment_reason_is_bounded(self, controller):
+        controller.create_canary("d1", "v1.0", "v1.1")
+        for _ in range(3):
+            controller.record_health("d1", 95.0)
+        controller.promote("d1")
+        with pytest.raises(ValueError, match="not active") as exc_info:
+            controller.rollback("d1")
+        assert "d1" not in str(exc_info.value)
+        assert "completed" not in str(exc_info.value).lower()
 
     def test_increase_traffic(self, controller):
         controller.create_canary("d1", "v1.0", "v1.1", initial_traffic_pct=5.0)

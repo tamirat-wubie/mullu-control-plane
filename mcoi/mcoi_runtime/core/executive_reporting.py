@@ -95,7 +95,7 @@ class ExecutiveReportingEngine:
         metadata: dict[str, Any] | None = None,
     ) -> KPIDefinition:
         if kpi_id in self._kpis:
-            raise RuntimeCoreInvariantError(f"KPI '{kpi_id}' already exists")
+            raise RuntimeCoreInvariantError("KPI already exists")
         now = _now_iso()
         kpi = KPIDefinition(
             kpi_id=kpi_id,
@@ -142,9 +142,9 @@ class ExecutiveReportingEngine:
         sample_count: int = 1,
     ) -> KPIValue:
         if value_id in self._values:
-            raise RuntimeCoreInvariantError(f"metric value '{value_id}' already exists")
+            raise RuntimeCoreInvariantError("metric value already exists")
         if kpi_id not in self._kpis:
-            raise RuntimeCoreInvariantError(f"KPI '{kpi_id}' not found")
+            raise RuntimeCoreInvariantError("KPI not found")
         now = _now_iso()
         kpi_value = KPIValue(
             value_id=value_id,
@@ -186,7 +186,7 @@ class ExecutiveReportingEngine:
         window: MetricWindow = MetricWindow.DAILY,
     ) -> RollupRecord:
         if kpi_id not in self._kpis:
-            raise RuntimeCoreInvariantError(f"KPI '{kpi_id}' not found")
+            raise RuntimeCoreInvariantError("KPI not found")
 
         values = self.get_values(kpi_id)
         # Filter by period
@@ -239,7 +239,7 @@ class ExecutiveReportingEngine:
         window: MetricWindow = MetricWindow.DAILY,
     ) -> TrendSnapshot:
         if kpi_id not in self._kpis:
-            raise RuntimeCoreInvariantError(f"KPI '{kpi_id}' not found")
+            raise RuntimeCoreInvariantError("KPI not found")
 
         kpi = self._kpis[kpi_id]
         values = self.get_values(kpi_id)
@@ -555,7 +555,7 @@ class ExecutiveReportingEngine:
         """Evaluate current KPI status: on_target, warning, or critical."""
         kpi = self._kpis.get(kpi_id)
         if kpi is None:
-            raise RuntimeCoreInvariantError(f"KPI '{kpi_id}' not found")
+            raise RuntimeCoreInvariantError("KPI not found")
 
         values = self.get_values(kpi_id)
         if not values:

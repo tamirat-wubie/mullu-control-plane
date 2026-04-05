@@ -20,6 +20,11 @@ from datetime import datetime, timezone
 from typing import Any, Protocol
 
 
+def _bounded_store_migration_error(exc: Exception, index: int) -> RuntimeError:
+    """Return a bounded PostgreSQL migration failure."""
+    return RuntimeError(f"postgres schema migration {index} failed ({type(exc).__name__})")
+
+
 class DatabaseConnection(Protocol):
     """Protocol for database connections — allows PostgreSQL or in-memory backends."""
 
@@ -279,12 +284,13 @@ class PostgresStore:
         if self._conn is None:
             return
         with self._conn.cursor() as cur:
-            for migration_sql in MIGRATIONS:
+            for index, migration_sql in enumerate(MIGRATIONS, start=1):
                 try:
                     cur.execute(migration_sql)
                     self._conn.commit()
-                except Exception:
+                except Exception as exc:
                     self._conn.rollback()
+                    raise _bounded_store_migration_error(exc, index) from exc
                     # Migration already applied or table exists — idempotent
 
     def append_ledger(
@@ -475,4 +481,4 @@ def create_store(backend: str = "memory", connection_string: str = "", **kwargs:
         return SQLiteStore(db_path=connection_string or "mullu.db")
     if backend == "postgresql":
         return PostgresStore(connection_string, **kwargs)
-    raise ValueError(f"unsupported persistence backend: {backend}")
+    raise ValueError("unsupported persistence backend")

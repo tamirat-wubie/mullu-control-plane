@@ -22,6 +22,7 @@ from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.errors import Recoverability, execution_error
 from mcoi_runtime.app.governed_execution import governed_operator_dispatch
 from mcoi_runtime.core.template_validator import TemplateValidationError
+from mcoi_runtime.core.template_validator import format_template_validation_error
 from mcoi_runtime.persistence.errors import PersistenceError
 
 from .operator_models import SkillRequest
@@ -53,7 +54,7 @@ class _GovernedStepExecutor:
             return SkillStepOutcome(
                 step_id=step_id,
                 status=SkillOutcomeStatus.FAILED,
-                error_message=f"validation:{exc.code}:{exc}",
+                error_message=f"validation:{format_template_validation_error(exc)}",
             )
 
         try:
@@ -76,7 +77,13 @@ class _GovernedStepExecutor:
             return SkillStepOutcome(
                 step_id=step_id,
                 status=SkillOutcomeStatus.FAILED,
-                error_message=f"dispatch_error:{type(exc).__name__}:{exc}",
+                error_message=f"dispatch_error:{exc.failure.code}",
+            )
+        except Exception as exc:
+            return SkillStepOutcome(
+                step_id=step_id,
+                status=SkillOutcomeStatus.FAILED,
+                error_message=f"dispatch_error:{type(exc).__name__}",
             )
 
         if result.status is ExecutionOutcome.SUCCEEDED:
@@ -164,7 +171,7 @@ class _GoalSubGoalExecutor:
         """Execute a sub-goal by dispatching to run_skill or run_workflow."""
         autonomy_decision = self._loop.runtime.autonomy.evaluate(
             ActionClass.EXECUTE_WRITE,
-            action_description=f"sub_goal_execution:{sub_goal.sub_goal_id}",
+            action_description="sub-goal execution",
         )
         if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
             return SubGoal(

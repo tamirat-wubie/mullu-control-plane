@@ -658,3 +658,31 @@ class TestGoldenScenarios:
             eng.register_claim("c1", _T1, "n1", "fact")
             eng.sync_claims("s1", _T1, "n1", "n2")
         assert eng1.state_hash() == eng2.state_hash()
+
+
+class TestBoundedFederatedContracts:
+    def test_duplicate_node_does_not_echo_id(self):
+        eng, _ = _make_engine()
+        eng.register_node("node-secret", _T1, "Node")
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate node_id") as exc:
+            eng.register_node("node-secret", _T1, "Node")
+        assert "node-secret" not in str(exc.value)
+
+    def test_partition_violation_reason_is_bounded(self):
+        eng, _ = _make_engine()
+        eng.register_node("node-secret", _T1, "Node")
+        eng.record_partition("partition-secret", _T1, "node-secret")
+        violations = eng.detect_federated_violations(_T1)
+        partition_violation = next(v for v in violations if v.operation == "unresolved_partition")
+        assert partition_violation.reason == "partition remains unresolved"
+
+    def test_conflicted_claim_reason_does_not_echo_claim_id(self):
+        eng, _ = _make_engine()
+        eng.register_claim("claim-a", _T1, "n1", "shared-fact", trust_level=0.9)
+        eng.register_claim("claim-secret", _T1, "n2", "shared-fact", trust_level=0.2)
+        eng.detect_sync_conflicts(_T1)
+        violations = eng.detect_federated_violations(_T1)
+        conflicted = [v for v in violations if v.operation == "conflicted_claim"]
+        assert conflicted
+        assert all(v.reason == "claim is conflicted" for v in conflicted)
+        assert "claim-secret" not in "".join(v.reason for v in conflicted)

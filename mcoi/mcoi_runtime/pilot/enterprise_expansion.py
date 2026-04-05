@@ -48,7 +48,7 @@ def recommend_bundle_upgrade(
         current_pack=pack,
         recommended_bundle=bundle,
         monthly_savings=savings,
-        reason=f"High activation ({activation_rate:.0%}), satisfaction {satisfaction}/10, {months_active}mo tenure",
+        reason="high activation, strong satisfaction, established tenure",
     )
 
 # 162C — In-Product Expansion Engine

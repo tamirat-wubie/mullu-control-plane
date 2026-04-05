@@ -288,6 +288,10 @@ class TestGoalRuntimeGoldenScenarios:
         assert len(report.errors) == 1
         assert report.errors[0].error_code == "autonomy_blocked"
         assert "observe_only" in report.errors[0].message
+        status = loop.runtime.autonomy.get_status()
+        assert len(status.violations) == 1
+        assert status.violations[0].attempted_action == "goal execution"
+        assert goal.goal_id not in status.violations[0].attempted_action
 
     def test_goal_blocked_by_policy(self):
         """Goal execution is blocked when the policy engine denies."""
@@ -367,6 +371,10 @@ class TestGoalRuntimeGoldenScenarios:
         assert report.status is GoalStatus.FAILED
         # Sub-goals should be blocked by observe_only mode
         assert len(report.failed_sub_goals) > 0
+        status = loop.runtime.autonomy.get_status()
+        assert any(v.attempted_action == "sub-goal execution" for v in status.violations)
+        assert all("sg-first" not in v.attempted_action for v in status.violations)
+        assert all("sg-second" not in v.attempted_action for v in status.violations)
 
         # Restore
         loop.runtime.autonomy.evaluate = original_evaluate

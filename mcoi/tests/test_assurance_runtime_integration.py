@@ -284,7 +284,8 @@ class TestMemoryMeshAndGraph:
     ) -> None:
         bridge.assurance_from_control_tests("att-mm-1", "t1", "ctrl-mm")
         mem = bridge.attach_assurance_to_memory_mesh("ctrl-mm")
-        assert mem.title == "Assurance state: ctrl-mm"
+        assert mem.title == "Assurance state"
+        assert "ctrl-mm" not in mem.title
         assert "assurance" in mem.tags
         assert "attestation" in mem.tags
         assert "certification" in mem.tags

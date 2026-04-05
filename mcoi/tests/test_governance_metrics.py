@@ -24,8 +24,11 @@ class TestCounters:
 
     def test_unknown_counter_strict(self):
         m = GovernanceMetricsEngine(clock=FIXED_CLOCK, strict=True)
-        with pytest.raises(ValueError, match="unknown counter"):
+        with pytest.raises(ValueError) as exc_info:
             m.inc("totally_fake_counter")
+        message = str(exc_info.value)
+        assert message == "unknown counter"
+        assert "totally_fake_counter" not in message
 
     def test_unknown_counter_non_strict(self):
         m = GovernanceMetricsEngine(clock=FIXED_CLOCK, strict=False)
@@ -52,8 +55,11 @@ class TestGauges:
 
     def test_unknown_gauge_strict(self):
         m = GovernanceMetricsEngine(clock=FIXED_CLOCK, strict=True)
-        with pytest.raises(ValueError, match="unknown gauge"):
+        with pytest.raises(ValueError) as exc_info:
             m.set_gauge("fake_gauge", 1.0)
+        message = str(exc_info.value)
+        assert message == "unknown gauge"
+        assert "fake_gauge" not in message
 
 
 class TestHistograms:
@@ -69,6 +75,14 @@ class TestHistograms:
         m = GovernanceMetricsEngine(clock=FIXED_CLOCK)
         stats = m.histogram_stats("request_latency_ms")
         assert stats["count"] == 0
+
+    def test_unknown_histogram_strict(self):
+        m = GovernanceMetricsEngine(clock=FIXED_CLOCK, strict=True)
+        with pytest.raises(ValueError) as exc_info:
+            m.observe("fake_histogram", 1.0)
+        message = str(exc_info.value)
+        assert message == "unknown histogram"
+        assert "fake_histogram" not in message
 
     def test_percentiles(self):
         m = GovernanceMetricsEngine(clock=FIXED_CLOCK)

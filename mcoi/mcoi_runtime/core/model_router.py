@@ -87,7 +87,7 @@ class ModelRouter:
             profile = self._profiles[force_model]
             decision = RoutingDecision(
                 model_id=force_model,
-                reason=f"forced model: {force_model}",
+                reason="forced model override",
                 complexity=self.classify_complexity(prompt, max_tokens=max_tokens),
                 estimated_cost=self._estimate_cost(profile, len(prompt), max_tokens),
                 alternatives=(),
@@ -132,7 +132,7 @@ class ModelRouter:
 
         decision = RoutingDecision(
             model_id=best[2].model_id,
-            reason=f"{complexity.value} task → {best[2].name} ({best[2].capability_tier}/{best[2].speed_tier})",
+            reason="selected by routing policy",
             complexity=complexity,
             estimated_cost=round(best[1], 6),
             alternatives=alternatives,

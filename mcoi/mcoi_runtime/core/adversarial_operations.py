@@ -262,7 +262,7 @@ class AdversarialOperationsBridge:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=session_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Adversarial campaign: {session.name}",
+            title="Adversarial campaign outcome",
             content={
                 "session_id": session_id,
                 "name": session.name,

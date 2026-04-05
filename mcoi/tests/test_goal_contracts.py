@@ -167,8 +167,11 @@ class TestSubGoal:
             _sub_goal(sub_goal_id="")
 
     def test_empty_predecessor_rejected(self):
-        with pytest.raises(ValueError, match="predecessors"):
+        with pytest.raises(ValueError) as exc_info:
             _sub_goal(predecessors=("",))
+        message = str(exc_info.value)
+        assert message == "value must be a non-empty string"
+        assert "predecessors" not in message
 
     def test_frozen(self):
         sg = _sub_goal()
@@ -203,15 +206,23 @@ class TestGoalPlan:
             _plan(version=-1)
 
     def test_circular_dependency_rejected(self):
-        sg1 = _sub_goal(sub_goal_id="sg-a", predecessors=("sg-b",))
-        sg2 = _sub_goal(sub_goal_id="sg-b", predecessors=("sg-a",))
-        with pytest.raises(ValueError, match="circular"):
+        sg1 = _sub_goal(sub_goal_id="sg-secret-a", predecessors=("sg-secret-b",))
+        sg2 = _sub_goal(sub_goal_id="sg-secret-b", predecessors=("sg-secret-a",))
+        with pytest.raises(ValueError) as exc_info:
             _plan(sub_goals=(sg1, sg2))
+        message = str(exc_info.value)
+        assert message == "circular sub-goal dependency detected"
+        assert "sg-secret-a" not in message
+        assert "sg-secret-b" not in message
 
     def test_unknown_predecessor_rejected(self):
-        sg = _sub_goal(sub_goal_id="sg-a", predecessors=("sg-missing",))
-        with pytest.raises(ValueError, match="unknown sub-goal"):
+        sg = _sub_goal(sub_goal_id="sg-secret-a", predecessors=("sg-secret-missing",))
+        with pytest.raises(ValueError) as exc_info:
             _plan(sub_goals=(sg,))
+        message = str(exc_info.value)
+        assert message == "sub-goal dependency references an unknown sub-goal"
+        assert "sg-secret-a" not in message
+        assert "sg-secret-missing" not in message
 
     def test_valid_dag(self):
         sg1 = _sub_goal(sub_goal_id="sg-a")

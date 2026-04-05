@@ -185,7 +185,9 @@ class TestMemoryMeshAndGraph:
         integration.remediation_from_case("rem-1", "t1", "case-1")
         mem = integration.attach_remediation_to_memory_mesh("scope-1")
         assert mem.memory_id  # non-empty
-        assert mem.title == "Remediation state: scope-1"
+        assert mem.title == "Remediation state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
         assert "remediation" in mem.tags
         assert "corrective" in mem.tags
         assert "preventive" in mem.tags
@@ -282,6 +284,8 @@ class TestGoldenPath:
 
         # Attach to memory mesh
         mem = integration.attach_remediation_to_memory_mesh("scope-golden")
+        assert mem.title == "Remediation state"
+        assert "scope-golden" not in mem.title
         assert "remediation" in mem.tags
         assert mem.content["total_remediations"] == 4
 
@@ -349,6 +353,8 @@ class TestEdgeCases:
     def test_memory_mesh_record_scope_ref_id(self, engines):
         _es, _re, _me, integration = engines
         mem = integration.attach_remediation_to_memory_mesh("my-scope")
+        assert mem.title == "Remediation state"
+        assert "my-scope" not in mem.title
         assert mem.scope_ref_id == "my-scope"
 
     def test_memory_mesh_record_confidence(self, engines):

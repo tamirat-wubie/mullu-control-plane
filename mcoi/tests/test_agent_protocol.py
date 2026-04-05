@@ -23,8 +23,9 @@ class TestAgentRegistry:
         reg = AgentRegistry()
         agent = AgentDescriptor(agent_id="a1", name="A1", capabilities=(AgentCapability.LLM_COMPLETION,))
         reg.register(agent)
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^agent already registered$") as exc_info:
             reg.register(agent)
+        assert "a1" not in str(exc_info.value)
 
     def test_find_capable(self):
         reg = AgentRegistry()
@@ -107,8 +108,9 @@ class TestTaskManager:
         mgr = self._setup()
         task = TaskSpec(task_id="t1", description="test", required_capability=AgentCapability.LLM_COMPLETION, payload={})
         mgr.submit(task)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^task already exists$") as exc_info:
             mgr.submit(task)
+        assert "t1" not in str(exc_info.value)
 
     def test_assign_valid(self):
         mgr = self._setup()
@@ -119,8 +121,10 @@ class TestTaskManager:
     def test_assign_wrong_capability(self):
         mgr = self._setup()
         mgr.submit(TaskSpec(task_id="t1", description="test", required_capability=AgentCapability.LLM_COMPLETION, payload={}))
-        with pytest.raises(ValueError, match="lacks capability"):
+        with pytest.raises(ValueError, match="^assigned agent lacks required capability$") as exc_info:
             mgr.assign("t1", "code-agent")
+        assert "code-agent" not in str(exc_info.value)
+        assert AgentCapability.LLM_COMPLETION.value not in str(exc_info.value)
 
     def test_auto_assign(self):
         mgr = self._setup()
@@ -145,6 +149,25 @@ class TestTaskManager:
         assert result.status == TaskStatus.COMPLETED
         assert result.output["answer"] == "42"
         assert result.result_hash
+
+    def test_assign_unknown_task_is_bounded(self):
+        mgr = self._setup()
+        with pytest.raises(ValueError, match="^task unavailable$") as exc_info:
+            mgr.assign("missing-task", "llm-agent")
+        assert "missing-task" not in str(exc_info.value)
+
+    def test_assign_unknown_agent_is_bounded(self):
+        mgr = self._setup()
+        mgr.submit(TaskSpec(task_id="t1", description="test", required_capability=AgentCapability.LLM_COMPLETION, payload={}))
+        with pytest.raises(ValueError, match="^agent unavailable$") as exc_info:
+            mgr.assign("t1", "ghost-agent")
+        assert "ghost-agent" not in str(exc_info.value)
+
+    def test_complete_unknown_task_is_bounded(self):
+        mgr = self._setup()
+        with pytest.raises(ValueError, match="^task unavailable$") as exc_info:
+            mgr.complete("missing-task", {"answer": "42"})
+        assert "missing-task" not in str(exc_info.value)
 
     def test_fail(self):
         mgr = self._setup()

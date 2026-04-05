@@ -131,7 +131,7 @@ class PolicySimulationEngine:
         candidate_rule_count: int = 0,
     ) -> PolicySimulationRequest:
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("duplicate request_id")
         now = _now_iso()
         req = PolicySimulationRequest(
             request_id=request_id, tenant_id=tenant_id, display_name=display_name,
@@ -144,13 +144,13 @@ class PolicySimulationEngine:
 
     def get_simulation(self, request_id: str) -> PolicySimulationRequest:
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         return self._requests[request_id]
 
     def start_simulation(self, request_id: str) -> PolicySimulationRequest:
         req = self.get_simulation(request_id)
         if req.status in _SIM_TERMINAL:
-            raise RuntimeCoreInvariantError(f"simulation {request_id} is in terminal state")
+            raise RuntimeCoreInvariantError("simulation is in terminal state")
         now = _now_iso()
         updated = PolicySimulationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, display_name=req.display_name,
@@ -164,7 +164,7 @@ class PolicySimulationEngine:
     def complete_simulation(self, request_id: str) -> PolicySimulationRequest:
         req = self.get_simulation(request_id)
         if req.status in _SIM_TERMINAL:
-            raise RuntimeCoreInvariantError(f"simulation {request_id} is in terminal state")
+            raise RuntimeCoreInvariantError("simulation is in terminal state")
         now = _now_iso()
         updated = PolicySimulationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, display_name=req.display_name,
@@ -178,7 +178,7 @@ class PolicySimulationEngine:
     def fail_simulation(self, request_id: str) -> PolicySimulationRequest:
         req = self.get_simulation(request_id)
         if req.status in _SIM_TERMINAL:
-            raise RuntimeCoreInvariantError(f"simulation {request_id} is in terminal state")
+            raise RuntimeCoreInvariantError("simulation is in terminal state")
         now = _now_iso()
         updated = PolicySimulationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, display_name=req.display_name,
@@ -192,7 +192,7 @@ class PolicySimulationEngine:
     def cancel_simulation(self, request_id: str) -> PolicySimulationRequest:
         req = self.get_simulation(request_id)
         if req.status in _SIM_TERMINAL:
-            raise RuntimeCoreInvariantError(f"simulation {request_id} is in terminal state")
+            raise RuntimeCoreInvariantError("simulation is in terminal state")
         now = _now_iso()
         updated = PolicySimulationRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, display_name=req.display_name,
@@ -220,9 +220,9 @@ class PolicySimulationEngine:
         impact_level: PolicyImpactLevel = PolicyImpactLevel.NONE,
     ) -> PolicySimulationScenario:
         if scenario_id in self._scenarios:
-            raise RuntimeCoreInvariantError(f"duplicate scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("duplicate scenario_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = _now_iso()
         # Auto-determine impact if outcomes differ
         if baseline_outcome != simulated_outcome and impact_level == PolicyImpactLevel.NONE:
@@ -239,7 +239,7 @@ class PolicySimulationEngine:
 
     def get_scenario(self, scenario_id: str) -> PolicySimulationScenario:
         if scenario_id not in self._scenarios:
-            raise RuntimeCoreInvariantError(f"unknown scenario_id: {scenario_id}")
+            raise RuntimeCoreInvariantError("unknown scenario_id")
         return self._scenarios[scenario_id]
 
     def scenarios_for_simulation(self, request_id: str) -> tuple[PolicySimulationScenario, ...]:
@@ -258,9 +258,9 @@ class PolicySimulationEngine:
         after_value: str,
     ) -> PolicyDiffRecord:
         if diff_id in self._diffs:
-            raise RuntimeCoreInvariantError(f"duplicate diff_id: {diff_id}")
+            raise RuntimeCoreInvariantError("duplicate diff_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = _now_iso()
         diff = PolicyDiffRecord(
             diff_id=diff_id, request_id=request_id, tenant_id=tenant_id,
@@ -287,9 +287,9 @@ class PolicySimulationEngine:
         blocked_actions: int = 0,
     ) -> RuntimeImpactRecord:
         if impact_id in self._impacts:
-            raise RuntimeCoreInvariantError(f"duplicate impact_id: {impact_id}")
+            raise RuntimeCoreInvariantError("duplicate impact_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = _now_iso()
         impact = RuntimeImpactRecord(
             impact_id=impact_id, request_id=request_id, tenant_id=tenant_id,
@@ -356,13 +356,18 @@ class PolicySimulationEngine:
         tenant_id: str,
     ) -> AdoptionRecommendation:
         if recommendation_id in self._recommendations:
-            raise RuntimeCoreInvariantError(f"duplicate recommendation_id: {recommendation_id}")
+            raise RuntimeCoreInvariantError("duplicate recommendation_id")
         results = self.results_for_simulation(request_id)
         if not results:
-            raise RuntimeCoreInvariantError(f"no results for simulation {request_id}")
+            raise RuntimeCoreInvariantError("no results for simulation")
         latest = results[-1]
         now = _now_iso()
-        reason = f"max impact: {latest.max_impact_level.value}, readiness: {latest.adoption_readiness.value}"
+        reason = {
+            AdoptionReadiness.BLOCKED: "max impact assessed; readiness blocked",
+            AdoptionReadiness.NOT_READY: "max impact assessed; readiness not_ready",
+            AdoptionReadiness.CAUTION: "max impact assessed; readiness caution",
+            AdoptionReadiness.READY: "max impact assessed; readiness ready",
+        }[latest.adoption_readiness]
         rec = AdoptionRecommendation(
             recommendation_id=recommendation_id, request_id=request_id,
             tenant_id=tenant_id, readiness=latest.adoption_readiness,
@@ -398,7 +403,7 @@ class PolicySimulationEngine:
 
     def sandbox_assessment(self, assessment_id: str, tenant_id: str) -> SandboxAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         now = _now_iso()
         sims = self.simulations_for_tenant(tenant_id)
         completed = [s for s in sims if s.status == SimulationStatus.COMPLETED]
@@ -436,7 +441,7 @@ class PolicySimulationEngine:
                     v = SandboxViolation(
                         violation_id=vid, tenant_id=tenant_id,
                         operation="stuck_running",
-                        reason=f"simulation {req.request_id} stuck in RUNNING state",
+                        reason="simulation stuck in RUNNING state",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -454,7 +459,7 @@ class PolicySimulationEngine:
                         v = SandboxViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="completed_no_result",
-                            reason=f"completed simulation {req.request_id} has no result",
+                            reason="completed simulation has no result",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -472,7 +477,7 @@ class PolicySimulationEngine:
                         v = SandboxViolation(
                             violation_id=vid, tenant_id=tenant_id,
                             operation="blocked_no_recommendation",
-                            reason=f"blocked result {result.result_id} has no recommendation",
+                            reason="blocked simulation result has no recommendation",
                             detected_at=now,
                         )
                         self._violations[vid] = v

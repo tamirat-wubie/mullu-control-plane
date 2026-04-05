@@ -132,7 +132,7 @@ class AgentOrchestrator:
 
     def create_plan(self, initiator_id: str, goal: str) -> OrchestrationPlan:
         if initiator_id not in self._capabilities:
-            raise ValueError(f"Unknown agent: {initiator_id}")
+            raise ValueError("initiator agent unavailable")
         plan = OrchestrationPlan(
             plan_id=uuid.uuid4().hex[:12],
             initiator_id=initiator_id,
@@ -146,15 +146,15 @@ class AgentOrchestrator:
     def add_proposal(self, plan_id: str, proposal: AgentProposal) -> None:
         plan = self._plans.get(plan_id)
         if not plan:
-            raise ValueError(f"Plan not found: {plan_id}")
+            raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.PLANNING:
-            raise ValueError(f"Plan not in planning phase: {plan.phase.value}")
+            raise ValueError("plan not accepting proposals")
         plan.proposals.append(proposal)
 
     def submit_for_voting(self, plan_id: str) -> None:
         plan = self._plans.get(plan_id)
         if not plan:
-            raise ValueError(f"Plan not found: {plan_id}")
+            raise ValueError("plan unavailable")
         if not plan.proposals:
             raise ValueError("Cannot vote on empty plan")
         plan.phase = OrchestrationPhase.VOTING
@@ -162,11 +162,11 @@ class AgentOrchestrator:
     def cast_vote(self, plan_id: str, agent_id: str, vote: Vote) -> None:
         plan = self._plans.get(plan_id)
         if not plan:
-            raise ValueError(f"Plan not found: {plan_id}")
+            raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.VOTING:
-            raise ValueError(f"Plan not in voting phase: {plan.phase.value}")
+            raise ValueError("plan not accepting votes")
         if agent_id not in self._capabilities:
-            raise ValueError(f"Unknown agent: {agent_id}")
+            raise ValueError("voting agent unavailable")
         plan.votes[agent_id] = vote
 
     def check_consensus(self, plan_id: str) -> bool:
@@ -179,9 +179,9 @@ class AgentOrchestrator:
                      executor: Callable[[AgentProposal], dict[str, Any]] | None = None) -> OrchestrationPlan:
         plan = self._plans.get(plan_id)
         if not plan:
-            raise ValueError(f"Plan not found: {plan_id}")
+            raise ValueError("plan unavailable")
         if plan.phase != OrchestrationPhase.VOTING:
-            raise ValueError(f"Plan not in voting phase: {plan.phase.value}")
+            raise ValueError("plan not ready for execution")
         if not plan.has_quorum(self.agent_count):
             plan.phase = OrchestrationPhase.FAILED
             return plan
@@ -209,15 +209,15 @@ class AgentOrchestrator:
                 required_capabilities: tuple[str, ...] = (),
                 payload: dict[str, Any] | None = None) -> HandoffResult:
         if from_agent not in self._capabilities:
-            return HandoffResult(from_agent, to_agent, False, error=f"Unknown source: {from_agent}")
+            return HandoffResult(from_agent, to_agent, False, error="source agent unavailable")
         if to_agent not in self._capabilities:
-            return HandoffResult(from_agent, to_agent, False, error=f"Unknown target: {to_agent}")
+            return HandoffResult(from_agent, to_agent, False, error="target agent unavailable")
 
         target_caps = set(self._capabilities[to_agent])
         missing = set(required_capabilities) - target_caps
         if missing:
             return HandoffResult(from_agent, to_agent, False,
-                                 error=f"Missing capabilities: {sorted(missing)}")
+                                 error="target agent lacks required capabilities")
 
         result = HandoffResult(from_agent, to_agent, True, payload=payload or {})
         self._handoffs.append(result)

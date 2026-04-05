@@ -39,7 +39,7 @@ class PaidDeploymentPath:
             if m.step == step:
                 m.complete()
                 return m
-        raise ValueError(f"No milestone with step {step}")
+        raise ValueError("no milestone with that step")
 
     @property
     def milestones(self) -> tuple[DeploymentMilestone, ...]:

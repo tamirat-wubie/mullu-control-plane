@@ -53,6 +53,14 @@ class TestDemoCatalog:
         with pytest.raises(ValueError):
             catalog.generate_demo("nonexistent")
 
+    def test_unknown_pack_error_is_bounded(self):
+        catalog = DemoCatalog()
+        with pytest.raises(ValueError, match="unknown pack") as excinfo:
+            catalog.generate_demo("nonexistent")
+        assert str(excinfo.value) == "unknown pack"
+        assert "nonexistent" not in str(excinfo.value)
+        assert "regulated_ops" not in str(excinfo.value)
+
 class TestPipelineOps:
     def test_per_pack_funnel(self):
         pipeline = PackPipeline()
@@ -79,6 +87,8 @@ class TestPipelineOps:
         scores = score_expansion("c1", "regulated_ops", satisfaction=9.0, months_active=6)
         assert len(scores) == 2
         assert scores[0].score > 0.5
+        assert scores[0].reason == "expansion opportunity indicators present"
+        assert "9.0" not in scores[0].reason
 
     def test_expansion_paths(self):
         assert len(EXPANSION_PATHS) == 4
@@ -134,6 +144,8 @@ class TestEndToEndGTM:
         # 4. Expansion scoring
         scores = score_expansion("reg-c1", "regulated_ops", 9.0, 6)
         assert scores[0].recommended_next in ("financial_control", "enterprise_service")
+        assert scores[0].reason == "expansion opportunity indicators present"
+        assert "months active" not in scores[0].reason
 
         # 5. Delivery profiles all exist
         assert all(d in DEPLOYMENT_PROFILES for d in ["regulated_ops", "enterprise_service", "financial_control", "factory_quality"])

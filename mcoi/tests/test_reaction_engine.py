@@ -95,8 +95,10 @@ class TestRuleManagement:
     def test_duplicate_rule_raises(self) -> None:
         eng = _engine()
         eng.register_rule(_rule())
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
             eng.register_rule(_rule())
+        assert str(excinfo.value) == "rule already exists"
+        assert "r1" not in str(excinfo.value)
 
     def test_unregister(self) -> None:
         eng = _engine()
@@ -107,8 +109,10 @@ class TestRuleManagement:
 
     def test_unregister_missing_raises(self) -> None:
         eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
             eng.unregister_rule("nope")
+        assert str(excinfo.value) == "rule not found"
+        assert "nope" not in str(excinfo.value)
 
     def test_list_rules_sorted_by_priority(self) -> None:
         eng = _engine()
@@ -346,7 +350,8 @@ class TestGating:
         decision = eng.react(_event())
         assert decision.rules_executed == 0
         assert decision.rules_rejected == 1
-        assert "gate callback error" in decision.executions[0].gate_result.reason
+        assert decision.executions[0].gate_result.reason == "gate callback error (RuntimeError)"
+        assert "gate crashed" not in decision.executions[0].gate_result.reason
         assert decision.executions[0].gate_result.confidence == 0.0
 
 
@@ -529,13 +534,16 @@ class TestUnknownOperatorRaises:
 
     def test_unknown_operator_rejected_at_contract_level(self) -> None:
         """ReactionCondition contract itself rejects unknown operators."""
-        with pytest.raises(ValueError, match="operator must be one of"):
+        with pytest.raises(ValueError, match="^operator has unsupported value$") as exc_info:
             ReactionCondition(
                 condition_id="c-1",
                 field_path="status",
                 operator="MATCHES",
                 expected_value="ok",
             )
+        message = str(exc_info.value)
+        assert "MATCHES" not in message
+        assert "eq" not in message
 
     def test_known_operators_do_not_raise(self) -> None:
         for i, op in enumerate(("eq", "neq", "gt", "gte", "lt", "lte", "contains", "in", "exists")):

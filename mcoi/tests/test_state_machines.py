@@ -185,7 +185,7 @@ class TestTerminalInvariant:
             assert len(REACTION_PIPELINE_MACHINE.legal_actions(ts)) == 0
 
     def test_spec_rejects_terminal_with_outgoing(self) -> None:
-        with pytest.raises(ValueError, match="terminal state.*outgoing"):
+        with pytest.raises(ValueError, match="^terminal state cannot have outgoing transitions$") as exc_info:
             StateMachineSpec(
                 machine_id="bad",
                 name="Bad Machine",
@@ -198,6 +198,60 @@ class TestTerminalInvariant:
                     TransitionRule(from_state="b", to_state="a", action="illegal"),
                 ),
             )
+        assert "b" not in str(exc_info.value)
+        assert "1" not in str(exc_info.value)
+
+
+class TestBoundedStateMachineContracts:
+    def test_state_declaration_errors_are_bounded(self) -> None:
+        with pytest.raises(ValueError, match="^initial state must be declared in states$") as exc_info:
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "b"),
+                initial_state="secret-state",
+                terminal_states=(),
+                transitions=(),
+            )
+        assert "secret-state" not in str(exc_info.value)
+
+        with pytest.raises(ValueError, match="^terminal state must be declared in states$") as exc_info:
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "b"),
+                initial_state="a",
+                terminal_states=("secret-terminal",),
+                transitions=(),
+            )
+        assert "secret-terminal" not in str(exc_info.value)
+
+    def test_transition_state_reference_errors_are_bounded(self) -> None:
+        with pytest.raises(ValueError, match="^transition source state must be declared in states$") as exc_info:
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "b"),
+                initial_state="a",
+                terminal_states=(),
+                transitions=(TransitionRule(from_state="secret-source", to_state="b", action="go"),),
+            )
+        assert "secret-source" not in str(exc_info.value)
+
+        with pytest.raises(ValueError, match="^transition target state must be declared in states$") as exc_info:
+            StateMachineSpec(
+                machine_id="bad",
+                name="Bad Machine",
+                version="1.0.0",
+                states=("a", "b"),
+                initial_state="a",
+                terminal_states=(),
+                transitions=(TransitionRule(from_state="a", to_state="secret-target", action="go"),),
+            )
+        assert "secret-target" not in str(exc_info.value)
 
 
 # =====================================================================

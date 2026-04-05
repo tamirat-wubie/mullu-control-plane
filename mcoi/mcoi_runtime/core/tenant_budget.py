@@ -126,7 +126,7 @@ class TenantBudgetManager:
 
         policy = self.get_policy(tenant_id)
         if not policy.auto_create:
-            raise ValueError(f"no budget for tenant {tenant_id} and auto_create is disabled")
+            raise ValueError("no budget available and auto_create is disabled")
 
         budget = LLMBudget(
             budget_id=f"tenant-{tenant_id}",
@@ -150,10 +150,10 @@ class TenantBudgetManager:
         Returns the updated budget. Raises if budget is exhausted or cost is invalid.
         """
         if cost < 0.0:
-            raise ValueError(f"cost must be non-negative, got {cost}")
+            raise ValueError("cost must be non-negative")
         budget = self.ensure_budget(tenant_id)
         if budget.exhausted:
-            raise ValueError(f"budget exhausted for tenant {tenant_id}")
+            raise ValueError("budget exhausted")
 
         updated = LLMBudget(
             budget_id=budget.budget_id,

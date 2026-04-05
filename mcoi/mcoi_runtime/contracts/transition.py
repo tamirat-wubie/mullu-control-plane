@@ -29,6 +29,6 @@ class TransitionRecord(ContractRecord):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         for field_name in ("from_category", "to_category"):
             if not isinstance(getattr(self, field_name), StateCategory):
-                raise ValueError(f"{field_name} must be a StateCategory value")
+                raise ValueError("state category must be a StateCategory value")
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
         object.__setattr__(self, "extensions", freeze_value(self.extensions))

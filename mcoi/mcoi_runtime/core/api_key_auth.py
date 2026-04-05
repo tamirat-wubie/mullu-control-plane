@@ -112,14 +112,13 @@ class APIKeyManager:
 
         if not api_key.is_valid:
             self._total_auth_failure += 1
-            reason = "revoked" if api_key.revoked else "expired"
-            return AuthResult(authenticated=False, key_id=api_key.key_id, error=f"Key {reason}")
+            return AuthResult(authenticated=False, key_id=api_key.key_id, error="inactive API key")
 
         if required_scope and not api_key.has_scope(required_scope):
             self._total_auth_failure += 1
             return AuthResult(
                 authenticated=False, key_id=api_key.key_id,
-                error=f"Missing scope: {required_scope}",
+                error="missing required scope",
             )
 
         api_key.last_used_at = time.time()

@@ -54,7 +54,7 @@ class PromptTemplateEngine:
     def register(self, template: PromptTemplate) -> None:
         """Register a prompt template."""
         if template.template_id in self._templates:
-            raise ValueError(f"template already registered: {template.template_id}")
+            raise ValueError("template already registered")
         self._templates[template.template_id] = template
 
     def get(self, template_id: str) -> PromptTemplate | None:
@@ -68,12 +68,12 @@ class PromptTemplateEngine:
         """
         template = self._templates.get(template_id)
         if template is None:
-            raise ValueError(f"unknown template: {template_id}")
+            raise ValueError("template unavailable")
 
         # Check required variables
         missing = [v for v in template.variables if v not in variables]
         if missing:
-            raise ValueError(f"missing variables: {', '.join(missing)}")
+            raise ValueError("missing required template variables")
 
         # Substitute variables
         prompt = template.template

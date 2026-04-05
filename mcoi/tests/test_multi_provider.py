@@ -87,7 +87,8 @@ class TestGroqBackend:
         backend = GroqBackend()
         result = backend.call(_params("test"))
         # Without httpx or API key, returns stub response
-        assert result.finished or "no API key" in result.error or "groq" in result.content
+        assert result.finished or result.error == "provider credentials unavailable" or "groq" in result.content
+        assert "groq" not in result.error.lower()
 
     def test_call_count(self):
         backend = GroqBackend()
@@ -134,6 +135,13 @@ class TestGeminiBackend:
         backend = GeminiBackend()
         result = backend.call(_params())
         assert result.provider == LLMProvider.GEMINI
+
+    def test_call_without_key_returns_bounded_error(self):
+        backend = GeminiBackend()
+        result = backend.call(_params())
+        if not result.finished:
+            assert result.error == "provider credentials unavailable"
+            assert "gemini" not in result.error.lower()
 
 
 class TestDeepSeekBackend:
@@ -233,8 +241,10 @@ class TestProviderRegistry:
         assert backend.provider == LLMProvider.GROQ
 
     def test_create_unknown_raises(self):
-        with pytest.raises(ValueError, match="unknown provider"):
+        with pytest.raises(ValueError, match="^unsupported provider$") as exc_info:
             create_provider("nonexistent")
+        assert "nonexistent" not in str(exc_info.value)
+        assert "groq" not in str(exc_info.value).lower()
 
     def test_available_providers_empty(self):
         # No API keys set in test environment

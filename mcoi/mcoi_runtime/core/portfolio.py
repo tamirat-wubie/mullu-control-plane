@@ -596,7 +596,7 @@ class PortfolioEngine:
             domain_pack_id=preempted_res.domain_pack_id,
             scheduled=False,
             deferred=True,
-            deferred_reason=f"preempted by {preempting_campaign_id}",
+            deferred_reason="preempted by higher-priority campaign",
             created_at=preempted_res.created_at,
         )
 

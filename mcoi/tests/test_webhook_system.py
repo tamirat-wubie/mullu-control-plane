@@ -23,6 +23,15 @@ class TestWebhookManager:
         with pytest.raises(ValueError):
             mgr.subscribe(sub)
 
+    def test_duplicate_subscribe_error_is_bounded(self):
+        mgr = WebhookManager(clock=FIXED_CLOCK)
+        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="http://x", events=("task.completed",))
+        mgr.subscribe(sub)
+        with pytest.raises(ValueError, match="subscription already exists") as excinfo:
+            mgr.subscribe(sub)
+        assert str(excinfo.value) == "subscription already exists"
+        assert "sub-1" not in str(excinfo.value)
+
     def test_unsubscribe(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
         sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="http://x", events=("task.completed",))

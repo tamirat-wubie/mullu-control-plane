@@ -402,7 +402,7 @@ class RiskComplianceIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Risk/compliance state: {scope_ref_id}",
+            title="Risk/compliance state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("risk", "compliance", "controls"),

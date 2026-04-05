@@ -317,6 +317,17 @@ class TestOptionUtility:
         with pytest.raises(TypeError):
             ou.factor_contributions["b"] = 0.5  # type: ignore[index]
 
+    def test_non_finite_factor_contribution_error_is_bounded(self) -> None:
+        with pytest.raises(ValueError, match="^factor contribution must be finite$") as exc_info:
+            OptionUtility(
+                option_id="opt-5",
+                raw_score=0.5,
+                weighted_score=0.5,
+                factor_contributions={"sensitive_factor": float("inf")},
+                rank=1,
+            )
+        assert "sensitive_factor" not in str(exc_info.value)
+
 
 # ---------------------------------------------------------------------------
 # DecisionComparison
@@ -551,7 +562,7 @@ class TestAuditHardening:
     """Tests added from audit pass — edge cases and invariant guards."""
 
     def test_nan_in_factor_contributions_raises(self) -> None:
-        with pytest.raises(ValueError, match="factor_contributions.*finite"):
+        with pytest.raises(ValueError, match="^factor contribution must be finite$") as exc_info:
             OptionUtility(
                 option_id="opt-nan",
                 raw_score=0.5,
@@ -559,9 +570,10 @@ class TestAuditHardening:
                 factor_contributions={"risk": float("nan")},
                 rank=1,
             )
+        assert "risk" not in str(exc_info.value)
 
     def test_inf_in_factor_contributions_raises(self) -> None:
-        with pytest.raises(ValueError, match="factor_contributions.*finite"):
+        with pytest.raises(ValueError, match="^factor contribution must be finite$") as exc_info:
             OptionUtility(
                 option_id="opt-inf",
                 raw_score=0.5,
@@ -569,6 +581,7 @@ class TestAuditHardening:
                 factor_contributions={"risk": float("inf")},
                 rank=1,
             )
+        assert "risk" not in str(exc_info.value)
 
     def test_best_option_id_not_in_utilities_raises(self) -> None:
         with pytest.raises(ValueError, match="best_option_id"):

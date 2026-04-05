@@ -269,6 +269,7 @@ def bootstrap_info():
         "registered_providers": deps.llm_bootstrap_result.registered_providers,
         "skipped_model_registrations": deps.llm_bootstrap_result.skipped_model_registrations,
         "model_registration_failures": deps.llm_bootstrap_result.model_registration_failures,
+        "field_encryption": deps.field_encryption_bootstrap,
         "config": {
             "default_model": deps.llm_bootstrap_result.config.default_model,
             "default_budget_max_cost": deps.llm_bootstrap_result.config.default_budget_max_cost,

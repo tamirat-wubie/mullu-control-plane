@@ -14,12 +14,18 @@ class TestCustomerHealthSignal:
         assert s.signal_type == "adoption_weak"
 
     def test_invalid_signal_type(self):
-        with pytest.raises(ValueError, match="Invalid signal_type"):
+        with pytest.raises(ValueError) as exc_info:
             CustomerHealthSignal("acct1", "bad_type", "low", "x")
+        message = str(exc_info.value)
+        assert message == "invalid signal_type"
+        assert "bad_type" not in message
 
     def test_invalid_severity(self):
-        with pytest.raises(ValueError, match="Invalid severity"):
+        with pytest.raises(ValueError) as exc_info:
             CustomerHealthSignal("acct1", "adoption_weak", "extreme", "x")
+        message = str(exc_info.value)
+        assert message == "invalid severity"
+        assert "extreme" not in message
 
 
 class TestCSAutomationEngine:

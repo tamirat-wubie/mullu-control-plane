@@ -140,7 +140,7 @@ class BillingRuntimeEngine:
     ) -> BillingAccount:
         """Register a billing account."""
         if account_id in self._accounts:
-            raise RuntimeCoreInvariantError(f"Duplicate account_id: {account_id}")
+            raise RuntimeCoreInvariantError("Duplicate account_id")
         now = self._now()
         acct = BillingAccount(
             account_id=account_id,
@@ -160,7 +160,7 @@ class BillingRuntimeEngine:
         """Get a billing account by ID."""
         a = self._accounts.get(account_id)
         if a is None:
-            raise RuntimeCoreInvariantError(f"Unknown account_id: {account_id}")
+            raise RuntimeCoreInvariantError("Unknown account_id")
         return a
 
     def suspend_account(self, account_id: str) -> BillingAccount:
@@ -221,7 +221,7 @@ class BillingRuntimeEngine:
     ) -> InvoiceRecord:
         """Create an invoice for a billing account."""
         if invoice_id in self._invoices:
-            raise RuntimeCoreInvariantError(f"Duplicate invoice_id: {invoice_id}")
+            raise RuntimeCoreInvariantError("Duplicate invoice_id")
         acct = self.get_account(account_id)
         now = self._now()
         if not due_at:
@@ -248,7 +248,7 @@ class BillingRuntimeEngine:
         """Get an invoice by ID."""
         i = self._invoices.get(invoice_id)
         if i is None:
-            raise RuntimeCoreInvariantError(f"Unknown invoice_id: {invoice_id}")
+            raise RuntimeCoreInvariantError("Unknown invoice_id")
         return i
 
     def issue_invoice(self, invoice_id: str) -> InvoiceRecord:
@@ -280,9 +280,7 @@ class BillingRuntimeEngine:
         """Mark an invoice as paid."""
         old = self.get_invoice(invoice_id)
         if old.status in _INVOICE_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot pay invoice in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("cannot pay finalized invoice")
         updated = InvoiceRecord(
             invoice_id=old.invoice_id,
             account_id=old.account_id,
@@ -304,9 +302,7 @@ class BillingRuntimeEngine:
         """Void an invoice."""
         old = self.get_invoice(invoice_id)
         if old.status in _INVOICE_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot void invoice in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("cannot void finalized invoice")
         updated = InvoiceRecord(
             invoice_id=old.invoice_id,
             account_id=old.account_id,
@@ -345,7 +341,7 @@ class BillingRuntimeEngine:
     ) -> ChargeRecord:
         """Add a charge to an invoice."""
         if charge_id in self._charges:
-            raise RuntimeCoreInvariantError(f"Duplicate charge_id: {charge_id}")
+            raise RuntimeCoreInvariantError("Duplicate charge_id")
         inv = self.get_invoice(invoice_id)
         if inv.status in _INVOICE_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot add charge to terminal invoice")
@@ -386,9 +382,9 @@ class BillingRuntimeEngine:
     ) -> CreditRecord:
         """Add a credit to an account from a breach."""
         if credit_id in self._credits:
-            raise RuntimeCoreInvariantError(f"Duplicate credit_id: {credit_id}")
+            raise RuntimeCoreInvariantError("Duplicate credit_id")
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"Unknown account_id: {account_id}")
+            raise RuntimeCoreInvariantError("Unknown account_id")
         now = self._now()
         credit = CreditRecord(
             credit_id=credit_id,
@@ -425,9 +421,9 @@ class BillingRuntimeEngine:
     ) -> PenaltyRecord:
         """Add a penalty to an account from a breach."""
         if penalty_id in self._penalties:
-            raise RuntimeCoreInvariantError(f"Duplicate penalty_id: {penalty_id}")
+            raise RuntimeCoreInvariantError("Duplicate penalty_id")
         if account_id not in self._accounts:
-            raise RuntimeCoreInvariantError(f"Unknown account_id: {account_id}")
+            raise RuntimeCoreInvariantError("Unknown account_id")
         now = self._now()
         penalty = PenaltyRecord(
             penalty_id=penalty_id,
@@ -462,7 +458,7 @@ class BillingRuntimeEngine:
     ) -> DisputeRecord:
         """Open a dispute against an invoice."""
         if dispute_id in self._disputes:
-            raise RuntimeCoreInvariantError(f"Duplicate dispute_id: {dispute_id}")
+            raise RuntimeCoreInvariantError("Duplicate dispute_id")
         inv = self.get_invoice(invoice_id)
         now = self._now()
         dispute = DisputeRecord(
@@ -506,11 +502,9 @@ class BillingRuntimeEngine:
         """Resolve a dispute."""
         old = self._disputes.get(dispute_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown dispute_id: {dispute_id}")
+            raise RuntimeCoreInvariantError("Unknown dispute_id")
         if old.status in _DISPUTE_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot resolve dispute in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("dispute already resolved")
         now = self._now()
         status = DisputeStatus.RESOLVED_ACCEPTED if accepted else DisputeStatus.RESOLVED_REJECTED
         updated = DisputeRecord(
@@ -534,7 +528,7 @@ class BillingRuntimeEngine:
             if credit_id not in self._credits:
                 self.add_credit(
                     credit_id, old.account_id, f"dispute-{dispute_id}",
-                    old.amount, reason=f"Dispute {dispute_id} accepted",
+                    old.amount, reason="accepted dispute credit",
                 )
 
         _emit(self._events, "dispute_resolved", {
@@ -602,7 +596,7 @@ class BillingRuntimeEngine:
                                 account_id=inv.account_id,
                                 tenant_id=inv.tenant_id,
                                 operation="overdue_invoice",
-                                reason=f"Invoice {inv.invoice_id} overdue since {inv.due_at}",
+                                reason="invoice overdue",
                                 detected_at=now,
                             )
                             self._violations[vid] = v
@@ -639,7 +633,7 @@ class BillingRuntimeEngine:
                             account_id=acct.account_id,
                             tenant_id=acct.tenant_id,
                             operation="delinquent_account",
-                            reason=f"Account {acct.account_id} has {overdue_count} overdue invoices",
+                            reason="account delinquent",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -662,7 +656,7 @@ class BillingRuntimeEngine:
     def revenue_snapshot(self, snapshot_id: str) -> RevenueSnapshot:
         """Capture a point-in-time revenue and billing snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._now()
         snap = RevenueSnapshot(
             snapshot_id=snapshot_id,

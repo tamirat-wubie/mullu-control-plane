@@ -548,3 +548,97 @@ class TestGoldenScenario:
         snap2 = eng.assemble_snapshot("s-lifecycle-2")
         deltas = eng.compute_deltas(snap1, snap2)
         assert any(d.kind == DeltaKind.ENTITY_ADDED and d.target_id == "svc-cache" for d in deltas)
+
+
+class TestBoundedWorldStateContracts:
+    def test_derived_resolution_and_expectation_errors_are_bounded(self) -> None:
+        eng = _engine()
+        eng.add_entity(_entity("entity-secret"))
+        eng.record_contradiction(_contradiction("contradiction-secret", "entity-secret"))
+        eng.add_derived_fact(DerivedFact(
+            fact_id="fact-secret",
+            entity_id="entity-secret",
+            attribute="health_score",
+            derived_value=0.85,
+            source_entity_ids=("entity-secret",),
+            derivation_rule="avg_confidence",
+            confidence=0.85,
+            derived_at=_CLOCK,
+        ))
+        eng.record_resolution(_resolution("resolution-secret", "contradiction-secret"))
+        eng.add_expected_state(_expected_state("expectation-secret", "entity-secret"))
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_contradiction:
+            eng.record_contradiction(_contradiction("contradiction-secret", "entity-secret"))
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_fact:
+            eng.add_derived_fact(_derived_fact("fact-secret", "entity-secret"))
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_resolution:
+            eng.record_resolution(_resolution("resolution-secret", "contradiction-secret"))
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_expectation:
+            eng.add_expected_state(_expected_state("expectation-secret", "entity-secret"))
+
+        assert str(duplicate_contradiction.value) == "contradiction already recorded"
+        assert str(duplicate_fact.value) == "derived fact already exists"
+        assert str(duplicate_resolution.value) == "resolution already exists"
+        assert str(duplicate_expectation.value) == "expected state already exists"
+        assert "contradiction-secret" not in str(duplicate_contradiction.value)
+        assert "fact-secret" not in str(duplicate_fact.value)
+        assert "resolution-secret" not in str(duplicate_resolution.value)
+        assert "expectation-secret" not in str(duplicate_expectation.value)
+
+    def test_missing_reference_errors_are_bounded(self) -> None:
+        eng = _engine()
+        with pytest.raises(RuntimeCoreInvariantError) as missing_source:
+            eng.add_derived_fact(_derived_fact("fact-secret", "entity-secret"))
+        with pytest.raises(RuntimeCoreInvariantError) as missing_contradiction:
+            eng.record_resolution(_resolution("resolution-secret", "contradiction-secret"))
+        with pytest.raises(RuntimeCoreInvariantError) as missing_entity:
+            eng.compute_confidence_envelope("entity-secret", "status")
+
+        assert str(missing_source.value) == "source entity not found"
+        assert str(missing_contradiction.value) == "contradiction not found"
+        assert str(missing_entity.value) == "entity not found"
+        assert "entity-secret" not in str(missing_source.value)
+        assert "contradiction-secret" not in str(missing_contradiction.value)
+        assert "entity-secret" not in str(missing_entity.value)
+
+    def test_delta_descriptions_are_bounded(self) -> None:
+        eng1 = _engine()
+        eng1.add_entity(_entity("entity-secret"))
+        snap1 = eng1.assemble_snapshot("snap-1")
+
+        eng2 = _engine()
+        eng2.add_entity(StateEntity(
+            entity_id="entity-secret",
+            entity_type="service",
+            attributes={"status": "changed"},
+            evidence_ids=("ev-1",),
+            confidence=0.8,
+            created_at=_CLOCK,
+        ))
+        eng2.add_entity(_entity("entity-added-secret"))
+        eng2.add_relation(_relation("relation-added-secret", "entity-secret", "entity-added-secret"))
+        eng2.add_derived_fact(DerivedFact(
+            fact_id="fact-added-secret",
+            entity_id="entity-secret",
+            attribute="health_score",
+            derived_value=0.85,
+            source_entity_ids=("entity-secret",),
+            derivation_rule="avg_confidence",
+            confidence=0.85,
+            derived_at=_CLOCK,
+        ))
+        snap2 = eng2.assemble_snapshot("snap-2")
+
+        deltas = eng1.compute_deltas(snap1, snap2)
+        descriptions = {delta.kind: delta.description for delta in deltas}
+
+        assert descriptions[DeltaKind.ENTITY_ADDED] == "entity added"
+        assert descriptions[DeltaKind.ENTITY_MODIFIED] == "entity modified"
+        assert descriptions[DeltaKind.RELATION_ADDED] == "relation added"
+        assert descriptions[DeltaKind.FACT_DERIVED] == "fact derived"
+
+        for delta in deltas:
+            assert "entity-added-secret" not in delta.description
+            assert "relation-added-secret" not in delta.description
+            assert "fact-added-secret" not in delta.description

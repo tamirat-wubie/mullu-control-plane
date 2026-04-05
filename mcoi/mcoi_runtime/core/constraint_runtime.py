@@ -139,7 +139,7 @@ class ConstraintRuntimeEngine:
     ) -> ConstraintDefinition:
         """Add a constraint definition. Duplicate constraint_id raises."""
         if constraint_id in self._constraints:
-            raise RuntimeCoreInvariantError(f"Duplicate constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Duplicate constraint_id")
         now = self._now()
         constraint = ConstraintDefinition(
             constraint_id=constraint_id,
@@ -159,7 +159,7 @@ class ConstraintRuntimeEngine:
     def get_constraint(self, constraint_id: str) -> ConstraintDefinition:
         c = self._constraints.get(constraint_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Unknown constraint_id")
         return c
 
     def constraints_for_tenant(self, tenant_id: str) -> tuple[ConstraintDefinition, ...]:
@@ -179,7 +179,7 @@ class ConstraintRuntimeEngine:
     ) -> SolverProblem:
         """Create a new solver problem in PENDING status."""
         if problem_id in self._problems:
-            raise RuntimeCoreInvariantError(f"Duplicate problem_id: {problem_id}")
+            raise RuntimeCoreInvariantError("Duplicate problem_id")
         now = self._now()
         problem = SolverProblem(
             problem_id=problem_id,
@@ -199,7 +199,7 @@ class ConstraintRuntimeEngine:
     def _replace_problem(self, problem_id: str, **kwargs: Any) -> SolverProblem:
         old = self._problems.get(problem_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown problem_id: {problem_id}")
+            raise RuntimeCoreInvariantError("Unknown problem_id")
         fields = {
             "problem_id": old.problem_id,
             "tenant_id": old.tenant_id,
@@ -219,7 +219,7 @@ class ConstraintRuntimeEngine:
         """Transition problem from PENDING to RUNNING."""
         old = self._problems.get(problem_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown problem_id: {problem_id}")
+            raise RuntimeCoreInvariantError("Unknown problem_id")
         if old.status != SolveStatus.PENDING:
             raise RuntimeCoreInvariantError(
                 f"Cannot start problem in {old.status.value} state (must be PENDING)"
@@ -241,10 +241,10 @@ class ConstraintRuntimeEngine:
     ) -> SolverSolution:
         """Record a solution and mark the problem as SOLVED."""
         if solution_id in self._solutions:
-            raise RuntimeCoreInvariantError(f"Duplicate solution_id: {solution_id}")
+            raise RuntimeCoreInvariantError("Duplicate solution_id")
         problem = self._problems.get(problem_ref)
         if problem is None:
-            raise RuntimeCoreInvariantError(f"Unknown problem_ref: {problem_ref}")
+            raise RuntimeCoreInvariantError("Unknown problem_ref")
         now = self._now()
         solution = SolverSolution(
             solution_id=solution_id,
@@ -267,7 +267,7 @@ class ConstraintRuntimeEngine:
         """Mark a problem as FAILED."""
         old = self._problems.get(problem_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown problem_id: {problem_id}")
+            raise RuntimeCoreInvariantError("Unknown problem_id")
         updated = self._replace_problem(problem_id, status=SolveStatus.FAILED)
         _emit(self._events, "problem_failed", {
             "problem_id": problem_id,
@@ -278,7 +278,7 @@ class ConstraintRuntimeEngine:
         """Mark a problem as TIMEOUT."""
         old = self._problems.get(problem_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown problem_id: {problem_id}")
+            raise RuntimeCoreInvariantError("Unknown problem_id")
         updated = self._replace_problem(problem_id, status=SolveStatus.TIMEOUT)
         _emit(self._events, "problem_timeout", {
             "problem_id": problem_id,
@@ -298,7 +298,7 @@ class ConstraintRuntimeEngine:
     ) -> GraphNode:
         """Add a graph node. Duplicate node_id raises."""
         if node_id in self._nodes:
-            raise RuntimeCoreInvariantError(f"Duplicate node_id: {node_id}")
+            raise RuntimeCoreInvariantError("Duplicate node_id")
         now = self._now()
         node = GraphNode(
             node_id=node_id,
@@ -323,11 +323,11 @@ class ConstraintRuntimeEngine:
     ) -> GraphEdge:
         """Add a graph edge. Both nodes must exist. Duplicate edge_id raises."""
         if edge_id in self._edges:
-            raise RuntimeCoreInvariantError(f"Duplicate edge_id: {edge_id}")
+            raise RuntimeCoreInvariantError("Duplicate edge_id")
         if from_node not in self._nodes:
-            raise RuntimeCoreInvariantError(f"from_node not found: {from_node}")
+            raise RuntimeCoreInvariantError("from_node not found")
         if to_node not in self._nodes:
-            raise RuntimeCoreInvariantError(f"to_node not found: {to_node}")
+            raise RuntimeCoreInvariantError("to_node not found")
         now = self._now()
         edge = GraphEdge(
             edge_id=edge_id,
@@ -472,7 +472,7 @@ class ConstraintRuntimeEngine:
     ) -> ScheduleSlot:
         """Create a schedule slot. Duplicate slot_id raises."""
         if slot_id in self._slots:
-            raise RuntimeCoreInvariantError(f"Duplicate slot_id: {slot_id}")
+            raise RuntimeCoreInvariantError("Duplicate slot_id")
         now = self._now()
         slot = ScheduleSlot(
             slot_id=slot_id,
@@ -504,7 +504,7 @@ class ConstraintRuntimeEngine:
     ) -> AssignmentRecord:
         """Assign a resource to a task. Duplicate assignment_id raises."""
         if assignment_id in self._assignments:
-            raise RuntimeCoreInvariantError(f"Duplicate assignment_id: {assignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assignment_id")
         now = self._now()
         assignment = AssignmentRecord(
             assignment_id=assignment_id,
@@ -535,7 +535,7 @@ class ConstraintRuntimeEngine:
     ) -> DependencyChain:
         """Add a dependency chain link. Duplicate chain_id raises."""
         if chain_id in self._dependencies:
-            raise RuntimeCoreInvariantError(f"Duplicate chain_id: {chain_id}")
+            raise RuntimeCoreInvariantError("Duplicate chain_id")
         now = self._now()
         dep = DependencyChain(
             chain_id=chain_id,

@@ -1580,3 +1580,31 @@ class TestEdgeCases:
         assert rpt.overall_disposition == ComplianceDisposition.NOT_ASSESSED
         assert rpt.total_controls == 0
         assert rpt.compliance_pct == 0.0
+
+
+class TestBoundedContracts:
+    def test_duplicate_risk_error_is_bounded(self, env):
+        _, eng = env
+        _register_risk(eng, risk_id="risk-secret", scope_ref_id="scope-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            _register_risk(eng, risk_id="risk-secret", scope_ref_id="scope-secret")
+
+        message = str(excinfo.value)
+        assert message == "Duplicate risk_id"
+        assert "risk-secret" not in message
+        assert "scope-secret" not in message
+
+    def test_exception_state_error_is_bounded(self, env):
+        _, eng = env
+        _register_control(eng, control_id="control-secret")
+        eng.request_exception("exception-secret", "control-secret")
+        eng.approve_exception("exception-secret", approved_by="approver-secret")
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            eng.deny_exception("exception-secret")
+
+        message = str(excinfo.value)
+        assert message == "Cannot deny exception in current status"
+        assert "APPROVED" not in message
+        assert "exception-secret" not in message

@@ -281,7 +281,7 @@ class AssetRuntimeIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Asset state: {scope_ref_id}",
+            title="Asset state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("asset", "configuration", "inventory"),

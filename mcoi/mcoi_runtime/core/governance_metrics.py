@@ -83,15 +83,15 @@ class GovernanceMetricsEngine:
 
     def _validate_counter(self, name: str) -> None:
         if self._strict and name not in self.KNOWN_COUNTERS:
-            raise ValueError(f"unknown counter: {name}")
+            raise ValueError("unknown counter")
 
     def _validate_gauge(self, name: str) -> None:
         if self._strict and name not in self.KNOWN_GAUGES:
-            raise ValueError(f"unknown gauge: {name}")
+            raise ValueError("unknown gauge")
 
     def _validate_histogram(self, name: str) -> None:
         if self._strict and name not in self.KNOWN_HISTOGRAMS:
-            raise ValueError(f"unknown histogram: {name}")
+            raise ValueError("unknown histogram")
 
     # ═══ Counters ═══
 

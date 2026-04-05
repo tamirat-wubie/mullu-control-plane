@@ -49,13 +49,13 @@ class CapabilityEngine:
     def register(self, descriptor: CapabilityDescriptor) -> None:
         """Register a capability."""
         if descriptor.capability_id in self._capabilities:
-            raise ValueError(f"capability already registered: {descriptor.capability_id}")
+            raise ValueError("capability already registered")
         self._capabilities[descriptor.capability_id] = descriptor
 
     def assign_to_agent(self, agent_id: str, capability_id: str) -> None:
         """Assign a capability to an agent."""
         if capability_id not in self._capabilities:
-            raise ValueError(f"unknown capability: {capability_id}")
+            raise ValueError("unknown capability")
         if agent_id not in self._agent_capabilities:
             self._agent_capabilities[agent_id] = set()
         self._agent_capabilities[agent_id].add(capability_id)

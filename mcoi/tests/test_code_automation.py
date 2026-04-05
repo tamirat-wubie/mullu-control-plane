@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from unittest.mock import patch
 
 from mcoi_runtime.contracts.code import (
     BuildResult,
@@ -181,8 +182,10 @@ class TestLocalCodeAdapter:
         assert (ws / "new_dir" / "deep" / "file.py").exists()
 
     def test_invalid_root_rejected(self, tmp_path: Path):
-        with pytest.raises(ValueError, match="not a directory"):
-            LocalCodeAdapter(root_path=str(tmp_path / "nonexistent"), clock=lambda: T0)
+        missing_root = tmp_path / "nonexistent"
+        with pytest.raises(ValueError, match="^workspace root is not a directory$") as exc_info:
+            LocalCodeAdapter(root_path=str(missing_root), clock=lambda: T0)
+        assert str(missing_root) not in str(exc_info.value)
 
 
 # --- Patch application ---
@@ -228,6 +231,26 @@ class TestPatchApplication:
 
 
 # --- Code engine ---
+
+
+    def test_patch_failure_is_bounded(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        diff = (
+            "--- a/main.py\n"
+            "+++ b/main.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def hello():\n"
+            "+def hello_world():\n"
+            "     return 'world'\n"
+        )
+
+        with patch("pathlib.Path.write_text", side_effect=OSError("secret patch failure")):
+            result = adapter.apply_patch("p-1", "main.py", diff)
+
+        assert result.status is PatchStatus.MALFORMED
+        assert result.error_message == "patch error (OSError)"
+        assert "secret patch failure" not in (result.error_message or "")
 
 
 class TestCodeEngine:

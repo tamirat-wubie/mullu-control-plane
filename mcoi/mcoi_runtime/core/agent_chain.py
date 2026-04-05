@@ -128,7 +128,7 @@ class AgentChainEngine:
                         cr = AgentChainResult(
                             chain_id=chain_id, steps=tuple(step_results),
                             final_output="", total_cost=total_cost,
-                            succeeded=False, error=f"step {step.step_id} failed: {error}",
+                            succeeded=False, error="chain execution failed",
                         )
                         self._history.append(cr)
                         return cr
@@ -147,7 +147,7 @@ class AgentChainEngine:
                     cr = AgentChainResult(
                         chain_id=chain_id, steps=tuple(step_results),
                         final_output="", total_cost=total_cost,
-                        succeeded=False, error=f"step {step.step_id} failed: {error}",
+                        succeeded=False, error="chain execution failed",
                     )
                     self._history.append(cr)
                     return cr

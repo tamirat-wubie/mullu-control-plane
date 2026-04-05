@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from mcoi_runtime.contracts.coordination import (
@@ -132,8 +134,9 @@ class TestDeleteState:
 
     def test_delete_missing_state_raises(self, tmp_path):
         store = CoordinationStore(tmp_path)
-        with pytest.raises(PersistenceError, match="not found"):
+        with pytest.raises(PersistenceError, match=r"^coordination state not found$") as excinfo:
             store.delete_state("nonexistent")
+        assert "nonexistent" not in str(excinfo.value)
 
 
 class TestLoadMissingStateRaises:
@@ -141,8 +144,17 @@ class TestLoadMissingStateRaises:
 
     def test_load_missing_state_raises(self, tmp_path):
         store = CoordinationStore(tmp_path)
-        with pytest.raises(PersistenceError, match="not found"):
+        with pytest.raises(PersistenceError, match=r"^coordination state not found$") as excinfo:
             store.load_state("nonexistent", DelegationRequest)
+        assert "nonexistent" not in str(excinfo.value)
+
+    def test_load_state_bounds_read_errors(self, tmp_path):
+        store = CoordinationStore(tmp_path)
+        store.save_state("del-req-001", _make_delegation_request())
+
+        with patch("pathlib.Path.read_text", side_effect=OSError("secret path detail")):
+            with pytest.raises(PersistenceError, match=r"^coordination state read failed \(OSError\)$"):
+                store.load_state("del-req-001", DelegationRequest)
 
 
 class TestPathTraversalPrevented:
@@ -155,8 +167,15 @@ class TestPathTraversalPrevented:
     )
     def test_path_traversal_prevented_save(self, tmp_path, bad_id):
         store = CoordinationStore(tmp_path)
-        with pytest.raises(PathTraversalError):
+        with pytest.raises(PathTraversalError) as excinfo:
             store.save_state(bad_id, _make_delegation_request())
+        expected = (
+            "identifier contains null byte"
+            if "\0" in bad_id
+            else "identifier contains forbidden characters"
+        )
+        assert str(excinfo.value) == expected
+        assert bad_id not in str(excinfo.value)
 
     @pytest.mark.parametrize(
         "bad_id",

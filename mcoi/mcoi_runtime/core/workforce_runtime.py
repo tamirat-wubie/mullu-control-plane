@@ -126,7 +126,7 @@ class WorkforceRuntimeEngine:
         status: WorkerStatus = WorkerStatus.ACTIVE,
     ) -> WorkerRecord:
         if worker_id in self._workers:
-            raise RuntimeCoreInvariantError(f"worker already registered: {worker_id}")
+            raise RuntimeCoreInvariantError("worker already registered")
         now = _now_iso()
         worker = WorkerRecord(
             worker_id=worker_id,
@@ -145,15 +145,15 @@ class WorkforceRuntimeEngine:
 
     def get_worker(self, worker_id: str) -> WorkerRecord:
         if worker_id not in self._workers:
-            raise RuntimeCoreInvariantError(f"unknown worker: {worker_id}")
+            raise RuntimeCoreInvariantError("worker unavailable")
         return self._workers[worker_id]
 
     def update_worker_status(self, worker_id: str, status: WorkerStatus) -> WorkerRecord:
         if worker_id not in self._workers:
-            raise RuntimeCoreInvariantError(f"unknown worker: {worker_id}")
+            raise RuntimeCoreInvariantError("worker unavailable")
         old = self._workers[worker_id]
         if old.status in _WORKER_TERMINAL:
-            raise RuntimeCoreInvariantError(f"worker is in terminal state: {old.status.value}")
+            raise RuntimeCoreInvariantError("worker state change denied")
         updated = WorkerRecord(
             worker_id=old.worker_id,
             tenant_id=old.tenant_id,
@@ -198,7 +198,7 @@ class WorkforceRuntimeEngine:
         role_ref: str,
     ) -> RoleCapacityRecord:
         if capacity_id in self._role_capacities:
-            raise RuntimeCoreInvariantError(f"role capacity already registered: {capacity_id}")
+            raise RuntimeCoreInvariantError("role capacity already registered")
         now = _now_iso()
         # Compute from current workers
         role_workers = [w for w in self._workers.values() if w.tenant_id == tenant_id and w.role_ref == role_ref]
@@ -226,7 +226,7 @@ class WorkforceRuntimeEngine:
 
     def get_role_capacity(self, capacity_id: str) -> RoleCapacityRecord:
         if capacity_id not in self._role_capacities:
-            raise RuntimeCoreInvariantError(f"unknown role capacity: {capacity_id}")
+            raise RuntimeCoreInvariantError("unknown role capacity")
         return self._role_capacities[capacity_id]
 
     def role_capacities_for_tenant(self, tenant_id: str) -> tuple[RoleCapacityRecord, ...]:
@@ -243,7 +243,7 @@ class WorkforceRuntimeEngine:
         team_ref: str,
     ) -> TeamCapacityRecord:
         if capacity_id in self._team_capacities:
-            raise RuntimeCoreInvariantError(f"team capacity already registered: {capacity_id}")
+            raise RuntimeCoreInvariantError("team capacity already registered")
         now = _now_iso()
         team_workers = [w for w in self._workers.values() if w.tenant_id == tenant_id and w.team_ref == team_ref]
         total_members = len(team_workers)
@@ -270,7 +270,7 @@ class WorkforceRuntimeEngine:
 
     def get_team_capacity(self, capacity_id: str) -> TeamCapacityRecord:
         if capacity_id not in self._team_capacities:
-            raise RuntimeCoreInvariantError(f"unknown team capacity: {capacity_id}")
+            raise RuntimeCoreInvariantError("unknown team capacity")
         return self._team_capacities[capacity_id]
 
     def team_capacities_for_tenant(self, tenant_id: str) -> tuple[TeamCapacityRecord, ...]:
@@ -290,7 +290,7 @@ class WorkforceRuntimeEngine:
         source_type: str = "manual",
     ) -> AssignmentRequest:
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"assignment request already exists: {request_id}")
+            raise RuntimeCoreInvariantError("assignment request already exists")
         now = _now_iso()
         request = AssignmentRequest(
             request_id=request_id,
@@ -307,7 +307,7 @@ class WorkforceRuntimeEngine:
 
     def get_request(self, request_id: str) -> AssignmentRequest:
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown assignment request: {request_id}")
+            raise RuntimeCoreInvariantError("assignment request unavailable")
         return self._requests[request_id]
 
     def requests_for_tenant(self, tenant_id: str) -> tuple[AssignmentRequest, ...]:
@@ -326,20 +326,20 @@ class WorkforceRuntimeEngine:
         reason: str = "",
     ) -> AssignmentDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"assignment decision already exists: {decision_id}")
+            raise RuntimeCoreInvariantError("assignment decision already exists")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown assignment request: {request_id}")
+            raise RuntimeCoreInvariantError("assignment request unavailable")
         now = _now_iso()
 
         # If assigning, validate worker
         if disposition == AssignmentDisposition.ASSIGNED:
             if worker_id not in self._workers:
-                raise RuntimeCoreInvariantError(f"unknown worker: {worker_id}")
+                raise RuntimeCoreInvariantError("worker unavailable")
             worker = self._workers[worker_id]
             if worker.status in _WORKER_UNAVAILABLE:
-                raise RuntimeCoreInvariantError(f"worker is unavailable: {worker.status.value}")
+                raise RuntimeCoreInvariantError("worker unavailable")
             if worker.current_assignments >= worker.max_assignments:
-                raise RuntimeCoreInvariantError(f"worker is at max assignments: {worker.current_assignments}/{worker.max_assignments}")
+                raise RuntimeCoreInvariantError("worker at capacity")
             # Increment current_assignments
             updated = WorkerRecord(
                 worker_id=worker.worker_id,
@@ -375,9 +375,9 @@ class WorkforceRuntimeEngine:
     ) -> AssignmentDecision:
         """Auto-assign to the lowest-load available worker for the request's role."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"assignment decision already exists: {decision_id}")
+            raise RuntimeCoreInvariantError("assignment decision already exists")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown assignment request: {request_id}")
+            raise RuntimeCoreInvariantError("assignment request unavailable")
         req = self._requests[request_id]
         available = self.available_workers_for_role(req.tenant_id, req.role_ref)
         if not available:
@@ -456,7 +456,7 @@ class WorkforceRuntimeEngine:
 
     def load_snapshot(self, snapshot_id: str, tenant_id: str) -> LoadSnapshot:
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"snapshot already exists: {snapshot_id}")
+            raise RuntimeCoreInvariantError("snapshot already exists")
         now = _now_iso()
         tenant_workers = [w for w in self._workers.values() if w.tenant_id == tenant_id]
         total = len(tenant_workers)
@@ -532,7 +532,7 @@ class WorkforceRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="overloaded_worker",
-                        reason=f"worker {w.worker_id} at {w.current_assignments}/{w.max_assignments} assignments",
+                        reason="worker at assignment capacity",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -548,7 +548,7 @@ class WorkforceRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="unassigned_request",
-                            reason=f"request {r.request_id} has no decision",
+                            reason="request has no decision",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -568,7 +568,7 @@ class WorkforceRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="empty_role",
-                        reason=f"role {role_ref} has requests but no workers",
+                        reason="role has requests but no workers",
                         detected_at=now,
                     )
                     self._violations[vid] = v

@@ -33,6 +33,11 @@ from mcoi_runtime.contracts.reaction import (
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 
 
+def _bounded_gate_callback_error(exc: Exception) -> str:
+    """Return a stable gate callback failure without raw backend detail."""
+    return f"gate callback error ({type(exc).__name__})"
+
+
 # ---------------------------------------------------------------------------
 # Gate callback protocol
 # ---------------------------------------------------------------------------
@@ -108,14 +113,14 @@ class ReactionEngine:
     def register_rule(self, rule: ReactionRule) -> ReactionRule:
         """Register a reaction rule. Duplicate rule_ids are rejected."""
         if rule.rule_id in self._rules:
-            raise RuntimeCoreInvariantError(f"rule already exists: {rule.rule_id}")
+            raise RuntimeCoreInvariantError("rule already exists")
         self._rules[rule.rule_id] = rule
         return rule
 
     def unregister_rule(self, rule_id: str) -> None:
         ensure_non_empty_text("rule_id", rule_id)
         if rule_id not in self._rules:
-            raise RuntimeCoreInvariantError(f"rule not found: {rule_id}")
+            raise RuntimeCoreInvariantError("rule not found")
         del self._rules[rule_id]
 
     def get_rule(self, rule_id: str) -> ReactionRule | None:
@@ -383,7 +388,7 @@ class ReactionEngine:
                     utility_acceptable=False,
                     meta_reasoning_clear=False,
                     confidence=0.0,
-                    reason=f"gate callback error: {type(exc).__name__}: {exc}",
+                    reason=_bounded_gate_callback_error(exc),
                     gated_at=now,
                 )
 

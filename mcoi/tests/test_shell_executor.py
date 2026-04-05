@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import subprocess
 
+import pytest
+
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.contracts.execution import ExecutionOutcome
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
 def test_shell_executor_runs_explicit_argv_without_shell_mode() -> None:
@@ -94,3 +97,17 @@ def test_shell_executor_sanitizes_spawn_failure() -> None:
     assert result.actual_effects[0].details["code"] == "spawn_failed"
     assert result.actual_effects[0].details["message"] == "shell command not found (FileNotFoundError)"
     assert "secret executable path" not in result.actual_effects[0].details["message"]
+
+
+def test_execution_request_bounds_invalid_argv_items() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="^argv items must be non-empty strings$") as exc_info:
+        ExecutionRequest(
+            execution_id="execution-5",
+            goal_id="goal-5",
+            argv=("python", " ", "print('ok')"),
+        )
+
+    message = str(exc_info.value)
+    assert message == "argv items must be non-empty strings"
+    assert "[1]" not in message
+    assert "argv items" in message

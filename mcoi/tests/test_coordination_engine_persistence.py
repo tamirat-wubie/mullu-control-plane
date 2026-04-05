@@ -139,7 +139,8 @@ def test_expired_lease_rejected(tmp_path: Path) -> None:
     )
     outcome = engine2.restore_checkpoint("cp-exp")
     assert outcome.status == RestoreStatus.EXPIRED
-    assert "expired" in outcome.reason
+    assert outcome.reason == "checkpoint lease expired"
+    assert _T_EXPIRED not in outcome.reason
     assert engine2.delegation_count == 0
 
 
@@ -157,8 +158,9 @@ def test_policy_pack_drift_needs_review(tmp_path: Path) -> None:
     )
     outcome = engine2.restore_checkpoint("cp-drift", current_policy_pack_id="pack-v2")
     assert outcome.status == RestoreStatus.NEEDS_REVIEW
-    assert "pack-v1" in outcome.reason
-    assert "pack-v2" in outcome.reason
+    assert outcome.reason == "checkpoint policy pack drift"
+    assert "pack-v1" not in outcome.reason
+    assert "pack-v2" not in outcome.reason
     assert engine2.delegation_count == 0
 
 
@@ -179,7 +181,8 @@ def test_max_retries_aborts(tmp_path: Path) -> None:
     )
     outcome = engine2.restore_checkpoint("cp-retry", current_policy_pack_id="pack-v1")
     assert outcome.status == RestoreStatus.ABORTED
-    assert "retry" in outcome.reason.lower()
+    assert outcome.reason == "checkpoint retry limit exceeded"
+    assert "3" not in outcome.reason
 
 
 # --- No store configured ---

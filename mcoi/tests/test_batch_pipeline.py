@@ -78,8 +78,9 @@ class TestBatchPipeline:
         ])
         assert result.succeeded is False
         assert result.steps[0].error == "pipeline execution error (RuntimeError)"
-        assert result.error == "step s1 failed: pipeline execution error (RuntimeError)"
+        assert result.error == "pipeline execution failed"
         assert "LLM down" not in result.error
+        assert "s1" not in result.error
 
     def test_fail_fast(self):
         call_count = 0
@@ -100,8 +101,9 @@ class TestBatchPipeline:
         assert result.succeeded is False
         assert len(result.steps) == 2  # s3 never ran
         assert result.steps[1].error == "pipeline execution error (RuntimeError)"
-        assert result.error == "step s2 failed: pipeline execution error (RuntimeError)"
+        assert result.error == "pipeline execution failed"
         assert "step 2 fails" not in result.error
+        assert "s2" not in result.error
 
     def test_returned_failure_error_redacted(self):
         def failed_result(prompt, **kw):
@@ -122,8 +124,9 @@ class TestBatchPipeline:
         ])
         assert result.succeeded is False
         assert result.steps[0].error == "pipeline step failed"
-        assert result.error == "step s1 failed: pipeline step failed"
+        assert result.error == "pipeline execution failed"
         assert "provider secret detail" not in result.error
+        assert "s1" not in result.error
 
     def test_history(self):
         pipe = _pipeline()

@@ -96,10 +96,10 @@ class ExecutiveControlIntegration:
             try:
                 self._control.issue_directive(
                     directive_id,
-                    f"KPI degraded for {objective_id}",
+                    "KPI degraded",
                     DirectiveType.ESCALATE,
                     objective_id=objective_id,
-                    reason=f"gap {health['gap_pct']:.1f}% exceeds tolerance {health['tolerance_pct']:.1f}%",
+                    reason="objective gap exceeds tolerance",
                     parameters={"gap_pct": health["gap_pct"], "current_value": current_value},
                 )
             except RuntimeCoreInvariantError:
@@ -404,7 +404,7 @@ class ExecutiveControlIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Control tower state: {scope_ref_id}",
+            title="Control tower state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("executive", "control", "strategic"),

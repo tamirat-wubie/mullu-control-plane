@@ -74,10 +74,28 @@ def test_memory_store_rejects_malformed_working_payload(tmp_path: Path) -> None:
     store = MemoryStore(tmp_path / "memory")
     path = tmp_path / "memory" / "working_memory.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"max_entries": 2, "entries": [{"tier": "episodic"}]}), encoding="utf-8")
+    path.write_text(
+        json.dumps(
+            {
+                "max_entries": 2,
+                "entries": [
+                    {
+                        "entry_id": "w-1",
+                        "tier": "episodic",
+                        "category": "observation",
+                        "content": {"entry_id": "w-1"},
+                        "source_ids": ["src-w-1"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
-    with pytest.raises(CorruptedDataError, match="invalid memory entry|tier mismatch"):
+    with pytest.raises(CorruptedDataError, match=r"^memory entry tier mismatch$") as excinfo:
         store.load_working()
+    assert "episodic" not in str(excinfo.value)
+    assert "working" not in str(excinfo.value)
 
 
 def test_memory_store_rejects_non_object_payload(tmp_path: Path) -> None:
@@ -86,5 +104,26 @@ def test_memory_store_rejects_non_object_payload(tmp_path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("[]", encoding="utf-8")
 
-    with pytest.raises(CorruptedDataError, match="JSON object"):
+    with pytest.raises(
+        CorruptedDataError,
+        match=r"^memory store payload must be a JSON object$",
+    ):
         store.load_episodic()
+
+
+def test_memory_store_bounds_file_parse_errors(tmp_path: Path) -> None:
+    store = MemoryStore(tmp_path / "memory")
+    path = tmp_path / "memory" / "episodic_memory.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("not json", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match=r"^malformed memory store file \(JSONDecodeError\)$"):
+        store.load_episodic()
+
+
+def test_memory_store_bounds_missing_file_error(tmp_path: Path) -> None:
+    store = MemoryStore(tmp_path / "memory")
+
+    with pytest.raises(CorruptedDataError, match=r"^memory store file not found$") as excinfo:
+        store.load_working()
+    assert "working" not in str(excinfo.value)

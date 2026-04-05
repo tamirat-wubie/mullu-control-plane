@@ -141,7 +141,7 @@ class ConstitutionalGovernanceEngine:
         target_action: str = "all",
     ) -> ConstitutionRule:
         if rule_id in self._rules:
-            raise RuntimeCoreInvariantError(f"duplicate rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("duplicate rule_id")
         now = self._now()
         rule = ConstitutionRule(
             rule_id=rule_id,
@@ -160,13 +160,13 @@ class ConstitutionalGovernanceEngine:
 
     def get_rule(self, rule_id: str) -> ConstitutionRule:
         if rule_id not in self._rules:
-            raise RuntimeCoreInvariantError(f"unknown rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("unknown rule_id")
         return self._rules[rule_id]
 
     def suspend_rule(self, rule_id: str) -> ConstitutionRule:
         rule = self.get_rule(rule_id)
         if rule.status in _RULE_TERMINAL:
-            raise RuntimeCoreInvariantError(f"rule {rule_id} is in terminal state: {rule.status.value}")
+            raise RuntimeCoreInvariantError("rule is in terminal state")
         now = self._now()
         updated = ConstitutionRule(
             rule_id=rule.rule_id,
@@ -186,7 +186,7 @@ class ConstitutionalGovernanceEngine:
     def retire_rule(self, rule_id: str) -> ConstitutionRule:
         rule = self.get_rule(rule_id)
         if rule.status == ConstitutionStatus.RETIRED:
-            raise RuntimeCoreInvariantError(f"rule {rule_id} already retired")
+            raise RuntimeCoreInvariantError("rule already retired")
         now = self._now()
         updated = ConstitutionRule(
             rule_id=rule.rule_id,
@@ -218,7 +218,7 @@ class ConstitutionalGovernanceEngine:
         display_name: str,
     ) -> ConstitutionBundle:
         if bundle_id in self._bundles:
-            raise RuntimeCoreInvariantError(f"duplicate bundle_id: {bundle_id}")
+            raise RuntimeCoreInvariantError("duplicate bundle_id")
         now = self._now()
         bundle = ConstitutionBundle(
             bundle_id=bundle_id,
@@ -235,11 +235,11 @@ class ConstitutionalGovernanceEngine:
 
     def add_rule_to_bundle(self, bundle_id: str, rule_id: str) -> ConstitutionBundle:
         if bundle_id not in self._bundles:
-            raise RuntimeCoreInvariantError(f"unknown bundle_id: {bundle_id}")
+            raise RuntimeCoreInvariantError("unknown bundle_id")
         if rule_id not in self._rules:
-            raise RuntimeCoreInvariantError(f"unknown rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("unknown rule_id")
         if rule_id in self._bundle_rules[bundle_id]:
-            raise RuntimeCoreInvariantError(f"rule {rule_id} already in bundle {bundle_id}")
+            raise RuntimeCoreInvariantError("rule already in bundle")
         self._bundle_rules[bundle_id].append(rule_id)
         old = self._bundles[bundle_id]
         updated = ConstitutionBundle(
@@ -256,7 +256,7 @@ class ConstitutionalGovernanceEngine:
 
     def get_bundle(self, bundle_id: str) -> ConstitutionBundle:
         if bundle_id not in self._bundles:
-            raise RuntimeCoreInvariantError(f"unknown bundle_id: {bundle_id}")
+            raise RuntimeCoreInvariantError("unknown bundle_id")
         return self._bundles[bundle_id]
 
     def bundles_for_tenant(self, tenant_id: str) -> tuple[ConstitutionBundle, ...]:
@@ -272,7 +272,7 @@ class ConstitutionalGovernanceEngine:
         target_action: str,
     ) -> ConstitutionDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("duplicate decision_id")
         now = self._now()
         em = self._emergency_modes.get(tenant_id, EmergencyMode.NORMAL)
 
@@ -354,7 +354,7 @@ class ConstitutionalGovernanceEngine:
 
     def get_decision(self, decision_id: str) -> ConstitutionDecision:
         if decision_id not in self._decisions:
-            raise RuntimeCoreInvariantError(f"unknown decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("unknown decision_id")
         return self._decisions[decision_id]
 
     def decisions_for_tenant(self, tenant_id: str) -> tuple[ConstitutionDecision, ...]:
@@ -370,7 +370,7 @@ class ConstitutionalGovernanceEngine:
         rule_id_b: str,
     ) -> PrecedenceResolution:
         if resolution_id in self._resolutions:
-            raise RuntimeCoreInvariantError(f"duplicate resolution_id: {resolution_id}")
+            raise RuntimeCoreInvariantError("duplicate resolution_id")
         rule_a = self.get_rule(rule_id_a)
         rule_b = self.get_rule(rule_id_b)
 
@@ -410,7 +410,7 @@ class ConstitutionalGovernanceEngine:
         reason: str = "executive override",
     ) -> GlobalOverrideRecord:
         if override_id in self._overrides:
-            raise RuntimeCoreInvariantError(f"duplicate override_id: {override_id}")
+            raise RuntimeCoreInvariantError("duplicate override_id")
         rule = self.get_rule(rule_id)
         now = self._now()
 
@@ -422,7 +422,7 @@ class ConstitutionalGovernanceEngine:
                 tenant_id=tenant_id,
                 authority_ref=authority_ref,
                 disposition=OverrideDisposition.DENIED,
-                reason=f"hard_deny rule cannot be overridden: {reason}",
+                reason="hard_deny rule cannot be overridden",
                 created_at=now,
             )
             self._overrides[override_id] = override
@@ -432,7 +432,7 @@ class ConstitutionalGovernanceEngine:
                 violation_id=vid,
                 tenant_id=tenant_id,
                 operation="override_hard_deny",
-                reason=f"attempted override of hard_deny rule {rule_id}",
+                reason="attempted override of hard_deny rule",
                 detected_at=now,
             )
             self._violations[vid] = v
@@ -468,7 +468,7 @@ class ConstitutionalGovernanceEngine:
 
     def get_override(self, override_id: str) -> GlobalOverrideRecord:
         if override_id not in self._overrides:
-            raise RuntimeCoreInvariantError(f"unknown override_id: {override_id}")
+            raise RuntimeCoreInvariantError("unknown override_id")
         return self._overrides[override_id]
 
     def overrides_for_tenant(self, tenant_id: str) -> tuple[GlobalOverrideRecord, ...]:
@@ -485,7 +485,7 @@ class ConstitutionalGovernanceEngine:
         reason: str = "emergency declared",
     ) -> EmergencyGovernanceRecord:
         if emergency_id in self._emergency_records:
-            raise RuntimeCoreInvariantError(f"duplicate emergency_id: {emergency_id}")
+            raise RuntimeCoreInvariantError("duplicate emergency_id")
         if mode == EmergencyMode.NORMAL:
             raise RuntimeCoreInvariantError("cannot enter NORMAL mode — use exit_emergency_mode")
         prev = self._emergency_modes.get(tenant_id, EmergencyMode.NORMAL)
@@ -512,10 +512,10 @@ class ConstitutionalGovernanceEngine:
         reason: str = "emergency resolved",
     ) -> EmergencyGovernanceRecord:
         if emergency_id in self._emergency_records:
-            raise RuntimeCoreInvariantError(f"duplicate emergency_id: {emergency_id}")
+            raise RuntimeCoreInvariantError("duplicate emergency_id")
         prev = self._emergency_modes.get(tenant_id, EmergencyMode.NORMAL)
         if prev == EmergencyMode.NORMAL:
-            raise RuntimeCoreInvariantError(f"tenant {tenant_id} is not in emergency mode")
+            raise RuntimeCoreInvariantError("tenant is not in emergency mode")
         now = self._now()
         record = EmergencyGovernanceRecord(
             emergency_id=emergency_id,
@@ -568,7 +568,7 @@ class ConstitutionalGovernanceEngine:
 
     def constitution_assessment(self, assessment_id: str, tenant_id: str) -> ConstitutionAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         now = self._now()
         rules = self.rules_for_tenant(tenant_id)
         active = self.active_rules_for_tenant(tenant_id)
@@ -620,7 +620,7 @@ class ConstitutionalGovernanceEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="suspended_no_override",
-                            reason=f"rule {rule.rule_id} suspended without override record",
+                            reason="rule suspended without override record",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -637,7 +637,7 @@ class ConstitutionalGovernanceEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="empty_bundle",
-                        reason=f"active bundle {bundle.bundle_id} has no rules",
+                        reason="active bundle has no rules",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -654,7 +654,7 @@ class ConstitutionalGovernanceEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="policy_denied",
-                        reason=f"action denied by rule {dec.matched_rule_id}",
+                        reason="action denied by rule",
                         detected_at=now,
                     )
                     self._violations[vid] = v

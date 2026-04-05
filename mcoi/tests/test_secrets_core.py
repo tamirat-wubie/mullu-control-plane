@@ -80,14 +80,16 @@ class TestSecretStoreRegisterResolve:
     def test_duplicate_registration_rejected(self) -> None:
         store = SecretStore(clock=_make_clock())
         store.register_secret(_make_descriptor(), "val")
-        with pytest.raises(ValueError, match="already registered"):
+        with pytest.raises(ValueError, match="^secret already registered$") as exc_info:
             store.register_secret(_make_descriptor(), "val2")
+        assert "sec-1" not in str(exc_info.value)
 
     def test_resolve_unknown_raises(self) -> None:
         store = SecretStore(clock=_make_clock())
         ref = SecretReference(secret_id="nope", scope_id="scope-gh")
-        with pytest.raises(ValueError, match="unknown"):
+        with pytest.raises(ValueError, match="^secret reference unavailable$") as exc_info:
             store.resolve(ref)
+        assert "nope" not in str(exc_info.value)
 
     def test_scope_mismatch_raises(self) -> None:
         store = SecretStore(clock=_make_clock())
@@ -143,13 +145,23 @@ class TestSecretStoreRevocation:
         store = SecretStore(clock=_make_clock())
         ref = store.register_secret(_make_descriptor(), "val")
         store.revoke("sec-1")
-        with pytest.raises(ValueError, match="revoked"):
+        with pytest.raises(ValueError, match="^secret unavailable$") as exc_info:
             store.resolve(ref)
+        assert "sec-1" not in str(exc_info.value)
 
     def test_revoke_unknown_raises(self) -> None:
         store = SecretStore(clock=_make_clock())
-        with pytest.raises(ValueError, match="unknown"):
+        with pytest.raises(ValueError, match="^secret reference unavailable$") as exc_info:
             store.revoke("nope")
+        assert "nope" not in str(exc_info.value)
+
+    def test_missing_value_raises_bounded_error(self) -> None:
+        store = SecretStore(clock=_make_clock())
+        ref = store.register_secret(_make_descriptor(), "val")
+        store._values.pop("sec-1")
+        with pytest.raises(ValueError, match="^secret unavailable$") as exc_info:
+            store.resolve(ref)
+        assert "sec-1" not in str(exc_info.value)
 
 
 class TestSecretStoreListExpiring:

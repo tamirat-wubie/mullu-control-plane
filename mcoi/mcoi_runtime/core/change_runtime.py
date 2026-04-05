@@ -112,7 +112,7 @@ class ChangeRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ChangeRequest:
         if change_id in self._changes:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' already exists")
+            raise RuntimeCoreInvariantError("change already exists")
         now = _now_iso()
         change = ChangeRequest(
             change_id=change_id,
@@ -145,7 +145,7 @@ class ChangeRuntimeEngine:
 
     def get_change_status(self, change_id: str) -> ChangeStatus:
         if change_id not in self._status:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' not found")
+            raise RuntimeCoreInvariantError("change not found")
         return self._status[change_id]
 
     # ------------------------------------------------------------------
@@ -163,9 +163,9 @@ class ChangeRuntimeEngine:
         estimated_duration_seconds: float = 0.0,
     ) -> ChangePlan:
         if change_id not in self._changes:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' not found")
+            raise RuntimeCoreInvariantError("change not found")
         if plan_id in self._plans:
-            raise RuntimeCoreInvariantError(f"plan '{plan_id}' already exists")
+            raise RuntimeCoreInvariantError("plan already exists")
         now = _now_iso()
         change = self._changes[change_id]
         mode = rollout_mode or change.rollout_mode
@@ -224,7 +224,7 @@ class ChangeRuntimeEngine:
         reason: str = "",
     ) -> ChangeApprovalBinding:
         if change_id not in self._changes:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' not found")
+            raise RuntimeCoreInvariantError("change not found")
         now = _now_iso()
         binding = ChangeApprovalBinding(
             approval_id=approval_id,
@@ -272,7 +272,7 @@ class ChangeRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ChangeStep:
         if change_id not in self._changes:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' not found")
+            raise RuntimeCoreInvariantError("change not found")
         change = self._changes[change_id]
 
         # Must be approved if approval required
@@ -280,7 +280,7 @@ class ChangeRuntimeEngine:
             ChangeStatus.APPROVED, ChangeStatus.IN_PROGRESS,
         }:
             raise RuntimeCoreInvariantError(
-                f"change '{change_id}' requires approval before execution (status: {self._status[change_id].value})"
+                "change requires approval before execution from current status"
             )
 
         # Transition to IN_PROGRESS on first step
@@ -290,7 +290,7 @@ class ChangeRuntimeEngine:
             self._transition(change_id, ChangeStatus.IN_PROGRESS)
 
         if step_id not in self._steps:
-            raise RuntimeCoreInvariantError(f"step '{step_id}' not found")
+            raise RuntimeCoreInvariantError("step not found")
 
         now = _now_iso()
         old_step = self._steps[step_id]
@@ -448,7 +448,7 @@ class ChangeRuntimeEngine:
             self._status[change_id] = ChangeStatus.COMPLETED
         else:
             raise RuntimeCoreInvariantError(
-                f"cannot complete change '{change_id}' from status {current.value}"
+                "cannot complete change from current status"
             )
 
         exec_record = self._executions.get(change_id)
@@ -630,13 +630,13 @@ class ChangeRuntimeEngine:
     def _require_change(self, change_id: str) -> ChangeRequest:
         change = self._changes.get(change_id)
         if change is None:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' not found")
+            raise RuntimeCoreInvariantError("change not found")
         return change
 
     def _transition(self, change_id: str, new_status: ChangeStatus) -> None:
         current = self._status.get(change_id)
         if current is None:
-            raise RuntimeCoreInvariantError(f"change '{change_id}' not found")
+            raise RuntimeCoreInvariantError("change not found")
         valid = _VALID_TRANSITIONS.get(current, set())
         if new_status not in valid:
             raise RuntimeCoreInvariantError(

@@ -132,7 +132,7 @@ class AssetRuntimeEngine:
     ) -> AssetRecord:
         """Register an asset."""
         if asset_id in self._assets:
-            raise RuntimeCoreInvariantError(f"Duplicate asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Duplicate asset_id")
         now = _now_iso()
         a = AssetRecord(
             asset_id=asset_id, name=name, tenant_id=tenant_id,
@@ -150,7 +150,7 @@ class AssetRuntimeEngine:
         """Get an asset by ID."""
         a = self._assets.get(asset_id)
         if a is None:
-            raise RuntimeCoreInvariantError(f"Unknown asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Unknown asset_id")
         return a
 
     def deactivate_asset(self, asset_id: str) -> AssetRecord:
@@ -173,7 +173,7 @@ class AssetRuntimeEngine:
         old = self.get_asset(asset_id)
         if old.status in _ASSET_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot maintain asset in status {old.status.value}"
+                "cannot maintain asset from current status"
             )
         updated = AssetRecord(
             asset_id=old.asset_id, name=old.name, tenant_id=old.tenant_id,
@@ -190,7 +190,7 @@ class AssetRuntimeEngine:
         old = self.get_asset(asset_id)
         if old.status in _ASSET_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Asset already in status {old.status.value}"
+                "asset already in terminal status"
             )
         updated = AssetRecord(
             asset_id=old.asset_id, name=old.name, tenant_id=old.tenant_id,
@@ -237,9 +237,9 @@ class AssetRuntimeEngine:
     ) -> ConfigurationItem:
         """Register a configuration item linked to an asset."""
         if ci_id in self._config_items:
-            raise RuntimeCoreInvariantError(f"Duplicate ci_id: {ci_id}")
+            raise RuntimeCoreInvariantError("Duplicate ci_id")
         if asset_id not in self._assets:
-            raise RuntimeCoreInvariantError(f"Unknown asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Unknown asset_id")
         now = _now_iso()
         ci = ConfigurationItem(
             ci_id=ci_id, asset_id=asset_id, name=name,
@@ -257,7 +257,7 @@ class AssetRuntimeEngine:
         """Get a configuration item by ID."""
         ci = self._config_items.get(ci_id)
         if ci is None:
-            raise RuntimeCoreInvariantError(f"Unknown ci_id: {ci_id}")
+            raise RuntimeCoreInvariantError("Unknown ci_id")
         return ci
 
     def deprecate_config_item(self, ci_id: str) -> ConfigurationItem:
@@ -265,7 +265,7 @@ class AssetRuntimeEngine:
         old = self.get_config_item(ci_id)
         if old.status in (ConfigurationItemStatus.DEPRECATED, ConfigurationItemStatus.ARCHIVED):
             raise RuntimeCoreInvariantError(
-                f"Config item already in status {old.status.value}"
+                "config item already in terminal status"
             )
         updated = ConfigurationItem(
             ci_id=old.ci_id, asset_id=old.asset_id, name=old.name,
@@ -309,9 +309,9 @@ class AssetRuntimeEngine:
     ) -> InventoryRecord:
         """Register an inventory record."""
         if inventory_id in self._inventory:
-            raise RuntimeCoreInvariantError(f"Duplicate inventory_id: {inventory_id}")
+            raise RuntimeCoreInvariantError("Duplicate inventory_id")
         if asset_id not in self._assets:
-            raise RuntimeCoreInvariantError(f"Unknown asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Unknown asset_id")
         now = _now_iso()
         inv = InventoryRecord(
             inventory_id=inventory_id, asset_id=asset_id, tenant_id=tenant_id,
@@ -330,7 +330,7 @@ class AssetRuntimeEngine:
         """Get an inventory record by ID."""
         inv = self._inventory.get(inventory_id)
         if inv is None:
-            raise RuntimeCoreInvariantError(f"Unknown inventory_id: {inventory_id}")
+            raise RuntimeCoreInvariantError("Unknown inventory_id")
         return inv
 
     def assign_inventory(self, inventory_id: str, quantity: int) -> InventoryRecord:
@@ -400,11 +400,11 @@ class AssetRuntimeEngine:
     ) -> AssetAssignment:
         """Assign an asset to a scope."""
         if assignment_id in self._assignments:
-            raise RuntimeCoreInvariantError(f"Duplicate assignment_id: {assignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assignment_id")
         asset = self.get_asset(asset_id)
         if asset.status in _ASSET_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot assign asset in status {asset.status.value}"
+                "cannot assign asset from current status"
             )
         now = _now_iso()
         aa = AssetAssignment(
@@ -437,11 +437,11 @@ class AssetRuntimeEngine:
     ) -> AssetDependency:
         """Register a dependency between two assets."""
         if dependency_id in self._dependencies:
-            raise RuntimeCoreInvariantError(f"Duplicate dependency_id: {dependency_id}")
+            raise RuntimeCoreInvariantError("Duplicate dependency_id")
         if asset_id not in self._assets:
-            raise RuntimeCoreInvariantError(f"Unknown asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Unknown asset_id")
         if depends_on_asset_id not in self._assets:
-            raise RuntimeCoreInvariantError(f"Unknown depends_on_asset_id: {depends_on_asset_id}")
+            raise RuntimeCoreInvariantError("Unknown depends_on_asset_id")
         now = _now_iso()
         dep = AssetDependency(
             dependency_id=dependency_id, asset_id=asset_id,
@@ -474,9 +474,9 @@ class AssetRuntimeEngine:
     ) -> LifecycleEvent:
         """Record a lifecycle event for an asset."""
         if event_id in self._lifecycle:
-            raise RuntimeCoreInvariantError(f"Duplicate event_id: {event_id}")
+            raise RuntimeCoreInvariantError("Duplicate event_id")
         if asset_id not in self._assets:
-            raise RuntimeCoreInvariantError(f"Unknown asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Unknown asset_id")
         now = _now_iso()
         le = LifecycleEvent(
             event_id=event_id, asset_id=asset_id, disposition=disposition,
@@ -509,9 +509,9 @@ class AssetRuntimeEngine:
     ) -> AssetAssessment:
         """Assess an asset's health and risk."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
         if asset_id not in self._assets:
-            raise RuntimeCoreInvariantError(f"Unknown asset_id: {asset_id}")
+            raise RuntimeCoreInvariantError("Unknown asset_id")
         now = _now_iso()
         aa = AssetAssessment(
             assessment_id=assessment_id, asset_id=asset_id,
@@ -554,7 +554,7 @@ class AssetRuntimeEngine:
                             violation_id=vid, asset_id=asset.asset_id,
                             tenant_id=asset.tenant_id,
                             operation="retired_with_assignments",
-                            reason=f"Asset {asset.asset_id} is {asset.status.value} but has {len(active_assignments)} active assignments",
+                            reason="terminal asset has active assignments",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -572,7 +572,7 @@ class AssetRuntimeEngine:
                         violation_id=vid, asset_id=dep.asset_id,
                         tenant_id=target.tenant_id,
                         operation="depends_on_retired",
-                        reason=f"Asset {dep.asset_id} depends on {dep.depends_on_asset_id} which is {target.status.value}",
+                        reason="asset depends on terminal dependency",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -589,7 +589,7 @@ class AssetRuntimeEngine:
                         violation_id=vid, asset_id=inv.asset_id,
                         tenant_id=inv.tenant_id,
                         operation="depleted_inventory",
-                        reason=f"Inventory {inv.inventory_id} is depleted",
+                        reason="inventory is depleted",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -612,7 +612,7 @@ class AssetRuntimeEngine:
     def asset_snapshot(self, snapshot_id: str) -> AssetSnapshot:
         """Capture a point-in-time asset snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         total_value = sum(
             a.value for a in self._assets.values()

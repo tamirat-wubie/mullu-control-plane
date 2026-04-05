@@ -59,8 +59,9 @@ class TestAgentChain:
         assert result.succeeded is False
         assert len(result.steps) == 2  # s3 never ran
         assert result.steps[1].error == "chain execution error (RuntimeError)"
-        assert result.error == "step s2 failed: chain execution error (RuntimeError)"
+        assert result.error == "chain execution failed"
         assert "step 2 fails" not in result.error
+        assert "s2" not in result.error
 
     def test_skip_on_failure(self):
         call_count = {"n": 0}
@@ -103,8 +104,9 @@ class TestAgentChain:
         ])
         assert result.succeeded is False
         assert result.steps[0].error == "chain step failed"
-        assert result.error == "step s1 failed: chain step failed"
+        assert result.error == "chain execution failed"
         assert "provider secret detail" not in result.error
+        assert "s1" not in result.error
 
     def test_history(self):
         eng = _engine()

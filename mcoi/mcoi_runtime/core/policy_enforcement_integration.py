@@ -258,7 +258,7 @@ class PolicyEnforcementIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=scope_ref_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Session enforcement state: {scope_ref_id}",
+            title="Session enforcement state",
             content=content,
             source_ids=(scope_ref_id,),
             tags=("session", "enforcement", "policy"),

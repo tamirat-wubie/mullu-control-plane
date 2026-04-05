@@ -54,6 +54,17 @@ def _classify_provider_exception(exc: Exception) -> str:
     return f"provider error ({error_type})"
 
 
+def _classify_budget_rejection(reason: str) -> str:
+    """Collapse budget-manager detail into stable public denial reasons."""
+    if reason == "unknown budget" or reason.startswith("unknown budget:"):
+        return "unknown budget"
+    if reason == "budget exhausted" or reason.startswith("budget exhausted:"):
+        return "budget exhausted"
+    if reason == "budget limit exceeded" or reason.startswith("would exceed budget:"):
+        return "budget limit exceeded"
+    return "budget rejected"
+
+
 class LLMBackend(Protocol):
     """Protocol for raw LLM API backends.
 
@@ -90,18 +101,18 @@ class LLMBudgetManager:
         """Check if an invocation is within budget. Returns (allowed, reason)."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            return False, f"unknown budget: {budget_id}"
+            return False, "unknown budget"
         if budget.exhausted:
-            return False, f"budget exhausted: spent={budget.spent:.6f}, max={budget.max_cost:.6f}, calls={budget.calls_made}/{budget.max_calls}"
+            return False, "budget exhausted"
         if budget.spent + estimated_cost > budget.max_cost:
-            return False, f"would exceed budget: spent={budget.spent:.6f} + est={estimated_cost:.6f} > max={budget.max_cost:.6f}"
+            return False, "budget limit exceeded"
         return True, "within_budget"
 
     def record_spend(self, budget_id: str, cost: float) -> LLMBudget:
         """Record spending against a budget. Returns updated budget."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"cannot record spend for unknown budget: {budget_id}")
+            raise RuntimeCoreInvariantError("cannot record spend for unknown budget")
         updated = LLMBudget(
             budget_id=budget.budget_id,
             tenant_id=budget.tenant_id,
@@ -646,7 +657,7 @@ class GovernedLLMAdapter:
                     model_name=params.model_name,
                     provider=self._backend.provider,
                     finished=False,
-                    error=f"budget_rejected: {reason}",
+                    error=f"budget_rejected: {_classify_budget_rejection(reason)}",
                 )
 
         # Content safety gate (pre-call)
@@ -665,7 +676,7 @@ class GovernedLLMAdapter:
                     model_name=params.model_name,
                     provider=self._backend.provider,
                     finished=False,
-                    error=f"content_safety_blocked: {safety_result.reason}",
+                    error="content_safety_blocked",
                 )
 
         # Backend call

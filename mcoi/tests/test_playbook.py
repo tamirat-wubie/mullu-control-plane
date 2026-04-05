@@ -108,6 +108,13 @@ class TestPlaybookContracts:
 
 
 class TestPatternMatching:
+    def test_duplicate_register_error_is_bounded(self):
+        engine = _engine()
+        engine.register(_playbook())
+        with pytest.raises(ValueError, match="^playbook already registered$") as exc_info:
+            engine.register(_playbook(playbook_id="pb-1"))
+        assert "pb-1" not in str(exc_info.value)
+
     def test_exact_family_match(self):
         engine = _engine()
         engine.register(_playbook())
@@ -193,6 +200,8 @@ class TestPlaybookExecution:
         result = engine.execute("pb-1", "inc-1", step_executor=fail_second)
         assert result.outcome is PlaybookOutcome.FAILED
         assert result.steps_completed == 1
+        assert result.error_message == "playbook step failed"
+        assert "escalate" not in (result.error_message or "")
 
     def test_playbook_not_found(self):
         engine = _engine()
@@ -205,6 +214,8 @@ class TestPlaybookExecution:
         engine.register(_playbook(status=PlaybookStatus.DRAFT, requires_review=False))
         result = engine.execute("pb-1", "inc-1")
         assert result.outcome is PlaybookOutcome.BLOCKED
+        assert result.error_message == "playbook execution blocked by status"
+        assert PlaybookStatus.DRAFT.value not in (result.error_message or "")
 
     def test_execution_history_recorded(self):
         engine = _engine()

@@ -50,7 +50,7 @@ def test_register_and_get() -> None:
 def test_duplicate_rejected() -> None:
     reg = ProviderRegistry(clock=lambda: _CLOCK)
     reg.register(_descriptor(), _scope())
-    with pytest.raises(RuntimeCoreInvariantError, match="already registered"):
+    with pytest.raises(RuntimeCoreInvariantError, match="^provider already registered$"):
         reg.register(_descriptor(), _scope())
 
 

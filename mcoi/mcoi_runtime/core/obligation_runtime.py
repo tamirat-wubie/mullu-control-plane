@@ -92,7 +92,7 @@ class ObligationRuntimeEngine:
             "ref": trigger_ref_id,
         })
         if oid in self._obligations:
-            raise RuntimeCoreInvariantError(f"obligation already exists: {oid}")
+            raise RuntimeCoreInvariantError("obligation already exists")
 
         record = ObligationRecord(
             obligation_id=oid,
@@ -168,11 +168,9 @@ class ObligationRuntimeEngine:
         ensure_non_empty_text("obligation_id", obligation_id)
         obl = self._obligations.get(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation not found: {obligation_id}")
+            raise RuntimeCoreInvariantError("obligation not found")
         if obl.state != expected_from:
-            raise RuntimeCoreInvariantError(
-                f"obligation {obligation_id} is in state {obl.state}, expected {expected_from}"
-            )
+            raise RuntimeCoreInvariantError("obligation state mismatch")
         now = self._now()
         updated = ObligationRecord(
             obligation_id=obl.obligation_id,
@@ -203,16 +201,12 @@ class ObligationRuntimeEngine:
         """Explicitly close an obligation."""
         ensure_non_empty_text("obligation_id", obligation_id)
         if final_state not in _TERMINAL_STATES:
-            raise RuntimeCoreInvariantError(
-                f"final_state must be a terminal state ({', '.join(s.value for s in _TERMINAL_STATES)}), got {final_state}"
-            )
+            raise RuntimeCoreInvariantError("final_state must be terminal")
         obl = self._obligations.get(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation not found: {obligation_id}")
+            raise RuntimeCoreInvariantError("obligation not found")
         if obl.state in _TERMINAL_STATES:
-            raise RuntimeCoreInvariantError(
-                f"obligation {obligation_id} is already closed ({obl.state})"
-            )
+            raise RuntimeCoreInvariantError("obligation already closed")
 
         now = self._now()
         closure_id = stable_identifier("cls", {
@@ -262,11 +256,9 @@ class ObligationRuntimeEngine:
         ensure_non_empty_text("obligation_id", obligation_id)
         obl = self._obligations.get(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation not found: {obligation_id}")
+            raise RuntimeCoreInvariantError("obligation not found")
         if obl.state in _TERMINAL_STATES:
-            raise RuntimeCoreInvariantError(
-                f"cannot transfer closed obligation: {obligation_id}"
-            )
+            raise RuntimeCoreInvariantError("cannot transfer closed obligation")
 
         now = self._now()
         transfer_id = stable_identifier("xfr", {
@@ -317,11 +309,9 @@ class ObligationRuntimeEngine:
         ensure_non_empty_text("obligation_id", obligation_id)
         obl = self._obligations.get(obligation_id)
         if obl is None:
-            raise RuntimeCoreInvariantError(f"obligation not found: {obligation_id}")
+            raise RuntimeCoreInvariantError("obligation not found")
         if obl.state in _TERMINAL_STATES:
-            raise RuntimeCoreInvariantError(
-                f"cannot escalate closed obligation: {obligation_id} ({obl.state})"
-            )
+            raise RuntimeCoreInvariantError("cannot escalate closed obligation")
 
         now = self._now()
         esc_id = stable_identifier("esc", {

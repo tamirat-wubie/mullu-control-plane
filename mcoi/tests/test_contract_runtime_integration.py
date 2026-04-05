@@ -278,6 +278,14 @@ class TestAttachContractStateToMemoryMesh:
         mem = integration.attach_contract_state_to_memory_mesh("scope-1")
         assert isinstance(mem, MemoryRecord)
 
+    def test_title_is_bounded(
+        self, integration: ContractRuntimeIntegration
+    ) -> None:
+        mem = integration.attach_contract_state_to_memory_mesh("scope-title")
+        assert mem.title == "Contract governance state"
+        assert "scope-title" not in mem.title
+        assert mem.scope_ref_id == "scope-title"
+
     def test_tags_contain_expected_values(
         self, integration: ContractRuntimeIntegration
     ) -> None:

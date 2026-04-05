@@ -29,6 +29,10 @@ from mcoi_runtime.core.memory import (
 from .errors import CorruptedDataError, PersistenceError, PersistenceWriteError
 
 
+def _bounded_store_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
 def _deterministic_json(data: Any) -> str:
     return json.dumps(data, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
@@ -51,7 +55,7 @@ def _atomic_write(path: Path, content: str) -> None:
                 os.unlink(tmp_path)
             raise
     except OSError as exc:
-        raise PersistenceWriteError(f"failed to write {path}: {exc}") from exc
+        raise PersistenceWriteError(_bounded_store_error("memory store write failed", exc)) from exc
 
 
 def _serialize_entry(entry: MemoryEntry) -> dict[str, Any]:
@@ -66,13 +70,13 @@ def _serialize_entry(entry: MemoryEntry) -> dict[str, Any]:
 
 def _load_payload(path: Path, *, label: str) -> dict[str, Any]:
     if not path.exists():
-        raise CorruptedDataError(f"{label} file not found: {path}")
+        raise CorruptedDataError("memory store file not found")
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
-        raise CorruptedDataError(f"malformed {label} file: {exc}") from exc
+        raise CorruptedDataError(_bounded_store_error("malformed memory store file", exc)) from exc
     if not isinstance(raw, dict):
-        raise CorruptedDataError(f"{label} file must be a JSON object")
+        raise CorruptedDataError("memory store payload must be a JSON object")
     return raw
 
 
@@ -89,12 +93,10 @@ def _deserialize_entry(raw: dict[str, Any], *, expected_tier: MemoryTier) -> Mem
             source_ids=tuple(raw.get("source_ids", ())),
         )
     except (KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
-        raise CorruptedDataError(f"invalid memory entry: {exc}") from exc
+        raise CorruptedDataError(_bounded_store_error("invalid memory entry", exc)) from exc
 
     if entry.tier is not expected_tier:
-        raise CorruptedDataError(
-            f"memory entry tier mismatch: expected {expected_tier.value}, got {entry.tier.value}"
-        )
+        raise CorruptedDataError("memory entry tier mismatch")
     return entry
 
 
@@ -144,13 +146,13 @@ class MemoryStore:
     def load_working(self) -> WorkingMemory:
         payload = _load_payload(self._working_path(), label="working memory")
         if "max_entries" not in payload or "entries" not in payload:
-            raise CorruptedDataError("working memory payload must contain max_entries and entries")
+            raise CorruptedDataError("working memory payload missing required fields")
         max_entries = payload["max_entries"]
         entries_raw = payload["entries"]
         if not isinstance(max_entries, int) or max_entries <= 0:
-            raise CorruptedDataError("working memory max_entries must be a positive integer")
+            raise CorruptedDataError("working memory capacity invalid")
         if not isinstance(entries_raw, list):
-            raise CorruptedDataError("working memory entries must be a JSON array")
+            raise CorruptedDataError("working memory entry list invalid")
         entries = tuple(
             _deserialize_entry(raw, expected_tier=MemoryTier.WORKING) for raw in entries_raw
         )
@@ -160,7 +162,7 @@ class MemoryStore:
         payload = _load_payload(self._episodic_path(), label="episodic memory")
         entries_raw = payload.get("entries")
         if not isinstance(entries_raw, list):
-            raise CorruptedDataError("episodic memory entries must be a JSON array")
+            raise CorruptedDataError("episodic memory entry list invalid")
         entries = tuple(
             _deserialize_entry(raw, expected_tier=MemoryTier.EPISODIC) for raw in entries_raw
         )

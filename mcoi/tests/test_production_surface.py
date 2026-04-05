@@ -73,8 +73,9 @@ class TestAuthGate:
         auth.create_session("s1", "a1", "t1")
         auth.revoke("s1")
         assert auth.active_sessions == 0
-        with pytest.raises(PermissionError):
+        with pytest.raises(PermissionError, match="^invalid or expired session$") as exc_info:
             auth.validate("s1")
+        assert "s1" not in str(exc_info.value)
 
     def test_denied_count(self):
         auth = AuthGate()
@@ -82,6 +83,12 @@ class TestAuthGate:
             with pytest.raises(PermissionError):
                 auth.validate("nonexistent")
         assert auth.denied_count == 3
+
+    def test_validate_bounds_unknown_session_message(self):
+        auth = AuthGate()
+        with pytest.raises(PermissionError, match="^invalid or expired session$") as exc_info:
+            auth.validate("secret-session-id")
+        assert "secret-session-id" not in str(exc_info.value)
 
 
 # ═══ 196C — Persistence Configuration ═══

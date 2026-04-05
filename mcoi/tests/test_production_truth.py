@@ -40,7 +40,9 @@ def test_tenant_spoofing_rejected_in_require_auth() -> None:
     ctx = {"authorization": f"Bearer {raw_key}", "tenant_id": "spoofed-tenant"}
     result = guard.check(ctx)
     assert not result.allowed
-    assert "mismatch" in result.reason
+    assert result.reason == "tenant mismatch"
+    assert "tenant-a" not in result.reason
+    assert "spoofed-tenant" not in result.reason
 
 
 def test_tenant_spoofing_overridden_in_permissive_mode() -> None:

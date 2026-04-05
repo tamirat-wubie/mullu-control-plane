@@ -32,7 +32,7 @@ class ReviewEngine:
 
     def submit(self, request: ReviewRequest) -> ReviewRequest:
         if request.request_id in self._requests:
-            raise ValueError(f"review request already exists: {request.request_id}")
+            raise ValueError("review request already exists")
         self._requests[request.request_id] = request
         return request
 
@@ -57,7 +57,7 @@ class ReviewEngine:
         ensure_non_empty_text("request_id", request_id)
         request = self._requests.get(request_id)
         if request is None:
-            raise ValueError(f"review request not found: {request_id}")
+            raise ValueError("review request unavailable")
 
         # Check expiry
         if request.expires_at and self._is_expired(request.expires_at):

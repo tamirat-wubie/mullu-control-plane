@@ -42,8 +42,9 @@ class TestRunMetrics:
         assert m.verification_closure_rate == 0.0
 
     def test_negative_rejected(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^run metric count must be a non-negative integer$") as exc_info:
             RunMetrics(total_runs=-1)
+        assert "total_runs" not in str(exc_info.value)
 
 
 class TestSkillMetrics:

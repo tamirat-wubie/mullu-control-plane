@@ -158,12 +158,14 @@ class TestProblemLifecycle:
 
     def test_duplicate_problem_raises(self, engine):
         engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.create_problem("p-1", "t-1", AlgorithmKind.GRAPH_SEARCH)
+        assert "p-1" not in str(exc_info.value)
 
     def test_solve_unknown_problem_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.solve_problem("s-1", "t-1", "unknown")
+        assert "unknown" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -186,8 +188,9 @@ class TestGraph:
 
     def test_add_edge_missing_from_node_raises(self, engine):
         engine.add_graph_node("n-2", "t-1", "End")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.add_graph_edge("e-1", "t-1", "missing", "n-2")
+        assert "missing" not in str(exc_info.value)
 
     def test_add_edge_missing_to_node_raises(self, engine):
         engine.add_graph_node("n-1", "t-1", "Start")
@@ -326,8 +329,9 @@ class TestAssignments:
 
     def test_duplicate_assignment_raises(self, engine):
         engine.assign_resource("a-1", "t-1", "r-1", "task-1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.assign_resource("a-1", "t-1", "r-1", "task-2")
+        assert "a-1" not in str(exc_info.value)
 
 
 # ===================================================================

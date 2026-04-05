@@ -143,7 +143,7 @@ class AssuranceRuntimeEngine:
     ) -> AttestationRecord:
         """Register an attestation."""
         if attestation_id in self._attestations:
-            raise RuntimeCoreInvariantError(f"Duplicate attestation_id: {attestation_id}")
+            raise RuntimeCoreInvariantError("Duplicate attestation_id")
         now = _now_iso()
         rec = AttestationRecord(
             attestation_id=attestation_id,
@@ -166,7 +166,7 @@ class AssuranceRuntimeEngine:
         """Get an attestation by ID."""
         a = self._attestations.get(attestation_id)
         if a is None:
-            raise RuntimeCoreInvariantError(f"Unknown attestation_id: {attestation_id}")
+            raise RuntimeCoreInvariantError("Unknown attestation_id")
         return a
 
     def attestations_for_tenant(self, tenant_id: str) -> tuple[AttestationRecord, ...]:
@@ -178,7 +178,7 @@ class AssuranceRuntimeEngine:
         old = self.get_attestation(attestation_id)
         if old.status in _ATTESTATION_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot grant attestation in status {old.status.value}"
+                "Cannot grant attestation in current status"
             )
         # Check evidence sufficiency
         bindings = self.bindings_for_target(attestation_id, "attestation")
@@ -209,7 +209,7 @@ class AssuranceRuntimeEngine:
         old = self.get_attestation(attestation_id)
         if old.status in _ATTESTATION_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot deny attestation in status {old.status.value}"
+                "Cannot deny attestation in current status"
             )
         updated = AttestationRecord(
             attestation_id=old.attestation_id,
@@ -269,7 +269,7 @@ class AssuranceRuntimeEngine:
     ) -> CertificationRecord:
         """Register a certification."""
         if certification_id in self._certifications:
-            raise RuntimeCoreInvariantError(f"Duplicate certification_id: {certification_id}")
+            raise RuntimeCoreInvariantError("Duplicate certification_id")
         now = _now_iso()
         rec = CertificationRecord(
             certification_id=certification_id,
@@ -292,7 +292,7 @@ class AssuranceRuntimeEngine:
         """Get a certification by ID."""
         c = self._certifications.get(certification_id)
         if c is None:
-            raise RuntimeCoreInvariantError(f"Unknown certification_id: {certification_id}")
+            raise RuntimeCoreInvariantError("Unknown certification_id")
         return c
 
     def activate_certification(self, certification_id: str, level: AssuranceLevel) -> CertificationRecord:
@@ -300,7 +300,7 @@ class AssuranceRuntimeEngine:
         old = self.get_certification(certification_id)
         if old.status in _CERTIFICATION_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot activate certification in status {old.status.value}"
+                "Cannot activate certification in current status"
             )
         bindings = self.bindings_for_target(certification_id, "certification")
         if not bindings:
@@ -353,7 +353,7 @@ class AssuranceRuntimeEngine:
         old = self.get_certification(certification_id)
         if old.status in _CERTIFICATION_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot revoke certification in status {old.status.value}"
+                "Cannot revoke certification in current status"
             )
         updated = CertificationRecord(
             certification_id=old.certification_id,
@@ -378,7 +378,7 @@ class AssuranceRuntimeEngine:
         old = self.get_certification(certification_id)
         if old.status in _CERTIFICATION_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot expire certification in status {old.status.value}"
+                "Cannot expire certification in current status"
             )
         updated = CertificationRecord(
             certification_id=old.certification_id,
@@ -403,7 +403,7 @@ class AssuranceRuntimeEngine:
         old = self.get_certification(certification_id)
         if old.status in _CERTIFICATION_TERMINAL:
             raise RuntimeCoreInvariantError(
-                f"Cannot mark recertification for status {old.status.value}"
+                "Cannot mark recertification in current status"
             )
         updated = CertificationRecord(
             certification_id=old.certification_id,
@@ -437,7 +437,7 @@ class AssuranceRuntimeEngine:
     ) -> AssuranceEvidenceBinding:
         """Bind evidence to an attestation or certification."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         now = _now_iso()
         binding = AssuranceEvidenceBinding(
             binding_id=binding_id,
@@ -476,7 +476,7 @@ class AssuranceRuntimeEngine:
     ) -> AssuranceAssessment:
         """Assess assurance for a scope, evaluating evidence sufficiency."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
 
         # Count evidence bindings for this scope
         bindings = [
@@ -538,7 +538,7 @@ class AssuranceRuntimeEngine:
     ) -> AssuranceFinding:
         """Record a finding that affects assurance status."""
         if finding_id in self._findings:
-            raise RuntimeCoreInvariantError(f"Duplicate finding_id: {finding_id}")
+            raise RuntimeCoreInvariantError("Duplicate finding_id")
         now = _now_iso()
         finding = AssuranceFinding(
             finding_id=finding_id,
@@ -554,10 +554,10 @@ class AssuranceRuntimeEngine:
         if impact_level in (AssuranceLevel.HIGH, AssuranceLevel.FULL):
             for att in list(self._attestations.values()):
                 if att.scope_ref_id == target_id and att.status == AttestationStatus.GRANTED:
-                    self.revoke_attestation(att.attestation_id, reason=f"Finding: {finding_id}")
+                    self.revoke_attestation(att.attestation_id, reason="finding-triggered revocation")
             for cert in list(self._certifications.values()):
                 if cert.scope_ref_id == target_id and cert.status == CertificationStatus.ACTIVE:
-                    self.suspend_certification(cert.certification_id, reason=f"Finding: {finding_id}")
+                    self.suspend_certification(cert.certification_id, reason="finding-triggered suspension")
 
         _emit(self._events, "assurance_finding_recorded", {
             "finding_id": finding_id, "target_id": target_id,
@@ -581,7 +581,7 @@ class AssuranceRuntimeEngine:
     ) -> AssuranceDecision:
         """Make a formal assurance decision."""
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"Duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("Duplicate decision_id")
         now = _now_iso()
         decision = AssuranceDecision(
             decision_id=decision_id,
@@ -612,9 +612,9 @@ class AssuranceRuntimeEngine:
     ) -> RecertificationWindow:
         """Schedule a recertification window."""
         if window_id in self._windows:
-            raise RuntimeCoreInvariantError(f"Duplicate window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Duplicate window_id")
         if certification_id not in self._certifications:
-            raise RuntimeCoreInvariantError(f"Unknown certification_id: {certification_id}")
+            raise RuntimeCoreInvariantError("Unknown certification_id")
         window = RecertificationWindow(
             window_id=window_id,
             certification_id=certification_id,
@@ -632,7 +632,7 @@ class AssuranceRuntimeEngine:
         """Mark a recertification window as completed."""
         old = self._windows.get(window_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown window_id: {window_id}")
+            raise RuntimeCoreInvariantError("Unknown window_id")
         now = _now_iso()
         updated = RecertificationWindow(
             window_id=old.window_id,
@@ -678,7 +678,7 @@ class AssuranceRuntimeEngine:
                                 target_type="certification",
                                 tenant_id=cert.tenant_id,
                                 operation="expired_certification_active",
-                                reason=f"Certification expired at {cert.expires_at} but still active",
+                                reason="active certification is expired",
                                 detected_at=now,
                             )
                             self._violations[vid] = v
@@ -704,7 +704,7 @@ class AssuranceRuntimeEngine:
                                 target_type="certification",
                                 tenant_id=tenant_id,
                                 operation="overdue_recertification",
-                                reason=f"Recertification window {window.window_id} overdue",
+                                reason="recertification window is overdue",
                                 detected_at=now,
                             )
                             self._violations[vid] = v
@@ -754,7 +754,7 @@ class AssuranceRuntimeEngine:
     ) -> AssuranceSnapshot:
         """Capture a point-in-time assurance state snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snapshot = AssuranceSnapshot(
             snapshot_id=snapshot_id,

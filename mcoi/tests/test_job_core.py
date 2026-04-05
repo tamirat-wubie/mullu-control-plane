@@ -94,6 +94,19 @@ class TestWorkQueueEnqueue:
         assert entries[1].priority == JobPriority.NORMAL
         assert entries[2].priority == JobPriority.LOW
 
+    def test_duplicate_entry_rejected_without_reflection(self):
+        clock = _fixed_clock()
+        q = WorkQueue(clock=clock)
+        desc = JobDescriptor(
+            job_id="j-dup", name="Task A", description="Do A",
+            priority=JobPriority.NORMAL, created_at=_T0,
+        )
+        q.enqueue(desc)
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate queue entry") as excinfo:
+            q.enqueue(desc)
+        assert str(excinfo.value) == "duplicate queue entry"
+        assert "j-dup" not in str(excinfo.value)
+
 
 class TestWorkQueueDequeue:
     def test_dequeue_empty(self):
@@ -170,8 +183,10 @@ class TestWorkQueueAssign:
 
     def test_assign_nonexistent_entry_raises(self):
         q = WorkQueue(clock=_fixed_clock())
-        with pytest.raises(RuntimeCoreInvariantError, match="queue entry not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="queue entry not found") as excinfo:
             q.assign("no-such-entry", "person-1", "manager-1", "reason")
+        assert str(excinfo.value) == "queue entry not found"
+        assert "no-such-entry" not in str(excinfo.value)
 
 
 class TestWorkQueueRemove:
@@ -435,8 +450,10 @@ class TestFollowUpScheduling:
 
     def test_schedule_follow_up_nonexistent_job_raises(self):
         engine = JobEngine(clock=_fixed_clock())
-        with pytest.raises(RuntimeCoreInvariantError, match="job not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="job not found") as excinfo:
             engine.schedule_follow_up("no-such-job", "reason", _DEADLINE_FUTURE)
+        assert str(excinfo.value) == "job not found"
+        assert "no-such-job" not in str(excinfo.value)
 
 
 # ============================================================
@@ -555,8 +572,10 @@ class TestClockDeterminism:
 class TestEdgeCases:
     def test_nonexistent_job_raises(self):
         engine = JobEngine(clock=_fixed_clock())
-        with pytest.raises(RuntimeCoreInvariantError, match="job not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="job not found") as excinfo:
             engine.start_job("nonexistent")
+        assert str(excinfo.value) == "job not found"
+        assert "nonexistent" not in str(excinfo.value)
 
     def test_empty_description_raises(self):
         engine = JobEngine(clock=_fixed_clock())

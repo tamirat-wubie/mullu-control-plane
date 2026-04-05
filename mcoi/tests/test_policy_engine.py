@@ -135,3 +135,5 @@ def test_policy_engine_fails_closed_on_unknown_policy_pack() -> None:
 
     assert decision.status == "deny"
     assert decision.reasons[0].code == "unknown_policy_pack"
+    assert decision.reasons[0].message == "policy pack unavailable"
+    assert "missing-pack" not in decision.reasons[0].message

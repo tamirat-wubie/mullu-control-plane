@@ -57,8 +57,9 @@ class TestIdentityCRUD:
     def test_duplicate_rejected(self):
         engine = ContactIdentityEngine()
         engine.add_identity(_identity())
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             engine.add_identity(_identity())
+        assert "id-1" not in str(exc_info.value)
 
     def test_get_missing(self):
         engine = ContactIdentityEngine()
@@ -116,13 +117,15 @@ class TestChannelHandles:
         engine = ContactIdentityEngine()
         engine.add_identity(_identity())
         engine.add_channel_handle(_handle())
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             engine.add_channel_handle(_handle())
+        assert "hd-1" not in str(exc_info.value)
 
     def test_missing_identity_rejected(self):
         engine = ContactIdentityEngine()
-        with pytest.raises(RuntimeCoreInvariantError, match="identity not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="identity not found") as exc_info:
             engine.add_channel_handle(_handle(iid="missing"))
+        assert "missing" not in str(exc_info.value)
 
     def test_list_for_identity(self):
         engine = ContactIdentityEngine()
@@ -189,8 +192,9 @@ class TestIdentityLinking:
             to_identity_id="id-2", relation="knows", created_at=NOW,
         )
         engine.link_identities(link)
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             engine.link_identities(link)
+        assert "lk-1" not in str(exc_info.value)
 
     def test_missing_from_rejected(self):
         engine = ContactIdentityEngine()
@@ -199,8 +203,9 @@ class TestIdentityLinking:
             link_id="lk-bad", from_identity_id="missing",
             to_identity_id="id-2", relation="knows", created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="from_identity"):
+        with pytest.raises(RuntimeCoreInvariantError, match="from_identity") as exc_info:
             engine.link_identities(link)
+        assert "missing" not in str(exc_info.value)
 
     def test_missing_to_rejected(self):
         engine = ContactIdentityEngine()
@@ -209,8 +214,9 @@ class TestIdentityLinking:
             link_id="lk-bad", from_identity_id="id-1",
             to_identity_id="missing", relation="knows", created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="to_identity"):
+        with pytest.raises(RuntimeCoreInvariantError, match="to_identity") as exc_info:
             engine.link_identities(link)
+        assert "missing" not in str(exc_info.value)
 
     def test_get_links_for(self):
         engine = ContactIdentityEngine()
@@ -251,8 +257,9 @@ class TestContactPreferences:
             preference_id="pref-1", identity_id="missing",
             created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="identity not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="identity not found") as exc_info:
             engine.set_contact_preference(pref)
+        assert "missing" not in str(exc_info.value)
 
     def test_replaces_existing(self):
         engine = ContactIdentityEngine()
@@ -292,8 +299,9 @@ class TestAvailability:
             window_id="aw-1", identity_id="missing",
             state=AvailabilityState.AVAILABLE, created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="identity not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="identity not found") as exc_info:
             engine.set_availability(w)
+        assert "missing" not in str(exc_info.value)
 
 
 # ---------------------------------------------------------------------------
@@ -324,8 +332,9 @@ class TestEscalationChains:
             target_identity_ids=("id-1",), created_at=NOW,
         )
         engine.add_escalation_chain(chain)
-        with pytest.raises(RuntimeCoreInvariantError, match="duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="duplicate") as exc_info:
             engine.add_escalation_chain(chain)
+        assert "esc-1" not in str(exc_info.value)
 
     def test_missing_target_rejected(self):
         engine = ContactIdentityEngine()
@@ -334,8 +343,9 @@ class TestEscalationChains:
             mode=EscalationMode.SEQUENTIAL,
             target_identity_ids=("missing",), created_at=NOW,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="target not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="target not found") as exc_info:
             engine.add_escalation_chain(chain)
+        assert "missing" not in str(exc_info.value)
 
     def test_list_chains(self):
         engine = ContactIdentityEngine()
@@ -449,6 +459,8 @@ class TestRouting:
         ))
         decision = engine.route_contact("id-1", urgency="emergency")
         assert decision is not None
+        assert decision.reason == "contact route selected"
+        assert "emergency" not in decision.reason
 
     def test_route_with_fallbacks(self):
         engine = ContactIdentityEngine()
@@ -498,6 +510,9 @@ class TestEscalationRouting:
         decisions = engine.route_escalation("esc-1")
         assert len(decisions) == 1
         assert decisions[0].target_identity_id == "id-1"
+        assert decisions[0].reason == "escalation route selected"
+        assert "On-call" not in decisions[0].reason
+        assert EscalationMode.SEQUENTIAL.value not in decisions[0].reason
 
     def test_sequential_skips_unavailable(self):
         engine = ContactIdentityEngine()

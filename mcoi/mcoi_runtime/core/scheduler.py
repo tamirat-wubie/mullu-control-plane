@@ -100,6 +100,9 @@ class GovernedScheduler:
         self._execution_counter = 0
         self._lock = threading.Lock()
 
+    def _bounded_job_error(self, exc: Exception) -> str:
+        return f"handler error ({type(exc).__name__})"
+
     def register_handler(self, name: str, handler: Callable[..., dict[str, Any]]) -> None:
         """Register a named job handler."""
         self._handlers[name] = handler
@@ -165,7 +168,7 @@ class GovernedScheduler:
         with self._lock:
             job = self._jobs.get(job_id)
         if job is None:
-            raise ValueError(f"job not found: {job_id}")
+            raise ValueError("job not found")
         if not job.enabled:
             return self._record_execution(job, JobStatus.DISABLED, error="job is disabled")
 
@@ -182,7 +185,7 @@ class GovernedScheduler:
             if not guard_result.allowed:
                 return self._record_execution(
                     job, JobStatus.FAILED,
-                    error=f"guard denied: {guard_result.reason}",
+                    error="job execution denied",
                 )
 
         # Execute handler
@@ -190,7 +193,7 @@ class GovernedScheduler:
         if handler is None:
             return self._record_execution(
                 job, JobStatus.FAILED,
-                error=f"handler not found: {job.handler_name}",
+                error="handler not found",
             )
 
         try:
@@ -199,7 +202,7 @@ class GovernedScheduler:
         except Exception as exc:
             return self._record_execution(
                 job, JobStatus.FAILED,
-                error=f"{type(exc).__name__}: {exc}",
+                error=self._bounded_job_error(exc),
             )
 
     def _record_execution(

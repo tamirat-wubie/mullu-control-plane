@@ -32,6 +32,11 @@ from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.core.supervisor_engine import SupervisorEngine
 
 
+def _bounded_replay_error(summary: str, exc: Exception) -> str:
+    """Return a stable replay failure without raw backend detail."""
+    return f"{summary} ({type(exc).__name__})"
+
+
 # ---------------------------------------------------------------------------
 # Replay contracts
 # ---------------------------------------------------------------------------
@@ -280,7 +285,7 @@ class JournalReplayEngine:
                 kind=JournalEntryKind.TICK,
                 verdict=ReplayStepVerdict.ERROR,
                 expected_payload=entry.payload,
-                detail=f"tick execution error: {exc}",
+                detail=_bounded_replay_error("tick execution error", exc),
             )
 
         actual_tick = tick_result.tick_number

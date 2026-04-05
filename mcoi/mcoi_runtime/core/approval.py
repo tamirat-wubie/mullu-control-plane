@@ -50,7 +50,7 @@ class ApprovalEngine:
     def submit_request(self, request: ApprovalRequest) -> ApprovalRequest:
         """Register an approval request."""
         if request.request_id in self._requests:
-            raise ValueError(f"approval request already exists: {request.request_id}")
+            raise ValueError("approval request already exists")
         self._requests[request.request_id] = request
         return request
 
@@ -81,7 +81,7 @@ class ApprovalEngine:
 
         request = self._requests.get(request_id)
         if request is None:
-            raise ValueError(f"approval request not found: {request_id}")
+            raise ValueError("approval request unavailable")
 
         # Check expiry
         if request.expires_at and self._is_expired(request.expires_at):

@@ -136,7 +136,7 @@ class PolicyEnforcementEngine:
     ) -> SessionRecord:
         """Open a new live session."""
         if session_id in self._sessions:
-            raise RuntimeCoreInvariantError(f"Duplicate session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Duplicate session_id")
         now = _now_iso()
         session = SessionRecord(
             session_id=session_id,
@@ -162,7 +162,7 @@ class PolicyEnforcementEngine:
         """Get a session by ID."""
         s = self._sessions.get(session_id)
         if s is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         return s
 
     def sessions_for_identity(self, identity_id: str) -> tuple[SessionRecord, ...]:
@@ -179,7 +179,7 @@ class PolicyEnforcementEngine:
         """Internal helper to update session status."""
         old = self._sessions.get(session_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         now = _now_iso()
         closed_at = now if status in (
             SessionStatus.CLOSED, SessionStatus.REVOKED, SessionStatus.EXPIRED,
@@ -221,9 +221,9 @@ class PolicyEnforcementEngine:
     ) -> SessionConstraint:
         """Add a constraint to a session."""
         if constraint_id in self._constraints:
-            raise RuntimeCoreInvariantError(f"Duplicate constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Duplicate constraint_id")
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         now = _now_iso()
         constraint = SessionConstraint(
             constraint_id=constraint_id,
@@ -260,9 +260,9 @@ class PolicyEnforcementEngine:
     ) -> PolicySessionBinding:
         """Bind a session to a specific resource."""
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"Duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("Duplicate binding_id")
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         now = _now_iso()
         binding = PolicySessionBinding(
             binding_id=binding_id,
@@ -316,10 +316,16 @@ class PolicyEnforcementEngine:
                 SessionStatus.EXPIRED: EnforcementDecision.DENIED,
                 SessionStatus.CLOSED: EnforcementDecision.DENIED,
             }
+            reason_map = {
+                SessionStatus.SUSPENDED: "session suspended",
+                SessionStatus.REVOKED: "session revoked",
+                SessionStatus.EXPIRED: "session inactive",
+                SessionStatus.CLOSED: "session inactive",
+            }
             decision = decision_map.get(session.status, EnforcementDecision.DENIED)
             return self._record_enforcement(
                 session_id, session.identity_id, resource_type, action,
-                decision, f"session {session.status.value}",
+                decision, reason_map.get(session.status, "session inactive"),
                 environment_id, connector_id, now,
             )
 
@@ -337,7 +343,7 @@ class PolicyEnforcementEngine:
             return self._record_enforcement(
                 session_id, session.identity_id, resource_type, action,
                 EnforcementDecision.STEP_UP_REQUIRED,
-                f"requires {required_privilege.value} privilege",
+                "additional privilege required",
                 environment_id, connector_id, now,
             )
 
@@ -349,7 +355,7 @@ class PolicyEnforcementEngine:
                 return self._record_enforcement(
                     session_id, session.identity_id, resource_type, action,
                     EnforcementDecision.DENIED,
-                    f"environment constraint: session bound to {c.environment_id}",
+                    "environment constraint",
                     environment_id, connector_id, now,
                 )
             # Connector constraint
@@ -357,7 +363,7 @@ class PolicyEnforcementEngine:
                 return self._record_enforcement(
                     session_id, session.identity_id, resource_type, action,
                     EnforcementDecision.DENIED,
-                    f"connector constraint: session bound to {c.connector_id}",
+                    "connector constraint",
                     environment_id, connector_id, now,
                 )
             # Resource/action constraint — if constraint specifies a resource_type,
@@ -366,14 +372,14 @@ class PolicyEnforcementEngine:
                 return self._record_enforcement(
                     session_id, session.identity_id, resource_type, action,
                     EnforcementDecision.DENIED,
-                    f"resource constraint: session limited to {c.resource_type}",
+                    "resource constraint",
                     environment_id, connector_id, now,
                 )
             if c.action and c.action != action:
                 return self._record_enforcement(
                     session_id, session.identity_id, resource_type, action,
                     EnforcementDecision.DENIED,
-                    f"action constraint: session limited to {c.action}",
+                    "action constraint",
                     environment_id, connector_id, now,
                 )
             # Privilege cap from constraint
@@ -383,7 +389,7 @@ class PolicyEnforcementEngine:
                     return self._record_enforcement(
                         session_id, session.identity_id, resource_type, action,
                         EnforcementDecision.STEP_UP_REQUIRED,
-                        f"constraint caps privilege at {c.max_privilege.value}",
+                        "privilege capped by constraint",
                         environment_id, connector_id, now,
                     )
 
@@ -458,9 +464,9 @@ class PolicyEnforcementEngine:
     ) -> PrivilegeElevationRequest:
         """Request a step-up privilege elevation."""
         if request_id in self._step_up_requests:
-            raise RuntimeCoreInvariantError(f"Duplicate step_up request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Duplicate step_up request_id")
         if session_id not in self._sessions:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         now = _now_iso()
         req = PrivilegeElevationRequest(
             request_id=request_id,
@@ -491,11 +497,9 @@ class PolicyEnforcementEngine:
         """Approve a step-up request and elevate the session."""
         req = self._step_up_requests.get(request_id)
         if req is None:
-            raise RuntimeCoreInvariantError(f"Unknown step_up request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Unknown step_up request_id")
         if req.status != StepUpStatus.PENDING:
-            raise RuntimeCoreInvariantError(
-                f"Cannot approve step-up in status {req.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot approve step-up in current status")
         now = _now_iso()
 
         # Update request status
@@ -558,11 +562,9 @@ class PolicyEnforcementEngine:
         """Deny a step-up request."""
         req = self._step_up_requests.get(request_id)
         if req is None:
-            raise RuntimeCoreInvariantError(f"Unknown step_up request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Unknown step_up request_id")
         if req.status != StepUpStatus.PENDING:
-            raise RuntimeCoreInvariantError(
-                f"Cannot deny step-up in status {req.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot deny step-up in current status")
         now = _now_iso()
 
         updated_req = PrivilegeElevationRequest(
@@ -608,11 +610,9 @@ class PolicyEnforcementEngine:
         """Revoke an active or suspended session."""
         old = self._sessions.get(session_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         if old.status not in (SessionStatus.ACTIVE, SessionStatus.SUSPENDED):
-            raise RuntimeCoreInvariantError(
-                f"Cannot revoke session in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot revoke session in current status")
         now = _now_iso()
         self._update_session_status(session_id, SessionStatus.REVOKED)
 
@@ -635,11 +635,9 @@ class PolicyEnforcementEngine:
         """Expire an active session."""
         old = self._sessions.get(session_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         if old.status != SessionStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot expire session in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot expire session in current status")
         updated = self._update_session_status(session_id, SessionStatus.EXPIRED)
         _emit(self._events, "session_expired", {"session_id": session_id}, session_id)
         return updated
@@ -648,11 +646,9 @@ class PolicyEnforcementEngine:
         """Suspend an active session."""
         old = self._sessions.get(session_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         if old.status != SessionStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot suspend session in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot suspend session in current status")
         updated = self._update_session_status(session_id, SessionStatus.SUSPENDED)
         _emit(self._events, "session_suspended", {"session_id": session_id}, session_id)
         return updated
@@ -661,11 +657,9 @@ class PolicyEnforcementEngine:
         """Close a session and produce a closure report."""
         old = self._sessions.get(session_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown session_id: {session_id}")
+            raise RuntimeCoreInvariantError("Unknown session_id")
         if old.status not in (SessionStatus.ACTIVE, SessionStatus.SUSPENDED):
-            raise RuntimeCoreInvariantError(
-                f"Cannot close session in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Cannot close session in current status")
         now = _now_iso()
         self._update_session_status(session_id, SessionStatus.CLOSED)
 
@@ -707,7 +701,7 @@ class PolicyEnforcementEngine:
     ) -> SessionSnapshot:
         """Capture a point-in-time session snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         active = sum(1 for s in self._sessions.values() if s.status == SessionStatus.ACTIVE)
         suspended = sum(1 for s in self._sessions.values() if s.status == SessionStatus.SUSPENDED)

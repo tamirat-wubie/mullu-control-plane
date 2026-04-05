@@ -1,10 +1,6 @@
-"""Phase 212C — Structured Output Contracts.
-
-Purpose: JSON-mode LLM responses with schema validation.
-    Ensures LLM outputs conform to expected structures before
-    they're used in downstream processing.
-Governance scope: output parsing and validation only.
-Dependencies: schema_validator.
+"""Purpose: Structured output contracts for governed JSON-mode responses.
+Governance scope: output parsing and schema validation only.
+Dependencies: Python standard library only.
 Invariants:
   - Output schemas are validated at registration time.
   - Parsing failures produce explicit errors with context.
@@ -16,7 +12,15 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
+
+_SUPPORTED_FIELD_TYPES = frozenset({
+    "string",
+    "number",
+    "boolean",
+    "array",
+    "object",
+})
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +29,7 @@ class OutputSchema:
 
     schema_id: str
     name: str
-    fields: dict[str, str]  # field_name → type ("string", "number", "boolean", "array", "object")
+    fields: dict[str, str]
     required_fields: tuple[str, ...]
     description: str = ""
 
@@ -49,7 +53,8 @@ class StructuredOutputEngine:
 
     def register(self, schema: OutputSchema) -> None:
         if schema.schema_id in self._schemas:
-            raise ValueError(f"schema already registered: {schema.schema_id}")
+            raise ValueError("schema already registered")
+        self._validate_schema(schema)
         self._schemas[schema.schema_id] = schema
 
     def get(self, schema_id: str) -> OutputSchema | None:
@@ -60,27 +65,28 @@ class StructuredOutputEngine:
         schema = self._schemas.get(schema_id)
         if schema is None:
             return ParsedOutput(
-                schema_id=schema_id, raw_text=raw_text,
-                parsed=None, valid=False,
-                errors=(f"unknown schema: {schema_id}",),
+                schema_id=schema_id,
+                raw_text=raw_text,
+                parsed=None,
+                valid=False,
+                errors=("schema unavailable",),
             )
 
-        # Try to extract JSON from the text
         parsed_json = self._extract_json(raw_text)
         if parsed_json is None:
             return ParsedOutput(
-                schema_id=schema_id, raw_text=raw_text,
-                parsed=None, valid=False,
+                schema_id=schema_id,
+                raw_text=raw_text,
+                parsed=None,
+                valid=False,
                 errors=("could not parse JSON from LLM output",),
             )
 
-        # Validate required fields
         errors: list[str] = []
         for field_name in schema.required_fields:
             if field_name not in parsed_json:
                 errors.append(f"missing required field: {field_name}")
 
-        # Validate field types
         for field_name, expected_type in schema.fields.items():
             if field_name in parsed_json:
                 actual = parsed_json[field_name]
@@ -91,20 +97,20 @@ class StructuredOutputEngine:
                     )
 
         return ParsedOutput(
-            schema_id=schema_id, raw_text=raw_text,
-            parsed=parsed_json, valid=len(errors) == 0,
+            schema_id=schema_id,
+            raw_text=raw_text,
+            parsed=parsed_json,
+            valid=len(errors) == 0,
             errors=tuple(errors),
         )
 
     def _extract_json(self, text: str) -> dict[str, Any] | None:
-        """Extract JSON from LLM text (handles markdown code blocks)."""
-        # Try direct parse
+        """Extract JSON from LLM text, including markdown code blocks."""
         try:
             return json.loads(text.strip())
         except json.JSONDecodeError:
             pass
 
-        # Try extracting from ```json ... ``` block
         if "```json" in text:
             start = text.index("```json") + len("```json")
             end = text.index("```", start)
@@ -113,10 +119,9 @@ class StructuredOutputEngine:
             except (json.JSONDecodeError, ValueError):
                 pass
 
-        # Try extracting from ``` ... ``` block
         if "```" in text:
             parts = text.split("```")
-            for part in parts[1::2]:  # Odd parts are inside code blocks
+            for part in parts[1::2]:
                 clean = part.strip()
                 if clean.startswith("json"):
                     clean = clean[4:].strip()
@@ -125,12 +130,11 @@ class StructuredOutputEngine:
                 except json.JSONDecodeError:
                     continue
 
-        # Try finding { ... } in text
         brace_start = text.find("{")
         brace_end = text.rfind("}")
         if brace_start >= 0 and brace_end > brace_start:
             try:
-                return json.loads(text[brace_start:brace_end + 1])
+                return json.loads(text[brace_start : brace_end + 1])
             except json.JSONDecodeError:
                 pass
 
@@ -146,11 +150,26 @@ class StructuredOutputEngine:
         }
         expected_type = type_map.get(expected)
         if expected_type is None:
-            return True  # Unknown type — don't validate
+            return False
         return isinstance(value, expected_type)
 
+    def _validate_schema(self, schema: OutputSchema) -> None:
+        for field_name, expected_type in schema.fields.items():
+            if not isinstance(field_name, str) or not field_name.strip():
+                raise ValueError("schema field names must be non-empty strings")
+            if expected_type not in _SUPPORTED_FIELD_TYPES:
+                raise ValueError(
+                    f"unsupported field type for '{field_name}': {expected_type}"
+                )
+
+        for field_name in schema.required_fields:
+            if field_name not in schema.fields:
+                raise ValueError(
+                    f"required field not declared in schema fields: {field_name}"
+                )
+
     def list_schemas(self) -> list[OutputSchema]:
-        return sorted(self._schemas.values(), key=lambda s: s.schema_id)
+        return sorted(self._schemas.values(), key=lambda schema: schema.schema_id)
 
     @property
     def count(self) -> int:

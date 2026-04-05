@@ -275,12 +275,12 @@ class TestDeprecateCatalogItem:
 
     def test_deprecated_cannot_deprecate_again(self, engine_with_item: ServiceCatalogEngine) -> None:
         engine_with_item.deprecate_catalog_item("item-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError, match="active catalog items"):
             engine_with_item.deprecate_catalog_item("item-1")
 
     def test_retired_cannot_deprecate(self, engine_with_item: ServiceCatalogEngine) -> None:
         engine_with_item.retire_catalog_item("item-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="ACTIVE"):
+        with pytest.raises(RuntimeCoreInvariantError, match="active catalog items"):
             engine_with_item.deprecate_catalog_item("item-1")
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
@@ -742,27 +742,27 @@ class TestApproveRequest:
         assert eng.decision_count == before + 1
 
     def test_submitted_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING_APPROVAL"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
     def test_entitled_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.evaluate_entitlement("rul-1", "req-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING_APPROVAL"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
     def test_fulfilled_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.close_request("req-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING_APPROVAL"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
     def test_denied_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.deny_request("req-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING_APPROVAL"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
     def test_cancelled_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.cancel_request("req-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING_APPROVAL"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
     def test_custom_approved_by(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
@@ -1045,25 +1045,25 @@ class TestStartTask:
     def test_in_progress_cannot_start_again(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_completed_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_failed_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
         engine_with_request.fail_task("t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_cancelled_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
         engine_with_request.cancel_task("t1")
-        with pytest.raises(RuntimeCoreInvariantError, match="PENDING"):
+        with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
@@ -2195,7 +2195,9 @@ class TestGoldenScenario5:
         eng.fail_task("task-b")
         violations = eng.detect_request_violations()
         atf = [v for v in violations if v.operation == "all_tasks_failed"]
-        assert "2" in atf[0].reason
+        assert atf[0].reason == "All fulfillment tasks failed"
+        assert "2" not in atf[0].reason
+        assert "req-deploy" not in atf[0].reason
 
 
 class TestGoldenScenario6:
@@ -2448,3 +2450,59 @@ class TestEdgeCases:
         task = eng.create_fulfillment_task("t1", "r1", "tech-1")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_ids_or_statuses(
+        self,
+        engine_with_request: ServiceCatalogEngine,
+        engine_with_item: ServiceCatalogEngine,
+    ) -> None:
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            engine_with_item.register_catalog_item("item-1", "Again", "tenant-a")
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate item_id"
+        assert "item-1" not in duplicate_message
+        assert "item_id" in duplicate_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as approve_exc:
+            engine_with_request.approve_request("req-1")
+        approve_message = str(approve_exc.value)
+        assert approve_message == "Can only approve pending-approval requests"
+        assert "PENDING_APPROVAL" not in approve_message
+        assert "pending-approval" in approve_message
+
+        engine_with_request.create_fulfillment_task("task-secret", "req-1", "tech-1")
+        engine_with_request.start_task("task-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as start_exc:
+            engine_with_request.start_task("task-secret")
+        start_message = str(start_exc.value)
+        assert start_message == "Can only start pending tasks"
+        assert "IN_PROGRESS" not in start_message
+        assert "pending" in start_message
+
+    def test_violation_reasons_are_bounded(self, engine: ServiceCatalogEngine) -> None:
+        engine.register_catalog_item("item-secret", "Secret", "t1")
+        engine.submit_request("req-no-ent", "item-secret", "t1", "u1")
+
+        engine.submit_request("req-no-tasks", "item-secret", "t1", "u2")
+        engine._update_request_status("req-no-tasks", RequestStatus.IN_FULFILLMENT)
+        engine.submit_request("req-all-failed", "item-secret", "t1", "u3")
+        engine.create_fulfillment_task("fail-1", "req-all-failed", "tech-1")
+        engine.fail_task("fail-1")
+
+        violations = {
+            (v.request_id, v.operation): v.reason
+            for v in engine.detect_request_violations()
+        }
+        assert violations[("req-no-ent", "no_entitlement")] == "Request lacks entitlement evaluation"
+        assert "req-no-ent" not in violations[("req-no-ent", "no_entitlement")]
+        assert "entitlement evaluation" in violations[("req-no-ent", "no_entitlement")]
+
+        assert violations[("req-no-tasks", "no_tasks")] == "Request in fulfillment has no tasks"
+        assert "req-no-tasks" not in violations[("req-no-tasks", "no_tasks")]
+        assert "fulfillment" in violations[("req-no-tasks", "no_tasks")]
+
+        assert violations[("req-all-failed", "all_tasks_failed")] == "All fulfillment tasks failed"
+        assert "req-all-failed" not in violations[("req-all-failed", "all_tasks_failed")]
+        assert "1" not in violations[("req-all-failed", "all_tasks_failed")]

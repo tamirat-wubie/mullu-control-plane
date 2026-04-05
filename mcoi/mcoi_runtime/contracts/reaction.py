@@ -98,7 +98,7 @@ class ReactionCondition(ContractRecord):
         )
         valid_ops = ("eq", "neq", "gt", "gte", "lt", "lte", "contains", "in", "exists")
         if self.operator not in valid_ops:
-            raise ValueError(f"operator must be one of {valid_ops}, got {self.operator!r}")
+            raise ValueError("operator has unsupported value")
         object.__setattr__(self, "expected_value", freeze_value(self.expected_value))
 
 

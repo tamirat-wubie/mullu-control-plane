@@ -347,6 +347,9 @@ class TestMemoryMeshAttachment:
         bridge.research_from_artifact_ingestion("t1", "art-1")
         mem = bridge.attach_research_state_to_memory_mesh("scope-1")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Research state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
 
     def test_memory_type_observation(self, bridge):
         bridge.research_from_artifact_ingestion("t1", "art-1")
@@ -392,6 +395,8 @@ class TestMemoryMeshAttachment:
     def test_scope_ref_id_in_content(self, bridge):
         bridge.research_from_artifact_ingestion("t1", "art-1")
         mem = bridge.attach_research_state_to_memory_mesh("my-scope")
+        assert mem.title == "Research state"
+        assert "my-scope" not in mem.title
         assert mem.content["scope_ref_id"] == "my-scope"
 
 

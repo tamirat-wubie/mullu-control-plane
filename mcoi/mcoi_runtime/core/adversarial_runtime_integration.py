@@ -92,7 +92,7 @@ class AdversarialRuntimeIntegration:
         vuln = self._adv.register_vulnerability(
             vulnerability_id=vuln_id, tenant_id=tenant_id,
             target_runtime=source_type,
-            description=f"{source_type} bridge vulnerability scan",
+            description="bridge vulnerability scan",
         )
         _emit(self._events, f"adversarial_for_{source_type}", {
             "tenant_id": tenant_id, "scenario_id": scenario_id, "vulnerability_id": vuln_id,
@@ -145,7 +145,7 @@ class AdversarialRuntimeIntegration:
         record = MemoryRecord(
             memory_id=mid,
             scope_ref_id=scope_ref_id,
-            title=f"Adversarial runtime state for {scope_ref_id}",
+            title="Adversarial runtime state",
             memory_type=MemoryType.OBSERVATION,
             scope=MemoryScope.GLOBAL,
             trust_level=MemoryTrustLevel.VERIFIED,

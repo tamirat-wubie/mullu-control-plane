@@ -23,6 +23,10 @@ from mcoi_runtime.app.routers.deps import deps
 router = APIRouter()
 
 
+def _adapter_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # ── Pydantic request/response models ──────────────────────────────────
 
 
@@ -320,11 +324,7 @@ def agent_restore(req: dict[str, Any]):
     try:
         outcome = deps.coordination_engine.restore_checkpoint(checkpoint_id)
     except PersistenceError:
-        raise HTTPException(404, detail={
-            "error": f"checkpoint not found: {checkpoint_id}",
-            "error_code": "checkpoint_not_found",
-            "governed": True,
-        })
+        raise HTTPException(404, detail=_adapter_error_detail("checkpoint not found", "checkpoint_not_found"))
     return {
         "checkpoint_id": outcome.checkpoint_id,
         "status": outcome.status.value,

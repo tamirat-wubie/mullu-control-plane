@@ -48,6 +48,16 @@ class TestToolRegistry:
                 handler=lambda args: {},
             )
 
+    def test_duplicate_register_error_is_bounded(self):
+        reg = _registry()
+        with pytest.raises(ValueError, match="already registered") as excinfo:
+            reg.register(
+                ToolDefinition(tool_id="calculator", name="C2", description="x", parameters=()),
+                handler=lambda args: {},
+            )
+        assert str(excinfo.value) == "tool already registered"
+        assert "calculator" not in str(excinfo.value)
+
     def test_invoke_success(self):
         reg = _registry()
         result = reg.invoke("calculator", {"expression": "2+3"})
@@ -59,19 +69,22 @@ class TestToolRegistry:
         reg = _registry()
         result = reg.invoke("calculator", {})  # Missing "expression"
         assert result.succeeded is False
-        assert "missing required" in result.error
+        assert result.error == "missing required parameter"
+        assert "expression" not in result.error
 
     def test_invoke_unknown_tool(self):
         reg = _registry()
         result = reg.invoke("nonexistent", {})
         assert result.succeeded is False
-        assert "unknown tool" in result.error
+        assert result.error == "unknown tool"
+        assert "nonexistent" not in result.error
 
     def test_invoke_disallowed_tool(self):
         reg = _registry()
         result = reg.invoke("calculator", {"expression": "2+3"}, allowed_tool_ids={"greeting"})
         assert result.succeeded is False
-        assert "tool not allowed" in result.error
+        assert result.error == "tool not allowed"
+        assert "calculator" not in result.error
 
     def test_invoke_disabled_tool(self):
         reg = ToolRegistry(clock=FIXED_CLOCK)
@@ -81,7 +94,8 @@ class TestToolRegistry:
         )
         result = reg.invoke("disabled", {})
         assert result.succeeded is False
-        assert "disabled" in result.error
+        assert result.error == "tool disabled"
+        assert "disabled:" not in result.error
 
     def test_invoke_handler_error(self):
         reg = ToolRegistry(clock=FIXED_CLOCK)

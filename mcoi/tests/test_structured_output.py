@@ -52,6 +52,57 @@ class TestStructuredOutputEngine:
         eng = self._engine()
         result = eng.parse("nonexistent", '{}')
         assert result.valid is False
+        assert result.errors == ("schema unavailable",)
+        assert "nonexistent" not in result.errors[0]
+
+    def test_register_rejects_unsupported_field_type(self):
+        eng = StructuredOutputEngine()
+        with pytest.raises(ValueError, match="unsupported field type"):
+            eng.register(OutputSchema(
+                schema_id="bad",
+                name="Bad",
+                fields={"summary": "mystery"},
+                required_fields=("summary",),
+            ))
+
+    def test_register_rejects_required_field_missing_from_schema(self):
+        eng = StructuredOutputEngine()
+        with pytest.raises(ValueError, match="required field not declared"):
+            eng.register(OutputSchema(
+                schema_id="bad-required",
+                name="Bad Required",
+                fields={"summary": "string"},
+                required_fields=("summary", "score"),
+            ))
+
+    def test_parse_fails_closed_for_unknown_runtime_field_type(self):
+        eng = StructuredOutputEngine()
+        eng._schemas["legacy"] = OutputSchema(
+            schema_id="legacy",
+            name="Legacy",
+            fields={"summary": "mystery"},
+            required_fields=("summary",),
+        )
+        result = eng.parse("legacy", '{"summary": "test"}')
+        assert result.valid is False
+        assert any("expected mystery" in error for error in result.errors)
+
+    def test_duplicate_register_is_bounded(self):
+        eng = StructuredOutputEngine()
+        eng.register(OutputSchema(
+            schema_id="analysis",
+            name="Analysis",
+            fields={"summary": "string"},
+            required_fields=("summary",),
+        ))
+        with pytest.raises(ValueError, match="^schema already registered$") as exc_info:
+            eng.register(OutputSchema(
+                schema_id="analysis",
+                name="Analysis 2",
+                fields={"summary": "string"},
+                required_fields=("summary",),
+            ))
+        assert "analysis" not in str(exc_info.value)
 
     def test_raw_text_preserved(self):
         eng = self._engine()

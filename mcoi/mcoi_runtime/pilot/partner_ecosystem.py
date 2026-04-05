@@ -11,6 +11,13 @@ CONTRIBUTION_KINDS = (
     "compliance_overlay",
 )
 
+CONTRIBUTION_STATUSES = (
+    "submitted",
+    "approved",
+    "rejected",
+    "deprecated",
+)
+
 APPROVAL_REQUIREMENTS: dict[str, tuple[str, ...]] = {
     "connector_pack": ("security_review", "test_coverage"),
     "deployment_template": ("dry_run_validation", "documentation_review"),
@@ -31,9 +38,9 @@ class PartnerContribution:
 
     def __post_init__(self) -> None:
         if self.kind not in CONTRIBUTION_KINDS:
-            raise ValueError(f"Invalid kind {self.kind!r}; must be one of {CONTRIBUTION_KINDS}")
-        if self.status not in ("submitted", "approved", "rejected", "deprecated"):
-            raise ValueError(f"Invalid status {self.status!r}")
+            raise ValueError("invalid contribution kind")
+        if self.status not in CONTRIBUTION_STATUSES:
+            raise ValueError("invalid contribution status")
         if not (0.0 <= self.quality_score <= 10.0):
             raise ValueError("quality_score must be between 0 and 10")
 
@@ -48,7 +55,7 @@ class EcosystemMarketplace:
 
     def submit_contribution(self, contrib: PartnerContribution) -> PartnerContribution:
         if contrib.contribution_id in self._contributions:
-            raise ValueError(f"Duplicate contribution_id {contrib.contribution_id!r}")
+            raise ValueError("duplicate contribution")
         contrib.status = "submitted"
         self._contributions[contrib.contribution_id] = contrib
         return contrib
@@ -56,7 +63,7 @@ class EcosystemMarketplace:
     def approve(self, contribution_id: str, quality_score: float) -> PartnerContribution:
         c = self._get(contribution_id)
         if c.status != "submitted":
-            raise ValueError(f"Cannot approve contribution in status {c.status!r}")
+            raise ValueError("contribution must be submitted before approval")
         if not (0.0 <= quality_score <= 10.0):
             raise ValueError("quality_score must be between 0 and 10")
         c.status = "approved"
@@ -66,14 +73,14 @@ class EcosystemMarketplace:
     def reject(self, contribution_id: str, reason: str = "") -> PartnerContribution:
         c = self._get(contribution_id)
         if c.status != "submitted":
-            raise ValueError(f"Cannot reject contribution in status {c.status!r}")
+            raise ValueError("contribution must be submitted before rejection")
         c.status = "rejected"
         return c
 
     def deprecate(self, contribution_id: str) -> PartnerContribution:
         c = self._get(contribution_id)
         if c.status != "approved":
-            raise ValueError(f"Cannot deprecate contribution in status {c.status!r}")
+            raise ValueError("contribution must be approved before deprecation")
         c.status = "deprecated"
         return c
 
@@ -109,4 +116,4 @@ class EcosystemMarketplace:
         try:
             return self._contributions[contribution_id]
         except KeyError:
-            raise KeyError(f"Unknown contribution_id {contribution_id!r}")
+            raise KeyError("unknown contribution")

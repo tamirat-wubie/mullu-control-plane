@@ -34,7 +34,7 @@ class TestPluginRegistry:
         reg = PluginRegistry()
         desc = PluginDescriptor(plugin_id="p1", name="P1", version="1.0", hooks=())
         reg.register(desc)
-        with pytest.raises(ValueError, match="didn't declare hook"):
+        with pytest.raises(ValueError, match="^plugin hook not declared$"):
             reg.load("p1", hooks={HookPoint.PRE_LLM_CALL: lambda **kw: None})
 
     def test_load_missing_dependency(self):
@@ -66,7 +66,7 @@ class TestPluginRegistry:
     def test_activate_unloaded(self):
         reg = PluginRegistry()
         reg.register(PluginDescriptor(plugin_id="p1", name="P1", version="1.0"))
-        with pytest.raises(ValueError, match="not loaded"):
+        with pytest.raises(ValueError, match="^plugin must be loaded before activation$"):
             reg.activate("p1")
 
     def test_disable(self):
@@ -141,3 +141,41 @@ class TestPluginRegistry:
         summary = reg.summary()
         assert summary["total"] == 1
         assert summary["active"] == 1
+
+
+class TestBoundedPluginRegistryContracts:
+    def test_registry_errors_are_bounded(self):
+        reg = PluginRegistry()
+        desc = PluginDescriptor(plugin_id="plugin-secret", name="P1", version="1.0")
+        reg.register(desc)
+
+        with pytest.raises(ValueError, match="^plugin already registered$") as exc_info:
+            reg.register(desc)
+        assert "plugin-secret" not in str(exc_info.value)
+
+        with pytest.raises(ValueError, match="^plugin not found$") as exc_info:
+            reg.load("missing-plugin")
+        assert "missing-plugin" not in str(exc_info.value)
+
+    def test_dependency_and_activation_errors_are_bounded(self):
+        reg = PluginRegistry()
+        reg.register(PluginDescriptor(plugin_id="plugin-secret", name="P1", version="1.0"))
+        reg.register(PluginDescriptor(plugin_id="plugin-dependent", name="P2", version="1.0", dependencies=("plugin-secret",)))
+
+        with pytest.raises(ValueError, match="^plugin dependency not loaded$") as exc_info:
+            reg.load("plugin-dependent")
+        assert "plugin-secret" not in str(exc_info.value)
+
+        with pytest.raises(ValueError, match="^plugin must be loaded before activation$") as exc_info:
+            reg.activate("plugin-secret")
+        assert "registered" not in str(exc_info.value)
+        assert "plugin-secret" not in str(exc_info.value)
+
+    def test_hook_declaration_errors_are_bounded(self):
+        reg = PluginRegistry()
+        desc = PluginDescriptor(plugin_id="plugin-secret", name="P1", version="1.0", hooks=())
+        reg.register(desc)
+        with pytest.raises(ValueError, match="^plugin hook not declared$") as exc_info:
+            reg.load("plugin-secret", hooks={HookPoint.PRE_LLM_CALL: lambda **kw: None})
+        assert "plugin-secret" not in str(exc_info.value)
+        assert "PRE_LLM_CALL" not in str(exc_info.value)

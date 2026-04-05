@@ -96,8 +96,9 @@ class TestTenantRegistration:
     def test_register_dup_raises(self, env):
         _, eng = env
         eng.register_tenant("t1", "T1", owner="x")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             eng.register_tenant("t1", "T1 again", owner="y")
+        assert "t1" not in str(exc_info.value)
 
     def test_get_tenant_returns_record(self, env):
         _, eng = env
@@ -107,8 +108,9 @@ class TestTenantRegistration:
 
     def test_get_unknown_tenant_raises(self, env):
         _, eng = env
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.get_tenant("no-such")
+        assert "no-such" not in str(exc_info.value)
 
     def test_set_tenant_status(self, env):
         es, eng = env
@@ -184,8 +186,9 @@ class TestWorkspaceRegistration:
 
     def test_unknown_tenant_raises(self, env):
         _, eng = env
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown tenant"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown tenant") as exc_info:
             eng.register_workspace("ws1", "no-tenant", "WS1")
+        assert "no-tenant" not in str(exc_info.value)
 
     def test_get_workspace(self, env):
         _, eng = env
@@ -692,16 +695,18 @@ class TestEnvironmentPromotion:
         eng.register_tenant("t1", "T1", owner="x")
         eng.register_workspace("ws1", "t1", "WS1")
         eng.register_environment("env1", "ws1", EnvironmentKind.STAGING)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown source"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown source") as exc_info:
             eng.promote_environment("p1", "no-env", "env1")
+        assert "no-env" not in str(exc_info.value)
 
     def test_unknown_target_raises(self, env):
         _, eng = env
         eng.register_tenant("t1", "T1", owner="x")
         eng.register_workspace("ws1", "t1", "WS1")
         eng.register_environment("env0", "ws1", EnvironmentKind.DEVELOPMENT)
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown target"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown target") as exc_info:
             eng.promote_environment("p1", "env0", "no-env")
+        assert "no-env" not in str(exc_info.value)
 
     def test_promotion_updates_target_promoted_from(self, env):
         _, eng = env

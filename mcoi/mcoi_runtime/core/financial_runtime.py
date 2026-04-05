@@ -101,7 +101,7 @@ class FinancialRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> BudgetEnvelope:
         if budget_id in self._budgets:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' already exists")
+            raise RuntimeCoreInvariantError("budget already exists")
         now = _now_iso()
         budget = BudgetEnvelope(
             budget_id=budget_id,
@@ -141,10 +141,10 @@ class FinancialRuntimeEngine:
         allocated_amount: float,
     ) -> CampaignBudgetBinding:
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"binding '{binding_id}' already exists")
+            raise RuntimeCoreInvariantError("binding already exists")
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
         if allocated_amount < 0:
             raise RuntimeCoreInvariantError("allocated_amount must be non-negative")
 
@@ -194,7 +194,7 @@ class FinancialRuntimeEngine:
         metadata: dict[str, Any] | None = None,
     ) -> ConnectorCostProfile:
         if profile_id in self._connector_profiles:
-            raise RuntimeCoreInvariantError(f"connector profile '{profile_id}' already exists")
+            raise RuntimeCoreInvariantError("connector profile already exists")
         now = _now_iso()
         profile = ConnectorCostProfile(
             profile_id=profile_id,
@@ -238,7 +238,7 @@ class FinancialRuntimeEngine:
         auto_approve_below: float = 0.0,
     ) -> ApprovalThreshold:
         if budget_id not in self._budgets:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
         now = _now_iso()
         threshold = ApprovalThreshold(
             threshold_id=threshold_id,
@@ -279,10 +279,10 @@ class FinancialRuntimeEngine:
     ) -> BudgetDecision:
         """Reserve funds from a budget. Returns a BudgetDecision with disposition."""
         if reservation_id in self._reservations:
-            raise RuntimeCoreInvariantError(f"reservation '{reservation_id}' already exists")
+            raise RuntimeCoreInvariantError("reservation already exists")
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
         if amount < 0:
             raise RuntimeCoreInvariantError("reservation amount must be non-negative")
 
@@ -302,7 +302,7 @@ class FinancialRuntimeEngine:
                 requested_amount=amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason=f"hard stop: utilization would be {new_utilization:.2%}, threshold is {budget.hard_stop_threshold:.2%}",
+                reason="hard stop threshold exceeded",
                 decided_at=now,
             )
             self._decisions.append(decision)
@@ -323,7 +323,7 @@ class FinancialRuntimeEngine:
                 requested_amount=amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason=f"insufficient funds: requested {amount}, available {available}",
+                reason="insufficient funds",
                 decided_at=now,
             )
             self._decisions.append(decision)
@@ -344,7 +344,7 @@ class FinancialRuntimeEngine:
                 requested_amount=amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason=f"approval required from {approver}",
+                reason="approval required",
                 reservation_id=reservation_id,
                 approval_required=True,
                 approver_ref=approver,
@@ -395,7 +395,7 @@ class FinancialRuntimeEngine:
             requested_amount=amount,
             available_amount=available - amount,
             currency=budget.currency,
-            reason="reserved" if not warning else f"reserved with warning: utilization {new_utilization:.2%}",
+            reason="reserved" if not warning else "reserved with warning",
             reservation_id=reservation_id,
             decided_at=now,
         )
@@ -420,12 +420,12 @@ class FinancialRuntimeEngine:
     ) -> SpendRecord:
         """Consume a reservation, creating a spend record."""
         if spend_id in self._spend_records:
-            raise RuntimeCoreInvariantError(f"spend record '{spend_id}' already exists")
+            raise RuntimeCoreInvariantError("spend record already exists")
         reservation = self._reservations.get(reservation_id)
         if reservation is None:
-            raise RuntimeCoreInvariantError(f"reservation '{reservation_id}' not found")
+            raise RuntimeCoreInvariantError("reservation not found")
         if not reservation.active:
-            raise RuntimeCoreInvariantError(f"reservation '{reservation_id}' is not active")
+            raise RuntimeCoreInvariantError("reservation is not active")
 
         amount = actual_amount if actual_amount is not None else reservation.amount
         if amount < 0:
@@ -483,9 +483,9 @@ class FinancialRuntimeEngine:
         """Release a reservation, returning funds to available."""
         reservation = self._reservations.get(reservation_id)
         if reservation is None:
-            raise RuntimeCoreInvariantError(f"reservation '{reservation_id}' not found")
+            raise RuntimeCoreInvariantError("reservation not found")
         if not reservation.active:
-            raise RuntimeCoreInvariantError(f"reservation '{reservation_id}' is not active")
+            raise RuntimeCoreInvariantError("reservation is not active")
 
         budget = self._budgets[reservation.budget_id]
         now = _now_iso()
@@ -587,7 +587,7 @@ class FinancialRuntimeEngine:
         """Project future spend for a budget based on current burn rate."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
 
         now = _now_iso()
         # Simple projection: current consumed + active reservations
@@ -622,7 +622,7 @@ class FinancialRuntimeEngine:
         """Return point-in-time financial health for a budget."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
 
         now = _now_iso()
         available = budget.limit_amount - budget.consumed_amount - budget.reserved_amount
@@ -655,7 +655,7 @@ class FinancialRuntimeEngine:
         """Detect conflicts in a budget's state."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
 
         now = _now_iso()
         conflicts: list[BudgetConflict] = []
@@ -667,7 +667,7 @@ class FinancialRuntimeEngine:
                 conflict_id=stable_identifier("bcon", {"bid": budget_id, "kind": "over_limit", "ts": now}),
                 budget_id=budget_id,
                 kind=BudgetConflictKind.OVER_LIMIT,
-                description=f"committed {total_committed} exceeds limit {budget.limit_amount}",
+                description="committed spend exceeds budget limit",
                 severity=3,
                 detected_at=now,
             ))
@@ -680,7 +680,7 @@ class FinancialRuntimeEngine:
                     conflict_id=stable_identifier("bcon", {"bid": budget_id, "kind": "orphaned", "ts": now}),
                     budget_id=budget_id,
                     kind=BudgetConflictKind.ORPHANED_RESERVATION,
-                    description=f"{len(active_res)} active reservations on inactive budget",
+                    description="inactive budget has active reservations",
                     severity=2,
                     detected_at=now,
                 ))
@@ -692,7 +692,7 @@ class FinancialRuntimeEngine:
                 conflict_id=stable_identifier("bcon", {"bid": budget_id, "kind": "threshold", "ts": now}),
                 budget_id=budget_id,
                 kind=BudgetConflictKind.THRESHOLD_BREACH,
-                description=f"utilization {utilization:.2%} at or above hard stop {budget.hard_stop_threshold:.2%}",
+                description="utilization exceeds hard stop threshold",
                 severity=3,
                 detected_at=now,
             ))
@@ -711,7 +711,7 @@ class FinancialRuntimeEngine:
         """Check if a spend of requested_amount would be allowed. Read-only gate."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
 
         now = _now_iso()
         available = budget.limit_amount - budget.consumed_amount - budget.reserved_amount
@@ -724,7 +724,7 @@ class FinancialRuntimeEngine:
                 requested_amount=requested_amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason="budget is inactive",
+                reason="budget inactive",
                 decided_at=now,
             )
 
@@ -738,7 +738,7 @@ class FinancialRuntimeEngine:
                 requested_amount=requested_amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason=f"hard stop: utilization would be {new_utilization:.2%}",
+                reason="hard stop threshold exceeded",
                 decided_at=now,
             )
 
@@ -750,7 +750,7 @@ class FinancialRuntimeEngine:
                 requested_amount=requested_amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason=f"insufficient: requested {requested_amount}, available {available}",
+                reason="insufficient funds",
                 decided_at=now,
             )
 
@@ -763,7 +763,7 @@ class FinancialRuntimeEngine:
                 requested_amount=requested_amount,
                 available_amount=available,
                 currency=budget.currency,
-                reason=f"approval required from {approver}",
+                reason="approval required",
                 approval_required=True,
                 approver_ref=approver,
                 decided_at=now,
@@ -773,7 +773,7 @@ class FinancialRuntimeEngine:
         reason = "approved"
         if new_utilization >= budget.warning_threshold:
             disposition = ChargeDisposition.WARNING_ISSUED
-            reason = f"approved with warning: utilization would be {new_utilization:.2%}"
+            reason = "approved with warning"
 
         return BudgetDecision(
             decision_id=stable_identifier("bgate", {"bid": budget_id, "ts": now}),
@@ -794,7 +794,7 @@ class FinancialRuntimeEngine:
         """Close a budget and produce a closure report."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
 
         now = _now_iso()
 
@@ -866,7 +866,7 @@ class FinancialRuntimeEngine:
         """Find the cheapest viable connector under budget pressure."""
         budget = self._budgets.get(budget_id)
         if budget is None:
-            raise RuntimeCoreInvariantError(f"budget '{budget_id}' not found")
+            raise RuntimeCoreInvariantError("budget not found")
 
         available = budget.limit_amount - budget.consumed_amount - budget.reserved_amount
         candidates: list[dict[str, Any]] = []

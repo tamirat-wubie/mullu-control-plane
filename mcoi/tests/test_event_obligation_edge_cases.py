@@ -6,6 +6,8 @@ Invariants: bridge methods handle edge cases gracefully with clear errors.
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from mcoi_runtime.contracts.event import (
@@ -21,6 +23,7 @@ from mcoi_runtime.contracts.obligation import (
 )
 from mcoi_runtime.core.event_obligation_integration import EventObligationBridge
 from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.obligation_runtime import ObligationRuntimeEngine
 
 _CLOCK = "2026-03-20T12:00:00+00:00"
@@ -117,6 +120,46 @@ class TestCloseAndEmitEdgeCases:
         )
         assert evt.event_type == EventType.OBLIGATION_CLOSED
 
+    def test_close_missing_after_close_is_bounded(self) -> None:
+        spine, eng = _spine(), _obl_engine()
+        obl, _ = EventObligationBridge.process_event(
+            spine, eng, _event(eid="evt-close-missing"),
+            owner=_owner(), deadline=_deadline(),
+            trigger=ObligationTrigger.APPROVAL_REQUEST,
+            description="test",
+        )
+        eng.activate(obl.obligation_id)
+        eng.get_obligation = lambda _obligation_id: None  # type: ignore[method-assign]
+        with pytest.raises(RuntimeCoreInvariantError, match="^obligation not found after close$") as excinfo:
+            EventObligationBridge.close_and_emit(
+                spine, eng, obl.obligation_id,
+                final_state=ObligationState.COMPLETED,
+                reason="done", closed_by="agent-1",
+            )
+        assert obl.obligation_id not in str(excinfo.value)
+
+    def test_close_state_mismatch_after_close_is_bounded(self) -> None:
+        spine, eng = _spine(), _obl_engine()
+        obl, _ = EventObligationBridge.process_event(
+            spine, eng, _event(eid="evt-close-mismatch"),
+            owner=_owner(), deadline=_deadline(),
+            trigger=ObligationTrigger.APPROVAL_REQUEST,
+            description="test",
+        )
+        eng.activate(obl.obligation_id)
+        eng.get_obligation = lambda _obligation_id: replace(  # type: ignore[method-assign]
+            eng._obligations[obl.obligation_id],
+            state=ObligationState.ACTIVE,
+        )
+        with pytest.raises(RuntimeCoreInvariantError, match="^obligation state mismatch after close$") as excinfo:
+            EventObligationBridge.close_and_emit(
+                spine, eng, obl.obligation_id,
+                final_state=ObligationState.COMPLETED,
+                reason="done", closed_by="agent-1",
+            )
+        assert obl.obligation_id not in str(excinfo.value)
+        assert ObligationState.ACTIVE.value not in str(excinfo.value)
+
 
 # --- transfer_and_emit edge cases ---
 
@@ -164,6 +207,45 @@ class TestTransferAndEmitEdgeCases:
         assert history[0].to_owner.owner_id == "a2"
         assert history[1].to_owner.owner_id == "a3"
 
+    def test_transfer_missing_after_transfer_is_bounded(self) -> None:
+        spine, eng = _spine(), _obl_engine()
+        obl, _ = EventObligationBridge.process_event(
+            spine, eng, _event(eid="evt-transfer-missing"),
+            owner=_owner("a1"), deadline=_deadline(),
+            trigger=ObligationTrigger.ESCALATION_ACK,
+            description="test",
+        )
+        eng.activate(obl.obligation_id)
+        eng.get_obligation = lambda _obligation_id: None  # type: ignore[method-assign]
+        with pytest.raises(RuntimeCoreInvariantError, match="^obligation not found after transfer$") as excinfo:
+            EventObligationBridge.transfer_and_emit(
+                spine, eng, obl.obligation_id,
+                to_owner=_owner("a2"), reason="handoff",
+            )
+        assert obl.obligation_id not in str(excinfo.value)
+
+    def test_transfer_owner_mismatch_after_transfer_is_bounded(self) -> None:
+        spine, eng = _spine(), _obl_engine()
+        obl, _ = EventObligationBridge.process_event(
+            spine, eng, _event(eid="evt-transfer-mismatch"),
+            owner=_owner("a1"), deadline=_deadline(),
+            trigger=ObligationTrigger.ESCALATION_ACK,
+            description="test",
+        )
+        eng.activate(obl.obligation_id)
+        eng.get_obligation = lambda _obligation_id: replace(  # type: ignore[method-assign]
+            eng._obligations[obl.obligation_id],
+            owner=_owner("unexpected"),
+        )
+        with pytest.raises(RuntimeCoreInvariantError, match="^obligation owner mismatch after transfer$") as excinfo:
+            EventObligationBridge.transfer_and_emit(
+                spine, eng, obl.obligation_id,
+                to_owner=_owner("a2"), reason="handoff",
+            )
+        assert obl.obligation_id not in str(excinfo.value)
+        assert "unexpected" not in str(excinfo.value)
+        assert "a2" not in str(excinfo.value)
+
 
 # --- escalate_and_emit edge cases ---
 
@@ -193,6 +275,44 @@ class TestEscalateAndEmitEdgeCases:
         assert len(esc_history) == 2
         assert esc_history[0].escalated_to.owner_id == "mgr-1"
         assert esc_history[1].escalated_to.owner_id == "dir-1"
+
+    def test_escalate_missing_after_escalate_is_bounded(self) -> None:
+        spine, eng = _spine(), _obl_engine()
+        obl, _ = EventObligationBridge.process_event(
+            spine, eng, _event(eid="evt-esc-missing"),
+            owner=_owner("a1"), deadline=_deadline(),
+            trigger=ObligationTrigger.ESCALATION_ACK,
+            description="test",
+        )
+        eng.activate(obl.obligation_id)
+        eng.get_obligation = lambda _obligation_id: None  # type: ignore[method-assign]
+        with pytest.raises(RuntimeCoreInvariantError, match="^obligation not found after escalate$") as excinfo:
+            EventObligationBridge.escalate_and_emit(
+                spine, eng, obl.obligation_id,
+                escalated_to=_owner("mgr-1"), reason="timeout", severity="high",
+            )
+        assert obl.obligation_id not in str(excinfo.value)
+
+    def test_escalate_state_mismatch_after_escalate_is_bounded(self) -> None:
+        spine, eng = _spine(), _obl_engine()
+        obl, _ = EventObligationBridge.process_event(
+            spine, eng, _event(eid="evt-esc-mismatch"),
+            owner=_owner("a1"), deadline=_deadline(),
+            trigger=ObligationTrigger.ESCALATION_ACK,
+            description="test",
+        )
+        eng.activate(obl.obligation_id)
+        eng.get_obligation = lambda _obligation_id: replace(  # type: ignore[method-assign]
+            eng._obligations[obl.obligation_id],
+            state=ObligationState.ACTIVE,
+        )
+        with pytest.raises(RuntimeCoreInvariantError, match="^obligation state mismatch after escalate$") as excinfo:
+            EventObligationBridge.escalate_and_emit(
+                spine, eng, obl.obligation_id,
+                escalated_to=_owner("mgr-1"), reason="timeout", severity="high",
+            )
+        assert obl.obligation_id not in str(excinfo.value)
+        assert ObligationState.ACTIVE.value not in str(excinfo.value)
 
 
 # --- check_expired_obligations edge cases ---

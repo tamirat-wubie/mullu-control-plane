@@ -68,8 +68,11 @@ class TestReactionCondition:
             ReactionCondition(condition_id="", field_path="x", operator="eq", expected_value=1)
 
     def test_invalid_operator_raises(self) -> None:
-        with pytest.raises(ValueError, match="operator"):
+        with pytest.raises(ValueError, match="^operator has unsupported value$") as exc_info:
             ReactionCondition(condition_id="c1", field_path="x", operator="banana", expected_value=1)
+        message = str(exc_info.value)
+        assert "banana" not in message
+        assert "eq" not in message
 
     def test_all_valid_operators(self) -> None:
         for op in ("eq", "neq", "gt", "gte", "lt", "lte", "contains", "in", "exists"):

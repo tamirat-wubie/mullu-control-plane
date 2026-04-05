@@ -171,10 +171,12 @@ class TestMemoryMeshAttachment:
         record = integ.attach_epistemic_state_to_memory_mesh("scope-1")
         assert record.content["total_claims"] == 1
 
-    def test_title(self):
+    def test_title_is_bounded(self):
         integ, _, _, _ = _make_integration()
         record = integ.attach_epistemic_state_to_memory_mesh("scope-1")
-        assert "scope-1" in record.title
+        assert record.title == "Epistemic state"
+        assert "scope-1" not in record.title
+        assert record.scope_ref_id == "scope-1"
 
     def test_tags(self):
         integ, _, _, _ = _make_integration()

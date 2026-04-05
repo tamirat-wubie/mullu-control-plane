@@ -52,7 +52,7 @@ def test_temporal_task_validates() -> None:
 
 def test_state_transition_rejects_terminal_source() -> None:
     for state in TERMINAL_STATES:
-        with pytest.raises(ValueError, match="terminal"):
+        with pytest.raises(ValueError, match="^cannot transition from terminal state$") as exc_info:
             StateTransition(
                 task_id="t-1",
                 from_state=state,
@@ -60,6 +60,8 @@ def test_state_transition_rejects_terminal_source() -> None:
                 reason="invalid",
                 transitioned_at=_CLOCK,
             )
+        assert state.value not in str(exc_info.value)
+        assert "TemporalState" not in str(exc_info.value)
 
 
 def test_state_transition_rejects_same_state() -> None:
@@ -97,8 +99,9 @@ def test_schedule_and_get() -> None:
 def test_schedule_duplicate_rejected() -> None:
     engine = TemporalEngine(clock=lambda: _CLOCK)
     engine.schedule(_task())
-    with pytest.raises(RuntimeCoreInvariantError, match="already scheduled"):
+    with pytest.raises(RuntimeCoreInvariantError, match="^task already scheduled$") as exc_info:
         engine.schedule(_task())
+    assert "task-1" not in str(exc_info.value)
 
 
 def test_schedule_non_pending_rejected() -> None:
@@ -121,6 +124,13 @@ def test_transition_updates_state() -> None:
     assert transition.from_state is TemporalState.PENDING
     assert transition.to_state is TemporalState.DUE
     assert engine.get_task("task-1").state is TemporalState.DUE
+
+
+def test_transition_unknown_task_is_bounded() -> None:
+    engine = TemporalEngine(clock=lambda: _CLOCK)
+    with pytest.raises(RuntimeCoreInvariantError, match="^task unavailable$") as exc_info:
+        engine.transition("missing-task", TemporalState.DUE, "trigger met")
+    assert "missing-task" not in str(exc_info.value)
 
 
 def test_transition_from_terminal_rejected() -> None:
@@ -203,3 +213,42 @@ def test_get_transitions() -> None:
     assert len(transitions) == 2
     assert transitions[0].to_state is TemporalState.DUE
     assert transitions[1].to_state is TemporalState.RUNNING
+
+
+def test_terminal_reason_is_bounded() -> None:
+    engine = TemporalEngine(clock=lambda: _CLOCK)
+    engine.schedule(_task())
+    engine.transition("task-1", TemporalState.CANCELLED, "cancelled")
+
+    result = engine.evaluate_due("task-1")
+    assert result.reason == "terminal_state"
+    assert "TemporalState" not in result.reason
+    assert "CANCELLED" not in result.reason
+
+
+def test_not_evaluable_reason_is_bounded() -> None:
+    engine = TemporalEngine(clock=lambda: _CLOCK)
+    engine.schedule(_task())
+    engine.transition("task-1", TemporalState.RUNNING, "started")
+
+    result = engine.evaluate_due("task-1")
+    assert result.reason == "not_evaluable"
+    assert "TemporalState" not in result.reason
+    assert "RUNNING" not in result.reason
+
+
+def test_checkpoint_unknown_task_contract_is_bounded() -> None:
+    engine = TemporalEngine(clock=lambda: _CLOCK)
+    cp = ResumeCheckpoint(
+        checkpoint_id="cp-1",
+        task_id="task-secret",
+        last_completed_step="step-1",
+        state_snapshot={"progress": 0.1},
+        created_at=_CLOCK,
+    )
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        engine.save_checkpoint(cp)
+    message = str(exc_info.value)
+    assert message == "cannot checkpoint unknown task"
+    assert "task-secret" not in message
+    assert "unknown task" in message

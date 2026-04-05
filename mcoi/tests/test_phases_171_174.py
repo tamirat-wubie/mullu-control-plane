@@ -130,6 +130,21 @@ class TestFleetMigration:
         prog = tracker.progress()
         assert prog["complete"] == 2
 
+    def test_invalid_migration_type_error_is_bounded(self):
+        tracker = MigrationTracker()
+        with pytest.raises(ValueError, match="migration_type") as excinfo:
+            tracker.track_engine("billing_engine", "full")
+        assert str(excinfo.value) == "migration_type must be 'clock' or 'snapshot'"
+        assert "full" not in str(excinfo.value)
+
+    def test_missing_tracked_migration_error_is_bounded(self):
+        tracker = MigrationTracker()
+        with pytest.raises(KeyError) as excinfo:
+            tracker.mark_complete("billing_engine", "clock")
+        assert excinfo.value.args[0] == "no tracked migration"
+        assert "billing_engine" not in excinfo.value.args[0]
+        assert "clock" not in excinfo.value.args[0]
+
     def test_plan_generation(self):
         plans = generate_migration_plan()
         assert len(plans) > 0

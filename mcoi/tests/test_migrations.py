@@ -90,6 +90,29 @@ class TestMigrationEngine:
         with pytest.raises(RuntimeError, match="failed"):
             engine.apply_all(db)
 
+    def test_failed_migration_message_is_bounded(self, engine):
+        class BrokenMigrationConn:
+            def execute(self, _sql: str, _params: tuple = ()):
+                return self
+
+            def executescript(self, _sql: str) -> None:
+                raise RuntimeError("secret ddl backend failure")
+
+            def commit(self) -> None:
+                return None
+
+            def fetchone(self):
+                return (0,)
+
+        engine.register(Migration(version=1, name="bad", sql="CREATE TABLE test (id INTEGER);"))
+
+        with pytest.raises(RuntimeError, match=r"Migration 1 \(bad\) failed \(RuntimeError\)") as exc_info:
+            engine.apply_all(BrokenMigrationConn())
+
+        assert "RuntimeError" in str(exc_info.value)
+        assert "secret ddl backend failure" not in str(exc_info.value)
+        assert "failed" in str(exc_info.value)
+
     def test_history(self, engine, db):
         engine.register(Migration(version=1, name="v1", sql="SELECT 1"))
         engine.register(Migration(version=2, name="v2", sql="SELECT 1"))
@@ -100,6 +123,51 @@ class TestMigrationEngine:
         assert history[0]["version"] == 1
         assert history[1]["version"] == 2
         assert history[0]["applied_at"] == "2026-03-27T12:00:00Z"
+
+    def test_current_version_raises_bounded_error_on_lookup_failure(self, engine):
+        class BrokenVersionConn:
+            def execute(self, _sql: str, _params: tuple = ()):
+                raise RuntimeError("secret version lookup failure")
+
+            def executescript(self, _sql: str) -> None:
+                return None
+
+            def commit(self) -> None:
+                return None
+
+        with pytest.raises(RuntimeError, match=r"migration state lookup failed \(RuntimeError\)") as exc_info:
+            engine.current_version(BrokenVersionConn())
+
+        assert "RuntimeError" in str(exc_info.value)
+        assert "secret version lookup failure" not in str(exc_info.value)
+        assert "migration state lookup failed" in str(exc_info.value)
+
+    def test_history_raises_bounded_error_on_lookup_failure(self, engine):
+        class BrokenHistoryConn:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def execute(self, _sql: str, _params: tuple = ()):
+                self.calls += 1
+                if self.calls >= 2:
+                    raise RuntimeError("secret history lookup failure")
+                return self
+
+            def executescript(self, _sql: str) -> None:
+                return None
+
+            def commit(self) -> None:
+                return None
+
+            def fetchall(self):
+                return []
+
+        with pytest.raises(RuntimeError, match=r"migration history lookup failed \(RuntimeError\)") as exc_info:
+            engine.history(BrokenHistoryConn())
+
+        assert "RuntimeError" in str(exc_info.value)
+        assert "secret history lookup failure" not in str(exc_info.value)
+        assert "migration history lookup failed" in str(exc_info.value)
 
     def test_summary(self, engine):
         engine.register(Migration(version=1, name="v1", sql="SELECT 1"))

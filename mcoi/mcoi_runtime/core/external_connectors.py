@@ -56,12 +56,11 @@ def _classify_execution_exception(
     exc: Exception,
 ) -> tuple[ConnectorFailureCategory, str]:
     """Map provider exceptions to a governed category and sanitized message."""
-    error_type = type(exc).__name__
     if isinstance(exc, TimeoutError):
-        return ConnectorFailureCategory.TIMEOUT, f"connector timeout ({error_type})"
+        return ConnectorFailureCategory.TIMEOUT, "connector timeout"
     if isinstance(exc, ConnectionError):
-        return ConnectorFailureCategory.NETWORK_ERROR, f"network error ({error_type})"
-    return ConnectorFailureCategory.PROVIDER_ERROR, f"provider error ({error_type})"
+        return ConnectorFailureCategory.NETWORK_ERROR, "network error"
+    return ConnectorFailureCategory.PROVIDER_ERROR, "provider error"
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +130,7 @@ class ExternalConnectorRegistry:
         cid = connector.connector_id()
         if cid in self._connectors:
             raise RuntimeCoreInvariantError(
-                f"connector '{cid}' already registered"
+                "connector already registered"
             )
         desc = connector.descriptor()
         self._connectors[cid] = connector
@@ -147,12 +146,12 @@ class ExternalConnectorRegistry:
 
     def get_connector(self, connector_id: str) -> ExternalConnector:
         if connector_id not in self._connectors:
-            raise RuntimeCoreInvariantError(f"connector '{connector_id}' not found")
+            raise RuntimeCoreInvariantError("connector not found")
         return self._connectors[connector_id]
 
     def get_descriptor(self, connector_id: str) -> ExternalConnectorDescriptor:
         if connector_id not in self._descriptors:
-            raise RuntimeCoreInvariantError(f"connector '{connector_id}' not found")
+            raise RuntimeCoreInvariantError("connector not found")
         return self._descriptors[connector_id]
 
     def list_connectors(
@@ -199,7 +198,7 @@ class ExternalConnectorRegistry:
             raise RuntimeCoreInvariantError("binding must be a ConnectorCapabilityBinding")
         if binding.connector_id not in self._connectors:
             raise RuntimeCoreInvariantError(
-                f"connector '{binding.connector_id}' not found"
+                "connector not found"
             )
         self._bindings[binding.binding_id] = binding
 
@@ -236,7 +235,7 @@ class ExternalConnectorRegistry:
             raise RuntimeCoreInvariantError("policy must be a ConnectorRateLimitPolicy")
         if policy.connector_id not in self._connectors:
             raise RuntimeCoreInvariantError(
-                f"connector '{policy.connector_id}' not found"
+                "connector not found"
             )
         self._rate_limits[policy.connector_id] = policy
 
@@ -281,7 +280,7 @@ class ExternalConnectorRegistry:
             raise RuntimeCoreInvariantError("scope must be a SecretScope")
         if scope.connector_id not in self._connectors:
             raise RuntimeCoreInvariantError(
-                f"connector '{scope.connector_id}' not found"
+                "connector not found"
             )
         self._secret_scopes[scope.connector_id] = scope
 
@@ -478,7 +477,7 @@ class ExternalConnectorRegistry:
         """Execute with fallback chain: try each connector in order."""
         chain = self._fallback_chains.get(chain_id)
         if chain is None:
-            raise RuntimeCoreInvariantError(f"fallback chain '{chain_id}' not found")
+            raise RuntimeCoreInvariantError("fallback chain not found")
 
         entries = sorted(chain.entries, key=lambda e: e.priority)
         attempts: list[ConnectorExecutionRecord] = []
@@ -792,7 +791,7 @@ class FailingTestConnector(ExternalConnector):
     def execute(
         self, operation: str, payload: Mapping[str, Any],
     ) -> ConnectorExecutionRecord:
-        raise RuntimeError(f"Simulated failure for {operation}")
+        raise RuntimeError("simulated failure")
 
     def health_check(self) -> ConnectorHealthSnapshot:
         now = _now_iso()

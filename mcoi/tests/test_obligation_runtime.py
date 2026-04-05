@@ -99,7 +99,7 @@ class TestCreation:
             owner=_owner(), deadline=_deadline(),
             description="test", correlation_id="c-1",
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as excinfo:
             eng.create_obligation(
                 obligation_id="obl-1",
                 trigger=ObligationTrigger.CUSTOM,
@@ -107,6 +107,8 @@ class TestCreation:
                 owner=_owner(), deadline=_deadline(),
                 description="test", correlation_id="c-1",
             )
+        assert str(excinfo.value) == "obligation already exists"
+        assert "obl-1" not in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------
@@ -184,8 +186,12 @@ class TestActivation:
             description="test", correlation_id="c-1",
         )
         eng.activate("obl-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="expected pending"):
+        with pytest.raises(RuntimeCoreInvariantError, match="state mismatch") as excinfo:
             eng.activate("obl-1")
+        assert str(excinfo.value) == "obligation state mismatch"
+        assert "pending" not in str(excinfo.value).lower()
+        assert "active" not in str(excinfo.value).lower()
+        assert "obl-1" not in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------
@@ -237,9 +243,12 @@ class TestClosure:
         )
         eng.close("obl-1", final_state=ObligationState.COMPLETED,
                   reason="done", closed_by="x")
-        with pytest.raises(RuntimeCoreInvariantError, match="already closed"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already closed") as excinfo:
             eng.close("obl-1", final_state=ObligationState.COMPLETED,
                       reason="again", closed_by="x")
+        assert str(excinfo.value) == "obligation already closed"
+        assert "obl-1" not in str(excinfo.value)
+        assert "completed" not in str(excinfo.value).lower()
 
     def test_closure_for(self) -> None:
         eng = _engine()
@@ -286,8 +295,10 @@ class TestTransfer:
         )
         eng.close("obl-1", final_state=ObligationState.COMPLETED,
                   reason="done", closed_by="x")
-        with pytest.raises(RuntimeCoreInvariantError, match="closed"):
+        with pytest.raises(RuntimeCoreInvariantError, match="closed") as excinfo:
             eng.transfer("obl-1", to_owner=_owner("b"), reason="test")
+        assert str(excinfo.value) == "cannot transfer closed obligation"
+        assert "obl-1" not in str(excinfo.value)
 
     def test_transfer_history(self) -> None:
         eng = _engine()
@@ -342,6 +353,22 @@ class TestEscalation:
         eng.escalate("obl-1", escalated_to=_owner("b"), reason="first")
         history = eng.escalation_history("obl-1")
         assert len(history) == 1
+
+    def test_escalate_closed_rejected(self) -> None:
+        eng = _engine()
+        eng.create_obligation(
+            obligation_id="obl-1",
+            trigger=ObligationTrigger.CUSTOM,
+            trigger_ref_id="x",
+            owner=_owner("a"), deadline=_deadline(),
+            description="test", correlation_id="c-1",
+        )
+        eng.close("obl-1", final_state=ObligationState.COMPLETED,
+                  reason="done", closed_by="x")
+        with pytest.raises(RuntimeCoreInvariantError, match="closed") as excinfo:
+            eng.escalate("obl-1", escalated_to=_owner("b"), reason="urgent")
+        assert str(excinfo.value) == "cannot escalate closed obligation"
+        assert "obl-1" not in str(excinfo.value)
 
 
 # ---------------------------------------------------------------------------

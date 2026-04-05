@@ -281,6 +281,8 @@ class TestMemoryMeshAttachment:
     def test_attach_memory_record_fields(self, integration):
         record = integration.attach_persona_state_to_memory_mesh("scope-1")
         assert record.scope_ref_id == "scope-1"
+        assert record.title == "Persona state"
+        assert "scope-1" not in record.title
         assert "persona" in record.tags or "persona" in list(record.tags)
 
 

@@ -704,6 +704,38 @@ class TestJournalReplayDeterministic:
         assert result.verdict == ReplaySessionVerdict.SUCCESS
         assert result.entries_matched == 5
 
+    def test_tick_execution_error_is_bounded(self) -> None:
+        sup, spine, obl = _full_stack()
+        mgr = CheckpointManager(
+            supervisor=sup, spine=spine, obligation_engine=obl, clock=CLOCK,
+        )
+        cp = mgr.create_checkpoint()
+        entry = mgr.append_journal(
+            JournalEntryKind.TICK,
+            "tick-1",
+            {"tick_number": 1, "outcome": "idle_tick"},
+        )
+
+        _, spine2, obl2 = _full_stack()
+        mgr2 = CheckpointManager(
+            supervisor=sup, spine=spine2, obligation_engine=obl2, clock=CLOCK,
+        )
+
+        class CrashingSupervisor:
+            def tick(self):
+                raise RuntimeError("secret tick failure")
+
+        replay = JournalReplayEngine(
+            supervisor=CrashingSupervisor(), checkpoint_manager=mgr2, clock=CLOCK,
+        )
+        result = replay.replay_from_checkpoint(cp, (entry,), halt_on_divergence=True)
+        step = result.steps[0]
+
+        assert result.verdict == ReplaySessionVerdict.DIVERGENCE_DETECTED
+        assert step.verdict == ReplayStepVerdict.ERROR
+        assert step.detail == "tick execution error (RuntimeError)"
+        assert "secret tick failure" not in step.detail
+
 
 class TestReplayDivergenceDetection:
     def test_halt_on_divergence(self) -> None:

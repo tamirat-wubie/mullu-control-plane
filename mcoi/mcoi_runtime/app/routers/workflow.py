@@ -19,6 +19,10 @@ import hashlib
 router = APIRouter()
 
 
+def _workflow_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 # ── Pydantic request models ──────────────────────────────────────────────
 
 
@@ -115,7 +119,7 @@ def execute_workflow(req: WorkflowRequest):
     try:
         cap = AgentCapability(req.capability)
     except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+        raise HTTPException(400, detail=_workflow_error_detail("invalid capability", "invalid_capability"))
 
     result = deps.workflow_engine.execute(
         task_id=req.task_id, description=req.description,
@@ -156,7 +160,7 @@ def execute_traced_workflow(req: WorkflowRequest):
     try:
         cap = AgentCapability(req.capability)
     except ValueError:
-        raise HTTPException(400, detail=f"unknown capability: {req.capability}")
+        raise HTTPException(400, detail=_workflow_error_detail("invalid capability", "invalid_capability"))
 
     result, trace = deps.traced_workflow.execute(
         task_id=req.task_id, description=req.description,

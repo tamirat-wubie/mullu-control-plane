@@ -656,3 +656,55 @@ class TestIntegration:
         node_ids = [n.node_id for n in result.matched_nodes]
         assert "goal-1" in node_ids
         assert "job-1" in node_ids
+
+
+class TestBoundedContracts:
+    def test_duplicate_node_redacts_node_id(self):
+        g = _make_graph()
+        g.add_node("secret-node", NodeType.GOAL, "Goal")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            g.add_node("secret-node", NodeType.GOAL, "Goal")
+        assert "duplicate node" in str(excinfo.value)
+        assert "secret-node" not in str(excinfo.value)
+
+    def test_missing_source_redacts_node_id(self):
+        g = _make_graph()
+        g.add_node("target", NodeType.JOB, "Target")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            g.add_edge(EdgeType.CAUSED_BY, "source-secret", "target")
+        assert "source node not found" in str(excinfo.value)
+        assert "source-secret" not in str(excinfo.value)
+
+    def test_missing_edge_redacts_edge_id(self):
+        g = _make_graph()
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            g.fulfill_obligation("edge-secret")
+        assert "edge not found" in str(excinfo.value)
+        assert "edge-secret" not in str(excinfo.value)
+
+    def test_causal_path_description_redacts_endpoints(self):
+        g = _two_node_graph()
+        edge = g.add_edge(EdgeType.CAUSED_BY, "n1", "n2", "cause")
+        result = g.find_causal_path("n1", "n2")
+        assert result is not None
+        assert result.edge_ids == (edge.edge_id,)
+        assert result.description == "causal path located"
+        assert "n1" not in result.description
+        assert "n2" not in result.description
+
+    def test_query_connected_redacts_node_id(self):
+        g = _make_graph()
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            g.query_connected("node-secret")
+        assert "node not found" in str(excinfo.value)
+        assert "node-secret" not in str(excinfo.value)
+
+    def test_ensure_node_type_mismatch_redacts_types_and_id(self):
+        g = _make_graph()
+        g.add_node("secret-node", NodeType.GOAL, "Goal")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            g.ensure_node("secret-node", NodeType.JOB)
+        assert "different type" in str(excinfo.value)
+        assert "secret-node" not in str(excinfo.value)
+        assert "goal" not in str(excinfo.value).lower()
+        assert "job" not in str(excinfo.value).lower()

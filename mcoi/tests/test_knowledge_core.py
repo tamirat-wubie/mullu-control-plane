@@ -416,3 +416,92 @@ class TestVerification:
 
         with pytest.raises(RuntimeCoreInvariantError, match="knowledge not found"):
             registry.verify("no-such-id", "verifier-1", "method", "notes")
+
+
+class TestBoundedContracts:
+    def test_document_extraction_redacts_source_and_counts(self) -> None:
+        extractor = KnowledgeExtractor(clock=_clock)
+        source = _make_source("source-secret")
+        result = extractor.extract_from_document(source, "1. Do the thing\n2. Done")
+
+        assert result.name == "procedure candidate"
+        assert result.confidence.reason == "completeness-based extraction assessment"
+        assert "source-secret" not in result.name
+        assert "2 steps" not in result.confidence.reason
+
+    def test_failure_pattern_redacts_trigger_and_frequency(self) -> None:
+        extractor = KnowledgeExtractor(clock=_clock)
+        source = _make_source("source-secret")
+        incidents = [
+            {"trigger": "trigger-secret", "failure_mode": "service_down", "response": "restart"},
+            {"trigger": "trigger-secret", "failure_mode": "service_down", "response": "restart"},
+            {"trigger": "other-trigger", "failure_mode": "degraded", "response": "retry"},
+        ]
+
+        result = extractor.extract_failure_pattern(source, incidents)
+
+        assert result.name == "failure pattern"
+        assert result.confidence.reason == "trigger frequency assessment"
+        assert "trigger-secret" not in result.name
+        assert "2/3" not in result.confidence.reason
+
+    def test_method_pattern_redacts_source_and_run_counts(self) -> None:
+        extractor = KnowledgeExtractor(clock=_clock)
+        source = _make_source("source-secret")
+        runs = [
+            {"steps": ["init", "process", "finalize"]},
+            {"steps": ["init", "process", "finalize"]},
+            {"steps": ["setup", "run"]},
+        ]
+
+        result = extractor.extract_method_pattern(source, runs)
+
+        assert result.name == "method pattern"
+        assert result.description == "common steps across successful runs"
+        assert result.confidence.reason == "step match assessment"
+        assert "source-secret" not in result.name
+        assert "3 runs" not in result.description
+        assert "2/3" not in result.confidence.reason
+
+    def test_duplicate_registration_redacts_knowledge_id(self) -> None:
+        registry = KnowledgeRegistry(clock=_clock)
+        extractor = KnowledgeExtractor(clock=_clock)
+        candidate = extractor.extract_from_document(_make_source(), "1. Step one")
+
+        registry.register(candidate)
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            registry.register(candidate)
+
+        assert "knowledge already registered" in str(excinfo.value)
+        assert candidate.candidate_id not in str(excinfo.value)
+
+    def test_promote_missing_redacts_knowledge_id(self) -> None:
+        registry = KnowledgeRegistry(clock=_clock)
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            registry.promote("knowledge-secret", KnowledgeLifecycle.PROVISIONAL, "reason", "reviewer")
+
+        assert "knowledge not found" in str(excinfo.value)
+        assert "knowledge-secret" not in str(excinfo.value)
+
+    def test_verify_missing_redacts_knowledge_id(self) -> None:
+        registry = KnowledgeRegistry(clock=_clock)
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            registry.verify("knowledge-secret", "verifier-1", "method", "notes")
+
+        assert "knowledge not found" in str(excinfo.value)
+        assert "knowledge-secret" not in str(excinfo.value)
+
+    def test_invalid_transition_redacts_lifecycle_values(self) -> None:
+        registry = KnowledgeRegistry(clock=_clock)
+        extractor = KnowledgeExtractor(clock=_clock)
+        candidate = extractor.extract_from_document(_make_source(), "1. Step one")
+        registry.register(candidate)
+
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            registry.promote(candidate.candidate_id, KnowledgeLifecycle.VERIFIED, "skip", "reviewer-1")
+
+        assert "invalid lifecycle transition" in str(excinfo.value)
+        assert "candidate" not in str(excinfo.value).lower()
+        assert "verified" not in str(excinfo.value).lower()

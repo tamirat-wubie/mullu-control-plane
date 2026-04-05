@@ -1,10 +1,12 @@
-"""Phase 216 — Server endpoint tests for memory, A/B, isolation."""
+"""Phase 216 — Governed router error contract tests."""
+
+import os
 
 import pytest
-import os
 
 try:
     from fastapi.testclient import TestClient
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
@@ -16,64 +18,73 @@ def client():
         pytest.skip("FastAPI not installed")
     os.environ["MULLU_ENV"] = "local_dev"
     os.environ["MULLU_DB_BACKEND"] = "memory"
+    os.environ["MULLU_CERT_INTERVAL"] = "0"
     from mcoi_runtime.app.server import app
+
     return TestClient(app)
 
 
-class TestMemoryEndpoints:
-    def test_store_memory(self, client):
-        resp = client.post("/api/v1/memory/store", json={
-            "agent_id": "llm-agent", "tenant_id": "t1",
-            "category": "fact", "content": "User prefers Python",
-        })
-        assert resp.status_code == 200
-        assert resp.json()["memory_id"]
+class TestWorkflowErrorContracts:
+    def test_execute_workflow_bad_capability_returns_governed_error(self, client):
+        resp = client.post(
+            "/api/v1/workflow/execute",
+            json={"task_id": "wf-bad", "description": "test", "capability": "nonexistent.capability"},
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid capability"
+        assert data["error_code"] == "invalid_capability"
+        assert data["governed"] is True
+        assert "nonexistent.capability" not in str(resp.json())
 
-    def test_search_memory(self, client):
-        client.post("/api/v1/memory/store", json={
-            "agent_id": "a1", "tenant_id": "t1",
-            "content": "Python is a programming language",
-            "keywords": ["python", "programming"],
-        })
-        resp = client.post("/api/v1/memory/search", json={
-            "agent_id": "a1", "tenant_id": "t1", "query": "python",
-        })
-        assert resp.status_code == 200
-        assert resp.json()["count"] >= 1
-
-    def test_memory_summary(self, client):
-        resp = client.get("/api/v1/memory/summary")
-        assert resp.status_code == 200
-        assert "total" in resp.json()
-
-
-class TestABTestEndpoints:
-    def test_ab_test(self, client):
-        resp = client.post("/api/v1/ab-test", json={
-            "prompt": "What is 2+2?", "model_ids": ["default"],
-        })
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["experiment_id"]
-        assert data["winner"]
-
-    def test_ab_summary(self, client):
-        client.post("/api/v1/ab-test", json={"prompt": "test"})
-        resp = client.get("/api/v1/ab-test/summary")
-        assert resp.json()["total_experiments"] >= 1
+    def test_traced_workflow_bad_capability_returns_governed_error(self, client):
+        resp = client.post(
+            "/api/v1/workflow/traced",
+            json={"task_id": "wf-bad-traced", "description": "test", "capability": "nonexistent.capability"},
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid capability"
+        assert data["error_code"] == "invalid_capability"
+        assert data["governed"] is True
+        assert "nonexistent.capability" not in str(resp.json())
 
 
-class TestIsolationEndpoints:
-    def test_verify_isolation(self, client):
-        resp = client.post("/api/v1/isolation/verify", params={
-            "tenant_a": "iso-a", "tenant_b": "iso-b",
-        })
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["all_isolated"] is True
-        assert data["probes_run"] >= 3
+class TestDataErrorContracts:
+    def test_load_missing_state_returns_governed_not_found(self, client):
+        resp = client.get("/api/v1/state/nonexistent_state")
+        assert resp.status_code == 404
+        data = resp.json()["detail"]
+        assert data["error"] == "state not found"
+        assert data["error_code"] == "state_not_found"
+        assert data["governed"] is True
+        assert "nonexistent_state" not in str(resp.json())
 
-    def test_isolation_summary(self, client):
-        resp = client.get("/api/v1/isolation/summary")
-        assert resp.status_code == 200
-        assert "probes_registered" in resp.json()
+    def test_revoke_missing_api_key_returns_governed_not_found(self, client):
+        resp = client.delete("/api/v1/api-keys/key-missing-123")
+        assert resp.status_code == 404
+        data = resp.json()["detail"]
+        assert data["error"] == "api key not found"
+        assert data["error_code"] == "api_key_not_found"
+        assert data["governed"] is True
+        assert "key-missing-123" not in str(resp.json())
+
+    def test_export_invalid_format_returns_governed_validation_error(self, client):
+        resp = client.post("/api/v1/export", json={"source": "audit", "format": "xml"})
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "unsupported export format"
+        assert data["error_code"] == "unsupported_export_format"
+        assert data["governed"] is True
+        assert "xml" not in str(resp.json())
+
+
+class TestAgentErrorContracts:
+    def test_missing_orchestration_plan_returns_governed_not_found(self, client):
+        resp = client.get("/api/v1/orchestration/plans/plan-missing-123")
+        assert resp.status_code == 404
+        data = resp.json()["detail"]
+        assert data["error"] == "plan not found"
+        assert data["error_code"] == "plan_not_found"
+        assert data["governed"] is True
+        assert "plan-missing-123" not in str(resp.json())

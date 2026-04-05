@@ -55,10 +55,9 @@ injects this callback to check policy before every action.
 
 def _classify_supervisor_exception(exc: Exception) -> str:
     """Return a bounded supervisor tick error message."""
-    exc_type = type(exc).__name__
     if isinstance(exc, TimeoutError):
-        return f"supervisor tick timeout ({exc_type})"
-    return f"supervisor tick error ({exc_type})"
+        return "supervisor tick timeout"
+    return "supervisor tick error"
 
 
 # ---------------------------------------------------------------------------
@@ -291,7 +290,7 @@ class SupervisorEngine:
                     }),
                     action_type="activate_obligation",
                     target_id=obl.obligation_id,
-                    reason=f"pending obligation from trigger {obl.trigger.value}",
+                    reason="pending obligation",
                     governance_approved=approved,
                     decided_at=self._now(),
                 )
@@ -324,7 +323,7 @@ class SupervisorEngine:
                     }),
                     action_type="expire_obligation",
                     target_id=obl.obligation_id,
-                    reason=f"deadline breached: due_at={obl.deadline.due_at}",
+                    reason="deadline breached",
                     governance_approved=approved,
                     decided_at=self._now(),
                 )
@@ -361,7 +360,7 @@ class SupervisorEngine:
                     }),
                     action_type="fire_reaction",
                     target_id=sub.reaction_id,
-                    reason=f"event {event.event_type.value} matched subscription {sub.subscription_id}",
+                    reason="event matched subscription",
                     governance_approved=approved,
                     decided_at=self._now(),
                 )

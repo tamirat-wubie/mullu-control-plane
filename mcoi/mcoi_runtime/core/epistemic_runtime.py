@@ -159,7 +159,7 @@ class EpistemicRuntimeEngine:
     ) -> KnowledgeClaim:
         """Register a new knowledge claim. Duplicate claim_id raises."""
         if claim_id in self._claims:
-            raise RuntimeCoreInvariantError(f"Duplicate claim_id: {claim_id}")
+            raise RuntimeCoreInvariantError("Duplicate claim_id")
         now = self._now()
         trust_level = _derive_trust_level(status)
         claim = KnowledgeClaim(
@@ -183,7 +183,7 @@ class EpistemicRuntimeEngine:
         """Get a claim by ID. Raises if not found."""
         claim = self._claims.get(claim_id)
         if claim is None:
-            raise RuntimeCoreInvariantError(f"Unknown claim_id: {claim_id}")
+            raise RuntimeCoreInvariantError("Unknown claim_id")
         return claim
 
     def claims_for_tenant(self, tenant_id: str) -> tuple[KnowledgeClaim, ...]:
@@ -201,7 +201,7 @@ class EpistemicRuntimeEngine:
         """Retract a claim: set status=RETRACTED, trust=UNTRUSTED."""
         old = self._claims.get(claim_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown claim_id: {claim_id}")
+            raise RuntimeCoreInvariantError("Unknown claim_id")
         retracted = KnowledgeClaim(
             claim_id=old.claim_id,
             tenant_id=old.tenant_id,
@@ -234,7 +234,7 @@ class EpistemicRuntimeEngine:
     ) -> EvidenceSource:
         """Register an evidence source. Duplicate source_id raises."""
         if source_id in self._sources:
-            raise RuntimeCoreInvariantError(f"Duplicate source_id: {source_id}")
+            raise RuntimeCoreInvariantError("Duplicate source_id")
         now = self._now()
         source = EvidenceSource(
             source_id=source_id,
@@ -255,7 +255,7 @@ class EpistemicRuntimeEngine:
         """Get a source by ID. Raises if not found."""
         source = self._sources.get(source_id)
         if source is None:
-            raise RuntimeCoreInvariantError(f"Unknown source_id: {source_id}")
+            raise RuntimeCoreInvariantError("Unknown source_id")
         return source
 
     def sources_for_tenant(self, tenant_id: str) -> tuple[EvidenceSource, ...]:
@@ -276,10 +276,10 @@ class EpistemicRuntimeEngine:
     ) -> SourceReliabilityRecord:
         """Update a source's reliability score."""
         if record_id in self._reliability_updates:
-            raise RuntimeCoreInvariantError(f"Duplicate record_id: {record_id}")
+            raise RuntimeCoreInvariantError("Duplicate record_id")
         source = self._sources.get(source_ref)
         if source is None:
-            raise RuntimeCoreInvariantError(f"Unknown source_ref: {source_ref}")
+            raise RuntimeCoreInvariantError("Unknown source_ref")
         now = self._now()
         previous_score = source.reliability_score
         record = SourceReliabilityRecord(
@@ -328,13 +328,13 @@ class EpistemicRuntimeEngine:
         Combines claim.confidence * source.reliability_score to derive trust_level.
         """
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
         claim = self._claims.get(claim_ref)
         if claim is None:
-            raise RuntimeCoreInvariantError(f"Unknown claim_ref: {claim_ref}")
+            raise RuntimeCoreInvariantError("Unknown claim_ref")
         source = self._sources.get(source_ref)
         if source is None:
-            raise RuntimeCoreInvariantError(f"Unknown source_ref: {source_ref}")
+            raise RuntimeCoreInvariantError("Unknown source_ref")
 
         now = self._now()
         combined = claim.confidence * source.reliability_score
@@ -419,7 +419,7 @@ class EpistemicRuntimeEngine:
         """Resolve an existing claim conflict."""
         old = self._conflicts.get(conflict_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown conflict_id: {conflict_id}")
+            raise RuntimeCoreInvariantError("Unknown conflict_id")
         now = self._now()
         resolved = ClaimConflict(
             conflict_id=old.conflict_id,
@@ -554,7 +554,7 @@ class EpistemicRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="insufficient_basis",
-                            reason=f"Claim {cid} has {claim.trust_level.value} trust but no trust assessment",
+                            reason="high-trust claim lacks trust assessment",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -571,7 +571,7 @@ class EpistemicRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="unresolved_conflict",
-                        reason=f"Conflict {cfid} is unresolved",
+                        reason="conflict is unresolved",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -591,7 +591,7 @@ class EpistemicRuntimeEngine:
                             violation_id=vid,
                             tenant_id=tenant_id,
                             operation="untrusted_source_high_claim",
-                            reason=f"Source {claim.source_ref} reliability {source.reliability_score:.2f} < 0.3 but claim {cid} confidence {claim.confidence:.2f} > 0.8",
+                            reason="high-confidence claim depends on untrusted source",
                             detected_at=now,
                         )
                         self._violations[vid] = v

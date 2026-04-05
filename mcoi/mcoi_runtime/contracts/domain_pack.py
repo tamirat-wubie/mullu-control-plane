@@ -109,9 +109,9 @@ class DomainPackDescriptor(ContractRecord):
         require_non_empty_text(self.domain_name, "domain_name")
         require_non_empty_text(self.version, "version")
         if not isinstance(self.status, DomainPackStatus):
-            raise ValueError(f"status must be DomainPackStatus, got {type(self.status)}")
+            raise ValueError("status must be a DomainPackStatus value")
         if not isinstance(self.scope, PackScope):
-            raise ValueError(f"scope must be PackScope, got {type(self.scope)}")
+            raise ValueError("scope must be a PackScope value")
         require_datetime_text(self.created_at, "created_at")
         if self.updated_at:
             require_datetime_text(self.updated_at, "updated_at")

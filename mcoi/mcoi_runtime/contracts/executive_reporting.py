@@ -40,7 +40,7 @@ def _require_period_start_before_end(period_start: str, period_end: str) -> None
     end_dt = _parse_datetime_text(period_end, "period_end")
     if start_dt >= end_dt:
         raise ValueError(
-            f"period_start ({period_start}) must be before period_end ({period_end})"
+            "period_start must be before period_end"
         )
 
 

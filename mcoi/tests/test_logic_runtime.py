@@ -129,12 +129,15 @@ class TestContracts:
         assert c.resolved is False
 
     def test_contradiction_record_bad_bool_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc:
             ContradictionRecord(
                 contradiction_id="c1", tenant_id="t1",
                 statement_a_ref="s1", statement_b_ref="s2",
                 resolved=1, detected_at=TS,
             )
+        assert str(exc.value) == "value must be a boolean flag"
+        assert "resolved" not in str(exc.value)
+        assert str(exc.value) != "resolved must be a bool"
 
     def test_revision_record_valid(self):
         r = RevisionRecord(
@@ -430,6 +433,9 @@ class TestIntegration:
         integ = LogicRuntimeIntegration(eng, spine, memory)
         rec = integ.attach_logic_state_to_memory_mesh("scope-1")
         assert rec.memory_id
+        assert rec.title == "Logic state"
+        assert "scope-1" not in rec.title
+        assert rec.scope_ref_id == "scope-1"
         assert memory.memory_count >= 1
 
     def test_attach_to_graph(self, spine, clock, memory):
@@ -437,3 +443,69 @@ class TestIntegration:
         integ = LogicRuntimeIntegration(eng, spine, memory)
         result = integ.attach_logic_state_to_graph("scope-1")
         assert "total_statements" in result
+
+
+class TestBoundedContracts:
+    def test_duplicate_statement_redacts_statement_id(self, engine):
+        engine.register_statement("stmt-secret", "t1", StatementKind.FACT, "sky is blue")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.register_statement("stmt-secret", "t1", StatementKind.FACT, "sky is blue")
+        assert "Duplicate statement_id" in str(excinfo.value)
+        assert "stmt-secret" not in str(excinfo.value)
+
+    def test_wrong_antecedent_redacts_statement_content(self, engine):
+        engine.register_statement("s1", "t1", StatementKind.FACT, "secret premise")
+        engine.register_rule("r1", "t1", "secret rule antecedent", "B")
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.derive_conclusion("t1", "r1", "s1")
+        assert "does not match rule antecedent" in str(excinfo.value)
+        assert "secret premise" not in str(excinfo.value)
+        assert "secret rule antecedent" not in str(excinfo.value)
+
+    def test_unknown_assumption_redacts_assumption_id(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.retract_assumption("assumption-secret")
+        assert "Unknown assumption_id" in str(excinfo.value)
+        assert "assumption-secret" not in str(excinfo.value)
+
+    def test_revision_paths_redact_ids(self, engine):
+        with pytest.raises(RuntimeCoreInvariantError) as excinfo:
+            engine.revise_belief_state("revision-secret", "t1", "contradiction-secret")
+        assert "Unknown contradiction_id" in str(excinfo.value)
+        assert "contradiction-secret" not in str(excinfo.value)
+
+        engine.register_statement("s1", "t1", StatementKind.FACT, "A")
+        engine.register_statement("s2", "t1", StatementKind.FACT, "NOT A")
+        contradiction_id = engine.detect_contradictions("t1")[0].contradiction_id
+        engine.revise_belief_state("revision-secret", "t1", contradiction_id)
+        with pytest.raises(RuntimeCoreInvariantError) as dup_excinfo:
+            engine.revise_belief_state("revision-secret", "t1", contradiction_id)
+        assert "Duplicate revision_id" in str(dup_excinfo.value)
+        assert "revision-secret" not in str(dup_excinfo.value)
+
+    def test_unresolved_contradiction_reason_redacts_contradiction_id(self, engine):
+        engine.register_statement("s1", "t1", StatementKind.FACT, "sky is blue")
+        engine.register_statement("s2", "t1", StatementKind.FACT, "NOT sky is blue")
+        contradiction = engine.detect_contradictions("t1")[0]
+        violation = engine.detect_logic_violations("t1")[0]
+        assert violation["reason"] == "Contradiction is unresolved"
+        assert contradiction.contradiction_id not in violation["reason"]
+
+    def test_retracted_proof_reason_redacts_proof_and_conclusion_ids(self, engine):
+        engine.register_statement("stmt-secret", "t1", StatementKind.CONCLUSION, "B")
+        engine.record_proof("proof-secret", "t1", "stmt-secret", "r1", ProofStatus.RETRACTED, 1)
+        violation = engine.detect_logic_violations("t1")[0]
+        assert violation["operation"] == "retracted_proof_still_used"
+        assert violation["reason"] == "Retracted proof still has active conclusion"
+        assert "proof-secret" not in violation["reason"]
+        assert "stmt-secret" not in violation["reason"]
+
+    def test_assumption_reason_redacts_assumption_id(self, engine):
+        engine.register_statement("s1", "t1", StatementKind.ASSUMPTION, "rain tomorrow")
+        assumption = engine.register_assumption("assumption-secret", "t1", "s1", "because")
+        object.__setattr__(assumption, "justification", "   ")
+        engine._assumptions["assumption-secret"] = assumption
+        violation = engine.detect_logic_violations("t1")[0]
+        assert violation["operation"] == "assumption_no_justification"
+        assert violation["reason"] == "Assumption has no justification"
+        assert "assumption-secret" not in violation["reason"]

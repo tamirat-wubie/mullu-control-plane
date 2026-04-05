@@ -40,15 +40,27 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
 
 
 def test_app_config_rejects_unknown_keys() -> None:
-    with pytest.raises(ValueError, match="unknown config keys"):
+    with pytest.raises(ValueError, match="^unknown config keys$") as exc_info:
         AppConfig.from_mapping({"unknown_key": "value"})
+    message = str(exc_info.value)
+    assert message == "unknown config keys"
+    assert "unknown_key" not in message
+    assert "config keys" in message
 
 
 def test_app_config_rejects_non_text_autonomy_mode() -> None:
-    with pytest.raises(ValueError, match="autonomy_mode"):
+    with pytest.raises(ValueError, match="^config values must be non-empty strings$") as exc_info:
         AppConfig.from_mapping({"autonomy_mode": 7})
+    message = str(exc_info.value)
+    assert message == "config values must be non-empty strings"
+    assert "autonomy_mode" not in message
+    assert "non-empty strings" in message
 
 
 def test_app_config_rejects_empty_policy_pack_id() -> None:
-    with pytest.raises(ValueError, match="policy_pack_id"):
+    with pytest.raises(ValueError, match="^config values must be non-empty strings$") as exc_info:
         AppConfig.from_mapping({"policy_pack_id": ""})
+    message = str(exc_info.value)
+    assert message == "config values must be non-empty strings"
+    assert "policy_pack_id" not in message
+    assert "non-empty strings" in message

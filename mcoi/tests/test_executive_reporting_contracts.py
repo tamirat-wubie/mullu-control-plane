@@ -1199,8 +1199,11 @@ class TestExecutiveDashboardSnapshot:
     (_rollup, _outcome, _efficiency, _cost_eff, _reliability, _dashboard),
 )
 def test_period_models_require_start_before_end(factory):
-    with pytest.raises((ValueError, TypeError), match="must be before"):
+    with pytest.raises((ValueError, TypeError)) as exc_info:
         factory(period_start=DT2, period_end=DT)
+    assert str(exc_info.value) == "period_start must be before period_end"
+    assert DT2 not in str(exc_info.value)
+    assert DT not in str(exc_info.value)
 
 
 # ===================================================================

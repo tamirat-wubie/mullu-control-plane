@@ -71,8 +71,9 @@ class TestEmit:
     def test_duplicate_rejected(self) -> None:
         s = _spine()
         s.emit(_event())
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^event already exists$") as excinfo:
             s.emit(_event())
+        assert "evt-1" not in str(excinfo.value)
 
     def test_emit_and_envelope(self) -> None:
         s = _spine()
@@ -128,8 +129,9 @@ class TestSubscriptions:
     def test_duplicate_rejected(self) -> None:
         s = _spine()
         s.subscribe(_subscription())
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^subscription already exists$") as excinfo:
             s.subscribe(_subscription())
+        assert "sub-1" not in str(excinfo.value)
 
     def test_unsubscribe(self) -> None:
         s = _spine()
@@ -139,8 +141,9 @@ class TestSubscriptions:
 
     def test_unsubscribe_not_found(self) -> None:
         s = _spine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^subscription not found$") as excinfo:
             s.unsubscribe("sub-missing")
+        assert "sub-missing" not in str(excinfo.value)
 
     def test_matching_subscriptions(self) -> None:
         s = _spine()
@@ -194,8 +197,9 @@ class TestReactions:
             subscription_id="sub-1",
             action_taken="test", result="ok", reacted_at=_CLOCK,
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="event not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^event not found$") as excinfo:
             s.record_reaction(rx)
+        assert "evt-missing" not in str(excinfo.value)
 
     def test_list_reactions_by_event(self) -> None:
         s = _spine()
@@ -228,6 +232,8 @@ class TestCorrelation:
         assert corr is not None
         assert len(corr.event_ids) == 2
         assert corr.root_event_id == "e-1"
+        assert corr.description == "correlated event group"
+        assert "job-1" not in corr.description
 
     def test_correlate_not_found(self) -> None:
         s = _spine()

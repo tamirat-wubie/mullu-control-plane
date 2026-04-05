@@ -371,16 +371,23 @@ class TestBudgetEnvelope:
         assert set(d.keys()) == expected_keys
 
     def test_consumed_plus_reserved_exceeds_limit_raises(self):
-        with pytest.raises(ValueError, match="exceeds limit"):
+        with pytest.raises(ValueError) as exc:
             _budget(consumed_amount=600.0, reserved_amount=500.0, limit_amount=1000.0)
+        assert str(exc.value) == "consumed and reserved amounts exceed limit"
+        assert "600.0" not in str(exc.value)
+        assert "500.0" not in str(exc.value)
+        assert "1000.0" not in str(exc.value)
 
     def test_consumed_plus_reserved_equals_limit_ok(self):
         b = _budget(consumed_amount=500.0, reserved_amount=500.0, limit_amount=1000.0)
         assert b.consumed_amount + b.reserved_amount == b.limit_amount
 
     def test_warning_exceeds_hard_stop_raises(self):
-        with pytest.raises(ValueError, match="warning_threshold"):
+        with pytest.raises(ValueError) as exc:
             _budget(warning_threshold=0.95, hard_stop_threshold=0.9)
+        assert str(exc.value) == "warning threshold must not exceed hard stop threshold"
+        assert "0.95" not in str(exc.value)
+        assert "0.9" not in str(exc.value)
 
     def test_warning_equals_hard_stop_ok(self):
         b = _budget(warning_threshold=0.9, hard_stop_threshold=0.9)
@@ -399,8 +406,10 @@ class TestBudgetEnvelope:
             _budget(consumed_amount=-1.0)
 
     def test_currency_lowercase_raises(self):
-        with pytest.raises(ValueError, match="currency"):
+        with pytest.raises(ValueError) as exc:
             _budget(currency="usd")
+        assert str(exc.value) == "currency must be a 3-letter uppercase code"
+        assert "usd" not in str(exc.value)
 
     def test_currency_two_letters_raises(self):
         with pytest.raises(ValueError, match="currency"):
@@ -668,8 +677,11 @@ class TestCampaignBudgetBinding:
         assert set(d.keys()) == expected_keys
 
     def test_consumed_exceeds_allocated_raises(self):
-        with pytest.raises(ValueError, match="consumed_amount"):
+        with pytest.raises(ValueError) as exc:
             _binding(consumed_amount=600.0, allocated_amount=500.0)
+        assert str(exc.value) == "consumed amount must not exceed allocated amount"
+        assert "600.0" not in str(exc.value)
+        assert "500.0" not in str(exc.value)
 
     def test_consumed_equals_allocated_ok(self):
         b = _binding(consumed_amount=500.0, allocated_amount=500.0)
@@ -735,8 +747,11 @@ class TestApprovalThreshold:
         assert set(d.keys()) == expected_keys
 
     def test_auto_approve_exceeds_amount_raises(self):
-        with pytest.raises(ValueError, match="auto_approve_below"):
+        with pytest.raises(ValueError) as exc:
             _threshold(auto_approve_below=150.0, amount=100.0)
+        assert str(exc.value) == "auto-approve threshold must not exceed approval amount"
+        assert "150.0" not in str(exc.value)
+        assert "100.0" not in str(exc.value)
 
     def test_auto_approve_equals_amount_ok(self):
         t = _threshold(auto_approve_below=100.0, amount=100.0)
@@ -867,12 +882,17 @@ class TestSpendForecast:
             _forecast(confidence=-0.1)
 
     def test_period_start_after_end_raises(self):
-        with pytest.raises(ValueError, match="period_start"):
+        with pytest.raises(ValueError) as exc:
             _forecast(period_start=DT2, period_end=DT)
+        assert str(exc.value) == "period_start must be before period_end"
+        assert DT2 not in str(exc.value)
+        assert DT not in str(exc.value)
 
     def test_period_start_equals_end_raises(self):
-        with pytest.raises(ValueError, match="period_start"):
+        with pytest.raises(ValueError) as exc:
             _forecast(period_start=DT, period_end=DT)
+        assert str(exc.value) == "period_start must be before period_end"
+        assert DT not in str(exc.value)
 
     def test_bad_period_start_raises(self):
         with pytest.raises(ValueError, match="period_start"):

@@ -139,8 +139,9 @@ class TestRegisterContract:
 
     def test_duplicate_raises(self, engine):
         engine.register_contract("c1", "t1", "vendor-a", "Title")
-        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Duplicate") as exc_info:
             engine.register_contract("c1", "t1", "vendor-a", "Title")
+        assert "c1" not in str(exc_info.value)
 
     def test_contract_count_increments(self, engine):
         engine.register_contract("c1", "t1", "vendor-a", "Title")
@@ -166,8 +167,9 @@ class TestGetContract:
         assert rec.contract_id == "c1"
 
     def test_get_unknown_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             engine.get_contract("nope")
+        assert "nope" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -191,15 +193,19 @@ class TestActivateContract:
         engine.register_contract("c1", "t1", "vendor-a", "Title")
         engine.activate_contract("c1")
         engine.expire_contract("c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.activate_contract("c1")
+        assert str(exc_info.value) == "cannot activate contract from current status"
+        assert "expired" not in str(exc_info.value)
 
     def test_activate_terminated_raises(self, engine):
         engine.register_contract("c1", "t1", "vendor-a", "Title")
         engine.activate_contract("c1")
         engine.terminate_contract("c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.activate_contract("c1")
+        assert str(exc_info.value) == "cannot activate contract from current status"
+        assert "terminated" not in str(exc_info.value)
 
     def test_activate_suspended_ok(self, engine):
         engine.register_contract("c1", "t1", "vendor-a", "Title")
@@ -262,13 +268,17 @@ class TestTerminateContract:
 
     def test_terminate_already_terminated_raises(self, active_contract):
         active_contract.terminate_contract("c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             active_contract.terminate_contract("c1")
+        assert str(exc_info.value) == "cannot terminate contract from current status"
+        assert "terminated" not in str(exc_info.value)
 
     def test_terminate_expired_raises(self, active_contract):
         active_contract.expire_contract("c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             active_contract.terminate_contract("c1")
+        assert str(exc_info.value) == "cannot terminate contract from current status"
+        assert "expired" not in str(exc_info.value)
 
     def test_terminate_with_reason(self, active_contract):
         rec = active_contract.terminate_contract("c1", reason="breach")
@@ -292,13 +302,17 @@ class TestExpireContract:
 
     def test_expire_already_expired_raises(self, active_contract):
         active_contract.expire_contract("c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             active_contract.expire_contract("c1")
+        assert str(exc_info.value) == "cannot expire contract from current status"
+        assert "expired" not in str(exc_info.value)
 
     def test_expire_terminated_raises(self, active_contract):
         active_contract.terminate_contract("c1")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             active_contract.expire_contract("c1")
+        assert str(exc_info.value) == "cannot expire contract from current status"
+        assert "terminated" not in str(exc_info.value)
 
 
 # ===================================================================
@@ -455,13 +469,15 @@ class TestRegisterCommitment:
             engine.register_commitment("cm1", "c1", "cl1", "t1", "99%")
 
     def test_unknown_contract_raises(self, engine):
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown contract"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown contract") as exc_info:
             engine.register_commitment("cm1", "nope", "cl1", "t1", "99%")
+        assert "nope" not in str(exc_info.value)
 
     def test_unknown_clause_raises(self, engine):
         engine.register_contract("c1", "t1", "vendor-a", "Title")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown clause"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown clause") as exc_info:
             engine.register_commitment("cm1", "c1", "nope", "t1", "99%")
+        assert "nope" not in str(exc_info.value)
 
     def test_commitment_count(self, engine):
         engine.register_contract("c1", "t1", "vendor-a", "Title")
@@ -1414,7 +1430,8 @@ class TestGoldenScenario2AvailabilityFailureTriggersBreach:
         assert b.severity == BreachSeverity.MAJOR  # 0.60 >= 0.5
         assert b.contract_id == "c-hosting"
         assert b.tenant_id == "tenant-corp"
-        assert "compliance=0.60" in b.description
+        assert b.description == "SLA breached"
+        assert "0.60" not in b.description
 
     def test_critical_severity_at_very_low_compliance(self, es):
         eng = ContractRuntimeEngine(es)

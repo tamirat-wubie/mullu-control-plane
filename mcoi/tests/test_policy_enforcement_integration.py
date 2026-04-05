@@ -209,6 +209,9 @@ class TestMemoryMeshAttachment:
         _es, _mm, _eng, bridge = env
         mem = bridge.attach_session_audit_to_memory_mesh("scope-1")
         assert isinstance(mem, MemoryRecord)
+        assert mem.title == "Session enforcement state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
         assert "session" in mem.tags
         assert "enforcement" in mem.tags
         assert "policy" in mem.tags

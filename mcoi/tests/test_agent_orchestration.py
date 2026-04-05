@@ -52,8 +52,9 @@ class TestPlanLifecycle:
         assert plan.initiator_id == "agent-a"
 
     def test_create_plan_unknown_agent(self, orchestrator):
-        with pytest.raises(ValueError, match="Unknown agent"):
+        with pytest.raises(ValueError, match="^initiator agent unavailable$") as exc_info:
             orchestrator.create_plan("ghost", "goal")
+        assert "ghost" not in str(exc_info.value)
 
     def test_add_proposal(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -70,8 +71,18 @@ class TestPlanLifecycle:
                                  action="search", description="d")
         orchestrator.add_proposal(plan.plan_id, proposal)
         orchestrator.submit_for_voting(plan.plan_id)
-        with pytest.raises(ValueError, match="not in planning"):
+        with pytest.raises(ValueError, match="^plan not accepting proposals$") as exc_info:
             orchestrator.add_proposal(plan.plan_id, proposal)
+        assert OrchestrationPhase.VOTING.value not in str(exc_info.value)
+
+    def test_add_proposal_plan_unavailable(self, orchestrator):
+        proposal = AgentProposal(
+            proposal_id="p1", agent_id="agent-a",
+            action="search", description="Search docs",
+        )
+        with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
+            orchestrator.add_proposal("missing-plan", proposal)
+        assert "missing-plan" not in str(exc_info.value)
 
     def test_submit_empty_plan_fails(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -121,8 +132,9 @@ class TestVotingAndConsensus:
 
     def test_vote_wrong_phase(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
-        with pytest.raises(ValueError, match="not in voting"):
+        with pytest.raises(ValueError, match="^plan not accepting votes$") as exc_info:
             orchestrator.cast_vote(plan.plan_id, "agent-a", Vote.APPROVE)
+        assert OrchestrationPhase.PLANNING.value not in str(exc_info.value)
 
     def test_vote_unknown_agent(self, orchestrator):
         plan = orchestrator.create_plan("agent-a", "goal")
@@ -130,8 +142,14 @@ class TestVotingAndConsensus:
             proposal_id="p1", agent_id="agent-a", action="a", description="d",
         ))
         orchestrator.submit_for_voting(plan.plan_id)
-        with pytest.raises(ValueError, match="Unknown agent"):
+        with pytest.raises(ValueError, match="^voting agent unavailable$") as exc_info:
             orchestrator.cast_vote(plan.plan_id, "ghost", Vote.APPROVE)
+        assert "ghost" not in str(exc_info.value)
+
+    def test_vote_plan_unavailable(self, orchestrator):
+        with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
+            orchestrator.cast_vote("missing-plan", "agent-a", Vote.APPROVE)
+        assert "missing-plan" not in str(exc_info.value)
 
 
 class TestPlanExecution:
@@ -190,6 +208,17 @@ class TestPlanExecution:
         assert result.results[0]["error"] == "proposal execution error (RuntimeError)"
         assert "boom" not in result.results[0]["error"]
 
+    def test_execute_plan_wrong_phase_is_bounded(self, orchestrator):
+        plan = orchestrator.create_plan("agent-a", "goal")
+        with pytest.raises(ValueError, match="^plan not ready for execution$") as exc_info:
+            orchestrator.execute_plan(plan.plan_id)
+        assert OrchestrationPhase.PLANNING.value not in str(exc_info.value)
+
+    def test_execute_plan_unavailable_is_bounded(self, orchestrator):
+        with pytest.raises(ValueError, match="^plan unavailable$") as exc_info:
+            orchestrator.execute_plan("missing-plan")
+        assert "missing-plan" not in str(exc_info.value)
+
 
 class TestHandoffs:
     def test_successful_handoff(self, orchestrator):
@@ -203,15 +232,20 @@ class TestHandoffs:
         result = orchestrator.handoff("agent-a", "agent-b",
                                        required_capabilities=("deploy",))
         assert not result.success
-        assert "Missing capabilities" in result.error
+        assert result.error == "target agent lacks required capabilities"
+        assert "deploy" not in result.error
 
     def test_handoff_unknown_source(self, orchestrator):
         result = orchestrator.handoff("ghost", "agent-a")
         assert not result.success
+        assert result.error == "source agent unavailable"
+        assert "ghost" not in result.error
 
     def test_handoff_unknown_target(self, orchestrator):
         result = orchestrator.handoff("agent-a", "ghost")
         assert not result.success
+        assert result.error == "target agent unavailable"
+        assert "ghost" not in result.error
 
     def test_find_capable_agents(self, orchestrator):
         agents = orchestrator.find_capable_agents(("code", "deploy"))

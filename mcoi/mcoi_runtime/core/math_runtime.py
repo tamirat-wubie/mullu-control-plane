@@ -159,7 +159,7 @@ class MathRuntimeEngine:
     ) -> QuantityRecord:
         """Register a new quantity. Duplicate quantity_id raises."""
         if quantity_id in self._quantities:
-            raise RuntimeCoreInvariantError(f"Duplicate quantity_id: {quantity_id}")
+            raise RuntimeCoreInvariantError("Duplicate quantity_id")
         now = self._now()
         q = QuantityRecord(
             quantity_id=quantity_id,
@@ -179,7 +179,7 @@ class MathRuntimeEngine:
     def get_quantity(self, quantity_id: str) -> QuantityRecord:
         q = self._quantities.get(quantity_id)
         if q is None:
-            raise RuntimeCoreInvariantError(f"Unknown quantity_id: {quantity_id}")
+            raise RuntimeCoreInvariantError("Unknown quantity_id")
         return q
 
     def quantities_for_tenant(self, tenant_id: str) -> tuple[QuantityRecord, ...]:
@@ -200,7 +200,7 @@ class MathRuntimeEngine:
     ) -> UnitConversion:
         """Register a unit conversion factor. Duplicate conversion_id raises."""
         if conversion_id in self._conversions:
-            raise RuntimeCoreInvariantError(f"Duplicate conversion_id: {conversion_id}")
+            raise RuntimeCoreInvariantError("Duplicate conversion_id")
         now = self._now()
         uc = UnitConversion(
             conversion_id=conversion_id,
@@ -228,13 +228,10 @@ class MathRuntimeEngine:
             if conv.from_unit == q.unit_label and conv.to_unit == target_unit:
                 if conv.dimension != q.dimension:
                     raise RuntimeCoreInvariantError(
-                        f"Dimension mismatch: quantity {quantity_id} has {q.dimension.value}, "
-                        f"conversion has {conv.dimension.value}"
+                        "Dimension mismatch between quantity and conversion"
                     )
                 return q.value * conv.factor
-        raise RuntimeCoreInvariantError(
-            f"No conversion from {q.unit_label} to {target_unit}"
-        )
+        raise RuntimeCoreInvariantError("No conversion available for requested unit pair")
 
     def validate_dimension(self, quantity_id_a: str, quantity_id_b: str) -> QuantityValidation:
         """Validate that two quantities share the same dimension."""
@@ -259,7 +256,7 @@ class MathRuntimeEngine:
     ) -> OptimizationObjective:
         """Register an optimization objective. Duplicate objective_id raises."""
         if objective_id in self._objectives:
-            raise RuntimeCoreInvariantError(f"Duplicate objective_id: {objective_id}")
+            raise RuntimeCoreInvariantError("Duplicate objective_id")
         now = self._now()
         obj = OptimizationObjective(
             objective_id=objective_id,
@@ -291,7 +288,7 @@ class MathRuntimeEngine:
     ) -> MathOptimizationConstraint:
         """Add a constraint on an objective. Duplicate constraint_id raises."""
         if constraint_id in self._constraints:
-            raise RuntimeCoreInvariantError(f"Duplicate constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Duplicate constraint_id")
         now = self._now()
         con = MathOptimizationConstraint(
             constraint_id=constraint_id,
@@ -322,7 +319,7 @@ class MathRuntimeEngine:
     ) -> SolverRequest:
         """Submit a solver request with FEASIBLE status. Duplicate request_id raises."""
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"Duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Duplicate request_id")
         now = self._now()
         sr = SolverRequest(
             request_id=request_id,
@@ -356,7 +353,7 @@ class MathRuntimeEngine:
     ) -> SolverResult:
         """Record a solver result. Duplicate result_id raises."""
         if result_id in self._results:
-            raise RuntimeCoreInvariantError(f"Duplicate result_id: {result_id}")
+            raise RuntimeCoreInvariantError("Duplicate result_id")
         now = self._now()
         res = SolverResult(
             result_id=result_id,
@@ -391,7 +388,7 @@ class MathRuntimeEngine:
     ) -> UncertaintyInterval:
         """Record an uncertainty interval. Duplicate interval_id raises."""
         if interval_id in self._intervals:
-            raise RuntimeCoreInvariantError(f"Duplicate interval_id: {interval_id}")
+            raise RuntimeCoreInvariantError("Duplicate interval_id")
         now = self._now()
         ui = UncertaintyInterval(
             interval_id=interval_id,
@@ -424,7 +421,7 @@ class MathRuntimeEngine:
     ) -> OptimizationTrace:
         """Record a trace step. Duplicate trace_id raises."""
         if trace_id in self._traces:
-            raise RuntimeCoreInvariantError(f"Duplicate trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("Duplicate trace_id")
         now = self._now()
         ot = OptimizationTrace(
             trace_id=trace_id,
@@ -493,7 +490,7 @@ class MathRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="dimension_mismatch_in_constraint",
-                        reason=f"Constraint {con.constraint_id} has lower_bound ({con.lower_bound}) > upper_bound ({con.upper_bound})",
+                        reason="Constraint bounds are inverted",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -512,7 +509,7 @@ class MathRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="infeasible_no_result",
-                        reason=f"Solver request {req.request_id} has no result",
+                        reason="Solver request has no result",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -530,7 +527,7 @@ class MathRuntimeEngine:
                         violation_id=vid,
                         tenant_id=tenant_id,
                         operation="uncertainty_inverted",
-                        reason=f"Uncertainty interval {interval.interval_id} has lower ({interval.lower}) > upper ({interval.upper})",
+                        reason="Uncertainty interval bounds are inverted",
                         detected_at=now,
                     )
                     self._violations[vid] = v

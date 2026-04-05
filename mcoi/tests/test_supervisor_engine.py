@@ -154,6 +154,23 @@ class TestEventProcessing:
         assert tick.reactions_fired == 1
         assert any(d.action_type == "fire_reaction" for d in tick.decisions)
 
+    def test_subscription_matching_reason_bounded(self) -> None:
+        spine = EventSpineEngine(clock=_clock)
+        spine.subscribe(EventSubscription(
+            subscription_id="sub-secret",
+            event_type=EventType.CUSTOM,
+            subscriber_id="test",
+            reaction_id="rxn1",
+            created_at=NOW,
+        ))
+        spine.emit(_event("e-secret"))
+        eng = _engine(spine=spine)
+        tick = eng.tick()
+        decision = next(d for d in tick.decisions if d.action_type == "fire_reaction")
+        assert decision.reason == "event matched subscription"
+        assert "sub-secret" not in decision.reason
+        assert EventType.CUSTOM.value not in decision.reason
+
 
 # =====================================================================
 # Obligation evaluation
@@ -200,6 +217,23 @@ class TestObligationEvaluation:
         blocked = [d for d in tick.decisions if not d.governance_approved]
         assert len(blocked) > 0
 
+    def test_pending_obligation_reason_bounded(self) -> None:
+        spine = EventSpineEngine(clock=_clock)
+        obl_engine = ObligationRuntimeEngine(clock=_clock)
+        obl_engine.create_obligation(
+            trigger=ObligationTrigger.CUSTOM,
+            trigger_ref_id="ref-1",
+            owner=_owner(),
+            deadline=_deadline(),
+            description="test",
+            correlation_id="corr-1",
+        )
+        eng = _engine(spine=spine, obligation_engine=obl_engine)
+        tick = eng.tick()
+        decision = next(d for d in tick.decisions if d.action_type == "activate_obligation")
+        assert decision.reason == "pending obligation"
+        assert ObligationTrigger.CUSTOM.value not in decision.reason
+
 
 # =====================================================================
 # Deadline checking
@@ -225,6 +259,24 @@ class TestDeadlineChecking:
         updated = obl_engine.get_obligation(obl.obligation_id)
         assert updated is not None
         assert updated.state == ObligationState.EXPIRED
+
+    def test_deadline_reason_bounded(self) -> None:
+        spine = EventSpineEngine(clock=_clock)
+        obl_engine = ObligationRuntimeEngine(clock=_clock)
+        obl = obl_engine.create_obligation(
+            trigger=ObligationTrigger.CUSTOM,
+            trigger_ref_id="ref-1",
+            owner=_owner(),
+            deadline=_deadline(due_at=PAST),
+            description="expired test",
+            correlation_id="corr-1",
+        )
+        obl_engine.activate(obl.obligation_id)
+        eng = _engine(spine=spine, obligation_engine=obl_engine)
+        tick = eng.tick()
+        decision = next(d for d in tick.decisions if d.action_type == "expire_obligation")
+        assert decision.reason == "deadline breached"
+        assert PAST not in decision.reason
 
 
 # =====================================================================
@@ -323,8 +375,23 @@ class TestHaltBehavior:
         tick2 = eng.tick()  # error 2 — should halt
         assert tick2.outcome == TickOutcome.HALTED
         assert eng.is_halted
-        assert tick2.errors[-1] == "supervisor tick error (RuntimeError)"
+        assert tick2.errors[-1] == "supervisor tick error"
         assert "spine down" not in tick2.errors[-1]
+
+    def test_timeout_errors_use_bounded_label(self) -> None:
+        class SlowSpine(EventSpineEngine):
+            def list_events(self):
+                raise TimeoutError("poll timeout")
+
+        eng = _engine(
+            spine=SlowSpine(clock=_clock),
+            obligation_engine=ObligationRuntimeEngine(clock=_clock),
+            policy=_policy(max_consecutive_errors=5),
+        )
+        tick = eng.tick()
+        assert tick.errors[-1] == "supervisor tick timeout"
+        assert "TimeoutError" not in tick.errors[-1]
+        assert "poll timeout" not in tick.errors[-1]
 
 
 # =====================================================================

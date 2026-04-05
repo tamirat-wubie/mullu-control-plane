@@ -187,7 +187,7 @@ class GovernanceBridge:
                 utility_acceptable=verdict != ReactionVerdict.REJECT,
                 meta_reasoning_clear=verdict not in (ReactionVerdict.ESCALATE, ReactionVerdict.REQUIRES_APPROVAL),
                 confidence=1.0 if verdict == ReactionVerdict.PROCEED else 0.5,
-                reason=f"governance: {trace.final_effect.value} ({trace.rules_fired} rules fired)",
+                reason="governance decision",
                 gated_at=clock(),
             )
 

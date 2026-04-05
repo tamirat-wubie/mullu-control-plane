@@ -40,6 +40,11 @@ def _truncate_output(text: str | None, max_bytes: int) -> str:
     return truncated + _TRUNCATION_MARKER.format(limit=max_bytes)
 
 
+def _bounded_process_error(exc: Exception) -> str:
+    """Return a stable process-model failure without raw backend detail."""
+    return f"process model error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class ProcessModelConfig:
     """Configuration for a local process model adapter."""
@@ -132,5 +137,5 @@ class ProcessModelAdapter:
                 output_digest="none",
                 completed_at=self._clock(),
                 validation_status=ValidationStatus.FAILED,
-                metadata={"error": f"{type(exc).__name__}: {exc}"},
+                metadata={"error": _bounded_process_error(exc)},
             )

@@ -673,7 +673,7 @@ def restore_coordination_checkpoint(req: CoordinationRestoreRequest):
     except PersistenceError:
         from fastapi import HTTPException
         raise HTTPException(404, detail={
-            "error": f"checkpoint not found: {req.checkpoint_id}",
+            "error": "checkpoint not found",
             "error_code": "checkpoint_not_found",
             "governed": True,
         })

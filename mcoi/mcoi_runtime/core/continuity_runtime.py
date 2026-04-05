@@ -140,7 +140,7 @@ class ContinuityRuntimeEngine:
     ) -> ContinuityPlan:
         """Register a continuity plan."""
         if plan_id in self._plans:
-            raise RuntimeCoreInvariantError(f"Duplicate plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("Duplicate plan_id")
         now = self._now()
         plan = ContinuityPlan(
             plan_id=plan_id, name=name, tenant_id=tenant_id,
@@ -159,16 +159,14 @@ class ContinuityRuntimeEngine:
         """Get a continuity plan by ID."""
         plan = self._plans.get(plan_id)
         if plan is None:
-            raise RuntimeCoreInvariantError(f"Unknown plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("Unknown plan_id")
         return plan
 
     def activate_plan(self, plan_id: str) -> ContinuityPlan:
         """Activate a continuity plan (mark as activated/triggered)."""
         old = self.get_plan(plan_id)
         if old.status in _PLAN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot activate plan in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("plan unavailable for activation")
         updated = ContinuityPlan(
             plan_id=old.plan_id, name=old.name, tenant_id=old.tenant_id,
             scope=old.scope, status=ContinuityStatus.ACTIVATED,
@@ -185,9 +183,7 @@ class ContinuityRuntimeEngine:
         """Suspend a continuity plan."""
         old = self.get_plan(plan_id)
         if old.status in _PLAN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot suspend plan in status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("plan unavailable for suspension")
         updated = ContinuityPlan(
             plan_id=old.plan_id, name=old.name, tenant_id=old.tenant_id,
             scope=old.scope, status=ContinuityStatus.SUSPENDED,
@@ -237,9 +233,9 @@ class ContinuityRuntimeEngine:
     ) -> RecoveryPlan:
         """Register a recovery plan linked to a continuity plan."""
         if recovery_plan_id in self._recovery_plans:
-            raise RuntimeCoreInvariantError(f"Duplicate recovery_plan_id: {recovery_plan_id}")
+            raise RuntimeCoreInvariantError("Duplicate recovery_plan_id")
         if plan_id not in self._plans:
-            raise RuntimeCoreInvariantError(f"Unknown plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("Unknown plan_id")
         now = self._now()
         rp = RecoveryPlan(
             recovery_plan_id=recovery_plan_id, plan_id=plan_id,
@@ -257,7 +253,7 @@ class ContinuityRuntimeEngine:
         """Get a recovery plan by ID."""
         rp = self._recovery_plans.get(recovery_plan_id)
         if rp is None:
-            raise RuntimeCoreInvariantError(f"Unknown recovery_plan_id: {recovery_plan_id}")
+            raise RuntimeCoreInvariantError("Unknown recovery_plan_id")
         return rp
 
     def recovery_plans_for_plan(self, plan_id: str) -> tuple[RecoveryPlan, ...]:
@@ -280,7 +276,7 @@ class ContinuityRuntimeEngine:
     ) -> DisruptionEvent:
         """Record a disruption event."""
         if disruption_id in self._disruptions:
-            raise RuntimeCoreInvariantError(f"Duplicate disruption_id: {disruption_id}")
+            raise RuntimeCoreInvariantError("Duplicate disruption_id")
         now = self._now()
         event = DisruptionEvent(
             disruption_id=disruption_id, tenant_id=tenant_id,
@@ -299,7 +295,7 @@ class ContinuityRuntimeEngine:
         """Get a disruption event by ID."""
         d = self._disruptions.get(disruption_id)
         if d is None:
-            raise RuntimeCoreInvariantError(f"Unknown disruption_id: {disruption_id}")
+            raise RuntimeCoreInvariantError("Unknown disruption_id")
         return d
 
     def resolve_disruption(self, disruption_id: str) -> DisruptionEvent:
@@ -340,14 +336,12 @@ class ContinuityRuntimeEngine:
     ) -> FailoverRecord:
         """Trigger a failover action."""
         if failover_id in self._failovers:
-            raise RuntimeCoreInvariantError(f"Duplicate failover_id: {failover_id}")
+            raise RuntimeCoreInvariantError("Duplicate failover_id")
         plan = self.get_plan(plan_id)
         if plan.status in _PLAN_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot trigger failover for {plan.status.value} plan"
-            )
+            raise RuntimeCoreInvariantError("plan unavailable for failover")
         if disruption_id not in self._disruptions:
-            raise RuntimeCoreInvariantError(f"Unknown disruption_id: {disruption_id}")
+            raise RuntimeCoreInvariantError("Unknown disruption_id")
         # Auto-activate plan if not already
         if plan.status not in (ContinuityStatus.ACTIVATED,):
             self.activate_plan(plan_id)
@@ -371,11 +365,9 @@ class ContinuityRuntimeEngine:
         """Complete a failover action."""
         old = self._failovers.get(failover_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown failover_id: {failover_id}")
+            raise RuntimeCoreInvariantError("Unknown failover_id")
         if old.disposition != FailoverDisposition.INITIATED:
-            raise RuntimeCoreInvariantError(
-                f"Can only complete INITIATED failovers, got {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("failover cannot be completed")
         now = self._now()
         updated = FailoverRecord(
             failover_id=old.failover_id, plan_id=old.plan_id,
@@ -393,11 +385,9 @@ class ContinuityRuntimeEngine:
         """Mark a failover as failed."""
         old = self._failovers.get(failover_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown failover_id: {failover_id}")
+            raise RuntimeCoreInvariantError("Unknown failover_id")
         if old.disposition != FailoverDisposition.INITIATED:
-            raise RuntimeCoreInvariantError(
-                f"Can only fail INITIATED failovers, got {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("failover cannot be failed")
         now = self._now()
         updated = FailoverRecord(
             failover_id=old.failover_id, plan_id=old.plan_id,
@@ -415,11 +405,9 @@ class ContinuityRuntimeEngine:
         """Roll back a failover."""
         old = self._failovers.get(failover_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown failover_id: {failover_id}")
+            raise RuntimeCoreInvariantError("Unknown failover_id")
         if old.disposition in (FailoverDisposition.ROLLED_BACK, FailoverDisposition.FAILED):
-            raise RuntimeCoreInvariantError(
-                f"Cannot roll back failover in {old.disposition.value}"
-            )
+            raise RuntimeCoreInvariantError("failover cannot be rolled back")
         now = self._now()
         updated = FailoverRecord(
             failover_id=old.failover_id, plan_id=old.plan_id,
@@ -451,11 +439,11 @@ class ContinuityRuntimeEngine:
     ) -> RecoveryExecution:
         """Start a recovery execution."""
         if execution_id in self._executions:
-            raise RuntimeCoreInvariantError(f"Duplicate execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Duplicate execution_id")
         if recovery_plan_id not in self._recovery_plans:
-            raise RuntimeCoreInvariantError(f"Unknown recovery_plan_id: {recovery_plan_id}")
+            raise RuntimeCoreInvariantError("Unknown recovery_plan_id")
         if disruption_id not in self._disruptions:
-            raise RuntimeCoreInvariantError(f"Unknown disruption_id: {disruption_id}")
+            raise RuntimeCoreInvariantError("Unknown disruption_id")
         now = self._now()
         exe = RecoveryExecution(
             execution_id=execution_id, recovery_plan_id=recovery_plan_id,
@@ -472,11 +460,9 @@ class ContinuityRuntimeEngine:
         """Complete a recovery execution."""
         old = self._executions.get(execution_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Unknown execution_id")
         if old.status in _RECOVERY_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Recovery already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("recovery already finished")
         now = self._now()
         updated = RecoveryExecution(
             execution_id=old.execution_id, recovery_plan_id=old.recovery_plan_id,
@@ -492,11 +478,9 @@ class ContinuityRuntimeEngine:
         """Mark a recovery as failed."""
         old = self._executions.get(execution_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Unknown execution_id")
         if old.status in _RECOVERY_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Recovery already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("recovery already finished")
         now = self._now()
         updated = RecoveryExecution(
             execution_id=old.execution_id, recovery_plan_id=old.recovery_plan_id,
@@ -512,11 +496,9 @@ class ContinuityRuntimeEngine:
         """Cancel a recovery execution."""
         old = self._executions.get(execution_id)
         if old is None:
-            raise RuntimeCoreInvariantError(f"Unknown execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Unknown execution_id")
         if old.status in _RECOVERY_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Recovery already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("recovery already finished")
         updated = RecoveryExecution(
             execution_id=old.execution_id, recovery_plan_id=old.recovery_plan_id,
             disruption_id=old.disruption_id, status=RecoveryStatus.CANCELLED,
@@ -545,9 +527,9 @@ class ContinuityRuntimeEngine:
     ) -> RecoveryObjective:
         """Record a recovery objective evaluation."""
         if objective_id in self._objectives:
-            raise RuntimeCoreInvariantError(f"Duplicate objective_id: {objective_id}")
+            raise RuntimeCoreInvariantError("Duplicate objective_id")
         if plan_id not in self._plans:
-            raise RuntimeCoreInvariantError(f"Unknown plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("Unknown plan_id")
         now = self._now()
         met = actual_minutes <= target_minutes
         obj = RecoveryObjective(
@@ -581,9 +563,9 @@ class ContinuityRuntimeEngine:
     ) -> VerificationRecord:
         """Verify a recovery execution."""
         if verification_id in self._verifications:
-            raise RuntimeCoreInvariantError(f"Duplicate verification_id: {verification_id}")
+            raise RuntimeCoreInvariantError("Duplicate verification_id")
         if execution_id not in self._executions:
-            raise RuntimeCoreInvariantError(f"Unknown execution_id: {execution_id}")
+            raise RuntimeCoreInvariantError("Unknown execution_id")
         now = self._now()
         vr = VerificationRecord(
             verification_id=verification_id, execution_id=execution_id,
@@ -631,7 +613,7 @@ class ContinuityRuntimeEngine:
                             violation_id=vid, plan_id=plan.plan_id,
                             tenant_id=plan.tenant_id,
                             operation="activated_no_recovery",
-                            reason=f"Plan {plan.plan_id} is activated but has no recovery plans",
+                            reason="activated plan missing recovery plan",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -655,7 +637,7 @@ class ContinuityRuntimeEngine:
                             violation_id=vid, plan_id=fo.plan_id,
                             tenant_id=tenant_id,
                             operation="failed_failover_no_recovery",
-                            reason=f"Failover {fo.failover_id} failed but no recovery started for disruption {fo.disruption_id}",
+                            reason="failed failover missing recovery",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -674,7 +656,7 @@ class ContinuityRuntimeEngine:
                             violation_id=vid, plan_id=disruption.disruption_id,
                             tenant_id=disruption.tenant_id,
                             operation="all_recoveries_failed",
-                            reason=f"All {len(exes)} recovery executions failed for disruption {disruption.disruption_id}",
+                            reason="all recoveries failed",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -697,7 +679,7 @@ class ContinuityRuntimeEngine:
     def continuity_snapshot(self, snapshot_id: str) -> ContinuitySnapshot:
         """Capture a point-in-time continuity snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = self._now()
         snap = ContinuitySnapshot(
             snapshot_id=snapshot_id,

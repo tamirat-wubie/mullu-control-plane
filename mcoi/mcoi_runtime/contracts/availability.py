@@ -41,11 +41,38 @@ def _parse_datetime_text(value: str, field_name: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+_HOUR_FIELD_LABELS = frozenset({
+    "weekday_start_hour",
+    "weekday_end_hour",
+    "quiet_start_hour",
+    "quiet_end_hour",
+})
+
+_POSITIVE_INT_FIELD_LABELS = frozenset({"duration_minutes"})
+
+
+def _bounded_validation_label(
+    field_name: str,
+    *,
+    allowed_labels: frozenset[str],
+    fallback: str,
+) -> str:
+    """Return a bounded label for outward-facing validation errors."""
+    if field_name in allowed_labels:
+        return field_name
+    return fallback
+
+
 def _require_hour(value: int, field_name: str) -> int:
     """Validate that an hour value is in range 0-23."""
     v = require_non_negative_int(value, field_name)
     if v > 23:
-        raise ValueError(f"{field_name} must be 0-23, got {v}")
+        label = _bounded_validation_label(
+            field_name,
+            allowed_labels=_HOUR_FIELD_LABELS,
+            fallback="hour",
+        )
+        raise ValueError("{} must be 0-23".format(label))
     return v
 
 
@@ -53,7 +80,12 @@ def _require_positive_int(value: int, field_name: str) -> int:
     """Validate that an integer is strictly positive (>= 1)."""
     v = require_non_negative_int(value, field_name)
     if v < 1:
-        raise ValueError(f"{field_name} must be >= 1, got {v}")
+        label = _bounded_validation_label(
+            field_name,
+            allowed_labels=_POSITIVE_INT_FIELD_LABELS,
+            fallback="value",
+        )
+        raise ValueError("{} must be >= 1".format(label))
     return v
 
 
@@ -62,9 +94,7 @@ def _require_starts_before_ends(starts_at: str, ends_at: str) -> None:
     s = _parse_datetime_text(starts_at, "starts_at")
     e = _parse_datetime_text(ends_at, "ends_at")
     if s >= e:
-        raise ValueError(
-            f"starts_at ({starts_at}) must be before ends_at ({ends_at})"
-        )
+        raise ValueError("starts_at must be before ends_at")
 
 
 # ---------------------------------------------------------------------------
@@ -235,9 +265,7 @@ class SchedulingWindow(ContractRecord):
             require_non_negative_int(self.reserved, "reserved"),
         )
         if self.reserved > self.capacity:
-            raise ValueError(
-                f"reserved ({self.reserved}) must not exceed capacity ({self.capacity})"
-            )
+            raise ValueError("reserved must not exceed capacity")
         object.__setattr__(
             self, "metadata",
             freeze_value(dict(self.metadata)),
@@ -285,10 +313,7 @@ class BusinessHoursProfile(ContractRecord):
             _require_hour(self.weekday_end_hour, "weekday_end_hour"),
         )
         if self.weekday_start_hour >= self.weekday_end_hour:
-            raise ValueError(
-                f"weekday_start_hour ({self.weekday_start_hour}) must be < "
-                f"weekday_end_hour ({self.weekday_end_hour})"
-            )
+            raise ValueError("weekday_start_hour must be before weekday_end_hour")
         if not isinstance(self.weekend_available, bool):
             raise ValueError("weekend_available must be a boolean")
         object.__setattr__(
@@ -469,10 +494,7 @@ class ResponseSLA(ContractRecord):
             require_non_negative_int(self.escalation_after_seconds, "escalation_after_seconds"),
         )
         if self.escalation_after_seconds > self.max_response_seconds:
-            raise ValueError(
-                f"escalation_after_seconds ({self.escalation_after_seconds}) "
-                f"must not exceed max_response_seconds ({self.max_response_seconds})"
-            )
+            raise ValueError("escalation_after_seconds must not exceed max_response_seconds")
         if self.escalation_after_seconds > 0 and not self.escalation_target.strip():
             raise ValueError(
                 "escalation_target must be non-empty when escalation_after_seconds > 0"

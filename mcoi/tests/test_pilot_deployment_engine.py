@@ -481,3 +481,62 @@ class TestSnapshotAndStateHash:
         assert "runbooks" in cols
         assert "slos" in cols
         assert "violations" in cols
+
+
+class TestBoundedContracts:
+    def test_duplicate_and_unknown_contracts_do_not_reflect_ids(self, engine: PilotDeploymentEngine):
+        engine.bootstrap_tenant("bootstrap-secret", "t1", "pack-1")
+
+        with pytest.raises(RuntimeCoreInvariantError) as dup_exc:
+            engine.bootstrap_tenant("bootstrap-secret", "t1", "pack-2")
+        dup_message = str(dup_exc.value)
+        assert dup_message == "Duplicate bootstrap_id"
+        assert "bootstrap-secret" not in dup_message
+        assert "Duplicate bootstrap_id" in dup_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as unknown_exc:
+            engine.complete_connector_activation("activation-missing", True)
+        unknown_message = str(unknown_exc.value)
+        assert unknown_message == "Unknown activation_id"
+        assert "activation-missing" not in unknown_message
+        assert "Unknown activation_id" in unknown_message
+
+    def test_state_contracts_do_not_reflect_phase_or_status_values(self, engine: PilotDeploymentEngine):
+        engine.bootstrap_tenant("bootstrap-secret", "t1", "pack-1")
+        with pytest.raises(RuntimeCoreInvariantError) as bootstrap_exc:
+            engine.complete_bootstrap("bootstrap-secret")
+        bootstrap_message = str(bootstrap_exc.value)
+        assert bootstrap_message == "Cannot transition bootstrap from current status"
+        assert "PENDING" not in bootstrap_message
+        assert "COMPLETED" not in bootstrap_message
+
+        engine.register_pilot("pilot-secret", "t1", "pack-1")
+        engine.advance_pilot("pilot-secret")
+        engine.advance_pilot("pilot-secret")
+        engine.advance_pilot("pilot-secret")
+        engine.advance_pilot("pilot-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as pilot_exc:
+            engine.advance_pilot("pilot-secret")
+        pilot_message = str(pilot_exc.value)
+        assert pilot_message == "Pilot already in terminal phase"
+        assert "pilot-secret" not in pilot_message
+        assert "GRADUATED" not in pilot_message
+
+    def test_violation_reasons_do_not_reflect_ids_or_values(self, engine: PilotDeploymentEngine):
+        engine.register_pilot("pilot-secret", "t1", "pack-1")
+        engine.advance_pilot("pilot-secret")
+        engine.advance_pilot("pilot-secret")
+        engine.activate_connector("activation-secret", "t1", "http", "https://x.com")
+        engine.complete_connector_activation("activation-secret", False)
+        engine.start_migration("migration-secret", "t1", "legacy", 100)
+        engine.fail_migration("migration-secret")
+        engine.register_slo("slo-secret", "t1", "uptime", 100.0, 80.0, "percent")
+
+        reasons = {v.operation: v.reason for v in engine.detect_pilot_violations("t1")}
+        assert reasons["failed_connector_in_live_pilot"] == "Connector failed during live pilot"
+        assert "activation-secret" not in reasons["failed_connector_in_live_pilot"]
+        assert reasons["incomplete_migration"] == "Migration failed"
+        assert "migration-secret" not in reasons["incomplete_migration"]
+        assert reasons["slo_breach"] == "SLO breached"
+        assert "slo-secret" not in reasons["slo_breach"]
+        assert "80" not in reasons["slo_breach"]

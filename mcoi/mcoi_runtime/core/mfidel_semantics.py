@@ -11,7 +11,6 @@ Invariants:
 from __future__ import annotations
 
 import math
-import re
 from collections import Counter
 from dataclasses import dataclass
 from typing import Callable
@@ -21,7 +20,12 @@ from typing import Callable
 # ---------------------------------------------------------------------------
 
 _MAX_EMBEDDING_DIMS: int = 64
-_WORD_PATTERN: re.Pattern[str] = re.compile(r"[a-z0-9]+")
+_ETHIOPIC_RANGES: tuple[tuple[int, int], ...] = (
+    (0x1200, 0x137F),
+    (0x1380, 0x139F),
+    (0x2D80, 0x2DDF),
+    (0xAB00, 0xAB2F),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -104,8 +108,38 @@ class SemanticFamily:
 
 
 def _normalize_text(text: str) -> list[str]:
-    """Lowercase, strip non-alphanumeric, split into word tokens."""
-    return _WORD_PATTERN.findall(text.lower())
+    """Split text into atomic semantic tokens without decomposing fidel."""
+    tokens: list[str] = []
+    current: list[str] = []
+
+    for char in text:
+        if _is_semantic_token_char(char):
+            current.append(_normalize_semantic_char(char))
+            continue
+        if current:
+            tokens.append("".join(current))
+            current.clear()
+
+    if current:
+        tokens.append("".join(current))
+    return tokens
+
+
+def _is_ethiopic_char(char: str) -> bool:
+    codepoint = ord(char)
+    return any(start <= codepoint <= end for start, end in _ETHIOPIC_RANGES)
+
+
+def _is_semantic_token_char(char: str) -> bool:
+    if _is_ethiopic_char(char):
+        return True
+    return char.isascii() and char.isalnum()
+
+
+def _normalize_semantic_char(char: str) -> str:
+    if _is_ethiopic_char(char):
+        return char
+    return char.lower()
 
 
 def _build_embedding(text: str) -> tuple[tuple[str, ...], tuple[float, ...]]:
@@ -194,8 +228,7 @@ class MfidelSemanticIndex:
         """
         vocab, values = _build_embedding(text_content)
         self._vocabs[artifact_id] = vocab
-        tag_labels = ", ".join(t.label for t in tags) if tags else "untagged"
-        description = f"{artifact_type} [{artifact_id}]: {tag_labels}"
+        description = "Semantic annotation"
         return SemanticAnnotation(
             artifact_id=artifact_id,
             artifact_type=artifact_type,

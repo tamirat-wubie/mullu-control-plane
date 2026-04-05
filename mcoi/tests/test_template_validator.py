@@ -8,7 +8,13 @@ from __future__ import annotations
 
 import pytest
 
-from mcoi_runtime.core.template_validator import ExecutionActionType, TemplateValidationError, TemplateValidator
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.template_validator import (
+    ExecutionActionType,
+    TemplateValidationError,
+    TemplateValidator,
+    ValidatedTemplate,
+)
 
 
 def test_template_validator_accepts_valid_shell_templates() -> None:
@@ -65,3 +71,14 @@ def test_template_validator_rejects_malformed_templates() -> None:
     assert exc_info.value.code == "malformed_template"
     assert "command_argv" in str(exc_info.value)
     assert "sequence of strings" in str(exc_info.value)
+
+
+def test_validated_template_rejects_blank_command_items_under_bounded_contract() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="^command_argv items must be non-empty strings$") as exc_info:
+        ValidatedTemplate(
+            template_id="template-1",
+            action_type=ExecutionActionType.SHELL_COMMAND,
+            command_argv=("python", " "),
+        )
+
+    assert "[1]" not in str(exc_info.value)

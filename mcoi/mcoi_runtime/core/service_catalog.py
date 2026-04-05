@@ -135,7 +135,7 @@ class ServiceCatalogEngine:
     ) -> ServiceCatalogItem:
         """Register a service catalog item."""
         if item_id in self._catalog:
-            raise RuntimeCoreInvariantError(f"Duplicate item_id: {item_id}")
+            raise RuntimeCoreInvariantError("Duplicate item_id")
         now = _now_iso()
         item = ServiceCatalogItem(
             item_id=item_id, name=name, tenant_id=tenant_id,
@@ -154,16 +154,14 @@ class ServiceCatalogEngine:
         """Get a catalog item by ID."""
         item = self._catalog.get(item_id)
         if item is None:
-            raise RuntimeCoreInvariantError(f"Unknown item_id: {item_id}")
+            raise RuntimeCoreInvariantError("Unknown item_id")
         return item
 
     def deprecate_catalog_item(self, item_id: str) -> ServiceCatalogItem:
         """Deprecate a catalog item."""
         old = self.get_catalog_item(item_id)
         if old.status != ServiceStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Can only deprecate ACTIVE items, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only deprecate active catalog items")
         updated = ServiceCatalogItem(
             item_id=old.item_id, name=old.name, tenant_id=old.tenant_id,
             kind=old.kind, status=ServiceStatus.DEPRECATED,
@@ -215,12 +213,10 @@ class ServiceCatalogEngine:
     ) -> ServiceRequest:
         """Submit a new service request."""
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"Duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Duplicate request_id")
         item = self.get_catalog_item(item_id)
         if item.status != ServiceStatus.ACTIVE:
-            raise RuntimeCoreInvariantError(
-                f"Cannot request from {item.status.value} catalog item"
-            )
+            raise RuntimeCoreInvariantError("Cannot request from non-active catalog item")
         now = _now_iso()
         status = RequestStatus.SUBMITTED
         req = ServiceRequest(
@@ -240,7 +236,7 @@ class ServiceCatalogEngine:
         """Get a request by ID."""
         req = self._requests.get(request_id)
         if req is None:
-            raise RuntimeCoreInvariantError(f"Unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("Unknown request_id")
         return req
 
     def _update_request_status(self, request_id: str, new_status: RequestStatus) -> ServiceRequest:
@@ -272,12 +268,10 @@ class ServiceCatalogEngine:
     ) -> EntitlementRule:
         """Evaluate entitlement for a request."""
         if rule_id in self._entitlements:
-            raise RuntimeCoreInvariantError(f"Duplicate rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate rule_id")
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot evaluate entitlement for {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot evaluate entitlement for terminal request")
         now = _now_iso()
         rule = EntitlementRule(
             rule_id=rule_id, item_id=req.item_id, tenant_id=req.tenant_id,
@@ -330,9 +324,7 @@ class ServiceCatalogEngine:
         """Approve a pending-approval request."""
         req = self.get_request(request_id)
         if req.status != RequestStatus.PENDING_APPROVAL:
-            raise RuntimeCoreInvariantError(
-                f"Can only approve PENDING_APPROVAL requests, got {req.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only approve pending-approval requests")
         now = _now_iso()
         dec_id = stable_identifier("dec-appr", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
@@ -358,9 +350,7 @@ class ServiceCatalogEngine:
         """Deny a request."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot deny {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot deny terminal request")
         now = _now_iso()
         dec_id = stable_identifier("dec-deny", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
@@ -380,9 +370,7 @@ class ServiceCatalogEngine:
         """Cancel a request."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot cancel {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot cancel terminal request")
         updated = self._update_request_status(request_id, RequestStatus.CANCELLED)
         _emit(self._events, "request_cancelled", {"request_id": request_id}, request_id)
         return updated
@@ -401,12 +389,10 @@ class ServiceCatalogEngine:
     ) -> RequestAssignment:
         """Assign a request to an assignee."""
         if assignment_id in self._assignments:
-            raise RuntimeCoreInvariantError(f"Duplicate assignment_id: {assignment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assignment_id")
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot assign {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot assign terminal request")
         now = _now_iso()
         assignment = RequestAssignment(
             assignment_id=assignment_id, request_id=request_id,
@@ -439,12 +425,10 @@ class ServiceCatalogEngine:
     ) -> FulfillmentTask:
         """Create a fulfillment task for a request."""
         if task_id in self._tasks:
-            raise RuntimeCoreInvariantError(f"Duplicate task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Duplicate task_id")
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Cannot create task for {req.status.value} request"
-            )
+            raise RuntimeCoreInvariantError("Cannot create task for terminal request")
         # Auto-transition to IN_FULFILLMENT if not already
         if req.status not in (RequestStatus.IN_FULFILLMENT, RequestStatus.DENIED, RequestStatus.CANCELLED):
             self._update_request_status(request_id, RequestStatus.IN_FULFILLMENT)
@@ -465,16 +449,14 @@ class ServiceCatalogEngine:
         """Get a fulfillment task by ID."""
         task = self._tasks.get(task_id)
         if task is None:
-            raise RuntimeCoreInvariantError(f"Unknown task_id: {task_id}")
+            raise RuntimeCoreInvariantError("Unknown task_id")
         return task
 
     def start_task(self, task_id: str) -> FulfillmentTask:
         """Start a fulfillment task."""
         old = self.get_task(task_id)
         if old.status != FulfillmentStatus.PENDING:
-            raise RuntimeCoreInvariantError(
-                f"Can only start PENDING tasks, got {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Can only start pending tasks")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, status=FulfillmentStatus.IN_PROGRESS,
@@ -489,9 +471,7 @@ class ServiceCatalogEngine:
         """Complete a fulfillment task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Task already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Task already in terminal status")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
@@ -520,9 +500,7 @@ class ServiceCatalogEngine:
         """Mark a fulfillment task as failed."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Task already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Task already in terminal status")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
@@ -539,9 +517,7 @@ class ServiceCatalogEngine:
         """Cancel a fulfillment task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Task already in terminal status {old.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Task already in terminal status")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, status=FulfillmentStatus.CANCELLED,
@@ -564,9 +540,7 @@ class ServiceCatalogEngine:
         """Close a request (mark as fulfilled)."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(
-                f"Request already in terminal status {req.status.value}"
-            )
+            raise RuntimeCoreInvariantError("Request already in terminal status")
         updated = self._update_request_status(request_id, RequestStatus.FULFILLED)
         _emit(self._events, "request_closed", {"request_id": request_id}, request_id)
         return updated
@@ -590,9 +564,9 @@ class ServiceCatalogEngine:
     ) -> CatalogAssessment:
         """Assess a catalog item's health."""
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"Duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("Duplicate assessment_id")
         if item_id not in self._catalog:
-            raise RuntimeCoreInvariantError(f"Unknown item_id: {item_id}")
+            raise RuntimeCoreInvariantError("Unknown item_id")
         now = _now_iso()
         assessment = CatalogAssessment(
             assessment_id=assessment_id, item_id=item_id,
@@ -632,7 +606,7 @@ class ServiceCatalogEngine:
                             violation_id=vid, request_id=req.request_id,
                             tenant_id=req.tenant_id,
                             operation="all_tasks_failed",
-                            reason=f"All {len(req_tasks)} fulfillment tasks have failed for request {req.request_id}",
+                            reason="All fulfillment tasks failed",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -654,7 +628,7 @@ class ServiceCatalogEngine:
                             violation_id=vid, request_id=req.request_id,
                             tenant_id=req.tenant_id,
                             operation="no_entitlement",
-                            reason=f"Request {req.request_id} has no entitlement evaluation",
+                            reason="Request lacks entitlement evaluation",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -673,7 +647,7 @@ class ServiceCatalogEngine:
                             violation_id=vid, request_id=req.request_id,
                             tenant_id=req.tenant_id,
                             operation="no_tasks",
-                            reason=f"Request {req.request_id} is in fulfillment but has no tasks",
+                            reason="Request in fulfillment has no tasks",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -696,7 +670,7 @@ class ServiceCatalogEngine:
     def request_snapshot(self, snapshot_id: str) -> RequestSnapshot:
         """Capture a point-in-time request snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         total_cost = sum(
             r.estimated_cost for r in self._requests.values()

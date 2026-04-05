@@ -78,7 +78,7 @@ class CanaryController:
     def create_canary(self, deployment_id: str, stable_version: str,
                       canary_version: str, initial_traffic_pct: float = 5.0) -> CanaryDeployment:
         if initial_traffic_pct < 0 or initial_traffic_pct > 100:
-            raise ValueError(f"Traffic percentage must be 0-100: {initial_traffic_pct}")
+            raise ValueError("Traffic percentage must be 0-100")
         if self._active_deployment:
             raise ValueError("Active canary deployment already exists")
 
@@ -146,9 +146,9 @@ class CanaryController:
     def _get_active(self, deployment_id: str) -> CanaryDeployment:
         dep = self._deployments.get(deployment_id)
         if not dep:
-            raise ValueError(f"Deployment not found: {deployment_id}")
+            raise ValueError("Deployment not found")
         if dep.status not in (DeploymentStatus.CANARY, DeploymentStatus.PROMOTING):
-            raise ValueError(f"Deployment not active: {dep.status.value}")
+            raise ValueError("Deployment not active")
         return dep
 
     @property

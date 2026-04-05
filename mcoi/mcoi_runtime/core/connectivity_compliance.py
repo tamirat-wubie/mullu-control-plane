@@ -342,7 +342,7 @@ class ConnectivityComplianceEngine:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=connector_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Outbound {operation} via {connector_id}",
+            title="Outbound connectivity audit",
             content={
                 "connector_id": connector_id,
                 "operation": operation,

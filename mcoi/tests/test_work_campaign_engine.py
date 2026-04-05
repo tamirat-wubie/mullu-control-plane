@@ -431,7 +431,7 @@ class TestEscalation:
         escs = eng.get_escalations("r1")
         assert len(escs) == 1
         assert escs[0].reason == CampaignEscalationReason.STEP_FAILURE
-        assert "failed:" in escs[0].description
+        assert escs[0].description == "campaign step failed and requires escalation"
 
     def test_non_escalating_failure_sets_failed(self):
         eng = _make_engine()
@@ -856,7 +856,7 @@ class TestClosureReport:
         eng.start_run("camp-1", run_id="r1")
         eng.execute_all_steps("r1")
         report = eng.get_closure_report("r1")
-        assert "camp-1" in report.summary
+        assert "camp-1" not in report.summary
         assert "success" in report.summary.lower()
 
     def test_no_closure_report_before_completion(self):
@@ -1135,7 +1135,7 @@ class TestExecutionRecords:
         eng.execute_next_step("r1")
         escalation = eng.get_escalations("r1")[0]
         assert escalation.reason == CampaignEscalationReason.STEP_FAILURE
-        assert "campaign step handler error (RuntimeError)" in escalation.description
+        assert escalation.description == "campaign step failed and requires escalation"
         assert "boom" not in escalation.description
 
 
@@ -1255,3 +1255,42 @@ class TestEdgeCases:
         eng.start_run("camp-1", run_id="r1")
         rec = eng.execute_next_step("r1")
         assert "auto" in rec.output_summary
+
+
+class TestBoundedWorkCampaignContracts:
+    def test_registry_and_lifecycle_errors_are_bounded(self):
+        eng = _make_engine()
+        _register_simple(eng, "campaign-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_campaign:
+            _register_simple(eng, "campaign-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as missing_campaign:
+            eng.get_campaign("missing-campaign")
+
+        eng.start_run("campaign-secret", run_id="run-secret")
+        eng.execute_all_steps("run-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as pause_terminal:
+            eng.pause_run("run-secret")
+
+        assert str(duplicate_campaign.value) == "campaign already registered"
+        assert str(missing_campaign.value) == "campaign not found"
+        assert str(pause_terminal.value) == "cannot pause run in terminal status"
+        assert "campaign-secret" not in str(duplicate_campaign.value)
+        assert "missing-campaign" not in str(missing_campaign.value)
+        assert "completed" not in str(pause_terminal.value).lower()
+
+    def test_step_and_summary_surfaces_are_bounded(self):
+        eng = _make_engine()
+        eng.register_step_handler(CampaignStepType.SEND_COMMUNICATION, _raise_handler)
+        steps = [_step("step-secret", step_type=CampaignStepType.SEND_COMMUNICATION, max_retries=0, name="secret-step")]
+        eng.register_campaign("campaign-secret", "C1", steps)
+        eng.start_run("campaign-secret", run_id="run-secret")
+        eng.execute_next_step("run-secret")
+        escalation = eng.get_escalations("run-secret")[0]
+        report = eng._generate_closure_report("run-secret")
+
+        assert escalation.description == "campaign step failed and requires escalation"
+        assert "secret-step" not in escalation.description
+        assert "RuntimeError" not in escalation.description
+        assert report.summary == "campaign completed with failure verdict"
+        assert "campaign-secret" not in report.summary
+        assert "run-secret" not in report.summary

@@ -126,3 +126,17 @@ class TestGoldenProof:
         assert engine.project_count == 1
         assert engine.case_count == 1
         assert engine.milestone_count == 8
+
+
+class TestBoundedInternalOpsContracts:
+    def test_case_errors_are_bounded(self):
+        engine = InternalOpsEngine()
+        with pytest.raises(ValueError, match="^unknown support case$") as exc_info:
+            engine.assign_case("case-secret", "eng-1")
+        assert "case-secret" not in str(exc_info.value)
+
+    def test_milestone_errors_are_bounded(self):
+        engine = InternalOpsEngine()
+        with pytest.raises(ValueError, match="^unknown success milestone$") as exc_info:
+            engine.complete_milestone("milestone-secret")
+        assert "milestone-secret" not in str(exc_info.value)

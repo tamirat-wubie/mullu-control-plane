@@ -78,7 +78,7 @@ class DataExportPipeline:
 
     def export(self, request: ExportRequest) -> ExportResult:
         if request.source not in self._sources:
-            raise ValueError(f"Unknown export source: {request.source}")
+            raise ValueError("Unknown export source")
 
         records = self._sources[request.source]()
 
@@ -104,7 +104,7 @@ class DataExportPipeline:
         elif request.format == ExportFormat.JSONL:
             content = "\n".join(json.dumps(r, default=str) for r in records)
         else:
-            raise ValueError(f"Unsupported format: {request.format}")
+            raise ValueError("Unsupported export format")
 
         self._total_exports += 1
         self._total_records_exported += len(records)

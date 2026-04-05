@@ -30,8 +30,9 @@ class TestWorldStateStore:
     def test_duplicate_snapshot_raises(self):
         store = WorldStateStore()
         store.store_snapshot("s1", "h1", 1, 0, 1.0, FIXED_CLOCK(), {})
-        with pytest.raises(ValueError, match="already exists"):
+        with pytest.raises(ValueError, match=r"^snapshot already exists$") as excinfo:
             store.store_snapshot("s1", "h2", 2, 0, 1.0, FIXED_CLOCK(), {})
+        assert "s1" not in str(excinfo.value)
 
     def test_get_snapshot(self):
         store = WorldStateStore()
@@ -78,8 +79,9 @@ class TestWorldStateStore:
     def test_duplicate_delta_raises(self):
         store = WorldStateStore()
         store.store_delta("d1", "s1", "s2", [], FIXED_CLOCK())
-        with pytest.raises(ValueError, match="already exists"):
+        with pytest.raises(ValueError, match=r"^delta already exists$") as excinfo:
             store.store_delta("d1", "s1", "s2", [], FIXED_CLOCK())
+        assert "d1" not in str(excinfo.value)
 
     def test_deltas_for_snapshot(self):
         store = WorldStateStore()

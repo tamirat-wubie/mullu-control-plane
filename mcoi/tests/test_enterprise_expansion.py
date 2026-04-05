@@ -15,6 +15,10 @@ def test_recommend_eligible():
     assert offer is not None
     assert offer.recommended_bundle == "regulated_financial_bundle"
     assert offer.monthly_savings == 1200.0
+    assert offer.reason == "high activation, strong satisfaction, established tenure"
+    assert "80%" not in offer.reason
+    assert "9.0" not in offer.reason
+    assert "4" not in offer.reason
 
 def test_recommend_low_activation_returns_none():
     assert recommend_bundle_upgrade("regulated_ops", 0.3, 9.0, 4) is None

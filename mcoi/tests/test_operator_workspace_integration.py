@@ -503,6 +503,12 @@ class TestAttachWorkspaceStateToMemoryMesh:
         mem = integration.attach_workspace_state_to_memory_mesh("scope-1")
         assert mem.scope_ref_id == "scope-1"
 
+    def test_memory_title_is_bounded(self, integration: OperatorWorkspaceIntegration) -> None:
+        mem = integration.attach_workspace_state_to_memory_mesh("scope-1")
+        assert mem.title == "Operator workspace state"
+        assert "scope-1" not in mem.title
+        assert mem.scope_ref_id == "scope-1"
+
     def test_memory_added_to_engine(
         self,
         integration: OperatorWorkspaceIntegration,

@@ -17,6 +17,11 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 
+def _bounded_probe_error(exc: Exception) -> str:
+    """Return a stable probe failure label without raw backend detail."""
+    return f"probe error ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class IsolationProbe:
     """Result of a single isolation probe."""
@@ -61,7 +66,7 @@ class IsolationVerifier:
             except Exception as exc:
                 probes.append(IsolationProbe(
                     probe_name="error", tenant_a=tenant_a, tenant_b=tenant_b,
-                    isolated=False, detail=f"probe error: {exc}",
+                    isolated=False, detail=_bounded_probe_error(exc),
                 ))
 
         passed = sum(1 for p in probes if p.isolated)

@@ -87,7 +87,7 @@ class TestWebhookRetryEngine:
             raise ConnectionError("refused")
         result = engine.deliver(delivery, send_fn=explode)
         assert result.status == DeliveryStatus.DEAD_LETTER
-        assert "refused" in result.attempts[0].error
+        assert result.attempts[0].error == "delivery error (ConnectionError)"
 
     def test_get_delivery(self):
         engine = WebhookRetryEngine()

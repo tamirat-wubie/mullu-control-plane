@@ -148,8 +148,12 @@ def test_episodic_memory_rejects_working_tier() -> None:
 def test_episodic_memory_rejects_duplicates() -> None:
     em = EpisodicMemory()
     em.admit(_episodic_entry("e-1"))
-    with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+    with pytest.raises(
+        RuntimeCoreInvariantError,
+        match="^entry_id already exists in episodic memory$",
+    ) as exc_info:
         em.admit(_episodic_entry("e-1"))
+    assert "e-1" not in str(exc_info.value)
 
 
 def test_episodic_memory_preserves_temporal_order() -> None:

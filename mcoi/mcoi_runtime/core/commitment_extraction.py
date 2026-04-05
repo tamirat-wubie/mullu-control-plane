@@ -289,7 +289,7 @@ class CommitmentExtractionEngine:
                 confidence=confidence,
                 confidence_level=conf_level,
                 disposition=disposition,
-                reason=f"Detected {'approval' if appr.approved else 'rejection'} signal",
+                reason="approval signal detected" if appr.approved else "rejection signal detected",
                 created_at=now,
             ))
             idx += 1
@@ -439,7 +439,7 @@ class CommitmentExtractionEngine:
                 decision_id=stable_identifier("rt-commit", {"cid": c.commitment_id}),
                 commitment_id=c.commitment_id,
                 routed_to_identity_id=target,
-                reason=f"Routed {c.commitment_type.value} commitment",
+                reason="commitment routed",
                 created_at=now,
             )
             decisions.append(decision)
@@ -457,14 +457,14 @@ class CommitmentExtractionEngine:
     ) -> CommitmentPromotionRecord:
         """Record promotion of a commitment candidate to an obligation."""
         if commitment_id not in self._candidates:
-            raise RuntimeCoreInvariantError(f"commitment not found: {commitment_id}")
+            raise RuntimeCoreInvariantError("commitment not found")
         candidate = self._candidates[commitment_id]
         if candidate.disposition in (CommitmentDisposition.REJECTED, CommitmentDisposition.AMBIGUOUS):
             raise RuntimeCoreInvariantError(
-                f"cannot promote {candidate.disposition.value} commitment: {commitment_id}"
+                "cannot promote commitment"
             )
         if commitment_id in self._promotions:
-            raise RuntimeCoreInvariantError(f"commitment already promoted: {commitment_id}")
+            raise RuntimeCoreInvariantError("commitment already promoted")
 
         now = _now_iso()
         promotion = CommitmentPromotionRecord(

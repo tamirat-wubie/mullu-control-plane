@@ -82,14 +82,14 @@ class DMRSContext:
         if not isinstance(self.load, str):
             raise TypeError("load must be a str")
         if self.load not in _VALID_LOADS:
-            raise ValueError(f"load must be one of {_VALID_LOADS}, got {self.load!r}")
+            raise ValueError("load must be one of the supported values")
         if not isinstance(self.flags, tuple):
             raise TypeError("flags must be a tuple of str")
         for flag in self.flags:
             if not isinstance(flag, str):
                 raise TypeError("each flag must be a str")
             if flag not in _VALID_FLAGS:
-                raise ValueError(f"invalid flag {flag!r}; must be subset of {_VALID_FLAGS}")
+                raise ValueError("invalid flag; must use a supported value")
 
 
 @dataclass(frozen=True, slots=True)

@@ -210,6 +210,10 @@ class TestWorkflowRuntimeGoldenScenarios:
         assert len(report.errors) == 1
         assert report.errors[0].error_code == "autonomy_blocked"
         assert "observe_only" in report.errors[0].message
+        status = loop.runtime.autonomy.get_status()
+        assert len(status.violations) == 1
+        assert status.violations[0].attempted_action == "workflow execution"
+        assert wf.workflow_id not in status.violations[0].attempted_action
 
     def test_workflow_persistence_round_trip(self, tmp_path: Path):
         """Workflow execution record survives save/load cycle."""

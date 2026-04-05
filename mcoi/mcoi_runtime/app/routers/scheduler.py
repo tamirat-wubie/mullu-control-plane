@@ -15,6 +15,10 @@ from mcoi_runtime.app.routers.deps import deps
 router = APIRouter()
 
 
+def _scheduler_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
 class ScheduleJobRequest(BaseModel):
     job_id: str
     name: str
@@ -43,11 +47,7 @@ def schedule_job(req: ScheduleJobRequest):
     try:
         schedule_type = JobSchedule(req.schedule_type)
     except ValueError:
-        raise HTTPException(400, detail={
-            "error": f"invalid schedule_type: {req.schedule_type}",
-            "error_code": "invalid_schedule_type",
-            "governed": True,
-        })
+        raise HTTPException(400, detail=_scheduler_error_detail("invalid schedule type", "invalid_schedule_type"))
     job = ScheduledJob(
         job_id=req.job_id,
         name=req.name,
@@ -79,11 +79,7 @@ def execute_job(req: ExecuteJobRequest):
     try:
         execution = deps.scheduler.execute_job(req.job_id)
     except ValueError:
-        raise HTTPException(404, detail={
-            "error": f"job not found: {req.job_id}",
-            "error_code": "job_not_found",
-            "governed": True,
-        })
+        raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {
         "execution_id": execution.execution_id,
         "job_id": execution.job_id,
@@ -120,11 +116,7 @@ def disable_job(job_id: str):
     """Disable a scheduled job."""
     deps.metrics.inc("requests_governed")
     if not deps.scheduler.disable(job_id):
-        raise HTTPException(404, detail={
-            "error": f"job not found: {job_id}",
-            "error_code": "job_not_found",
-            "governed": True,
-        })
+        raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {"job_id": job_id, "enabled": False, "governed": True}
 
 
@@ -133,11 +125,7 @@ def enable_job(job_id: str):
     """Enable a previously disabled job."""
     deps.metrics.inc("requests_governed")
     if not deps.scheduler.enable(job_id):
-        raise HTTPException(404, detail={
-            "error": f"job not found: {job_id}",
-            "error_code": "job_not_found",
-            "governed": True,
-        })
+        raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {"job_id": job_id, "enabled": True, "governed": True}
 
 
@@ -146,11 +134,7 @@ def unschedule_job(job_id: str):
     """Remove a scheduled job."""
     deps.metrics.inc("requests_governed")
     if not deps.scheduler.unschedule(job_id):
-        raise HTTPException(404, detail={
-            "error": f"job not found: {job_id}",
-            "error_code": "job_not_found",
-            "governed": True,
-        })
+        raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {"job_id": job_id, "removed": True, "governed": True}
 
 

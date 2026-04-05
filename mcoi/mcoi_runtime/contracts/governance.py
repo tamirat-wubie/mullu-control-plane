@@ -144,7 +144,7 @@ class PolicyCondition(ContractRecord):
         object.__setattr__(self, "operator", require_non_empty_text(self.operator, "operator"))
         if self.operator not in _VALID_CONDITION_OPERATORS:
             raise ValueError(
-                f"operator must be one of {sorted(_VALID_CONDITION_OPERATORS)}"
+                "operator has unsupported value"
             )
         object.__setattr__(self, "expected_value", freeze_value(self.expected_value))
 

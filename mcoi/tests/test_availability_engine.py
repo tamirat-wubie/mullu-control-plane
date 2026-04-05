@@ -162,11 +162,12 @@ class TestAvailabilityRecords:
             "rec-1", "alice", AvailabilityKind.VACATION,
             _iso(2025, 6, 10), _iso(2025, 6, 20),
         )
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             eng.set_availability(
                 "rec-1", "bob", AvailabilityKind.QUIET_HOURS,
                 _iso(2025, 6, 10), _iso(2025, 6, 20),
-            )
+                )
+        assert "rec-1" not in str(exc_info.value)
 
     def test_filter_by_time_inside(self):
         _, eng = _engine()
@@ -293,7 +294,8 @@ class TestContactAllowedNow:
         )
         d = eng.contact_allowed_now("alice", priority="low", at_time=_dt(2025, 6, 16))
         assert d.resolution == AvailabilityResolution.UNAVAILABLE
-        assert "temporarily unavailable" in d.reason
+        assert d.reason == "temporarily unavailable"
+        assert "in a meeting" not in d.reason
 
     def test_temporary_unavailable_blocks_normal(self):
         _, eng = _engine()
@@ -427,7 +429,8 @@ class TestContactAllowedNow:
             "alice", priority="critical", channel="sms", at_time=_dt(2025, 6, 16),
         )
         assert d.resolution == AvailabilityResolution.UNAVAILABLE
-        assert "sms" in d.reason
+        assert d.reason == "channel blocked"
+        assert "sms" not in d.reason
 
     def test_channel_not_blocked_passes(self):
         _, eng = _engine()
@@ -879,6 +882,9 @@ class TestFindConflicts:
         conflicts = eng.find_conflicts("alice")
         assert len(conflicts) >= 1
         assert conflicts[0].kind == SchedulingConflictKind.DOUBLE_BOOKING
+        assert conflicts[0].description == "meetings overlap"
+        assert "M1" not in conflicts[0].description
+        assert "M2" not in conflicts[0].description
 
     def test_non_overlapping_no_conflict(self):
         _, eng = _engine()
@@ -902,13 +908,14 @@ class TestFindConflicts:
         conflicts = eng.find_conflicts("alice")
         assert len(conflicts) == 0
 
-    def test_conflict_description_has_titles(self):
+    def test_conflict_description_is_bounded(self):
         _, eng = _engine()
         self._schedule(eng, "r1", "alice", ("bob",), 9, 11, "StandUp")
         self._schedule(eng, "r2", "alice", ("carol",), 10, 12, "Review")
         conflicts = eng.find_conflicts("alice")
-        assert "StandUp" in conflicts[0].description
-        assert "Review" in conflicts[0].description
+        assert conflicts[0].description == "meetings overlap"
+        assert "StandUp" not in conflicts[0].description
+        assert "Review" not in conflicts[0].description
 
 
 # ===================================================================
@@ -933,8 +940,9 @@ class TestWindows:
     def test_duplicate_window_raises(self):
         _, eng = _engine()
         eng.add_window("w-1", "alice", WindowType.CONTACT, _iso(2025, 6, 16, 9), _iso(2025, 6, 16, 17))
-        with pytest.raises(RuntimeCoreInvariantError, match="already exists"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already exists") as exc_info:
             eng.add_window("w-1", "bob", WindowType.MEETING, _iso(2025, 6, 16, 9), _iso(2025, 6, 16, 17))
+        assert "w-1" not in str(exc_info.value)
 
     def test_filter_by_type(self):
         _, eng = _engine()
@@ -1459,7 +1467,8 @@ class TestEdgeCases:
         )
         d = eng.contact_allowed_now("alice", priority="low", at_time=_dt(2025, 6, 16))
         assert d.resolution == AvailabilityResolution.UNAVAILABLE
-        assert "temporarily unavailable" in d.reason
+        assert d.reason == "temporarily unavailable"
+        assert "meeting" not in d.reason
 
     def test_quiet_hours_with_urgent_floor(self):
         _, eng = _engine()
@@ -1674,23 +1683,31 @@ class TestInvalidPriority:
 
     def test_invalid_priority_in_contact_allowed(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown priority"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.contact_allowed_now("alice", priority="super_high", at_time=MON)
+        assert str(exc_info.value) == "priority has unsupported value"
+        assert "super_high" not in str(exc_info.value)
+        assert "critical" not in str(exc_info.value)
 
     def test_empty_priority_rejected(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown priority"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.contact_allowed_now("alice", priority="", at_time=MON)
+        assert str(exc_info.value) == "priority has unsupported value"
 
     def test_case_sensitive_priority(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown priority"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.contact_allowed_now("alice", priority="Normal", at_time=MON)
+        assert str(exc_info.value) == "priority has unsupported value"
+        assert "Normal" not in str(exc_info.value)
 
     def test_numeric_string_priority_rejected(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="unknown priority"):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             eng.contact_allowed_now("alice", priority="1", at_time=MON)
+        assert str(exc_info.value) == "priority has unsupported value"
+        assert "1" not in str(exc_info.value)
 
     @pytest.mark.parametrize("valid_prio", ["low", "normal", "high", "urgent", "critical"])
     def test_all_valid_priorities_accepted(self, valid_prio):
@@ -1745,8 +1762,9 @@ class TestDeactivateAvailability:
 
     def test_deactivate_nonexistent_raises(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             eng.deactivate_availability("no-such-record")
+        assert "no-such-record" not in str(exc_info.value)
 
     def test_deactivate_already_inactive_raises(self):
         _, eng = _engine()
@@ -1755,8 +1773,9 @@ class TestDeactivateAvailability:
             _iso(2025, 6, 10), _iso(2025, 6, 20),
         )
         eng.deactivate_availability("rec-1")
-        with pytest.raises(RuntimeCoreInvariantError, match="already inactive"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already inactive") as exc_info:
             eng.deactivate_availability("rec-1")
+        assert "rec-1" not in str(exc_info.value)
 
     def test_deactivate_emits_event(self):
         es, eng = _engine()
@@ -1829,15 +1848,17 @@ class TestCancelMeeting:
 
     def test_cancel_nonexistent_raises(self):
         _, eng = _engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="not found") as exc_info:
             eng.cancel_meeting("no-such-meeting")
+        assert "no-such-meeting" not in str(exc_info.value)
 
     def test_cancel_already_cancelled_raises(self):
         _, eng = _engine()
         decision = self._schedule_meeting(eng)
         eng.cancel_meeting(decision.meeting_id)
-        with pytest.raises(RuntimeCoreInvariantError, match="already cancelled"):
+        with pytest.raises(RuntimeCoreInvariantError, match="already cancelled") as exc_info:
             eng.cancel_meeting(decision.meeting_id)
+        assert decision.meeting_id not in str(exc_info.value)
 
     def test_cancel_emits_event(self):
         es, eng = _engine()

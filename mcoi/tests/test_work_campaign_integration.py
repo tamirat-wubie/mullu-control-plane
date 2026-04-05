@@ -281,8 +281,13 @@ class TestAbortCampaign:
         mem_before = len(mm.list_memories())
         integ.abort_campaign("run-abm", reason="test")
         mem_after = len(mm.list_memories())
+        closure_records = [m for m in mm.list_memories() if "closure" in m.tags]
 
         assert mem_after > mem_before
+        assert closure_records
+        assert closure_records[-1].title == "Campaign closure"
+        assert "camp-abm" not in closure_records[-1].title
+        assert "aborted" not in closure_records[-1].title
 
     def test_abort_closure_report_has_correct_run_id(self, engines):
         es, mm, wce, integ, obs = engines
@@ -311,6 +316,8 @@ class TestCampaignFromCommitments:
 
         assert len(steps) == 4  # 3 commitment steps + close
         assert desc.trigger == CampaignTrigger.COMMITMENT_EXTRACTED
+        assert steps[0].name == "Create obligation"
+        assert "Fix bug" not in steps[0].name
 
     def test_commitment_steps_are_create_obligation(self, engines):
         es, mm, wce, integ, obs = engines
@@ -352,6 +359,8 @@ class TestCampaignFromArtifact:
         assert steps[0].step_type == CampaignStepType.INGEST_ARTIFACT
         assert steps[1].step_type == CampaignStepType.EXTRACT_COMMITMENTS
         assert steps[2].step_type == CampaignStepType.CLOSE
+        assert steps[0].name == "Ingest artifact"
+        assert "artifact-ref-001" not in steps[0].name
 
     def test_artifact_ref_is_set(self, engines):
         es, mm, wce, integ, obs = engines
@@ -396,6 +405,10 @@ class TestCampaignFromIncident:
         assert len(route_steps) == 2
         assert route_steps[0].target_ref == "alpha"
         assert route_steps[1].target_ref == "beta"
+        assert route_steps[0].name == "Route to identity"
+        assert route_steps[1].name == "Route to identity"
+        assert "alpha" not in route_steps[0].name
+        assert "beta" not in route_steps[1].name
 
     def test_default_priority_is_urgent(self, engines):
         es, mm, wce, integ, obs = engines
@@ -478,6 +491,10 @@ class TestAttachCampaignToMemoryMesh:
 
         assert mem_after > mem_before
         assert "campaign" in record.tags
+        assert record.title == "Campaign state"
+        assert "camp-atmm" not in record.title
+        assert "campaign_started" not in record.title
+        assert record.scope_ref_id == "camp-atmm"
 
     def test_memory_record_has_correct_campaign_id(self, engines):
         es, mm, wce, integ, obs = engines
@@ -978,6 +995,8 @@ class TestCampaignLineage:
         assert mem_after > mem_before
         assert "lineage" in record.tags
         assert record.content["campaign_id"] == "camp-obs-linm"
+        assert record.title == "Campaign lineage"
+        assert "camp-obs-linm" not in record.title
 
     def test_lineage_to_memory_emits_event(self, engines):
         es, mm, wce, integ, obs = engines

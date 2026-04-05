@@ -23,9 +23,9 @@ class CustomerHealthSignal:
 
     def __post_init__(self) -> None:
         if self.signal_type not in SIGNAL_TYPES:
-            raise ValueError(f"Invalid signal_type {self.signal_type!r}")
+            raise ValueError("invalid signal_type")
         if self.severity not in ("low", "medium", "high", "critical"):
-            raise ValueError(f"Invalid severity {self.severity!r}")
+            raise ValueError("invalid severity")
 
 
 class CSAutomationEngine:

@@ -95,6 +95,8 @@ class TestCaseFromRecord:
         assert evidence[0].evidence_id == result["evidence_id"]
         assert evidence[0].source_type == "record"
         assert evidence[0].source_id == "rec-001"
+        assert evidence[0].title == "Case evidence"
+        assert "rec-001" not in evidence[0].title
 
 
 class TestCaseFromFaultCampaign:
@@ -257,7 +259,8 @@ class TestMemoryMeshAndGraph:
         bridge.case_from_record("c1", "t1", "rec-001")
         mem = bridge.attach_case_state_to_memory_mesh("scope-1")
         assert mem.memory_id  # non-empty
-        assert mem.title == "Case state: scope-1"
+        assert mem.title == "Case state"
+        assert "scope-1" not in mem.title
         assert "case" in mem.tags
         assert "investigation" in mem.tags
         assert "evidence" in mem.tags

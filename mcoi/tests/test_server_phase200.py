@@ -1,5 +1,7 @@
 """Phase 200 — Server endpoint tests for streaming, daemon, bootstrap."""
 
+import base64
+import importlib
 import pytest
 import os
 
@@ -105,13 +107,50 @@ class TestBootstrapEndpoint:
         assert "stub" in data["available_backends"]
         assert "skipped_model_registrations" in data
         assert "model_registration_failures" in data
+        assert "field_encryption" in data
         assert "config" in data
         assert data["config"]["default_model"]
+        assert data["field_encryption"]["configured"] is False
+        assert data["field_encryption"]["enabled"] is False
+        assert data["field_encryption"]["warning"] == ""
 
     def test_bootstrap_has_stub(self, client):
         resp = client.get("/api/v1/bootstrap")
         data = resp.json()
         assert "stub" in data["available_backends"]
+
+    def test_field_encryption_bootstrap_bounds_invalid_key(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "local_dev")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+        monkeypatch.setenv("MULLU_CERT_ENABLED", "false")
+        monkeypatch.setenv(
+            "MULLU_ENCRYPTION_KEY",
+            base64.b64encode(b"short").decode(),
+        )
+
+        from mcoi_runtime.app import server as server_module
+
+        importlib.reload(server_module)
+        try:
+            state = server_module._init_field_encryption_from_env()[1]
+            assert state["configured"] is True
+            assert state["enabled"] is False
+            assert state["aes_available"] is False
+            assert state["warning"] == "field encryption bootstrap failed (ValueError)"
+
+            from mcoi_runtime.app.routers.deps import deps
+
+            wired_state = deps.get("field_encryption_bootstrap")
+            assert wired_state["configured"] is True
+            assert wired_state["enabled"] is False
+            assert wired_state["warning"] == "field encryption bootstrap failed (ValueError)"
+
+            platform = deps.get("platform")
+            assert platform.bootstrap_components["field_encryption"] is False
+            assert "field encryption bootstrap failed (ValueError)" in platform.bootstrap_warnings
+        finally:
+            monkeypatch.delenv("MULLU_ENCRYPTION_KEY", raising=False)
+            importlib.reload(server_module)
 
 
 class TestDockerCompose:

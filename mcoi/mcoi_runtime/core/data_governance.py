@@ -148,7 +148,7 @@ class DataGovernanceEngine:
     ) -> DataRecord:
         """Classify and register a data record."""
         if data_id in self._records:
-            raise RuntimeCoreInvariantError(f"Duplicate data_id: {data_id}")
+            raise RuntimeCoreInvariantError("Duplicate data_id")
         now = _now_iso()
         record = DataRecord(
             data_id=data_id,
@@ -170,7 +170,7 @@ class DataGovernanceEngine:
         """Get a data record by ID."""
         r = self._records.get(data_id)
         if r is None:
-            raise RuntimeCoreInvariantError(f"Unknown data_id: {data_id}")
+            raise RuntimeCoreInvariantError("Unknown data_id")
         return r
 
     def records_for_tenant(self, tenant_id: str) -> tuple[DataRecord, ...]:
@@ -194,7 +194,7 @@ class DataGovernanceEngine:
     ) -> DataPolicy:
         """Register a data handling policy."""
         if policy_id in self._policies:
-            raise RuntimeCoreInvariantError(f"Duplicate policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("Duplicate policy_id")
         now = _now_iso()
         policy = DataPolicy(
             policy_id=policy_id,
@@ -222,7 +222,7 @@ class DataGovernanceEngine:
     ) -> ResidencyConstraint:
         """Register a residency constraint."""
         if constraint_id in self._residency_constraints:
-            raise RuntimeCoreInvariantError(f"Duplicate constraint_id: {constraint_id}")
+            raise RuntimeCoreInvariantError("Duplicate constraint_id")
         now = _now_iso()
         constraint = ResidencyConstraint(
             constraint_id=constraint_id,
@@ -249,7 +249,7 @@ class DataGovernanceEngine:
     ) -> PrivacyRule:
         """Register a privacy rule."""
         if rule_id in self._privacy_rules:
-            raise RuntimeCoreInvariantError(f"Duplicate privacy rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate privacy rule_id")
         now = _now_iso()
         rule = PrivacyRule(
             rule_id=rule_id,
@@ -278,7 +278,7 @@ class DataGovernanceEngine:
     ) -> RedactionRule:
         """Register a redaction rule."""
         if rule_id in self._redaction_rules:
-            raise RuntimeCoreInvariantError(f"Duplicate redaction rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate redaction rule_id")
         now = _now_iso()
         rule = RedactionRule(
             rule_id=rule_id,
@@ -307,7 +307,7 @@ class DataGovernanceEngine:
     ) -> RetentionRule:
         """Register a retention rule."""
         if rule_id in self._retention_rules:
-            raise RuntimeCoreInvariantError(f"Duplicate retention rule_id: {rule_id}")
+            raise RuntimeCoreInvariantError("Duplicate retention rule_id")
         now = _now_iso()
         rule = RetentionRule(
             rule_id=rule_id,
@@ -445,7 +445,7 @@ class DataGovernanceEngine:
         """Evaluate data handling. Fail-closed: default is DENY."""
         record = self._records.get(data_id)
         if record is None:
-            raise RuntimeCoreInvariantError(f"Unknown data_id: {data_id}")
+            raise RuntimeCoreInvariantError("Unknown data_id")
 
         tenant_id = record.tenant_id
         classification = record.classification
@@ -651,7 +651,7 @@ class DataGovernanceEngine:
     ) -> DataGovernanceSnapshot:
         """Capture a point-in-time governance snapshot."""
         if snapshot_id in self._snapshot_ids:
-            raise RuntimeCoreInvariantError(f"Duplicate snapshot_id: {snapshot_id}")
+            raise RuntimeCoreInvariantError("Duplicate snapshot_id")
         now = _now_iso()
         snapshot = DataGovernanceSnapshot(
             snapshot_id=snapshot_id,

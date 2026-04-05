@@ -105,7 +105,7 @@ class StateTransition(ContractRecord):
         if not isinstance(self.to_state, TemporalState):
             raise ValueError("to_state must be a TemporalState value")
         if self.from_state in TERMINAL_STATES:
-            raise ValueError(f"cannot transition from terminal state: {self.from_state}")
+            raise ValueError("cannot transition from terminal state")
         if self.from_state == self.to_state:
             raise ValueError("state transition must change state")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))

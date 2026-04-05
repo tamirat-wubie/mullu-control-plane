@@ -7,6 +7,7 @@ Invariants: all invocations governed; errors never propagate; history bounded.
 from __future__ import annotations
 
 import pytest
+from types import SimpleNamespace
 
 from mcoi_runtime.core.connector_framework import (
     ConnectorDefinition,
@@ -92,7 +93,21 @@ def test_invoke_handler_raises() -> None:
     fw.register(_sample_connector(), bad_handler)
     inv = fw.invoke("c1", "fetch", {})
     assert inv.outcome == InvocationOutcome.FAILURE
-    assert "boom" in inv.error
+    assert inv.error == "connector error (RuntimeError)"
+
+
+def test_invoke_guard_denied_is_bounded() -> None:
+    class GuardChain:
+        def evaluate(self, ctx):
+            return SimpleNamespace(allowed=False, reason="tenant t1 denied by secret policy")
+
+    fw = _make_framework(guard_chain=GuardChain())
+    fw.register(_sample_connector(), lambda a, p: {"ok": True})
+    inv = fw.invoke("c1", "fetch", {})
+    assert inv.outcome == InvocationOutcome.DENIED
+    assert inv.error == "connector access denied"
+    assert "tenant t1" not in inv.error
+    assert "secret policy" not in inv.error
 
 
 def test_history_bounded() -> None:

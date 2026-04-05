@@ -281,7 +281,7 @@ class DomainPackIntegration:
             scope=MemoryScope.DOMAIN,
             scope_ref_id=pack_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Domain pack activation: {pack.domain_name}",
+            title="Domain pack activation",
             content={
                 "pack_id": pack_id,
                 "domain_name": pack.domain_name,

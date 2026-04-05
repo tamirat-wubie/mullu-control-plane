@@ -334,8 +334,9 @@ class TestRegisterCertification:
 
     def test_get_certification_unknown(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.get_certification("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_emits_event(self):
         eng, es = _make_engine()
@@ -832,8 +833,9 @@ class TestScheduleRecertification:
 
     def test_unknown_certification_raises(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.schedule_recertification("w1", "nope", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
+        assert "nope" not in str(exc_info.value)
 
     def test_windows_for_certification(self):
         eng, _ = _make_engine()
@@ -869,8 +871,9 @@ class TestCompleteRecertification:
 
     def test_unknown_window_raises(self):
         eng, _ = _make_engine()
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown") as exc_info:
             eng.complete_recertification("nope")
+        assert "nope" not in str(exc_info.value)
 
     def test_emits_event(self):
         eng, es = _make_engine()
@@ -1192,3 +1195,47 @@ class TestGoldenScenarios:
 
         h = eng.state_hash()
         assert isinstance(h, str) and len(h) == 64
+
+
+class TestBoundedAssuranceContracts:
+    def test_terminal_attestation_message_is_bounded(self):
+        eng, _ = _make_engine()
+        _register_and_bind(eng)
+        eng.grant_attestation("att-1", AssuranceLevel.HIGH)
+        eng.revoke_attestation("att-1", reason="policy change")
+        with pytest.raises(RuntimeCoreInvariantError, match="Cannot grant attestation in current status") as exc:
+            eng.grant_attestation("att-1", AssuranceLevel.HIGH)
+        assert "revoked" not in str(exc.value).lower()
+        assert "att-1" not in str(exc.value)
+
+    def test_terminal_certification_message_is_bounded(self):
+        eng, _ = _make_engine()
+        _register_cert_and_bind(eng)
+        eng.activate_certification("cert-1", AssuranceLevel.HIGH)
+        eng.expire_certification("cert-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="Cannot activate certification in current status") as exc:
+            eng.activate_certification("cert-1", AssuranceLevel.HIGH)
+        assert "expired" not in str(exc.value).lower()
+        assert "cert-1" not in str(exc.value)
+
+    def test_violation_reasons_are_bounded(self):
+        eng, _ = _make_engine()
+        _register_cert_and_bind(eng)
+        eng.activate_certification("cert-1", AssuranceLevel.HIGH)
+        old = eng.get_certification("cert-1")
+        eng._certifications["cert-1"] = CertificationRecord(
+            certification_id=old.certification_id,
+            tenant_id=old.tenant_id,
+            scope=old.scope,
+            scope_ref_id=old.scope_ref_id,
+            status=CertificationStatus.ACTIVE,
+            level=old.level,
+            certified_by=old.certified_by,
+            certified_at=old.certified_at,
+            expires_at="2020-01-01T00:00:00+00:00",
+        )
+        eng.schedule_recertification("w1", "cert-1", "2020-01-01T00:00:00+00:00", "2020-06-01T00:00:00+00:00")
+        reasons = {v.reason for v in eng.detect_assurance_violations()}
+        assert "active certification is expired" in reasons
+        assert "recertification window is overdue" in reasons
+        assert all("2020" not in reason for reason in reasons)

@@ -224,14 +224,14 @@ class TestEvaluatorEdgeCases:
         assert trace.final_effect == PolicyEffect.ESCALATE
         assert len(trace.actions_produced) == 0
 
-    def test_scope_no_context_scope_info_defaults_to_apply(self) -> None:
+    def test_scope_missing_context_blocks_firing(self) -> None:
         evaluator = GovernanceEvaluator(clock=CLOCK)
-        # Rule with no conditions → always matches; team scope with no context → fail-open
+        # Rule with no conditions matches, but missing scoped context must fail closed.
         r = _rule("r1", scope=_scope(PolicyScopeKind.TEAM, ref_id="team-x"))
         b = _bundle(rules=(r,))
-        # No scope info in context → scope applies (fail-open), rule fires
         trace = evaluator.evaluate(b, "s1", {})
-        assert trace.rules_fired == 1  # fail-open: scope applies when context lacks scope info
+        assert trace.rules_matched == 1
+        assert trace.rules_fired == 0
 
     def test_multiple_fired_rules_actions_collected(self) -> None:
         evaluator = GovernanceEvaluator(clock=CLOCK)

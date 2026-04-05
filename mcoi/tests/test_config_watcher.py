@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import time
+from unittest.mock import patch
 import pytest
 
 from mcoi_runtime.core.config_watcher import (
@@ -108,8 +109,22 @@ class TestConfigFileWatcher:
             assert reloaded == []
             s = watcher.summary()
             assert s["total_errors"] == 1  # parse error on invalid JSON
+            assert s["files"][path]["last_error"] == "watch error (JSONDecodeError)"
         finally:
             os.unlink(path)
+
+    def test_getmtime_failure_is_bounded(self):
+        watcher = ConfigFileWatcher()
+        path = "/tmp/config-watch-race.json"
+        wf = WatchedFile(path=path, parser=json_parser, on_change=lambda c: None)
+        watcher.watch(wf)
+        with patch("mcoi_runtime.core.config_watcher.os.path.exists", return_value=True):
+            with patch("mcoi_runtime.core.config_watcher.os.path.getmtime", side_effect=OSError("secret race")):
+                reloaded = watcher.check_once()
+        assert reloaded == []
+        summary = watcher.summary()
+        assert summary["total_errors"] == 1
+        assert summary["files"][path]["last_error"] == "watch error (OSError)"
 
     def test_start_stop(self):
         watcher = ConfigFileWatcher(poll_interval=0.1)

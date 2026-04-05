@@ -47,9 +47,9 @@ class ValidatedTemplate:
             raise RuntimeCoreInvariantError("action_type must be an ExecutionActionType value")
         if not self.command_argv:
             raise RuntimeCoreInvariantError("command_argv must contain at least one item")
-        for index, item in enumerate(self.command_argv):
+        for item in self.command_argv:
             if not isinstance(item, str) or not item.strip():
-                raise RuntimeCoreInvariantError(f"command_argv[{index}] must be a non-empty string")
+                raise RuntimeCoreInvariantError("command_argv items must be non-empty strings")
         if self.cwd is not None and (not isinstance(self.cwd, str) or not self.cwd.strip()):
             raise RuntimeCoreInvariantError("cwd must be a non-empty string when provided")
         environment = dict(self.environment)

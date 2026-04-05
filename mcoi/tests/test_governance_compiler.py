@@ -343,6 +343,18 @@ class TestEvaluation:
         assert trace2.rules_matched == 1  # condition matched
         assert trace2.rules_fired == 0  # scope filtered it out
 
+    def test_missing_scope_context_does_not_apply(self) -> None:
+        evaluator = GovernanceEvaluator(clock=CLOCK)
+        r = _rule(
+            "r1",
+            scope=PolicyScope(scope_id="s", kind=PolicyScopeKind.TEAM, ref_id="team-alpha"),
+            conds=(_cond("x", "exists"),),
+        )
+        b = _bundle(rules=(r,))
+        trace = evaluator.evaluate(b, "s1", {"x": 1})
+        assert trace.rules_matched == 1
+        assert trace.rules_fired == 0
+
     def test_actions_collected(self) -> None:
         evaluator = GovernanceEvaluator(clock=CLOCK)
         a1 = PolicyAction(action_id="a1", kind=PolicyActionKind.SET_SIMULATION_THRESHOLD, parameters={"threshold": 0.8})

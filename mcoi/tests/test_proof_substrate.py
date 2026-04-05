@@ -56,21 +56,27 @@ class TestCertifyTransition:
 
     def test_illegal_transition_raises(self):
         m = _machine()
-        with pytest.raises(ValueError, match="denied_illegal_edge"):
+        with pytest.raises(ValueError) as exc_info:
             certify_transition(
                 m, entity_id="e1", from_state="idle", to_state="done",
                 action="skip", before_state_hash="h1", after_state_hash="h2",
                 actor_id="actor", reason="skip", timestamp="2026-03-27T12:00:00Z",
             )
+        message = str(exc_info.value)
+        assert message == "transition denied"
+        assert "denied_illegal_edge" not in message
 
     def test_terminal_state_raises(self):
         m = _machine()
-        with pytest.raises(ValueError, match="denied_terminal_state"):
+        with pytest.raises(ValueError) as exc_info:
             certify_transition(
                 m, entity_id="e1", from_state="done", to_state="idle",
                 action="reset", before_state_hash="h1", after_state_hash="h2",
                 actor_id="actor", reason="reset", timestamp="2026-03-27T12:00:00Z",
             )
+        message = str(exc_info.value)
+        assert message == "transition denied"
+        assert "denied_terminal_state" not in message
 
     def test_failed_guard_raises(self):
         m = _machine()
@@ -78,13 +84,17 @@ class TestCertifyTransition:
             GuardVerdict(guard_id="budget", passed=True, reason="ok"),
             GuardVerdict(guard_id="auth", passed=False, reason="unauthorized"),
         )
-        with pytest.raises(ValueError, match="auth"):
+        with pytest.raises(ValueError) as exc_info:
             certify_transition(
                 m, entity_id="e1", from_state="idle", to_state="running",
                 action="start", before_state_hash="h1", after_state_hash="h2",
                 guards=guards, actor_id="actor", reason="start",
                 timestamp="2026-03-27T12:00:00Z",
             )
+        message = str(exc_info.value)
+        assert message == "guard failed"
+        assert "auth" not in message
+        assert "unauthorized" not in message
 
     def test_receipt_hash_deterministic(self):
         m = _machine()

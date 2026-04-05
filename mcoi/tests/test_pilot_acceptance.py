@@ -1,6 +1,8 @@
 """Phase 124G — Pilot Acceptance Test Suite."""
 import pytest
+from unittest.mock import Mock
 from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.pilot.tenant_bootstrap import PilotTenantBootstrap
 from mcoi_runtime.pilot.data_import import PilotDataImporter
 from mcoi_runtime.pilot.acceptance_test import PilotAcceptanceTest
@@ -85,6 +87,34 @@ class TestDataImport:
         results = importer.import_all(TENANT, dataset)
         assert results["cases"].accepted == 3
         assert results["records"].accepted == 4
+
+    def test_import_case_failure_is_bounded(self):
+        es = EventSpineEngine()
+        importer = PilotDataImporter(es)
+        importer._case_engine.open_case = Mock(side_effect=RuntimeError("secret backend detail"))
+
+        result = importer.import_cases(TENANT, [{"case_id": "bad-case", "title": "Broken"}])
+
+        assert result.accepted == 0
+        assert result.rejected == 1
+        assert result.errors == ["bad-case: case import failed (RuntimeError)"]
+
+    def test_import_duplicate_invariant_counts_as_conflict(self):
+        es = EventSpineEngine()
+        importer = PilotDataImporter(es)
+        original_register = importer._records_engine.register_record
+
+        def _register_then_raise(record_id: str, tenant_id: str, title: str):
+            original_register(record_id, tenant_id, title)
+            raise RuntimeCoreInvariantError("duplicate witness contract changed")
+
+        importer._records_engine.register_record = Mock(side_effect=_register_then_raise)
+
+        result = importer.import_records(TENANT, [{"record_id": "r-1", "title": "Record"}])
+
+        assert result.accepted == 0
+        assert result.conflicts == 1
+        assert result.errors == []
 
 class TestSloConfig:
     def test_slo_definitions(self):

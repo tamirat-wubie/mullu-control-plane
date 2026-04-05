@@ -34,7 +34,7 @@ class SupportAnalyticsEngine:
                 t.status = "resolved"
                 t.resolved_at = datetime.now(timezone.utc).isoformat()
                 return t
-        raise ValueError(f"Unknown ticket: {ticket_id}")
+        raise ValueError("unknown ticket")
 
     def by_customer(self, customer_id: str) -> list[SupportTicket]:
         return [t for t in self._tickets if t.customer_id == customer_id]

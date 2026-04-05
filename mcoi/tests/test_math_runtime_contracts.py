@@ -146,39 +146,49 @@ class TestHappyPaths:
 
 
 class TestInfNanRejection:
+    def test_quantity_value_type_message_is_bounded(self):
+        with pytest.raises(ValueError) as exc_info:
+            _quantity(value=True)
+        message = str(exc_info.value)
+        assert message == "numeric value must be a number"
+        assert "bool" not in message
+
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_quantity_value_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="value.*finite"):
+        with pytest.raises(ValueError) as exc_info:
             _quantity(value=bad)
+        message = str(exc_info.value)
+        assert message == "numeric value must be finite"
+        assert repr(float(bad)) not in message
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_conversion_factor_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="factor.*finite"):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _conversion(factor=bad)
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_objective_target_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="target_value.*finite"):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _objective(target_value=bad)
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_uncertainty_lower_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="lower.*finite"):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _uncertainty(lower=bad)
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_uncertainty_upper_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="upper.*finite"):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _uncertainty(upper=bad)
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_trace_objective_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="objective_value.*finite"):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _trace(objective_value=bad)
 
     @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
     def test_solver_result_objective_rejects_non_finite(self, bad):
-        with pytest.raises(ValueError, match="objective_value.*finite"):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
             _solver_result(objective_value=bad)
 
     def test_constraint_bounds_allow_inf(self):

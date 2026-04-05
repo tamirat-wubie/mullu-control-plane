@@ -53,7 +53,8 @@ class TestNotificationDispatcher:
         n = Notification("n1", NotificationChannel.WEBHOOK, "hook-url", "Test", "body")
         record = d.send(n)
         assert not record.delivered
-        assert "fail" in record.error
+        assert record.error == "notification handler error (RuntimeError)"
+        assert "fail" not in record.error
 
     def test_handler_returns_false(self):
         d = NotificationDispatcher()

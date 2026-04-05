@@ -68,21 +68,15 @@ class CoordinationEngine:
 
     def request_delegation(self, request: DelegationRequest) -> DelegationRequest:
         if request.delegation_id in self._delegations:
-            raise RuntimeCoreInvariantError(
-                f"delegation already exists: {request.delegation_id}"
-            )
+            raise RuntimeCoreInvariantError("delegation already exists")
         self._delegations[request.delegation_id] = request
         return request
 
     def resolve_delegation(self, result: DelegationResult) -> DelegationResult:
         if result.delegation_id not in self._delegations:
-            raise RuntimeCoreInvariantError(
-                f"delegation not found: {result.delegation_id}"
-            )
+            raise RuntimeCoreInvariantError("delegation not found")
         if result.delegation_id in self._delegation_results:
-            raise RuntimeCoreInvariantError(
-                f"delegation already resolved: {result.delegation_id}"
-            )
+            raise RuntimeCoreInvariantError("delegation already resolved")
         self._delegation_results[result.delegation_id] = result
         return result
 
@@ -98,9 +92,7 @@ class CoordinationEngine:
 
     def record_handoff(self, handoff: HandoffRecord) -> HandoffRecord:
         if handoff.handoff_id in self._handoffs:
-            raise RuntimeCoreInvariantError(
-                f"handoff already recorded: {handoff.handoff_id}"
-            )
+            raise RuntimeCoreInvariantError("handoff already recorded")
         self._handoffs[handoff.handoff_id] = handoff
         return handoff
 
@@ -112,9 +104,7 @@ class CoordinationEngine:
 
     def record_merge(self, decision: MergeDecision) -> MergeDecision:
         if decision.merge_id in self._merges:
-            raise RuntimeCoreInvariantError(
-                f"merge already recorded: {decision.merge_id}"
-            )
+            raise RuntimeCoreInvariantError("merge already recorded")
         self._merges[decision.merge_id] = decision
         return decision
 
@@ -126,9 +116,7 @@ class CoordinationEngine:
 
     def record_conflict(self, conflict: ConflictRecord) -> ConflictRecord:
         if conflict.conflict_id in self._conflicts:
-            raise RuntimeCoreInvariantError(
-                f"conflict already recorded: {conflict.conflict_id}"
-            )
+            raise RuntimeCoreInvariantError("conflict already recorded")
         self._conflicts[conflict.conflict_id] = conflict
         return conflict
 
@@ -243,7 +231,7 @@ class CoordinationEngine:
             return RestoreOutcome(
                 checkpoint_id=checkpoint_id,
                 status=RestoreStatus.EXPIRED,
-                reason=f"lease expired at {checkpoint.lease_expires_at}",
+                reason="checkpoint lease expired",
                 restored_at=now,
             )
 
@@ -252,7 +240,7 @@ class CoordinationEngine:
             return RestoreOutcome(
                 checkpoint_id=checkpoint_id,
                 status=RestoreStatus.ABORTED,
-                reason=f"max retry count ({_MAX_RETRY_COUNT}) exceeded",
+                reason="checkpoint retry limit exceeded",
                 restored_at=now,
             )
 
@@ -264,10 +252,7 @@ class CoordinationEngine:
             return RestoreOutcome(
                 checkpoint_id=checkpoint_id,
                 status=RestoreStatus.NEEDS_REVIEW,
-                reason=(
-                    f"policy pack changed: "
-                    f"{checkpoint.policy_pack_id} -> {current_policy_pack_id}"
-                ),
+                reason="checkpoint policy pack drift",
                 restored_at=now,
             )
 

@@ -128,7 +128,7 @@ class MetaOrchestrationEngine:
         scope: CompositionScope = CompositionScope.TENANT,
     ) -> OrchestrationPlan:
         if plan_id in self._plans:
-            raise RuntimeCoreInvariantError(f"duplicate plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("duplicate plan_id")
         now = self._now()
         plan = OrchestrationPlan(
             plan_id=plan_id,
@@ -148,7 +148,7 @@ class MetaOrchestrationEngine:
 
     def get_plan(self, plan_id: str) -> OrchestrationPlan:
         if plan_id not in self._plans:
-            raise RuntimeCoreInvariantError(f"unknown plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("unknown plan_id")
         return self._plans[plan_id]
 
     def plans_for_tenant(self, tenant_id: str) -> tuple[OrchestrationPlan, ...]:
@@ -187,12 +187,12 @@ class MetaOrchestrationEngine:
         sequence_order: int = 0,
     ) -> OrchestrationStep:
         if step_id in self._steps:
-            raise RuntimeCoreInvariantError(f"duplicate step_id: {step_id}")
+            raise RuntimeCoreInvariantError("duplicate step_id")
         if plan_id not in self._plans:
-            raise RuntimeCoreInvariantError(f"unknown plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("unknown plan_id")
         plan = self._plans[plan_id]
         if plan.status in _PLAN_TERMINAL:
-            raise RuntimeCoreInvariantError(f"plan {plan_id} is in terminal state: {plan.status.value}")
+            raise RuntimeCoreInvariantError("plan is in terminal state")
         now = self._now()
         step = OrchestrationStep(
             step_id=step_id,
@@ -213,7 +213,7 @@ class MetaOrchestrationEngine:
 
     def get_step(self, step_id: str) -> OrchestrationStep:
         if step_id not in self._steps:
-            raise RuntimeCoreInvariantError(f"unknown step_id: {step_id}")
+            raise RuntimeCoreInvariantError("unknown step_id")
         return self._steps[step_id]
 
     def steps_for_plan(self, plan_id: str) -> tuple[OrchestrationStep, ...]:
@@ -251,13 +251,13 @@ class MetaOrchestrationEngine:
         to_step_id: str,
     ) -> StepDependency:
         if dependency_id in self._dependencies:
-            raise RuntimeCoreInvariantError(f"duplicate dependency_id: {dependency_id}")
+            raise RuntimeCoreInvariantError("duplicate dependency_id")
         if plan_id not in self._plans:
-            raise RuntimeCoreInvariantError(f"unknown plan_id: {plan_id}")
+            raise RuntimeCoreInvariantError("unknown plan_id")
         if from_step_id not in self._steps:
-            raise RuntimeCoreInvariantError(f"unknown from_step_id: {from_step_id}")
+            raise RuntimeCoreInvariantError("unknown from_step_id")
         if to_step_id not in self._steps:
-            raise RuntimeCoreInvariantError(f"unknown to_step_id: {to_step_id}")
+            raise RuntimeCoreInvariantError("unknown to_step_id")
         now = self._now()
         dep = StepDependency(
             dependency_id=dependency_id,
@@ -318,9 +318,9 @@ class MetaOrchestrationEngine:
         config_ref: str = "default",
     ) -> RuntimeBinding:
         if binding_id in self._bindings:
-            raise RuntimeCoreInvariantError(f"duplicate binding_id: {binding_id}")
+            raise RuntimeCoreInvariantError("duplicate binding_id")
         if step_id not in self._steps:
-            raise RuntimeCoreInvariantError(f"unknown step_id: {step_id}")
+            raise RuntimeCoreInvariantError("unknown step_id")
         now = self._now()
         binding = RuntimeBinding(
             binding_id=binding_id,
@@ -343,9 +343,9 @@ class MetaOrchestrationEngine:
     def start_execution(self, plan_id: str) -> OrchestrationPlan:
         plan = self.get_plan(plan_id)
         if plan.status in _PLAN_TERMINAL:
-            raise RuntimeCoreInvariantError(f"plan {plan_id} is in terminal state: {plan.status.value}")
+            raise RuntimeCoreInvariantError("plan is in terminal state")
         if plan.step_count == 0:
-            raise RuntimeCoreInvariantError(f"plan {plan_id} has no steps")
+            raise RuntimeCoreInvariantError("plan has no steps")
         updated = self._update_plan(plan_id, status=OrchestrationStatus.IN_PROGRESS)
         # Mark first steps (no dependencies or all deps satisfied) as READY
         # Skip steps already in terminal state
@@ -362,7 +362,7 @@ class MetaOrchestrationEngine:
         """Advance plan execution: evaluate deps, ready next steps, check completion."""
         plan = self.get_plan(plan_id)
         if plan.status != OrchestrationStatus.IN_PROGRESS:
-            raise RuntimeCoreInvariantError(f"plan {plan_id} is not IN_PROGRESS")
+            raise RuntimeCoreInvariantError("plan is not IN_PROGRESS")
 
         steps = self.steps_for_plan(plan_id)
         # Evaluate dependencies and ready blocked steps
@@ -402,10 +402,10 @@ class MetaOrchestrationEngine:
         duration_ms: float = 0.0,
     ) -> ExecutionTrace:
         if trace_id in self._traces:
-            raise RuntimeCoreInvariantError(f"duplicate trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("duplicate trace_id")
         step = self.get_step(step_id)
         if step.status in _STEP_TERMINAL:
-            raise RuntimeCoreInvariantError(f"step {step_id} is in terminal state: {step.status.value}")
+            raise RuntimeCoreInvariantError("step is in terminal state")
 
         new_status = OrchestrationStatus.COMPLETED if success else OrchestrationStatus.FAILED
         self._update_step(step_id, status=new_status)
@@ -454,7 +454,7 @@ class MetaOrchestrationEngine:
         reason: str = "auto-approved",
     ) -> OrchestrationDecision:
         if decision_id in self._decisions:
-            raise RuntimeCoreInvariantError(f"duplicate decision_id: {decision_id}")
+            raise RuntimeCoreInvariantError("duplicate decision_id")
         now = self._now()
         decision = OrchestrationDecision(
             decision_id=decision_id,
@@ -486,7 +486,7 @@ class MetaOrchestrationEngine:
     def cancel_plan(self, plan_id: str) -> OrchestrationPlan:
         plan = self.get_plan(plan_id)
         if plan.status in _PLAN_TERMINAL:
-            raise RuntimeCoreInvariantError(f"plan {plan_id} is in terminal state: {plan.status.value}")
+            raise RuntimeCoreInvariantError("plan is in terminal state")
         # Cancel all non-terminal steps
         for step in self.steps_for_plan(plan_id):
             if step.status not in _STEP_TERMINAL:
@@ -526,7 +526,7 @@ class MetaOrchestrationEngine:
 
     def composition_assessment(self, assessment_id: str, tenant_id: str) -> CompositionAssessment:
         if assessment_id in self._assessments:
-            raise RuntimeCoreInvariantError(f"duplicate assessment_id: {assessment_id}")
+            raise RuntimeCoreInvariantError("duplicate assessment_id")
         now = self._now()
         plans = self.plans_for_tenant(tenant_id)
         active = [p for p in plans if p.status == OrchestrationStatus.IN_PROGRESS]
@@ -573,7 +573,7 @@ class MetaOrchestrationEngine:
                             plan_id=plan.plan_id,
                             tenant_id=tenant_id,
                             operation="all_steps_failed",
-                            reason=f"all steps in plan {plan.plan_id} have failed",
+                            reason="all steps in plan have failed",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -588,7 +588,7 @@ class MetaOrchestrationEngine:
                         plan_id=plan.plan_id,
                         tenant_id=tenant_id,
                         operation="empty_plan",
-                        reason=f"plan {plan.plan_id} has no steps",
+                        reason="plan has no steps",
                         detected_at=now,
                     )
                     self._violations[vid] = v
@@ -607,7 +607,7 @@ class MetaOrchestrationEngine:
                                     plan_id=plan.plan_id,
                                     tenant_id=tenant_id,
                                     operation="blocked_by_failed_dep",
-                                    reason=f"step {step.step_id} is READY but has failed dependencies",
+                                    reason="step is READY but has failed dependencies",
                                     detected_at=now,
                                 )
                                 self._violations[vid] = v

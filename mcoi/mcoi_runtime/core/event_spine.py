@@ -62,7 +62,7 @@ class EventSpineEngine:
     def emit(self, event: EventRecord) -> EventRecord:
         """Append an event to the spine. Duplicate event_ids are rejected."""
         if event.event_id in self._events:
-            raise RuntimeCoreInvariantError(f"event already exists: {event.event_id}")
+            raise RuntimeCoreInvariantError("event already exists")
         self._events[event.event_id] = event
         return event
 
@@ -115,9 +115,7 @@ class EventSpineEngine:
     def subscribe(self, subscription: EventSubscription) -> EventSubscription:
         """Register a subscription. Duplicate subscription_ids are rejected."""
         if subscription.subscription_id in self._subscriptions:
-            raise RuntimeCoreInvariantError(
-                f"subscription already exists: {subscription.subscription_id}"
-            )
+            raise RuntimeCoreInvariantError("subscription already exists")
         self._subscriptions[subscription.subscription_id] = subscription
         return subscription
 
@@ -125,9 +123,7 @@ class EventSpineEngine:
         """Remove a subscription."""
         ensure_non_empty_text("subscription_id", subscription_id)
         if subscription_id not in self._subscriptions:
-            raise RuntimeCoreInvariantError(
-                f"subscription not found: {subscription_id}"
-            )
+            raise RuntimeCoreInvariantError("subscription not found")
         del self._subscriptions[subscription_id]
 
     def list_subscriptions(
@@ -161,13 +157,9 @@ class EventSpineEngine:
     def record_reaction(self, reaction: EventReaction) -> EventReaction:
         """Record that a reaction was triggered by an event."""
         if reaction.reaction_id in self._reactions:
-            raise RuntimeCoreInvariantError(
-                f"reaction already exists: {reaction.reaction_id}"
-            )
+            raise RuntimeCoreInvariantError("reaction already exists")
         if reaction.event_id not in self._events:
-            raise RuntimeCoreInvariantError(
-                f"event not found: {reaction.event_id}"
-            )
+            raise RuntimeCoreInvariantError("event not found")
         self._reactions[reaction.reaction_id] = reaction
         return reaction
 
@@ -196,7 +188,7 @@ class EventSpineEngine:
             correlation_id=correlation_id,
             event_ids=event_ids,
             root_event_id=root_event_id,
-            description=f"correlated {len(events)} events for {correlation_id}",
+            description="correlated event group",
             created_at=self._now(),
         )
 

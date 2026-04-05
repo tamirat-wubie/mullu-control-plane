@@ -633,6 +633,8 @@ class TestPreemption:
         res = pe.get_campaign_reservation("c-low")
         assert res.deferred is True
         assert res.scheduled is False
+        assert res.deferred_reason == "preempted by higher-priority campaign"
+        assert "c-high" not in res.deferred_reason
 
     def test_preempt_releases_resources(self, engines):
         _, _, wce, _, pe, _ = engines
@@ -1391,7 +1393,9 @@ class TestPortfolioIntegrationMemory:
         _, _, wce, _, pe, pi = engines
         pe.register_portfolio("p1", "P1")
         mem = pi.attach_portfolio_to_memory_mesh("p1")
-        assert mem.title.startswith("Portfolio state:")
+        assert mem.title == "Portfolio state"
+        assert "P1" not in mem.title
+        assert mem.scope_ref_id == "p1"
 
     def test_attach_to_memory_mesh_includes_health(self, engines):
         _, _, wce, _, pe, pi = engines

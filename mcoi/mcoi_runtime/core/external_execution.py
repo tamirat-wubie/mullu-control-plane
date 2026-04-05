@@ -145,7 +145,7 @@ class ExternalExecutionEngine:
         timeout_ms: int = 30000,
     ) -> ExecutionTarget:
         if target_id in self._targets:
-            raise RuntimeCoreInvariantError(f"duplicate target_id: {target_id}")
+            raise RuntimeCoreInvariantError("duplicate target_id")
         now = self._now()
         target = ExecutionTarget(
             target_id=target_id, tenant_id=tenant_id, display_name=display_name,
@@ -159,7 +159,7 @@ class ExternalExecutionEngine:
 
     def get_target(self, target_id: str) -> ExecutionTarget:
         if target_id not in self._targets:
-            raise RuntimeCoreInvariantError(f"unknown target_id: {target_id}")
+            raise RuntimeCoreInvariantError("unknown target_id")
         return self._targets[target_id]
 
     def targets_for_tenant(self, tenant_id: str) -> tuple[ExecutionTarget, ...]:
@@ -178,9 +178,9 @@ class ExternalExecutionEngine:
         risk_threshold: ExecutionRiskLevel = ExecutionRiskLevel.HIGH,
     ) -> ExecutionPolicy:
         if policy_id in self._policies:
-            raise RuntimeCoreInvariantError(f"duplicate policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("duplicate policy_id")
         if target_id not in self._targets:
-            raise RuntimeCoreInvariantError(f"unknown target_id: {target_id}")
+            raise RuntimeCoreInvariantError("unknown target_id")
         now = self._now()
         policy = ExecutionPolicy(
             policy_id=policy_id, tenant_id=tenant_id, target_id=target_id,
@@ -194,7 +194,7 @@ class ExternalExecutionEngine:
 
     def get_policy(self, policy_id: str) -> ExecutionPolicy:
         if policy_id not in self._policies:
-            raise RuntimeCoreInvariantError(f"unknown policy_id: {policy_id}")
+            raise RuntimeCoreInvariantError("unknown policy_id")
         return self._policies[policy_id]
 
     def policies_for_target(self, target_id: str) -> tuple[ExecutionPolicy, ...]:
@@ -212,9 +212,9 @@ class ExternalExecutionEngine:
         risk_level: ExecutionRiskLevel = ExecutionRiskLevel.LOW,
     ) -> ExecutionRequest:
         if request_id in self._requests:
-            raise RuntimeCoreInvariantError(f"duplicate request_id: {request_id}")
+            raise RuntimeCoreInvariantError("duplicate request_id")
         if target_id not in self._targets:
-            raise RuntimeCoreInvariantError(f"unknown target_id: {target_id}")
+            raise RuntimeCoreInvariantError("unknown target_id")
         target = self._targets[target_id]
         if target.tenant_id != tenant_id:
             # Cross-tenant blocked — record violation and return blocked request
@@ -222,7 +222,7 @@ class ExternalExecutionEngine:
             now = self._now()
             violation = ExecutionViolation(
                 violation_id=vid, tenant_id=tenant_id, request_id=request_id,
-                operation="cross_tenant_blocked", reason=f"target {target_id} belongs to tenant {target.tenant_id}",
+                operation="cross_tenant_blocked", reason="cross-tenant access denied",
                 detected_at=now,
             )
             self._violations[vid] = violation
@@ -244,7 +244,7 @@ class ExternalExecutionEngine:
                 now = self._now()
                 violation = ExecutionViolation(
                     violation_id=vid, tenant_id=tenant_id, request_id=request_id,
-                    operation="risk_exceeded", reason=f"risk {risk_level.value} exceeds threshold {pol.risk_threshold.value}",
+                    operation="risk_exceeded", reason="risk exceeds policy threshold",
                     detected_at=now,
                 )
                 self._violations[vid] = violation
@@ -265,7 +265,7 @@ class ExternalExecutionEngine:
             violation = ExecutionViolation(
                 violation_id=vid, tenant_id=tenant_id, request_id=request_id,
                 operation="circuit_breaker_open",
-                reason=f"circuit breaker open for target {target_id} after {self._consecutive_failures[target_id]} consecutive failures",
+                reason="circuit breaker open",
                 detected_at=now,
             )
             self._violations[vid] = violation
@@ -292,7 +292,7 @@ class ExternalExecutionEngine:
 
     def get_request(self, request_id: str) -> ExecutionRequest:
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         return self._requests[request_id]
 
     def requests_for_tenant(self, tenant_id: str) -> tuple[ExecutionRequest, ...]:
@@ -302,9 +302,9 @@ class ExternalExecutionEngine:
     def approve_execution(self, request_id: str) -> ExecutionRequest:
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(f"request {request_id} is terminal: {req.status.value}")
+            raise RuntimeCoreInvariantError("request is terminal")
         if req.status != ExecutionStatus.PENDING:
-            raise RuntimeCoreInvariantError(f"request {request_id} must be PENDING to approve")
+            raise RuntimeCoreInvariantError("request must be PENDING to approve")
         now = self._now()
         updated = ExecutionRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, target_id=req.target_id,
@@ -319,9 +319,9 @@ class ExternalExecutionEngine:
     def start_execution(self, request_id: str) -> ExecutionRequest:
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(f"request {request_id} is terminal: {req.status.value}")
+            raise RuntimeCoreInvariantError("request is terminal")
         if req.status not in (ExecutionStatus.PENDING, ExecutionStatus.APPROVED):
-            raise RuntimeCoreInvariantError(f"request {request_id} must be PENDING or APPROVED to start")
+            raise RuntimeCoreInvariantError("request must be PENDING or APPROVED to start")
         now = self._now()
         updated = ExecutionRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, target_id=req.target_id,
@@ -336,7 +336,7 @@ class ExternalExecutionEngine:
     def cancel_execution(self, request_id: str) -> ExecutionRequest:
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
-            raise RuntimeCoreInvariantError(f"request {request_id} is terminal: {req.status.value}")
+            raise RuntimeCoreInvariantError("request is terminal")
         now = self._now()
         updated = ExecutionRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, target_id=req.target_id,
@@ -351,7 +351,7 @@ class ExternalExecutionEngine:
     def timeout_execution(self, request_id: str) -> ExecutionRequest:
         req = self.get_request(request_id)
         if req.status != ExecutionStatus.RUNNING:
-            raise RuntimeCoreInvariantError(f"request {request_id} must be RUNNING to timeout")
+            raise RuntimeCoreInvariantError("request must be RUNNING to timeout")
         now = self._now()
         updated = ExecutionRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, target_id=req.target_id,
@@ -368,7 +368,7 @@ class ExternalExecutionEngine:
     def complete_execution(self, request_id: str) -> ExecutionRequest:
         req = self.get_request(request_id)
         if req.status != ExecutionStatus.RUNNING:
-            raise RuntimeCoreInvariantError(f"request {request_id} must be RUNNING to complete")
+            raise RuntimeCoreInvariantError("request must be RUNNING to complete")
         now = self._now()
         updated = ExecutionRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, target_id=req.target_id,
@@ -385,7 +385,7 @@ class ExternalExecutionEngine:
     def fail_execution(self, request_id: str) -> ExecutionRequest:
         req = self.get_request(request_id)
         if req.status != ExecutionStatus.RUNNING:
-            raise RuntimeCoreInvariantError(f"request {request_id} must be RUNNING to fail")
+            raise RuntimeCoreInvariantError("request must be RUNNING to fail")
         now = self._now()
         updated = ExecutionRequest(
             request_id=req.request_id, tenant_id=req.tenant_id, target_id=req.target_id,
@@ -419,9 +419,9 @@ class ExternalExecutionEngine:
         output_ref: str = "none",
     ) -> ExecutionReceipt:
         if receipt_id in self._receipts:
-            raise RuntimeCoreInvariantError(f"duplicate receipt_id: {receipt_id}")
+            raise RuntimeCoreInvariantError("duplicate receipt_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = self._now()
         receipt = ExecutionReceipt(
             receipt_id=receipt_id, request_id=request_id, tenant_id=tenant_id,
@@ -434,7 +434,7 @@ class ExternalExecutionEngine:
 
     def get_receipt(self, receipt_id: str) -> ExecutionReceipt:
         if receipt_id not in self._receipts:
-            raise RuntimeCoreInvariantError(f"unknown receipt_id: {receipt_id}")
+            raise RuntimeCoreInvariantError("unknown receipt_id")
         return self._receipts[receipt_id]
 
     def receipts_for_request(self, request_id: str) -> tuple[ExecutionReceipt, ...]:
@@ -451,9 +451,9 @@ class ExternalExecutionEngine:
         confidence: float = 1.0,
     ) -> ExecutionResult:
         if result_id in self._results:
-            raise RuntimeCoreInvariantError(f"duplicate result_id: {result_id}")
+            raise RuntimeCoreInvariantError("duplicate result_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = self._now()
         result = ExecutionResult(
             result_id=result_id, request_id=request_id, tenant_id=tenant_id,
@@ -466,7 +466,7 @@ class ExternalExecutionEngine:
 
     def get_result(self, result_id: str) -> ExecutionResult:
         if result_id not in self._results:
-            raise RuntimeCoreInvariantError(f"unknown result_id: {result_id}")
+            raise RuntimeCoreInvariantError("unknown result_id")
         return self._results[result_id]
 
     def results_for_request(self, request_id: str) -> tuple[ExecutionResult, ...]:
@@ -483,9 +483,9 @@ class ExternalExecutionEngine:
         retry_count: int = 0,
     ) -> ExecutionFailure:
         if failure_id in self._failures:
-            raise RuntimeCoreInvariantError(f"duplicate failure_id: {failure_id}")
+            raise RuntimeCoreInvariantError("duplicate failure_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = self._now()
         failure = ExecutionFailure(
             failure_id=failure_id, request_id=request_id, tenant_id=tenant_id,
@@ -498,7 +498,7 @@ class ExternalExecutionEngine:
 
     def get_failure(self, failure_id: str) -> ExecutionFailure:
         if failure_id not in self._failures:
-            raise RuntimeCoreInvariantError(f"unknown failure_id: {failure_id}")
+            raise RuntimeCoreInvariantError("unknown failure_id")
         return self._failures[failure_id]
 
     def failures_for_request(self, request_id: str) -> tuple[ExecutionFailure, ...]:
@@ -515,9 +515,9 @@ class ExternalExecutionEngine:
         status: ExecutionStatus = ExecutionStatus.COMPLETED,
     ) -> ExecutionTrace:
         if trace_id in self._traces:
-            raise RuntimeCoreInvariantError(f"duplicate trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("duplicate trace_id")
         if request_id not in self._requests:
-            raise RuntimeCoreInvariantError(f"unknown request_id: {request_id}")
+            raise RuntimeCoreInvariantError("unknown request_id")
         now = self._now()
         trace = ExecutionTrace(
             trace_id=trace_id, request_id=request_id, tenant_id=tenant_id,
@@ -530,7 +530,7 @@ class ExternalExecutionEngine:
 
     def get_trace(self, trace_id: str) -> ExecutionTrace:
         if trace_id not in self._traces:
-            raise RuntimeCoreInvariantError(f"unknown trace_id: {trace_id}")
+            raise RuntimeCoreInvariantError("unknown trace_id")
         return self._traces[trace_id]
 
     def traces_for_request(self, request_id: str) -> tuple[ExecutionTrace, ...]:
@@ -541,9 +541,7 @@ class ExternalExecutionEngine:
         """Retry a failed/timed-out execution. Resets to PENDING."""
         req = self.get_request(request_id)
         if req.status not in (ExecutionStatus.FAILED, ExecutionStatus.TIMED_OUT):
-            raise RuntimeCoreInvariantError(
-                f"request {request_id} must be FAILED or TIMED_OUT to retry"
-            )
+            raise RuntimeCoreInvariantError("request must be FAILED or TIMED_OUT to retry")
         # Check retry count against target max_retries
         target = self._targets.get(req.target_id)
         existing_failures = [f for f in self._failures.values() if f.request_id == request_id]
@@ -610,7 +608,7 @@ class ExternalExecutionEngine:
                         v = ExecutionViolation(
                             violation_id=vid, tenant_id=tenant_id, request_id=req.request_id,
                             operation="running_no_trace",
-                            reason=f"running request {req.request_id} has no traces",
+                            reason="running request has no traces",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -630,7 +628,7 @@ class ExternalExecutionEngine:
                         v = ExecutionViolation(
                             violation_id=vid, tenant_id=tenant_id, request_id=req.request_id,
                             operation="failed_no_failure_record",
-                            reason=f"failed request {req.request_id} has no failure record",
+                            reason="failed request missing failure record",
                             detected_at=now,
                         )
                         self._violations[vid] = v
@@ -650,7 +648,7 @@ class ExternalExecutionEngine:
                         v = ExecutionViolation(
                             violation_id=vid, tenant_id=tenant_id, request_id=req.request_id,
                             operation="completed_no_result",
-                            reason=f"completed request {req.request_id} has no result",
+                            reason="completed request missing result",
                             detected_at=now,
                         )
                         self._violations[vid] = v

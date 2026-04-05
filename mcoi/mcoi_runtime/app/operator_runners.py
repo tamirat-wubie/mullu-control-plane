@@ -113,7 +113,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
 
     autonomy_decision = loop.runtime.autonomy.evaluate(
         ActionClass.EXECUTE_WRITE,
-        action_description=f"skill_execution:{skill.skill_id}",
+        action_description="skill execution",
     )
     if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
         return SkillRunReport(
@@ -234,7 +234,7 @@ def run_workflow(
 
     autonomy_decision = loop.runtime.autonomy.evaluate(
         ActionClass.EXECUTE_WRITE,
-        action_description=f"workflow_execution:{workflow_descriptor.workflow_id}",
+        action_description="workflow execution",
     )
     if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
         return WorkflowRunReport(
@@ -363,7 +363,7 @@ def run_goal(
 
     autonomy_decision = loop.runtime.autonomy.evaluate(
         ActionClass.EXECUTE_WRITE,
-        action_description=f"goal_execution:{goal_descriptor.goal_id}",
+        action_description="goal execution",
     )
     if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
         return GoalRunReport(

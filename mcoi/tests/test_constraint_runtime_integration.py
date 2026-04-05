@@ -187,6 +187,8 @@ class TestMemoryMeshAttachment:
     def test_attach_to_memory_mesh(self, integration):
         record = integration.attach_constraint_state_to_memory_mesh("scope-1")
         assert isinstance(record, MemoryRecord)
+        assert record.title == "Constraint state"
+        assert "scope-1" not in record.title
         assert "constraint" in record.tags
         assert "algorithm" in record.tags
         assert "solver" in record.tags

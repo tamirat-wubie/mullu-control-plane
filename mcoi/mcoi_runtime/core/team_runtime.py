@@ -73,9 +73,7 @@ class WorkerRegistry:
     def register_worker(self, profile: WorkerProfile) -> WorkerProfile:
         """Register a worker profile. Rejects duplicate worker_id."""
         if profile.worker_id in self._workers:
-            raise RuntimeCoreInvariantError(
-                f"worker already registered: {profile.worker_id}"
-            )
+            raise RuntimeCoreInvariantError("worker already registered")
         self._workers[profile.worker_id] = profile
         # Initialize capacity tracking
         self._capacities[profile.worker_id] = _InternalCapacity(
@@ -94,9 +92,7 @@ class WorkerRegistry:
     def register_role(self, descriptor: RoleDescriptor) -> RoleDescriptor:
         """Register a role descriptor. Rejects duplicate role_id."""
         if descriptor.role_id in self._roles:
-            raise RuntimeCoreInvariantError(
-                f"role already registered: {descriptor.role_id}"
-            )
+            raise RuntimeCoreInvariantError("role already registered")
         self._roles[descriptor.role_id] = descriptor
         return descriptor
 
@@ -120,9 +116,7 @@ class WorkerRegistry:
     def register_policy(self, policy: AssignmentPolicy) -> AssignmentPolicy:
         """Register an assignment policy. Rejects duplicate policy_id."""
         if policy.policy_id in self._policies:
-            raise RuntimeCoreInvariantError(
-                f"policy already registered: {policy.policy_id}"
-            )
+            raise RuntimeCoreInvariantError("policy already registered")
         self._policies[policy.policy_id] = policy
         return policy
 
@@ -135,7 +129,7 @@ class WorkerRegistry:
     def update_capacity(self, worker_id: str, current_load: int) -> WorkerCapacity:
         """Update worker load and return a contract-valid WorkerCapacity snapshot."""
         if worker_id not in self._workers:
-            raise RuntimeCoreInvariantError(f"worker not found: {worker_id}")
+            raise RuntimeCoreInvariantError("worker not found")
         profile = self._workers[worker_id]
         internal = _InternalCapacity(
             worker_id=worker_id,
@@ -222,7 +216,7 @@ class TeamEngine:
             job_id=job_id,
             worker_id=best_worker.worker_id,
             role_id=role_id,
-            reason=f"least loaded worker with {best_slots} available slots",
+            reason="least loaded available worker",
             decided_at=now,
         )
 

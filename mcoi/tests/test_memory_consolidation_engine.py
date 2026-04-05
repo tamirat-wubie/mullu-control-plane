@@ -1213,3 +1213,60 @@ class TestAdditionalEngineCoverage:
         engine.register_memory_candidate("c-1", "t-1", "s-1", "s")
         snap = engine.snapshot()
         assert snap["_state_hash"] == engine.state_hash()
+
+
+class TestBoundedContractWitnesses:
+    def test_invariant_messages_do_not_reflect_identifiers(self, engine):
+        engine.register_memory_candidate("c-secret", "t-1", "s-1", "s")
+
+        with pytest.raises(RuntimeCoreInvariantError) as duplicate_exc:
+            engine.register_memory_candidate("c-secret", "t-1", "s-2", "s")
+        duplicate_message = str(duplicate_exc.value)
+        assert duplicate_message == "Duplicate candidate_id"
+        assert "c-secret" not in duplicate_message
+        assert "candidate_id" in duplicate_message
+
+        with pytest.raises(RuntimeCoreInvariantError) as unknown_rule_exc:
+            engine.get_rule("rule-secret")
+        unknown_rule_message = str(unknown_rule_exc.value)
+        assert unknown_rule_message == "Unknown rule_id"
+        assert "rule-secret" not in unknown_rule_message
+        assert "rule_id" in unknown_rule_message
+
+        engine.resolve_memory_conflict("cf-secret", "t-1", "c-1", "c-2")
+        engine.complete_conflict_resolution("cf-secret")
+        with pytest.raises(RuntimeCoreInvariantError) as resolved_exc:
+            engine.complete_conflict_resolution("cf-secret")
+        resolved_message = str(resolved_exc.value)
+        assert resolved_message == "Conflict already resolved"
+        assert "cf-secret" not in resolved_message
+        assert "resolved" in resolved_message
+
+    def test_violation_reasons_are_bounded(self, engine):
+        engine.resolve_memory_conflict("cf-secret", "t-1", "c-1", "c-2")
+        engine.register_memory_candidate("c-high", "t-1", "s-1", "s", occurrence_count=10)
+        engine.register_memory_candidate("c-promoted", "t-1", "s-2", "s", importance=MemoryImportance.CRITICAL)
+        for i in range(4):
+            engine.register_memory_candidate(
+                f"c-low-{i}",
+                "t-1",
+                f"s-low-{i}",
+                "s",
+                importance=MemoryImportance.LOW,
+                occurrence_count=1,
+            )
+        engine.consolidate_batch("b-1", "t-1")
+        engine.build_personalization_profile("profile-secret", "t-1", "u-1")
+
+        violations = {v.operation: v.reason for v in engine.detect_consolidation_violations("t-1")}
+        assert violations["unresolved_conflict"] == "Conflict unresolved"
+        assert "cf-secret" not in violations["unresolved_conflict"]
+        assert "not resolved" not in violations["unresolved_conflict"]
+
+        assert violations["candidate_no_decision"] == "High-occurrence candidate lacks consolidation decision"
+        assert "c-high" not in violations["candidate_no_decision"]
+        assert "10" not in violations["candidate_no_decision"]
+
+        assert violations["profile_low_confidence"] == "Profile confidence below threshold"
+        assert "profile-secret" not in violations["profile_low_confidence"]
+        assert "0.2" not in violations["profile_low_confidence"]

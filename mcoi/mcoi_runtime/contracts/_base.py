@@ -14,8 +14,21 @@ import json
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
+from ._base_field_labels import KNOWN_CONTRACT_FIELD_LABELS
+
 
 FrozenValue = Any
+_GENERIC_FIELD_LABEL = "value"
+
+
+def _bounded_field_label(field_name: Any) -> str:
+    if isinstance(field_name, str) and field_name in KNOWN_CONTRACT_FIELD_LABELS:
+        return field_name
+    return _GENERIC_FIELD_LABEL
+
+
+def _field_validation_message(field_name: Any, suffix: str) -> str:
+    return _bounded_field_label(field_name) + suffix
 
 
 def freeze_value(value: Any) -> FrozenValue:
@@ -69,7 +82,7 @@ def thaw_value_json(value: Any) -> Any:
 
 def require_non_empty_text(value: str, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{field_name} must be a non-empty string")
+        raise ValueError(_field_validation_message(field_name, " must be a non-empty string"))
     return value
 
 
@@ -79,14 +92,16 @@ def require_datetime_text(value: str, field_name: str) -> str:
     try:
         datetime.fromisoformat(normalized)
     except ValueError as exc:
-        raise ValueError(f"{field_name} must be an ISO 8601 date-time string") from exc
+        raise ValueError(
+            _field_validation_message(field_name, " must be an ISO 8601 date-time string")
+        ) from exc
     return value
 
 
 def require_non_empty_tuple(values: Sequence[Any], field_name: str) -> tuple[Any, ...]:
     frozen = freeze_value(list(values))
     if not isinstance(frozen, tuple) or not frozen:
-        raise ValueError(f"{field_name} must contain at least one item")
+        raise ValueError(_field_validation_message(field_name, " must contain at least one item"))
     return frozen
 
 
@@ -98,52 +113,52 @@ def require_non_empty_tuple(values: Sequence[Any], field_name: str) -> tuple[Any
 def require_unit_float(value: float, field_name: str) -> float:
     """Validate that a float is finite and within [0.0, 1.0]."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a number")
+        raise ValueError(_field_validation_message(field_name, " must be a number"))
     fval = float(value)
     if not math.isfinite(fval):
-        raise ValueError(f"{field_name} must be finite")
+        raise ValueError(_field_validation_message(field_name, " must be finite"))
     if not (0.0 <= fval <= 1.0):
-        raise ValueError(f"{field_name} must be between 0.0 and 1.0")
+        raise ValueError(_field_validation_message(field_name, " must be between 0.0 and 1.0"))
     return fval
 
 
 def require_non_negative_float(value: float, field_name: str) -> float:
     """Validate that a float is finite and non-negative."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a number")
+        raise ValueError(_field_validation_message(field_name, " must be a number"))
     fval = float(value)
     if not math.isfinite(fval):
-        raise ValueError(f"{field_name} must be finite")
+        raise ValueError(_field_validation_message(field_name, " must be finite"))
     if fval < 0.0:
-        raise ValueError(f"{field_name} must be non-negative")
+        raise ValueError(_field_validation_message(field_name, " must be non-negative"))
     return fval
 
 
 def require_finite_float(value: float, field_name: str) -> float:
     """Validate that a float is finite (may be negative)."""
     if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be a number")
+        raise ValueError(_field_validation_message(field_name, " must be a number"))
     fval = float(value)
     if not math.isfinite(fval):
-        raise ValueError(f"{field_name} must be finite")
+        raise ValueError(_field_validation_message(field_name, " must be finite"))
     return fval
 
 
 def require_non_negative_int(value: int, field_name: str) -> int:
     """Validate that a value is a non-negative integer."""
     if not isinstance(value, int) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be an integer")
+        raise ValueError(_field_validation_message(field_name, " must be an integer"))
     if value < 0:
-        raise ValueError(f"{field_name} must be non-negative")
+        raise ValueError(_field_validation_message(field_name, " must be non-negative"))
     return value
 
 
 def require_positive_int(value: int, field_name: str) -> int:
     """Validate that a value is a positive integer (>= 1)."""
     if not isinstance(value, int) or isinstance(value, bool):
-        raise ValueError(f"{field_name} must be an integer")
+        raise ValueError(_field_validation_message(field_name, " must be an integer"))
     if value < 1:
-        raise ValueError(f"{field_name} must be >= 1")
+        raise ValueError(_field_validation_message(field_name, " must be >= 1"))
     return value
 
 

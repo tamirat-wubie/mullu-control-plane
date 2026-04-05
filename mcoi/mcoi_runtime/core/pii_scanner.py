@@ -24,6 +24,49 @@ from enum import Enum
 from typing import Any
 
 
+_ETHIOPIC_RANGES: tuple[tuple[int, int], ...] = (
+    (0x1200, 0x137F),
+    (0x1380, 0x139F),
+    (0x2D80, 0x2DDF),
+    (0xAB00, 0xAB2F),
+)
+
+
+def _is_ethiopic_char(char: str) -> bool:
+    codepoint = ord(char)
+    return any(start <= codepoint <= end for start, end in _ETHIOPIC_RANGES)
+
+
+def _normalize_non_ethiopic_runs(text: str) -> str:
+    if not text:
+        return text
+
+    pieces: list[str] = []
+    current_run: list[str] = []
+    current_is_ethiopic: bool | None = None
+
+    for char in text:
+        char_is_ethiopic = _is_ethiopic_char(char)
+        if current_is_ethiopic is None:
+            current_is_ethiopic = char_is_ethiopic
+        elif char_is_ethiopic != current_is_ethiopic:
+            segment = "".join(current_run)
+            pieces.append(
+                segment if current_is_ethiopic else unicodedata.normalize("NFKC", segment)
+            )
+            current_run = []
+            current_is_ethiopic = char_is_ethiopic
+        current_run.append(char)
+
+    if current_run:
+        segment = "".join(current_run)
+        pieces.append(
+            segment if current_is_ethiopic else unicodedata.normalize("NFKC", segment)
+        )
+
+    return "".join(pieces)
+
+
 class PIICategory(str, Enum):
     """Categories of personally identifiable information."""
 
@@ -197,8 +240,8 @@ class PIIScanner:
         if len(text) > self.MAX_SCAN_LENGTH:
             text = text[:self.MAX_SCAN_LENGTH]
 
-        # Normalize Unicode to defeat bypass techniques
-        text = unicodedata.normalize("NFKC", text)
+        # Normalize only non-Ethiopic runs to preserve Mfidel atomicity.
+        text = _normalize_non_ethiopic_runs(text)
         # Strip zero-width and invisible characters
         text = re.sub(r"[\u200b\u200c\u200d\u00ad\u2060\ufeff]", "", text)
 

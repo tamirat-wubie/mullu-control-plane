@@ -163,7 +163,7 @@ class BatchPipeline:
                         total_cost=total_cost,
                         total_tokens=total_tokens,
                         succeeded=False,
-                        error=f"step {step.step_id} failed: {error}",
+                        error="pipeline execution failed",
                     )
                     self._history.append(pipe_result)
                     return pipe_result
@@ -184,7 +184,7 @@ class BatchPipeline:
                     total_cost=total_cost,
                     total_tokens=total_tokens,
                     succeeded=False,
-                    error=f"step {step.step_id} failed: {error}",
+                    error="pipeline execution failed",
                 )
                 self._history.append(pipe_result)
                 return pipe_result

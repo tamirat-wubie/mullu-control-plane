@@ -208,8 +208,9 @@ class TestEngineLifecycle:
 
     def test_duplicate_node_raises(self, engine):
         engine.register_causal_node("n1", "t1", "Temperature")
-        with pytest.raises(RuntimeCoreInvariantError):
+        with pytest.raises(RuntimeCoreInvariantError) as exc_info:
             engine.register_causal_node("n1", "t1", "Temperature")
+        assert "n1" not in str(exc_info.value)
 
     def test_register_edge(self, engine):
         engine.register_causal_node("n1", "t1", "Cause")
@@ -220,13 +221,15 @@ class TestEngineLifecycle:
 
     def test_edge_missing_cause_raises(self, engine):
         engine.register_causal_node("n2", "t1", "Effect")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown cause"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown cause") as exc_info:
             engine.register_causal_edge("e1", "t1", "n1", "n2")
+        assert "n1" not in str(exc_info.value)
 
     def test_edge_missing_effect_raises(self, engine):
         engine.register_causal_node("n1", "t1", "Cause")
-        with pytest.raises(RuntimeCoreInvariantError, match="Unknown effect"):
+        with pytest.raises(RuntimeCoreInvariantError, match="Unknown effect") as exc_info:
             engine.register_causal_edge("e1", "t1", "n1", "n2")
+        assert "n2" not in str(exc_info.value)
 
     def test_register_intervention(self, engine):
         intv = engine.register_intervention("i1", "t1", "n1", "reduce noise")
@@ -397,6 +400,8 @@ class TestIntegration:
         integ = CausalRuntimeIntegration(eng, spine, memory)
         rec = integ.attach_causal_state_to_memory_mesh("scope-1")
         assert rec.memory_id
+        assert rec.title == "Causal state"
+        assert "scope-1" not in rec.title
         assert memory.memory_count >= 1
 
     def test_attach_to_graph(self, spine, clock, memory):

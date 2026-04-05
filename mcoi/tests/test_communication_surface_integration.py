@@ -190,8 +190,9 @@ class TestCommunicationSurfaceIntegration:
 
     def test_extract_obligations_missing_message_rejected(self):
         _, _, _, _, bridge = _make_bridge()
-        with pytest.raises(RuntimeCoreInvariantError, match="not found"):
+        with pytest.raises(RuntimeCoreInvariantError, match="^inbound message not found$") as excinfo:
             bridge.extract_obligations_from_message("nope", [])
+        assert "nope" not in str(excinfo.value)
 
     # -- commitment extraction --
 
@@ -210,6 +211,12 @@ class TestCommunicationSurfaceIntegration:
         assert len(created) == 1
         assert len(obligations._obligations) == 1
         assert memory.memory_count == 1  # commitment memory
+
+    def test_extract_commitments_missing_message_rejected(self):
+        _, _, _, _, bridge = _make_bridge()
+        with pytest.raises(RuntimeCoreInvariantError, match="^inbound message not found$") as excinfo:
+            bridge.extract_commitments_from_message("nope", [])
+        assert "nope" not in str(excinfo.value)
 
     # -- remember_communication --
 

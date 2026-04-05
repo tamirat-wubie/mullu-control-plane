@@ -643,3 +643,40 @@ class TestPlaybookRegistration:
             pb.execute_playbook("", "job-1")
         with pytest.raises(RuntimeCoreInvariantError):
             pb.execute_playbook("pb-1", "")
+
+
+class TestBoundedFunctionContracts:
+    def test_duplicate_function_does_not_echo_id(self) -> None:
+        reg = FunctionRegistry(clock=_fixed_clock())
+        reg.register_function(_make_function(function_id="fn-secret"))
+        with pytest.raises(RuntimeCoreInvariantError, match="function already registered") as exc:
+            reg.register_function(_make_function(function_id="fn-secret"))
+        assert "fn-secret" not in str(exc.value)
+
+    def test_missing_function_does_not_echo_id(self) -> None:
+        reg = FunctionRegistry(clock=_fixed_clock())
+        with pytest.raises(RuntimeCoreInvariantError, match="function not found") as exc:
+            reg.activate_function("fn-secret")
+        assert "fn-secret" not in str(exc.value)
+
+    def test_inactive_function_does_not_echo_status_or_id(self) -> None:
+        reg = FunctionRegistry(clock=_fixed_clock())
+        reg.register_function(_make_function(function_id="fn-secret"))
+        engine = FunctionEngine(registry=reg, clock=_fixed_clock(_T1))
+        with pytest.raises(RuntimeCoreInvariantError, match="function is not active") as exc:
+            engine.submit_job_to_function("fn-secret", _make_job())
+        assert "fn-secret" not in str(exc.value)
+        assert "draft" not in str(exc.value).lower()
+
+    def test_duplicate_policy_binding_does_not_echo_binding_id(self) -> None:
+        reg = FunctionRegistry(clock=_fixed_clock())
+        reg.register_policy_binding(_make_policy_binding(binding_id="bind-secret"))
+        with pytest.raises(RuntimeCoreInvariantError, match="policy binding already registered") as exc:
+            reg.register_policy_binding(_make_policy_binding(binding_id="bind-secret"))
+        assert "bind-secret" not in str(exc.value)
+
+    def test_missing_playbook_does_not_echo_id(self) -> None:
+        pb = FunctionPlaybook()
+        with pytest.raises(RuntimeCoreInvariantError, match="playbook not found") as exc:
+            pb.execute_playbook("pb-secret", "job-1")
+        assert "pb-secret" not in str(exc.value)

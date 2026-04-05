@@ -93,7 +93,7 @@ class FinancialIntegration:
         decision = self._finance.reserve_budget(
             reservation_id, budget_id, estimated_amount, category,
             campaign_ref=campaign_ref, step_ref=step_ref,
-            reason=f"campaign step: {step_ref}",
+            reason="campaign step budget reservation",
         )
         result: dict[str, Any] = {
             "budget_id": budget_id,
@@ -151,7 +151,7 @@ class FinancialIntegration:
             connector_ref=connector_ref,
             campaign_ref=campaign_ref,
             step_ref=step_ref,
-            reason=f"connector call: {connector_ref}",
+            reason="connector call budget reservation",
         )
 
         result: dict[str, Any] = {
@@ -195,7 +195,7 @@ class FinancialIntegration:
             reservation_id, budget_id, estimated_amount,
             CostCategory.COMMUNICATION,
             campaign_ref=campaign_ref,
-            reason=f"communication via {channel}",
+            reason="communication budget reservation",
         )
         return {
             "budget_id": budget_id,
@@ -230,7 +230,7 @@ class FinancialIntegration:
             reservation_id, budget_id, estimated_amount,
             CostCategory.ARTIFACT_PARSING,
             campaign_ref=campaign_ref,
-            reason=f"artifact parsing: {artifact_ref}",
+            reason="artifact parsing budget reservation",
         )
         return {
             "budget_id": budget_id,
@@ -265,7 +265,7 @@ class FinancialIntegration:
             reservation_id, budget_id, estimated_amount,
             CostCategory.PROVIDER_ROUTING,
             campaign_ref=campaign_ref,
-            reason=f"provider routing: {provider_ref}",
+            reason="provider routing budget reservation",
         )
         return {
             "budget_id": budget_id,
@@ -414,7 +414,7 @@ class FinancialIntegration:
             scope=MemoryScope.GLOBAL,
             scope_ref_id=budget_id,
             trust_level=MemoryTrustLevel.VERIFIED,
-            title=f"Financial state: {budget_id}",
+            title="Financial state",
             content=content,
             source_ids=(budget_id,),
             tags=("financial", "budget", "state"),

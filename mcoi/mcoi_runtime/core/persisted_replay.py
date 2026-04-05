@@ -22,7 +22,6 @@ from .replay_engine import (
 from mcoi_runtime.persistence.replay_store import ReplayStore
 from mcoi_runtime.persistence.trace_store import TraceStore
 from mcoi_runtime.persistence.errors import (
-    CorruptedDataError,
     PersistenceError,
 )
 
@@ -56,6 +55,9 @@ class PersistedReplayValidator:
         self._trace_store = trace_store
         self._replay_engine = replay_engine or ReplayEngine()
 
+    def _bounded_persistence_reason(self, prefix: str, exc: Exception) -> str:
+        return f"{prefix}:{type(exc).__name__}"
+
     def validate(
         self,
         replay_id: str,
@@ -80,7 +82,7 @@ class PersistedReplayValidator:
                 trace_id="",
                 validation=ReplayValidationResult(
                     ready=False,
-                    reasons=(f"persistence_load_failed:{exc}",),
+                    reasons=(self._bounded_persistence_reason("persistence_load_failed", exc),),
                     artifacts=(),
                     verdict=ReplayVerdict.INVALID_RECORD,
                 ),

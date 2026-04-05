@@ -104,8 +104,9 @@ class TestApprovalRequestManagement:
     def test_duplicate_request_rejected(self):
         engine = _engine()
         engine.submit_request(_request())
-        with pytest.raises(ValueError, match="already exists"):
+        with pytest.raises(ValueError, match="^approval request already exists$") as exc_info:
             engine.submit_request(_request())
+        assert "req-1" not in str(exc_info.value)
 
     def test_list_pending(self):
         engine = _engine()
@@ -146,8 +147,9 @@ class TestApprovalDecisions:
 
     def test_request_not_found(self):
         engine = _engine()
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ValueError, match="^approval request unavailable$") as exc_info:
             engine.record_decision(request_id="missing", approver_id="op-1", approved=True)
+        assert "missing" not in str(exc_info.value)
 
 
 # --- Validation ---

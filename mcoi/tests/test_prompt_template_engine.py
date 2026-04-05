@@ -36,13 +36,15 @@ class TestPromptTemplateEngine:
 
     def test_missing_variable(self):
         eng = self._engine()
-        with pytest.raises(ValueError, match="missing variables"):
+        with pytest.raises(ValueError, match="^missing required template variables$") as exc_info:
             eng.render("greet", {"name": "Alice"})  # Missing "place"
+        assert "place" not in str(exc_info.value)
 
     def test_unknown_template(self):
         eng = self._engine()
-        with pytest.raises(ValueError, match="unknown template"):
+        with pytest.raises(ValueError, match="^template unavailable$") as exc_info:
             eng.render("nonexistent", {})
+        assert "nonexistent" not in str(exc_info.value)
 
     def test_extra_variables_ignored(self):
         eng = self._engine()
@@ -60,8 +62,9 @@ class TestPromptTemplateEngine:
     def test_duplicate_register(self):
         eng = PromptTemplateEngine()
         eng.register(PromptTemplate(template_id="x", name="X", template="t", variables=()))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="^template already registered$") as exc_info:
             eng.register(PromptTemplate(template_id="x", name="X2", template="t2", variables=()))
+        assert "x" not in str(exc_info.value)
 
     def test_summary(self):
         eng = self._engine()

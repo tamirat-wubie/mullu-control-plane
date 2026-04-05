@@ -1,4 +1,4 @@
-"""Phase 200 — Governed HTTP Server (FastAPI).
+﻿"""Phase 200 â€” Governed HTTP Server (FastAPI).
 
 Purpose: HTTP boundary for the governed platform. All requests enter governed execution.
     Phase 199: LLM completion, certification, persistence-backed ledger, budget reporting.
@@ -58,7 +58,56 @@ def _env_flag(name: str) -> bool | None:
         return True
     if normalized in {"0", "false", "no", "off"}:
         return False
-    raise ValueError(f"{name} must be a boolean flag")
+    raise ValueError("value must be a boolean flag")
+
+
+def _bounded_bootstrap_warning(component: str, exc: Exception) -> str:
+    """Return a bounded startup warning without leaking backend detail."""
+    return f"{component} bootstrap failed ({type(exc).__name__})"
+
+
+def _bounded_lifecycle_warning(component: str, exc: Exception) -> str:
+    """Return a bounded lifecycle warning without leaking backend detail."""
+    return f"{component} failed ({type(exc).__name__})"
+
+
+def _append_bounded_warning(warnings: list[str], component: str, exc: Exception) -> None:
+    """Record a bounded warning once per component/error class pair."""
+    warning = _bounded_lifecycle_warning(component, exc)
+    if warning not in warnings:
+        warnings.append(warning)
+
+
+def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
+    """Build optional field encryption and expose explicit startup posture."""
+    state = {
+        "configured": bool(os.environ.get("MULLU_ENCRYPTION_KEY", "")),
+        "enabled": False,
+        "aes_available": False,
+        "warning": "",
+    }
+    if not state["configured"]:
+        return None, state
+
+    from mcoi_runtime.core.field_encryption import FieldEncryptor, EnvKeyProvider
+
+    try:
+        provider = EnvKeyProvider()
+        if not provider.available:
+            state["warning"] = "field encryption configured but no key available"
+            return None, state
+        encryptor = FieldEncryptor(provider)
+        state["enabled"] = True
+        state["aes_available"] = encryptor.aes_available
+        return encryptor, state
+    except Exception as exc:
+        state["warning"] = _bounded_bootstrap_warning("field encryption", exc)
+        return None, state
+
+
+_tenant_allow_unknown = _env_flag("MULLU_ALLOW_UNKNOWN_TENANTS")
+if _tenant_allow_unknown is None:
+    _tenant_allow_unknown = ENV in ("local_dev", "test")
 
 # Clock
 def _clock() -> str:
@@ -91,7 +140,7 @@ if _db_backend == "sqlite" and hasattr(store, '_conn'):
     if _migration_results:
         _applied = [r.name for r in _migration_results if r.success]
         if _applied:
-            pass  # Migrations applied silently — logged at startup below
+            pass  # Migrations applied silently â€” logged at startup below
 
 # Phase 200A: LLM bootstrap wiring (env-driven backend selection)
 llm_bootstrap_result = bootstrap_llm(
@@ -135,16 +184,8 @@ cert_daemon = CertificationDaemon(
     ),
 )
 
-# Phase 2B: Field encryption (optional — enabled when MULLU_ENCRYPTION_KEY is set)
-_field_encryptor = None
-if os.environ.get("MULLU_ENCRYPTION_KEY", ""):
-    from mcoi_runtime.core.field_encryption import FieldEncryptor, EnvKeyProvider
-    try:
-        _enc_provider = EnvKeyProvider()
-        if _enc_provider.available:
-            _field_encryptor = FieldEncryptor(_enc_provider)
-    except ValueError:
-        pass  # Invalid key length — encryption disabled
+# Phase 2B: Field encryption (optional â€” enabled when MULLU_ENCRYPTION_KEY is set)
+_field_encryptor, _field_encryption_bootstrap = _init_field_encryption_from_env()
 
 # Phase 1A: Governance stores (env-driven backend selection, with optional encryption)
 _gov_stores = create_governance_stores(
@@ -168,7 +209,7 @@ rate_limiter = RateLimiter(
 # Phase 202D: Audit trail (with persistent store)
 audit_trail = AuditTrail(clock=_clock, store=_gov_stores["audit"])
 
-# Phase 2A: JWT/OIDC authenticator (optional — enabled when MULLU_JWT_SECRET is set)
+# Phase 2A: JWT/OIDC authenticator (optional â€” enabled when MULLU_JWT_SECRET is set)
 _jwt_authenticator = None
 _jwt_secret = os.environ.get("MULLU_JWT_SECRET", "")
 if _jwt_secret:
@@ -182,7 +223,11 @@ if _jwt_secret:
 
 # Phase 2D: Tenant gating registry (lifecycle enforcement)
 from mcoi_runtime.core.tenant_gating import TenantGatingRegistry
-_tenant_gating = TenantGatingRegistry(clock=_clock, store=_gov_stores["tenant_gating"])
+_tenant_gating = TenantGatingRegistry(
+    clock=_clock,
+    store=_gov_stores["tenant_gating"],
+    allow_unknown_tenants=_tenant_allow_unknown,
+)
 
 # Phase 3A: PII scanner
 from mcoi_runtime.core.pii_scanner import PIIScanner
@@ -199,7 +244,7 @@ from mcoi_runtime.app.shell_policies import SANDBOXED, LOCAL_DEV, PILOT_PROD
 _shell_policy_map = {"local_dev": LOCAL_DEV, "pilot": PILOT_PROD, "production": PILOT_PROD}
 shell_policy = _shell_policy_map.get(ENV, SANDBOXED)
 
-# Phase 4C: Proof bridge (governance decision → MAF transition receipts)
+# Phase 4C: Proof bridge (governance decision â†’ MAF transition receipts)
 from mcoi_runtime.core.proof_bridge import ProofBridge
 proof_bridge = ProofBridge(clock=_clock)
 
@@ -295,7 +340,7 @@ connector_framework = GovernedConnectorFramework(
 )
 observability.register_source("connectors", lambda: connector_framework.summary())
 
-# RBAC — access runtime engine
+# RBAC â€” access runtime engine
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
 _rbac_spine = EventSpineEngine(clock=_clock)
@@ -312,7 +357,7 @@ observability.register_source("rbac", lambda: {
     "rules_seeded": _rbac_rules_seeded,
 })
 
-# Policy sandbox — dry-run simulation
+# Policy sandbox â€” dry-run simulation
 from mcoi_runtime.core.policy_sandbox import PolicySandbox
 policy_sandbox = PolicySandbox(
     clock=_clock,
@@ -688,9 +733,9 @@ health_v3.register("llm_bridge", lambda: ComponentHealth.HEALTHY, weight=3.0)
 health_v3.register("store", lambda: ComponentHealth.HEALTHY, weight=2.0)
 health_v3.register("rate_limiter", lambda: ComponentHealth.HEALTHY, weight=1.0)
 
-# ═══════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Additional subsystem initialization (previously scattered in route sections)
-# ═══════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 # Phase 212A: Tool registry
 from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
@@ -923,7 +968,7 @@ app.add_middleware(
 )
 
 
-# ── CORS middleware — allow cross-origin requests from web frontends ──────
+# â”€â”€ CORS middleware â€” allow cross-origin requests from web frontends â”€â”€â”€â”€â”€â”€
 from starlette.middleware.cors import CORSMiddleware
 
 _cors_default = "http://localhost:3000,http://localhost:8080" if ENV in ("local_dev", "test") else ""
@@ -946,7 +991,7 @@ app.add_middleware(
 )
 
 
-# ── Global error handler — prevents leaking internal details ─────────────
+# â”€â”€ Global error handler â€” prevents leaking internal details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import JSONResponse as StarletteJSONResponse
 
@@ -964,9 +1009,9 @@ async def global_exception_handler(request: StarletteRequest, exc: Exception):
     )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Dependency injection — register all subsystems into deps container
-# ═══════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Dependency injection â€” register all subsystems into deps container
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 from mcoi_runtime.app.routers.deps import deps
 
@@ -994,6 +1039,7 @@ deps.set("proof_bridge", proof_bridge)
 deps.set("pii_scanner", pii_scanner)
 deps.set("content_safety_chain", content_safety_chain)
 deps.set("tenant_gating", _tenant_gating)
+deps.set("field_encryption_bootstrap", dict(_field_encryption_bootstrap))
 
 # GovernedSession Platform harness
 from mcoi_runtime.core.governed_session import Platform as _Platform
@@ -1008,6 +1054,16 @@ platform = _Platform(
     proof_bridge=proof_bridge,
     tenant_gating=_tenant_gating,
     rate_limiter=rate_limiter,
+    bootstrap_warnings=tuple(
+        warning for warning in (_field_encryption_bootstrap.get("warning", ""),) if warning
+    ),
+    bootstrap_components={
+        "access_runtime": access_runtime is not None,
+        "llm_bridge": llm_bootstrap_result.bridge is not None,
+        "tenant_gating": _tenant_gating is not None,
+        "proof_bridge": proof_bridge is not None,
+        "field_encryption": bool(_field_encryption_bootstrap.get("enabled", False)),
+    },
 )
 deps.set("platform", platform)
 
@@ -1118,9 +1174,9 @@ deps.set("backpressure", backpressure)
 deps.set("ab_engine", ab_engine)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Include routers — all route handlers live in routers/ modules
-# ═══════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Include routers â€” all route handlers live in routers/ modules
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 from mcoi_runtime.app.routers.health import router as health_router
 from mcoi_runtime.app.routers.llm import router as llm_router
@@ -1163,65 +1219,90 @@ app.include_router(multi_agent_router)
 app.include_router(knowledge_router)
 
 
-# ════��════════════════���═════════════════════════��═══════════════════════════
-# Shutdown handler — stays in server.py (needs direct access to subsystems)
-# ═══════════════════════════════════════════════════════════════════════════
+# â•â•â•â•ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ï¿½ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# Shutdown handler â€” stays in server.py (needs direct access to subsystems)
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 def _flush_state_on_shutdown():
     """Flush critical in-memory state to file-based snapshots before exit."""
     flushed = {}
+    warnings: list[str] = []
+
+    budget_data = {}
+    if hasattr(tenant_budget_mgr, '_budgets'):
+        for tid, b in tenant_budget_mgr._budgets.items():
+            budget_data[tid] = {
+                "spent": b.spent, "calls_made": b.calls_made,
+                "max_cost": b.max_cost, "max_calls": b.max_calls,
+            }
     try:
-        budget_data = {}
-        if hasattr(tenant_budget_mgr, '_budgets'):
-            for tid, b in tenant_budget_mgr._budgets.items():
-                budget_data[tid] = {
-                    "spent": b.spent, "calls_made": b.calls_made,
-                    "max_cost": b.max_cost, "max_calls": b.max_calls,
-                }
         state_persistence.save("budgets", budget_data)
         flushed["budgets"] = len(budget_data)
+    except Exception as exc:
+        _append_bounded_warning(warnings, "shutdown budgets flush", exc)
 
-        audit_summary_data = {
-            "entry_count": audit_trail.entry_count,
-            "last_hash": audit_trail._last_hash if hasattr(audit_trail, '_last_hash') else "",
-            "sequence": audit_trail._sequence if hasattr(audit_trail, '_sequence') else 0,
-        }
+    audit_summary_data = {
+        "entry_count": audit_trail.entry_count,
+        "last_hash": audit_trail._last_hash if hasattr(audit_trail, '_last_hash') else "",
+        "sequence": audit_trail._sequence if hasattr(audit_trail, '_sequence') else 0,
+    }
+    try:
         state_persistence.save("audit_summary", audit_summary_data)
         flushed["audit_sequence"] = audit_summary_data["sequence"]
+    except Exception as exc:
+        _append_bounded_warning(warnings, "shutdown audit summary flush", exc)
 
-        cost_data = {"summary": cost_analytics.summary() if hasattr(cost_analytics, 'summary') else {}}
+    cost_data = {"summary": cost_analytics.summary() if hasattr(cost_analytics, 'summary') else {}}
+    try:
         state_persistence.save("cost_analytics", cost_data)
         flushed["cost_analytics"] = True
+    except Exception as exc:
+        _append_bounded_warning(warnings, "shutdown cost analytics flush", exc)
 
+    if flushed:
         platform_logger.log(LogLevel.INFO, f"Shutdown state flush: {flushed}")
-    except Exception as e:
-        platform_logger.log(LogLevel.ERROR, f"Shutdown flush error: {e}")
-    return {"flushed": True, **flushed}
+    if warnings:
+        platform_logger.log(LogLevel.WARNING, f"Shutdown state flush warnings: {warnings}")
+    return {"flushed": not warnings, **flushed, "warnings": tuple(warnings)}
 
 
 def _restore_state_on_startup():
     """Restore state from file-based snapshots on startup."""
     restored = {}
+    warnings: list[str] = []
+
+    budget_snap = None
     try:
         budget_snap = state_persistence.load("budgets")
-        if budget_snap and budget_snap.data:
-            for tid, bdata in budget_snap.data.items():
+    except Exception as exc:
+        _append_bounded_warning(warnings, "startup budgets load", exc)
+    if budget_snap and budget_snap.data:
+        skipped = 0
+        for tid, bdata in budget_snap.data.items():
+            try:
                 tenant_budget_mgr.ensure_budget(tid)
                 if bdata.get("spent", 0) > 0:
-                    try:
-                        tenant_budget_mgr.record_spend(tid, cost=bdata["spent"])
-                    except ValueError:
-                        pass
-            restored["budgets"] = len(budget_snap.data)
+                    tenant_budget_mgr.record_spend(tid, cost=bdata["spent"])
+            except Exception as exc:
+                skipped += 1
+                _append_bounded_warning(warnings, "startup budget restore", exc)
+        restored["budgets"] = len(budget_snap.data)
+        if skipped:
+            restored["budget_restore_skipped"] = skipped
 
+    audit_snap = None
+    try:
         audit_snap = state_persistence.load("audit_summary")
-        if audit_snap and audit_snap.data:
-            restored["audit_sequence"] = audit_snap.data.get("sequence", 0)
+    except Exception as exc:
+        _append_bounded_warning(warnings, "startup audit summary load", exc)
+    if audit_snap and audit_snap.data:
+        restored["audit_sequence"] = audit_snap.data.get("sequence", 0)
 
-        if restored:
-            platform_logger.log(LogLevel.INFO, f"Startup state restore: {restored}")
-    except Exception as e:
-        platform_logger.log(LogLevel.ERROR, f"Startup restore error: {e}")
+    if restored:
+        platform_logger.log(LogLevel.INFO, f"Startup state restore: {restored}")
+    if warnings:
+        platform_logger.log(LogLevel.WARNING, f"Startup state restore warnings: {warnings}")
+        restored["warnings"] = tuple(warnings)
     return restored
 
 
@@ -1233,14 +1314,31 @@ shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 
 def _close_governance_stores():
     """Close all governance store connections on shutdown."""
-    _gov_stores.close()
+    warnings: list[str] = []
+    governance_stores_closed = True
+    store_closed = True
+
+    try:
+        _gov_stores.close()
+    except Exception as exc:
+        governance_stores_closed = False
+        _append_bounded_warning(warnings, "shutdown governance store close", exc)
     if hasattr(store, "close"):
         try:
             store.close()
-        except Exception:
-            pass
-    return {"closed": True}
+        except Exception as exc:
+            store_closed = False
+            _append_bounded_warning(warnings, "shutdown primary store close", exc)
+    if warnings:
+        platform_logger.log(LogLevel.WARNING, f"Shutdown store close warnings: {warnings}")
+    return {
+        "closed": governance_stores_closed and store_closed,
+        "governance_stores_closed": governance_stores_closed,
+        "store_closed": store_closed,
+        "warnings": tuple(warnings),
+    }
 
 
 shutdown_mgr.register("close_connections", _close_governance_stores, priority=10)
+
 

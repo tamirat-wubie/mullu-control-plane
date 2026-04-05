@@ -21,9 +21,13 @@ class RuntimeCoreInvariantError(ValueError):
     """Raised when runtime-core input violates an explicit invariant."""
 
 
+class DuplicateRuntimeIdentifierError(RuntimeCoreInvariantError):
+    """Raised when a runtime-core identifier is registered more than once."""
+
+
 def ensure_non_empty_text(field_name: str, value: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        raise RuntimeCoreInvariantError("value must be a non-empty string")
     return value
 
 
@@ -32,13 +36,13 @@ def ensure_iso_timestamp(field_name: str, value: str) -> str:
     try:
         datetime.fromisoformat(normalized)
     except ValueError as exc:
-        raise RuntimeCoreInvariantError(f"{field_name} must be an ISO-8601 timestamp") from exc
+        raise RuntimeCoreInvariantError("value must be an ISO-8601 timestamp") from exc
     return value
 
 
 def ensure_dataclass_instance(field_name: str, value: Any) -> Any:
     if not is_dataclass(value) or isinstance(value, type):
-        raise RuntimeCoreInvariantError(f"{field_name} must be a dataclass instance")
+        raise RuntimeCoreInvariantError("value must be a dataclass instance")
     return value
 
 

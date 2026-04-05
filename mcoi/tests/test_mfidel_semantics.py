@@ -66,12 +66,13 @@ class TestAnnotationCreation:
         assert len(ann.embedding) > 0
         assert all(isinstance(v, float) for v in ann.embedding)
 
-    def test_annotate_description_contains_type_and_id(
+    def test_annotate_description_is_bounded(
         self, index: MfidelSemanticIndex
     ) -> None:
         ann = index.annotate("a4", "incident", "disk full on node 3")
-        assert "incident" in ann.description
-        assert "a4" in ann.description
+        assert ann.description == "Semantic annotation"
+        assert "incident" not in ann.description
+        assert "a4" not in ann.description
 
     def test_annotate_empty_text_produces_zero_embedding(
         self, index: MfidelSemanticIndex
@@ -91,6 +92,15 @@ class TestSimilarityIdentical:
     ) -> None:
         a = index.annotate("x1", "skill", "deploy service to production")
         b = index.annotate("x2", "skill", "deploy service to production")
+        score = index.similarity(a, b)
+        assert score == pytest.approx(1.0, abs=1e-9)
+
+    def test_identical_ethiopic_text_similarity_is_one(
+        self, index: MfidelSemanticIndex
+    ) -> None:
+        text = "\u1230\u120b\u121d \u12a0\u1308\u120d\u130d\u120e\u1275"
+        a = index.annotate("x1-et", "skill", text)
+        b = index.annotate("x2-et", "skill", text)
         score = index.similarity(a, b)
         assert score == pytest.approx(1.0, abs=1e-9)
 
@@ -135,6 +145,22 @@ class TestSimilarityRelated:
     ) -> None:
         a = index.annotate("x9", "goal", "build pipeline test pipeline")
         b = index.annotate("x10", "goal", "pipeline monitoring alerts")
+        score = index.similarity(a, b)
+        assert score > 0.0
+
+    def test_related_ethiopic_text_has_positive_score(
+        self, index: MfidelSemanticIndex
+    ) -> None:
+        a = index.annotate(
+            "x9-et",
+            "goal",
+            "\u1230\u120b\u121d \u12a0\u1308\u120d\u130d\u120e\u1275",
+        )
+        b = index.annotate(
+            "x10-et",
+            "goal",
+            "\u1230\u120b\u121d \u1235\u122d\u12d3\u1275",
+        )
         score = index.similarity(a, b)
         assert score > 0.0
 
@@ -408,6 +434,26 @@ class TestHelpers:
     def test_normalize_text_strips_punctuation(self) -> None:
         result = _normalize_text("deploy! the; service.")
         assert result == ["deploy", "the", "service"]
+
+    def test_normalize_text_preserves_ethiopic_tokens(self) -> None:
+        result = _normalize_text(
+            "\u1230\u120b\u121d world 123 \u12a0\u1308\u120d\u130d\u120e\u1275"
+        )
+        assert result == [
+            "\u1230\u120b\u121d",
+            "world",
+            "123",
+            "\u12a0\u1308\u120d\u130d\u120e\u1275",
+        ]
+
+    def test_build_embedding_keeps_ethiopic_content_non_empty(self) -> None:
+        vocab, values = _build_embedding("\u1230\u120b\u121d \u12a0\u1308\u120d\u130d\u120e\u1275")
+        assert vocab == (
+            "\u1230\u120b\u121d",
+            "\u12a0\u1308\u120d\u130d\u120e\u1275",
+        )
+        assert len(values) == 2
+        assert all(value > 0.0 for value in values)
 
     def test_build_embedding_deterministic(self) -> None:
         e1 = _build_embedding("deploy service")

@@ -27,6 +27,11 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 
+def _bounded_mcp_error(prefix: str, summary: str, exc: Exception) -> str:
+    """Return a bounded MCP-facing error without backend detail."""
+    return f"{prefix}: {summary} ({type(exc).__name__})"
+
+
 @dataclass(frozen=True, slots=True)
 class MCPTool:
     """An MCP tool definition."""
@@ -166,9 +171,15 @@ class MulluMCPServer:
                 tenant_id=tenant_id,
             )
         except PermissionError as exc:
-            return MCPToolResult(content=f"Access denied: {exc}", is_error=True)
+            return MCPToolResult(
+                content=_bounded_mcp_error("Access denied", "access denied", exc),
+                is_error=True,
+            )
         except Exception as exc:
-            return MCPToolResult(content=f"Connection failed: {exc}", is_error=True)
+            return MCPToolResult(
+                content=_bounded_mcp_error("Connection failed", "mcp session unavailable", exc),
+                is_error=True,
+            )
 
         try:
             if name == "mullu_llm":
@@ -186,7 +197,10 @@ class MulluMCPServer:
             else:
                 return MCPToolResult(content=f"Unknown tool: {name}", is_error=True)
         except Exception as exc:
-            return MCPToolResult(content=f"Tool error: {exc}", is_error=True)
+            return MCPToolResult(
+                content=_bounded_mcp_error("Tool error", "mcp tool execution failed", exc),
+                is_error=True,
+            )
         finally:
             try:
                 session.close()
@@ -199,11 +213,19 @@ class MulluMCPServer:
             return MCPToolResult(content="prompt is required", is_error=True)
         try:
             result = session.llm(prompt)
-            return MCPToolResult(content=result.content if result.succeeded else f"LLM error: {result.error}")
+            if result.succeeded:
+                return MCPToolResult(content=result.content)
+            return MCPToolResult(content="Service error: llm request failed", is_error=True)
         except ValueError as exc:
-            return MCPToolResult(content=f"Content blocked: {exc}", is_error=True)
+            return MCPToolResult(
+                content=_bounded_mcp_error("Content blocked", "content blocked", exc),
+                is_error=True,
+            )
         except RuntimeError as exc:
-            return MCPToolResult(content=f"Service error: {exc}", is_error=True)
+            return MCPToolResult(
+                content=_bounded_mcp_error("Service error", "service unavailable", exc),
+                is_error=True,
+            )
 
     def _tool_query(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
         resource = args.get("resource_type", "")

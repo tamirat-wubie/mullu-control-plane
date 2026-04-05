@@ -406,7 +406,9 @@ class TestRecordOutboundCall(unittest.TestCase):
 
         # Memory record
         self.assertIn("memory", result)
-        self.assertIn("Outbound", result["memory"].title)
+        self.assertEqual(result["memory"].title, "Outbound connectivity audit")
+        self.assertNotIn("send_message", result["memory"].title)
+        self.assertNotIn("api-audit", result["memory"].title)
 
         # Event
         self.assertIn("event", result)

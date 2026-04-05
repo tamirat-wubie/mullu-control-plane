@@ -67,7 +67,7 @@ class SchemaValidator:
     def register(self, schema: SchemaDefinition) -> None:
         """Register a schema."""
         if schema.schema_id in self._schemas:
-            raise ValueError(f"schema already registered: {schema.schema_id}")
+            raise ValueError("schema already registered")
         self._schemas[schema.schema_id] = schema
 
     def get(self, schema_id: str) -> SchemaDefinition | None:
@@ -81,7 +81,7 @@ class SchemaValidator:
                 schema_id=schema_id, valid=False,
                 errors=(ValidationError(
                     field="", rule_type="schema",
-                    message=f"unknown schema: {schema_id}",
+                    message="schema unavailable",
                 ),),
             )
 

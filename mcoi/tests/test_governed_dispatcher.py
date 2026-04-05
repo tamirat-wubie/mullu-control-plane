@@ -134,6 +134,8 @@ def test_happy_path_all_gates_pass() -> None:
     assert result.ledger_hash != ""
     assert governed.ledger_count == 1
     assert len(result.gates_passed) >= 5  # identity, prediction, economics, equilibrium, promotion
+    predictive_gate = next(g for g in result.gates_passed if g.gate_name == "predictive_failure")
+    assert predictive_gate.reason == "predictive failure check passed"
 
 
 # ── 2. Identity binding required ──
@@ -158,6 +160,25 @@ def test_identity_binding_required() -> None:
 
 # ── 3. Predictive failure blocks abort ──
 
+def test_identity_binding_failure_is_bounded() -> None:
+    class CrashingIdentity:
+        def sign_intent(self, intent_id: str, actor_id: str, action: str, target: str):
+            raise RuntimeError("secret identity failure")
+
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(identity=CrashingIdentity(), equilibrium=eq)
+
+    result = governed.governed_dispatch(_make_context(intent_id="intent-crash"))
+
+    assert result.blocked
+    assert result.gates_failed[0].reason == "identity binding failed"
+    assert result.block_reason == "identity_binding blocked"
+    assert "RuntimeError" not in result.gates_failed[0].reason
+    assert "secret identity failure" not in result.block_reason
+    assert exe.calls == 0
+
+
 def test_predictive_failure_blocks_abort() -> None:
     predictor = PredictiveFailureEngine()
     # Record enough failures to push risk above abort threshold (0.8)
@@ -172,7 +193,9 @@ def test_predictive_failure_blocks_abort() -> None:
     result = governed.governed_dispatch(ctx)
 
     assert result.blocked
-    assert "predictive_failure" in result.block_reason
+    assert result.gates_failed[0].reason == "predictive failure blocked dispatch"
+    assert result.block_reason == "predictive_failure blocked"
+    assert "0." not in result.gates_failed[0].reason
     assert exe.calls == 0
 
 

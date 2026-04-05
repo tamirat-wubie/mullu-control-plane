@@ -43,9 +43,7 @@ def _require_period_start_before_end(period_start: str, period_end: str) -> None
     start_dt = _parse_datetime_text(period_start, "period_start")
     end_dt = _parse_datetime_text(period_end, "period_end")
     if start_dt >= end_dt:
-        raise ValueError(
-            f"period_start ({period_start}) must be before period_end ({period_end})"
-        )
+        raise ValueError("period_start must be before period_end")
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +120,7 @@ def _require_currency(value: str, field_name: str) -> str:
     """Validate currency is a non-empty uppercase string (e.g. USD, EUR)."""
     v = require_non_empty_text(value, field_name)
     if not v.isalpha() or not v.isupper() or len(v) < 3 or len(v) > 3:
-        raise ValueError(f"{field_name} must be a 3-letter uppercase currency code, got '{v}'")
+        raise ValueError("currency must be a 3-letter uppercase code")
     return v
 
 
@@ -131,10 +129,7 @@ def _require_amounts_consistent(
 ) -> None:
     """Validate consumed + reserved ≤ limit."""
     if consumed + reserved > limit:
-        raise ValueError(
-            f"consumed ({consumed}) + reserved ({reserved}) = {consumed + reserved} "
-            f"exceeds limit ({limit})"
-        )
+        raise ValueError("consumed and reserved amounts exceed limit")
 
 
 # ---------------------------------------------------------------------------
@@ -176,10 +171,7 @@ class BudgetEnvelope(ContractRecord):
         object.__setattr__(self, "warning_threshold", require_unit_float(self.warning_threshold, "warning_threshold"))
         object.__setattr__(self, "hard_stop_threshold", require_unit_float(self.hard_stop_threshold, "hard_stop_threshold"))
         if self.warning_threshold > self.hard_stop_threshold:
-            raise ValueError(
-                f"warning_threshold ({self.warning_threshold}) must be <= "
-                f"hard_stop_threshold ({self.hard_stop_threshold})"
-            )
+            raise ValueError("warning threshold must not exceed hard stop threshold")
         if not isinstance(self.active, bool):
             raise ValueError("active must be a boolean")
         object.__setattr__(self, "tags", freeze_value(list(self.tags)))
@@ -289,10 +281,7 @@ class CampaignBudgetBinding(ContractRecord):
         object.__setattr__(self, "allocated_amount", require_non_negative_float(self.allocated_amount, "allocated_amount"))
         object.__setattr__(self, "consumed_amount", require_non_negative_float(self.consumed_amount, "consumed_amount"))
         if self.consumed_amount > self.allocated_amount:
-            raise ValueError(
-                f"consumed_amount ({self.consumed_amount}) exceeds "
-                f"allocated_amount ({self.allocated_amount})"
-            )
+            raise ValueError("consumed amount must not exceed allocated amount")
         object.__setattr__(self, "currency", _require_currency(self.currency, "currency"))
         if not isinstance(self.active, bool):
             raise ValueError("active must be a boolean")
@@ -322,10 +311,7 @@ class ApprovalThreshold(ContractRecord):
         object.__setattr__(self, "approver_ref", require_non_empty_text(self.approver_ref, "approver_ref"))
         object.__setattr__(self, "auto_approve_below", require_non_negative_float(self.auto_approve_below, "auto_approve_below"))
         if self.auto_approve_below > self.amount:
-            raise ValueError(
-                f"auto_approve_below ({self.auto_approve_below}) must be <= "
-                f"amount ({self.amount})"
-            )
+            raise ValueError("auto-approve threshold must not exceed approval amount")
         require_datetime_text(self.created_at, "created_at")
 
 

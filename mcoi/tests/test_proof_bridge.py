@@ -5,8 +5,10 @@ Tests: Governance decision certification, receipt verification, causal
 """
 
 import json
+from unittest.mock import patch
 
 import pytest
+import mcoi_runtime.core.proof_bridge as proof_bridge_module
 from mcoi_runtime.core.proof_bridge import (
     GOVERNANCE_MACHINE,
     GovernanceProof,
@@ -75,15 +77,21 @@ class TestAllowedDecision:
 
     def test_receipt_has_correct_transition(self):
         bridge = ProofBridge(clock=_clock)
-        proof = bridge.certify_governance_decision(
-            tenant_id="t1", endpoint="/api/test",
-            guard_results=[{"guard_name": "guard1", "allowed": True, "reason": ""}],
-            decision="allowed",
-        )
+        with patch(
+            "mcoi_runtime.core.proof_bridge.certify_transition",
+            wraps=proof_bridge_module.certify_transition,
+        ) as wrapped:
+            proof = bridge.certify_governance_decision(
+                tenant_id="t1", endpoint="/api/test",
+                guard_results=[{"guard_name": "guard1", "allowed": True, "reason": ""}],
+                decision="allowed",
+            )
         receipt = proof.capsule.receipt
         assert receipt.from_state == "evaluating"
         assert receipt.to_state == "allowed"
         assert receipt.action == "all_guards_passed"
+        assert wrapped.call_args_list[0].kwargs["reason"] == "evaluating governed request"
+        assert "/api/test" not in wrapped.call_args_list[0].kwargs["reason"]
         assert receipt.verdict == TransitionVerdict.ALLOWED
 
     def test_guard_verdicts_mapped(self):
