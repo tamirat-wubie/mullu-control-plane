@@ -62,6 +62,10 @@ from mcoi_runtime.app.server_deps import (
     register_dependency_groups,
     wire_runtime_dependencies,
 )
+from mcoi_runtime.app.server_bootstrap import (
+    init_field_encryption_from_env as _init_field_encryption_from_env_impl,
+    utc_clock as _utc_clock,
+)
 from mcoi_runtime.app.server_runtime import (
     build_default_input_validator,
     calculator_handler as _calculator_handler_impl,
@@ -81,29 +85,10 @@ surface = ProductionSurface(DEPLOYMENT_MANIFESTS.get(ENV, DEPLOYMENT_MANIFESTS["
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
-    state = {
-        "configured": bool(os.environ.get("MULLU_ENCRYPTION_KEY", "")),
-        "enabled": False,
-        "aes_available": False,
-        "warning": "",
-    }
-    if not state["configured"]:
-        return None, state
-
-    from mcoi_runtime.core.field_encryption import FieldEncryptor, EnvKeyProvider
-
-    try:
-        provider = EnvKeyProvider()
-        if not provider.available:
-            state["warning"] = "field encryption configured but no key available"
-            return None, state
-        encryptor = FieldEncryptor(provider)
-        state["enabled"] = True
-        state["aes_available"] = encryptor.aes_available
-        return encryptor, state
-    except Exception as exc:
-        state["warning"] = _bounded_bootstrap_warning("field encryption", exc)
-        return None, state
+    return _init_field_encryption_from_env_impl(
+        env=os.environ,
+        bounded_bootstrap_warning=_bounded_bootstrap_warning,
+    )
 
 
 _tenant_allow_unknown = _env_flag("MULLU_ALLOW_UNKNOWN_TENANTS", os.environ)
@@ -112,7 +97,7 @@ if _tenant_allow_unknown is None:
 
 # Clock
 def _clock() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return _utc_clock()
 
 # Persistence store (InMemoryStore for dev, PostgresStore for production)
 _db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")

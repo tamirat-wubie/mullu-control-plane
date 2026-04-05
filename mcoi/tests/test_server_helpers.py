@@ -7,11 +7,13 @@ Invariants: environment flag validation stays bounded and does not reflect calle
 from __future__ import annotations
 
 import importlib
+from datetime import datetime
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from mcoi_runtime.app import server_bootstrap
 from mcoi_runtime.app import server_http
 from mcoi_runtime.app import server_policy
 from mcoi_runtime.app import server_runtime
@@ -174,6 +176,46 @@ def test_include_default_routers_mounts_health_and_completion_routes() -> None:
     paths = {route.path for route in app.routes}
     assert "/health" in paths
     assert "/api/v1/complete" in paths
+
+
+def test_utc_clock_returns_parseable_utc_timestamp() -> None:
+    value = server_bootstrap.utc_clock()
+    parsed = datetime.fromisoformat(value)
+
+    assert parsed.tzinfo is not None
+    assert parsed.utcoffset().total_seconds() == 0
+
+
+def test_init_field_encryption_from_env_without_key_is_disabled() -> None:
+    encryptor, state = server_bootstrap.init_field_encryption_from_env(
+        env={},
+        bounded_bootstrap_warning=lambda context, exc: f"{context} failed ({type(exc).__name__})",
+    )
+
+    assert encryptor is None
+    assert state == {
+        "configured": False,
+        "enabled": False,
+        "aes_available": False,
+        "warning": "",
+    }
+
+
+def test_init_field_encryption_from_env_bounds_invalid_key() -> None:
+    def raise_invalid_key():
+        raise ValueError("secret bootstrap detail")
+
+    encryptor, state = server_bootstrap.init_field_encryption_from_env(
+        env={"MULLU_ENCRYPTION_KEY": "c2hvcnQ="},
+        bounded_bootstrap_warning=lambda context, exc: f"{context} failed ({type(exc).__name__})",
+        key_provider_factory=raise_invalid_key,
+    )
+
+    assert encryptor is None
+    assert state["configured"] is True
+    assert state["enabled"] is False
+    assert state["aes_available"] is False
+    assert state["warning"] == "field encryption failed (ValueError)"
 
 
 def test_build_default_input_validator_registers_expected_schemas() -> None:
