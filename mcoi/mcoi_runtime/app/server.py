@@ -53,6 +53,11 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
+from mcoi_runtime.app.server_state import (
+    close_governance_stores as _close_governance_stores_impl,
+    flush_state_on_shutdown as _flush_state_on_shutdown_impl,
+    restore_state_on_startup as _restore_state_on_startup_impl,
+)
 
 ENV = os.environ.get("MULLU_ENV", "local_dev")
 surface = ProductionSurface(DEPLOYMENT_MANIFESTS.get(ENV, DEPLOYMENT_MANIFESTS["local_dev"]))
@@ -1198,85 +1203,26 @@ app.include_router(knowledge_router)
 
 def _flush_state_on_shutdown():
     """Flush critical in-memory state to file-based snapshots before exit."""
-    flushed = {}
-    warnings: list[str] = []
-
-    budget_data = {}
-    if hasattr(tenant_budget_mgr, '_budgets'):
-        for tid, b in tenant_budget_mgr._budgets.items():
-            budget_data[tid] = {
-                "spent": b.spent, "calls_made": b.calls_made,
-                "max_cost": b.max_cost, "max_calls": b.max_calls,
-            }
-    try:
-        state_persistence.save("budgets", budget_data)
-        flushed["budgets"] = len(budget_data)
-    except Exception as exc:
-        _append_bounded_warning(warnings, "shutdown budgets flush", exc)
-
-    audit_summary_data = {
-        "entry_count": audit_trail.entry_count,
-        "last_hash": audit_trail._last_hash if hasattr(audit_trail, '_last_hash') else "",
-        "sequence": audit_trail._sequence if hasattr(audit_trail, '_sequence') else 0,
-    }
-    try:
-        state_persistence.save("audit_summary", audit_summary_data)
-        flushed["audit_sequence"] = audit_summary_data["sequence"]
-    except Exception as exc:
-        _append_bounded_warning(warnings, "shutdown audit summary flush", exc)
-
-    cost_data = {"summary": cost_analytics.summary() if hasattr(cost_analytics, 'summary') else {}}
-    try:
-        state_persistence.save("cost_analytics", cost_data)
-        flushed["cost_analytics"] = True
-    except Exception as exc:
-        _append_bounded_warning(warnings, "shutdown cost analytics flush", exc)
-
-    if flushed:
-        platform_logger.log(LogLevel.INFO, f"Shutdown state flush: {flushed}")
-    if warnings:
-        platform_logger.log(LogLevel.WARNING, f"Shutdown state flush warnings: {warnings}")
-    return {"flushed": not warnings, **flushed, "warnings": tuple(warnings)}
+    return _flush_state_on_shutdown_impl(
+        tenant_budget_mgr=tenant_budget_mgr,
+        state_persistence=state_persistence,
+        audit_trail=audit_trail,
+        cost_analytics=cost_analytics,
+        platform_logger=platform_logger,
+        log_levels=LogLevel,
+        append_bounded_warning=_append_bounded_warning,
+    )
 
 
 def _restore_state_on_startup():
     """Restore state from file-based snapshots on startup."""
-    restored = {}
-    warnings: list[str] = []
-
-    budget_snap = None
-    try:
-        budget_snap = state_persistence.load("budgets")
-    except Exception as exc:
-        _append_bounded_warning(warnings, "startup budgets load", exc)
-    if budget_snap and budget_snap.data:
-        skipped = 0
-        for tid, bdata in budget_snap.data.items():
-            try:
-                tenant_budget_mgr.ensure_budget(tid)
-                if bdata.get("spent", 0) > 0:
-                    tenant_budget_mgr.record_spend(tid, cost=bdata["spent"])
-            except Exception as exc:
-                skipped += 1
-                _append_bounded_warning(warnings, "startup budget restore", exc)
-        restored["budgets"] = len(budget_snap.data)
-        if skipped:
-            restored["budget_restore_skipped"] = skipped
-
-    audit_snap = None
-    try:
-        audit_snap = state_persistence.load("audit_summary")
-    except Exception as exc:
-        _append_bounded_warning(warnings, "startup audit summary load", exc)
-    if audit_snap and audit_snap.data:
-        restored["audit_sequence"] = audit_snap.data.get("sequence", 0)
-
-    if restored:
-        platform_logger.log(LogLevel.INFO, f"Startup state restore: {restored}")
-    if warnings:
-        platform_logger.log(LogLevel.WARNING, f"Startup state restore warnings: {warnings}")
-        restored["warnings"] = tuple(warnings)
-    return restored
+    return _restore_state_on_startup_impl(
+        tenant_budget_mgr=tenant_budget_mgr,
+        state_persistence=state_persistence,
+        platform_logger=platform_logger,
+        log_levels=LogLevel,
+        append_bounded_warning=_append_bounded_warning,
+    )
 
 
 _startup_restored = _restore_state_on_startup()
@@ -1287,29 +1233,13 @@ shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 
 def _close_governance_stores():
     """Close all governance store connections on shutdown."""
-    warnings: list[str] = []
-    governance_stores_closed = True
-    store_closed = True
-
-    try:
-        _gov_stores.close()
-    except Exception as exc:
-        governance_stores_closed = False
-        _append_bounded_warning(warnings, "shutdown governance store close", exc)
-    if hasattr(store, "close"):
-        try:
-            store.close()
-        except Exception as exc:
-            store_closed = False
-            _append_bounded_warning(warnings, "shutdown primary store close", exc)
-    if warnings:
-        platform_logger.log(LogLevel.WARNING, f"Shutdown store close warnings: {warnings}")
-    return {
-        "closed": governance_stores_closed and store_closed,
-        "governance_stores_closed": governance_stores_closed,
-        "store_closed": store_closed,
-        "warnings": tuple(warnings),
-    }
+    return _close_governance_stores_impl(
+        governance_stores=_gov_stores,
+        primary_store=store,
+        platform_logger=platform_logger,
+        log_levels=LogLevel,
+        append_bounded_warning=_append_bounded_warning,
+    )
 
 
 shutdown_mgr.register("close_connections", _close_governance_stores, priority=10)
