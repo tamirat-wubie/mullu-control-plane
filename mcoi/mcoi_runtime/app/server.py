@@ -57,6 +57,7 @@ from mcoi_runtime.app.server_platform import (
     bootstrap_primary_store,
 )
 from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
+from mcoi_runtime.app.server_services import bootstrap_operational_services
 from mcoi_runtime.app.server_subsystems import bootstrap_subsystems
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
@@ -228,215 +229,75 @@ _rbac_rules_seeded = _subsystem_bootstrap.rbac_rules_seeded
 policy_sandbox = _subsystem_bootstrap.policy_sandbox
 runbook_learning = _subsystem_bootstrap.runbook_learning
 
-# Phase 204D: Plugin registry
-plugin_registry = PluginRegistry()
-
 explanation_engine = _subsystem_bootstrap.explanation_engine
 audit_anchor = _subsystem_bootstrap.audit_anchor
 knowledge_graph = _subsystem_bootstrap.knowledge_graph
 event_bus = _subsystem_bootstrap.event_bus
 batch_pipeline = _subsystem_bootstrap.batch_pipeline
 
-# Phase 206C: Register example plugins
-_logging_plugin = PluginDescriptor(
-    plugin_id="logging", name="Governance Logger", version="1.0.0",
-    description="Logs all governed operations to audit trail",
-    hooks=(HookPoint.POST_DISPATCH, HookPoint.POST_LLM_CALL),
-)
-plugin_registry.register(_logging_plugin)
-plugin_registry.load("logging", hooks={
-    HookPoint.POST_DISPATCH: lambda **kw: audit_trail.record(
-        action="plugin.log.dispatch", actor_id="logging-plugin",
-        tenant_id=kw.get("tenant_id", ""), target="dispatch", outcome="logged",
-    ),
-    HookPoint.POST_LLM_CALL: lambda **kw: metrics.inc("llm_calls_total"),
-})
-plugin_registry.activate("logging")
+from mcoi_runtime.app.middleware import GovernanceMiddleware
+from mcoi_runtime.core.structured_logging import LogLevel
 
-_alert_plugin = PluginDescriptor(
-    plugin_id="cost-alert", name="Cost Alert Plugin", version="1.0.0",
-    description="Emits budget.warning events when utilization exceeds 80%",
-    hooks=(HookPoint.ON_BUDGET_CHECK,),
-)
-plugin_registry.register(_alert_plugin)
-plugin_registry.load("cost-alert", hooks={
-    HookPoint.ON_BUDGET_CHECK: lambda **kw: event_bus.publish(
-        "budget.warning", tenant_id=kw.get("tenant_id", ""),
-        source="cost-alert-plugin", payload=kw,
-    ) if kw.get("utilization_pct", 0) > 80 else None,
-})
-plugin_registry.activate("cost-alert")
-
-# Phase 208A: Governance guard middleware (chain built after all subsystems init)
-from mcoi_runtime.app.middleware import GovernanceMiddleware, build_guard_chain
-guard_chain = build_guard_chain(
-    rate_limiter=rate_limiter, budget_mgr=tenant_budget_mgr,
+_operational_bootstrap = bootstrap_operational_services(
+    clock=_clock,
+    env=ENV,
+    runtime_env=os.environ,
+    cert_daemon=cert_daemon,
+    workflow_engine=workflow_engine,
+    event_bus=event_bus,
+    observability=observability,
+    audit_trail=audit_trail,
+    metrics=metrics,
+    tenant_budget_mgr=tenant_budget_mgr,
+    rate_limiter=rate_limiter,
     jwt_authenticator=_jwt_authenticator,
-    tenant_gating_registry=_tenant_gating,
+    tenant_gating=_tenant_gating,
     access_runtime=access_runtime,
     content_safety_chain=content_safety_chain,
 )
-
-# Phase 208B: Traced workflow engine
-from mcoi_runtime.core.traced_workflow import TracedWorkflowEngine
-from mcoi_runtime.core.execution_replay import ReplayRecorder
-replay_recorder = ReplayRecorder(clock=_clock)
-traced_workflow = TracedWorkflowEngine(
-    workflow_engine=workflow_engine, replay_recorder=replay_recorder,
-)
-observability.register_source("replay", lambda: replay_recorder.summary())
-
-# Phase 208C: Conversation store
-from mcoi_runtime.core.conversation_memory import ConversationStore
-conversation_store = ConversationStore(clock=_clock)
-
-# Phase 208D: Schema validator
-from mcoi_runtime.core.schema_validator import SchemaValidator, SchemaDefinition, SchemaRule
-schema_validator = SchemaValidator()
-schema_validator.register(SchemaDefinition(
-    schema_id="workflow_request", name="Workflow Request",
-    rules=(
-        SchemaRule(field="task_id", rule_type="required", value=True),
-        SchemaRule(field="description", rule_type="required", value=True),
-        SchemaRule(field="capability", rule_type="required", value=True),
-    ),
-))
-schema_validator.register(SchemaDefinition(
-    schema_id="pipeline_request", name="Pipeline Request",
-    rules=(
-        SchemaRule(field="steps", rule_type="required", value=True),
-        SchemaRule(field="steps", rule_type="type", value="list"),
-    ),
-))
-
-# Phase 209C: Prompt template engine
-from mcoi_runtime.core.prompt_template_engine import PromptTemplateEngine, PromptTemplate
-prompt_engine = PromptTemplateEngine()
-prompt_engine.register(PromptTemplate(
-    template_id="summarize", name="Summarize",
-    template="Summarize the following text concisely:\n\n{{text}}",
-    variables=("text",), system_prompt="You are a concise summarizer.",
-    category="analysis",
-))
-prompt_engine.register(PromptTemplate(
-    template_id="translate", name="Translate",
-    template="Translate the following text to {{language}}:\n\n{{text}}",
-    variables=("text", "language"), system_prompt="You are a professional translator.",
-    category="language",
-))
-prompt_engine.register(PromptTemplate(
-    template_id="analyze", name="Analyze",
-    template="Analyze the following {{topic}} and provide key insights:\n\n{{content}}",
-    variables=("topic", "content"), system_prompt="You are an expert analyst.",
-    category="analysis",
-))
-
-# Phase 209D: Cost analytics engine
-from mcoi_runtime.core.cost_analytics import CostAnalyticsEngine
-cost_analytics = CostAnalyticsEngine(clock=_clock)
-observability.register_source("cost_analytics", lambda: cost_analytics.summary())
-
-# Phase 210A: Chat workflow engine
-from mcoi_runtime.core.chat_workflow import ChatWorkflowEngine
-chat_workflow = ChatWorkflowEngine(
-    clock=_clock,
-    conversation_store=conversation_store,
-    traced_workflow=traced_workflow,
-    cost_record_fn=lambda tid, model, cost, tokens: cost_analytics.record(tid, model, cost, tokens),
-)
-observability.register_source("chat_workflows", lambda: chat_workflow.summary())
-
-# Phase 210B: Health aggregator
-from mcoi_runtime.core.health_aggregator import HealthAggregator
-health_agg = HealthAggregator(clock=_clock)
-health_agg.register("store", lambda: {"status": "healthy"}, weight=1.0)
-health_agg.register("llm", lambda: {"status": "healthy"}, weight=2.0)
-health_agg.register("certification", lambda: {"status": "healthy" if cert_daemon.health.is_healthy else "degraded"}, weight=1.5)
-health_agg.register("metrics", lambda: {"status": "healthy"}, weight=0.5)
-health_agg.register("event_bus", lambda: {"status": "healthy" if event_bus.error_count == 0 else "degraded"}, weight=0.5)
-
-# Phase 210C: API version manager
-from mcoi_runtime.core.api_version import APIVersionManager
-api_versions = APIVersionManager(clock=_clock)
-
-# Phase 222A: Grafana dashboard generator
-from mcoi_runtime.core.grafana_dashboard import build_default_dashboard
-grafana_dashboard = build_default_dashboard()
-
-# Phase 222B: Request tracing
-from mcoi_runtime.core.request_tracing import RequestTracer
-request_tracer = RequestTracer(
-    max_traces=10_000,
-    on_span_finish=lambda span: audit_trail.record(
-        action="trace.span.finish", actor_id="tracer",
-        tenant_id="", target=span.operation,
-        outcome=span.status.value,
-    ),
-)
-observability.register_source("tracing", lambda: request_tracer.summary())
-
-# Phase 222C: Agent orchestration
-from mcoi_runtime.core.agent_orchestration import AgentOrchestrator
-agent_orchestrator = AgentOrchestrator(clock=_clock, agent_capabilities={
-    "llm-agent": ("llm_completion", "tool_use"),
-    "code-agent": ("code_execution",),
-})
-observability.register_source("orchestration", lambda: agent_orchestrator.summary())
-
-# Phase 223A: Rate limit headers
-from mcoi_runtime.core.rate_limit_headers import RateLimitHeaderProvider
-rate_limit_headers = RateLimitHeaderProvider(default_limit=60, window_seconds=60.0)
-
-# Phase 223B: Webhook retry engine
-from mcoi_runtime.core.webhook_retry import WebhookRetryEngine, RetryPolicy
-webhook_retry = WebhookRetryEngine(policy=RetryPolicy(max_retries=3, base_delay_seconds=1.0))
-observability.register_source("webhook_retry", lambda: webhook_retry.summary())
-
-# Phase 223C: Config file watcher
-from mcoi_runtime.core.config_watcher import ConfigFileWatcher
-config_watcher = ConfigFileWatcher(poll_interval=30.0, clock=_clock)
-
-# Phase 224A: Structured logging
-from mcoi_runtime.core.structured_logging import StructuredLogger, LogLevel
-platform_logger = StructuredLogger(name="mullu-platform", min_level=LogLevel.INFO)
-
-# Phase 224B: API key authentication
-from mcoi_runtime.core.api_key_auth import APIKeyManager
-api_key_mgr = APIKeyManager(clock=_clock)
-observability.register_source("api_keys", lambda: api_key_mgr.summary())
-api_auth_required = _env_flag("MULLU_API_AUTH_REQUIRED")
-if api_auth_required is None:
-    api_auth_required = ENV in ("pilot", "production")
-# Wire API key guard as FIRST guard (auth before rate-limit/budget checks)
-from mcoi_runtime.core.governance_guard import create_api_key_guard
-guard_chain.insert(0, create_api_key_guard(api_key_mgr, require_auth=api_auth_required))
-
-# Phase 224C: Data export pipeline
-from mcoi_runtime.core.data_export import DataExportPipeline
-data_export = DataExportPipeline(clock=_clock)
-data_export.register_source("audit", lambda: [
-    e.to_dict() if hasattr(e, "to_dict") else e for e in audit_trail.recent(1000)
-])
-
-# Phase 225A: SLA monitoring
-from mcoi_runtime.core.sla_monitor import SLAMonitor, SLATarget, SLAMetricType
-sla_monitor = SLAMonitor(clock=_clock)
-sla_monitor.add_target(SLATarget("uptime", "Platform Uptime", SLAMetricType.UPTIME, 99.9, "gte"))
-sla_monitor.add_target(SLATarget("latency-p99", "API Latency P99", SLAMetricType.LATENCY_P99, 500.0, "lte"))
-observability.register_source("sla", lambda: sla_monitor.summary())
-
-# Phase 225B: Notification dispatcher
-from mcoi_runtime.core.notification_dispatcher import NotificationDispatcher, NotificationChannel
-notification_dispatcher = NotificationDispatcher(clock=_clock)
-notification_dispatcher.register_channel(NotificationChannel.IN_APP, lambda n: True)
-
-# Phase 225C: Tenant isolation auditor
-from mcoi_runtime.core.tenant_isolation_audit import TenantIsolationAuditor
-tenant_isolation = TenantIsolationAuditor(clock=_clock)
-observability.register_source("tenant_isolation", lambda: tenant_isolation.summary())
-
-# Phase 226A: Input validation
-input_validator = build_default_input_validator()
+plugin_registry = _operational_bootstrap.plugin_registry
+guard_chain = _operational_bootstrap.guard_chain
+replay_recorder = _operational_bootstrap.replay_recorder
+traced_workflow = _operational_bootstrap.traced_workflow
+conversation_store = _operational_bootstrap.conversation_store
+schema_validator = _operational_bootstrap.schema_validator
+prompt_engine = _operational_bootstrap.prompt_engine
+cost_analytics = _operational_bootstrap.cost_analytics
+chat_workflow = _operational_bootstrap.chat_workflow
+health_agg = _operational_bootstrap.health_agg
+api_versions = _operational_bootstrap.api_versions
+grafana_dashboard = _operational_bootstrap.grafana_dashboard
+request_tracer = _operational_bootstrap.request_tracer
+agent_orchestrator = _operational_bootstrap.agent_orchestrator
+rate_limit_headers = _operational_bootstrap.rate_limit_headers
+webhook_retry = _operational_bootstrap.webhook_retry
+config_watcher = _operational_bootstrap.config_watcher
+platform_logger = _operational_bootstrap.platform_logger
+api_key_mgr = _operational_bootstrap.api_key_mgr
+data_export = _operational_bootstrap.data_export
+sla_monitor = _operational_bootstrap.sla_monitor
+notification_dispatcher = _operational_bootstrap.notification_dispatcher
+tenant_isolation = _operational_bootstrap.tenant_isolation
+input_validator = _operational_bootstrap.input_validator
+prom_exporter = _operational_bootstrap.prom_exporter
+health_agg_v2 = _operational_bootstrap.health_agg_v2
+idempotency_store = _operational_bootstrap.idempotency_store
+response_compressor = _operational_bootstrap.response_compressor
+canary_controller = _operational_bootstrap.canary_controller
+secret_rotation = _operational_bootstrap.secret_rotation
+request_dedup = _operational_bootstrap.request_dedup
+snapshot_mgr = _operational_bootstrap.snapshot_mgr
+otel_exporter = _operational_bootstrap.otel_exporter
+circuit_dashboard = _operational_bootstrap.circuit_dashboard
+tenant_quota = _operational_bootstrap.tenant_quota
+deploy_checker = _operational_bootstrap.deploy_checker
+api_migration = _operational_bootstrap.api_migration
+retry_engine = _operational_bootstrap.retry_engine
+region_router = _operational_bootstrap.region_router
+config_drift = _operational_bootstrap.config_drift
+request_ctx_factory = _operational_bootstrap.request_ctx_factory
+tenant_partitions = _operational_bootstrap.tenant_partitions
+health_v3 = _operational_bootstrap.health_v3
 
 
 def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
@@ -447,101 +308,9 @@ def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
         data=data,
     )
 
-# Phase 226B: Prometheus exporter
-from mcoi_runtime.core.prometheus_exporter import PrometheusExporter
-prom_exporter = PrometheusExporter(prefix="mullu")
-prom_exporter.register_counter("requests_governed_total", "Total governed requests")
-prom_exporter.register_counter("errors_total", "Total errors")
-prom_exporter.register_gauge("active_tenants", "Active tenant count")
-prom_exporter.register_gauge("health_score", "Platform health score")
-
-# Phase 226C: Health check aggregation
-from mcoi_runtime.core.health_check_agg import HealthCheckAggregator, HealthCheckDef
-health_agg_v2 = HealthCheckAggregator(clock=_clock)
-health_agg_v2.register(HealthCheckDef("store", lambda: {"status": "healthy"}, weight=2.0, critical=True))
-health_agg_v2.register(HealthCheckDef("llm", lambda: {"status": "healthy"}, weight=2.0, critical=True))
-health_agg_v2.register(HealthCheckDef("event_bus", lambda: {"status": "healthy" if event_bus.error_count == 0 else "degraded"}, weight=1.0))
-
-# Phase 227A: Idempotency store
-from mcoi_runtime.core.idempotency import IdempotencyStore
-idempotency_store = IdempotencyStore(max_entries=10_000, ttl_seconds=3600.0)
-
-# Phase 227B: Response compression
-from mcoi_runtime.core.response_compression import ResponseCompressor
-response_compressor = ResponseCompressor(min_size_bytes=1024)
-
-# Phase 227C: Canary deployment controller
-from mcoi_runtime.core.canary_controller import CanaryController
-canary_controller = CanaryController(health_threshold=90.0, clock=_clock)
-
-# Phase 228A: Secret rotation
-from mcoi_runtime.core.secret_rotation import SecretRotationEngine
-secret_rotation = SecretRotationEngine(clock=_clock)
-
-# Phase 228B: Request deduplication
-from mcoi_runtime.core.request_dedup import RequestDeduplicator
-request_dedup = RequestDeduplicator(window_seconds=300.0)
-
-# Phase 228C: Rollback snapshots
-from mcoi_runtime.core.rollback_snapshot import SnapshotManager
-snapshot_mgr = SnapshotManager(max_snapshots=50, clock=_clock)
-observability.register_source("snapshots", lambda: snapshot_mgr.summary())
-
-# Phase 229A: OpenTelemetry exporter
-from mcoi_runtime.core.otel_exporter import OtelExporter
-otel_exporter = OtelExporter(service_name="mullu-platform", batch_size=100)
-
-# Phase 229B: Circuit breaker dashboard
-from mcoi_runtime.core.circuit_dashboard import CircuitDashboard
-circuit_dashboard = CircuitDashboard()
-
-# Phase 229C: Tenant quota enforcement
-from mcoi_runtime.core.tenant_quota import TenantQuotaEngine
-tenant_quota = TenantQuotaEngine()
-observability.register_source("quotas", lambda: tenant_quota.summary())
-
-# Phase 230A: Deployment readiness
-from mcoi_runtime.core.deploy_readiness import DeployReadinessChecker, CheckResult, CheckStatus
-deploy_checker = DeployReadinessChecker()
-deploy_checker.register_check("config", lambda: CheckResult("config", CheckStatus.PASS, "Config valid"))
-deploy_checker.register_check("health", lambda: CheckResult("health", CheckStatus.PASS, "Healthy"))
-
-# Phase 230B: API migration versioning
-from mcoi_runtime.core.api_migration import ApiMigrationEngine
-api_migration = ApiMigrationEngine()
-api_migration.register_version("v1", endpoints=["/api/v1/*"])
-
-# Phase 230C: Governed retry policy
-from mcoi_runtime.core.retry_policy import RetryPolicyEngine
-retry_engine = RetryPolicyEngine()
-
 # Phase 231A: Event sourcing
 from mcoi_runtime.core.event_sourcing import EventStore
 event_store = EventStore(max_events=100_000)
-
-# Phase 231B: Multi-region routing
-from mcoi_runtime.core.region_router import RegionRouter, RoutingStrategy
-region_router = RegionRouter(strategy=RoutingStrategy.LATENCY)
-region_router.add_region("primary", latency_ms=20.0, is_primary=True)
-
-# Phase 231C: Config drift detection
-from mcoi_runtime.core.config_drift import ConfigDriftDetector
-config_drift = ConfigDriftDetector()
-
-# Phase 232A: Request context propagation
-from mcoi_runtime.core.request_context import RequestContextFactory
-request_ctx_factory = RequestContextFactory()
-
-# Phase 232B: Tenant data partitioning
-from mcoi_runtime.core.tenant_partition import TenantPartitionManager
-tenant_partitions = TenantPartitionManager(max_partitions=10_000)
-
-# Phase 232C: Health check v3
-from mcoi_runtime.core.health_v3 import HealthAggregatorV3, ComponentHealth
-health_v3 = HealthAggregatorV3(recovery_threshold=3)
-health_v3.register("llm_bridge", lambda: ComponentHealth.HEALTHY, weight=3.0)
-health_v3.register("store", lambda: ComponentHealth.HEALTHY, weight=2.0)
-health_v3.register("rate_limiter", lambda: ComponentHealth.HEALTHY, weight=1.0)
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Additional subsystem initialization (previously scattered in route sections)
