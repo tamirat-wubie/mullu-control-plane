@@ -693,7 +693,9 @@ def test_bootstrap_subsystems_wires_coordination_and_governed_services() -> None
         tempdir_getter=lambda: "C:\\temp",
     )
 
-    assert str(bootstrap.coordination_store.base).endswith("C:\\data\\mullu-coordination")
+    assert str(bootstrap.coordination_store.base).replace("\\", "/").endswith(
+        "C:/data/mullu-coordination"
+    )
     assert bootstrap.coordination_engine.kwargs["policy_pack_id"] == "default"
     assert bootstrap.scheduler.kwargs["guard_chain"] is None
     assert bootstrap.scheduler.kwargs["audit_trail"] is None
