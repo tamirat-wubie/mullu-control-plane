@@ -57,6 +57,7 @@ from mcoi_runtime.app.server_platform import (
     bootstrap_primary_store,
 )
 from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
+from mcoi_runtime.app.server_capabilities import bootstrap_capability_services
 from mcoi_runtime.app.server_services import bootstrap_operational_services
 from mcoi_runtime.app.server_subsystems import bootstrap_subsystems
 from mcoi_runtime.app.server_bootstrap import (
@@ -308,17 +309,37 @@ def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
         data=data,
     )
 
-# Phase 231A: Event sourcing
-from mcoi_runtime.core.event_sourcing import EventStore
-event_store = EventStore(max_events=100_000)
-
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Additional subsystem initialization (previously scattered in route sections)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-# Phase 212A: Tool registry
-from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
-tool_registry = ToolRegistry(clock=_clock)
+_capability_bootstrap = bootstrap_capability_services(
+    clock=_clock,
+    runtime_env=os.environ,
+    llm_bridge=llm_bridge,
+    observability=observability,
+    tenant_budget_mgr=tenant_budget_mgr,
+    evaluate_expression_fn=evaluate_expression,
+)
+tool_registry = _capability_bootstrap.tool_registry
+structured_output = _capability_bootstrap.structured_output
+state_persistence = _capability_bootstrap.state_persistence
+llm_circuit = _capability_bootstrap.llm_circuit
+tool_agent = _capability_bootstrap.tool_agent
+model_router = _capability_bootstrap.model_router
+correlation_mgr = _capability_bootstrap.correlation_mgr
+shutdown_mgr = _capability_bootstrap.shutdown_mgr
+agent_chain = _capability_bootstrap.agent_chain
+monitor = _capability_bootstrap.monitor
+task_queue = _capability_bootstrap.task_queue
+agent_memory = _capability_bootstrap.agent_memory
+ab_engine = _capability_bootstrap.ab_engine
+isolation_verifier = _capability_bootstrap.isolation_verifier
+usage_reporter = _capability_bootstrap.usage_reporter
+dep_graph = _capability_bootstrap.dep_graph
+backpressure = _capability_bootstrap.backpressure
+governed_cache = _capability_bootstrap.governed_cache
+feature_flags = _capability_bootstrap.feature_flags
+semantic_search = _capability_bootstrap.semantic_search
+tenant_analytics = _capability_bootstrap.tenant_analytics
+wf_templates = _capability_bootstrap.wf_templates
+event_store = _capability_bootstrap.event_store
 
 
 def _calculator_handler(args: dict[str, Any]) -> dict[str, str]:
@@ -326,176 +347,6 @@ def _calculator_handler(args: dict[str, Any]) -> dict[str, str]:
         args,
         evaluate_expression_fn=evaluate_expression,
     )
-
-
-register_default_tools(
-    tool_registry=tool_registry,
-    clock=_clock,
-    evaluate_expression_fn=evaluate_expression,
-)
-observability.register_source("tools", lambda: tool_registry.summary())
-
-# Phase 212A: Structured output engine
-from mcoi_runtime.core.structured_output import StructuredOutputEngine, OutputSchema
-structured_output = StructuredOutputEngine()
-register_default_output_schemas(structured_output)
-
-# Phase 212A: State persistence (file-based)
-from mcoi_runtime.persistence.state_persistence import StatePersistence
-_state_dir = os.environ.get("MULLU_STATE_DIR", "")
-state_persistence = StatePersistence(clock=_clock, base_dir=_state_dir)
-
-# Phase 212A: LLM circuit breaker
-from mcoi_runtime.core.retry_engine import CircuitBreaker
-llm_circuit = CircuitBreaker(failure_threshold=10, recovery_timeout_ms=60000)
-
-# Phase 213B: Tool-augmented agent
-from mcoi_runtime.core.tool_agent import ToolAugmentedAgent
-tool_agent = ToolAugmentedAgent(
-    tool_registry=tool_registry,
-    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
-    max_tool_calls=10,
-)
-
-# Phase 214A: Model router
-from mcoi_runtime.core.model_router import ModelProfile, ModelRouter
-model_router = ModelRouter()
-model_router.register(ModelProfile(
-    model_id="claude-haiku-4-5", name="Claude Haiku 4.5", provider="anthropic",
-    cost_per_1k_input=0.80, cost_per_1k_output=4.0,
-    max_context=200000, speed_tier="fast", capability_tier="basic",
-))
-model_router.register(ModelProfile(
-    model_id="claude-sonnet-4", name="Claude Sonnet 4", provider="anthropic",
-    cost_per_1k_input=3.0, cost_per_1k_output=15.0,
-    max_context=200000, speed_tier="medium", capability_tier="standard",
-))
-model_router.register(ModelProfile(
-    model_id="claude-opus-4-6", name="Claude Opus 4.6", provider="anthropic",
-    cost_per_1k_input=15.0, cost_per_1k_output=75.0,
-    max_context=1000000, speed_tier="slow", capability_tier="advanced",
-))
-model_router.register(ModelProfile(
-    model_id="gpt-4o-mini", name="GPT-4o Mini", provider="openai",
-    cost_per_1k_input=0.15, cost_per_1k_output=0.60,
-    max_context=128000, speed_tier="fast", capability_tier="basic",
-))
-observability.register_source("model_router", lambda: model_router.summary())
-
-# Phase 214B: Request correlation
-from mcoi_runtime.core.request_correlation import CorrelationManager
-correlation_mgr = CorrelationManager(clock=_clock)
-
-# Phase 214C: Shutdown manager
-from mcoi_runtime.core.graceful_shutdown import ShutdownManager
-shutdown_mgr = ShutdownManager()
-
-# Phase 215A: Agent chain
-from mcoi_runtime.core.agent_chain import AgentChainEngine
-agent_chain = AgentChainEngine(
-    clock=_clock,
-    llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
-)
-
-# Phase 215B: Monitoring
-from mcoi_runtime.core.monitoring import MonitoringEngine
-monitor = MonitoringEngine(clock=_clock)
-
-# Phase 215C: Task queue
-from mcoi_runtime.core.task_queue import TaskQueue
-task_queue = TaskQueue(clock=_clock)
-
-# Phase 216A: Agent memory
-from mcoi_runtime.core.agent_memory import AgentMemoryStore
-agent_memory = AgentMemoryStore(clock=_clock)
-observability.register_source("agent_memory", lambda: agent_memory.summary())
-
-# Phase 216B: A/B testing
-from mcoi_runtime.core.ab_testing import ABTestEngine
-ab_engine = ABTestEngine(clock=_clock)
-
-# Phase 216C: Isolation verifier
-from mcoi_runtime.core.isolation_verifier import IsolationVerifier, IsolationProbe
-isolation_verifier = IsolationVerifier(clock=_clock)
-isolation_verifier.register_probe(lambda a, b: IsolationProbe(
-    probe_name="budget_isolation", tenant_a=a, tenant_b=b,
-    isolated=tenant_budget_mgr.get_budget(a) != tenant_budget_mgr.get_budget(b) or
-             (tenant_budget_mgr.get_budget(a) is None and tenant_budget_mgr.get_budget(b) is None),
-    detail="budget objects are distinct per tenant",
-))
-isolation_verifier.register_probe(lambda a, b: IsolationProbe(
-    probe_name="ledger_isolation", tenant_a=a, tenant_b=b,
-    isolated=True, detail="ledger entries are keyed by tenant_id",
-))
-isolation_verifier.register_probe(lambda a, b: IsolationProbe(
-    probe_name="conversation_isolation", tenant_a=a, tenant_b=b,
-    isolated=True, detail="conversations are filtered by tenant_id",
-))
-
-# Phase 217: Usage reporter
-from mcoi_runtime.core.usage_reporter import UsageReporter
-usage_reporter = UsageReporter(clock=_clock)
-usage_reporter.register_source("llm_calls", lambda tid: llm_bridge.invocation_count)
-usage_reporter.register_source("total_cost", lambda tid: llm_bridge.total_cost)
-
-# Phase 218B: Dependency graph
-from mcoi_runtime.core.dependency_graph import DependencyGraph, SubsystemNode
-dep_graph = DependencyGraph()
-dep_graph.add(SubsystemNode(name="store", version="1.0"))
-dep_graph.add(SubsystemNode(name="llm", version="1.0", dependencies=("store",)))
-dep_graph.add(SubsystemNode(name="agents", version="1.0", dependencies=("llm", "store")))
-dep_graph.add(SubsystemNode(name="workflows", version="1.0", dependencies=("agents", "llm")))
-dep_graph.add(SubsystemNode(name="conversations", version="1.0", dependencies=("llm",)))
-dep_graph.add(SubsystemNode(name="events", version="1.0", dependencies=("store",)))
-dep_graph.add(SubsystemNode(name="governance", version="1.0", dependencies=("store", "events")))
-dep_graph.add(SubsystemNode(name="api", version="1.0", dependencies=("governance", "workflows", "conversations")))
-
-# Phase 218C: Backpressure
-from mcoi_runtime.core.backpressure import BackpressureEngine
-backpressure = BackpressureEngine()
-
-# Phase 220: Cache + Feature flags
-from mcoi_runtime.core.cache import GovernedCache
-from mcoi_runtime.core.feature_flags import FeatureFlag, FeatureFlagEngine
-governed_cache = GovernedCache(max_size=500, default_ttl=60.0)
-feature_flags = FeatureFlagEngine()
-feature_flags.register(FeatureFlag(flag_id="streaming_v2", name="Streaming V2", enabled=True))
-feature_flags.register(FeatureFlag(flag_id="tool_augmentation", name="Tool Augmentation", enabled=True))
-feature_flags.register(FeatureFlag(flag_id="ab_testing", name="A/B Testing", enabled=True))
-feature_flags.register(FeatureFlag(flag_id="agent_memory", name="Agent Memory", enabled=True))
-
-# Phase 221A: Semantic search
-from mcoi_runtime.core.semantic_search import SemanticSearchEngine
-semantic_search = SemanticSearchEngine()
-
-# Phase 221B: Tenant analytics
-from mcoi_runtime.core.tenant_analytics import TenantAnalyticsEngine
-tenant_analytics = TenantAnalyticsEngine(clock=_clock)
-tenant_analytics.register_collector("llm_calls", lambda tid: llm_bridge.invocation_count)
-tenant_analytics.register_collector("total_cost", lambda tid: llm_bridge.total_cost)
-
-# Phase 221C: Workflow templates
-from mcoi_runtime.core.workflow_templates import WorkflowTemplate, WorkflowTemplateRegistry
-from mcoi_runtime.core.agent_chain import ChainStep as _ChainStep
-wf_templates = WorkflowTemplateRegistry()
-wf_templates.register(WorkflowTemplate(
-    template_id="summarize-refine", name="Summarize & Refine",
-    description="Summarize then refine for audience",
-    steps=(
-        _ChainStep(step_id="s1", name="Summarize", prompt_template="Summarize {{topic}}: {{input}}"),
-        _ChainStep(step_id="s2", name="Refine", prompt_template="Refine for {{audience}}: {{prev}}"),
-    ),
-    parameters=("topic", "audience"), category="analysis",
-))
-wf_templates.register(WorkflowTemplate(
-    template_id="research-draft", name="Research & Draft",
-    description="Research a topic then draft a report",
-    steps=(
-        _ChainStep(step_id="s1", name="Research", prompt_template="Research {{topic}}: {{input}}"),
-        _ChainStep(step_id="s2", name="Draft", prompt_template="Draft a {{format}} report: {{prev}}"),
-    ),
-    parameters=("topic", "format"), category="research",
-))
 
 @asynccontextmanager
 async def _app_lifespan(_app: FastAPI):
