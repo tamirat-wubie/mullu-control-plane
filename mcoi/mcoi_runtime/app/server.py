@@ -7,7 +7,6 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
-import tempfile
 from contextlib import asynccontextmanager
 from typing import Any
 from fastapi import FastAPI, HTTPException
@@ -29,8 +28,6 @@ from mcoi_runtime.core.config_reload import ConfigManager
 from mcoi_runtime.core.observability import ObservabilityAggregator
 from mcoi_runtime.core.plugin_system import HookPoint, PluginDescriptor, PluginRegistry
 from mcoi_runtime.core.safe_arithmetic import evaluate_expression
-from mcoi_runtime.core.event_bus import EventBus
-from mcoi_runtime.core.batch_pipeline import BatchPipeline
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 
 import hashlib
@@ -60,6 +57,7 @@ from mcoi_runtime.app.server_platform import (
     bootstrap_primary_store,
 )
 from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
+from mcoi_runtime.app.server_subsystems import bootstrap_subsystems
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
@@ -213,106 +211,31 @@ config_manager = _agent_bootstrap.config_manager
 workflow_engine = _agent_bootstrap.workflow_engine
 observability = _agent_bootstrap.observability
 
-# Coordination engine with checkpoint persistence
-from mcoi_runtime.core.coordination import CoordinationEngine
-from mcoi_runtime.persistence import CoordinationStore
-from pathlib import Path as _Path
-
-_coordination_base = _Path(os.environ.get(
-    "MULLU_COORDINATION_DIR",
-    os.path.join(os.environ.get("MULLU_DATA_DIR", tempfile.gettempdir()), "mullu-coordination"),
-))
-coordination_store = CoordinationStore(_coordination_base)
-coordination_engine = CoordinationEngine(
+_subsystem_bootstrap = bootstrap_subsystems(
     clock=_clock,
-    coordination_store=coordination_store,
-    policy_pack_id="default",
+    runtime_env=os.environ,
+    llm_bridge=llm_bridge,
+    audit_trail=audit_trail,
+    observability=observability,
+    deep_health=deep_health,
 )
-observability.register_source("coordination", lambda: coordination_engine.summary())
-
-# Governed background scheduler
-from mcoi_runtime.core.scheduler import GovernedScheduler
-scheduler = GovernedScheduler(
-    clock=_clock,
-    guard_chain=None,  # Wired after guard_chain is built
-    audit_trail=None,  # Wired after audit_trail is built
-)
-observability.register_source("scheduler", lambda: scheduler.summary())
-
-# Governed connector framework
-from mcoi_runtime.core.connector_framework import GovernedConnectorFramework
-connector_framework = GovernedConnectorFramework(
-    clock=_clock,
-    guard_chain=None,  # Wired after guard_chain is built
-    audit_trail=None,  # Wired after audit_trail is built
-)
-observability.register_source("connectors", lambda: connector_framework.summary())
-
-# RBAC â€” access runtime engine
-from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
-_rbac_spine = EventSpineEngine(clock=_clock)
-access_runtime = AccessRuntimeEngine(_rbac_spine)
-
-# Phase 5: Seed default RBAC roles and permission rules
-from mcoi_runtime.core.rbac_defaults import seed_default_permissions
-_rbac_rules_seeded = seed_default_permissions(access_runtime)
-
-observability.register_source("rbac", lambda: {
-    "identities": access_runtime.identity_count,
-    "roles": access_runtime.role_count,
-    "bindings": access_runtime.binding_count,
-    "rules_seeded": _rbac_rules_seeded,
-})
-
-# Policy sandbox â€” dry-run simulation
-from mcoi_runtime.core.policy_sandbox import PolicySandbox
-policy_sandbox = PolicySandbox(
-    clock=_clock,
-    guard_chain=None,  # Wired after guard_chain is built
-)
-observability.register_source("simulation", lambda: policy_sandbox.summary())
-
-# Runbook learning engine
-from mcoi_runtime.core.runbook_learning import RunbookLearningEngine
-runbook_learning = RunbookLearningEngine(clock=_clock)
-observability.register_source("runbooks", lambda: runbook_learning.summary())
+coordination_store = _subsystem_bootstrap.coordination_store
+coordination_engine = _subsystem_bootstrap.coordination_engine
+scheduler = _subsystem_bootstrap.scheduler
+connector_framework = _subsystem_bootstrap.connector_framework
+access_runtime = _subsystem_bootstrap.access_runtime
+_rbac_rules_seeded = _subsystem_bootstrap.rbac_rules_seeded
+policy_sandbox = _subsystem_bootstrap.policy_sandbox
+runbook_learning = _subsystem_bootstrap.runbook_learning
 
 # Phase 204D: Plugin registry
 plugin_registry = PluginRegistry()
 
-# Explanation engine
-from mcoi_runtime.core.explanation_engine import ExplanationEngine
-explanation_engine = ExplanationEngine(
-    clock=_clock,
-    audit_trail=None,
-    guard_chain=None,
-)
-observability.register_source("explanations", lambda: explanation_engine.summary())
-
-# Audit chain anchoring
-from mcoi_runtime.core.audit_anchor import AuditAnchorStore
-audit_anchor = AuditAnchorStore(clock=_clock)
-observability.register_source("audit_anchors", lambda: audit_anchor.summary())
-
-# Knowledge graph
-from mcoi_runtime.core.knowledge_graph import KnowledgeGraph
-knowledge_graph = KnowledgeGraph(clock=_clock)
-observability.register_source("knowledge", lambda: knowledge_graph.summary())
-
-# Phase 206A: Event bus
-event_bus = EventBus(clock=_clock)
-# Wire event bus into observability
-observability.register_source("event_bus", lambda: event_bus.summary())
-# Wire event bus into deep health
-deep_health.register("event_bus", lambda: {"status": "healthy", "events": event_bus.event_count, "errors": event_bus.error_count})
-
-# Phase 206B: Batch pipeline
-batch_pipeline = BatchPipeline(
-    clock=_clock,
-    llm_complete_fn=lambda prompt, **kw: llm_bridge.complete(prompt, **kw),
-)
-observability.register_source("pipelines", lambda: batch_pipeline.summary())
+explanation_engine = _subsystem_bootstrap.explanation_engine
+audit_anchor = _subsystem_bootstrap.audit_anchor
+knowledge_graph = _subsystem_bootstrap.knowledge_graph
+event_bus = _subsystem_bootstrap.event_bus
+batch_pipeline = _subsystem_bootstrap.batch_pipeline
 
 # Phase 206C: Register example plugins
 _logging_plugin = PluginDescriptor(
