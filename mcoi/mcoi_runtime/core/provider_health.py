@@ -296,13 +296,14 @@ class ProviderHealthMonitor:
 # ── Utility functions ──────────────────────────────────────────
 
 def _percentile(values: list[float], pct: int) -> float:
-    """Compute the pct-th percentile of a sorted list."""
+    """Compute the pct-th percentile using nearest-rank method."""
     if not values:
         return 0.0
     sorted_vals = sorted(values)
-    idx = int(len(sorted_vals) * pct / 100)
-    idx = min(idx, len(sorted_vals) - 1)
-    return sorted_vals[idx]
+    # Nearest-rank: rank = ceil(pct/100 * n), clamped to [0, n-1]
+    rank = max(0, int((pct / 100.0) * len(sorted_vals) + 0.5) - 1)
+    rank = min(rank, len(sorted_vals) - 1)
+    return sorted_vals[rank]
 
 
 def _latency_score(p95_ms: float) -> float:

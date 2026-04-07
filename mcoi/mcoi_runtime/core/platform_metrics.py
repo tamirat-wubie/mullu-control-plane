@@ -56,6 +56,13 @@ class PlatformMetricsCollector:
         print(metrics.export())
     """
 
+    # Allowlists prevent unbounded cardinality from user-supplied values
+    ALLOWED_CHANNELS = frozenset({"whatsapp", "telegram", "slack", "discord", "web", "unknown"})
+    ALLOWED_PROVIDERS = frozenset({
+        "anthropic", "openai", "groq", "gemini", "deepseek",
+        "grok", "mistral", "openrouter", "ollama", "stub", "unknown",
+    })
+
     def __init__(self, *, prefix: str = "mullu") -> None:
         self._exporter = PrometheusExporter(prefix=prefix)
         self._lock = threading.Lock()
@@ -63,6 +70,14 @@ class PlatformMetricsCollector:
         self._latency_window = 1000  # Keep last N samples per metric
 
         self._register_all()
+
+    @classmethod
+    def _sanitize_channel(cls, channel: str) -> str:
+        return channel if channel in cls.ALLOWED_CHANNELS else "unknown"
+
+    @classmethod
+    def _sanitize_provider(cls, provider: str) -> str:
+        return provider if provider in cls.ALLOWED_PROVIDERS else "unknown"
 
     def _register_all(self) -> None:
         e = self._exporter
@@ -134,12 +149,13 @@ class PlatformMetricsCollector:
     # ── Gateway recording methods ──────────────────────────
 
     def record_gateway_message(self, channel: str, outcome: str = "success") -> None:
+        channel = self._sanitize_channel(channel)
         self._exporter.inc_counter("gateway_messages_total", channel=channel)
         if outcome == "error":
             self._exporter.inc_counter("gateway_messages_errors_total", channel=channel)
 
     def record_gateway_duplicate(self, channel: str) -> None:
-        self._exporter.inc_counter("gateway_duplicates_total", channel=channel)
+        self._exporter.inc_counter("gateway_duplicates_total", channel=self._sanitize_channel(channel))
 
     # ── Governance recording methods ───────────────────────
 
@@ -172,6 +188,7 @@ class PlatformMetricsCollector:
         output_tokens: int = 0,
         cost: float = 0.0,
     ) -> None:
+        provider = self._sanitize_provider(provider)
         self._exporter.inc_counter("llm_invocations_total", provider=provider, model=model)
         if not success:
             self._exporter.inc_counter("llm_invocations_errors_total", provider=provider, model=model)
@@ -235,6 +252,7 @@ class PlatformMetricsCollector:
     # ── Provider health recording ──────────────────────────
 
     def set_provider_health(self, provider: str, *, score: float, error_rate: float) -> None:
+        provider = self._sanitize_provider(provider)
         self._exporter.set_gauge("provider_health_score", score, provider=provider)
         self._exporter.set_gauge("provider_error_rate", error_rate, provider=provider)
 
@@ -281,11 +299,16 @@ class PlatformMetricsCollector:
             return {"avg": 0.0, "p50": 0.0, "p95": 0.0, "p99": 0.0, "count": 0}
         sorted_s = sorted(samples)
         n = len(sorted_s)
+
+        def _pct(pct: float) -> float:
+            rank = max(0, int((pct / 100.0) * n + 0.5) - 1)
+            return sorted_s[min(rank, n - 1)]
+
         return {
             "avg": round(sum(sorted_s) / n, 2),
-            "p50": sorted_s[int(n * 0.5)],
-            "p95": sorted_s[min(int(n * 0.95), n - 1)],
-            "p99": sorted_s[min(int(n * 0.99), n - 1)],
+            "p50": _pct(50),
+            "p95": _pct(95),
+            "p99": _pct(99),
             "count": n,
         }
 

@@ -546,7 +546,16 @@ class GovernedSession:
             compaction_count=self._compaction_count,
             checkpoint_at=self._clock(),
         )
-        return cp.to_dict()
+        data = cp.to_dict()
+        # Persist policy if set
+        if self._policy is not None:
+            data["session_policy"] = {
+                "max_llm_calls": self._policy.max_llm_calls,
+                "max_operations": self._policy.max_operations,
+                "max_execute_actions": self._policy.max_execute_actions,
+                "max_cost": self._policy.max_cost,
+            }
+        return data
 
     def _restore_from_checkpoint(self, data: dict[str, Any]) -> None:
         """Restore mutable state from a checkpoint dict.
@@ -564,6 +573,15 @@ class GovernedSession:
         self._total_cost = float(data.get("total_cost", 0.0))
         self._context_messages = list(data.get("context_messages", []))
         self._compaction_count = int(data.get("compaction_count", 0))
+        # Restore policy if persisted
+        policy_data = data.get("session_policy")
+        if policy_data and isinstance(policy_data, dict):
+            self._policy = SessionPolicy(
+                max_llm_calls=int(policy_data.get("max_llm_calls", 0)),
+                max_operations=int(policy_data.get("max_operations", 0)),
+                max_execute_actions=int(policy_data.get("max_execute_actions", 0)),
+                max_cost=float(policy_data.get("max_cost", 0.0)),
+            )
 
     # ── Session lifecycle ──
 
