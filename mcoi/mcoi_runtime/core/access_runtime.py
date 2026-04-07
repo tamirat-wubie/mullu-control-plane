@@ -97,6 +97,14 @@ class AccessRuntimeEngine:
     def rule_count(self) -> int:
         return len(self._rules)
 
+    def all_identities(self) -> tuple:
+        """Return all registered identities (public accessor)."""
+        return tuple(self._identities.values())
+
+    def all_roles(self) -> tuple:
+        """Return all registered roles (public accessor)."""
+        return tuple(self._roles.values())
+
     def has_role(self, role_id: str) -> bool:
         """Return whether a role is registered."""
         return role_id in self._roles

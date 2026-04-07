@@ -126,7 +126,8 @@ class DallEProvider(ImageProvider):
             )
         except Exception as exc:
             return ImageGenerationResult(
-                success=False, error=str(exc), prompt=prompt, prompt_hash=prompt_hash,
+                success=False, error=f"image generation failed ({type(exc).__name__})",
+                prompt=prompt, prompt_hash=prompt_hash,
             )
 
 

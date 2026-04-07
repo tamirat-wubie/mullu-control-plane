@@ -164,7 +164,7 @@ class TaskScheduler:
             return execution
 
         except Exception as exc:
-            execution = self._record_execution(task, TaskStatus.FAILED, error=str(exc))
+            execution = self._record_execution(task, TaskStatus.FAILED, error=f"task failed ({type(exc).__name__})")
             updated = ScheduledTask(
                 task_id=task.task_id, tenant_id=task.tenant_id,
                 name=task.name, description=task.description,

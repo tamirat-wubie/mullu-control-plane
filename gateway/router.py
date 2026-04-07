@@ -137,13 +137,13 @@ class GatewayRouter:
                 identity_id=mapping.identity_id,
                 tenant_id=mapping.tenant_id,
             )
-        except PermissionError as exc:
+        except PermissionError:
             self._error_count += 1
             return GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
-                body=f"Access denied: {exc}",
+                body="Access denied.",
                 governed=True,
                 metadata={"error": "access_denied"},
             )
@@ -212,11 +212,10 @@ class GatewayRouter:
                 recipient_id=message.sender_id,
                 body=response_body,
                 governed=True,
-                metadata={"error": "content_blocked", "reason": str(exc)},
+                metadata={"error": "content_blocked"},
             )
-        except RuntimeError as exc:
-            # Budget exhausted, rate limited, or no LLM bridge
-            response_body = f"Service unavailable: {exc}"
+        except RuntimeError:
+            response_body = "Service temporarily unavailable."
             self._error_count += 1
         except Exception as exc:
             response_body = "An error occurred. Please try again."
