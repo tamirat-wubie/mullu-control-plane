@@ -130,9 +130,10 @@ class TenantOnboarding:
                 detail = handler(request)
                 steps.append(OnboardingStep(name=name, status="completed", detail=detail))
             except Exception as exc:
-                steps.append(OnboardingStep(name=name, status="failed", detail=f"{type(exc).__name__}"))
+                exc_type = type(exc).__name__
+                steps.append(OnboardingStep(name=name, status="failed", detail="step execution error"))
                 failed = True
-                error_msg = f"step '{name}' failed ({type(exc).__name__})"
+                error_msg = "step '{}' failed ({})".format(name, exc_type)
 
         success = not failed
         result = OnboardingResult(
