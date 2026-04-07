@@ -153,9 +153,9 @@ BUILTIN_PATTERNS: tuple[PIIPattern, ...] = (
     ),
     PIIPattern(
         category=PIICategory.IP_ADDRESS,
-        pattern=r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
+        pattern=r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b",
         redaction_mode=RedactionMode.FULL,
-        description="IPv4 addresses",
+        description="IPv4 addresses (valid octet ranges 0-255)",
     ),
     PIIPattern(
         category=PIICategory.API_KEY,

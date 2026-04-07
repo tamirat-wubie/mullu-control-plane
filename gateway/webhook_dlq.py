@@ -199,6 +199,8 @@ class WebhookDLQ:
         with self._lock:
             for entry in self._entries.values():
                 if entry.status == DLQEntryStatus.PENDING and entry.next_retry_at <= now:
+                    # Mark as RETRYING under lock to prevent duplicate pickup
+                    entry.status = DLQEntryStatus.RETRYING
                     to_retry.append(entry)
                     if len(to_retry) >= batch_size:
                         break
@@ -208,7 +210,6 @@ class WebhookDLQ:
         exhausted = 0
 
         for entry in to_retry:
-            entry.status = DLQEntryStatus.RETRYING
             entry.attempt_count += 1
             entry.last_attempt_at = self._clock()
 
