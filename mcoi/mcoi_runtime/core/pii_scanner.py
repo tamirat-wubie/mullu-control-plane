@@ -172,6 +172,25 @@ BUILTIN_PATTERNS: tuple[PIIPattern, ...] = (
 )
 
 
+def _luhn_check(digits: str) -> bool:
+    """Validate a digit string using the Luhn algorithm (ISO/IEC 7812-1).
+
+    Returns True if the digit string passes the Luhn checksum.
+    Used to reduce false positives on credit card detection.
+    """
+    if not digits or len(digits) < 13:
+        return False
+    total = 0
+    for i, ch in enumerate(reversed(digits)):
+        n = int(ch)
+        if i % 2 == 1:
+            n *= 2
+            if n > 9:
+                n -= 9
+        total += n
+    return total % 10 == 0
+
+
 def _apply_redaction(match_text: str, category: PIICategory, mode: RedactionMode, salt: str = "") -> str:
     """Apply redaction to a matched PII value."""
     if mode == RedactionMode.NONE:
@@ -248,7 +267,13 @@ class PIIScanner:
         all_matches: list[tuple[int, int, PIIPattern, str]] = []
         for pattern_def, compiled in self._compiled:
             for m in compiled.finditer(text):
-                all_matches.append((m.start(), m.end(), pattern_def, m.group()))
+                matched = m.group()
+                # Luhn validation for credit card matches (reduce false positives)
+                if pattern_def.category == PIICategory.CREDIT_CARD:
+                    digits = "".join(c for c in matched if c.isdigit())
+                    if not _luhn_check(digits):
+                        continue
+                all_matches.append((m.start(), m.end(), pattern_def, matched))
 
         if not all_matches:
             return ScanResult(

@@ -135,6 +135,7 @@ class RateLimiter:
         self._allowed_count: int = 0
         self._identity_denied_count: int = 0
         self._store = store
+        self._lock = threading.Lock()
 
     def configure_endpoint(
         self,
@@ -192,11 +193,12 @@ class RateLimiter:
           2. Identity-level bucket must allow.
         Both must pass — if either denies, the request is denied.
         """
-        tenant_config = self._resolve_config(endpoint)
-        tenant_key = self._bucket_key(tenant_id, endpoint)
-        tenant_bucket = self._get_bucket(tenant_key, tenant_config)
+        with self._lock:
+            tenant_config = self._resolve_config(endpoint)
+            tenant_key = self._bucket_key(tenant_id, endpoint)
+            tenant_bucket = self._get_bucket(tenant_key, tenant_config)
 
-        # Tenant-level check
+        # Tenant-level check (TokenBucket has its own lock)
         allowed, remaining = tenant_bucket.try_consume(tokens)
         denied_by = ""
         if not allowed:
@@ -207,18 +209,21 @@ class RateLimiter:
         if allowed and identity_id:
             id_config = self._resolve_identity_config(endpoint)
             if id_config is not None:
-                id_key = self._identity_bucket_key(tenant_id, identity_id, endpoint)
-                id_bucket = self._get_bucket(id_key, id_config)
+                with self._lock:
+                    id_key = self._identity_bucket_key(tenant_id, identity_id, endpoint)
+                    id_bucket = self._get_bucket(id_key, id_config)
                 id_allowed, identity_remaining = id_bucket.try_consume(tokens)
                 if not id_allowed:
                     allowed = False
                     denied_by = "identity"
-                    self._identity_denied_count += 1
 
-        if allowed:
-            self._allowed_count += 1
-        else:
-            self._denied_count += 1
+        with self._lock:
+            if allowed:
+                self._allowed_count += 1
+            else:
+                self._denied_count += 1
+            if denied_by == "identity":
+                self._identity_denied_count += 1
         if self._store is not None:
             self._store.record_decision(tenant_key, allowed)
 
