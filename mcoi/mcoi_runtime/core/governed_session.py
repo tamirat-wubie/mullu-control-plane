@@ -81,6 +81,31 @@ def _build_session_dispatch_request(
 
 
 @dataclass(frozen=True, slots=True)
+class SessionPolicy:
+    """Per-session action limits.
+
+    Constrains what a governed session can do within its lifetime.
+    Prevents runaway agents from burning through resources even when
+    tenant-level budget is still available.  A value of 0 means unlimited.
+    """
+
+    max_llm_calls: int = 0  # 0 = unlimited
+    max_operations: int = 0  # Total operations (llm + execute + query)
+    max_execute_actions: int = 0  # Execute-only cap
+    max_cost: float = 0.0  # Max cumulative cost ($)
+
+    def __post_init__(self) -> None:
+        if self.max_llm_calls < 0:
+            raise ValueError("max_llm_calls must be >= 0")
+        if self.max_operations < 0:
+            raise ValueError("max_operations must be >= 0")
+        if self.max_execute_actions < 0:
+            raise ValueError("max_execute_actions must be >= 0")
+        if self.max_cost < 0.0:
+            raise ValueError("max_cost must be >= 0.0")
+
+
+@dataclass(frozen=True, slots=True)
 class SessionClosureReport:
     """Immutable report generated when a GovernedSession is closed."""
 
@@ -126,6 +151,7 @@ class GovernedSession:
         tenant_gating: Any | None = None,
         governed_dispatcher: Any | None = None,
         rate_limiter: Any | None = None,
+        session_policy: SessionPolicy | None = None,
     ) -> None:
         self._session_id = session_id
         self._identity_id = identity_id
@@ -141,9 +167,11 @@ class GovernedSession:
         self._tenant_gating = tenant_gating
         self._governed_dispatcher = governed_dispatcher
         self._rate_limiter = rate_limiter
+        self._policy = session_policy
         self._closed = False
         self._operations = 0
         self._llm_calls = 0
+        self._execute_actions = 0
         self._total_cost = 0.0
         self._context_messages: list[dict[str, str]] = []
         self._max_context_messages = 50
@@ -215,6 +243,14 @@ class GovernedSession:
         return self._operations
 
     @property
+    def execute_actions(self) -> int:
+        return self._execute_actions
+
+    @property
+    def session_policy(self) -> SessionPolicy | None:
+        return self._policy
+
+    @property
     def llm_calls(self) -> int:
         return self._llm_calls
 
@@ -277,6 +313,20 @@ class GovernedSession:
         if report.exhausted:
             raise RuntimeError("budget exhausted")
 
+    def _check_policy(self, operation: str) -> None:
+        """Enforce per-session action limits."""
+        if self._policy is None:
+            return
+        p = self._policy
+        if p.max_operations > 0 and self._operations >= p.max_operations:
+            raise RuntimeError("session operation limit reached")
+        if operation == "llm" and p.max_llm_calls > 0 and self._llm_calls >= p.max_llm_calls:
+            raise RuntimeError("session LLM call limit reached")
+        if operation == "execute" and p.max_execute_actions > 0 and self._execute_actions >= p.max_execute_actions:
+            raise RuntimeError("session execute action limit reached")
+        if p.max_cost > 0.0 and self._total_cost >= p.max_cost:
+            raise RuntimeError("session cost limit reached")
+
     def _redact_pii(self, text: str) -> str:
         if self._pii_scanner is None or not text:
             return text
@@ -320,9 +370,10 @@ class GovernedSession:
     def llm(self, prompt: str, **kwargs: Any) -> Any:
         """Governed LLM completion.
 
-        Full pipeline: RBAC → content safety → budget → LLM call → PII redaction → audit → proof.
+        Full pipeline: policy → RBAC → content safety → budget → LLM call → PII redaction → audit → proof.
         """
         self._require_open()
+        self._check_policy("llm")
         self._check_tenant_gating()
         self._check_rbac("llm", "POST")
         self._check_rate_limit("session/llm")
@@ -373,12 +424,13 @@ class GovernedSession:
     def execute(self, action_type: str, **bindings: Any) -> dict[str, Any]:
         """Governed action execution (shell, tool, etc).
 
-        Pipeline: RBAC → tenant gating → dispatch → audit → proof.
+        Pipeline: policy → RBAC → tenant gating → dispatch → audit → proof.
 
         When a GovernedDispatcher is available, routes through the full
         governed execution pipeline. Otherwise returns governed metadata.
         """
         self._require_open()
+        self._check_policy("execute")
         self._check_tenant_gating()
         self._check_rbac("execute", "POST")
         self._check_rate_limit("session/execute")
@@ -415,6 +467,7 @@ class GovernedSession:
                 result_detail["dispatch_error"] = _classify_session_dispatch_exception(exc)
 
         self._operations += 1
+        self._execute_actions += 1
         self._record_audit(
             action="session.execute",
             target=action_type,
@@ -427,9 +480,10 @@ class GovernedSession:
     def query(self, resource_type: str, **filters: Any) -> dict[str, Any]:
         """Governed read-only query.
 
-        Pipeline: RBAC → query → audit → proof.
+        Pipeline: policy → RBAC → query → audit → proof.
         """
         self._require_open()
+        self._check_policy("query")
         self._check_rbac(resource_type, "GET")
         self._check_rate_limit("session/query")
         self._certify_proof("session/query", "allowed")
@@ -760,10 +814,12 @@ class Platform:
         *,
         identity_id: str,
         tenant_id: str,
+        session_policy: SessionPolicy | None = None,
     ) -> GovernedSession:
         """Open a governed session for an identity + tenant.
 
         Validates tenant gating and identity status before creating session.
+        Optionally applies per-session action limits via SessionPolicy.
         """
         # Validate tenant is not suspended/terminated
         if self._tenant_gating is not None:
@@ -825,6 +881,7 @@ class Platform:
             tenant_gating=self._tenant_gating,
             governed_dispatcher=self._governed_dispatcher,
             rate_limiter=self._rate_limiter,
+            session_policy=session_policy,
         )
 
     def resume(
