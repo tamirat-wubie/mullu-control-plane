@@ -161,11 +161,18 @@ class GovernanceGuardChain:
 def create_rate_limit_guard(
     rate_limiter: Any,
 ) -> GovernanceGuard:
-    """Create a rate-limiting guard."""
+    """Create a rate-limiting guard.
+
+    Uses both tenant-level and per-identity rate limiting when
+    ``authenticated_subject`` or ``authenticated_key_id`` is present
+    in the guard context (populated by auth guards upstream).
+    """
     def check(ctx: dict[str, Any]) -> GuardResult:
         tenant_id = ctx.get("tenant_id", "system")
         endpoint = ctx.get("endpoint", "/unknown")
-        result = rate_limiter.check(tenant_id, endpoint)
+        # Resolve identity from auth guards (JWT subject or API key ID)
+        identity_id = ctx.get("authenticated_subject", "") or ctx.get("authenticated_key_id", "")
+        result = rate_limiter.check(tenant_id, endpoint, identity_id=identity_id)
         if result.allowed:
             return GuardResult(allowed=True, guard_name="rate_limit")
         return GuardResult(

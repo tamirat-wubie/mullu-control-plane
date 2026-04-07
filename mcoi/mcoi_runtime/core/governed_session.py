@@ -264,7 +264,9 @@ class GovernedSession:
     def _check_rate_limit(self, endpoint: str) -> None:
         if self._rate_limiter is None:
             return
-        result = self._rate_limiter.check(self._tenant_id, endpoint)
+        result = self._rate_limiter.check(
+            self._tenant_id, endpoint, identity_id=self._identity_id,
+        )
         if not result.allowed:
             raise RuntimeError("rate limited")
 
