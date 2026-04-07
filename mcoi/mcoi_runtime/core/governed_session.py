@@ -469,6 +469,46 @@ class GovernedSession:
             )
             return False
 
+    # ── Session persistence ──
+
+    def checkpoint(self) -> dict[str, Any]:
+        """Serialize mutable session state for persistence.
+
+        Returns a dict suitable for passing to SessionStore.save().
+        Does NOT close the session — the session remains usable.
+        """
+        self._require_open()
+        from mcoi_runtime.persistence.session_store import SessionCheckpoint
+        cp = SessionCheckpoint(
+            session_id=self._session_id,
+            identity_id=self._identity_id,
+            tenant_id=self._tenant_id,
+            operations=self._operations,
+            llm_calls=self._llm_calls,
+            total_cost=self._total_cost,
+            context_messages=tuple(self._context_messages),
+            compaction_count=self._compaction_count,
+            checkpoint_at=self._clock(),
+        )
+        return cp.to_dict()
+
+    def _restore_from_checkpoint(self, data: dict[str, Any]) -> None:
+        """Restore mutable state from a checkpoint dict.
+
+        Called by Platform.resume(). Validates identity/tenant match.
+        """
+        if data.get("session_id") != self._session_id:
+            raise ValueError("session_id mismatch")
+        if data.get("identity_id") != self._identity_id:
+            raise ValueError("identity_id mismatch")
+        if data.get("tenant_id") != self._tenant_id:
+            raise ValueError("tenant_id mismatch")
+        self._operations = int(data.get("operations", 0))
+        self._llm_calls = int(data.get("llm_calls", 0))
+        self._total_cost = float(data.get("total_cost", 0.0))
+        self._context_messages = list(data.get("context_messages", []))
+        self._compaction_count = int(data.get("compaction_count", 0))
+
     # ── Session lifecycle ──
 
     def close(self) -> SessionClosureReport:
@@ -784,6 +824,49 @@ class Platform:
             governed_dispatcher=self._governed_dispatcher,
             rate_limiter=self._rate_limiter,
         )
+
+    def resume(
+        self,
+        *,
+        session_id: str,
+        identity_id: str,
+        tenant_id: str,
+        checkpoint_data: dict[str, Any],
+    ) -> GovernedSession:
+        """Resume a previously checkpointed session.
+
+        Creates a new GovernedSession with live subsystems, then restores
+        mutable state from the checkpoint.  Validates that session_id,
+        identity_id, and tenant_id match the checkpoint.
+        """
+        self._session_count += 1
+        session = GovernedSession(
+            session_id=session_id,
+            identity_id=identity_id,
+            tenant_id=tenant_id,
+            clock=self._clock,
+            access_runtime=self._access_runtime,
+            content_safety_chain=self._content_safety,
+            pii_scanner=self._pii_scanner,
+            budget_mgr=self._budget_mgr,
+            llm_bridge=self._llm_bridge,
+            audit_trail=self._audit_trail,
+            proof_bridge=self._proof_bridge,
+            tenant_gating=self._tenant_gating,
+            governed_dispatcher=self._governed_dispatcher,
+            rate_limiter=self._rate_limiter,
+        )
+        session._restore_from_checkpoint(checkpoint_data)
+
+        self._record_platform_audit(
+            identity_id=identity_id,
+            tenant_id=tenant_id,
+            target=session_id,
+            outcome="resumed",
+            detail={"operations": checkpoint_data.get("operations", 0)},
+        )
+
+        return session
 
     @property
     def session_count(self) -> int:
