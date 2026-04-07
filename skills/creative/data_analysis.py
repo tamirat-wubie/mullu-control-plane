@@ -127,7 +127,7 @@ def analyze_csv(csv_text: str, *, max_rows: int = 10_000) -> AnalysisResult:
             insights=tuple(insights),
         )
     except Exception as exc:
-        return AnalysisResult(success=False, error=str(exc))
+        return AnalysisResult(success=False, error=f"analysis failed ({type(exc).__name__})")
 
 
 def analyze_key_value(data: dict[str, Any]) -> AnalysisResult:

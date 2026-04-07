@@ -102,9 +102,9 @@ class HandoffRouter:
                 return result
             except Exception as exc:
                 return {
-                    "response": f"Agent {agent.name} encountered an error.",
+                    "response": "Agent encountered an error.",
                     "agent": agent.agent_id,
-                    "error": str(exc),
+                    "error": type(exc).__name__,
                     "governed": True,
                 }
 

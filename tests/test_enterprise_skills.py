@@ -294,7 +294,9 @@ class TestTaskExecution:
 
         execution = scheduler.execute_task(task.task_id, executor=failing_executor)
         assert execution.status == TaskStatus.FAILED
-        assert "exploded" in execution.error
+        assert "task failed" in execution.error
+        assert "RuntimeError" in execution.error
+        assert "exploded" not in execution.error  # sanitized — no raw exception text
         assert scheduler.get_task(task.task_id).fail_count == 1
 
     def test_execution_history(self):

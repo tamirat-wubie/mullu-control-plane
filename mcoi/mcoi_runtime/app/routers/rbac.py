@@ -82,7 +82,7 @@ def list_identities(tenant_id: str = ""):
     if tenant_id:
         identities = deps.access_runtime.identities_for_tenant(tenant_id)
     else:
-        identities = tuple(deps.access_runtime._identities.values())
+        identities = deps.access_runtime.all_identities()
     return {
         "identities": [
             {
@@ -136,7 +136,7 @@ def create_role(req: CreateRoleRequest):
 def list_roles():
     """List all permission roles."""
     deps.metrics.inc("requests_governed")
-    roles = tuple(deps.access_runtime._roles.values())
+    roles = deps.access_runtime.all_roles()
     return {
         "roles": [
             {
