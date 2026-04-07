@@ -86,11 +86,43 @@ class TaskScheduler:
     MAX_TASKS_PER_TENANT = 100
     MAX_EXECUTION_HISTORY = 50_000
 
-    def __init__(self, *, clock: Callable[[], str] | None = None) -> None:
+    def __init__(self, *, clock: Callable[[], str] | None = None, store: Any | None = None) -> None:
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._tasks: dict[str, ScheduledTask] = {}  # task_id → task
         self._executions: list[TaskExecution] = []
         self._running: set[str] = set()  # task_ids currently executing
+        self._store = store
+
+        # Load persisted state if store is available
+        if self._store is not None:
+            self._load_from_store()
+
+    def _load_from_store(self) -> None:
+        """Load tasks and executions from persistent store."""
+        try:
+            tasks = self._store.load_tasks()
+            for task in tasks:
+                self._tasks[task.task_id] = task
+            executions = self._store.load_executions()
+            self._executions = executions
+        except Exception:
+            pass  # Store failure should not prevent scheduler startup
+
+    def _save_tasks(self) -> None:
+        """Persist current task definitions to store."""
+        if self._store is not None:
+            try:
+                self._store.save_tasks(list(self._tasks.values()))
+            except Exception:
+                pass  # Store write failure is non-fatal
+
+    def _save_executions(self) -> None:
+        """Persist execution history to store."""
+        if self._store is not None:
+            try:
+                self._store.save_executions(self._executions)
+            except Exception:
+                pass
 
     def register_task(
         self,
@@ -117,6 +149,7 @@ class TaskScheduler:
             created_at=now,
         )
         self._tasks[task_id] = task
+        self._save_tasks()
         return task
 
     def execute_task(
@@ -161,6 +194,8 @@ class TaskScheduler:
                 run_count=task.run_count + 1, fail_count=task.fail_count,
             )
             self._tasks[task_id] = updated
+            self._save_tasks()
+            self._save_executions()
             return execution
 
         except Exception as exc:
@@ -174,6 +209,8 @@ class TaskScheduler:
                 run_count=task.run_count + 1, fail_count=task.fail_count + 1,
             )
             self._tasks[task_id] = updated
+            self._save_tasks()
+            self._save_executions()
             return execution
 
         finally:
@@ -221,6 +258,7 @@ class TaskScheduler:
             created_at=task.created_at, last_run_at=task.last_run_at,
             run_count=task.run_count, fail_count=task.fail_count,
         )
+        self._save_tasks()
         return True
 
     def get_executions(self, task_id: str = "", limit: int = 50) -> list[TaskExecution]:
