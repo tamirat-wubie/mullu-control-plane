@@ -218,7 +218,7 @@ class TestSessionBudgetEnforcement:
 class TestSessionRateLimiting:
     def test_rate_limit_reason_is_bounded(self):
         class RejectingLimiter:
-            def check(self, tenant_id, endpoint):
+            def check(self, tenant_id, endpoint, tokens=1, *, identity_id=""):
                 class _Result:
                     allowed = False
                     retry_after_seconds = 47
