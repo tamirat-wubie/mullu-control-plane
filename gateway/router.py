@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
 from gateway.approval import ApprovalRouter, ApprovalStatus
+from gateway.dedup import MessageDeduplicator
 from gateway.skill_dispatch import SkillDispatcher, detect_intent
 
 
@@ -86,14 +87,17 @@ class GatewayRouter:
         clock: Callable[[], str] | None = None,
         approval_router: ApprovalRouter | None = None,
         skill_dispatcher: SkillDispatcher | None = None,
+        deduplicator: MessageDeduplicator | None = None,
     ) -> None:
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._approval = approval_router or ApprovalRouter(clock=self._clock)
         self._skills = skill_dispatcher or SkillDispatcher()
+        self._dedup = deduplicator or MessageDeduplicator()
         self._tenant_mappings: dict[str, TenantMapping] = {}  # "channel:sender_id" -> mapping
         self._channels: dict[str, ChannelAdapter] = {}
         self._message_count = 0
+        self._duplicate_count = 0
         self._error_count = 0
 
     def register_channel(self, adapter: ChannelAdapter) -> None:
@@ -114,15 +118,21 @@ class GatewayRouter:
         """Process an inbound message through the full governance pipeline.
 
         This is the main entry point. Every message goes through:
-        tenant resolution → session → content safety → LLM → PII redaction → audit → proof.
+        dedup → tenant resolution → session → content safety → LLM → PII redaction → audit → proof.
         """
         self._message_count += 1
+
+        # 0. Deduplication — return cached response for retried webhooks
+        dedup_result = self._dedup.check(message.channel, message.sender_id, message.message_id)
+        if dedup_result.is_duplicate:
+            self._duplicate_count += 1
+            return dedup_result.cached_response
 
         # 1. Resolve tenant
         mapping = self.resolve_tenant(message.channel, message.sender_id)
         if mapping is None:
             self._error_count += 1
-            return GatewayResponse(
+            resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
@@ -130,6 +140,8 @@ class GatewayRouter:
                 governed=True,
                 metadata={"error": "tenant_not_found"},
             )
+            self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
+            return resp
 
         # 2. Open governed session
         try:
@@ -139,7 +151,7 @@ class GatewayRouter:
             )
         except PermissionError:
             self._error_count += 1
-            return GatewayResponse(
+            resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
@@ -147,6 +159,8 @@ class GatewayRouter:
                 governed=True,
                 metadata={"error": "access_denied"},
             )
+            self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
+            return resp
 
         # 3. Risk classification + approval
         approval = self._approval.request_approval(
@@ -243,6 +257,7 @@ class GatewayRouter:
             except Exception:
                 pass  # Channel send failure — response still returned
 
+        self._dedup.record(message.channel, message.sender_id, message.message_id, response)
         return response
 
     def handle_approval_callback(self, request_id: str, approved: bool, resolved_by: str = "user") -> GatewayResponse | None:
@@ -278,10 +293,16 @@ class GatewayRouter:
     def error_count(self) -> int:
         return self._error_count
 
+    @property
+    def duplicate_count(self) -> int:
+        return self._duplicate_count
+
     def summary(self) -> dict[str, Any]:
         return {
             "message_count": self._message_count,
+            "duplicate_count": self._duplicate_count,
             "error_count": self._error_count,
             "channels": list(self._channels.keys()),
             "tenant_mappings": len(self._tenant_mappings),
+            "dedup": self._dedup.status(),
         }
