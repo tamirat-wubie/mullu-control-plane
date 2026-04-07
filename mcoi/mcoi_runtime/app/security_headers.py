@@ -58,7 +58,7 @@ class SecurityHeadersConfig:
         if self.csp:
             return self.csp
         if self.is_production:
-            return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+            return "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         return "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src * data:; connect-src *"
 
     @property

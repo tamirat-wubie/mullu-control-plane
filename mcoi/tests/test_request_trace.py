@@ -41,8 +41,9 @@ class TestTraceBuilder:
 
     def test_span_error_captured(self):
         builder = TraceBuilder(tenant_id="t1", endpoint="/test")
-        with builder.span("guard:budget") as s:
-            raise RuntimeError("budget exhausted")
+        with pytest.raises(RuntimeError, match="budget exhausted"):
+            with builder.span("guard:budget") as s:
+                raise RuntimeError("budget exhausted")
         trace = builder.finish(outcome="denied")
         assert trace.spans[0].status == "error"
         assert trace.spans[0].detail["error_type"] == "RuntimeError"

@@ -176,7 +176,7 @@ class GatewayRouter:
                 session.close()
             except Exception:
                 pass
-            return GatewayResponse(
+            resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
@@ -185,6 +185,8 @@ class GatewayRouter:
                 governed=True,
                 metadata={"approval_required": True, "request_id": approval.request_id},
             )
+            self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
+            return resp
 
         # 4. Check for skill intent (financial, etc.) before LLM
         intent = detect_intent(message.body)
@@ -210,6 +212,7 @@ class GatewayRouter:
                         adapter.send(message.sender_id, response_body)
                     except Exception:
                         pass
+                self._dedup.record(message.channel, message.sender_id, message.message_id, response)
                 return response
 
         # 5. Execute through LLM (governed — no skill match)
@@ -220,7 +223,7 @@ class GatewayRouter:
             # Content safety blocked
             response_body = "I can't process that request due to safety policies."
             session.close()
-            return GatewayResponse(
+            resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
                 recipient_id=message.sender_id,
@@ -228,6 +231,8 @@ class GatewayRouter:
                 governed=True,
                 metadata={"error": "content_blocked"},
             )
+            self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
+            return resp
         except RuntimeError:
             response_body = "Service temporarily unavailable."
             self._error_count += 1

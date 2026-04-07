@@ -99,6 +99,18 @@ class AuditExporter:
             limit=effective_limit,
         )
 
+    @staticmethod
+    def _sanitize_csv_value(value: str) -> str:
+        """Sanitize a string value to prevent CSV formula injection.
+
+        CSV readers (Excel, LibreOffice) interpret cells starting with
+        =, +, -, @, \\t, \\r as formulas.  Prefix with a single quote
+        to force text interpretation.
+        """
+        if value and value[0] in ("=", "+", "-", "@", "\t", "\r"):
+            return f"'{value}"
+        return value
+
     def _entry_to_dict(self, entry: AuditEntry, *, redact_detail: bool = False) -> dict[str, Any]:
         """Convert an AuditEntry to a serializable dict."""
         detail = entry.detail
@@ -244,6 +256,10 @@ class AuditExporter:
         for entry in entries:
             d = self._entry_to_dict(entry, redact_detail=redact_detail)
             d["detail"] = json.dumps(d["detail"], sort_keys=True, default=str)
+            # Sanitize all string values to prevent CSV formula injection
+            for k, v in d.items():
+                if isinstance(v, str):
+                    d[k] = self._sanitize_csv_value(v)
             writer.writerow(d)
         content = output.getvalue()
 

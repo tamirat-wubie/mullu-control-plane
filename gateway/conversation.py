@@ -282,23 +282,30 @@ class ConversationManager:
             thread = self._ensure_thread(session, thread_id)
 
             # Topic change detection
+            topic_changed = False
             if self._auto_detect_topics and role == "user" and thread.messages:
                 if detect_topic_change(thread.messages, content):
                     session.topic_changes += 1
-                    # Summarize old context before topic shift
-                    if thread.messages:
-                        thread.summarized_context = summarize_messages(thread.messages)
+                    topic_changed = True
 
             msg = ConversationMessage(
                 role=role, content=content, timestamp=self._clock(),
             )
             thread.messages.append(msg)
 
-            # Compact if over limit
+            # Compact if over limit (includes topic-change context)
             if len(thread.messages) > self._max_messages:
                 old_msgs = thread.messages[:-self._max_messages]
-                thread.summarized_context = summarize_messages(old_msgs)
+                old_summary = summarize_messages(old_msgs)
+                # Preserve existing summary + new compaction
+                if thread.summarized_context:
+                    thread.summarized_context = f"{thread.summarized_context}\n---\n{old_summary}"
+                else:
+                    thread.summarized_context = old_summary
                 thread.messages = thread.messages[-self._max_messages:]
+            elif topic_changed and thread.messages:
+                # Only set topic-change summary if compaction didn't already handle it
+                thread.summarized_context = summarize_messages(thread.messages[:-1])
 
             return thread
 

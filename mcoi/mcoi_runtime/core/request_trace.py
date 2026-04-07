@@ -179,7 +179,7 @@ class _SpanContext:
             detail=self._detail,
         )
         self._builder.add_span(span)
-        return exc_type is not None  # Suppress exceptions within span
+        return False  # Never suppress exceptions — let them propagate
 
 
 class TraceStore:
