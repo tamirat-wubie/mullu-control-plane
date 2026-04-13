@@ -152,6 +152,9 @@ class GovernedSession:
         governed_dispatcher: Any | None = None,
         rate_limiter: Any | None = None,
         session_policy: SessionPolicy | None = None,
+        llm_cache: Any | None = None,
+        usage_tracker: Any | None = None,
+        decision_log: Any | None = None,
     ) -> None:
         self._session_id = session_id
         self._identity_id = identity_id
@@ -168,6 +171,9 @@ class GovernedSession:
         self._governed_dispatcher = governed_dispatcher
         self._rate_limiter = rate_limiter
         self._policy = session_policy
+        self._llm_cache = llm_cache
+        self._usage_tracker = usage_tracker
+        self._decision_log = decision_log
         self._closed = False
         self._operations = 0
         self._llm_calls = 0
@@ -385,19 +391,35 @@ class GovernedSession:
 
         self._certify_proof("session/llm", "allowed")
 
-        # Track context for multi-turn conversations
-        self._add_context("user", prompt)
+        # Check LLM cache before calling provider
+        cache_hit = False
+        if self._llm_cache is not None:
+            cache_result = self._llm_cache.get(self._tenant_id, "default", "default", prompt)
+            if cache_result.hit:
+                result = cache_result.response
+                cache_hit = True
 
-        result = self._llm_bridge.complete(
-            prompt,
-            tenant_id=self._tenant_id,
-            budget_id=f"tenant-{self._tenant_id}",
-            **kwargs,
-        )
+        if not cache_hit:
+            # Track context for multi-turn conversations
+            self._add_context("user", prompt)
 
-        # Track response in context
-        if result.succeeded and result.content:
-            self._add_context("assistant", result.content)
+            result = self._llm_bridge.complete(
+                prompt,
+                tenant_id=self._tenant_id,
+                budget_id=f"tenant-{self._tenant_id}",
+                **kwargs,
+            )
+
+            # Track response in context
+            if result.succeeded and result.content:
+                self._add_context("assistant", result.content)
+
+            # Cache successful responses
+            if self._llm_cache is not None and result.succeeded:
+                self._llm_cache.put(
+                    self._tenant_id, "default", "default", prompt,
+                    result, cost=result.cost,
+                )
 
         # PII redaction on response
         if result.succeeded and result.content:
@@ -411,12 +433,25 @@ class GovernedSession:
         if result.succeeded:
             self._total_cost += result.cost
 
+        # Record to usage tracker
+        if self._usage_tracker is not None and result.succeeded:
+            self._usage_tracker.record_llm(
+                self._tenant_id,
+                tokens_in=result.input_tokens,
+                tokens_out=result.output_tokens,
+                cost=result.cost,
+            )
+
         outcome = "success" if result.succeeded else "error"
         self._record_audit(
             action="session.llm",
             target="llm.complete",
             outcome=outcome,
-            detail={"model": result.model_name, "cost": result.cost, "tokens": result.input_tokens + result.output_tokens},
+            detail={
+                "model": result.model_name, "cost": result.cost,
+                "tokens": result.input_tokens + result.output_tokens,
+                "cache_hit": cache_hit,
+            },
         )
 
         return result
@@ -468,6 +503,8 @@ class GovernedSession:
 
         self._operations += 1
         self._execute_actions += 1
+        if self._usage_tracker is not None:
+            self._usage_tracker.record_skill(self._tenant_id, success=result_detail.get("dispatched", True))
         self._record_audit(
             action="session.execute",
             target=action_type,
@@ -641,6 +678,9 @@ class Platform:
         tenant_gating: Any | None = None,
         governed_dispatcher: Any | None = None,
         rate_limiter: Any | None = None,
+        llm_cache: Any | None = None,
+        usage_tracker: Any | None = None,
+        decision_log: Any | None = None,
         bootstrap_warnings: tuple[str, ...] = (),
         bootstrap_components: dict[str, bool] | None = None,
     ) -> None:
@@ -655,6 +695,9 @@ class Platform:
         self._tenant_gating = tenant_gating
         self._governed_dispatcher = governed_dispatcher
         self._rate_limiter = rate_limiter
+        self._llm_cache = llm_cache
+        self._usage_tracker = usage_tracker
+        self._decision_log = decision_log
         self._bootstrap_warnings = tuple(bootstrap_warnings)
         self._bootstrap_components = dict(bootstrap_components or {})
         self._session_count = 0
@@ -900,6 +943,9 @@ class Platform:
             governed_dispatcher=self._governed_dispatcher,
             rate_limiter=self._rate_limiter,
             session_policy=session_policy,
+            llm_cache=self._llm_cache,
+            usage_tracker=self._usage_tracker,
+            decision_log=self._decision_log,
         )
 
     def resume(
@@ -932,6 +978,9 @@ class Platform:
             tenant_gating=self._tenant_gating,
             governed_dispatcher=self._governed_dispatcher,
             rate_limiter=self._rate_limiter,
+            llm_cache=self._llm_cache,
+            usage_tracker=self._usage_tracker,
+            decision_log=self._decision_log,
         )
         session._restore_from_checkpoint(checkpoint_data)
 
