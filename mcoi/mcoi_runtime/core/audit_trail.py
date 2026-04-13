@@ -14,6 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Callable
@@ -83,6 +84,7 @@ class AuditTrail:
         self._sequence: int = 0
         self._pruned_count: int = 0
         self._store = store
+        self._lock = threading.Lock()
 
     def record(
         self,
@@ -94,7 +96,21 @@ class AuditTrail:
         outcome: str,
         detail: dict[str, Any] | None = None,
     ) -> AuditEntry:
-        """Record an audit entry linked to the hash chain."""
+        """Record an audit entry linked to the hash chain.
+
+        Thread-safe: the entire record operation is serialized to
+        preserve hash chain integrity under concurrent writes.
+        """
+        with self._lock:
+            return self._record_locked(
+                action=action, actor_id=actor_id, tenant_id=tenant_id,
+                target=target, outcome=outcome, detail=detail,
+            )
+
+    def _record_locked(
+        self, *, action: str, actor_id: str, tenant_id: str,
+        target: str, outcome: str, detail: dict[str, Any] | None = None,
+    ) -> AuditEntry:
         self._sequence += 1
         now = self._clock()
         detail = detail or {}
@@ -156,7 +172,8 @@ class AuditTrail:
         limit: int = 50,
     ) -> list[AuditEntry]:
         """Query audit entries with optional filters."""
-        results = self._entries
+        with self._lock:
+            results = list(self._entries)
         if tenant_id is not None:
             results = [e for e in results if e.tenant_id == tenant_id]
         if action is not None:
@@ -172,6 +189,10 @@ class AuditTrail:
 
         Returns (valid, entries_checked).
         """
+        with self._lock:
+            return self._verify_chain_locked()
+
+    def _verify_chain_locked(self) -> tuple[bool, int]:
         if not self._entries:
             return True, 0
 

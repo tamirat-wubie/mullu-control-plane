@@ -111,12 +111,31 @@ class SkillDispatcher:
         *,
         financial_provider: Any | None = None,
         payment_executor: Any | None = None,
+        capability_registry: Any | None = None,
     ) -> None:
         self._financial_provider = financial_provider
         self._payment_executor = payment_executor
+        self._capability_registry = capability_registry
 
     def dispatch(self, intent: SkillIntent, tenant_id: str, identity_id: str) -> dict[str, Any] | None:
-        """Dispatch a skill intent. Returns response dict or None if no handler."""
+        """Dispatch a skill intent. Returns response dict or None if no handler.
+
+        If a capability_registry is configured, checks that an agent with
+        the required capability exists for the tenant before dispatching.
+        """
+        # Capability gate: check an agent can handle this skill
+        if self._capability_registry is not None:
+            agents = self._capability_registry.find_agents_with_capability(
+                intent.skill, tenant_id,
+            )
+            if not agents:
+                return {
+                    "skill": intent.skill,
+                    "action": intent.action,
+                    "response": f"No agent with '{intent.skill}' capability is available.",
+                    "routed": False,
+                }
+
         if intent.skill == "financial":
             return self._dispatch_financial(intent, tenant_id, identity_id)
         return None
