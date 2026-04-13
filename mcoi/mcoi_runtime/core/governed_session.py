@@ -262,6 +262,50 @@ class GovernedSession:
     def llm_calls(self) -> int:
         return self._llm_calls
 
+    # ── Φ_gps Integration ──
+
+    def frame_problem(self, **context: Any) -> dict[str, Any]:
+        """Run Φ_gps Phase 0 (FRAME) on the session context.
+
+        Returns the problem profile, ignorance map, and recommended phases.
+        Cached after first call — re-frames only if context changes.
+        """
+        try:
+            from mcoi_runtime.core.phi_gps import frame_problem
+            result = frame_problem(**context)
+            self._problem_profile = result
+            return result.to_dict()
+        except Exception:
+            return {"error": "framing unavailable"}
+
+    def distinguish_prompt(self, prompt: str) -> dict[str, Any]:
+        """Run Φ_gps Phase 1 (DISTINGUISH) on a prompt.
+
+        Extracts symbols with confidence κ before LLM processing.
+        Useful for understanding what the user is asking about.
+        """
+        try:
+            from mcoi_runtime.core.phi_gps import distinguish
+            result = distinguish(prompt)
+            return result.to_dict()
+        except Exception:
+            return {"symbols": [], "error": "distinction unavailable"}
+
+    def select_strategy(self, **context: Any) -> list[dict[str, Any]]:
+        """Select solving strategies based on problem profile.
+
+        Requires frame_problem() to have been called first.
+        """
+        try:
+            from mcoi_runtime.core.phi_gps import select_strategies, frame_problem as fp
+            profile_result = getattr(self, "_problem_profile", None)
+            if profile_result is None:
+                profile_result = fp(**context)
+            strategies = select_strategies(profile_result.profile)
+            return [{"name": s.name, "score": s.score} for s in strategies]
+        except Exception:
+            return [{"error": "strategy selection unavailable"}]
+
     # ── Governance checks ──
 
     def _require_open(self) -> None:
