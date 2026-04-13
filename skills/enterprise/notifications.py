@@ -105,6 +105,18 @@ class NotificationEngine:
         self._pending: list[Notification] = []
         self._delivered_count = 0
         self._failed_count = 0
+        self._backends: dict[str, Callable[[str, str, str], bool]] = {}
+
+    def register_backend(
+        self,
+        channel: str,
+        backend: Callable[[str, str, str], bool],
+    ) -> None:
+        """Register a delivery backend for a notification channel.
+
+        Backend signature: (recipient, title, body) -> success.
+        """
+        self._backends[channel] = backend
 
     def add_rule(self, rule: NotificationRule) -> None:
         """Add a notification rule for a tenant."""
@@ -157,6 +169,18 @@ class NotificationEngine:
             now = self._clock()
             notif_id = f"notif-{hashlib.sha256(f'{tenant_id}:{rule.rule_id}:{now}'.encode()).hexdigest()[:12]}"
 
+            # Deliver via backend if available
+            delivered = False
+            delivery_error = ""
+            backend = self._backends.get(rule.channel)
+            if backend is not None:
+                try:
+                    delivered = backend(rule.recipient, title, body)
+                except Exception as exc:
+                    delivery_error = f"delivery failed ({type(exc).__name__})"
+            else:
+                delivered = True  # Stub: assume delivered if no backend
+
             notif = Notification(
                 notification_id=notif_id,
                 tenant_id=tenant_id,
@@ -166,8 +190,8 @@ class NotificationEngine:
                 body=body,
                 channel=rule.channel,
                 recipient=rule.recipient,
-                delivered=True,  # Stub: always delivers
-                delivered_at=now,
+                delivered=delivered,
+                delivered_at=now if delivered else "",
                 metadata=metadata or {},
             )
             notifications.append(notif)
@@ -197,4 +221,44 @@ class NotificationEngine:
             "delivered": self._delivered_count,
             "failed": self._failed_count,
             "history_size": len(self._history),
+            "backends": list(self._backends.keys()),
         }
+
+
+def create_smtp_backend(
+    *,
+    host: str,
+    port: int = 587,
+    username: str = "",
+    password: str = "",
+    from_addr: str,
+    use_tls: bool = True,
+) -> Callable[[str, str, str], bool]:
+    """Create an SMTP email delivery backend.
+
+    Returns a callable (recipient, title, body) -> success.
+    """
+    def send_email(recipient: str, title: str, body: str) -> bool:
+        import smtplib
+        from email.mime.text import MIMEText
+
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = title
+        msg["From"] = from_addr
+        msg["To"] = recipient
+
+        try:
+            if use_tls:
+                server = smtplib.SMTP(host, port, timeout=10)
+                server.starttls()
+            else:
+                server = smtplib.SMTP(host, port, timeout=10)
+            if username:
+                server.login(username, password)
+            server.sendmail(from_addr, [recipient], msg.as_string())
+            server.quit()
+            return True
+        except Exception:
+            return False
+
+    return send_email

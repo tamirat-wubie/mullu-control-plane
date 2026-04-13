@@ -64,16 +64,71 @@ def _simple_embedding(text: str, dim: int = 64) -> tuple[float, ...]:
     This provides deterministic, comparable vectors for development.
     """
     h = hashlib.sha256(text.lower().encode()).digest()
-    # Expand hash to fill dimension
     values = []
     for i in range(dim):
         byte_val = h[i % len(h)]
-        values.append((byte_val / 255.0) * 2 - 1)  # Normalize to [-1, 1]
-    # Normalize to unit vector
+        values.append((byte_val / 255.0) * 2 - 1)
     magnitude = math.sqrt(sum(v * v for v in values))
     if magnitude > 0:
         values = [v / magnitude for v in values]
     return tuple(values)
+
+
+class TFIDFEmbedder:
+    """TF-IDF based embedding — better retrieval than hash-based.
+
+    Builds a vocabulary from ingested documents and produces sparse
+    TF-IDF vectors projected to a fixed dimension via hashing trick.
+    No external dependencies required.
+    """
+
+    def __init__(self, dim: int = 128) -> None:
+        self._dim = dim
+        self._doc_freq: dict[str, int] = {}  # term → document count
+        self._total_docs = 0
+
+    def _tokenize(self, text: str) -> list[str]:
+        return [w.lower() for w in text.split() if len(w) > 2]
+
+    def fit_document(self, text: str) -> None:
+        """Update document frequency counts from a new document."""
+        self._total_docs += 1
+        seen: set[str] = set()
+        for token in self._tokenize(text):
+            if token not in seen:
+                self._doc_freq[token] = self._doc_freq.get(token, 0) + 1
+                seen.add(token)
+
+    def embed(self, text: str) -> tuple[float, ...]:
+        """Produce a TF-IDF vector for text, projected to fixed dimension."""
+        tokens = self._tokenize(text)
+        if not tokens:
+            return tuple(0.0 for _ in range(self._dim))
+
+        # Term frequency
+        tf: dict[str, float] = {}
+        for t in tokens:
+            tf[t] = tf.get(t, 0) + 1
+        max_tf = max(tf.values()) if tf else 1
+        for t in tf:
+            tf[t] = 0.5 + 0.5 * (tf[t] / max_tf)  # Augmented TF
+
+        # IDF + hashing trick projection
+        vec = [0.0] * self._dim
+        n = max(self._total_docs, 1)
+        for term, freq in tf.items():
+            df = self._doc_freq.get(term, 0)
+            idf = math.log((n + 1) / (df + 1)) + 1  # Smoothed IDF
+            weight = freq * idf
+            # Hash term to dimension index
+            idx = hash(term) % self._dim
+            vec[idx] += weight
+
+        # L2 normalize
+        mag = math.sqrt(sum(v * v for v in vec))
+        if mag > 0:
+            vec = [v / mag for v in vec]
+        return tuple(vec)
 
 
 def _cosine_similarity(a: tuple[float, ...], b: tuple[float, ...]) -> float:
