@@ -183,17 +183,20 @@ class _SpanContext:
 
 
 class TraceStore:
-    """In-memory trace storage with bounded history."""
+    """In-memory trace storage with bounded history.
+
+    Uses deque(maxlen) for O(1) eviction instead of periodic list slicing
+    that causes GC stalls under sustained throughput.
+    """
 
     MAX_TRACES = 50_000
 
     def __init__(self) -> None:
-        self._traces: list[RequestTrace] = []
+        from collections import deque
+        self._traces: deque[RequestTrace] = deque(maxlen=self.MAX_TRACES)
 
     def store(self, trace: RequestTrace) -> None:
         self._traces.append(trace)
-        if len(self._traces) > self.MAX_TRACES:
-            self._traces = self._traces[-self.MAX_TRACES:]
 
     def get(self, trace_id: str) -> RequestTrace | None:
         for t in reversed(self._traces):
@@ -204,7 +207,7 @@ class TraceStore:
     def query(
         self, *, tenant_id: str = "", outcome: str = "", limit: int = 50,
     ) -> list[RequestTrace]:
-        results = self._traces
+        results = list(self._traces)
         if tenant_id:
             results = [t for t in results if t.tenant_id == tenant_id]
         if outcome:
@@ -218,9 +221,11 @@ class TraceStore:
     def summary(self) -> dict[str, Any]:
         if not self._traces:
             return {"count": 0, "avg_duration_ms": 0}
-        avg = sum(t.total_duration_ms for t in self._traces[-100:]) / min(100, len(self._traces))
+        # Use list() for deque compatibility (deque doesn't support slicing)
+        recent = list(self._traces)[-100:]
+        avg = sum(t.total_duration_ms for t in recent) / len(recent)
         outcomes: dict[str, int] = {}
-        for t in self._traces[-100:]:
+        for t in recent:
             outcomes[t.outcome] = outcomes.get(t.outcome, 0) + 1
         return {
             "count": self.trace_count,

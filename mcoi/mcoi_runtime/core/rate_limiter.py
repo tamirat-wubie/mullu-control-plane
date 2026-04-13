@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any
 
@@ -129,7 +130,7 @@ class RateLimiter:
         self._identity_config = identity_config  # None = no per-identity limiting
         self._configs: dict[str, RateLimitConfig] = {}  # endpoint -> config
         self._identity_configs: dict[str, RateLimitConfig] = {}  # endpoint -> identity config
-        self._buckets: dict[str, TokenBucket] = {}  # "tenant:endpoint" -> bucket
+        self._buckets: OrderedDict[str, TokenBucket] = OrderedDict()  # LRU: "tenant:endpoint" -> bucket
         self._max_buckets = max_buckets
         self._denied_count: int = 0
         self._allowed_count: int = 0
@@ -164,11 +165,13 @@ class RateLimiter:
         return f"{tenant_id}:{identity_id}:{endpoint}"
 
     def _get_bucket(self, key: str, config: RateLimitConfig) -> TokenBucket:
-        if key not in self._buckets:
-            if len(self._buckets) >= self._max_buckets:
-                oldest_key = next(iter(self._buckets))
-                del self._buckets[oldest_key]
-            self._buckets[key] = TokenBucket(config)
+        if key in self._buckets:
+            self._buckets.move_to_end(key)  # Mark as recently used
+            return self._buckets[key]
+        # Evict least recently used if at capacity
+        if len(self._buckets) >= self._max_buckets:
+            self._buckets.popitem(last=False)  # Remove LRU (oldest)
+        self._buckets[key] = TokenBucket(config)
         return self._buckets[key]
 
     def _resolve_config(self, endpoint: str) -> RateLimitConfig:

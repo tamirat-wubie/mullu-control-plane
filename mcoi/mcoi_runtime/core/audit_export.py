@@ -275,6 +275,34 @@ class AuditExporter:
             success=True, content=content, metadata=metadata,
         )
 
+    def stream_jsonl(
+        self,
+        *,
+        tenant_id: str = "",
+        action: str = "",
+        outcome: str = "",
+        actor_id: str = "",
+        limit: int = 0,
+        redact_detail: bool = False,
+    ) -> Any:
+        """Streaming JSONL export — yields one line at a time.
+
+        Use this for large exports to avoid loading all entries into
+        memory at once.  Each yield is a complete JSON line (no newline).
+
+        Usage:
+            for line in exporter.stream_jsonl(tenant_id="t1"):
+                file.write(line + "\\n")
+        """
+        from typing import Generator
+        entries = self._filter_entries(
+            tenant_id=tenant_id, action=action,
+            outcome=outcome, actor_id=actor_id, limit=limit,
+        )
+        for entry in entries:
+            d = self._entry_to_dict(entry, redact_detail=redact_detail)
+            yield json.dumps(d, sort_keys=True, default=str)
+
     @property
     def export_count(self) -> int:
         return self._export_count
