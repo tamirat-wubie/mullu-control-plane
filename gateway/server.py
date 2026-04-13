@@ -22,6 +22,10 @@ from gateway.channels.slack import SlackAdapter
 from gateway.channels.discord import DiscordAdapter
 from gateway.channels.web import WebChatAdapter
 from gateway.session import SessionManager
+from gateway.event_log import WebhookEventLog
+from gateway.signature_verification import (
+    ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
+)
 
 
 def create_gateway_app(platform: Any = None) -> FastAPI:
@@ -36,7 +40,14 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         except Exception:
             platform = None
 
+    from datetime import datetime, timezone
+
+    def _clock() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
+    event_log = WebhookEventLog(clock=_clock)
+    verifier = WebhookVerifier()
     router = GatewayRouter(platform=platform)
     session_mgr = SessionManager()
 
@@ -78,6 +89,24 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     web = WebChatAdapter()
     router.register_channel(web)
 
+    # ── Register signature verifiers from env ──
+    if os.environ.get("WHATSAPP_APP_SECRET"):
+        verifier.register("whatsapp", ChannelVerifierConfig(
+            channel="whatsapp", method=VerificationMethod.HMAC_SHA256,
+            secret=os.environ["WHATSAPP_APP_SECRET"], signature_prefix="sha256=",
+        ))
+    if os.environ.get("SLACK_SIGNING_SECRET"):
+        verifier.register("slack", ChannelVerifierConfig(
+            channel="slack", method=VerificationMethod.HMAC_SHA256,
+            secret=os.environ["SLACK_SIGNING_SECRET"], signature_prefix="v0=",
+            replay_window_seconds=300.0,
+        ))
+    if os.environ.get("DISCORD_PUBLIC_KEY"):
+        verifier.register("discord", ChannelVerifierConfig(
+            channel="discord", method=VerificationMethod.ED25519,
+            secret=os.environ["DISCORD_PUBLIC_KEY"],
+        ))
+
     # ── Health ──
 
     @app.get("/health")
@@ -86,6 +115,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "status": "healthy",
             "gateway": router.summary(),
             "sessions": session_mgr.summary(),
+            "event_log": event_log.summary(),
+            "verifier": verifier.status(),
         }
 
     # ── WhatsApp Webhook ──
@@ -113,11 +144,20 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         if not whatsapp.verify_signature(body, signature):
             raise HTTPException(403, detail="Invalid signature")
         import json
+        import time as _time
+        _t0 = _time.monotonic()
         payload = json.loads(body)
         msg = whatsapp.parse_message(payload)
         if msg is None:
+            event_log.record(channel="whatsapp", sender_id="", status="ignored",
+                             body=body.decode("utf-8", errors="replace")[:200],
+                             headers=dict(request.headers))
             return JSONResponse({"status": "ignored"})
         response = router.handle_message(msg)
+        event_log.record(channel="whatsapp", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
         return JSONResponse({"status": "ok", "response": response.body})
 
     # ── Telegram Webhook ──
@@ -127,12 +167,20 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         """Telegram Bot API webhook (POST)."""
         if telegram is None:
             raise HTTPException(503, detail="Telegram not configured")
-        import json
-        payload = json.loads(await request.body())
+        import json, time as _time
+        _t0 = _time.monotonic()
+        body_bytes = await request.body()
+        payload = json.loads(body_bytes)
         msg = telegram.parse_message(payload)
         if msg is None:
+            event_log.record(channel="telegram", sender_id="", status="ignored",
+                             headers=dict(request.headers))
             return JSONResponse({"status": "ignored"})
         response = router.handle_message(msg)
+        event_log.record(channel="telegram", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
         return JSONResponse({"status": "ok", "response": response.body})
 
     # ── Slack Events API ──
@@ -160,8 +208,16 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
         msg = slack.parse_message(payload)
         if msg is None:
+            event_log.record(channel="slack", sender_id="", status="ignored",
+                             headers=dict(request.headers))
             return JSONResponse({"status": "ignored"})
+        import time as _time
+        _t0 = _time.monotonic()
         response = router.handle_message(msg)
+        event_log.record(channel="slack", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
         return JSONResponse({"status": "ok", "response": response.body})
 
     # ── Discord Interactions ──
@@ -187,9 +243,17 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
         msg = discord.parse_interaction(payload)
         if msg is None:
+            event_log.record(channel="discord", sender_id="", status="ignored",
+                             headers=dict(request.headers))
             return JSONResponse({"status": "ignored"})
+        import time as _time
+        _t0 = _time.monotonic()
         response = router.handle_message(msg)
         # Discord interaction response format
+        event_log.record(channel="discord", sender_id=msg.sender_id,
+                         message_id=msg.message_id, status="processed",
+                         body=msg.body[:200], headers=dict(request.headers),
+                         processing_ms=(_time.monotonic() - _t0) * 1000)
         return JSONResponse({
             "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
             "data": {"content": response.body},
@@ -245,6 +309,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     # Store references for testing
     app.state.router = router
     app.state.session_mgr = session_mgr
+    app.state.event_log = event_log
+    app.state.verifier = verifier
 
     return app
 

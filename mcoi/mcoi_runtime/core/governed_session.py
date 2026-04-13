@@ -847,6 +847,38 @@ class Platform:
                 f"llm bootstrap failed ({type(exc).__name__})"
             )
 
+        # Optional: LLM cache
+        llm_cache = None
+        try:
+            from mcoi_runtime.core.llm_cache import LLMResponseCache
+            llm_cache = LLMResponseCache()
+        except Exception:
+            pass
+
+        # Optional: Tenant usage tracker
+        usage_tracker = None
+        try:
+            from mcoi_runtime.core.tenant_usage_tracker import TenantUsageTracker
+            usage_tracker = TenantUsageTracker()
+        except Exception:
+            pass
+
+        # Optional: Governance decision log
+        decision_log = None
+        try:
+            from mcoi_runtime.core.governance_decision_log import GovernanceDecisionLog
+            decision_log = GovernanceDecisionLog(clock=_clock)
+        except Exception:
+            pass
+
+        # Optional: Cross-session memory
+        cross_session_memory = None
+        try:
+            from mcoi_runtime.core.cross_session_memory import CrossSessionMemory
+            cross_session_memory = CrossSessionMemory(clock=_clock)
+        except Exception:
+            pass
+
         return cls(
             clock=_clock,
             access_runtime=access_runtime,
@@ -861,12 +893,19 @@ class Platform:
                 store=stores["tenant_gating"],
                 allow_unknown_tenants=allow_unknown_tenants,
             ),
+            llm_cache=llm_cache,
+            usage_tracker=usage_tracker,
+            decision_log=decision_log,
             bootstrap_warnings=tuple(bootstrap_warnings),
             bootstrap_components={
                 "access_runtime": access_runtime is not None,
                 "llm_bridge": llm_bridge is not None,
                 "tenant_gating": True,
                 "proof_bridge": True,
+                "llm_cache": llm_cache is not None,
+                "usage_tracker": usage_tracker is not None,
+                "decision_log": decision_log is not None,
+                "cross_session_memory": cross_session_memory is not None,
             },
         )
 
