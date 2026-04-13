@@ -75,6 +75,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         on_reject: Callable[[dict[str, Any]], None] | None = None,
         on_allow: Callable[[dict[str, Any]], None] | None = None,
         proof_bridge: Any | None = None,
+        decision_log: Any | None = None,
     ) -> None:
         super().__init__(app)
         self._chain = guard_chain
@@ -82,6 +83,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         self._on_reject = on_reject
         self._on_allow = on_allow
         self._proof_bridge = proof_bridge
+        self._decision_log = decision_log
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
         path = request.url.path
@@ -123,6 +125,31 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                 self._metrics_fn("requests_governed", 1)
             else:
                 self._metrics_fn("requests_rejected", 1)
+
+        # Record to governance decision log
+        if self._decision_log is not None:
+            try:
+                from mcoi_runtime.core.governance_decision_log import GuardDecisionDetail
+                guards = [
+                    GuardDecisionDetail(
+                        guard_name=r.guard_name,
+                        allowed=r.allowed,
+                        reason=r.reason,
+                    )
+                    for r in result.results
+                ]
+                self._decision_log.record(
+                    tenant_id=tenant_id,
+                    identity_id=context.get("authenticated_subject", ""),
+                    endpoint=path,
+                    method=request.method,
+                    allowed=result.allowed,
+                    blocking_guard=result.blocking_guard,
+                    blocking_reason=result.reason,
+                    guards=guards,
+                )
+            except Exception:
+                pass  # Decision log failure is non-fatal
 
         # Certify governance decision via proof bridge
         if self._proof_bridge is not None:
