@@ -1,8 +1,8 @@
-"""Φ_gps Runtime — Universal Problem Solver (Phases 0-1).
+"""Φ_gps Runtime — Universal Problem Solver (Phases 0-3).
 
-Purpose: Runtime implementation of Φ_gps Phase 0 (FRAME) and Phase 1
-    (DISTINGUISH) from the canonical Φ specification (phi2-gps-v2.2).
-    Bridges the formal specification to executable governance-aware code.
+Purpose: Runtime implementation of Φ_gps Phases 0-3 from the canonical
+    Φ specification (phi2-gps-v2.2).  Bridges the formal specification
+    to executable governance-aware code.
 
 Schema: phi2-gps-v2.2
 Governance scope: problem framing and symbol extraction only.
@@ -465,3 +465,292 @@ _BOUNDARY_WORDS = frozenset({
     "threshold", "cap", "floor", "maximum", "minimum",
     "timeout", "restriction", "requirement", "condition",
 })
+
+
+# ═══════════════════════════════════════════
+# PHASE 2 — ESTIMATE BELIEF
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class BeliefVariable:
+    """A single variable in the belief state."""
+
+    name: str
+    observability: str  # "observable", "noisy", "hidden"
+    value: Any = None
+    confidence: float = 0.5
+    source: str = ""  # "observed", "inferred", "prior", "assumed"
+
+
+@dataclass(frozen=True, slots=True)
+class BeliefState:
+    """Estimated belief about the world state B̂ = P(W | observations, K).
+
+    Separates what is known (observed) from what is inferred (estimated)
+    from what is unknown (prior/assumed).
+    """
+
+    variables: tuple[BeliefVariable, ...]
+    overall_confidence: float  # Weighted average confidence
+    entropy: float  # Information entropy (higher = more uncertain)
+    observation_count: int
+
+    @property
+    def observed_count(self) -> int:
+        return sum(1 for v in self.variables if v.source == "observed")
+
+    @property
+    def hidden_count(self) -> int:
+        return sum(1 for v in self.variables if v.observability == "hidden")
+
+    def get(self, name: str) -> BeliefVariable | None:
+        for v in self.variables:
+            if v.name == name:
+                return v
+        return None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "variables": [
+                {"name": v.name, "observability": v.observability,
+                 "confidence": v.confidence, "source": v.source}
+                for v in self.variables
+            ],
+            "overall_confidence": round(self.overall_confidence, 3),
+            "entropy": round(self.entropy, 3),
+            "observed": self.observed_count,
+            "hidden": self.hidden_count,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class VoIEstimate:
+    """Value of Information estimate for a query."""
+
+    query: str
+    estimated_entropy_reduction: float
+    cost: float = 0.0
+    priority: float = 0.0  # Higher = more valuable to ask
+
+
+def estimate_belief(
+    observations: dict[str, Any],
+    *,
+    prior_knowledge: dict[str, Any] | None = None,
+    hidden_variables: list[str] | None = None,
+) -> BeliefState:
+    """Phase 2 — ESTIMATE BELIEF: Build belief state from observations.
+
+    Classifies each variable as observable/noisy/hidden, assigns
+    confidence based on source, and computes overall belief entropy.
+    """
+    import math
+
+    prior = prior_knowledge or {}
+    hidden = set(hidden_variables or [])
+    variables: list[BeliefVariable] = []
+
+    # Observed variables (high confidence)
+    for name, value in observations.items():
+        variables.append(BeliefVariable(
+            name=name, observability="observable",
+            value=value, confidence=0.9, source="observed",
+        ))
+
+    # Prior knowledge (medium confidence)
+    for name, value in prior.items():
+        if name not in observations:
+            obs = "hidden" if name in hidden else "noisy"
+            variables.append(BeliefVariable(
+                name=name, observability=obs,
+                value=value, confidence=0.5, source="prior",
+            ))
+
+    # Hidden variables (low confidence)
+    for name in hidden:
+        if name not in observations and name not in prior:
+            variables.append(BeliefVariable(
+                name=name, observability="hidden",
+                value=None, confidence=0.1, source="assumed",
+            ))
+
+    # Compute overall confidence and entropy
+    if variables:
+        confidences = [v.confidence for v in variables]
+        overall = sum(confidences) / len(confidences)
+        # Shannon entropy: H = -Σ p·log(p)
+        entropy = -sum(
+            c * math.log(max(c, 1e-10)) + (1 - c) * math.log(max(1 - c, 1e-10))
+            for c in confidences
+        ) / len(confidences)
+    else:
+        overall = 0.0
+        entropy = 0.0
+
+    return BeliefState(
+        variables=tuple(variables),
+        overall_confidence=overall,
+        entropy=entropy,
+        observation_count=len(observations),
+    )
+
+
+def compute_voi(
+    belief: BeliefState,
+    candidate_queries: list[str],
+) -> list[VoIEstimate]:
+    """Compute Value of Information for candidate queries.
+
+    Myopic VoI: estimates entropy reduction if the query is answered.
+    Higher priority = ask this question first.
+    """
+    estimates: list[VoIEstimate] = []
+    for query in candidate_queries:
+        # Find the variable this query would resolve
+        target = belief.get(query)
+        if target is not None and target.confidence < 0.8:
+            reduction = (0.9 - target.confidence) * 0.5  # Expected entropy reduction
+            priority = reduction / max(0.01, 1.0)  # Normalize
+        else:
+            reduction = 0.1
+            priority = 0.1
+        estimates.append(VoIEstimate(
+            query=query,
+            estimated_entropy_reduction=round(reduction, 3),
+            priority=round(priority, 3),
+        ))
+    estimates.sort(key=lambda e: -e.priority)
+    return estimates
+
+
+# ═══════════════════════════════════════════
+# PHASE 3 — GOAL + UTILITY
+# ═══════════════════════════════════════════
+
+class GoalStatus(StrEnum):
+    CRISP = "crisp"           # Goal is clearly defined
+    FUZZY = "fuzzy"           # Goal has imprecise boundaries
+    ABSENT = "absent"         # No goal specified
+    CONTRADICTORY = "contradictory"  # Multiple conflicting goals
+
+
+@dataclass(frozen=True, slots=True)
+class SafetyFloor:
+    """Minimum acceptable state — violation triggers immediate halt."""
+
+    description: str
+    variables: tuple[str, ...]  # Variables that must stay within bounds
+    severity: str = "critical"  # "critical" = halt, "warning" = alert
+
+
+@dataclass(frozen=True, slots=True)
+class GoalRegion:
+    """The satisfying set for the goal (not a single point)."""
+
+    description: str
+    satisfaction_criteria: dict[str, Any]
+    gamma_goal: float = 0.8  # P(satisfied | B_t) threshold
+
+
+@dataclass(frozen=True, slots=True)
+class UtilityStructure:
+    """Four-layer utility structure (§5.3 of spec).
+
+    Priority: safety_floor > goal_satisfaction > optimization > satisficing
+    """
+
+    safety_floor: SafetyFloor
+    goal: GoalRegion
+    optimization_preferences: tuple[str, ...] = ()  # Preference ordering within goal
+    satisficing_threshold: float = 0.7  # "Good enough" threshold
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "safety_floor": {
+                "description": self.safety_floor.description,
+                "variables": list(self.safety_floor.variables),
+                "severity": self.safety_floor.severity,
+            },
+            "goal": {
+                "description": self.goal.description,
+                "gamma_goal": self.goal.gamma_goal,
+                "criteria": self.goal.satisfaction_criteria,
+            },
+            "optimization": list(self.optimization_preferences),
+            "satisficing_threshold": self.satisficing_threshold,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class GoalConstructionResult:
+    """Output of Phase 3 (GOAL + UTILITY)."""
+
+    goal_status: GoalStatus
+    utility: UtilityStructure
+    tradeoffs: tuple[str, ...] = ()  # Recorded tradeoffs if goal was contradictory
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "goal_status": self.goal_status.value,
+            "utility": self.utility.to_dict(),
+            "tradeoffs": list(self.tradeoffs),
+        }
+
+
+def construct_goal(
+    *,
+    description: str = "",
+    safety_variables: list[str] | None = None,
+    satisfaction_criteria: dict[str, Any] | None = None,
+    optimization_preferences: list[str] | None = None,
+    contradictions: list[str] | None = None,
+    gamma_goal: float = 0.8,
+    satisficing: float = 0.7,
+) -> GoalConstructionResult:
+    """Phase 3 — CONSTRUCT GOAL + UTILITY.
+
+    Builds the four-layer utility structure from goal description,
+    safety constraints, satisfaction criteria, and preferences.
+    """
+    # Classify goal status
+    if contradictions:
+        status = GoalStatus.CONTRADICTORY
+    elif not description and not satisfaction_criteria:
+        status = GoalStatus.ABSENT
+    elif satisfaction_criteria:
+        status = GoalStatus.CRISP
+    else:
+        status = GoalStatus.FUZZY
+
+    # Safety floor
+    safety = SafetyFloor(
+        description="System safety constraints",
+        variables=tuple(safety_variables or []),
+    )
+
+    # Goal region
+    goal = GoalRegion(
+        description=description or "No explicit goal",
+        satisfaction_criteria=satisfaction_criteria or {},
+        gamma_goal=gamma_goal,
+    )
+
+    # Build utility structure
+    utility = UtilityStructure(
+        safety_floor=safety,
+        goal=goal,
+        optimization_preferences=tuple(optimization_preferences or []),
+        satisficing_threshold=satisficing,
+    )
+
+    # Record tradeoffs for contradictory goals
+    tradeoffs: list[str] = []
+    if contradictions:
+        for c in contradictions:
+            tradeoffs.append(f"tradeoff: {c}")
+
+    return GoalConstructionResult(
+        goal_status=status,
+        utility=utility,
+        tradeoffs=tuple(tradeoffs),
+    )
