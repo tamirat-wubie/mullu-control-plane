@@ -182,6 +182,8 @@ class GovernedSession:
         self._context_messages: list[dict[str, str]] = []
         self._max_context_messages = 50
         self._compaction_count = 0
+        self._auto_checkpoint_interval = 0  # 0 = disabled
+        self._session_store: Any | None = None
 
     # ── Context Compaction ──
 
@@ -454,6 +456,7 @@ class GovernedSession:
             },
         )
 
+        self._maybe_checkpoint()
         return result
 
     def execute(self, action_type: str, **bindings: Any) -> dict[str, Any]:
@@ -512,6 +515,7 @@ class GovernedSession:
             detail=result_detail,
         )
 
+        self._maybe_checkpoint()
         return {**result_detail, "governed": True}
 
     def query(self, resource_type: str, **filters: Any) -> dict[str, Any]:
@@ -533,6 +537,7 @@ class GovernedSession:
             detail={"filters": filters},
         )
 
+        self._maybe_checkpoint()
         return {"resource_type": resource_type, "filters": filters, "governed": True}
 
     # ── Identity & access ──
@@ -561,6 +566,32 @@ class GovernedSession:
                 },
             )
             return False
+
+    # ── Auto-checkpoint ──
+
+    def enable_auto_checkpoint(self, *, interval: int, store: Any) -> None:
+        """Enable auto-checkpoint every N operations.
+
+        Args:
+            interval: Checkpoint every N operations (e.g., 5).
+            store: SessionStore instance to save checkpoints to.
+        """
+        self._auto_checkpoint_interval = interval
+        self._session_store = store
+
+    def _maybe_checkpoint(self) -> None:
+        """Auto-checkpoint if interval reached."""
+        if self._auto_checkpoint_interval <= 0 or self._session_store is None:
+            return
+        if self._operations > 0 and self._operations % self._auto_checkpoint_interval == 0:
+            try:
+                data = self.checkpoint()
+                from mcoi_runtime.persistence.session_store import SessionCheckpoint
+                cp = SessionCheckpoint.from_dict(dict(data))
+                if cp is not None:
+                    self._session_store.save(cp)
+            except Exception:
+                pass  # Auto-checkpoint failure is non-fatal
 
     # ── Session persistence ──
 

@@ -265,6 +265,21 @@ def normalize_content(text: str) -> str:
     if decoded_parts:
         normalized = normalized + " " + " ".join(decoded_parts)
 
+    # 5. Decode HTML entities (&#82;&#101;... → Re...)
+    import html
+    html_decoded = html.unescape(normalized)
+    if html_decoded != normalized:
+        normalized = normalized + " " + html_decoded
+
+    # 6. Decode percent-encoded sequences (%52%65... → Re...)
+    try:
+        from urllib.parse import unquote
+        url_decoded = unquote(normalized)
+        if url_decoded != normalized:
+            normalized = normalized + " " + url_decoded
+    except Exception:
+        pass
+
     return normalized
 
 

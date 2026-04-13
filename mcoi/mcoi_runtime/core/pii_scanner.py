@@ -143,7 +143,25 @@ BUILTIN_PATTERNS: tuple[PIIPattern, ...] = (
         category=PIICategory.SSN,
         pattern=r"\b\d{3}-\d{2}-\d{4}\b",
         redaction_mode=RedactionMode.FULL,
-        description="US Social Security Numbers",
+        description="US Social Security Numbers (hyphenated)",
+    ),
+    PIIPattern(
+        category=PIICategory.SSN,
+        pattern=r"\b(?<!\d)\d{9}(?!\d)\b",
+        redaction_mode=RedactionMode.FULL,
+        description="US Social Security Numbers (non-hyphenated 9 digits)",
+    ),
+    PIIPattern(
+        category=PIICategory.SSN,
+        pattern=r"\b\d{3}\s\d{3}\s\d{3}\b",
+        redaction_mode=RedactionMode.FULL,
+        description="Canadian Social Insurance Numbers (SIN)",
+    ),
+    PIIPattern(
+        category=PIICategory.SSN,
+        pattern=r"\b[A-CEGHJ-PR-TW-Z]{2}\s?\d{2}\s?\d{2}\s?\d{2}\s?[A-D]\b",
+        redaction_mode=RedactionMode.FULL,
+        description="UK National Insurance Numbers (NIIN)",
     ),
     PIIPattern(
         category=PIICategory.CREDIT_CARD,
