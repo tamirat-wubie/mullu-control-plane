@@ -1,4 +1,4 @@
-"""Φ_gps Runtime Tests — Phases 0-4.5."""
+"""Φ_gps Runtime Tests — Phases 0-7.5."""
 
 import pytest
 from mcoi_runtime.core.phi_gps import (
@@ -8,19 +8,25 @@ from mcoi_runtime.core.phi_gps import (
     DiscoveredNorm,
     DistinguishResult,
     EpisodeModelSet,
+    FeasibilityResult,
     FrameResult,
     GoalConstructionResult,
     GoalStatus,
     IgnoranceMap,
+    InvariantGrade,
     KnowledgeLevel,
     LawDiscoveryResult,
     LawType,
     ModelStatus,
     NormKind,
     ProfileVector,
+    ProofSketch,
+    ProofState,
     ResourceLevel,
     Symbol,
     UtilityStructure,
+    build_proof_sketch,
+    check_feasibility,
     compute_voi,
     construct_goal,
     discover_laws,
@@ -550,3 +556,136 @@ class TestFreezeModels:
         assert model.is_frozen is True
         assert model.law_count >= 4
         assert model.norm_count >= 2
+
+
+# ── Phase 7: FEASIBILITY ──────────────────────────────────────
+
+class TestFeasibility:
+    def _model(self):
+        laws = discover_laws(domain="test", constraints=["x > 0"])
+        belief = estimate_belief({"x": 5})
+        goal = construct_goal(description="test", satisfaction_criteria={"done": True})
+        return freeze_models(laws=laws, belief=belief, goal=goal)
+
+    def test_feasible_problem(self):
+        model = self._model()
+        result = check_feasibility(model=model)
+        assert result.feasible is True
+        assert result.solvability == "feasible"
+
+    def test_hard_invariant_violation(self):
+        model = self._model()
+        result = check_feasibility(
+            model=model,
+            current_state={"balance": 100},
+            goal_state={"balance": -50},
+            invariant_specs=[{
+                "name": "balance", "grade": "hard",
+                "confidence": 0.99, "n_observed": 25,
+                "reachable": False,
+            }],
+        )
+        assert result.feasible is False
+        assert "balance" in result.hard_violations
+
+    def test_soft_warning(self):
+        model = self._model()
+        result = check_feasibility(
+            model=model,
+            current_state={"latency": 500},
+            goal_state={"latency": 50},
+            invariant_specs=[{
+                "name": "latency", "grade": "soft",
+                "confidence": 0.8, "reachable": False,
+            }],
+        )
+        assert result.feasible is True  # Soft doesn't block
+        assert "latency" in result.soft_warnings
+
+    def test_candidate_ignored(self):
+        model = self._model()
+        result = check_feasibility(
+            model=model,
+            invariant_specs=[{
+                "name": "hunch", "grade": "candidate",
+                "confidence": 0.3, "reachable": False,
+            }],
+        )
+        assert result.feasible is True  # Candidates don't gate
+
+    def test_laws_become_invariants(self):
+        model = self._model()
+        result = check_feasibility(model=model)
+        assert result.hard_count >= 2  # Universal governance laws
+
+    def test_to_dict(self):
+        model = self._model()
+        d = check_feasibility(model=model).to_dict()
+        assert "feasible" in d
+        assert "solvability" in d
+        assert "invariants" in d
+
+
+# ── Phase 7.5: PROOF SKETCH ───────────────────────────────────
+
+class TestProofSketch:
+    def _setup(self):
+        laws = discover_laws(domain="finance", constraints=["balance >= 0"])
+        belief = estimate_belief({"balance": 100})
+        goal = construct_goal(description="transfer", satisfaction_criteria={"done": True})
+        model = freeze_models(laws=laws, belief=belief, goal=goal)
+        feasibility = check_feasibility(model=model)
+        return model, feasibility
+
+    def test_feasible_sketch(self):
+        model, feasibility = self._setup()
+        sketch = build_proof_sketch(sub_goal="transfer_funds", feasibility=feasibility, model=model)
+        assert sketch.pi_goal == ProofState.PASS
+        assert sketch.pi_law == ProofState.PASS
+
+    def test_infeasible_sketch(self):
+        model, _ = self._setup()
+        infeasible = FeasibilityResult(
+            feasible=False, invariants=(),
+            hard_violations=("balance",), soft_warnings=(), solvability="infeasible",
+        )
+        sketch = build_proof_sketch(sub_goal="overdraft", feasibility=infeasible, model=model)
+        assert sketch.pi_goal == ProofState.FAIL
+        assert sketch.pi_law == ProofState.FAIL
+        assert sketch.is_verified is False
+
+    def test_unknown_side_effects(self):
+        model, feasibility = self._setup()
+        sketch = build_proof_sketch(sub_goal="action", feasibility=feasibility, model=model)
+        assert sketch.pi_side_effect == ProofState.UNKNOWN
+        assert sketch.has_unknown is True
+
+    def test_to_dict(self):
+        model, feasibility = self._setup()
+        d = build_proof_sketch(sub_goal="test", feasibility=feasibility, model=model).to_dict()
+        assert d["sub_goal"] == "test"
+        assert "verified" in d
+        assert "has_unknown" in d
+
+    def test_full_pipeline_0_through_7_5(self):
+        """Full Phase 0 → 7.5 pipeline."""
+        frame = frame_problem(world_partial=True, goal_known=True)
+        symbols = distinguish("Transfer $500 from Alice to Bob")
+        belief = estimate_belief({"balance": 1000}, hidden_variables=["fraud_risk"])
+        goal = construct_goal(
+            description="Transfer $500",
+            safety_variables=["balance_non_negative"],
+            satisfaction_criteria={"transferred": True},
+        )
+        laws = discover_laws(domain="finance", constraints=["balance >= 0"], prohibitions=["overdraft"])
+        model = freeze_models(laws=laws, belief=belief, goal=goal, clock=lambda: "now")
+        feasibility = check_feasibility(model=model)
+        sketch = build_proof_sketch(sub_goal="transfer", feasibility=feasibility, model=model)
+
+        assert frame.profile.k_goal == KnowledgeLevel.KNOWN
+        assert symbols.symbol_count > 0
+        assert belief.overall_confidence > 0
+        assert goal.goal_status == GoalStatus.CRISP
+        assert model.is_frozen is True
+        assert feasibility.feasible is True
+        assert sketch.pi_goal == ProofState.PASS

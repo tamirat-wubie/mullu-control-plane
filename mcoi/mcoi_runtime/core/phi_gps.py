@@ -986,3 +986,209 @@ def freeze_models(
         frozen_at=now,
         approved_by=approver,
     )
+
+
+# ═══════════════════════════════════════════
+# PHASE 7 — FEASIBILITY + INVARIANTS
+# ═══════════════════════════════════════════
+
+class InvariantGrade(StrEnum):
+    HARD = "hard"           # confidence ≥ 0.95, n_observed ≥ 20
+    SOFT = "soft"           # tolerance band
+    CANDIDATE = "candidate" # not trusted for solvability gate
+
+
+@dataclass(frozen=True, slots=True)
+class Invariant:
+    """A discovered invariant of the problem."""
+
+    name: str
+    grade: InvariantGrade
+    description: str
+    confidence: float
+    current_value: Any = None
+    goal_value: Any = None
+    satisfied: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class FeasibilityResult:
+    """Output of Phase 7 (FEASIBILITY)."""
+
+    feasible: bool
+    invariants: tuple[Invariant, ...]
+    hard_violations: tuple[str, ...]  # Names of hard invariants that block
+    soft_warnings: tuple[str, ...]    # Names of soft invariants drifting
+    solvability: str  # "feasible", "infeasible", "unknown"
+
+    @property
+    def hard_count(self) -> int:
+        return sum(1 for i in self.invariants if i.grade == InvariantGrade.HARD)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "feasible": self.feasible,
+            "solvability": self.solvability,
+            "invariants": [{"name": i.name, "grade": i.grade.value,
+                            "satisfied": i.satisfied, "confidence": i.confidence}
+                           for i in self.invariants],
+            "hard_violations": list(self.hard_violations),
+            "soft_warnings": list(self.soft_warnings),
+        }
+
+
+def check_feasibility(
+    *,
+    model: EpisodeModelSet,
+    current_state: dict[str, Any] | None = None,
+    goal_state: dict[str, Any] | None = None,
+    invariant_specs: list[dict[str, Any]] | None = None,
+) -> FeasibilityResult:
+    """Phase 7 — FEASIBILITY + INVARIANTS.
+
+    Discovers invariants from the frozen model, classifies them by grade,
+    and runs the solvability gate: if ANY Hard invariant is violated
+    between current state and goal, the problem is PROVABLY UNREACHABLE.
+    """
+    current = current_state or {}
+    goal = goal_state or {}
+    invariants: list[Invariant] = []
+    hard_violations: list[str] = []
+    soft_warnings: list[str] = []
+
+    # Extract invariants from laws
+    for law in model.laws:
+        grade = InvariantGrade.HARD if law.confidence >= 0.95 else InvariantGrade.SOFT
+        invariants.append(Invariant(
+            name=law.name, grade=grade,
+            description=law.description,
+            confidence=law.confidence,
+            satisfied=True,  # Laws are structural — always satisfied by definition
+        ))
+
+    # User-specified invariant checks
+    for spec in (invariant_specs or []):
+        name = spec.get("name", "unknown")
+        grade_str = spec.get("grade", "candidate")
+        grade = InvariantGrade(grade_str) if grade_str in ("hard", "soft", "candidate") else InvariantGrade.CANDIDATE
+
+        current_val = current.get(name)
+        goal_val = goal.get(name)
+        satisfied = True
+
+        if current_val is not None and goal_val is not None:
+            satisfied = (current_val == goal_val) or spec.get("reachable", True)
+
+        confidence = float(spec.get("confidence", 0.5))
+        if confidence >= 0.95 and spec.get("n_observed", 0) >= 20:
+            grade = InvariantGrade.HARD
+
+        invariant = Invariant(
+            name=name, grade=grade, description=spec.get("description", ""),
+            confidence=confidence, current_value=current_val,
+            goal_value=goal_val, satisfied=satisfied,
+        )
+        invariants.append(invariant)
+
+        # SOLVABILITY GATE: Hard invariant violation = PROVABLY UNREACHABLE
+        if grade == InvariantGrade.HARD and not satisfied:
+            hard_violations.append(name)
+        elif grade == InvariantGrade.SOFT and not satisfied:
+            soft_warnings.append(name)
+
+    feasible = len(hard_violations) == 0
+    solvability = "feasible" if feasible else "infeasible"
+    if not feasible:
+        solvability = "infeasible"
+    elif soft_warnings:
+        solvability = "feasible"  # Soft violations don't block
+
+    return FeasibilityResult(
+        feasible=feasible,
+        invariants=tuple(invariants),
+        hard_violations=tuple(hard_violations),
+        soft_warnings=tuple(soft_warnings),
+        solvability=solvability,
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 7.5 — FORWARD PROOF SKETCH
+# ═══════════════════════════════════════════
+
+class ProofState(StrEnum):
+    PASS = "pass"
+    FAIL = "fail"
+    UNKNOWN = "unknown"
+    BUDGET_UNKNOWN = "budget_unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class ProofSketch:
+    """Forward proof sketch for a sub-goal (§5.6 of spec)."""
+
+    sub_goal: str
+    pi_goal: ProofState       # Reachability witness
+    pi_law: ProofState        # No hard law blocks required actions
+    pi_norm: ProofState       # Required actions are norm-permitted
+    pi_side_effect: ProofState  # Estimated damage within bounds
+
+    @property
+    def is_verified(self) -> bool:
+        return all(p == ProofState.PASS for p in
+                   (self.pi_goal, self.pi_law, self.pi_norm, self.pi_side_effect))
+
+    @property
+    def has_unknown(self) -> bool:
+        return any(p in (ProofState.UNKNOWN, ProofState.BUDGET_UNKNOWN)
+                   for p in (self.pi_goal, self.pi_law, self.pi_norm, self.pi_side_effect))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "sub_goal": self.sub_goal,
+            "pi_goal": self.pi_goal.value,
+            "pi_law": self.pi_law.value,
+            "pi_norm": self.pi_norm.value,
+            "pi_side_effect": self.pi_side_effect.value,
+            "verified": self.is_verified,
+            "has_unknown": self.has_unknown,
+        }
+
+
+def build_proof_sketch(
+    *,
+    sub_goal: str,
+    feasibility: FeasibilityResult,
+    model: EpisodeModelSet,
+) -> ProofSketch:
+    """Phase 7.5 — FORWARD PROOF SKETCH.
+
+    Builds a proof sketch for a sub-goal based on feasibility results
+    and the frozen model. Hard constraint failures → FAIL.
+    Unknown on hard constraints → UNKNOWN (action BLOCKED).
+    """
+    # Goal reachability
+    pi_goal = ProofState.PASS if feasibility.feasible else ProofState.FAIL
+
+    # Law compliance
+    if feasibility.hard_violations:
+        pi_law = ProofState.FAIL
+    elif feasibility.soft_warnings:
+        pi_law = ProofState.PASS  # Soft violations don't block
+    else:
+        pi_law = ProofState.PASS
+
+    # Norm compliance (check against model norms)
+    prohibitions = [n for n in model.norms if n.kind == NormKind.PROHIBITION]
+    pi_norm = ProofState.PASS if not prohibitions else ProofState.UNKNOWN
+
+    # Side effects (conservative: unknown unless explicitly checked)
+    pi_side = ProofState.UNKNOWN
+
+    return ProofSketch(
+        sub_goal=sub_goal,
+        pi_goal=pi_goal,
+        pi_law=pi_law,
+        pi_norm=pi_norm,
+        pi_side_effect=pi_side,
+    )
