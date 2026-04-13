@@ -754,3 +754,235 @@ def construct_goal(
         utility=utility,
         tradeoffs=tuple(tradeoffs),
     )
+
+
+# ═══════════════════════════════════════════
+# PHASE 4 — DISCOVER LAWS + NORMS
+# ═══════════════════════════════════════════
+
+class LawType(StrEnum):
+    PHYSICAL = "physical"
+    LOGICAL = "logical"
+    MATHEMATICAL = "mathematical"
+
+
+class NormKind(StrEnum):
+    PERMISSION = "permission"
+    PROHIBITION = "prohibition"
+    SOCIAL = "social_expectation"
+    GOVERNANCE = "governance_rule"
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoveredLaw:
+    """A hard law discovered during problem analysis."""
+
+    name: str
+    law_type: LawType
+    description: str
+    confidence: float  # κ ∈ [0, 1]
+    falsification_condition: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class DiscoveredNorm:
+    """A norm governing agent behavior."""
+
+    name: str
+    kind: NormKind
+    description: str
+    authority_level: int = 10  # 0 = highest (USCL/Φ_gov), 10 = default
+    scope: str = "global"
+    conflict_resolution: str = "escalate"  # "prohibitive", "permissive", "escalate"
+
+
+@dataclass(frozen=True, slots=True)
+class LawDiscoveryResult:
+    """Output of Phase 4."""
+
+    laws: tuple[DiscoveredLaw, ...]
+    norms: tuple[DiscoveredNorm, ...]
+    resource_constraints: dict[str, Any]
+
+    @property
+    def hard_law_count(self) -> int:
+        return sum(1 for l in self.laws if l.confidence >= 0.95)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "laws": [{"name": l.name, "type": l.law_type.value,
+                      "confidence": l.confidence} for l in self.laws],
+            "norms": [{"name": n.name, "kind": n.kind.value,
+                       "authority": n.authority_level} for n in self.norms],
+            "resources": self.resource_constraints,
+            "hard_laws": self.hard_law_count,
+        }
+
+
+def discover_laws(
+    *,
+    domain: str = "",
+    constraints: list[str] | None = None,
+    permissions: list[str] | None = None,
+    prohibitions: list[str] | None = None,
+    resource_limits: dict[str, Any] | None = None,
+) -> LawDiscoveryResult:
+    """Phase 4 — DISCOVER LAWS + NORMS + RESOURCES.
+
+    Identifies hard laws (physical/logical/mathematical impossibilities),
+    norms (permissions, prohibitions, social expectations), and resource
+    constraints that bound the solution space.
+    """
+    laws: list[DiscoveredLaw] = []
+    norms: list[DiscoveredNorm] = []
+
+    # Domain-specific hard laws
+    if domain:
+        laws.append(DiscoveredLaw(
+            name="domain_boundary",
+            law_type=LawType.LOGICAL,
+            description="Solution must operate within specified domain",
+            confidence=1.0,
+        ))
+
+    # User-specified constraints become laws
+    for idx, c in enumerate(constraints or []):
+        laws.append(DiscoveredLaw(
+            name="constraint_{}".format(idx),
+            law_type=LawType.LOGICAL,
+            description=c,
+            confidence=0.95,
+            falsification_condition="constraint violation",
+        ))
+
+    # Universal governance laws (always present)
+    laws.append(DiscoveredLaw(
+        name="identity_preservation",
+        law_type=LawType.LOGICAL,
+        description="System identity invariants must be preserved",
+        confidence=1.0,
+    ))
+    laws.append(DiscoveredLaw(
+        name="audit_completeness",
+        law_type=LawType.LOGICAL,
+        description="Every state change must be audited",
+        confidence=1.0,
+    ))
+
+    # Permissions → norms
+    for idx, p in enumerate(permissions or []):
+        norms.append(DiscoveredNorm(
+            name="permit_{}".format(idx),
+            kind=NormKind.PERMISSION,
+            description=p,
+            conflict_resolution="permissive",
+        ))
+
+    # Prohibitions → norms (higher authority)
+    for idx, p in enumerate(prohibitions or []):
+        norms.append(DiscoveredNorm(
+            name="prohibit_{}".format(idx),
+            kind=NormKind.PROHIBITION,
+            description=p,
+            authority_level=2,
+            conflict_resolution="prohibitive",
+        ))
+
+    # Governance norms (always present)
+    norms.append(DiscoveredNorm(
+        name="governance_authority",
+        kind=NormKind.GOVERNANCE,
+        description="All state writes require Φ_gov authority",
+        authority_level=0,
+        conflict_resolution="prohibitive",
+    ))
+
+    return LawDiscoveryResult(
+        laws=tuple(laws),
+        norms=tuple(norms),
+        resource_constraints=resource_limits or {},
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 4.5 — APPROVE + FREEZE MODELS
+# ═══════════════════════════════════════════
+
+class ModelStatus(StrEnum):
+    PROPOSED = "proposed"
+    APPROVED = "approved"
+    FROZEN = "frozen"
+    DEPRECATED = "deprecated"
+    QUARANTINED = "quarantined"
+
+
+@dataclass(frozen=True, slots=True)
+class EpisodeModelSet:
+    """Frozen model set for an execution episode (§5.8 of spec).
+
+    Once frozen, execution uses ONLY these models. Proposed changes
+    accumulate as ΔM but are NEVER applied during the episode.
+    They are reviewed by Φ_gov after Phase 12 verification.
+    """
+
+    model_id: str
+    laws: tuple[DiscoveredLaw, ...]
+    norms: tuple[DiscoveredNorm, ...]
+    belief: Any  # BeliefState from Phase 2
+    goal: Any  # GoalConstructionResult from Phase 3
+    status: ModelStatus
+    frozen_at: str = ""
+    approved_by: str = ""
+
+    @property
+    def is_frozen(self) -> bool:
+        return self.status == ModelStatus.FROZEN
+
+    @property
+    def law_count(self) -> int:
+        return len(self.laws)
+
+    @property
+    def norm_count(self) -> int:
+        return len(self.norms)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "model_id": self.model_id,
+            "status": self.status.value,
+            "laws": self.law_count,
+            "norms": self.norm_count,
+            "frozen_at": self.frozen_at,
+            "approved_by": self.approved_by,
+            "is_frozen": self.is_frozen,
+        }
+
+
+def freeze_models(
+    *,
+    laws: LawDiscoveryResult,
+    belief: Any,
+    goal: Any,
+    approver: str = "phi_gov",
+    clock: Any = None,
+) -> EpisodeModelSet:
+    """Phase 4.5 — APPROVE + FREEZE MODELS.
+
+    Creates an immutable EpisodeModelSet from the outputs of Phases 2-4.
+    Once frozen, execution uses ONLY these models. Changes accumulate
+    as proposals, reviewed post-episode by Φ_gov.
+    """
+    import hashlib
+    now = clock() if clock else ""
+    model_id = f"model-{hashlib.sha256(f'{now}:{len(laws.laws)}'.encode()).hexdigest()[:12]}"
+
+    return EpisodeModelSet(
+        model_id=model_id,
+        laws=laws.laws,
+        norms=laws.norms,
+        belief=belief,
+        goal=goal,
+        status=ModelStatus.FROZEN,
+        frozen_at=now,
+        approved_by=approver,
+    )

@@ -1,24 +1,33 @@
-"""Φ_gps Runtime Tests — Phase 0 (FRAME) + Phase 1 (DISTINGUISH) + Phase 2 (BELIEF) + Phase 3 (GOAL)."""
+"""Φ_gps Runtime Tests — Phases 0-4.5."""
 
 import pytest
 from mcoi_runtime.core.phi_gps import (
     AgentMode,
     BeliefState,
+    DiscoveredLaw,
+    DiscoveredNorm,
     DistinguishResult,
+    EpisodeModelSet,
     FrameResult,
     GoalConstructionResult,
     GoalStatus,
     IgnoranceMap,
     KnowledgeLevel,
+    LawDiscoveryResult,
+    LawType,
+    ModelStatus,
+    NormKind,
     ProfileVector,
     ResourceLevel,
     Symbol,
     UtilityStructure,
     compute_voi,
     construct_goal,
+    discover_laws,
     distinguish,
     estimate_belief,
     frame_problem,
+    freeze_models,
     select_strategies,
 )
 
@@ -396,3 +405,148 @@ class TestConstructGoal:
         assert u.goal.gamma_goal > 0  # Second
         assert len(u.optimization_preferences) > 0  # Third
         assert u.satisficing_threshold > 0  # Fourth
+
+
+# ── Phase 4: DISCOVER LAWS ────────────────────────────────────
+
+class TestDiscoverLaws:
+    def test_domain_law(self):
+        result = discover_laws(domain="finance")
+        assert any(l.name == "domain_boundary" for l in result.laws)
+
+    def test_constraints_become_laws(self):
+        result = discover_laws(constraints=["balance >= 0", "amount > 0"])
+        assert len(result.laws) >= 4  # 2 constraints + 2 universal
+
+    def test_universal_governance_laws(self):
+        result = discover_laws()
+        names = {l.name for l in result.laws}
+        assert "identity_preservation" in names
+        assert "audit_completeness" in names
+
+    def test_hard_law_confidence(self):
+        result = discover_laws()
+        for l in result.laws:
+            if l.name in ("identity_preservation", "audit_completeness"):
+                assert l.confidence == 1.0
+
+    def test_permissions(self):
+        result = discover_laws(permissions=["read data", "send email"])
+        perms = [n for n in result.norms if n.kind == NormKind.PERMISSION]
+        assert len(perms) == 2
+
+    def test_prohibitions(self):
+        result = discover_laws(prohibitions=["delete production data"])
+        prohibs = [n for n in result.norms if n.kind == NormKind.PROHIBITION]
+        assert len(prohibs) == 1
+        assert prohibs[0].authority_level == 2  # Higher authority
+
+    def test_governance_norm_always_present(self):
+        result = discover_laws()
+        gov = [n for n in result.norms if n.kind == NormKind.GOVERNANCE]
+        assert len(gov) >= 1
+        assert gov[0].authority_level == 0  # Highest
+
+    def test_resource_constraints(self):
+        result = discover_laws(resource_limits={"time": 60, "budget": 100})
+        assert result.resource_constraints["time"] == 60
+
+    def test_hard_law_count(self):
+        result = discover_laws(constraints=["must be positive"])
+        assert result.hard_law_count >= 2  # Universal laws always hard
+
+    def test_to_dict(self):
+        result = discover_laws(domain="test", constraints=["x > 0"])
+        d = result.to_dict()
+        assert "laws" in d
+        assert "norms" in d
+        assert "hard_laws" in d
+
+
+# ── Phase 4.5: FREEZE MODELS ─────────────────────────────────
+
+class TestFreezeModels:
+    def _setup(self):
+        laws = discover_laws(domain="test", constraints=["x > 0"])
+        belief = estimate_belief({"x": 5})
+        goal = construct_goal(description="test", satisfaction_criteria={"done": True})
+        return laws, belief, goal
+
+    def test_freeze_creates_frozen_model(self):
+        laws, belief, goal = self._setup()
+        model = freeze_models(laws=laws, belief=belief, goal=goal,
+                              clock=lambda: "2026-04-07T12:00:00Z")
+        assert model.is_frozen is True
+        assert model.status == ModelStatus.FROZEN
+
+    def test_model_has_id(self):
+        laws, belief, goal = self._setup()
+        model = freeze_models(laws=laws, belief=belief, goal=goal,
+                              clock=lambda: "2026-04-07T12:00:00Z")
+        assert model.model_id.startswith("model-")
+
+    def test_model_contains_laws(self):
+        laws, belief, goal = self._setup()
+        model = freeze_models(laws=laws, belief=belief, goal=goal)
+        assert model.law_count >= 3
+
+    def test_model_contains_norms(self):
+        laws, belief, goal = self._setup()
+        model = freeze_models(laws=laws, belief=belief, goal=goal)
+        assert model.norm_count >= 1
+
+    def test_approved_by(self):
+        laws, belief, goal = self._setup()
+        model = freeze_models(laws=laws, belief=belief, goal=goal, approver="admin")
+        assert model.approved_by == "admin"
+
+    def test_to_dict(self):
+        laws, belief, goal = self._setup()
+        model = freeze_models(laws=laws, belief=belief, goal=goal,
+                              clock=lambda: "now")
+        d = model.to_dict()
+        assert d["is_frozen"] is True
+        assert d["status"] == "frozen"
+        assert "model_id" in d
+
+    def test_full_pipeline_0_through_4_5(self):
+        """Full Phase 0 → 1 → 2 → 3 → 4 → 4.5 pipeline."""
+        # Phase 0
+        frame = frame_problem(world_partial=True, goal_known=True)
+        assert frame.profile.k_goal == KnowledgeLevel.KNOWN
+
+        # Phase 1
+        symbols = distinguish("Transfer $500 from Alice to Bob")
+        assert symbols.symbol_count > 0
+
+        # Phase 2
+        belief = estimate_belief(
+            {"balance": 1000, "recipient": "Bob"},
+            hidden_variables=["fraud_risk"],
+        )
+        assert belief.overall_confidence > 0
+
+        # Phase 3
+        goal = construct_goal(
+            description="Transfer $500",
+            safety_variables=["balance_non_negative"],
+            satisfaction_criteria={"transferred": True, "amount": 500},
+        )
+        assert goal.goal_status == GoalStatus.CRISP
+
+        # Phase 4
+        laws = discover_laws(
+            domain="finance",
+            constraints=["balance >= 0", "amount > 0"],
+            prohibitions=["overdraft"],
+        )
+        assert laws.hard_law_count >= 2
+
+        # Phase 4.5
+        model = freeze_models(
+            laws=laws, belief=belief, goal=goal,
+            clock=lambda: "2026-04-07T12:00:00Z",
+        )
+        assert model.is_frozen is True
+        assert model.law_count >= 4
+        assert model.norm_count >= 2
