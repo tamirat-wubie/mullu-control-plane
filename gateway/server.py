@@ -111,12 +111,36 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     @app.get("/health")
     def health():
+        # Check dependency health
+        deps = {}
+        overall = "healthy"
+        if platform is not None:
+            try:
+                components = getattr(platform, "bootstrap_components", {})
+                if callable(getattr(components, "__call__", None)):
+                    components = components()
+                deps["platform_components"] = components
+                if isinstance(components, dict):
+                    for name, ok in components.items():
+                        if not ok:
+                            overall = "degraded"
+            except Exception:
+                overall = "degraded"
+
+        # Check channel adapters
+        channels_configured = []
+        for ch_name in ["whatsapp", "telegram", "slack", "discord", "web"]:
+            if ch_name in [a for a in router._channels]:
+                channels_configured.append(ch_name)
+
         return {
-            "status": "healthy",
+            "status": overall,
             "gateway": router.summary(),
             "sessions": session_mgr.summary(),
             "event_log": event_log.summary(),
             "verifier": verifier.status(),
+            "dependencies": deps,
+            "channels_configured": channels_configured,
         }
 
     # ── WhatsApp Webhook ──
