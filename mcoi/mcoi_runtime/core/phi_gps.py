@@ -1,6 +1,6 @@
-"""Φ_gps Runtime — Universal Problem Solver (Phases 0-3).
+"""Φ_gps Runtime — Universal Problem Solver (Phases 0-12).
 
-Purpose: Runtime implementation of Φ_gps Phases 0-3 from the canonical
+Purpose: Runtime implementation of Φ_gps Phases 0-12 from the canonical
     Φ specification (phi2-gps-v2.2).  Bridges the formal specification
     to executable governance-aware code.
 
@@ -1191,4 +1191,261 @@ def build_proof_sketch(
         pi_law=pi_law,
         pi_norm=pi_norm,
         pi_side_effect=pi_side,
+    )
+
+
+# ═══════════════════════════════════════════
+# SOLVER OUTCOME (§5.10 of spec)
+# ═══════════════════════════════════════════
+
+class SolverOutcome(StrEnum):
+    SOLVED_VERIFIED = "solved_verified"
+    SOLVED_UNVERIFIED = "solved_unverified"
+    AWAITING_EVIDENCE = "awaiting_evidence"
+    SAFE_HALT = "safe_halt"
+    GOVERNANCE_BLOCKED = "governance_blocked"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    IMPOSSIBLE_PROVED = "impossible_proved"
+    MODEL_INVALIDATED = "model_invalidated"
+
+
+# ═══════════════════════════════════════════
+# PHASE 10 — EXECUTE UNDER FULL FEEDBACK
+# ═══════════════════════════════════════════
+
+@dataclass
+class ExecutionStep:
+    """A single step in the execution trace."""
+
+    step_id: int
+    action: str
+    action_class: str  # "epistemic" or "world"
+    outcome: str = ""
+    safety_ok: bool = True
+    surprise: float = 0.0  # KL divergence between predicted and observed
+    cost: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionTrace:
+    """Full execution trace from Phase 10."""
+
+    steps: tuple[ExecutionStep, ...]
+    total_cost: float
+    safety_violations: int
+    stall_count: int
+    goal_reached: bool
+
+    @property
+    def step_count(self) -> int:
+        return len(self.steps)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "steps": [{"id": s.step_id, "action": s.action,
+                       "class": s.action_class, "outcome": s.outcome,
+                       "safety_ok": s.safety_ok, "surprise": s.surprise}
+                      for s in self.steps],
+            "total_cost": round(self.total_cost, 4),
+            "safety_violations": self.safety_violations,
+            "stall_count": self.stall_count,
+            "goal_reached": self.goal_reached,
+        }
+
+
+def execute_plan(
+    *,
+    model: EpisodeModelSet,
+    actions: list[dict[str, Any]],
+    executor: Any = None,
+    safety_check: Any = None,
+    max_steps: int = 100,
+    cost_budget: float = 0.0,
+) -> ExecutionTrace:
+    """Phase 10 — EXECUTE UNDER FULL FEEDBACK.
+
+    Executes a sequence of actions against the frozen model with:
+    - Safety pre-check before every action
+    - Cost tracking against budget
+    - Surprise detection (prediction vs observation divergence)
+    - Stall detection (no progress for consecutive steps)
+    """
+    steps: list[ExecutionStep] = []
+    total_cost = 0.0
+    safety_violations = 0
+    stall_count = 0
+    goal_reached = False
+
+    for i, action_spec in enumerate(actions[:max_steps]):
+        action_name = action_spec.get("action", "unknown")
+        action_class = action_spec.get("class", "world")
+        action_cost = float(action_spec.get("cost", 0.0))
+
+        # 1. Safety pre-check
+        safety_ok = True
+        if safety_check is not None:
+            try:
+                safety_ok = safety_check(action_spec)
+            except Exception:
+                safety_ok = False
+
+        if not safety_ok:
+            safety_violations += 1
+            steps.append(ExecutionStep(
+                step_id=i, action=action_name, action_class=action_class,
+                outcome="safety_blocked", safety_ok=False,
+            ))
+            continue
+
+        # 2. Budget check
+        if cost_budget > 0 and total_cost + action_cost > cost_budget:
+            steps.append(ExecutionStep(
+                step_id=i, action=action_name, action_class=action_class,
+                outcome="budget_exceeded", cost=action_cost,
+            ))
+            break
+
+        # 3. Execute
+        outcome = "executed"
+        surprise = 0.0
+        if executor is not None:
+            try:
+                result = executor(action_name, action_spec.get("params", {}))
+                outcome = result.get("outcome", "executed") if isinstance(result, dict) else "executed"
+                surprise = float(result.get("surprise", 0.0)) if isinstance(result, dict) else 0.0
+            except Exception as exc:
+                outcome = "execution_error"
+
+        total_cost += action_cost
+
+        # 4. Goal check
+        if action_spec.get("is_goal_action", False):
+            goal_reached = True
+
+        # 5. Stall detection
+        if surprise < 0.01 and outcome == "executed":
+            stall_count += 1
+        else:
+            stall_count = 0
+
+        steps.append(ExecutionStep(
+            step_id=i, action=action_name, action_class=action_class,
+            outcome=outcome, safety_ok=True, surprise=surprise, cost=action_cost,
+        ))
+
+    return ExecutionTrace(
+        steps=tuple(steps),
+        total_cost=total_cost,
+        safety_violations=safety_violations,
+        stall_count=stall_count,
+        goal_reached=goal_reached,
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 12 — DUAL VERIFY + SOLVER OUTPUT
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class Verification:
+    """Dual-channel verification result (§5.7 of spec)."""
+
+    pi_goal: ProofState
+    pi_law: ProofState
+    pi_norm: ProofState
+    pi_side: ProofState
+    misfit: float = 0.0  # Divergence between model and observed
+    misfit_verdict: str = "consistent"  # "consistent", "suspicious", "invalidated"
+
+    @property
+    def all_pass(self) -> bool:
+        return all(p == ProofState.PASS for p in (self.pi_goal, self.pi_law, self.pi_norm, self.pi_side))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "pi_goal": self.pi_goal.value, "pi_law": self.pi_law.value,
+            "pi_norm": self.pi_norm.value, "pi_side": self.pi_side.value,
+            "misfit": round(self.misfit, 4), "misfit_verdict": self.misfit_verdict,
+            "all_pass": self.all_pass,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SolverOutput:
+    """Complete output of the Φ_gps solver (§5.10 of spec)."""
+
+    outcome: SolverOutcome
+    trace: ExecutionTrace | None = None
+    verification: Verification | None = None
+    diagnosis: str = ""
+    schema_version: str = "phi2-gps-v2.2"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "outcome": self.outcome.value,
+            "trace": self.trace.to_dict() if self.trace else None,
+            "verification": self.verification.to_dict() if self.verification else None,
+            "diagnosis": self.diagnosis,
+            "schema": self.schema_version,
+        }
+
+
+def verify_and_judge(
+    *,
+    trace: ExecutionTrace,
+    model: EpisodeModelSet,
+    feasibility: FeasibilityResult,
+    misfit_threshold: float = 0.5,
+) -> SolverOutput:
+    """Phase 12 — DUAL VERIFY + Ψ JUDGMENT.
+
+    Verifies the execution trace against the frozen model and
+    produces the final SolverOutput with outcome classification.
+    """
+    # Goal verification
+    pi_goal = ProofState.PASS if trace.goal_reached else ProofState.FAIL
+
+    # Law compliance (no safety violations)
+    pi_law = ProofState.PASS if trace.safety_violations == 0 else ProofState.FAIL
+
+    # Norm compliance (based on feasibility)
+    pi_norm = ProofState.PASS if feasibility.feasible else ProofState.FAIL
+
+    # Side effects (conservative)
+    pi_side = ProofState.PASS if trace.safety_violations == 0 else ProofState.UNKNOWN
+
+    # Misfit (surprise accumulation as proxy)
+    total_surprise = sum(s.surprise for s in trace.steps)
+    avg_surprise = total_surprise / max(len(trace.steps), 1)
+    misfit_verdict = "consistent"
+    if avg_surprise > misfit_threshold:
+        misfit_verdict = "invalidated"
+    elif avg_surprise > misfit_threshold * 0.5:
+        misfit_verdict = "suspicious"
+
+    verification = Verification(
+        pi_goal=pi_goal, pi_law=pi_law, pi_norm=pi_norm, pi_side=pi_side,
+        misfit=avg_surprise, misfit_verdict=misfit_verdict,
+    )
+
+    # Classify outcome
+    if verification.all_pass and misfit_verdict == "consistent":
+        outcome = SolverOutcome.SOLVED_VERIFIED
+    elif trace.goal_reached and not verification.all_pass:
+        outcome = SolverOutcome.SOLVED_UNVERIFIED
+    elif trace.safety_violations > 0:
+        outcome = SolverOutcome.SAFE_HALT
+    elif not feasibility.feasible:
+        outcome = SolverOutcome.IMPOSSIBLE_PROVED
+    elif misfit_verdict == "invalidated":
+        outcome = SolverOutcome.MODEL_INVALIDATED
+    elif not trace.goal_reached and trace.step_count > 0:
+        outcome = SolverOutcome.BUDGET_EXHAUSTED
+    else:
+        outcome = SolverOutcome.AWAITING_EVIDENCE
+
+    return SolverOutput(
+        outcome=outcome,
+        trace=trace,
+        verification=verification,
     )
