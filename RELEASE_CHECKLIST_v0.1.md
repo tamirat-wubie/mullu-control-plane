@@ -63,9 +63,9 @@
 - [ ] Registry backend uses dynamic make_dataclass for opaque restoration
 - [x] Coordination engine supports explicit checkpoint/restore persistence
 - [ ] Working/episodic memory persistence is explicit and opt-in
-- [ ] HTTP connector uses urllib (no per-read timeout enforcement)
-- [ ] No authentication/authorization system
-- [ ] No encryption at rest
+- [x] HTTP connector read timeout enforcement added (v3.9.1)
+- [x] API key auth with scopes, JWT auth, per-session RBAC checks
+- [x] Field-level encryption at rest (AES-256-GCM, optional cryptography dep)
 
 ## Release Decision
 

@@ -335,7 +335,7 @@ def bootstrap_operational_services(
     observability.register_source("webhook_retry", lambda: webhook_retry.summary())
 
     config_watcher = ConfigFileWatcher(poll_interval=30.0, clock=clock)
-    platform_logger = StructuredLogger(name="mullu-platform", min_level=LogLevel.INFO)
+    platform_logger = StructuredLogger(name="mullu-control-plane", min_level=LogLevel.INFO)
 
     api_key_mgr = APIKeyManager(clock=clock)
     observability.register_source("api_keys", lambda: api_key_mgr.summary())
@@ -427,7 +427,7 @@ def bootstrap_operational_services(
     snapshot_mgr = SnapshotManager(max_snapshots=50, clock=clock)
     observability.register_source("snapshots", lambda: snapshot_mgr.summary())
 
-    otel_exporter = OtelExporter(service_name="mullu-platform", batch_size=100)
+    otel_exporter = OtelExporter(service_name="mullu-control-plane", batch_size=100)
     circuit_dashboard = CircuitDashboard()
 
     tenant_quota = TenantQuotaEngine()

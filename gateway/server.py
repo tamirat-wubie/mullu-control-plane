@@ -9,8 +9,11 @@ Run: uvicorn gateway.server:app --host 0.0.0.0 --port 8001
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
+
+_log = logging.getLogger(__name__)
 
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -55,6 +58,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     whatsapp = None
     if os.environ.get("WHATSAPP_PHONE_NUMBER_ID"):
+        if not os.environ.get("WHATSAPP_APP_SECRET"):
+            _log.warning("WHATSAPP_APP_SECRET not set — signature verification will reject all requests")
         whatsapp = WhatsAppAdapter(
             phone_number_id=os.environ["WHATSAPP_PHONE_NUMBER_ID"],
             access_token=os.environ.get("WHATSAPP_ACCESS_TOKEN", ""),
@@ -72,6 +77,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     slack = None
     if os.environ.get("SLACK_BOT_TOKEN"):
+        if not os.environ.get("SLACK_SIGNING_SECRET"):
+            _log.warning("SLACK_SIGNING_SECRET not set — signature verification will reject all requests")
         slack = SlackAdapter(
             bot_token=os.environ["SLACK_BOT_TOKEN"],
             signing_secret=os.environ.get("SLACK_SIGNING_SECRET", ""),
@@ -80,6 +87,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     discord = None
     if os.environ.get("DISCORD_BOT_TOKEN"):
+        if not os.environ.get("DISCORD_PUBLIC_KEY"):
+            _log.warning("DISCORD_PUBLIC_KEY not set — signature verification will reject all requests")
         discord = DiscordAdapter(
             bot_token=os.environ["DISCORD_BOT_TOKEN"],
             public_key=os.environ.get("DISCORD_PUBLIC_KEY", ""),
@@ -194,7 +203,15 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         import json, time as _time
         _t0 = _time.monotonic()
         body_bytes = await request.body()
-        payload = json.loads(body_bytes)
+        # Verify Telegram secret token if configured (X-Telegram-Bot-Api-Secret-Token)
+        if hasattr(telegram, "verify_signature"):
+            secret_header = request.headers.get("x-telegram-bot-api-secret-token", "")
+            if not telegram.verify_signature(body_bytes, secret_header):
+                raise HTTPException(403, detail="Invalid Telegram signature")
+        try:
+            payload = json.loads(body_bytes)
+        except (json.JSONDecodeError, ValueError):
+            raise HTTPException(400, detail="Invalid JSON payload")
         msg = telegram.parse_message(payload)
         if msg is None:
             event_log.record(channel="telegram", sender_id="", status="ignored",
@@ -289,8 +306,13 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     async def web_receive(request: Request):
         """Web chat message endpoint (POST)."""
         import json
-        payload = json.loads(await request.body())
+        try:
+            payload = json.loads(await request.body())
+        except (json.JSONDecodeError, ValueError):
+            raise HTTPException(400, detail="Invalid JSON payload")
         session_token = request.headers.get("X-Session-Token", "")
+        if not session_token or len(session_token) > 512:
+            raise HTTPException(401, detail="Missing or invalid session token")
         msg = web.parse_message(payload, session_token=session_token)
         if msg is None:
             raise HTTPException(400, detail="Invalid message")
@@ -308,7 +330,10 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     async def approve_request(request_id: str, request: Request):
         """Approve a pending governance request."""
         import json
-        payload = json.loads(await request.body())
+        try:
+            payload = json.loads(await request.body())
+        except (json.JSONDecodeError, ValueError):
+            raise HTTPException(400, detail="Invalid JSON payload")
         approved = payload.get("approved", False)
         resolved_by = payload.get("resolved_by", "user")
         result = router.handle_approval_callback(request_id, approved=approved, resolved_by=resolved_by)

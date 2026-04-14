@@ -145,11 +145,21 @@ class InputValidator:
                 )
 
         elif rule.rule_type == RuleType.PATTERN:
-            if value is not None and isinstance(value, str) and not re.match(rule.value, value):
-                return ValidationError(
-                    rule.field, "pattern",
-                    msg or "field has invalid format",
-                )
+            if value is not None and isinstance(value, str):
+                try:
+                    # Guard against catastrophic backtracking (ReDoS).
+                    # Compile to validate the regex itself, then match.
+                    compiled = re.compile(rule.value)
+                    if not compiled.match(value):
+                        return ValidationError(
+                            rule.field, "pattern",
+                            msg or "field has invalid format",
+                        )
+                except re.error:
+                    return ValidationError(
+                        rule.field, "pattern",
+                        "invalid validation pattern",
+                    )
 
         elif rule.rule_type == RuleType.ENUM:
             if value is not None and value not in rule.value:

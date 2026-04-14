@@ -38,8 +38,8 @@ class RowConfig:
 class GrafanaDashboardGenerator:
     """Generates Grafana dashboard JSON from row/panel definitions."""
 
-    def __init__(self, title: str = "Mullu Platform — Governed AI Operating System",
-                 uid: str = "mullu-platform-main",
+    def __init__(self, title: str = "Mullu Control Plane — Governed AI Operating System",
+                 uid: str = "mullu-control-plane-main",
                  refresh: str = "30s"):
         self._title = title
         self._uid = uid

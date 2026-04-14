@@ -73,5 +73,6 @@ implementation in this release:
   agents can connect via the agent adapter protocol.
 - **Web UI:** Operator console provides structured JSON dashboard views (home,
   runs, audit, checkpoints, providers, scheduler) but no browser-based frontend.
-- **RBAC / human governance:** API key auth exists but no user identity, roles,
-  team ownership, approval chains, or escalation rights.
+- **RBAC / human governance:** API key auth with scopes, JWT auth, and
+  per-session RBAC checks exist. Team ownership, approval chains, and
+  escalation rights are not yet implemented.

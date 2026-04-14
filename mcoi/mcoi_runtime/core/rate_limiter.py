@@ -196,6 +196,8 @@ class RateLimiter:
           2. Identity-level bucket must allow.
         Both must pass — if either denies, the request is denied.
         """
+        if tokens < 1:
+            raise ValueError(f"tokens must be >= 1, got {tokens}")
         with self._lock:
             tenant_config = self._resolve_config(endpoint)
             tenant_key = self._bucket_key(tenant_id, endpoint)

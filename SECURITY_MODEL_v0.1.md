@@ -63,19 +63,22 @@ unless explicitly overridden.
 This is an internal alpha. The following security capabilities are still absent
 or incomplete:
 
-### No End-User Identity or RBAC
+### RBAC and Identity (Partial)
 
-There is still no user authentication, role-based access control, or delegated
-authorization model for human operators. Any process that can invoke the CLI or
-import the runtime module still has full local access to all operations. Shared
-or production environments should front the runtime with authenticated gateways
-and least-privilege operating-system controls.
+API key auth with scopes, JWT auth, and per-session RBAC checks are implemented.
+Team ownership, approval chains, and escalation rights are not yet available.
+Any process that can invoke the CLI or import the runtime module still has full
+local access to all operations. Shared or production environments should front
+the runtime with authenticated gateways and least-privilege OS controls.
 
-### No Encryption at Rest
+### Field-Level Encryption at Rest (Optional)
 
-Persistence stores (traces, snapshots, replay records, registry data) write JSON
-files to the local filesystem with no encryption. Anyone with filesystem access can
-read persisted data.
+Sensitive data fields can be encrypted via `FieldEncryptor` (AES-256-GCM with
+AAD context binding). Requires the `cryptography` library (`pip install
+mcoi-runtime[encryption]`). Without it, encrypt/decrypt operations raise
+`RuntimeError` (fail-closed). General persistence stores (traces, snapshots,
+replay records) still write JSON to the filesystem without field-level
+encryption unless explicitly configured.
 
 ### No External Audit Log Signing
 

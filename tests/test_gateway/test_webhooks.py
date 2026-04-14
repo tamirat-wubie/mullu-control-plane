@@ -190,8 +190,15 @@ class TestWebChatWebhook:
         assert data["governed"] is True
         assert data["body"] == "Governed response"
 
-    def test_empty_message_rejected(self, client):
+    def test_missing_token_rejected(self, client):
         resp = client.post("/webhook/web", content=json.dumps({}))
+        assert resp.status_code == 401
+
+    def test_empty_message_rejected(self, client):
+        resp = client.post(
+            "/webhook/web", content=json.dumps({}),
+            headers={"X-Session-Token": "test-token"},
+        )
         assert resp.status_code == 400
 
 

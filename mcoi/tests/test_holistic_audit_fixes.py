@@ -69,7 +69,7 @@ class TestEncryptionEdgeCases:
         from mcoi_runtime.core.field_encryption import FieldEncryptor, StaticKeyProvider
         keys = {"k1": bytes([1] * 32), "k2": bytes([2] * 32)}
         p = StaticKeyProvider(keys, "k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         token = enc.encrypt("secret")
         # Remove k1 from provider
         p._keys = {"k2": keys["k2"]}
@@ -79,7 +79,7 @@ class TestEncryptionEdgeCases:
     def test_encrypt_special_characters(self):
         from mcoi_runtime.core.field_encryption import FieldEncryptor, StaticKeyProvider
         p = StaticKeyProvider({"k1": bytes([1] * 32)}, "k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         special = "Hello\x00World\n\t\r\"'\\/<>&"
         token = enc.encrypt(special)
         assert enc.decrypt(token) == special

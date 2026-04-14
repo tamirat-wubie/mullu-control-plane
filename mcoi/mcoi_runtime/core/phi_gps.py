@@ -16,9 +16,48 @@ Invariants:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Callable
+
+__all__ = [
+    # Phase 0
+    "KnowledgeLevel", "ResourceLevel", "ProfileVector", "IgnoranceEntry",
+    "IgnoranceMap", "FrameResult", "frame_problem",
+    # Phase 1
+    "Symbol", "DistinguishResult", "distinguish",
+    # Phase 2
+    "BeliefVariable", "BeliefState", "VoIEstimate", "estimate_belief", "compute_voi",
+    # Phase 3
+    "GoalStatus", "GoalRegion", "SafetyFloor", "UtilityStructure",
+    "GoalConstructionResult", "construct_goal",
+    # Phase 4
+    "LawType", "NormKind", "DiscoveredLaw", "DiscoveredNorm",
+    "LawDiscoveryResult", "discover_laws",
+    # Phase 4.5
+    "ModelStatus", "EpisodeModelSet", "freeze_models",
+    # Phase 5
+    "TransitionMap", "discover_transitions",
+    # Phase 6
+    "ActionSet", "synthesize_actions",
+    # Phase 7
+    "InvariantGrade", "Invariant", "FeasibilityResult", "check_feasibility",
+    # Phase 7.5
+    "ProofState", "ProofSketch", "build_proof_sketch",
+    # Phase 8
+    "DecompositionResult", "decompose_problem",
+    # Phase 9
+    "PolicyResult", "select_policy",
+    # Phase 10
+    "ExecutionStep", "ExecutionTrace", "execute_plan",
+    # Phase 11
+    "DiagnosisResult", "diagnose_failure",
+    # Phase 12
+    "Verification", "SolverOutcome", "SolverOutput", "verify_and_judge",
+    # Utilities
+    "AgentMode", "StrategyScore", "select_strategies",
+]
 
 
 # ═══════════════════════════════════════════
@@ -989,6 +1028,84 @@ def freeze_models(
 
 
 # ═══════════════════════════════════════════
+# PHASE 5 — TRANSITIONS (structural placeholder)
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class TransitionMap:
+    """Output of Phase 5 (TRANSITIONS)."""
+
+    transitions: tuple[dict[str, Any], ...]
+    state_space_size: int = 0
+
+
+def discover_transitions(
+    *,
+    model: EpisodeModelSet,
+    observation_data: list[dict[str, Any]] | None = None,
+) -> TransitionMap:
+    """Phase 5 — DISCOVER STATE TRANSITIONS.
+
+    Identifies how the world changes: state-action-state triples,
+    transition probabilities, and reachability from the current state.
+
+    Status: structural stub — returns identity transitions from model laws.
+    """
+    transitions: list[dict[str, Any]] = []
+    for law in model.laws:
+        transitions.append({
+            "source": law.description,
+            "action": "observe",
+            "target": law.description,
+            "probability": law.confidence,
+        })
+    return TransitionMap(
+        transitions=tuple(transitions),
+        state_space_size=len(transitions),
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 6 — ACTIONS (structural placeholder)
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class ActionSet:
+    """Output of Phase 6 (ACTIONS)."""
+
+    actions: tuple[dict[str, Any], ...]
+    primitive_count: int = 0
+    composite_count: int = 0
+
+
+def synthesize_actions(
+    *,
+    model: EpisodeModelSet,
+    transitions: TransitionMap | None = None,
+) -> ActionSet:
+    """Phase 6 — SYNTHESIZE ACTIONS.
+
+    Constructs the action repertoire: primitives (single-step),
+    composites (macro-actions), and precondition/effect annotations.
+
+    Status: structural stub — extracts actions from norms and laws.
+    """
+    actions: list[dict[str, Any]] = []
+    for norm in (model.norms or ()):
+        actions.append({
+            "name": f"comply_{norm.description[:30]}",
+            "kind": "primitive",
+            "precondition": f"authority_level<={norm.authority_level}",
+            "effect": norm.description,
+        })
+    return ActionSet(
+        actions=tuple(actions),
+        primitive_count=len(actions),
+        composite_count=0,
+    )
+
+
+# ═══════════════════════════════════════════
 # PHASE 7 — FEASIBILITY + INVARIANTS
 # ═══════════════════════════════════════════
 
@@ -1210,6 +1327,79 @@ class SolverOutcome(StrEnum):
 
 
 # ═══════════════════════════════════════════
+# PHASE 8 — DECOMPOSE (structural placeholder)
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class DecompositionResult:
+    """Output of Phase 8 (DECOMPOSE)."""
+
+    subproblems: tuple[dict[str, Any], ...]
+    dependency_edges: tuple[tuple[int, int], ...]  # (from_idx, to_idx)
+
+
+def decompose_problem(
+    *,
+    model: EpisodeModelSet,
+    feasibility: Any,
+    proof_sketch: Any = None,
+) -> DecompositionResult:
+    """Phase 8 — DECOMPOSE into sub-problems.
+
+    Breaks the problem into independent or weakly-coupled sub-problems.
+    Each sub-problem inherits the safety floor and can be solved in parallel
+    or sequentially depending on dependency edges.
+
+    Status: structural stub — returns single monolithic subproblem.
+    """
+    mono = {
+        "id": 0,
+        "description": "monolithic (no decomposition)",
+        "laws": [law.description for law in model.laws],
+        "norms": [n.description for n in (model.norms or ())],
+    }
+    return DecompositionResult(
+        subproblems=(mono,),
+        dependency_edges=(),
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 9 — POLICY (structural placeholder)
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class PolicyResult:
+    """Output of Phase 9 (POLICY)."""
+
+    strategy: str  # "greedy", "satisficing", "optimal", "safe_default"
+    action_sequence: tuple[str, ...]
+    expected_cost: float = 0.0
+
+
+def select_policy(
+    *,
+    model: EpisodeModelSet,
+    feasibility: Any,
+    actions: ActionSet | None = None,
+    decomposition: DecompositionResult | None = None,
+) -> PolicyResult:
+    """Phase 9 — SELECT POLICY.
+
+    Chooses the execution strategy: greedy, satisficing, optimal search,
+    or safe-default (when proof sketch is UNKNOWN). Maps decomposed
+    sub-problems to action sequences.
+
+    Status: structural stub — returns safe_default with empty sequence.
+    """
+    return PolicyResult(
+        strategy="safe_default",
+        action_sequence=(),
+        expected_cost=0.0,
+    )
+
+
+# ═══════════════════════════════════════════
 # PHASE 10 — EXECUTE UNDER FULL FEEDBACK
 # ═══════════════════════════════════════════
 
@@ -1339,6 +1529,59 @@ def execute_plan(
         safety_violations=safety_violations,
         stall_count=stall_count,
         goal_reached=goal_reached,
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 11 — DIAGNOSE (structural placeholder)
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class DiagnosisResult:
+    """Output of Phase 11 (DIAGNOSE)."""
+
+    diagnosis: str
+    root_causes: tuple[str, ...]
+    suggested_repairs: tuple[str, ...]
+    model_drift_detected: bool = False
+
+
+def diagnose_failure(
+    *,
+    trace: Any,
+    model: EpisodeModelSet,
+    feasibility: Any,
+) -> DiagnosisResult:
+    """Phase 11 — DIAGNOSE execution failures.
+
+    Analyses a failed or stalled execution trace to identify root causes:
+    model mismatch, insufficient actions, violated assumptions, or
+    resource exhaustion. Suggests repairs for the next episode.
+
+    Status: structural stub — returns generic diagnosis from trace state.
+    """
+    causes: list[str] = []
+    repairs: list[str] = []
+
+    if hasattr(trace, "safety_violations") and trace.safety_violations > 0:
+        causes.append("safety_violation")
+        repairs.append("tighten safety floor constraints")
+    if hasattr(trace, "stall_count") and trace.stall_count > 0:
+        causes.append("execution_stall")
+        repairs.append("expand action repertoire or decompose further")
+    if hasattr(trace, "goal_reached") and not trace.goal_reached:
+        causes.append("goal_not_reached")
+        repairs.append("re-estimate belief state and retry with updated model")
+
+    if not causes:
+        causes.append("unknown")
+        repairs.append("collect more observations before retrying")
+
+    return DiagnosisResult(
+        diagnosis="structural_diagnosis",
+        root_causes=tuple(causes),
+        suggested_repairs=tuple(repairs),
+        model_drift_detected=False,
     )
 
 

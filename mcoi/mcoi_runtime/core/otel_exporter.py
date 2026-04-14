@@ -85,7 +85,7 @@ class OtelSpan:
 class OtelExporter:
     """Buffers and exports spans in OTLP JSON format."""
 
-    def __init__(self, service_name: str = "mullu-platform",
+    def __init__(self, service_name: str = "mullu-control-plane",
                  batch_size: int = 100,
                  export_fn: Callable[[list[dict]], bool] | None = None):
         self._service_name = service_name
