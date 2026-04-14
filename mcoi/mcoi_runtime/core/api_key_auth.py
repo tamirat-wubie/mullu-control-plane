@@ -15,10 +15,14 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import secrets
 import time
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Callable
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -60,6 +64,11 @@ class APIKey:
 
     def has_scope(self, scope: str) -> bool:
         return scope in self.scopes or "*" in self.scopes
+
+    @property
+    def is_wildcard(self) -> bool:
+        """True if this key has the wildcard scope (full access)."""
+        return "*" in self.scopes
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -105,6 +114,14 @@ class APIKeyManager:
     def create_key(self, tenant_id: str, scopes: frozenset[str],
                    description: str = "", ttl_seconds: float | None = None) -> tuple[str, APIKey]:
         """Create a new API key. Returns (raw_key, APIKey)."""
+        if not scopes:
+            raise ValueError("at least one scope is required")
+        if "*" in scopes:
+            _log.warning(
+                "creating wildcard API key for tenant %s — grants full access. "
+                "Use explicit scopes in production.",
+                tenant_id,
+            )
         raw_key = secrets.token_urlsafe(32)
         key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
         key_id = f"mk_{secrets.token_hex(8)}"
@@ -127,7 +144,14 @@ class APIKeyManager:
     def authenticate(self, raw_key: str, required_scope: str = "") -> AuthResult:
         """Authenticate using a raw API key."""
         key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-        api_key = self._keys.get(key_hash)
+
+        # Constant-time lookup: iterate all keys to prevent timing attacks
+        # that could leak valid key hashes via response time differences.
+        api_key = None
+        for stored_hash, stored_key in self._keys.items():
+            if hmac.compare_digest(key_hash, stored_hash):
+                api_key = stored_key
+                break
 
         if not api_key:
             self._total_auth_failure += 1

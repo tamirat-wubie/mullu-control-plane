@@ -85,10 +85,12 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
         "urllib",
     ),
     "auth_limitation": (
-        "No End-User Identity or RBAC",
+        "RBAC",
+        "approval chains",
     ),
     "encryption_limitation": (
-        "No Encryption at Rest",
+        "Field-Level Encryption",
+        "AES-256-GCM",
     ),
 }
 

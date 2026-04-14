@@ -18,8 +18,12 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
+import logging
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
+
+_log = logging.getLogger(__name__)
 
 
 def _classify_session_dispatch_exception(exc: Exception) -> str:
@@ -174,6 +178,7 @@ class GovernedSession:
         self._llm_cache = llm_cache
         self._usage_tracker = usage_tracker
         self._decision_log = decision_log
+        self._lock = threading.Lock()
         self._closed = False
         self._operations = 0
         self._llm_calls = 0
@@ -189,10 +194,11 @@ class GovernedSession:
 
     def _add_context(self, role: str, content: str) -> None:
         """Add a message to the session context (for multi-turn conversations)."""
-        self._context_messages.append({"role": role, "content": content})
-        # Auto-compact when approaching limit
-        if len(self._context_messages) > self._max_context_messages:
-            self._compact_context()
+        with self._lock:
+            self._context_messages.append({"role": role, "content": content})
+            # Auto-compact when approaching limit
+            if len(self._context_messages) > self._max_context_messages:
+                self._compact_context()
 
     def _compact_context(self) -> None:
         """Compact older context by summarizing into a single system message.
@@ -276,6 +282,7 @@ class GovernedSession:
             self._problem_profile = result
             return result.to_dict()
         except Exception:
+            _log.exception("phi_gps frame_problem failed")
             return {"error": "framing unavailable"}
 
     def distinguish_prompt(self, prompt: str) -> dict[str, Any]:
@@ -289,6 +296,7 @@ class GovernedSession:
             result = distinguish(prompt)
             return result.to_dict()
         except Exception:
+            _log.exception("phi_gps distinguish failed")
             return {"symbols": [], "error": "distinction unavailable"}
 
     def select_strategy(self, **context: Any) -> list[dict[str, Any]]:
@@ -304,13 +312,15 @@ class GovernedSession:
             strategies = select_strategies(profile_result.profile)
             return [{"name": s.name, "score": s.score} for s in strategies]
         except Exception:
+            _log.exception("phi_gps select_strategy failed")
             return [{"error": "strategy selection unavailable"}]
 
     # ── Governance checks ──
 
     def _require_open(self) -> None:
-        if self._closed:
-            raise RuntimeError("session is closed")
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("session is closed")
 
     def _check_tenant_gating(self) -> None:
         if self._tenant_gating is not None:
@@ -474,10 +484,11 @@ class GovernedSession:
                 from dataclasses import replace
                 result = replace(result, content=redacted)
 
-        self._operations += 1
-        self._llm_calls += 1
-        if result.succeeded:
-            self._total_cost += result.cost
+        with self._lock:
+            self._operations += 1
+            self._llm_calls += 1
+            if result.succeeded:
+                self._total_cost += result.cost
 
         # Record to usage tracker
         if self._usage_tracker is not None and result.succeeded:
@@ -548,8 +559,9 @@ class GovernedSession:
                 result_detail["dispatched"] = False
                 result_detail["dispatch_error"] = _classify_session_dispatch_exception(exc)
 
-        self._operations += 1
-        self._execute_actions += 1
+        with self._lock:
+            self._operations += 1
+            self._execute_actions += 1
         if self._usage_tracker is not None:
             self._usage_tracker.record_skill(self._tenant_id, success=result_detail.get("dispatched", True))
         self._record_audit(
@@ -635,7 +647,7 @@ class GovernedSession:
                 if cp is not None:
                     self._session_store.save(cp)
             except Exception:
-                pass  # Auto-checkpoint failure is non-fatal
+                _log.warning("auto-checkpoint failed for session %s", self._session_id, exc_info=True)
 
     # ── Session persistence ──
 
@@ -680,11 +692,11 @@ class GovernedSession:
             raise ValueError("identity_id mismatch")
         if data.get("tenant_id") != self._tenant_id:
             raise ValueError("tenant_id mismatch")
-        self._operations = int(data.get("operations", 0))
-        self._llm_calls = int(data.get("llm_calls", 0))
-        self._total_cost = float(data.get("total_cost", 0.0))
+        self._operations = max(0, int(data.get("operations", 0)))
+        self._llm_calls = max(0, int(data.get("llm_calls", 0)))
+        self._total_cost = max(0.0, float(data.get("total_cost", 0.0)))
         self._context_messages = list(data.get("context_messages", []))
-        self._compaction_count = int(data.get("compaction_count", 0))
+        self._compaction_count = max(0, int(data.get("compaction_count", 0)))
         # Restore policy if persisted
         policy_data = data.get("session_policy")
         if policy_data and isinstance(policy_data, dict):
@@ -699,10 +711,10 @@ class GovernedSession:
 
     def close(self) -> SessionClosureReport:
         """Close the session and produce an immutable closure report."""
-        if self._closed:
-            raise RuntimeError("session already closed")
-
-        self._closed = True
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("session already closed")
+            self._closed = True
         closed_at = self._clock()
 
         audit_count = self._audit_trail.entry_count if self._audit_trail else 0

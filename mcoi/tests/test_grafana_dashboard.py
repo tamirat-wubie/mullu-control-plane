@@ -109,7 +109,7 @@ class TestGrafanaDashboardGenerator:
         )))
         j = gen.to_json()
         parsed = json.loads(j)
-        assert parsed["dashboard"]["uid"] == "mullu-platform-main"
+        assert parsed["dashboard"]["uid"] == "mullu-control-plane-main"
 
     def test_schema_version(self):
         gen = GrafanaDashboardGenerator()

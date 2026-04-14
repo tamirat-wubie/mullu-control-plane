@@ -103,19 +103,27 @@ class FieldEncryptor:
     Encrypts string values into tokens: "key_id:nonce_b64:ciphertext_b64"
     Decrypts tokens back to plaintext strings.
 
-    If the `cryptography` library is unavailable, falls back to
-    HMAC-SHA256 integrity mode (data is base64-encoded, not encrypted,
-    but tamper-evident via HMAC tag).
+    If the `cryptography` library is unavailable:
+      - By default, encrypt/decrypt raise RuntimeError (fail-closed).
+      - Pass allow_hmac_fallback=True for HMAC-SHA256 integrity-only mode
+        (test/dev only — data is NOT encrypted, only tamper-evident).
     """
 
-    def __init__(self, key_provider: KeyProvider) -> None:
+    def __init__(self, key_provider: KeyProvider, *,
+                 allow_hmac_fallback: bool = False) -> None:
         self._provider = key_provider
+        self._allow_hmac_fallback = allow_hmac_fallback
         self._aes_available = False
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM  # noqa: F401
             self._aes_available = True
         except ImportError:
-            pass
+            if not allow_hmac_fallback:
+                _log.warning(
+                    "cryptography library not installed. FieldEncryptor will "
+                    "raise RuntimeError on encrypt/decrypt. Install it for "
+                    "production: pip install cryptography"
+                )
 
     @property
     def aes_available(self) -> bool:
@@ -125,11 +133,17 @@ class FieldEncryptor:
     def provider(self) -> KeyProvider:
         return self._provider
 
-    def encrypt(self, plaintext: str) -> str:
+    def encrypt(self, plaintext: str, *, aad: str = "") -> str:
         """Encrypt a string field value.
 
         Returns a token string: "key_id:nonce_b64:ciphertext_b64"
         The token is safe to store in a TEXT database column.
+
+        Args:
+            plaintext: The string to encrypt.
+            aad: Additional Authenticated Data (e.g., "field_name:record_id").
+                 Binds the ciphertext to its context — prevents moving encrypted
+                 values between fields/records. Must be supplied at decrypt time.
         """
         key_id = self._provider.current_key_id()
         if not key_id:
@@ -140,25 +154,36 @@ class FieldEncryptor:
 
         plaintext_bytes = plaintext.encode("utf-8")
         nonce = os.urandom(12)
+        aad_bytes = aad.encode("utf-8") if aad else None
 
         if self._aes_available:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
             aesgcm = AESGCM(key)
-            ciphertext = aesgcm.encrypt(nonce, plaintext_bytes, None)
-        else:
-            # Fallback: HMAC integrity mode (not true encryption)
+            ciphertext = aesgcm.encrypt(nonce, plaintext_bytes, aad_bytes)
+        elif self._allow_hmac_fallback:
+            # HMAC integrity-only mode (NOT encryption — test/dev only)
             tag = hmac.new(key, nonce + plaintext_bytes, hashlib.sha256).digest()
             ciphertext = plaintext_bytes + tag
+        else:
+            raise RuntimeError(
+                "field encryption requires the 'cryptography' library. "
+                "Install it: pip install cryptography"
+            )
 
         nonce_b64 = base64.b64encode(nonce).decode("ascii")
         ct_b64 = base64.b64encode(ciphertext).decode("ascii")
         return f"{key_id}:{nonce_b64}:{ct_b64}"
 
-    def decrypt(self, token: str) -> str:
+    def decrypt(self, token: str, *, aad: str = "") -> str:
         """Decrypt a token string back to plaintext.
 
         Raises ValueError if the token is malformed, the key is missing,
         or authentication/integrity check fails.
+
+        Args:
+            token: The encrypted token string.
+            aad: Additional Authenticated Data — must match the value used
+                 during encryption. Pass empty string if none was used.
         """
         parts = token.split(":")
         if len(parts) != 3:
@@ -171,16 +196,17 @@ class FieldEncryptor:
 
         nonce = base64.b64decode(nonce_b64)
         ciphertext = base64.b64decode(ct_b64)
+        aad_bytes = aad.encode("utf-8") if aad else None
 
         if self._aes_available:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
             aesgcm = AESGCM(key)
             try:
-                plaintext_bytes = aesgcm.decrypt(nonce, ciphertext, None)
+                plaintext_bytes = aesgcm.decrypt(nonce, ciphertext, aad_bytes)
             except Exception as exc:
                 raise ValueError("decryption failed") from exc
-        else:
-            # Fallback: HMAC integrity check
+        elif self._allow_hmac_fallback:
+            # HMAC integrity-only mode (NOT encryption — test/dev only)
             if len(ciphertext) < 32:
                 raise ValueError("ciphertext too short for HMAC tag")
             plaintext_bytes = ciphertext[:-32]
@@ -188,6 +214,11 @@ class FieldEncryptor:
             expected_tag = hmac.new(key, nonce + plaintext_bytes, hashlib.sha256).digest()
             if not hmac.compare_digest(stored_tag, expected_tag):
                 raise ValueError("integrity check failed: data may have been tampered with")
+        else:
+            raise RuntimeError(
+                "field decryption requires the 'cryptography' library. "
+                "Install it: pip install cryptography"
+            )
 
         return plaintext_bytes.decode("utf-8")
 

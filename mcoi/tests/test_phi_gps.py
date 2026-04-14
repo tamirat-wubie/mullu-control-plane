@@ -40,6 +40,11 @@ from mcoi_runtime.core.phi_gps import (
     freeze_models,
     select_strategies,
     verify_and_judge,
+    ActionSet,
+    DecompositionResult,
+    DiagnosisResult,
+    PolicyResult,
+    TransitionMap,
 )
 
 
@@ -849,3 +854,134 @@ class TestVerifyAndJudge:
         assert output.verification.all_pass is True
         assert trace.goal_reached is True
         assert model.is_frozen is True
+
+
+# ═══════════════════════════════════════════
+# PHASE STUBS — Structural Verification
+# ═══════════════════════════════════════════
+
+class TestPhase5Transitions:
+    """Verify Phase 5 (discover_transitions) structural stub."""
+
+    def test_returns_transition_map(self):
+        from mcoi_runtime.core.phi_gps import discover_transitions, freeze_models, discover_laws
+        laws = discover_laws(constraints=["gravity pulls down"], permissions=["may observe"])
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = discover_transitions(model=model)
+        assert isinstance(result.transitions, tuple)
+        assert result.state_space_size == len(result.transitions)
+
+    def test_model_transitions_match_laws(self):
+        from mcoi_runtime.core.phi_gps import discover_transitions, freeze_models, discover_laws
+        laws = discover_laws()
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = discover_transitions(model=model)
+        assert result.state_space_size == len(model.laws)
+
+
+class TestPhase6Actions:
+    """Verify Phase 6 (synthesize_actions) structural stub."""
+
+    def test_returns_action_set(self):
+        from mcoi_runtime.core.phi_gps import synthesize_actions, freeze_models, discover_laws
+        laws = discover_laws(constraints=["must not harm"], permissions=["may act"])
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = synthesize_actions(model=model)
+        assert isinstance(result.actions, tuple)
+        assert result.composite_count == 0
+
+    def test_with_transitions(self):
+        from mcoi_runtime.core.phi_gps import (
+            synthesize_actions, discover_transitions, freeze_models, discover_laws,
+        )
+        laws = discover_laws(constraints=["gravity"], permissions=["fly"])
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        transitions = discover_transitions(model=model)
+        result = synthesize_actions(model=model, transitions=transitions)
+        assert isinstance(result, ActionSet)
+
+
+class TestPhase8Decompose:
+    """Verify Phase 8 (decompose_problem) structural stub."""
+
+    def test_returns_monolithic(self):
+        from mcoi_runtime.core.phi_gps import decompose_problem, freeze_models, discover_laws
+        laws = discover_laws(constraints=["c1"])
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = decompose_problem(model=model, feasibility=None)
+        assert len(result.subproblems) == 1
+        assert result.subproblems[0]["description"] == "monolithic (no decomposition)"
+        assert result.dependency_edges == ()
+
+
+class TestPhase9Policy:
+    """Verify Phase 9 (select_policy) structural stub."""
+
+    def test_returns_safe_default(self):
+        from mcoi_runtime.core.phi_gps import select_policy, freeze_models, discover_laws
+        laws = discover_laws()
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = select_policy(model=model, feasibility=None)
+        assert result.strategy == "safe_default"
+        assert result.action_sequence == ()
+        assert result.expected_cost == 0.0
+
+
+class TestPhase11Diagnose:
+    """Verify Phase 11 (diagnose_failure) structural stub."""
+
+    def test_diagnose_safety_violation(self):
+        from mcoi_runtime.core.phi_gps import diagnose_failure, freeze_models, discover_laws
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeTrace:
+            safety_violations: int = 1
+            stall_count: int = 0
+            goal_reached: bool = False
+
+        laws = discover_laws()
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = diagnose_failure(trace=FakeTrace(), model=model, feasibility=None)
+        assert "safety_violation" in result.root_causes
+        assert "goal_not_reached" in result.root_causes
+        assert len(result.suggested_repairs) > 0
+
+    def test_diagnose_stall(self):
+        from mcoi_runtime.core.phi_gps import diagnose_failure, freeze_models, discover_laws
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeTrace:
+            safety_violations: int = 0
+            stall_count: int = 3
+            goal_reached: bool = True
+
+        laws = discover_laws()
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = diagnose_failure(trace=FakeTrace(), model=model, feasibility=None)
+        assert "execution_stall" in result.root_causes
+
+    def test_diagnose_unknown(self):
+        from mcoi_runtime.core.phi_gps import diagnose_failure, freeze_models, discover_laws
+        from dataclasses import dataclass
+
+        @dataclass
+        class FakeTrace:
+            safety_violations: int = 0
+            stall_count: int = 0
+            goal_reached: bool = True
+
+        laws = discover_laws()
+        model = freeze_models(laws=laws, belief=None, goal=None)
+        result = diagnose_failure(trace=FakeTrace(), model=model, feasibility=None)
+        assert "unknown" in result.root_causes
+
+
+class TestExports:
+    """Verify __all__ exports are importable."""
+
+    def test_all_exports_importable(self):
+        from mcoi_runtime.core import phi_gps
+        for name in phi_gps.__all__:
+            assert hasattr(phi_gps, name), f"__all__ lists '{name}' but it doesn't exist"

@@ -30,7 +30,7 @@ def _provider(keys: dict[str, bytes] | None = None, current: str = "k1") -> Stat
 
 
 def _encryptor(provider: StaticKeyProvider | None = None) -> FieldEncryptor:
-    return FieldEncryptor(provider or _provider())
+    return FieldEncryptor(provider or _provider(), allow_hmac_fallback=True)
 
 
 # ═══ StaticKeyProvider ═══
@@ -173,7 +173,7 @@ class TestTokenFormat:
 class TestEncryptionErrors:
     def test_no_key_available(self):
         p = StaticKeyProvider({"k1": _test_key()}, "k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         # Override to simulate no current key
         p._current = ""
         with pytest.raises(ValueError, match="no encryption key"):
@@ -208,7 +208,7 @@ class TestEncryptionErrors:
 
     def test_encrypt_missing_current_key_is_bounded(self):
         p = StaticKeyProvider({"k1": _test_key()}, "k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         p._keys.pop("k1")
         with pytest.raises(ValueError, match="^encryption key not found$") as exc_info:
             enc.encrypt("test")
@@ -221,7 +221,7 @@ class TestEncryptionErrors:
 class TestKeyRotation:
     def test_decrypt_with_old_key(self):
         p = _provider(current="k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         token = enc.encrypt("secret")
         # Switch to k2 for new encryptions
         p._current = "k2"
@@ -230,7 +230,7 @@ class TestKeyRotation:
 
     def test_new_encryptions_use_current_key(self):
         p = _provider(current="k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         token1 = enc.encrypt("test")
         assert token1.startswith("k1:")
         p._current = "k2"
@@ -239,7 +239,7 @@ class TestKeyRotation:
 
     def test_cross_key_roundtrip(self):
         p = _provider(current="k1")
-        enc = FieldEncryptor(p)
+        enc = FieldEncryptor(p, allow_hmac_fallback=True)
         token_k1 = enc.encrypt("data-k1")
         p._current = "k2"
         token_k2 = enc.encrypt("data-k2")
