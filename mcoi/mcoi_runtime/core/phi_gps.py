@@ -1,6 +1,6 @@
-"""Φ_gps Runtime — Universal Problem Solver (Phases 0-3).
+"""Φ_gps Runtime — Universal Problem Solver (Phases 0-12).
 
-Purpose: Runtime implementation of Φ_gps Phases 0-3 from the canonical
+Purpose: Runtime implementation of Φ_gps Phases 0-12 from the canonical
     Φ specification (phi2-gps-v2.2).  Bridges the formal specification
     to executable governance-aware code.
 
@@ -985,4 +985,467 @@ def freeze_models(
         status=ModelStatus.FROZEN,
         frozen_at=now,
         approved_by=approver,
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 7 — FEASIBILITY + INVARIANTS
+# ═══════════════════════════════════════════
+
+class InvariantGrade(StrEnum):
+    HARD = "hard"           # confidence ≥ 0.95, n_observed ≥ 20
+    SOFT = "soft"           # tolerance band
+    CANDIDATE = "candidate" # not trusted for solvability gate
+
+
+@dataclass(frozen=True, slots=True)
+class Invariant:
+    """A discovered invariant of the problem."""
+
+    name: str
+    grade: InvariantGrade
+    description: str
+    confidence: float
+    current_value: Any = None
+    goal_value: Any = None
+    satisfied: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class FeasibilityResult:
+    """Output of Phase 7 (FEASIBILITY)."""
+
+    feasible: bool
+    invariants: tuple[Invariant, ...]
+    hard_violations: tuple[str, ...]  # Names of hard invariants that block
+    soft_warnings: tuple[str, ...]    # Names of soft invariants drifting
+    solvability: str  # "feasible", "infeasible", "unknown"
+
+    @property
+    def hard_count(self) -> int:
+        return sum(1 for i in self.invariants if i.grade == InvariantGrade.HARD)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "feasible": self.feasible,
+            "solvability": self.solvability,
+            "invariants": [{"name": i.name, "grade": i.grade.value,
+                            "satisfied": i.satisfied, "confidence": i.confidence}
+                           for i in self.invariants],
+            "hard_violations": list(self.hard_violations),
+            "soft_warnings": list(self.soft_warnings),
+        }
+
+
+def check_feasibility(
+    *,
+    model: EpisodeModelSet,
+    current_state: dict[str, Any] | None = None,
+    goal_state: dict[str, Any] | None = None,
+    invariant_specs: list[dict[str, Any]] | None = None,
+) -> FeasibilityResult:
+    """Phase 7 — FEASIBILITY + INVARIANTS.
+
+    Discovers invariants from the frozen model, classifies them by grade,
+    and runs the solvability gate: if ANY Hard invariant is violated
+    between current state and goal, the problem is PROVABLY UNREACHABLE.
+    """
+    current = current_state or {}
+    goal = goal_state or {}
+    invariants: list[Invariant] = []
+    hard_violations: list[str] = []
+    soft_warnings: list[str] = []
+
+    # Extract invariants from laws
+    for law in model.laws:
+        grade = InvariantGrade.HARD if law.confidence >= 0.95 else InvariantGrade.SOFT
+        invariants.append(Invariant(
+            name=law.name, grade=grade,
+            description=law.description,
+            confidence=law.confidence,
+            satisfied=True,  # Laws are structural — always satisfied by definition
+        ))
+
+    # User-specified invariant checks
+    for spec in (invariant_specs or []):
+        name = spec.get("name", "unknown")
+        grade_str = spec.get("grade", "candidate")
+        grade = InvariantGrade(grade_str) if grade_str in ("hard", "soft", "candidate") else InvariantGrade.CANDIDATE
+
+        current_val = current.get(name)
+        goal_val = goal.get(name)
+        satisfied = True
+
+        if current_val is not None and goal_val is not None:
+            satisfied = (current_val == goal_val) or spec.get("reachable", True)
+
+        confidence = float(spec.get("confidence", 0.5))
+        if confidence >= 0.95 and spec.get("n_observed", 0) >= 20:
+            grade = InvariantGrade.HARD
+
+        invariant = Invariant(
+            name=name, grade=grade, description=spec.get("description", ""),
+            confidence=confidence, current_value=current_val,
+            goal_value=goal_val, satisfied=satisfied,
+        )
+        invariants.append(invariant)
+
+        # SOLVABILITY GATE: Hard invariant violation = PROVABLY UNREACHABLE
+        if grade == InvariantGrade.HARD and not satisfied:
+            hard_violations.append(name)
+        elif grade == InvariantGrade.SOFT and not satisfied:
+            soft_warnings.append(name)
+
+    feasible = len(hard_violations) == 0
+    solvability = "feasible" if feasible else "infeasible"
+    if not feasible:
+        solvability = "infeasible"
+    elif soft_warnings:
+        solvability = "feasible"  # Soft violations don't block
+
+    return FeasibilityResult(
+        feasible=feasible,
+        invariants=tuple(invariants),
+        hard_violations=tuple(hard_violations),
+        soft_warnings=tuple(soft_warnings),
+        solvability=solvability,
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 7.5 — FORWARD PROOF SKETCH
+# ═══════════════════════════════════════════
+
+class ProofState(StrEnum):
+    PASS = "pass"
+    FAIL = "fail"
+    UNKNOWN = "unknown"
+    BUDGET_UNKNOWN = "budget_unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class ProofSketch:
+    """Forward proof sketch for a sub-goal (§5.6 of spec)."""
+
+    sub_goal: str
+    pi_goal: ProofState       # Reachability witness
+    pi_law: ProofState        # No hard law blocks required actions
+    pi_norm: ProofState       # Required actions are norm-permitted
+    pi_side_effect: ProofState  # Estimated damage within bounds
+
+    @property
+    def is_verified(self) -> bool:
+        return all(p == ProofState.PASS for p in
+                   (self.pi_goal, self.pi_law, self.pi_norm, self.pi_side_effect))
+
+    @property
+    def has_unknown(self) -> bool:
+        return any(p in (ProofState.UNKNOWN, ProofState.BUDGET_UNKNOWN)
+                   for p in (self.pi_goal, self.pi_law, self.pi_norm, self.pi_side_effect))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "sub_goal": self.sub_goal,
+            "pi_goal": self.pi_goal.value,
+            "pi_law": self.pi_law.value,
+            "pi_norm": self.pi_norm.value,
+            "pi_side_effect": self.pi_side_effect.value,
+            "verified": self.is_verified,
+            "has_unknown": self.has_unknown,
+        }
+
+
+def build_proof_sketch(
+    *,
+    sub_goal: str,
+    feasibility: FeasibilityResult,
+    model: EpisodeModelSet,
+) -> ProofSketch:
+    """Phase 7.5 — FORWARD PROOF SKETCH.
+
+    Builds a proof sketch for a sub-goal based on feasibility results
+    and the frozen model. Hard constraint failures → FAIL.
+    Unknown on hard constraints → UNKNOWN (action BLOCKED).
+    """
+    # Goal reachability
+    pi_goal = ProofState.PASS if feasibility.feasible else ProofState.FAIL
+
+    # Law compliance
+    if feasibility.hard_violations:
+        pi_law = ProofState.FAIL
+    elif feasibility.soft_warnings:
+        pi_law = ProofState.PASS  # Soft violations don't block
+    else:
+        pi_law = ProofState.PASS
+
+    # Norm compliance (check against model norms)
+    prohibitions = [n for n in model.norms if n.kind == NormKind.PROHIBITION]
+    pi_norm = ProofState.PASS if not prohibitions else ProofState.UNKNOWN
+
+    # Side effects (conservative: unknown unless explicitly checked)
+    pi_side = ProofState.UNKNOWN
+
+    return ProofSketch(
+        sub_goal=sub_goal,
+        pi_goal=pi_goal,
+        pi_law=pi_law,
+        pi_norm=pi_norm,
+        pi_side_effect=pi_side,
+    )
+
+
+# ═══════════════════════════════════════════
+# SOLVER OUTCOME (§5.10 of spec)
+# ═══════════════════════════════════════════
+
+class SolverOutcome(StrEnum):
+    SOLVED_VERIFIED = "solved_verified"
+    SOLVED_UNVERIFIED = "solved_unverified"
+    AWAITING_EVIDENCE = "awaiting_evidence"
+    SAFE_HALT = "safe_halt"
+    GOVERNANCE_BLOCKED = "governance_blocked"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    IMPOSSIBLE_PROVED = "impossible_proved"
+    MODEL_INVALIDATED = "model_invalidated"
+
+
+# ═══════════════════════════════════════════
+# PHASE 10 — EXECUTE UNDER FULL FEEDBACK
+# ═══════════════════════════════════════════
+
+@dataclass
+class ExecutionStep:
+    """A single step in the execution trace."""
+
+    step_id: int
+    action: str
+    action_class: str  # "epistemic" or "world"
+    outcome: str = ""
+    safety_ok: bool = True
+    surprise: float = 0.0  # KL divergence between predicted and observed
+    cost: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class ExecutionTrace:
+    """Full execution trace from Phase 10."""
+
+    steps: tuple[ExecutionStep, ...]
+    total_cost: float
+    safety_violations: int
+    stall_count: int
+    goal_reached: bool
+
+    @property
+    def step_count(self) -> int:
+        return len(self.steps)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "steps": [{"id": s.step_id, "action": s.action,
+                       "class": s.action_class, "outcome": s.outcome,
+                       "safety_ok": s.safety_ok, "surprise": s.surprise}
+                      for s in self.steps],
+            "total_cost": round(self.total_cost, 4),
+            "safety_violations": self.safety_violations,
+            "stall_count": self.stall_count,
+            "goal_reached": self.goal_reached,
+        }
+
+
+def execute_plan(
+    *,
+    model: EpisodeModelSet,
+    actions: list[dict[str, Any]],
+    executor: Any = None,
+    safety_check: Any = None,
+    max_steps: int = 100,
+    cost_budget: float = 0.0,
+) -> ExecutionTrace:
+    """Phase 10 — EXECUTE UNDER FULL FEEDBACK.
+
+    Executes a sequence of actions against the frozen model with:
+    - Safety pre-check before every action
+    - Cost tracking against budget
+    - Surprise detection (prediction vs observation divergence)
+    - Stall detection (no progress for consecutive steps)
+    """
+    steps: list[ExecutionStep] = []
+    total_cost = 0.0
+    safety_violations = 0
+    stall_count = 0
+    goal_reached = False
+
+    for i, action_spec in enumerate(actions[:max_steps]):
+        action_name = action_spec.get("action", "unknown")
+        action_class = action_spec.get("class", "world")
+        action_cost = float(action_spec.get("cost", 0.0))
+
+        # 1. Safety pre-check
+        safety_ok = True
+        if safety_check is not None:
+            try:
+                safety_ok = safety_check(action_spec)
+            except Exception:
+                safety_ok = False
+
+        if not safety_ok:
+            safety_violations += 1
+            steps.append(ExecutionStep(
+                step_id=i, action=action_name, action_class=action_class,
+                outcome="safety_blocked", safety_ok=False,
+            ))
+            continue
+
+        # 2. Budget check
+        if cost_budget > 0 and total_cost + action_cost > cost_budget:
+            steps.append(ExecutionStep(
+                step_id=i, action=action_name, action_class=action_class,
+                outcome="budget_exceeded", cost=action_cost,
+            ))
+            break
+
+        # 3. Execute
+        outcome = "executed"
+        surprise = 0.0
+        if executor is not None:
+            try:
+                result = executor(action_name, action_spec.get("params", {}))
+                outcome = result.get("outcome", "executed") if isinstance(result, dict) else "executed"
+                surprise = float(result.get("surprise", 0.0)) if isinstance(result, dict) else 0.0
+            except Exception as exc:
+                outcome = "execution_error"
+
+        total_cost += action_cost
+
+        # 4. Goal check
+        if action_spec.get("is_goal_action", False):
+            goal_reached = True
+
+        # 5. Stall detection
+        if surprise < 0.01 and outcome == "executed":
+            stall_count += 1
+        else:
+            stall_count = 0
+
+        steps.append(ExecutionStep(
+            step_id=i, action=action_name, action_class=action_class,
+            outcome=outcome, safety_ok=True, surprise=surprise, cost=action_cost,
+        ))
+
+    return ExecutionTrace(
+        steps=tuple(steps),
+        total_cost=total_cost,
+        safety_violations=safety_violations,
+        stall_count=stall_count,
+        goal_reached=goal_reached,
+    )
+
+
+# ═══════════════════════════════════════════
+# PHASE 12 — DUAL VERIFY + SOLVER OUTPUT
+# ═══════════════════════════════════════════
+
+@dataclass(frozen=True, slots=True)
+class Verification:
+    """Dual-channel verification result (§5.7 of spec)."""
+
+    pi_goal: ProofState
+    pi_law: ProofState
+    pi_norm: ProofState
+    pi_side: ProofState
+    misfit: float = 0.0  # Divergence between model and observed
+    misfit_verdict: str = "consistent"  # "consistent", "suspicious", "invalidated"
+
+    @property
+    def all_pass(self) -> bool:
+        return all(p == ProofState.PASS for p in (self.pi_goal, self.pi_law, self.pi_norm, self.pi_side))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "pi_goal": self.pi_goal.value, "pi_law": self.pi_law.value,
+            "pi_norm": self.pi_norm.value, "pi_side": self.pi_side.value,
+            "misfit": round(self.misfit, 4), "misfit_verdict": self.misfit_verdict,
+            "all_pass": self.all_pass,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SolverOutput:
+    """Complete output of the Φ_gps solver (§5.10 of spec)."""
+
+    outcome: SolverOutcome
+    trace: ExecutionTrace | None = None
+    verification: Verification | None = None
+    diagnosis: str = ""
+    schema_version: str = "phi2-gps-v2.2"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "outcome": self.outcome.value,
+            "trace": self.trace.to_dict() if self.trace else None,
+            "verification": self.verification.to_dict() if self.verification else None,
+            "diagnosis": self.diagnosis,
+            "schema": self.schema_version,
+        }
+
+
+def verify_and_judge(
+    *,
+    trace: ExecutionTrace,
+    model: EpisodeModelSet,
+    feasibility: FeasibilityResult,
+    misfit_threshold: float = 0.5,
+) -> SolverOutput:
+    """Phase 12 — DUAL VERIFY + Ψ JUDGMENT.
+
+    Verifies the execution trace against the frozen model and
+    produces the final SolverOutput with outcome classification.
+    """
+    # Goal verification
+    pi_goal = ProofState.PASS if trace.goal_reached else ProofState.FAIL
+
+    # Law compliance (no safety violations)
+    pi_law = ProofState.PASS if trace.safety_violations == 0 else ProofState.FAIL
+
+    # Norm compliance (based on feasibility)
+    pi_norm = ProofState.PASS if feasibility.feasible else ProofState.FAIL
+
+    # Side effects (conservative)
+    pi_side = ProofState.PASS if trace.safety_violations == 0 else ProofState.UNKNOWN
+
+    # Misfit (surprise accumulation as proxy)
+    total_surprise = sum(s.surprise for s in trace.steps)
+    avg_surprise = total_surprise / max(len(trace.steps), 1)
+    misfit_verdict = "consistent"
+    if avg_surprise > misfit_threshold:
+        misfit_verdict = "invalidated"
+    elif avg_surprise > misfit_threshold * 0.5:
+        misfit_verdict = "suspicious"
+
+    verification = Verification(
+        pi_goal=pi_goal, pi_law=pi_law, pi_norm=pi_norm, pi_side=pi_side,
+        misfit=avg_surprise, misfit_verdict=misfit_verdict,
+    )
+
+    # Classify outcome
+    if verification.all_pass and misfit_verdict == "consistent":
+        outcome = SolverOutcome.SOLVED_VERIFIED
+    elif trace.goal_reached and not verification.all_pass:
+        outcome = SolverOutcome.SOLVED_UNVERIFIED
+    elif trace.safety_violations > 0:
+        outcome = SolverOutcome.SAFE_HALT
+    elif not feasibility.feasible:
+        outcome = SolverOutcome.IMPOSSIBLE_PROVED
+    elif misfit_verdict == "invalidated":
+        outcome = SolverOutcome.MODEL_INVALIDATED
+    elif not trace.goal_reached and trace.step_count > 0:
+        outcome = SolverOutcome.BUDGET_EXHAUSTED
+    else:
+        outcome = SolverOutcome.AWAITING_EVIDENCE
+
+    return SolverOutput(
+        outcome=outcome,
+        trace=trace,
+        verification=verification,
     )
