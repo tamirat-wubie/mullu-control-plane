@@ -76,6 +76,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         on_allow: Callable[[dict[str, Any]], None] | None = None,
         proof_bridge: Any | None = None,
         decision_log: Any | None = None,
+        request_analytics: Any | None = None,
     ) -> None:
         super().__init__(app)
         self._chain = guard_chain
@@ -84,6 +85,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         self._on_allow = on_allow
         self._proof_bridge = proof_bridge
         self._decision_log = decision_log
+        self._request_analytics = request_analytics
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
         path = request.url.path
@@ -209,6 +211,20 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
 
         # Guards passed - proceed to endpoint
         response = await call_next(request)
+
+        # Record request analytics
+        if self._request_analytics is not None:
+            total_latency = (time.monotonic() - start) * 1000
+            status_code = getattr(response, "status_code", 200)
+            try:
+                self._request_analytics.record(
+                    path, latency_ms=total_latency,
+                    success=200 <= status_code < 400,
+                    status_code=status_code,
+                )
+            except Exception:
+                pass  # Analytics failure is non-fatal
+
         return response
 
 
