@@ -12,26 +12,9 @@ from typing import Any
 from mcoi_runtime.app.production_surface import (
     ProductionSurface, DEPLOYMENT_MANIFESTS,
 )
-from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
-from mcoi_runtime.app.streaming import StreamingAdapter
-from mcoi_runtime.core.live_path_certification import LivePathCertifier
-from mcoi_runtime.core.certification_daemon import CertificationConfig, CertificationDaemon
-from mcoi_runtime.core.agent_protocol import (
-    AgentCapability, AgentDescriptor, AgentRegistry, TaskManager,
-)
-from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine
-from mcoi_runtime.core.webhook_system import WebhookManager
-from mcoi_runtime.core.deep_health import DeepHealthChecker
-from mcoi_runtime.core.config_reload import ConfigManager
-from mcoi_runtime.core.observability import ObservabilityAggregator
-from mcoi_runtime.core.plugin_system import HookPoint, PluginDescriptor, PluginRegistry
 from mcoi_runtime.core.safe_arithmetic import evaluate_expression
-from mcoi_runtime.persistence.tenant_ledger import TenantLedger
 
-import hashlib
-import json
 import os
-from datetime import datetime, timezone
 
 from mcoi_runtime.app.server_policy import (
     _append_bounded_warning,
@@ -56,6 +39,7 @@ from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
 )
+from mcoi_runtime.app.server_foundation import bootstrap_foundation_services
 from mcoi_runtime.app.server_runtime import (
     build_default_input_validator,
     calculator_handler as _calculator_handler_impl,
@@ -95,47 +79,21 @@ _db_backend = _primary_store_bootstrap.db_backend
 _db_backend_warning = _primary_store_bootstrap.warning
 store = _primary_store_bootstrap.store
 
-# Phase 200A: LLM bootstrap wiring (env-driven backend selection)
-llm_bootstrap_result = bootstrap_llm(
+# Phase 200 foundation services
+_foundation_bootstrap = bootstrap_foundation_services(
     clock=_clock,
-    config=LLMConfig.from_env(),
-    ledger_sink=lambda entry: store.append_ledger(
-        entry.get("type", "llm"),
-        entry.get("tenant_id", "system"),
-        entry.get("tenant_id", "system"),
-        entry,
-        hashlib.sha256(json.dumps(entry, sort_keys=True).encode()).hexdigest(),
-    ),
+    runtime_env=os.environ,
+    store=store,
 )
+llm_bootstrap_result = _foundation_bootstrap.llm_bootstrap_result
 llm_bridge = llm_bootstrap_result.bridge
-
-# Certification engine
-certifier = LivePathCertifier(clock=_clock)
-
-# Phase 200C: Streaming adapter
-streaming_adapter = StreamingAdapter(clock=_clock)
-
-# Phase 200D: Certification daemon
-cert_daemon = CertificationDaemon(
-    certifier=certifier,
-    clock=_clock,
-    config=CertificationConfig(
-        interval_seconds=float(os.environ.get("MULLU_CERT_INTERVAL", "300")),
-        enabled=os.environ.get("MULLU_CERT_ENABLED", "true").lower() == "true",
-    ),
-    api_handle_fn=lambda req: {"governed": True, "status": "ok"},
-    db_write_fn=lambda t, c: store.append_ledger(
-        "certification", "certifier", t, c,
-        hashlib.sha256(json.dumps(c, sort_keys=True).encode()).hexdigest(),
-    ),
-    db_read_fn=lambda t: store.query_ledger(t),
-    llm_invoke_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
-    ledger_fn=lambda t: store.query_ledger(t),
-    state_fn=lambda: (
-        hashlib.sha256(str(store.ledger_count()).encode()).hexdigest(),
-        store.ledger_count(),
-    ),
-)
+certifier = _foundation_bootstrap.certifier
+streaming_adapter = _foundation_bootstrap.streaming_adapter
+cert_daemon = _foundation_bootstrap.cert_daemon
+pii_scanner = _foundation_bootstrap.pii_scanner
+content_safety_chain = _foundation_bootstrap.content_safety_chain
+proof_bridge = _foundation_bootstrap.proof_bridge
+tenant_ledger = _foundation_bootstrap.tenant_ledger
 
 # Phase 2B: Field encryption (optional â€” enabled when MULLU_ENCRYPTION_KEY is set)
 _field_encryptor, _field_encryption_bootstrap = _init_field_encryption_from_env()
@@ -156,25 +114,8 @@ audit_trail = _governance_bootstrap.audit_trail
 _jwt_authenticator = _governance_bootstrap.jwt_authenticator
 _tenant_gating = _governance_bootstrap.tenant_gating
 
-# Phase 3A: PII scanner
-from mcoi_runtime.core.pii_scanner import PIIScanner
-pii_scanner = PIIScanner(
-    enabled=os.environ.get("MULLU_PII_SCAN", "true").lower() == "true",
-)
-
-# Phase 3B: Content safety chain
-from mcoi_runtime.core.content_safety import build_default_safety_chain
-content_safety_chain = build_default_safety_chain()
-
 # Phase 3C: Shell sandbox policy (env-driven profile selection)
 shell_policy = _governance_bootstrap.shell_policy
-
-# Phase 4C: Proof bridge (governance decision â†’ MAF transition receipts)
-from mcoi_runtime.core.proof_bridge import ProofBridge
-proof_bridge = ProofBridge(clock=_clock)
-
-# Phase 201D: Tenant-scoped ledger
-tenant_ledger = TenantLedger(clock=_clock)
 
 _agent_bootstrap = bootstrap_agent_runtime(
     clock=_clock,
