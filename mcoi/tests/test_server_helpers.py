@@ -29,6 +29,7 @@ from mcoi_runtime.app import server_platform
 from mcoi_runtime.app import server_policy
 from mcoi_runtime.app import server_registry
 from mcoi_runtime.app import server_runtime
+from mcoi_runtime.app import server_runtime_stack
 from mcoi_runtime.app import server_services
 from mcoi_runtime.app import server_subsystems
 from mcoi_runtime.core.plugin_system import HookPoint
@@ -1749,6 +1750,85 @@ def test_bootstrap_server_context_composes_env_store_foundation_and_governance()
     assert captured["primary_store_kwargs"]["env"] == "test"
     assert captured["foundation_kwargs"]["store"] is store
     assert captured["governance_kwargs"]["allow_unknown_tenants"] is True
+
+
+def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() -> None:
+    captured: dict[str, object] = {}
+    observability = object()
+    access_runtime = object()
+    guard_chain = object()
+    shutdown_mgr = object()
+    state_persistence = object()
+
+    agent_bootstrap = SimpleNamespace(
+        observability=observability,
+        deep_health=object(),
+        workflow_engine=object(),
+    )
+    subsystem_bootstrap = SimpleNamespace(
+        event_bus=object(),
+        access_runtime=access_runtime,
+    )
+    operational_bootstrap = SimpleNamespace(
+        guard_chain=guard_chain,
+    )
+    capability_bootstrap = SimpleNamespace(
+        shutdown_mgr=shutdown_mgr,
+        state_persistence=state_persistence,
+    )
+
+    def fake_bootstrap_agent_runtime_fn(**kwargs):
+        captured["agent_kwargs"] = kwargs
+        return agent_bootstrap
+
+    def fake_bootstrap_subsystems_fn(**kwargs):
+        captured["subsystem_kwargs"] = kwargs
+        return subsystem_bootstrap
+
+    def fake_bootstrap_operational_services_fn(**kwargs):
+        captured["operational_kwargs"] = kwargs
+        return operational_bootstrap
+
+    def fake_bootstrap_capability_services_fn(**kwargs):
+        captured["capability_kwargs"] = kwargs
+        return capability_bootstrap
+
+    bootstrap = server_runtime_stack.bootstrap_server_runtime_stack(
+        clock=lambda: "2026-01-01T00:00:00Z",
+        env="test",
+        runtime_env={"MULLU_ENV": "test"},
+        store=object(),
+        llm_bridge=object(),
+        cert_daemon=object(),
+        metrics=object(),
+        default_model="stub",
+        audit_trail=object(),
+        tenant_budget_mgr=object(),
+        tenant_gating=object(),
+        pii_scanner=object(),
+        content_safety_chain=object(),
+        proof_bridge=object(),
+        rate_limiter=object(),
+        shell_policy=object(),
+        jwt_authenticator=object(),
+        evaluate_expression_fn=lambda value: value,
+        bootstrap_agent_runtime_fn=fake_bootstrap_agent_runtime_fn,
+        bootstrap_subsystems_fn=fake_bootstrap_subsystems_fn,
+        bootstrap_operational_services_fn=fake_bootstrap_operational_services_fn,
+        bootstrap_capability_services_fn=fake_bootstrap_capability_services_fn,
+    )
+
+    assert captured["subsystem_kwargs"]["observability"] is observability
+    assert captured["subsystem_kwargs"]["deep_health"] is agent_bootstrap.deep_health
+    assert captured["operational_kwargs"]["workflow_engine"] is agent_bootstrap.workflow_engine
+    assert captured["operational_kwargs"]["event_bus"] is subsystem_bootstrap.event_bus
+    assert captured["operational_kwargs"]["access_runtime"] is access_runtime
+    assert captured["capability_kwargs"]["observability"] is observability
+    assert bootstrap.observability is observability
+    assert bootstrap.access_runtime is access_runtime
+    assert bootstrap.guard_chain is guard_chain
+    assert bootstrap.shutdown_mgr is shutdown_mgr
+    assert bootstrap.state_persistence is state_persistence
 
 
 def test_validate_or_raise_returns_bounded_422_payload() -> None:
