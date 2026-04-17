@@ -41,7 +41,6 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
-from mcoi_runtime.app.server_http import include_default_routers
 from mcoi_runtime.app.server_platform import (
     bootstrap_governance_runtime,
     bootstrap_primary_store,
@@ -49,6 +48,7 @@ from mcoi_runtime.app.server_platform import (
 from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
 from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_capabilities import bootstrap_capability_services
+from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_services import bootstrap_operational_services
 from mcoi_runtime.app.server_subsystems import bootstrap_subsystems
@@ -62,11 +62,6 @@ from mcoi_runtime.app.server_runtime import (
     register_default_output_schemas,
     register_default_tools,
     validate_or_raise as _validate_or_raise_impl,
-)
-from mcoi_runtime.app.server_state import (
-    close_governance_stores as _close_governance_stores_impl,
-    flush_state_on_shutdown as _flush_state_on_shutdown_impl,
-    restore_state_on_startup as _restore_state_on_startup_impl,
 )
 
 ENV = os.environ.get("MULLU_ENV", "local_dev")
@@ -475,54 +470,22 @@ platform = _dependency_bootstrap.platform
 # Include routers â€” all route handlers live in routers/ modules
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-include_default_routers(app)
-
-
-# â•â•â•â•ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ï¿½ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ï¿½ï¿½â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-# Shutdown handler â€” stays in server.py (needs direct access to subsystems)
-# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
-def _flush_state_on_shutdown():
-    """Flush critical in-memory state to file-based snapshots before exit."""
-    return _flush_state_on_shutdown_impl(
-        tenant_budget_mgr=tenant_budget_mgr,
-        state_persistence=state_persistence,
-        audit_trail=audit_trail,
-        cost_analytics=cost_analytics,
-        platform_logger=platform_logger,
-        log_levels=LogLevel,
-        append_bounded_warning=_append_bounded_warning,
-    )
-
-
-def _restore_state_on_startup():
-    """Restore state from file-based snapshots on startup."""
-    return _restore_state_on_startup_impl(
-        tenant_budget_mgr=tenant_budget_mgr,
-        state_persistence=state_persistence,
-        platform_logger=platform_logger,
-        log_levels=LogLevel,
-        append_bounded_warning=_append_bounded_warning,
-    )
-
-
-_startup_restored = _restore_state_on_startup()
-
-shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
-shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
-
-
-def _close_governance_stores():
-    """Close all governance store connections on shutdown."""
-    return _close_governance_stores_impl(
-        governance_stores=_gov_stores,
-        primary_store=store,
-        platform_logger=platform_logger,
-        log_levels=LogLevel,
-        append_bounded_warning=_append_bounded_warning,
-    )
-
-
-shutdown_mgr.register("close_connections", _close_governance_stores, priority=10)
+_lifecycle_bootstrap = bootstrap_server_lifecycle(
+    app=app,
+    shutdown_mgr=shutdown_mgr,
+    tenant_budget_mgr=lambda: tenant_budget_mgr,
+    state_persistence=lambda: state_persistence,
+    audit_trail=lambda: audit_trail,
+    cost_analytics=lambda: cost_analytics,
+    platform_logger=lambda: platform_logger,
+    log_levels=LogLevel,
+    append_bounded_warning=_append_bounded_warning,
+    governance_stores=lambda: _gov_stores,
+    primary_store=lambda: store,
+)
+_flush_state_on_shutdown = _lifecycle_bootstrap.flush_state_on_shutdown
+_restore_state_on_startup = _lifecycle_bootstrap.restore_state_on_startup
+_close_governance_stores = _lifecycle_bootstrap.close_governance_stores
+_startup_restored = _lifecycle_bootstrap.startup_restored
 
 
