@@ -37,111 +37,117 @@ def bootstrap_dependency_registry(
     env: str,
     surface: Any,
     store: Any,
-    llm_bridge: Any,
     llm_bootstrap_result: Any,
-    llm_circuit: Any,
     streaming_adapter: Any,
-    model_router: Any,
-    metrics: Any,
-    rate_limiter: Any,
-    rate_limit_headers: Any,
-    guard_chain: Any,
-    audit_trail: Any,
-    input_validator: Any,
     proof_bridge: Any,
     pii_scanner: Any,
     content_safety_chain: Any,
-    tenant_gating: Any,
     field_encryption_bootstrap: Mapping[str, Any],
-    tenant_budget_mgr: Any,
     tenant_ledger: Any,
-    tenant_isolation: Any,
-    tenant_quota: Any,
-    tenant_partitions: Any,
-    tenant_analytics: Any,
-    usage_reporter: Any,
-    isolation_verifier: Any,
-    agent_registry: Any,
-    task_manager: Any,
-    workflow_engine: Any,
-    traced_workflow: Any,
-    replay_recorder: Any,
-    chat_workflow: Any,
-    agent_chain: Any,
-    agent_orchestrator: Any,
-    coordination_engine: Any,
-    coordination_store: Any,
-    scheduler: Any,
-    connector_framework: Any,
-    access_runtime: Any,
-    policy_sandbox: Any,
-    runbook_learning: Any,
-    explanation_engine: Any,
-    knowledge_graph: Any,
-    audit_anchor: Any,
-    tool_registry: Any,
-    tool_agent: Any,
-    agent_memory: Any,
-    task_queue: Any,
-    batch_pipeline: Any,
-    wf_templates: Any,
-    semantic_search: Any,
-    conversation_store: Any,
-    prompt_engine: Any,
-    schema_validator: Any,
-    state_persistence: Any,
-    structured_output: Any,
-    cost_analytics: Any,
-    deep_health: Any,
-    health_agg: Any,
-    health_agg_v2: Any,
-    health_v3: Any,
     certifier: Any,
     cert_daemon: Any,
-    event_bus: Any,
-    event_store: Any,
-    webhook_manager: Any,
-    webhook_retry: Any,
-    config_manager: Any,
-    config_watcher: Any,
-    config_drift: Any,
-    observability: Any,
-    plugin_registry: Any,
-    api_versions: Any,
-    platform_logger: Any,
-    api_key_mgr: Any,
-    data_export: Any,
-    sla_monitor: Any,
-    notification_dispatcher: Any,
-    prom_exporter: Any,
-    grafana_dashboard: Any,
-    request_tracer: Any,
-    monitor: Any,
-    shutdown_mgr: Any,
-    correlation_mgr: Any,
-    idempotency_store: Any,
-    response_compressor: Any,
-    canary_controller: Any,
-    secret_rotation: Any,
-    request_dedup: Any,
-    snapshot_mgr: Any,
-    otel_exporter: Any,
-    circuit_dashboard: Any,
-    deploy_checker: Any,
-    api_migration: Any,
-    retry_engine: Any,
-    region_router: Any,
-    request_ctx_factory: Any,
-    governed_cache: Any,
-    feature_flags: Any,
-    dep_graph: Any,
-    backpressure: Any,
-    ab_engine: Any,
+    governance_bootstrap: Any,
+    agent_bootstrap: Any,
+    subsystem_bootstrap: Any,
+    operational_bootstrap: Any,
+    capability_bootstrap: Any,
     platform_cls: type[Any] = GovernedPlatform,
     wire_runtime_dependencies_fn: Callable[..., Any] = wire_runtime_dependencies,
     register_dependency_groups_fn: Callable[..., Any] = register_dependency_groups,
 ) -> DependencyRegistryBootstrap:
     """Build the platform harness and register dependency groups."""
+    llm_bridge = llm_bootstrap_result.bridge
+    tenant_budget_mgr = governance_bootstrap.tenant_budget_mgr
+    metrics = governance_bootstrap.metrics
+    rate_limiter = governance_bootstrap.rate_limiter
+    audit_trail = governance_bootstrap.audit_trail
+    tenant_gating = governance_bootstrap.tenant_gating
+    agent_registry = agent_bootstrap.agent_registry
+    task_manager = agent_bootstrap.task_manager
+    webhook_manager = agent_bootstrap.webhook_manager
+    deep_health = agent_bootstrap.deep_health
+    config_manager = agent_bootstrap.config_manager
+    workflow_engine = agent_bootstrap.workflow_engine
+    observability = agent_bootstrap.observability
+    coordination_store = subsystem_bootstrap.coordination_store
+    coordination_engine = subsystem_bootstrap.coordination_engine
+    scheduler = subsystem_bootstrap.scheduler
+    connector_framework = subsystem_bootstrap.connector_framework
+    access_runtime = subsystem_bootstrap.access_runtime
+    policy_sandbox = subsystem_bootstrap.policy_sandbox
+    runbook_learning = subsystem_bootstrap.runbook_learning
+    explanation_engine = subsystem_bootstrap.explanation_engine
+    audit_anchor = subsystem_bootstrap.audit_anchor
+    knowledge_graph = subsystem_bootstrap.knowledge_graph
+    event_bus = subsystem_bootstrap.event_bus
+    batch_pipeline = subsystem_bootstrap.batch_pipeline
+    guard_chain = operational_bootstrap.guard_chain
+    replay_recorder = operational_bootstrap.replay_recorder
+    traced_workflow = operational_bootstrap.traced_workflow
+    conversation_store = operational_bootstrap.conversation_store
+    schema_validator = operational_bootstrap.schema_validator
+    prompt_engine = operational_bootstrap.prompt_engine
+    cost_analytics = operational_bootstrap.cost_analytics
+    chat_workflow = operational_bootstrap.chat_workflow
+    health_agg = operational_bootstrap.health_agg
+    api_versions = operational_bootstrap.api_versions
+    grafana_dashboard = operational_bootstrap.grafana_dashboard
+    request_tracer = operational_bootstrap.request_tracer
+    agent_orchestrator = operational_bootstrap.agent_orchestrator
+    rate_limit_headers = operational_bootstrap.rate_limit_headers
+    webhook_retry = operational_bootstrap.webhook_retry
+    config_watcher = operational_bootstrap.config_watcher
+    platform_logger = operational_bootstrap.platform_logger
+    plugin_registry = operational_bootstrap.plugin_registry
+    api_key_mgr = operational_bootstrap.api_key_mgr
+    data_export = operational_bootstrap.data_export
+    sla_monitor = operational_bootstrap.sla_monitor
+    notification_dispatcher = operational_bootstrap.notification_dispatcher
+    tenant_isolation = operational_bootstrap.tenant_isolation
+    input_validator = operational_bootstrap.input_validator
+    prom_exporter = operational_bootstrap.prom_exporter
+    health_agg_v2 = operational_bootstrap.health_agg_v2
+    idempotency_store = operational_bootstrap.idempotency_store
+    response_compressor = operational_bootstrap.response_compressor
+    canary_controller = operational_bootstrap.canary_controller
+    secret_rotation = operational_bootstrap.secret_rotation
+    request_dedup = operational_bootstrap.request_dedup
+    snapshot_mgr = operational_bootstrap.snapshot_mgr
+    otel_exporter = operational_bootstrap.otel_exporter
+    circuit_dashboard = operational_bootstrap.circuit_dashboard
+    tenant_quota = operational_bootstrap.tenant_quota
+    deploy_checker = operational_bootstrap.deploy_checker
+    api_migration = operational_bootstrap.api_migration
+    retry_engine = operational_bootstrap.retry_engine
+    region_router = operational_bootstrap.region_router
+    config_drift = operational_bootstrap.config_drift
+    request_ctx_factory = operational_bootstrap.request_ctx_factory
+    tenant_partitions = operational_bootstrap.tenant_partitions
+    health_v3 = operational_bootstrap.health_v3
+    tool_registry = capability_bootstrap.tool_registry
+    structured_output = capability_bootstrap.structured_output
+    state_persistence = capability_bootstrap.state_persistence
+    llm_circuit = capability_bootstrap.llm_circuit
+    tool_agent = capability_bootstrap.tool_agent
+    model_router = capability_bootstrap.model_router
+    correlation_mgr = capability_bootstrap.correlation_mgr
+    shutdown_mgr = capability_bootstrap.shutdown_mgr
+    agent_chain = capability_bootstrap.agent_chain
+    monitor = capability_bootstrap.monitor
+    task_queue = capability_bootstrap.task_queue
+    agent_memory = capability_bootstrap.agent_memory
+    ab_engine = capability_bootstrap.ab_engine
+    isolation_verifier = capability_bootstrap.isolation_verifier
+    usage_reporter = capability_bootstrap.usage_reporter
+    dep_graph = capability_bootstrap.dep_graph
+    backpressure = capability_bootstrap.backpressure
+    governed_cache = capability_bootstrap.governed_cache
+    feature_flags = capability_bootstrap.feature_flags
+    semantic_search = capability_bootstrap.semantic_search
+    tenant_analytics = capability_bootstrap.tenant_analytics
+    wf_templates = capability_bootstrap.wf_templates
+    event_store = capability_bootstrap.event_store
+
     platform = platform_cls(
         clock=clock,
         access_runtime=access_runtime,
