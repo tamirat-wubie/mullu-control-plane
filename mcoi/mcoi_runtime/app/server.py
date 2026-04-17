@@ -7,9 +7,7 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
-from contextlib import asynccontextmanager
 from typing import Any
-from fastapi import FastAPI, HTTPException
 
 from mcoi_runtime.app.production_surface import (
     ProductionSurface, DEPLOYMENT_MANIFESTS,
@@ -43,16 +41,13 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
-from mcoi_runtime.app.server_http import (
-    configure_cors_middleware,
-    include_default_routers,
-    install_global_exception_handler,
-)
+from mcoi_runtime.app.server_http import include_default_routers
 from mcoi_runtime.app.server_platform import (
     bootstrap_governance_runtime,
     bootstrap_primary_store,
 )
 from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
+from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_capabilities import bootstrap_capability_services
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_services import bootstrap_operational_services
@@ -233,7 +228,6 @@ knowledge_graph = _subsystem_bootstrap.knowledge_graph
 event_bus = _subsystem_bootstrap.event_bus
 batch_pipeline = _subsystem_bootstrap.batch_pipeline
 
-from mcoi_runtime.app.middleware import GovernanceMiddleware
 from mcoi_runtime.core.structured_logging import LogLevel
 
 _operational_bootstrap = bootstrap_operational_services(
@@ -345,58 +339,19 @@ def _calculator_handler(args: dict[str, Any]) -> dict[str, str]:
         evaluate_expression_fn=evaluate_expression,
     )
 
-@asynccontextmanager
-async def _app_lifespan(_app: FastAPI):
-    try:
-        yield
-    finally:
-        shutdown_mgr.execute()
-
-
-app = FastAPI(
-    title="Mullu Platform",
-    version="3.13.0",
-    description="Governed AI Operating System",
-    lifespan=_app_lifespan,
-)
-
-# Wire middleware
-app.add_middleware(
-    GovernanceMiddleware,
-    guard_chain=guard_chain,
-    metrics_fn=lambda name, val: metrics.inc(name, val),
-    proof_bridge=proof_bridge,
-    on_reject=lambda ctx: audit_trail.record(
-        action="guard.rejected", actor_id="system",
-        tenant_id=ctx.get("tenant_id", ""), target=ctx.get("path", ""),
-        outcome="denied",
-        detail=pii_scanner.scan_dict(ctx)[0] if pii_scanner.enabled else ctx,
-    ),
-    on_allow=lambda ctx: audit_trail.record(
-        action="guard.allowed", actor_id=ctx.get("tenant_id", "system"),
-        tenant_id=ctx.get("tenant_id", ""), target=ctx.get("path", ""),
-        outcome="success",
-    ),
-)
-
-
-import warnings
-
-configure_cors_middleware(
-    app=app,
+app = create_governed_app(
     env=ENV,
     cors_origins_raw=os.environ.get("MULLU_CORS_ORIGINS"),
-    resolve_cors_origins=_resolve_cors_origins,
-    validate_cors_origins_for_env=_validate_cors_origins_for_env,
-    warnings_module=warnings,
-)
-
-
-install_global_exception_handler(
-    app=app,
+    guard_chain=guard_chain,
     metrics=metrics,
+    proof_bridge=proof_bridge,
+    audit_trail=audit_trail,
+    pii_scanner=pii_scanner,
     platform_logger=platform_logger,
     log_levels=LogLevel,
+    shutdown_mgr=shutdown_mgr,
+    resolve_cors_origins=_resolve_cors_origins,
+    validate_cors_origins_for_env=_validate_cors_origins_for_env,
 )
 
 
