@@ -32,6 +32,13 @@ class ServerLifecycleBootstrap:
     startup_restored: Any
 
 
+def _as_getter(value: Any) -> Callable[[], Any]:
+    """Normalize a value or zero-arg provider into a getter."""
+    if callable(value):
+        return value
+    return lambda: value
+
+
 def bootstrap_server_lifecycle(
     *,
     app: Any,
@@ -51,32 +58,39 @@ def bootstrap_server_lifecycle(
     close_governance_stores_impl: Callable[..., Any] = _close_governance_stores_impl,
 ) -> ServerLifecycleBootstrap:
     """Mount routers and register startup/shutdown lifecycle helpers."""
+    tenant_budget_mgr_getter = _as_getter(tenant_budget_mgr)
+    state_persistence_getter = _as_getter(state_persistence)
+    audit_trail_getter = _as_getter(audit_trail)
+    cost_analytics_getter = _as_getter(cost_analytics)
+    platform_logger_getter = _as_getter(platform_logger)
+    governance_stores_getter = _as_getter(governance_stores)
+    primary_store_getter = _as_getter(primary_store)
 
     def flush_state_on_shutdown() -> Any:
         return flush_state_on_shutdown_impl(
-            tenant_budget_mgr=tenant_budget_mgr,
-            state_persistence=state_persistence,
-            audit_trail=audit_trail,
-            cost_analytics=cost_analytics,
-            platform_logger=platform_logger,
+            tenant_budget_mgr=tenant_budget_mgr_getter(),
+            state_persistence=state_persistence_getter(),
+            audit_trail=audit_trail_getter(),
+            cost_analytics=cost_analytics_getter(),
+            platform_logger=platform_logger_getter(),
             log_levels=log_levels,
             append_bounded_warning=append_bounded_warning,
         )
 
     def restore_state_on_startup() -> Any:
         return restore_state_on_startup_impl(
-            tenant_budget_mgr=tenant_budget_mgr,
-            state_persistence=state_persistence,
-            platform_logger=platform_logger,
+            tenant_budget_mgr=tenant_budget_mgr_getter(),
+            state_persistence=state_persistence_getter(),
+            platform_logger=platform_logger_getter(),
             log_levels=log_levels,
             append_bounded_warning=append_bounded_warning,
         )
 
     def close_governance_stores() -> Any:
         return close_governance_stores_impl(
-            governance_stores=governance_stores,
-            primary_store=primary_store,
-            platform_logger=platform_logger,
+            governance_stores=governance_stores_getter(),
+            primary_store=primary_store_getter(),
+            platform_logger=platform_logger_getter(),
             log_levels=log_levels,
             append_bounded_warning=append_bounded_warning,
         )

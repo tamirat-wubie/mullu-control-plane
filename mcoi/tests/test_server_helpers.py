@@ -450,6 +450,15 @@ def test_bootstrap_server_lifecycle_mounts_routes_and_registers_shutdown_hooks()
 
 def test_bootstrap_server_lifecycle_wrappers_preserve_state_and_store_bindings() -> None:
     captured: dict[str, object] = {}
+    current = {
+        "tenant_budget_mgr": "tenant-budget",
+        "state_persistence": "state-persistence",
+        "audit_trail": "audit-trail",
+        "cost_analytics": "cost-analytics",
+        "platform_logger": "platform-logger",
+        "governance_stores": "governance-stores",
+        "primary_store": "primary-store",
+    }
 
     def fake_flush_state_on_shutdown_impl(**kwargs):
         captured["flush_kwargs"] = kwargs
@@ -470,28 +479,39 @@ def test_bootstrap_server_lifecycle_wrappers_preserve_state_and_store_bindings()
     bootstrap = server_lifecycle.bootstrap_server_lifecycle(
         app=object(),
         shutdown_mgr=ShutdownManager(),
-        tenant_budget_mgr="tenant-budget",
-        state_persistence="state-persistence",
-        audit_trail="audit-trail",
-        cost_analytics="cost-analytics",
-        platform_logger="platform-logger",
+        tenant_budget_mgr=lambda: current["tenant_budget_mgr"],
+        state_persistence=lambda: current["state_persistence"],
+        audit_trail=lambda: current["audit_trail"],
+        cost_analytics=lambda: current["cost_analytics"],
+        platform_logger=lambda: current["platform_logger"],
         log_levels="log-levels",
         append_bounded_warning="append-warning",
-        governance_stores="governance-stores",
-        primary_store="primary-store",
+        governance_stores=lambda: current["governance_stores"],
+        primary_store=lambda: current["primary_store"],
         include_default_routers_fn=lambda app: None,
         flush_state_on_shutdown_impl=fake_flush_state_on_shutdown_impl,
         restore_state_on_startup_impl=fake_restore_state_on_startup_impl,
         close_governance_stores_impl=fake_close_governance_stores_impl,
     )
 
+    current["tenant_budget_mgr"] = "tenant-budget-updated"
+    current["state_persistence"] = "state-persistence-updated"
+    current["audit_trail"] = "audit-trail-updated"
+    current["cost_analytics"] = "cost-analytics-updated"
+    current["platform_logger"] = "platform-logger-updated"
+    current["governance_stores"] = "governance-stores-updated"
+    current["primary_store"] = "primary-store-updated"
+
     assert bootstrap.flush_state_on_shutdown() == {"status": "flushed"}
     assert bootstrap.restore_state_on_startup() == {"status": "restored"}
     assert bootstrap.close_governance_stores() == {"status": "closed"}
-    assert captured["flush_kwargs"]["audit_trail"] == "audit-trail"
-    assert captured["flush_kwargs"]["cost_analytics"] == "cost-analytics"
-    assert captured["close_kwargs"]["governance_stores"] == "governance-stores"
-    assert captured["close_kwargs"]["primary_store"] == "primary-store"
+    assert captured["flush_kwargs"]["tenant_budget_mgr"] == "tenant-budget-updated"
+    assert captured["flush_kwargs"]["state_persistence"] == "state-persistence-updated"
+    assert captured["flush_kwargs"]["audit_trail"] == "audit-trail-updated"
+    assert captured["flush_kwargs"]["cost_analytics"] == "cost-analytics-updated"
+    assert captured["restore_kwargs"]["platform_logger"] == "platform-logger-updated"
+    assert captured["close_kwargs"]["governance_stores"] == "governance-stores-updated"
+    assert captured["close_kwargs"]["primary_store"] == "primary-store-updated"
     assert captured["close_kwargs"]["append_bounded_warning"] == "append-warning"
 
 
