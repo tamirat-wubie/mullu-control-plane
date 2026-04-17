@@ -19,12 +19,123 @@ from mcoi_runtime.app import server_capabilities
 from mcoi_runtime.app import server_http
 from mcoi_runtime.app import server_platform
 from mcoi_runtime.app import server_policy
+from mcoi_runtime.app import server_registry
 from mcoi_runtime.app import server_runtime
 from mcoi_runtime.app import server_services
 from mcoi_runtime.app import server_subsystems
 from mcoi_runtime.core.plugin_system import HookPoint
 from mcoi_runtime.core.structured_output import StructuredOutputEngine
 from mcoi_runtime.core.tool_use import ToolRegistry
+
+
+def _server_registry_kwargs() -> dict[str, object]:
+    return {
+        "deps_container": object(),
+        "clock": lambda: "2026-01-01T00:00:00Z",
+        "env": "test",
+        "surface": object(),
+        "store": object(),
+        "llm_bridge": object(),
+        "llm_bootstrap_result": object(),
+        "llm_circuit": object(),
+        "streaming_adapter": object(),
+        "model_router": object(),
+        "metrics": object(),
+        "rate_limiter": object(),
+        "rate_limit_headers": object(),
+        "guard_chain": object(),
+        "audit_trail": object(),
+        "input_validator": object(),
+        "proof_bridge": object(),
+        "pii_scanner": object(),
+        "content_safety_chain": object(),
+        "tenant_gating": object(),
+        "field_encryption_bootstrap": {"enabled": True, "warning": "field warning"},
+        "tenant_budget_mgr": object(),
+        "tenant_ledger": object(),
+        "tenant_isolation": object(),
+        "tenant_quota": object(),
+        "tenant_partitions": object(),
+        "tenant_analytics": object(),
+        "usage_reporter": object(),
+        "isolation_verifier": object(),
+        "agent_registry": object(),
+        "task_manager": object(),
+        "workflow_engine": object(),
+        "traced_workflow": object(),
+        "replay_recorder": object(),
+        "chat_workflow": object(),
+        "agent_chain": object(),
+        "agent_orchestrator": object(),
+        "coordination_engine": object(),
+        "coordination_store": object(),
+        "scheduler": object(),
+        "connector_framework": object(),
+        "access_runtime": object(),
+        "policy_sandbox": object(),
+        "runbook_learning": object(),
+        "explanation_engine": object(),
+        "knowledge_graph": object(),
+        "audit_anchor": object(),
+        "tool_registry": object(),
+        "tool_agent": object(),
+        "agent_memory": object(),
+        "task_queue": object(),
+        "batch_pipeline": object(),
+        "wf_templates": object(),
+        "semantic_search": object(),
+        "conversation_store": object(),
+        "prompt_engine": object(),
+        "schema_validator": object(),
+        "state_persistence": object(),
+        "structured_output": object(),
+        "cost_analytics": object(),
+        "deep_health": object(),
+        "health_agg": object(),
+        "health_agg_v2": object(),
+        "health_v3": object(),
+        "certifier": object(),
+        "cert_daemon": object(),
+        "event_bus": object(),
+        "event_store": object(),
+        "webhook_manager": object(),
+        "webhook_retry": object(),
+        "config_manager": object(),
+        "config_watcher": object(),
+        "config_drift": object(),
+        "observability": object(),
+        "plugin_registry": object(),
+        "api_versions": object(),
+        "platform_logger": object(),
+        "api_key_mgr": object(),
+        "data_export": object(),
+        "sla_monitor": object(),
+        "notification_dispatcher": object(),
+        "prom_exporter": object(),
+        "grafana_dashboard": object(),
+        "request_tracer": object(),
+        "monitor": object(),
+        "shutdown_mgr": object(),
+        "correlation_mgr": object(),
+        "idempotency_store": object(),
+        "response_compressor": object(),
+        "canary_controller": object(),
+        "secret_rotation": object(),
+        "request_dedup": object(),
+        "snapshot_mgr": object(),
+        "otel_exporter": object(),
+        "circuit_dashboard": object(),
+        "deploy_checker": object(),
+        "api_migration": object(),
+        "retry_engine": object(),
+        "region_router": object(),
+        "request_ctx_factory": object(),
+        "governed_cache": object(),
+        "feature_flags": object(),
+        "dep_graph": object(),
+        "backpressure": object(),
+        "ab_engine": object(),
+    }
 
 
 def test_env_flag_bounds_invalid_boolean_name(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1076,6 +1187,74 @@ def test_bootstrap_capability_services_wires_usage_templates_and_isolation() -> 
     assert templates == ["research-draft", "summarize-refine"]
     assert bootstrap.dep_graph.topological_sort()[-1] == "api"
     assert bootstrap.event_store.summary()["total_events"] == 0
+
+
+def test_bootstrap_dependency_registry_preserves_platform_and_runtime_wiring() -> None:
+    captured: dict[str, object] = {}
+
+    class FakePlatform:
+        def __init__(self, **kwargs) -> None:
+            self.kwargs = kwargs
+
+    def fake_wire_runtime_dependencies_fn(**kwargs) -> None:
+        captured["wire_kwargs"] = kwargs
+
+    def fake_register_dependency_groups_fn(_deps, *groups) -> None:
+        captured["groups"] = groups
+
+    bootstrap = server_registry.bootstrap_dependency_registry(
+        **_server_registry_kwargs(),
+        platform_cls=FakePlatform,
+        wire_runtime_dependencies_fn=fake_wire_runtime_dependencies_fn,
+        register_dependency_groups_fn=fake_register_dependency_groups_fn,
+    )
+
+    assert bootstrap.platform.kwargs["bootstrap_warnings"] == ("field warning",)
+    assert bootstrap.platform.kwargs["bootstrap_components"]["field_encryption"] is True
+    assert bootstrap.platform.kwargs["llm_bridge"] is not None
+    assert captured["wire_kwargs"]["guard_chain"] is not None
+    assert captured["wire_kwargs"]["scheduler"] is not None
+    assert captured["wire_kwargs"]["connector_framework"] is not None
+    assert captured["wire_kwargs"]["policy_sandbox"] is not None
+    assert captured["wire_kwargs"]["explanation_engine"] is not None
+
+
+def test_bootstrap_dependency_registry_registers_expected_dependency_keys() -> None:
+    captured: dict[str, object] = {}
+    registry_kwargs = _server_registry_kwargs()
+    deps_container = registry_kwargs["deps_container"]
+
+    class FakePlatform:
+        def __init__(self, **kwargs) -> None:
+            self.kwargs = kwargs
+
+    def fake_register_dependency_groups_fn(container, *groups) -> None:
+        captured["container"] = container
+        captured["groups"] = groups
+
+    bootstrap = server_registry.bootstrap_dependency_registry(
+        **registry_kwargs,
+        platform_cls=FakePlatform,
+        wire_runtime_dependencies_fn=lambda **kwargs: None,
+        register_dependency_groups_fn=fake_register_dependency_groups_fn,
+    )
+
+    group_keys = {key for group in captured["groups"] for key in group}
+
+    assert captured["container"] is deps_container
+    assert len(captured["groups"]) == 10
+    assert "surface" in group_keys
+    assert "store" in group_keys
+    assert "platform" in group_keys
+    assert "tool_registry" in group_keys
+    assert "event_bus" in group_keys
+    assert "shutdown_mgr" in group_keys
+    assert "request_ctx_factory" in group_keys
+    assert "governed_cache" in group_keys
+    assert "feature_flags" in group_keys
+    assert "dep_graph" in group_keys
+    assert "backpressure" in group_keys
+    assert bootstrap.platform.kwargs["tenant_gating"] is registry_kwargs["tenant_gating"]
 
 
 def test_build_default_input_validator_registers_expected_schemas() -> None:
