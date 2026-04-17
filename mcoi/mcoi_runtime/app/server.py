@@ -121,6 +121,7 @@ access_runtime = _runtime_stack.access_runtime
 guard_chain = _runtime_stack.guard_chain
 shutdown_mgr = _runtime_stack.shutdown_mgr
 state_persistence = _runtime_stack.state_persistence
+platform_logger = _operational_bootstrap.platform_logger
 
 from mcoi_runtime.core.structured_logging import LogLevel
 
@@ -147,7 +148,7 @@ app = create_governed_app(
     proof_bridge=proof_bridge,
     audit_trail=audit_trail,
     pii_scanner=pii_scanner,
-    platform_logger=_operational_bootstrap.platform_logger,
+    platform_logger=platform_logger,
     log_levels=LogLevel,
     shutdown_mgr=shutdown_mgr,
     resolve_cors_origins=_resolve_cors_origins,
@@ -196,7 +197,7 @@ _lifecycle_bootstrap = bootstrap_server_lifecycle(
     state_persistence=lambda: state_persistence,
     audit_trail=lambda: audit_trail,
     cost_analytics=lambda: _operational_bootstrap.cost_analytics,
-    platform_logger=lambda: _operational_bootstrap.platform_logger,
+    platform_logger=lambda: platform_logger,
     log_levels=LogLevel,
     append_bounded_warning=_append_bounded_warning,
     governance_stores=lambda: _gov_stores,
