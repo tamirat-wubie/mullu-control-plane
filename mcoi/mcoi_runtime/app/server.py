@@ -9,9 +9,6 @@ Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 from __future__ import annotations
 from typing import Any
 
-from mcoi_runtime.app.production_surface import (
-    ProductionSurface, DEPLOYMENT_MANIFESTS,
-)
 from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 
 import os
@@ -24,13 +21,10 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
-from mcoi_runtime.app.server_platform import (
-    bootstrap_governance_runtime,
-    bootstrap_primary_store,
-)
 from mcoi_runtime.app.server_agents import bootstrap_agent_runtime
 from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_capabilities import bootstrap_capability_services
+from mcoi_runtime.app.server_context import bootstrap_server_context
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_services import bootstrap_operational_services
@@ -39,7 +33,6 @@ from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
 )
-from mcoi_runtime.app.server_foundation import bootstrap_foundation_services
 from mcoi_runtime.app.server_runtime import (
     build_default_input_validator,
     calculator_handler as _calculator_handler_impl,
@@ -47,10 +40,6 @@ from mcoi_runtime.app.server_runtime import (
     register_default_tools,
     validate_or_raise as _validate_or_raise_impl,
 )
-
-ENV = os.environ.get("MULLU_ENV", "local_dev")
-surface = ProductionSurface(DEPLOYMENT_MANIFESTS.get(ENV, DEPLOYMENT_MANIFESTS["local_dev"]))
-
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
@@ -60,31 +49,25 @@ def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     )
 
 
-_tenant_allow_unknown = _env_flag("MULLU_ALLOW_UNKNOWN_TENANTS", os.environ)
-if _tenant_allow_unknown is None:
-    _tenant_allow_unknown = ENV in ("local_dev", "test")
-
 # Clock
 def _clock() -> str:
     return _utc_clock()
 
-# Persistence store (InMemoryStore for dev, PostgresStore for production)
-_primary_store_bootstrap = bootstrap_primary_store(
-    env=ENV,
+# Environment and governance context
+_server_context = bootstrap_server_context(
     runtime_env=os.environ,
     clock=_clock,
+    env_flag_fn=_env_flag,
     validate_db_backend_for_env=_validate_db_backend_for_env,
+    init_field_encryption_from_env_fn=_init_field_encryption_from_env,
 )
-_db_backend = _primary_store_bootstrap.db_backend
-_db_backend_warning = _primary_store_bootstrap.warning
-store = _primary_store_bootstrap.store
-
-# Phase 200 foundation services
-_foundation_bootstrap = bootstrap_foundation_services(
-    clock=_clock,
-    runtime_env=os.environ,
-    store=store,
-)
+ENV = _server_context.env
+surface = _server_context.surface
+_tenant_allow_unknown = _server_context.tenant_allow_unknown
+_db_backend = _server_context.db_backend
+_db_backend_warning = _server_context.db_backend_warning
+store = _server_context.store
+_foundation_bootstrap = _server_context.foundation_bootstrap
 llm_bootstrap_result = _foundation_bootstrap.llm_bootstrap_result
 llm_bridge = llm_bootstrap_result.bridge
 certifier = _foundation_bootstrap.certifier
@@ -94,18 +77,9 @@ pii_scanner = _foundation_bootstrap.pii_scanner
 content_safety_chain = _foundation_bootstrap.content_safety_chain
 proof_bridge = _foundation_bootstrap.proof_bridge
 tenant_ledger = _foundation_bootstrap.tenant_ledger
-
-# Phase 2B: Field encryption (optional â€” enabled when MULLU_ENCRYPTION_KEY is set)
-_field_encryptor, _field_encryption_bootstrap = _init_field_encryption_from_env()
-
-_governance_bootstrap = bootstrap_governance_runtime(
-    env=ENV,
-    runtime_env=os.environ,
-    db_backend=_db_backend,
-    clock=_clock,
-    field_encryptor=_field_encryptor,
-    allow_unknown_tenants=_tenant_allow_unknown,
-)
+_field_encryptor = _server_context.field_encryptor
+_field_encryption_bootstrap = _server_context.field_encryption_bootstrap
+_governance_bootstrap = _server_context.governance_bootstrap
 _gov_stores = _governance_bootstrap.governance_stores
 tenant_budget_mgr = _governance_bootstrap.tenant_budget_mgr
 metrics = _governance_bootstrap.metrics
@@ -115,7 +89,7 @@ _jwt_authenticator = _governance_bootstrap.jwt_authenticator
 _tenant_gating = _governance_bootstrap.tenant_gating
 
 # Phase 3C: Shell sandbox policy (env-driven profile selection)
-shell_policy = _governance_bootstrap.shell_policy
+shell_policy = _server_context.shell_policy
 
 _agent_bootstrap = bootstrap_agent_runtime(
     clock=_clock,
