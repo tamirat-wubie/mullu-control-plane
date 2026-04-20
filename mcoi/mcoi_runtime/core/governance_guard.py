@@ -31,6 +31,12 @@ def _bounded_tenant_mismatch_reason() -> str:
     return "tenant mismatch"
 
 
+def _looks_like_jwt_bearer(token: str) -> bool:
+    """Return True when a bearer token matches JWT's 3-part structure."""
+    parts = token.split(".")
+    return len(parts) == 3 and all(parts)
+
+
 class GuardContext(TypedDict, total=False):
     """Typed context passed through the governance guard chain.
 
@@ -276,6 +282,7 @@ def create_api_key_guard(
     api_key_mgr: Any,
     *,
     require_auth: bool = False,
+    allow_jwt_passthrough: bool = False,
 ) -> GovernanceGuard:
     """Create an API-key authentication guard.
 
@@ -283,7 +290,9 @@ def create_api_key_guard(
     authenticates via the :class:`APIKeyManager`.  Requests without an
     ``Authorization`` header are allowed through (opt-in auth) so that
     health / public endpoints keep working.  When a key IS supplied it
-    must be valid — invalid keys are hard-rejected.
+    must be valid — invalid keys are hard-rejected.  When
+    ``allow_jwt_passthrough`` is enabled, JWT-shaped bearer tokens are
+    left for a downstream JWT guard to validate.
     """
     def check(ctx: dict[str, Any]) -> GuardResult:
         auth_header: str = ctx.get("authorization", "")
@@ -301,6 +310,8 @@ def create_api_key_guard(
                     allowed=False, guard_name="api_key",
                     reason="missing bearer token",
                 )
+            return GuardResult(allowed=True, guard_name="api_key")
+        if allow_jwt_passthrough and _looks_like_jwt_bearer(token):
             return GuardResult(allowed=True, guard_name="api_key")
         result = api_key_mgr.authenticate(token)
         if not result.authenticated:

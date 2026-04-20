@@ -18,8 +18,10 @@ from mcoi_runtime.core.jwt_auth import (
 )
 from mcoi_runtime.core.governance_guard import (
     GovernanceGuardChain,
+    create_api_key_guard,
     create_jwt_guard,
 )
+from mcoi_runtime.core.api_key_auth import APIKeyManager
 
 
 # ═══ Test Fixtures ═══
@@ -434,6 +436,24 @@ class TestJWTGuard:
         result = chain.evaluate(ctx)
         assert result.allowed
         assert ctx["tenant_id"] == "t1"
+
+    def test_guard_in_chain_after_api_key_passthrough(self):
+        auth = _auth()
+        token = auth.create_token(subject="user1", tenant_id="t1")
+        chain = GovernanceGuardChain()
+        chain.add(
+            create_api_key_guard(
+                APIKeyManager(),
+                require_auth=True,
+                allow_jwt_passthrough=True,
+            )
+        )
+        chain.add(create_jwt_guard(auth, require_auth=True))
+        ctx = {"authorization": f"Bearer {token}", "endpoint": "/api/test"}
+        result = chain.evaluate(ctx)
+        assert result.allowed
+        assert ctx["tenant_id"] == "t1"
+        assert ctx["authenticated_subject"] == "user1"
 
     def test_guard_expired_token_rejected(self):
         auth = _auth()

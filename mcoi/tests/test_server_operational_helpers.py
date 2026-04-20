@@ -57,8 +57,8 @@ def test_bootstrap_operational_services_preserves_guard_order_and_sources() -> N
         guard_calls.append(kwargs)
         return ["budget-guard", "rate-guard"]
 
-    def fake_create_api_key_guard(manager, require_auth):
-        return ("api-key-guard", require_auth, manager)
+    def fake_create_api_key_guard(manager, require_auth, allow_jwt_passthrough):
+        return ("api-key-guard", require_auth, allow_jwt_passthrough, manager)
 
     observability = FakeObservability()
     bootstrap = server_services.bootstrap_operational_services(
@@ -85,6 +85,7 @@ def test_bootstrap_operational_services_preserves_guard_order_and_sources() -> N
 
     assert bootstrap.guard_chain[0][0] == "api-key-guard"
     assert bootstrap.guard_chain[0][1] is True
+    assert bootstrap.guard_chain[0][2] is True
     assert bootstrap.guard_chain[1:] == ["budget-guard", "rate-guard"]
     assert guard_calls[0]["tenant_gating_registry"] is not None
     assert bootstrap.input_validator == "validator"
@@ -163,7 +164,11 @@ def test_bootstrap_operational_services_activates_plugins_and_budget_alerts() ->
         access_runtime=object(),
         content_safety_chain=object(),
         build_guard_chain_fn=lambda **kwargs: [],
-        create_api_key_guard_fn=lambda manager, require_auth: ("api-key", require_auth),
+        create_api_key_guard_fn=lambda manager, require_auth, allow_jwt_passthrough: (
+            "api-key",
+            require_auth,
+            allow_jwt_passthrough,
+        ),
     )
 
     dispatch_results = bootstrap.plugin_registry.dispatch_hook(

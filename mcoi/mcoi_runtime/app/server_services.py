@@ -344,7 +344,11 @@ def bootstrap_operational_services(
         api_auth_required = env in ("pilot", "production")
     guard_chain.insert(
         0,
-        create_api_key_guard_fn(api_key_mgr, require_auth=api_auth_required),
+        create_api_key_guard_fn(
+            api_key_mgr,
+            require_auth=api_auth_required,
+            allow_jwt_passthrough=jwt_authenticator is not None,
+        ),
     )
 
     data_export = DataExportPipeline(clock=clock)
