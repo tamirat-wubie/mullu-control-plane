@@ -105,6 +105,25 @@ class TestApprovalLifecycle:
         router.resolve(req.request_id, approved=True)
         assert router.resolve(req.request_id, approved=True) is None
 
+    def test_expired_pending_resolves_to_expired(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:10:00+00:00",
+        ]
+
+        def clock() -> str:
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = ApprovalRouter(clock=clock, timeout_seconds=60)
+        req = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="web",
+            action_description="delete", body="delete old files",
+        )
+        resolved = router.resolve(req.request_id, approved=True, resolved_by="user1")
+        assert resolved is not None
+        assert resolved.status == ApprovalStatus.EXPIRED
+        assert resolved.resolved_by == "timeout"
+
 
 # ═══ Pending Management ═══
 
@@ -136,6 +155,23 @@ class TestPendingManagement:
         assert len(router.get_pending("t2")) == 1
         assert len(router.get_pending("t3")) == 0
 
+    def test_get_pending_prunes_expired_requests(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:10:00+00:00",
+        ]
+
+        def clock() -> str:
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = ApprovalRouter(clock=clock, timeout_seconds=60)
+        router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="web",
+            action_description="delete", body="delete file",
+        )
+        assert router.get_pending() == []
+        assert router.pending_count == 0
+
 
 # ═══ Summary ═══
 
@@ -155,3 +191,22 @@ class TestApprovalSummary:
         assert summary["total"] == 2
         assert summary["pending"] == 1
         assert summary["history_count"] == 1  # Low-risk auto-approved
+
+    def test_summary_counts_expired_requests_in_history(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:10:00+00:00",
+        ]
+
+        def clock() -> str:
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = ApprovalRouter(clock=clock, timeout_seconds=60)
+        router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="web",
+            action_description="delete", body="delete old files",
+        )
+        summary = router.summary()
+        assert summary["pending"] == 0
+        assert summary["history_count"] == 1
+        assert summary["total"] == 1

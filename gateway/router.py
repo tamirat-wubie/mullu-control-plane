@@ -273,7 +273,12 @@ class GatewayRouter:
         result = self._approval.resolve(request_id, approved=approved, resolved_by=resolved_by)
         if result is None:
             return None
-        status = "approved" if result.status == ApprovalStatus.APPROVED else "denied"
+        if result.status == ApprovalStatus.APPROVED:
+            status = "approved"
+        elif result.status == ApprovalStatus.EXPIRED:
+            status = "expired"
+        else:
+            status = "denied"
         return GatewayResponse(
             message_id=self._gen_id("apr-resp", request_id),
             channel=result.channel,

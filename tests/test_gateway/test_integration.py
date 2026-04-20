@@ -100,6 +100,31 @@ class TestApprovalInRouter:
         router = GatewayRouter(platform=StubPlatform())
         assert router.handle_approval_callback("nonexistent", approved=True) is None
 
+    def test_approval_callback_reports_expired_request(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:10:00+00:00",
+        ]
+
+        def clock() -> str:
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = GatewayRouter(
+            platform=StubPlatform(),
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=60),
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="u1", tenant_id="t1", identity_id="u1",
+        ))
+        resp = router.handle_message(GatewayMessage(
+            message_id="m1", channel="web", sender_id="u1", body="delete all old files",
+        ))
+        request_id = resp.metadata["request_id"]
+        callback_resp = router.handle_approval_callback(request_id, approved=True)
+        assert callback_resp is not None
+        assert "expired" in callback_resp.body
+        assert router.pending_approvals == 0
+
 
 # ═══ Session Manager ═══
 
