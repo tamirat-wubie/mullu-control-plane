@@ -39,15 +39,24 @@ class ShellPolicyEngine:
         """Evaluate *argv* against the loaded policy and return a verdict.
 
         Checks are applied in this order:
-        1. argv length
-        2. individual arg byte size
-        3. absolute-path presence (when disallowed)
-        4. executable allowlist
-        5. denied regex patterns
+        1. policy enabled state
+        2. argv length
+        3. individual arg byte size
+        4. absolute-path presence (when disallowed)
+        5. executable allowlist
+        6. denied regex patterns
         """
         summary = _argv_summary(argv)
 
-        # 1. argv length
+        # 1. policy enabled state
+        if not self._policy.enabled:
+            return ShellPolicyVerdict(
+                verdict="deny_disabled",
+                matched_rule="shell execution disabled",
+                argv_summary=summary,
+            )
+
+        # 2. argv length
         if len(argv) > self._policy.max_argv_length:
             return ShellPolicyVerdict(
                 verdict="deny_argv_length",
@@ -55,7 +64,7 @@ class ShellPolicyEngine:
                 argv_summary=summary,
             )
 
-        # 2. individual arg byte size
+        # 3. individual arg byte size
         for arg in argv:
             if len(arg.encode("utf-8", errors="replace")) > self._policy.max_single_arg_bytes:
                 return ShellPolicyVerdict(
@@ -64,17 +73,19 @@ class ShellPolicyEngine:
                     argv_summary=summary,
                 )
 
-        # 3. absolute-path check
+        # 4. absolute-path check
         if not self._policy.allow_absolute_paths:
             for arg in argv[1:]:  # skip executable itself
-                if arg.startswith("/") or arg.startswith("\\") or (len(arg) >= 3 and arg[1] == ":" and arg[2] in ("/", "\\")):
+                if arg.startswith("/") or arg.startswith("\\") or (
+                    len(arg) >= 3 and arg[1] == ":" and arg[2] in ("/", "\\")
+                ):
                     return ShellPolicyVerdict(
                         verdict="deny_absolute_path",
                         matched_rule="allow_absolute_paths=False",
                         argv_summary=summary,
                     )
 
-        # 4. executable allowlist
+        # 5. executable allowlist
         executable = os.path.basename(argv[0]) if argv else ""
         if executable not in self._policy.allowed_executables:
             return ShellPolicyVerdict(
@@ -83,7 +94,7 @@ class ShellPolicyEngine:
                 argv_summary=summary,
             )
 
-        # 5. denied patterns — match against the full joined argv string
+        # 6. denied patterns match against the full joined argv string.
         joined = " ".join(argv)
         for idx, pattern in enumerate(self._denied_compiled):
             if pattern.search(joined):

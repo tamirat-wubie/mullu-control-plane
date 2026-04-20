@@ -19,7 +19,12 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.app.shell_policies import LOCAL_DEV, PILOT_PROD, SANDBOXED
+from mcoi_runtime.app.shell_policies import (
+    LOCAL_DEV,
+    PILOT_PROD,
+    PILOT_PROD_DISABLED,
+    SANDBOXED,
+)
 from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine
 from mcoi_runtime.core.rate_limiter import RateLimitConfig, RateLimiter
@@ -52,6 +57,12 @@ class GovernanceBootstrap:
     jwt_authenticator: Any | None
     tenant_gating: Any
     shell_policy: Any
+
+
+def _shell_execution_enabled(runtime_env: Mapping[str, str]) -> bool:
+    """Return whether governed shell execution is explicitly enabled."""
+    value = runtime_env.get("MULLU_SHELL_EXECUTION_ENABLED", "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
 
 
 def bootstrap_primary_store(
@@ -112,6 +123,7 @@ def bootstrap_governance_runtime(
     sandboxed_policy: Any = SANDBOXED,
     local_dev_policy: Any = LOCAL_DEV,
     pilot_prod_policy: Any = PILOT_PROD,
+    pilot_prod_disabled_policy: Any = PILOT_PROD_DISABLED,
     jwt_authenticator_cls: type[Any] | None = None,
     oidc_config_cls: type[Any] | None = None,
 ) -> GovernanceBootstrap:
@@ -160,11 +172,16 @@ def bootstrap_governance_runtime(
         store=governance_stores["tenant_gating"],
         allow_unknown_tenants=allow_unknown_tenants,
     )
-    shell_policy = {
-        "local_dev": local_dev_policy,
-        "pilot": pilot_prod_policy,
-        "production": pilot_prod_policy,
-    }.get(env, sandboxed_policy)
+    if env == "local_dev":
+        shell_policy = local_dev_policy
+    elif env in {"pilot", "production"}:
+        shell_policy = (
+            pilot_prod_policy
+            if _shell_execution_enabled(runtime_env)
+            else pilot_prod_disabled_policy
+        )
+    else:
+        shell_policy = sandboxed_policy
 
     return GovernanceBootstrap(
         governance_stores=governance_stores,
