@@ -258,6 +258,23 @@ class ApprovalRouter:
         self._append_history(resolved)
         return resolved
 
+    def lookup_request(self, request_id: str) -> ApprovalRequest | None:
+        """Return a pending request, expiring it first if its timeout elapsed."""
+        pending = self._pending.get(request_id)
+        if pending is None:
+            return None
+
+        now_text = self._clock()
+        now = self._parse_timestamp(now_text)
+        if now is None:
+            now = datetime.now(timezone.utc)
+            now_text = now.isoformat()
+
+        if self._is_expired(pending, now):
+            self._pending.pop(request_id, None)
+            return self._expire_pending(request_id, pending, now_text)
+        return pending
+
     def get_pending(self, tenant_id: str = "") -> list[ApprovalRequest]:
         """Get pending approval requests, optionally filtered by tenant."""
         self._prune_expired_pending()
