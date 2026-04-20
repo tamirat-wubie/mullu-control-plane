@@ -207,6 +207,19 @@ class TestRegisterCatalogItem:
         item = engine.register_catalog_item("i1", "Svc", "t1", approval_required=True)
         assert item.approval_required is True
 
+    def test_default_approver_refs_empty(self, engine: ServiceCatalogEngine) -> None:
+        item = engine.register_catalog_item("i1", "Svc", "t1")
+        assert item.approver_refs == ()
+
+    def test_custom_approver_refs(self, engine: ServiceCatalogEngine) -> None:
+        item = engine.register_catalog_item(
+            "i1",
+            "Svc",
+            "t1",
+            approver_refs=("ops-lead", "cfo"),
+        )
+        assert item.approver_refs == ("ops-lead", "cfo")
+
     def test_default_estimated_cost_zero(self, engine: ServiceCatalogEngine) -> None:
         item = engine.register_catalog_item("i1", "Svc", "t1")
         assert item.estimated_cost == 0.0
@@ -788,6 +801,40 @@ class TestApproveRequest:
             eng.approve_request("r1", approved_by="u1")
         assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
         assert eng.decision_count == before
+
+    def test_unauthorized_approver_cannot_approve_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        before = eng.decision_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Approver not authorized for request$") as exc_info:
+            eng.approve_request("r1", approved_by="intern-1")
+        message = str(exc_info.value)
+        assert message == "Approver not authorized for request"
+        assert "intern-1" not in message
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+        assert eng.decision_count == before
+
+    def test_authorized_approver_can_approve_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        result = eng.approve_request("r1", approved_by="cfo")
+        assert result.status == RequestStatus.APPROVED
 
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):

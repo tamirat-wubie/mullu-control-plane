@@ -77,6 +77,7 @@ alignment_rate
 alignment_score
 allocated_amount
 allowed_count
+allowed_approver_ids
 amount
 anchor_id
 anchor_ref
@@ -92,6 +93,7 @@ approved_at
 approved_by
 approver_id
 approver_ref
+approver_refs
 area
 artifact_id
 artifacts_failed

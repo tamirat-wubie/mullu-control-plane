@@ -63,6 +63,10 @@ class TestApprovalContracts:
         r = _request()
         assert r.request_id == "req-1"
 
+    def test_request_preserves_allowed_approver_ids(self):
+        r = _request(allowed_approver_ids=("ops-lead", "admin-1"))
+        assert r.allowed_approver_ids == ("ops-lead", "admin-1")
+
     def test_decision_active(self):
         d = ApprovalDecisionRecord(
             decision_id="d-1", request_id="req-1", approver_id="op-1",
@@ -158,6 +162,27 @@ class TestApprovalDecisions:
             engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
         assert engine.get_request("req-1").requester_id == "op-1"
         assert len(engine.list_pending()) == 1
+
+    def test_unauthorized_approver_cannot_record_decision(self):
+        engine = _engine()
+        engine.submit_request(_request(allowed_approver_ids=("ops-lead", "admin-1")))
+        with pytest.raises(ValueError, match="^approver not authorized for request$") as exc_info:
+            engine.record_decision(request_id="req-1", approver_id="intern-1", approved=True)
+        message = str(exc_info.value)
+        assert message == "approver not authorized for request"
+        assert "intern-1" not in message
+        assert len(engine.list_pending()) == 1
+
+    def test_authorized_approver_can_record_decision(self):
+        engine = _engine()
+        engine.submit_request(_request(allowed_approver_ids=("ops-lead", "admin-1")))
+        decision = engine.record_decision(
+            request_id="req-1",
+            approver_id="ops-lead",
+            approved=True,
+        )
+        assert decision.status is ApprovalStatus.APPROVED
+        assert decision.approver_id == "ops-lead"
 
 
 # --- Validation ---
