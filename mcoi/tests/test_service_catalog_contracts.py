@@ -1443,7 +1443,7 @@ class TestServiceCatalogItemToDict:
         d = item.to_dict()
         expected_keys = {
             "item_id", "name", "tenant_id", "kind", "status",
-            "owner_ref", "sla_ref", "approval_required", "estimated_cost",
+            "owner_ref", "sla_ref", "approval_required", "approver_refs", "estimated_cost",
             "created_at", "metadata",
         }
         assert set(d.keys()) == expected_keys
@@ -1467,6 +1467,7 @@ class TestServiceCatalogItemToDict:
         assert d["name"] == "VM Provisioning"
         assert d["estimated_cost"] == 100.0
         assert d["approval_required"] is False
+        assert d["approver_refs"] == []
 
 
 class TestServiceRequestToDict:

@@ -131,6 +131,7 @@ class ServiceCatalogEngine:
         owner_ref: str = "",
         sla_ref: str = "",
         approval_required: bool = False,
+        approver_refs: tuple[str, ...] = (),
         estimated_cost: float = 0.0,
     ) -> ServiceCatalogItem:
         """Register a service catalog item."""
@@ -142,6 +143,7 @@ class ServiceCatalogEngine:
             kind=kind, status=ServiceStatus.ACTIVE,
             owner_ref=owner_ref, sla_ref=sla_ref,
             approval_required=approval_required,
+            approver_refs=approver_refs,
             estimated_cost=estimated_cost, created_at=now,
         )
         self._catalog[item_id] = item
@@ -167,6 +169,7 @@ class ServiceCatalogEngine:
             kind=old.kind, status=ServiceStatus.DEPRECATED,
             owner_ref=old.owner_ref, sla_ref=old.sla_ref,
             approval_required=old.approval_required,
+            approver_refs=old.approver_refs,
             estimated_cost=old.estimated_cost, created_at=old.created_at,
             metadata=old.metadata,
         )
@@ -184,6 +187,7 @@ class ServiceCatalogEngine:
             kind=old.kind, status=ServiceStatus.RETIRED,
             owner_ref=old.owner_ref, sla_ref=old.sla_ref,
             approval_required=old.approval_required,
+            approver_refs=old.approver_refs,
             estimated_cost=old.estimated_cost, created_at=old.created_at,
             metadata=old.metadata,
         )
@@ -327,6 +331,9 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("Can only approve pending-approval requests")
         if req.requester_ref.strip() == approved_by.strip():
             raise RuntimeCoreInvariantError("Requester cannot approve own request")
+        item = self.get_catalog_item(req.item_id)
+        if item.approver_refs and approved_by.strip() not in item.approver_refs:
+            raise RuntimeCoreInvariantError("Approver not authorized for request")
         now = _now_iso()
         dec_id = stable_identifier("dec-appr", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(

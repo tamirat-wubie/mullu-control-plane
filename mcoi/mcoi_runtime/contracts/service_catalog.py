@@ -106,6 +106,7 @@ class ServiceCatalogItem(ContractRecord):
     owner_ref: str = ""
     sla_ref: str = ""
     approval_required: bool = False
+    approver_refs: tuple[str, ...] = ()
     estimated_cost: float = 0.0
     created_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
@@ -118,6 +119,10 @@ class ServiceCatalogItem(ContractRecord):
             raise ValueError("kind must be a CatalogItemKind")
         if not isinstance(self.status, ServiceStatus):
             raise ValueError("status must be a ServiceStatus")
+        approver_refs = freeze_value(list(self.approver_refs))
+        for index, approver_ref in enumerate(approver_refs):
+            require_non_empty_text(approver_ref, f"approver_refs[{index}]")
+        object.__setattr__(self, "approver_refs", approver_refs)
         object.__setattr__(self, "estimated_cost", require_non_negative_float(self.estimated_cost, "estimated_cost"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))

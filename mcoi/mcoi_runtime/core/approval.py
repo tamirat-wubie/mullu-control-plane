@@ -98,6 +98,8 @@ class ApprovalEngine:
 
         if request.requester_id.strip() == approver_id.strip():
             raise ValueError("requester cannot approve own request")
+        if request.allowed_approver_ids and approver_id.strip() not in request.allowed_approver_ids:
+            raise ValueError("approver not authorized for request")
 
         status = ApprovalStatus.APPROVED if approved else ApprovalStatus.REJECTED
         decision = ApprovalDecisionRecord(
