@@ -168,6 +168,7 @@ def bootstrap_agent_runtime(
         "shell_policy",
         lambda: {
             "policy_id": shell_policy.policy_id,
+            "enabled": shell_policy.enabled,
             "allowed": list(shell_policy.allowed_executables),
         },
     )

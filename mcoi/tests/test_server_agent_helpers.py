@@ -93,7 +93,11 @@ def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() ->
     shell_policy = type(
         "Policy",
         (),
-        {"policy_id": "shell-local-dev", "allowed_executables": ("python", "echo")},
+        {
+            "policy_id": "shell-local-dev",
+            "enabled": True,
+            "allowed_executables": ("python", "echo"),
+        },
     )()
 
     bootstrap = server_agents.bootstrap_agent_runtime(
@@ -179,7 +183,11 @@ def test_bootstrap_agent_runtime_wires_workflow_and_observability_sources() -> N
         shell_policy=type(
             "Policy",
             (),
-            {"policy_id": "shell-sandboxed", "allowed_executables": ("echo",)},
+            {
+                "policy_id": "shell-sandboxed",
+                "enabled": False,
+                "allowed_executables": ("echo",),
+            },
         )(),
         workflow_engine_cls=FakeWorkflowEngine,
         observability_aggregator_cls=FakeObservability,
@@ -209,6 +217,7 @@ def test_bootstrap_agent_runtime_wires_workflow_and_observability_sources() -> N
     }
     assert sources["shell_policy"]() == {
         "policy_id": "shell-sandboxed",
+        "enabled": False,
         "allowed": ["echo"],
     }
     assert sources["workflows"]() == {"workflow_count": 1}

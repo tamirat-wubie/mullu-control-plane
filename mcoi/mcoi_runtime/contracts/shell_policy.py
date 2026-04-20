@@ -22,6 +22,7 @@ class ShellCommandPolicy(ContractRecord):
     policy_id: str
     allowed_executables: tuple[str, ...]
     denied_patterns: tuple[str, ...] = ()
+    enabled: bool = True
     max_argv_length: int = 100
     max_single_arg_bytes: int = 65536
     allow_absolute_paths: bool = False
@@ -50,6 +51,8 @@ class ShellCommandPolicy(ContractRecord):
                 re.compile(pat)
             except re.error as exc:
                 raise ValueError("denied pattern must be a valid regex") from exc
+        if not isinstance(self.enabled, bool):
+            raise ValueError("enabled must be a boolean")
         object.__setattr__(
             self,
             "max_argv_length",
@@ -75,6 +78,7 @@ class ShellPolicyVerdict(ContractRecord):
     _VALID_VERDICTS = frozenset(
         {
             "allow",
+            "deny_disabled",
             "deny_executable",
             "deny_pattern",
             "deny_argv_length",

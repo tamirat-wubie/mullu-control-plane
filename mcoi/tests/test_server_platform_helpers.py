@@ -113,6 +113,69 @@ def test_bootstrap_governance_runtime_wires_services_and_local_policy() -> None:
     assert bootstrap.shell_policy is local_policy
 
 
+def test_bootstrap_governance_runtime_defaults_pilot_prod_to_disabled_shell_policy() -> None:
+    disabled_policy = object()
+
+    bootstrap = server_platform.bootstrap_governance_runtime(
+        env="production",
+        runtime_env={},
+        db_backend="postgresql",
+        clock=lambda: "2026-01-01T00:00:00Z",
+        field_encryptor=None,
+        allow_unknown_tenants=False,
+        create_governance_stores_fn=lambda **kwargs: {
+            "budget": object(),
+            "rate_limit": object(),
+            "audit": object(),
+            "tenant_gating": object(),
+        },
+        tenant_budget_manager_cls=lambda **kwargs: object(),
+        governance_metrics_engine_cls=lambda **kwargs: object(),
+        rate_limiter_cls=lambda **kwargs: object(),
+        rate_limit_config_cls=lambda **kwargs: object(),
+        audit_trail_cls=lambda **kwargs: object(),
+        tenant_gating_registry_cls=lambda **kwargs: object(),
+        sandboxed_policy=object(),
+        local_dev_policy=object(),
+        pilot_prod_policy=object(),
+        pilot_prod_disabled_policy=disabled_policy,
+    )
+
+    assert bootstrap.shell_policy is disabled_policy
+
+
+def test_bootstrap_governance_runtime_enables_pilot_shell_only_with_explicit_opt_in() -> None:
+    pilot_policy = object()
+    disabled_policy = object()
+
+    bootstrap = server_platform.bootstrap_governance_runtime(
+        env="pilot",
+        runtime_env={"MULLU_SHELL_EXECUTION_ENABLED": "true"},
+        db_backend="postgresql",
+        clock=lambda: "2026-01-01T00:00:00Z",
+        field_encryptor=None,
+        allow_unknown_tenants=False,
+        create_governance_stores_fn=lambda **kwargs: {
+            "budget": object(),
+            "rate_limit": object(),
+            "audit": object(),
+            "tenant_gating": object(),
+        },
+        tenant_budget_manager_cls=lambda **kwargs: object(),
+        governance_metrics_engine_cls=lambda **kwargs: object(),
+        rate_limiter_cls=lambda **kwargs: object(),
+        rate_limit_config_cls=lambda **kwargs: object(),
+        audit_trail_cls=lambda **kwargs: object(),
+        tenant_gating_registry_cls=lambda **kwargs: object(),
+        sandboxed_policy=object(),
+        local_dev_policy=object(),
+        pilot_prod_policy=pilot_policy,
+        pilot_prod_disabled_policy=disabled_policy,
+    )
+
+    assert bootstrap.shell_policy is pilot_policy
+
+
 def test_bootstrap_governance_runtime_builds_jwt_authenticator() -> None:
     captured = {}
 
@@ -151,6 +214,7 @@ def test_bootstrap_governance_runtime_builds_jwt_authenticator() -> None:
         sandboxed_policy=object(),
         local_dev_policy=object(),
         pilot_prod_policy=object(),
+        pilot_prod_disabled_policy=object(),
         jwt_authenticator_cls=Authenticator,
         oidc_config_cls=Config,
     )
