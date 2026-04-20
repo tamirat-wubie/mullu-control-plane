@@ -13,6 +13,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import pytest
+from gateway.approval import ApprovalRouter
 from gateway.router import GatewayMessage, GatewayResponse, GatewayRouter, TenantMapping
 
 
@@ -171,6 +172,78 @@ class TestChannelAdapterIntegration:
             message_id="m1", channel="unknown", sender_id="u1", body="hello",
         ))
         assert response.body == "Response"
+
+    def test_channel_approval_callback_resolves_for_same_identity(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+            "2026-04-20T12:00:02+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        channel = StubChannel()
+        platform = StubPlatform(llm_response="pending")
+        router = GatewayRouter(
+            platform=platform,
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+        )
+        router.register_channel(channel)
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="u1", tenant_id="t1", identity_id="identity-1",
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="u1", body="delete all files",
+        ))
+        request_id = pending.metadata["request_id"]
+
+        resolved = router.handle_message(GatewayMessage(
+            message_id="m2", channel="test", sender_id="u1", body=f"approve:{request_id}",
+        ))
+
+        assert pending.metadata["approval_required"] is True
+        assert resolved.metadata["approval_resolved"] is True
+        assert resolved.metadata["status"] == "approved"
+        assert "approved" in resolved.body
+        assert platform.sessions_opened == 1
+        assert channel.sent_messages[-1] == ("u1", resolved.body)
+
+    def test_channel_approval_callback_denies_mismatched_identity(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="pending"),
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="owner", tenant_id="t1", identity_id="identity-1",
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="other", tenant_id="t1", identity_id="identity-2",
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="owner", body="delete all files",
+        ))
+        request_id = pending.metadata["request_id"]
+
+        denied = router.handle_message(GatewayMessage(
+            message_id="m2", channel="test", sender_id="other", body=f"approve:{request_id}",
+        ))
+
+        assert denied.metadata["error"] == "approval_context_denied"
+        assert "not allowed" in denied.body
+        assert router.pending_approvals == 1
 
 
 # ═══ Summary ═══

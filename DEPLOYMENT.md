@@ -34,6 +34,7 @@
 | `MULLU_CERT_INTERVAL` | `300` | Certification daemon interval (seconds) |
 | `MULLU_CERT_ENABLED` | `true` | Enable certification daemon |
 | `MULLU_API_AUTH_REQUIRED` | profile-based | Require `Authorization: Bearer <api-key>` on `/api/*`. Defaults to `false` in `local_dev` and `test`, `true` in `pilot` and `production` |
+| `MULLU_GATEWAY_APPROVAL_SECRET` | — | Required outside `local_dev` and `test` if you use the raw gateway approval callback endpoint (`/webhook/approve/{request_id}`) |
 | `ANTHROPIC_API_KEY` | — | Anthropic API key (when backend=anthropic) |
 | `OPENAI_API_KEY` | — | OpenAI API key (when backend=openai) |
 
@@ -68,6 +69,7 @@ curl http://localhost:8000/health
 6. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` for real LLM
 7. Verify with `curl /api/v1/readiness`
 8. Confirm API-key auth is enabled for `/api/*` or enforced by a trusted upstream gateway
+9. If gateway approvals use `/webhook/approve/{request_id}`, set `MULLU_GATEWAY_APPROVAL_SECRET` and send it via `X-Mullu-Approval-Secret`
 
 ## Startup Behavior
 

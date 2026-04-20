@@ -44,9 +44,22 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             platform = None
 
     from datetime import datetime, timezone
+    import hmac
 
     def _clock() -> str:
         return datetime.now(timezone.utc).isoformat()
+
+    gateway_env = (os.environ.get("MULLU_ENV", "local_dev") or "local_dev").strip().lower()
+    approval_secret = os.environ.get("MULLU_GATEWAY_APPROVAL_SECRET", "")
+
+    def _approval_webhook_authorized(request: Request) -> bool:
+        """Fail closed outside local and test unless an explicit approval secret matches."""
+        if gateway_env in {"local_dev", "test"}:
+            return True
+        provided = request.headers.get("X-Mullu-Approval-Secret", "")
+        if not approval_secret:
+            return False
+        return hmac.compare_digest(provided, approval_secret)
 
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
     event_log = WebhookEventLog(clock=_clock)
@@ -330,6 +343,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     async def approve_request(request_id: str, request: Request):
         """Approve a pending governance request."""
         import json
+        if not _approval_webhook_authorized(request):
+            raise HTTPException(403, detail="Approval callback not authorized")
         try:
             payload = json.loads(await request.body())
         except (json.JSONDecodeError, ValueError):

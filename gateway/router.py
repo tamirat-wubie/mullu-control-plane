@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
-from gateway.approval import ApprovalRouter, ApprovalStatus
+from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus
 from gateway.dedup import MessageDeduplicator
 from gateway.skill_dispatch import SkillDispatcher, detect_intent
 
@@ -114,6 +114,92 @@ class GatewayRouter:
         key = f"{channel}:{sender_id}"
         return self._tenant_mappings.get(key)
 
+    def _parse_approval_command(self, body: str) -> tuple[str, bool] | None:
+        """Parse a channel-native approval callback command."""
+        normalized = body.strip()
+        if normalized.startswith("approve:"):
+            request_id = normalized.split(":", 1)[1].strip()
+            if request_id:
+                return request_id, True
+        if normalized.startswith("deny:"):
+            request_id = normalized.split(":", 1)[1].strip()
+            if request_id:
+                return request_id, False
+        return None
+
+    def _approval_status_text(self, status: ApprovalStatus) -> str:
+        if status == ApprovalStatus.APPROVED:
+            return "approved"
+        if status == ApprovalStatus.EXPIRED:
+            return "expired"
+        return "denied"
+
+    def _approval_response(
+        self,
+        request_id: str,
+        result: ApprovalRequest,
+        *,
+        recipient_id: str | None = None,
+    ) -> GatewayResponse:
+        """Build a governed approval-resolution response."""
+        status = self._approval_status_text(result.status)
+        return GatewayResponse(
+            message_id=self._gen_id("apr-resp", request_id),
+            channel=result.channel,
+            recipient_id=recipient_id or result.identity_id,
+            body=f"Request {request_id} has been {status}.",
+            governed=True,
+            metadata={"approval_resolved": True, "status": status},
+        )
+
+    def _handle_approval_message(
+        self,
+        message: GatewayMessage,
+        mapping: TenantMapping,
+        request_id: str,
+        approved: bool,
+    ) -> GatewayResponse:
+        """Resolve a channel-native approval callback for the mapped identity."""
+        request = self._approval.lookup_request(request_id)
+        if request is None:
+            self._error_count += 1
+            return GatewayResponse(
+                message_id=self._gen_id("apr-resp", request_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body="This approval request is no longer available.",
+                governed=True,
+                metadata={"error": "approval_not_found"},
+            )
+        if request.status == ApprovalStatus.EXPIRED:
+            return self._approval_response(request_id, request, recipient_id=message.sender_id)
+        if (
+            request.tenant_id != mapping.tenant_id
+            or request.identity_id != mapping.identity_id
+            or request.channel != message.channel
+        ):
+            self._error_count += 1
+            return GatewayResponse(
+                message_id=self._gen_id("apr-resp", request_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body="You are not allowed to resolve this approval request.",
+                governed=True,
+                metadata={"error": "approval_context_denied"},
+            )
+        result = self._approval.resolve(request_id, approved=approved, resolved_by=mapping.identity_id)
+        if result is None:
+            self._error_count += 1
+            return GatewayResponse(
+                message_id=self._gen_id("apr-resp", request_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body="This approval request is no longer available.",
+                governed=True,
+                metadata={"error": "approval_not_found"},
+            )
+        return self._approval_response(request_id, result, recipient_id=message.sender_id)
+
     def handle_message(self, message: GatewayMessage) -> GatewayResponse:
         """Process an inbound message through the full governance pipeline.
 
@@ -142,6 +228,19 @@ class GatewayRouter:
             )
             self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
             return resp
+
+        approval_command = self._parse_approval_command(message.body)
+        if approval_command is not None:
+            request_id, approved = approval_command
+            response = self._handle_approval_message(message, mapping, request_id, approved)
+            adapter = self._channels.get(message.channel)
+            if adapter is not None:
+                try:
+                    adapter.send(message.sender_id, response.body)
+                except Exception:
+                    pass
+            self._dedup.record(message.channel, message.sender_id, message.message_id, response)
+            return response
 
         # 2. Open governed session
         try:
@@ -273,20 +372,7 @@ class GatewayRouter:
         result = self._approval.resolve(request_id, approved=approved, resolved_by=resolved_by)
         if result is None:
             return None
-        if result.status == ApprovalStatus.APPROVED:
-            status = "approved"
-        elif result.status == ApprovalStatus.EXPIRED:
-            status = "expired"
-        else:
-            status = "denied"
-        return GatewayResponse(
-            message_id=self._gen_id("apr-resp", request_id),
-            channel=result.channel,
-            recipient_id=result.identity_id,
-            body=f"Request {request_id} has been {status}.",
-            governed=True,
-            metadata={"approval_resolved": True, "status": status},
-        )
+        return self._approval_response(request_id, result)
 
     @property
     def pending_approvals(self) -> int:
