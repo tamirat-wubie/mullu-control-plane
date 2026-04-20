@@ -362,8 +362,16 @@ class TestServiceCatalogItemConstruction:
         assert item.created_at == TS
 
     def test_approval_required_true(self):
-        item = _catalog_item(approval_required=True)
+        item = _catalog_item(approval_required=True, approver_refs=("ops-lead",))
         assert item.approval_required is True
+        assert item.approver_refs == ("ops-lead",)
+
+    def test_approval_required_without_approver_refs_rejected(self):
+        with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
+            _catalog_item(approval_required=True, approver_refs=())
+        message = str(exc_info.value)
+        assert message == "approval_required items must declare approver_refs"
+        assert "item-001" not in message
 
     def test_all_catalog_item_kinds(self):
         for kind in CatalogItemKind:
