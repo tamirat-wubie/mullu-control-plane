@@ -97,3 +97,9 @@ class TestAPIKeyManager:
         assert s["total_keys"] == 2
         assert s["auth_success"] == 1
         assert s["auth_failure"] == 1
+        assert s["allow_wildcard_keys"] is True
+
+    def test_manager_can_disable_wildcard_key_posture(self):
+        mgr = APIKeyManager(allow_wildcard_keys=False)
+        assert mgr.allow_wildcard_keys is False
+        assert mgr.summary()["allow_wildcard_keys"] is False

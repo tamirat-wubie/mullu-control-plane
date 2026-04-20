@@ -87,6 +87,7 @@ def test_bootstrap_operational_services_preserves_guard_order_and_sources() -> N
     assert bootstrap.guard_chain[0][1] is True
     assert bootstrap.guard_chain[0][2] is True
     assert bootstrap.guard_chain[1:] == ["budget-guard", "rate-guard"]
+    assert bootstrap.api_key_mgr.allow_wildcard_keys is False
     assert guard_calls[0]["tenant_gating_registry"] is not None
     assert bootstrap.input_validator == "validator"
     assert bootstrap.grafana_dashboard == {"dashboard": True}
@@ -197,3 +198,35 @@ def test_bootstrap_operational_services_activates_plugins_and_budget_alerts() ->
             {"tenant_id": "tenant-a", "utilization_pct": 81},
         )
     ]
+
+
+def test_bootstrap_operational_services_allows_wildcard_keys_in_local_dev() -> None:
+    class FakeObservability:
+        def register_source(self, name, source) -> None:
+            return None
+
+    bootstrap = server_services.bootstrap_operational_services(
+        clock=lambda: "2026-01-01T00:00:00Z",
+        env="local_dev",
+        runtime_env={},
+        cert_daemon=type("FakeCertDaemon", (), {"health": type("Health", (), {"is_healthy": True})(), "status": lambda self: {"status": "ok"}})(),
+        workflow_engine=type("FakeWorkflowEngine", (), {"summary": lambda self: {"workflows": 0}})(),
+        event_bus=type("FakeEventBus", (), {"error_count": 0, "publish": lambda self, *args, **kwargs: None})(),
+        observability=FakeObservability(),
+        audit_trail=type("FakeAuditTrail", (), {"record": lambda self, **kwargs: None, "recent": lambda self, limit: []})(),
+        metrics=type("FakeMetrics", (), {"inc": lambda self, name: None})(),
+        tenant_budget_mgr=object(),
+        rate_limiter=object(),
+        jwt_authenticator=None,
+        tenant_gating=object(),
+        access_runtime=object(),
+        content_safety_chain=object(),
+        build_guard_chain_fn=lambda **kwargs: [],
+        create_api_key_guard_fn=lambda manager, require_auth, allow_jwt_passthrough: (
+            "api-key",
+            require_auth,
+            allow_jwt_passthrough,
+        ),
+    )
+
+    assert bootstrap.api_key_mgr.allow_wildcard_keys is True
