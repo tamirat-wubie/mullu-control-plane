@@ -96,6 +96,9 @@ class ApprovalEngine:
             self._decisions[decision.decision_id] = decision
             return decision
 
+        if request.requester_id.strip() == approver_id.strip():
+            raise ValueError("requester cannot approve own request")
+
         status = ApprovalStatus.APPROVED if approved else ApprovalStatus.REJECTED
         decision = ApprovalDecisionRecord(
             decision_id=self._make_id("approval-decision"),

@@ -779,6 +779,16 @@ class TestApproveRequest:
         result = eng.approve_request("r1", reason="Budget allocated")
         assert result.status == RequestStatus.APPROVED
 
+    def test_requester_cannot_approve_own_request(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        before = eng.decision_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Requester cannot approve own request$"):
+            eng.approve_request("r1", approved_by="u1")
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+        assert eng.decision_count == before
+
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
             engine.approve_request("ghost")
