@@ -51,6 +51,54 @@ class TestWorkflowErrorContracts:
 
 
 class TestDataErrorContracts:
+    def test_create_wildcard_api_key_returns_governed_validation_error(self, client):
+        from mcoi_runtime.app.routers.deps import deps
+        from mcoi_runtime.core.api_key_auth import APIKeyManager
+
+        original_api_key_mgr = deps.get("api_key_mgr")
+        deps.set(
+            "api_key_mgr",
+            APIKeyManager(
+                clock=lambda: "2026-01-01T00:00:00Z",
+                allow_wildcard_keys=False,
+            ),
+        )
+        try:
+            resp = client.post(
+                "/api/v1/api-keys",
+                json={
+                    "tenant_id": "tenant-a",
+                    "scopes": ["*"],
+                    "description": "full access",
+                },
+            )
+        finally:
+            deps.set("api_key_mgr", original_api_key_mgr)
+
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "wildcard api keys disabled"
+        assert data["error_code"] == "wildcard_api_keys_disabled"
+        assert data["governed"] is True
+        assert "tenant-a" not in str(resp.json())
+
+    def test_create_api_key_empty_scopes_returns_governed_validation_error(self, client):
+        resp = client.post(
+            "/api/v1/api-keys",
+            json={
+                "tenant_id": "tenant-a",
+                "scopes": [],
+                "description": "empty scopes",
+            },
+        )
+
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "invalid api key request"
+        assert data["error_code"] == "api_key_validation_error"
+        assert data["governed"] is True
+        assert "tenant-a" not in str(resp.json())
+
     def test_load_missing_state_returns_governed_not_found(self, client):
         resp = client.get("/api/v1/state/nonexistent_state")
         assert resp.status_code == 404

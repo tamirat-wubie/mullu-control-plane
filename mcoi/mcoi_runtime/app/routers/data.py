@@ -444,10 +444,29 @@ def search_stats():
 def create_api_key(req: CreateAPIKeyRequest):
     """Create a new API key."""
     deps.metrics.inc("requests_governed")
-    raw_key, api_key = deps.api_key_mgr.create_key(
-        req.tenant_id, frozenset(req.scopes),
-        description=req.description, ttl_seconds=req.ttl_seconds,
-    )
+    if "*" in req.scopes and not deps.api_key_mgr.allow_wildcard_keys:
+        raise HTTPException(
+            400,
+            detail=_data_error_detail(
+                "wildcard api keys disabled",
+                "wildcard_api_keys_disabled",
+            ),
+        )
+    try:
+        raw_key, api_key = deps.api_key_mgr.create_key(
+            req.tenant_id,
+            frozenset(req.scopes),
+            description=req.description,
+            ttl_seconds=req.ttl_seconds,
+        )
+    except ValueError:
+        raise HTTPException(
+            400,
+            detail=_data_error_detail(
+                "invalid api key request",
+                "api_key_validation_error",
+            ),
+        )
     return {
         "raw_key": raw_key,
         "key": api_key.to_dict(),

@@ -101,8 +101,14 @@ class AuthResult:
 class APIKeyManager:
     """Manages API keys with creation, validation, and revocation."""
 
-    def __init__(self, clock: Callable[[], str] | None = None):
+    def __init__(
+        self,
+        clock: Callable[[], str] | None = None,
+        *,
+        allow_wildcard_keys: bool = True,
+    ):
         self._clock = clock
+        self._allow_wildcard_keys = allow_wildcard_keys
         self._keys: dict[str, APIKey] = {}  # key_hash -> APIKey
         self._keys_by_id: dict[str, APIKey] = {}  # key_id -> APIKey
         self._total_created = 0
@@ -286,6 +292,10 @@ class APIKeyManager:
     def active_key_count(self) -> int:
         return sum(1 for k in self._keys_by_id.values() if k.is_valid)
 
+    @property
+    def allow_wildcard_keys(self) -> bool:
+        return self._allow_wildcard_keys
+
     def summary(self) -> dict[str, Any]:
         active = sum(1 for k in self._keys_by_id.values() if k.is_valid)
         expired = sum(1 for k in self._keys_by_id.values() if k.is_expired)
@@ -293,6 +303,7 @@ class APIKeyManager:
             "total_keys": self.key_count,
             "active_keys": active,
             "expired_keys": expired,
+            "allow_wildcard_keys": self._allow_wildcard_keys,
             "total_created": self._total_created,
             "total_revoked": self._total_revoked,
             "total_rotated": self._total_rotated,

@@ -337,7 +337,13 @@ def bootstrap_operational_services(
     config_watcher = ConfigFileWatcher(poll_interval=30.0, clock=clock)
     platform_logger = StructuredLogger(name="mullu-control-plane", min_level=LogLevel.INFO)
 
-    api_key_mgr = APIKeyManager(clock=clock)
+    allow_wildcard_api_keys = _env_flag("MULLU_ALLOW_WILDCARD_API_KEYS", runtime_env)
+    if allow_wildcard_api_keys is None:
+        allow_wildcard_api_keys = env in ("local_dev", "test")
+    api_key_mgr = APIKeyManager(
+        clock=clock,
+        allow_wildcard_keys=allow_wildcard_api_keys,
+    )
     observability.register_source("api_keys", lambda: api_key_mgr.summary())
     api_auth_required = _env_flag("MULLU_API_AUTH_REQUIRED", runtime_env)
     if api_auth_required is None:
