@@ -230,6 +230,44 @@ class TestApprovalWebhook:
         # The response body should mention approval
         assert "governed" in data
 
+    def test_production_approval_callback_requires_secret(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        app = create_gateway_app(platform=StubPlatform())
+        client = TestClient(app)
+        resp = client.post(
+            "/webhook/approve/nonexistent",
+            content=json.dumps({"approved": True}),
+        )
+        assert resp.status_code == 403
+        assert resp.json()["detail"] == "Approval callback not authorized"
+
+    def test_production_approval_callback_accepts_configured_secret(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_GATEWAY_APPROVAL_SECRET", "approve-secret")
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="risk-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps({"approved": True, "resolved_by": "operator"}),
+            headers={"X-Mullu-Approval-Secret": "approve-secret"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "resolved"
+        assert "approved" in data["body"]
+
 
 # ═══ Gateway Status ═══
 
