@@ -47,3 +47,17 @@ def init_field_encryption_from_env(
     except Exception as exc:
         state["warning"] = bounded_bootstrap_warning("field encryption", exc)
         return None, state
+
+
+def validate_field_encryption_posture(
+    *,
+    env: str,
+    db_backend: str,
+    field_encryption_bootstrap: Mapping[str, Any],
+) -> None:
+    """Reject production PostgreSQL startup when field encryption is not enabled."""
+    if env == "production" and db_backend == "postgresql":
+        if not bool(field_encryption_bootstrap.get("enabled", False)):
+            raise RuntimeError(
+                "Production PostgreSQL deployments require field encryption to be enabled."
+            )

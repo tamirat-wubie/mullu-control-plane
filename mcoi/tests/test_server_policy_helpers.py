@@ -6,6 +6,7 @@ Invariants: environment, backend, and CORS policy behavior stays bounded, determ
 
 from __future__ import annotations
 
+import base64
 import importlib
 
 import pytest
@@ -73,6 +74,10 @@ def test_server_rejects_empty_cors_in_production(
 ) -> None:
     monkeypatch.setenv("MULLU_ENV", "production")
     monkeypatch.setenv("MULLU_DB_BACKEND", "postgresql")
+    monkeypatch.setenv(
+        "MULLU_ENCRYPTION_KEY",
+        base64.b64encode(bytes([1] * 32)).decode("ascii"),
+    )
     monkeypatch.delenv("MULLU_CORS_ORIGINS", raising=False)
 
     with pytest.raises(
@@ -85,6 +90,7 @@ def test_server_rejects_empty_cors_in_production(
 
     monkeypatch.setenv("MULLU_ENV", "local_dev")
     monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+    monkeypatch.delenv("MULLU_ENCRYPTION_KEY", raising=False)
     monkeypatch.setenv(
         "MULLU_CORS_ORIGINS",
         "http://localhost:3000,http://localhost:8080",

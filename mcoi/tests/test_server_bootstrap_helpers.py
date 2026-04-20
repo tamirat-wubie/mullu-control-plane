@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import pytest
+
 from mcoi_runtime.app import server_bootstrap
 
 
@@ -49,3 +51,23 @@ def test_init_field_encryption_from_env_bounds_invalid_key() -> None:
     assert state["enabled"] is False
     assert state["aes_available"] is False
     assert state["warning"] == "field encryption failed (ValueError)"
+
+
+def test_validate_field_encryption_posture_rejects_production_postgres_without_encryption() -> None:
+    with pytest.raises(
+        RuntimeError,
+        match="^Production PostgreSQL deployments require field encryption to be enabled\\.$",
+    ):
+        server_bootstrap.validate_field_encryption_posture(
+            env="production",
+            db_backend="postgresql",
+            field_encryption_bootstrap={"enabled": False},
+        )
+
+
+def test_validate_field_encryption_posture_allows_production_postgres_with_encryption() -> None:
+    server_bootstrap.validate_field_encryption_posture(
+        env="production",
+        db_backend="postgresql",
+        field_encryption_bootstrap={"enabled": True},
+    )

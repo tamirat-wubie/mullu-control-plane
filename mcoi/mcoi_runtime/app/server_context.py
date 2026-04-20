@@ -19,6 +19,7 @@ from mcoi_runtime.app.production_surface import (
     DEPLOYMENT_MANIFESTS,
     ProductionSurface,
 )
+from mcoi_runtime.app.server_bootstrap import validate_field_encryption_posture
 from mcoi_runtime.app.server_foundation import bootstrap_foundation_services
 from mcoi_runtime.app.server_platform import (
     bootstrap_governance_runtime,
@@ -50,6 +51,7 @@ def bootstrap_server_context(
     env_flag_fn: Callable[[str, Mapping[str, str]], bool | None],
     validate_db_backend_for_env: Callable[[str, str], Any],
     init_field_encryption_from_env_fn: Callable[[], tuple[Any | None, dict[str, Any]]],
+    validate_field_encryption_posture_fn: Callable[..., None] = validate_field_encryption_posture,
     deployment_manifests: Mapping[str, Any] = DEPLOYMENT_MANIFESTS,
     production_surface_cls: type[Any] = ProductionSurface,
     bootstrap_primary_store_fn: Callable[..., Any] = bootstrap_primary_store,
@@ -77,6 +79,11 @@ def bootstrap_server_context(
     store = primary_store_bootstrap.store
 
     field_encryptor, field_encryption_bootstrap = init_field_encryption_from_env_fn()
+    validate_field_encryption_posture_fn(
+        env=env,
+        db_backend=db_backend,
+        field_encryption_bootstrap=field_encryption_bootstrap,
+    )
     foundation_bootstrap = bootstrap_foundation_services_fn(
         clock=clock,
         runtime_env=runtime_env,
