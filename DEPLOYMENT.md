@@ -19,6 +19,7 @@
 | `MULLU_DB_BACKEND` | Database backend | `postgresql` |
 | `MULLU_DB_URL` | Database connection string | `postgresql://mullu:$PW@db:5432/mullu` |
 | `MULLU_CORS_ORIGINS` | Comma-separated allowed origins | `https://app.mullu.io` |
+| `MULLU_ENCRYPTION_KEY` | Base64-encoded 32-byte field-encryption key | `openssl rand -base64 32` |
 | `POSTGRES_PASSWORD` | Database password (compose) | Set in `.env` |
 
 ### Optional
@@ -62,10 +63,11 @@ curl http://localhost:8000/health
 1. Set `MULLU_ENV=production`
 2. Set `MULLU_DB_BACKEND=postgresql` with a real `MULLU_DB_URL`
 3. Set `MULLU_CORS_ORIGINS` to your frontend domain(s)
-4. Set `POSTGRES_PASSWORD` via secrets manager (not `.env`)
-5. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` for real LLM
-6. Verify with `curl /api/v1/readiness`
-7. Confirm API-key auth is enabled for `/api/*` or enforced by a trusted upstream gateway
+4. Set `MULLU_ENCRYPTION_KEY` to a base64-encoded 32-byte key before startup
+5. Set `POSTGRES_PASSWORD` via secrets manager (not `.env`)
+6. Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` for real LLM
+7. Verify with `curl /api/v1/readiness`
+8. Confirm API-key auth is enabled for `/api/*` or enforced by a trusted upstream gateway
 
 ## Startup Behavior
 
@@ -74,10 +76,11 @@ On startup, the platform:
 1. Creates the persistence store (memory, SQLite, or PostgreSQL)
 2. Warns if `MULLU_DB_BACKEND=memory` in non-dev environments
 3. Warns if `MULLU_CORS_ORIGINS` is empty in production
-4. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
-5. Registers all subsystems into the dependency container
-6. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
-7. Applies profile-aware API auth defaults to `/api/*` routes
+4. Fails closed if production PostgreSQL starts without field encryption enabled
+5. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
+6. Registers all subsystems into the dependency container
+7. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
+8. Applies profile-aware API auth defaults to `/api/*` routes
 
 On shutdown:
 
