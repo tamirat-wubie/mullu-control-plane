@@ -1,5 +1,5 @@
 """Purpose: verify registry helper contracts for the governed server.
-Governance scope: helper validation tests only.
+Governance scope: registry helper validation tests only.
 Dependencies: server registry helpers.
 Invariants: registry composition remains deterministic and auditable.
 """
