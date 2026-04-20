@@ -159,3 +159,22 @@ class TestBuiltInGuards:
         assert result.reason == "tenant mismatch"
         assert "tenant-123" not in result.reason
         assert "spoofed" not in result.reason
+
+    def test_api_key_guard_rejects_jwt_like_token_without_passthrough(self):
+        mgr = APIKeyManager()
+        guard = create_api_key_guard(mgr, require_auth=True)
+        result = guard.check({"authorization": "Bearer a.b.c"})
+        assert result.allowed is False
+        assert result.guard_name == "api_key"
+
+    def test_api_key_guard_allows_jwt_like_token_with_passthrough(self):
+        mgr = APIKeyManager()
+        guard = create_api_key_guard(
+            mgr,
+            require_auth=True,
+            allow_jwt_passthrough=True,
+        )
+        ctx = {"authorization": "Bearer a.b.c", "tenant_id": ""}
+        result = guard.check(ctx)
+        assert result.allowed is True
+        assert "authenticated_key_id" not in ctx
