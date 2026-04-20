@@ -151,6 +151,14 @@ class TestApprovalDecisions:
             engine.record_decision(request_id="missing", approver_id="op-1", approved=True)
         assert "missing" not in str(exc_info.value)
 
+    def test_requester_cannot_approve_own_request(self):
+        engine = _engine()
+        engine.submit_request(_request(requester_id="op-1"))
+        with pytest.raises(ValueError, match="^requester cannot approve own request$"):
+            engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
+        assert engine.get_request("req-1").requester_id == "op-1"
+        assert len(engine.list_pending()) == 1
+
 
 # --- Validation ---
 

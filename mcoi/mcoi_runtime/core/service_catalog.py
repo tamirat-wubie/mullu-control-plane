@@ -325,6 +325,8 @@ class ServiceCatalogEngine:
         req = self.get_request(request_id)
         if req.status != RequestStatus.PENDING_APPROVAL:
             raise RuntimeCoreInvariantError("Can only approve pending-approval requests")
+        if req.requester_ref.strip() == approved_by.strip():
+            raise RuntimeCoreInvariantError("Requester cannot approve own request")
         now = _now_iso()
         dec_id = stable_identifier("dec-appr", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
