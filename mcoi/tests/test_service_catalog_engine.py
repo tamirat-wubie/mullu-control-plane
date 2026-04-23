@@ -1003,65 +1003,78 @@ class TestAssignRequest:
     """assign_request tests."""
 
     def test_returns_request_assignment(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert isinstance(asn, RequestAssignment)
 
     def test_assignment_id_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert asn.assignment_id == "a1"
 
     def test_request_id_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert asn.request_id == "req-1"
 
     def test_assignee_ref_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert asn.assignee_ref == "tech-1"
 
-    def test_default_assigned_by_system(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
-        assert asn.assigned_by == "system"
+    def test_missing_assigned_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.assignment_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^assigned_by required for assignment$") as exc_info:
+            engine_with_request.assign_request("a1", "req-1", "tech-1")
+        message = str(exc_info.value)
+        assert message == "assigned_by required for assignment"
+        assert engine_with_request.assignment_count == before
 
     def test_custom_assigned_by(self, engine_with_request: ServiceCatalogEngine) -> None:
         asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert asn.assigned_by == "mgr-1"
 
+    def test_system_assigned_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.assignment_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^assigned_by must exclude system$") as exc_info:
+            engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="system")
+        message = str(exc_info.value)
+        assert message == "assigned_by must exclude system"
+        assert "tech-1" not in message
+        assert engine_with_request.assignment_count == before
+
     def test_assigned_at_non_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert len(asn.assigned_at) > 0
 
     def test_assignment_count_increments(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.assign_request("a1", "req-1", "tech-1")
+        engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert engine_with_request.assignment_count == 1
-        engine_with_request.assign_request("a2", "req-1", "tech-2")
+        engine_with_request.assign_request("a2", "req-1", "tech-2", assigned_by="mgr-2")
         assert engine_with_request.assignment_count == 2
 
     def test_duplicate_assignment_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.assign_request("a1", "req-1", "tech-1")
+        engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate assignment_id"):
-            engine_with_request.assign_request("a1", "req-1", "tech-2")
+            engine_with_request.assign_request("a1", "req-1", "tech-2", assigned_by="mgr-2")
 
     def test_terminal_fulfilled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.close_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
-            engine_with_request.assign_request("a1", "req-1", "tech-1")
+            engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
 
     def test_terminal_denied_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
-            engine_with_request.assign_request("a1", "req-1", "tech-1")
+            engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
 
     def test_terminal_cancelled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.cancel_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
-            engine_with_request.assign_request("a1", "req-1", "tech-1")
+            engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
 
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
-            engine.assign_request("a1", "ghost", "tech-1")
+            engine.assign_request("a1", "ghost", "tech-1", assigned_by="mgr-1")
 
     def test_assignment_is_frozen(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         with pytest.raises(AttributeError):
             asn.assignee_ref = "changed"  # type: ignore[misc]
 
@@ -1073,13 +1086,13 @@ class TestAssignmentsForRequest:
         assert engine_with_request.assignments_for_request("req-1") == ()
 
     def test_returns_tuple(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.assign_request("a1", "req-1", "tech-1")
+        engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         result = engine_with_request.assignments_for_request("req-1")
         assert isinstance(result, tuple)
 
     def test_returns_matching_assignments(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.assign_request("a1", "req-1", "tech-1")
-        engine_with_request.assign_request("a2", "req-1", "tech-2")
+        engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
+        engine_with_request.assign_request("a2", "req-1", "tech-2", assigned_by="mgr-2")
         result = engine_with_request.assignments_for_request("req-1")
         assert len(result) == 2
 
@@ -1087,8 +1100,8 @@ class TestAssignmentsForRequest:
         engine.register_catalog_item("i1", "S", "t1")
         engine.submit_request("r1", "i1", "t1", "u1")
         engine.submit_request("r2", "i1", "t1", "u2")
-        engine.assign_request("a1", "r1", "tech-1")
-        engine.assign_request("a2", "r2", "tech-2")
+        engine.assign_request("a1", "r1", "tech-1", assigned_by="mgr-1")
+        engine.assign_request("a2", "r2", "tech-2", assigned_by="mgr-2")
         assert len(engine.assignments_for_request("r1")) == 1
         assert len(engine.assignments_for_request("r2")) == 1
 
@@ -1927,7 +1940,7 @@ class TestStateHash:
 
     def test_changes_after_assign(self, engine_with_request: ServiceCatalogEngine) -> None:
         h1 = engine_with_request.state_hash()
-        engine_with_request.assign_request("a1", "req-1", "tech-1")
+        engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         h2 = engine_with_request.state_hash()
         assert h1 != h2
 
@@ -2008,7 +2021,7 @@ class TestProperties:
         assert engine_with_item.request_count == 1
 
     def test_assignment_count_after_assign(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.assign_request("a1", "req-1", "tech-1")
+        engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert engine_with_request.assignment_count == 1
 
     def test_entitlement_count_after_evaluate(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -2129,8 +2142,17 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         before = es.event_count
-        eng.assign_request("a1", "r1", "tech-1")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="mgr-1")
         assert es.event_count > before
+
+    def test_assign_request_event_includes_assigned_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="mgr-1")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "request_assigned"
+        assert event.payload["assigned_by"] == "mgr-1"
 
     def test_create_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2212,7 +2234,7 @@ class TestEventEmission:
         initial = es.event_count
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
-        eng.assign_request("a1", "r1", "tech-1")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="mgr-1")
         assert es.event_count >= initial + 3
 
 
@@ -2500,7 +2522,7 @@ class TestEdgeCases:
 
     def test_multiple_assignments_same_request(self, engine_with_request: ServiceCatalogEngine) -> None:
         for i in range(5):
-            engine_with_request.assign_request(f"a-{i}", "req-1", f"tech-{i}")
+            engine_with_request.assign_request(f"a-{i}", "req-1", f"tech-{i}", assigned_by=f"mgr-{i}")
         assert engine_with_request.assignment_count == 5
         assert len(engine_with_request.assignments_for_request("req-1")) == 5
 
@@ -2635,17 +2657,17 @@ class TestEdgeCases:
         assert req.estimated_cost == 0.0
 
     def test_assign_submitted_request(self, engine_with_request: ServiceCatalogEngine) -> None:
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert asn.request_id == "req-1"
 
     def test_assign_entitled_request(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.evaluate_entitlement("rul-1", "req-1")
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-1")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert asn.request_id == "req-1"
 
     def test_assign_in_fulfillment_request(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        asn = engine_with_request.assign_request("a1", "req-1", "tech-2")
+        asn = engine_with_request.assign_request("a1", "req-1", "tech-2", assigned_by="mgr-1")
         assert asn.request_id == "req-1"
 
     def test_violations_for_request_nonexistent(self, engine: ServiceCatalogEngine) -> None:
