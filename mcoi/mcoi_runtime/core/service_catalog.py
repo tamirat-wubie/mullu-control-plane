@@ -444,6 +444,11 @@ class ServiceCatalogEngine:
             and normalized_assigned_by != item.owner_ref.strip()
         ):
             raise RuntimeCoreInvariantError("Assigner not authorized for request")
+        if (
+            item.approval_required
+            and req.status not in (RequestStatus.APPROVED, RequestStatus.IN_FULFILLMENT)
+        ):
+            raise RuntimeCoreInvariantError("Request not approved for assignment")
         now = _now_iso()
         assignment = RequestAssignment(
             assignment_id=assignment_id, request_id=request_id,
