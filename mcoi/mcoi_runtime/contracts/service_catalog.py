@@ -123,6 +123,8 @@ class ServiceCatalogItem(ContractRecord):
         for index, approver_ref in enumerate(approver_refs):
             require_non_empty_text(approver_ref, f"approver_refs[{index}]")
         object.__setattr__(self, "approver_refs", approver_refs)
+        if self.approval_required and not approver_refs:
+            raise ValueError("approval_required items must declare approver_refs")
         object.__setattr__(self, "estimated_cost", require_non_negative_float(self.estimated_cost, "estimated_cost"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))

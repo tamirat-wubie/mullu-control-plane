@@ -73,7 +73,9 @@ def engine_with_request(engine_with_item: ServiceCatalogEngine) -> ServiceCatalo
 def engine_with_approval_item(engine: ServiceCatalogEngine) -> ServiceCatalogEngine:
     """Engine with a catalog item that requires approval."""
     engine.register_catalog_item(
-        "item-appr", "Budget VM", "tenant-a", approval_required=True,
+        "item-appr", "Budget VM", "tenant-a",
+        approval_required=True,
+        approver_refs=("system", "cfo", "ops-lead"),
     )
     return engine
 
@@ -204,7 +206,13 @@ class TestRegisterCatalogItem:
         assert item.approval_required is False
 
     def test_approval_required_true(self, engine: ServiceCatalogEngine) -> None:
-        item = engine.register_catalog_item("i1", "Svc", "t1", approval_required=True)
+        item = engine.register_catalog_item(
+            "i1",
+            "Svc",
+            "t1",
+            approval_required=True,
+            approver_refs=("ops-lead",),
+        )
         assert item.approval_required is True
 
     def test_default_approver_refs_empty(self, engine: ServiceCatalogEngine) -> None:
@@ -219,6 +227,13 @@ class TestRegisterCatalogItem:
             approver_refs=("ops-lead", "cfo"),
         )
         assert item.approver_refs == ("ops-lead", "cfo")
+
+    def test_approval_required_without_approver_refs_rejected(self, engine: ServiceCatalogEngine) -> None:
+        with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
+            engine.register_catalog_item("i1", "Svc", "t1", approval_required=True)
+        message = str(exc_info.value)
+        assert message == "approval_required items must declare approver_refs"
+        assert "i1" not in message
 
     def test_default_estimated_cost_zero(self, engine: ServiceCatalogEngine) -> None:
         item = engine.register_catalog_item("i1", "Svc", "t1")
@@ -1964,7 +1979,13 @@ class TestEventEmission:
 
     def test_approve_request_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
-        eng.register_catalog_item("i1", "S", "t1", approval_required=True)
+        eng.register_catalog_item(
+            "i1",
+            "S",
+            "t1",
+            approval_required=True,
+            approver_refs=("system",),
+        )
         eng.submit_request("r1", "i1", "t1", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         before = es.event_count
@@ -2152,7 +2173,14 @@ class TestGoldenScenario3:
 
     def test_full_approval_flow(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
-        eng.register_catalog_item("item-hw", "Hardware", "finance", approval_required=True, estimated_cost=5000.0)
+        eng.register_catalog_item(
+            "item-hw",
+            "Hardware",
+            "finance",
+            approval_required=True,
+            approver_refs=("cfo",),
+            estimated_cost=5000.0,
+        )
 
         req = eng.submit_request("req-hw", "item-hw", "finance", "carol")
         assert req.status == RequestStatus.SUBMITTED
@@ -2169,7 +2197,13 @@ class TestGoldenScenario3:
 
     def test_decision_created_on_approval(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
-        eng.register_catalog_item("item-hw", "Hardware", "finance", approval_required=True)
+        eng.register_catalog_item(
+            "item-hw",
+            "Hardware",
+            "finance",
+            approval_required=True,
+            approver_refs=("system",),
+        )
         eng.submit_request("req-hw", "item-hw", "finance", "carol")
         eng.evaluate_entitlement("rul-hw", "req-hw", disposition=EntitlementDisposition.GRANTED)
         before = eng.decision_count
@@ -2422,9 +2456,16 @@ class TestEdgeCases:
         assert engine_with_request.decision_count >= 1
 
     def test_deprecate_preserves_approval_required(self, engine: ServiceCatalogEngine) -> None:
-        engine.register_catalog_item("i1", "S", "t1", approval_required=True)
+        engine.register_catalog_item(
+            "i1",
+            "S",
+            "t1",
+            approval_required=True,
+            approver_refs=("ops-lead",),
+        )
         result = engine.deprecate_catalog_item("i1")
         assert result.approval_required is True
+        assert result.approver_refs == ("ops-lead",)
 
     def test_retire_preserves_estimated_cost(self, engine: ServiceCatalogEngine) -> None:
         engine.register_catalog_item("i1", "S", "t1", estimated_cost=123.45)
