@@ -158,6 +158,7 @@ class ServiceRequest(ContractRecord):
     submitted_at: str = ""
     due_at: str = ""
     cancelled_by: str = ""
+    closed_by: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -181,6 +182,12 @@ class ServiceRequest(ContractRecord):
         object.__setattr__(self, "cancelled_by", normalized_cancelled_by)
         if self.status == RequestStatus.CANCELLED and not normalized_cancelled_by:
             raise ValueError("cancelled requests must declare cancelled_by")
+        normalized_closed_by = self.closed_by.strip()
+        if normalized_closed_by:
+            normalized_closed_by = require_non_empty_text(normalized_closed_by, "closed_by")
+            if normalized_closed_by == "system":
+                raise ValueError("closed_by must exclude system")
+        object.__setattr__(self, "closed_by", normalized_closed_by)
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 

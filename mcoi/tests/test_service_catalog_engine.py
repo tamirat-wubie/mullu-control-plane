@@ -614,7 +614,7 @@ class TestDenyRequest:
             engine_with_request.deny_request("req-1", denied_by="manager-1")
 
     def test_fulfilled_cannot_be_denied(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot deny"):
             engine_with_request.deny_request("req-1", denied_by="manager-1")
 
@@ -674,7 +674,7 @@ class TestCancelRequest:
             engine_with_request.cancel_request("req-1")
 
     def test_fulfilled_cannot_be_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot cancel"):
             engine_with_request.cancel_request("req-1")
 
@@ -706,23 +706,38 @@ class TestCloseRequest:
     """close_request tests."""
 
     def test_submitted_can_be_closed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        result = engine_with_request.close_request("req-1")
+        result = engine_with_request.close_request("req-1", closed_by="manager-1")
         assert result.status == RequestStatus.FULFILLED
+        assert result.closed_by == "manager-1"
 
     def test_fulfilled_cannot_be_closed_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.close_request("req-1")
+            engine_with_request.close_request("req-1", closed_by="manager-1")
 
     def test_denied_cannot_be_closed(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.close_request("req-1")
+            engine_with_request.close_request("req-1", closed_by="manager-1")
 
     def test_cancelled_cannot_be_closed(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+            engine_with_request.close_request("req-1", closed_by="manager-1")
+
+    def test_closed_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^closed_by required for closure$") as exc_info:
             engine_with_request.close_request("req-1")
+        message = str(exc_info.value)
+        assert message == "closed_by required for closure"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+
+    def test_system_closed_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^closed_by must exclude system$") as exc_info:
+            engine_with_request.close_request("req-1", closed_by="system")
+        message = str(exc_info.value)
+        assert message == "closed_by must exclude system"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
 
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -791,7 +806,7 @@ class TestEvaluateEntitlement:
             engine_with_request.evaluate_entitlement("rul-1", "req-1")
 
     def test_terminal_request_fulfilled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot evaluate"):
             engine_with_request.evaluate_entitlement("rul-1", "req-1")
 
@@ -904,7 +919,7 @@ class TestApproveRequest:
             engine_with_request.approve_request("req-1")
 
     def test_fulfilled_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
@@ -1110,7 +1125,7 @@ class TestAssignRequest:
             engine_with_request.assign_request("a1", "req-1", "tech-2", assigned_by="mgr-2")
 
     def test_terminal_fulfilled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
             engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
 
@@ -1395,7 +1410,7 @@ class TestCreateFulfillmentTask:
             _create_task(engine_with_request, "t1", "req-1", "tech-2")
 
     def test_terminal_fulfilled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot create task"):
             _create_task(engine_with_request, "t1", "req-1", "tech-1")
 
@@ -2019,7 +2034,7 @@ class TestAutoFulfillment:
         _create_task(engine, "t1", "r1", "tech-1")
         # Manually close (fulfilled) before task completes
         # Request is IN_FULFILLMENT; close it to FULFILLED
-        engine.close_request("r1")
+        engine.close_request("r1", closed_by="manager-1")
         # Now completing should not error (task is independent) but request stays fulfilled
         # Actually close_request makes it terminal so complete_task won't trigger again
         assert engine.get_request("r1").status == RequestStatus.FULFILLED
@@ -2254,7 +2269,7 @@ class TestDetectRequestViolations:
         assert "all_tasks_failed" not in ops
 
     def test_fulfilled_request_no_no_entitlement(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         violations = engine_with_request.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "no_entitlement" not in ops
@@ -2346,7 +2361,7 @@ class TestRequestSnapshot:
         assert snap.total_in_fulfillment == 1
 
     def test_total_fulfilled_matches(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.close_request("req-1")
+        engine_with_request.close_request("req-1", closed_by="manager-1")
         snap = engine_with_request.request_snapshot("snap-1")
         assert snap.total_fulfilled == 1
 
@@ -2624,8 +2639,17 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         before = es.event_count
-        eng.close_request("r1")
+        eng.close_request("r1", closed_by="manager-1")
         assert es.event_count > before
+
+    def test_close_request_event_includes_closed_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        eng.close_request("r1", closed_by="manager-1")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "request_closed"
+        assert event.payload["closed_by"] == "manager-1"
 
     def test_evaluate_entitlement_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -3150,17 +3174,17 @@ class TestEdgeCases:
         assert e1.state_hash() != e2.state_hash()
 
     def test_close_submitted_request(self, engine_with_request: ServiceCatalogEngine) -> None:
-        result = engine_with_request.close_request("req-1")
+        result = engine_with_request.close_request("req-1", closed_by="manager-1")
         assert result.status == RequestStatus.FULFILLED
 
     def test_close_entitled_request(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.evaluate_entitlement("rul-1", "req-1")
-        result = engine_with_request.close_request("req-1")
+        result = engine_with_request.close_request("req-1", closed_by="manager-1")
         assert result.status == RequestStatus.FULFILLED
 
     def test_close_in_fulfillment_request(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.close_request("req-1")
+        result = engine_with_request.close_request("req-1", closed_by="manager-1")
         assert result.status == RequestStatus.FULFILLED
 
     def test_multiple_snapshots_different_ids(self, engine: ServiceCatalogEngine) -> None:
