@@ -731,6 +731,15 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("closed_by required for closure") from exc
         if normalized_closed_by == "system":
             raise RuntimeCoreInvariantError("closed_by must exclude system")
+        if req.requester_ref.strip() == normalized_closed_by.strip():
+            raise RuntimeCoreInvariantError("Requester cannot close own request")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_closed_by not in item.approver_refs
+            and normalized_closed_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Closer not authorized for request")
         updated = self._update_request_status(
             request_id,
             RequestStatus.FULFILLED,
