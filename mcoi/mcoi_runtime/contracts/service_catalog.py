@@ -157,6 +157,7 @@ class ServiceRequest(ContractRecord):
     estimated_cost: float = 0.0
     submitted_at: str = ""
     due_at: str = ""
+    cancelled_by: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -172,6 +173,14 @@ class ServiceRequest(ContractRecord):
         require_datetime_text(self.submitted_at, "submitted_at")
         if self.due_at:
             require_datetime_text(self.due_at, "due_at")
+        normalized_cancelled_by = self.cancelled_by.strip()
+        if normalized_cancelled_by:
+            normalized_cancelled_by = require_non_empty_text(normalized_cancelled_by, "cancelled_by")
+            if normalized_cancelled_by == "system":
+                raise ValueError("cancelled_by must exclude system")
+        object.__setattr__(self, "cancelled_by", normalized_cancelled_by)
+        if self.status == RequestStatus.CANCELLED and not normalized_cancelled_by:
+            raise ValueError("cancelled requests must declare cancelled_by")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 

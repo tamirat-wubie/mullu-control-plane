@@ -245,7 +245,13 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("Unknown request_id")
         return req
 
-    def _update_request_status(self, request_id: str, new_status: RequestStatus) -> ServiceRequest:
+    def _update_request_status(
+        self,
+        request_id: str,
+        new_status: RequestStatus,
+        *,
+        cancelled_by: str = "",
+    ) -> ServiceRequest:
         """Internal helper to update request status."""
         old = self.get_request(request_id)
         updated = ServiceRequest(
@@ -254,6 +260,7 @@ class ServiceCatalogEngine:
             status=new_status, priority=old.priority,
             description=old.description, estimated_cost=old.estimated_cost,
             submitted_at=old.submitted_at, due_at=old.due_at,
+            cancelled_by=cancelled_by or old.cancelled_by,
             metadata=old.metadata,
         )
         self._requests[request_id] = updated
@@ -394,13 +401,26 @@ class ServiceCatalogEngine:
         }, request_id)
         return updated
 
-    def cancel_request(self, request_id: str) -> ServiceRequest:
+    def cancel_request(self, request_id: str, *, cancelled_by: str = "") -> ServiceRequest:
         """Cancel a request."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot cancel terminal request")
-        updated = self._update_request_status(request_id, RequestStatus.CANCELLED)
-        _emit(self._events, "request_cancelled", {"request_id": request_id}, request_id)
+        try:
+            normalized_cancelled_by = ensure_non_empty_text("cancelled_by", cancelled_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("cancelled_by required for cancellation") from exc
+        if normalized_cancelled_by == "system":
+            raise RuntimeCoreInvariantError("cancelled_by must exclude system")
+        updated = self._update_request_status(
+            request_id,
+            RequestStatus.CANCELLED,
+            cancelled_by=normalized_cancelled_by,
+        )
+        _emit(self._events, "request_cancelled", {
+            "request_id": request_id,
+            "cancelled_by": normalized_cancelled_by,
+        }, request_id)
         return updated
 
     # ------------------------------------------------------------------

@@ -619,7 +619,7 @@ class TestDenyRequest:
             engine_with_request.deny_request("req-1", denied_by="manager-1")
 
     def test_cancelled_cannot_be_denied(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot deny"):
             engine_with_request.deny_request("req-1", denied_by="manager-1")
 
@@ -664,11 +664,12 @@ class TestCancelRequest:
     """cancel_request tests."""
 
     def test_submitted_can_be_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        result = engine_with_request.cancel_request("req-1")
+        result = engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         assert result.status == RequestStatus.CANCELLED
+        assert result.cancelled_by == "manager-1"
 
     def test_cancelled_cannot_be_cancelled_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot cancel"):
             engine_with_request.cancel_request("req-1")
 
@@ -681,6 +682,20 @@ class TestCancelRequest:
         engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot cancel"):
             engine_with_request.cancel_request("req-1")
+
+    def test_cancelled_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^cancelled_by required for cancellation$") as exc_info:
+            engine_with_request.cancel_request("req-1")
+        message = str(exc_info.value)
+        assert message == "cancelled_by required for cancellation"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+
+    def test_system_cancelled_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^cancelled_by must exclude system$") as exc_info:
+            engine_with_request.cancel_request("req-1", cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
 
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -705,7 +720,7 @@ class TestCloseRequest:
             engine_with_request.close_request("req-1")
 
     def test_cancelled_cannot_be_closed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.close_request("req-1")
 
@@ -786,7 +801,7 @@ class TestEvaluateEntitlement:
             engine_with_request.evaluate_entitlement("rul-1", "req-1")
 
     def test_terminal_request_cancelled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot evaluate"):
             engine_with_request.evaluate_entitlement("rul-1", "req-1")
 
@@ -899,7 +914,7 @@ class TestApproveRequest:
             engine_with_request.approve_request("req-1")
 
     def test_cancelled_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
@@ -1105,7 +1120,7 @@ class TestAssignRequest:
             engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
 
     def test_terminal_cancelled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
             engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
 
@@ -1390,7 +1405,7 @@ class TestCreateFulfillmentTask:
             _create_task(engine_with_request, "t1", "req-1", "tech-1")
 
     def test_terminal_cancelled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.cancel_request("req-1")
+        engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot create task"):
             _create_task(engine_with_request, "t1", "req-1", "tech-1")
 
@@ -2592,8 +2607,17 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         before = es.event_count
-        eng.cancel_request("r1")
+        eng.cancel_request("r1", cancelled_by="mgr-1")
         assert es.event_count > before
+
+    def test_cancel_request_event_includes_cancelled_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        eng.cancel_request("r1", cancelled_by="mgr-1")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "request_cancelled"
+        assert event.payload["cancelled_by"] == "mgr-1"
 
     def test_close_request_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -3083,8 +3107,9 @@ class TestEdgeCases:
     def test_cancel_after_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         # Request is IN_FULFILLMENT, can still cancel
-        result = engine_with_request.cancel_request("req-1")
+        result = engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         assert result.status == RequestStatus.CANCELLED
+        assert result.cancelled_by == "manager-1"
 
     def test_deny_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -3234,8 +3259,9 @@ class TestEdgeCases:
         eng = engine_with_approval_item
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
-        result = eng.cancel_request("r1")
+        result = eng.cancel_request("r1", cancelled_by="ops-lead")
         assert result.status == RequestStatus.CANCELLED
+        assert result.cancelled_by == "ops-lead"
 
     def test_create_task_after_approval(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
         eng = engine_with_approval_item
