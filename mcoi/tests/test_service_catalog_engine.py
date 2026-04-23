@@ -93,22 +93,22 @@ def _create_task(
 
 
 def _start_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
-    kwargs.setdefault("started_by", "ops-runner")
+    kwargs.setdefault("started_by", engine.get_task(task_id).assignee_ref)
     return engine.start_task(task_id, **kwargs)
 
 
 def _complete_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
-    kwargs.setdefault("completed_by", "ops-runner")
+    kwargs.setdefault("completed_by", engine.get_task(task_id).assignee_ref)
     return engine.complete_task(task_id, **kwargs)
 
 
 def _fail_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
-    kwargs.setdefault("failed_by", "ops-runner")
+    kwargs.setdefault("failed_by", engine.get_task(task_id).assignee_ref)
     return engine.fail_task(task_id, **kwargs)
 
 
 def _cancel_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
-    kwargs.setdefault("cancelled_by", "ops-runner")
+    kwargs.setdefault("cancelled_by", engine.get_task(task_id).assignee_ref)
     return engine.cancel_task(task_id, **kwargs)
 
 
@@ -1515,8 +1515,8 @@ class TestStartTask:
 
     def test_preserves_started_by(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = _start_task(engine_with_request, "t1", started_by="ops-lead")
-        assert result.started_by == "ops-lead"
+        result = _start_task(engine_with_request, "t1", started_by="tech-1")
+        assert result.started_by == "tech-1"
 
     def test_started_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -1532,6 +1532,15 @@ class TestStartTask:
             _start_task(engine_with_request, "t1", started_by="system")
         message = str(exc_info.value)
         assert message == "started_by must exclude system"
+
+    def test_non_assignee_cannot_start_task(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Task starter not authorized for task$") as exc_info:
+            _start_task(engine_with_request, "t1", started_by="ops-lead")
+        message = str(exc_info.value)
+        assert message == "Task starter not authorized for task"
+        assert "ops-lead" not in message
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
 
     def test_in_progress_cannot_start_again(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -1606,8 +1615,8 @@ class TestCompleteTask:
 
     def test_preserves_completed_by(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = _complete_task(engine_with_request, "t1", completed_by="ops-lead")
-        assert result.completed_by == "ops-lead"
+        result = _complete_task(engine_with_request, "t1", completed_by="tech-1")
+        assert result.completed_by == "tech-1"
 
     def test_completed_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -1623,6 +1632,15 @@ class TestCompleteTask:
             _complete_task(engine_with_request, "t1", completed_by="system")
         message = str(exc_info.value)
         assert message == "completed_by must exclude system"
+
+    def test_non_assignee_cannot_complete_task(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Task completer not authorized for task$") as exc_info:
+            _complete_task(engine_with_request, "t1", completed_by="ops-lead")
+        message = str(exc_info.value)
+        assert message == "Task completer not authorized for task"
+        assert "ops-lead" not in message
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
 
     def test_preserves_description(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1", description="Provision")
@@ -1678,8 +1696,8 @@ class TestFailTask:
 
     def test_preserves_failed_by(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = _fail_task(engine_with_request, "t1", failed_by="ops-lead")
-        assert result.failed_by == "ops-lead"
+        result = _fail_task(engine_with_request, "t1", failed_by="tech-1")
+        assert result.failed_by == "tech-1"
 
     def test_failed_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -1695,6 +1713,15 @@ class TestFailTask:
             _fail_task(engine_with_request, "t1", failed_by="system")
         message = str(exc_info.value)
         assert message == "failed_by must exclude system"
+
+    def test_non_assignee_cannot_fail_task(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Task failure actor not authorized for task$") as exc_info:
+            _fail_task(engine_with_request, "t1", failed_by="ops-lead")
+        message = str(exc_info.value)
+        assert message == "Task failure actor not authorized for task"
+        assert "ops-lead" not in message
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -1735,8 +1762,8 @@ class TestCancelTask:
 
     def test_preserves_cancelled_by(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = _cancel_task(engine_with_request, "t1", cancelled_by="ops-lead")
-        assert result.cancelled_by == "ops-lead"
+        result = _cancel_task(engine_with_request, "t1", cancelled_by="mgr-1")
+        assert result.cancelled_by == "mgr-1"
 
     def test_cancelled_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -1752,6 +1779,21 @@ class TestCancelTask:
             _cancel_task(engine_with_request, "t1", cancelled_by="system")
         message = str(exc_info.value)
         assert message == "cancelled_by must exclude system"
+
+    def test_creator_can_cancel_task(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        result = _cancel_task(engine_with_request, "t1", cancelled_by="mgr-1")
+        assert result.cancelled_by == "mgr-1"
+        assert result.status == FulfillmentStatus.CANCELLED
+
+    def test_unrelated_actor_cannot_cancel_task(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Task canceller not authorized for task$") as exc_info:
+            _cancel_task(engine_with_request, "t1", cancelled_by="ops-lead")
+        message = str(exc_info.value)
+        assert message == "Task canceller not authorized for task"
+        assert "ops-lead" not in message
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -2520,10 +2562,10 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
-        _start_task(eng, "t1", started_by="ops-shift")
+        _start_task(eng, "t1", started_by="tech-1")
         event = es.list_events(correlation_id="r1")[-1]
         assert event.payload["action"] == "task_started"
-        assert event.payload["started_by"] == "ops-shift"
+        assert event.payload["started_by"] == "tech-1"
 
     def test_complete_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2539,10 +2581,10 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
-        _complete_task(eng, "t1", completed_by="ops-shift")
+        _complete_task(eng, "t1", completed_by="tech-1")
         event = es.list_events(correlation_id="r1")[-2]
         assert event.payload["action"] == "task_completed"
-        assert event.payload["completed_by"] == "ops-shift"
+        assert event.payload["completed_by"] == "tech-1"
 
     def test_fail_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2558,10 +2600,10 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
-        _fail_task(eng, "t1", failed_by="ops-shift")
+        _fail_task(eng, "t1", failed_by="tech-1")
         event = es.list_events(correlation_id="r1")[-1]
         assert event.payload["action"] == "task_failed"
-        assert event.payload["failed_by"] == "ops-shift"
+        assert event.payload["failed_by"] == "tech-1"
 
     def test_cancel_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2577,10 +2619,10 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
-        _cancel_task(eng, "t1", cancelled_by="ops-shift")
+        _cancel_task(eng, "t1", cancelled_by="mgr-1")
         event = es.list_events(correlation_id="r1")[-1]
         assert event.payload["action"] == "task_cancelled"
-        assert event.payload["cancelled_by"] == "ops-shift"
+        assert event.payload["cancelled_by"] == "mgr-1"
 
     def test_assess_item_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
