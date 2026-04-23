@@ -76,7 +76,7 @@ def engine_with_approval_item(engine: ServiceCatalogEngine) -> ServiceCatalogEng
         "item-appr", "Budget VM", "tenant-a",
         owner_ref="ops-owner",
         approval_required=True,
-        approver_refs=("system", "cfo", "ops-lead"),
+        approver_refs=("cfo", "ops-lead"),
     )
     return engine
 
@@ -236,6 +236,14 @@ class TestRegisterCatalogItem:
         message = str(exc_info.value)
         assert message == "approver_refs must not contain duplicates"
         assert "ops-lead" not in message
+
+    def test_system_not_allowed_in_approver_refs(self, engine: ServiceCatalogEngine) -> None:
+        with pytest.raises(ValueError, match="^approver_refs must exclude system$") as exc_info:
+            engine.register_catalog_item("i1", "Svc", "t1", approver_refs=("system", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must exclude system"
+        assert "ops-lead" not in message
+        assert "(" not in message
 
     def test_owner_ref_not_allowed_in_approver_refs(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(ValueError, match="^approver_refs must exclude owner_ref$") as exc_info:
@@ -2054,12 +2062,12 @@ class TestEventEmission:
             "t1",
             owner_ref="ops-owner",
             approval_required=True,
-            approver_refs=("system",),
+            approver_refs=("ops-lead",),
         )
         eng.submit_request("r1", "i1", "t1", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         before = es.event_count
-        eng.approve_request("r1", approved_by="system")
+        eng.approve_request("r1", approved_by="ops-lead")
         assert es.event_count > before
 
     def test_assign_request_emits_event(self, es: EventSpineEngine) -> None:
@@ -2274,12 +2282,12 @@ class TestGoldenScenario3:
             "finance",
             owner_ref="finance-owner",
             approval_required=True,
-            approver_refs=("system",),
+            approver_refs=("cfo",),
         )
         eng.submit_request("req-hw", "item-hw", "finance", "carol")
         eng.evaluate_entitlement("rul-hw", "req-hw", disposition=EntitlementDisposition.GRANTED)
         before = eng.decision_count
-        eng.approve_request("req-hw", approved_by="system")
+        eng.approve_request("req-hw", approved_by="cfo")
         assert eng.decision_count == before + 1
 
 
