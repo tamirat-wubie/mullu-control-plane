@@ -541,6 +541,8 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("started_by required for task start") from exc
         if normalized_started_by == "system":
             raise RuntimeCoreInvariantError("started_by must exclude system")
+        if normalized_started_by != old.assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Task starter not authorized for task")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, created_by=old.created_by,
@@ -570,6 +572,8 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("completed_by required for task completion") from exc
         if normalized_completed_by == "system":
             raise RuntimeCoreInvariantError("completed_by must exclude system")
+        if normalized_completed_by != old.assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Task completer not authorized for task")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
@@ -613,6 +617,8 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("failed_by required for task failure") from exc
         if normalized_failed_by == "system":
             raise RuntimeCoreInvariantError("failed_by must exclude system")
+        if normalized_failed_by != old.assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Task failure actor not authorized for task")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
@@ -644,6 +650,11 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("cancelled_by required for task cancellation") from exc
         if normalized_cancelled_by == "system":
             raise RuntimeCoreInvariantError("cancelled_by must exclude system")
+        if (
+            normalized_cancelled_by != old.assignee_ref.strip()
+            and normalized_cancelled_by != old.created_by.strip()
+        ):
+            raise RuntimeCoreInvariantError("Task canceller not authorized for task")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, created_by=old.created_by,
