@@ -15,10 +15,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any
 
 from ..contracts.procurement_runtime import (
-    ProcurementClosureReport,
     ProcurementDecision,
     ProcurementDecisionStatus,
     ProcurementRenewalWindow,
@@ -57,6 +55,15 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     )
     es.emit(event)
     return event
+
+
+def _require_human_actor(field_name: str, value: str, missing_message: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(missing_message)
+    normalized = value.strip()
+    if normalized == "system":
+        raise RuntimeCoreInvariantError(f"{field_name} must exclude system")
+    return normalized
 
 
 _VENDOR_BLOCKED = frozenset({VendorStatus.BLOCKED, VendorStatus.TERMINATED})
@@ -290,7 +297,8 @@ class ProcurementRuntimeEngine:
             tenant_id=old.tenant_id, status=ProcurementRequestStatus.SUBMITTED,
             description=old.description, estimated_amount=old.estimated_amount,
             currency=old.currency, requested_by=old.requested_by,
-            requested_at=old.requested_at, metadata=old.metadata,
+            requested_at=old.requested_at, cancelled_by=old.cancelled_by,
+            metadata=old.metadata,
         )
         self._requests[request_id] = updated
         _emit(self._events, "request_submitted", {"request_id": request_id}, request_id)
@@ -309,7 +317,8 @@ class ProcurementRuntimeEngine:
             tenant_id=old.tenant_id, status=ProcurementRequestStatus.APPROVED,
             description=old.description, estimated_amount=old.estimated_amount,
             currency=old.currency, requested_by=old.requested_by,
-            requested_at=old.requested_at, metadata=old.metadata,
+            requested_at=old.requested_at, cancelled_by=old.cancelled_by,
+            metadata=old.metadata,
         )
         self._requests[request_id] = updated
 
@@ -342,7 +351,8 @@ class ProcurementRuntimeEngine:
             tenant_id=old.tenant_id, status=ProcurementRequestStatus.DENIED,
             description=old.description, estimated_amount=old.estimated_amount,
             currency=old.currency, requested_by=old.requested_by,
-            requested_at=old.requested_at, metadata=old.metadata,
+            requested_at=old.requested_at, cancelled_by=old.cancelled_by,
+            metadata=old.metadata,
         )
         self._requests[request_id] = updated
 
@@ -361,20 +371,29 @@ class ProcurementRuntimeEngine:
         }, request_id)
         return updated
 
-    def cancel_request(self, request_id: str) -> ProcurementRequest:
+    def cancel_request(self, request_id: str, *, cancelled_by: str = "") -> ProcurementRequest:
         """Cancel a request."""
         old = self.get_request(request_id)
         if old.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot cancel request in current status")
+        normalized_cancelled_by = _require_human_actor(
+            "cancelled_by",
+            cancelled_by,
+            "cancelled_by required for cancellation",
+        )
         updated = ProcurementRequest(
             request_id=old.request_id, vendor_id=old.vendor_id,
             tenant_id=old.tenant_id, status=ProcurementRequestStatus.CANCELLED,
             description=old.description, estimated_amount=old.estimated_amount,
             currency=old.currency, requested_by=old.requested_by,
-            requested_at=old.requested_at, metadata=old.metadata,
+            requested_at=old.requested_at, cancelled_by=normalized_cancelled_by,
+            metadata=old.metadata,
         )
         self._requests[request_id] = updated
-        _emit(self._events, "request_cancelled", {"request_id": request_id}, request_id)
+        _emit(self._events, "request_cancelled", {
+            "request_id": request_id,
+            "cancelled_by": normalized_cancelled_by,
+        }, request_id)
         return updated
 
     def requests_for_vendor(self, vendor_id: str) -> tuple[ProcurementRequest, ...]:
@@ -415,7 +434,8 @@ class ProcurementRuntimeEngine:
             tenant_id=req.tenant_id, status=ProcurementRequestStatus.FULFILLED,
             description=req.description, estimated_amount=req.estimated_amount,
             currency=req.currency, requested_by=req.requested_by,
-            requested_at=req.requested_at, metadata=req.metadata,
+            requested_at=req.requested_at, cancelled_by=req.cancelled_by,
+            metadata=req.metadata,
         )
         self._requests[request_id] = fulfilled
 
