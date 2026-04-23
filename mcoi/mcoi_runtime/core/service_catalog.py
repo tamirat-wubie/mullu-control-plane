@@ -413,7 +413,7 @@ class ServiceCatalogEngine:
         request_id: str,
         assignee_ref: str,
         *,
-        assigned_by: str = "system",
+        assigned_by: str = "",
     ) -> RequestAssignment:
         """Assign a request to an assignee."""
         if assignment_id in self._assignments:
@@ -421,16 +421,23 @@ class ServiceCatalogEngine:
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot assign terminal request")
+        try:
+            normalized_assigned_by = ensure_non_empty_text("assigned_by", assigned_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("assigned_by required for assignment") from exc
+        if normalized_assigned_by == "system":
+            raise RuntimeCoreInvariantError("assigned_by must exclude system")
         now = _now_iso()
         assignment = RequestAssignment(
             assignment_id=assignment_id, request_id=request_id,
-            assignee_ref=assignee_ref, assigned_by=assigned_by,
+            assignee_ref=assignee_ref, assigned_by=normalized_assigned_by,
             assigned_at=now,
         )
         self._assignments[assignment_id] = assignment
         _emit(self._events, "request_assigned", {
             "assignment_id": assignment_id, "request_id": request_id,
             "assignee_ref": assignee_ref,
+            "assigned_by": normalized_assigned_by,
         }, request_id)
         return assignment
 

@@ -190,7 +190,10 @@ class RequestAssignment(ContractRecord):
         object.__setattr__(self, "assignment_id", require_non_empty_text(self.assignment_id, "assignment_id"))
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
         object.__setattr__(self, "assignee_ref", require_non_empty_text(self.assignee_ref, "assignee_ref"))
-        object.__setattr__(self, "assigned_by", require_non_empty_text(self.assigned_by, "assigned_by"))
+        normalized_assigned_by = require_non_empty_text(self.assigned_by, "assigned_by")
+        if normalized_assigned_by == "system":
+            raise ValueError("assigned_by must exclude system")
+        object.__setattr__(self, "assigned_by", normalized_assigned_by)
         require_datetime_text(self.assigned_at, "assigned_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 

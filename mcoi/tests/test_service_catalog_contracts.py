@@ -817,6 +817,13 @@ class TestRequestAssignmentValidation:
         with pytest.raises(ValueError):
             _assignment(assigned_by="")
 
+    def test_system_assigned_by_rejected(self):
+        with pytest.raises(ValueError, match="^assigned_by must exclude system$") as exc_info:
+            _assignment(assigned_by="system")
+        message = str(exc_info.value)
+        assert message == "assigned_by must exclude system"
+        assert "mgr-001" not in message
+
     def test_invalid_assigned_at(self):
         with pytest.raises(ValueError):
             _assignment(assigned_at="not-a-date")
