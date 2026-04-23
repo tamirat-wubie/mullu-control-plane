@@ -421,6 +421,8 @@ class ServiceCatalogEngine:
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot assign terminal request")
+        if req.requester_ref.strip() == assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Requester cannot be assignee for own request")
         try:
             normalized_assigned_by = ensure_non_empty_text("assigned_by", assigned_by)
         except ValueError as exc:

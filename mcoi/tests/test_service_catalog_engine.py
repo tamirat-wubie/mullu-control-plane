@@ -1039,6 +1039,15 @@ class TestAssignRequest:
         assert "tech-1" not in message
         assert engine_with_request.assignment_count == before
 
+    def test_requester_cannot_be_assigned_own_request(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.assignment_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Requester cannot be assignee for own request$") as exc_info:
+            engine_with_request.assign_request("a1", "req-1", "user-1", assigned_by="mgr-1")
+        message = str(exc_info.value)
+        assert message == "Requester cannot be assignee for own request"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+        assert engine_with_request.assignment_count == before
+
     def test_assigned_at_non_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
         asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         assert len(asn.assigned_at) > 0
