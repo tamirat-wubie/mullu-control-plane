@@ -228,6 +228,26 @@ class TestRegisterCatalogItem:
         )
         assert item.approver_refs == ("ops-lead", "cfo")
 
+    def test_duplicate_approver_refs_rejected(self, engine: ServiceCatalogEngine) -> None:
+        with pytest.raises(ValueError, match="^approver_refs must not contain duplicates$") as exc_info:
+            engine.register_catalog_item("i1", "Svc", "t1", approver_refs=("ops-lead", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must not contain duplicates"
+        assert "ops-lead" not in message
+
+    def test_owner_ref_not_allowed_in_approver_refs(self, engine: ServiceCatalogEngine) -> None:
+        with pytest.raises(ValueError, match="^approver_refs must exclude owner_ref$") as exc_info:
+            engine.register_catalog_item(
+                "i1",
+                "Svc",
+                "t1",
+                owner_ref="ops-lead",
+                approver_refs=("ops-lead", "cfo"),
+            )
+        message = str(exc_info.value)
+        assert message == "approver_refs must exclude owner_ref"
+        assert "ops-lead" not in message
+
     def test_approval_required_without_approver_refs_rejected(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
             engine.register_catalog_item("i1", "Svc", "t1", approval_required=True)
