@@ -429,6 +429,13 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("assigned_by required for assignment") from exc
         if normalized_assigned_by == "system":
             raise RuntimeCoreInvariantError("assigned_by must exclude system")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_assigned_by not in item.approver_refs
+            and normalized_assigned_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Assigner not authorized for request")
         now = _now_iso()
         assignment = RequestAssignment(
             assignment_id=assignment_id, request_id=request_id,
