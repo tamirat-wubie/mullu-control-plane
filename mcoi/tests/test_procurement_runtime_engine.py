@@ -8,9 +8,6 @@ procurement snapshots, state hashing, and six golden scenarios.
 import pytest
 
 from mcoi_runtime.contracts.procurement_runtime import (
-    ProcurementClosureReport,
-    ProcurementDecision,
-    ProcurementDecisionStatus,
     ProcurementRenewalWindow,
     ProcurementRequest,
     ProcurementRequestStatus,
@@ -23,7 +20,6 @@ from mcoi_runtime.contracts.procurement_runtime import (
     VendorRecord,
     VendorRiskLevel,
     VendorStatus,
-    VendorViolation,
 )
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -482,35 +478,52 @@ class TestDenyRequest:
     def test_denied_cannot_cancel(self, submitted_engine):
         submitted_engine.deny_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError):
-            submitted_engine.cancel_request("req-1")
+            submitted_engine.cancel_request("req-1", cancelled_by="ops-1")
 
 
 class TestCancelRequest:
     def test_cancel_draft(self, request_engine):
-        r = request_engine.cancel_request("req-1")
+        r = request_engine.cancel_request("req-1", cancelled_by="ops-1")
         assert r.status == ProcurementRequestStatus.CANCELLED
+        assert r.cancelled_by == "ops-1"
 
     def test_cancel_submitted(self, submitted_engine):
-        r = submitted_engine.cancel_request("req-1")
+        r = submitted_engine.cancel_request("req-1", cancelled_by="ops-1")
         assert r.status == ProcurementRequestStatus.CANCELLED
+        assert r.cancelled_by == "ops-1"
 
     def test_cancel_approved(self, approved_engine):
-        r = approved_engine.cancel_request("req-1")
+        r = approved_engine.cancel_request("req-1", cancelled_by="ops-1")
         assert r.status == ProcurementRequestStatus.CANCELLED
+        assert r.cancelled_by == "ops-1"
+
+    def test_cancelled_by_required(self, request_engine):
+        with pytest.raises(RuntimeCoreInvariantError, match="^cancelled_by required for cancellation$") as exc_info:
+            request_engine.cancel_request("req-1")
+        message = str(exc_info.value)
+        assert message == "cancelled_by required for cancellation"
+        assert request_engine.get_request("req-1").status == ProcurementRequestStatus.DRAFT
+
+    def test_system_cancelled_by_rejected(self, request_engine):
+        with pytest.raises(RuntimeCoreInvariantError, match="^cancelled_by must exclude system$") as exc_info:
+            request_engine.cancel_request("req-1", cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+        assert request_engine.get_request("req-1").status == ProcurementRequestStatus.DRAFT
 
     def test_cancel_denied_raises(self, submitted_engine):
         submitted_engine.deny_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError):
-            submitted_engine.cancel_request("req-1")
+            submitted_engine.cancel_request("req-1", cancelled_by="ops-1")
 
     def test_cancel_cancelled_raises(self, request_engine):
-        request_engine.cancel_request("req-1")
+        request_engine.cancel_request("req-1", cancelled_by="ops-1")
         with pytest.raises(RuntimeCoreInvariantError):
-            request_engine.cancel_request("req-1")
+            request_engine.cancel_request("req-1", cancelled_by="ops-1")
 
     def test_cancel_fulfilled_raises(self, po_engine):
         with pytest.raises(RuntimeCoreInvariantError):
-            po_engine.cancel_request("req-1")
+            po_engine.cancel_request("req-1", cancelled_by="ops-1")
 
 
 class TestRequestsForVendor:
@@ -1572,7 +1585,7 @@ class TestGoldenScenario2MissingApprovalBlocksPO:
     def test_cancelled_request_cannot_issue_po(self, engine):
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("req-1", "v-1", "t-1", 5000.0)
-        engine.cancel_request("req-1")
+        engine.cancel_request("req-1", cancelled_by="ops-1")
         with pytest.raises(RuntimeCoreInvariantError, match="APPROVED"):
             engine.issue_po("po-1", "req-1")
 
@@ -1801,8 +1814,9 @@ class TestRequestStatusTransitions:
         assert engine.get_request("r-1").status == ProcurementRequestStatus.FULFILLED
 
     def test_draft_to_cancelled(self, request_engine):
-        r = request_engine.cancel_request("req-1")
+        r = request_engine.cancel_request("req-1", cancelled_by="ops-1")
         assert r.status == ProcurementRequestStatus.CANCELLED
+        assert r.cancelled_by == "ops-1"
 
     def test_submitted_to_denied(self, submitted_engine):
         r = submitted_engine.deny_request("req-1")
@@ -1910,6 +1924,14 @@ class TestEventEmission:
         initial = es.event_count
         vendor_engine.create_request("r-1", "v-1", "tenant-1", 1000.0)
         assert es.event_count > initial
+
+    def test_request_cancel_event_includes_cancelled_by(self, es, vendor_engine):
+        vendor_engine.create_request("r-1", "v-1", "tenant-1", 1000.0)
+        vendor_engine.cancel_request("r-1", cancelled_by="ops-1")
+        event = es.list_events(correlation_id="r-1")[-1]
+        assert event.payload["action"] == "request_cancelled"
+        assert event.payload["cancelled_by"] == "ops-1"
+        assert event.payload["request_id"] == "r-1"
 
     def test_po_issuance_emits(self, es, approved_engine):
         initial = es.event_count
