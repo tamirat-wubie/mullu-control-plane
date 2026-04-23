@@ -82,8 +82,14 @@ class ApprovalRequest(ContractRecord):
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
         allowed_approver_ids = freeze_value(list(self.allowed_approver_ids))
+        seen_approver_ids: set[str] = set()
         for index, approver_id in enumerate(allowed_approver_ids):
-            require_non_empty_text(approver_id, f"allowed_approver_ids[{index}]")
+            normalized_approver_id = require_non_empty_text(approver_id, f"allowed_approver_ids[{index}]")
+            if normalized_approver_id in seen_approver_ids:
+                raise ValueError("allowed_approver_ids must not contain duplicates")
+            if normalized_approver_id == self.requester_id:
+                raise ValueError("allowed_approver_ids must exclude requester_id")
+            seen_approver_ids.add(normalized_approver_id)
         object.__setattr__(self, "allowed_approver_ids", allowed_approver_ids)
         if self.expires_at is not None:
             object.__setattr__(self, "expires_at", require_datetime_text(self.expires_at, "expires_at"))

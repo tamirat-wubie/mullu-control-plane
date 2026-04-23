@@ -67,6 +67,20 @@ class TestApprovalContracts:
         r = _request(allowed_approver_ids=("ops-lead", "admin-1"))
         assert r.allowed_approver_ids == ("ops-lead", "admin-1")
 
+    def test_request_rejects_duplicate_allowed_approver_ids(self):
+        with pytest.raises(ValueError, match="^allowed_approver_ids must not contain duplicates$") as exc_info:
+            _request(allowed_approver_ids=("ops-lead", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "allowed_approver_ids must not contain duplicates"
+        assert "ops-lead" not in message
+
+    def test_request_rejects_requester_in_allowed_approver_ids(self):
+        with pytest.raises(ValueError, match="^allowed_approver_ids must exclude requester_id$") as exc_info:
+            _request(requester_id="ops-lead", allowed_approver_ids=("ops-lead", "admin-1"))
+        message = str(exc_info.value)
+        assert message == "allowed_approver_ids must exclude requester_id"
+        assert "ops-lead" not in message
+
     def test_decision_active(self):
         d = ApprovalDecisionRecord(
             decision_id="d-1", request_id="req-1", approver_id="op-1",
