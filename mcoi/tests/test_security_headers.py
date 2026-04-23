@@ -90,6 +90,29 @@ class TestSecurityHeadersConfig:
         assert SecurityHeadersConfig(environment="local_dev").is_production is False
         assert SecurityHeadersConfig(environment="test").is_production is False
 
+    def test_environment_is_normalized(self):
+        cfg = SecurityHeadersConfig(environment=" Production ")
+        headers = build_security_headers(cfg)
+        assert cfg.environment == "production"
+        assert cfg.is_production is True
+        assert "Strict-Transport-Security" in headers
+
+    def test_invalid_environment_rejected(self):
+        with pytest.raises(ValueError, match="^environment must be non-empty$") as empty_info:
+            SecurityHeadersConfig(environment=" ")
+        with pytest.raises(ValueError, match="^environment must be text$") as type_info:
+            SecurityHeadersConfig(environment=123)
+        assert str(empty_info.value) == "environment must be non-empty"
+        assert str(type_info.value) == "environment must be text"
+
+    def test_negative_hsts_max_age_rejected(self):
+        with pytest.raises(ValueError, match="^hsts_max_age must be non-negative$") as negative_info:
+            SecurityHeadersConfig(hsts_max_age=-1)
+        with pytest.raises(ValueError, match="^hsts_max_age must be non-negative$") as type_info:
+            SecurityHeadersConfig(hsts_max_age="31536000")
+        assert str(negative_info.value) == "hsts_max_age must be non-negative"
+        assert str(type_info.value) == "hsts_max_age must be non-negative"
+
     def test_hsts_with_preload(self):
         cfg = SecurityHeadersConfig(hsts_preload=True)
         assert "preload" in cfg.effective_hsts
@@ -106,6 +129,30 @@ class TestSecurityHeadersConfig:
         cfg = SecurityHeadersConfig(referrer_policy="no-referrer")
         headers = build_security_headers(cfg)
         assert headers["Referrer-Policy"] == "no-referrer"
+
+    def test_policy_header_values_reject_control_characters(self):
+        with pytest.raises(ValueError, match="^csp must not contain control characters$") as csp_info:
+            SecurityHeadersConfig(csp="default-src 'self'\nscript-src 'none'")
+        with pytest.raises(ValueError, match="^referrer_policy must not contain control characters$") as referrer_info:
+            SecurityHeadersConfig(referrer_policy="no-referrer\r")
+        assert str(csp_info.value) == "csp must not contain control characters"
+        assert str(referrer_info.value) == "referrer_policy must not contain control characters"
+
+    def test_custom_headers_are_frozen_and_normalized(self):
+        cfg = SecurityHeadersConfig(custom_headers={" X-Custom ": " value "})
+        headers = build_security_headers(cfg)
+        with pytest.raises(TypeError):
+            cfg.custom_headers["X-Other"] = "value"
+        assert headers["X-Custom"] == "value"
+        assert " X-Custom " not in headers
+
+    def test_custom_headers_reject_injection_surfaces(self):
+        with pytest.raises(ValueError, match="^custom header names must be HTTP tokens$") as name_info:
+            SecurityHeadersConfig(custom_headers={"Bad Header": "value"})
+        with pytest.raises(ValueError, match="^custom header values must not contain control characters$") as value_info:
+            SecurityHeadersConfig(custom_headers={"X-Custom": "ok\nSet-Cookie: leaked=true"})
+        assert str(name_info.value) == "custom header names must be HTTP tokens"
+        assert str(value_info.value) == "custom header values must not contain control characters"
 
 
 # ── Middleware integration ─────────────────────────────────────
