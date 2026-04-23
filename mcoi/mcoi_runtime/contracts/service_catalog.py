@@ -120,6 +120,8 @@ class ServiceCatalogItem(ContractRecord):
         if not isinstance(self.status, ServiceStatus):
             raise ValueError("status must be a ServiceStatus")
         normalized_owner_ref = self.owner_ref.strip()
+        if normalized_owner_ref == "system":
+            raise ValueError("owner_ref must exclude system")
         approver_refs = freeze_value(list(self.approver_refs))
         seen_approver_refs: set[str] = set()
         for index, approver_ref in enumerate(approver_refs):

@@ -245,6 +245,14 @@ class TestRegisterCatalogItem:
         assert "ops-lead" not in message
         assert "(" not in message
 
+    def test_system_not_allowed_as_owner_ref(self, engine: ServiceCatalogEngine) -> None:
+        with pytest.raises(ValueError, match="^owner_ref must exclude system$") as exc_info:
+            engine.register_catalog_item("i1", "Svc", "t1", owner_ref="system")
+        message = str(exc_info.value)
+        assert message == "owner_ref must exclude system"
+        assert "Svc" not in message
+        assert "(" not in message
+
     def test_owner_ref_not_allowed_in_approver_refs(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(ValueError, match="^approver_refs must exclude owner_ref$") as exc_info:
             engine.register_catalog_item(
