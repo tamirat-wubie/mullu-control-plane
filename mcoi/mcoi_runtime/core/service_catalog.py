@@ -359,25 +359,29 @@ class ServiceCatalogEngine:
         self,
         request_id: str,
         *,
-        denied_by: str = "system",
+        denied_by: str = "",
         reason: str = "",
     ) -> ServiceRequest:
         """Deny a request."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot deny terminal request")
+        try:
+            normalized_denied_by = ensure_non_empty_text("denied_by", denied_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("denied_by required for denial") from exc
         now = _now_iso()
         dec_id = stable_identifier("dec-deny", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
             decision_id=dec_id, request_id=request_id,
-            disposition="denied", decided_by=denied_by,
+            disposition="denied", decided_by=normalized_denied_by,
             reason=reason or "Request denied",
             decided_at=now,
         )
         self._decisions[dec_id] = decision
         updated = self._update_request_status(request_id, RequestStatus.DENIED)
         _emit(self._events, "request_denied", {
-            "request_id": request_id, "denied_by": denied_by,
+            "request_id": request_id, "denied_by": normalized_denied_by,
         }, request_id)
         return updated
 

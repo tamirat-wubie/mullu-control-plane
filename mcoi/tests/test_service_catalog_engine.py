@@ -522,27 +522,27 @@ class TestDenyRequest:
     """deny_request tests."""
 
     def test_submitted_can_be_denied(self, engine_with_request: ServiceCatalogEngine) -> None:
-        result = engine_with_request.deny_request("req-1")
+        result = engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert result.status == RequestStatus.DENIED
 
     def test_denied_cannot_be_denied_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot deny"):
-            engine_with_request.deny_request("req-1")
+            engine_with_request.deny_request("req-1", denied_by="manager-1")
 
     def test_fulfilled_cannot_be_denied(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.close_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot deny"):
-            engine_with_request.deny_request("req-1")
+            engine_with_request.deny_request("req-1", denied_by="manager-1")
 
     def test_cancelled_cannot_be_denied(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.cancel_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot deny"):
-            engine_with_request.deny_request("req-1")
+            engine_with_request.deny_request("req-1", denied_by="manager-1")
 
     def test_creates_denial_decision(self, engine_with_request: ServiceCatalogEngine) -> None:
         before = engine_with_request.decision_count
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert engine_with_request.decision_count == before + 1
 
     def test_custom_denied_by(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -550,8 +550,18 @@ class TestDenyRequest:
         assert engine_with_request.decision_count >= 1
 
     def test_custom_reason(self, engine_with_request: ServiceCatalogEngine) -> None:
-        result = engine_with_request.deny_request("req-1", reason="Budget exceeded")
+        result = engine_with_request.deny_request("req-1", denied_by="manager-1", reason="Budget exceeded")
         assert result.status == RequestStatus.DENIED
+
+    def test_missing_denied_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.decision_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^denied_by required for denial$") as exc_info:
+            engine_with_request.deny_request("req-1")
+        message = str(exc_info.value)
+        assert message == "denied_by required for denial"
+        assert "denied_by" in message
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+        assert engine_with_request.decision_count == before
 
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -576,7 +586,7 @@ class TestCancelRequest:
             engine_with_request.cancel_request("req-1")
 
     def test_denied_cannot_be_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot cancel"):
             engine_with_request.cancel_request("req-1")
 
@@ -598,7 +608,7 @@ class TestCloseRequest:
             engine_with_request.close_request("req-1")
 
     def test_denied_cannot_be_closed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.close_request("req-1")
 
@@ -631,7 +641,7 @@ class TestRequestsForTenant:
         assert len(engine.requests_for_tenant("tB")) == 1
 
     def test_includes_terminal_requests(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         result = engine_with_request.requests_for_tenant("tenant-a")
         assert len(result) == 1
 
@@ -679,7 +689,7 @@ class TestEvaluateEntitlement:
             engine_with_request.evaluate_entitlement("rul-1", "req-1")
 
     def test_terminal_request_denied_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot evaluate"):
             engine_with_request.evaluate_entitlement("rul-1", "req-1")
 
@@ -792,7 +802,7 @@ class TestApproveRequest:
             engine_with_request.approve_request("req-1")
 
     def test_denied_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending-approval"):
             engine_with_request.approve_request("req-1")
 
@@ -937,7 +947,7 @@ class TestAssignRequest:
             engine_with_request.assign_request("a1", "req-1", "tech-1")
 
     def test_terminal_denied_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot assign"):
             engine_with_request.assign_request("a1", "req-1", "tech-1")
 
@@ -1075,7 +1085,7 @@ class TestCreateFulfillmentTask:
             engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
 
     def test_terminal_denied_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot create task"):
             engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
 
@@ -1632,7 +1642,7 @@ class TestDetectRequestViolations:
         assert "no_entitlement" not in ops
 
     def test_denied_request_no_no_entitlement(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         violations = engine_with_request.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "no_entitlement" not in ops
@@ -1723,7 +1733,7 @@ class TestRequestSnapshot:
         assert snap.total_fulfilled == 1
 
     def test_total_denied_matches(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         snap = engine_with_request.request_snapshot("snap-1")
         assert snap.total_denied == 1
 
@@ -1747,7 +1757,7 @@ class TestRequestSnapshot:
         engine.register_catalog_item("i1", "S", "t1", estimated_cost=100.0)
         engine.submit_request("r1", "i1", "t1", "u1", estimated_cost=100.0)
         engine.submit_request("r2", "i1", "t1", "u2", estimated_cost=50.0)
-        engine.deny_request("r2")
+        engine.deny_request("r2", denied_by="manager-1")
         snap = engine.request_snapshot("snap-1")
         assert snap.total_estimated_cost == 100.0
 
@@ -1835,7 +1845,7 @@ class TestStateHash:
 
     def test_changes_after_deny(self, engine_with_request: ServiceCatalogEngine) -> None:
         h1 = engine_with_request.state_hash()
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         h2 = engine_with_request.state_hash()
         assert h1 != h2
 
@@ -1910,7 +1920,7 @@ class TestProperties:
         assert engine_with_request.task_count == 1
 
     def test_decision_count_after_deny(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.deny_request("req-1")
+        engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert engine_with_request.decision_count >= 1
 
     def test_violation_count_after_detect(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -1971,7 +1981,7 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         before = es.event_count
-        eng.deny_request("r1")
+        eng.deny_request("r1", denied_by="ops-lead")
         assert es.event_count > before
 
     def test_cancel_request_emits_event(self, es: EventSpineEngine) -> None:
@@ -2402,7 +2412,7 @@ class TestEdgeCases:
     def test_deny_after_entitlement_granted(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.evaluate_entitlement("rul-1", "req-1")
         # Request is now ENTITLED, can still deny
-        result = engine_with_request.deny_request("req-1")
+        result = engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert result.status == RequestStatus.DENIED
 
     def test_cancel_after_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -2413,7 +2423,7 @@ class TestEdgeCases:
 
     def test_deny_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        result = engine_with_request.deny_request("req-1")
+        result = engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert result.status == RequestStatus.DENIED
 
     def test_evaluate_entitlement_different_requests(self, engine: ServiceCatalogEngine) -> None:
@@ -2436,7 +2446,7 @@ class TestEdgeCases:
         engine.submit_request("r1", "i1", "t1", "u1", estimated_cost=10.0)
         engine.submit_request("r2", "i1", "t1", "u2", estimated_cost=20.0)
         engine.create_fulfillment_task("t1", "r1", "tech-1")
-        engine.deny_request("r2")
+        engine.deny_request("r2", denied_by="manager-1")
         snap = engine.request_snapshot("snap-1")
         assert snap.total_requests == 2
         assert snap.total_in_fulfillment == 1
@@ -2551,7 +2561,7 @@ class TestEdgeCases:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
-        result = eng.deny_request("r1")
+        result = eng.deny_request("r1", denied_by="ops-lead")
         assert result.status == RequestStatus.DENIED
 
     def test_cancel_pending_approval_request(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
