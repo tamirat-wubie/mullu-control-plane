@@ -472,6 +472,7 @@ class ServiceCatalogEngine:
         request_id: str,
         assignee_ref: str,
         *,
+        created_by: str = "",
         description: str = "",
         dependency_ref: str = "",
     ) -> FulfillmentTask:
@@ -492,19 +493,33 @@ class ServiceCatalogEngine:
             )
         ):
             raise RuntimeCoreInvariantError("Assignee not eligible for request")
+        try:
+            normalized_created_by = ensure_non_empty_text("created_by", created_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("created_by required for task creation") from exc
+        if normalized_created_by == "system":
+            raise RuntimeCoreInvariantError("created_by must exclude system")
+        if (
+            item.approval_required
+            and normalized_created_by not in item.approver_refs
+            and normalized_created_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Task creator not authorized for request")
         # Auto-transition to IN_FULFILLMENT if not already
         if req.status not in (RequestStatus.IN_FULFILLMENT, RequestStatus.DENIED, RequestStatus.CANCELLED):
             self._update_request_status(request_id, RequestStatus.IN_FULFILLMENT)
         now = _now_iso()
         task = FulfillmentTask(
             task_id=task_id, request_id=request_id,
-            assignee_ref=assignee_ref, status=FulfillmentStatus.PENDING,
+            assignee_ref=assignee_ref, created_by=normalized_created_by,
+            status=FulfillmentStatus.PENDING,
             description=description, dependency_ref=dependency_ref,
             created_at=now,
         )
         self._tasks[task_id] = task
         _emit(self._events, "fulfillment_task_created", {
             "task_id": task_id, "request_id": request_id,
+            "created_by": normalized_created_by,
         }, request_id)
         return task
 
@@ -522,7 +537,8 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("Can only start pending tasks")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.IN_PROGRESS,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            status=FulfillmentStatus.IN_PROGRESS,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, metadata=old.metadata,
         )
@@ -538,7 +554,8 @@ class ServiceCatalogEngine:
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.COMPLETED,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            status=FulfillmentStatus.COMPLETED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, completed_at=now,
             metadata=old.metadata,
@@ -567,7 +584,8 @@ class ServiceCatalogEngine:
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.FAILED,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            status=FulfillmentStatus.FAILED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, completed_at=now,
             metadata=old.metadata,
@@ -583,7 +601,8 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("Task already in terminal status")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
-            assignee_ref=old.assignee_ref, status=FulfillmentStatus.CANCELLED,
+            assignee_ref=old.assignee_ref, created_by=old.created_by,
+            status=FulfillmentStatus.CANCELLED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, metadata=old.metadata,
         )

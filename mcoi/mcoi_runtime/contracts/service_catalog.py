@@ -228,6 +228,7 @@ class FulfillmentTask(ContractRecord):
     task_id: str = ""
     request_id: str = ""
     assignee_ref: str = ""
+    created_by: str = ""
     status: FulfillmentStatus = FulfillmentStatus.PENDING
     description: str = ""
     dependency_ref: str = ""
@@ -239,6 +240,10 @@ class FulfillmentTask(ContractRecord):
         object.__setattr__(self, "task_id", require_non_empty_text(self.task_id, "task_id"))
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
         object.__setattr__(self, "assignee_ref", require_non_empty_text(self.assignee_ref, "assignee_ref"))
+        normalized_created_by = require_non_empty_text(self.created_by, "created_by")
+        if normalized_created_by == "system":
+            raise ValueError("created_by must exclude system")
+        object.__setattr__(self, "created_by", normalized_created_by)
         if not isinstance(self.status, FulfillmentStatus):
             raise ValueError("status must be a FulfillmentStatus")
         require_datetime_text(self.created_at, "created_at")

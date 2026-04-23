@@ -101,6 +101,7 @@ def _fulfillment_task(**overrides) -> FulfillmentTask:
         task_id="task-001",
         request_id="req-001",
         assignee_ref="eng-001",
+        created_by="mgr-001",
         status=FulfillmentStatus.PENDING,
         description="Deploy VM",
         dependency_ref="dep-001",
@@ -519,6 +520,7 @@ class TestFulfillmentTaskConstruction:
         assert task.task_id == "task-001"
         assert task.request_id == "req-001"
         assert task.assignee_ref == "eng-001"
+        assert task.created_by == "mgr-001"
         assert task.status == FulfillmentStatus.PENDING
         assert task.description == "Deploy VM"
         assert task.dependency_ref == "dep-001"
@@ -887,6 +889,17 @@ class TestFulfillmentTaskValidation:
     def test_empty_assignee_ref(self):
         with pytest.raises(ValueError):
             _fulfillment_task(assignee_ref="")
+
+    def test_empty_created_by(self):
+        with pytest.raises(ValueError):
+            _fulfillment_task(created_by="")
+
+    def test_system_created_by_rejected(self):
+        with pytest.raises(ValueError, match="^created_by must exclude system$") as exc_info:
+            _fulfillment_task(created_by="system")
+        message = str(exc_info.value)
+        assert message == "created_by must exclude system"
+        assert "mgr-001" not in message
 
     def test_invalid_status_type(self):
         with pytest.raises(ValueError, match="status must be a FulfillmentStatus"):
@@ -1597,7 +1610,7 @@ class TestFulfillmentTaskToDict:
         task = _fulfillment_task()
         d = task.to_dict()
         expected_keys = {
-            "task_id", "request_id", "assignee_ref", "status",
+            "task_id", "request_id", "assignee_ref", "created_by", "status",
             "description", "dependency_ref", "created_at",
             "completed_at", "metadata",
         }
