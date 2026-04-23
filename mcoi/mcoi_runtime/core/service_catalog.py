@@ -251,6 +251,7 @@ class ServiceCatalogEngine:
         new_status: RequestStatus,
         *,
         cancelled_by: str = "",
+        closed_by: str = "",
     ) -> ServiceRequest:
         """Internal helper to update request status."""
         old = self.get_request(request_id)
@@ -261,6 +262,7 @@ class ServiceCatalogEngine:
             description=old.description, estimated_cost=old.estimated_cost,
             submitted_at=old.submitted_at, due_at=old.due_at,
             cancelled_by=cancelled_by or old.cancelled_by,
+            closed_by=closed_by or old.closed_by,
             metadata=old.metadata,
         )
         self._requests[request_id] = updated
@@ -718,13 +720,26 @@ class ServiceCatalogEngine:
     # Request closure
     # ------------------------------------------------------------------
 
-    def close_request(self, request_id: str) -> ServiceRequest:
+    def close_request(self, request_id: str, *, closed_by: str = "") -> ServiceRequest:
         """Close a request (mark as fulfilled)."""
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Request already in terminal status")
-        updated = self._update_request_status(request_id, RequestStatus.FULFILLED)
-        _emit(self._events, "request_closed", {"request_id": request_id}, request_id)
+        try:
+            normalized_closed_by = ensure_non_empty_text("closed_by", closed_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("closed_by required for closure") from exc
+        if normalized_closed_by == "system":
+            raise RuntimeCoreInvariantError("closed_by must exclude system")
+        updated = self._update_request_status(
+            request_id,
+            RequestStatus.FULFILLED,
+            closed_by=normalized_closed_by,
+        )
+        _emit(self._events, "request_closed", {
+            "request_id": request_id,
+            "closed_by": normalized_closed_by,
+        }, request_id)
         return updated
 
     def requests_for_tenant(self, tenant_id: str) -> tuple[ServiceRequest, ...]:

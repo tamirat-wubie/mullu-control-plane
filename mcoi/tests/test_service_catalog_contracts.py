@@ -452,6 +452,7 @@ class TestServiceRequestConstruction:
         assert req.submitted_at == TS
         assert req.due_at == ""
         assert req.cancelled_by == ""
+        assert req.closed_by == ""
 
     def test_with_due_at(self):
         req = _service_request(due_at=TS2)
@@ -793,6 +794,13 @@ class TestServiceRequestValidation:
             _service_request(status=RequestStatus.CANCELLED, cancelled_by="system")
         message = str(exc_info.value)
         assert message == "cancelled_by must exclude system"
+        assert "system" not in message.replace("system", "", 1)
+
+    def test_system_closed_by_rejected(self):
+        with pytest.raises(ValueError, match="^closed_by must exclude system$") as exc_info:
+            _service_request(status=RequestStatus.FULFILLED, closed_by="system")
+        message = str(exc_info.value)
+        assert message == "closed_by must exclude system"
         assert "system" not in message.replace("system", "", 1)
 
     def test_cancelled_requires_cancelled_by(self):
@@ -1624,7 +1632,7 @@ class TestServiceRequestToDict:
         expected_keys = {
             "request_id", "item_id", "tenant_id", "requester_ref",
             "status", "priority", "description", "estimated_cost",
-            "submitted_at", "due_at", "cancelled_by", "metadata",
+            "submitted_at", "due_at", "cancelled_by", "closed_by", "metadata",
         }
         assert set(d.keys()) == expected_keys
 
