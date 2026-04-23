@@ -1135,6 +1135,30 @@ class TestAssignRequest:
         assert eng.get_request("r1").status == RequestStatus.APPROVED
         assert eng.assignment_count == before
 
+    def test_approval_governed_request_must_be_approved_before_assignment(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        before = eng.assignment_count
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^Request not approved for assignment$",
+        ) as exc_info:
+            eng.assign_request("a1", "r1", "tech-1", assigned_by="ops-lead")
+        message = str(exc_info.value)
+        assert message == "Request not approved for assignment"
+        assert "PENDING_APPROVAL" not in message
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+        assert eng.assignment_count == before
+
     def test_owner_can_assign_approval_governed_request(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item(
@@ -1328,7 +1352,6 @@ class TestCreateFulfillmentTask:
         eng = engine_with_approval_item
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
-        eng.assign_request("a1", "r1", "tech-1", assigned_by="ops-lead")
         before = eng.task_count
         with pytest.raises(
             RuntimeCoreInvariantError,
