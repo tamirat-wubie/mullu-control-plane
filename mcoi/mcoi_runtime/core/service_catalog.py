@@ -221,6 +221,8 @@ class ServiceCatalogEngine:
         item = self.get_catalog_item(item_id)
         if item.status != ServiceStatus.ACTIVE:
             raise RuntimeCoreInvariantError("Cannot request from non-active catalog item")
+        if item.tenant_id != tenant_id:
+            raise RuntimeCoreInvariantError("Catalog item not available for tenant")
         now = _now_iso()
         status = RequestStatus.SUBMITTED
         req = ServiceRequest(

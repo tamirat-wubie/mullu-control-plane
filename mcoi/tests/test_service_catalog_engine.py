@@ -487,6 +487,14 @@ class TestSubmitRequest:
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot request"):
             engine_with_item.submit_request("r1", "item-1", "tenant-a", "user-1")
 
+    def test_cross_tenant_item_raises(self, engine_with_item: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^Catalog item not available for tenant$") as exc_info:
+            engine_with_item.submit_request("r1", "item-1", "tenant-b", "user-1")
+        message = str(exc_info.value)
+        assert message == "Catalog item not available for tenant"
+        assert "tenant-a" not in message
+        assert "tenant-b" not in message
+
     def test_request_is_frozen(self, engine_with_item: ServiceCatalogEngine) -> None:
         req = engine_with_item.submit_request("r1", "item-1", "tenant-a", "user-1")
         with pytest.raises(AttributeError):
