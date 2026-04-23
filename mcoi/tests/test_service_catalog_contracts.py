@@ -366,6 +366,20 @@ class TestServiceCatalogItemConstruction:
         assert item.approval_required is True
         assert item.approver_refs == ("ops-lead",)
 
+    def test_duplicate_approver_refs_rejected(self):
+        with pytest.raises(ValueError, match="^approver_refs must not contain duplicates$") as exc_info:
+            _catalog_item(approver_refs=("ops-lead", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must not contain duplicates"
+        assert "ops-lead" not in message
+
+    def test_owner_ref_not_allowed_in_approver_refs(self):
+        with pytest.raises(ValueError, match="^approver_refs must exclude owner_ref$") as exc_info:
+            _catalog_item(owner_ref="ops-lead", approver_refs=("ops-lead", "cfo"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must exclude owner_ref"
+        assert "ops-lead" not in message
+
     def test_approval_required_without_approver_refs_rejected(self):
         with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
             _catalog_item(approval_required=True, approver_refs=())

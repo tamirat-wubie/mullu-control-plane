@@ -119,9 +119,16 @@ class ServiceCatalogItem(ContractRecord):
             raise ValueError("kind must be a CatalogItemKind")
         if not isinstance(self.status, ServiceStatus):
             raise ValueError("status must be a ServiceStatus")
+        normalized_owner_ref = self.owner_ref.strip()
         approver_refs = freeze_value(list(self.approver_refs))
+        seen_approver_refs: set[str] = set()
         for index, approver_ref in enumerate(approver_refs):
-            require_non_empty_text(approver_ref, f"approver_refs[{index}]")
+            normalized_approver_ref = require_non_empty_text(approver_ref, f"approver_refs[{index}]")
+            if normalized_approver_ref in seen_approver_refs:
+                raise ValueError("approver_refs must not contain duplicates")
+            if normalized_owner_ref and normalized_approver_ref == normalized_owner_ref:
+                raise ValueError("approver_refs must exclude owner_ref")
+            seen_approver_refs.add(normalized_approver_ref)
         object.__setattr__(self, "approver_refs", approver_refs)
         if self.approval_required and not approver_refs:
             raise ValueError("approval_required items must declare approver_refs")
