@@ -184,6 +184,17 @@ class TestApprovalDecisions:
         assert decision.status is ApprovalStatus.APPROVED
         assert decision.approver_id == "ops-lead"
 
+    def test_request_cannot_record_conflicting_second_decision(self):
+        engine = _engine()
+        engine.submit_request(_request())
+        decision = engine.record_decision(request_id="req-1", approver_id="op-1", approved=True)
+        with pytest.raises(ValueError, match="^approval request already decided$") as exc_info:
+            engine.record_decision(request_id="req-1", approver_id="op-2", approved=False)
+        message = str(exc_info.value)
+        assert decision.status is ApprovalStatus.APPROVED
+        assert message == "approval request already decided"
+        assert "req-1" not in message
+
 
 # --- Validation ---
 
