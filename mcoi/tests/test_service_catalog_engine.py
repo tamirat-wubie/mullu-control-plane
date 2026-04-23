@@ -739,6 +739,52 @@ class TestCloseRequest:
         assert message == "closed_by must exclude system"
         assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
 
+    def test_requester_cannot_close_own_request(self, engine_with_request: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="^Requester cannot close own request$") as exc_info:
+            engine_with_request.close_request("req-1", closed_by="user-1")
+        message = str(exc_info.value)
+        assert message == "Requester cannot close own request"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+
+    def test_unauthorized_closer_cannot_close_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Closer not authorized for request$") as exc_info:
+            eng.close_request("r1", closed_by="intern-1")
+        message = str(exc_info.value)
+        assert message == "Closer not authorized for request"
+        assert "intern-1" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+
+    def test_owner_can_close_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        result = eng.close_request("r1", closed_by="ops-owner")
+        assert result.status == RequestStatus.FULFILLED
+        assert result.closed_by == "ops-owner"
+
+    def test_approver_can_close_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        result = eng.close_request("r1", closed_by="ops-lead")
+        assert result.status == RequestStatus.FULFILLED
+        assert result.closed_by == "ops-lead"
+
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
             engine.close_request("ghost")
