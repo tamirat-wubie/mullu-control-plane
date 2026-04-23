@@ -505,6 +505,13 @@ class ServiceCatalogEngine:
             and normalized_created_by != item.owner_ref.strip()
         ):
             raise RuntimeCoreInvariantError("Task creator not authorized for request")
+        if item.approval_required:
+            request_assignments = self.assignments_for_request(request_id)
+            if not request_assignments:
+                raise RuntimeCoreInvariantError("Governed request requires assignment before tasks")
+            assigned_refs = {assignment.assignee_ref for assignment in request_assignments}
+            if assignee_ref not in assigned_refs:
+                raise RuntimeCoreInvariantError("Task assignee not assigned to request")
         # Auto-transition to IN_FULFILLMENT if not already
         if req.status not in (RequestStatus.IN_FULFILLMENT, RequestStatus.DENIED, RequestStatus.CANCELLED):
             self._update_request_status(request_id, RequestStatus.IN_FULFILLMENT)

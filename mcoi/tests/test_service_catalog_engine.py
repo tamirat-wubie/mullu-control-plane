@@ -1317,6 +1317,7 @@ class TestCreateFulfillmentTask:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         eng.approve_request("r1", approved_by="ops-lead")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="ops-lead")
         _create_task(eng, "t1", "r1", "tech-1", created_by="ops-lead")
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
 
@@ -1461,9 +1462,79 @@ class TestCreateFulfillmentTask:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         eng.approve_request("r1", approved_by="cfo")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="ops-owner")
         task = _create_task(eng, "t1", "r1", "tech-1", created_by="ops-owner")
         assert task.created_by == "ops-owner"
         assert task.status == FulfillmentStatus.PENDING
+        assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
+
+    def test_approval_governed_request_requires_assignment_before_task_creation(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        before = eng.task_count
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^Governed request requires assignment before tasks$",
+        ) as exc_info:
+            _create_task(eng, "t1", "r1", "tech-1", created_by="cfo")
+        message = str(exc_info.value)
+        assert message == "Governed request requires assignment before tasks"
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.task_count == before
+
+    def test_governed_task_assignee_must_be_assigned_to_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        eng.assign_request("a1", "r1", "tech-2", assigned_by="cfo")
+        before = eng.task_count
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^Task assignee not assigned to request$",
+        ) as exc_info:
+            _create_task(eng, "t1", "r1", "tech-1", created_by="cfo")
+        message = str(exc_info.value)
+        assert message == "Task assignee not assigned to request"
+        assert "tech-1" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.task_count == before
+
+    def test_assigned_actor_can_receive_task_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="cfo")
+        task = _create_task(eng, "t1", "r1", "tech-1", created_by="cfo")
+        assert task.assignee_ref == "tech-1"
+        assert task.created_by == "cfo"
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
 
     def test_task_is_frozen(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -2772,6 +2843,7 @@ class TestGoldenScenario3:
         approved = eng.approve_request("req-hw", approved_by="cfo")
         assert approved.status == RequestStatus.APPROVED
 
+        eng.assign_request("a1", "req-hw", "procurement-team", assigned_by="cfo")
         task = _create_task(eng, "task-hw", "req-hw", "procurement-team", created_by="cfo")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("req-hw").status == RequestStatus.IN_FULFILLMENT
@@ -3128,6 +3200,7 @@ class TestEdgeCases:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         eng.approve_request("r1", approved_by="ops-lead")
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="ops-lead")
         task = _create_task(eng, "t1", "r1", "tech-1", created_by="ops-lead")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
