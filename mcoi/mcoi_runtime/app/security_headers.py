@@ -15,11 +15,23 @@ Invariants:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from types import MappingProxyType
+from typing import Any
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+
+_HEADER_NAME_CHARS = frozenset(
+    "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+)
+_HEADER_CONTROL_CHARS = frozenset(("\r", "\n", "\0"))
+
+
+def _reject_header_control_chars(field_name: str, value: str) -> None:
+    if any(ch in value for ch in _HEADER_CONTROL_CHARS):
+        raise ValueError(f"{field_name} must not contain control characters")
 
 
 @dataclass(frozen=True)
@@ -47,7 +59,45 @@ class SecurityHeadersConfig:
     permissions_policy: str = "camera=(), microphone=(), geolocation=(), payment=()"
 
     # Additional custom headers
-    custom_headers: dict[str, str] = field(default_factory=dict)
+    custom_headers: Mapping[str, str] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.environment, str):
+            raise ValueError("environment must be text")
+        environment = self.environment.strip().lower()
+        if not environment:
+            raise ValueError("environment must be non-empty")
+        object.__setattr__(self, "environment", environment)
+
+        if not isinstance(self.hsts_max_age, int) or self.hsts_max_age < 0:
+            raise ValueError("hsts_max_age must be non-negative")
+
+        for field_name in ("csp", "referrer_policy", "permissions_policy"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str):
+                raise ValueError(f"{field_name} must be text")
+            _reject_header_control_chars(field_name, value)
+            normalized = value.strip()
+            if field_name != "csp" and not normalized:
+                raise ValueError(f"{field_name} must be non-empty")
+            object.__setattr__(self, field_name, normalized)
+
+        if not isinstance(self.custom_headers, Mapping):
+            raise ValueError("custom_headers must be a mapping")
+        custom_headers: dict[str, str] = {}
+        for name, value in self.custom_headers.items():
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError("custom header names must be non-empty")
+            _reject_header_control_chars("custom header names", name)
+            normalized_name = name.strip()
+            if any(ch not in _HEADER_NAME_CHARS for ch in normalized_name):
+                raise ValueError("custom header names must be HTTP tokens")
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError("custom header values must be non-empty")
+            _reject_header_control_chars("custom header values", value)
+            normalized_value = value.strip()
+            custom_headers[normalized_name] = normalized_value
+        object.__setattr__(self, "custom_headers", MappingProxyType(custom_headers))
 
     @property
     def is_production(self) -> bool:
