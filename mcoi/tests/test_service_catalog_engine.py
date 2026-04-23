@@ -2120,17 +2120,16 @@ class TestAutoFulfillment:
         _cancel_task(engine_with_request, "t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
-    def test_auto_fulfillment_does_not_trigger_if_not_in_fulfillment(self, engine: ServiceCatalogEngine) -> None:
-        # Edge case: manually close request before tasks complete
+    def test_manual_close_rejected_while_task_incomplete(self, engine: ServiceCatalogEngine) -> None:
         engine.register_catalog_item("i1", "S", "t1")
         engine.submit_request("r1", "i1", "t1", "u1")
         _create_task(engine, "t1", "r1", "tech-1")
-        # Manually close (fulfilled) before task completes
-        # Request is IN_FULFILLMENT; close it to FULFILLED
-        engine.close_request("r1", closed_by="manager-1")
-        # Now completing should not error (task is independent) but request stays fulfilled
-        # Actually close_request makes it terminal so complete_task won't trigger again
-        assert engine.get_request("r1").status == RequestStatus.FULFILLED
+        with pytest.raises(RuntimeCoreInvariantError, match="^Cannot close request with incomplete tasks$") as exc_info:
+            engine.close_request("r1", closed_by="manager-1")
+        message = str(exc_info.value)
+        assert message == "Cannot close request with incomplete tasks"
+        assert engine.get_request("r1").status == RequestStatus.IN_FULFILLMENT
+        assert engine.get_task("t1").status == FulfillmentStatus.PENDING
 
     def test_started_then_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
@@ -3223,13 +3222,34 @@ class TestEdgeCases:
 
     def test_cancel_after_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        # Request is IN_FULFILLMENT, can still cancel
+        with pytest.raises(RuntimeCoreInvariantError, match="^Cannot cancel request with active tasks$") as exc_info:
+            engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
+        message = str(exc_info.value)
+        assert message == "Cannot cancel request with active tasks"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
+
+    def test_cancel_after_task_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _cancel_task(engine_with_request, "t1", cancelled_by="tech-1")
         result = engine_with_request.cancel_request("req-1", cancelled_by="manager-1")
         assert result.status == RequestStatus.CANCELLED
         assert result.cancelled_by == "manager-1"
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.CANCELLED
 
     def test_deny_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.decision_count
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Cannot deny request with active tasks$") as exc_info:
+            engine_with_request.deny_request("req-1", denied_by="manager-1")
+        message = str(exc_info.value)
+        assert message == "Cannot deny request with active tasks"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
+        assert engine_with_request.decision_count == before
+
+    def test_deny_after_task_failed(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _fail_task(engine_with_request, "t1", failed_by="tech-1")
         result = engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert result.status == RequestStatus.DENIED
 
@@ -3277,8 +3297,20 @@ class TestEdgeCases:
 
     def test_close_in_fulfillment_request(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.close_request("req-1", closed_by="manager-1")
-        assert result.status == RequestStatus.FULFILLED
+        with pytest.raises(RuntimeCoreInvariantError, match="^Cannot close request with incomplete tasks$") as exc_info:
+            engine_with_request.close_request("req-1", closed_by="manager-1")
+        message = str(exc_info.value)
+        assert message == "Cannot close request with incomplete tasks"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
+
+    def test_close_after_failed_task_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _fail_task(engine_with_request, "t1", failed_by="tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^Cannot close request with incomplete tasks$") as exc_info:
+            engine_with_request.close_request("req-1", closed_by="manager-1")
+        message = str(exc_info.value)
+        assert message == "Cannot close request with incomplete tasks"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_multiple_snapshots_different_ids(self, engine: ServiceCatalogEngine) -> None:
         s1 = engine.request_snapshot("snap-1")
