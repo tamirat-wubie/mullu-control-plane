@@ -74,6 +74,7 @@ def engine_with_approval_item(engine: ServiceCatalogEngine) -> ServiceCatalogEng
     """Engine with a catalog item that requires approval."""
     engine.register_catalog_item(
         "item-appr", "Budget VM", "tenant-a",
+        owner_ref="ops-owner",
         approval_required=True,
         approver_refs=("system", "cfo", "ops-lead"),
     )
@@ -210,6 +211,7 @@ class TestRegisterCatalogItem:
             "i1",
             "Svc",
             "t1",
+            owner_ref="ops-owner",
             approval_required=True,
             approver_refs=("ops-lead",),
         )
@@ -247,6 +249,20 @@ class TestRegisterCatalogItem:
         message = str(exc_info.value)
         assert message == "approver_refs must exclude owner_ref"
         assert "ops-lead" not in message
+
+    def test_approval_required_without_owner_ref_rejected(self, engine: ServiceCatalogEngine) -> None:
+        with pytest.raises(ValueError, match="^approval_required items must declare owner_ref$") as exc_info:
+            engine.register_catalog_item(
+                "i1",
+                "Svc",
+                "t1",
+                owner_ref="",
+                approval_required=True,
+                approver_refs=("ops-lead",),
+            )
+        message = str(exc_info.value)
+        assert message == "approval_required items must declare owner_ref"
+        assert "ops-owner" not in message
 
     def test_approval_required_without_approver_refs_rejected(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
@@ -874,6 +890,7 @@ class TestApproveRequest:
             "item-appr",
             "Budget VM",
             "tenant-a",
+            owner_ref="ops-owner",
             approval_required=True,
             approver_refs=("cfo", "ops-lead"),
         )
@@ -894,6 +911,7 @@ class TestApproveRequest:
             "item-appr",
             "Budget VM",
             "tenant-a",
+            owner_ref="ops-owner",
             approval_required=True,
             approver_refs=("cfo", "ops-lead"),
         )
@@ -2034,6 +2052,7 @@ class TestEventEmission:
             "i1",
             "S",
             "t1",
+            owner_ref="ops-owner",
             approval_required=True,
             approver_refs=("system",),
         )
@@ -2228,6 +2247,7 @@ class TestGoldenScenario3:
             "item-hw",
             "Hardware",
             "finance",
+            owner_ref="finance-owner",
             approval_required=True,
             approver_refs=("cfo",),
             estimated_cost=5000.0,
@@ -2252,6 +2272,7 @@ class TestGoldenScenario3:
             "item-hw",
             "Hardware",
             "finance",
+            owner_ref="finance-owner",
             approval_required=True,
             approver_refs=("system",),
         )
@@ -2511,6 +2532,7 @@ class TestEdgeCases:
             "i1",
             "S",
             "t1",
+            owner_ref="ops-owner",
             approval_required=True,
             approver_refs=("ops-lead",),
         )

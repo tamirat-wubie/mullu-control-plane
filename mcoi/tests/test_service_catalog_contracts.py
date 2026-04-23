@@ -380,6 +380,13 @@ class TestServiceCatalogItemConstruction:
         assert message == "approver_refs must exclude owner_ref"
         assert "ops-lead" not in message
 
+    def test_approval_required_without_owner_ref_rejected(self):
+        with pytest.raises(ValueError, match="^approval_required items must declare owner_ref$") as exc_info:
+            _catalog_item(owner_ref="", approval_required=True, approver_refs=("ops-lead",))
+        message = str(exc_info.value)
+        assert message == "approval_required items must declare owner_ref"
+        assert "owner-001" not in message
+
     def test_approval_required_without_approver_refs_rejected(self):
         with pytest.raises(ValueError, match="^approval_required items must declare approver_refs$") as exc_info:
             _catalog_item(approval_required=True, approver_refs=())

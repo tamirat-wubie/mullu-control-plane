@@ -132,6 +132,8 @@ class ServiceCatalogItem(ContractRecord):
         object.__setattr__(self, "approver_refs", approver_refs)
         if self.approval_required and not approver_refs:
             raise ValueError("approval_required items must declare approver_refs")
+        if self.approval_required and not normalized_owner_ref:
+            raise ValueError("approval_required items must declare owner_ref")
         object.__setattr__(self, "estimated_cost", require_non_negative_float(self.estimated_cost, "estimated_cost"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
