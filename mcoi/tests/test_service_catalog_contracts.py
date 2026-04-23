@@ -373,6 +373,14 @@ class TestServiceCatalogItemConstruction:
         assert message == "approver_refs must not contain duplicates"
         assert "ops-lead" not in message
 
+    def test_system_not_allowed_in_approver_refs(self):
+        with pytest.raises(ValueError, match="^approver_refs must exclude system$") as exc_info:
+            _catalog_item(approver_refs=("system", "ops-lead"))
+        message = str(exc_info.value)
+        assert message == "approver_refs must exclude system"
+        assert "ops-lead" not in message
+        assert "(" not in message
+
     def test_owner_ref_not_allowed_in_approver_refs(self):
         with pytest.raises(ValueError, match="^approver_refs must exclude owner_ref$") as exc_info:
             _catalog_item(owner_ref="ops-lead", approver_refs=("ops-lead", "cfo"))

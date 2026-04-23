@@ -126,6 +126,8 @@ class ServiceCatalogItem(ContractRecord):
             normalized_approver_ref = require_non_empty_text(approver_ref, f"approver_refs[{index}]")
             if normalized_approver_ref in seen_approver_refs:
                 raise ValueError("approver_refs must not contain duplicates")
+            if normalized_approver_ref == "system":
+                raise ValueError("approver_refs must exclude system")
             if normalized_owner_ref and normalized_approver_ref == normalized_owner_ref:
                 raise ValueError("approver_refs must exclude owner_ref")
             seen_approver_refs.add(normalized_approver_ref)
