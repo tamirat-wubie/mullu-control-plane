@@ -268,6 +268,20 @@ class ServiceCatalogEngine:
         self._requests[request_id] = updated
         return updated
 
+    def _has_active_fulfillment_tasks(self, request_id: str) -> bool:
+        """Return whether any task for the request is still non-terminal."""
+        return any(
+            task.request_id == request_id and task.status not in _TASK_TERMINAL
+            for task in self._tasks.values()
+        )
+
+    def _has_incomplete_fulfillment_tasks(self, request_id: str) -> bool:
+        """Return whether any task for the request is not completed."""
+        return any(
+            task.request_id == request_id and task.status != FulfillmentStatus.COMPLETED
+            for task in self._tasks.values()
+        )
+
     # ------------------------------------------------------------------
     # Entitlement evaluation
     # ------------------------------------------------------------------
@@ -388,6 +402,8 @@ class ServiceCatalogEngine:
             and normalized_denied_by.strip() != item.owner_ref.strip()
         ):
             raise RuntimeCoreInvariantError("Denier not authorized for request")
+        if self._has_active_fulfillment_tasks(request_id):
+            raise RuntimeCoreInvariantError("Cannot deny request with active tasks")
         now = _now_iso()
         dec_id = stable_identifier("dec-deny", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
@@ -422,6 +438,8 @@ class ServiceCatalogEngine:
             and normalized_cancelled_by != item.owner_ref.strip()
         ):
             raise RuntimeCoreInvariantError("Canceller not authorized for request")
+        if self._has_active_fulfillment_tasks(request_id):
+            raise RuntimeCoreInvariantError("Cannot cancel request with active tasks")
         updated = self._update_request_status(
             request_id,
             RequestStatus.CANCELLED,
@@ -748,6 +766,8 @@ class ServiceCatalogEngine:
             and normalized_closed_by != item.owner_ref.strip()
         ):
             raise RuntimeCoreInvariantError("Closer not authorized for request")
+        if self._has_incomplete_fulfillment_tasks(request_id):
+            raise RuntimeCoreInvariantError("Cannot close request with incomplete tasks")
         updated = self._update_request_status(
             request_id,
             RequestStatus.FULFILLED,
