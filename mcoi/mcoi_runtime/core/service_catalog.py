@@ -38,7 +38,7 @@ from ..contracts.service_catalog import (
 )
 from ..contracts.event import EventRecord, EventSource, EventType
 from .event_spine import EventSpineEngine
-from .invariants import RuntimeCoreInvariantError, stable_identifier
+from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 
 
 def _now_iso() -> str:
@@ -324,30 +324,34 @@ class ServiceCatalogEngine:
         self,
         request_id: str,
         *,
-        approved_by: str = "system",
+        approved_by: str = "",
         reason: str = "",
     ) -> ServiceRequest:
         """Approve a pending-approval request."""
         req = self.get_request(request_id)
         if req.status != RequestStatus.PENDING_APPROVAL:
             raise RuntimeCoreInvariantError("Can only approve pending-approval requests")
-        if req.requester_ref.strip() == approved_by.strip():
+        try:
+            normalized_approved_by = ensure_non_empty_text("approved_by", approved_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("approved_by required for approval") from exc
+        if req.requester_ref.strip() == normalized_approved_by.strip():
             raise RuntimeCoreInvariantError("Requester cannot approve own request")
         item = self.get_catalog_item(req.item_id)
-        if item.approver_refs and approved_by.strip() not in item.approver_refs:
+        if item.approver_refs and normalized_approved_by.strip() not in item.approver_refs:
             raise RuntimeCoreInvariantError("Approver not authorized for request")
         now = _now_iso()
         dec_id = stable_identifier("dec-appr", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
             decision_id=dec_id, request_id=request_id,
-            disposition="approved", decided_by=approved_by,
+            disposition="approved", decided_by=normalized_approved_by,
             reason=reason or "Request approved",
             decided_at=now,
         )
         self._decisions[dec_id] = decision
         updated = self._update_request_status(request_id, RequestStatus.APPROVED)
         _emit(self._events, "request_approved", {
-            "request_id": request_id, "approved_by": approved_by,
+            "request_id": request_id, "approved_by": normalized_approved_by,
         }, request_id)
         return updated
 

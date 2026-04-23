@@ -766,7 +766,7 @@ class TestApproveRequest:
         eng = engine_with_approval_item
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
-        result = eng.approve_request("r1")
+        result = eng.approve_request("r1", approved_by="ops-lead")
         assert result.status == RequestStatus.APPROVED
 
     def test_creates_approval_decision(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
@@ -774,7 +774,7 @@ class TestApproveRequest:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         before = eng.decision_count
-        eng.approve_request("r1")
+        eng.approve_request("r1", approved_by="ops-lead")
         assert eng.decision_count == before + 1
 
     def test_submitted_cannot_be_approved(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -812,8 +812,21 @@ class TestApproveRequest:
         eng = engine_with_approval_item
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
-        result = eng.approve_request("r1", reason="Budget allocated")
+        result = eng.approve_request("r1", approved_by="ops-lead", reason="Budget allocated")
         assert result.status == RequestStatus.APPROVED
+
+    def test_missing_approved_by_rejected(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        before = eng.decision_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^approved_by required for approval$") as exc_info:
+            eng.approve_request("r1")
+        message = str(exc_info.value)
+        assert message == "approved_by required for approval"
+        assert "approved_by" in message
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+        assert eng.decision_count == before
 
     def test_requester_cannot_approve_own_request(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
         eng = engine_with_approval_item
@@ -867,7 +880,7 @@ class TestApproveRequest:
         eng = engine_with_item
         eng.submit_request("r1", "item-1", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.REQUIRES_APPROVAL)
-        result = eng.approve_request("r1")
+        result = eng.approve_request("r1", approved_by="ops-lead")
         assert result.status == RequestStatus.APPROVED
 
 
@@ -1036,7 +1049,7 @@ class TestCreateFulfillmentTask:
         eng = engine_with_approval_item
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
-        eng.approve_request("r1")
+        eng.approve_request("r1", approved_by="ops-lead")
         eng.create_fulfillment_task("t1", "r1", "tech-1")
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
 
@@ -1997,7 +2010,7 @@ class TestEventEmission:
         eng.submit_request("r1", "i1", "t1", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         before = es.event_count
-        eng.approve_request("r1")
+        eng.approve_request("r1", approved_by="system")
         assert es.event_count > before
 
     def test_assign_request_emits_event(self, es: EventSpineEngine) -> None:
@@ -2215,7 +2228,7 @@ class TestGoldenScenario3:
         eng.submit_request("req-hw", "item-hw", "finance", "carol")
         eng.evaluate_entitlement("rul-hw", "req-hw", disposition=EntitlementDisposition.GRANTED)
         before = eng.decision_count
-        eng.approve_request("req-hw")
+        eng.approve_request("req-hw", approved_by="system")
         assert eng.decision_count == before + 1
 
 
@@ -2552,7 +2565,7 @@ class TestEdgeCases:
         eng = engine_with_approval_item
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
-        eng.approve_request("r1")
+        eng.approve_request("r1", approved_by="ops-lead")
         task = eng.create_fulfillment_task("t1", "r1", "tech-1")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
