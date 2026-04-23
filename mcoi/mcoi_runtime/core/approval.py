@@ -82,6 +82,8 @@ class ApprovalEngine:
         request = self._requests.get(request_id)
         if request is None:
             raise ValueError("approval request unavailable")
+        if self._decision_for_request(request_id) is not None:
+            raise ValueError("approval request already decided")
 
         # Check expiry
         if request.expires_at and self._is_expired(request.expires_at):
@@ -213,3 +215,9 @@ class ApprovalEngine:
             "count": len(self._decisions) + len(self._overrides),
             "time": self._clock(),
         })
+
+    def _decision_for_request(self, request_id: str) -> ApprovalDecisionRecord | None:
+        for decision in self._decisions.values():
+            if decision.request_id == request_id:
+                return decision
+        return None
