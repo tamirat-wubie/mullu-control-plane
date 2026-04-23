@@ -370,6 +370,15 @@ class ServiceCatalogEngine:
             normalized_denied_by = ensure_non_empty_text("denied_by", denied_by)
         except ValueError as exc:
             raise RuntimeCoreInvariantError("denied_by required for denial") from exc
+        if req.requester_ref.strip() == normalized_denied_by.strip():
+            raise RuntimeCoreInvariantError("Requester cannot deny own request")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_denied_by.strip() not in item.approver_refs
+            and normalized_denied_by.strip() != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Denier not authorized for request")
         now = _now_iso()
         dec_id = stable_identifier("dec-deny", {"req": request_id, "ts": now})
         decision = FulfillmentDecision(
