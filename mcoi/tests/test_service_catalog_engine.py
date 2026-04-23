@@ -1138,6 +1138,50 @@ class TestAssignRequest:
         assert asn.request_id == "r1"
         assert asn.assigned_by == "ops-lead"
 
+    def test_owner_cannot_be_assignee_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        before = eng.assignment_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Assignee not eligible for request$") as exc_info:
+            eng.assign_request("a1", "r1", "ops-owner", assigned_by="ops-owner")
+        message = str(exc_info.value)
+        assert message == "Assignee not eligible for request"
+        assert "ops-owner" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.assignment_count == before
+
+    def test_approver_cannot_be_assignee_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        before = eng.assignment_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Assignee not eligible for request$") as exc_info:
+            eng.assign_request("a1", "r1", "ops-lead", assigned_by="ops-owner")
+        message = str(exc_info.value)
+        assert message == "Assignee not eligible for request"
+        assert "ops-lead" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.assignment_count == before
+
     def test_assignment_is_frozen(self, engine_with_request: ServiceCatalogEngine) -> None:
         asn = engine_with_request.assign_request("a1", "req-1", "tech-1", assigned_by="mgr-1")
         with pytest.raises(AttributeError):

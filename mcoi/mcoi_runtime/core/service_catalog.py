@@ -423,13 +423,21 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("Cannot assign terminal request")
         if req.requester_ref.strip() == assignee_ref.strip():
             raise RuntimeCoreInvariantError("Requester cannot be assignee for own request")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and (
+                assignee_ref.strip() == item.owner_ref.strip()
+                or assignee_ref.strip() in item.approver_refs
+            )
+        ):
+            raise RuntimeCoreInvariantError("Assignee not eligible for request")
         try:
             normalized_assigned_by = ensure_non_empty_text("assigned_by", assigned_by)
         except ValueError as exc:
             raise RuntimeCoreInvariantError("assigned_by required for assignment") from exc
         if normalized_assigned_by == "system":
             raise RuntimeCoreInvariantError("assigned_by must exclude system")
-        item = self.get_catalog_item(req.item_id)
         if (
             item.approval_required
             and normalized_assigned_by not in item.approver_refs
