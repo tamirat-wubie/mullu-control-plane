@@ -607,6 +607,15 @@ class TestDenyRequest:
         assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
         assert engine_with_request.decision_count == before
 
+    def test_requester_cannot_deny_own_request(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.decision_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Requester cannot deny own request$") as exc_info:
+            engine_with_request.deny_request("req-1", denied_by="user-1")
+        message = str(exc_info.value)
+        assert message == "Requester cannot deny own request"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+        assert engine_with_request.decision_count == before
+
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
             engine.deny_request("ghost")
@@ -912,6 +921,43 @@ class TestApproveRequest:
         assert "intern-1" not in message
         assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
         assert eng.decision_count == before
+
+    def test_unauthorized_denier_cannot_deny_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        before = eng.decision_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Denier not authorized for request$") as exc_info:
+            eng.deny_request("r1", denied_by="intern-1")
+        message = str(exc_info.value)
+        assert message == "Denier not authorized for request"
+        assert "intern-1" not in message
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+        assert eng.decision_count == before
+
+    def test_owner_can_deny_pending_approval_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        result = eng.deny_request("r1", denied_by="ops-owner")
+        assert result.status == RequestStatus.DENIED
+        assert eng.decision_count >= 1
 
     def test_authorized_approver_can_approve_request(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
