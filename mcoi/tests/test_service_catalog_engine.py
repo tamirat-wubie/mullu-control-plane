@@ -92,6 +92,26 @@ def _create_task(
     return engine.create_fulfillment_task(task_id, request_id, assignee_ref, **kwargs)
 
 
+def _start_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
+    kwargs.setdefault("started_by", "ops-runner")
+    return engine.start_task(task_id, **kwargs)
+
+
+def _complete_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
+    kwargs.setdefault("completed_by", "ops-runner")
+    return engine.complete_task(task_id, **kwargs)
+
+
+def _fail_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
+    kwargs.setdefault("failed_by", "ops-runner")
+    return engine.fail_task(task_id, **kwargs)
+
+
+def _cancel_task(engine: ServiceCatalogEngine, task_id: str, **kwargs) -> FulfillmentTask:
+    kwargs.setdefault("cancelled_by", "ops-runner")
+    return engine.cancel_task(task_id, **kwargs)
+
+
 # ===================================================================
 # 1. Constructor
 # ===================================================================
@@ -1475,47 +1495,67 @@ class TestStartTask:
 
     def test_pending_to_in_progress(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.start_task("t1")
+        result = _start_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.IN_PROGRESS
 
     def test_preserves_task_id(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.start_task("t1")
+        result = _start_task(engine_with_request, "t1")
         assert result.task_id == "t1"
 
     def test_preserves_request_id(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.start_task("t1")
+        result = _start_task(engine_with_request, "t1")
         assert result.request_id == "req-1"
 
     def test_preserves_assignee_ref(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.start_task("t1")
+        result = _start_task(engine_with_request, "t1")
         assert result.assignee_ref == "tech-1"
+
+    def test_preserves_started_by(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        result = _start_task(engine_with_request, "t1", started_by="ops-lead")
+        assert result.started_by == "ops-lead"
+
+    def test_started_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^started_by required for task start$") as exc_info:
+            engine_with_request.start_task("t1")
+        message = str(exc_info.value)
+        assert message == "started_by required for task start"
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
+
+    def test_system_started_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^started_by must exclude system$") as exc_info:
+            _start_task(engine_with_request, "t1", started_by="system")
+        message = str(exc_info.value)
+        assert message == "started_by must exclude system"
 
     def test_in_progress_cannot_start_again(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.start_task("t1")
+        _start_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
-            engine_with_request.start_task("t1")
+            _start_task(engine_with_request, "t1")
 
     def test_completed_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
-            engine_with_request.start_task("t1")
+            _start_task(engine_with_request, "t1")
 
     def test_failed_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.fail_task("t1")
+        _fail_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
-            engine_with_request.start_task("t1")
+            _start_task(engine_with_request, "t1")
 
     def test_cancelled_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.cancel_task("t1")
+        _cancel_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
-            engine_with_request.start_task("t1")
+            _start_task(engine_with_request, "t1")
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -1523,7 +1563,7 @@ class TestStartTask:
 
     def test_get_reflects_started(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.start_task("t1")
+        _start_task(engine_with_request, "t1")
         assert engine_with_request.get_task("t1").status == FulfillmentStatus.IN_PROGRESS
 
 
@@ -1532,46 +1572,66 @@ class TestCompleteTask:
 
     def test_pending_to_completed(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.complete_task("t1")
+        result = _complete_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.COMPLETED
 
     def test_in_progress_to_completed(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.start_task("t1")
-        result = engine_with_request.complete_task("t1")
+        _start_task(engine_with_request, "t1")
+        result = _complete_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.COMPLETED
 
     def test_completed_cannot_complete_again(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.complete_task("t1")
+            _complete_task(engine_with_request, "t1")
 
     def test_failed_cannot_complete(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.fail_task("t1")
+        _fail_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.complete_task("t1")
+            _complete_task(engine_with_request, "t1")
 
     def test_cancelled_cannot_complete(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.cancel_task("t1")
+        _cancel_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.complete_task("t1")
+            _complete_task(engine_with_request, "t1")
 
     def test_completed_at_non_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.complete_task("t1")
+        result = _complete_task(engine_with_request, "t1")
         assert len(result.completed_at) > 0
+
+    def test_preserves_completed_by(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        result = _complete_task(engine_with_request, "t1", completed_by="ops-lead")
+        assert result.completed_by == "ops-lead"
+
+    def test_completed_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^completed_by required for task completion$") as exc_info:
+            engine_with_request.complete_task("t1")
+        message = str(exc_info.value)
+        assert message == "completed_by required for task completion"
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
+
+    def test_system_completed_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^completed_by must exclude system$") as exc_info:
+            _complete_task(engine_with_request, "t1", completed_by="system")
+        message = str(exc_info.value)
+        assert message == "completed_by must exclude system"
 
     def test_preserves_description(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1", description="Provision")
-        result = engine_with_request.complete_task("t1")
+        result = _complete_task(engine_with_request, "t1")
         assert result.description == "Provision"
 
     def test_preserves_dependency_ref(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1", dependency_ref="dep-1")
-        result = engine_with_request.complete_task("t1")
+        result = _complete_task(engine_with_request, "t1")
         assert result.dependency_ref == "dep-1"
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
@@ -1584,37 +1644,57 @@ class TestFailTask:
 
     def test_pending_to_failed(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.fail_task("t1")
+        result = _fail_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.FAILED
 
     def test_in_progress_to_failed(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.start_task("t1")
-        result = engine_with_request.fail_task("t1")
+        _start_task(engine_with_request, "t1")
+        result = _fail_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.FAILED
 
     def test_completed_cannot_fail(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.fail_task("t1")
+            _fail_task(engine_with_request, "t1")
 
     def test_failed_cannot_fail_again(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.fail_task("t1")
+        _fail_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.fail_task("t1")
+            _fail_task(engine_with_request, "t1")
 
     def test_cancelled_cannot_fail(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.cancel_task("t1")
+        _cancel_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.fail_task("t1")
+            _fail_task(engine_with_request, "t1")
 
     def test_completed_at_populated(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.fail_task("t1")
+        result = _fail_task(engine_with_request, "t1")
         assert len(result.completed_at) > 0
+
+    def test_preserves_failed_by(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        result = _fail_task(engine_with_request, "t1", failed_by="ops-lead")
+        assert result.failed_by == "ops-lead"
+
+    def test_failed_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^failed_by required for task failure$") as exc_info:
+            engine_with_request.fail_task("t1")
+        message = str(exc_info.value)
+        assert message == "failed_by required for task failure"
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
+
+    def test_system_failed_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^failed_by must exclude system$") as exc_info:
+            _fail_task(engine_with_request, "t1", failed_by="system")
+        message = str(exc_info.value)
+        assert message == "failed_by must exclude system"
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -1626,32 +1706,52 @@ class TestCancelTask:
 
     def test_pending_to_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        result = engine_with_request.cancel_task("t1")
+        result = _cancel_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.CANCELLED
 
     def test_in_progress_to_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.start_task("t1")
-        result = engine_with_request.cancel_task("t1")
+        _start_task(engine_with_request, "t1")
+        result = _cancel_task(engine_with_request, "t1")
         assert result.status == FulfillmentStatus.CANCELLED
 
     def test_completed_cannot_cancel(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.cancel_task("t1")
+            _cancel_task(engine_with_request, "t1")
 
     def test_failed_cannot_cancel(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.fail_task("t1")
+        _fail_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
-            engine_with_request.cancel_task("t1")
+            _cancel_task(engine_with_request, "t1")
 
     def test_cancelled_cannot_cancel_again(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.cancel_task("t1")
+        _cancel_task(engine_with_request, "t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
+            _cancel_task(engine_with_request, "t1")
+
+    def test_preserves_cancelled_by(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        result = _cancel_task(engine_with_request, "t1", cancelled_by="ops-lead")
+        assert result.cancelled_by == "ops-lead"
+
+    def test_cancelled_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^cancelled_by required for task cancellation$") as exc_info:
             engine_with_request.cancel_task("t1")
+        message = str(exc_info.value)
+        assert message == "cancelled_by required for task cancellation"
+        assert engine_with_request.get_task("t1").status == FulfillmentStatus.PENDING
+
+    def test_system_cancelled_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="^cancelled_by must exclude system$") as exc_info:
+            _cancel_task(engine_with_request, "t1", cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
 
     def test_unknown_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
@@ -1686,7 +1786,7 @@ class TestTasksForRequest:
 
     def test_includes_terminal_tasks(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         result = engine_with_request.tasks_for_request("req-1")
         assert len(result) == 1
         assert result[0].status == FulfillmentStatus.COMPLETED
@@ -1702,44 +1802,44 @@ class TestAutoFulfillment:
 
     def test_single_task_complete_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
     def test_two_tasks_one_completed_not_fulfilled(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")
-        engine_with_request.complete_task("t1")
+        _complete_task(engine_with_request, "t1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_two_tasks_both_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")
-        engine_with_request.complete_task("t1")
-        engine_with_request.complete_task("t2")
+        _complete_task(engine_with_request, "t1")
+        _complete_task(engine_with_request, "t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
     def test_three_tasks_all_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")
         _create_task(engine_with_request, "t3", "req-1", "tech-3")
-        engine_with_request.complete_task("t1")
-        engine_with_request.complete_task("t2")
+        _complete_task(engine_with_request, "t1")
+        _complete_task(engine_with_request, "t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
-        engine_with_request.complete_task("t3")
+        _complete_task(engine_with_request, "t3")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
     def test_mixed_complete_and_failed_not_auto_fulfilled(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")
-        engine_with_request.complete_task("t1")
-        engine_with_request.fail_task("t2")
+        _complete_task(engine_with_request, "t1")
+        _fail_task(engine_with_request, "t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_mixed_complete_and_cancelled_not_auto_fulfilled(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")
-        engine_with_request.complete_task("t1")
-        engine_with_request.cancel_task("t2")
+        _complete_task(engine_with_request, "t1")
+        _cancel_task(engine_with_request, "t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_auto_fulfillment_does_not_trigger_if_not_in_fulfillment(self, engine: ServiceCatalogEngine) -> None:
@@ -1756,8 +1856,8 @@ class TestAutoFulfillment:
 
     def test_started_then_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.start_task("t1")
-        engine_with_request.complete_task("t1")
+        _start_task(engine_with_request, "t1")
+        _complete_task(engine_with_request, "t1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
 
@@ -1894,8 +1994,8 @@ class TestDetectRequestViolations:
         eng = engine_with_request
         _create_task(eng, "t1", "req-1", "tech-1")
         _create_task(eng, "t2", "req-1", "tech-2")
-        eng.fail_task("t1")
-        eng.fail_task("t2")
+        _fail_task(eng, "t1")
+        _fail_task(eng, "t2")
         violations = eng.detect_request_violations()
         assert len(violations) >= 1
         ops = [v.operation for v in violations]
@@ -1904,7 +2004,7 @@ class TestDetectRequestViolations:
     def test_all_tasks_failed_single_task(self, engine_with_request: ServiceCatalogEngine) -> None:
         eng = engine_with_request
         _create_task(eng, "t1", "req-1", "tech-1")
-        eng.fail_task("t1")
+        _fail_task(eng, "t1")
         violations = eng.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "all_tasks_failed" in ops
@@ -1977,8 +2077,8 @@ class TestDetectRequestViolations:
         eng = engine_with_request
         _create_task(eng, "t1", "req-1", "tech-1")
         _create_task(eng, "t2", "req-1", "tech-2")
-        eng.fail_task("t1")
-        eng.complete_task("t2")
+        _fail_task(eng, "t1")
+        _complete_task(eng, "t2")
         violations = eng.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "all_tasks_failed" not in ops
@@ -2412,8 +2512,18 @@ class TestEventEmission:
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
-        eng.start_task("t1")
+        _start_task(eng, "t1")
         assert es.event_count > before
+
+    def test_start_task_event_includes_started_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        _create_task(eng, "t1", "r1", "tech-1")
+        _start_task(eng, "t1", started_by="ops-shift")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "task_started"
+        assert event.payload["started_by"] == "ops-shift"
 
     def test_complete_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2421,8 +2531,18 @@ class TestEventEmission:
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
-        eng.complete_task("t1")
+        _complete_task(eng, "t1")
         assert es.event_count > before
+
+    def test_complete_task_event_includes_completed_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        _create_task(eng, "t1", "r1", "tech-1")
+        _complete_task(eng, "t1", completed_by="ops-shift")
+        event = es.list_events(correlation_id="r1")[-2]
+        assert event.payload["action"] == "task_completed"
+        assert event.payload["completed_by"] == "ops-shift"
 
     def test_fail_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2430,8 +2550,18 @@ class TestEventEmission:
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
-        eng.fail_task("t1")
+        _fail_task(eng, "t1")
         assert es.event_count > before
+
+    def test_fail_task_event_includes_failed_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        _create_task(eng, "t1", "r1", "tech-1")
+        _fail_task(eng, "t1", failed_by="ops-shift")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "task_failed"
+        assert event.payload["failed_by"] == "ops-shift"
 
     def test_cancel_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2439,8 +2569,18 @@ class TestEventEmission:
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
-        eng.cancel_task("t1")
+        _cancel_task(eng, "t1")
         assert es.event_count > before
+
+    def test_cancel_task_event_includes_cancelled_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        _create_task(eng, "t1", "r1", "tech-1")
+        _cancel_task(eng, "t1", cancelled_by="ops-shift")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "task_cancelled"
+        assert event.payload["cancelled_by"] == "ops-shift"
 
     def test_assess_item_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
@@ -2469,7 +2609,7 @@ class TestEventEmission:
         eng.submit_request("r1", "i1", "t1", "u1")
         _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
-        eng.complete_task("t1")
+        _complete_task(eng, "t1")
         # complete_task emits + auto-fulfill emits = at least 2
         assert es.event_count >= before + 2
 
@@ -2505,10 +2645,10 @@ class TestGoldenScenario1:
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("req-vm").status == RequestStatus.IN_FULFILLMENT
 
-        eng.start_task("task-vm")
+        _start_task(eng, "task-vm")
         assert eng.get_task("task-vm").status == FulfillmentStatus.IN_PROGRESS
 
-        eng.complete_task("task-vm")
+        _complete_task(eng, "task-vm")
         assert eng.get_task("task-vm").status == FulfillmentStatus.COMPLETED
         assert eng.get_request("req-vm").status == RequestStatus.FULFILLED
 
@@ -2519,8 +2659,8 @@ class TestGoldenScenario1:
         eng.submit_request("req-vm", "item-vm", "acme", "alice")
         eng.evaluate_entitlement("rul-vm", "req-vm")
         _create_task(eng, "task-vm", "req-vm", "ops")
-        eng.start_task("task-vm")
-        eng.complete_task("task-vm")
+        _start_task(eng, "task-vm")
+        _complete_task(eng, "task-vm")
         assert es.event_count > initial + 5
 
     def test_final_snapshot(self, es: EventSpineEngine) -> None:
@@ -2529,7 +2669,7 @@ class TestGoldenScenario1:
         eng.submit_request("req-vm", "item-vm", "acme", "alice")
         eng.evaluate_entitlement("rul-vm", "req-vm")
         _create_task(eng, "task-vm", "req-vm", "ops")
-        eng.complete_task("task-vm")
+        _complete_task(eng, "task-vm")
         snap = eng.request_snapshot("snap-final")
         assert snap.total_fulfilled == 1
         assert snap.total_requests == 1
@@ -2629,12 +2769,12 @@ class TestGoldenScenario4:
         )
         assert task2.dependency_ref == "task-order"
 
-        eng.start_task("task-order")
-        eng.complete_task("task-order")
+        _start_task(eng, "task-order")
+        _complete_task(eng, "task-order")
         assert eng.get_request("req-rack").status == RequestStatus.IN_FULFILLMENT
 
-        eng.start_task("task-install")
-        eng.complete_task("task-install")
+        _start_task(eng, "task-install")
+        _complete_task(eng, "task-install")
         assert eng.get_request("req-rack").status == RequestStatus.FULFILLED
 
     def test_partial_completion_no_fulfill(self, es: EventSpineEngine) -> None:
@@ -2643,7 +2783,7 @@ class TestGoldenScenario4:
         eng.submit_request("req-rack", "item-rack", "ops", "dave")
         _create_task(eng, "task-1", "req-rack", "p1")
         _create_task(eng, "task-2", "req-rack", "p2", dependency_ref="task-1")
-        eng.complete_task("task-1")
+        _complete_task(eng, "task-1")
         assert eng.get_request("req-rack").status == RequestStatus.IN_FULFILLMENT
 
 
@@ -2658,8 +2798,8 @@ class TestGoldenScenario5:
         _create_task(eng, "task-a", "req-deploy", "ci-cd")
         _create_task(eng, "task-b", "req-deploy", "ci-cd")
 
-        eng.fail_task("task-a")
-        eng.fail_task("task-b")
+        _fail_task(eng, "task-a")
+        _fail_task(eng, "task-b")
 
         violations = eng.detect_request_violations()
         ops = [v.operation for v in violations]
@@ -2670,7 +2810,7 @@ class TestGoldenScenario5:
         eng.register_catalog_item("item-deploy", "Deployment", "eng")
         eng.submit_request("req-deploy", "item-deploy", "eng", "eve")
         _create_task(eng, "task-a", "req-deploy", "ci-cd")
-        eng.fail_task("task-a")
+        _fail_task(eng, "task-a")
         violations = eng.detect_request_violations()
         atf = [v for v in violations if v.operation == "all_tasks_failed"]
         assert len(atf) >= 1
@@ -2682,8 +2822,8 @@ class TestGoldenScenario5:
         eng.submit_request("req-deploy", "item-deploy", "eng", "eve")
         _create_task(eng, "task-a", "req-deploy", "ci-cd")
         _create_task(eng, "task-b", "req-deploy", "ci-cd")
-        eng.fail_task("task-a")
-        eng.fail_task("task-b")
+        _fail_task(eng, "task-a")
+        _fail_task(eng, "task-b")
         violations = eng.detect_request_violations()
         atf = [v for v in violations if v.operation == "all_tasks_failed"]
         assert atf[0].reason == "All fulfillment tasks failed"
@@ -2875,7 +3015,7 @@ class TestEdgeCases:
 
     def test_fail_then_detect_single_task(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
-        engine_with_request.fail_task("t1")
+        _fail_task(engine_with_request, "t1")
         violations = engine_with_request.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "all_tasks_failed" in ops
@@ -2889,8 +3029,8 @@ class TestEdgeCases:
     def test_no_violation_when_some_tasks_in_progress(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")
-        engine_with_request.fail_task("t1")
-        engine_with_request.start_task("t2")
+        _fail_task(engine_with_request, "t1")
+        _start_task(engine_with_request, "t2")
         violations = engine_with_request.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "all_tasks_failed" not in ops
@@ -2972,9 +3112,9 @@ class TestBoundedContractWitnesses:
         assert "pending-approval" in approve_message
 
         _create_task(engine_with_request, "task-secret", "req-1", "tech-1")
-        engine_with_request.start_task("task-secret")
+        _start_task(engine_with_request, "task-secret")
         with pytest.raises(RuntimeCoreInvariantError) as start_exc:
-            engine_with_request.start_task("task-secret")
+            _start_task(engine_with_request, "task-secret")
         start_message = str(start_exc.value)
         assert start_message == "Can only start pending tasks"
         assert "IN_PROGRESS" not in start_message
@@ -2988,7 +3128,7 @@ class TestBoundedContractWitnesses:
         engine._update_request_status("req-no-tasks", RequestStatus.IN_FULFILLMENT)
         engine.submit_request("req-all-failed", "item-secret", "t1", "u3")
         _create_task(engine, "fail-1", "req-all-failed", "tech-1")
-        engine.fail_task("fail-1")
+        _fail_task(engine, "fail-1")
 
         violations = {
             (v.request_id, v.operation): v.reason
@@ -3005,4 +3145,5 @@ class TestBoundedContractWitnesses:
         assert violations[("req-all-failed", "all_tasks_failed")] == "All fulfillment tasks failed"
         assert "req-all-failed" not in violations[("req-all-failed", "all_tasks_failed")]
         assert "1" not in violations[("req-all-failed", "all_tasks_failed")]
+
 

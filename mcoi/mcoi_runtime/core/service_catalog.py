@@ -530,38 +530,64 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("Unknown task_id")
         return task
 
-    def start_task(self, task_id: str) -> FulfillmentTask:
+    def start_task(self, task_id: str, *, started_by: str = "") -> FulfillmentTask:
         """Start a fulfillment task."""
         old = self.get_task(task_id)
         if old.status != FulfillmentStatus.PENDING:
             raise RuntimeCoreInvariantError("Can only start pending tasks")
+        try:
+            normalized_started_by = ensure_non_empty_text("started_by", started_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("started_by required for task start") from exc
+        if normalized_started_by == "system":
+            raise RuntimeCoreInvariantError("started_by must exclude system")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=normalized_started_by,
+            completed_by=old.completed_by,
+            failed_by=old.failed_by,
+            cancelled_by=old.cancelled_by,
             status=FulfillmentStatus.IN_PROGRESS,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_started", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_started", {
+            "task_id": task_id,
+            "started_by": normalized_started_by,
+        }, old.request_id)
         return updated
 
-    def complete_task(self, task_id: str) -> FulfillmentTask:
+    def complete_task(self, task_id: str, *, completed_by: str = "") -> FulfillmentTask:
         """Complete a fulfillment task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
             raise RuntimeCoreInvariantError("Task already in terminal status")
+        try:
+            normalized_completed_by = ensure_non_empty_text("completed_by", completed_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("completed_by required for task completion") from exc
+        if normalized_completed_by == "system":
+            raise RuntimeCoreInvariantError("completed_by must exclude system")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=old.started_by,
+            completed_by=normalized_completed_by,
+            failed_by=old.failed_by,
+            cancelled_by=old.cancelled_by,
             status=FulfillmentStatus.COMPLETED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, completed_at=now,
             metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_completed", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_completed", {
+            "task_id": task_id,
+            "completed_by": normalized_completed_by,
+        }, old.request_id)
 
         # Auto-fulfill request if all tasks completed
         request_tasks = [t for t in self._tasks.values() if t.request_id == old.request_id]
@@ -576,38 +602,64 @@ class ServiceCatalogEngine:
 
         return updated
 
-    def fail_task(self, task_id: str) -> FulfillmentTask:
+    def fail_task(self, task_id: str, *, failed_by: str = "") -> FulfillmentTask:
         """Mark a fulfillment task as failed."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
             raise RuntimeCoreInvariantError("Task already in terminal status")
+        try:
+            normalized_failed_by = ensure_non_empty_text("failed_by", failed_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("failed_by required for task failure") from exc
+        if normalized_failed_by == "system":
+            raise RuntimeCoreInvariantError("failed_by must exclude system")
         now = _now_iso()
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=old.started_by,
+            completed_by=old.completed_by,
+            failed_by=normalized_failed_by,
+            cancelled_by=old.cancelled_by,
             status=FulfillmentStatus.FAILED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, completed_at=now,
             metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_failed", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_failed", {
+            "task_id": task_id,
+            "failed_by": normalized_failed_by,
+        }, old.request_id)
         return updated
 
-    def cancel_task(self, task_id: str) -> FulfillmentTask:
+    def cancel_task(self, task_id: str, *, cancelled_by: str = "") -> FulfillmentTask:
         """Cancel a fulfillment task."""
         old = self.get_task(task_id)
         if old.status in _TASK_TERMINAL:
             raise RuntimeCoreInvariantError("Task already in terminal status")
+        try:
+            normalized_cancelled_by = ensure_non_empty_text("cancelled_by", cancelled_by)
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError("cancelled_by required for task cancellation") from exc
+        if normalized_cancelled_by == "system":
+            raise RuntimeCoreInvariantError("cancelled_by must exclude system")
         updated = FulfillmentTask(
             task_id=old.task_id, request_id=old.request_id,
             assignee_ref=old.assignee_ref, created_by=old.created_by,
+            started_by=old.started_by,
+            completed_by=old.completed_by,
+            failed_by=old.failed_by,
+            cancelled_by=normalized_cancelled_by,
             status=FulfillmentStatus.CANCELLED,
             description=old.description, dependency_ref=old.dependency_ref,
             created_at=old.created_at, metadata=old.metadata,
         )
         self._tasks[task_id] = updated
-        _emit(self._events, "task_cancelled", {"task_id": task_id}, old.request_id)
+        _emit(self._events, "task_cancelled", {
+            "task_id": task_id,
+            "cancelled_by": normalized_cancelled_by,
+        }, old.request_id)
         return updated
 
     def tasks_for_request(self, request_id: str) -> tuple[FulfillmentTask, ...]:

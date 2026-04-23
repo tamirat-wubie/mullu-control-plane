@@ -229,6 +229,10 @@ class FulfillmentTask(ContractRecord):
     request_id: str = ""
     assignee_ref: str = ""
     created_by: str = ""
+    started_by: str = ""
+    completed_by: str = ""
+    failed_by: str = ""
+    cancelled_by: str = ""
     status: FulfillmentStatus = FulfillmentStatus.PENDING
     description: str = ""
     dependency_ref: str = ""
@@ -244,8 +248,40 @@ class FulfillmentTask(ContractRecord):
         if normalized_created_by == "system":
             raise ValueError("created_by must exclude system")
         object.__setattr__(self, "created_by", normalized_created_by)
+        normalized_started_by = self.started_by.strip()
+        if normalized_started_by:
+            normalized_started_by = require_non_empty_text(normalized_started_by, "started_by")
+            if normalized_started_by == "system":
+                raise ValueError("started_by must exclude system")
+        object.__setattr__(self, "started_by", normalized_started_by)
+        normalized_completed_by = self.completed_by.strip()
+        if normalized_completed_by:
+            normalized_completed_by = require_non_empty_text(normalized_completed_by, "completed_by")
+            if normalized_completed_by == "system":
+                raise ValueError("completed_by must exclude system")
+        object.__setattr__(self, "completed_by", normalized_completed_by)
+        normalized_failed_by = self.failed_by.strip()
+        if normalized_failed_by:
+            normalized_failed_by = require_non_empty_text(normalized_failed_by, "failed_by")
+            if normalized_failed_by == "system":
+                raise ValueError("failed_by must exclude system")
+        object.__setattr__(self, "failed_by", normalized_failed_by)
+        normalized_cancelled_by = self.cancelled_by.strip()
+        if normalized_cancelled_by:
+            normalized_cancelled_by = require_non_empty_text(normalized_cancelled_by, "cancelled_by")
+            if normalized_cancelled_by == "system":
+                raise ValueError("cancelled_by must exclude system")
+        object.__setattr__(self, "cancelled_by", normalized_cancelled_by)
         if not isinstance(self.status, FulfillmentStatus):
             raise ValueError("status must be a FulfillmentStatus")
+        if self.status == FulfillmentStatus.IN_PROGRESS and not normalized_started_by:
+            raise ValueError("in_progress tasks must declare started_by")
+        if self.status == FulfillmentStatus.COMPLETED and not normalized_completed_by:
+            raise ValueError("completed tasks must declare completed_by")
+        if self.status == FulfillmentStatus.FAILED and not normalized_failed_by:
+            raise ValueError("failed tasks must declare failed_by")
+        if self.status == FulfillmentStatus.CANCELLED and not normalized_cancelled_by:
+            raise ValueError("cancelled tasks must declare cancelled_by")
         require_datetime_text(self.created_at, "created_at")
         if self.completed_at:
             require_datetime_text(self.completed_at, "completed_at")
