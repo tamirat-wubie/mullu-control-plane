@@ -1320,6 +1320,59 @@ class TestCreateFulfillmentTask:
         with pytest.raises(RuntimeCoreInvariantError):
             engine.create_fulfillment_task("t1", "ghost", "tech-1")
 
+    def test_requester_cannot_be_task_assignee(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.task_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Requester cannot be assignee for own request$") as exc_info:
+            engine_with_request.create_fulfillment_task("t1", "req-1", "user-1")
+        message = str(exc_info.value)
+        assert message == "Requester cannot be assignee for own request"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+        assert engine_with_request.task_count == before
+
+    def test_owner_cannot_be_task_assignee_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        before = eng.task_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Assignee not eligible for request$") as exc_info:
+            eng.create_fulfillment_task("t1", "r1", "ops-owner")
+        message = str(exc_info.value)
+        assert message == "Assignee not eligible for request"
+        assert "ops-owner" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.task_count == before
+
+    def test_approver_cannot_be_task_assignee_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        before = eng.task_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Assignee not eligible for request$") as exc_info:
+            eng.create_fulfillment_task("t1", "r1", "ops-lead")
+        message = str(exc_info.value)
+        assert message == "Assignee not eligible for request"
+        assert "ops-lead" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.task_count == before
+
     def test_task_is_frozen(self, engine_with_request: ServiceCatalogEngine) -> None:
         task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
         with pytest.raises(AttributeError):
