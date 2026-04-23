@@ -1321,6 +1321,25 @@ class TestCreateFulfillmentTask:
         _create_task(eng, "t1", "r1", "tech-1", created_by="ops-lead")
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
 
+    def test_approval_governed_request_must_be_approved_before_task_creation(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.assign_request("a1", "r1", "tech-1", assigned_by="ops-lead")
+        before = eng.task_count
+        with pytest.raises(
+            RuntimeCoreInvariantError,
+            match="^Request not approved for task creation$",
+        ) as exc_info:
+            _create_task(eng, "t1", "r1", "tech-1", created_by="ops-lead")
+        message = str(exc_info.value)
+        assert message == "Request not approved for task creation"
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+        assert eng.task_count == before
+
     def test_second_task_keeps_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
         _create_task(engine_with_request, "t1", "req-1", "tech-1")
         _create_task(engine_with_request, "t2", "req-1", "tech-2")

@@ -505,6 +505,11 @@ class ServiceCatalogEngine:
             and normalized_created_by != item.owner_ref.strip()
         ):
             raise RuntimeCoreInvariantError("Task creator not authorized for request")
+        if (
+            item.approval_required
+            and req.status not in (RequestStatus.APPROVED, RequestStatus.IN_FULFILLMENT)
+        ):
+            raise RuntimeCoreInvariantError("Request not approved for task creation")
         if item.approval_required:
             request_assignments = self.assignments_for_request(request_id)
             if not request_assignments:
