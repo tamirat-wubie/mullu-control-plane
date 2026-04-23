@@ -481,6 +481,17 @@ class ServiceCatalogEngine:
         req = self.get_request(request_id)
         if req.status in _REQUEST_TERMINAL:
             raise RuntimeCoreInvariantError("Cannot create task for terminal request")
+        item = self.get_catalog_item(req.item_id)
+        if req.requester_ref.strip() == assignee_ref.strip():
+            raise RuntimeCoreInvariantError("Requester cannot be assignee for own request")
+        if (
+            item.approval_required
+            and (
+                assignee_ref.strip() == item.owner_ref.strip()
+                or assignee_ref.strip() in item.approver_refs
+            )
+        ):
+            raise RuntimeCoreInvariantError("Assignee not eligible for request")
         # Auto-transition to IN_FULFILLMENT if not already
         if req.status not in (RequestStatus.IN_FULFILLMENT, RequestStatus.DENIED, RequestStatus.CANCELLED):
             self._update_request_status(request_id, RequestStatus.IN_FULFILLMENT)
