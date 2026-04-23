@@ -81,6 +81,17 @@ def engine_with_approval_item(engine: ServiceCatalogEngine) -> ServiceCatalogEng
     return engine
 
 
+def _create_task(
+    engine: ServiceCatalogEngine,
+    task_id: str,
+    request_id: str,
+    assignee_ref: str,
+    **kwargs,
+) -> FulfillmentTask:
+    kwargs.setdefault("created_by", "mgr-1")
+    return engine.create_fulfillment_task(task_id, request_id, assignee_ref, **kwargs)
+
+
 # ===================================================================
 # 1. Constructor
 # ===================================================================
@@ -1224,57 +1235,61 @@ class TestCreateFulfillmentTask:
     """create_fulfillment_task tests."""
 
     def test_returns_fulfillment_task(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert isinstance(task, FulfillmentTask)
 
     def test_task_id_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert task.task_id == "t1"
 
     def test_request_id_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert task.request_id == "req-1"
 
     def test_assignee_ref_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert task.assignee_ref == "tech-1"
 
+    def test_created_by_preserved(self, engine_with_request: ServiceCatalogEngine) -> None:
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        assert task.created_by == "mgr-1"
+
     def test_status_is_pending(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert task.status == FulfillmentStatus.PENDING
 
     def test_default_description_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert task.description == ""
 
     def test_custom_description(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task(
+        task = _create_task(engine_with_request, 
             "t1", "req-1", "tech-1", description="Provision VM",
         )
         assert task.description == "Provision VM"
 
     def test_default_dependency_ref_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert task.dependency_ref == ""
 
     def test_custom_dependency_ref(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task(
+        task = _create_task(engine_with_request, 
             "t1", "req-1", "tech-1", dependency_ref="dep-abc",
         )
         assert task.dependency_ref == "dep-abc"
 
     def test_created_at_non_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert len(task.created_at) > 0
 
     def test_auto_transitions_request_to_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         req = engine_with_request.get_request("req-1")
         assert req.status == RequestStatus.IN_FULFILLMENT
 
     def test_auto_transition_from_entitled(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.evaluate_entitlement("rul-1", "req-1")
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_auto_transition_from_approved(self, engine_with_approval_item: ServiceCatalogEngine) -> None:
@@ -1282,48 +1297,66 @@ class TestCreateFulfillmentTask:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         eng.approve_request("r1", approved_by="ops-lead")
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1", created_by="ops-lead")
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
 
     def test_second_task_keeps_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_task_count_increments(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert engine_with_request.task_count == 1
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         assert engine_with_request.task_count == 2
 
     def test_duplicate_task_id_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate task_id"):
-            engine_with_request.create_fulfillment_task("t1", "req-1", "tech-2")
+            _create_task(engine_with_request, "t1", "req-1", "tech-2")
 
     def test_terminal_fulfilled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.close_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot create task"):
-            engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+            _create_task(engine_with_request, "t1", "req-1", "tech-1")
 
     def test_terminal_denied_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.deny_request("req-1", denied_by="manager-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot create task"):
-            engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+            _create_task(engine_with_request, "t1", "req-1", "tech-1")
 
     def test_terminal_cancelled_raises(self, engine_with_request: ServiceCatalogEngine) -> None:
         engine_with_request.cancel_request("req-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot create task"):
-            engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+            _create_task(engine_with_request, "t1", "req-1", "tech-1")
 
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
-            engine.create_fulfillment_task("t1", "ghost", "tech-1")
+            _create_task(engine, "t1", "ghost", "tech-1")
+
+    def test_created_by_required(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.task_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^created_by required for task creation$") as exc_info:
+            engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        message = str(exc_info.value)
+        assert message == "created_by required for task creation"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+        assert engine_with_request.task_count == before
+
+    def test_system_created_by_rejected(self, engine_with_request: ServiceCatalogEngine) -> None:
+        before = engine_with_request.task_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^created_by must exclude system$") as exc_info:
+            _create_task(engine_with_request, "t1", "req-1", "tech-1", created_by="system")
+        message = str(exc_info.value)
+        assert message == "created_by must exclude system"
+        assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
+        assert engine_with_request.task_count == before
 
     def test_requester_cannot_be_task_assignee(self, engine_with_request: ServiceCatalogEngine) -> None:
         before = engine_with_request.task_count
         with pytest.raises(RuntimeCoreInvariantError, match="^Requester cannot be assignee for own request$") as exc_info:
-            engine_with_request.create_fulfillment_task("t1", "req-1", "user-1")
+            _create_task(engine_with_request, "t1", "req-1", "user-1")
         message = str(exc_info.value)
         assert message == "Requester cannot be assignee for own request"
         assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
@@ -1344,7 +1377,7 @@ class TestCreateFulfillmentTask:
         eng.approve_request("r1", approved_by="cfo")
         before = eng.task_count
         with pytest.raises(RuntimeCoreInvariantError, match="^Assignee not eligible for request$") as exc_info:
-            eng.create_fulfillment_task("t1", "r1", "ops-owner")
+            _create_task(eng, "t1", "r1", "ops-owner")
         message = str(exc_info.value)
         assert message == "Assignee not eligible for request"
         assert "ops-owner" not in message
@@ -1366,15 +1399,55 @@ class TestCreateFulfillmentTask:
         eng.approve_request("r1", approved_by="cfo")
         before = eng.task_count
         with pytest.raises(RuntimeCoreInvariantError, match="^Assignee not eligible for request$") as exc_info:
-            eng.create_fulfillment_task("t1", "r1", "ops-lead")
+            _create_task(eng, "t1", "r1", "ops-lead")
         message = str(exc_info.value)
         assert message == "Assignee not eligible for request"
         assert "ops-lead" not in message
         assert eng.get_request("r1").status == RequestStatus.APPROVED
         assert eng.task_count == before
 
+    def test_creator_must_be_authorized_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        before = eng.task_count
+        with pytest.raises(RuntimeCoreInvariantError, match="^Task creator not authorized for request$") as exc_info:
+            _create_task(eng, "t1", "r1", "tech-1")
+        message = str(exc_info.value)
+        assert message == "Task creator not authorized for request"
+        assert "mgr-1" not in message
+        assert eng.get_request("r1").status == RequestStatus.APPROVED
+        assert eng.task_count == before
+
+    def test_owner_can_create_task_for_approval_governed_request(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item(
+            "item-appr",
+            "Budget VM",
+            "tenant-a",
+            owner_ref="ops-owner",
+            approval_required=True,
+            approver_refs=("cfo", "ops-lead"),
+        )
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        eng.approve_request("r1", approved_by="cfo")
+        task = _create_task(eng, "t1", "r1", "tech-1", created_by="ops-owner")
+        assert task.created_by == "ops-owner"
+        assert task.status == FulfillmentStatus.PENDING
+        assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
+
     def test_task_is_frozen(self, engine_with_request: ServiceCatalogEngine) -> None:
-        task = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        task = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         with pytest.raises(AttributeError):
             task.status = FulfillmentStatus.COMPLETED  # type: ignore[misc]
 
@@ -1383,7 +1456,7 @@ class TestGetTask:
     """get_task tests."""
 
     def test_returns_created_task(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         task = engine_with_request.get_task("t1")
         assert task.task_id == "t1"
 
@@ -1392,7 +1465,7 @@ class TestGetTask:
             engine.get_task("ghost")
 
     def test_returns_same_data(self, engine_with_request: ServiceCatalogEngine) -> None:
-        created = engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        created = _create_task(engine_with_request, "t1", "req-1", "tech-1")
         fetched = engine_with_request.get_task("t1")
         assert created == fetched
 
@@ -1401,45 +1474,45 @@ class TestStartTask:
     """start_task tests."""
 
     def test_pending_to_in_progress(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.start_task("t1")
         assert result.status == FulfillmentStatus.IN_PROGRESS
 
     def test_preserves_task_id(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.start_task("t1")
         assert result.task_id == "t1"
 
     def test_preserves_request_id(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.start_task("t1")
         assert result.request_id == "req-1"
 
     def test_preserves_assignee_ref(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.start_task("t1")
         assert result.assignee_ref == "tech-1"
 
     def test_in_progress_cannot_start_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_completed_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_failed_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.fail_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
 
     def test_cancelled_cannot_start(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.cancel_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="pending"):
             engine_with_request.start_task("t1")
@@ -1449,7 +1522,7 @@ class TestStartTask:
             engine.start_task("ghost")
 
     def test_get_reflects_started(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
         assert engine_with_request.get_task("t1").status == FulfillmentStatus.IN_PROGRESS
 
@@ -1458,46 +1531,46 @@ class TestCompleteTask:
     """complete_task tests."""
 
     def test_pending_to_completed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.complete_task("t1")
         assert result.status == FulfillmentStatus.COMPLETED
 
     def test_in_progress_to_completed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
         result = engine_with_request.complete_task("t1")
         assert result.status == FulfillmentStatus.COMPLETED
 
     def test_completed_cannot_complete_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.complete_task("t1")
 
     def test_failed_cannot_complete(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.fail_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.complete_task("t1")
 
     def test_cancelled_cannot_complete(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.cancel_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.complete_task("t1")
 
     def test_completed_at_non_empty(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.complete_task("t1")
         assert len(result.completed_at) > 0
 
     def test_preserves_description(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1", description="Provision")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1", description="Provision")
         result = engine_with_request.complete_task("t1")
         assert result.description == "Provision"
 
     def test_preserves_dependency_ref(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1", dependency_ref="dep-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1", dependency_ref="dep-1")
         result = engine_with_request.complete_task("t1")
         assert result.dependency_ref == "dep-1"
 
@@ -1510,36 +1583,36 @@ class TestFailTask:
     """fail_task tests."""
 
     def test_pending_to_failed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.fail_task("t1")
         assert result.status == FulfillmentStatus.FAILED
 
     def test_in_progress_to_failed(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
         result = engine_with_request.fail_task("t1")
         assert result.status == FulfillmentStatus.FAILED
 
     def test_completed_cannot_fail(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.fail_task("t1")
 
     def test_failed_cannot_fail_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.fail_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.fail_task("t1")
 
     def test_cancelled_cannot_fail(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.cancel_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.fail_task("t1")
 
     def test_completed_at_populated(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.fail_task("t1")
         assert len(result.completed_at) > 0
 
@@ -1552,30 +1625,30 @@ class TestCancelTask:
     """cancel_task tests."""
 
     def test_pending_to_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.cancel_task("t1")
         assert result.status == FulfillmentStatus.CANCELLED
 
     def test_in_progress_to_cancelled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
         result = engine_with_request.cancel_task("t1")
         assert result.status == FulfillmentStatus.CANCELLED
 
     def test_completed_cannot_cancel(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.cancel_task("t1")
 
     def test_failed_cannot_cancel(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.fail_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.cancel_task("t1")
 
     def test_cancelled_cannot_cancel_again(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.cancel_task("t1")
         with pytest.raises(RuntimeCoreInvariantError, match="terminal"):
             engine_with_request.cancel_task("t1")
@@ -1592,13 +1665,13 @@ class TestTasksForRequest:
         assert engine_with_request.tasks_for_request("req-1") == ()
 
     def test_returns_tuple(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.tasks_for_request("req-1")
         assert isinstance(result, tuple)
 
     def test_returns_matching_tasks(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         result = engine_with_request.tasks_for_request("req-1")
         assert len(result) == 2
 
@@ -1606,13 +1679,13 @@ class TestTasksForRequest:
         engine.register_catalog_item("i1", "S", "t1")
         engine.submit_request("r1", "i1", "t1", "u1")
         engine.submit_request("r2", "i1", "t1", "u2")
-        engine.create_fulfillment_task("t1", "r1", "tech-1")
-        engine.create_fulfillment_task("t2", "r2", "tech-2")
+        _create_task(engine, "t1", "r1", "tech-1")
+        _create_task(engine, "t2", "r2", "tech-2")
         assert len(engine.tasks_for_request("r1")) == 1
         assert len(engine.tasks_for_request("r2")) == 1
 
     def test_includes_terminal_tasks(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
         result = engine_with_request.tasks_for_request("req-1")
         assert len(result) == 1
@@ -1628,27 +1701,27 @@ class TestAutoFulfillment:
     """Auto-fulfillment when all tasks complete."""
 
     def test_single_task_complete_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.complete_task("t1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
     def test_two_tasks_one_completed_not_fulfilled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         engine_with_request.complete_task("t1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_two_tasks_both_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         engine_with_request.complete_task("t1")
         engine_with_request.complete_task("t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
     def test_three_tasks_all_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
-        engine_with_request.create_fulfillment_task("t3", "req-1", "tech-3")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t3", "req-1", "tech-3")
         engine_with_request.complete_task("t1")
         engine_with_request.complete_task("t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
@@ -1656,15 +1729,15 @@ class TestAutoFulfillment:
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
 
     def test_mixed_complete_and_failed_not_auto_fulfilled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         engine_with_request.complete_task("t1")
         engine_with_request.fail_task("t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
 
     def test_mixed_complete_and_cancelled_not_auto_fulfilled(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         engine_with_request.complete_task("t1")
         engine_with_request.cancel_task("t2")
         assert engine_with_request.get_request("req-1").status == RequestStatus.IN_FULFILLMENT
@@ -1673,7 +1746,7 @@ class TestAutoFulfillment:
         # Edge case: manually close request before tasks complete
         engine.register_catalog_item("i1", "S", "t1")
         engine.submit_request("r1", "i1", "t1", "u1")
-        engine.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(engine, "t1", "r1", "tech-1")
         # Manually close (fulfilled) before task completes
         # Request is IN_FULFILLMENT; close it to FULFILLED
         engine.close_request("r1")
@@ -1682,7 +1755,7 @@ class TestAutoFulfillment:
         assert engine.get_request("r1").status == RequestStatus.FULFILLED
 
     def test_started_then_completed_auto_fulfills(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.start_task("t1")
         engine_with_request.complete_task("t1")
         assert engine_with_request.get_request("req-1").status == RequestStatus.FULFILLED
@@ -1819,8 +1892,8 @@ class TestDetectRequestViolations:
 
     def test_all_tasks_failed_violation(self, engine_with_request: ServiceCatalogEngine) -> None:
         eng = engine_with_request
-        eng.create_fulfillment_task("t1", "req-1", "tech-1")
-        eng.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(eng, "t1", "req-1", "tech-1")
+        _create_task(eng, "t2", "req-1", "tech-2")
         eng.fail_task("t1")
         eng.fail_task("t2")
         violations = eng.detect_request_violations()
@@ -1830,7 +1903,7 @@ class TestDetectRequestViolations:
 
     def test_all_tasks_failed_single_task(self, engine_with_request: ServiceCatalogEngine) -> None:
         eng = engine_with_request
-        eng.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(eng, "t1", "req-1", "tech-1")
         eng.fail_task("t1")
         violations = eng.detect_request_violations()
         ops = [v.operation for v in violations]
@@ -1902,8 +1975,8 @@ class TestDetectRequestViolations:
 
     def test_mixed_failed_and_complete_no_all_tasks_failed(self, engine_with_request: ServiceCatalogEngine) -> None:
         eng = engine_with_request
-        eng.create_fulfillment_task("t1", "req-1", "tech-1")
-        eng.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(eng, "t1", "req-1", "tech-1")
+        _create_task(eng, "t2", "req-1", "tech-2")
         eng.fail_task("t1")
         eng.complete_task("t2")
         violations = eng.detect_request_violations()
@@ -1998,7 +2071,7 @@ class TestRequestSnapshot:
         assert snap.total_submitted == 1
 
     def test_total_in_fulfillment_matches(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         snap = engine_with_request.request_snapshot("snap-1")
         assert snap.total_in_fulfillment == 1
 
@@ -2013,7 +2086,7 @@ class TestRequestSnapshot:
         assert snap.total_denied == 1
 
     def test_total_tasks_matches(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         snap = engine_with_request.request_snapshot("snap-1")
         assert snap.total_tasks == 1
 
@@ -2114,7 +2187,7 @@ class TestStateHash:
 
     def test_changes_after_create_task(self, engine_with_request: ServiceCatalogEngine) -> None:
         h1 = engine_with_request.state_hash()
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         h2 = engine_with_request.state_hash()
         assert h1 != h2
 
@@ -2191,7 +2264,7 @@ class TestProperties:
         assert engine_with_request.entitlement_count == 1
 
     def test_task_count_after_create(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         assert engine_with_request.task_count == 1
 
     def test_decision_count_after_deny(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -2321,14 +2394,23 @@ class TestEventEmission:
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
         before = es.event_count
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1")
         assert es.event_count > before
+
+    def test_create_task_event_includes_created_by(self, es: EventSpineEngine) -> None:
+        eng = ServiceCatalogEngine(es)
+        eng.register_catalog_item("i1", "S", "t1")
+        eng.submit_request("r1", "i1", "t1", "u1")
+        _create_task(eng, "t1", "r1", "tech-1", created_by="mgr-7")
+        event = es.list_events(correlation_id="r1")[-1]
+        assert event.payload["action"] == "fulfillment_task_created"
+        assert event.payload["created_by"] == "mgr-7"
 
     def test_start_task_emits_event(self, es: EventSpineEngine) -> None:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
         eng.start_task("t1")
         assert es.event_count > before
@@ -2337,7 +2419,7 @@ class TestEventEmission:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
         eng.complete_task("t1")
         assert es.event_count > before
@@ -2346,7 +2428,7 @@ class TestEventEmission:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
         eng.fail_task("t1")
         assert es.event_count > before
@@ -2355,7 +2437,7 @@ class TestEventEmission:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
         eng.cancel_task("t1")
         assert es.event_count > before
@@ -2385,7 +2467,7 @@ class TestEventEmission:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("i1", "S", "t1")
         eng.submit_request("r1", "i1", "t1", "u1")
-        eng.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(eng, "t1", "r1", "tech-1")
         before = es.event_count
         eng.complete_task("t1")
         # complete_task emits + auto-fulfill emits = at least 2
@@ -2419,7 +2501,7 @@ class TestGoldenScenario1:
         assert rule.disposition == EntitlementDisposition.GRANTED
         assert eng.get_request("req-vm").status == RequestStatus.ENTITLED
 
-        task = eng.create_fulfillment_task("task-vm", "req-vm", "ops-team")
+        task = _create_task(eng, "task-vm", "req-vm", "ops-team")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("req-vm").status == RequestStatus.IN_FULFILLMENT
 
@@ -2436,7 +2518,7 @@ class TestGoldenScenario1:
         eng.register_catalog_item("item-vm", "VM", "acme")
         eng.submit_request("req-vm", "item-vm", "acme", "alice")
         eng.evaluate_entitlement("rul-vm", "req-vm")
-        eng.create_fulfillment_task("task-vm", "req-vm", "ops")
+        _create_task(eng, "task-vm", "req-vm", "ops")
         eng.start_task("task-vm")
         eng.complete_task("task-vm")
         assert es.event_count > initial + 5
@@ -2446,7 +2528,7 @@ class TestGoldenScenario1:
         eng.register_catalog_item("item-vm", "VM", "acme")
         eng.submit_request("req-vm", "item-vm", "acme", "alice")
         eng.evaluate_entitlement("rul-vm", "req-vm")
-        eng.create_fulfillment_task("task-vm", "req-vm", "ops")
+        _create_task(eng, "task-vm", "req-vm", "ops")
         eng.complete_task("task-vm")
         snap = eng.request_snapshot("snap-final")
         assert snap.total_fulfilled == 1
@@ -2508,7 +2590,7 @@ class TestGoldenScenario3:
         approved = eng.approve_request("req-hw", approved_by="cfo")
         assert approved.status == RequestStatus.APPROVED
 
-        task = eng.create_fulfillment_task("task-hw", "req-hw", "procurement-team")
+        task = _create_task(eng, "task-hw", "req-hw", "procurement-team", created_by="cfo")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("req-hw").status == RequestStatus.IN_FULFILLMENT
 
@@ -2537,11 +2619,11 @@ class TestGoldenScenario4:
         eng.register_catalog_item("item-rack", "Rack Installation", "ops")
         eng.submit_request("req-rack", "item-rack", "ops", "dave")
 
-        task1 = eng.create_fulfillment_task(
+        task1 = _create_task(eng, 
             "task-order", "req-rack", "procurement",
             description="Order hardware", dependency_ref="",
         )
-        task2 = eng.create_fulfillment_task(
+        task2 = _create_task(eng, 
             "task-install", "req-rack", "technician",
             description="Install rack", dependency_ref="task-order",
         )
@@ -2559,8 +2641,8 @@ class TestGoldenScenario4:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("item-rack", "Rack", "ops")
         eng.submit_request("req-rack", "item-rack", "ops", "dave")
-        eng.create_fulfillment_task("task-1", "req-rack", "p1")
-        eng.create_fulfillment_task("task-2", "req-rack", "p2", dependency_ref="task-1")
+        _create_task(eng, "task-1", "req-rack", "p1")
+        _create_task(eng, "task-2", "req-rack", "p2", dependency_ref="task-1")
         eng.complete_task("task-1")
         assert eng.get_request("req-rack").status == RequestStatus.IN_FULFILLMENT
 
@@ -2573,8 +2655,8 @@ class TestGoldenScenario5:
         eng.register_catalog_item("item-deploy", "Deployment", "eng")
         eng.submit_request("req-deploy", "item-deploy", "eng", "eve")
 
-        eng.create_fulfillment_task("task-a", "req-deploy", "ci-cd")
-        eng.create_fulfillment_task("task-b", "req-deploy", "ci-cd")
+        _create_task(eng, "task-a", "req-deploy", "ci-cd")
+        _create_task(eng, "task-b", "req-deploy", "ci-cd")
 
         eng.fail_task("task-a")
         eng.fail_task("task-b")
@@ -2587,7 +2669,7 @@ class TestGoldenScenario5:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("item-deploy", "Deployment", "eng")
         eng.submit_request("req-deploy", "item-deploy", "eng", "eve")
-        eng.create_fulfillment_task("task-a", "req-deploy", "ci-cd")
+        _create_task(eng, "task-a", "req-deploy", "ci-cd")
         eng.fail_task("task-a")
         violations = eng.detect_request_violations()
         atf = [v for v in violations if v.operation == "all_tasks_failed"]
@@ -2598,8 +2680,8 @@ class TestGoldenScenario5:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("item-deploy", "Deployment", "eng")
         eng.submit_request("req-deploy", "item-deploy", "eng", "eve")
-        eng.create_fulfillment_task("task-a", "req-deploy", "ci-cd")
-        eng.create_fulfillment_task("task-b", "req-deploy", "ci-cd")
+        _create_task(eng, "task-a", "req-deploy", "ci-cd")
+        _create_task(eng, "task-b", "req-deploy", "ci-cd")
         eng.fail_task("task-a")
         eng.fail_task("task-b")
         violations = eng.detect_request_violations()
@@ -2692,8 +2774,8 @@ class TestEdgeCases:
         engine.register_catalog_item("i1", "S", "t1")
         engine.submit_request("r1", "i1", "t1", "u1")
         engine.submit_request("r2", "i1", "t1", "u2")
-        engine.create_fulfillment_task("t1", "r1", "tech-1")
-        engine.create_fulfillment_task("t2", "r2", "tech-2")
+        _create_task(engine, "t1", "r1", "tech-1")
+        _create_task(engine, "t2", "r2", "tech-2")
         assert engine.task_count == 2
 
     def test_deny_after_entitlement_granted(self, engine_with_request: ServiceCatalogEngine) -> None:
@@ -2703,13 +2785,13 @@ class TestEdgeCases:
         assert result.status == RequestStatus.DENIED
 
     def test_cancel_after_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         # Request is IN_FULFILLMENT, can still cancel
         result = engine_with_request.cancel_request("req-1")
         assert result.status == RequestStatus.CANCELLED
 
     def test_deny_in_fulfillment(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.deny_request("req-1", denied_by="manager-1")
         assert result.status == RequestStatus.DENIED
 
@@ -2732,7 +2814,7 @@ class TestEdgeCases:
         engine.register_catalog_item("i1", "S", "t1", estimated_cost=10.0)
         engine.submit_request("r1", "i1", "t1", "u1", estimated_cost=10.0)
         engine.submit_request("r2", "i1", "t1", "u2", estimated_cost=20.0)
-        engine.create_fulfillment_task("t1", "r1", "tech-1")
+        _create_task(engine, "t1", "r1", "tech-1")
         engine.deny_request("r2", denied_by="manager-1")
         snap = engine.request_snapshot("snap-1")
         assert snap.total_requests == 2
@@ -2756,7 +2838,7 @@ class TestEdgeCases:
         assert result.status == RequestStatus.FULFILLED
 
     def test_close_in_fulfillment_request(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         result = engine_with_request.close_request("req-1")
         assert result.status == RequestStatus.FULFILLED
 
@@ -2792,21 +2874,21 @@ class TestEdgeCases:
         assert result.estimated_cost == 123.45
 
     def test_fail_then_detect_single_task(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         engine_with_request.fail_task("t1")
         violations = engine_with_request.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "all_tasks_failed" in ops
 
     def test_no_violation_when_tasks_pending(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         violations = engine_with_request.detect_request_violations()
         ops = [v.operation for v in violations]
         assert "all_tasks_failed" not in ops
 
     def test_no_violation_when_some_tasks_in_progress(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
-        engine_with_request.create_fulfillment_task("t2", "req-1", "tech-2")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t2", "req-1", "tech-2")
         engine_with_request.fail_task("t1")
         engine_with_request.start_task("t2")
         violations = engine_with_request.detect_request_violations()
@@ -2828,7 +2910,7 @@ class TestEdgeCases:
         assert asn.request_id == "req-1"
 
     def test_assign_in_fulfillment_request(self, engine_with_request: ServiceCatalogEngine) -> None:
-        engine_with_request.create_fulfillment_task("t1", "req-1", "tech-1")
+        _create_task(engine_with_request, "t1", "req-1", "tech-1")
         asn = engine_with_request.assign_request("a1", "req-1", "tech-2", assigned_by="mgr-1")
         assert asn.request_id == "req-1"
 
@@ -2864,7 +2946,7 @@ class TestEdgeCases:
         eng.submit_request("r1", "item-appr", "tenant-a", "u1")
         eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
         eng.approve_request("r1", approved_by="ops-lead")
-        task = eng.create_fulfillment_task("t1", "r1", "tech-1")
+        task = _create_task(eng, "t1", "r1", "tech-1", created_by="ops-lead")
         assert task.status == FulfillmentStatus.PENDING
         assert eng.get_request("r1").status == RequestStatus.IN_FULFILLMENT
 
@@ -2889,7 +2971,7 @@ class TestBoundedContractWitnesses:
         assert "PENDING_APPROVAL" not in approve_message
         assert "pending-approval" in approve_message
 
-        engine_with_request.create_fulfillment_task("task-secret", "req-1", "tech-1")
+        _create_task(engine_with_request, "task-secret", "req-1", "tech-1")
         engine_with_request.start_task("task-secret")
         with pytest.raises(RuntimeCoreInvariantError) as start_exc:
             engine_with_request.start_task("task-secret")
@@ -2905,7 +2987,7 @@ class TestBoundedContractWitnesses:
         engine.submit_request("req-no-tasks", "item-secret", "t1", "u2")
         engine._update_request_status("req-no-tasks", RequestStatus.IN_FULFILLMENT)
         engine.submit_request("req-all-failed", "item-secret", "t1", "u3")
-        engine.create_fulfillment_task("fail-1", "req-all-failed", "tech-1")
+        _create_task(engine, "fail-1", "req-all-failed", "tech-1")
         engine.fail_task("fail-1")
 
         violations = {
@@ -2923,3 +3005,4 @@ class TestBoundedContractWitnesses:
         assert violations[("req-all-failed", "all_tasks_failed")] == "All fulfillment tasks failed"
         assert "req-all-failed" not in violations[("req-all-failed", "all_tasks_failed")]
         assert "1" not in violations[("req-all-failed", "all_tasks_failed")]
+
