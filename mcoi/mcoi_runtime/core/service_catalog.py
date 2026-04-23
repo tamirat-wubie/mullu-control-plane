@@ -414,6 +414,14 @@ class ServiceCatalogEngine:
             raise RuntimeCoreInvariantError("cancelled_by required for cancellation") from exc
         if normalized_cancelled_by == "system":
             raise RuntimeCoreInvariantError("cancelled_by must exclude system")
+        item = self.get_catalog_item(req.item_id)
+        if (
+            item.approval_required
+            and normalized_cancelled_by != req.requester_ref.strip()
+            and normalized_cancelled_by not in item.approver_refs
+            and normalized_cancelled_by != item.owner_ref.strip()
+        ):
+            raise RuntimeCoreInvariantError("Canceller not authorized for request")
         updated = self._update_request_status(
             request_id,
             RequestStatus.CANCELLED,

@@ -697,6 +697,53 @@ class TestCancelRequest:
         assert message == "cancelled_by must exclude system"
         assert engine_with_request.get_request("req-1").status == RequestStatus.SUBMITTED
 
+    def test_unauthorized_canceller_cannot_cancel_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        with pytest.raises(RuntimeCoreInvariantError, match="^Canceller not authorized for request$") as exc_info:
+            eng.cancel_request("r1", cancelled_by="intern-1")
+        message = str(exc_info.value)
+        assert message == "Canceller not authorized for request"
+        assert "intern-1" not in message
+        assert eng.get_request("r1").status == RequestStatus.PENDING_APPROVAL
+
+    def test_requester_can_cancel_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        result = eng.cancel_request("r1", cancelled_by="u1")
+        assert result.status == RequestStatus.CANCELLED
+        assert result.cancelled_by == "u1"
+
+    def test_owner_can_cancel_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        result = eng.cancel_request("r1", cancelled_by="ops-owner")
+        assert result.status == RequestStatus.CANCELLED
+        assert result.cancelled_by == "ops-owner"
+
+    def test_approver_can_cancel_approval_governed_request(
+        self,
+        engine_with_approval_item: ServiceCatalogEngine,
+    ) -> None:
+        eng = engine_with_approval_item
+        eng.submit_request("r1", "item-appr", "tenant-a", "u1")
+        eng.evaluate_entitlement("rul-1", "r1", disposition=EntitlementDisposition.GRANTED)
+        result = eng.cancel_request("r1", cancelled_by="ops-lead")
+        assert result.status == RequestStatus.CANCELLED
+        assert result.cancelled_by == "ops-lead"
+
     def test_unknown_request_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError):
             engine.cancel_request("ghost")
