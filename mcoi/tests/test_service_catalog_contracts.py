@@ -451,6 +451,7 @@ class TestServiceRequestConstruction:
         assert req.estimated_cost == 50.0
         assert req.submitted_at == TS
         assert req.due_at == ""
+        assert req.cancelled_by == ""
 
     def test_with_due_at(self):
         req = _service_request(due_at=TS2)
@@ -458,7 +459,10 @@ class TestServiceRequestConstruction:
 
     def test_all_request_statuses(self):
         for status in RequestStatus:
-            req = _service_request(status=status)
+            overrides = {}
+            if status == RequestStatus.CANCELLED:
+                overrides["cancelled_by"] = "ops-001"
+            req = _service_request(status=status, **overrides)
             assert req.status == status
 
     def test_all_priorities(self):
@@ -783,6 +787,20 @@ class TestServiceRequestValidation:
     def test_invalid_priority_type(self):
         with pytest.raises(ValueError, match="priority must be a RequestPriority"):
             _service_request(priority="medium")
+
+    def test_system_cancelled_by_rejected(self):
+        with pytest.raises(ValueError, match="^cancelled_by must exclude system$") as exc_info:
+            _service_request(status=RequestStatus.CANCELLED, cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+        assert "system" not in message.replace("system", "", 1)
+
+    def test_cancelled_requires_cancelled_by(self):
+        with pytest.raises(ValueError, match="^cancelled requests must declare cancelled_by$") as exc_info:
+            _service_request(status=RequestStatus.CANCELLED, cancelled_by="")
+        message = str(exc_info.value)
+        assert message == "cancelled requests must declare cancelled_by"
+        assert "CANCELLED" not in message
 
     def test_negative_estimated_cost(self):
         with pytest.raises(ValueError):
@@ -1606,7 +1624,7 @@ class TestServiceRequestToDict:
         expected_keys = {
             "request_id", "item_id", "tenant_id", "requester_ref",
             "status", "priority", "description", "estimated_cost",
-            "submitted_at", "due_at", "metadata",
+            "submitted_at", "due_at", "cancelled_by", "metadata",
         }
         assert set(d.keys()) == expected_keys
 
