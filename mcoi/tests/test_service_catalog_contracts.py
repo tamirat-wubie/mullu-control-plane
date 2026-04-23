@@ -102,6 +102,10 @@ def _fulfillment_task(**overrides) -> FulfillmentTask:
         request_id="req-001",
         assignee_ref="eng-001",
         created_by="mgr-001",
+        started_by="",
+        completed_by="",
+        failed_by="",
+        cancelled_by="",
         status=FulfillmentStatus.PENDING,
         description="Deploy VM",
         dependency_ref="dep-001",
@@ -521,6 +525,10 @@ class TestFulfillmentTaskConstruction:
         assert task.request_id == "req-001"
         assert task.assignee_ref == "eng-001"
         assert task.created_by == "mgr-001"
+        assert task.started_by == ""
+        assert task.completed_by == ""
+        assert task.failed_by == ""
+        assert task.cancelled_by == ""
         assert task.status == FulfillmentStatus.PENDING
         assert task.description == "Deploy VM"
         assert task.dependency_ref == "dep-001"
@@ -533,7 +541,18 @@ class TestFulfillmentTaskConstruction:
 
     def test_all_fulfillment_statuses(self):
         for status in FulfillmentStatus:
-            task = _fulfillment_task(status=status)
+            overrides = {"status": status}
+            if status == FulfillmentStatus.IN_PROGRESS:
+                overrides["started_by"] = "ops-001"
+            if status == FulfillmentStatus.COMPLETED:
+                overrides["completed_by"] = "ops-001"
+                overrides["completed_at"] = TS2
+            if status == FulfillmentStatus.FAILED:
+                overrides["failed_by"] = "ops-001"
+                overrides["completed_at"] = TS2
+            if status == FulfillmentStatus.CANCELLED:
+                overrides["cancelled_by"] = "ops-001"
+            task = _fulfillment_task(**overrides)
             assert task.status == status
 
     def test_is_dataclass(self):
@@ -900,6 +919,46 @@ class TestFulfillmentTaskValidation:
         message = str(exc_info.value)
         assert message == "created_by must exclude system"
         assert "mgr-001" not in message
+
+    def test_system_started_by_rejected(self):
+        with pytest.raises(ValueError, match="^started_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.IN_PROGRESS, started_by="system")
+        message = str(exc_info.value)
+        assert message == "started_by must exclude system"
+
+    def test_system_completed_by_rejected(self):
+        with pytest.raises(ValueError, match="^completed_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.COMPLETED, completed_by="system", completed_at=TS2)
+        message = str(exc_info.value)
+        assert message == "completed_by must exclude system"
+
+    def test_system_failed_by_rejected(self):
+        with pytest.raises(ValueError, match="^failed_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.FAILED, failed_by="system", completed_at=TS2)
+        message = str(exc_info.value)
+        assert message == "failed_by must exclude system"
+
+    def test_system_cancelled_by_rejected(self):
+        with pytest.raises(ValueError, match="^cancelled_by must exclude system$") as exc_info:
+            _fulfillment_task(status=FulfillmentStatus.CANCELLED, cancelled_by="system")
+        message = str(exc_info.value)
+        assert message == "cancelled_by must exclude system"
+
+    def test_in_progress_requires_started_by(self):
+        with pytest.raises(ValueError, match="^in_progress tasks must declare started_by$"):
+            _fulfillment_task(status=FulfillmentStatus.IN_PROGRESS, started_by="")
+
+    def test_completed_requires_completed_by(self):
+        with pytest.raises(ValueError, match="^completed tasks must declare completed_by$"):
+            _fulfillment_task(status=FulfillmentStatus.COMPLETED, completed_by="", completed_at=TS2)
+
+    def test_failed_requires_failed_by(self):
+        with pytest.raises(ValueError, match="^failed tasks must declare failed_by$"):
+            _fulfillment_task(status=FulfillmentStatus.FAILED, failed_by="", completed_at=TS2)
+
+    def test_cancelled_requires_cancelled_by(self):
+        with pytest.raises(ValueError, match="^cancelled tasks must declare cancelled_by$"):
+            _fulfillment_task(status=FulfillmentStatus.CANCELLED, cancelled_by="")
 
     def test_invalid_status_type(self):
         with pytest.raises(ValueError, match="status must be a FulfillmentStatus"):
@@ -1610,7 +1669,8 @@ class TestFulfillmentTaskToDict:
         task = _fulfillment_task()
         d = task.to_dict()
         expected_keys = {
-            "task_id", "request_id", "assignee_ref", "created_by", "status",
+            "task_id", "request_id", "assignee_ref", "created_by",
+            "started_by", "completed_by", "failed_by", "cancelled_by", "status",
             "description", "dependency_ref", "created_at",
             "completed_at", "metadata",
         }
