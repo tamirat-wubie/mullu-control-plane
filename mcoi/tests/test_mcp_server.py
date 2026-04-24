@@ -3,8 +3,8 @@
 import json
 from types import SimpleNamespace
 
-import pytest
-from mcoi_runtime.mcp.server import MulluMCPServer, MCPTool, MCPToolResult
+from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLedgerStore
+from mcoi_runtime.mcp.server import MulluMCPServer
 from mcoi_runtime.core.governed_session import Platform
 from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.proof_bridge import ProofBridge
@@ -22,11 +22,19 @@ def _platform():
     )
 
 
+def _ledger() -> CommandLedger:
+    return CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+
+
 class _SessionStub:
-    def __init__(self, *, llm_fn=None, query_fn=None, execute_fn=None) -> None:
+    def __init__(self, *, llm_fn=None, query_fn=None, execute_fn=None, close_exc: Exception | None = None) -> None:
         self._llm_fn = llm_fn or (lambda prompt: SimpleNamespace(succeeded=True, content="ok"))
         self._query_fn = query_fn or (lambda resource: {"governed": True, "resource_type": resource})
         self._execute_fn = execute_fn or (lambda action: {"governed": True, "action_type": action})
+        self._close_exc = close_exc
         self.closed = False
 
     def llm(self, prompt: str):
@@ -39,6 +47,8 @@ class _SessionStub:
         return self._execute_fn(action)
 
     def close(self) -> None:
+        if self._close_exc is not None:
+            raise self._close_exc
         self.closed = True
 
 
@@ -119,6 +129,79 @@ class TestMCPToolCalls:
         server.call_tool("mullu_query", {"resource_type": "test2"})
         assert server.call_count == 2
 
+    def test_tool_call_records_command_witness(self):
+        ledger = _ledger()
+        server = MulluMCPServer(
+            platform=_PlatformStub(),
+            command_ledger=ledger,
+        )
+
+        result = server.call_tool("mullu_query", {"resource_type": "health"})
+        command_id = result.metadata["command_id"]
+        command = ledger.get(command_id)
+        events = ledger.events_for(command_id)
+
+        assert result.is_error is False
+        assert command is not None
+        assert command.source == "mcp"
+        assert command.intent == "mcp.query"
+        assert command.redacted_payload["mcp_tool"] == "mullu_query"
+        assert command.redacted_payload["mcp_argument_keys"] == ["resource_type"]
+        assert "health" not in json.dumps(command.redacted_payload)
+        assert result.metadata["tool_name"] == "mullu_query"
+        assert result.metadata["risk_tier"] == "low"
+        assert result.metadata["command_state"] == CommandState.RESPONDED.value
+        assert [event.next_state for event in events] == [
+            CommandState.RECEIVED,
+            CommandState.NORMALIZED,
+            CommandState.TENANT_BOUND,
+            CommandState.POLICY_EVALUATED,
+            CommandState.DISPATCHED,
+            CommandState.OBSERVED,
+            CommandState.VERIFIED,
+            CommandState.COMMITTED,
+            CommandState.RESPONDED,
+        ]
+        assert events[-1].tool_name == "mullu_query"
+
+    def test_access_denial_records_denied_command_witness(self):
+        ledger = _ledger()
+        server = MulluMCPServer(
+            platform=_PlatformStub(connect_exc=PermissionError("secret tenant mismatch")),
+            command_ledger=ledger,
+        )
+
+        result = server.call_tool("mullu_query", {"resource_type": "health"})
+        command_id = result.metadata["command_id"]
+        events = ledger.events_for(command_id)
+
+        assert result.is_error is True
+        assert result.content == "Access denied: access denied (PermissionError)"
+        assert CommandState.DENIED in {event.next_state for event in events}
+        assert events[-1].next_state == CommandState.RESPONDED
+        assert any(event.detail.get("cause") == "mcp_access_denied" for event in events)
+        assert "secret tenant mismatch" not in result.content
+
+    def test_close_failure_records_review_witness_before_response(self):
+        ledger = _ledger()
+        session = _SessionStub(close_exc=RuntimeError("secret close failure"))
+        server = MulluMCPServer(
+            platform=_PlatformStub(session=session),
+            command_ledger=ledger,
+        )
+
+        result = server.call_tool("mullu_query", {"resource_type": "health"})
+        command_id = result.metadata["command_id"]
+        events = ledger.events_for(command_id)
+
+        assert result.is_error is False
+        assert server.close_failure_count == 1
+        assert result.metadata["close_failed"] is True
+        assert any(event.detail.get("cause") == "mcp_session_close_failed" for event in events)
+        assert CommandState.COMMITTED not in [event.next_state for event in events]
+        assert events[-1].next_state == CommandState.RESPONDED
+        assert "secret close failure" not in result.content
+
     def test_connection_failure_is_sanitized(self):
         server = MulluMCPServer(platform=_PlatformStub(connect_exc=RuntimeError("secret backend detail")))
         result = server.call_tool("mullu_query", {"resource_type": "health"})
@@ -186,6 +269,8 @@ class TestMCPJsonRPC:
         })
         assert "content" in resp["result"]
         assert not resp["result"]["isError"]
+        assert resp["result"]["_meta"]["command_id"].startswith("cmd-")
+        assert resp["result"]["_meta"]["tool_name"] == "mullu_query"
 
     def test_unknown_method(self):
         server = MulluMCPServer(platform=_platform())
