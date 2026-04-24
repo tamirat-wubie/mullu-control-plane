@@ -20,6 +20,12 @@ class CapabilityDescriptor(ContractRecord):
     version: str
     scope: str
     constraints: tuple[str, ...]
+    risk_tier: str = ""
+    declared_effects: tuple[str, ...] = ()
+    forbidden_effects: tuple[str, ...] = ()
+    evidence_required: tuple[str, ...] = ()
+    rollback: Mapping[str, Any] = field(default_factory=dict)
+    graph_projection: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
     extensions: Mapping[str, Any] = field(default_factory=dict)
 
@@ -29,5 +35,14 @@ class CapabilityDescriptor(ContractRecord):
         object.__setattr__(self, "constraints", require_non_empty_tuple(self.constraints, "constraints"))
         for index, constraint in enumerate(self.constraints):
             require_non_empty_text(constraint, f"constraints[{index}]")
+        if self.risk_tier:
+            object.__setattr__(self, "risk_tier", require_non_empty_text(self.risk_tier, "risk_tier"))
+        for field_name in ("declared_effects", "forbidden_effects", "evidence_required"):
+            values = tuple(getattr(self, field_name))
+            object.__setattr__(self, field_name, values)
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        object.__setattr__(self, "rollback", freeze_value(self.rollback))
+        object.__setattr__(self, "graph_projection", freeze_value(self.graph_projection))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
         object.__setattr__(self, "extensions", freeze_value(self.extensions))

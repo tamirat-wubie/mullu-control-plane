@@ -41,6 +41,38 @@
         "minLength": 1
       }
     },
+    "risk_tier": {
+      "type": "string"
+    },
+    "declared_effects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forbidden_effects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_required": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "graph_projection": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "metadata": {
       "type": "object",
       "additionalProperties": true

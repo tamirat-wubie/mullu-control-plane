@@ -100,6 +100,18 @@ pub struct CapabilityDescriptor {
     pub scope: String,
     #[serde(default)]
     pub constraints: Vec<String>,
+    #[serde(default)]
+    pub risk_tier: String,
+    #[serde(default)]
+    pub declared_effects: Vec<String>,
+    #[serde(default)]
+    pub forbidden_effects: Vec<String>,
+    #[serde(default)]
+    pub evidence_required: Vec<String>,
+    #[serde(default)]
+    pub rollback: BTreeMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub graph_projection: BTreeMap<String, serde_json::Value>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub metadata: BTreeMap<String, serde_json::Value>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -154,6 +166,12 @@ mod tests {
             version: "1.0.0".into(),
             scope: "local".into(),
             constraints: vec!["os=linux".into()],
+            risk_tier: "low".into(),
+            declared_effects: vec!["command_output_created".into()],
+            forbidden_effects: vec!["unauthorized_state_mutation".into()],
+            evidence_required: vec!["output_hash".into()],
+            rollback: BTreeMap::new(),
+            graph_projection: BTreeMap::new(),
             metadata: BTreeMap::new(),
             extensions: BTreeMap::new(),
         };
@@ -172,6 +190,12 @@ mod tests {
             version: "1.0.0".into(),
             scope: "local".into(),
             constraints: vec!["read_only".into()],
+            risk_tier: String::new(),
+            declared_effects: Vec::new(),
+            forbidden_effects: Vec::new(),
+            evidence_required: Vec::new(),
+            rollback: BTreeMap::new(),
+            graph_projection: BTreeMap::new(),
             metadata: BTreeMap::new(),
             extensions: BTreeMap::new(),
         };

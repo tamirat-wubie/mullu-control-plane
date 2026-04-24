@@ -497,6 +497,12 @@ def _build_capability_descriptor(payload: dict[str, Any]) -> Any:
         version=payload["version"],
         scope=payload["scope"],
         constraints=tuple(payload["constraints"]),
+        risk_tier=payload.get("risk_tier", ""),
+        declared_effects=tuple(payload.get("declared_effects", ())),
+        forbidden_effects=tuple(payload.get("forbidden_effects", ())),
+        evidence_required=tuple(payload.get("evidence_required", ())),
+        rollback=payload.get("rollback", {}),
+        graph_projection=payload.get("graph_projection", {}),
         metadata=payload["metadata"],
         extensions=payload["extensions"],
     )
