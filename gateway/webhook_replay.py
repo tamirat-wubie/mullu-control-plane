@@ -76,6 +76,14 @@ class WebhookReplayEngine:
         self._replay_count = 0
         self._success_count = 0
         self._failure_count = 0
+        self._skipped_count = 0
+        self._skip_reasons: dict[str, int] = {}
+
+    def _record_skip(self, reason_code: str) -> None:
+        """Record a bounded replay skip reason for operator summaries."""
+        with self._lock:
+            self._skipped_count += 1
+            self._skip_reasons[reason_code] = self._skip_reasons.get(reason_code, 0) + 1
 
     def replay_event(
         self,
@@ -92,6 +100,7 @@ class WebhookReplayEngine:
         """
         event = self._event_log.get(event_id)
         if event is None:
+            self._record_skip("event_not_found")
             return ReplayResult(
                 event_id=event_id, original_status="unknown",
                 replay_status="skipped", detail="event not found",
@@ -99,6 +108,7 @@ class WebhookReplayEngine:
 
         # Skip if already successfully processed
         if event.status == "processed":
+            self._record_skip("already_processed")
             return ReplayResult(
                 event_id=event_id, original_status=event.status,
                 replay_status="skipped", detail="already processed",
@@ -194,4 +204,6 @@ class WebhookReplayEngine:
                 "total_replays": self._replay_count,
                 "succeeded": self._success_count,
                 "failed": self._failure_count,
+                "skipped": self._skipped_count,
+                "skip_reasons": dict(sorted(self._skip_reasons.items())),
             }
