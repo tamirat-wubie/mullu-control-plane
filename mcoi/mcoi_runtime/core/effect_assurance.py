@@ -143,7 +143,7 @@ class EffectAssuranceGate:
             request_id=f"simreq:{plan.effect_plan_id}",
             context_type="command",
             context_id=plan.command_id,
-            description=f"Effect assurance simulation for {plan.capability_id}",
+            description="Effect assurance simulation for governed capability dispatch",
             options=(option,),
         )
 
@@ -233,7 +233,7 @@ class EffectAssuranceGate:
             overall = VerificationStatus.FAIL
         evidence = tuple(
             EvidenceRecord(
-                description=f"Observed effect {effect.name}",
+                description="Observed effect evidence",
                 uri=effect.evidence_ref,
                 details={
                     "effect_id": effect.effect_id,
