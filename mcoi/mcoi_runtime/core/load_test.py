@@ -18,7 +18,7 @@ from __future__ import annotations
 import statistics
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 
@@ -152,6 +152,7 @@ def run_concurrent_benchmark(
     iterations: int = 1000,
     concurrency: int = 4,
     warmup: int = 10,
+    join_timeout_seconds: float = 60.0,
 ) -> BenchmarkResult:
     """Run a benchmark with concurrent threads.
 
@@ -184,30 +185,38 @@ def run_concurrent_benchmark(
             total_errors[0] += local_errors
 
     start = time.monotonic()
-    threads = [threading.Thread(target=worker) for _ in range(concurrency)]
+    threads = [
+        threading.Thread(target=worker, daemon=True)
+        for _ in range(concurrency)
+    ]
     for t in threads:
         t.start()
+    join_deadline = start + join_timeout_seconds
     for t in threads:
-        t.join(timeout=60)
+        remaining_seconds = max(0.0, join_deadline - time.monotonic())
+        t.join(timeout=remaining_seconds)
     end = time.monotonic()
 
     duration = end - start
     total_ops = iterations * concurrency
-    errors = total_errors[0]
+    completed_ops = len(all_latencies)
+    unfinished_ops = max(0, total_ops - completed_ops)
+    errors = total_errors[0] + unfinished_ops
 
     if not all_latencies:
         return BenchmarkResult(
-            name=name, operations=0, duration_seconds=0,
+            name=name, operations=total_ops, duration_seconds=duration,
             throughput_ops=0, avg_latency_ms=0, p50_latency_ms=0,
             p95_latency_ms=0, p99_latency_ms=0, min_latency_ms=0,
-            max_latency_ms=0,
+            max_latency_ms=0, error_count=errors,
+            error_rate=errors / total_ops if total_ops > 0 else 0,
         )
 
     return BenchmarkResult(
         name=name,
         operations=total_ops,
         duration_seconds=duration,
-        throughput_ops=total_ops / duration if duration > 0 else 0,
+        throughput_ops=completed_ops / duration if duration > 0 else 0,
         avg_latency_ms=statistics.mean(all_latencies),
         p50_latency_ms=_percentile(all_latencies, 50),
         p95_latency_ms=_percentile(all_latencies, 95),
