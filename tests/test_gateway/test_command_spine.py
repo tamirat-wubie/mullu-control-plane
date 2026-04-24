@@ -630,6 +630,39 @@ def test_command_ledger_records_evidence_backed_claim():
     assert events[-1].detail["response_evidence_closure"]["claim_id"] == claim.claim_id
 
 
+def test_command_ledger_promotes_observed_receipts_to_graph_and_evidence_refs():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-provider-receipt",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"content": "hello", "succeeded": True},
+    )
+
+    promotions = ledger.promote_provider_receipts_to_graph(command.command_id)
+    evidence = ledger.evidence_for(command.command_id)
+    events = ledger.events_for(command.command_id)
+
+    assert promotions
+    assert any(promotion.effect_id == "content" for promotion in promotions)
+    assert any(promotion.provider_action_node_ref.startswith("provider_action:") for promotion in promotions)
+    assert any(promotion.evidence_node_ref.startswith("evidence:receipt:") for promotion in promotions)
+    assert any(promotion.verification_node_ref.startswith("verification:") for promotion in promotions)
+    assert all(promotion.evidence_id in {record.evidence_id for record in evidence} for promotion in promotions)
+    assert "provider_receipt_graph_promotions" in events[-1].detail
+
+
 def test_command_ledger_blocks_success_response_closure_without_reconciliation():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",
