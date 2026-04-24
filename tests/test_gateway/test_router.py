@@ -15,7 +15,8 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.approval import ApprovalRouter  # noqa: E402
-from gateway.command_spine import CommandLedger, GovernedAction, InMemoryCommandLedgerStore  # noqa: E402
+from gateway.capability_isolation import CapabilityExecutionReceipt  # noqa: E402
+from gateway.command_spine import CommandLedger, CommandState, GovernedAction, InMemoryCommandLedgerStore  # noqa: E402
 from gateway.router import GatewayMessage, GatewayRouter, TenantMapping  # noqa: E402
 from gateway.skill_dispatch import SkillDispatcher  # noqa: E402
 
@@ -135,6 +136,63 @@ class SettlingPaymentExecutor:
             provider_tx_id="refund-gateway-1",
             metadata={"ledger_hash": "refund-ledger-gateway-proof"},
         )
+
+
+class RestrictedPaymentExecutor:
+    """Restricted worker fixture for pilot/prod capability dispatch."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def execute(self, *, intent, tenant_id, identity_id, boundary):
+        self.calls += 1
+        result = {
+            "response": "Payment processed: tx-restricted-1",
+            "governed": True,
+            "skill": intent.action,
+            "receipt_status": "settled",
+            "transaction_id": "tx-restricted-1",
+            "amount": str(intent.params.get("amount", "50")),
+            "currency": "USD",
+            "provider_transaction_id": "provider-restricted-1",
+            "ledger_hash": "ledger-restricted-proof",
+            "recipient_hash": "recipient-restricted-proof",
+            "recipient_ref": "dest:pending",
+        }
+        receipt = CapabilityExecutionReceipt(
+            receipt_id="capability-receipt-restricted",
+            capability_id=boundary.capability_id,
+            execution_plane=boundary.execution_plane,
+            isolation_required=boundary.isolation_required,
+            worker_id="restricted-worker-1",
+            input_hash="input-hash",
+            output_hash="output-hash",
+            evidence_refs=("restricted_worker:payment",),
+        )
+        return {
+            **result,
+            "capability_execution_boundary": {
+                "capability_id": boundary.capability_id,
+                "execution_plane": boundary.execution_plane,
+                "isolation_required": boundary.isolation_required,
+                "network_policy": boundary.network_policy,
+                "filesystem_policy": boundary.filesystem_policy,
+                "max_runtime_seconds": boundary.max_runtime_seconds,
+                "max_memory_mb": boundary.max_memory_mb,
+                "service_account": boundary.service_account,
+                "evidence_required": boundary.evidence_required,
+            },
+            "capability_execution_receipt": {
+                "receipt_id": receipt.receipt_id,
+                "capability_id": receipt.capability_id,
+                "execution_plane": receipt.execution_plane,
+                "isolation_required": receipt.isolation_required,
+                "worker_id": receipt.worker_id,
+                "input_hash": receipt.input_hash,
+                "output_hash": receipt.output_hash,
+                "evidence_refs": receipt.evidence_refs,
+            },
+        }, receipt
 
 
 class MissingPredictionLedger(CommandLedger):
@@ -262,12 +320,25 @@ class TestMessageRouting:
         assert closure["evidence_refs"] == response.metadata["claims"][0]["evidence_refs"]
         assert closure["reconciliation_hash"]
         assert closure["evidence_hash"]
+        certificate = response.metadata["terminal_certificate"]
+        assert certificate["disposition"] == "committed"
+        assert certificate["evidence_refs"]
+        assert response.metadata["terminal_certificate_id"] == certificate["certificate_id"]
+        assert response.metadata["closure_memory_entry"]["terminal_certificate_id"] == certificate["certificate_id"]
+        assert response.metadata["learning_admission"]["status"] == "admit"
+        assert response.metadata["success_claim_allowed"] is True
         promotions = response.metadata["provider_receipt_graph_promotions"]
         assert promotions
         assert any(promotion["effect_id"] == "content" for promotion in promotions)
         assert all(promotion["provider_action_node_ref"].startswith("provider_action:") for promotion in promotions)
         assert all(promotion["evidence_node_ref"].startswith("evidence:receipt:") for promotion in promotions)
         assert all(promotion["verification_node_ref"].startswith("verification:") for promotion in promotions)
+        command_events = router._commands.events_for(response.metadata["command_id"])
+        assert any(event.next_state == CommandState.TERMINALLY_CERTIFIED for event in command_events)
+        assert any(event.next_state == CommandState.RESPONSE_EVIDENCE_CLOSED for event in command_events)
+        assert any(event.next_state == CommandState.MEMORY_PROMOTED for event in command_events)
+        assert any(event.next_state == CommandState.LEARNING_DECIDED for event in command_events)
+        assert command_events[-1].next_state == CommandState.RESPONDED
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())
@@ -629,6 +700,9 @@ class TestChannelAdapterIntegration:
 
         assert failed.metadata["error"] == "effect_reconciliation_failed"
         assert "ledger_hash" in failed.metadata["mismatch_reason"]
+        assert failed.metadata["closure_disposition"] == "requires_review"
+        assert failed.metadata["success_claim_allowed"] is False
+        assert failed.metadata["terminal_certificate_id"]
         assert platform.sessions_opened == 1
         assert router.pending_approvals == 0
 
@@ -758,6 +832,90 @@ class TestChannelAdapterIntegration:
         assert committed.metadata["receipt_status"] == "refunded"
         assert "error" not in committed.metadata
         assert router.pending_approvals == 0
+
+    def test_pilot_payment_requires_restricted_capability_worker(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+            "2026-04-20T12:00:02+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="should not use llm"),
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+            skill_dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+            environment="pilot",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="payer", tenant_id="t1", identity_id="identity-1",
+            roles=("financial_admin",),
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="approver", tenant_id="t1", identity_id="identity-2",
+            roles=("financial_admin",), approval_authority=True,
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="payer", body="make a payment of $50",
+        ))
+        blocked = router.handle_message(GatewayMessage(
+            message_id="m2", channel="test", sender_id="approver",
+            body=f"approve:{pending.metadata['request_id']}",
+        ))
+
+        assert blocked.metadata["receipt_status"] == "isolation_worker_required"
+        assert blocked.metadata["closure_disposition"] == "requires_review"
+        assert blocked.metadata["success_claim_allowed"] is False
+        assert blocked.metadata["capability_execution_boundary"]["isolation_required"] is True
+
+    def test_pilot_payment_uses_restricted_capability_worker(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+            "2026-04-20T12:00:02+00:00",
+            "2026-04-20T12:00:03+00:00",
+            "2026-04-20T12:00:04+00:00",
+            "2026-04-20T12:00:05+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        restricted_executor = RestrictedPaymentExecutor()
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="should not use llm"),
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+            skill_dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+            environment="pilot",
+            isolated_capability_executor=restricted_executor,
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="payer", tenant_id="t1", identity_id="identity-1",
+            roles=("financial_admin",),
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="approver", tenant_id="t1", identity_id="identity-2",
+            roles=("financial_admin",), approval_authority=True,
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="payer", body="make a payment of $50",
+        ))
+        committed = router.handle_message(GatewayMessage(
+            message_id="m2", channel="test", sender_id="approver",
+            body=f"approve:{pending.metadata['request_id']}",
+        ))
+
+        assert committed.metadata["transaction_id"] == "tx-restricted-1"
+        assert committed.metadata["capability_execution_receipt"]["worker_id"] == "restricted-worker-1"
+        assert committed.metadata["capability_execution_boundary"]["execution_plane"] == "isolated_worker"
+        assert committed.metadata["closure_disposition"] == "committed"
+        assert restricted_executor.calls == 1
 
     def test_deferred_approval_is_executed_by_worker(self):
         times = [

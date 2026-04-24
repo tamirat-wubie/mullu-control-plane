@@ -51,6 +51,11 @@
 | `MULLU_COMMAND_ANCHOR_SECRET` | unset | HMAC secret used by `gateway.worker` to sign command-event anchors |
 | `MULLU_COMMAND_ANCHOR_KEY_ID` | `local` | Key identifier recorded on command-event anchors |
 | `MULLU_REQUIRE_COMMAND_ANCHOR` | profile-based | Require command-event anchor signing. Defaults to true in `pilot` and `production` |
+| `MULLU_RUNTIME_WITNESS_SECRET` | unset | HMAC secret used by `/gateway/witness` and `/runtime/witness` |
+| `MULLU_RUNTIME_WITNESS_KEY_ID` | `runtime-witness-local` | Key identifier recorded on runtime witness objects |
+| `MULLU_CAPABILITY_WORKER_URL` | unset | Restricted worker endpoint for dangerous capability execution, for example `http://capability-worker:8010/capability/execute` |
+| `MULLU_CAPABILITY_WORKER_SECRET` | unset | HMAC secret shared by gateway and restricted capability worker |
+| `MULLU_CAPABILITY_WORKER_TIMEOUT_SECONDS` | `10.0` | HTTP timeout for restricted capability worker calls |
 
 ## Quick Start
 
@@ -91,6 +96,50 @@ For one bounded pass, useful in smoke tests:
 python -m gateway.worker --once --batch-size 5
 ```
 
+### Restricted Capability Worker
+
+Dangerous capabilities such as payment mutation must not execute inside the
+gateway process in `pilot` or `production`. Run the restricted worker as a
+separate process and point the gateway and gateway worker at it:
+
+```bash
+export MULLU_CAPABILITY_WORKER_SECRET="$(openssl rand -hex 32)"
+export MULLU_CAPABILITY_WORKER_URL="http://localhost:8010/capability/execute"
+python -m uvicorn gateway.capability_worker:app --host 0.0.0.0 --port 8010
+```
+
+Then validate the gateway deployment profile:
+
+```bash
+python scripts/validate_gateway_deployment_env.py --strict
+```
+
+After gateway and capability worker are running, run the runtime smoke probe:
+
+```bash
+export MULLU_GATEWAY_URL="http://localhost:8001"
+export MULLU_CAPABILITY_WORKER_URL="http://localhost:8010/capability/execute"
+python scripts/gateway_runtime_smoke.py
+```
+
+The probe checks:
+
+1. Gateway `/health`.
+2. Gateway `/gateway/witness`.
+3. Capability worker `/health`.
+4. Signed `/capability/execute` request and signed worker response.
+
+For local smoke testing without real payment credentials, the restricted worker
+supports an explicit local/test-only stub:
+
+```bash
+export MULLU_ENV=local_dev
+export MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB=1
+```
+
+Do not enable `MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB` in `pilot` or
+`production`.
+
 ### Production Checklist
 
 1. Set `MULLU_ENV=production`
@@ -107,6 +156,11 @@ python -m gateway.worker --once --batch-size 5
 12. Set `MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY=true` so gateway startup fails closed if identity storage is unavailable
 13. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
 14. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
+15. Set `MULLU_RUNTIME_WITNESS_SECRET` so `/gateway/witness` and `/runtime/witness` are signed
+16. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
+17. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
+18. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
+19. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
 
 ## Startup Behavior
 
@@ -118,10 +172,12 @@ On startup, the platform:
 4. Fails closed if production PostgreSQL starts without field encryption enabled
 5. Fails closed if pilot/production gateway identity storage is not persistent and available
 6. Fails closed if pilot/production `gateway.worker` lacks command anchor signing material
-7. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
-8. Registers all subsystems into the dependency container
-9. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
-10. Applies profile-aware API auth defaults to `/api/*` routes
+7. Fails dangerous capability execution closed if the restricted capability worker is not configured
+8. Publishes signed runtime witness state at `/gateway/witness` and `/runtime/witness`
+9. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
+10. Registers all subsystems into the dependency container
+11. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
+12. Applies profile-aware API auth defaults to `/api/*` routes
 
 On shutdown:
 

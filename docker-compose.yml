@@ -98,6 +98,9 @@ services:
       MULLU_TENANT_IDENTITY_BACKEND: postgresql
       MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"
       MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"
+      MULLU_RUNTIME_WITNESS_SECRET: "${MULLU_RUNTIME_WITNESS_SECRET:-}"
+      MULLU_CAPABILITY_WORKER_URL: "http://capability-worker:8010/capability/execute"
+      MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:-}"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
       # Channel credentials (set in .env):
@@ -113,10 +116,43 @@ services:
     depends_on:
       mullu:
         condition: service_healthy
+      capability-worker:
+        condition: service_healthy
     networks:
       - mullu-net
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Capability Worker - restricted dangerous-capability execution plane
+  capability-worker:
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.capability_worker:app", "--host", "0.0.0.0", "--port", "8010"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DB_BACKEND: postgresql
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:?Set MULLU_CAPABILITY_WORKER_SECRET in .env}"
+      MULLU_LLM_BACKEND: stub
+      MULLU_PII_SCAN: "true"
+      # Provider credentials for dangerous capabilities belong here, not in gateway:
+      # STRIPE_API_KEY: ""
+      # PAYMENT_PROVIDER_API_KEY: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8010/health"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -145,6 +181,9 @@ services:
       MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"
       MULLU_COMMAND_ANCHOR_SECRET: "${MULLU_COMMAND_ANCHOR_SECRET:-}"
       MULLU_REQUIRE_COMMAND_ANCHOR: "true"
+      MULLU_RUNTIME_WITNESS_SECRET: "${MULLU_RUNTIME_WITNESS_SECRET:-}"
+      MULLU_CAPABILITY_WORKER_URL: "http://capability-worker:8010/capability/execute"
+      MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:-}"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
       # Channel credentials are needed only if worker sends final responses through adapters:
@@ -159,6 +198,8 @@ services:
       # DISCORD_PUBLIC_KEY: ""
     depends_on:
       postgres:
+        condition: service_healthy
+      capability-worker:
         condition: service_healthy
     networks:
       - mullu-net

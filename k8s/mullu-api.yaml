@@ -22,6 +22,8 @@ data:
   MULLU_GATEWAY_WORKER_POLL_SECONDS: "2.0"
   MULLU_COMMAND_ANCHOR_KEY_ID: "k8s-command-anchor"
   MULLU_REQUIRE_COMMAND_ANCHOR: "true"
+  MULLU_RUNTIME_WITNESS_KEY_ID: "k8s-runtime-witness"
+  MULLU_CAPABILITY_WORKER_URL: "http://mullu-capability-worker.mullu.svc.cluster.local/capability/execute"
   MULLU_JWT_ISSUER: "mullu"
   MULLU_JWT_AUDIENCE: "mullu-api"
 ---
@@ -38,6 +40,8 @@ stringData:
   MULLU_JWT_SECRET: ""  # base64-encoded 32-byte key — set via kubectl create secret
   MULLU_ENCRYPTION_KEY: ""  # base64-encoded 32-byte AES key — set via kubectl create secret
   MULLU_COMMAND_ANCHOR_SECRET: ""  # HMAC secret for command event anchor signatures
+  MULLU_RUNTIME_WITNESS_SECRET: ""  # HMAC secret for runtime witness signatures
+  MULLU_CAPABILITY_WORKER_SECRET: ""  # HMAC secret shared by gateway and capability worker
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -247,6 +251,68 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+---
+# Restricted Capability Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mullu-capability-worker
+  namespace: mullu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mullu-capability-worker
+  template:
+    metadata:
+      labels:
+        app: mullu-capability-worker
+        governed: "true"
+        execution-plane: "restricted-capability"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: mullu-capability-worker
+          image: mullu-control-plane:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          command: ["python", "-m", "uvicorn", "gateway.capability_worker:app", "--host", "0.0.0.0", "--port", "8010"]
+          ports:
+            - containerPort: 8010
+          envFrom:
+            - configMapRef:
+                name: mullu-config
+            - secretRef:
+                name: mullu-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8010
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mullu-capability-worker
+  namespace: mullu
+spec:
+  selector:
+    app: mullu-capability-worker
+  ports:
+    - port: 80
+      targetPort: 8010
+  type: ClusterIP
 ---
 # Network Policy (restrict inter-pod traffic)
 apiVersion: networking.k8s.io/v1

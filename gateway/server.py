@@ -21,6 +21,7 @@ from gateway.channels.slack import SlackAdapter
 from gateway.channels.telegram import TelegramAdapter
 from gateway.channels.web import WebChatAdapter
 from gateway.channels.whatsapp import WhatsAppAdapter
+from gateway.capability_isolation import build_isolated_capability_executor_from_env
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.event_log import WebhookEventLog
 from gateway.router import GatewayRouter
@@ -74,12 +75,15 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     command_ledger = build_command_ledger_from_env(clock=_clock)
     tenant_identity_store = build_tenant_identity_store_from_env(clock=_clock)
     skill_dispatcher = build_skill_dispatcher_from_platform(platform)
+    isolated_capability_executor = build_isolated_capability_executor_from_env()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,
         tenant_identity_store=tenant_identity_store,
         skill_dispatcher=skill_dispatcher,
         defer_approved_execution=defer_approved_execution,
+        environment=gateway_env,
+        isolated_capability_executor=isolated_capability_executor,
     )
     session_mgr = SessionManager()
 
@@ -401,6 +405,59 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "router": router.summary(),
             "sessions": session_mgr.summary(),
             "governed": True,
+        }
+
+    @app.get("/gateway/witness")
+    def gateway_witness():
+        return router.runtime_witness(
+            environment=gateway_env,
+            signature_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
+            signing_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
+        )
+
+    @app.get("/runtime/witness")
+    def runtime_witness():
+        return router.runtime_witness(
+            environment=gateway_env,
+            signature_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
+            signing_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
+        )
+
+    @app.get("/commands/{command_id}/closure")
+    def command_closure(command_id: str):
+        certificate = command_ledger.terminal_certificate_for(command_id)
+        if certificate is None:
+            raise HTTPException(404, detail="terminal closure certificate not found")
+        return {
+            "command_id": command_id,
+            "terminal_certificate": certificate,
+            "events": [
+                {
+                    "event_id": event.event_id,
+                    "previous_state": event.previous_state.value,
+                    "next_state": event.next_state.value,
+                    "event_hash": event.event_hash,
+                    "timestamp": event.timestamp,
+                }
+                for event in command_ledger.events_for(command_id)
+            ],
+        }
+
+    @app.get("/anchors/latest")
+    def latest_anchor():
+        anchors = command_ledger.list_anchors(limit=1)
+        if not anchors:
+            raise HTTPException(404, detail="anchor not found")
+        anchor = anchors[0]
+        return {
+            "anchor_id": anchor.anchor_id,
+            "from_event_hash": anchor.from_event_hash,
+            "to_event_hash": anchor.to_event_hash,
+            "event_count": anchor.event_count,
+            "merkle_root": anchor.merkle_root,
+            "signature": f"hmac-sha256:{anchor.signature}",
+            "signature_key_id": anchor.signature_key_id,
+            "anchored_at": anchor.anchored_at,
         }
 
     # Store references for testing

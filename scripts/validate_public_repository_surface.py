@@ -76,6 +76,8 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "**Deployment witness state:** `not-published`",
     "**Public production health endpoint:** `not-declared`",
     "No governed production endpoint is declared in this repository",
+    "python scripts/validate_gateway_deployment_env.py --strict",
+    "python scripts/gateway_runtime_smoke.py",
     "python scripts/validate_public_repository_surface.py",
 )
 
