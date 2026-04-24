@@ -6,6 +6,7 @@ Invariants: canonical shared contracts are adopted without reinterpretation.
 
 from .capability import CapabilityDescriptor
 from .connector import ConnectorDescriptor, ConnectorResult, ConnectorStatus
+from .connector_effects import ConnectorInvocationReceipt
 from .coordination import (
     ConflictRecord,
     ConflictStrategy,
@@ -29,6 +30,8 @@ from .effect_assurance import (
 )
 from .evidence import EvidenceRecord
 from .execution import AcceptedRiskState, EffectRecord, ExecutionClosure, ExecutionOutcome, ExecutionResult
+from .file_effects import FileEffectOperation, FileWriteReceipt
+from .shell_execution import ShellExecutionReceipt
 from .function import (
     CommunicationStyle,
     FunctionMetricsSnapshot,
@@ -488,6 +491,7 @@ from .communication_surface import (
     OutboundMessage,
     TranscriptSegment,
 )
+from .communication_effects import CommunicationDeliveryReceipt
 from .memory_mesh import (
     ConflictResolutionState,
     DecayMode,
@@ -1933,6 +1937,7 @@ __all__ = [
     "AcceptedRiskState",
     "CapabilityDescriptor",
     "ConnectorDescriptor",
+    "ConnectorInvocationReceipt",
     "ConnectorResult",
     "ConnectorStatus",
     "ConflictRecord",
@@ -1956,7 +1961,11 @@ __all__ = [
     "ExecutionClosure",
     "ExecutionOutcome",
     "ExecutionResult",
+    "FileEffectOperation",
+    "FileWriteReceipt",
+    "ShellExecutionReceipt",
     "CommunicationStyle",
+    "CommunicationDeliveryReceipt",
     "FunctionMetricsSnapshot",
     "FunctionOutcomeRecord",
     "FunctionPolicyBinding",
@@ -1978,6 +1987,8 @@ __all__ = [
     "PauseReason",
     "SlaStatus",
     "WorkQueueEntry",
+    "HashChainEntry",
+    "HashChainValidationResult",
     "CausalLineage",
     "CausalPath",
     "DecisionLink",
@@ -2061,6 +2072,19 @@ __all__ = [
     "StateReference",
     "TemplateReference",
     "TraceEntry",
+    "TransitionVerdict",
+    "TransitionRule",
+    "StateMachineSpec",
+    "TransitionAuditRecord",
+    "JournalEntry",
+    "JournalEntryKind",
+    "CheckpointScope",
+    "SubsystemSnapshot",
+    "CompositeCheckpoint",
+    "RestoreVerdict",
+    "RestoreVerification",
+    "JournalValidationVerdict",
+    "JournalValidationResult",
     "TransitionReceipt",
     "TransitionRecord",
     "VerificationCheck",

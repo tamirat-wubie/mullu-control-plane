@@ -78,6 +78,11 @@ def test_file_communication_delivers(tmp_path: Path) -> None:
 
     assert result.status is DeliveryStatus.DELIVERED
     assert result.message_id == "msg-1"
+    receipt = result.metadata["file_write_receipt"]
+    assert receipt["operation"] == "write"
+    assert receipt["bytes_written"] > 0
+    assert receipt["atomic_replace"] is True
+    assert receipt["evidence_ref"].startswith("file-write:msg-1:")
 
     # Verify file exists with message content
     file_path = tmp_path / "outbox" / "msg-1.json"
@@ -85,6 +90,9 @@ def test_file_communication_delivers(tmp_path: Path) -> None:
     content = json.loads(file_path.read_text(encoding="utf-8"))
     assert content["message_id"] == "msg-1"
     assert content["channel"] == "approval"
+    assert receipt["content_hash"]
+    assert receipt["target_path_hash"]
+    assert result.metadata["file_path"] == str(file_path)
 
 
 def test_file_communication_multiple_messages(tmp_path: Path) -> None:

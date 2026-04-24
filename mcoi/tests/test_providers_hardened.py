@@ -8,14 +8,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import smtplib
 import sys
 
 import pytest
 
 from mcoi_runtime.adapters.http_connector import HttpConnector, HttpConnectorConfig, _normalize_url
-from mcoi_runtime.adapters.smtp_communication import SmtpConfig
+from mcoi_runtime.adapters.smtp_communication import SmtpCommunicationAdapter, SmtpConfig
+from mcoi_runtime.contracts.communication import CommunicationChannel, CommunicationMessage, DeliveryStatus
 from mcoi_runtime.adapters.process_model import ProcessModelAdapter, ProcessModelConfig
-from mcoi_runtime.adapters.stub_model import StubModelAdapter
 from mcoi_runtime.contracts.integration import (
     ConnectorDescriptor,
     ConnectorStatus,
@@ -91,6 +92,87 @@ def test_smtp_config_rejects_bad_port() -> None:
 def test_smtp_config_rejects_empty_host() -> None:
     with pytest.raises((ValueError, RuntimeError), match="must be a non-empty string"):
         SmtpConfig(host="", port=587, sender_email="a@b.com")
+
+
+def _message() -> CommunicationMessage:
+    return CommunicationMessage(
+        message_id="msg-smtp-1",
+        sender_id="agent-1",
+        recipient_id="operator@example.com",
+        channel=CommunicationChannel.NOTIFICATION,
+        message_type="status_update",
+        payload={"state": "ready"},
+        correlation_id="corr-1",
+        created_at=_CLOCK,
+    )
+
+
+class _FakeSmtp:
+    sent_messages: list[object] = []
+    starttls_called = False
+
+    def __init__(self, host: str, port: int, timeout: int) -> None:
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+
+    def __enter__(self) -> "_FakeSmtp":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        return None
+
+    def starttls(self) -> None:
+        type(self).starttls_called = True
+
+    def login(self, username: str, password: str) -> None:
+        assert username
+        assert password
+
+    def send_message(self, email: object) -> None:
+        type(self).sent_messages.append(email)
+
+
+def test_smtp_delivery_emits_bounded_receipt(monkeypatch: pytest.MonkeyPatch) -> None:
+    _FakeSmtp.sent_messages = []
+    _FakeSmtp.starttls_called = False
+    monkeypatch.setattr(smtplib, "SMTP", _FakeSmtp)
+    adapter = SmtpCommunicationAdapter(
+        config=SmtpConfig(host="smtp.test.com", port=587, sender_email="agent@test.com"),
+        clock=lambda: _CLOCK,
+    )
+
+    result = adapter.deliver(_message())
+    receipt = result.metadata["delivery_receipt"]
+
+    assert result.status is DeliveryStatus.DELIVERED
+    assert _FakeSmtp.starttls_called is True
+    assert len(_FakeSmtp.sent_messages) == 1
+    assert receipt["provider"] == "smtp"
+    assert receipt["status"] == "delivered"
+    assert receipt["recipient_hash"] != "operator@example.com"
+    assert "ready" not in receipt["body_hash"]
+
+
+def test_smtp_failure_emits_failed_receipt(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FailingSmtp(_FakeSmtp):
+        def send_message(self, email: object) -> None:
+            raise smtplib.SMTPException("provider detail")
+
+    monkeypatch.setattr(smtplib, "SMTP", FailingSmtp)
+    adapter = SmtpCommunicationAdapter(
+        config=SmtpConfig(host="smtp.test.com", port=587, sender_email="agent@test.com"),
+        clock=lambda: _CLOCK,
+    )
+
+    result = adapter.deliver(_message())
+    receipt = result.metadata["delivery_receipt"]
+
+    assert result.status is DeliveryStatus.FAILED
+    assert result.error_code == "smtp_error:SMTPException"
+    assert receipt["status"] == "failed"
+    assert receipt["error_code"] == "smtp_error:SMTPException"
+    assert "provider detail" not in str(receipt)
 
 
 # --- Process Model ---
