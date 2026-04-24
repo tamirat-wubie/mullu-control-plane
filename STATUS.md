@@ -12,15 +12,15 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 **Last audited:** 2026-04-24
 **Repository:** `tamirat-wubie/mullu-control-plane`
 **Default branch:** `main`
-**Audited head:** `9cf46e4c9d63ceeeb8fe726bc137ba16710e0a7d`
-**Audited head subject:** `fix(multi-agent): witness engine failure classes (#304)`
+**Audited head:** `3cb270ba5d08c199c9ecf21348cd1ffaca79f84e`
+**Audited head subject:** `docs: add repository status witness (#306)`
 
 ## Reflection Summary
 
 | Surface | Witness | Status |
 |---|---|---|
 | Branch witness | GitHub `main` and local `origin/main` at audited head | Reflected |
-| Release witness | GitHub latest release points to `v3.10.3`; release docs declare `0.4.0 (v3.13.0)` | Divergent |
+| Release witness | GitHub latest release points to `v3.13.0`; release docs declare `0.4.0 (v3.13.0)` | Reflected |
 | CI witness | `.github/workflows/ci.yml` contains Python, Rust, schema, artifact, release-status, and change-assurance gates | Reflected |
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
 | Operational witness | Runtime deployment, live health, and production readiness are not exposed on the repository landing page | Not reflected |
@@ -39,10 +39,9 @@ The GitHub page is sufficient only when these anchors are present and current:
 
 | Gap | Cause | Required closure |
 |---|---|---|
-| Release tag divergence | GitHub latest release is older than current release metadata | Publish or reconcile a release matching the governed release docs |
 | Deployment status absent | GitHub repository page has no live environment health witness | Add deployment badges or a deployment status document once live environments are governed |
 | Test-count claim not machine-derived | README states test volume as a human-maintained claim | Derive test inventory from CI or a generated manifest |
-| Repository About metadata external to git | GitHub description/topics are not versioned in this repository | Mirror required About metadata in a governed document or automate GitHub metadata checks |
+| Repository About metadata external to git | GitHub description/topics are not versioned in this repository | Keep the mirrored claim in this witness and automate GitHub metadata checks |
 
 ## Proof Chain
 
