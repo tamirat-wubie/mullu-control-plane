@@ -187,6 +187,12 @@ Effect-bearing commands can be capped with a final certificate that names exactl
 one disposition: committed, compensated, accepted risk, or requires review. See
 `docs/37_terminal_closure_certificate.md`.
 
+### Closure Learning Admission
+
+Terminal closure certificates and episodic closure memory now pass through an
+explicit learning admission gate before they can be used as semantic or
+procedural planning knowledge. See `docs/38_closure_learning_admission.md`.
+
 ## Deployment
 
 ```bash
