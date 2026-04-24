@@ -51,6 +51,23 @@ class TestMultiAgentErrorContracts:
         assert data["governed"] is True
         assert "not-a-status" not in str(resp.json())
 
+    def test_missing_delegation_resolution_has_bounded_failure_class(self, client):
+        resp = client.post(
+            "/api/v1/multi-agent/delegate/resolve",
+            json={
+                "delegation_id": "secret-missing-delegation",
+                "status": "accepted",
+                "reason": "x",
+            },
+        )
+        assert resp.status_code == 400
+        data = resp.json()["detail"]
+        assert data["error"] == "resolution failed"
+        assert data["error_code"] == "resolution_error"
+        assert data["failure_class"] == "RuntimeCoreInvariantError"
+        assert data["governed"] is True
+        assert "secret-missing-delegation" not in str(resp.json())
+
     def test_invalid_merge_outcome_is_bounded(self, client):
         resp = client.post(
             "/api/v1/multi-agent/merge",
