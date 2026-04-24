@@ -69,6 +69,20 @@ def test_validate_status_document_text_rejects_missing_public_anchors() -> None:
     assert "python scripts/validate_release_status.py --strict" in errors[0]
 
 
+def test_validate_public_surface_document_texts_rejects_missing_anchor() -> None:
+    errors = validate_release_status.validate_public_surface_document_texts(
+        {
+            "GITHUB_SURFACE.md": "# GitHub Surface Witness\n",
+            "DEPLOYMENT_STATUS.md": "# Deployment Status Witness\n",
+        }
+    )
+
+    assert len(errors) == 2
+    assert any("GITHUB_SURFACE.md missing required public-surface anchors" in error for error in errors)
+    assert any("DEPLOYMENT_STATUS.md missing required public-surface anchors" in error for error in errors)
+    assert any("symbolic intelligence" in error for error in errors)
+
+
 def test_validate_release_metadata_texts_rejects_mismatch() -> None:
     (_, _), errors = validate_release_status.validate_release_metadata_texts(
         {

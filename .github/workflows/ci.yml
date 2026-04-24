@@ -101,6 +101,9 @@ jobs:
       - name: Validate shipped artifacts
         run: python scripts/validate_artifacts.py
 
+      - name: Validate public repository surface
+        run: python scripts/validate_public_repository_surface.py
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
 
@@ -152,6 +155,9 @@ jobs:
 
       - name: Release status check
         run: python scripts/validate_release_status.py --strict
+
+      - name: Public repository surface check
+        run: python scripts/validate_public_repository_surface.py --local-only
 
       - name: Governed evolution certification
         run: python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md

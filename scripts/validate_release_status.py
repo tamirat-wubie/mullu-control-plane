@@ -36,6 +36,8 @@ from scripts import validate_artifacts, validate_schemas  # noqa: E402
 REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
     "README.md",
     "STATUS.md",
+    "GITHUB_SURFACE.md",
+    "DEPLOYMENT_STATUS.md",
     "RELEASE_NOTES_v0.1.md",
     "RELEASE_CHECKLIST_v0.1.md",
     "KNOWN_LIMITATIONS_v0.1.md",
@@ -59,6 +61,8 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_artifacts.py",
     "python scripts/validate_schemas.py --strict",
     "python scripts/validate_artifacts.py --strict",
+    "python scripts/validate_public_repository_surface.py",
+    "python scripts/validate_public_repository_surface.py --local-only",
     "python scripts/validate_release_status.py",
     "python scripts/validate_release_status.py --strict",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
@@ -77,9 +81,28 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "CI witness",
     "Governance witness",
     "Known Reflection Gaps",
+    "GITHUB_SURFACE.md",
+    "DEPLOYMENT_STATUS.md",
     "python scripts/validate_release_status.py --strict",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
+
+PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
+    "GITHUB_SURFACE.md": (
+        "GitHub Surface Witness",
+        "Governed symbolic intelligence control plane",
+        "v3.13.0",
+        "symbolic-intelligence",
+        "python scripts/validate_public_repository_surface.py",
+    ),
+    "DEPLOYMENT_STATUS.md": (
+        "Deployment Status Witness",
+        "**Deployment witness state:** `not-published`",
+        "**Public production health endpoint:** `not-declared`",
+        "No governed production endpoint is declared in this repository",
+        "python scripts/validate_public_repository_surface.py",
+    ),
+}
 
 ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     "registry_backend_limitation": (
@@ -281,6 +304,26 @@ def validate_status_document_text(content: str) -> list[str]:
     return errors
 
 
+def validate_public_surface_document_texts(
+    document_texts: dict[str, str],
+) -> list[str]:
+    """Validate public-surface witness documents have required local anchors."""
+    errors: list[str] = []
+    for document_name, required_literals in PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS.items():
+        content = document_texts.get(document_name)
+        if content is None:
+            errors.append(f"{document_name} missing from public-surface documents")
+            continue
+        missing_literals = tuple(
+            literal for literal in required_literals if literal not in content
+        )
+        if missing_literals:
+            errors.append(
+                f"{document_name} missing required public-surface anchors: {list(missing_literals)}"
+            )
+    return errors
+
+
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for pattern in SOURCE_HYGIENE_GLOBS:
@@ -343,6 +386,13 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     if status_document_path.exists():
         status_content = status_document_path.read_text(encoding="utf-8")
         errors.extend(validate_status_document_text(status_content))
+
+    public_surface_texts = {
+        document_name: (REPO_ROOT / document_name).read_text(encoding="utf-8")
+        for document_name in PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS
+        if (REPO_ROOT / document_name).exists()
+    }
+    errors.extend(validate_public_surface_document_texts(public_surface_texts))
 
     metadata_texts = {
         document_name: (REPO_ROOT / document_name).read_text(encoding="utf-8")
