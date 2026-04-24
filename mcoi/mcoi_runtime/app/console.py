@@ -173,6 +173,8 @@ def render_skill_summary(view: SkillSummaryView) -> str:
     ]
     if view.failed_step:
         lines.append(f"  failed_step:      {view.failed_step}")
+    if view.lifecycle_transition_warning:
+        lines.append(f"  lifecycle_warning: {view.lifecycle_transition_warning}")
     if view.structured_errors:
         lines.append(f"  errors ({len(view.structured_errors)}):")
         for err in view.structured_errors:

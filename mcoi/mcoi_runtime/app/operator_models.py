@@ -124,6 +124,7 @@ class SkillRunReport:
     status: SkillOutcomeStatus
     completed: bool
     structured_errors: tuple[StructuredError, ...] = ()
+    lifecycle_transition_warning: str = ""
 
     @property
     def succeeded(self) -> bool:
