@@ -529,6 +529,48 @@ class TestPostgresBaseWarnings:
         assert "RuntimeError" in warnings[0]
         assert "query-secret" not in warnings[0]
 
+    def test_close_bounds_warning(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_governance_stores as pg
+
+        warnings: list[str] = []
+
+        class BrokenConn:
+            def close(self) -> None:
+                raise RuntimeError("postgres://secret-close")
+
+        class DummyStore(pg._PostgresBase):
+            pass
+
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        store = DummyStore()
+        store._conn = BrokenConn()
+
+        store.close()
+
+        assert store._conn is None
+        assert warnings
+        assert "RuntimeError" in warnings[0]
+        assert "secret-close" not in warnings[0]
+
+    def test_bundle_close_bounds_warning(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_governance_stores as pg
+
+        warnings: list[str] = []
+
+        class BrokenStore:
+            def close(self) -> None:
+                raise RuntimeError("postgres://secret-bundle-close")
+
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        bundle = pg.GovernanceStoreBundle({"broken": BrokenStore()})
+        bundle.close()
+
+        assert warnings
+        assert "RuntimeError" in warnings[0]
+        assert "secret-bundle-close" not in warnings[0]
+
 
 # ═══ Schema Definitions ═══
 
