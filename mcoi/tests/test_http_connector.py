@@ -6,8 +6,7 @@ method allowlisting, and status code mapping.
 
 from __future__ import annotations
 
-import urllib.error
-import urllib.request
+import unittest.mock as mock
 
 import pytest
 
@@ -140,18 +139,24 @@ class TestHttpConnectorInvoke:
         result = connector.invoke(_make_descriptor(), {"url": ""})
         assert result.status is ConnectorStatus.FAILED
         assert result.error_code == "missing_url"
+        receipt = result.metadata["connector_receipt"]
+        assert receipt["status"] == "failed"
+        assert receipt["error_code"] == "missing_url"
+        assert receipt["evidence_ref"].startswith("connector-invocation:conn-test:")
 
     def test_disallowed_method_returns_failure(self) -> None:
         connector = HttpConnector(clock=_clock, config=HttpConnectorConfig(allowed_methods=("GET",)))
         result = connector.invoke(_make_descriptor(), {"url": "https://example.com", "method": "POST"})
         assert result.status is ConnectorStatus.FAILED
         assert "method_not_allowed" in (result.error_code or "")
+        assert result.metadata["connector_receipt"]["method"] == "POST"
 
     def test_private_host_blocked(self) -> None:
         connector = HttpConnector(clock=_clock)
         result = connector.invoke(_make_descriptor(), {"url": "https://127.0.0.1/secret"})
         assert result.status is ConnectorStatus.FAILED
         assert result.error_code == "blocked_private_address"
+        assert result.metadata["connector_receipt"]["response_digest"] == "none"
 
     def test_private_host_metadata_blocked(self) -> None:
         connector = HttpConnector(clock=_clock)
@@ -173,6 +178,7 @@ class TestHttpConnectorInvoke:
         )
         assert result.status is ConnectorStatus.FAILED
         assert result.error_code == "timeout"
+        assert result.metadata["connector_receipt"]["error_code"] == "timeout"
 
         # Separately verify ConnectorResult accepts TIMEOUT status
         timeout_result = ConnectorResult(
@@ -214,3 +220,26 @@ class TestHttpConnectorInvoke:
     def test_config_rejects_negative_max_bytes(self) -> None:
         with pytest.raises(ValueError, match="max_response_bytes must be positive"):
             HttpConnectorConfig(max_response_bytes=-1)
+
+    def test_success_result_emits_connector_receipt(self) -> None:
+        connector = HttpConnector(clock=_clock)
+
+        fake_response = mock.MagicMock()
+        fake_response.status = 200
+        fake_response.headers = {"Content-Type": "text/plain"}
+        fake_response.read.side_effect = [b"ok", b""]
+        fake_response.__enter__ = lambda s: s
+        fake_response.__exit__ = mock.MagicMock(return_value=False)
+
+        with (
+            mock.patch("mcoi_runtime.adapters.http_connector._is_private_host", return_value=False),
+            mock.patch.object(connector._opener, "open", return_value=fake_response),
+        ):
+            result = connector.invoke(_make_descriptor(), {"url": "https://example.com/ok"})
+
+        receipt = result.metadata["connector_receipt"]
+        assert result.status is ConnectorStatus.SUCCEEDED
+        assert receipt["status"] == "succeeded"
+        assert receipt["status_code"] == 200
+        assert receipt["response_digest"] == result.response_digest
+        assert receipt["url_hash"] != "https://example.com/ok"
