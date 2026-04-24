@@ -79,6 +79,7 @@ class GovernedPaymentExecutor:
         self._clock = clock
         self._on_approval_needed = on_approval_needed  # callback(tx_id, tenant_id, amount, currency)
         self._tx_counter = 0
+        self._approval_notification_failures = 0
 
     def initiate_payment(
         self,
@@ -148,17 +149,24 @@ class GovernedPaymentExecutor:
         self._ledger.advance(tx_id, TxState.PENDING_APPROVAL, reason="requires human approval", actor_id=actor_id, timestamp=now)
 
         # Notify external approval system (e.g., gateway ApprovalRouter)
+        approval_notification_failed = False
         if self._on_approval_needed is not None:
             try:
                 self._on_approval_needed(tx_id, tenant_id, str(amount), currency)
             except Exception:
-                pass  # Approval notification must not block
+                self._approval_notification_failures += 1
+                approval_notification_failed = True
 
         return GovernedPaymentResult(
             success=True, tx_id=tx_id, state=TxState.PENDING_APPROVAL.value,
             amount=str(amount), currency=currency,
             requires_approval=True,
+            metadata={"approval_notification_failed": approval_notification_failed},
         )
+
+    @property
+    def approval_notification_failures(self) -> int:
+        return self._approval_notification_failures
 
     def approve_and_execute(
         self,
