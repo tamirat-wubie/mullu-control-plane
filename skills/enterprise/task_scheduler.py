@@ -115,7 +115,9 @@ class TaskScheduler:
         """Persist current task definitions to store."""
         if self._store is not None:
             try:
-                self._store.save_tasks(list(self._tasks.values()))
+                saved = self._store.save_tasks(list(self._tasks.values()))
+                if saved is False:
+                    self._store_task_save_failures += 1
             except Exception:
                 self._store_task_save_failures += 1
 
@@ -123,7 +125,9 @@ class TaskScheduler:
         """Persist execution history to store."""
         if self._store is not None:
             try:
-                self._store.save_executions(self._executions)
+                saved = self._store.save_executions(self._executions)
+                if saved is False:
+                    self._store_execution_save_failures += 1
             except Exception:
                 self._store_execution_save_failures += 1
 

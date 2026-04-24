@@ -258,6 +258,19 @@ class TestSchedulerStoreIntegration:
         assert summary["store_task_save_failures"] == 0
         assert summary["store_execution_save_failures"] == 0
 
+    def test_false_store_save_result_counted_and_non_fatal(self):
+        """False store writes are visible but do not block scheduling."""
+        sched = TaskScheduler(clock=lambda: "2026-04-07T12:00:00Z", store=TaskStore())
+        task = sched.register_task(tenant_id="t1", name="job", action="run")
+        execution = sched.execute_task(task.task_id)
+        summary = sched.summary()
+        assert execution.status == TaskStatus.COMPLETED
+        assert sched.task_count == 1
+        assert sched.execution_count == 1
+        assert sched.store_load_failures == 0
+        assert summary["store_task_save_failures"] == 2
+        assert summary["store_execution_save_failures"] == 1
+
 
 # ── Base TaskStore ─────────────────────────────────────────────
 
