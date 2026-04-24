@@ -126,6 +126,8 @@ jobs:
     needs: [python-tests, rust-tests, schema-validation, reflective-contract-guard]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.13
         uses: actions/setup-python@v5
@@ -151,6 +153,9 @@ jobs:
       - name: Release status check
         run: python scripts/validate_release_status.py --strict
 
+      - name: Governed evolution certification
+        run: python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md
+
       - name: Print summary
         run: |
           echo "=== Build Verification Summary ==="
@@ -159,4 +164,5 @@ jobs:
           echo "Schemas: OK"
           echo "Artifacts: OK"
           echo "Release status: OK"
+          echo "Change assurance: OK"
           echo "=================================="

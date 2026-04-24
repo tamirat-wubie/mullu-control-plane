@@ -147,6 +147,20 @@ mullu-control-plane/
 └── docker-compose.yml      # 3-service deployment (postgres + API + gateway)
 ```
 
+### Governed Evolution
+
+System changes are certified before production use:
+
+```bash
+python scripts/certify_change.py --base HEAD --head current --strict --approval-id local-approval --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md
+```
+
+The command emits `.change_assurance/change_command.json`,
+`.change_assurance/blast_radius.json`, `.change_assurance/invariant_report.json`,
+`.change_assurance/replay_report.json`, and
+`.change_assurance/release_certificate.json`. See
+`docs/33_governed_evolution.md`.
+
 ## Deployment
 
 ```bash

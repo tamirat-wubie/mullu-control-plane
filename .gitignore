@@ -52,3 +52,4 @@ maf/rust/Cargo.lock
 *.swp
 *.swo
 *.bak
+.change_assurance/
