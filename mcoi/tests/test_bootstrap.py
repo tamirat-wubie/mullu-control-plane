@@ -55,6 +55,30 @@ def test_bootstrap_runtime_wires_effect_assurance_when_required() -> None:
     assert runtime.config.effect_assurance_required is True
 
 
+def test_bootstrap_runtime_wires_shell_sandbox_policy_when_configured(tmp_path: Path) -> None:
+    runtime = bootstrap_runtime(
+        config=AppConfig(
+            shell_sandbox_enabled=True,
+            shell_sandbox_id="runtime-sandbox",
+            shell_allowed_cwd_roots=(str(tmp_path),),
+            shell_allowed_environment_keys=("MULLU_TRACE_ID",),
+            shell_allow_inherited_environment=False,
+            shell_require_cwd=True,
+        ),
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+    )
+
+    executor = runtime.executors["shell_command"]
+
+    assert isinstance(executor, ShellExecutor)
+    assert executor.sandbox_policy is not None
+    assert executor.sandbox_policy.sandbox_id == "runtime-sandbox"
+    assert executor.sandbox_policy.allowed_cwd_roots == (str(tmp_path),)
+    assert executor.sandbox_policy.allowed_environment_keys == ("MULLU_TRACE_ID",)
+    assert executor.sandbox_policy.allow_inherited_environment is False
+    assert executor.sandbox_policy.require_cwd is True
+
+
 def test_bootstrap_runtime_respects_explicit_adapter_overrides() -> None:
     class FakeExecutor:
         def execute(self, request):  # pragma: no cover - execution is not allowed in bootstrap
