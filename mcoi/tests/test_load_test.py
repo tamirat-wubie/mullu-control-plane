@@ -1,8 +1,9 @@
 """Load Testing Framework Tests."""
 
+import time
+
 import pytest
 from mcoi_runtime.core.load_test import (
-    BenchmarkResult,
     LoadTestSuite,
     run_benchmark,
     run_concurrent_benchmark,
@@ -72,6 +73,24 @@ class TestConcurrentBenchmark:
         )
         assert result.error_count == 20
         assert result.error_rate == 1.0
+
+    def test_concurrent_timeout_counts_unfinished_operations(self):
+        def slow():
+            time.sleep(0.2)
+
+        result = run_concurrent_benchmark(
+            "slow_concurrent",
+            slow,
+            iterations=1,
+            concurrency=2,
+            warmup=0,
+            join_timeout_seconds=0.01,
+        )
+
+        assert result.operations == 2
+        assert result.error_count == 2
+        assert result.error_rate == 1.0
+        assert result.throughput_ops == 0
 
 
 class TestPlatformBenchmarks:
