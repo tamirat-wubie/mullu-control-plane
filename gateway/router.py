@@ -240,7 +240,10 @@ class GatewayRouter:
                 governed=True,
                 metadata={"error": "missing_effect_prediction", "command_id": command.command_id},
             )
-        if governed_action.risk_tier == "high" and not self._commands.recovery_plan_for(command.command_id):
+        if (
+            governed_action.risk_tier == "high"
+            and (not governed_action.rollback_plan_hash or not self._commands.recovery_plan_for(command.command_id))
+        ):
             self._error_count += 1
             self._commands.transition(
                 command.command_id,

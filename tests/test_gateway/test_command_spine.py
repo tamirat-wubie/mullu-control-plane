@@ -250,14 +250,15 @@ def test_command_ledger_binds_governed_action_before_policy():
     assert action.intent_hash
     assert reloaded_action == action
     assert current is not None
-    assert current.state == CommandState.EFFECT_PREDICTED
+    assert current.state == CommandState.EFFECT_PLANNED
     assert action.predicted_effect_hash
     assert action.rollback_plan_hash
-    assert [event.next_state for event in events][-4:] == [
+    assert [event.next_state for event in events][-5:] == [
         CommandState.INTENT_COMPILED,
         CommandState.CAPABILITY_BOUND,
         CommandState.GOVERNED_ACTION_BOUND,
         CommandState.EFFECT_PREDICTED,
+        CommandState.EFFECT_PLANNED,
     ]
 
 
@@ -295,7 +296,44 @@ def test_command_ledger_predicts_high_risk_payment_effects():
     assert "payment_provider" in prediction.expected_external_calls
     assert "ledger_hash" in prediction.expected_receipts
     assert "financial.refund" in prediction.rollback_plan
-    assert events[-1].next_state == CommandState.EFFECT_PREDICTED
+    assert events[-1].next_state == CommandState.EFFECT_PLANNED
+    assert events[-1].detail["effect_plan"]["capability_id"] == "financial.send_payment"
+    assert events[-1].detail["effect_plan"]["forbidden_effects"]
+    assert events[-1].detail["effect_plan_hash"]
+
+
+def test_command_ledger_binds_compensation_recovery_plan():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-recovery",
+        intent="financial.send_payment",
+        payload={
+            "body": "make a payment of $50",
+            "skill_intent": {
+                "skill": "financial",
+                "action": "send_payment",
+                "params": {"amount": "50"},
+            },
+        },
+    )
+
+    action = ledger.bind_governed_action(command.command_id)
+    plan = ledger.recovery_plan_for(command.command_id)
+
+    assert action.rollback_plan_hash
+    assert action.state == CommandState.EFFECT_PLANNED
+    assert plan is not None
+    assert plan.recovery_type == "compensatable"
+    assert plan.recovery_capabilities == ("financial.refund",)
+    assert plan.requires_higher_approval is False
+    assert "ledger_hash" in plan.proof_required_fields
 
 
 def test_command_ledger_reconciles_read_only_effect_observation():
@@ -326,6 +364,10 @@ def test_command_ledger_reconciles_read_only_effect_observation():
     assert reconciliation.observed_effect_hash
     assert current is not None
     assert current.state == CommandState.RECONCILED
+    events = ledger.events_for(command.command_id)
+    assert events[-2].detail["observed_effects"]
+    assert events[-1].detail["effect_verification"]["status"] == "pass"
+    assert events[-1].detail["effect_assurance_reconciliation"]["status"] == "match"
 
 
 def test_command_ledger_blocks_mutating_effect_without_required_receipts():
@@ -361,4 +403,8 @@ def test_command_ledger_blocks_mutating_effect_without_required_receipts():
     assert reconciliation.mismatch_reason.startswith("missing_receipts:")
     assert "ledger_hash" in reconciliation.mismatch_reason
     assert current is not None
-    assert current.state == CommandState.DENIED
+    assert current.state == CommandState.REQUIRES_REVIEW
+    events = ledger.events_for(command.command_id)
+    assert events[-1].detail["effect_verification"]["status"] == "fail"
+    assert events[-1].detail["effect_assurance_reconciliation"]["status"] == "mismatch"
+    assert events[-1].detail["effect_assurance_reconciliation"]["case_id"] == f"case-{command.command_id}"

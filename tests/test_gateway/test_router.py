@@ -94,6 +94,42 @@ class MissingPredictionLedger(CommandLedger):
         return stripped
 
 
+class MissingRecoveryLedger(CommandLedger):
+    """Ledger fixture that drops the recovery plan after action binding."""
+
+    def __init__(self):
+        super().__init__(
+            clock=lambda: "2026-04-20T12:00:00+00:00",
+            store=InMemoryCommandLedgerStore(),
+        )
+
+    def bind_governed_action(self, command_id: str) -> GovernedAction:
+        action = super().bind_governed_action(command_id)
+        stripped = GovernedAction(
+            command_id=action.command_id,
+            tenant_id=action.tenant_id,
+            actor_id=action.actor_id,
+            typed_intent=action.typed_intent,
+            intent_schema=action.intent_schema,
+            intent_hash=action.intent_hash,
+            capability=action.capability,
+            capability_version=action.capability_version,
+            capability_passport_hash=action.capability_passport_hash,
+            risk_tier=action.risk_tier,
+            authority_required=action.authority_required,
+            approval_id=action.approval_id,
+            predicted_effect_hash=action.predicted_effect_hash,
+            rollback_plan_hash=None,
+            state=action.state,
+        )
+        self._recovery_plans.pop(command_id, None)
+        self._governed_actions[command_id] = stripped
+        return stripped
+
+    def recovery_plan_for(self, command_id: str):
+        return None
+
+
 # ═══ Tenant Resolution ═══
 
 
@@ -385,6 +421,44 @@ class TestChannelAdapterIntegration:
         ))
 
         assert denied.metadata["error"] == "missing_effect_prediction"
+        assert platform.sessions_opened == 0
+        assert router.pending_approvals == 0
+
+    def test_high_risk_command_without_recovery_plan_requires_review(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+            "2026-04-20T12:00:02+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        platform = StubPlatform(llm_response="should not execute")
+        router = GatewayRouter(
+            platform=platform,
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+            command_ledger=MissingRecoveryLedger(),
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="payer", tenant_id="t1", identity_id="identity-1",
+            roles=("financial_admin",), approval_authority=True,
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="approver", tenant_id="t1", identity_id="identity-2",
+            roles=("financial_admin",), approval_authority=True,
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="payer", body="make a payment of $50",
+        ))
+        review = router.handle_message(GatewayMessage(
+            message_id="m2", channel="test", sender_id="approver",
+            body=f"approve:{pending.metadata['request_id']}",
+        ))
+
+        assert review.metadata["error"] == "missing_recovery_plan"
         assert platform.sessions_opened == 0
         assert router.pending_approvals == 0
 

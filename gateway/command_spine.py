@@ -1132,6 +1132,71 @@ def build_recovery_plan(
     )
 
 
+def build_effect_plan_payload(
+    action: GovernedAction,
+    prediction: EffectPrediction,
+    passport: CapabilityPassport,
+    *,
+    effect_plan_id: str,
+    created_at: str,
+) -> dict[str, Any]:
+    """Build an EffectPlan-compatible JSON payload for command-event anchoring."""
+    expected_effects: list[dict[str, Any]] = []
+    for mutation in prediction.expected_mutations:
+        expected_effects.append({
+            "effect_id": mutation,
+            "name": mutation,
+            "target_ref": mutation,
+            "required": True,
+            "verification_method": "mutation_receipt",
+            "expected_value": None,
+        })
+    for receipt in prediction.expected_receipts:
+        expected_effects.append({
+            "effect_id": receipt,
+            "name": receipt,
+            "target_ref": f"{action.command_id}:receipt:{receipt}",
+            "required": True,
+            "verification_method": "receipt_field",
+            "expected_value": None,
+        })
+    if not expected_effects:
+        expected_effects.append({
+            "effect_id": "response_emitted",
+            "name": "response_emitted",
+            "target_ref": f"command:{action.command_id}",
+            "required": True,
+            "verification_method": "output_hash",
+            "expected_value": None,
+        })
+    forbidden_effects = (
+        "duplicate_dispatch",
+        "unapproved_budget_mutation",
+        "recipient_mismatch",
+        "amount_mismatch",
+    ) if passport.mutates_world else ("unauthorized_state_mutation",)
+    return {
+        "effect_plan_id": effect_plan_id,
+        "command_id": action.command_id,
+        "tenant_id": action.tenant_id,
+        "capability_id": action.capability,
+        "expected_effects": expected_effects,
+        "forbidden_effects": list(forbidden_effects),
+        "rollback_plan_id": passport.rollback_capability or None,
+        "compensation_plan_id": passport.compensation_capability or None,
+        "graph_node_refs": [
+            f"command:{action.command_id}",
+            f"capability:{action.capability}",
+            f"effect_plan:{effect_plan_id}",
+        ],
+        "graph_edge_refs": [
+            "command depends_on capability",
+            "command produced effect_plan",
+        ],
+        "created_at": created_at,
+    }
+
+
 def observe_effects(
     prediction: EffectPrediction,
     *,
@@ -1155,6 +1220,99 @@ def observe_effects(
         actual_external_calls=actual_external_calls,
         actual_receipts=actual_receipts,
     )
+
+
+def build_observed_effect_payloads(observation: EffectObservation, *, observed_at: str) -> list[dict[str, Any]]:
+    """Build ObservedEffect-compatible JSON payloads from a command observation."""
+    effects: list[dict[str, Any]] = []
+    for mutation in observation.actual_mutations:
+        effects.append({
+            "effect_id": mutation,
+            "name": mutation,
+            "source": "command_output",
+            "observed_value": mutation,
+            "evidence_ref": f"mutation:{observation.command_id}:{mutation}",
+            "observed_at": observed_at,
+        })
+    for receipt in observation.actual_receipts:
+        effects.append({
+            "effect_id": receipt,
+            "name": receipt,
+            "source": "command_output",
+            "observed_value": receipt,
+            "evidence_ref": f"receipt:{observation.command_id}:{receipt}",
+            "observed_at": observed_at,
+        })
+    return effects
+
+
+def build_effect_verification_payload(
+    reconciliation: EffectReconciliation,
+    *,
+    verification_id: str,
+    execution_id: str,
+    observed_effects: list[dict[str, Any]],
+    closed_at: str,
+) -> dict[str, Any]:
+    """Build verification-result compatible payload for effect assurance."""
+    status = "pass" if reconciliation.reconciled else "fail"
+    return {
+        "verification_id": verification_id,
+        "execution_id": execution_id,
+        "status": status,
+        "checks": [{
+            "name": "effect_reconciliation",
+            "status": status,
+            "details": {
+                "mismatch_reason": reconciliation.mismatch_reason,
+                "predicted_effect_hash": reconciliation.predicted_effect_hash,
+                "observed_effect_hash": reconciliation.observed_effect_hash,
+            },
+        }],
+        "evidence": [
+            {
+                "description": f"Observed effect {effect['name']}",
+                "uri": str(effect["evidence_ref"]),
+                "details": {
+                    "effect_id": effect["effect_id"],
+                    "source": effect["source"],
+                    "observed_at": effect["observed_at"],
+                },
+            }
+            for effect in observed_effects
+        ] or [{
+            "description": "No observed effects available",
+            "uri": f"command:{execution_id}",
+            "details": {"mismatch_reason": reconciliation.mismatch_reason},
+        }],
+        "closed_at": closed_at,
+        "metadata": {"command_id": reconciliation.command_id},
+        "extensions": {},
+    }
+
+
+def build_effect_assurance_reconciliation_payload(
+    reconciliation: EffectReconciliation,
+    *,
+    reconciliation_id: str,
+    effect_plan_id: str,
+    verification_result_id: str,
+    decided_at: str,
+) -> dict[str, Any]:
+    """Build EffectReconciliation-compatible JSON payload from command reconciliation."""
+    status = "match" if reconciliation.reconciled else "mismatch"
+    return {
+        "reconciliation_id": reconciliation_id,
+        "command_id": reconciliation.command_id,
+        "effect_plan_id": effect_plan_id,
+        "status": status,
+        "matched_effects": ["effect_prediction"] if reconciliation.reconciled else [],
+        "missing_effects": [] if reconciliation.reconciled else [reconciliation.mismatch_reason],
+        "unexpected_effects": [],
+        "verification_result_id": verification_result_id,
+        "case_id": None if reconciliation.reconciled else f"case-{reconciliation.command_id}",
+        "decided_at": decided_at,
+    }
 
 
 def reconcile_effects(
@@ -1412,12 +1570,25 @@ class CommandLedger:
         )
         self._recovery_plans[command_id] = recovery_plan
         self._governed_actions[command_id] = updated_action
+        effect_plan_id = f"effect-plan-{canonical_hash({
+            'command_id': command_id,
+            'predicted_effect_hash': action.predicted_effect_hash or '',
+        })[:12]}"
+        effect_plan = build_effect_plan_payload(
+            updated_action,
+            effect_prediction,
+            capability_passport,
+            effect_plan_id=effect_plan_id,
+            created_at=self._clock(),
+        )
         self.transition(
             command_id,
             CommandState.EFFECT_PLANNED,
             risk_tier=updated_action.risk_tier,
             detail={
                 "cause": "recovery_plan_bound",
+                "effect_plan": effect_plan,
+                "effect_plan_hash": canonical_hash(effect_plan),
                 "recovery_plan": asdict(recovery_plan),
                 "rollback_plan_hash": recovery_plan_hash,
                 "governed_action": asdict(updated_action),
@@ -1533,6 +1704,37 @@ class CommandLedger:
             predicted_effect_hash=action.predicted_effect_hash,
             observed_effect_hash=observation_hash,
         )
+        observed_at = self._clock()
+        observed_effects = build_observed_effect_payloads(observation, observed_at=observed_at)
+        verification_closed_at = self._clock()
+        verification_id = f"effect-verification-{canonical_hash({
+            'command_id': command_id,
+            'observed_effect_hash': observation_hash,
+            'closed_at': verification_closed_at,
+        })[:12]}"
+        verification_payload = build_effect_verification_payload(
+            reconciliation,
+            verification_id=verification_id,
+            execution_id=command_id,
+            observed_effects=observed_effects,
+            closed_at=verification_closed_at,
+        )
+        effect_plan_id = f"effect-plan-{canonical_hash({
+            'command_id': command_id,
+            'predicted_effect_hash': action.predicted_effect_hash,
+        })[:12]}"
+        reconciliation_decided_at = self._clock()
+        effect_assurance_reconciliation = build_effect_assurance_reconciliation_payload(
+            reconciliation,
+            reconciliation_id=f"effect-reconciliation-{canonical_hash({
+                'command_id': command_id,
+                'observed_effect_hash': observation_hash,
+                'decided_at': reconciliation_decided_at,
+            })[:12]}",
+            effect_plan_id=effect_plan_id,
+            verification_result_id=verification_id,
+            decided_at=reconciliation_decided_at,
+        )
         self._effect_observations[command_id] = observation
         self._effect_reconciliations[command_id] = reconciliation
         self.transition(
@@ -1543,10 +1745,11 @@ class CommandLedger:
             detail={
                 "cause": "effect_observed",
                 "effect_observation": asdict(observation),
+                "observed_effects": observed_effects,
                 "observed_effect_hash": observation_hash,
             },
         )
-        next_state = CommandState.RECONCILED if reconciliation.reconciled else CommandState.DENIED
+        next_state = CommandState.RECONCILED if reconciliation.reconciled else CommandState.REQUIRES_REVIEW
         self.transition(
             command_id,
             next_state,
@@ -1554,6 +1757,8 @@ class CommandLedger:
             detail={
                 "cause": "effect_reconciled" if reconciliation.reconciled else "effect_reconciliation_failed",
                 "effect_reconciliation": asdict(reconciliation),
+                "effect_verification": verification_payload,
+                "effect_assurance_reconciliation": effect_assurance_reconciliation,
             },
         )
         return reconciliation
