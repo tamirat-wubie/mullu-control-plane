@@ -21,6 +21,7 @@ from gateway.proof_carrying_adapter import (  # noqa: E402
     CapabilityExecutionStatus,
     ProofCarryingCapabilityAdapter,
 )
+from mcoi_runtime.contracts.execution import ExecutionOutcome  # noqa: E402
 
 
 def _payment_command() -> tuple[CommandLedger, object, object]:
@@ -67,6 +68,9 @@ def test_proof_adapter_wraps_successful_effect_bearing_result() -> None:
     assert execution.receipt.command_id == command.command_id
     assert execution.receipt.actual_effects
     assert execution.receipt.evidence_refs
+    assert execution.execution_result.execution_id == execution.receipt.execution_id
+    assert execution.execution_result.status is ExecutionOutcome.SUCCEEDED
+    assert any(effect.name == "payment_receipt_received" for effect in execution.execution_result.actual_effects)
     assert execution.result["proof_carrying_receipt"]["execution_id"] == execution.receipt.execution_id
 
 
@@ -82,6 +86,7 @@ def test_proof_adapter_downgrades_missing_mutation_proof_to_review() -> None:
     )
 
     assert execution.receipt.status is CapabilityExecutionStatus.REQUIRES_REVIEW
+    assert execution.execution_result.status is ExecutionOutcome.FAILED
     assert execution.result["error"] == "missing_required_proof"
     assert "transaction_id" in execution.result["missing_proof_fields"]
     assert execution.receipt.evidence_refs
@@ -102,6 +107,7 @@ def test_proof_adapter_converts_exception_to_failed_receipt() -> None:
     )
 
     assert execution.receipt.status is CapabilityExecutionStatus.FAILED
+    assert execution.execution_result.status is ExecutionOutcome.FAILED
     assert execution.result["error"] == "RuntimeError"
     assert execution.result["proof_carrying_receipt"]["status"] == "failed"
     assert execution.receipt.evidence_refs

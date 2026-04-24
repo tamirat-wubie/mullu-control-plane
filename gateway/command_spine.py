@@ -25,6 +25,27 @@ from enum import StrEnum
 from typing import Any, Callable
 from uuid import uuid4
 
+from mcoi_runtime.contracts.effect_assurance import (
+    EffectReconciliation as CoreEffectReconciliation,
+    EffectPlan as CoreEffectPlan,
+    ExpectedEffect as CoreExpectedEffect,
+    ReconciliationStatus as CoreReconciliationStatus,
+)
+from mcoi_runtime.contracts.evidence import EvidenceRecord as CoreEvidenceRecord
+from mcoi_runtime.contracts.execution import (
+    EffectRecord as CoreEffectRecord,
+    ExecutionOutcome as CoreExecutionOutcome,
+    ExecutionResult as CoreExecutionResult,
+)
+from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition as CoreTerminalClosureDisposition
+from mcoi_runtime.contracts.verification import (
+    VerificationCheck as CoreVerificationCheck,
+    VerificationResult as CoreVerificationResult,
+    VerificationStatus as CoreVerificationStatus,
+)
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
+
 _log = logging.getLogger(__name__)
 
 
@@ -1486,7 +1507,25 @@ def observe_effects(
     output: dict[str, Any],
 ) -> EffectObservation:
     """Build an observed effect contract from dispatch output."""
-    output_receipts = tuple(str(key) for key in sorted(output))
+    receipt = output.get("proof_carrying_receipt")
+    receipt_effects = ()
+    receipt_evidence_refs = ()
+    if isinstance(receipt, dict):
+        raw_effects = receipt.get("actual_effects", ())
+        if isinstance(raw_effects, (list, tuple)):
+            receipt_effects = tuple(
+                str(effect.get("effect_id") or effect.get("name"))
+                for effect in raw_effects
+                if isinstance(effect, dict) and (effect.get("effect_id") or effect.get("name"))
+            )
+        raw_evidence_refs = receipt.get("evidence_refs", ())
+        if isinstance(raw_evidence_refs, (list, tuple)):
+            receipt_evidence_refs = tuple(str(ref) for ref in raw_evidence_refs if ref)
+    output_receipts = tuple(dict.fromkeys((
+        *(str(key) for key in sorted(output)),
+        *receipt_effects,
+        *receipt_evidence_refs,
+    )))
     actual_receipts = tuple(dict.fromkeys((
         "command_id",
         "trace_id",
@@ -1494,7 +1533,8 @@ def observe_effects(
         *output_receipts,
         *(prediction.expected_receipts if not prediction.expected_mutations else ()),
     )))
-    actual_mutations = prediction.expected_mutations if "error" not in output else ()
+    has_receipt_success = not isinstance(receipt, dict) or str(receipt.get("status", "")) == "succeeded"
+    actual_mutations = prediction.expected_mutations if "error" not in output and has_receipt_success else ()
     actual_external_calls = prediction.expected_external_calls
     return EffectObservation(
         command_id=prediction.command_id,
@@ -1595,6 +1635,188 @@ def build_effect_assurance_reconciliation_payload(
         "case_id": None if reconciliation.reconciled else f"case-{reconciliation.command_id}",
         "decided_at": decided_at,
     }
+
+
+def core_effect_plan_from_payload(payload: dict[str, Any]) -> CoreEffectPlan:
+    """Convert an anchored gateway effect plan into the MCOI core contract."""
+    return CoreEffectPlan(
+        effect_plan_id=str(payload["effect_plan_id"]),
+        command_id=str(payload["command_id"]),
+        tenant_id=str(payload["tenant_id"]),
+        capability_id=str(payload["capability_id"]),
+        expected_effects=tuple(
+            CoreExpectedEffect(
+                effect_id=str(effect["effect_id"]),
+                name=str(effect["name"]),
+                target_ref=str(effect["target_ref"]),
+                required=bool(effect["required"]),
+                verification_method=str(effect["verification_method"]),
+                expected_value=effect.get("expected_value"),
+            )
+            for effect in payload["expected_effects"]
+        ),
+        forbidden_effects=tuple(payload["forbidden_effects"]),
+        rollback_plan_id=payload.get("rollback_plan_id"),
+        compensation_plan_id=payload.get("compensation_plan_id"),
+        graph_node_refs=tuple(payload.get("graph_node_refs", ())),
+        graph_edge_refs=tuple(payload.get("graph_edge_refs", ())),
+        created_at=str(payload["created_at"]),
+    )
+
+
+def core_execution_result_from_gateway_output(
+    *,
+    action: GovernedAction,
+    prediction: EffectPrediction,
+    passport: CapabilityPassport,
+    output: dict[str, Any],
+    output_hash: str,
+    clock: Callable[[], str],
+) -> CoreExecutionResult:
+    """Project gateway execution output into the MCOI ExecutionResult contract."""
+    receipt = output.get("proof_carrying_receipt")
+    if isinstance(receipt, dict):
+        return _core_execution_result_from_receipt(receipt)
+    observed_at = clock()
+    effect_names: list[str] = ["command_id", "trace_id", "output_hash", *sorted(str(key) for key in output)]
+    if not prediction.expected_mutations and "error" not in output:
+        effect_names.extend(passport.declared_effects)
+        effect_names.extend(prediction.expected_receipts)
+    effects = tuple(
+        CoreEffectRecord(
+            name=effect_name,
+            details={
+                "effect_id": effect_name,
+                "observed_value": output_hash if effect_name == "output_hash" else output.get(effect_name, effect_name),
+                "evidence_ref": f"receipt:{action.command_id}:{effect_name}",
+                "source": action.capability,
+            },
+        )
+        for effect_name in tuple(dict.fromkeys(effect_names))
+    )
+    status = CoreExecutionOutcome.FAILED if "error" in output else CoreExecutionOutcome.SUCCEEDED
+    return CoreExecutionResult(
+        execution_id=f"gateway-execution-{canonical_hash({'command_id': action.command_id, 'output_hash': output_hash})[:16]}",
+        goal_id=action.command_id,
+        status=status,
+        actual_effects=effects,
+        assumed_effects=(),
+        started_at=observed_at,
+        finished_at=observed_at,
+        metadata={
+            "command_id": action.command_id,
+            "capability_id": action.capability,
+            "projection": "gateway_compatibility",
+        },
+    )
+
+
+def _core_execution_result_from_receipt(receipt: dict[str, Any]) -> CoreExecutionResult:
+    """Convert a proof-carrying receipt payload into the MCOI contract."""
+    status = (
+        CoreExecutionOutcome.SUCCEEDED
+        if str(receipt.get("status", "")) == CoreExecutionOutcome.SUCCEEDED.value
+        else CoreExecutionOutcome.FAILED
+    )
+    actual_effects = tuple(
+        CoreEffectRecord(
+            name=str(effect["name"]),
+            details={
+                "effect_id": str(effect.get("effect_id", effect["name"])),
+                "observed_value": effect.get("observed_value"),
+                "evidence_ref": str(effect.get("evidence_ref", receipt.get("execution_id", ""))),
+                "source": str(receipt.get("capability_id", "")),
+            },
+        )
+        for effect in receipt.get("actual_effects", ())
+        if isinstance(effect, dict) and effect.get("name")
+    )
+    return CoreExecutionResult(
+        execution_id=str(receipt["execution_id"]),
+        goal_id=str(receipt["command_id"]),
+        status=status,
+        actual_effects=actual_effects,
+        assumed_effects=(),
+        started_at=str(receipt["started_at"]),
+        finished_at=str(receipt["completed_at"]),
+        metadata={
+            "command_id": str(receipt["command_id"]),
+            "tenant_id": str(receipt["tenant_id"]),
+            "actor_id": str(receipt["actor_id"]),
+            "capability_id": str(receipt["capability_id"]),
+            "proof_receipt_id": str(receipt["execution_id"]),
+            "isolation_plane": str(receipt.get("isolation_plane", "control")),
+        },
+    )
+
+
+def core_execution_result_from_payload(payload: dict[str, Any]) -> CoreExecutionResult:
+    """Load an MCOI ExecutionResult from event JSON."""
+    return CoreExecutionResult(
+        execution_id=str(payload["execution_id"]),
+        goal_id=str(payload["goal_id"]),
+        status=CoreExecutionOutcome(str(payload["status"])),
+        actual_effects=tuple(
+            CoreEffectRecord(name=str(effect["name"]), details=effect.get("details"))
+            for effect in payload.get("actual_effects", ())
+            if isinstance(effect, dict)
+        ),
+        assumed_effects=tuple(
+            CoreEffectRecord(name=str(effect["name"]), details=effect.get("details"))
+            for effect in payload.get("assumed_effects", ())
+            if isinstance(effect, dict)
+        ),
+        started_at=str(payload["started_at"]),
+        finished_at=str(payload["finished_at"]),
+        metadata=dict(payload.get("metadata", {})),
+        extensions=dict(payload.get("extensions", {})),
+    )
+
+
+def core_verification_from_payload(payload: dict[str, Any]) -> CoreVerificationResult:
+    """Load an MCOI VerificationResult from event JSON."""
+    return CoreVerificationResult(
+        verification_id=str(payload["verification_id"]),
+        execution_id=str(payload["execution_id"]),
+        status=CoreVerificationStatus(str(payload["status"])),
+        checks=tuple(
+            CoreVerificationCheck(
+                name=str(check["name"]),
+                status=CoreVerificationStatus(str(check["status"])),
+                details=check.get("details"),
+            )
+            for check in payload.get("checks", ())
+            if isinstance(check, dict)
+        ),
+        evidence=tuple(
+            CoreEvidenceRecord(
+                description=str(evidence["description"]),
+                uri=evidence.get("uri"),
+                details=evidence.get("details"),
+            )
+            for evidence in payload.get("evidence", ())
+            if isinstance(evidence, dict)
+        ),
+        closed_at=str(payload["closed_at"]),
+        metadata=dict(payload.get("metadata", {})),
+        extensions=dict(payload.get("extensions", {})),
+    )
+
+
+def core_reconciliation_from_payload(payload: dict[str, Any]) -> CoreEffectReconciliation:
+    """Load an MCOI EffectReconciliation from event JSON."""
+    return CoreEffectReconciliation(
+        reconciliation_id=str(payload["reconciliation_id"]),
+        command_id=str(payload["command_id"]),
+        effect_plan_id=str(payload["effect_plan_id"]),
+        status=CoreReconciliationStatus(str(payload["status"])),
+        matched_effects=tuple(payload.get("matched_effects", ())),
+        missing_effects=tuple(payload.get("missing_effects", ())),
+        unexpected_effects=tuple(payload.get("unexpected_effects", ())),
+        verification_result_id=payload.get("verification_result_id"),
+        case_id=payload.get("case_id"),
+        decided_at=str(payload["decided_at"]),
+    )
 
 
 def reconcile_effects(
@@ -1984,14 +2206,62 @@ class CommandLedger:
             raise KeyError(f"missing governed action for command_id: {command_id}")
         if prediction is None or not action.predicted_effect_hash:
             raise ValueError("effect prediction is required before observation")
+        passport = capability_passport_for(action.capability)
         output_hash = canonical_hash(output)
         observation = observe_effects(prediction, output_hash=output_hash, output=output)
         observation_hash = canonical_hash(asdict(observation))
-        reconciliation = reconcile_effects(
+        legacy_reconciliation = reconcile_effects(
             prediction,
             observation,
             predicted_effect_hash=action.predicted_effect_hash,
             observed_effect_hash=observation_hash,
+        )
+        effect_plan_id = f"effect-plan-{canonical_hash({
+            'command_id': command_id,
+            'predicted_effect_hash': action.predicted_effect_hash,
+        })[:12]}"
+        effect_plan_payload = build_effect_plan_payload(
+            action,
+            prediction,
+            passport,
+            effect_plan_id=effect_plan_id,
+            created_at=self._clock(),
+        )
+        core_plan = core_effect_plan_from_payload(effect_plan_payload)
+        execution_result = core_execution_result_from_gateway_output(
+            action=action,
+            prediction=prediction,
+            passport=passport,
+            output=output,
+            output_hash=output_hash,
+            clock=self._clock,
+        )
+        gate = EffectAssuranceGate(clock=self._clock)
+        core_observed_effects = gate.observe(execution_result)
+        core_verification = gate.verify(
+            plan=core_plan,
+            execution_result=execution_result,
+            observed_effects=core_observed_effects,
+        )
+        core_reconciliation = gate.reconcile(
+            plan=core_plan,
+            observed_effects=core_observed_effects,
+            verification_result=core_verification,
+            case_id=None if legacy_reconciliation.reconciled else f"case-{command_id}",
+        )
+        reconciliation = EffectReconciliation(
+            command_id=command_id,
+            predicted_effect_hash=action.predicted_effect_hash,
+            observed_effect_hash=observation_hash,
+            reconciled=core_reconciliation.status is CoreReconciliationStatus.MATCH,
+            mismatch_reason=(
+                ""
+                if core_reconciliation.status is CoreReconciliationStatus.MATCH
+                else legacy_reconciliation.mismatch_reason
+                or ",".join(core_reconciliation.missing_effects)
+                or ",".join(core_reconciliation.unexpected_effects)
+                or core_reconciliation.status.value
+            ),
         )
         observed_at = self._clock()
         observed_effects = build_observed_effect_payloads(observation, observed_at=observed_at)
@@ -2003,26 +2273,18 @@ class CommandLedger:
         })[:12]}"
         verification_payload = build_effect_verification_payload(
             reconciliation,
-            verification_id=verification_id,
-            execution_id=command_id,
+            verification_id=core_verification.verification_id or verification_id,
+            execution_id=execution_result.execution_id,
             observed_effects=observed_effects,
-            closed_at=verification_closed_at,
+            closed_at=core_verification.closed_at,
         )
-        effect_plan_id = f"effect-plan-{canonical_hash({
-            'command_id': command_id,
-            'predicted_effect_hash': action.predicted_effect_hash,
-        })[:12]}"
         reconciliation_decided_at = self._clock()
         effect_assurance_reconciliation = build_effect_assurance_reconciliation_payload(
             reconciliation,
-            reconciliation_id=f"effect-reconciliation-{canonical_hash({
-                'command_id': command_id,
-                'observed_effect_hash': observation_hash,
-                'decided_at': reconciliation_decided_at,
-            })[:12]}",
-            effect_plan_id=effect_plan_id,
-            verification_result_id=verification_id,
-            decided_at=reconciliation_decided_at,
+            reconciliation_id=core_reconciliation.reconciliation_id,
+            effect_plan_id=core_reconciliation.effect_plan_id,
+            verification_result_id=core_verification.verification_id,
+            decided_at=core_reconciliation.decided_at or reconciliation_decided_at,
         )
         self._effect_observations[command_id] = observation
         self._effect_reconciliations[command_id] = reconciliation
@@ -2036,6 +2298,8 @@ class CommandLedger:
                 "effect_observation": asdict(observation),
                 "observed_effects": observed_effects,
                 "observed_effect_hash": observation_hash,
+                "execution_result": execution_result.to_json_dict(),
+                "mcoi_observed_effects": tuple(effect.to_json_dict() for effect in core_observed_effects),
             },
         )
         next_state = CommandState.RECONCILED if reconciliation.reconciled else CommandState.REQUIRES_REVIEW
@@ -2048,6 +2312,9 @@ class CommandLedger:
                 "effect_reconciliation": asdict(reconciliation),
                 "effect_verification": verification_payload,
                 "effect_assurance_reconciliation": effect_assurance_reconciliation,
+                "mcoi_effect_plan": core_plan.to_json_dict(),
+                "mcoi_verification": core_verification.to_json_dict(),
+                "mcoi_reconciliation": core_reconciliation.to_json_dict(),
             },
         )
         return reconciliation
@@ -2395,6 +2662,53 @@ class CommandLedger:
         else:
             raise ValueError("unknown terminal closure disposition")
 
+        mcoi_terminal_certificate: Any | None = None
+        core_execution_result: CoreExecutionResult | None = None
+        core_verification: CoreVerificationResult | None = None
+        core_reconciliation: CoreEffectReconciliation | None = None
+        for event in reversed(self.events_for(command_id)):
+            if core_execution_result is None and isinstance(event.detail.get("execution_result"), dict):
+                core_execution_result = core_execution_result_from_payload(event.detail["execution_result"])
+            if core_verification is None and isinstance(event.detail.get("mcoi_verification"), dict):
+                core_verification = core_verification_from_payload(event.detail["mcoi_verification"])
+            if core_reconciliation is None and isinstance(event.detail.get("mcoi_reconciliation"), dict):
+                core_reconciliation = core_reconciliation_from_payload(event.detail["mcoi_reconciliation"])
+            if core_execution_result is not None and core_verification is not None and core_reconciliation is not None:
+                break
+        has_core_closure_inputs = (
+            core_execution_result is not None
+            and core_verification is not None
+            and core_reconciliation is not None
+        )
+        if disposition is ClosureDisposition.COMMITTED:
+            if not has_core_closure_inputs:
+                raise ValueError("committed terminal closure requires MCOI effect assurance witnesses")
+            mcoi_terminal_certificate = TerminalClosureCertifier(clock=self._clock).certify_committed(
+                execution_result=core_execution_result,
+                verification_result=core_verification,
+                reconciliation=core_reconciliation,
+                evidence_refs=evidence_refs,
+                response_closure_ref=(
+                    canonical_hash(asdict(response_evidence_closure)) if response_evidence_closure else None
+                ),
+            )
+        elif disposition is ClosureDisposition.REQUIRES_REVIEW and has_core_closure_inputs:
+            mcoi_terminal_certificate = TerminalClosureCertifier(clock=self._clock).certify_requires_review(
+                execution_result=core_execution_result,
+                verification_result=core_verification,
+                reconciliation=core_reconciliation,
+                case_id=case_id or f"case-{command_id}",
+                evidence_refs=evidence_refs,
+            )
+        certificate_metadata = dict(metadata or {})
+        if mcoi_terminal_certificate is not None:
+            certificate_metadata["mcoi_terminal_certificate"] = mcoi_terminal_certificate.to_json_dict()
+            certificate_metadata["mcoi_terminal_disposition"] = CoreTerminalClosureDisposition(
+                mcoi_terminal_certificate.disposition
+            ).value
+        elif disposition is ClosureDisposition.REQUIRES_REVIEW:
+            certificate_metadata.setdefault("mcoi_terminal_certificate", None)
+
         certificate_hash = canonical_hash({
             "command_id": command_id,
             "disposition": disposition.value,
@@ -2416,7 +2730,7 @@ class CommandLedger:
             case_id=case_id,
             accepted_risk_id=accepted_risk_id,
             compensation_outcome_id=compensation_outcome_id,
-            metadata=metadata or {},
+            metadata=certificate_metadata,
         )
         self._terminal_certificates[command_id] = certificate
         self.transition(
@@ -2426,6 +2740,11 @@ class CommandLedger:
             detail={
                 "cause": "terminal_closure_certified",
                 "terminal_closure_certificate": asdict(certificate),
+                "mcoi_terminal_certificate": (
+                    mcoi_terminal_certificate.to_json_dict()
+                    if mcoi_terminal_certificate is not None
+                    else None
+                ),
             },
         )
         return certificate

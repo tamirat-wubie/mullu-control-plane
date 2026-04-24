@@ -578,8 +578,12 @@ def test_command_ledger_reconciles_read_only_effect_observation():
     assert current.state == CommandState.RECONCILED
     events = ledger.events_for(command.command_id)
     assert events[-2].detail["observed_effects"]
+    assert events[-2].detail["execution_result"]["actual_effects"]
+    assert events[-2].detail["mcoi_observed_effects"]
     assert events[-1].detail["effect_verification"]["status"] == "pass"
     assert events[-1].detail["effect_assurance_reconciliation"]["status"] == "match"
+    assert events[-1].detail["mcoi_verification"]["status"] == "pass"
+    assert events[-1].detail["mcoi_reconciliation"]["status"] == "match"
 
 
 def test_command_ledger_records_evidence_backed_claim():
@@ -781,6 +785,8 @@ def test_command_ledger_requires_terminal_certificate_before_success_response():
 
     assert certificate.disposition is ClosureDisposition.COMMITTED
     assert certificate.evidence_refs
+    assert certificate.metadata["mcoi_terminal_disposition"] == "committed"
+    assert certificate.metadata["mcoi_terminal_certificate"]["evidence_refs"]
     assert memory_entry.terminal_certificate_id == certificate.certificate_id
     assert learning.status == "admit"
     assert responded.state == CommandState.RESPONDED

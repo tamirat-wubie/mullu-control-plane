@@ -233,6 +233,7 @@ class CausalClosureKernel:
                 "cause": "capability_execution_isolated",
                 "capability_execution_boundary": asdict(boundary),
                 "proof_carrying_receipt": asdict(receipt_execution.receipt),
+                "execution_result": receipt_execution.execution_result.to_json_dict(),
             },
         )
         return receipt_execution.result

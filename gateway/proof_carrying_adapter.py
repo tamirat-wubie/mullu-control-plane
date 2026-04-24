@@ -19,6 +19,7 @@ from enum import StrEnum
 from typing import Any, Callable
 
 from gateway.command_spine import CapabilityPassport, CommandEnvelope, GovernedAction, canonical_hash
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 
 
 class CapabilityExecutionStatus(StrEnum):
@@ -60,6 +61,7 @@ class ProofCarryingExecution:
 
     result: dict[str, Any]
     receipt: ProofCarryingReceipt
+    execution_result: ExecutionResult
 
 
 class ProofCarryingCapabilityAdapter:
@@ -97,7 +99,11 @@ class ProofCarryingCapabilityAdapter:
                 completed_at=completed_at,
                 result_summary=f"failed:{type(exc).__name__}",
             )
-            return ProofCarryingExecution(result=self._attach_receipt(result, receipt), receipt=receipt)
+            return ProofCarryingExecution(
+                result=self._attach_receipt(result, receipt),
+                receipt=receipt,
+                execution_result=_execution_result_from_receipt(receipt),
+            )
 
         completed_at = self._clock()
         result = _normalize_result(raw_result)
@@ -120,7 +126,11 @@ class ProofCarryingCapabilityAdapter:
             completed_at=completed_at,
             result_summary=_result_summary(result, status),
         )
-        return ProofCarryingExecution(result=self._attach_receipt(result, receipt), receipt=receipt)
+        return ProofCarryingExecution(
+            result=self._attach_receipt(result, receipt),
+            receipt=receipt,
+            execution_result=_execution_result_from_receipt(receipt),
+        )
 
     def _build_receipt(
         self,
@@ -160,7 +170,13 @@ class ProofCarryingCapabilityAdapter:
             idempotency_key=command.idempotency_key,
             status=status,
             result_summary=result_summary,
-            actual_effects=_actual_effects(result, evidence_refs=evidence_refs),
+            actual_effects=_actual_effects(
+                result,
+                evidence_refs=evidence_refs,
+                governed_action=governed_action,
+                capability_passport=capability_passport,
+                status=status,
+            ),
             evidence_refs=evidence_refs,
             cost_amount=_optional_text(result.get("cost_amount")),
             cost_currency=_optional_text(result.get("cost_currency")),
@@ -246,8 +262,44 @@ def _evidence_refs(
     return tuple(dict.fromkeys(refs))
 
 
-def _actual_effects(result: dict[str, Any], *, evidence_refs: tuple[str, ...]) -> tuple[dict[str, Any], ...]:
+def _actual_effects(
+    result: dict[str, Any],
+    *,
+    evidence_refs: tuple[str, ...],
+    governed_action: GovernedAction,
+    capability_passport: CapabilityPassport,
+    status: CapabilityExecutionStatus,
+) -> tuple[dict[str, Any], ...]:
     effects: list[dict[str, Any]] = []
+    if status is CapabilityExecutionStatus.SUCCEEDED:
+        for effect_name in capability_passport.declared_effects:
+            effects.append({
+                "effect_id": effect_name,
+                "name": effect_name,
+                "observed_value": effect_name,
+                "evidence_ref": evidence_refs[0] if evidence_refs else effect_name,
+            })
+        if capability_passport.mutates_world:
+            for mutation in (
+                f"{governed_action.tenant_id}:ledger_entry",
+                f"{governed_action.tenant_id}:capability_effect:{capability_passport.capability}",
+            ):
+                effects.append({
+                    "effect_id": mutation,
+                    "name": mutation,
+                    "observed_value": mutation,
+                    "evidence_ref": evidence_refs[0] if evidence_refs else mutation,
+                })
+        for proof_field in capability_passport.evidence_required or capability_passport.proof_required_fields:
+            observed_value = result.get(proof_field)
+            evidence_ref = _evidence_ref_for_field(proof_field, evidence_refs)
+            if observed_value or evidence_ref:
+                effects.append({
+                    "effect_id": proof_field,
+                    "name": proof_field,
+                    "observed_value": observed_value or proof_field,
+                    "evidence_ref": evidence_ref or proof_field,
+                })
     for key, value in sorted(result.items()):
         if key in {"proof_carrying_receipt"}:
             continue
@@ -259,7 +311,68 @@ def _actual_effects(result: dict[str, Any], *, evidence_refs: tuple[str, ...]) -
             "observed_value": value,
             "evidence_ref": evidence_refs[0] if evidence_refs else key,
         })
-    return tuple(effects)
+    return tuple(_deduplicate_effects(effects))
+
+
+def _deduplicate_effects(effects: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    deduplicated: list[dict[str, Any]] = []
+    for effect in effects:
+        effect_id = str(effect.get("effect_id", ""))
+        if effect_id in seen:
+            continue
+        seen.add(effect_id)
+        deduplicated.append(effect)
+    return deduplicated
+
+
+def _evidence_ref_for_field(field: str, evidence_refs: tuple[str, ...]) -> str:
+    prefixes = {
+        "command_id": "command:",
+        "trace_id": "trace:",
+        "output_hash": "output_hash:",
+    }
+    prefix = prefixes.get(field, f"{field}:")
+    for evidence_ref in evidence_refs:
+        if evidence_ref.startswith(prefix):
+            return evidence_ref
+    return ""
+
+
+def _execution_result_from_receipt(receipt: ProofCarryingReceipt) -> ExecutionResult:
+    status = (
+        ExecutionOutcome.SUCCEEDED
+        if receipt.status is CapabilityExecutionStatus.SUCCEEDED
+        else ExecutionOutcome.FAILED
+    )
+    return ExecutionResult(
+        execution_id=receipt.execution_id,
+        goal_id=receipt.command_id,
+        status=status,
+        actual_effects=tuple(
+            EffectRecord(
+                name=str(effect["name"]),
+                details={
+                    "effect_id": str(effect.get("effect_id", effect["name"])),
+                    "observed_value": effect.get("observed_value"),
+                    "evidence_ref": str(effect.get("evidence_ref", receipt.execution_id)),
+                    "source": receipt.capability_id,
+                },
+            )
+            for effect in receipt.actual_effects
+        ),
+        assumed_effects=(),
+        started_at=receipt.started_at,
+        finished_at=receipt.completed_at,
+        metadata={
+            "command_id": receipt.command_id,
+            "tenant_id": receipt.tenant_id,
+            "actor_id": receipt.actor_id,
+            "capability_id": receipt.capability_id,
+            "proof_receipt_id": receipt.execution_id,
+            "isolation_plane": receipt.isolation_plane,
+        },
+    )
 
 
 def _isolation_context(result: dict[str, Any]) -> tuple[str, str | None]:
