@@ -16,8 +16,15 @@ from mcoi_runtime.app.routers.deps import deps
 router = APIRouter()
 
 
-def _multi_agent_error_detail(error: str, error_code: str) -> dict[str, object]:
-    return {"error": error, "error_code": error_code, "governed": True}
+def _multi_agent_error_detail(
+    error: str,
+    error_code: str,
+    exc: Exception | None = None,
+) -> dict[str, object]:
+    detail: dict[str, object] = {"error": error, "error_code": error_code, "governed": True}
+    if exc is not None:
+        detail["failure_class"] = type(exc).__name__
+    return detail
 
 
 # ── Request Models ────────────────────────────────────────────────────
@@ -85,12 +92,11 @@ def delegate_work(req: DelegateRequest):
             metadata=req.metadata,
         )
         result = deps.coordination_engine.request_delegation(delegation)
-    except (ValueError, Exception):
-        raise HTTPException(400, detail={
-            "error": "delegation failed",
-            "error_code": "delegation_error",
-            "governed": True,
-        })
+    except Exception as exc:
+        raise HTTPException(
+            400,
+            detail=_multi_agent_error_detail("delegation failed", "delegation_error", exc),
+        ) from exc
     deps.audit_trail.record(
         action="multi_agent.delegate",
         actor_id=req.delegator_id,
@@ -126,12 +132,11 @@ def resolve_delegation(req: ResolveDelegationRequest):
             resolved_at=datetime.now(timezone.utc).isoformat(),
         )
         deps.coordination_engine.resolve_delegation(result)
-    except Exception:
-        raise HTTPException(400, detail={
-            "error": "resolution failed",
-            "error_code": "resolution_error",
-            "governed": True,
-        })
+    except Exception as exc:
+        raise HTTPException(
+            400,
+            detail=_multi_agent_error_detail("resolution failed", "resolution_error", exc),
+        ) from exc
     deps.audit_trail.record(
         action="multi_agent.delegate.resolve",
         actor_id="api",
@@ -164,12 +169,11 @@ def record_handoff(req: HandoffRequest):
             metadata=req.metadata,
         )
         deps.coordination_engine.record_handoff(handoff)
-    except Exception:
-        raise HTTPException(400, detail={
-            "error": "handoff failed",
-            "error_code": "handoff_error",
-            "governed": True,
-        })
+    except Exception as exc:
+        raise HTTPException(
+            400,
+            detail=_multi_agent_error_detail("handoff failed", "handoff_error", exc),
+        ) from exc
     deps.audit_trail.record(
         action="multi_agent.handoff",
         actor_id=req.from_party,
@@ -206,12 +210,11 @@ def record_merge(req: RecordMergeRequest):
             resolved_at=datetime.now(timezone.utc).isoformat(),
         )
         deps.coordination_engine.record_merge(merge)
-    except Exception:
-        raise HTTPException(400, detail={
-            "error": "merge recording failed",
-            "error_code": "merge_error",
-            "governed": True,
-        })
+    except Exception as exc:
+        raise HTTPException(
+            400,
+            detail=_multi_agent_error_detail("merge recording failed", "merge_error", exc),
+        ) from exc
     return {
         "merge_id": req.merge_id,
         "outcome": req.outcome,
@@ -239,12 +242,11 @@ def record_conflict(req: RecordConflictRequest):
             metadata=req.metadata,
         )
         deps.coordination_engine.record_conflict(conflict)
-    except Exception:
-        raise HTTPException(400, detail={
-            "error": "conflict recording failed",
-            "error_code": "conflict_error",
-            "governed": True,
-        })
+    except Exception as exc:
+        raise HTTPException(
+            400,
+            detail=_multi_agent_error_detail("conflict recording failed", "conflict_error", exc),
+        ) from exc
     return {
         "conflict_id": req.conflict_id,
         "strategy": req.strategy,
