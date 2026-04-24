@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
+from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceMerger, EvidenceState, EvidenceStateCategory
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningBoundary, PlanningKnowledge
 from mcoi_runtime.core.policy_engine import PolicyEngine, PolicyInput, PolicyReason
@@ -78,6 +80,21 @@ def test_runtime_kernel_wires_core_boundaries_without_adapter_logic() -> None:
         ),
         admitted_classes=("constraint",),
     )
+    admission_result = kernel.evaluate_planning_with_learning_admission(
+        (
+            PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+        ),
+        admitted_classes=("constraint",),
+        admission_decisions=(
+            LearningAdmissionDecision(
+                admission_id="admission-1",
+                knowledge_id="knowledge-1",
+                status=LearningAdmissionStatus.ADMIT,
+                reasons=(DecisionReason(message="admitted knowledge only"),),
+                issued_at="2026-03-18T12:00:00+00:00",
+            ),
+        ),
+    )
     policy_decision = kernel.evaluate_policy(
         PolicyInput(
             subject_id="subject-1",
@@ -108,5 +125,6 @@ def test_runtime_kernel_wires_core_boundaries_without_adapter_logic() -> None:
     assert kernel.registry_index.ids_for_type("capability") == ("capability-1",)
     assert merged_state.observed["workspace.files"].provenance_ids == ("evidence-1",)
     assert tuple(item.knowledge_id for item in planning_result.admitted) == ("knowledge-1",)
+    assert admission_result.admission_decision_ids == ("admission-1",)
     assert policy_decision.status == "allow"
     assert replay_result.ready is True
