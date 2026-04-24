@@ -1,10 +1,9 @@
 """Session Persistence Tests — Checkpoint, restore, and store backends."""
 
 import json
-import os
-import tempfile
 
 import pytest
+import mcoi_runtime.persistence.session_store as session_store_module
 from mcoi_runtime.persistence.session_store import (
     FileSessionStore,
     InMemorySessionStore,
@@ -47,6 +46,17 @@ class TestSessionCheckpoint:
         assert restored.total_cost == cp.total_cost
         assert restored.compaction_count == cp.compaction_count
         assert len(restored.context_messages) == 2
+
+    def test_from_dict_does_not_mutate_input_payload(self):
+        cp = self._checkpoint()
+        data = cp.to_dict()
+        original = dict(data)
+
+        restored = SessionCheckpoint.from_dict(data)
+
+        assert restored is not None
+        assert data == original
+        assert "checkpoint_hash" in data
 
     def test_hash_integrity(self):
         cp = self._checkpoint()
@@ -241,6 +251,45 @@ class TestFileSessionStore:
     def test_null_byte_blocked(self, tmp_path):
         store = self._store(str(tmp_path))
         assert store.save(self._checkpoint("gs-\x00evil")) is False
+
+    def test_save_failure_logs_bounded_warning_and_cleans_temp(
+        self,
+        tmp_path,
+        monkeypatch,
+    ):
+        warnings = []
+
+        def _capture_warning(message, failure_class):
+            warnings.append(message % failure_class)
+
+        def _raise_replace(source, target):
+            raise RuntimeError("secret session write failure")
+
+        monkeypatch.setattr(session_store_module._log, "warning", _capture_warning)
+        monkeypatch.setattr(session_store_module.os, "replace", _raise_replace)
+
+        store = self._store(str(tmp_path))
+        saved = store.save(self._checkpoint("gs-secret"))
+
+        assert saved is False
+        assert warnings == ["session checkpoint save failed (RuntimeError)"]
+        assert "secret session write failure" not in warnings[0]
+        assert not list(tmp_path.glob("session_*.tmp"))
+
+    def test_invalid_session_id_logs_bounded_warning(self, tmp_path, monkeypatch):
+        warnings = []
+
+        def _capture_warning(message, failure_class):
+            warnings.append(message % failure_class)
+
+        monkeypatch.setattr(session_store_module._log, "warning", _capture_warning)
+
+        store = self._store(str(tmp_path))
+        saved = store.save(self._checkpoint("../../secret-session"))
+
+        assert saved is False
+        assert warnings == ["session checkpoint save failed (ValueError)"]
+        assert "secret-session" not in warnings[0]
 
     def test_summary(self, tmp_path):
         store = self._store(str(tmp_path))

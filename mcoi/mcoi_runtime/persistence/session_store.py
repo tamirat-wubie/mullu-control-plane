@@ -15,13 +15,21 @@ Invariants:
 from __future__ import annotations
 
 import json
+import logging as _logging
 import os
 import tempfile
 import threading
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Callable
+
+
+_log = _logging.getLogger(__name__)
+
+
+def _bounded_session_store_failure(exc: BaseException) -> str:
+    return type(exc).__name__
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,21 +67,22 @@ class SessionCheckpoint:
     def from_dict(cls, data: dict[str, Any]) -> SessionCheckpoint | None:
         """Deserialize with integrity check. Returns None on corruption."""
         try:
-            stored_hash = data.pop("checkpoint_hash", "")
-            content = json.dumps(data, sort_keys=True, default=str)
+            payload = dict(data)
+            stored_hash = payload.pop("checkpoint_hash", "")
+            content = json.dumps(payload, sort_keys=True, default=str)
             expected_hash = sha256(content.encode()).hexdigest()[:16]
             if stored_hash and stored_hash != expected_hash:
                 return None
             return cls(
-                session_id=data["session_id"],
-                identity_id=data["identity_id"],
-                tenant_id=data["tenant_id"],
-                operations=int(data["operations"]),
-                llm_calls=int(data["llm_calls"]),
-                total_cost=float(data["total_cost"]),
-                context_messages=tuple(data.get("context_messages", ())),
-                compaction_count=int(data.get("compaction_count", 0)),
-                checkpoint_at=data.get("checkpoint_at", ""),
+                session_id=payload["session_id"],
+                identity_id=payload["identity_id"],
+                tenant_id=payload["tenant_id"],
+                operations=int(payload["operations"]),
+                llm_calls=int(payload["llm_calls"]),
+                total_cost=float(payload["total_cost"]),
+                context_messages=tuple(payload.get("context_messages", ())),
+                compaction_count=int(payload.get("compaction_count", 0)),
+                checkpoint_at=payload.get("checkpoint_at", ""),
                 checkpoint_hash=expected_hash,
             )
         except (KeyError, TypeError, ValueError):
@@ -199,12 +208,26 @@ class FileSessionStore(SessionStore):
                 with os.fdopen(tmp_fd, "w") as f:
                     json.dump(data, f, sort_keys=True, default=str, indent=2)
                 os.replace(tmp_path, str(self._session_path(checkpoint.session_id)))
-            except Exception:
+            except Exception as exc:
+                _log.warning(
+                    "session checkpoint save failed (%s)",
+                    _bounded_session_store_failure(exc),
+                )
                 if os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
+                    try:
+                        os.unlink(tmp_path)
+                    except OSError as cleanup_exc:
+                        _log.warning(
+                            "session checkpoint cleanup failed (%s)",
+                            _bounded_session_store_failure(cleanup_exc),
+                        )
                 return False
             return True
-        except (ValueError, OSError):
+        except (ValueError, OSError) as exc:
+            _log.warning(
+                "session checkpoint save failed (%s)",
+                _bounded_session_store_failure(exc),
+            )
             return False
 
     def load(self, session_id: str) -> SessionCheckpoint | None:
