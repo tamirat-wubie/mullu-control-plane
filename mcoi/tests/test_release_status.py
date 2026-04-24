@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts import validate_release_status
+from scripts import validate_release_status  # noqa: E402
 
 
 def test_discover_release_status_summary_exposes_live_inventory() -> None:
@@ -54,6 +54,19 @@ python scripts/validate_artifacts.py --strict
     assert len(errors) == 1
     assert "python scripts/validate_release_status.py --strict" in errors[0]
     assert "cargo test" in errors[0]
+
+
+def test_validate_status_document_text_rejects_missing_public_anchors() -> None:
+    errors = validate_release_status.validate_status_document_text(
+        "# Repository Status Witness\n\n"
+        "## Reflection Summary\n\n"
+        "| Branch witness | Reflected |\n"
+    )
+
+    assert len(errors) == 1
+    assert "Release witness" in errors[0]
+    assert "Governance witness" in errors[0]
+    assert "python scripts/validate_release_status.py --strict" in errors[0]
 
 
 def test_validate_release_metadata_texts_rejects_mismatch() -> None:
