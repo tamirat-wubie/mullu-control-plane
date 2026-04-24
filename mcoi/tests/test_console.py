@@ -6,7 +6,6 @@ Invariants: view models are read-only projections; rendering is deterministic.
 
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
@@ -42,7 +41,6 @@ from mcoi_runtime.contracts.temporal import (
 )
 from mcoi_runtime.core.coordination import CoordinationEngine
 from mcoi_runtime.core.persisted_replay import PersistedReplayResult
-from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnowledge
 from mcoi_runtime.core.replay_engine import ReplayValidationResult, ReplayVerdict
 from mcoi_runtime.core.runbook import RunbookAdmissionResult, RunbookAdmissionStatus
 
@@ -171,6 +169,26 @@ def test_replay_summary_from_result() -> None:
     output = render_replay_summary(view)
     assert "replay-1" in output
     assert "replay_match" in output
+
+
+def test_replay_summary_renders_trace_lookup_reason() -> None:
+    result = PersistedReplayResult(
+        replay_id="replay-1",
+        trace_id="trace-1",
+        validation=ReplayValidationResult(
+            ready=True, reasons=(), artifacts=(),
+            verdict=ReplayVerdict.MATCH,
+        ),
+        trace_found=False,
+        trace_hash_matches=None,
+        trace_lookup_reason="trace_lookup_failed:TraceNotFoundError",
+    )
+    view = ReplaySummaryView.from_result(result)
+
+    assert view.trace_lookup_reason == "trace_lookup_failed:TraceNotFoundError"
+    assert view.trace_found is False
+    output = render_replay_summary(view)
+    assert "trace_lookup_failed:TraceNotFoundError" in output
 
 
 # --- TemporalTaskView tests ---

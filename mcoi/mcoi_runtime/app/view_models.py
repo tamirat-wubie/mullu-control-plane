@@ -168,6 +168,7 @@ class ReplaySummaryView:
     ready: bool
     trace_found: bool
     trace_hash_matches: bool | None
+    trace_lookup_reason: str
     reasons: tuple[str, ...]
 
     @staticmethod
@@ -179,6 +180,7 @@ class ReplaySummaryView:
             ready=result.validation.ready,
             trace_found=result.trace_found,
             trace_hash_matches=result.trace_hash_matches,
+            trace_lookup_reason=result.trace_lookup_reason,
             reasons=result.validation.reasons,
         )
 

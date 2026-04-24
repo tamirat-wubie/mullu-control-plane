@@ -11,10 +11,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from mcoi_runtime.contracts.trace import TraceEntry
-from mcoi_runtime.core.persisted_replay import PersistedReplayResult, PersistedReplayValidator
+from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
 from mcoi_runtime.core.replay_engine import (
     EffectControl,
     ReplayArtifact,
@@ -200,6 +198,27 @@ def test_persisted_replay_trace_not_found_still_validates(tmp_path: Path) -> Non
     assert result.validation.ready is True
     assert result.trace_found is False
     assert result.trace_hash_matches is None
+    assert result.trace_lookup_reason == "trace_lookup_failed:TraceNotFoundError"
+
+
+def test_persisted_replay_trace_lookup_error_is_bounded(tmp_path: Path) -> None:
+    replay_store, _, validator = _setup(tmp_path)
+    replay_store.save(_make_replay_record())
+
+    trace_dir = tmp_path / "traces"
+    trace_dir.mkdir(parents=True, exist_ok=True)
+    (trace_dir / "trace-1.json").write_text("not json", encoding="utf-8")
+
+    result = validator.validate(
+        "replay-1",
+        context=ReplayContext(state_hash="state-abc", environment_digest="env-xyz"),
+    )
+
+    assert result.validation.ready is True
+    assert result.trace_found is False
+    assert result.trace_hash_matches is None
+    assert result.trace_lookup_reason == "trace_lookup_failed:CorruptedDataError"
+    assert "not json" not in result.trace_lookup_reason
 
 
 def test_persisted_replay_trace_hash_mismatch(tmp_path: Path) -> None:
