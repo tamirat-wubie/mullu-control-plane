@@ -62,7 +62,7 @@ def create_governed_app(
     app = fastapi_cls(
         title="Mullu Platform",
         version="3.13.0",
-        description="Governed AI Operating System",
+        description="Governed Symbolic Intelligence Operating System",
         lifespan=lifespan_factory(shutdown_mgr=shutdown_mgr),
     )
 

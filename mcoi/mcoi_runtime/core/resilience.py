@@ -1,6 +1,6 @@
 """Production Resilience — Retry, fallback, circuit breaker, dead letter queue.
 
-Solves the #1 reason AI agents fail in production: provider outages cause
+Solves the #1 reason symbolic intelligence agents fail in production: provider outages cause
 cascading crashes. This module provides:
   - Exponential backoff with jitter for transient failures
   - Circuit breaker (closed→open→half-open) for persistent failures
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Callable, TypeVar
 
