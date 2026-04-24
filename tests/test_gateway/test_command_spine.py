@@ -13,6 +13,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.command_spine import (  # noqa: E402
+    CommandAnchorProof,
     CommandLedger,
     CommandState,
     InMemoryCommandLedgerStore,
@@ -170,6 +171,74 @@ def test_command_ledger_creates_signed_anchor_for_unanchored_events():
     assert anchors == [anchor]
     assert anchored_command is not None
     assert anchored_command.state == CommandState.ANCHORED
+
+
+def test_command_ledger_exports_and_verifies_anchor_proof():
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-anchor-proof",
+        intent="llm_completion",
+        payload={"body": "anchor proof"},
+    )
+    ledger.transition(command.command_id, CommandState.ALLOWED)
+
+    anchor = ledger.anchor_unanchored_events(
+        signing_secret="test-secret",
+        signature_key_id="test-key",
+    )
+    proof = ledger.export_anchor_proof(anchor.anchor_id if anchor is not None else "")
+    verification = ledger.verify_anchor_proof(proof, signing_secret="test-secret")
+
+    assert anchor is not None
+    assert proof is not None
+    assert proof.anchor == anchor
+    assert proof.event_hashes[0] == anchor.from_event_hash
+    assert proof.event_hashes[-1] == anchor.to_event_hash
+    assert proof.proof_hash
+    assert verification.valid is True
+    assert verification.reason == "verified"
+
+
+def test_command_ledger_anchor_proof_detects_tampering():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-anchor-tamper",
+        intent="llm_completion",
+        payload={"body": "anchor tamper"},
+    )
+    ledger.transition(command.command_id, CommandState.ALLOWED)
+    anchor = ledger.anchor_unanchored_events(
+        signing_secret="test-secret",
+        signature_key_id="test-key",
+    )
+    proof = ledger.export_anchor_proof(anchor.anchor_id if anchor is not None else "")
+    tampered = CommandAnchorProof(
+        anchor=proof.anchor,
+        event_hashes=tuple((*proof.event_hashes[:-1], "tampered")),
+        proof_hash=proof.proof_hash,
+        exported_at=proof.exported_at,
+    )
+
+    verification = ledger.verify_anchor_proof(tampered, signing_secret="test-secret")
+
+    assert proof is not None
+    assert verification.valid is False
+    assert verification.reason == "to_event_hash_mismatch"
 
 
 def test_command_ledger_anchor_returns_none_when_no_unanchored_events():
@@ -407,6 +476,73 @@ def test_command_ledger_records_evidence_backed_claim():
     assert {record.evidence_type for record in evidence} >= {"payload_hash", "latest_event_hash"}
     assert events[-1].detail["claim"]["claim_id"] == claim.claim_id
     assert events[-1].detail["evidence"]
+
+
+def test_command_ledger_fracture_test_requires_high_risk_approval():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-fracture",
+        intent="financial.send_payment",
+        payload={
+            "body": "make a payment of $50",
+            "skill_intent": {
+                "skill": "financial",
+                "action": "send_payment",
+                "params": {"amount": "50"},
+            },
+        },
+    )
+    ledger.bind_governed_action(command.command_id)
+
+    result = ledger.fracture_test(command.command_id)
+    current = ledger.get(command.command_id)
+
+    assert result.passed is False
+    assert "missing_high_risk_approval" in result.fractures
+    assert result.result_hash
+    assert current is not None
+    assert current.state == CommandState.REQUIRES_REVIEW
+
+
+def test_command_ledger_fracture_test_passes_after_approval():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-fracture-pass",
+        intent="financial.send_payment",
+        payload={
+            "body": "make a payment of $50",
+            "skill_intent": {
+                "skill": "financial",
+                "action": "send_payment",
+                "params": {"amount": "50"},
+            },
+        },
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.transition(command.command_id, CommandState.APPROVED, approval_id="apr-1", risk_tier="high")
+
+    result = ledger.fracture_test(command.command_id)
+    current = ledger.get(command.command_id)
+
+    assert result.passed is True
+    assert result.fractures == ()
+    assert "duplicate_dispatch_absent" in result.checks
+    assert current is not None
+    assert current.state == CommandState.FRACTURE_TESTED
 
 
 def test_command_ledger_blocks_mutating_effect_without_required_receipts():

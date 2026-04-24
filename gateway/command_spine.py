@@ -45,6 +45,7 @@ class CommandState(StrEnum):
     APPROVED = "approved"
     BUDGET_RESERVED = "budget_reserved"
     EFFECT_PLANNED = "effect_planned"
+    FRACTURE_TESTED = "fracture_tested"
     SIMULATED = "simulated"
     SIMULATION_BLOCKED = "simulation_blocked"
     PENDING_EFFECT_APPROVAL = "pending_effect_approval"
@@ -127,6 +128,25 @@ class CommandAnchor:
     signature: str
     signature_key_id: str
     anchored_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class CommandAnchorProof:
+    """Exportable proof for a signed command event anchor."""
+
+    anchor: CommandAnchor
+    event_hashes: tuple[str, ...]
+    proof_hash: str
+    exported_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class AnchorVerification:
+    """Verification result for an exported anchor proof."""
+
+    valid: bool
+    reason: str
+    anchor_id: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -251,6 +271,17 @@ class Claim:
     evidence_refs: tuple[str, ...]
     confidence: float
     verified: bool
+
+
+@dataclass(frozen=True, slots=True)
+class FractureResult:
+    """Result of contradiction checks before high-risk dispatch."""
+
+    command_id: str
+    passed: bool
+    checks: tuple[str, ...]
+    fractures: tuple[str, ...]
+    result_hash: str
 
 
 class CommandLedgerStore:
@@ -923,6 +954,27 @@ def _compute_merkle_root(hashes: list[str]) -> str:
     return level[0].hex()
 
 
+def _anchor_signature_payload(anchor: CommandAnchor) -> str:
+    """Return canonical payload signed for a command anchor."""
+    return canonical_hash({
+        "from_event_hash": anchor.from_event_hash,
+        "to_event_hash": anchor.to_event_hash,
+        "event_count": anchor.event_count,
+        "merkle_root": anchor.merkle_root,
+        "signature_key_id": anchor.signature_key_id,
+        "anchored_at": anchor.anchored_at,
+    })
+
+
+def _anchor_signature(anchor: CommandAnchor, *, signing_secret: str) -> str:
+    """Return HMAC signature for an anchor payload."""
+    return hmac.new(
+        signing_secret.encode(),
+        _anchor_signature_payload(anchor).encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
 def redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
     """Return the gateway-safe command payload.
 
@@ -1408,6 +1460,7 @@ class CommandLedger:
         self._effect_reconciliations: dict[str, EffectReconciliation] = {}
         self._claims: dict[str, list[Claim]] = {}
         self._evidence_records: dict[str, list[EvidenceRecord]] = {}
+        self._fracture_results: dict[str, FractureResult] = {}
         self._store = store or InMemoryCommandLedgerStore()
         self._last_event_hash = self._store.latest_event_hash()
 
@@ -1914,6 +1967,91 @@ class CommandLedger:
             self._evidence_records[command_id] = loaded
         return loaded
 
+    def fracture_test(self, command_id: str) -> FractureResult:
+        """Run bounded contradiction checks before high-risk dispatch."""
+        command = self.get(command_id)
+        if command is None:
+            raise KeyError(f"unknown command_id: {command_id}")
+        action = self.governed_action_for(command_id)
+        prediction = self.effect_prediction_for(command_id)
+        recovery_plan = self.recovery_plan_for(command_id)
+        events = self.events_for(command_id)
+        checks = (
+            "governed_action_present",
+            "capability_passport_present",
+            "effect_prediction_present",
+            "recovery_plan_present",
+            "approval_present_for_high_risk",
+            "duplicate_dispatch_absent",
+            "prompt_injection_absent",
+        )
+        fractures: list[str] = []
+        if action is None:
+            fractures.append("missing_governed_action")
+        else:
+            try:
+                capability_passport_for(action.capability)
+            except ValueError:
+                fractures.append("missing_capability_passport")
+            if action.risk_tier == "high" and not any(event.next_state == CommandState.APPROVED for event in events):
+                fractures.append("missing_high_risk_approval")
+        if prediction is None:
+            fractures.append("missing_effect_prediction")
+        if action is not None and action.risk_tier == "high" and recovery_plan is None:
+            fractures.append("missing_recovery_plan")
+        if any(event.next_state == CommandState.DISPATCHED for event in events):
+            fractures.append("duplicate_dispatch")
+        body = str(command.redacted_payload.get("body", "")).lower()
+        if "ignore previous" in body or "bypass governance" in body or "disable policy" in body:
+            fractures.append("prompt_injection_marker")
+
+        result_payload = {
+            "command_id": command_id,
+            "checks": checks,
+            "fractures": tuple(fractures),
+        }
+        result = FractureResult(
+            command_id=command_id,
+            passed=not fractures,
+            checks=checks,
+            fractures=tuple(fractures),
+            result_hash=canonical_hash(result_payload),
+        )
+        self._fracture_results[command_id] = result
+        self.transition(
+            command_id,
+            CommandState.FRACTURE_TESTED if result.passed else CommandState.REQUIRES_REVIEW,
+            risk_tier=action.risk_tier if action is not None else "",
+            detail={
+                "cause": "fracture_tested" if result.passed else "fracture_failed",
+                "fracture_result": asdict(result),
+            },
+        )
+        return result
+
+    def fracture_result_for(self, command_id: str) -> FractureResult | None:
+        """Return the latest fracture result for a command."""
+        result = self._fracture_results.get(command_id)
+        if result is not None:
+            return result
+        for event in reversed(self.events_for(command_id)):
+            raw_result = event.detail.get("fracture_result")
+            if not isinstance(raw_result, dict):
+                continue
+            try:
+                result = FractureResult(
+                    command_id=str(raw_result["command_id"]),
+                    passed=bool(raw_result["passed"]),
+                    checks=tuple(raw_result["checks"]),
+                    fractures=tuple(raw_result["fractures"]),
+                    result_hash=str(raw_result["result_hash"]),
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
+            self._fracture_results[command_id] = result
+            return result
+        return None
+
     def _build_evidence_records(self, command_id: str, *, verified: bool) -> list[EvidenceRecord]:
         """Build canonical evidence records from command witnesses."""
         command = self.get(command_id)
@@ -2029,6 +2167,7 @@ class CommandLedger:
             "effect_reconciliations": len(self._effect_reconciliations),
             "claims": sum(len(claims) for claims in self._claims.values()),
             "evidence_records": sum(len(records) for records in self._evidence_records.values()),
+            "fracture_results": len(self._fracture_results),
             "states": state_counts,
             "last_event_hash": self._last_event_hash,
             "anchors": len(self._store.list_anchors(limit=10)),
@@ -2150,28 +2289,25 @@ class CommandLedger:
         event_hashes = [event.event_hash for event in events]
         merkle_root = _compute_merkle_root(event_hashes)
         anchored_at = self._clock()
-        signature_payload = canonical_hash({
-            "from_event_hash": event_hashes[0],
-            "to_event_hash": event_hashes[-1],
-            "event_count": len(event_hashes),
-            "merkle_root": merkle_root,
-            "signature_key_id": signature_key_id,
-            "anchored_at": anchored_at,
-        })
-        signature = hmac.new(
-            signing_secret.encode(),
-            signature_payload.encode(),
-            hashlib.sha256,
-        ).hexdigest()
-        anchor = CommandAnchor(
+        unsigned_anchor = CommandAnchor(
             anchor_id=f"cmd-anchor-{merkle_root[:16]}",
             from_event_hash=event_hashes[0],
             to_event_hash=event_hashes[-1],
             event_count=len(event_hashes),
             merkle_root=merkle_root,
-            signature=signature,
+            signature="",
             signature_key_id=signature_key_id,
             anchored_at=anchored_at,
+        )
+        anchor = CommandAnchor(
+            anchor_id=unsigned_anchor.anchor_id,
+            from_event_hash=unsigned_anchor.from_event_hash,
+            to_event_hash=unsigned_anchor.to_event_hash,
+            event_count=unsigned_anchor.event_count,
+            merkle_root=unsigned_anchor.merkle_root,
+            signature=_anchor_signature(unsigned_anchor, signing_secret=signing_secret),
+            signature_key_id=unsigned_anchor.signature_key_id,
+            anchored_at=unsigned_anchor.anchored_at,
         )
         self._store.append_anchor(anchor)
         for event in events:
@@ -2183,6 +2319,85 @@ class CommandLedger:
     def list_anchors(self, limit: int = 50) -> list[CommandAnchor]:
         """Return recent signed command-event anchors."""
         return self._store.list_anchors(limit=limit)
+
+    def export_anchor_proof(self, anchor_id: str) -> CommandAnchorProof | None:
+        """Return exportable proof for one persisted anchor."""
+        anchor = next((item for item in self._store.list_anchors(limit=10_000) if item.anchor_id == anchor_id), None)
+        if anchor is None:
+            return None
+        event_hashes: list[str] = []
+        recording = False
+        for event in self._events:
+            if event.event_hash == anchor.from_event_hash:
+                recording = True
+            if recording:
+                event_hashes.append(event.event_hash)
+            if event.event_hash == anchor.to_event_hash:
+                break
+        if not event_hashes:
+            for command in self._commands:
+                for event in self._store.events_for(command):
+                    if event.event_hash == anchor.from_event_hash:
+                        recording = True
+                    if recording:
+                        event_hashes.append(event.event_hash)
+                    if event.event_hash == anchor.to_event_hash:
+                        break
+        exported_at = self._clock()
+        proof_hash = canonical_hash({
+            "anchor": asdict(anchor),
+            "event_hashes": tuple(event_hashes),
+            "exported_at": exported_at,
+        })
+        return CommandAnchorProof(
+            anchor=anchor,
+            event_hashes=tuple(event_hashes),
+            proof_hash=proof_hash,
+            exported_at=exported_at,
+        )
+
+    def verify_anchor_proof(
+        self,
+        proof: CommandAnchorProof,
+        *,
+        signing_secret: str,
+    ) -> AnchorVerification:
+        """Verify an exported command anchor proof."""
+        if not signing_secret:
+            return AnchorVerification(False, "signing_secret_required", proof.anchor.anchor_id)
+        if proof.anchor.event_count != len(proof.event_hashes):
+            return AnchorVerification(False, "event_count_mismatch", proof.anchor.anchor_id)
+        if not proof.event_hashes:
+            return AnchorVerification(False, "event_hashes_required", proof.anchor.anchor_id)
+        if proof.anchor.from_event_hash != proof.event_hashes[0]:
+            return AnchorVerification(False, "from_event_hash_mismatch", proof.anchor.anchor_id)
+        if proof.anchor.to_event_hash != proof.event_hashes[-1]:
+            return AnchorVerification(False, "to_event_hash_mismatch", proof.anchor.anchor_id)
+        if proof.anchor.merkle_root != _compute_merkle_root(list(proof.event_hashes)):
+            return AnchorVerification(False, "merkle_root_mismatch", proof.anchor.anchor_id)
+        expected_signature = _anchor_signature(
+            CommandAnchor(
+                anchor_id=proof.anchor.anchor_id,
+                from_event_hash=proof.anchor.from_event_hash,
+                to_event_hash=proof.anchor.to_event_hash,
+                event_count=proof.anchor.event_count,
+                merkle_root=proof.anchor.merkle_root,
+                signature="",
+                signature_key_id=proof.anchor.signature_key_id,
+                anchored_at=proof.anchor.anchored_at,
+            ),
+            signing_secret=signing_secret,
+        )
+        if not hmac.compare_digest(expected_signature, proof.anchor.signature):
+            return AnchorVerification(False, "signature_mismatch", proof.anchor.anchor_id)
+        expected_proof_hash = canonical_hash({
+            "anchor": asdict(proof.anchor),
+            "event_hashes": tuple(proof.event_hashes),
+            "exported_at": proof.exported_at,
+        })
+        if not hmac.compare_digest(expected_proof_hash, proof.proof_hash):
+            return AnchorVerification(False, "proof_hash_mismatch", proof.anchor.anchor_id)
+        return AnchorVerification(True, "verified", proof.anchor.anchor_id)
 
 
 def build_command_ledger_from_env(
