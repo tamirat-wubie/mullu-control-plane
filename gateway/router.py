@@ -21,6 +21,11 @@ from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus
 from gateway.authority import evaluate_approval_authority
 from gateway.command_spine import CommandAnchor, CommandEnvelope, CommandLedger, CommandState, canonical_hash
 from gateway.dedup import MessageDeduplicator
+from gateway.memory_constitution import (
+    GovernedMemoryStore,
+    InMemoryGovernedMemoryStore,
+    governed_memory_cell_from_mapping,
+)
 from gateway.skill_dispatch import SkillDispatcher, SkillIntent, detect_intent
 from gateway.tenant_identity import InMemoryTenantIdentityStore, TenantIdentityStore, TenantMapping
 
@@ -83,6 +88,7 @@ class GatewayRouter:
         deduplicator: MessageDeduplicator | None = None,
         command_ledger: CommandLedger | None = None,
         tenant_identity_store: TenantIdentityStore | None = None,
+        memory_store: GovernedMemoryStore | None = None,
         defer_approved_execution: bool = False,
     ) -> None:
         self._platform = platform
@@ -92,6 +98,7 @@ class GatewayRouter:
         self._dedup = deduplicator or MessageDeduplicator()
         self._commands = command_ledger or CommandLedger(clock=self._clock)
         self._tenant_identities = tenant_identity_store or InMemoryTenantIdentityStore(clock=self._clock)
+        self._memory = memory_store or InMemoryGovernedMemoryStore(clock=self._clock)
         self._defer_approved_execution = defer_approved_execution
         self._channels: dict[str, ChannelAdapter] = {}
         self._message_count = 0
@@ -105,10 +112,35 @@ class GatewayRouter:
     def register_tenant_mapping(self, mapping: TenantMapping) -> None:
         """Map a channel user identity to a tenant."""
         self._tenant_identities.save(mapping)
+        self._admit_mapping_memory(mapping)
 
     def resolve_tenant(self, channel: str, sender_id: str) -> TenantMapping | None:
         """Resolve tenant from channel user identity."""
         return self._tenant_identities.resolve(channel, sender_id)
+
+    def governed_memory_for(self, mapping: TenantMapping, *, allowed_use: str, scope: str = "") -> list[Any]:
+        """Return governed memory cells usable for one mapped identity."""
+        return self._memory.query(
+            tenant_id=mapping.tenant_id,
+            owner_id=mapping.identity_id,
+            allowed_use=allowed_use,
+            scope=scope,
+        )
+
+    def _admit_mapping_memory(self, mapping: TenantMapping) -> None:
+        """Admit explicit memory cells carried by tenant mapping metadata."""
+        raw_cells = mapping.metadata.get("memory_cells", ())
+        if not isinstance(raw_cells, (list, tuple)):
+            return
+        for raw_cell in raw_cells:
+            if not isinstance(raw_cell, dict):
+                continue
+            cell = governed_memory_cell_from_mapping(
+                raw_cell,
+                tenant_id=mapping.tenant_id,
+                owner_id=mapping.identity_id,
+            )
+            self._memory.admit(cell)
 
     def _parse_approval_command(self, body: str) -> tuple[str, bool] | None:
         """Parse a channel-native approval callback command."""
@@ -259,6 +291,23 @@ class GatewayRouter:
                 governed=True,
                 metadata={"error": "missing_recovery_plan", "command_id": command.command_id},
             )
+        if governed_action.risk_tier == "high":
+            fracture = self._commands.fracture_test(command.command_id)
+            if not fracture.passed:
+                self._error_count += 1
+                return GatewayResponse(
+                    message_id=self._gen_id("resp", command.command_id),
+                    channel=command.source,
+                    recipient_id=recipient_id,
+                    body="This high-risk action requires review because fracture testing found a contradiction.",
+                    governed=True,
+                    metadata={
+                        "error": "fracture_test_failed",
+                        "command_id": command.command_id,
+                        "fractures": fracture.fractures,
+                        "fracture_result_hash": fracture.result_hash,
+                    },
+                )
         body = str(command.redacted_payload.get("body", ""))
         try:
             session = self._platform.connect(
@@ -839,6 +888,7 @@ class GatewayRouter:
             "channels": list(self._channels.keys()),
             "tenant_mappings": self._tenant_identities.count(),
             "tenant_identity_store": self._tenant_identities.status(),
+            "memory_store": self._memory.status(),
             "dedup": self._dedup.status(),
             "command_ledger": self._commands.summary(),
         }
