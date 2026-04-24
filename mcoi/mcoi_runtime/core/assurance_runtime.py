@@ -17,11 +17,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any
 
 from ..contracts.assurance_runtime import (
     AssuranceAssessment,
-    AssuranceClosureReport,
     AssuranceDecision,
     AssuranceEvidenceBinding,
     AssuranceFinding,
@@ -59,6 +57,15 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     )
     es.emit(event)
     return event
+
+
+def _require_human_actor(field_name: str, value: str, missing_message: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(missing_message)
+    normalized = value.strip()
+    if normalized == "system":
+        raise RuntimeCoreInvariantError(f"{field_name} must exclude system")
+    return normalized
 
 
 _ATTESTATION_TERMINAL = frozenset({AttestationStatus.REVOKED, AttestationStatus.EXPIRED})
@@ -138,12 +145,15 @@ class AssuranceRuntimeEngine:
         *,
         scope: AssuranceScope = AssuranceScope.CONTROL,
         level: AssuranceLevel = AssuranceLevel.NONE,
-        attested_by: str = "system",
+        attested_by: str = "",
         expires_at: str = "",
     ) -> AttestationRecord:
         """Register an attestation."""
         if attestation_id in self._attestations:
             raise RuntimeCoreInvariantError("Duplicate attestation_id")
+        normalized_attested_by = _require_human_actor(
+            "attested_by", attested_by, "attested_by required for attestation"
+        )
         now = _now_iso()
         rec = AttestationRecord(
             attestation_id=attestation_id,
@@ -152,13 +162,14 @@ class AssuranceRuntimeEngine:
             scope_ref_id=scope_ref_id,
             level=level,
             status=AttestationStatus.PENDING,
-            attested_by=attested_by,
+            attested_by=normalized_attested_by,
             attested_at=now,
             expires_at=expires_at,
         )
         self._attestations[attestation_id] = rec
         _emit(self._events, "attestation_registered", {
             "attestation_id": attestation_id, "scope": scope.value,
+            "attested_by": normalized_attested_by,
         }, attestation_id)
         return rec
 
@@ -264,12 +275,15 @@ class AssuranceRuntimeEngine:
         *,
         scope: AssuranceScope = AssuranceScope.CONTROL,
         level: AssuranceLevel = AssuranceLevel.NONE,
-        certified_by: str = "system",
+        certified_by: str = "",
         expires_at: str = "",
     ) -> CertificationRecord:
         """Register a certification."""
         if certification_id in self._certifications:
             raise RuntimeCoreInvariantError("Duplicate certification_id")
+        normalized_certified_by = _require_human_actor(
+            "certified_by", certified_by, "certified_by required for certification"
+        )
         now = _now_iso()
         rec = CertificationRecord(
             certification_id=certification_id,
@@ -278,13 +292,14 @@ class AssuranceRuntimeEngine:
             scope_ref_id=scope_ref_id,
             status=CertificationStatus.PENDING,
             level=level,
-            certified_by=certified_by,
+            certified_by=normalized_certified_by,
             certified_at=now,
             expires_at=expires_at,
         )
         self._certifications[certification_id] = rec
         _emit(self._events, "certification_registered", {
             "certification_id": certification_id, "scope": scope.value,
+            "certified_by": normalized_certified_by,
         }, certification_id)
         return rec
 
@@ -472,11 +487,14 @@ class AssuranceRuntimeEngine:
         scope_ref_id: str,
         *,
         scope: AssuranceScope = AssuranceScope.CONTROL,
-        assessed_by: str = "system",
+        assessed_by: str = "",
     ) -> AssuranceAssessment:
         """Assess assurance for a scope, evaluating evidence sufficiency."""
         if assessment_id in self._assessments:
             raise RuntimeCoreInvariantError("Duplicate assessment_id")
+        normalized_assessed_by = _require_human_actor(
+            "assessed_by", assessed_by, "assessed_by required for assurance assessment"
+        )
 
         # Count evidence bindings for this scope
         bindings = [
@@ -512,7 +530,7 @@ class AssuranceRuntimeEngine:
             level=level,
             sufficiency=sufficiency,
             confidence=confidence,
-            assessed_by=assessed_by,
+            assessed_by=normalized_assessed_by,
             assessed_at=now,
         )
         self._assessments[assessment_id] = assessment
@@ -520,6 +538,7 @@ class AssuranceRuntimeEngine:
             "assessment_id": assessment_id,
             "level": level.value,
             "sufficiency": sufficiency.value,
+            "assessed_by": normalized_assessed_by,
         }, assessment_id)
         return assessment
 
@@ -576,19 +595,22 @@ class AssuranceRuntimeEngine:
         target_type: str,
         *,
         level: AssuranceLevel = AssuranceLevel.NONE,
-        decided_by: str = "system",
+        decided_by: str = "",
         reason: str = "",
     ) -> AssuranceDecision:
         """Make a formal assurance decision."""
         if decision_id in self._decisions:
             raise RuntimeCoreInvariantError("Duplicate decision_id")
+        normalized_decided_by = _require_human_actor(
+            "decided_by", decided_by, "decided_by required for assurance decision"
+        )
         now = _now_iso()
         decision = AssuranceDecision(
             decision_id=decision_id,
             target_id=target_id,
             target_type=target_type,
             level=level,
-            decided_by=decided_by,
+            decided_by=normalized_decided_by,
             reason=reason,
             decided_at=now,
         )
@@ -596,6 +618,7 @@ class AssuranceRuntimeEngine:
         _emit(self._events, "assurance_decision_made", {
             "decision_id": decision_id, "target_id": target_id,
             "level": level.value,
+            "decided_by": normalized_decided_by,
         }, target_id)
         return decision
 

@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ..contracts.assurance_runtime import (
-    AssuranceLevel,
     AssuranceScope,
 )
 from ..contracts.event import EventRecord, EventSource, EventType
@@ -51,6 +50,15 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     return event
 
 
+def _require_human_actor(field_name: str, value: str, missing_message: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(missing_message)
+    normalized = value.strip()
+    if normalized == "system":
+        raise RuntimeCoreInvariantError(f"{field_name} must exclude system")
+    return normalized
+
+
 class AssuranceRuntimeIntegration:
     """Integration bridge for assurance runtime with platform layers."""
 
@@ -82,20 +90,28 @@ class AssuranceRuntimeIntegration:
         tenant_id: str,
         control_id: str,
         title: str = "Control test attestation",
+        *,
+        attested_by: str = "",
     ) -> dict[str, Any]:
         """Create an attestation from control test results."""
+        normalized_attested_by = _require_human_actor(
+            "attested_by", attested_by, "attested_by required for assurance creation"
+        )
         att = self._assurance.register_attestation(
             attestation_id, tenant_id, control_id,
             scope=AssuranceScope.CONTROL,
+            attested_by=normalized_attested_by,
         )
         _emit(self._events, "assurance_from_control_tests", {
             "attestation_id": attestation_id, "control_id": control_id,
+            "attested_by": normalized_attested_by,
         }, attestation_id)
         return {
             "attestation_id": att.attestation_id,
             "tenant_id": att.tenant_id,
             "scope": att.scope.value,
             "scope_ref_id": control_id,
+            "attested_by": att.attested_by,
             "source_type": "control_test",
         }
 
@@ -105,20 +121,28 @@ class AssuranceRuntimeIntegration:
         tenant_id: str,
         case_id: str,
         title: str = "Case closure attestation",
+        *,
+        attested_by: str = "",
     ) -> dict[str, Any]:
         """Create an attestation from a closed case."""
+        normalized_attested_by = _require_human_actor(
+            "attested_by", attested_by, "attested_by required for assurance creation"
+        )
         att = self._assurance.register_attestation(
             attestation_id, tenant_id, case_id,
             scope=AssuranceScope.CONTROL,
+            attested_by=normalized_attested_by,
         )
         _emit(self._events, "assurance_from_case_closure", {
             "attestation_id": attestation_id, "case_id": case_id,
+            "attested_by": normalized_attested_by,
         }, attestation_id)
         return {
             "attestation_id": att.attestation_id,
             "tenant_id": att.tenant_id,
             "scope": att.scope.value,
             "scope_ref_id": case_id,
+            "attested_by": att.attested_by,
             "source_type": "case_closure",
         }
 
@@ -128,20 +152,28 @@ class AssuranceRuntimeIntegration:
         tenant_id: str,
         remediation_id: str,
         title: str = "Remediation attestation",
+        *,
+        attested_by: str = "",
     ) -> dict[str, Any]:
         """Create an attestation from a completed remediation."""
+        normalized_attested_by = _require_human_actor(
+            "attested_by", attested_by, "attested_by required for assurance creation"
+        )
         att = self._assurance.register_attestation(
             attestation_id, tenant_id, remediation_id,
             scope=AssuranceScope.CONTROL,
+            attested_by=normalized_attested_by,
         )
         _emit(self._events, "assurance_from_remediation", {
             "attestation_id": attestation_id, "remediation_id": remediation_id,
+            "attested_by": normalized_attested_by,
         }, attestation_id)
         return {
             "attestation_id": att.attestation_id,
             "tenant_id": att.tenant_id,
             "scope": att.scope.value,
             "scope_ref_id": remediation_id,
+            "attested_by": att.attested_by,
             "source_type": "remediation",
         }
 
@@ -151,20 +183,28 @@ class AssuranceRuntimeIntegration:
         tenant_id: str,
         program_id: str,
         title: str = "Program health certification",
+        *,
+        certified_by: str = "",
     ) -> dict[str, Any]:
         """Create a certification from program health metrics."""
+        normalized_certified_by = _require_human_actor(
+            "certified_by", certified_by, "certified_by required for assurance creation"
+        )
         cert = self._assurance.register_certification(
             certification_id, tenant_id, program_id,
             scope=AssuranceScope.PROGRAM,
+            certified_by=normalized_certified_by,
         )
         _emit(self._events, "assurance_from_program_health", {
             "certification_id": certification_id, "program_id": program_id,
+            "certified_by": normalized_certified_by,
         }, certification_id)
         return {
             "certification_id": cert.certification_id,
             "tenant_id": cert.tenant_id,
             "scope": cert.scope.value,
             "scope_ref_id": program_id,
+            "certified_by": cert.certified_by,
             "source_type": "program_health",
         }
 
@@ -174,20 +214,28 @@ class AssuranceRuntimeIntegration:
         tenant_id: str,
         connector_id: str,
         title: str = "Connector stability certification",
+        *,
+        certified_by: str = "",
     ) -> dict[str, Any]:
         """Create a certification from connector stability metrics."""
+        normalized_certified_by = _require_human_actor(
+            "certified_by", certified_by, "certified_by required for assurance creation"
+        )
         cert = self._assurance.register_certification(
             certification_id, tenant_id, connector_id,
             scope=AssuranceScope.CONNECTOR,
+            certified_by=normalized_certified_by,
         )
         _emit(self._events, "assurance_from_connector_stability", {
             "certification_id": certification_id, "connector_id": connector_id,
+            "certified_by": normalized_certified_by,
         }, certification_id)
         return {
             "certification_id": cert.certification_id,
             "tenant_id": cert.tenant_id,
             "scope": cert.scope.value,
             "scope_ref_id": connector_id,
+            "certified_by": cert.certified_by,
             "source_type": "connector_stability",
         }
 

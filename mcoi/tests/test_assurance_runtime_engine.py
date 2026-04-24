@@ -5,14 +5,12 @@ from __future__ import annotations
 import pytest
 
 from mcoi_runtime.contracts.assurance_runtime import (
-    AssuranceAssessment,
     AssuranceDecision,
     AssuranceEvidenceBinding,
     AssuranceFinding,
     AssuranceLevel,
     AssuranceScope,
     AssuranceSnapshot,
-    AssuranceViolation,
     AttestationRecord,
     AttestationStatus,
     CertificationRecord,
@@ -37,7 +35,7 @@ def _make_engine() -> tuple[AssuranceRuntimeEngine, EventSpineEngine]:
 def _register_and_bind(eng: AssuranceRuntimeEngine, att_id: str = "att-1",
                        tenant: str = "t1", ref: str = "ref-1",
                        binding_id: str = "b-1") -> AttestationRecord:
-    att = eng.register_attestation(att_id, tenant, ref)
+    att = eng.register_attestation(att_id, tenant, ref, attested_by="assurance-attester-1")
     eng.bind_evidence(binding_id, att_id, "attestation", "record", "rec-1")
     return att
 
@@ -45,7 +43,7 @@ def _register_and_bind(eng: AssuranceRuntimeEngine, att_id: str = "att-1",
 def _register_cert_and_bind(eng: AssuranceRuntimeEngine, cert_id: str = "cert-1",
                             tenant: str = "t1", ref: str = "ref-1",
                             binding_id: str = "bc-1") -> CertificationRecord:
-    cert = eng.register_certification(cert_id, tenant, ref)
+    cert = eng.register_certification(cert_id, tenant, ref, certified_by="assurance-certifier-1")
     eng.bind_evidence(binding_id, cert_id, "certification", "record", "rec-1")
     return cert
 
@@ -78,7 +76,7 @@ class TestConstructor:
 class TestRegisterAttestation:
     def test_basic_registration(self):
         eng, es = _make_engine()
-        att = eng.register_attestation("att-1", "t1", "ref-1")
+        att = eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         assert isinstance(att, AttestationRecord)
         assert att.attestation_id == "att-1"
         assert att.tenant_id == "t1"
@@ -95,6 +93,7 @@ class TestRegisterAttestation:
             "att-1", "t1", "ref-1",
             scope=AssuranceScope.PROGRAM,
             level=AssuranceLevel.HIGH,
+            attested_by="assurance-attester-1",
         )
         assert att.scope == AssuranceScope.PROGRAM
         assert att.level == AssuranceLevel.HIGH
@@ -104,15 +103,25 @@ class TestRegisterAttestation:
         att = eng.register_attestation("att-1", "t1", "ref-1", attested_by="admin")
         assert att.attested_by == "admin"
 
+    def test_missing_attested_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="attested_by required for attestation"):
+            eng.register_attestation("att-1", "t1", "ref-1")
+
+    def test_system_attested_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="attested_by must exclude system"):
+            eng.register_attestation("att-1", "t1", "ref-1", attested_by="system")
+
     def test_duplicate_raises(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
-            eng.register_attestation("att-1", "t2", "ref-2")
+            eng.register_attestation("att-1", "t2", "ref-2", attested_by="assurance-attester-1")
 
     def test_get_attestation(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         att = eng.get_attestation("att-1")
         assert att.attestation_id == "att-1"
 
@@ -123,9 +132,9 @@ class TestRegisterAttestation:
 
     def test_attestations_for_tenant(self):
         eng, _ = _make_engine()
-        eng.register_attestation("a1", "t1", "r1")
-        eng.register_attestation("a2", "t1", "r2")
-        eng.register_attestation("a3", "t2", "r3")
+        eng.register_attestation("a1", "t1", "r1", attested_by="assurance-attester-1")
+        eng.register_attestation("a2", "t1", "r2", attested_by="assurance-attester-1")
+        eng.register_attestation("a3", "t2", "r3", attested_by="assurance-attester-1")
         result = eng.attestations_for_tenant("t1")
         assert len(result) == 2
         assert isinstance(result, tuple)
@@ -137,19 +146,19 @@ class TestRegisterAttestation:
     def test_emits_event(self):
         eng, es = _make_engine()
         initial = es.event_count
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         assert es.event_count > initial
 
     def test_all_scopes(self):
         eng, _ = _make_engine()
         for i, scope in enumerate(AssuranceScope):
-            att = eng.register_attestation(f"att-{i}", "t1", f"ref-{i}", scope=scope)
+            att = eng.register_attestation(f"att-{i}", "t1", f"ref-{i}", scope=scope, attested_by="assurance-attester-1")
             assert att.scope == scope
 
     def test_all_levels(self):
         eng, _ = _make_engine()
         for i, level in enumerate(AssuranceLevel):
-            att = eng.register_attestation(f"att-{i}", "t1", f"ref-{i}", level=level)
+            att = eng.register_attestation(f"att-{i}", "t1", f"ref-{i}", level=level, attested_by="assurance-attester-1")
             assert att.level == level
 
 
@@ -168,7 +177,7 @@ class TestGrantAttestation:
 
     def test_grant_without_evidence_raises(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         with pytest.raises(RuntimeCoreInvariantError, match="without evidence"):
             eng.grant_attestation("att-1", AssuranceLevel.HIGH)
 
@@ -211,7 +220,7 @@ class TestGrantAttestation:
 class TestDenyAttestation:
     def test_deny_pending(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         denied = eng.deny_attestation("att-1", reason="insufficient")
         assert denied.status == AttestationStatus.DENIED
         assert denied.level == AssuranceLevel.NONE
@@ -233,7 +242,7 @@ class TestDenyAttestation:
 
     def test_deny_expired_raises(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         # Force expired status
         old = eng.get_attestation("att-1")
         expired = AttestationRecord(
@@ -252,7 +261,7 @@ class TestDenyAttestation:
 
     def test_deny_emits_event(self):
         eng, es = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         initial = es.event_count
         eng.deny_attestation("att-1")
         assert es.event_count > initial
@@ -274,13 +283,13 @@ class TestRevokeAttestation:
 
     def test_revoke_pending_raises(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         with pytest.raises(RuntimeCoreInvariantError, match="only revoke GRANTED"):
             eng.revoke_attestation("att-1")
 
     def test_revoke_denied_raises(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         eng.deny_attestation("att-1")
         with pytest.raises(RuntimeCoreInvariantError, match="only revoke GRANTED"):
             eng.revoke_attestation("att-1")
@@ -301,7 +310,7 @@ class TestRevokeAttestation:
 class TestRegisterCertification:
     def test_basic_registration(self):
         eng, es = _make_engine()
-        cert = eng.register_certification("cert-1", "t1", "ref-1")
+        cert = eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         assert isinstance(cert, CertificationRecord)
         assert cert.certification_id == "cert-1"
         assert cert.status == CertificationStatus.PENDING
@@ -316,19 +325,30 @@ class TestRegisterCertification:
             "cert-1", "t1", "ref-1",
             scope=AssuranceScope.CONNECTOR,
             level=AssuranceLevel.FULL,
+            certified_by="assurance-certifier-1",
         )
         assert cert.scope == AssuranceScope.CONNECTOR
         assert cert.level == AssuranceLevel.FULL
 
+    def test_missing_certified_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="certified_by required for certification"):
+            eng.register_certification("cert-1", "t1", "ref-1")
+
+    def test_system_certified_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="certified_by must exclude system"):
+            eng.register_certification("cert-1", "t1", "ref-1", certified_by="system")
+
     def test_duplicate_raises(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
-            eng.register_certification("cert-1", "t2", "ref-2")
+            eng.register_certification("cert-1", "t2", "ref-2", certified_by="assurance-certifier-1")
 
     def test_get_certification(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         cert = eng.get_certification("cert-1")
         assert cert.certification_id == "cert-1"
 
@@ -341,7 +361,7 @@ class TestRegisterCertification:
     def test_emits_event(self):
         eng, es = _make_engine()
         initial = es.event_count
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         assert es.event_count > initial
 
 
@@ -360,7 +380,7 @@ class TestActivateCertification:
 
     def test_activate_without_evidence_raises(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         with pytest.raises(RuntimeCoreInvariantError, match="without evidence"):
             eng.activate_certification("cert-1", AssuranceLevel.HIGH)
 
@@ -402,7 +422,7 @@ class TestSuspendCertification:
 
     def test_suspend_pending_raises(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         with pytest.raises(RuntimeCoreInvariantError, match="only suspend ACTIVE"):
             eng.suspend_certification("cert-1")
 
@@ -437,7 +457,7 @@ class TestRevokeCertification:
 
     def test_revoke_pending(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         revoked = eng.revoke_certification("cert-1")
         assert revoked.status == CertificationStatus.REVOKED
 
@@ -459,7 +479,7 @@ class TestRevokeCertification:
 
     def test_revoke_emits_event(self):
         eng, es = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         initial = es.event_count
         eng.revoke_certification("cert-1")
         assert es.event_count > initial
@@ -480,20 +500,20 @@ class TestExpireCertification:
 
     def test_expire_pending(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         expired = eng.expire_certification("cert-1")
         assert expired.status == CertificationStatus.EXPIRED
 
     def test_expire_already_expired_raises(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.expire_certification("cert-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot expire"):
             eng.expire_certification("cert-1")
 
     def test_expire_emits_event(self):
         eng, es = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         initial = es.event_count
         eng.expire_certification("cert-1")
         assert es.event_count > initial
@@ -514,20 +534,20 @@ class TestMarkRecertificationRequired:
 
     def test_mark_pending(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         marked = eng.mark_recertification_required("cert-1")
         assert marked.status == CertificationStatus.RECERTIFICATION_REQUIRED
 
     def test_mark_revoked_raises(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.revoke_certification("cert-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Cannot mark"):
             eng.mark_recertification_required("cert-1")
 
     def test_mark_emits_event(self):
         eng, es = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         initial = es.event_count
         eng.mark_recertification_required("cert-1")
         assert es.event_count > initial
@@ -590,7 +610,7 @@ class TestBindEvidence:
 class TestAssessAssurance:
     def test_no_evidence_insufficient(self):
         eng, _ = _make_engine()
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a.sufficiency == EvidenceSufficiency.INSUFFICIENT
         assert a.level == AssuranceLevel.NONE
         assert a.confidence == 0.0
@@ -598,7 +618,7 @@ class TestAssessAssurance:
     def test_one_binding_partial(self):
         eng, _ = _make_engine()
         eng.bind_evidence("b1", "ref-1", "any", "record", "r1")
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a.sufficiency == EvidenceSufficiency.PARTIAL
         assert a.level == AssuranceLevel.LOW
         assert a.confidence == pytest.approx(0.3)
@@ -607,7 +627,7 @@ class TestAssessAssurance:
         eng, _ = _make_engine()
         eng.bind_evidence("b1", "ref-1", "any", "record", "r1")
         eng.bind_evidence("b2", "ref-1", "any", "memory", "m1")
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a.sufficiency == EvidenceSufficiency.SUFFICIENT
         assert a.level == AssuranceLevel.MODERATE
         assert a.confidence == pytest.approx(0.7)
@@ -616,7 +636,7 @@ class TestAssessAssurance:
         eng, _ = _make_engine()
         for i in range(3):
             eng.bind_evidence(f"b{i}", "ref-1", "any", "record", f"r{i}")
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a.sufficiency == EvidenceSufficiency.SUFFICIENT
         assert a.level == AssuranceLevel.MODERATE
 
@@ -624,7 +644,7 @@ class TestAssessAssurance:
         eng, _ = _make_engine()
         for i in range(4):
             eng.bind_evidence(f"b{i}", "ref-1", "any", "record", f"r{i}")
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a.sufficiency == EvidenceSufficiency.COMPREHENSIVE
         assert a.level == AssuranceLevel.HIGH
         assert a.confidence == pytest.approx(0.9)
@@ -633,37 +653,47 @@ class TestAssessAssurance:
         eng, _ = _make_engine()
         for i in range(5):
             eng.bind_evidence(f"b{i}", "ref-1", "any", "record", f"r{i}")
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a.sufficiency == EvidenceSufficiency.COMPREHENSIVE
         assert a.level == AssuranceLevel.HIGH
 
+    def test_missing_assessed_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by required for assurance assessment"):
+            eng.assess_assurance("a1", "t1", "ref-1")
+
+    def test_system_assessed_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by must exclude system"):
+            eng.assess_assurance("a1", "t1", "ref-1", assessed_by="system")
+
     def test_duplicate_assessment_raises(self):
         eng, _ = _make_engine()
-        eng.assess_assurance("a1", "t1", "ref-1")
+        eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
-            eng.assess_assurance("a1", "t1", "ref-1")
+            eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
 
     def test_assessment_count(self):
         eng, _ = _make_engine()
-        eng.assess_assurance("a1", "t1", "ref-1")
-        eng.assess_assurance("a2", "t1", "ref-2")
+        eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
+        eng.assess_assurance("a2", "t1", "ref-2", assessed_by="assurance-assessor-1")
         assert eng.assessment_count == 2
 
     def test_assessment_is_frozen(self):
         eng, _ = _make_engine()
-        a = eng.assess_assurance("a1", "t1", "ref-1")
+        a = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         with pytest.raises(AttributeError):
             a.level = AssuranceLevel.HIGH
 
     def test_assessment_scope(self):
         eng, _ = _make_engine()
-        a = eng.assess_assurance("a1", "t1", "ref-1", scope=AssuranceScope.PROGRAM)
+        a = eng.assess_assurance("a1", "t1", "ref-1", scope=AssuranceScope.PROGRAM, assessed_by="assurance-assessor-1")
         assert a.scope == AssuranceScope.PROGRAM
 
     def test_assessment_emits_event(self):
         eng, es = _make_engine()
         initial = es.event_count
-        eng.assess_assurance("a1", "t1", "ref-1")
+        eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert es.event_count > initial
 
 
@@ -755,13 +785,13 @@ class TestRecordAssuranceFinding:
 
     def test_finding_does_not_affect_pending_attestation(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "target-1")
+        eng.register_attestation("att-1", "t1", "target-1", attested_by="assurance-attester-1")
         eng.record_assurance_finding("f1", "target-1", "scope", impact_level=AssuranceLevel.HIGH)
         assert eng.get_attestation("att-1").status == AttestationStatus.PENDING
 
     def test_finding_does_not_affect_pending_certification(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "target-1")
+        eng.register_certification("cert-1", "t1", "target-1", certified_by="assurance-certifier-1")
         eng.record_assurance_finding("f1", "target-1", "scope", impact_level=AssuranceLevel.HIGH)
         assert eng.get_certification("cert-1").status == CertificationStatus.PENDING
 
@@ -788,22 +818,32 @@ class TestMakeAssuranceDecision:
 
     def test_duplicate_raises(self):
         eng, _ = _make_engine()
-        eng.make_assurance_decision("d1", "t1", "att")
+        eng.make_assurance_decision("d1", "t1", "att", decided_by="assurance-decider-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
-            eng.make_assurance_decision("d1", "t2", "cert")
+            eng.make_assurance_decision("d1", "t2", "cert", decided_by="assurance-decider-1")
 
     def test_emits_event(self):
         eng, es = _make_engine()
         initial = es.event_count
-        eng.make_assurance_decision("d1", "t1", "att")
+        eng.make_assurance_decision("d1", "t1", "att", decided_by="assurance-decider-1")
         assert es.event_count > initial
 
     def test_default_values(self):
         eng, _ = _make_engine()
-        d = eng.make_assurance_decision("d1", "t1", "att")
+        d = eng.make_assurance_decision("d1", "t1", "att", decided_by="assurance-decider-1")
         assert d.level == AssuranceLevel.NONE
-        assert d.decided_by == "system"
+        assert d.decided_by == "assurance-decider-1"
         assert d.reason == ""
+
+    def test_missing_decided_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="decided_by required for assurance decision"):
+            eng.make_assurance_decision("d1", "t1", "att")
+
+    def test_system_decided_by_rejected(self):
+        eng, _ = _make_engine()
+        with pytest.raises(RuntimeCoreInvariantError, match="decided_by must exclude system"):
+            eng.make_assurance_decision("d1", "t1", "att", decided_by="system")
 
 
 # =====================================================================
@@ -813,7 +853,7 @@ class TestMakeAssuranceDecision:
 class TestScheduleRecertification:
     def test_basic_schedule(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         w = eng.schedule_recertification(
             "w1", "cert-1",
             "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00",
@@ -826,7 +866,7 @@ class TestScheduleRecertification:
 
     def test_duplicate_raises(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification("w1", "cert-1", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
             eng.schedule_recertification("w1", "cert-1", "2026-02-01T00:00:00+00:00", "2026-07-01T00:00:00+00:00")
@@ -839,8 +879,8 @@ class TestScheduleRecertification:
 
     def test_windows_for_certification(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
-        eng.register_certification("cert-2", "t1", "ref-2")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
+        eng.register_certification("cert-2", "t1", "ref-2", certified_by="assurance-certifier-1")
         eng.schedule_recertification("w1", "cert-1", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
         eng.schedule_recertification("w2", "cert-1", "2026-07-01T00:00:00+00:00", "2026-12-01T00:00:00+00:00")
         eng.schedule_recertification("w3", "cert-2", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
@@ -850,7 +890,7 @@ class TestScheduleRecertification:
 
     def test_emits_event(self):
         eng, es = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         initial = es.event_count
         eng.schedule_recertification("w1", "cert-1", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
         assert es.event_count > initial
@@ -863,7 +903,7 @@ class TestScheduleRecertification:
 class TestCompleteRecertification:
     def test_complete_window(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification("w1", "cert-1", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
         completed = eng.complete_recertification("w1")
         assert completed.status == RecertificationStatus.COMPLETED
@@ -877,7 +917,7 @@ class TestCompleteRecertification:
 
     def test_emits_event(self):
         eng, es = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification("w1", "cert-1", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
         initial = es.event_count
         eng.complete_recertification("w1")
@@ -919,7 +959,7 @@ class TestDetectAssuranceViolations:
 
     def test_overdue_recertification_window(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification(
             "w1", "cert-1",
             "2020-01-01T00:00:00+00:00", "2020-06-01T00:00:00+00:00",
@@ -931,7 +971,7 @@ class TestDetectAssuranceViolations:
 
     def test_idempotent_violation_detection(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification(
             "w1", "cert-1",
             "2020-01-01T00:00:00+00:00", "2020-06-01T00:00:00+00:00",
@@ -943,7 +983,7 @@ class TestDetectAssuranceViolations:
 
     def test_violations_for_tenant(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification(
             "w1", "cert-1",
             "2020-01-01T00:00:00+00:00", "2020-06-01T00:00:00+00:00",
@@ -959,7 +999,7 @@ class TestDetectAssuranceViolations:
 
     def test_completed_window_no_violation(self):
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification(
             "w1", "cert-1",
             "2020-01-01T00:00:00+00:00", "2020-06-01T00:00:00+00:00",
@@ -976,8 +1016,8 @@ class TestDetectAssuranceViolations:
 class TestAssuranceSnapshot:
     def test_basic_snapshot(self):
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         snap = eng.assurance_snapshot("snap-1", "ref-1")
         assert isinstance(snap, AssuranceSnapshot)
         assert snap.snapshot_id == "snap-1"
@@ -991,7 +1031,7 @@ class TestAssuranceSnapshot:
         eng.grant_attestation("att-1", AssuranceLevel.HIGH)
         _register_cert_and_bind(eng)
         eng.activate_certification("cert-1", AssuranceLevel.MODERATE)
-        eng.assess_assurance("a1", "t1", "ref-1")
+        eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         snap = eng.assurance_snapshot("snap-1")
         assert snap.total_attestations == 1
         assert snap.granted_attestations == 1
@@ -1035,7 +1075,7 @@ class TestStateHash:
     def test_changes_with_state(self):
         eng, _ = _make_engine()
         h1 = eng.state_hash()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         h2 = eng.state_hash()
         assert h1 != h2
 
@@ -1076,7 +1116,7 @@ class TestProperties:
     def test_window_count(self):
         eng, _ = _make_engine()
         assert eng.window_count == 0
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.schedule_recertification("w1", "cert-1", "2026-01-01T00:00:00+00:00", "2026-06-01T00:00:00+00:00")
         assert eng.window_count == 1
 
@@ -1089,7 +1129,7 @@ class TestProperties:
     def test_decision_count(self):
         eng, _ = _make_engine()
         assert eng.decision_count == 0
-        eng.make_assurance_decision("d1", "t1", "att")
+        eng.make_assurance_decision("d1", "t1", "att", decided_by="assurance-decider-1")
         assert eng.decision_count == 1
 
 
@@ -1101,7 +1141,7 @@ class TestGoldenScenarios:
     def test_scenario_1_full_attestation_lifecycle(self):
         """Register -> bind evidence -> grant -> revoke."""
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ctrl-1")
+        eng.register_attestation("att-1", "t1", "ctrl-1", attested_by="assurance-attester-1")
         eng.bind_evidence("b1", "att-1", "attestation", "record", "rec-1")
         granted = eng.grant_attestation("att-1", AssuranceLevel.HIGH)
         assert granted.status == AttestationStatus.GRANTED
@@ -1112,7 +1152,7 @@ class TestGoldenScenarios:
     def test_scenario_2_full_certification_lifecycle(self):
         """Register -> bind -> activate -> suspend -> mark recertification."""
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "prog-1", scope=AssuranceScope.PROGRAM)
+        eng.register_certification("cert-1", "t1", "prog-1", scope=AssuranceScope.PROGRAM, certified_by="assurance-certifier-1")
         eng.bind_evidence("b1", "cert-1", "certification", "record", "rec-1")
         active = eng.activate_certification("cert-1", AssuranceLevel.HIGH)
         assert active.status == CertificationStatus.ACTIVE
@@ -1122,29 +1162,29 @@ class TestGoldenScenarios:
     def test_scenario_3_evidence_sufficiency_assessment(self):
         """Incrementally add evidence and re-assess."""
         eng, _ = _make_engine()
-        a1 = eng.assess_assurance("a1", "t1", "ref-1")
+        a1 = eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a1.sufficiency == EvidenceSufficiency.INSUFFICIENT
 
         eng.bind_evidence("b1", "ref-1", "attestation", "record", "r1")
-        a2 = eng.assess_assurance("a2", "t1", "ref-1")
+        a2 = eng.assess_assurance("a2", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a2.sufficiency == EvidenceSufficiency.PARTIAL
 
         eng.bind_evidence("b2", "ref-1", "attestation", "memory", "m1")
         eng.bind_evidence("b3", "ref-1", "attestation", "event", "e1")
-        a3 = eng.assess_assurance("a3", "t1", "ref-1")
+        a3 = eng.assess_assurance("a3", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a3.sufficiency == EvidenceSufficiency.SUFFICIENT
 
         eng.bind_evidence("b4", "ref-1", "attestation", "record", "r2")
-        a4 = eng.assess_assurance("a4", "t1", "ref-1")
+        a4 = eng.assess_assurance("a4", "t1", "ref-1", assessed_by="assurance-assessor-1")
         assert a4.sufficiency == EvidenceSufficiency.COMPREHENSIVE
 
     def test_scenario_4_high_finding_auto_degrades(self):
         """Grant attestation + activate cert, then HIGH finding revokes/suspends both."""
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "scope-1")
+        eng.register_attestation("att-1", "t1", "scope-1", attested_by="assurance-attester-1")
         eng.bind_evidence("b1", "att-1", "attestation", "record", "r1")
         eng.grant_attestation("att-1", AssuranceLevel.HIGH)
-        eng.register_certification("cert-1", "t1", "scope-1")
+        eng.register_certification("cert-1", "t1", "scope-1", certified_by="assurance-certifier-1")
         eng.bind_evidence("b2", "cert-1", "certification", "record", "r2")
         eng.activate_certification("cert-1", AssuranceLevel.HIGH)
 
@@ -1161,7 +1201,7 @@ class TestGoldenScenarios:
     def test_scenario_5_recertification_flow(self):
         """Register cert -> schedule window -> complete window."""
         eng, _ = _make_engine()
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.bind_evidence("b1", "cert-1", "certification", "record", "r1")
         eng.activate_certification("cert-1", AssuranceLevel.HIGH)
         eng.schedule_recertification(
@@ -1176,14 +1216,14 @@ class TestGoldenScenarios:
     def test_scenario_6_snapshot_and_hash(self):
         """Full setup then snapshot and state hash."""
         eng, _ = _make_engine()
-        eng.register_attestation("att-1", "t1", "ref-1")
+        eng.register_attestation("att-1", "t1", "ref-1", attested_by="assurance-attester-1")
         eng.bind_evidence("b1", "att-1", "attestation", "record", "r1")
         eng.grant_attestation("att-1", AssuranceLevel.HIGH)
-        eng.register_certification("cert-1", "t1", "ref-1")
+        eng.register_certification("cert-1", "t1", "ref-1", certified_by="assurance-certifier-1")
         eng.bind_evidence("b2", "cert-1", "certification", "record", "r2")
         eng.activate_certification("cert-1", AssuranceLevel.MODERATE)
-        eng.assess_assurance("a1", "t1", "ref-1")
-        eng.make_assurance_decision("d1", "att-1", "attestation", level=AssuranceLevel.HIGH)
+        eng.assess_assurance("a1", "t1", "ref-1", assessed_by="assurance-assessor-1")
+        eng.make_assurance_decision("d1", "att-1", "attestation", level=AssuranceLevel.HIGH, decided_by="assurance-decider-1")
 
         snap = eng.assurance_snapshot("snap-1", "ref-1")
         assert snap.total_attestations == 1
