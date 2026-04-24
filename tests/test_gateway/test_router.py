@@ -262,6 +262,12 @@ class TestMessageRouting:
         assert closure["evidence_refs"] == response.metadata["claims"][0]["evidence_refs"]
         assert closure["reconciliation_hash"]
         assert closure["evidence_hash"]
+        promotions = response.metadata["provider_receipt_graph_promotions"]
+        assert promotions
+        assert any(promotion["effect_id"] == "content" for promotion in promotions)
+        assert all(promotion["provider_action_node_ref"].startswith("provider_action:") for promotion in promotions)
+        assert all(promotion["evidence_node_ref"].startswith("evidence:receipt:") for promotion in promotions)
+        assert all(promotion["verification_node_ref"].startswith("verification:") for promotion in promotions)
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())

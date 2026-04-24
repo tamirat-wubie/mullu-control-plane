@@ -395,6 +395,7 @@ class GatewayRouter:
                     )
                     self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "skill_dispatch"})
                     self._commands.transition(command.command_id, CommandState.COMMITTED)
+                    receipt_promotions = self._commands.promote_provider_receipts_to_graph(command.command_id)
                     claim = self._commands.record_operational_claim(
                         command.command_id,
                         text=f"Command {command.intent} completed.",
@@ -435,6 +436,9 @@ class GatewayRouter:
                             "command_id": command.command_id,
                             "claims": [asdict(claim)],
                             "response_evidence_closure": asdict(response_closure),
+                            "provider_receipt_graph_promotions": [
+                                asdict(promotion) for promotion in receipt_promotions
+                            ],
                             "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
                         },
                     )
@@ -474,6 +478,9 @@ class GatewayRouter:
             )
             self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "governed_session"})
             self._commands.transition(command.command_id, CommandState.COMMITTED)
+            receipt_promotions = []
+            if result.succeeded:
+                receipt_promotions = self._commands.promote_provider_receipts_to_graph(command.command_id)
             claim = self._commands.record_operational_claim(
                 command.command_id,
                 text=f"Command {command.intent} completed.",
@@ -510,6 +517,10 @@ class GatewayRouter:
                 "claims": [asdict(claim)],
                 "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
             }
+            if receipt_promotions:
+                metadata["provider_receipt_graph_promotions"] = [
+                    asdict(promotion) for promotion in receipt_promotions
+                ]
             if response_closure is not None:
                 metadata["response_evidence_closure"] = asdict(response_closure)
             response = GatewayResponse(

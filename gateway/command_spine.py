@@ -290,6 +290,20 @@ class ResponseEvidenceClosure:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderReceiptGraphPromotion:
+    """Graph/evidence projection for an observed provider receipt."""
+
+    command_id: str
+    effect_id: str
+    provider_action_node_ref: str
+    evidence_node_ref: str
+    verification_node_ref: str
+    graph_edge_refs: tuple[str, ...]
+    evidence_id: str
+    promoted_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class FractureResult:
     """Result of contradiction checks before high-risk dispatch."""
 
@@ -1594,6 +1608,7 @@ class CommandLedger:
         self._effect_reconciliations: dict[str, EffectReconciliation] = {}
         self._claims: dict[str, list[Claim]] = {}
         self._evidence_records: dict[str, list[EvidenceRecord]] = {}
+        self._provider_receipt_promotions: dict[str, list[ProviderReceiptGraphPromotion]] = {}
         self._fracture_results: dict[str, FractureResult] = {}
         self._store = store or InMemoryCommandLedgerStore()
         self._last_event_hash = self._store.latest_event_hash()
@@ -1999,6 +2014,126 @@ class CommandLedger:
             self._effect_reconciliations[command_id] = reconciliation
             return reconciliation
         return None
+
+    def promote_provider_receipts_to_graph(self, command_id: str) -> list[ProviderReceiptGraphPromotion]:
+        """Promote observed receipt effects into graph/evidence node references."""
+        command = self.get(command_id)
+        if command is None:
+            raise KeyError(f"unknown command_id: {command_id}")
+        reconciliation = self.effect_reconciliation_for(command_id)
+        if reconciliation is None or not reconciliation.reconciled:
+            raise ValueError("provider receipt promotion requires reconciled effects")
+        existing = self._provider_receipt_promotions.get(command_id)
+        if existing:
+            return list(existing)
+
+        observed_effects: list[dict[str, Any]] = []
+        verification_id = ""
+        for event in reversed(self.events_for(command_id)):
+            raw_verification = event.detail.get("effect_verification")
+            if isinstance(raw_verification, dict) and not verification_id:
+                verification_id = str(raw_verification.get("verification_id", ""))
+            raw_effects = event.detail.get("observed_effects")
+            if isinstance(raw_effects, list):
+                observed_effects = [
+                    dict(effect)
+                    for effect in raw_effects
+                    if isinstance(effect, dict)
+                ]
+                break
+        if not observed_effects:
+            raise ValueError("provider receipt promotion requires observed effects")
+        if not verification_id:
+            verification_id = f"effect-verification:{command_id}"
+
+        promoted_at = self._clock()
+        promotions: list[ProviderReceiptGraphPromotion] = []
+        evidence_records = self._evidence_records.setdefault(command_id, [])
+        existing_evidence_ids = {record.evidence_id for record in evidence_records}
+        for effect in observed_effects:
+            effect_id = str(effect.get("effect_id", ""))
+            evidence_ref = str(effect.get("evidence_ref", ""))
+            if not effect_id or not evidence_ref:
+                continue
+            provider_node_ref = f"provider_action:{command_id}:{effect_id}"
+            evidence_node_ref = f"evidence:{evidence_ref}"
+            verification_node_ref = f"verification:{verification_id}"
+            evidence_hash = canonical_hash({
+                "command_id": command_id,
+                "effect_id": effect_id,
+                "evidence_ref": evidence_ref,
+                "provider_action_node_ref": provider_node_ref,
+                "verification_node_ref": verification_node_ref,
+            })
+            evidence_id = f"evidence-{evidence_hash[:16]}"
+            if evidence_id not in existing_evidence_ids:
+                evidence_records.append(EvidenceRecord(
+                    evidence_id=evidence_id,
+                    command_id=command_id,
+                    evidence_type="provider_receipt",
+                    ref=evidence_ref,
+                    ref_hash=evidence_hash,
+                    verified=True,
+                ))
+                existing_evidence_ids.add(evidence_id)
+            promotions.append(ProviderReceiptGraphPromotion(
+                command_id=command_id,
+                effect_id=effect_id,
+                provider_action_node_ref=provider_node_ref,
+                evidence_node_ref=evidence_node_ref,
+                verification_node_ref=verification_node_ref,
+                graph_edge_refs=(
+                    f"command:{command_id} produced {provider_node_ref}",
+                    f"{provider_node_ref} verified_by {verification_node_ref}",
+                    f"{provider_node_ref} verified_by {evidence_node_ref}",
+                ),
+                evidence_id=evidence_id,
+                promoted_at=promoted_at,
+            ))
+        if not promotions:
+            raise ValueError("provider receipt promotion requires promotable receipts")
+        self._provider_receipt_promotions[command_id] = promotions
+        self.transition(
+            command_id,
+            command.state,
+            output={"provider_receipt_graph_promotions": [asdict(item) for item in promotions]},
+            detail={
+                "cause": "provider_receipts_promoted",
+                "provider_receipt_graph_promotions": [asdict(item) for item in promotions],
+                "evidence": [asdict(record) for record in evidence_records if record.evidence_id in existing_evidence_ids],
+            },
+        )
+        return list(promotions)
+
+    def provider_receipt_promotions_for(self, command_id: str) -> list[ProviderReceiptGraphPromotion]:
+        """Return provider receipt graph promotions for one command."""
+        promotions = self._provider_receipt_promotions.get(command_id)
+        if promotions:
+            return list(promotions)
+        loaded: list[ProviderReceiptGraphPromotion] = []
+        for event in self.events_for(command_id):
+            raw_promotions = event.detail.get("provider_receipt_graph_promotions")
+            if not isinstance(raw_promotions, list):
+                continue
+            for raw_promotion in raw_promotions:
+                if not isinstance(raw_promotion, dict):
+                    continue
+                try:
+                    loaded.append(ProviderReceiptGraphPromotion(
+                        command_id=str(raw_promotion["command_id"]),
+                        effect_id=str(raw_promotion["effect_id"]),
+                        provider_action_node_ref=str(raw_promotion["provider_action_node_ref"]),
+                        evidence_node_ref=str(raw_promotion["evidence_node_ref"]),
+                        verification_node_ref=str(raw_promotion["verification_node_ref"]),
+                        graph_edge_refs=tuple(raw_promotion["graph_edge_refs"]),
+                        evidence_id=str(raw_promotion["evidence_id"]),
+                        promoted_at=str(raw_promotion["promoted_at"]),
+                    ))
+                except (KeyError, TypeError, ValueError):
+                    continue
+        if loaded:
+            self._provider_receipt_promotions[command_id] = loaded
+        return loaded
 
     def record_operational_claim(
         self,
