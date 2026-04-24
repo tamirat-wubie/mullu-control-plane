@@ -10,9 +10,12 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from mcoi_runtime.contracts._base import freeze_value
+
+if TYPE_CHECKING:
+    from mcoi_runtime.contracts.deployment import DeploymentBinding
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +35,7 @@ class DeploymentProfile:
     export_enabled: bool = True
     import_enabled: bool = False
     telemetry_enabled: bool = True
+    effect_assurance_required: bool = False
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -52,6 +56,7 @@ class DeploymentProfile:
             "autonomy_mode": self.autonomy_mode,
             "policy_pack_id": self.policy_pack_id,
             "policy_pack_version": self.policy_pack_version,
+            "effect_assurance_required": self.effect_assurance_required,
         }
 
 
@@ -92,6 +97,7 @@ OPERATOR_APPROVED = DeploymentProfile(
     max_retention_days=90,
     export_enabled=True,
     import_enabled=False,
+    effect_assurance_required=True,
 )
 
 SANDBOXED = DeploymentProfile(
@@ -119,6 +125,7 @@ PILOT_PROD = DeploymentProfile(
     export_enabled=True,
     import_enabled=False,
     telemetry_enabled=True,
+    effect_assurance_required=True,
 )
 
 

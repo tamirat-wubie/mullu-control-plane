@@ -47,6 +47,27 @@ def test_load_pilot_prod_profile() -> None:
     assert "process" in result.config.enabled_observer_routes
     assert result.config.policy_pack_id == "default-safe"
     assert result.config.policy_pack_version == "v0.1"
+    assert result.config.effect_assurance_required is True
+
+
+def test_high_risk_profiles_require_effect_assurance() -> None:
+    pilot = load_profile(ProfileName.PILOT_PROD)
+    operator = load_profile(ProfileName.OPERATOR_APPROVED)
+    local = load_profile(ProfileName.LOCAL_DEV)
+
+    assert pilot.config.effect_assurance_required is True
+    assert operator.config.effect_assurance_required is True
+    assert local.config.effect_assurance_required is False
+
+
+def test_high_risk_profile_cannot_disable_effect_assurance() -> None:
+    with pytest.raises(ProfileLoadError, match="^protected profile invariant cannot be overridden$") as exc_info:
+        load_profile(
+            ProfileName.PILOT_PROD,
+            overrides={"effect_assurance_required": False},
+        )
+
+    assert "effect_assurance_required" not in str(exc_info.value)
 
 
 def test_load_profile_with_overrides() -> None:

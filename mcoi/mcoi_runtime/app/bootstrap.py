@@ -21,6 +21,7 @@ from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
@@ -78,6 +79,7 @@ class BootstrappedRuntime:
     memory_store: MemoryStore | None
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
+    effect_assurance: EffectAssuranceGate | None = None
     governed_dispatcher: object | None = None
 
 
@@ -180,6 +182,11 @@ def bootstrap_runtime(
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
     goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
     workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
+    effect_assurance = (
+        EffectAssuranceGate(clock=runtime_clock)
+        if app_config.effect_assurance_required
+        else None
+    )
 
     if restore_memory and memory_store is not None:
         working_memory, episodic_memory = memory_store.load_all(allow_missing=True)
@@ -216,5 +223,6 @@ def bootstrap_runtime(
         memory_store=memory_store,
         executors=frozen_executors,
         observers=frozen_observers,
+        effect_assurance=effect_assurance,
         governed_dispatcher=governed,
     )

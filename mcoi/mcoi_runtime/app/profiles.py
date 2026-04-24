@@ -63,6 +63,15 @@ class UnknownProfileOverrideError(ProfileLoadError):
         super().__init__(message, public_message=message)
 
 
+class ProtectedProfileOverrideError(ProfileLoadError):
+    """Raised when an override attempts to weaken a protected profile invariant."""
+
+    def __init__(self, key: str) -> None:
+        self.key = key
+        message = "protected profile invariant cannot be overridden"
+        super().__init__(message, public_message=message)
+
+
 def load_profile(
     name: str,
     *,
@@ -83,6 +92,12 @@ def load_profile(
     if overrides:
         for key, value in overrides.items():
             if key in base:
+                if (
+                    key == "effect_assurance_required"
+                    and deployment_profile.effect_assurance_required
+                    and value is not True
+                ):
+                    raise ProtectedProfileOverrideError(key)
                 base[key] = value
                 override_count += 1
             else:

@@ -18,6 +18,7 @@ _APP_CONFIG_KEYS = frozenset(
         "autonomy_mode",
         "policy_pack_id",
         "policy_pack_version",
+        "effect_assurance_required",
     }
 )
 
@@ -48,6 +49,7 @@ class AppConfig:
     autonomy_mode: str = "bounded_autonomous"
     policy_pack_id: str | None = None
     policy_pack_version: str | None = None
+    effect_assurance_required: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -74,6 +76,8 @@ class AppConfig:
                 "policy_pack_version",
                 _require_text(self.policy_pack_version, "policy_pack_version"),
             )
+        if not isinstance(self.effect_assurance_required, bool):
+            raise ValueError("effect_assurance_required must be a boolean")
 
     @classmethod
     def from_mapping(cls, values: Mapping[str, Any] | None = None) -> AppConfig:
@@ -101,4 +105,5 @@ class AppConfig:
             autonomy_mode=normalized.get("autonomy_mode", "bounded_autonomous"),
             policy_pack_id=normalized.get("policy_pack_id"),
             policy_pack_version=normalized.get("policy_pack_version"),
+            effect_assurance_required=normalized.get("effect_assurance_required", False),
         )
