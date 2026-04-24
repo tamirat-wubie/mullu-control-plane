@@ -257,6 +257,11 @@ class TestMessageRouting:
         assert response.metadata["claims"][0]["verified"] is True
         assert response.metadata["claims"][0]["evidence_refs"]
         assert response.metadata["evidence"]
+        closure = response.metadata["response_evidence_closure"]
+        assert closure["claim_id"] == response.metadata["claims"][0]["claim_id"]
+        assert closure["evidence_refs"] == response.metadata["claims"][0]["evidence_refs"]
+        assert closure["reconciliation_hash"]
+        assert closure["evidence_hash"]
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())

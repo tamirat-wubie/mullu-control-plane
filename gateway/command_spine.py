@@ -278,6 +278,18 @@ class Claim:
 
 
 @dataclass(frozen=True, slots=True)
+class ResponseEvidenceClosure:
+    """Proof that a success response is backed by reconciled observed effects."""
+
+    command_id: str
+    claim_id: str
+    reconciliation_hash: str
+    evidence_refs: tuple[str, ...]
+    evidence_hash: str
+    closed_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class FractureResult:
     """Result of contradiction checks before high-risk dispatch."""
 
@@ -2088,6 +2100,67 @@ class CommandLedger:
         if loaded:
             self._evidence_records[command_id] = loaded
         return loaded
+
+    def close_success_response_evidence(
+        self,
+        command_id: str,
+        *,
+        claim_id: str,
+    ) -> ResponseEvidenceClosure:
+        """Prove a successful response is backed by reconciled evidence."""
+        reconciliation = self.effect_reconciliation_for(command_id)
+        if reconciliation is None or not reconciliation.reconciled:
+            raise ValueError("response requires reconciled observed effects")
+        claims = self.claims_for(command_id)
+        claim = next((candidate for candidate in claims if candidate.claim_id == claim_id), None)
+        if claim is None:
+            raise ValueError("response requires evidence-backed claim")
+        if not claim.verified:
+            raise ValueError("success response requires verified claim")
+        if not claim.evidence_refs:
+            raise ValueError("success response requires evidence refs")
+        evidence_by_id = {
+            record.evidence_id: record
+            for record in self.evidence_for(command_id)
+        }
+        missing_refs = tuple(
+            evidence_ref for evidence_ref in claim.evidence_refs
+            if evidence_ref not in evidence_by_id
+        )
+        if missing_refs:
+            raise ValueError("success response evidence refs must resolve")
+        unverified_refs = tuple(
+            evidence_ref for evidence_ref in claim.evidence_refs
+            if not evidence_by_id[evidence_ref].verified
+        )
+        if unverified_refs:
+            raise ValueError("success response evidence refs must be verified")
+        reconciliation_hash = canonical_hash(asdict(reconciliation))
+        evidence_payload = [
+            asdict(evidence_by_id[evidence_ref])
+            for evidence_ref in claim.evidence_refs
+        ]
+        closure = ResponseEvidenceClosure(
+            command_id=command_id,
+            claim_id=claim.claim_id,
+            reconciliation_hash=reconciliation_hash,
+            evidence_refs=claim.evidence_refs,
+            evidence_hash=canonical_hash(evidence_payload),
+            closed_at=self._clock(),
+        )
+        command = self.get(command_id)
+        if command is None:
+            raise KeyError(f"unknown command_id: {command_id}")
+        self.transition(
+            command_id,
+            command.state,
+            output=asdict(closure),
+            detail={
+                "cause": "response_evidence_closed",
+                "response_evidence_closure": asdict(closure),
+            },
+        )
+        return closure
 
     def fracture_test(self, command_id: str) -> FractureResult:
         """Run bounded contradiction checks before high-risk dispatch."""

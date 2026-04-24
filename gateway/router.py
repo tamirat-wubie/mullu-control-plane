@@ -400,6 +400,30 @@ class GatewayRouter:
                         text=f"Command {command.intent} completed.",
                         verified=True,
                     )
+                    try:
+                        response_closure = self._commands.close_success_response_evidence(
+                            command.command_id,
+                            claim_id=claim.claim_id,
+                        )
+                    except ValueError as exc:
+                        self._error_count += 1
+                        self._commands.transition(
+                            command.command_id,
+                            CommandState.REQUIRES_REVIEW,
+                            detail={"cause": "response_evidence_closure_failed"},
+                        )
+                        return GatewayResponse(
+                            message_id=self._gen_id("resp", command.command_id),
+                            channel=command.source,
+                            recipient_id=recipient_id,
+                            body="This action could not return success because response evidence closure failed.",
+                            governed=True,
+                            metadata={
+                                "error": "response_evidence_closure_failed",
+                                "command_id": command.command_id,
+                                "reason": str(exc),
+                            },
+                        )
                     response = GatewayResponse(
                         message_id=self._gen_id("resp", command.command_id),
                         channel=command.source,
@@ -410,6 +434,7 @@ class GatewayRouter:
                             **skill_result,
                             "command_id": command.command_id,
                             "claims": [asdict(claim)],
+                            "response_evidence_closure": asdict(response_closure),
                             "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
                         },
                     )
@@ -417,6 +442,7 @@ class GatewayRouter:
                         command.command_id,
                         CommandState.RESPONDED,
                         output={"body": response_body},
+                        detail={"response_evidence_closure": asdict(response_closure)},
                     )
                     return response
 
@@ -453,22 +479,55 @@ class GatewayRouter:
                 text=f"Command {command.intent} completed.",
                 verified=bool(result.succeeded),
             )
+            response_closure = None
+            if result.succeeded:
+                try:
+                    response_closure = self._commands.close_success_response_evidence(
+                        command.command_id,
+                        claim_id=claim.claim_id,
+                    )
+                except ValueError as exc:
+                    self._error_count += 1
+                    self._commands.transition(
+                        command.command_id,
+                        CommandState.REQUIRES_REVIEW,
+                        detail={"cause": "response_evidence_closure_failed"},
+                    )
+                    return GatewayResponse(
+                        message_id=self._gen_id("resp", command.command_id),
+                        channel=command.source,
+                        recipient_id=recipient_id,
+                        body="This action could not return success because response evidence closure failed.",
+                        governed=True,
+                        metadata={
+                            "error": "response_evidence_closure_failed",
+                            "command_id": command.command_id,
+                            "reason": str(exc),
+                        },
+                    )
+            metadata = {
+                "command_id": command.command_id,
+                "claims": [asdict(claim)],
+                "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
+            }
+            if response_closure is not None:
+                metadata["response_evidence_closure"] = asdict(response_closure)
             response = GatewayResponse(
                 message_id=self._gen_id("resp", command.command_id),
                 channel=command.source,
                 recipient_id=recipient_id,
                 body=response_body,
                 governed=True,
-                metadata={
-                    "command_id": command.command_id,
-                    "claims": [asdict(claim)],
-                    "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
-                },
+                metadata=metadata,
             )
             self._commands.transition(
                 command.command_id,
                 CommandState.RESPONDED,
                 output={"body": response_body},
+                detail=(
+                    {"response_evidence_closure": asdict(response_closure)}
+                    if response_closure is not None else {}
+                ),
             )
             return response
         except ValueError:
