@@ -17,7 +17,7 @@ from mcoi_runtime.adapters.executor_base import ExecutorAdapter, utc_now_text
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.observer_base import ObserverAdapter
 from mcoi_runtime.adapters.process_observer import ProcessObserver
-from mcoi_runtime.adapters.shell_executor import ShellExecutor
+from mcoi_runtime.adapters.shell_executor import ShellExecutor, ShellSandboxPolicy
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
@@ -155,7 +155,21 @@ def bootstrap_runtime(
     if executors is not None:
         executor_map.update(executors)
     elif "shell_command" in app_config.enabled_executor_routes:
-        executor_map["shell_command"] = ShellExecutor(clock=runtime_clock)
+        shell_sandbox_policy = (
+            ShellSandboxPolicy(
+                sandbox_id=app_config.shell_sandbox_id,
+                allowed_cwd_roots=app_config.shell_allowed_cwd_roots,
+                allowed_environment_keys=app_config.shell_allowed_environment_keys,
+                allow_inherited_environment=app_config.shell_allow_inherited_environment,
+                require_cwd=app_config.shell_require_cwd,
+            )
+            if app_config.shell_sandbox_enabled
+            else None
+        )
+        executor_map["shell_command"] = ShellExecutor(
+            clock=runtime_clock,
+            sandbox_policy=shell_sandbox_policy,
+        )
 
     observer_map: dict[str, ObserverAdapter[object]] = {}
     if observers is not None:
