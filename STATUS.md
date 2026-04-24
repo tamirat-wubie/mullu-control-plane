@@ -12,14 +12,16 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 **Last audited:** 2026-04-24
 **Repository:** `tamirat-wubie/mullu-control-plane`
 **Default branch:** `main`
-**Audited head:** `9cf46e4c9d63ceeeb8fe726bc137ba16710e0a7d`
-**Audited head subject:** `fix(multi-agent): witness engine failure classes (#304)`
+**Audited runtime baseline:** `2fdcd37046e0be096ac4c52c357257e4f65c0c0a`
+**Audited runtime baseline subject:** `fix(persistence): witness governance store close failures (#305)`
+**Status witness publication head:** `3cb270bc4cb1fe9e0c38cb3ced8f2cfca9ac1024`
+**Status witness publication subject:** `docs: add repository status witness (#306)`
 
 ## Reflection Summary
 
 | Surface | Witness | Status |
 |---|---|---|
-| Branch witness | GitHub `main` and local `origin/main` at audited head | Reflected |
+| Branch witness | GitHub `main` contains this status witness; the audited runtime baseline is named separately from the mutable status-witness commit | Reflected |
 | Release witness | GitHub latest release points to `v3.10.3`; release docs declare `0.4.0 (v3.13.0)` | Divergent |
 | CI witness | `.github/workflows/ci.yml` contains Python, Rust, schema, artifact, release-status, and change-assurance gates | Reflected |
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
