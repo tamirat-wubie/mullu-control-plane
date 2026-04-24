@@ -17,6 +17,7 @@ def test_compose_declares_gateway_worker_service():
     assert 'command: ["python", "-m", "gateway.worker"]' in compose
     assert "MULLU_COMMAND_LEDGER_BACKEND: postgresql" in compose
     assert "MULLU_TENANT_IDENTITY_BACKEND: postgresql" in compose
+    assert 'MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"' in compose
     assert 'MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"' in compose
     assert "MULLU_COMMAND_ANCHOR_SECRET:" in compose
     assert 'MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"' in compose
@@ -30,6 +31,7 @@ def test_kubernetes_declares_gateway_worker_deployment():
     assert 'command: ["python", "-m", "gateway.worker"]' in manifest
     assert 'MULLU_COMMAND_LEDGER_BACKEND: "postgresql"' in manifest
     assert 'MULLU_TENANT_IDENTITY_BACKEND: "postgresql"' in manifest
+    assert 'MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"' in manifest
     assert 'MULLU_COMMAND_ANCHOR_KEY_ID: "k8s-command-anchor"' in manifest
     assert "MULLU_COMMAND_ANCHOR_SECRET:" in manifest
     assert 'MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"' in manifest

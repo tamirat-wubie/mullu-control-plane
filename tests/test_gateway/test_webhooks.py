@@ -235,6 +235,7 @@ class TestApprovalWebhook:
 
     def test_production_approval_callback_requires_secret(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
         app = create_gateway_app(platform=StubPlatform())
         client = TestClient(app)
         resp = client.post(
@@ -246,6 +247,7 @@ class TestApprovalWebhook:
 
     def test_production_approval_callback_accepts_configured_secret(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
         monkeypatch.setenv("MULLU_GATEWAY_APPROVAL_SECRET", "approve-secret")
         app = create_gateway_app(platform=StubPlatform())
         app.state.router.register_tenant_mapping(TenantMapping(

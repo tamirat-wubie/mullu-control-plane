@@ -340,3 +340,10 @@ def test_operator_loop_effect_assurance_fails_closed_on_mismatch() -> None:
         report.execution_result.metadata["effect_assurance"]["reconciliation_status"]
         == "mismatch"
     )
+    case_id = report.execution_result.metadata["effect_assurance"]["case_id"]
+    assert case_id.startswith("case-op-intent-")
+    assert runtime.case_runtime is not None
+    assert runtime.case_runtime.open_case_count == 1
+    assert runtime.case_runtime.evidence_count == 1
+    assert runtime.case_runtime.finding_count == 1
+    assert runtime.case_runtime.get_case(case_id).opened_by == "effect_assurance"

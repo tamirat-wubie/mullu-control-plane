@@ -96,6 +96,7 @@ services:
       MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
       MULLU_COMMAND_LEDGER_BACKEND: postgresql
       MULLU_TENANT_IDENTITY_BACKEND: postgresql
+      MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"
       MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
@@ -136,6 +137,7 @@ services:
       MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
       MULLU_COMMAND_LEDGER_BACKEND: postgresql
       MULLU_TENANT_IDENTITY_BACKEND: postgresql
+      MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"
       MULLU_GATEWAY_WORKER_ID: "gateway-worker-1"
       MULLU_GATEWAY_WORKER_BATCH_SIZE: "10"
       MULLU_GATEWAY_WORKER_LEASE_SECONDS: "300"

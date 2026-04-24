@@ -42,6 +42,7 @@
 | `MULLU_COMMAND_LEDGER_DB_URL` | `MULLU_DB_URL` | Optional dedicated PostgreSQL URL for command ledger storage |
 | `MULLU_TENANT_IDENTITY_BACKEND` | `MULLU_DB_BACKEND` | Tenant identity backend: `memory` or `postgresql` |
 | `MULLU_TENANT_IDENTITY_DB_URL` | `MULLU_DB_URL` | Optional dedicated PostgreSQL URL for channel subject to tenant identity mappings |
+| `MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY` | profile-based | Require a persistent, available tenant identity store. Defaults to true in `pilot` and `production` |
 | `MULLU_GATEWAY_DEFER_APPROVED_EXECUTION` | `false` | If true, approved commands are queued for `gateway.worker` instead of executed inline |
 | `MULLU_GATEWAY_WORKER_ID` | `gateway-worker` | Stable worker identity for command leases |
 | `MULLU_GATEWAY_WORKER_BATCH_SIZE` | `10` | Max commands claimed per worker pass |
@@ -102,7 +103,8 @@ python -m gateway.worker --once --batch-size 5
 9. If gateway approvals use `/webhook/approve/{request_id}`, set `MULLU_GATEWAY_APPROVAL_SECRET` and send it via `X-Mullu-Approval-Secret`
 10. If approvals are deferred, run `python -m gateway.worker` beside the gateway with PostgreSQL command ledger storage
 11. Set `MULLU_TENANT_IDENTITY_BACKEND=postgresql` so channel identities resolve from durable storage
-12. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
+12. Set `MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY=true` so gateway startup fails closed if identity storage is unavailable
+13. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
 
 ## Startup Behavior
 
@@ -112,10 +114,11 @@ On startup, the platform:
 2. Warns if `MULLU_DB_BACKEND=memory` in non-dev environments
 3. Warns if `MULLU_CORS_ORIGINS` is empty in production
 4. Fails closed if production PostgreSQL starts without field encryption enabled
-5. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
-6. Registers all subsystems into the dependency container
-7. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
-8. Applies profile-aware API auth defaults to `/api/*` routes
+5. Fails closed if pilot/production gateway identity storage is not persistent and available
+6. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
+7. Registers all subsystems into the dependency container
+8. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
+9. Applies profile-aware API auth defaults to `/api/*` routes
 
 On shutdown:
 

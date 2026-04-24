@@ -22,7 +22,9 @@ from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, Policy
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
+from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
 from mcoi_runtime.core.operational_graph import OperationalGraph
@@ -82,6 +84,8 @@ class BootstrappedRuntime:
     observers: Mapping[str, ObserverAdapter[object]]
     effect_assurance: EffectAssuranceGate | None = None
     operational_graph: OperationalGraph | None = None
+    event_spine: EventSpineEngine | None = None
+    case_runtime: CaseRuntimeEngine | None = None
     governed_dispatcher: object | None = None
 
 
@@ -179,6 +183,16 @@ def bootstrap_runtime(
         if app_config.effect_assurance_required
         else None
     )
+    event_spine = (
+        EventSpineEngine(clock=runtime_clock)
+        if app_config.effect_assurance_required
+        else None
+    )
+    case_runtime = (
+        CaseRuntimeEngine(event_spine)
+        if event_spine is not None
+        else None
+    )
     effect_assurance = (
         EffectAssuranceGate(clock=runtime_clock, graph=operational_graph)
         if operational_graph is not None
@@ -196,6 +210,7 @@ def bootstrap_runtime(
     governed = GovernedDispatcher(
         dispatcher,
         effect_assurance=effect_assurance,
+        case_runtime=case_runtime,
         clock=runtime_clock,
     )
 
@@ -236,5 +251,7 @@ def bootstrap_runtime(
         observers=frozen_observers,
         effect_assurance=effect_assurance,
         operational_graph=operational_graph,
+        event_spine=event_spine,
+        case_runtime=case_runtime,
         governed_dispatcher=governed,
     )
