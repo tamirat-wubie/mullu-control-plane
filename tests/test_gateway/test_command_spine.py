@@ -6,6 +6,7 @@ Tests: command envelope creation, transition witnesses, store-backed reload,
 
 import os
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -20,11 +21,41 @@ from gateway.command_spine import (  # noqa: E402
     CommandLedger,
     CommandState,
     InMemoryCommandLedgerStore,
+    PostgresCommandLedgerStore,
     build_governed_action,
     build_command_ledger_from_env,
     capability_passport_for,
     compile_typed_intent,
 )
+
+
+class _RollbackFailingConnection:
+    def __init__(self):
+        self.rollback_attempts = 0
+
+    def rollback(self):
+        self.rollback_attempts += 1
+        raise RuntimeError("rollback failed")
+
+    def close(self):
+        return None
+
+
+class _CloseFailingConnection:
+    def close(self):
+        raise RuntimeError("close failed")
+
+
+def _postgres_command_store_for_fault_tests(conn):
+    store = PostgresCommandLedgerStore.__new__(PostgresCommandLedgerStore)
+    store._connection_string = "postgresql://example/mullu"
+    store._conn = conn
+    store._lock = threading.Lock()
+    store._available = True
+    store._operation_failures = 0
+    store._rollback_failures = 0
+    store._close_failures = 0
+    return store
 
 
 def test_command_ledger_persists_command_and_events_through_store():
@@ -76,6 +107,31 @@ def test_build_command_ledger_from_env_uses_memory_backend(monkeypatch):
     assert summary["commands"] == 1
     assert summary["events"] == 1
     assert summary["store"]["backend"] == "memory"
+
+
+def test_postgres_command_store_counts_operation_and_rollback_failure():
+    conn = _RollbackFailingConnection()
+    store = _postgres_command_store_for_fault_tests(conn)
+
+    result = store._safe_execute(lambda: (_ for _ in ()).throw(RuntimeError("write failed")))
+    status = store.status()
+
+    assert result is None
+    assert conn.rollback_attempts == 1
+    assert status["operation_failures"] == 1
+    assert status["rollback_failures"] == 1
+    assert status["available"] is True
+
+
+def test_postgres_command_store_counts_close_failure_and_clears_connection():
+    store = _postgres_command_store_for_fault_tests(_CloseFailingConnection())
+
+    store.close()
+    status = store.status()
+
+    assert store._conn is None
+    assert status["available"] is False
+    assert status["close_failures"] == 1
 
 
 def test_command_ledger_continues_store_hash_chain():
