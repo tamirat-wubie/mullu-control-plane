@@ -177,6 +177,10 @@ class CapabilityPassport:
     rollback_capability: str = ""
     compensation_capability: str = ""
     proof_required_fields: tuple[str, ...] = ()
+    declared_effects: tuple[str, ...] = ()
+    forbidden_effects: tuple[str, ...] = ()
+    evidence_required: tuple[str, ...] = ()
+    graph_projection: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -998,6 +1002,13 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
         rollback_type="irreversible",
         compensation_capability="create_correction_response",
         proof_required_fields=("command_id", "trace_id", "output_hash"),
+        declared_effects=("response_emitted",),
+        forbidden_effects=("unauthorized_state_mutation",),
+        evidence_required=("command_id", "trace_id", "output_hash"),
+        graph_projection={
+            "nodes": ("command", "provider_action", "verification"),
+            "edges": ("verified_by", "produced"),
+        },
     ),
     "financial.balance_check": CapabilityPassport(
         capability="financial.balance_check",
@@ -1011,6 +1022,13 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
         external_system="financial_provider",
         rollback_type="irreversible",
         proof_required_fields=("command_id", "provider_receipt_hash"),
+        declared_effects=("balance_snapshot_read", "provider_receipt_received"),
+        forbidden_effects=("account_state_mutation", "budget_mutation"),
+        evidence_required=("command_id", "provider_receipt_hash"),
+        graph_projection={
+            "nodes": ("command", "provider_action", "verification"),
+            "edges": ("verified_by", "produced"),
+        },
     ),
     "financial.transaction_history": CapabilityPassport(
         capability="financial.transaction_history",
@@ -1024,6 +1042,13 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
         external_system="financial_provider",
         rollback_type="irreversible",
         proof_required_fields=("command_id", "provider_receipt_hash"),
+        declared_effects=("transaction_history_read", "provider_receipt_received"),
+        forbidden_effects=("account_state_mutation", "budget_mutation"),
+        evidence_required=("command_id", "provider_receipt_hash"),
+        graph_projection={
+            "nodes": ("command", "provider_action", "verification"),
+            "edges": ("verified_by", "produced"),
+        },
     ),
     "financial.spending_insights": CapabilityPassport(
         capability="financial.spending_insights",
@@ -1037,6 +1062,13 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
         external_system="financial_provider",
         rollback_type="irreversible",
         proof_required_fields=("command_id", "provider_receipt_hash"),
+        declared_effects=("spending_insights_read", "provider_receipt_received"),
+        forbidden_effects=("account_state_mutation", "budget_mutation"),
+        evidence_required=("command_id", "provider_receipt_hash"),
+        graph_projection={
+            "nodes": ("command", "provider_action", "verification"),
+            "edges": ("verified_by", "produced"),
+        },
     ),
     "financial.send_payment": CapabilityPassport(
         capability="financial.send_payment",
@@ -1051,6 +1083,23 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
         rollback_type="compensatable",
         compensation_capability="financial.refund",
         proof_required_fields=("transaction_id", "amount", "currency", "recipient_hash", "ledger_hash"),
+        declared_effects=(
+            "payment_provider_request_created",
+            "payment_receipt_received",
+            "ledger_entry_created",
+            "tenant_budget_decremented",
+        ),
+        forbidden_effects=(
+            "duplicate_payment",
+            "amount_mismatch",
+            "recipient_mismatch",
+            "unapproved_budget_mutation",
+        ),
+        evidence_required=("transaction_id", "amount", "currency", "recipient_hash", "ledger_hash"),
+        graph_projection={
+            "nodes": ("command", "approval", "provider_action", "verification", "evidence"),
+            "edges": ("decided_by", "verified_by", "produced"),
+        },
     ),
     "financial.refund": CapabilityPassport(
         capability="financial.refund",
@@ -1065,6 +1114,17 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
         rollback_type="compensatable",
         compensation_capability="create_financial_incident",
         proof_required_fields=("refund_id", "transaction_id", "ledger_hash"),
+        declared_effects=(
+            "refund_provider_request_created",
+            "refund_receipt_received",
+            "ledger_entry_created",
+        ),
+        forbidden_effects=("duplicate_refund", "amount_mismatch", "unapproved_budget_mutation"),
+        evidence_required=("refund_id", "transaction_id", "ledger_hash"),
+        graph_projection={
+            "nodes": ("command", "approval", "provider_action", "verification", "evidence"),
+            "edges": ("decided_by", "verified_by", "produced"),
+        },
     ),
 }
 
@@ -1107,6 +1167,24 @@ def capability_passport_for(intent_name: str) -> CapabilityPassport:
     return passport
 
 
+def _require_passport_effect_contract(passport: CapabilityPassport) -> None:
+    """Fail closed when an effect-bearing passport lacks assurance semantics."""
+    requires_effect_contract = passport.mutates_world or passport.risk_tier == "high"
+    if not requires_effect_contract:
+        return
+    if not passport.declared_effects:
+        raise ValueError("effect-bearing capability requires declared effects")
+    if not passport.forbidden_effects:
+        raise ValueError("effect-bearing capability requires forbidden effects")
+    evidence_required = passport.evidence_required or passport.proof_required_fields
+    if not evidence_required:
+        raise ValueError("effect-bearing capability requires evidence")
+    projected_nodes = tuple(passport.graph_projection.get("nodes", ()))
+    projected_edges = tuple(passport.graph_projection.get("edges", ()))
+    if not projected_nodes or not projected_edges:
+        raise ValueError("effect-bearing capability requires graph projection")
+
+
 def build_governed_action(
     command: CommandEnvelope,
     typed_intent: TypedIntent,
@@ -1120,6 +1198,7 @@ def build_governed_action(
     """Bind typed meaning and capability authority into one governed unit."""
     if typed_intent.name != passport.capability:
         raise ValueError("typed intent and capability passport mismatch")
+    _require_passport_effect_contract(passport)
     if passport.mutates_world and not passport.proof_required_fields:
         raise ValueError("mutating capability requires proof fields")
     if passport.rollback_type not in {"reversible", "compensatable", "irreversible"}:
@@ -1154,12 +1233,17 @@ def build_governed_action(
 
 def predict_effects(action: GovernedAction, passport: CapabilityPassport) -> EffectPrediction:
     """Predict expected mutations, calls, receipts, and recovery path."""
+    declared_mutating_effects = tuple(
+        effect for effect in passport.declared_effects
+        if "read" not in effect and "response" not in effect
+    )
     expected_mutations: tuple[str, ...] = ()
     if passport.mutates_world:
-        expected_mutations = (
+        expected_mutations = tuple(dict.fromkeys((
             f"{action.tenant_id}:ledger_entry",
             f"{action.tenant_id}:capability_effect:{passport.capability}",
-        )
+            *declared_mutating_effects,
+        )))
 
     expected_external_calls: tuple[str, ...] = ()
     if passport.external_system:
@@ -1180,7 +1264,7 @@ def predict_effects(action: GovernedAction, passport: CapabilityPassport) -> Eff
         capability=action.capability,
         expected_mutations=expected_mutations,
         expected_external_calls=expected_external_calls,
-        expected_receipts=passport.proof_required_fields,
+        expected_receipts=passport.evidence_required or passport.proof_required_fields,
         rollback_plan=rollback_plan,
         risk_notes=risk_notes,
     )
@@ -1204,7 +1288,7 @@ def build_recovery_plan(
         recovery_capabilities=recovery_capabilities,
         requires_higher_approval=requires_higher_approval,
         operator_review_required=operator_review_required,
-        proof_required_fields=passport.proof_required_fields,
+        proof_required_fields=passport.evidence_required or passport.proof_required_fields,
     )
 
 
@@ -1218,7 +1302,21 @@ def build_effect_plan_payload(
 ) -> dict[str, Any]:
     """Build an EffectPlan-compatible JSON payload for command-event anchoring."""
     expected_effects: list[dict[str, Any]] = []
+    seen_effect_ids: set[str] = set()
+    for effect in passport.declared_effects:
+        seen_effect_ids.add(effect)
+        expected_effects.append({
+            "effect_id": effect,
+            "name": effect,
+            "target_ref": f"command:{action.command_id}:effect:{effect}",
+            "required": True,
+            "verification_method": "declared_effect",
+            "expected_value": None,
+        })
     for mutation in prediction.expected_mutations:
+        if mutation in seen_effect_ids:
+            continue
+        seen_effect_ids.add(mutation)
         expected_effects.append({
             "effect_id": mutation,
             "name": mutation,
@@ -1228,6 +1326,9 @@ def build_effect_plan_payload(
             "expected_value": None,
         })
     for receipt in prediction.expected_receipts:
+        if receipt in seen_effect_ids:
+            continue
+        seen_effect_ids.add(receipt)
         expected_effects.append({
             "effect_id": receipt,
             "name": receipt,
@@ -1245,12 +1346,19 @@ def build_effect_plan_payload(
             "verification_method": "output_hash",
             "expected_value": None,
         })
-    forbidden_effects = (
-        "duplicate_dispatch",
-        "unapproved_budget_mutation",
-        "recipient_mismatch",
-        "amount_mismatch",
-    ) if passport.mutates_world else ("unauthorized_state_mutation",)
+    if passport.forbidden_effects:
+        forbidden_effects = passport.forbidden_effects
+    elif passport.mutates_world:
+        forbidden_effects = (
+            "duplicate_dispatch",
+            "unapproved_budget_mutation",
+            "recipient_mismatch",
+            "amount_mismatch",
+        )
+    else:
+        forbidden_effects = ("unauthorized_state_mutation",)
+    projected_nodes = tuple(passport.graph_projection.get("nodes", ()))
+    projected_edges = tuple(passport.graph_projection.get("edges", ()))
     return {
         "effect_plan_id": effect_plan_id,
         "command_id": action.command_id,
@@ -1264,10 +1372,12 @@ def build_effect_plan_payload(
             f"command:{action.command_id}",
             f"capability:{action.capability}",
             f"effect_plan:{effect_plan_id}",
+            *(f"projected:{node}" for node in projected_nodes),
         ],
         "graph_edge_refs": [
             "command depends_on capability",
             "command produced effect_plan",
+            *(f"projected:{edge}" for edge in projected_edges),
         ],
         "created_at": created_at,
     }
