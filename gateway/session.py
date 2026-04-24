@@ -61,6 +61,7 @@ class SessionManager:
         self._max_messages = max_context_messages
         self._ttl = session_ttl_seconds
         self._contexts: dict[str, ConversationContext] = {}
+        self._ttl_parse_failures = 0
         self._lock = threading.Lock()
 
     def _key(self, channel: str, sender_id: str, tenant_id: str = "") -> str:
@@ -90,8 +91,10 @@ class SessionManager:
                         if (current - last).total_seconds() > self._ttl:
                             del self._contexts[key]
                             ctx = None
-                    except Exception:
-                        pass
+                    except (AttributeError, TypeError, ValueError, OverflowError):
+                        self._ttl_parse_failures += 1
+                        self._contexts.pop(key, None)
+                        ctx = None
                 if ctx is not None:
                     ctx.last_active_at = now
                     return ctx
@@ -145,9 +148,14 @@ class SessionManager:
     def active_sessions(self) -> int:
         return len(self._contexts)
 
+    @property
+    def ttl_parse_failures(self) -> int:
+        return self._ttl_parse_failures
+
     def summary(self) -> dict[str, Any]:
         return {
             "active_sessions": self.active_sessions,
             "max_context_messages": self._max_messages,
             "max_sessions": self.MAX_SESSIONS,
+            "ttl_parse_failures": self._ttl_parse_failures,
         }

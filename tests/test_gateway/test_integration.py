@@ -146,6 +146,40 @@ class TestSessionManager:
         ctx2 = mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
         assert ctx1.session_id == ctx2.session_id
 
+    def test_expired_context_is_replaced(self):
+        timestamps = iter((
+            "2026-04-24T00:00:00+00:00",
+            "2026-04-24T00:00:30+00:00",
+        ))
+        mgr = SessionManager(clock=lambda: next(timestamps), session_ttl_seconds=10)
+        ctx1 = mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
+        ctx1.messages.append({"role": "user", "content": "stale"})
+
+        ctx2 = mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
+
+        assert ctx2.session_id != ctx1.session_id
+        assert ctx2.message_count == 0
+        assert ctx2.last_active_at == "2026-04-24T00:00:30+00:00"
+        assert mgr.active_sessions == 1
+
+    def test_invalid_ttl_timestamp_evicts_context_and_counts_repair(self):
+        timestamps = iter((
+            "2026-04-24T00:00:00+00:00",
+            "2026-04-24T00:00:05+00:00",
+        ))
+        mgr = SessionManager(clock=lambda: next(timestamps), session_ttl_seconds=10)
+        ctx1 = mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
+        ctx1.last_active_at = "not-a-timestamp"
+        ctx1.messages.append({"role": "user", "content": "unsafe stale context"})
+
+        ctx2 = mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
+
+        assert ctx2.session_id != ctx1.session_id
+        assert ctx2.message_count == 0
+        assert mgr.ttl_parse_failures == 1
+        assert mgr.summary()["ttl_parse_failures"] == 1
+        assert mgr.active_sessions == 1
+
     def test_add_message(self):
         mgr = SessionManager()
         mgr.get_or_create(channel="web", sender_id="u1", tenant_id="t1", identity_id="u1")
@@ -192,3 +226,4 @@ class TestSessionManager:
         mgr = SessionManager(max_context_messages=10)
         assert mgr.summary()["active_sessions"] == 0
         assert mgr.summary()["max_context_messages"] == 10
+        assert mgr.summary()["ttl_parse_failures"] == 0
