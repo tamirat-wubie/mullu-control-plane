@@ -50,6 +50,7 @@
 | `MULLU_GATEWAY_WORKER_POLL_SECONDS` | `2.0` | Worker polling interval |
 | `MULLU_COMMAND_ANCHOR_SECRET` | unset | HMAC secret used by `gateway.worker` to sign command-event anchors |
 | `MULLU_COMMAND_ANCHOR_KEY_ID` | `local` | Key identifier recorded on command-event anchors |
+| `MULLU_REQUIRE_COMMAND_ANCHOR` | profile-based | Require command-event anchor signing. Defaults to true in `pilot` and `production` |
 
 ## Quick Start
 
@@ -105,6 +106,7 @@ python -m gateway.worker --once --batch-size 5
 11. Set `MULLU_TENANT_IDENTITY_BACKEND=postgresql` so channel identities resolve from durable storage
 12. Set `MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY=true` so gateway startup fails closed if identity storage is unavailable
 13. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
+14. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
 
 ## Startup Behavior
 
@@ -115,10 +117,11 @@ On startup, the platform:
 3. Warns if `MULLU_CORS_ORIGINS` is empty in production
 4. Fails closed if production PostgreSQL starts without field encryption enabled
 5. Fails closed if pilot/production gateway identity storage is not persistent and available
-6. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
-7. Registers all subsystems into the dependency container
-8. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
-9. Applies profile-aware API auth defaults to `/api/*` routes
+6. Fails closed if pilot/production `gateway.worker` lacks command anchor signing material
+7. Restores state from file snapshots (if `MULLU_STATE_DIR` has previous snapshots)
+8. Registers all subsystems into the dependency container
+9. Mounts 8 router modules (health, llm, tenant, audit, workflow, agent, data, ops)
+10. Applies profile-aware API auth defaults to `/api/*` routes
 
 On shutdown:
 
