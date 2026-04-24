@@ -79,13 +79,26 @@ class TestAssuranceFromControlTests:
 
     def test_dict_shape(self, bridge: AssuranceRuntimeIntegration) -> None:
         result = bridge.assurance_from_control_tests(
-            "att-ct-1", "tenant-1", "ctrl-100"
+            "att-ct-1", "tenant-1", "ctrl-100",
+            attested_by="assurance-attester-1",
         )
         assert result["attestation_id"] == "att-ct-1"
         assert result["tenant_id"] == "tenant-1"
         assert result["scope"] == "control"
         assert result["scope_ref_id"] == "ctrl-100"
+        assert result["attested_by"] == "assurance-attester-1"
         assert result["source_type"] == "control_test"
+
+    def test_missing_attested_by_rejected(self, bridge: AssuranceRuntimeIntegration) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="attested_by required for assurance creation"):
+            bridge.assurance_from_control_tests("att-ct-1", "tenant-1", "ctrl-100")
+
+    def test_system_attested_by_rejected(self, bridge: AssuranceRuntimeIntegration) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="attested_by must exclude system"):
+            bridge.assurance_from_control_tests(
+                "att-ct-1", "tenant-1", "ctrl-100",
+                attested_by="system",
+            )
 
     def test_attestation_count_increments(
         self,
@@ -93,9 +106,9 @@ class TestAssuranceFromControlTests:
         assurance_engine: AssuranceRuntimeEngine,
     ) -> None:
         assert assurance_engine.attestation_count == 0
-        bridge.assurance_from_control_tests("att-ct-2", "tenant-1", "ctrl-200")
+        bridge.assurance_from_control_tests("att-ct-2", "tenant-1", "ctrl-200", attested_by="assurance-attester-1")
         assert assurance_engine.attestation_count == 1
-        bridge.assurance_from_control_tests("att-ct-3", "tenant-1", "ctrl-201")
+        bridge.assurance_from_control_tests("att-ct-3", "tenant-1", "ctrl-201", attested_by="assurance-attester-1")
         assert assurance_engine.attestation_count == 2
 
 
@@ -104,7 +117,8 @@ class TestAssuranceFromCaseClosure:
 
     def test_dict_shape(self, bridge: AssuranceRuntimeIntegration) -> None:
         result = bridge.assurance_from_case_closure(
-            "att-cc-1", "tenant-2", "case-500"
+            "att-cc-1", "tenant-2", "case-500",
+            attested_by="assurance-attester-1",
         )
         assert result["attestation_id"] == "att-cc-1"
         assert result["tenant_id"] == "tenant-2"
@@ -118,7 +132,7 @@ class TestAssuranceFromCaseClosure:
         assurance_engine: AssuranceRuntimeEngine,
     ) -> None:
         assert assurance_engine.attestation_count == 0
-        bridge.assurance_from_case_closure("att-cc-2", "tenant-2", "case-501")
+        bridge.assurance_from_case_closure("att-cc-2", "tenant-2", "case-501", attested_by="assurance-attester-1")
         assert assurance_engine.attestation_count == 1
 
 
@@ -127,7 +141,8 @@ class TestAssuranceFromRemediation:
 
     def test_dict_shape(self, bridge: AssuranceRuntimeIntegration) -> None:
         result = bridge.assurance_from_remediation(
-            "att-rem-1", "tenant-3", "rem-700"
+            "att-rem-1", "tenant-3", "rem-700",
+            attested_by="assurance-attester-1",
         )
         assert result["attestation_id"] == "att-rem-1"
         assert result["tenant_id"] == "tenant-3"
@@ -141,7 +156,7 @@ class TestAssuranceFromRemediation:
         assurance_engine: AssuranceRuntimeEngine,
     ) -> None:
         assert assurance_engine.attestation_count == 0
-        bridge.assurance_from_remediation("att-rem-2", "tenant-3", "rem-701")
+        bridge.assurance_from_remediation("att-rem-2", "tenant-3", "rem-701", attested_by="assurance-attester-1")
         assert assurance_engine.attestation_count == 1
 
 
@@ -155,13 +170,26 @@ class TestAssuranceFromProgramHealth:
 
     def test_dict_shape(self, bridge: AssuranceRuntimeIntegration) -> None:
         result = bridge.assurance_from_program_health(
-            "cert-ph-1", "tenant-4", "prog-10"
+            "cert-ph-1", "tenant-4", "prog-10",
+            certified_by="assurance-certifier-1",
         )
         assert result["certification_id"] == "cert-ph-1"
         assert result["tenant_id"] == "tenant-4"
         assert result["scope"] == "program"
         assert result["scope_ref_id"] == "prog-10"
+        assert result["certified_by"] == "assurance-certifier-1"
         assert result["source_type"] == "program_health"
+
+    def test_missing_certified_by_rejected(self, bridge: AssuranceRuntimeIntegration) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="certified_by required for assurance creation"):
+            bridge.assurance_from_program_health("cert-ph-1", "tenant-4", "prog-10")
+
+    def test_system_certified_by_rejected(self, bridge: AssuranceRuntimeIntegration) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="certified_by must exclude system"):
+            bridge.assurance_from_program_health(
+                "cert-ph-1", "tenant-4", "prog-10",
+                certified_by="system",
+            )
 
     def test_certification_count_increments(
         self,
@@ -169,9 +197,9 @@ class TestAssuranceFromProgramHealth:
         assurance_engine: AssuranceRuntimeEngine,
     ) -> None:
         assert assurance_engine.certification_count == 0
-        bridge.assurance_from_program_health("cert-ph-2", "tenant-4", "prog-11")
+        bridge.assurance_from_program_health("cert-ph-2", "tenant-4", "prog-11", certified_by="assurance-certifier-1")
         assert assurance_engine.certification_count == 1
-        bridge.assurance_from_program_health("cert-ph-3", "tenant-4", "prog-12")
+        bridge.assurance_from_program_health("cert-ph-3", "tenant-4", "prog-12", certified_by="assurance-certifier-1")
         assert assurance_engine.certification_count == 2
 
 
@@ -180,7 +208,8 @@ class TestAssuranceFromConnectorStability:
 
     def test_dict_shape(self, bridge: AssuranceRuntimeIntegration) -> None:
         result = bridge.assurance_from_connector_stability(
-            "cert-cs-1", "tenant-5", "conn-20"
+            "cert-cs-1", "tenant-5", "conn-20",
+            certified_by="assurance-certifier-1",
         )
         assert result["certification_id"] == "cert-cs-1"
         assert result["tenant_id"] == "tenant-5"
@@ -194,7 +223,7 @@ class TestAssuranceFromConnectorStability:
         assurance_engine: AssuranceRuntimeEngine,
     ) -> None:
         assert assurance_engine.certification_count == 0
-        bridge.assurance_from_connector_stability("cert-cs-2", "tenant-5", "conn-21")
+        bridge.assurance_from_connector_stability("cert-cs-2", "tenant-5", "conn-21", certified_by="assurance-certifier-1")
         assert assurance_engine.certification_count == 1
 
 
@@ -282,7 +311,7 @@ class TestMemoryMeshAndGraph:
     def test_attach_assurance_to_memory_mesh_creates_record_with_tags(
         self, bridge: AssuranceRuntimeIntegration
     ) -> None:
-        bridge.assurance_from_control_tests("att-mm-1", "t1", "ctrl-mm")
+        bridge.assurance_from_control_tests("att-mm-1", "t1", "ctrl-mm", attested_by="assurance-attester-1")
         mem = bridge.attach_assurance_to_memory_mesh("ctrl-mm")
         assert mem.title == "Assurance state"
         assert "ctrl-mm" not in mem.title
@@ -312,8 +341,8 @@ class TestMemoryMeshAndGraph:
         bridge: AssuranceRuntimeIntegration,
         assurance_engine: AssuranceRuntimeEngine,
     ) -> None:
-        bridge.assurance_from_control_tests("att-g-1", "t1", "ctrl-g")
-        bridge.assurance_from_program_health("cert-g-1", "t1", "prog-g")
+        bridge.assurance_from_control_tests("att-g-1", "t1", "ctrl-g", attested_by="assurance-attester-1")
+        bridge.assurance_from_program_health("cert-g-1", "t1", "prog-g", certified_by="assurance-certifier-1")
         bridge.bind_record_evidence("bind-g-1", "att-g-1", "attestation", "rec-g")
 
         result = bridge.attach_assurance_to_graph("scope-g")
@@ -341,7 +370,7 @@ class TestEvents:
         event_spine: EventSpineEngine,
     ) -> None:
         initial = event_spine.event_count
-        bridge.assurance_from_control_tests("att-ev-1", "t1", "ctrl-ev")
+        bridge.assurance_from_control_tests("att-ev-1", "t1", "ctrl-ev", attested_by="assurance-attester-1")
         after_att = event_spine.event_count
         assert after_att > initial
 
@@ -369,24 +398,24 @@ class TestGoldenPath:
         event_spine: EventSpineEngine,
     ) -> None:
         # --- Attestation creation (all three flavours) ---
-        att_ct = bridge.assurance_from_control_tests("att-gp-1", "t-gp", "ctrl-gp")
+        att_ct = bridge.assurance_from_control_tests("att-gp-1", "t-gp", "ctrl-gp", attested_by="assurance-attester-1")
         assert att_ct["source_type"] == "control_test"
         assert att_ct["scope"] == "control"
 
-        att_cc = bridge.assurance_from_case_closure("att-gp-2", "t-gp", "case-gp")
+        att_cc = bridge.assurance_from_case_closure("att-gp-2", "t-gp", "case-gp", attested_by="assurance-attester-1")
         assert att_cc["source_type"] == "case_closure"
 
-        att_rem = bridge.assurance_from_remediation("att-gp-3", "t-gp", "rem-gp")
+        att_rem = bridge.assurance_from_remediation("att-gp-3", "t-gp", "rem-gp", attested_by="assurance-attester-1")
         assert att_rem["source_type"] == "remediation"
 
         assert assurance_engine.attestation_count == 3
 
         # --- Certification creation (both flavours) ---
-        cert_ph = bridge.assurance_from_program_health("cert-gp-1", "t-gp", "prog-gp")
+        cert_ph = bridge.assurance_from_program_health("cert-gp-1", "t-gp", "prog-gp", certified_by="assurance-certifier-1")
         assert cert_ph["source_type"] == "program_health"
         assert cert_ph["scope"] == "program"
 
-        cert_cs = bridge.assurance_from_connector_stability("cert-gp-2", "t-gp", "conn-gp")
+        cert_cs = bridge.assurance_from_connector_stability("cert-gp-2", "t-gp", "conn-gp", certified_by="assurance-certifier-1")
         assert cert_cs["source_type"] == "connector_stability"
         assert cert_cs["scope"] == "connector"
 
