@@ -21,12 +21,11 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Callable
 
-from skills.financial.core.currency import Money
 from skills.financial.core.idempotency import IdempotencyStore, IdempotencyStatus, compute_key
 from skills.financial.core.spend_budget import SpendBudgetManager
 from skills.financial.core.transaction_ledger import TransactionLedger
 from skills.financial.core.transaction_state import TxState
-from skills.financial.providers.stripe_provider import StripeProvider, PaymentResult
+from skills.financial.providers.stripe_provider import StripeProvider
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,6 +221,14 @@ class GovernedPaymentExecutor:
             success=True, tx_id=tx_id, state=TxState.SETTLED.value,
             provider_tx_id=provider_result.provider_tx_id,
             amount=str(entry.amount), currency=entry.currency,
+            metadata={
+                "ledger_hash": entry.proof_hash,
+                "recipient_ref": entry.credit_account,
+                "recipient_hash": hashlib.sha256(entry.credit_account.encode()).hexdigest(),
+                "debit_account": entry.debit_account,
+                "credit_account": entry.credit_account,
+                "approval_actor_id": approver_id,
+            },
         )
 
     def deny(self, tx_id: str, *, reason: str = "", actor_id: str = "") -> GovernedPaymentResult:
@@ -260,9 +267,19 @@ class GovernedPaymentExecutor:
             return GovernedPaymentResult(success=False, tx_id=tx_id, state=TxState.FAILED.value, error=refund_result.error)
 
         self._ledger.advance(tx_id, TxState.REFUNDED, reason="refund processed", timestamp=now)
+        refunded_entry = self._ledger.get(tx_id)
+        ledger_hash = refunded_entry.proof_hash if refunded_entry is not None else entry.proof_hash
 
         return GovernedPaymentResult(
             success=True, tx_id=tx_id, state=TxState.REFUNDED.value,
             provider_tx_id=refund_result.provider_tx_id,
             amount=str(entry.amount), currency=entry.currency,
+            metadata={
+                "ledger_hash": ledger_hash,
+                "refund_provider_tx_id": refund_result.provider_tx_id,
+                "original_provider_tx_id": entry.provider_tx_id,
+                "recipient_ref": entry.credit_account,
+                "recipient_hash": hashlib.sha256(entry.credit_account.encode()).hexdigest(),
+                "refund_actor_id": actor_id,
+            },
         )

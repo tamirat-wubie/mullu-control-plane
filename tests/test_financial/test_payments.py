@@ -12,13 +12,12 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from skills.financial.core.spend_budget import SpendBudget, SpendBudgetManager
-from skills.financial.core.transaction_ledger import TransactionLedger
-from skills.financial.core.transaction_state import TxState
-from skills.financial.core.idempotency import IdempotencyStore
-from skills.financial.providers.stripe_provider import StripeProvider
-from skills.financial.skills.governed_payment import GovernedPaymentExecutor
+from skills.financial.core.spend_budget import SpendBudget, SpendBudgetManager  # noqa: E402
+from skills.financial.core.transaction_ledger import TransactionLedger  # noqa: E402
+from skills.financial.core.transaction_state import TxState  # noqa: E402
+from skills.financial.core.idempotency import IdempotencyStore  # noqa: E402
+from skills.financial.providers.stripe_provider import StripeProvider  # noqa: E402
+from skills.financial.skills.governed_payment import GovernedPaymentExecutor  # noqa: E402
 
 
 def _clock() -> str:
@@ -96,7 +95,7 @@ class TestInitiatePayment:
 
     def test_in_flight_returns_conflict(self):
         ex = _executor()
-        r1 = ex.initiate_payment(
+        ex.initiate_payment(
             tenant_id="t1", amount=Decimal("100"), currency="USD", destination="dest",
         )
         # Same params while still pending → in_flight
@@ -195,6 +194,9 @@ class TestRefund:
         assert result.success
         assert result.state == "refunded"
         assert result.provider_tx_id.startswith("re_test_")
+        assert result.metadata["ledger_hash"]
+        assert result.metadata["refund_provider_tx_id"] == result.provider_tx_id
+        assert result.metadata["recipient_hash"]
 
     def test_refund_non_settled_denied(self):
         ex = _executor()
