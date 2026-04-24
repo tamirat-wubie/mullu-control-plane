@@ -16,13 +16,22 @@ Invariants:
 from __future__ import annotations
 
 import json
+import logging as _logging
 from datetime import datetime, timezone
 from typing import Any, Protocol
+
+
+_log = _logging.getLogger(__name__)
 
 
 def _bounded_store_migration_error(exc: Exception, index: int) -> RuntimeError:
     """Return a bounded PostgreSQL migration failure."""
     return RuntimeError(f"postgres schema migration {index} failed ({type(exc).__name__})")
+
+
+def _bounded_store_failure(exc: Exception) -> str:
+    """Return a type-only PostgreSQL store failure label."""
+    return type(exc).__name__
 
 
 class DatabaseConnection(Protocol):
@@ -264,7 +273,7 @@ class PostgresStore:
         self._psycopg2_available = False
 
         try:
-            import psycopg2
+            import psycopg2  # noqa: F401
             self._psycopg2_available = True
         except ImportError:
             pass
@@ -459,8 +468,15 @@ class PostgresStore:
 
     def close(self) -> None:
         if self._conn is not None:
-            self._conn.close()
-            self._conn = None
+            try:
+                self._conn.close()
+            except Exception as exc:
+                _log.warning(
+                    "postgres store close failed (%s)",
+                    _bounded_store_failure(exc),
+                )
+            finally:
+                self._conn = None
 
 
 # ═══ Store Factory ═══
