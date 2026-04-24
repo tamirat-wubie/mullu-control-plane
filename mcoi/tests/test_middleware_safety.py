@@ -113,3 +113,55 @@ def test_middleware_witnesses_proof_bridge_failures() -> None:
     assert resp.status_code == 200
     assert resp.json()["ok"] is True
     assert ("proof_bridge_certification_failures", 1) in metric_calls
+
+
+def test_middleware_witnesses_decision_log_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    class BrokenDecisionLog:
+        def record(self, **_kwargs: object) -> None:
+            raise RuntimeError("secret-decision-log-failure")
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        decision_log=BrokenDecisionLog(),
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("decision_log_record_failures", 1) in metric_calls
+    assert "secret-decision-log-failure" not in str(resp.json())
+
+
+def test_middleware_witnesses_request_analytics_failures() -> None:
+    chain = GovernanceGuardChain()
+    metric_calls: list[tuple[str, int]] = []
+
+    class BrokenRequestAnalytics:
+        def record(self, *_args: object, **_kwargs: object) -> None:
+            raise RuntimeError("secret-analytics-failure")
+
+    def allow(_context: dict[str, object]) -> GuardResult:
+        return GuardResult(allowed=True, guard_name="allow")
+
+    chain.add(GovernanceGuard("allow", allow))
+    client = _client_with_chain(
+        chain,
+        metrics_fn=lambda name, value: metric_calls.append((name, value)),
+        request_analytics=BrokenRequestAnalytics(),
+    )
+
+    resp = client.post("/api/v1/echo", json={"prompt": "hello"})
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    assert ("request_analytics_record_failures", 1) in metric_calls
+    assert "secret-analytics-failure" not in str(resp.json())
