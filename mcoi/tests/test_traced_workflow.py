@@ -1,6 +1,5 @@
 """Phase 208B — Traced workflow tests."""
 
-import pytest
 from mcoi_runtime.core.traced_workflow import TracedWorkflowEngine
 from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine
 from mcoi_runtime.core.agent_protocol import (
@@ -11,7 +10,8 @@ from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.contracts.llm import LLMBudget
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 def _setup():
@@ -31,6 +31,32 @@ def _setup():
     recorder = ReplayRecorder(clock=FIXED_CLOCK)
     traced = TracedWorkflowEngine(workflow_engine=workflow, replay_recorder=recorder)
     return traced, recorder
+
+
+def _setup_with_recorder(recorder):
+    traced, _ = _setup()
+    return (
+        TracedWorkflowEngine(
+            workflow_engine=traced.workflow_engine,
+            replay_recorder=recorder,
+        ),
+        recorder,
+    )
+
+
+class StartFailingReplayRecorder(ReplayRecorder):
+    def start_trace(self, trace_id):
+        raise RuntimeError("raw-start-secret")
+
+
+class FrameFailingReplayRecorder(ReplayRecorder):
+    def record_frame(self, *args, **kwargs):
+        raise RuntimeError("raw-frame-secret")
+
+
+class CompleteFailingReplayRecorder(ReplayRecorder):
+    def complete_trace(self, trace_id):
+        raise RuntimeError("raw-complete-secret")
 
 
 class TestTracedWorkflow:
@@ -77,3 +103,42 @@ class TestTracedWorkflow:
         traced.execute(task_id="t1", description="a", capability=AgentCapability.LLM_COMPLETION, payload={})
         traced.execute(task_id="t2", description="b", capability=AgentCapability.LLM_COMPLETION, payload={})
         assert recorder.completed_count == 2
+
+    def test_start_trace_failure_is_counted_and_workflow_runs(self):
+        traced, recorder = _setup_with_recorder(StartFailingReplayRecorder(clock=FIXED_CLOCK))
+        result, trace = traced.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION, payload={},
+        )
+        assert result.status == "completed"
+        assert trace is None
+        assert traced.trace_recording_failures == 1
+        assert traced.last_trace_recording_error == "trace recording failed (RuntimeError)"
+        assert "raw-start-secret" not in traced.last_trace_recording_error
+        assert recorder.active_count == 0
+
+    def test_frame_failure_is_counted_and_partial_trace_discarded(self):
+        traced, recorder = _setup_with_recorder(FrameFailingReplayRecorder(clock=FIXED_CLOCK))
+        result, trace = traced.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION, payload={},
+        )
+        assert result.status == "completed"
+        assert trace is None
+        assert traced.trace_recording_failures == 1
+        assert traced.last_trace_recording_error == "trace recording failed (RuntimeError)"
+        assert recorder.active_count == 0
+        assert recorder.completed_count == 0
+
+    def test_complete_failure_is_counted_and_partial_trace_discarded(self):
+        traced, recorder = _setup_with_recorder(CompleteFailingReplayRecorder(clock=FIXED_CLOCK))
+        result, trace = traced.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION, payload={},
+        )
+        assert result.status == "completed"
+        assert trace is None
+        assert traced.trace_recording_failures == 1
+        assert traced.last_trace_recording_error == "trace recording failed (RuntimeError)"
+        assert recorder.active_count == 0
+        assert recorder.completed_count == 0

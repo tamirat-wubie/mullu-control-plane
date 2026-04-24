@@ -3,7 +3,9 @@
 import pytest
 from mcoi_runtime.core.execution_replay import ReplayExecutor, ReplayRecorder
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 class TestReplayRecorder:
@@ -24,6 +26,16 @@ class TestReplayRecorder:
         assert len(trace.frames) == 2
         assert trace.trace_hash
         assert trace.total_duration_ms >= 0
+
+    def test_discard_trace_removes_active_trace_without_completion(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        rec.start_trace("t1")
+        rec.record_frame("t1", "a", {"x": 1}, {"y": 2})
+        assert rec.active_count == 1
+        assert rec.discard_trace("t1") is True
+        assert rec.active_count == 0
+        assert rec.completed_count == 0
+        assert rec.discard_trace("missing") is False
 
     def test_duplicate_start(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
