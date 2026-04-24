@@ -19,7 +19,9 @@ from mcoi_runtime.contracts.integration import (
     ConnectorStatus,
 )
 from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_case_anchor import open_effect_reconciliation_case
 from mcoi_runtime.core.effect_result_adapter import execution_result_from_connector
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from .provider_registry import ProviderRegistry
@@ -63,6 +65,7 @@ class IntegrationEngine:
         provider_registry: ProviderRegistry | None = None,
         effect_assurance: EffectAssuranceGate | None = None,
         effect_assurance_tenant_id: str = "integration",
+        case_runtime: CaseRuntimeEngine | None = None,
     ) -> None:
         self._clock = clock
         self._connectors: dict[str, ConnectorDescriptor] = {}
@@ -74,6 +77,7 @@ class IntegrationEngine:
             "effect_assurance_tenant_id",
             effect_assurance_tenant_id,
         )
+        self._case_runtime = case_runtime
 
     def register(
         self,
@@ -208,6 +212,30 @@ class IntegrationEngine:
             "reconciliation_status": reconciliation.status.value,
         }
         if reconciliation.status is not ReconciliationStatus.MATCH:
+            case_id = open_effect_reconciliation_case(
+                self._case_runtime,
+                command_id=plan.command_id,
+                tenant_id=plan.tenant_id,
+                source_type="connector_invocation",
+                source_id=result.result_id,
+                effect_plan_id=plan.effect_plan_id,
+                verification_result_id=verification.verification_id,
+                reconciliation_status=reconciliation.status,
+            )
+            if case_id is not None:
+                reconciliation = self._effect_assurance.reconcile(
+                    plan=plan,
+                    observed_effects=observed,
+                    verification_result=verification,
+                    case_id=case_id,
+                )
+                assurance_metadata = {
+                    "effect_plan_id": plan.effect_plan_id,
+                    "verification_result_id": verification.verification_id,
+                    "reconciliation_id": reconciliation.reconciliation_id,
+                    "reconciliation_status": reconciliation.status.value,
+                    "case_id": case_id,
+                }
             return ConnectorResult(
                 result_id=result.result_id,
                 connector_id=result.connector_id,

@@ -20,7 +20,9 @@ from mcoi_runtime.contracts.communication import (
     DeliveryStatus,
 )
 from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_case_anchor import open_effect_reconciliation_case
 from mcoi_runtime.core.effect_result_adapter import execution_result_from_delivery
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from .provider_registry import ProviderRegistry
@@ -101,6 +103,7 @@ class CommunicationEngine:
         channel_provider_map: Mapping[CommunicationChannel, str] | None = None,
         effect_assurance: EffectAssuranceGate | None = None,
         effect_assurance_tenant_id: str = "communication",
+        case_runtime: CaseRuntimeEngine | None = None,
     ) -> None:
         self._sender_id = ensure_non_empty_text("sender_id", sender_id)
         self._clock = clock
@@ -112,6 +115,7 @@ class CommunicationEngine:
             "effect_assurance_tenant_id",
             effect_assurance_tenant_id,
         )
+        self._case_runtime = case_runtime
 
     def request_approval(
         self,
@@ -319,6 +323,30 @@ class CommunicationEngine:
             "reconciliation_status": reconciliation.status.value,
         }
         if reconciliation.status is not ReconciliationStatus.MATCH:
+            case_id = open_effect_reconciliation_case(
+                self._case_runtime,
+                command_id=plan.command_id,
+                tenant_id=plan.tenant_id,
+                source_type="communication_delivery",
+                source_id=result.delivery_id,
+                effect_plan_id=plan.effect_plan_id,
+                verification_result_id=verification.verification_id,
+                reconciliation_status=reconciliation.status,
+            )
+            if case_id is not None:
+                reconciliation = self._effect_assurance.reconcile(
+                    plan=plan,
+                    observed_effects=observed,
+                    verification_result=verification,
+                    case_id=case_id,
+                )
+                assurance_metadata = {
+                    "effect_plan_id": plan.effect_plan_id,
+                    "verification_result_id": verification.verification_id,
+                    "reconciliation_id": reconciliation.reconciliation_id,
+                    "reconciliation_status": reconciliation.status.value,
+                    "case_id": case_id,
+                }
             return DeliveryResult(
                 delivery_id=result.delivery_id,
                 message_id=result.message_id,

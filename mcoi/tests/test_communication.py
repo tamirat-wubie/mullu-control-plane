@@ -14,13 +14,16 @@ from mcoi_runtime.contracts.communication import (
     DeliveryResult,
     DeliveryStatus,
 )
+from mcoi_runtime.contracts.effect_assurance import EffectReconciliation, ReconciliationStatus
 from mcoi_runtime.core.communication import (
     ApprovalRequest,
     CommunicationEngine,
     EscalationRequest,
     NotificationRequest,
 )
+from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
 
@@ -66,15 +69,34 @@ class ReceiptDeliveryAdapter(FakeDeliveryAdapter):
         )
 
 
+class MismatchEffectAssuranceGate(EffectAssuranceGate):
+    def reconcile(self, **kwargs) -> EffectReconciliation:
+        base = super().reconcile(**kwargs)
+        return EffectReconciliation(
+            reconciliation_id=base.reconciliation_id,
+            command_id=base.command_id,
+            effect_plan_id=base.effect_plan_id,
+            status=ReconciliationStatus.MISMATCH,
+            matched_effects=base.matched_effects,
+            missing_effects=("forced_missing_effect",),
+            unexpected_effects=base.unexpected_effects,
+            verification_result_id=base.verification_result_id,
+            case_id=kwargs.get("case_id"),
+            decided_at=base.decided_at,
+        )
+
+
 def _make_engine(
     adapters: dict[CommunicationChannel, FakeDeliveryAdapter] | None = None,
     effect_assurance: EffectAssuranceGate | None = None,
+    case_runtime: CaseRuntimeEngine | None = None,
 ) -> CommunicationEngine:
     return CommunicationEngine(
         sender_id="agent-1",
         clock=lambda: _CLOCK,
         adapters=adapters,
         effect_assurance=effect_assurance,
+        case_runtime=case_runtime,
     )
 
 
@@ -300,3 +322,31 @@ def test_delivery_with_effect_assurance_fails_without_receipt() -> None:
     assert result.status is DeliveryStatus.FAILED
     assert result.error_code == "effect_assurance_failed"
     assert "required for effect observation" in result.metadata["effect_assurance_error"]
+
+
+def test_delivery_effect_mismatch_opens_case() -> None:
+    case_runtime = CaseRuntimeEngine(EventSpineEngine(clock=lambda: _CLOCK))
+    engine = _make_engine(
+        {CommunicationChannel.NOTIFICATION: ReceiptDeliveryAdapter()},
+        effect_assurance=MismatchEffectAssuranceGate(clock=lambda: _CLOCK),
+        case_runtime=case_runtime,
+    )
+
+    result = engine.notify(
+        NotificationRequest(
+            subject_id="subject-1",
+            goal_id="goal-1",
+            event_type="execution_complete",
+            summary="done",
+        ),
+        recipient_id="operator-1",
+    )
+
+    assurance = result.metadata["effect_assurance"]
+    assert result.status is DeliveryStatus.FAILED
+    assert result.error_code == "effect_reconciliation_mismatch"
+    assert assurance["reconciliation_status"] == "mismatch"
+    assert assurance["case_id"].startswith("case-delivery-")
+    assert case_runtime.open_case_count == 1
+    assert case_runtime.evidence_count == 1
+    assert case_runtime.finding_count == 1
