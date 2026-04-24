@@ -368,3 +368,41 @@ class TestGatewayStatus:
         data = resp.json()
         assert data["witness_id"].startswith("runtime-witness-")
         assert data["signature"].startswith("hmac-sha256:")
+
+    def test_command_closure_read_model(self, gateway_app, client):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "closure-token"},
+        )
+        assert msg_resp.status_code == 200
+        certificate = gateway_app.state.command_ledger.latest_terminal_certificate()
+        assert certificate is not None
+        command_id = certificate.command_id
+
+        resp = client.get(f"/commands/{command_id}/closure")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["command_id"] == command_id
+        assert data["terminal_certificate"]["disposition"] == "committed"
+        assert data["terminal_certificate"]["evidence_refs"]
+        assert len(data["events"]) >= 3
+
+    def test_latest_anchor_read_model(self, gateway_app, client):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "anchor-token"},
+        )
+        assert msg_resp.status_code == 200
+        anchor = gateway_app.state.router.anchor_command_events(
+            signing_secret="anchor-secret",
+            signature_key_id="test-anchor",
+        )
+
+        resp = client.get("/anchors/latest")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["anchor_id"] == anchor.anchor_id
+        assert data["event_count"] > 0
+        assert data["signature"].startswith("hmac-sha256:")

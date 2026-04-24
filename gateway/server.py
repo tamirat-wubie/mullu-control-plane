@@ -423,6 +423,43 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             signing_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
 
+    @app.get("/commands/{command_id}/closure")
+    def command_closure(command_id: str):
+        certificate = command_ledger.terminal_certificate_for(command_id)
+        if certificate is None:
+            raise HTTPException(404, detail="terminal closure certificate not found")
+        return {
+            "command_id": command_id,
+            "terminal_certificate": certificate,
+            "events": [
+                {
+                    "event_id": event.event_id,
+                    "previous_state": event.previous_state.value,
+                    "next_state": event.next_state.value,
+                    "event_hash": event.event_hash,
+                    "timestamp": event.timestamp,
+                }
+                for event in command_ledger.events_for(command_id)
+            ],
+        }
+
+    @app.get("/anchors/latest")
+    def latest_anchor():
+        anchors = command_ledger.list_anchors(limit=1)
+        if not anchors:
+            raise HTTPException(404, detail="anchor not found")
+        anchor = anchors[0]
+        return {
+            "anchor_id": anchor.anchor_id,
+            "from_event_hash": anchor.from_event_hash,
+            "to_event_hash": anchor.to_event_hash,
+            "event_count": anchor.event_count,
+            "merkle_root": anchor.merkle_root,
+            "signature": f"hmac-sha256:{anchor.signature}",
+            "signature_key_id": anchor.signature_key_id,
+            "anchored_at": anchor.anchored_at,
+        }
+
     # Store references for testing
     app.state.router = router
     app.state.command_ledger = command_ledger

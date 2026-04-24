@@ -111,6 +111,7 @@ class GatewayRouter:
             skills=self._skills,
             skill_intent_loader=self._skill_intent_from_command,
             error_recorder=self._record_error,
+            clock=self._clock,
             isolation_policy=CapabilityIsolationPolicy(environment=environment),
             isolated_executor=isolated_capability_executor,
         )
@@ -291,7 +292,7 @@ class GatewayRouter:
         """Execute an allowed command through the stored canonical payload."""
         closure = self._closure_kernel.run(command.command_id)
         response = GatewayResponse(
-            message_id=self._gen_id("resp", command.command_id),
+            message_id=f"resp-{command.command_id}",
             channel=command.source,
             recipient_id=recipient_id,
             body=closure.response_body,

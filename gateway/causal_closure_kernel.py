@@ -31,6 +31,7 @@ from gateway.command_spine import (
     CommandState,
     capability_passport_for,
 )
+from gateway.proof_carrying_adapter import ProofCarryingCapabilityAdapter
 from gateway.skill_dispatch import SkillDispatcher, SkillIntent
 
 
@@ -69,6 +70,7 @@ class CausalClosureKernel:
         skills: SkillDispatcher,
         skill_intent_loader: Callable[[CommandEnvelope], SkillIntent | None],
         error_recorder: Callable[[], None],
+        clock: Callable[[], str] | None = None,
         isolation_policy: CapabilityIsolationPolicy | None = None,
         isolated_executor: IsolatedCapabilityExecutor | None = None,
     ) -> None:
@@ -84,6 +86,7 @@ class CausalClosureKernel:
             self._isolated_executor = None
         else:
             self._isolated_executor = LocalCapabilityExecutionWorker(skills)
+        self._proof_adapter = ProofCarryingCapabilityAdapter(clock=clock or commands._clock)
 
     def run(self, command_id: str) -> CausalClosureResult:
         """Run one command from approved/allowed state to certified closure."""
@@ -139,12 +142,24 @@ class CausalClosureKernel:
                         )
                     return self._close_skill_result(command, skill_result)
 
-            result = session.llm(body)
-            response_body = result.content if result.succeeded else f"I couldn't process that: {result.error}"
+            action = self._commands.governed_action_for(command.command_id)
+            if action is None:
+                raise RuntimeError("missing governed action")
+            receipt_execution = self._proof_adapter.execute(
+                command=command,
+                governed_action=action,
+                capability_passport=capability_passport_for(action.capability),
+                executor=lambda: session.llm(body),
+            )
+            result = receipt_execution.result
+            succeeded = bool(result.get("succeeded", True)) and not result.get("error")
+            content = str(result.get("content", ""))
+            response_body = content if succeeded else f"I couldn't process that: {result.get('error', '')}"
             return self._close_llm_result(
                 command,
                 response_body=response_body,
-                succeeded=bool(result.succeeded),
+                succeeded=succeeded,
+                proof_output=result,
             )
         except ValueError:
             self._commands.transition(command.command_id, CommandState.DENIED, detail={"cause": "content_blocked"})
@@ -177,10 +192,19 @@ class CausalClosureKernel:
 
     def _dispatch_skill(self, command: CommandEnvelope, skill_intent: SkillIntent) -> dict[str, Any] | None:
         """Dispatch skill intent through the governed execution boundary."""
+        action = self._commands.governed_action_for(command.command_id)
+        if action is None:
+            raise RuntimeError("missing governed action")
         passport = capability_passport_for(command.intent)
         boundary = self._isolation_policy.boundary_for(passport)
         if not boundary.isolation_required:
-            return self._skills.dispatch(skill_intent, command.tenant_id, command.actor_id)
+            receipt_execution = self._proof_adapter.execute(
+                command=command,
+                governed_action=action,
+                capability_passport=passport,
+                executor=lambda: self._skills.dispatch(skill_intent, command.tenant_id, command.actor_id),
+            )
+            return receipt_execution.result
         if self._isolated_executor is None:
             self._record_error()
             return {
@@ -190,23 +214,28 @@ class CausalClosureKernel:
                 "receipt_status": "isolation_worker_required",
                 "capability_execution_boundary": asdict(boundary),
             }
-        skill_result, receipt = self._isolated_executor.execute(
-            intent=skill_intent,
-            tenant_id=command.tenant_id,
-            identity_id=command.actor_id,
-            boundary=boundary,
+        receipt_execution = self._proof_adapter.execute(
+            command=command,
+            governed_action=action,
+            capability_passport=passport,
+            executor=lambda: self._isolated_executor.execute(
+                intent=skill_intent,
+                tenant_id=command.tenant_id,
+                identity_id=command.actor_id,
+                boundary=boundary,
+            )[0],
         )
         self._commands.transition(
             command.command_id,
             command.state,
-            output={"capability_execution_receipt": asdict(receipt)},
+            output={"proof_carrying_receipt": asdict(receipt_execution.receipt)},
             detail={
                 "cause": "capability_execution_isolated",
                 "capability_execution_boundary": asdict(boundary),
-                "capability_execution_receipt": asdict(receipt),
+                "proof_carrying_receipt": asdict(receipt_execution.receipt),
             },
         )
-        return skill_result
+        return receipt_execution.result
 
     def _preflight(self, command: CommandEnvelope) -> CausalClosureResult | None:
         governed_action = self._commands.governed_action_for(command.command_id)
@@ -297,16 +326,17 @@ class CausalClosureKernel:
         *,
         response_body: str,
         succeeded: bool,
+        proof_output: dict[str, Any],
     ) -> CausalClosureResult:
         self._commands.transition(
             command.command_id,
             CommandState.OBSERVED,
             tool_name="llm_completion",
-            output={"succeeded": succeeded, "content": response_body},
+            output=proof_output,
         )
         reconciliation = self._commands.observe_and_reconcile_effect(
             command.command_id,
-            output={"succeeded": succeeded, "content": response_body},
+            output=proof_output,
         )
         if not reconciliation.reconciled:
             self._record_error()

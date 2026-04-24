@@ -61,6 +61,7 @@ class CommandState(StrEnum):
     RESPONSE_EVIDENCE_CLOSED = "response_evidence_closed"
     MEMORY_PROMOTED = "memory_promoted"
     LEARNING_DECIDED = "learning_decided"
+    WITNESSED = "witnessed"
     RESPONDED = "responded"
     ANCHORED = "anchored"
 
