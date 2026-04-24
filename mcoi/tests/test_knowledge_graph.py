@@ -122,6 +122,18 @@ def test_query_entities_endpoint(client) -> None:
     assert resp.json()["governed"] is True
 
 
+def test_query_entities_invalid_type_fails_closed_without_leakage(client) -> None:
+    resp = client.get(
+        "/api/v1/knowledge/entities",
+        params={"entity_type": "secret-entity-type"},
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["detail"]["error_code"] == "invalid_entity_type"
+    assert resp.json()["detail"]["governed"] is True
+    assert "secret-entity-type" not in str(resp.json())
+
+
 def test_add_link_endpoint(client) -> None:
     client.post("/api/v1/knowledge/entities", json={
         "entity_id": "link-a", "name": "A", "entity_type": "agent",
