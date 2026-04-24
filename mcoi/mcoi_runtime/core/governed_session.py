@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
 _log = logging.getLogger(__name__)
@@ -907,6 +907,9 @@ class Platform:
             allow_unknown_tenants = env in ("local_dev", "test")
         bootstrap_warnings: list[str] = []
 
+        def _bootstrap_warning(component: str, exc: Exception) -> str:
+            return f"{component} bootstrap failed ({type(exc).__name__})"
+
         # Optional: RBAC
         access_runtime = None
         try:
@@ -918,9 +921,7 @@ class Platform:
             seed_default_permissions(access_runtime)
         except Exception as exc:
             access_runtime = None
-            bootstrap_warnings.append(
-                f"access runtime bootstrap failed ({type(exc).__name__})"
-            )
+            bootstrap_warnings.append(_bootstrap_warning("access runtime", exc))
 
         # Optional: LLM
         llm_bridge = None
@@ -930,41 +931,43 @@ class Platform:
             llm_bridge = result.bridge
         except Exception as exc:
             llm_bridge = None
-            bootstrap_warnings.append(
-                f"llm bootstrap failed ({type(exc).__name__})"
-            )
+            bootstrap_warnings.append(_bootstrap_warning("llm", exc))
 
         # Optional: LLM cache
         llm_cache = None
         try:
             from mcoi_runtime.core.llm_cache import LLMResponseCache
             llm_cache = LLMResponseCache()
-        except Exception:
-            pass
+        except Exception as exc:
+            llm_cache = None
+            bootstrap_warnings.append(_bootstrap_warning("llm cache", exc))
 
         # Optional: Tenant usage tracker
         usage_tracker = None
         try:
             from mcoi_runtime.core.tenant_usage_tracker import TenantUsageTracker
             usage_tracker = TenantUsageTracker()
-        except Exception:
-            pass
+        except Exception as exc:
+            usage_tracker = None
+            bootstrap_warnings.append(_bootstrap_warning("usage tracker", exc))
 
         # Optional: Governance decision log
         decision_log = None
         try:
             from mcoi_runtime.core.governance_decision_log import GovernanceDecisionLog
             decision_log = GovernanceDecisionLog(clock=_clock)
-        except Exception:
-            pass
+        except Exception as exc:
+            decision_log = None
+            bootstrap_warnings.append(_bootstrap_warning("decision log", exc))
 
         # Optional: Cross-session memory
         cross_session_memory = None
         try:
             from mcoi_runtime.core.cross_session_memory import CrossSessionMemory
             cross_session_memory = CrossSessionMemory(clock=_clock)
-        except Exception:
-            pass
+        except Exception as exc:
+            cross_session_memory = None
+            bootstrap_warnings.append(_bootstrap_warning("cross-session memory", exc))
 
         return cls(
             clock=_clock,
