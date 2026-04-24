@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import hashlib
 import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum, unique
 from typing import Any, Callable
@@ -22,6 +21,11 @@ from typing import Any, Callable
 def _bounded_notification_error(exc: Exception) -> str:
     """Return a stable handler failure without raw backend detail."""
     return f"notification handler error ({type(exc).__name__})"
+
+
+def _failed_notification_result() -> str:
+    """Return a stable failure reason for explicit negative handler results."""
+    return "notification handler returned false"
 
 
 @unique
@@ -141,7 +145,9 @@ class NotificationDispatcher:
             notification_id=notification.notification_id,
             channel=notification.channel,
             recipient=notification.recipient,
-            delivered=success, timestamp=now,
+            delivered=success,
+            timestamp=now,
+            error="" if success else _failed_notification_result(),
         )
         self._deliveries.append(record)
         return record
