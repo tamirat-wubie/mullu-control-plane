@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any
-
 from ..contracts.service_catalog import (
     CatalogAssessment,
     CatalogItemKind,
@@ -32,7 +30,6 @@ from ..contracts.service_catalog import (
     RequestStatus,
     RequestViolation,
     ServiceCatalogItem,
-    ServiceClosureReport,
     ServiceRequest,
     ServiceStatus,
 )
@@ -794,23 +791,27 @@ class ServiceCatalogEngine:
         fulfillment_rate: float,
         satisfaction_score: float,
         *,
-        assessed_by: str = "system",
+        assessed_by: str = "",
     ) -> CatalogAssessment:
         """Assess a catalog item's health."""
         if assessment_id in self._assessments:
             raise RuntimeCoreInvariantError("Duplicate assessment_id")
         if item_id not in self._catalog:
             raise RuntimeCoreInvariantError("Unknown item_id")
+        normalized_assessed_by = ensure_non_empty_text("assessed_by", assessed_by)
+        if normalized_assessed_by == "system":
+            raise RuntimeCoreInvariantError("assessed_by must exclude system")
         now = _now_iso()
         assessment = CatalogAssessment(
             assessment_id=assessment_id, item_id=item_id,
             fulfillment_rate=fulfillment_rate,
             satisfaction_score=satisfaction_score,
-            assessed_by=assessed_by, assessed_at=now,
+            assessed_by=normalized_assessed_by, assessed_at=now,
         )
         self._assessments[assessment_id] = assessment
         _emit(self._events, "catalog_item_assessed", {
             "assessment_id": assessment_id, "item_id": item_id,
+            "assessed_by": normalized_assessed_by,
         }, item_id)
         return assessment
 
