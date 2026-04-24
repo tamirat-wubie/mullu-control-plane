@@ -38,6 +38,8 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.observers["process"].__class__ is ProcessObserver
     assert runtime.effect_assurance is None
     assert runtime.operational_graph is None
+    assert runtime.event_spine is None
+    assert runtime.case_runtime is None
 
 
 def test_bootstrap_runtime_wires_effect_assurance_when_required() -> None:
@@ -48,6 +50,8 @@ def test_bootstrap_runtime_wires_effect_assurance_when_required() -> None:
 
     assert isinstance(runtime.effect_assurance, EffectAssuranceGate)
     assert runtime.operational_graph is not None
+    assert runtime.event_spine is not None
+    assert runtime.case_runtime is not None
     assert runtime.config.effect_assurance_required is True
 
 

@@ -18,9 +18,11 @@ from mcoi_runtime.contracts.effect_assurance import (
     ReconciliationStatus,
 )
 from mcoi_runtime.contracts.execution import ExecutionResult, ExecutionOutcome
+from mcoi_runtime.contracts.case_runtime import CaseKind, CaseSeverity, FindingSeverity
 from mcoi_runtime.adapters.executor_base import build_failure_result, ExecutionFailure, utc_now_text
+from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
 from mcoi_runtime.core.system_closure import (
     ExecutionVerificationLoop,
@@ -93,6 +95,7 @@ class GovernedDispatcher:
         boundary: SimRealityBoundary | None = None,
         effect_assurance: EffectAssuranceGate | None = None,
         effect_assurance_tenant_id: str = "operator",
+        case_runtime: CaseRuntimeEngine | None = None,
         clock: Callable[[], str] = utc_now_text,
     ):
         self._dispatcher = dispatcher
@@ -108,6 +111,7 @@ class GovernedDispatcher:
         self._boundary = boundary or SimRealityBoundary()
         self._effect_assurance = effect_assurance
         self._effect_assurance_tenant_id = effect_assurance_tenant_id
+        self._case_runtime = case_runtime
         self._clock = clock
         self._ledger: list[dict[str, Any]] = []
 
@@ -291,6 +295,28 @@ class GovernedDispatcher:
             "reconciliation_status": reconciliation.status.value,
         }
         if reconciliation.status is not ReconciliationStatus.MATCH:
+            case_id = self._open_reconciliation_case(
+                context=context,
+                effect_plan=effect_plan,
+                verification_result_id=verification.verification_id,
+                reconciliation_status=reconciliation.status,
+                missing_effects=reconciliation.missing_effects,
+                unexpected_effects=reconciliation.unexpected_effects,
+            )
+            if case_id is not None:
+                reconciliation = self._effect_assurance.reconcile(
+                    plan=effect_plan,
+                    observed_effects=observed,
+                    verification_result=verification,
+                    case_id=case_id,
+                )
+                assurance_metadata = {
+                    "effect_plan_id": effect_plan.effect_plan_id,
+                    "verification_result_id": verification.verification_id,
+                    "reconciliation_id": reconciliation.reconciliation_id,
+                    "reconciliation_status": reconciliation.status.value,
+                    "case_id": case_id,
+                }
             now = self._clock()
             return build_failure_result(
                 execution_id=execution_result.execution_id,
@@ -351,6 +377,85 @@ class GovernedDispatcher:
             },
             extensions=execution_result.extensions,
         )
+
+    def _open_reconciliation_case(
+        self,
+        *,
+        context: GovernedDispatchContext,
+        effect_plan: EffectPlan,
+        verification_result_id: str,
+        reconciliation_status: ReconciliationStatus,
+        missing_effects: tuple[str, ...],
+        unexpected_effects: tuple[str, ...],
+    ) -> str | None:
+        """Open a durable case for unresolved effect reconciliation."""
+        if self._case_runtime is None:
+            return None
+
+        case_id = f"case-{effect_plan.command_id}"
+        try:
+            self._case_runtime.open_case(
+                case_id,
+                effect_plan.tenant_id,
+                "Effect reconciliation mismatch",
+                kind=CaseKind.INCIDENT,
+                severity=CaseSeverity.HIGH,
+                description="Governed dispatch produced effects that did not match the effect plan.",
+                opened_by="effect_assurance",
+            )
+        except RuntimeCoreInvariantError as exc:
+            if "Duplicate case_id" not in str(exc):
+                raise
+
+        evidence_id = stable_identifier(
+            "effect-case-evidence",
+            {
+                "case_id": case_id,
+                "effect_plan_id": effect_plan.effect_plan_id,
+                "verification_result_id": verification_result_id,
+            },
+        )
+        try:
+            self._case_runtime.add_evidence(
+                evidence_id,
+                case_id,
+                "effect_reconciliation",
+                effect_plan.effect_plan_id,
+                title="Effect reconciliation record",
+                description=f"status={reconciliation_status.value}; route={context.request.route}",
+                submitted_by="effect_assurance",
+            )
+        except RuntimeCoreInvariantError as exc:
+            if "Duplicate evidence_id" not in str(exc):
+                raise
+
+        finding_id = stable_identifier(
+            "effect-case-finding",
+            {
+                "case_id": case_id,
+                "effect_plan_id": effect_plan.effect_plan_id,
+                "status": reconciliation_status.value,
+            },
+        )
+        try:
+            self._case_runtime.record_finding(
+                finding_id,
+                case_id,
+                "Effect mismatch detected",
+                severity=FindingSeverity.HIGH,
+                description=(
+                    "Missing effects: "
+                    f"{', '.join(missing_effects) or 'none'}; "
+                    "unexpected effects: "
+                    f"{', '.join(unexpected_effects) or 'none'}"
+                ),
+                evidence_ids=(evidence_id,),
+                remediation="Review effect plan, observed effects, provider receipt, and compensation path.",
+            )
+        except RuntimeCoreInvariantError as exc:
+            if "Duplicate finding_id" not in str(exc):
+                raise
+        return case_id
 
     def _emit_ledger(self, context: GovernedDispatchContext, result: GovernedDispatchResult, timestamp: str) -> None:
         entry = {
