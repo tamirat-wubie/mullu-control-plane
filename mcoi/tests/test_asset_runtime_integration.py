@@ -288,30 +288,48 @@ class TestBindAssetToCampaign:
 
     def test_basic_bind_returns_dict(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1")
+        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1", bound_by="asset-operator-1")
         assert isinstance(result, dict)
 
     def test_binding_type_is_campaign(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1")
+        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1", bound_by="asset-operator-1")
         assert result["binding_type"] == "campaign"
 
     def test_campaign_ref_preserved(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-99")
+        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-99", bound_by="asset-operator-1")
         assert result["campaign_ref"] == "camp-99"
 
     def test_scope_ref_type_is_campaign(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1")
+        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1", bound_by="asset-operator-1")
         assert result["scope_ref_type"] == "campaign"
+
+    def test_bound_by_preserved(self, integration):
+        integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
+        result = integration.bind_asset_to_campaign("assign1", "a1", "camp-1", bound_by="asset-operator-1")
+        assert result["bound_by"] == "asset-operator-1"
+
+    def test_missing_bound_by_rejected(self, integration):
+        integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="bound_by required for asset binding"):
+            integration.bind_asset_to_campaign("assign1", "a1", "camp-1")
+
+    def test_system_bound_by_rejected(self, integration):
+        integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
+        with pytest.raises(RuntimeCoreInvariantError, match="bound_by must exclude system"):
+            integration.bind_asset_to_campaign(
+                "assign1", "a1", "camp-1",
+                bound_by="system",
+            )
 
     def test_event_emitted(self, engines):
         ae, es, mm = engines
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "Box", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_campaign("assign1", "a1", "camp-1")
+        bridge.bind_asset_to_campaign("assign1", "a1", "camp-1", bound_by="asset-operator-1")
         assert es.event_count > before
 
 
@@ -325,22 +343,22 @@ class TestBindAssetToProgram:
 
     def test_basic_bind_returns_dict(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_program("assign1", "a1", "prog-1")
+        result = integration.bind_asset_to_program("assign1", "a1", "prog-1", bound_by="asset-operator-1")
         assert isinstance(result, dict)
 
     def test_binding_type_is_program(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_program("assign1", "a1", "prog-1")
+        result = integration.bind_asset_to_program("assign1", "a1", "prog-1", bound_by="asset-operator-1")
         assert result["binding_type"] == "program"
 
     def test_program_ref_preserved(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_program("assign1", "a1", "prog-42")
+        result = integration.bind_asset_to_program("assign1", "a1", "prog-42", bound_by="asset-operator-1")
         assert result["program_ref"] == "prog-42"
 
     def test_scope_ref_type_is_program(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_program("assign1", "a1", "prog-1")
+        result = integration.bind_asset_to_program("assign1", "a1", "prog-1", bound_by="asset-operator-1")
         assert result["scope_ref_type"] == "program"
 
     def test_event_emitted(self, engines):
@@ -348,7 +366,7 @@ class TestBindAssetToProgram:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "Box", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_program("assign1", "a1", "prog-1")
+        bridge.bind_asset_to_program("assign1", "a1", "prog-1", bound_by="asset-operator-1")
         assert es.event_count > before
 
 
@@ -362,22 +380,22 @@ class TestBindAssetToVendor:
 
     def test_basic_bind_returns_dict(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-1")
+        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-1", bound_by="asset-operator-1")
         assert isinstance(result, dict)
 
     def test_binding_type_is_vendor(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-1")
+        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-1", bound_by="asset-operator-1")
         assert result["binding_type"] == "vendor"
 
     def test_vendor_ref_preserved(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-77")
+        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-77", bound_by="asset-operator-1")
         assert result["vendor_ref"] == "vendor-77"
 
     def test_scope_ref_type_is_vendor(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-1")
+        result = integration.bind_asset_to_vendor("assign1", "a1", "vendor-1", bound_by="asset-operator-1")
         assert result["scope_ref_type"] == "vendor"
 
     def test_event_emitted(self, engines):
@@ -385,7 +403,7 @@ class TestBindAssetToVendor:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "Box", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_vendor("assign1", "a1", "vendor-1")
+        bridge.bind_asset_to_vendor("assign1", "a1", "vendor-1", bound_by="asset-operator-1")
         assert es.event_count > before
 
 
@@ -399,22 +417,22 @@ class TestBindAssetToContract:
 
     def test_basic_bind_returns_dict(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-1")
+        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-1", bound_by="asset-operator-1")
         assert isinstance(result, dict)
 
     def test_binding_type_is_contract(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-1")
+        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-1", bound_by="asset-operator-1")
         assert result["binding_type"] == "contract"
 
     def test_contract_ref_preserved(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-55")
+        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-55", bound_by="asset-operator-1")
         assert result["contract_ref"] == "ctr-55"
 
     def test_scope_ref_type_is_contract(self, integration):
         integration.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-1")
+        result = integration.bind_asset_to_contract("assign1", "a1", "ctr-1", bound_by="asset-operator-1")
         assert result["scope_ref_type"] == "contract"
 
     def test_event_emitted(self, engines):
@@ -422,7 +440,7 @@ class TestBindAssetToContract:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "Box", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_contract("assign1", "a1", "ctr-1")
+        bridge.bind_asset_to_contract("assign1", "a1", "ctr-1", bound_by="asset-operator-1")
         assert es.event_count > before
 
 
@@ -464,7 +482,7 @@ class TestAttachAssetStateToMemoryMesh:
         ae, es, mm = engines
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "Box", "t1", "po-1")
-        bridge.bind_asset_to_campaign("asgn1", "a1", "camp-1")
+        bridge.bind_asset_to_campaign("asgn1", "a1", "camp-1", bound_by="asset-operator-1")
         mem = bridge.attach_asset_state_to_memory_mesh("scope-1")
         assert mem.content["total_assignments"] == ae.assignment_count
 
@@ -564,7 +582,7 @@ class TestAttachAssetStateToGraph:
         ae, es, mm = engines
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "X", "t1", "po-1")
-        bridge.bind_asset_to_program("asgn1", "a1", "prog-1")
+        bridge.bind_asset_to_program("asgn1", "a1", "prog-1", bound_by="asset-operator-1")
         result = bridge.attach_asset_state_to_graph("scope-g1")
         assert result["total_assignments"] == ae.assignment_count
 
@@ -645,7 +663,7 @@ class TestEventEmission:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "X", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_campaign("asgn1", "a1", "camp-1")
+        bridge.bind_asset_to_campaign("asgn1", "a1", "camp-1", bound_by="asset-operator-1")
         after = es.event_count
         assert after >= before + 2  # assign_asset + integration emit
 
@@ -654,7 +672,7 @@ class TestEventEmission:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "X", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_program("asgn1", "a1", "prog-1")
+        bridge.bind_asset_to_program("asgn1", "a1", "prog-1", bound_by="asset-operator-1")
         after = es.event_count
         assert after >= before + 2
 
@@ -663,7 +681,7 @@ class TestEventEmission:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "X", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_vendor("asgn1", "a1", "vendor-1")
+        bridge.bind_asset_to_vendor("asgn1", "a1", "vendor-1", bound_by="asset-operator-1")
         after = es.event_count
         assert after >= before + 2
 
@@ -672,7 +690,7 @@ class TestEventEmission:
         bridge = AssetRuntimeIntegration(ae, es, mm)
         bridge.asset_from_purchase_order("a1", "X", "t1", "po-1")
         before = es.event_count
-        bridge.bind_asset_to_contract("asgn1", "a1", "ctr-1")
+        bridge.bind_asset_to_contract("asgn1", "a1", "ctr-1", bound_by="asset-operator-1")
         after = es.event_count
         assert after >= before + 2
 
@@ -698,7 +716,7 @@ class TestEventEmission:
         bridge.asset_from_purchase_order("a1", "X", "t1", "po-1")
         bridge.asset_from_connector_dependency("cd1", "Y", "t1", "conn-1")
         bridge.asset_from_environment("env1", "Z", "t1", "env-1")
-        bridge.bind_asset_to_campaign("asgn1", "a1", "camp-1")
+        bridge.bind_asset_to_campaign("asgn1", "a1", "camp-1", bound_by="asset-operator-1")
         bridge.attach_asset_state_to_memory_mesh("scope-1")
         # At minimum: 3 register + 3 integration + 1 assign + 1 bind + 1 memory = 9
         assert es.event_count >= 9

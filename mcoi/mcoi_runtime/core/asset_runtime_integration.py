@@ -48,6 +48,15 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     return event
 
 
+def _require_human_actor(field_name: str, value: str, missing_message: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(missing_message)
+    normalized = value.strip()
+    if normalized == "system":
+        raise RuntimeCoreInvariantError(f"{field_name} must exclude system")
+    return normalized
+
+
 class AssetRuntimeIntegration:
     """Integration bridge for asset runtime with platform layers."""
 
@@ -170,20 +179,28 @@ class AssetRuntimeIntegration:
         assignment_id: str,
         asset_id: str,
         campaign_ref: str,
+        *,
+        bound_by: str = "",
     ) -> dict[str, Any]:
         """Bind an asset to a campaign."""
+        normalized_bound_by = _require_human_actor(
+            "bound_by", bound_by, "bound_by required for asset binding"
+        )
         aa = self._assets.assign_asset(
             assignment_id, asset_id, campaign_ref, "campaign",
+            assigned_by=normalized_bound_by,
         )
         _emit(self._events, "asset_bound_to_campaign", {
             "assignment_id": assignment_id, "asset_id": asset_id,
             "campaign_ref": campaign_ref,
+            "bound_by": normalized_bound_by,
         }, assignment_id)
         return {
             "assignment_id": aa.assignment_id,
             "asset_id": aa.asset_id,
             "campaign_ref": campaign_ref,
             "scope_ref_type": aa.scope_ref_type,
+            "bound_by": aa.assigned_by,
             "binding_type": "campaign",
         }
 
@@ -192,20 +209,28 @@ class AssetRuntimeIntegration:
         assignment_id: str,
         asset_id: str,
         program_ref: str,
+        *,
+        bound_by: str = "",
     ) -> dict[str, Any]:
         """Bind an asset to a program."""
+        normalized_bound_by = _require_human_actor(
+            "bound_by", bound_by, "bound_by required for asset binding"
+        )
         aa = self._assets.assign_asset(
             assignment_id, asset_id, program_ref, "program",
+            assigned_by=normalized_bound_by,
         )
         _emit(self._events, "asset_bound_to_program", {
             "assignment_id": assignment_id, "asset_id": asset_id,
             "program_ref": program_ref,
+            "bound_by": normalized_bound_by,
         }, assignment_id)
         return {
             "assignment_id": aa.assignment_id,
             "asset_id": aa.asset_id,
             "program_ref": program_ref,
             "scope_ref_type": aa.scope_ref_type,
+            "bound_by": aa.assigned_by,
             "binding_type": "program",
         }
 
@@ -214,20 +239,28 @@ class AssetRuntimeIntegration:
         assignment_id: str,
         asset_id: str,
         vendor_ref: str,
+        *,
+        bound_by: str = "",
     ) -> dict[str, Any]:
         """Bind an asset to a vendor."""
+        normalized_bound_by = _require_human_actor(
+            "bound_by", bound_by, "bound_by required for asset binding"
+        )
         aa = self._assets.assign_asset(
             assignment_id, asset_id, vendor_ref, "vendor",
+            assigned_by=normalized_bound_by,
         )
         _emit(self._events, "asset_bound_to_vendor", {
             "assignment_id": assignment_id, "asset_id": asset_id,
             "vendor_ref": vendor_ref,
+            "bound_by": normalized_bound_by,
         }, assignment_id)
         return {
             "assignment_id": aa.assignment_id,
             "asset_id": aa.asset_id,
             "vendor_ref": vendor_ref,
             "scope_ref_type": aa.scope_ref_type,
+            "bound_by": aa.assigned_by,
             "binding_type": "vendor",
         }
 
@@ -236,20 +269,28 @@ class AssetRuntimeIntegration:
         assignment_id: str,
         asset_id: str,
         contract_ref: str,
+        *,
+        bound_by: str = "",
     ) -> dict[str, Any]:
         """Bind an asset to a contract."""
+        normalized_bound_by = _require_human_actor(
+            "bound_by", bound_by, "bound_by required for asset binding"
+        )
         aa = self._assets.assign_asset(
             assignment_id, asset_id, contract_ref, "contract",
+            assigned_by=normalized_bound_by,
         )
         _emit(self._events, "asset_bound_to_contract", {
             "assignment_id": assignment_id, "asset_id": asset_id,
             "contract_ref": contract_ref,
+            "bound_by": normalized_bound_by,
         }, assignment_id)
         return {
             "assignment_id": aa.assignment_id,
             "asset_id": aa.asset_id,
             "contract_ref": contract_ref,
             "scope_ref_type": aa.scope_ref_type,
+            "bound_by": aa.assigned_by,
             "binding_type": "contract",
         }
 

@@ -14,12 +14,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any
 
 from ..contracts.asset_runtime import (
     AssetAssessment,
     AssetAssignment,
-    AssetClosureReport,
     AssetDependency,
     AssetKind,
     AssetRecord,
@@ -56,6 +54,15 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRe
     )
     es.emit(event)
     return event
+
+
+def _require_human_actor(field_name: str, value: str, missing_message: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(missing_message)
+    normalized = value.strip()
+    if normalized == "system":
+        raise RuntimeCoreInvariantError(f"{field_name} must exclude system")
+    return normalized
 
 
 _ASSET_TERMINAL = frozenset({AssetStatus.RETIRED, AssetStatus.DISPOSED})
@@ -396,7 +403,7 @@ class AssetRuntimeEngine:
         scope_ref_id: str,
         scope_ref_type: str,
         *,
-        assigned_by: str = "system",
+        assigned_by: str = "",
     ) -> AssetAssignment:
         """Assign an asset to a scope."""
         if assignment_id in self._assignments:
@@ -406,16 +413,20 @@ class AssetRuntimeEngine:
             raise RuntimeCoreInvariantError(
                 "cannot assign asset from current status"
             )
+        normalized_assigned_by = _require_human_actor(
+            "assigned_by", assigned_by, "assigned_by required for assignment"
+        )
         now = _now_iso()
         aa = AssetAssignment(
             assignment_id=assignment_id, asset_id=asset_id,
             scope_ref_id=scope_ref_id, scope_ref_type=scope_ref_type,
-            assigned_by=assigned_by, assigned_at=now,
+            assigned_by=normalized_assigned_by, assigned_at=now,
         )
         self._assignments[assignment_id] = aa
         _emit(self._events, "asset_assigned", {
             "assignment_id": assignment_id, "asset_id": asset_id,
             "scope_ref_id": scope_ref_id,
+            "assigned_by": normalized_assigned_by,
         }, assignment_id)
         return aa
 
@@ -470,23 +481,27 @@ class AssetRuntimeEngine:
         disposition: LifecycleDisposition,
         *,
         description: str = "",
-        performed_by: str = "system",
+        performed_by: str = "",
     ) -> LifecycleEvent:
         """Record a lifecycle event for an asset."""
         if event_id in self._lifecycle:
             raise RuntimeCoreInvariantError("Duplicate event_id")
         if asset_id not in self._assets:
             raise RuntimeCoreInvariantError("Unknown asset_id")
+        normalized_performed_by = _require_human_actor(
+            "performed_by", performed_by, "performed_by required for lifecycle event"
+        )
         now = _now_iso()
         le = LifecycleEvent(
             event_id=event_id, asset_id=asset_id, disposition=disposition,
-            description=description, performed_by=performed_by,
+            description=description, performed_by=normalized_performed_by,
             performed_at=now,
         )
         self._lifecycle[event_id] = le
         _emit(self._events, "lifecycle_event_recorded", {
             "event_id": event_id, "asset_id": asset_id,
             "disposition": disposition.value,
+            "performed_by": normalized_performed_by,
         }, asset_id)
         return le
 
@@ -505,23 +520,27 @@ class AssetRuntimeEngine:
         health_score: float,
         risk_score: float,
         *,
-        assessed_by: str = "system",
+        assessed_by: str = "",
     ) -> AssetAssessment:
         """Assess an asset's health and risk."""
         if assessment_id in self._assessments:
             raise RuntimeCoreInvariantError("Duplicate assessment_id")
         if asset_id not in self._assets:
             raise RuntimeCoreInvariantError("Unknown asset_id")
+        normalized_assessed_by = _require_human_actor(
+            "assessed_by", assessed_by, "assessed_by required for assessment"
+        )
         now = _now_iso()
         aa = AssetAssessment(
             assessment_id=assessment_id, asset_id=asset_id,
             health_score=health_score, risk_score=risk_score,
-            assessed_by=assessed_by, assessed_at=now,
+            assessed_by=normalized_assessed_by, assessed_at=now,
         )
         self._assessments[assessment_id] = aa
         _emit(self._events, "asset_assessed", {
             "assessment_id": assessment_id, "asset_id": asset_id,
             "health_score": health_score, "risk_score": risk_score,
+            "assessed_by": normalized_assessed_by,
         }, asset_id)
         return aa
 
