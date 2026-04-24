@@ -144,6 +144,7 @@ services:
       MULLU_GATEWAY_WORKER_POLL_SECONDS: "2.0"
       MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"
       MULLU_COMMAND_ANCHOR_SECRET: "${MULLU_COMMAND_ANCHOR_SECRET:-}"
+      MULLU_REQUIRE_COMMAND_ANCHOR: "true"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
       # Channel credentials are needed only if worker sends final responses through adapters:

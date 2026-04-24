@@ -114,6 +114,8 @@ def test_worker_run_once_anchors_when_secret_configured():
 
 
 def test_worker_config_from_env(monkeypatch):
+    monkeypatch.setitem(os.environ, "MULLU_ENV", "local_dev")
+    monkeypatch.delenv("MULLU_REQUIRE_COMMAND_ANCHOR", raising=False)
     monkeypatch.setitem(os.environ, "MULLU_GATEWAY_WORKER_ID", "worker-env")
     monkeypatch.setitem(os.environ, "MULLU_GATEWAY_WORKER_BATCH_SIZE", "7")
     monkeypatch.setitem(os.environ, "MULLU_GATEWAY_WORKER_LEASE_SECONDS", "120")
@@ -131,6 +133,42 @@ def test_worker_config_from_env(monkeypatch):
     assert config.run_once is True
     assert config.anchor_signing_secret == "anchor-secret"
     assert config.anchor_signature_key_id == "anchor-key"
+    assert config.require_command_anchor is False
+
+
+def test_worker_config_requires_anchor_secret_when_explicit(monkeypatch):
+    monkeypatch.setitem(os.environ, "MULLU_REQUIRE_COMMAND_ANCHOR", "true")
+    monkeypatch.delenv("MULLU_COMMAND_ANCHOR_SECRET", raising=False)
+
+    config = config_from_env()
+
+    assert config.require_command_anchor is True
+    with pytest.raises(ValueError, match="^command anchor signing secret is required$"):
+        GatewayWorker(StubWorkerRouter(), config)
+
+
+def test_worker_config_requires_anchor_secret_in_production(monkeypatch):
+    monkeypatch.setitem(os.environ, "MULLU_ENV", "production")
+    monkeypatch.delenv("MULLU_REQUIRE_COMMAND_ANCHOR", raising=False)
+    monkeypatch.delenv("MULLU_COMMAND_ANCHOR_SECRET", raising=False)
+
+    config = config_from_env()
+
+    assert config.require_command_anchor is True
+    with pytest.raises(ValueError, match="^command anchor signing secret is required$"):
+        GatewayWorker(StubWorkerRouter(), config)
+
+
+def test_worker_config_allows_local_without_anchor_secret(monkeypatch):
+    monkeypatch.setitem(os.environ, "MULLU_ENV", "local_dev")
+    monkeypatch.delenv("MULLU_REQUIRE_COMMAND_ANCHOR", raising=False)
+    monkeypatch.delenv("MULLU_COMMAND_ANCHOR_SECRET", raising=False)
+
+    config = config_from_env()
+    worker = GatewayWorker(StubWorkerRouter(response_count=0), config)
+
+    assert config.require_command_anchor is False
+    assert worker.run_once() == 0
 
 
 def test_worker_parse_args_overrides_env(monkeypatch):

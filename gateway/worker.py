@@ -60,6 +60,7 @@ class GatewayWorkerConfig:
     run_once: bool = False
     anchor_signing_secret: str = ""
     anchor_signature_key_id: str = "local"
+    require_command_anchor: bool = False
 
 
 class GatewayWorker:
@@ -74,6 +75,8 @@ class GatewayWorker:
             raise ValueError("lease_seconds must be > 0")
         if config.poll_seconds < 0:
             raise ValueError("poll_seconds must be >= 0")
+        if config.require_command_anchor and not config.anchor_signing_secret:
+            raise ValueError("command anchor signing secret is required")
         self._router = router
         self._config = config
         self._running = False
@@ -118,6 +121,10 @@ def build_router_from_env() -> CommandWorkerRouter:
 
 def config_from_env() -> GatewayWorkerConfig:
     """Build worker configuration from environment variables."""
+    gateway_env = os.environ.get("MULLU_ENV", "local_dev").strip().lower()
+    require_command_anchor = _truthy_env(os.environ.get("MULLU_REQUIRE_COMMAND_ANCHOR", ""))
+    if "MULLU_REQUIRE_COMMAND_ANCHOR" not in os.environ:
+        require_command_anchor = gateway_env in {"pilot", "pilot_prod", "prod", "production"}
     return GatewayWorkerConfig(
         worker_id=os.environ.get("MULLU_GATEWAY_WORKER_ID", "gateway-worker"),
         batch_size=int(os.environ.get("MULLU_GATEWAY_WORKER_BATCH_SIZE", "10")),
@@ -127,6 +134,7 @@ def config_from_env() -> GatewayWorkerConfig:
         in {"1", "true", "yes", "on"},
         anchor_signing_secret=os.environ.get("MULLU_COMMAND_ANCHOR_SECRET", ""),
         anchor_signature_key_id=os.environ.get("MULLU_COMMAND_ANCHOR_KEY_ID", "local"),
+        require_command_anchor=require_command_anchor,
     )
 
 
@@ -148,6 +156,7 @@ def parse_args(argv: list[str] | None = None) -> GatewayWorkerConfig:
         run_once=args.once,
         anchor_signing_secret=defaults.anchor_signing_secret,
         anchor_signature_key_id=defaults.anchor_signature_key_id,
+        require_command_anchor=defaults.require_command_anchor,
     )
 
 
@@ -162,6 +171,10 @@ def main(argv: list[str] | None = None) -> int:
         worker.stop()
         return 130
     return 0
+
+
+def _truthy_env(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 if __name__ == "__main__":

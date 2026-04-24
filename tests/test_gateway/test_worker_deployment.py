@@ -20,6 +20,7 @@ def test_compose_declares_gateway_worker_service():
     assert 'MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"' in compose
     assert 'MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"' in compose
     assert "MULLU_COMMAND_ANCHOR_SECRET:" in compose
+    assert 'MULLU_REQUIRE_COMMAND_ANCHOR: "true"' in compose
     assert 'MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"' in compose
     assert 'MULLU_GATEWAY_WORKER_ID: "gateway-worker-1"' in compose
 
@@ -34,5 +35,6 @@ def test_kubernetes_declares_gateway_worker_deployment():
     assert 'MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"' in manifest
     assert 'MULLU_COMMAND_ANCHOR_KEY_ID: "k8s-command-anchor"' in manifest
     assert "MULLU_COMMAND_ANCHOR_SECRET:" in manifest
+    assert 'MULLU_REQUIRE_COMMAND_ANCHOR: "true"' in manifest
     assert 'MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"' in manifest
     assert "name: mullu-gateway-worker-pdb" in manifest
