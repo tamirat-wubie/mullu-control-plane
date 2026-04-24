@@ -563,6 +563,41 @@ def test_command_ledger_records_evidence_backed_claim():
     assert events[-1].detail["claim"]["claim_id"] == claim.claim_id
     assert events[-1].detail["evidence"]
 
+    closure = ledger.close_success_response_evidence(command.command_id, claim_id=claim.claim_id)
+    events = ledger.events_for(command.command_id)
+
+    assert closure.command_id == command.command_id
+    assert closure.claim_id == claim.claim_id
+    assert closure.evidence_refs == claim.evidence_refs
+    assert closure.reconciliation_hash
+    assert closure.evidence_hash
+    assert events[-1].detail["response_evidence_closure"]["claim_id"] == claim.claim_id
+
+
+def test_command_ledger_blocks_success_response_closure_without_reconciliation():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-response-closure",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command llm_completion completed.",
+        verified=True,
+    )
+
+    with pytest.raises(ValueError, match="^response requires reconciled observed effects$"):
+        ledger.close_success_response_evidence(command.command_id, claim_id=claim.claim_id)
+
 
 def test_command_ledger_fracture_test_requires_high_risk_approval():
     ledger = CommandLedger(
