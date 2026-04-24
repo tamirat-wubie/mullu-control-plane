@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+"""Validate the public GitHub repository surface for governed reflection.
+
+Purpose: compare versioned public-surface witnesses with GitHub metadata and
+latest-release state.
+Governance scope: repository description, topics, latest release, deployment
+status witness, and required public documents.
+Dependencies: Python standard library, GITHUB_SURFACE.md, DEPLOYMENT_STATUS.md,
+STATUS.md, and GitHub public REST endpoints.
+Invariants:
+  - Public metadata must match the versioned witness.
+  - Latest release must match the governed release tag.
+  - Deployment health must remain explicitly not-published until endpoint
+    evidence is declared.
+  - No required public witness document may be absent.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+REPOSITORY_API_URL = "https://api.github.com/repos/tamirat-wubie/mullu-control-plane"
+LATEST_RELEASE_API_URL = f"{REPOSITORY_API_URL}/releases/latest"
+
+EXPECTED_DESCRIPTION = (
+    "Governed symbolic intelligence control plane - multi-tenant LLM orchestration "
+    "with budget enforcement, audit trails, and policy-driven governance"
+)
+EXPECTED_LATEST_RELEASE = "v3.13.0"
+REQUIRED_TOPICS = frozenset(
+    {
+        "audit-trail",
+        "budget-enforcement",
+        "fastapi",
+        "governance",
+        "llm",
+        "multi-tenant",
+        "orchestration",
+        "python",
+        "rust",
+        "symbolic-intelligence",
+    }
+)
+FORBIDDEN_TOPIC = "a" + "i"
+REQUIRED_PUBLIC_DOCUMENTS = (
+    "STATUS.md",
+    "GITHUB_SURFACE.md",
+    "DEPLOYMENT_STATUS.md",
+)
+GITHUB_SURFACE_REQUIRED_LITERALS = (
+    "GitHub Surface Witness",
+    EXPECTED_DESCRIPTION,
+    EXPECTED_LATEST_RELEASE,
+    "symbolic-intelligence",
+    "python scripts/validate_public_repository_surface.py",
+)
+DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
+    "Deployment Status Witness",
+    "**Deployment witness state:** `not-published`",
+    "**Public production health endpoint:** `not-declared`",
+    "No governed production endpoint is declared in this repository",
+    "python scripts/validate_public_repository_surface.py",
+)
+
+
+def read_json_url(url: str) -> dict[str, Any]:
+    """Read one GitHub JSON endpoint with explicit timeout and error context."""
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "mullu-public-surface-validator",
+        },
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            payload = response.read().decode("utf-8")
+    except HTTPError as exc:
+        raise RuntimeError(f"{url}: GitHub returned HTTP {exc.code}") from exc
+    except URLError as exc:
+        raise RuntimeError(f"{url}: network failure: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise RuntimeError(f"{url}: request timed out") from exc
+
+    try:
+        parsed = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{url}: response was not valid JSON") from exc
+    if not isinstance(parsed, dict):
+        raise RuntimeError(f"{url}: response root was not an object")
+    return parsed
+
+
+def validate_repository_payload(payload: dict[str, Any]) -> list[str]:
+    """Validate public repository metadata against the governed witness."""
+    errors: list[str] = []
+
+    description = payload.get("description")
+    if description != EXPECTED_DESCRIPTION:
+        errors.append(
+            f"repository description mismatch: {description!r} != {EXPECTED_DESCRIPTION!r}"
+        )
+
+    raw_topics = payload.get("topics")
+    if not isinstance(raw_topics, list) or not all(
+        isinstance(topic, str) for topic in raw_topics
+    ):
+        errors.append("repository topics missing or malformed")
+        return errors
+
+    topics = frozenset(raw_topics)
+    missing_topics = REQUIRED_TOPICS - topics
+    if missing_topics:
+        errors.append(f"repository missing required topics: {sorted(missing_topics)}")
+    if FORBIDDEN_TOPIC in topics:
+        errors.append("repository contains forbidden legacy topic")
+
+    return errors
+
+
+def validate_latest_release_payload(payload: dict[str, Any]) -> list[str]:
+    """Validate that the latest GitHub release matches the governed release tag."""
+    tag_name = payload.get("tag_name")
+    if tag_name != EXPECTED_LATEST_RELEASE:
+        return [f"latest release mismatch: {tag_name!r} != {EXPECTED_LATEST_RELEASE!r}"]
+    return []
+
+
+def validate_required_document_text(
+    *,
+    document_name: str,
+    content: str,
+    required_literals: tuple[str, ...],
+) -> list[str]:
+    """Validate one public witness document has required local anchors."""
+    missing_literals = tuple(
+        literal for literal in required_literals if literal not in content
+    )
+    if not missing_literals:
+        return []
+    return [f"{document_name} missing required literals: {list(missing_literals)}"]
+
+
+def validate_local_public_documents() -> list[str]:
+    """Validate required public witness documents and deployment-health anchors."""
+    errors: list[str] = []
+
+    for document_name in REQUIRED_PUBLIC_DOCUMENTS:
+        if not (REPO_ROOT / document_name).exists():
+            errors.append(f"missing required public witness document: {document_name}")
+
+    github_surface_path = REPO_ROOT / "GITHUB_SURFACE.md"
+    if github_surface_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name="GITHUB_SURFACE.md",
+                content=github_surface_path.read_text(encoding="utf-8"),
+                required_literals=GITHUB_SURFACE_REQUIRED_LITERALS,
+            )
+        )
+
+    deployment_status_path = REPO_ROOT / "DEPLOYMENT_STATUS.md"
+    if deployment_status_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name="DEPLOYMENT_STATUS.md",
+                content=deployment_status_path.read_text(encoding="utf-8"),
+                required_literals=DEPLOYMENT_STATUS_REQUIRED_LITERALS,
+            )
+        )
+
+    return errors
+
+
+def validate_public_repository_surface(*, live: bool = True) -> list[str]:
+    """Validate local witnesses and, when enabled, live GitHub public state."""
+    errors = validate_local_public_documents()
+    if not live:
+        return errors
+
+    try:
+        repository_payload = read_json_url(REPOSITORY_API_URL)
+        latest_release_payload = read_json_url(LATEST_RELEASE_API_URL)
+    except RuntimeError as exc:
+        return [str(exc)]
+
+    errors.extend(validate_repository_payload(repository_payload))
+    errors.extend(validate_latest_release_payload(latest_release_payload))
+    return errors
+
+
+def main() -> None:
+    local_only = "--local-only" in sys.argv
+    errors = validate_public_repository_surface(live=not local_only)
+
+    print("=== Public Repository Surface Validation ===")
+    print("  repository:     tamirat-wubie/mullu-control-plane")
+    print(f"  latest release: {EXPECTED_LATEST_RELEASE}")
+    print(f"  live checks:    {'disabled' if local_only else 'enabled'}")
+
+    if errors:
+        print(f"\nFAILED - {len(errors)} error(s):")
+        for error in errors:
+            print(f"  X {error}")
+        sys.exit(1)
+
+    print("\nALL PUBLIC SURFACE GATES PASSED")
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
