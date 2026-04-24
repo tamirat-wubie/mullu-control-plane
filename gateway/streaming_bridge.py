@@ -99,7 +99,7 @@ class StreamingBridge:
         self._clock = clock or time.monotonic
         self._timeout = stream_timeout
         self._streams: dict[str, StreamSession] = {}
-        self._callbacks: dict[str, Callable[[StreamChunk], None]] = {}
+        self._callbacks: dict[str, Callable[[StreamChunk], bool | None]] = {}
         self._lock = threading.Lock()
         self._sequence = 0
         self._completed_count = 0
@@ -148,7 +148,7 @@ class StreamingBridge:
     def set_chunk_callback(
         self,
         stream_id: str,
-        callback: Callable[[StreamChunk], None],
+        callback: Callable[[StreamChunk], bool | None],
     ) -> bool:
         """Register a callback for real-time chunk delivery."""
         with self._lock:
@@ -184,7 +184,9 @@ class StreamingBridge:
         # Call callback outside lock to avoid deadlock
         if callback is not None:
             try:
-                callback(chunk)
+                delivered = callback(chunk)
+                if delivered is False:
+                    self._record_callback_error(stream_id)
             except Exception:
                 self._record_callback_error(stream_id)
 
@@ -208,11 +210,13 @@ class StreamingBridge:
 
         if callback is not None:
             try:
-                callback(StreamChunk(
+                delivered = callback(StreamChunk(
                     index=session.chunk_count,
                     content="",
                     is_final=True,
                 ))
+                if delivered is False:
+                    self._record_callback_error(stream_id)
             except Exception:
                 self._record_callback_error(stream_id)
 

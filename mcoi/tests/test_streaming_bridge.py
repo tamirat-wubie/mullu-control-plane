@@ -74,6 +74,26 @@ class TestChunkCallback:
         assert session.error == "callback delivery failed"
         assert b.callback_errors == 1
 
+    def test_false_callback_result_is_counted(self):
+        b = _bridge()
+        sid = b.start_stream("wa", "+1", "t1")
+        b.set_chunk_callback(sid, lambda chunk: False)
+        assert b.push_chunk(sid, "data") is True
+        session = b.get_session(sid)
+        assert session.assembled_content == "data"
+        assert session.error == "callback delivery failed"
+        assert b.summary()["callback_errors"] == 1
+
+    def test_false_final_callback_result_is_counted(self):
+        b = _bridge()
+        sid = b.start_stream("wa", "+1", "t1")
+        b.set_chunk_callback(sid, lambda chunk: False)
+        session = b.finalize(sid)
+        assert session is not None
+        assert session.finalized is True
+        assert session.error == "callback delivery failed"
+        assert b.summary()["callback_errors"] == 1
+
     def test_final_callback_exception_is_counted(self):
         def bad_callback(chunk):
             raise RuntimeError("callback crashed")
