@@ -108,6 +108,8 @@ def render_replay_summary(view: ReplaySummaryView) -> str:
         f"  trace_found:      {view.trace_found}",
         f"  trace_hash_match: {view.trace_hash_matches}",
     ]
+    if view.trace_lookup_reason:
+        lines.append(f"  trace_lookup:     {view.trace_lookup_reason}")
     if view.reasons:
         lines.append("  reasons:")
         for reason in view.reasons:

@@ -35,6 +35,7 @@ class PersistedReplayResult:
     validation: ReplayValidationResult
     trace_found: bool
     trace_hash_matches: bool | None
+    trace_lookup_reason: str = ""
 
 
 class PersistedReplayValidator:
@@ -93,6 +94,7 @@ class PersistedReplayValidator:
         # Step 2: optionally load referenced trace for cross-validation
         trace_found = False
         trace_hash_matches: bool | None = None
+        trace_lookup_reason = ""
         try:
             trace_entry = self._trace_store.load_trace(record.trace_id)
             trace_found = True
@@ -100,9 +102,9 @@ class PersistedReplayValidator:
             # the trace entry's state_hash for consistency
             if record.source_hash and trace_entry.state_hash:
                 trace_hash_matches = record.source_hash == trace_entry.state_hash
-        except PersistenceError:
+        except PersistenceError as exc:
             # Trace not found is not fatal — replay can still validate its own artifacts
-            pass
+            trace_lookup_reason = self._bounded_persistence_reason("trace_lookup_failed", exc)
 
         # Step 3: validate with or without context
         if context is not None:
@@ -116,6 +118,7 @@ class PersistedReplayValidator:
             validation=validation,
             trace_found=trace_found,
             trace_hash_matches=trace_hash_matches,
+            trace_lookup_reason=trace_lookup_reason,
         )
 
     def validate_all(
