@@ -161,6 +161,12 @@ The command emits `.change_assurance/change_command.json`,
 `.change_assurance/release_certificate.json`. See
 `docs/33_governed_evolution.md`.
 
+### Accepted Risk Closure
+
+Unresolved verification gaps can be held open only through bounded accepted-risk
+records with owner, approver, case, expiry, review obligation, and evidence.
+See `docs/34_accepted_risk_closure.md`.
+
 ## Deployment
 
 ```bash

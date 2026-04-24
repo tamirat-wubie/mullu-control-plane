@@ -25,4 +25,6 @@ Policy gate precedes execution. Verification closes execution.
 ## Acceptance rule
 
 - If verification cannot be completed, the action MAY remain open only in an explicit accepted-risk state.
-- Accepted risk MUST be recorded and bounded by the consuming implementation.
+- Accepted risk MUST be recorded with case, owner, approver, expiry, review obligation, and evidence references.
+- Accepted risk MUST NOT be created for a passing verification or matched effect reconciliation.
+- Accepted risk MUST expire or close through explicit follow-up evidence.

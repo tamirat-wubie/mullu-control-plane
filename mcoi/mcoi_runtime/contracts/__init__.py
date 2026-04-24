@@ -7,6 +7,12 @@ Invariants: canonical shared contracts are adopted without reinterpretation.
 from .capability import CapabilityDescriptor
 from .connector import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from .connector_effects import ConnectorInvocationReceipt
+from .accepted_risk import (
+    AcceptedRiskDecision,
+    AcceptedRiskDisposition,
+    AcceptedRiskRecord,
+    AcceptedRiskScope,
+)
 from .change_assurance import (
     AssuranceDisposition,
     BlastRadiusReport,
