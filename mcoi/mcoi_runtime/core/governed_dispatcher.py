@@ -422,7 +422,7 @@ class GovernedDispatcher:
                 "effect_reconciliation",
                 effect_plan.effect_plan_id,
                 title="Effect reconciliation record",
-                description=f"status={reconciliation_status.value}; route={context.request.route}",
+                description="Effect reconciliation mismatch record",
                 submitted_by="effect_assurance",
             )
         except RuntimeCoreInvariantError as exc:
@@ -443,12 +443,7 @@ class GovernedDispatcher:
                 case_id,
                 "Effect mismatch detected",
                 severity=FindingSeverity.HIGH,
-                description=(
-                    "Missing effects: "
-                    f"{', '.join(missing_effects) or 'none'}; "
-                    "unexpected effects: "
-                    f"{', '.join(unexpected_effects) or 'none'}"
-                ),
+                description="Effect reconciliation produced missing or unexpected effects",
                 evidence_ids=(evidence_id,),
                 remediation="Review effect plan, observed effects, provider receipt, and compensation path.",
             )
