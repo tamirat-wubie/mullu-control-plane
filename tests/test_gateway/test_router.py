@@ -65,6 +65,18 @@ class StubChannel:
         return True
 
 
+class FailingChannel:
+    channel_name = "test"
+
+    def __init__(self, *, reject: bool = False):
+        self.reject = reject
+
+    def send(self, recipient_id: str, body: str, **kwargs):
+        if self.reject:
+            return False
+        raise RuntimeError("transport unavailable")
+
+
 @dataclass(frozen=True, slots=True)
 class StubPaymentResult:
     success: bool
@@ -297,6 +309,35 @@ class TestChannelAdapterIntegration:
             message_id="m1", channel="unknown", sender_id="u1", body="hello",
         ))
         assert response.body == "Response"
+        assert response.metadata["delivery_status"] == "skipped_no_adapter"
+
+    def test_channel_send_exception_is_recorded(self):
+        router = GatewayRouter(platform=StubPlatform(llm_response="Response"))
+        router.register_channel(FailingChannel())
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="u1", tenant_id="t1", identity_id="u1",
+        ))
+        response = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="u1", body="hello",
+        ))
+        assert response.body == "Response"
+        assert response.metadata["delivery_status"] == "failed"
+        assert response.metadata["delivery_error_type"] == "adapter_exception"
+        assert router.error_count == 1
+
+    def test_channel_send_rejection_is_recorded(self):
+        router = GatewayRouter(platform=StubPlatform(llm_response="Response"))
+        router.register_channel(FailingChannel(reject=True))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="u1", tenant_id="t1", identity_id="u1",
+        ))
+        response = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="u1", body="hello",
+        ))
+        assert response.body == "Response"
+        assert response.metadata["delivery_status"] == "failed"
+        assert response.metadata["delivery_error_type"] == "adapter_rejected"
+        assert router.error_count == 1
 
     def test_channel_approval_callback_resolves_for_same_identity(self):
         times = [
