@@ -7,16 +7,16 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from skills.creative.document_gen import (
+import pytest  # noqa: E402
+from skills.creative.document_gen import (  # noqa: E402
     DocumentGenerator, DocumentTemplate, DocumentType,
     BUILTIN_TEMPLATES, GeneratedDocument,
 )
-from skills.creative.data_analysis import analyze_csv, analyze_key_value, AnalysisResult
-from skills.creative.image_gen import (
-    GovernedImageGenerator, StubImageProvider, ImageGenerationResult,
+from skills.creative.data_analysis import analyze_csv, analyze_key_value  # noqa: E402
+from skills.creative.image_gen import (  # noqa: E402
+    GovernedImageGenerator, StubImageProvider,
 )
-from skills.creative.translation import (
+from skills.creative.translation import (  # noqa: E402
     build_translation_prompt, build_summarization_prompt,
     parse_translation_result, parse_summarization_result,
     SUPPORTED_LANGUAGES,

@@ -15,13 +15,12 @@ _MCOI = _ROOT / "mcoi"
 if str(_MCOI) not in sys.path:
     sys.path.insert(0, str(_MCOI))
 
-import pytest
-from skills.financial.providers.base import (
-    AccountInfo, TransactionRecord, StubFinancialProvider, ProviderResult,
+from skills.financial.providers.base import (  # noqa: E402
+    AccountInfo, TransactionRecord, StubFinancialProvider,
 )
-from skills.financial.skills.balance_check import check_balance
-from skills.financial.skills.transaction_history import get_transaction_history
-from skills.financial.skills.spending_insights import analyze_spending
+from skills.financial.skills.balance_check import check_balance  # noqa: E402
+from skills.financial.skills.transaction_history import get_transaction_history  # noqa: E402
+from skills.financial.skills.spending_insights import analyze_spending  # noqa: E402
 
 
 def _provider_with_data() -> StubFinancialProvider:

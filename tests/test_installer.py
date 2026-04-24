@@ -5,15 +5,13 @@ Tests: Configuration model, file generation, validation,
 """
 
 import sys
-import json
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from installer.cli import (
+from installer.cli import (  # noqa: E402
     MulluConfig,
     build_parser,
     cmd_init,

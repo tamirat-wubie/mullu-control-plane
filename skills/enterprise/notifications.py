@@ -14,7 +14,6 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import StrEnum
@@ -180,6 +179,9 @@ class NotificationEngine:
                     delivery_error = f"delivery failed ({type(exc).__name__})"
             else:
                 delivered = True  # Stub: assume delivered if no backend
+            notification_metadata = dict(metadata or {})
+            if delivery_error:
+                notification_metadata["delivery_error"] = delivery_error
 
             notif = Notification(
                 notification_id=notif_id,
@@ -192,11 +194,14 @@ class NotificationEngine:
                 recipient=rule.recipient,
                 delivered=delivered,
                 delivered_at=now if delivered else "",
-                metadata=metadata or {},
+                metadata=notification_metadata,
             )
             notifications.append(notif)
             self._history.append(notif)
-            self._delivered_count += 1
+            if delivered:
+                self._delivered_count += 1
+            else:
+                self._failed_count += 1
 
         # Prune history
         if len(self._history) > 100_000:
