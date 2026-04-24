@@ -13,7 +13,7 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
@@ -312,16 +312,26 @@ class GatewayRouter:
                                 "command_id": command.command_id,
                                 "mismatch_reason": reconciliation.mismatch_reason,
                             },
-                        )
+                    )
                     self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "skill_dispatch"})
                     self._commands.transition(command.command_id, CommandState.COMMITTED)
+                    claim = self._commands.record_operational_claim(
+                        command.command_id,
+                        text=f"Command {command.intent} completed.",
+                        verified=True,
+                    )
                     response = GatewayResponse(
                         message_id=self._gen_id("resp", command.command_id),
                         channel=command.source,
                         recipient_id=recipient_id,
                         body=response_body,
                         governed=True,
-                        metadata={**skill_result, "command_id": command.command_id},
+                        metadata={
+                            **skill_result,
+                            "command_id": command.command_id,
+                            "claims": [asdict(claim)],
+                            "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
+                        },
                     )
                     self._commands.transition(
                         command.command_id,
@@ -355,16 +365,25 @@ class GatewayRouter:
                         "command_id": command.command_id,
                         "mismatch_reason": reconciliation.mismatch_reason,
                     },
-                )
+            )
             self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "governed_session"})
             self._commands.transition(command.command_id, CommandState.COMMITTED)
+            claim = self._commands.record_operational_claim(
+                command.command_id,
+                text=f"Command {command.intent} completed.",
+                verified=bool(result.succeeded),
+            )
             response = GatewayResponse(
                 message_id=self._gen_id("resp", command.command_id),
                 channel=command.source,
                 recipient_id=recipient_id,
                 body=response_body,
                 governed=True,
-                metadata={"command_id": command.command_id},
+                metadata={
+                    "command_id": command.command_id,
+                    "claims": [asdict(claim)],
+                    "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
+                },
             )
             self._commands.transition(
                 command.command_id,

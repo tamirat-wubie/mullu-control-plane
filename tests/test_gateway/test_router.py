@@ -179,6 +179,9 @@ class TestMessageRouting:
         assert response.governed is True
         assert response.channel == "whatsapp"
         assert response.recipient_id == "+1234567890"
+        assert response.metadata["claims"][0]["verified"] is True
+        assert response.metadata["claims"][0]["evidence_refs"]
+        assert response.metadata["evidence"]
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())
