@@ -14,7 +14,6 @@ Invariants:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -204,3 +203,81 @@ class SkillDispatcher:
             return {"response": "To process a refund, please provide the transaction ID.", "governed": True, "skill": "refund"}
 
         return None
+
+
+def _first_platform_attribute(platform: Any, names: tuple[str, ...]) -> Any | None:
+    """Return the first non-empty runtime attribute exposed by a platform."""
+    for name in names:
+        if hasattr(platform, name):
+            value = getattr(platform, name)
+            if value is not None:
+                return value
+    return None
+
+
+def _nested_platform_attribute(platform: Any, container_names: tuple[str, ...], names: tuple[str, ...]) -> Any | None:
+    """Return the first non-empty attribute from a known platform sub-runtime."""
+    for container_name in container_names:
+        container = _first_platform_attribute(platform, (container_name,))
+        if container is None:
+            continue
+        value = _first_platform_attribute(container, names)
+        if value is not None:
+            return value
+    return None
+
+
+def build_skill_dispatcher_from_platform(platform: Any | None) -> SkillDispatcher:
+    """Build a dispatcher from explicit platform-backed capability providers.
+
+    The gateway uses this as its default runtime binding so detected skill
+    intent is connected to governed providers when the platform exposes them.
+    """
+    if platform is None:
+        return SkillDispatcher()
+
+    factory = _first_platform_attribute(platform, ("build_skill_dispatcher", "skill_dispatcher"))
+    if callable(factory):
+        dispatcher = factory()
+        if isinstance(dispatcher, SkillDispatcher):
+            return dispatcher
+
+    financial_provider = _first_platform_attribute(
+        platform,
+        (
+            "financial_provider",
+            "_financial_provider",
+            "read_only_financial_provider",
+            "_read_only_financial_provider",
+        ),
+    ) or _nested_platform_attribute(
+        platform,
+        ("capability_runtime", "_capability_runtime", "financial_runtime", "_financial_runtime"),
+        (
+            "financial_provider",
+            "_financial_provider",
+            "read_only_financial_provider",
+            "_read_only_financial_provider",
+        ),
+    )
+    payment_executor = _first_platform_attribute(
+        platform,
+        ("payment_executor", "_payment_executor", "governed_payment_executor", "_governed_payment_executor"),
+    ) or _nested_platform_attribute(
+        platform,
+        ("capability_runtime", "_capability_runtime", "financial_runtime", "_financial_runtime"),
+        ("payment_executor", "_payment_executor", "governed_payment_executor", "_governed_payment_executor"),
+    )
+    capability_registry = _first_platform_attribute(
+        platform,
+        ("capability_registry", "_capability_registry", "agent_capability_registry", "_agent_capability_registry"),
+    ) or _nested_platform_attribute(
+        platform,
+        ("capability_runtime", "_capability_runtime", "capability_bootstrap", "_capability_bootstrap"),
+        ("capability_registry", "_capability_registry", "agent_capability_registry", "_agent_capability_registry"),
+    )
+    return SkillDispatcher(
+        financial_provider=financial_provider,
+        payment_executor=payment_executor,
+        capability_registry=capability_registry,
+    )

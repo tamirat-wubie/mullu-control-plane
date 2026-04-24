@@ -7,8 +7,7 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from gateway.handoff import HandoffRouter, AgentSpec
+from gateway.handoff import HandoffRouter, AgentSpec  # noqa: E402
 
 
 class TestAgentRegistration:
@@ -82,7 +81,7 @@ class TestHandoff:
             handler=lambda m, t, i: {"response": "General result"},
         ))
         router.set_general_agent("general")
-        result = router.handoff(
+        router.handoff(
             "general", "fin",
             message="check my balance", reason="financial intent detected",
             tenant_id="t1", identity_id="u1",
@@ -97,7 +96,7 @@ class TestHandoff:
         # A → B
         router.handoff("a", "b", message="test", reason="test")
         # B → A (loop!)
-        result = router.handoff("a", "b", message="test", reason="loop test")
+        router.handoff("a", "b", message="test", reason="loop test")
         # Should detect the loop
         assert router.handoff_count >= 1
 

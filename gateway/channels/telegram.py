@@ -8,10 +8,9 @@ Requires: TELEGRAM_BOT_TOKEN
 
 from __future__ import annotations
 
-import hashlib
 from typing import Any
 
-from gateway.router import ChannelAdapter, GatewayMessage
+from gateway.router import GatewayMessage
 
 
 class TelegramAdapter:

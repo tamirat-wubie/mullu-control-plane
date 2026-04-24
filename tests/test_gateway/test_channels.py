@@ -11,12 +11,11 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from gateway.channels.whatsapp import WhatsAppAdapter
-from gateway.channels.slack import SlackAdapter
-from gateway.channels.discord import DiscordAdapter
-from gateway.channels.telegram import TelegramAdapter
-from gateway.channels.web import WebChatAdapter
+from gateway.channels.whatsapp import WhatsAppAdapter  # noqa: E402
+from gateway.channels.slack import SlackAdapter  # noqa: E402
+from gateway.channels.discord import DiscordAdapter  # noqa: E402
+from gateway.channels.telegram import TelegramAdapter  # noqa: E402
+from gateway.channels.web import WebChatAdapter  # noqa: E402
 
 
 # ═══ WhatsApp ═══
@@ -43,7 +42,8 @@ class TestWhatsAppAdapter:
             phone_number_id="123", access_token="tok",
             verify_token="v", app_secret="secret",
         )
-        import hmac, hashlib
+        import hmac
+        import hashlib
         payload = b'{"test": "data"}'
         sig = "sha256=" + hmac.new(b"secret", payload, hashlib.sha256).hexdigest()
         assert adapter.verify_signature(payload, sig) is True
@@ -221,7 +221,9 @@ class TestWebChatAdapter:
 
 class TestSlackAdapter:
     def test_verify_request_valid(self):
-        import hmac as _hmac, hashlib as _hash, time as _time
+        import hmac as _hmac
+        import hashlib as _hash
+        import time as _time
         secret = "test_signing_secret"
         adapter = SlackAdapter(bot_token="xoxb-123", signing_secret=secret)
         ts = str(int(_time.time()))

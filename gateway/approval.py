@@ -13,7 +13,8 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+import re as _re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any, Callable
@@ -46,6 +47,9 @@ class ApprovalRequest:
     channel: str
     action_description: str
     risk_tier: RiskTier
+    command_id: str = ""
+    payload_hash: str = ""
+    policy_version: str = ""
     status: ApprovalStatus = ApprovalStatus.PENDING
     requested_at: str = ""
     resolved_at: str = ""
@@ -62,8 +66,6 @@ _MEDIUM_RISK_KEYWORDS = frozenset({
     "schedule", "create", "book", "reserve", "subscribe", "connect",
 })
 
-
-import re as _re
 
 # Precompiled word-boundary patterns for risk classification
 _HIGH_RISK_RE = _re.compile(
@@ -149,6 +151,9 @@ class ApprovalRouter:
             channel=pending.channel,
             action_description=pending.action_description,
             risk_tier=pending.risk_tier,
+            command_id=pending.command_id,
+            payload_hash=pending.payload_hash,
+            policy_version=pending.policy_version,
             status=ApprovalStatus.EXPIRED,
             requested_at=pending.requested_at,
             resolved_at=now_text,
@@ -183,6 +188,9 @@ class ApprovalRouter:
         channel: str,
         action_description: str,
         body: str = "",
+        command_id: str = "",
+        payload_hash: str = "",
+        policy_version: str = "",
     ) -> ApprovalRequest:
         """Classify risk and create an approval request.
 
@@ -203,6 +211,9 @@ class ApprovalRouter:
                 channel=channel,
                 action_description=action_description,
                 risk_tier=risk,
+                command_id=command_id,
+                payload_hash=payload_hash,
+                policy_version=policy_version,
                 status=ApprovalStatus.APPROVED,
                 requested_at=now,
                 resolved_at=now,
@@ -224,6 +235,9 @@ class ApprovalRouter:
             channel=channel,
             action_description=action_description,
             risk_tier=risk,
+            command_id=command_id,
+            payload_hash=payload_hash,
+            policy_version=policy_version,
             status=ApprovalStatus.PENDING,
             requested_at=now,
         )
@@ -250,6 +264,9 @@ class ApprovalRouter:
             channel=pending.channel,
             action_description=pending.action_description,
             risk_tier=pending.risk_tier,
+            command_id=pending.command_id,
+            payload_hash=pending.payload_hash,
+            policy_version=pending.policy_version,
             status=ApprovalStatus.APPROVED if approved else ApprovalStatus.DENIED,
             requested_at=pending.requested_at,
             resolved_at=now_text,

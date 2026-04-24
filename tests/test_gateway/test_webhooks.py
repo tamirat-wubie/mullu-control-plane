@@ -4,7 +4,6 @@ Tests: HTTP webhook endpoints for all channels using FastAPI TestClient.
 """
 
 import sys
-import os
 import json
 from pathlib import Path
 
@@ -12,10 +11,10 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from fastapi.testclient import TestClient
-from gateway.server import create_gateway_app
-from gateway.router import TenantMapping
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from gateway.server import create_gateway_app  # noqa: E402
+from gateway.router import TenantMapping  # noqa: E402
 
 
 class StubPlatform:
@@ -209,7 +208,11 @@ class TestApprovalWebhook:
     def test_approve_unknown_request(self, client):
         resp = client.post(
             "/webhook/approve/nonexistent",
-            content=json.dumps({"approved": True}),
+            content=json.dumps({
+                "approved": True,
+                "resolver_channel": "web",
+                "resolver_sender_id": "web-user",
+            }),
         )
         assert resp.status_code == 404
 
@@ -249,6 +252,11 @@ class TestApprovalWebhook:
             channel="web", sender_id="risk-user",
             tenant_id="t1", identity_id="u1",
         ))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="operator",
+            tenant_id="t1", identity_id="operator-1",
+            approval_authority=True,
+        ))
         client = TestClient(app)
 
         msg_resp = client.post(
@@ -260,13 +268,72 @@ class TestApprovalWebhook:
 
         resp = client.post(
             f"/webhook/approve/{request_id}",
-            content=json.dumps({"approved": True, "resolved_by": "operator"}),
+            content=json.dumps({
+                "approved": True,
+                "resolver_channel": "web",
+                "resolver_sender_id": "operator",
+            }),
             headers={"X-Mullu-Approval-Secret": "approve-secret"},
         )
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "resolved"
         assert "approved" in data["body"]
+        assert data["metadata"]["approval_resolved"] is True
+
+    def test_approval_callback_requires_resolver_identity(self):
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="risk-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps({"approved": True}),
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "resolver_channel and resolver_sender_id are required"
+
+    def test_approval_callback_denies_unauthorized_resolver(self):
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="risk-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="viewer",
+            tenant_id="t1", identity_id="viewer-1",
+        ))
+        client = TestClient(app)
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
+            headers={"X-Session-Token": "sess-risk"},
+        )
+        request_id = msg_resp.json()["body"].split("Request ID: ", 1)[1]
+
+        resp = client.post(
+            f"/webhook/approve/{request_id}",
+            content=json.dumps({
+                "approved": True,
+                "resolver_channel": "web",
+                "resolver_sender_id": "viewer",
+            }),
+        )
+
+        assert resp.status_code == 403
+        detail = resp.json()["detail"]
+        assert detail["error"] == "approval_context_denied"
+        assert detail["authority_reason"] == "resolver_lacks_approval_authority"
 
 
 # ═══ Gateway Status ═══
