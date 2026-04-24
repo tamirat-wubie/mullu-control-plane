@@ -25,6 +25,7 @@ from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
+from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
 from mcoi_runtime.core.policy_engine import PolicyEngine
 from mcoi_runtime.core.registry_index import RegistryIndex
@@ -80,6 +81,7 @@ class BootstrappedRuntime:
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
     effect_assurance: EffectAssuranceGate | None = None
+    operational_graph: OperationalGraph | None = None
     governed_dispatcher: object | None = None
 
 
@@ -172,9 +174,14 @@ def bootstrap_runtime(
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
     goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
     workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
-    effect_assurance = (
-        EffectAssuranceGate(clock=runtime_clock)
+    operational_graph = (
+        OperationalGraph(clock=runtime_clock)
         if app_config.effect_assurance_required
+        else None
+    )
+    effect_assurance = (
+        EffectAssuranceGate(clock=runtime_clock, graph=operational_graph)
+        if operational_graph is not None
         else None
     )
 
@@ -228,5 +235,6 @@ def bootstrap_runtime(
         executors=frozen_executors,
         observers=frozen_observers,
         effect_assurance=effect_assurance,
+        operational_graph=operational_graph,
         governed_dispatcher=governed,
     )

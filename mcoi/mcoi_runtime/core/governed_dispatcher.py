@@ -309,6 +309,34 @@ class GovernedDispatcher:
                 },
             )
 
+        try:
+            self._effect_assurance.commit_graph(
+                plan=effect_plan,
+                observed_effects=observed,
+                reconciliation=reconciliation,
+            )
+        except RuntimeCoreInvariantError as exc:
+            now = self._clock()
+            return build_failure_result(
+                execution_id=execution_result.execution_id,
+                goal_id=execution_result.goal_id,
+                started_at=execution_result.started_at,
+                finished_at=now,
+                failure=ExecutionFailure(
+                    code="effect_graph_commit_failed",
+                    message="effect graph commit failed",
+                    details={
+                        **assurance_metadata,
+                        "reason": _bounded_gate_error("effect graph commit failed", exc),
+                    },
+                ),
+                effect_name="effect_graph_commit_failed",
+                metadata={
+                    **dict(execution_result.metadata),
+                    "effect_assurance": assurance_metadata,
+                },
+            )
+
         return ExecutionResult(
             execution_id=execution_result.execution_id,
             goal_id=execution_result.goal_id,

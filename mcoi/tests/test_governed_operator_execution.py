@@ -294,6 +294,10 @@ def test_operator_loop_effect_assurance_reconciles_when_required() -> None:
     assert report.execution_result is not None
     assert report.execution_result.status is ExecutionOutcome.SUCCEEDED
     assert report.execution_result.metadata["effect_assurance"]["reconciliation_status"] == "match"
+    assert runtime.operational_graph is not None
+    graph_snapshot = runtime.operational_graph.capture_snapshot()
+    assert graph_snapshot.node_count >= 4
+    assert graph_snapshot.edge_count >= 3
 
 
 def test_operator_loop_effect_assurance_fails_closed_on_mismatch() -> None:
