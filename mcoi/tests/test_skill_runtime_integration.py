@@ -5,8 +5,6 @@ Proves that skills are first-class in the live operator runtime path.
 
 from __future__ import annotations
 
-from typing import Any, Mapping
-
 import pytest
 
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
@@ -19,12 +17,16 @@ from mcoi_runtime.contracts.skill import (
     EffectClass,
     SkillClass,
     SkillDescriptor,
+    SkillExecutionRecord,
     SkillLifecycle,
+    SkillOutcome,
     SkillOutcomeStatus,
     SkillStep,
+    SkillStepOutcome,
     TrustClass,
     VerificationStrength,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
 FIXED_CLOCK = "2025-01-15T10:00:00+00:00"
@@ -233,6 +235,56 @@ class TestSkillRuntimeEdgeCases:
         ))
 
         assert report.succeeded is False
+
+    def test_lifecycle_promotion_failure_is_reported_without_leakage(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        """Successful execution still reports bounded lifecycle promotion failure."""
+        loop = _make_loop()
+        _register_skill(loop, "sk-transition-warning", name="shell_command", confidence=0.5)
+
+        def execute_success(skill, **_kwargs):
+            return SkillExecutionRecord(
+                record_id="record-transition-warning",
+                skill_id=skill.skill_id,
+                outcome=SkillOutcome(
+                    skill_id=skill.skill_id,
+                    status=SkillOutcomeStatus.SUCCEEDED,
+                    step_outcomes=(
+                        SkillStepOutcome(
+                            step_id="step-transition-warning",
+                            status=SkillOutcomeStatus.SUCCEEDED,
+                        ),
+                    ),
+                ),
+                started_at=FIXED_CLOCK,
+                finished_at=FIXED_CLOCK,
+            )
+
+        def reject_transition(_skill_id, _new_lifecycle):
+            raise RuntimeCoreInvariantError("secret lifecycle transition detail")
+
+        monkeypatch.setattr(loop.runtime.skill_executor, "execute", execute_success)
+        monkeypatch.setattr(loop.runtime.skill_registry, "transition", reject_transition)
+
+        report = loop.run_skill(SkillRequest(
+            request_id="req-transition-warning",
+            subject_id="operator-1",
+            goal_id="goal-transition-warning",
+            skill_id="sk-transition-warning",
+        ))
+        view = SkillSummaryView.from_report(report)
+        rendered = render_skill_summary(view)
+
+        assert report.succeeded is True
+        assert report.lifecycle_transition_warning == (
+            "skill lifecycle transition failed (RuntimeCoreInvariantError)"
+        )
+        assert "secret lifecycle transition detail" not in report.lifecycle_transition_warning
+        assert view.lifecycle_transition_warning == report.lifecycle_transition_warning
+        assert "lifecycle_warning:" in rendered
+        assert "secret lifecycle transition detail" not in rendered
 
 
 def _make_loop_with_autonomy(mode: str):

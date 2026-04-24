@@ -46,6 +46,11 @@ if TYPE_CHECKING:
     from .operator_loop import OperatorLoop
 
 
+def _bounded_lifecycle_transition_warning(exc: RuntimeCoreInvariantError) -> str:
+    """Return a stable lifecycle warning without exposing registry details."""
+    return f"skill lifecycle transition failed ({type(exc).__name__})"
+
+
 def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
     """Execute a skill through the governed runtime path."""
     registry = loop.runtime.skill_registry
@@ -185,11 +190,12 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
     new_confidence = min(1.0, existing + 0.1) if succeeded else max(0.0, existing - 0.1)
     registry.update_confidence(skill.skill_id, round(new_confidence, 4))
 
+    lifecycle_transition_warning = ""
     if succeeded and skill.lifecycle is SkillLifecycle.CANDIDATE:
         try:
             registry.transition(skill.skill_id, SkillLifecycle.PROVISIONAL)
-        except RuntimeCoreInvariantError:
-            pass
+        except RuntimeCoreInvariantError as exc:
+            lifecycle_transition_warning = _bounded_lifecycle_transition_warning(exc)
 
     return SkillRunReport(
         request_id=request.request_id,
@@ -199,6 +205,7 @@ def run_skill(loop: OperatorLoop, request: SkillRequest) -> SkillRunReport:
         execution_record=record,
         status=record.outcome.status,
         completed=succeeded,
+        lifecycle_transition_warning=lifecycle_transition_warning,
     )
 
 

@@ -289,6 +289,7 @@ class SkillSummaryView:
     step_count: int
     failed_step: str | None
     structured_errors: tuple[ErrorView, ...]
+    lifecycle_transition_warning: str
 
     @staticmethod
     def from_report(report: SkillRunReport) -> SkillSummaryView:
@@ -313,6 +314,7 @@ class SkillSummaryView:
             step_count=step_count,
             failed_step=failed_step,
             structured_errors=tuple(ErrorView.from_error(e) for e in report.structured_errors),
+            lifecycle_transition_warning=report.lifecycle_transition_warning,
         )
 
 
