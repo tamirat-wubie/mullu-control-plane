@@ -2406,6 +2406,10 @@ class CommandLedger:
                 ("observed_effect_hash", reconciliation.observed_effect_hash),
                 ("effect_reconciliation", canonical_hash(asdict(reconciliation))),
             ])
+        provider_receipt_ids = {
+            promotion.evidence_id
+            for promotion in self.provider_receipt_promotions_for(command_id)
+        }
         events = self.events_for(command_id)
         if events:
             refs.append(("latest_event_hash", events[-1].event_hash))
@@ -2425,6 +2429,12 @@ class CommandLedger:
                 ref_hash=evidence_hash,
                 verified=verified,
             ))
+        if provider_receipt_ids:
+            existing_ids = {record.evidence_id for record in records}
+            for record in self.evidence_for(command_id):
+                if record.evidence_id in provider_receipt_ids and record.evidence_id not in existing_ids:
+                    records.append(record)
+                    existing_ids.add(record.evidence_id)
         return records
 
     def transition(
