@@ -13,11 +13,16 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
 
 from mcoi_runtime.core.agent_protocol import AgentCapability
 from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine, WorkflowResult
 from mcoi_runtime.core.execution_replay import ReplayRecorder, ReplayTrace
+
+
+def _bounded_trace_recording_error(exc: Exception) -> str:
+    """Return a stable trace-recording failure reason without raw detail."""
+    return f"trace recording failed ({type(exc).__name__})"
 
 
 class TracedWorkflowEngine:
@@ -31,6 +36,56 @@ class TracedWorkflowEngine:
     ) -> None:
         self._engine = workflow_engine
         self._recorder = replay_recorder
+        self._trace_recording_failures = 0
+        self._last_trace_recording_error = ""
+
+    @property
+    def trace_recording_failures(self) -> int:
+        """Return contained trace-recording failure count."""
+        return self._trace_recording_failures
+
+    @property
+    def last_trace_recording_error(self) -> str:
+        """Return the latest bounded trace-recording failure reason."""
+        return self._last_trace_recording_error
+
+    def _record_trace_failure(self, exc: Exception, *, trace_id: str = "") -> None:
+        """Record a bounded trace failure and discard any partial trace."""
+        self._trace_recording_failures += 1
+        self._last_trace_recording_error = _bounded_trace_recording_error(exc)
+        if trace_id:
+            self._discard_trace(trace_id)
+
+    def _discard_trace(self, trace_id: str) -> None:
+        """Best-effort cleanup for partial traces after recording failure."""
+        discard = getattr(self._recorder, "discard_trace", None)
+        if callable(discard):
+            try:
+                discard(trace_id)
+            except Exception as exc:
+                self._trace_recording_failures += 1
+                self._last_trace_recording_error = _bounded_trace_recording_error(exc)
+
+    def _record_frame(
+        self,
+        trace_id: str,
+        operation: str,
+        *,
+        input_data: dict[str, Any],
+        output_data: dict[str, Any],
+    ) -> bool:
+        """Record one replay frame; contain recorder failures."""
+        try:
+            self._recorder.record_frame(
+                trace_id,
+                operation,
+                input_data=input_data,
+                output_data=output_data,
+            )
+            return True
+        except Exception as exc:
+            self._record_trace_failure(exc, trace_id=trace_id)
+            return False
 
     def execute(
         self,
@@ -52,7 +107,8 @@ class TracedWorkflowEngine:
 
         try:
             self._recorder.start_trace(trace_id)
-        except Exception:
+        except Exception as exc:
+            self._record_trace_failure(exc)
             # Trace start failed — run workflow without tracing
             result = self._engine.execute(
                 task_id=task_id, description=description,
@@ -62,7 +118,7 @@ class TracedWorkflowEngine:
             return result, None
 
         # Record input frame
-        self._recorder.record_frame(
+        if not self._record_frame(
             trace_id, "workflow.input",
             input_data={
                 "task_id": task_id,
@@ -72,7 +128,13 @@ class TracedWorkflowEngine:
                 "budget_id": budget_id,
             },
             output_data={"status": "submitted"},
-        )
+        ):
+            result = self._engine.execute(
+                task_id=task_id, description=description,
+                capability=capability, payload=payload,
+                tenant_id=tenant_id, budget_id=budget_id,
+            )
+            return result, None
 
         # Execute workflow
         result = self._engine.execute(
@@ -83,14 +145,15 @@ class TracedWorkflowEngine:
 
         # Record each step as a frame
         for step in result.steps:
-            self._recorder.record_frame(
+            if not self._record_frame(
                 trace_id, f"workflow.step.{step.step_name}",
                 input_data={"step_name": step.step_name},
                 output_data={"status": step.status, "detail": step.detail},
-            )
+            ):
+                return result, None
 
         # Record output frame
-        self._recorder.record_frame(
+        if not self._record_frame(
             trace_id, "workflow.output",
             input_data={"task_id": task_id},
             output_data={
@@ -100,13 +163,14 @@ class TracedWorkflowEngine:
                 "has_output": bool(result.output),
                 "error": result.error,
             },
-        )
+        ):
+            return result, None
 
         # Complete trace
         try:
             trace = self._recorder.complete_trace(trace_id)
-        except Exception:
-            pass
+        except Exception as exc:
+            self._record_trace_failure(exc, trace_id=trace_id)
 
         return result, trace
 

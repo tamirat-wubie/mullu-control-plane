@@ -14,7 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Callable
 import json
@@ -121,6 +121,10 @@ class ReplayRecorder:
         )
         self._completed.append(trace)
         return trace
+
+    def discard_trace(self, trace_id: str) -> bool:
+        """Discard an active trace after non-fatal recording failure."""
+        return self._traces.pop(trace_id, None) is not None
 
     def get_trace(self, trace_id: str) -> ReplayTrace | None:
         """Get a completed trace by ID."""
