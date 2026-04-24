@@ -13,22 +13,25 @@ import logging
 import os
 from typing import Any
 
-_log = logging.getLogger(__name__)
-
-from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
-from gateway.router import GatewayRouter, GatewayMessage, TenantMapping
-from gateway.channels.whatsapp import WhatsAppAdapter
-from gateway.channels.telegram import TelegramAdapter
-from gateway.channels.slack import SlackAdapter
 from gateway.channels.discord import DiscordAdapter
+from gateway.channels.slack import SlackAdapter
+from gateway.channels.telegram import TelegramAdapter
 from gateway.channels.web import WebChatAdapter
-from gateway.session import SessionManager
+from gateway.channels.whatsapp import WhatsAppAdapter
+from gateway.command_spine import build_command_ledger_from_env
 from gateway.event_log import WebhookEventLog
+from gateway.router import GatewayRouter
+from gateway.session import SessionManager
+from gateway.skill_dispatch import build_skill_dispatcher_from_platform
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
 )
+from gateway.tenant_identity import build_tenant_identity_store_from_env
+
+_log = logging.getLogger(__name__)
 
 
 def create_gateway_app(platform: Any = None) -> FastAPI:
@@ -51,6 +54,10 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     gateway_env = (os.environ.get("MULLU_ENV", "local_dev") or "local_dev").strip().lower()
     approval_secret = os.environ.get("MULLU_GATEWAY_APPROVAL_SECRET", "")
+    defer_approved_execution = (
+        os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
 
     def _approval_webhook_authorized(request: Request) -> bool:
         """Fail closed outside local and test unless an explicit approval secret matches."""
@@ -64,7 +71,16 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
     event_log = WebhookEventLog(clock=_clock)
     verifier = WebhookVerifier()
-    router = GatewayRouter(platform=platform)
+    command_ledger = build_command_ledger_from_env(clock=_clock)
+    tenant_identity_store = build_tenant_identity_store_from_env(clock=_clock)
+    skill_dispatcher = build_skill_dispatcher_from_platform(platform)
+    router = GatewayRouter(
+        platform=platform,
+        command_ledger=command_ledger,
+        tenant_identity_store=tenant_identity_store,
+        skill_dispatcher=skill_dispatcher,
+        defer_approved_execution=defer_approved_execution,
+    )
     session_mgr = SessionManager()
 
     # ── Channel Adapters (configured from env vars) ──
@@ -213,7 +229,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         """Telegram Bot API webhook (POST)."""
         if telegram is None:
             raise HTTPException(503, detail="Telegram not configured")
-        import json, time as _time
+        import json
+        import time as _time
         _t0 = _time.monotonic()
         body_bytes = await request.body()
         # Verify Telegram secret token if configured (X-Telegram-Bot-Api-Secret-Token)
@@ -350,14 +367,30 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         except (json.JSONDecodeError, ValueError):
             raise HTTPException(400, detail="Invalid JSON payload")
         approved = payload.get("approved", False)
-        resolved_by = payload.get("resolved_by", "user")
-        result = router.handle_approval_callback(request_id, approved=approved, resolved_by=resolved_by)
+        resolver_channel = str(payload.get("resolver_channel", "")).strip()
+        resolver_sender_id = str(payload.get("resolver_sender_id", "")).strip()
+        if not resolver_channel or not resolver_sender_id:
+            raise HTTPException(400, detail="resolver_channel and resolver_sender_id are required")
+        result = router.handle_external_approval_callback(
+            request_id,
+            approved=approved,
+            resolver_channel=resolver_channel,
+            resolver_sender_id=resolver_sender_id,
+        )
         if result is None:
             raise HTTPException(404, detail="Request not found or already resolved")
+        if result.metadata.get("error") == "approval_context_denied":
+            raise HTTPException(403, detail={
+                "error": "approval_context_denied",
+                "authority_reason": result.metadata.get("authority_reason", ""),
+                "required_roles": list(result.metadata.get("required_roles", ())),
+                "resolver_roles": list(result.metadata.get("resolver_roles", ())),
+            })
         return JSONResponse({
             "status": "resolved",
             "body": result.body,
             "governed": result.governed,
+            "metadata": result.metadata,
         })
 
     # ── Gateway Status ──
@@ -372,6 +405,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     # Store references for testing
     app.state.router = router
+    app.state.command_ledger = command_ledger
+    app.state.tenant_identity_store = tenant_identity_store
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.verifier = verifier

@@ -11,10 +11,9 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from gateway.router import GatewayMessage, GatewayRouter, TenantMapping
-from gateway.approval import ApprovalRouter, ApprovalStatus, RiskTier
-from gateway.session import SessionManager, ConversationContext
+from gateway.router import GatewayMessage, GatewayRouter, TenantMapping  # noqa: E402
+from gateway.approval import ApprovalRouter  # noqa: E402
+from gateway.session import SessionManager  # noqa: E402
 
 
 # ═══ Stubs ═══

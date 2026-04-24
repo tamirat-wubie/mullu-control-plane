@@ -12,16 +12,16 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from skills.financial.core.currency import Money, Currency, minor_units
-from skills.financial.core.spend_budget import SpendBudget, SpendBudgetManager
-from skills.financial.core.transaction_state import (
+import pytest  # noqa: E402
+from skills.financial.core.currency import Money, minor_units  # noqa: E402
+from skills.financial.core.spend_budget import SpendBudget, SpendBudgetManager  # noqa: E402
+from skills.financial.core.transaction_state import (  # noqa: E402
     TxState, transition, validate_transition, is_terminal, legal_next_states,
 )
-from skills.financial.core.idempotency import (
+from skills.financial.core.idempotency import (  # noqa: E402
     IdempotencyStore, IdempotencyStatus, compute_key,
 )
-from skills.financial.core.transaction_ledger import TransactionLedger, TransactionEntry
+from skills.financial.core.transaction_ledger import TransactionLedger  # noqa: E402
 
 
 # ═══ Currency ═══

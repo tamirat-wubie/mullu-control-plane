@@ -11,12 +11,10 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
-from skills.financial.core.currency import Money
 from skills.financial.core.transaction_state import TxState, TxTransition, transition
 
 

@@ -13,8 +13,8 @@ Invariants:
 
 from __future__ import annotations
 
+import hashlib
 import re
-from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -77,7 +77,7 @@ def detect_intent(message: str) -> SkillIntent | None:
         # No valid amount — fall through to LLM for clarification
 
     if _REFUND_PATTERNS.search(message):
-        return SkillIntent("financial", "refund", {})
+        return SkillIntent("financial", "refund", {"transaction_id": _extract_transaction_id(message)})
 
     if _BALANCE_PATTERNS.search(message):
         return SkillIntent("financial", "balance_check", {})
@@ -97,6 +97,22 @@ def _extract_amount(message: str) -> str:
     if match:
         return match.group(1).replace(",", "")
     return "0"
+
+
+def _extract_transaction_id(message: str) -> str:
+    """Extract a transaction-like identifier from message text."""
+    matches = re.finditer(
+        r"\b((?:tx|txn|transaction|ch|pi|pl|re)[-_]?[A-Za-z0-9][A-Za-z0-9_-]*)\b",
+        message,
+        re.IGNORECASE,
+    )
+    for match in matches:
+        if any(char.isdigit() for char in match.group(1)):
+            return match.group(1)
+    match = re.search(r"\b([A-Za-z]+[-_][A-Za-z0-9][A-Za-z0-9_-]*\d[A-Za-z0-9_-]*)\b", message)
+    if match:
+        return match.group(1)
+    return ""
 
 
 class SkillDispatcher:
@@ -191,16 +207,217 @@ class SkillDispatcher:
                 destination="pending", actor_id=identity_id,
             )
             if result.requires_approval:
+                approve_and_execute = getattr(self._payment_executor, "approve_and_execute", None)
+                if callable(approve_and_execute):
+                    result = approve_and_execute(result.tx_id, approver_id=identity_id)
+                else:
+                    receipt = _pending_payment_receipt(result, tenant_id=tenant_id, amount=amount, currency="USD")
+                    return {
+                        "response": f"Payment of ${amount} requires approval. Request ID: {result.tx_id}",
+                        "governed": True, "skill": "send_payment", "approval_required": True,
+                        **receipt,
+                    }
+            if getattr(result, "requires_approval", False):
+                receipt = _pending_payment_receipt(result, tenant_id=tenant_id, amount=amount, currency="USD")
                 return {
                     "response": f"Payment of ${amount} requires approval. Request ID: {result.tx_id}",
                     "governed": True, "skill": "send_payment", "approval_required": True,
-                    "tx_id": result.tx_id,
+                    **receipt,
                 }
             if result.success:
-                return {"response": f"Payment processed: {result.tx_id}", "governed": True, "skill": "send_payment"}
+                receipt = _settled_payment_receipt(result, tenant_id=tenant_id, amount=amount, currency="USD")
+                return {
+                    "response": f"Payment processed: {result.tx_id}",
+                    "governed": True,
+                    "skill": "send_payment",
+                    **receipt,
+                }
             return {"response": f"Payment failed: {result.error}", "governed": True}
 
         if intent.action == "refund":
-            return {"response": "To process a refund, please provide the transaction ID.", "governed": True, "skill": "refund"}
+            tx_id = str(intent.params.get("transaction_id", "")).strip()
+            if not tx_id:
+                return {
+                    "response": "To process a refund, please provide the transaction ID.",
+                    "governed": True,
+                    "skill": "refund",
+                    "receipt_status": "missing_transaction_id",
+                }
+            if not self._payment_executor:
+                return {
+                    "response": "Refund processing is not available right now.",
+                    "governed": True,
+                    "skill": "refund",
+                    "transaction_id": tx_id,
+                    "receipt_status": "executor_unavailable",
+                }
+            refund = getattr(self._payment_executor, "refund", None)
+            if not callable(refund):
+                return {
+                    "response": "Refund processing is not available right now.",
+                    "governed": True,
+                    "skill": "refund",
+                    "transaction_id": tx_id,
+                    "receipt_status": "executor_unavailable",
+                }
+            result = refund(tx_id, actor_id=identity_id)
+            if result.success:
+                receipt = _refund_receipt(result, tenant_id=tenant_id, transaction_id=tx_id)
+                return {
+                    "response": f"Refund processed: {receipt['refund_id']}",
+                    "governed": True,
+                    "skill": "refund",
+                    **receipt,
+                }
+            return {
+                "response": f"Refund failed: {result.error}",
+                "governed": True,
+                "skill": "refund",
+                "transaction_id": tx_id,
+                "receipt_status": "failed",
+            }
 
         return None
+
+
+def _first_platform_attribute(platform: Any, names: tuple[str, ...]) -> Any | None:
+    """Return the first non-empty runtime attribute exposed by a platform."""
+    for name in names:
+        if hasattr(platform, name):
+            value = getattr(platform, name)
+            if value is not None:
+                return value
+    return None
+
+
+def _nested_platform_attribute(platform: Any, container_names: tuple[str, ...], names: tuple[str, ...]) -> Any | None:
+    """Return the first non-empty attribute from a known platform sub-runtime."""
+    for container_name in container_names:
+        container = _first_platform_attribute(platform, (container_name,))
+        if container is None:
+            continue
+        value = _first_platform_attribute(container, names)
+        if value is not None:
+            return value
+    return None
+
+
+def build_skill_dispatcher_from_platform(platform: Any | None) -> SkillDispatcher:
+    """Build a dispatcher from explicit platform-backed capability providers.
+
+    The gateway uses this as its default runtime binding so detected skill
+    intent is connected to governed providers when the platform exposes them.
+    """
+    if platform is None:
+        return SkillDispatcher()
+
+    factory = _first_platform_attribute(platform, ("build_skill_dispatcher", "skill_dispatcher"))
+    if callable(factory):
+        dispatcher = factory()
+        if isinstance(dispatcher, SkillDispatcher):
+            return dispatcher
+
+    financial_provider = _first_platform_attribute(
+        platform,
+        (
+            "financial_provider",
+            "_financial_provider",
+            "read_only_financial_provider",
+            "_read_only_financial_provider",
+        ),
+    ) or _nested_platform_attribute(
+        platform,
+        ("capability_runtime", "_capability_runtime", "financial_runtime", "_financial_runtime"),
+        (
+            "financial_provider",
+            "_financial_provider",
+            "read_only_financial_provider",
+            "_read_only_financial_provider",
+        ),
+    )
+    payment_executor = _first_platform_attribute(
+        platform,
+        ("payment_executor", "_payment_executor", "governed_payment_executor", "_governed_payment_executor"),
+    ) or _nested_platform_attribute(
+        platform,
+        ("capability_runtime", "_capability_runtime", "financial_runtime", "_financial_runtime"),
+        ("payment_executor", "_payment_executor", "governed_payment_executor", "_governed_payment_executor"),
+    )
+    capability_registry = _first_platform_attribute(
+        platform,
+        ("capability_registry", "_capability_registry", "agent_capability_registry", "_agent_capability_registry"),
+    ) or _nested_platform_attribute(
+        platform,
+        ("capability_runtime", "_capability_runtime", "capability_bootstrap", "_capability_bootstrap"),
+        ("capability_registry", "_capability_registry", "agent_capability_registry", "_agent_capability_registry"),
+    )
+    return SkillDispatcher(
+        financial_provider=financial_provider,
+        payment_executor=payment_executor,
+        capability_registry=capability_registry,
+    )
+
+
+def _hash_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _pending_payment_receipt(result: Any, *, tenant_id: str, amount: Decimal, currency: str) -> dict[str, Any]:
+    """Return a non-settled initiation receipt without settlement proof fields."""
+    tx_id = str(getattr(result, "tx_id", ""))
+    metadata = getattr(result, "metadata", {}) if isinstance(getattr(result, "metadata", {}), dict) else {}
+    return {
+        "tx_id": tx_id,
+        "transaction_id": tx_id,
+        "amount": str(getattr(result, "amount", "") or amount),
+        "currency": str(getattr(result, "currency", "") or currency),
+        "tenant_hash": _hash_text(tenant_id),
+        "payment_state": str(getattr(result, "state", "") or "pending_approval"),
+        "provider_tx_id": str(getattr(result, "provider_tx_id", "")),
+        "receipt_status": "pending_approval",
+        "receipt_metadata": dict(metadata),
+    }
+
+
+def _settled_payment_receipt(result: Any, *, tenant_id: str, amount: Decimal, currency: str) -> dict[str, Any]:
+    """Return the evidence fields required for payment effect reconciliation."""
+    tx_id = str(getattr(result, "tx_id", ""))
+    result_amount = str(getattr(result, "amount", "") or amount)
+    result_currency = str(getattr(result, "currency", "") or currency)
+    provider_tx_id = str(getattr(result, "provider_tx_id", ""))
+    metadata = getattr(result, "metadata", {}) if isinstance(getattr(result, "metadata", {}), dict) else {}
+    recipient_ref = str(metadata.get("recipient_ref") or metadata.get("credit_account") or "pending")
+    ledger_hash = str(metadata.get("ledger_hash") or _hash_text(
+        f"{tenant_id}:{tx_id}:{result_amount}:{result_currency}:{provider_tx_id}:{recipient_ref}"
+    ))
+    return {
+        "tx_id": tx_id,
+        "transaction_id": tx_id,
+        "amount": result_amount,
+        "currency": result_currency,
+        "recipient_hash": str(metadata.get("recipient_hash") or _hash_text(recipient_ref)),
+        "ledger_hash": ledger_hash,
+        "provider_tx_id": provider_tx_id,
+        "payment_state": str(getattr(result, "state", "") or "settled"),
+        "receipt_status": "settled",
+    }
+
+
+def _refund_receipt(result: Any, *, tenant_id: str, transaction_id: str) -> dict[str, Any]:
+    """Return the evidence fields required for refund effect reconciliation."""
+    refund_id = str(getattr(result, "provider_tx_id", "") or getattr(result, "tx_id", ""))
+    result_amount = str(getattr(result, "amount", ""))
+    result_currency = str(getattr(result, "currency", ""))
+    metadata = getattr(result, "metadata", {}) if isinstance(getattr(result, "metadata", {}), dict) else {}
+    ledger_hash = str(metadata.get("ledger_hash") or _hash_text(
+        f"{tenant_id}:{transaction_id}:{refund_id}:{result_amount}:{result_currency}:refund"
+    ))
+    return {
+        "refund_id": refund_id,
+        "transaction_id": transaction_id,
+        "amount": result_amount,
+        "currency": result_currency,
+        "ledger_hash": ledger_hash,
+        "payment_state": str(getattr(result, "state", "") or "refunded"),
+        "receipt_status": "refunded",
+    }

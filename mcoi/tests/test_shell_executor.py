@@ -14,6 +14,7 @@ from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.contracts.execution import ExecutionOutcome
 from mcoi_runtime.contracts.shell_policy import ShellCommandPolicy
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.shell_policy_engine import ShellPolicyEngine
 
@@ -39,6 +40,13 @@ def test_shell_executor_runs_explicit_argv_without_shell_mode() -> None:
 
     assert result.status is ExecutionOutcome.SUCCEEDED
     assert result.actual_effects[0].details["stdout"] == "ok"
+    receipt = result.actual_effects[0].details["receipt"]
+    assert receipt["execution_id"] == "execution-1"
+    assert receipt["outcome"] == "succeeded"
+    assert receipt["returncode"] == 0
+    assert receipt["stdout_hash"] != receipt["stderr_hash"]
+    assert result.metadata["shell_receipt"]["receipt_id"] == receipt["receipt_id"]
+    assert result.actual_effects[0].details["evidence_ref"] == receipt["evidence_ref"]
     assert captured["argv"] == ["python", "-c", "print('ok')"]
     assert captured["shell"] is False
     assert captured["timeout"] == 5
@@ -61,6 +69,10 @@ def test_shell_executor_maps_timeout_to_typed_cancellation() -> None:
     assert result.status is ExecutionOutcome.CANCELLED
     assert result.actual_effects[0].name == "process_timed_out"
     assert result.actual_effects[0].details["code"] == "timeout"
+    receipt = result.actual_effects[0].details["details"]["receipt"]
+    assert receipt["outcome"] == "cancelled"
+    assert receipt["returncode"] is None
+    assert receipt["timeout_seconds"] == 0.1
 
 
 def test_shell_executor_maps_nonzero_exit_to_failed_result() -> None:
@@ -80,6 +92,10 @@ def test_shell_executor_maps_nonzero_exit_to_failed_result() -> None:
     assert result.actual_effects[0].name == "process_failed"
     assert result.actual_effects[0].details["returncode"] == 3
     assert result.actual_effects[0].details["stderr"] == "failure"
+    receipt = result.actual_effects[0].details["receipt"]
+    assert receipt["outcome"] == "failed"
+    assert receipt["returncode"] == 3
+    assert receipt["stderr_hash"] != receipt["stdout_hash"]
 
 
 def test_shell_executor_sanitizes_spawn_failure() -> None:
@@ -99,6 +115,10 @@ def test_shell_executor_sanitizes_spawn_failure() -> None:
     assert result.actual_effects[0].details["code"] == "spawn_failed"
     assert result.actual_effects[0].details["message"] == "shell command not found (FileNotFoundError)"
     assert "secret executable path" not in result.actual_effects[0].details["message"]
+    receipt = result.actual_effects[0].details["details"]["receipt"]
+    assert receipt["outcome"] == "failed"
+    assert receipt["returncode"] is None
+    assert receipt["evidence_ref"].startswith("shell-receipt:execution-4:")
 
 
 def test_execution_request_bounds_invalid_argv_items() -> None:
@@ -138,3 +158,27 @@ def test_shell_executor_bounds_policy_denial_message() -> None:
     assert result.actual_effects[0].details["code"] == "policy_denied"
     assert result.actual_effects[0].details["message"] == "Shell policy denied"
     assert "deny_executable" not in result.actual_effects[0].details["message"]
+    receipt = result.actual_effects[0].details["details"]["receipt"]
+    assert receipt["policy_id"] == "policy-1"
+    assert receipt["policy_verdict"] == "deny_executable"
+    assert receipt["outcome"] == "failed"
+
+
+def test_shell_receipt_becomes_effect_assurance_evidence_ref() -> None:
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args[0], 0, stdout="observed", stderr="")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-7",
+            goal_id="goal-7",
+            argv=("echo", "observed"),
+        )
+    )
+
+    observed = EffectAssuranceGate(clock=lambda: "2026-03-18T12:00:01+00:00").observe(result)
+    receipt = result.metadata["shell_receipt"]
+    assert observed[0].evidence_ref == receipt["evidence_ref"]
+    assert observed[0].observed_value["receipt_id"] == receipt["receipt_id"]
+    assert observed[0].source == "execution-7"

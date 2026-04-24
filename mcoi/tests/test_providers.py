@@ -47,16 +47,27 @@ def _http_connector_descriptor() -> ConnectorDescriptor:
 def test_http_connector_missing_url() -> None:
     connector = HttpConnector(clock=lambda: _CLOCK)
     result = connector.invoke(_http_connector_descriptor(), {})
+    receipt = result.metadata["connector_receipt"]
+
     assert result.status is ConnectorStatus.FAILED
     assert result.error_code == "missing_url"
+    assert receipt["status"] == "failed"
+    assert receipt["error_code"] == "missing_url"
+    assert receipt["response_digest"] == "none"
+    assert receipt["evidence_ref"].startswith("connector-invocation:http-1:")
 
 
 def test_http_connector_invalid_url() -> None:
     from mcoi_runtime.adapters.http_connector import HttpConnectorConfig
     connector = HttpConnector(clock=lambda: _CLOCK, config=HttpConnectorConfig(timeout_seconds=5.0))
     result = connector.invoke(_http_connector_descriptor(), {"url": "not-a-url"})
+    receipt = result.metadata["connector_receipt"]
+
     assert result.status is ConnectorStatus.FAILED
     assert result.error_code is not None
+    assert receipt["status"] == "failed"
+    assert receipt["url_hash"] != "not-a-url"
+    assert receipt["request_hash"]
 
 
 # --- File Communication ---
@@ -78,6 +89,11 @@ def test_file_communication_delivers(tmp_path: Path) -> None:
 
     assert result.status is DeliveryStatus.DELIVERED
     assert result.message_id == "msg-1"
+    receipt = result.metadata["file_write_receipt"]
+    assert receipt["operation"] == "write"
+    assert receipt["bytes_written"] > 0
+    assert receipt["atomic_replace"] is True
+    assert receipt["evidence_ref"].startswith("file-write:msg-1:")
 
     # Verify file exists with message content
     file_path = tmp_path / "outbox" / "msg-1.json"
@@ -85,6 +101,9 @@ def test_file_communication_delivers(tmp_path: Path) -> None:
     content = json.loads(file_path.read_text(encoding="utf-8"))
     assert content["message_id"] == "msg-1"
     assert content["channel"] == "approval"
+    assert receipt["content_hash"]
+    assert receipt["target_path_hash"]
+    assert result.metadata["file_path"] == str(file_path)
 
 
 def test_file_communication_multiple_messages(tmp_path: Path) -> None:

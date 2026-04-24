@@ -7,10 +7,9 @@ Embeddable in dashboard and external sites.
 from __future__ import annotations
 
 import hashlib
-import json
 from typing import Any
 
-from gateway.router import ChannelAdapter, GatewayMessage
+from gateway.router import GatewayMessage
 
 
 class WebChatAdapter:

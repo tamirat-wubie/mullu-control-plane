@@ -25,6 +25,8 @@ import urllib.error
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
+from mcoi_runtime.contracts.connector_effects import ConnectorInvocationReceipt
+from mcoi_runtime.contracts._shared_enums import EffectClass, TrustClass
 from mcoi_runtime.contracts.integration import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from mcoi_runtime.contracts.provider_policy import HttpProviderPolicy
 from mcoi_runtime.core.invariants import stable_identifier
@@ -134,6 +136,62 @@ def _map_status_code(code: int) -> ConnectorStatus:
     return ConnectorStatus.FAILED
 
 
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _build_connector_receipt(
+    *,
+    result_id: str,
+    connector: ConnectorDescriptor,
+    method: str,
+    url: str,
+    request: dict,
+    response_digest: str,
+    status: ConnectorStatus,
+    started_at: str,
+    finished_at: str,
+    status_code: int | None = None,
+    error_code: str | None = None,
+) -> ConnectorInvocationReceipt:
+    request_hash = _sha256_text(str({
+        "url": url,
+        "method": method,
+        "headers": sorted((request.get("headers") or {}).keys()) if isinstance(request.get("headers"), dict) else (),
+    }))
+    receipt_id = stable_identifier(
+        "connector-invocation-receipt",
+        {
+            "result_id": result_id,
+            "connector_id": connector.connector_id,
+            "method": method,
+            "url_hash": _sha256_text(url),
+            "request_hash": request_hash,
+            "response_digest": response_digest,
+            "status": status.value,
+            "status_code": status_code,
+            "error_code": error_code,
+        },
+    )
+    return ConnectorInvocationReceipt(
+        receipt_id=receipt_id,
+        result_id=result_id,
+        connector_id=connector.connector_id,
+        provider=connector.provider,
+        method=method,
+        url_hash=_sha256_text(url),
+        request_hash=request_hash,
+        response_digest=response_digest,
+        status=status,
+        evidence_ref=f"connector-invocation:{connector.connector_id}:{receipt_id}",
+        started_at=started_at,
+        finished_at=finished_at,
+        status_code=status_code,
+        error_code=error_code,
+        metadata={"effect_class": connector.effect_class.value, "trust_class": connector.trust_class.value},
+    )
+
+
 class HttpConnector:
     """Governed HTTP connector with response size limits, content-type checks, and status mapping.
 
@@ -174,12 +232,12 @@ class HttpConnector:
         })
 
         if not url:
-            return self._failure(result_id, connector.connector_id, started_at, "missing_url")
+            return self._failure(result_id, connector, method, url, request, started_at, "missing_url")
 
         # Policy: require_https check
         if self._policy and self._policy.require_https:
             if not url.lower().startswith("https://"):
-                return self._failure(result_id, connector.connector_id, started_at,
+                return self._failure(result_id, connector, method, url, request, started_at,
                                      "policy_requires_https")
 
         # Policy: method allowlist (policy takes precedence over config)
@@ -187,19 +245,19 @@ class HttpConnector:
             self._policy.allowed_methods if self._policy else self._config.allowed_methods
         )
         if method not in effective_methods:
-            return self._failure(result_id, connector.connector_id, started_at,
+            return self._failure(result_id, connector, method, url, request, started_at,
                                  f"method_not_allowed:{method}")
 
         # URL normalization
         try:
             normalized_url = _normalize_url(url)
         except (ValueError, TypeError):
-            return self._failure(result_id, connector.connector_id, started_at, "malformed_url")
+            return self._failure(result_id, connector, method, url, request, started_at, "malformed_url")
 
         # SSRF protection: block private/loopback/metadata addresses (includes DNS resolution)
         parsed = urlparse(normalized_url)
         if _is_private_host(parsed.hostname or ""):
-            return self._failure(result_id, connector.connector_id, started_at,
+            return self._failure(result_id, connector, method, normalized_url, request, started_at,
                                  "blocked_private_address")
 
         # Effective max response bytes (policy overrides config if stricter)
@@ -221,7 +279,7 @@ class HttpConnector:
                 if self._config.allowed_content_types:
                     ct_base = content_type.split(";")[0].strip().lower()
                     if ct_base not in (t.lower() for t in self._config.allowed_content_types):
-                        return self._failure(result_id, connector.connector_id, started_at,
+                        return self._failure(result_id, connector, method, normalized_url, request, started_at,
                                              f"content_type_not_allowed:{ct_base}")
 
                 # Time-bounded and size-bounded read (defends against slow trickle)
@@ -232,14 +290,28 @@ class HttpConnector:
                 chunk_size = 65536
                 while True:
                     if _time.monotonic() > read_deadline:
+                        finished_at = self._clock()
+                        receipt = _build_connector_receipt(
+                            result_id=result_id,
+                            connector=connector,
+                            method=method,
+                            url=normalized_url,
+                            request=request,
+                            response_digest="none",
+                            status=ConnectorStatus.TIMEOUT,
+                            started_at=started_at,
+                            finished_at=finished_at,
+                            error_code="read_timeout",
+                        )
                         return ConnectorResult(
                             result_id=result_id,
                             connector_id=connector.connector_id,
                             status=ConnectorStatus.TIMEOUT,
                             response_digest="none",
                             started_at=started_at,
-                            finished_at=self._clock(),
+                            finished_at=finished_at,
                             error_code="read_timeout",
+                            metadata={"connector_receipt": receipt.to_json_dict()},
                         )
                     chunk = response.read(min(chunk_size, max_bytes + 1 - total_read))
                     if not chunk:
@@ -247,7 +319,7 @@ class HttpConnector:
                     chunks.append(chunk)
                     total_read += len(chunk)
                     if total_read > max_bytes:
-                        return self._failure(result_id, connector.connector_id, started_at,
+                        return self._failure(result_id, connector, method, normalized_url, request, started_at,
                                              f"response_too_large:{total_read}")
                 body = b"".join(chunks)
 
@@ -255,6 +327,19 @@ class HttpConnector:
                 status = _map_status_code(response.status)
                 finished_at = self._clock()
 
+                receipt = _build_connector_receipt(
+                    result_id=result_id,
+                    connector=connector,
+                    method=method,
+                    url=normalized_url,
+                    request=request,
+                    response_digest=digest,
+                    status=status,
+                    started_at=started_at,
+                    finished_at=finished_at,
+                    status_code=response.status,
+                    error_code=None if status is ConnectorStatus.SUCCEEDED else f"http_{response.status}",
+                )
                 return ConnectorResult(
                     result_id=result_id,
                     connector_id=connector.connector_id,
@@ -269,6 +354,7 @@ class HttpConnector:
                         "status_code": response.status,
                         "content_type": content_type,
                         "content_length": len(body),
+                        "connector_receipt": receipt.to_json_dict(),
                     },
                 )
         except urllib.error.HTTPError as exc:
@@ -276,31 +362,83 @@ class HttpConnector:
             # Surface redirect-blocked errors distinctly
             if exc.msg and exc.msg.startswith("redirect_blocked:"):
                 error_msg = exc.msg
-            return self._failure(result_id, connector.connector_id, started_at, error_msg)
+            return self._failure(result_id, connector, method, url, request, started_at, error_msg)
         except urllib.error.URLError as exc:
-            return self._failure(result_id, connector.connector_id, started_at,
+            return self._failure(result_id, connector, method, url, request, started_at,
                                  f"url_error:{exc.reason}")
         except TimeoutError:
+            finished_at = self._clock()
+            receipt = _build_connector_receipt(
+                result_id=result_id,
+                connector=connector,
+                method=method,
+                url=url,
+                request=request,
+                response_digest="none",
+                status=ConnectorStatus.TIMEOUT,
+                started_at=started_at,
+                finished_at=finished_at,
+                error_code="timeout",
+            )
             return ConnectorResult(
                 result_id=result_id,
                 connector_id=connector.connector_id,
                 status=ConnectorStatus.TIMEOUT,
                 response_digest="none",
                 started_at=started_at,
-                finished_at=self._clock(),
+                finished_at=finished_at,
                 error_code="timeout",
+                metadata={"connector_receipt": receipt.to_json_dict()},
             )
         except Exception as exc:
-            return self._failure(result_id, connector.connector_id, started_at,
+            return self._failure(result_id, connector, method, url, request, started_at,
                                  f"unexpected:{type(exc).__name__}")
 
-    def _failure(self, result_id: str, connector_id: str, started_at: str, error_code: str) -> ConnectorResult:
+    def _failure(
+        self,
+        result_id: str,
+        connector: ConnectorDescriptor | str,
+        method: str | None = None,
+        url: str = "",
+        request: dict | None = None,
+        started_at: str = "",
+        error_code: str = "",
+    ) -> ConnectorResult:
+        if isinstance(connector, str) and started_at == "" and error_code == "" and method and url:
+            started_at = method
+            error_code = url
+            method = "GET"
+            url = ""
+        if isinstance(connector, str):
+            connector = ConnectorDescriptor(
+                connector_id=connector,
+                name=connector,
+                provider="unknown",
+                effect_class=EffectClass.EXTERNAL_READ,
+                trust_class=TrustClass.BOUNDED_EXTERNAL,
+                credential_scope_id="unknown",
+                enabled=True,
+            )
+        finished_at = self._clock()
+        receipt = _build_connector_receipt(
+            result_id=result_id,
+            connector=connector,
+            method=method or "GET",
+            url=url,
+            request=request or {},
+            response_digest="none",
+            status=ConnectorStatus.FAILED,
+            started_at=started_at,
+            finished_at=finished_at,
+            error_code=error_code,
+        )
         return ConnectorResult(
             result_id=result_id,
-            connector_id=connector_id,
+            connector_id=connector.connector_id,
             status=ConnectorStatus.FAILED,
             response_digest="none",
             started_at=started_at,
-            finished_at=self._clock(),
+            finished_at=finished_at,
             error_code=error_code,
+            metadata={"connector_receipt": receipt.to_json_dict()},
         )

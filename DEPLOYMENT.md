@@ -38,6 +38,18 @@
 | `ANTHROPIC_API_KEY` | — | Anthropic API key (when backend=anthropic) |
 | `OPENAI_API_KEY` | — | OpenAI API key (when backend=openai) |
 
+| `MULLU_COMMAND_LEDGER_BACKEND` | `MULLU_DB_BACKEND` | Command ledger backend: `memory` or `postgresql` |
+| `MULLU_COMMAND_LEDGER_DB_URL` | `MULLU_DB_URL` | Optional dedicated PostgreSQL URL for command ledger storage |
+| `MULLU_TENANT_IDENTITY_BACKEND` | `MULLU_DB_BACKEND` | Tenant identity backend: `memory` or `postgresql` |
+| `MULLU_TENANT_IDENTITY_DB_URL` | `MULLU_DB_URL` | Optional dedicated PostgreSQL URL for channel subject to tenant identity mappings |
+| `MULLU_GATEWAY_DEFER_APPROVED_EXECUTION` | `false` | If true, approved commands are queued for `gateway.worker` instead of executed inline |
+| `MULLU_GATEWAY_WORKER_ID` | `gateway-worker` | Stable worker identity for command leases |
+| `MULLU_GATEWAY_WORKER_BATCH_SIZE` | `10` | Max commands claimed per worker pass |
+| `MULLU_GATEWAY_WORKER_LEASE_SECONDS` | `300` | Lease duration for claimed commands |
+| `MULLU_GATEWAY_WORKER_POLL_SECONDS` | `2.0` | Worker polling interval |
+| `MULLU_COMMAND_ANCHOR_SECRET` | unset | HMAC secret used by `gateway.worker` to sign command-event anchors |
+| `MULLU_COMMAND_ANCHOR_KEY_ID` | `local` | Key identifier recorded on command-event anchors |
+
 ## Quick Start
 
 ### Local Development
@@ -59,6 +71,24 @@ docker compose up -d
 curl http://localhost:8000/health
 ```
 
+### Gateway Command Worker
+
+Enable deferred approval execution when gateway callbacks should enqueue the
+approved command and let a separate worker continue it:
+
+```bash
+export MULLU_GATEWAY_DEFER_APPROVED_EXECUTION=1
+export MULLU_COMMAND_LEDGER_BACKEND=postgresql
+export MULLU_COMMAND_ANCHOR_SECRET="$(openssl rand -hex 32)"
+python -m gateway.worker
+```
+
+For one bounded pass, useful in smoke tests:
+
+```bash
+python -m gateway.worker --once --batch-size 5
+```
+
 ### Production Checklist
 
 1. Set `MULLU_ENV=production`
@@ -70,6 +100,9 @@ curl http://localhost:8000/health
 7. Verify with `curl /api/v1/readiness`
 8. Confirm API-key auth is enabled for `/api/*` or enforced by a trusted upstream gateway
 9. If gateway approvals use `/webhook/approve/{request_id}`, set `MULLU_GATEWAY_APPROVAL_SECRET` and send it via `X-Mullu-Approval-Secret`
+10. If approvals are deferred, run `python -m gateway.worker` beside the gateway with PostgreSQL command ledger storage
+11. Set `MULLU_TENANT_IDENTITY_BACKEND=postgresql` so channel identities resolve from durable storage
+12. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
 
 ## Startup Behavior
 

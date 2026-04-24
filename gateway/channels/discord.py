@@ -8,10 +8,9 @@ Requires: DISCORD_BOT_TOKEN, DISCORD_PUBLIC_KEY (for interaction verification)
 
 from __future__ import annotations
 
-import hashlib
 from typing import Any
 
-from gateway.router import ChannelAdapter, GatewayMessage
+from gateway.router import GatewayMessage
 
 
 class DiscordAdapter:

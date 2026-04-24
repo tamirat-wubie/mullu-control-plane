@@ -13,7 +13,7 @@ import hmac
 import time
 from typing import Any
 
-from gateway.router import ChannelAdapter, GatewayMessage
+from gateway.router import GatewayMessage
 
 
 class SlackAdapter:

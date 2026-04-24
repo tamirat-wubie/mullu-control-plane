@@ -19,6 +19,7 @@ from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.persistence.memory_store import MemoryStore
 
@@ -35,6 +36,19 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.executors["shell_command"].__class__ is ShellExecutor
     assert runtime.observers["filesystem"].__class__ is FilesystemObserver
     assert runtime.observers["process"].__class__ is ProcessObserver
+    assert runtime.effect_assurance is None
+    assert runtime.operational_graph is None
+
+
+def test_bootstrap_runtime_wires_effect_assurance_when_required() -> None:
+    runtime = bootstrap_runtime(
+        config=AppConfig(effect_assurance_required=True),
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+    )
+
+    assert isinstance(runtime.effect_assurance, EffectAssuranceGate)
+    assert runtime.operational_graph is not None
+    assert runtime.config.effect_assurance_required is True
 
 
 def test_bootstrap_runtime_respects_explicit_adapter_overrides() -> None:

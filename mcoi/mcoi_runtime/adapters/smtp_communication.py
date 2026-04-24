@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Callable
 
+import hashlib
 import smtplib
 from dataclasses import dataclass
 from email.message import EmailMessage
@@ -22,6 +23,7 @@ from mcoi_runtime.contracts.communication import (
     DeliveryResult,
     DeliveryStatus,
 )
+from mcoi_runtime.contracts.communication_effects import CommunicationDeliveryReceipt
 from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
 
 
@@ -67,6 +69,57 @@ def _build_email_body(message: CommunicationMessage) -> str:
     return "\n".join(lines)
 
 
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _build_delivery_receipt(
+    *,
+    delivery_id: str,
+    message: CommunicationMessage,
+    status: DeliveryStatus,
+    subject: str,
+    body: str,
+    attempted_at: str,
+    delivered_at: str | None = None,
+    error_code: str | None = None,
+    transport_security: str | None = None,
+) -> CommunicationDeliveryReceipt:
+    recipient_hash = _sha256_text(message.recipient_id)
+    subject_hash = _sha256_text(subject)
+    body_hash = _sha256_text(body)
+    receipt_id = stable_identifier(
+        "communication-delivery-receipt",
+        {
+            "delivery_id": delivery_id,
+            "message_id": message.message_id,
+            "status": status.value,
+            "provider": "smtp",
+            "recipient_hash": recipient_hash,
+            "subject_hash": subject_hash,
+            "body_hash": body_hash,
+            "error_code": error_code,
+        },
+    )
+    return CommunicationDeliveryReceipt(
+        receipt_id=receipt_id,
+        delivery_id=delivery_id,
+        message_id=message.message_id,
+        channel=message.channel,
+        status=status,
+        provider="smtp",
+        recipient_hash=recipient_hash,
+        subject_hash=subject_hash,
+        body_hash=body_hash,
+        evidence_ref=f"communication-delivery:{message.message_id}:{receipt_id}",
+        attempted_at=attempted_at,
+        delivered_at=delivered_at,
+        error_code=error_code,
+        transport_security=transport_security,
+        metadata={"message_type": message.message_type, "correlation_id": message.correlation_id},
+    )
+
+
 class SmtpCommunicationAdapter:
     """SMTP email adapter for governed communication messages.
 
@@ -86,6 +139,8 @@ class SmtpCommunicationAdapter:
         subject_prefix = _CHANNEL_SUBJECTS.get(message.channel, "[MULLU]")
         subject = f"{subject_prefix} {message.message_type} — {message.correlation_id}"
         body = _build_email_body(message)
+        attempted_at = self._clock()
+        transport_security = "starttls" if self._config.use_tls else "plain"
 
         email = EmailMessage()
         email["From"] = self._config.sender_email
@@ -106,27 +161,66 @@ class SmtpCommunicationAdapter:
                         server.login(self._config.username, self._config.password)
                     server.send_message(email)
 
+            delivered_at = self._clock()
+            receipt = _build_delivery_receipt(
+                delivery_id=delivery_id,
+                message=message,
+                status=DeliveryStatus.DELIVERED,
+                subject=subject,
+                body=body,
+                attempted_at=attempted_at,
+                delivered_at=delivered_at,
+                transport_security=transport_security,
+            )
             return DeliveryResult(
                 delivery_id=delivery_id,
                 message_id=message.message_id,
                 status=DeliveryStatus.DELIVERED,
                 channel=message.channel,
-                delivered_at=self._clock(),
-                metadata={"smtp_host": self._config.host, "recipient": message.recipient_id},
+                delivered_at=delivered_at,
+                metadata={
+                    "smtp_host": self._config.host,
+                    "recipient": message.recipient_id,
+                    "delivery_receipt": receipt.to_json_dict(),
+                },
             )
         except smtplib.SMTPException as exc:
+            error_code = f"smtp_error:{type(exc).__name__}"
+            receipt = _build_delivery_receipt(
+                delivery_id=delivery_id,
+                message=message,
+                status=DeliveryStatus.FAILED,
+                subject=subject,
+                body=body,
+                attempted_at=attempted_at,
+                error_code=error_code,
+                transport_security=transport_security,
+            )
             return DeliveryResult(
                 delivery_id=delivery_id,
                 message_id=message.message_id,
                 status=DeliveryStatus.FAILED,
                 channel=message.channel,
-                error_code=f"smtp_error:{type(exc).__name__}",
+                error_code=error_code,
+                metadata={"delivery_receipt": receipt.to_json_dict()},
             )
         except (OSError, TimeoutError) as exc:
+            error_code = f"connection_error:{type(exc).__name__}"
+            receipt = _build_delivery_receipt(
+                delivery_id=delivery_id,
+                message=message,
+                status=DeliveryStatus.FAILED,
+                subject=subject,
+                body=body,
+                attempted_at=attempted_at,
+                error_code=error_code,
+                transport_security=transport_security,
+            )
             return DeliveryResult(
                 delivery_id=delivery_id,
                 message_id=message.message_id,
                 status=DeliveryStatus.FAILED,
                 channel=message.channel,
-                error_code=f"connection_error:{type(exc).__name__}",
+                error_code=error_code,
+                metadata={"delivery_receipt": receipt.to_json_dict()},
             )

@@ -18,6 +18,9 @@ from mcoi_runtime.contracts.integration import (
     ConnectorResult,
     ConnectorStatus,
 )
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_result_adapter import execution_result_from_connector
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from .provider_registry import ProviderRegistry
 
@@ -53,12 +56,24 @@ class IntegrationEngine:
     - Returns typed results — never raw external responses
     """
 
-    def __init__(self, *, clock: Callable[[], str], provider_registry: ProviderRegistry | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], str],
+        provider_registry: ProviderRegistry | None = None,
+        effect_assurance: EffectAssuranceGate | None = None,
+        effect_assurance_tenant_id: str = "integration",
+    ) -> None:
         self._clock = clock
         self._connectors: dict[str, ConnectorDescriptor] = {}
         self._adapters: dict[str, ConnectorAdapter] = {}
         self._provider_registry = provider_registry
         self._connector_provider_map: dict[str, str] = {}  # connector_id -> provider_id
+        self._effect_assurance = effect_assurance
+        self._effect_assurance_tenant_id = ensure_non_empty_text(
+            "effect_assurance_tenant_id",
+            effect_assurance_tenant_id,
+        )
 
     def register(
         self,
@@ -121,6 +136,8 @@ class IntegrationEngine:
             result = adapter.invoke(connector, request.parameters)
         except Exception as exc:
             result = self._failure_result(request.connector_id, started_at, f"adapter_error:{type(exc).__name__}")
+        if self._effect_assurance is not None:
+            result = self._assure_connector_effect(connector, request, result)
 
         # Update provider health from result
         if self._provider_registry is not None and provider_id is not None:
@@ -130,6 +147,87 @@ class IntegrationEngine:
                 self._provider_registry.record_failure(provider_id, result.error_code or "unknown_failure")
 
         return result
+
+    def _assure_connector_effect(
+        self,
+        connector: ConnectorDescriptor,
+        request: InvocationRequest,
+        result: ConnectorResult,
+    ) -> ConnectorResult:
+        try:
+            execution_result = execution_result_from_connector(
+                result,
+                goal_id=f"{request.connector_id}:{request.operation}",
+            )
+            effect = execution_result.actual_effects[0]
+            plan = self._effect_assurance.create_plan(
+                command_id=result.result_id,
+                tenant_id=self._effect_assurance_tenant_id,
+                capability_id=f"connector:{connector.connector_id}:{request.operation}",
+                expected_effects=(
+                    ExpectedEffect(
+                        effect_id=effect.name,
+                        name=effect.name,
+                        target_ref=connector.connector_id,
+                        required=True,
+                        verification_method="receipt",
+                    ),
+                ),
+                forbidden_effects=("connector_duplicate_mutation",),
+            )
+            observed = self._effect_assurance.observe(execution_result)
+            verification = self._effect_assurance.verify(
+                plan=plan,
+                execution_result=execution_result,
+                observed_effects=observed,
+            )
+            reconciliation = self._effect_assurance.reconcile(
+                plan=plan,
+                observed_effects=observed,
+                verification_result=verification,
+            )
+        except RuntimeCoreInvariantError as exc:
+            return ConnectorResult(
+                result_id=result.result_id,
+                connector_id=result.connector_id,
+                status=ConnectorStatus.FAILED,
+                response_digest=result.response_digest,
+                started_at=result.started_at,
+                finished_at=result.finished_at,
+                error_code="effect_assurance_failed",
+                metadata={
+                    **dict(result.metadata),
+                    "effect_assurance_error": str(exc),
+                },
+            )
+
+        assurance_metadata = {
+            "effect_plan_id": plan.effect_plan_id,
+            "verification_result_id": verification.verification_id,
+            "reconciliation_id": reconciliation.reconciliation_id,
+            "reconciliation_status": reconciliation.status.value,
+        }
+        if reconciliation.status is not ReconciliationStatus.MATCH:
+            return ConnectorResult(
+                result_id=result.result_id,
+                connector_id=result.connector_id,
+                status=ConnectorStatus.FAILED,
+                response_digest=result.response_digest,
+                started_at=result.started_at,
+                finished_at=result.finished_at,
+                error_code="effect_reconciliation_mismatch",
+                metadata={**dict(result.metadata), "effect_assurance": assurance_metadata},
+            )
+        return ConnectorResult(
+            result_id=result.result_id,
+            connector_id=result.connector_id,
+            status=result.status,
+            response_digest=result.response_digest,
+            started_at=result.started_at,
+            finished_at=result.finished_at,
+            error_code=result.error_code,
+            metadata={**dict(result.metadata), "effect_assurance": assurance_metadata},
+        )
 
     def _failure_result(
         self,

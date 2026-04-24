@@ -19,6 +19,7 @@ def test_app_config_uses_explicit_defaults() -> None:
     assert config.enabled_observer_routes == ("filesystem", "process")
     assert config.policy_pack_id is None
     assert config.policy_pack_version is None
+    assert config.effect_assurance_required is False
 
 
 def test_app_config_loads_deterministically_from_mapping() -> None:
@@ -29,6 +30,7 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
             "enabled_observer_routes": ("filesystem",),
             "policy_pack_id": "strict-approval",
             "policy_pack_version": "v0.1",
+            "effect_assurance_required": True,
         }
     )
 
@@ -37,6 +39,7 @@ def test_app_config_loads_deterministically_from_mapping() -> None:
     assert config.enabled_observer_routes == ("filesystem",)
     assert config.policy_pack_id == "strict-approval"
     assert config.policy_pack_version == "v0.1"
+    assert config.effect_assurance_required is True
 
 
 def test_app_config_rejects_unknown_keys() -> None:
@@ -64,3 +67,8 @@ def test_app_config_rejects_empty_policy_pack_id() -> None:
     assert message == "config values must be non-empty strings"
     assert "policy_pack_id" not in message
     assert "non-empty strings" in message
+
+
+def test_app_config_rejects_non_boolean_effect_assurance_flag() -> None:
+    with pytest.raises(ValueError, match="^effect_assurance_required must be a boolean$"):
+        AppConfig.from_mapping({"effect_assurance_required": "yes"})

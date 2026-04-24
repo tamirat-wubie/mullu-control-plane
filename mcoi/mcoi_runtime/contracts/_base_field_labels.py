@@ -1504,6 +1504,7 @@ total_breaches
 total_budget_forecasts
 total_bundles
 total_bytes
+bytes_written
 total_campaigns
 total_cancelled
 total_candidates

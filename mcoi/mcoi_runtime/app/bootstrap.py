@@ -21,9 +21,11 @@ from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.contracts.template import TemplateReference
 from mcoi_runtime.core.dispatcher import Dispatcher
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
+from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
 from mcoi_runtime.core.policy_engine import PolicyEngine
 from mcoi_runtime.core.registry_index import RegistryIndex
@@ -78,6 +80,8 @@ class BootstrappedRuntime:
     memory_store: MemoryStore | None
     executors: Mapping[str, ExecutorAdapter]
     observers: Mapping[str, ObserverAdapter[object]]
+    effect_assurance: EffectAssuranceGate | None = None
+    operational_graph: OperationalGraph | None = None
     governed_dispatcher: object | None = None
 
 
@@ -161,16 +165,6 @@ def bootstrap_runtime(
     frozen_executors: Mapping[str, ExecutorAdapter] = MappingProxyType(dict(executor_map))
     frozen_observers: Mapping[str, ObserverAdapter[object]] = MappingProxyType(dict(observer_map))
 
-    dispatcher = Dispatcher(
-        template_validator=template_validator,
-        executors=frozen_executors,
-        clock=runtime_clock,
-    )
-
-    # Phase 195C: create governed dispatcher wrapping the raw one
-    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
-    governed = GovernedDispatcher(dispatcher, clock=runtime_clock)
-
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
@@ -180,6 +174,30 @@ def bootstrap_runtime(
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
     goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
     workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
+    operational_graph = (
+        OperationalGraph(clock=runtime_clock)
+        if app_config.effect_assurance_required
+        else None
+    )
+    effect_assurance = (
+        EffectAssuranceGate(clock=runtime_clock, graph=operational_graph)
+        if operational_graph is not None
+        else None
+    )
+
+    dispatcher = Dispatcher(
+        template_validator=template_validator,
+        executors=frozen_executors,
+        clock=runtime_clock,
+    )
+
+    # Phase 195C: create governed dispatcher wrapping the raw one.
+    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
+    governed = GovernedDispatcher(
+        dispatcher,
+        effect_assurance=effect_assurance,
+        clock=runtime_clock,
+    )
 
     if restore_memory and memory_store is not None:
         working_memory, episodic_memory = memory_store.load_all(allow_missing=True)
@@ -216,5 +234,7 @@ def bootstrap_runtime(
         memory_store=memory_store,
         executors=frozen_executors,
         observers=frozen_observers,
+        effect_assurance=effect_assurance,
+        operational_graph=operational_graph,
         governed_dispatcher=governed,
     )

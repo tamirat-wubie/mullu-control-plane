@@ -13,6 +13,13 @@ data:
   MULLU_CORS_ORIGINS: ""  # Set to production frontend URL
   MULLU_STATE_DIR: "/data/state"
   MULLU_PII_SCAN: "true"
+  MULLU_COMMAND_LEDGER_BACKEND: "postgresql"
+  MULLU_TENANT_IDENTITY_BACKEND: "postgresql"
+  MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"
+  MULLU_GATEWAY_WORKER_BATCH_SIZE: "10"
+  MULLU_GATEWAY_WORKER_LEASE_SECONDS: "300"
+  MULLU_GATEWAY_WORKER_POLL_SECONDS: "2.0"
+  MULLU_COMMAND_ANCHOR_KEY_ID: "k8s-command-anchor"
   MULLU_JWT_ISSUER: "mullu"
   MULLU_JWT_AUDIENCE: "mullu-api"
 ---
@@ -28,6 +35,7 @@ stringData:
   OPENAI_API_KEY: ""
   MULLU_JWT_SECRET: ""  # base64-encoded 32-byte key — set via kubectl create secret
   MULLU_ENCRYPTION_KEY: ""  # base64-encoded 32-byte AES key — set via kubectl create secret
+  MULLU_COMMAND_ANCHOR_SECRET: ""  # HMAC secret for command event anchor signatures
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -194,7 +202,51 @@ spec:
       targetPort: 8001
   type: ClusterIP
 ---
-# ── Network Policy (restrict inter-pod traffic) ──
+# Gateway Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mullu-gateway-worker
+  namespace: mullu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mullu-gateway-worker
+  template:
+    metadata:
+      labels:
+        app: mullu-gateway-worker
+        governed: "true"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: mullu-gateway-worker
+          image: mullu-control-plane:latest
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: ["python", "-m", "gateway.worker"]
+          env:
+            - name: MULLU_GATEWAY_WORKER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          envFrom:
+            - configMapRef:
+                name: mullu-config
+            - secretRef:
+                name: mullu-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+# Network Policy (restrict inter-pod traffic)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -242,3 +294,14 @@ spec:
   selector:
     matchLabels:
       app: mullu-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mullu-gateway-worker-pdb
+  namespace: mullu
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mullu-gateway-worker

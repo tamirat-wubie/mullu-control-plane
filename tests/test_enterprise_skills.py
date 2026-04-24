@@ -7,13 +7,13 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import pytest
-from skills.enterprise.knowledge_base import KnowledgeBase, Document, RetrievalResult
-from skills.enterprise.notifications import (
+import pytest  # noqa: E402
+from skills.enterprise.knowledge_base import KnowledgeBase  # noqa: E402
+from skills.enterprise.notifications import (  # noqa: E402
     NotificationEngine, NotificationRule, NotificationChannel,
     NotificationPriority, NotificationType,
 )
-from skills.enterprise.task_scheduler import (
+from skills.enterprise.task_scheduler import (  # noqa: E402
     TaskScheduler, ScheduleInterval, TaskStatus,
 )
 

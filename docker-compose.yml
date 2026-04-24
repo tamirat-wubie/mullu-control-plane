@@ -94,6 +94,9 @@ services:
       MULLU_ENV: pilot
       MULLU_DB_BACKEND: postgresql
       MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_COMMAND_LEDGER_BACKEND: postgresql
+      MULLU_TENANT_IDENTITY_BACKEND: postgresql
+      MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
       # Channel credentials (set in .env):
@@ -116,6 +119,46 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Gateway Worker - command-spine continuation worker
+  gateway-worker:
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "gateway.worker"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DB_BACKEND: postgresql
+      MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
+      MULLU_COMMAND_LEDGER_BACKEND: postgresql
+      MULLU_TENANT_IDENTITY_BACKEND: postgresql
+      MULLU_GATEWAY_WORKER_ID: "gateway-worker-1"
+      MULLU_GATEWAY_WORKER_BATCH_SIZE: "10"
+      MULLU_GATEWAY_WORKER_LEASE_SECONDS: "300"
+      MULLU_GATEWAY_WORKER_POLL_SECONDS: "2.0"
+      MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"
+      MULLU_COMMAND_ANCHOR_SECRET: "${MULLU_COMMAND_ANCHOR_SECRET:-}"
+      MULLU_LLM_BACKEND: stub
+      MULLU_PII_SCAN: "true"
+      # Channel credentials are needed only if worker sends final responses through adapters:
+      # WHATSAPP_PHONE_NUMBER_ID: ""
+      # WHATSAPP_ACCESS_TOKEN: ""
+      # WHATSAPP_VERIFY_TOKEN: ""
+      # WHATSAPP_APP_SECRET: ""
+      # TELEGRAM_BOT_TOKEN: ""
+      # SLACK_BOT_TOKEN: ""
+      # SLACK_SIGNING_SECRET: ""
+      # DISCORD_BOT_TOKEN: ""
+      # DISCORD_PUBLIC_KEY: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mullu-net
     deploy:
       resources:
         limits:
