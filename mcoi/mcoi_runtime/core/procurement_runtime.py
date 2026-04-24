@@ -305,12 +305,17 @@ class ProcurementRuntimeEngine:
         return updated
 
     def approve_request(
-        self, request_id: str, *, decided_by: str = "approver",
+        self, request_id: str, *, decided_by: str = "",
     ) -> ProcurementRequest:
         """Approve a submitted request."""
         old = self.get_request(request_id)
         if old.status != ProcurementRequestStatus.SUBMITTED:
             raise RuntimeCoreInvariantError("Can only approve SUBMITTED requests")
+        normalized_decided_by = _require_human_actor(
+            "decided_by",
+            decided_by,
+            "decided_by required for approval",
+        )
         now = _now_iso()
         updated = ProcurementRequest(
             request_id=old.request_id, vendor_id=old.vendor_id,
@@ -328,23 +333,28 @@ class ProcurementRuntimeEngine:
             d = ProcurementDecision(
                 decision_id=did, request_id=request_id,
                 status=ProcurementDecisionStatus.APPROVED,
-                decided_by=decided_by, reason="Approved",
+                decided_by=normalized_decided_by, reason="Approved",
                 decided_at=now,
             )
             self._decisions[did] = d
 
         _emit(self._events, "request_approved", {
-            "request_id": request_id, "decided_by": decided_by,
+            "request_id": request_id, "decided_by": normalized_decided_by,
         }, request_id)
         return updated
 
     def deny_request(
-        self, request_id: str, *, decided_by: str = "approver", reason: str = "",
+        self, request_id: str, *, decided_by: str = "", reason: str = "",
     ) -> ProcurementRequest:
         """Deny a submitted request."""
         old = self.get_request(request_id)
         if old.status != ProcurementRequestStatus.SUBMITTED:
             raise RuntimeCoreInvariantError("Can only deny SUBMITTED requests")
+        normalized_decided_by = _require_human_actor(
+            "decided_by",
+            decided_by,
+            "decided_by required for denial",
+        )
         now = _now_iso()
         updated = ProcurementRequest(
             request_id=old.request_id, vendor_id=old.vendor_id,
@@ -361,13 +371,13 @@ class ProcurementRuntimeEngine:
             d = ProcurementDecision(
                 decision_id=did, request_id=request_id,
                 status=ProcurementDecisionStatus.DENIED,
-                decided_by=decided_by, reason=reason,
+                decided_by=normalized_decided_by, reason=reason,
                 decided_at=now,
             )
             self._decisions[did] = d
 
         _emit(self._events, "request_denied", {
-            "request_id": request_id, "decided_by": decided_by,
+            "request_id": request_id, "decided_by": normalized_decided_by,
         }, request_id)
         return updated
 

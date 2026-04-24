@@ -65,7 +65,7 @@ def submitted_engine(request_engine):
 @pytest.fixture()
 def approved_engine(submitted_engine):
     """Engine with a vendor and an approved request."""
-    submitted_engine.approve_request("req-1")
+    submitted_engine.approve_request("req-1", decided_by="approver-1")
     return submitted_engine
 
 
@@ -421,45 +421,57 @@ class TestSubmitRequest:
 
 class TestApproveRequest:
     def test_approves_submitted(self, submitted_engine):
-        r = submitted_engine.approve_request("req-1")
+        r = submitted_engine.approve_request("req-1", decided_by="approver-1")
         assert r.status == ProcurementRequestStatus.APPROVED
 
     def test_non_submitted_raises(self, request_engine):
         with pytest.raises(RuntimeCoreInvariantError, match="SUBMITTED"):
-            request_engine.approve_request("req-1")
+            request_engine.approve_request("req-1", decided_by="approver-1")
 
     def test_already_approved_raises(self, approved_engine):
         with pytest.raises(RuntimeCoreInvariantError):
-            approved_engine.approve_request("req-1")
+            approved_engine.approve_request("req-1", decided_by="approver-1")
 
     def test_creates_decision(self, submitted_engine):
-        submitted_engine.approve_request("req-1")
+        submitted_engine.approve_request("req-1", decided_by="approver-1")
         assert submitted_engine.decision_count == 1
 
-    def test_default_decided_by(self, submitted_engine):
-        submitted_engine.approve_request("req-1")
-        assert submitted_engine.decision_count >= 1
+    def test_decided_by_required_for_approval(self, submitted_engine):
+        with pytest.raises(RuntimeCoreInvariantError, match="^decided_by required for approval$") as exc_info:
+            submitted_engine.approve_request("req-1")
+        message = str(exc_info.value)
+        assert message == "decided_by required for approval"
+        assert submitted_engine.get_request("req-1").status == ProcurementRequestStatus.SUBMITTED
+        assert submitted_engine.decision_count == 0
+
+    def test_system_decided_by_rejected_for_approval(self, submitted_engine):
+        with pytest.raises(RuntimeCoreInvariantError, match="^decided_by must exclude system$") as exc_info:
+            submitted_engine.approve_request("req-1", decided_by="system")
+        message = str(exc_info.value)
+        assert message == "decided_by must exclude system"
+        assert submitted_engine.get_request("req-1").status == ProcurementRequestStatus.SUBMITTED
+        assert submitted_engine.decision_count == 0
 
     def test_custom_decided_by(self, submitted_engine):
         submitted_engine.approve_request("req-1", decided_by="manager")
         assert submitted_engine.decision_count >= 1
 
     def test_preserves_amount(self, submitted_engine):
-        r = submitted_engine.approve_request("req-1")
+        r = submitted_engine.approve_request("req-1", decided_by="approver-1")
         assert r.estimated_amount == 5000.0
 
 
 class TestDenyRequest:
     def test_denies_submitted(self, submitted_engine):
-        r = submitted_engine.deny_request("req-1")
+        r = submitted_engine.deny_request("req-1", decided_by="approver-1")
         assert r.status == ProcurementRequestStatus.DENIED
 
     def test_non_submitted_raises(self, request_engine):
         with pytest.raises(RuntimeCoreInvariantError, match="SUBMITTED"):
-            request_engine.deny_request("req-1")
+            request_engine.deny_request("req-1", decided_by="approver-1")
 
     def test_creates_decision(self, submitted_engine):
-        submitted_engine.deny_request("req-1")
+        submitted_engine.deny_request("req-1", decided_by="approver-1")
         assert submitted_engine.decision_count == 1
 
     def test_custom_decided_by(self, submitted_engine):
@@ -467,16 +479,32 @@ class TestDenyRequest:
         assert submitted_engine.decision_count >= 1
 
     def test_custom_reason(self, submitted_engine):
-        submitted_engine.deny_request("req-1", reason="Over budget")
+        submitted_engine.deny_request("req-1", decided_by="approver-1", reason="Over budget")
         assert submitted_engine.decision_count >= 1
 
+    def test_decided_by_required_for_denial(self, submitted_engine):
+        with pytest.raises(RuntimeCoreInvariantError, match="^decided_by required for denial$") as exc_info:
+            submitted_engine.deny_request("req-1")
+        message = str(exc_info.value)
+        assert message == "decided_by required for denial"
+        assert submitted_engine.get_request("req-1").status == ProcurementRequestStatus.SUBMITTED
+        assert submitted_engine.decision_count == 0
+
+    def test_system_decided_by_rejected_for_denial(self, submitted_engine):
+        with pytest.raises(RuntimeCoreInvariantError, match="^decided_by must exclude system$") as exc_info:
+            submitted_engine.deny_request("req-1", decided_by="system")
+        message = str(exc_info.value)
+        assert message == "decided_by must exclude system"
+        assert submitted_engine.get_request("req-1").status == ProcurementRequestStatus.SUBMITTED
+        assert submitted_engine.decision_count == 0
+
     def test_denied_cannot_approve(self, submitted_engine):
-        submitted_engine.deny_request("req-1")
+        submitted_engine.deny_request("req-1", decided_by="approver-1")
         with pytest.raises(RuntimeCoreInvariantError):
-            submitted_engine.approve_request("req-1")
+            submitted_engine.approve_request("req-1", decided_by="approver-1")
 
     def test_denied_cannot_cancel(self, submitted_engine):
-        submitted_engine.deny_request("req-1")
+        submitted_engine.deny_request("req-1", decided_by="approver-1")
         with pytest.raises(RuntimeCoreInvariantError):
             submitted_engine.cancel_request("req-1", cancelled_by="ops-1")
 
@@ -512,7 +540,7 @@ class TestCancelRequest:
         assert request_engine.get_request("req-1").status == ProcurementRequestStatus.DRAFT
 
     def test_cancel_denied_raises(self, submitted_engine):
-        submitted_engine.deny_request("req-1")
+        submitted_engine.deny_request("req-1", decided_by="approver-1")
         with pytest.raises(RuntimeCoreInvariantError):
             submitted_engine.cancel_request("req-1", cancelled_by="ops-1")
 
@@ -602,7 +630,7 @@ class TestIssuePo:
         po_engine.register_vendor("v-2", "Beta", "tenant-1")
         po_engine.create_request("req-2", "v-2", "tenant-1", 3000.0)
         po_engine.submit_request("req-2")
-        po_engine.approve_request("req-2")
+        po_engine.approve_request("req-2", decided_by="approver-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate"):
             po_engine.issue_po("po-1", "req-2")
 
@@ -748,11 +776,11 @@ class TestPosForVendor:
         engine.register_vendor("v-2", "Beta", "t-1")
         engine.create_request("r-1", "v-1", "t-1", 1000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         engine.create_request("r-2", "v-2", "t-1", 2000.0)
         engine.submit_request("r-2")
-        engine.approve_request("r-2")
+        engine.approve_request("r-2", decided_by="approver-2")
         engine.issue_po("po-2", "r-2")
         assert len(engine.pos_for_vendor("v-1")) == 1
         assert len(engine.pos_for_vendor("v-2")) == 1
@@ -1362,11 +1390,11 @@ class TestProcurementSnapshot:
         engine.register_vendor("v-2", "Beta", "t-1")
         engine.create_request("r-1", "v-1", "t-1", 1000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         engine.create_request("r-2", "v-2", "t-1", 2000.0)
         engine.submit_request("r-2")
-        engine.approve_request("r-2")
+        engine.approve_request("r-2", decided_by="approver-2")
         engine.issue_po("po-2", "r-2")
         s = engine.procurement_snapshot("snap-1")
         assert s.total_procurement_value == 3000.0
@@ -1376,11 +1404,11 @@ class TestProcurementSnapshot:
         engine.register_vendor("v-2", "Beta", "t-1")
         engine.create_request("r-1", "v-1", "t-1", 1000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         engine.create_request("r-2", "v-2", "t-1", 2000.0)
         engine.submit_request("r-2")
-        engine.approve_request("r-2")
+        engine.approve_request("r-2", decided_by="approver-2")
         engine.issue_po("po-2", "r-2")
         engine.cancel_po("po-1")
         s = engine.procurement_snapshot("snap-1")
@@ -1489,7 +1517,7 @@ class TestProperties:
 
     def test_decision_count(self, submitted_engine):
         assert submitted_engine.decision_count == 0
-        submitted_engine.approve_request("req-1")
+        submitted_engine.approve_request("req-1", decided_by="approver-1")
         assert submitted_engine.decision_count == 1
 
     def test_renewal_count(self, vendor_engine):
@@ -1528,14 +1556,14 @@ class TestGoldenScenario1BudgetApprovedRequestCreatesPO:
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("req-1", "v-1", "t-1", 5000.0)
         engine.submit_request("req-1")
-        engine.approve_request("req-1")
+        engine.approve_request("req-1", decided_by="approver-1")
         assert engine.decision_count == 1
 
     def test_po_vendor_matches(self, engine):
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("req-1", "v-1", "t-1", 5000.0)
         engine.submit_request("req-1")
-        engine.approve_request("req-1")
+        engine.approve_request("req-1", decided_by="approver-1")
         po = engine.issue_po("po-1", "req-1")
         assert po.vendor_id == "v-1"
 
@@ -1543,7 +1571,7 @@ class TestGoldenScenario1BudgetApprovedRequestCreatesPO:
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("req-1", "v-1", "t-1", 5000.0, currency="GBP")
         engine.submit_request("req-1")
-        engine.approve_request("req-1")
+        engine.approve_request("req-1", decided_by="approver-1")
         po = engine.issue_po("po-1", "req-1")
         assert po.currency == "GBP"
 
@@ -1552,7 +1580,7 @@ class TestGoldenScenario1BudgetApprovedRequestCreatesPO:
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("req-1", "v-1", "t-1", 5000.0)
         engine.submit_request("req-1")
-        engine.approve_request("req-1")
+        engine.approve_request("req-1", decided_by="approver-1")
         engine.issue_po("po-1", "req-1")
         assert es.event_count >= 5
 
@@ -1578,7 +1606,7 @@ class TestGoldenScenario2MissingApprovalBlocksPO:
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("req-1", "v-1", "t-1", 5000.0)
         engine.submit_request("req-1")
-        engine.deny_request("req-1")
+        engine.deny_request("req-1", decided_by="approver-1")
         with pytest.raises(RuntimeCoreInvariantError, match="APPROVED"):
             engine.issue_po("po-1", "req-1")
 
@@ -1714,12 +1742,12 @@ class TestGoldenScenario6SnapshotReflectsState:
         # Two requests, one approved with PO
         engine.create_request("r-1", "v-1", "t-1", 1000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         # Second request denied
         engine.create_request("r-2", "v-2", "t-1", 2000.0)
         engine.submit_request("r-2")
-        engine.deny_request("r-2")
+        engine.deny_request("r-2", decided_by="approver-2")
         # Assessment and commitment
         engine.assess_vendor("a-1", "v-1", 0.9, 0)
         engine.register_commitment("c-1", "v-1", "contract-100")
@@ -1740,7 +1768,7 @@ class TestGoldenScenario6SnapshotReflectsState:
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("r-1", "v-1", "t-1", 5000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         engine.assess_vendor("a-1", "v-1", 0.3, 4)
         engine.detect_procurement_violations()
@@ -1753,11 +1781,11 @@ class TestGoldenScenario6SnapshotReflectsState:
         engine.register_vendor("v-2", "Beta", "t-1")
         engine.create_request("r-1", "v-1", "t-1", 1000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         engine.create_request("r-2", "v-2", "t-1", 3000.0)
         engine.submit_request("r-2")
-        engine.approve_request("r-2")
+        engine.approve_request("r-2", decided_by="approver-2")
         engine.issue_po("po-2", "r-2")
         engine.cancel_po("po-2")
         snap = engine.procurement_snapshot("snap-1")
@@ -1809,7 +1837,7 @@ class TestRequestStatusTransitions:
         engine.register_vendor("v-1", "Acme", "t-1")
         engine.create_request("r-1", "v-1", "t-1", 1000.0)
         engine.submit_request("r-1")
-        engine.approve_request("r-1")
+        engine.approve_request("r-1", decided_by="approver-1")
         engine.issue_po("po-1", "r-1")
         assert engine.get_request("r-1").status == ProcurementRequestStatus.FULFILLED
 
@@ -1819,7 +1847,7 @@ class TestRequestStatusTransitions:
         assert r.cancelled_by == "ops-1"
 
     def test_submitted_to_denied(self, submitted_engine):
-        r = submitted_engine.deny_request("req-1")
+        r = submitted_engine.deny_request("req-1", decided_by="approver-1")
         assert r.status == ProcurementRequestStatus.DENIED
 
 
@@ -1861,8 +1889,8 @@ class TestMultiVendorWorkflows:
         engine.create_request("r-2", "v-2", "t-1", 2000.0)
         engine.submit_request("r-1")
         engine.submit_request("r-2")
-        engine.approve_request("r-1")
-        engine.deny_request("r-2")
+        engine.approve_request("r-1", decided_by="approver-1")
+        engine.deny_request("r-2", decided_by="approver-2")
         assert engine.get_request("r-1").status == ProcurementRequestStatus.APPROVED
         assert engine.get_request("r-2").status == ProcurementRequestStatus.DENIED
 
@@ -1931,6 +1959,24 @@ class TestEventEmission:
         event = es.list_events(correlation_id="r-1")[-1]
         assert event.payload["action"] == "request_cancelled"
         assert event.payload["cancelled_by"] == "ops-1"
+        assert event.payload["request_id"] == "r-1"
+
+    def test_request_approval_event_includes_decided_by(self, es, vendor_engine):
+        vendor_engine.create_request("r-1", "v-1", "tenant-1", 1000.0)
+        vendor_engine.submit_request("r-1")
+        vendor_engine.approve_request("r-1", decided_by="approver-1")
+        event = es.list_events(correlation_id="r-1")[-1]
+        assert event.payload["action"] == "request_approved"
+        assert event.payload["decided_by"] == "approver-1"
+        assert event.payload["request_id"] == "r-1"
+
+    def test_request_denial_event_includes_decided_by(self, es, vendor_engine):
+        vendor_engine.create_request("r-1", "v-1", "tenant-1", 1000.0)
+        vendor_engine.submit_request("r-1")
+        vendor_engine.deny_request("r-1", decided_by="approver-1")
+        event = es.list_events(correlation_id="r-1")[-1]
+        assert event.payload["action"] == "request_denied"
+        assert event.payload["decided_by"] == "approver-1"
         assert event.payload["request_id"] == "r-1"
 
     def test_po_issuance_emits(self, es, approved_engine):
