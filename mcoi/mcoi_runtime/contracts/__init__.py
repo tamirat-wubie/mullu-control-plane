@@ -20,6 +20,7 @@ from .compensation import (
     CompensationPlan,
     CompensationStatus,
 )
+from .terminal_closure import TerminalClosureCertificate, TerminalClosureDisposition
 from .change_assurance import (
     AssuranceDisposition,
     BlastRadiusReport,

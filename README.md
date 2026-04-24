@@ -181,6 +181,12 @@ and successful compensation outcomes can be admitted into append-only episodic
 memory without skipping into semantic or procedural memory. See
 `docs/36_closure_memory_promotion.md`.
 
+### Terminal Closure Certificate
+
+Effect-bearing commands can be capped with a final certificate that names exactly
+one disposition: committed, compensated, accepted risk, or requires review. See
+`docs/37_terminal_closure_certificate.md`.
+
 ## Deployment
 
 ```bash
