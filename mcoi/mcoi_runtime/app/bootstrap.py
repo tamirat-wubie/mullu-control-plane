@@ -163,16 +163,6 @@ def bootstrap_runtime(
     frozen_executors: Mapping[str, ExecutorAdapter] = MappingProxyType(dict(executor_map))
     frozen_observers: Mapping[str, ObserverAdapter[object]] = MappingProxyType(dict(observer_map))
 
-    dispatcher = Dispatcher(
-        template_validator=template_validator,
-        executors=frozen_executors,
-        clock=runtime_clock,
-    )
-
-    # Phase 195C: create governed dispatcher wrapping the raw one
-    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
-    governed = GovernedDispatcher(dispatcher, clock=runtime_clock)
-
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
@@ -186,6 +176,20 @@ def bootstrap_runtime(
         EffectAssuranceGate(clock=runtime_clock)
         if app_config.effect_assurance_required
         else None
+    )
+
+    dispatcher = Dispatcher(
+        template_validator=template_validator,
+        executors=frozen_executors,
+        clock=runtime_clock,
+    )
+
+    # Phase 195C: create governed dispatcher wrapping the raw one.
+    from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
+    governed = GovernedDispatcher(
+        dispatcher,
+        effect_assurance=effect_assurance,
+        clock=runtime_clock,
     )
 
     if restore_memory and memory_store is not None:

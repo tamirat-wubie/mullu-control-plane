@@ -9,16 +9,23 @@ Invariants: fail-closed on any gate failure, all actions are identity-bound and 
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable
-from datetime import datetime, timezone
 from hashlib import sha256
 
 from mcoi_runtime.core.dispatcher import Dispatcher, DispatchRequest
+from mcoi_runtime.contracts.effect_assurance import (
+    EffectPlan,
+    ExpectedEffect,
+    ReconciliationStatus,
+)
 from mcoi_runtime.contracts.execution import ExecutionResult, ExecutionOutcome
 from mcoi_runtime.adapters.executor_base import build_failure_result, ExecutionFailure, utc_now_text
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 from mcoi_runtime.core.system_closure import (
-    IngestionValidator, ExecutionVerificationLoop, TemporalScheduler,
-    FailureRecoveryEngine, SimRealityBoundary,
+    ExecutionVerificationLoop,
+    FailureRecoveryEngine,
+    SimRealityBoundary,
 )
 from mcoi_runtime.core.system_stabilization import (
     IdentityBindingEngine, OntologyEnforcer, EquilibriumEngine,
@@ -84,6 +91,8 @@ class GovernedDispatcher:
         verifier: ExecutionVerificationLoop | None = None,
         recovery: FailureRecoveryEngine | None = None,
         boundary: SimRealityBoundary | None = None,
+        effect_assurance: EffectAssuranceGate | None = None,
+        effect_assurance_tenant_id: str = "operator",
         clock: Callable[[], str] = utc_now_text,
     ):
         self._dispatcher = dispatcher
@@ -97,6 +106,8 @@ class GovernedDispatcher:
         self._verifier = verifier or ExecutionVerificationLoop()
         self._recovery = recovery or FailureRecoveryEngine()
         self._boundary = boundary or SimRealityBoundary()
+        self._effect_assurance = effect_assurance
+        self._effect_assurance_tenant_id = effect_assurance_tenant_id
         self._clock = clock
         self._ledger: list[dict[str, Any]] = []
 
@@ -107,7 +118,7 @@ class GovernedDispatcher:
 
         # --- Gate 1: Identity Binding ---
         try:
-            intent = self._identity.sign_intent(
+            self._identity.sign_intent(
                 context.intent_id, context.actor_id,
                 context.request.route, context.request.goal_id,
             )
@@ -165,8 +176,38 @@ class GovernedDispatcher:
         result.gates_passed.append(GateResult("promotion_boundary", True, f"mode={self._boundary.current_mode}"))
 
         # --- DISPATCH ---
+        effect_plan = None
+        if self._effect_assurance is not None:
+            try:
+                effect_plan = self._effect_assurance.create_plan(
+                    command_id=context.intent_id,
+                    tenant_id=self._effect_assurance_tenant_id,
+                    capability_id=context.request.route,
+                    expected_effects=_expected_effects_from_request(context.request),
+                    forbidden_effects=_forbidden_effects_from_request(context.request),
+                )
+                result.gates_passed.append(
+                    GateResult("effect_plan", True, effect_plan.effect_plan_id)
+                )
+            except (RuntimeCoreInvariantError, ValueError) as exc:
+                bounded_error = _bounded_gate_error("effect plan failed", exc)
+                result.gates_failed.append(GateResult("effect_plan", False, bounded_error))
+                result.blocked = True
+                result.block_reason = "effect_plan blocked"
+                self._emit_ledger(context, result, now)
+                return result
+
         exec_result = self._dispatcher.dispatch(context.request)
         result.execution_result = exec_result
+
+        if self._effect_assurance is not None and effect_plan is not None:
+            assurance_result = self._assure_execution_effect(
+                context=context,
+                execution_result=exec_result,
+                effect_plan=effect_plan,
+            )
+            result.execution_result = assurance_result
+            exec_result = assurance_result
 
         # --- Post: Execution Verification ---
         expected = "success" if exec_result.status == ExecutionOutcome.SUCCEEDED else "failure"
@@ -182,7 +223,7 @@ class GovernedDispatcher:
             )
 
         # --- Post: Action Binding ---
-        binding = self._identity.bind_action(
+        self._identity.bind_action(
             f"bind-{context.intent_id}", context.intent_id,
             exec_result.execution_id,
         )
@@ -197,6 +238,91 @@ class GovernedDispatcher:
         self._emit_ledger(context, result, now)
 
         return result
+
+    def _assure_execution_effect(
+        self,
+        *,
+        context: GovernedDispatchContext,
+        execution_result: ExecutionResult,
+        effect_plan: EffectPlan,
+    ) -> ExecutionResult:
+        """Observe, verify, and reconcile actual effects after dispatch."""
+        try:
+            observed = self._effect_assurance.observe(execution_result)
+            verification = self._effect_assurance.verify(
+                plan=effect_plan,
+                execution_result=execution_result,
+                observed_effects=observed,
+            )
+            reconciliation = self._effect_assurance.reconcile(
+                plan=effect_plan,
+                observed_effects=observed,
+                verification_result=verification,
+            )
+        except (RuntimeCoreInvariantError, ValueError) as exc:
+            now = self._clock()
+            return build_failure_result(
+                execution_id=execution_result.execution_id,
+                goal_id=execution_result.goal_id,
+                started_at=execution_result.started_at,
+                finished_at=now,
+                failure=ExecutionFailure(
+                    code="effect_assurance_failed",
+                    message="effect assurance observation failed",
+                    details={
+                        "route": context.request.route,
+                        "reason": _bounded_gate_error("effect assurance failed", exc),
+                    },
+                ),
+                effect_name="effect_assurance_failed",
+                metadata={
+                    **dict(execution_result.metadata),
+                    "effect_assurance_error": _bounded_gate_error(
+                        "effect assurance failed",
+                        exc,
+                    ),
+                },
+            )
+
+        assurance_metadata = {
+            "effect_plan_id": effect_plan.effect_plan_id,
+            "verification_result_id": verification.verification_id,
+            "reconciliation_id": reconciliation.reconciliation_id,
+            "reconciliation_status": reconciliation.status.value,
+        }
+        if reconciliation.status is not ReconciliationStatus.MATCH:
+            now = self._clock()
+            return build_failure_result(
+                execution_id=execution_result.execution_id,
+                goal_id=execution_result.goal_id,
+                started_at=execution_result.started_at,
+                finished_at=now,
+                failure=ExecutionFailure(
+                    code="effect_reconciliation_mismatch",
+                    message="effect reconciliation did not match expected effects",
+                    details=assurance_metadata,
+                ),
+                effect_name="effect_reconciliation_mismatch",
+                metadata={
+                    **dict(execution_result.metadata),
+                    "effect_assurance": assurance_metadata,
+                },
+            )
+
+        return ExecutionResult(
+            execution_id=execution_result.execution_id,
+            goal_id=execution_result.goal_id,
+            status=execution_result.status,
+            actual_effects=execution_result.actual_effects,
+            assumed_effects=execution_result.assumed_effects,
+            started_at=execution_result.started_at,
+            finished_at=execution_result.finished_at,
+            metadata={
+                **dict(execution_result.metadata),
+                "effect_assurance": assurance_metadata,
+            },
+            extensions=execution_result.extensions,
+        )
 
     def _emit_ledger(self, context: GovernedDispatchContext, result: GovernedDispatchResult, timestamp: str) -> None:
         entry = {
@@ -221,3 +347,40 @@ class GovernedDispatcher:
     @property
     def ledger(self) -> tuple[dict[str, Any], ...]:
         return tuple(self._ledger)
+
+
+def _expected_effects_from_request(request: DispatchRequest) -> tuple[ExpectedEffect, ...]:
+    """Build required expected effects from dispatch template metadata."""
+    declared = _string_tuple(request.template.get("declared_effects"))
+    if not declared:
+        declared = _default_declared_effects(request.route)
+    return tuple(
+        ExpectedEffect(
+            effect_id=effect_name,
+            name=effect_name,
+            target_ref=request.goal_id,
+            required=True,
+            verification_method="actual_effect",
+        )
+        for effect_name in declared
+    )
+
+
+def _forbidden_effects_from_request(request: DispatchRequest) -> tuple[str, ...]:
+    """Build forbidden effect names from dispatch template metadata."""
+    forbidden = _string_tuple(request.template.get("forbidden_effects"))
+    if forbidden:
+        return forbidden
+    return (f"{request.route}:unexpected_duplicate",)
+
+
+def _default_declared_effects(route: str) -> tuple[str, ...]:
+    if route == "shell_command":
+        return ("process_completed",)
+    return ("execution_completed",)
+
+
+def _string_tuple(value: object) -> tuple[str, ...]:
+    if not isinstance(value, (list, tuple)):
+        return ()
+    return tuple(item for item in value if isinstance(item, str) and item.strip())

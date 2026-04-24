@@ -38,6 +38,8 @@ _TEMPLATE_TEXT_REQUIREMENTS = {
 }
 _TEMPLATE_SEQUENCE_REQUIREMENTS = {
     "required_parameters": "required_parameters must be a sequence of strings",
+    "declared_effects": "declared_effects must be a sequence of strings",
+    "forbidden_effects": "forbidden_effects must be a sequence of strings",
 }
 _TEMPLATE_NON_EMPTY_SEQUENCE_REQUIREMENTS = {
     "required_parameters": "required_parameters must contain at least one item",
@@ -103,7 +105,9 @@ class TemplateValidator:
         "command_argv",
         "required_parameters",
         "cwd",
+        "declared_effects",
         "environment",
+        "forbidden_effects",
         "timeout_seconds",
     }
 
@@ -134,6 +138,16 @@ class TemplateValidator:
         required_parameters = self._sequence_of_text(
             template.get("required_parameters", ()),
             field_name="required_parameters",
+            allow_empty=True,
+        )
+        self._sequence_of_text(
+            template.get("declared_effects", ()),
+            field_name="declared_effects",
+            allow_empty=True,
+        )
+        self._sequence_of_text(
+            template.get("forbidden_effects", ()),
+            field_name="forbidden_effects",
             allow_empty=True,
         )
         normalized_bindings = self._normalized_bindings(bindings)

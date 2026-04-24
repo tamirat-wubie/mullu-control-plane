@@ -8,15 +8,15 @@ Invariants: governed path is opt-in; raw dispatch fallback always works.
 """
 from __future__ import annotations
 
-import pytest
 from dataclasses import dataclass
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
-from mcoi_runtime.adapters.filesystem_observer import FilesystemObservationMode, FilesystemObservationRequest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
+from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.governed_execution import governed_operator_dispatch
-from mcoi_runtime.app.operator_loop import ObservationDirective, OperatorLoop, OperatorRequest
+from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.governed_dispatcher import (
@@ -30,7 +30,8 @@ from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnow
 from mcoi_runtime.core.template_validator import TemplateValidator
 
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00+00:00"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00+00:00"
 
 VALID_TEMPLATE = {
     "template_id": "tpl-gov-op-1",
@@ -205,7 +206,7 @@ def test_operator_executors_uses_governed_when_available() -> None:
     assert runtime.governed_dispatcher is not None, "bootstrap_runtime should create governed_dispatcher"
 
     step_executor = _GovernedStepExecutor(runtime=runtime)
-    outcome = step_executor.execute_step(
+    step_executor.execute_step(
         step_id="step-gov-1",
         action_type="shell_command",
         input_bindings={"msg": "governed-hello"},
@@ -256,3 +257,82 @@ def test_operator_loop_uses_governed_when_available() -> None:
     assert report.execution_result.status is ExecutionOutcome.SUCCEEDED
     # governed dispatcher ledger should have entries
     assert runtime.governed_dispatcher.ledger_count >= 1
+
+
+def test_operator_loop_effect_assurance_reconciles_when_required() -> None:
+    """High-risk runtime profiles require successful effect reconciliation."""
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        config=AppConfig(effect_assurance_required=True),
+        clock=FIXED_CLOCK,
+        executors={"shell_command": executor},
+    )
+    loop = OperatorLoop(runtime)
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-effect-assurance-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template=VALID_TEMPLATE,
+            bindings={"msg": "observed"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            evidence_entries=(
+                EvidenceInput(
+                    evidence_id="evidence-1",
+                    state_key="workspace.seed",
+                    value={"ready": True},
+                    category=EvidenceStateCategory.OBSERVED,
+                ),
+            ),
+        )
+    )
+
+    assert report.dispatched is True
+    assert report.execution_result is not None
+    assert report.execution_result.status is ExecutionOutcome.SUCCEEDED
+    assert report.execution_result.metadata["effect_assurance"]["reconciliation_status"] == "match"
+
+
+def test_operator_loop_effect_assurance_fails_closed_on_mismatch() -> None:
+    """A successful adapter result cannot pass when declared effects do not match observation."""
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        config=AppConfig(effect_assurance_required=True),
+        clock=FIXED_CLOCK,
+        executors={"shell_command": executor},
+    )
+    template = {**VALID_TEMPLATE, "declared_effects": ("different_effect",)}
+    loop = OperatorLoop(runtime)
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-effect-assurance-2",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template=template,
+            bindings={"msg": "observed"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            evidence_entries=(
+                EvidenceInput(
+                    evidence_id="evidence-1",
+                    state_key="workspace.seed",
+                    value={"ready": True},
+                    category=EvidenceStateCategory.OBSERVED,
+                ),
+            ),
+        )
+    )
+
+    assert report.dispatched is True
+    assert report.execution_result is not None
+    assert report.execution_result.status is ExecutionOutcome.FAILED
+    assert report.execution_result.actual_effects[0].name == "effect_reconciliation_mismatch"
+    assert (
+        report.execution_result.metadata["effect_assurance"]["reconciliation_status"]
+        == "mismatch"
+    )
