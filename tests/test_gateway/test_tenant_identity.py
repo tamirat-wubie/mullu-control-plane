@@ -7,14 +7,18 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.router import GatewayRouter  # noqa: E402
+import gateway.tenant_identity as tenant_identity_module  # noqa: E402
 from gateway.tenant_identity import (  # noqa: E402
     InMemoryTenantIdentityStore,
     TenantMapping,
+    TenantIdentityConfigurationError,
     build_tenant_identity_store_from_env,
 )
 
@@ -66,11 +70,67 @@ def test_in_memory_tenant_identity_store_does_not_resolve_revoked_mapping():
 
 def test_build_tenant_identity_store_from_env_uses_memory_backend(monkeypatch):
     monkeypatch.setitem(os.environ, "MULLU_TENANT_IDENTITY_BACKEND", "memory")
+    monkeypatch.delenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", raising=False)
+    monkeypatch.setitem(os.environ, "MULLU_ENV", "local_dev")
 
     store = build_tenant_identity_store_from_env(clock=lambda: "2026-04-24T12:00:00+00:00")
 
     assert store.status()["backend"] == "memory"
+    assert store.status()["persistent"] is False
+    assert store.status()["available"] is True
     assert store.count() == 0
+
+
+def test_build_tenant_identity_store_rejects_memory_when_persistent_required(monkeypatch):
+    monkeypatch.setitem(os.environ, "MULLU_TENANT_IDENTITY_BACKEND", "memory")
+    monkeypatch.setitem(os.environ, "MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "true")
+    monkeypatch.setitem(os.environ, "MULLU_ENV", "local_dev")
+
+    with pytest.raises(
+        TenantIdentityConfigurationError,
+        match="^persistent tenant identity store required$",
+    ):
+        build_tenant_identity_store_from_env(clock=lambda: "2026-04-24T12:00:00+00:00")
+
+
+def test_build_tenant_identity_store_requires_persistence_in_pilot(monkeypatch):
+    monkeypatch.setitem(os.environ, "MULLU_TENANT_IDENTITY_BACKEND", "memory")
+    monkeypatch.delenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", raising=False)
+    monkeypatch.setitem(os.environ, "MULLU_ENV", "pilot")
+
+    with pytest.raises(
+        TenantIdentityConfigurationError,
+        match="^persistent tenant identity store required$",
+    ):
+        build_tenant_identity_store_from_env(clock=lambda: "2026-04-24T12:00:00+00:00")
+
+
+def test_build_tenant_identity_store_rejects_unavailable_postgres_when_required(monkeypatch):
+    class UnavailablePostgresStore:
+        def __init__(self, *_args, **_kwargs):
+            self.closed = False
+
+        def status(self):
+            return {
+                "backend": "postgresql",
+                "persistent": True,
+                "available": False,
+                "active_mappings": 0,
+            }
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setitem(os.environ, "MULLU_TENANT_IDENTITY_BACKEND", "postgresql")
+    monkeypatch.setitem(os.environ, "MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "true")
+    monkeypatch.setitem(os.environ, "MULLU_TENANT_IDENTITY_DB_URL", "postgresql://example/mullu")
+    monkeypatch.setattr(tenant_identity_module, "PostgresTenantIdentityStore", UnavailablePostgresStore)
+
+    with pytest.raises(
+        TenantIdentityConfigurationError,
+        match="^persistent tenant identity store unavailable$",
+    ):
+        build_tenant_identity_store_from_env(clock=lambda: "2026-04-24T12:00:00+00:00")
 
 
 def test_router_uses_injected_tenant_identity_store():

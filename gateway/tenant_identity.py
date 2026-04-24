@@ -39,6 +39,10 @@ class TenantMapping:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+class TenantIdentityConfigurationError(ValueError):
+    """Raised when gateway identity persistence violates deployment policy."""
+
+
 class TenantIdentityStore:
     """Persistence contract for gateway tenant identity mappings."""
 
@@ -56,7 +60,7 @@ class TenantIdentityStore:
 
     def status(self) -> dict[str, Any]:
         """Return store status for gateway health."""
-        return {"backend": "unknown"}
+        return {"backend": "unknown", "persistent": False, "available": False}
 
 
 class InMemoryTenantIdentityStore(TenantIdentityStore):
@@ -98,6 +102,7 @@ class InMemoryTenantIdentityStore(TenantIdentityStore):
     def status(self) -> dict[str, Any]:
         return {
             "backend": "memory",
+            "persistent": False,
             "active_mappings": self.count(),
             "available": True,
         }
@@ -266,6 +271,7 @@ class PostgresTenantIdentityStore(TenantIdentityStore):
     def status(self) -> dict[str, Any]:
         return {
             "backend": "postgresql",
+            "persistent": True,
             "available": self._conn is not None,
             "driver_available": self._available,
             "active_mappings": self.count(),
@@ -287,18 +293,38 @@ def build_tenant_identity_store_from_env(
     """Create a tenant identity store using gateway persistence environment."""
     import os
 
+    gateway_env = os.environ.get("MULLU_ENV", "local_dev").strip().lower()
+    require_persistent = _truthy_env(
+        os.environ.get("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "")
+    )
+    if not os.environ.get("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY"):
+        require_persistent = gateway_env in {"pilot", "pilot_prod", "prod", "production"}
+
     backend = os.environ.get("MULLU_TENANT_IDENTITY_BACKEND", "")
     if not backend:
         backend = os.environ.get("MULLU_DB_BACKEND", "memory")
     backend = backend.strip().lower()
+    if require_persistent and backend != "postgresql":
+        raise TenantIdentityConfigurationError("persistent tenant identity store required")
     if backend == "postgresql":
         connection_string = os.environ.get("MULLU_TENANT_IDENTITY_DB_URL", "")
         if not connection_string:
             connection_string = os.environ.get("MULLU_DB_URL", "")
-        return PostgresTenantIdentityStore(
+        store = PostgresTenantIdentityStore(
             connection_string or "postgresql://localhost:5432/mullu",
             clock=clock,
         )
+        status = store.status()
+        if require_persistent and not status.get("available"):
+            close = getattr(store, "close", None)
+            if callable(close):
+                close()
+            raise TenantIdentityConfigurationError("persistent tenant identity store unavailable")
+        return store
     if backend == "memory":
         return InMemoryTenantIdentityStore(clock=clock)
     raise ValueError("unsupported tenant identity backend")
+
+
+def _truthy_env(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes", "on"}
