@@ -3,12 +3,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
+
+
+def _knowledge_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
 
 
 class AddEntityRequest(BaseModel):
@@ -69,7 +73,10 @@ def query_entities(entity_type: str = "", min_trust: float = 0.0, limit: int = 5
         try:
             etype = EntityType(entity_type)
         except ValueError:
-            pass
+            raise HTTPException(
+                400,
+                detail=_knowledge_error_detail("invalid entity type", "invalid_entity_type"),
+            )
     entities = deps.knowledge_graph.query(entity_type=etype, min_trust=min_trust, limit=limit)
     return {
         "entities": [
@@ -117,13 +124,13 @@ def entity_links(entity_id: str):
         "entity_id": entity_id,
         "links": [
             {
-                "link_id": l.link_id,
-                "from": l.from_entity,
-                "to": l.to_entity,
-                "relationship": l.relationship,
-                "strength": l.strength.value,
+                "link_id": link.link_id,
+                "from": link.from_entity,
+                "to": link.to_entity,
+                "relationship": link.relationship,
+                "strength": link.strength.value,
             }
-            for l in links
+            for link in links
         ],
         "count": len(links),
         "governed": True,
