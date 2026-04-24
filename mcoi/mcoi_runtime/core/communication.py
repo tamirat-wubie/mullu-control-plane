@@ -355,6 +355,26 @@ class CommunicationEngine:
                 error_code="effect_reconciliation_mismatch",
                 metadata={**dict(result.metadata), "effect_assurance": assurance_metadata},
             )
+        if self._effect_assurance.graph_commit_available:
+            try:
+                self._effect_assurance.commit_graph(
+                    plan=plan,
+                    observed_effects=observed,
+                    reconciliation=reconciliation,
+                )
+            except RuntimeCoreInvariantError as exc:
+                return DeliveryResult(
+                    delivery_id=result.delivery_id,
+                    message_id=result.message_id,
+                    status=DeliveryStatus.FAILED,
+                    channel=result.channel,
+                    error_code="effect_graph_commit_failed",
+                    metadata={
+                        **dict(result.metadata),
+                        "effect_assurance": assurance_metadata,
+                        "effect_assurance_error": str(exc),
+                    },
+                )
         return DeliveryResult(
             delivery_id=result.delivery_id,
             message_id=result.message_id,

@@ -246,6 +246,28 @@ class IntegrationEngine:
                 error_code="effect_reconciliation_mismatch",
                 metadata={**dict(result.metadata), "effect_assurance": assurance_metadata},
             )
+        if self._effect_assurance.graph_commit_available:
+            try:
+                self._effect_assurance.commit_graph(
+                    plan=plan,
+                    observed_effects=observed,
+                    reconciliation=reconciliation,
+                )
+            except RuntimeCoreInvariantError as exc:
+                return ConnectorResult(
+                    result_id=result.result_id,
+                    connector_id=result.connector_id,
+                    status=ConnectorStatus.FAILED,
+                    response_digest=result.response_digest,
+                    started_at=result.started_at,
+                    finished_at=result.finished_at,
+                    error_code="effect_graph_commit_failed",
+                    metadata={
+                        **dict(result.metadata),
+                        "effect_assurance": assurance_metadata,
+                        "effect_assurance_error": str(exc),
+                    },
+                )
         return ConnectorResult(
             result_id=result.result_id,
             connector_id=result.connector_id,

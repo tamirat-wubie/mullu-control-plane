@@ -25,6 +25,7 @@ from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+from mcoi_runtime.core.operational_graph import OperationalGraph
 
 
 _CLOCK = "2026-03-19T00:00:00+00:00"
@@ -300,6 +301,30 @@ def test_delivery_with_effect_assurance_reconciles_receipt() -> None:
     assert assurance["reconciliation_status"] == "match"
     assert assurance["effect_plan_id"].startswith("effect-plan-")
     assert assurance["verification_result_id"].startswith("effect-verification-")
+
+
+def test_delivery_with_effect_assurance_commits_graph_when_available() -> None:
+    graph = OperationalGraph(clock=lambda: _CLOCK)
+    engine = _make_engine(
+        {CommunicationChannel.NOTIFICATION: ReceiptDeliveryAdapter()},
+        effect_assurance=EffectAssuranceGate(clock=lambda: _CLOCK, graph=graph),
+    )
+
+    result = engine.notify(
+        NotificationRequest(
+            subject_id="subject-1",
+            goal_id="goal-1",
+            event_type="execution_complete",
+            summary="done",
+        ),
+        recipient_id="operator-1",
+    )
+
+    snapshot = graph.capture_snapshot()
+    assert result.status is DeliveryStatus.DELIVERED
+    assert result.metadata["effect_assurance"]["reconciliation_status"] == "match"
+    assert snapshot.node_count >= 4
+    assert snapshot.edge_count >= 3
 
 
 def test_delivery_with_effect_assurance_fails_without_receipt() -> None:
