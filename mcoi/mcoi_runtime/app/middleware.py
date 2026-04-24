@@ -150,8 +150,13 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                     blocking_reason=result.reason,
                     guards=guards,
                 )
-            except Exception:
-                pass  # Decision log failure is non-fatal
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("decision_log_record_failures", 1)
+                _log.warning(
+                    "governance decision log record failed (%s)",
+                    type(exc).__name__,
+                )
 
         # Certify governance decision via proof bridge
         if self._proof_bridge is not None:
@@ -222,8 +227,13 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                     success=200 <= status_code < 400,
                     status_code=status_code,
                 )
-            except Exception:
-                pass  # Analytics failure is non-fatal
+            except Exception as exc:
+                if self._metrics_fn:
+                    self._metrics_fn("request_analytics_record_failures", 1)
+                _log.warning(
+                    "request analytics record failed (%s)",
+                    type(exc).__name__,
+                )
 
         return response
 
