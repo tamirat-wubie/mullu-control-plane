@@ -27,6 +27,7 @@ def _clock() -> str:
 def _executor(
     per_tx_limit: Decimal = Decimal("1000"),
     daily_limit: Decimal = Decimal("5000"),
+    on_approval_needed=None,
 ) -> GovernedPaymentExecutor:
     spend = SpendBudgetManager()
     spend.register(SpendBudget(
@@ -40,6 +41,7 @@ def _executor(
         ledger=TransactionLedger(),
         idempotency=IdempotencyStore(),
         clock=_clock,
+        on_approval_needed=on_approval_needed,
     )
 
 
@@ -112,6 +114,23 @@ class TestInitiatePayment:
         )
         assert not result.success
         assert "no spend budget" in result.error
+
+    def test_approval_notification_failure_counted_and_non_fatal(self):
+        def fail_notification(tx_id: str, tenant_id: str, amount: str, currency: str) -> None:
+            raise RuntimeError("secret notification backend")
+
+        ex = _executor(on_approval_needed=fail_notification)
+        result = ex.initiate_payment(
+            tenant_id="t1", amount=Decimal("100"), currency="USD", destination="dest",
+        )
+        entry = ex._ledger.get(result.tx_id)
+        assert result.success is True
+        assert result.requires_approval is True
+        assert result.metadata["approval_notification_failed"] is True
+        assert ex.approval_notification_failures == 1
+        assert entry is not None
+        assert entry.state == TxState.PENDING_APPROVAL
+        assert "secret notification backend" not in result.error
 
 
 # ═══ Approve and Execute ═══
