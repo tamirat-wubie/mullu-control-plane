@@ -53,7 +53,7 @@ def _create_po(procurement_engine: ProcurementRuntimeEngine) -> str:
     """Helper: create a PO via the full request lifecycle. Returns po_id."""
     procurement_engine.create_request("req-po", "v1", "t1", 5000.0)
     procurement_engine.submit_request("req-po")
-    procurement_engine.approve_request("req-po")
+    procurement_engine.approve_request("req-po", decided_by="approver-1")
     procurement_engine.issue_po("po-1", "req-po")
     return "po-1"
 
@@ -753,7 +753,7 @@ class TestGoldenPathFullLifecycle:
         # 6. Create a PO and bind to financial runtime
         procurement_engine.create_request("req-po", "v1", "t1", 5000.0)
         procurement_engine.submit_request("req-po")
-        procurement_engine.approve_request("req-po")
+        procurement_engine.approve_request("req-po", decided_by="approver-1")
         procurement_engine.issue_po("po-1", "req-po")
         po_bind = integration.bind_po_to_financial_runtime("po-1", "inv-ref-1")
         assert po_bind["binding_type"] == "financial"
