@@ -1,7 +1,6 @@
 """Phase 128A — Production Offer / Conversion Terms."""
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ProductionOffer:
@@ -31,7 +30,7 @@ SCOPE_DOCUMENT = {
         "Regulatory and executive reporting packet generation",
         "Operator dashboard with queues and worklists",
         "Executive dashboard with KPIs and risk summary",
-        "Governed AI copilot (explain, draft, escalate)",
+        "Governed symbolic intelligence copilot (explain, draft, escalate)",
         "Constitutional governance policy enforcement",
         "Observability (metrics, traces, anomalies)",
     ],

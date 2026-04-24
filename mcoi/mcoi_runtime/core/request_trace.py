@@ -5,7 +5,7 @@ Purpose: Reconstruct exactly what happened for any agent request:
     how long each step took, and why the final result was produced.
 
 Solves: "The agent gave a wrong answer and nobody knows why" —
-    the #4 real-world enterprise AI agent problem.
+    the #4 real-world enterprise symbolic intelligence agent problem.
 
 Invariants:
   - Every trace is immutable after completion.
@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)

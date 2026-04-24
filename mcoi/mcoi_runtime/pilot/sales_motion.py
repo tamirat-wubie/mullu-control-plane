@@ -1,6 +1,6 @@
 """Phase 134B+C — Sales Motion Pack and Demo-to-Pilot Engine."""
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 from datetime import datetime, timezone
 
@@ -17,10 +17,10 @@ class SalesPlaybook:
 PLAYBOOKS = {
     "regulated_ops": SalesPlaybook(
         "regulated_ops",
-        "Your compliance team spends weeks on evidence gathering and report generation. Our Control Tower reduces that to minutes with governed AI.",
+        "Your compliance team spends weeks on evidence gathering and report generation. Our Control Tower reduces that to minutes with governed symbolic intelligence.",
         ("How do you track remediation items today?", "How long does evidence collection take?", "How many audit cycles per year?", "What tools do you use for reporting?"),
         ("Show intake queue", "Create a case", "Retrieve evidence bundle", "Generate reporting packet", "Copilot explains a finding"),
-        (("How is this different from our GRC tool?", "We augment, not replace. We add AI-driven evidence retrieval, governed copilot, and automated reporting on top of your existing data."),
+        (("How is this different from our GRC tool?", "We augment, not replace. We add symbolic intelligence-driven evidence retrieval, governed copilot, and automated reporting on top of your existing data."),
          ("What about data residency?", "Fully tenant-isolated. Data stays in your environment. We support on-prem and private cloud."),
          ("Can we customize governance rules?", "Yes. Constitutional governance is fully configurable per tenant with precedence levels.")),
         "Dear [Sponsor], Following our discussion, I'd like to propose a 6-week pilot of the Regulated Operations Control Tower...",
@@ -31,7 +31,7 @@ PLAYBOOKS = {
         "Your service desk resolves thousands of incidents but lacks real-time visibility into SLA compliance and customer impact. Our IT Control Tower changes that.",
         ("What's your current MTTR?", "How do you track SLA compliance?", "What's your escalation process?", "How visible are service issues to executives?"),
         ("Log an incident", "Show SLA tracking", "Customer impact view", "Copilot drafts resolution summary"),
-        (("How does this compare to ServiceNow?", "We complement ITSM tools with AI-driven case management, evidence retrieval, and governed copilot."),
+        (("How does this compare to ServiceNow?", "We complement ITSM tools with symbolic intelligence-driven case management, evidence retrieval, and governed copilot."),
          ("Can it handle our ticket volume?", "Yes. The distributed execution fabric handles scale. We've tested with thousands of concurrent operations.")),
         "Dear [Sponsor], I'd like to propose a 6-week pilot of the Enterprise Service Control Tower...",
         ("35% reduction in MTTR", "SLA breach rate from 15% to 3%", "Real-time executive visibility", "Faster incident resolution"),

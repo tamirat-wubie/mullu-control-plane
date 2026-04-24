@@ -18,9 +18,12 @@ from __future__ import annotations
 import base64
 import re
 import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from mcoi_runtime.core.governance_guard import GovernanceGuard
 
 
 _ETHIOPIC_RANGES: tuple[tuple[int, int], ...] = (
@@ -143,7 +146,7 @@ PROMPT_INJECTION_PATTERNS: tuple[SafetyPattern, ...] = (
         pattern=r"(?i)you\s+are\s+now\s+(?:a|an|the)\s+(?:different|new|evil|unrestricted)",
         category=ThreatCategory.JAILBREAK,
         verdict=SafetyVerdict.BLOCKED,
-        description="Attempts to redefine the AI's role",
+        description="Attempts to redefine the symbolic intelligence role",
     ),
     SafetyPattern(
         name="system_prompt_leak",
@@ -365,7 +368,7 @@ def build_default_safety_chain() -> ContentSafetyChain:
 
 def create_content_safety_guard(
     chain: ContentSafetyChain,
-) -> "GovernanceGuard":
+) -> GovernanceGuard:
     """Create a content safety guard for the governance guard chain.
 
     Scans the request body/prompt for unsafe content before processing.

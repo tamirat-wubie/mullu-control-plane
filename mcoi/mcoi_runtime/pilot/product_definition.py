@@ -1,11 +1,10 @@
 """Phase 125A — Product Definition for Regulated Operations Control Tower v1."""
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 PRODUCT_NAME = "Regulated Operations Control Tower"
 PRODUCT_VERSION = "1.0.0"
-PRODUCT_TAGLINE = "Governed intake, case management, evidence, reporting, and AI-assisted operations for regulated enterprises."
+PRODUCT_TAGLINE = "Governed intake, case management, evidence, reporting, and symbolic intelligence-assisted operations for regulated enterprises."
 
 @dataclass(frozen=True)
 class CapabilityEntry:
@@ -22,7 +21,7 @@ V1_CAPABILITIES = (
     CapabilityEntry("reporting", "Regulatory and executive reporting packet generation", True, "core"),
     CapabilityEntry("operator_dashboard", "Operator workspace with queues, worklists, and panels", True, "core"),
     CapabilityEntry("executive_dashboard", "Executive summary, KPIs, and risk overview", True, "core"),
-    CapabilityEntry("governed_copilot", "AI assistant with persona, evidence-backed answers, governance guardrails", True, "core"),
+    CapabilityEntry("governed_copilot", "Symbolic intelligence assistant with persona, evidence-backed answers, governance guardrails", True, "core"),
     CapabilityEntry("constitutional_governance", "Platform-wide policy rules, emergency modes, override tracking", True, "core"),
     CapabilityEntry("observability", "Metrics, traces, anomaly detection across all operations", True, "core"),
     # Out of scope for v1
