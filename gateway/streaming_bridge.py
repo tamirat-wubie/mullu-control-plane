@@ -104,6 +104,7 @@ class StreamingBridge:
         self._sequence = 0
         self._completed_count = 0
         self._timed_out_count = 0
+        self._callback_error_count = 0
 
     def start_stream(
         self,
@@ -185,7 +186,7 @@ class StreamingBridge:
             try:
                 callback(chunk)
             except Exception:
-                pass  # Callback failure doesn't fail the stream
+                self._record_callback_error(stream_id)
 
         return True
 
@@ -213,9 +214,17 @@ class StreamingBridge:
                     is_final=True,
                 ))
             except Exception:
-                pass
+                self._record_callback_error(stream_id)
 
         return session
+
+    def _record_callback_error(self, stream_id: str) -> None:
+        """Record callback delivery failure without failing the stream."""
+        with self._lock:
+            self._callback_error_count += 1
+            session = self._streams.get(stream_id)
+            if session is not None and not session.error:
+                session.error = "callback delivery failed"
 
     def get_assembled(self, stream_id: str) -> str | None:
         """Get the fully assembled response content."""
@@ -249,6 +258,10 @@ class StreamingBridge:
     def active_count(self) -> int:
         return sum(1 for s in self._streams.values() if not s.finalized)
 
+    @property
+    def callback_errors(self) -> int:
+        return self._callback_error_count
+
     def summary(self) -> dict[str, Any]:
         with self._lock:
             active = sum(1 for s in self._streams.values() if not s.finalized)
@@ -257,5 +270,6 @@ class StreamingBridge:
                 "active_streams": active,
                 "completed": self._completed_count,
                 "timed_out": self._timed_out_count,
+                "callback_errors": self._callback_error_count,
                 "stream_timeout": self._timeout,
             }

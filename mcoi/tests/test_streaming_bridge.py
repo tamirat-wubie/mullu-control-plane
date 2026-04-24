@@ -1,7 +1,6 @@
 """Streaming Response Bridge Tests."""
 
-import pytest
-from gateway.streaming_bridge import StreamChunk, StreamSession, StreamingBridge
+from gateway.streaming_bridge import StreamingBridge
 
 
 def _bridge(**kw):
@@ -70,6 +69,22 @@ class TestChunkCallback:
         sid = b.start_stream("wa", "+1", "t1")
         b.set_chunk_callback(sid, bad_callback)
         assert b.push_chunk(sid, "data") is True  # Should not raise
+        session = b.get_session(sid)
+        assert session.assembled_content == "data"
+        assert session.error == "callback delivery failed"
+        assert b.callback_errors == 1
+
+    def test_final_callback_exception_is_counted(self):
+        def bad_callback(chunk):
+            raise RuntimeError("callback crashed")
+        b = _bridge()
+        sid = b.start_stream("wa", "+1", "t1")
+        b.set_chunk_callback(sid, bad_callback)
+        session = b.finalize(sid)
+        assert session is not None
+        assert session.finalized is True
+        assert session.error == "callback delivery failed"
+        assert b.summary()["callback_errors"] == 1
 
     def test_set_callback_unknown(self):
         b = _bridge()
@@ -93,7 +108,7 @@ class TestSessionManagement:
     def test_active_count(self):
         b = _bridge()
         s1 = b.start_stream("wa", "+1", "t1")
-        s2 = b.start_stream("wa", "+2", "t1")
+        b.start_stream("wa", "+2", "t1")
         assert b.active_count == 2
         b.finalize(s1)
         assert b.active_count == 1
@@ -138,3 +153,4 @@ class TestSessionManagement:
         s = b.summary()
         assert s["active_streams"] == 1
         assert s["stream_timeout"] > 0
+        assert s["callback_errors"] == 0
