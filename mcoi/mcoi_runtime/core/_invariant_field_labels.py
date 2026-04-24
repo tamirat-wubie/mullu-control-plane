@@ -11,6 +11,7 @@ KNOWN_INVARIANT_FIELD_LABELS = frozenset(
         "answer",
         "approver_id",
         "artifact_id",
+        "assessed_by",
         "assigned_by_id",
         "attribute",
         "blocked_knowledge_id",

@@ -23,16 +23,13 @@ from mcoi_runtime.contracts.service_catalog import (
     CatalogItemKind,
     EntitlementDisposition,
     EntitlementRule,
-    FulfillmentDecision,
     FulfillmentStatus,
     FulfillmentTask,
     RequestAssignment,
     RequestPriority,
     RequestSnapshot,
     RequestStatus,
-    RequestViolation,
     ServiceCatalogItem,
-    ServiceClosureReport,
     ServiceRequest,
     ServiceStatus,
 )
@@ -2147,81 +2144,92 @@ class TestAssessCatalogItem:
     """assess_catalog_item tests."""
 
     def test_returns_catalog_assessment(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8, assessed_by="catalog-assessor-1")
         assert isinstance(asmt, CatalogAssessment)
 
     def test_assessment_id_preserved(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8, assessed_by="catalog-assessor-1")
         assert asmt.assessment_id == "as1"
 
     def test_item_id_preserved(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8, assessed_by="catalog-assessor-1")
         assert asmt.item_id == "item-1"
 
     def test_fulfillment_rate_preserved(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8, assessed_by="catalog-assessor-1")
         assert asmt.fulfillment_rate == 0.95
 
     def test_satisfaction_score_preserved(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.95, 0.8, assessed_by="catalog-assessor-1")
         assert asmt.satisfaction_score == 0.8
 
-    def test_default_assessed_by_system(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
-        assert asmt.assessed_by == "system"
+    def test_assessed_by_preserved(self, engine_with_item: ServiceCatalogEngine) -> None:
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
+        assert asmt.assessed_by == "catalog-assessor-1"
+
+    def test_missing_assessed_by_rejected(self, engine_with_item: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by"):
+            engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+
+    def test_system_assessed_by_rejected(self, engine_with_item: ServiceCatalogEngine) -> None:
+        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by must exclude system"):
+            engine_with_item.assess_catalog_item(
+                "as1", "item-1", 0.5, 0.5,
+                assessed_by="system",
+            )
 
     def test_custom_assessed_by(self, engine_with_item: ServiceCatalogEngine) -> None:
         asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="auditor-1")
         assert asmt.assessed_by == "auditor-1"
 
     def test_assessed_at_non_empty(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         assert len(asmt.assessed_at) > 0
 
     def test_assessment_count_increments(self, engine_with_item: ServiceCatalogEngine) -> None:
-        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         assert engine_with_item.assessment_count == 1
-        engine_with_item.assess_catalog_item("as2", "item-1", 0.6, 0.6)
+        engine_with_item.assess_catalog_item("as2", "item-1", 0.6, 0.6, assessed_by="catalog-assessor-1")
         assert engine_with_item.assessment_count == 2
 
     def test_duplicate_assessment_raises(self, engine_with_item: ServiceCatalogEngine) -> None:
-        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         with pytest.raises(RuntimeCoreInvariantError, match="Duplicate assessment_id"):
-            engine_with_item.assess_catalog_item("as1", "item-1", 0.6, 0.6)
+            engine_with_item.assess_catalog_item("as1", "item-1", 0.6, 0.6, assessed_by="catalog-assessor-1")
 
     def test_unknown_item_raises(self, engine: ServiceCatalogEngine) -> None:
         with pytest.raises(RuntimeCoreInvariantError, match="Unknown item_id"):
-            engine.assess_catalog_item("as1", "ghost", 0.5, 0.5)
+            engine.assess_catalog_item("as1", "ghost", 0.5, 0.5, assessed_by="catalog-assessor-1")
 
     def test_fulfillment_rate_zero(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.0, 0.5)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.0, 0.5, assessed_by="catalog-assessor-1")
         assert asmt.fulfillment_rate == 0.0
 
     def test_fulfillment_rate_one(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 1.0, 0.5)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 1.0, 0.5, assessed_by="catalog-assessor-1")
         assert asmt.fulfillment_rate == 1.0
 
     def test_satisfaction_score_zero(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.0)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.0, assessed_by="catalog-assessor-1")
         assert asmt.satisfaction_score == 0.0
 
     def test_satisfaction_score_one(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 1.0)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 1.0, assessed_by="catalog-assessor-1")
         assert asmt.satisfaction_score == 1.0
 
     def test_assessment_is_frozen(self, engine_with_item: ServiceCatalogEngine) -> None:
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         with pytest.raises(AttributeError):
             asmt.fulfillment_rate = 0.9  # type: ignore[misc]
 
     def test_deprecated_item_can_be_assessed(self, engine_with_item: ServiceCatalogEngine) -> None:
         engine_with_item.deprecate_catalog_item("item-1")
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         assert asmt.item_id == "item-1"
 
     def test_retired_item_can_be_assessed(self, engine_with_item: ServiceCatalogEngine) -> None:
         engine_with_item.retire_catalog_item("item-1")
-        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        asmt = engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         assert asmt.item_id == "item-1"
 
 
@@ -2232,21 +2240,21 @@ class TestAssessmentsForItem:
         assert engine_with_item.assessments_for_item("item-1") == ()
 
     def test_returns_tuple(self, engine_with_item: ServiceCatalogEngine) -> None:
-        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         result = engine_with_item.assessments_for_item("item-1")
         assert isinstance(result, tuple)
 
     def test_returns_matching_assessments(self, engine_with_item: ServiceCatalogEngine) -> None:
-        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
-        engine_with_item.assess_catalog_item("as2", "item-1", 0.6, 0.6)
+        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
+        engine_with_item.assess_catalog_item("as2", "item-1", 0.6, 0.6, assessed_by="catalog-assessor-1")
         result = engine_with_item.assessments_for_item("item-1")
         assert len(result) == 2
 
     def test_excludes_other_items(self, engine: ServiceCatalogEngine) -> None:
         engine.register_catalog_item("i1", "S1", "t1")
         engine.register_catalog_item("i2", "S2", "t1")
-        engine.assess_catalog_item("as1", "i1", 0.5, 0.5)
-        engine.assess_catalog_item("as2", "i2", 0.6, 0.6)
+        engine.assess_catalog_item("as1", "i1", 0.5, 0.5, assessed_by="catalog-assessor-1")
+        engine.assess_catalog_item("as2", "i2", 0.6, 0.6, assessed_by="catalog-assessor-1")
         assert len(engine.assessments_for_item("i1")) == 1
         assert len(engine.assessments_for_item("i2")) == 1
 
@@ -2582,7 +2590,7 @@ class TestStateHash:
 
     def test_changes_after_assess(self, engine_with_item: ServiceCatalogEngine) -> None:
         h1 = engine_with_item.state_hash()
-        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         h2 = engine_with_item.state_hash()
         assert h1 != h2
 
@@ -2653,7 +2661,7 @@ class TestProperties:
         assert engine_with_request.violation_count >= 1
 
     def test_assessment_count_after_assess(self, engine_with_item: ServiceCatalogEngine) -> None:
-        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
+        engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         assert engine_with_item.assessment_count == 1
 
     def test_catalog_count_multiple(self, engine: ServiceCatalogEngine) -> None:
@@ -2881,7 +2889,7 @@ class TestEventEmission:
         eng = ServiceCatalogEngine(es)
         eng.register_catalog_item("i1", "S", "t1")
         before = es.event_count
-        eng.assess_catalog_item("as1", "i1", 0.5, 0.5)
+        eng.assess_catalog_item("as1", "i1", 0.5, 0.5, assessed_by="catalog-assessor-1")
         assert es.event_count > before
 
     def test_detect_violations_emits_event_when_found(self, es: EventSpineEngine) -> None:
@@ -3055,11 +3063,11 @@ class TestGoldenScenario4:
         eng.register_catalog_item("item-rack", "Rack Installation", "ops")
         eng.submit_request("req-rack", "item-rack", "ops", "dave")
 
-        task1 = _create_task(eng, 
+        _create_task(eng,
             "task-order", "req-rack", "procurement",
             description="Order hardware", dependency_ref="",
         )
-        task2 = _create_task(eng, 
+        task2 = _create_task(eng,
             "task-install", "req-rack", "technician",
             description="Install rack", dependency_ref="task-order",
         )
@@ -3264,8 +3272,8 @@ class TestEdgeCases:
     def test_assess_multiple_items(self, engine: ServiceCatalogEngine) -> None:
         engine.register_catalog_item("i1", "S1", "t1")
         engine.register_catalog_item("i2", "S2", "t1")
-        engine.assess_catalog_item("as1", "i1", 0.5, 0.5)
-        engine.assess_catalog_item("as2", "i2", 0.7, 0.7)
+        engine.assess_catalog_item("as1", "i1", 0.5, 0.5, assessed_by="catalog-assessor-1")
+        engine.assess_catalog_item("as2", "i2", 0.7, 0.7, assessed_by="catalog-assessor-1")
         assert engine.assessment_count == 2
 
     def test_snapshot_after_complex_state(self, engine: ServiceCatalogEngine) -> None:

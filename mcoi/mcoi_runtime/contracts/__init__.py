@@ -20,6 +20,13 @@ from .coordination import (
     RestoreStatus,
 )
 from .environment import EnvironmentFingerprint, PlatformDescriptor, RuntimeDescriptor
+from .effect_assurance import (
+    EffectPlan,
+    EffectReconciliation,
+    ExpectedEffect,
+    ObservedEffect,
+    ReconciliationStatus,
+)
 from .evidence import EvidenceRecord
 from .execution import AcceptedRiskState, EffectRecord, ExecutionClosure, ExecutionOutcome, ExecutionResult
 from .function import (
@@ -1941,7 +1948,10 @@ __all__ = [
     "RestoreStatus",
     "DecisionReason",
     "EffectRecord",
+    "EffectPlan",
+    "EffectReconciliation",
     "EnvironmentFingerprint",
+    "ExpectedEffect",
     "EvidenceRecord",
     "ExecutionClosure",
     "ExecutionOutcome",
@@ -1979,6 +1989,7 @@ __all__ = [
     "ObligationLink",
     "OperationalEdge",
     "OperationalNode",
+    "ObservedEffect",
     "StateDelta",
     "GoalDependency",
     "GoalDescriptor",
@@ -2012,6 +2023,7 @@ __all__ = [
     "PolicyDecision",
     "PolicyDecisionStatus",
     "RecoveryRecord",
+    "ReconciliationStatus",
     "ReplayEffect",
     "ReplayMode",
     "ReplayRecord",
