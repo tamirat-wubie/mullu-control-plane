@@ -7,6 +7,16 @@ Invariants: canonical shared contracts are adopted without reinterpretation.
 from .capability import CapabilityDescriptor
 from .connector import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from .connector_effects import ConnectorInvocationReceipt
+from .change_assurance import (
+    AssuranceDisposition,
+    BlastRadiusReport,
+    ChangeCertificate,
+    ChangeCommand,
+    ChangeRisk,
+    EvolutionChangeType,
+    InvariantCheckReport,
+    ReplayCertificationReport,
+)
 from .coordination import (
     ConflictRecord,
     ConflictStrategy,
@@ -3601,6 +3611,15 @@ __all__ = [
     "BootstrapStatus",
     "ConnectorActivation",
     "ConnectorActivationStatus",
+    # --- change_assurance ---
+    "AssuranceDisposition",
+    "BlastRadiusReport",
+    "ChangeCertificate",
+    "ChangeCommand",
+    "ChangeRisk",
+    "EvolutionChangeType",
+    "InvariantCheckReport",
+    "ReplayCertificationReport",
     "DataMigration",
     "GoLiveChecklist",
     "GoLiveReadiness",

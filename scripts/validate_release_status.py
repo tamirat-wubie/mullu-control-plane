@@ -28,9 +28,9 @@ if str(REPO_ROOT) not in sys.path:
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.app.policy_packs import PolicyPackRegistry
-from mcoi_runtime.app.profiles import list_profiles
-from scripts import validate_artifacts, validate_schemas
+from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
+from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
+from scripts import validate_artifacts, validate_schemas  # noqa: E402
 
 
 REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
@@ -60,6 +60,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_artifacts.py --strict",
     "python scripts/validate_release_status.py",
     "python scripts/validate_release_status.py --strict",
+    "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
 METADATA_DOCUMENTS: tuple[str, ...] = (
