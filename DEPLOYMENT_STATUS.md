@@ -12,7 +12,9 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 **Last audited:** 2026-04-24
 **Deployment witness state:** `not-published`
 **Public production health endpoint:** `not-declared`
-**Gateway health endpoint:** `not-declared`
+**Gateway health endpoint:** `/health`
+**Gateway runtime witness endpoint:** `/gateway/witness`
+**Restricted capability worker health endpoint:** `/health`
 **API health endpoint:** `not-declared`
 
 ## Reflection Summary
@@ -21,6 +23,8 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 |---|---|---|
 | Local API health contract | `RUNBOOK.md` and `DEPLOYMENT.md` document `/health` checks | Reflected |
 | Local gateway health contract | `README.md` documents `http://localhost:8001/health` | Reflected |
+| Local gateway runtime witness | `DEPLOYMENT.md` documents `/gateway/witness` and `/runtime/witness` | Reflected |
+| Restricted capability worker | `DEPLOYMENT.md`, `docker-compose.yml`, and `k8s/mullu-api.yaml` declare `gateway.capability_worker:app` | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
@@ -34,6 +38,7 @@ Before this witness can claim public deployment health, the repository must name
 4. Last successful health-check timestamp.
 5. Operator or automation identity that produced the health witness.
 6. Failure handling path for stale or unavailable health evidence.
+7. Capability worker endpoint and last successful signed worker-response check.
 
 ## Proof Chain
 
@@ -41,4 +46,6 @@ Before this witness can claim public deployment health, the repository must name
 |---|---|
 | Public surface validation | `python scripts/validate_public_repository_surface.py` |
 | Release status validation | `python scripts/validate_release_status.py --strict` |
+| Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
+| Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 

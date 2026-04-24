@@ -65,6 +65,8 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_public_repository_surface.py --local-only",
     "python scripts/validate_release_status.py",
     "python scripts/validate_release_status.py --strict",
+    "python -m pytest tests/test_gateway -q",
+    "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
@@ -84,6 +86,8 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
     "python scripts/validate_release_status.py --strict",
+    "python scripts/validate_gateway_deployment_env.py --strict",
+    "python scripts/gateway_runtime_smoke.py",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
@@ -100,6 +104,8 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "**Deployment witness state:** `not-published`",
         "**Public production health endpoint:** `not-declared`",
         "No governed production endpoint is declared in this repository",
+        "python scripts/validate_gateway_deployment_env.py --strict",
+        "python scripts/gateway_runtime_smoke.py",
         "python scripts/validate_public_repository_surface.py",
     ),
 }

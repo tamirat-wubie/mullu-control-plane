@@ -25,6 +25,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Release witness | GitHub latest release points to `v3.13.0`; release docs declare `0.4.0 (v3.13.0)` | Reflected |
 | CI witness | `.github/workflows/ci.yml` contains Python, Rust, schema, artifact, release-status, and change-assurance gates | Reflected |
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
+| Gateway closure witness | CI runs `python -m pytest tests/test_gateway -q` and `python scripts/validate_gateway_deployment_env.py --strict` | Reflected |
 | Operational witness | Runtime deployment, live health, and production readiness are not exposed on the repository landing page | Not reflected |
 
 ## Required Public Anchors
@@ -37,8 +38,10 @@ The GitHub page is sufficient only when these anchors are present and current:
 4. CI keeps `python scripts/validate_public_repository_surface.py`.
 5. CI keeps `python scripts/validate_release_status.py --strict`.
 6. CI keeps `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md`.
-7. Release metadata in `RELEASE_NOTES_v0.1.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md` remains aligned.
-8. Known reflection gaps are named instead of implied.
+7. CI keeps `python scripts/validate_gateway_deployment_env.py --strict`.
+8. Deployment runbooks keep `python scripts/gateway_runtime_smoke.py`.
+9. Release metadata in `RELEASE_NOTES_v0.1.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md` remains aligned.
+10. Known reflection gaps are named instead of implied.
 
 ## Known Reflection Gaps
 
@@ -56,5 +59,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Remote head | `git ls-remote origin refs/heads/main` |
 | Public repository surface | `python scripts/validate_public_repository_surface.py` |
 | Release status | `python scripts/validate_release_status.py --strict` |
+| Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
+| Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 | Change assurance | `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md` |
 

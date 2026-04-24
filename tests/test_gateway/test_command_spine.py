@@ -17,6 +17,7 @@ if str(_ROOT) not in sys.path:
 
 from gateway.command_spine import (  # noqa: E402
     CapabilityPassport,
+    ClosureDisposition,
     CommandAnchorProof,
     CommandLedger,
     CommandState,
@@ -727,6 +728,62 @@ def test_command_ledger_blocks_success_response_closure_without_reconciliation()
 
     with pytest.raises(ValueError, match="^response requires reconciled observed effects$"):
         ledger.close_success_response_evidence(command.command_id, claim_id=claim.claim_id)
+
+
+def test_command_ledger_requires_terminal_certificate_before_success_response():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-terminal-closure",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"content": "hello", "succeeded": True},
+    )
+    ledger.promote_provider_receipts_to_graph(command.command_id)
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command llm_completion completed.",
+        verified=True,
+    )
+    closure = ledger.close_success_response_evidence(command.command_id, claim_id=claim.claim_id)
+
+    with pytest.raises(ValueError, match="^success response requires terminal closure certificate$"):
+        ledger.transition(
+            command.command_id,
+            CommandState.RESPONDED,
+            output={"body": "hello"},
+            detail={"success_claim": True},
+        )
+
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.COMMITTED,
+        response_evidence_closure=closure,
+    )
+    memory_entry = ledger.promote_closure_memory(command.command_id)
+    learning = ledger.decide_closure_learning(command.command_id)
+    responded = ledger.transition(
+        command.command_id,
+        CommandState.RESPONDED,
+        output={"body": "hello"},
+        detail={"success_claim": True},
+    )
+
+    assert certificate.disposition is ClosureDisposition.COMMITTED
+    assert certificate.evidence_refs
+    assert memory_entry.terminal_certificate_id == certificate.certificate_id
+    assert learning.status == "admit"
+    assert responded.state == CommandState.RESPONDED
 
 
 def test_command_ledger_fracture_test_requires_high_risk_approval():

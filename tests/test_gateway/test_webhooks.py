@@ -349,3 +349,22 @@ class TestGatewayStatus:
         assert data["governed"] is True
         assert "router" in data
         assert "sessions" in data
+
+    def test_gateway_witness(self, client):
+        resp = client.get("/gateway/witness")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["environment"]
+        assert data["runtime_status"] == "healthy"
+        assert data["gateway_status"] in {"healthy", "degraded"}
+        assert "latest_command_event_hash" in data
+        assert "latest_terminal_certificate_id" in data
+        assert data["signature_key_id"]
+        assert data["signature"].startswith("hmac-sha256:")
+
+    def test_runtime_witness_alias(self, client):
+        resp = client.get("/runtime/witness")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["witness_id"].startswith("runtime-witness-")
+        assert data["signature"].startswith("hmac-sha256:")

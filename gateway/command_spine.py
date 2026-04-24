@@ -57,8 +57,21 @@ class CommandState(StrEnum):
     COMMITTED = "committed"
     REQUIRES_REVIEW = "requires_review"
     COMPENSATED = "compensated"
+    TERMINALLY_CERTIFIED = "terminally_certified"
+    RESPONSE_EVIDENCE_CLOSED = "response_evidence_closed"
+    MEMORY_PROMOTED = "memory_promoted"
+    LEARNING_DECIDED = "learning_decided"
     RESPONDED = "responded"
     ANCHORED = "anchored"
+
+
+class ClosureDisposition(StrEnum):
+    """Exactly one terminal disposition for a governed command."""
+
+    COMMITTED = "committed"
+    COMPENSATED = "compensated"
+    ACCEPTED_RISK = "accepted_risk"
+    REQUIRES_REVIEW = "requires_review"
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,6 +300,50 @@ class ResponseEvidenceClosure:
     evidence_refs: tuple[str, ...]
     evidence_hash: str
     closed_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class TerminalClosureCertificate:
+    """Final proof envelope for one command closure disposition."""
+
+    certificate_id: str
+    command_id: str
+    disposition: ClosureDisposition
+    evidence_refs: tuple[str, ...]
+    issued_at: str
+    response_evidence_closure_id: str | None = None
+    case_id: str | None = None
+    accepted_risk_id: str | None = None
+    compensation_outcome_id: str | None = None
+    memory_entry_id: str | None = None
+    learning_admission_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class ClosureMemoryEntry:
+    """Append-only episodic memory binding for terminal closure."""
+
+    entry_id: str
+    command_id: str
+    terminal_certificate_id: str
+    category: str
+    trust_class: str
+    evidence_refs: tuple[str, ...]
+    admitted_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class ClosureLearningDecision:
+    """Decision controlling whether closure memory can guide planning."""
+
+    admission_id: str
+    command_id: str
+    terminal_certificate_id: str
+    memory_entry_id: str
+    status: str
+    reasons: tuple[str, ...]
+    decided_at: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -1610,6 +1667,9 @@ class CommandLedger:
         self._evidence_records: dict[str, list[EvidenceRecord]] = {}
         self._provider_receipt_promotions: dict[str, list[ProviderReceiptGraphPromotion]] = {}
         self._fracture_results: dict[str, FractureResult] = {}
+        self._terminal_certificates: dict[str, TerminalClosureCertificate] = {}
+        self._closure_memory: dict[str, ClosureMemoryEntry] = {}
+        self._closure_learning: dict[str, ClosureLearningDecision] = {}
         self._store = store or InMemoryCommandLedgerStore()
         self._last_event_hash = self._store.latest_event_hash()
 
@@ -2297,6 +2357,214 @@ class CommandLedger:
         )
         return closure
 
+    def certify_terminal_closure(
+        self,
+        command_id: str,
+        *,
+        disposition: ClosureDisposition,
+        response_evidence_closure: ResponseEvidenceClosure | None = None,
+        case_id: str | None = None,
+        accepted_risk_id: str | None = None,
+        compensation_outcome_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> TerminalClosureCertificate:
+        """Issue the final closure certificate for a command lifecycle."""
+        command = self.get(command_id)
+        if command is None:
+            raise KeyError(f"unknown command_id: {command_id}")
+        reconciliation = self.effect_reconciliation_for(command_id)
+        evidence = self.evidence_for(command_id)
+        evidence_refs = tuple(record.evidence_id for record in evidence)
+        if not evidence_refs:
+            raise ValueError("terminal closure requires evidence references")
+        if disposition is ClosureDisposition.COMMITTED:
+            if reconciliation is None or not reconciliation.reconciled:
+                raise ValueError("committed terminal closure requires reconciled effects")
+            if response_evidence_closure is None:
+                raise ValueError("committed terminal closure requires response evidence closure")
+        elif disposition is ClosureDisposition.COMPENSATED:
+            if not compensation_outcome_id:
+                raise ValueError("compensated terminal closure requires compensation outcome")
+        elif disposition is ClosureDisposition.ACCEPTED_RISK:
+            if not accepted_risk_id or not case_id:
+                raise ValueError("accepted-risk terminal closure requires active risk and case")
+        elif disposition is ClosureDisposition.REQUIRES_REVIEW:
+            if not case_id:
+                raise ValueError("review terminal closure requires case")
+        else:
+            raise ValueError("unknown terminal closure disposition")
+
+        certificate_hash = canonical_hash({
+            "command_id": command_id,
+            "disposition": disposition.value,
+            "evidence_refs": evidence_refs,
+            "response_evidence_closure": asdict(response_evidence_closure) if response_evidence_closure else None,
+            "case_id": case_id,
+            "accepted_risk_id": accepted_risk_id,
+            "compensation_outcome_id": compensation_outcome_id,
+        })
+        certificate = TerminalClosureCertificate(
+            certificate_id=f"terminal-closure-{certificate_hash[:16]}",
+            command_id=command_id,
+            disposition=disposition,
+            evidence_refs=evidence_refs,
+            issued_at=self._clock(),
+            response_evidence_closure_id=(
+                canonical_hash(asdict(response_evidence_closure)) if response_evidence_closure else None
+            ),
+            case_id=case_id,
+            accepted_risk_id=accepted_risk_id,
+            compensation_outcome_id=compensation_outcome_id,
+            metadata=metadata or {},
+        )
+        self._terminal_certificates[command_id] = certificate
+        self.transition(
+            command_id,
+            CommandState.TERMINALLY_CERTIFIED,
+            output=asdict(certificate),
+            detail={
+                "cause": "terminal_closure_certified",
+                "terminal_closure_certificate": asdict(certificate),
+            },
+        )
+        return certificate
+
+    def terminal_certificate_for(self, command_id: str) -> TerminalClosureCertificate | None:
+        """Return the latest terminal closure certificate for one command."""
+        certificate = self._terminal_certificates.get(command_id)
+        if certificate is not None:
+            return certificate
+        for event in reversed(self.events_for(command_id)):
+            raw = event.detail.get("terminal_closure_certificate")
+            if not isinstance(raw, dict):
+                continue
+            try:
+                certificate = TerminalClosureCertificate(
+                    certificate_id=str(raw["certificate_id"]),
+                    command_id=str(raw["command_id"]),
+                    disposition=ClosureDisposition(str(raw["disposition"])),
+                    evidence_refs=tuple(raw["evidence_refs"]),
+                    issued_at=str(raw["issued_at"]),
+                    response_evidence_closure_id=raw.get("response_evidence_closure_id"),
+                    case_id=raw.get("case_id"),
+                    accepted_risk_id=raw.get("accepted_risk_id"),
+                    compensation_outcome_id=raw.get("compensation_outcome_id"),
+                    memory_entry_id=raw.get("memory_entry_id"),
+                    learning_admission_id=raw.get("learning_admission_id"),
+                    metadata=dict(raw.get("metadata", {})),
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
+            self._terminal_certificates[command_id] = certificate
+            return certificate
+        return None
+
+    def latest_terminal_certificate(self) -> TerminalClosureCertificate | None:
+        """Return the latest terminal certificate witnessed by the command ledger."""
+        for event in reversed(self._events):
+            raw = event.detail.get("terminal_closure_certificate")
+            if not isinstance(raw, dict):
+                continue
+            return self.terminal_certificate_for(str(raw.get("command_id", "")))
+        for command_id in reversed(tuple(self._terminal_certificates)):
+            return self._terminal_certificates[command_id]
+        return None
+
+    def promote_closure_memory(self, command_id: str) -> ClosureMemoryEntry:
+        """Promote terminal closure into append-only episodic memory."""
+        certificate = self.terminal_certificate_for(command_id)
+        if certificate is None:
+            raise ValueError("closure memory requires terminal certificate")
+        category_by_disposition = {
+            ClosureDisposition.COMMITTED: ("execution_closure", "trusted_execution"),
+            ClosureDisposition.COMPENSATED: ("compensation_success", "trusted_compensation"),
+            ClosureDisposition.ACCEPTED_RISK: ("execution_accepted_risk", "accepted_risk"),
+            ClosureDisposition.REQUIRES_REVIEW: ("execution_requires_review", "review_required"),
+        }
+        category, trust_class = category_by_disposition[certificate.disposition]
+        entry_hash = canonical_hash({
+            "command_id": command_id,
+            "terminal_certificate_id": certificate.certificate_id,
+            "category": category,
+            "evidence_refs": certificate.evidence_refs,
+        })
+        entry = ClosureMemoryEntry(
+            entry_id=f"closure-memory-{entry_hash[:16]}",
+            command_id=command_id,
+            terminal_certificate_id=certificate.certificate_id,
+            category=category,
+            trust_class=trust_class,
+            evidence_refs=certificate.evidence_refs,
+            admitted_at=self._clock(),
+        )
+        self._closure_memory[command_id] = entry
+        self.transition(
+            command_id,
+            CommandState.MEMORY_PROMOTED,
+            output=asdict(entry),
+            detail={
+                "cause": "closure_memory_promoted",
+                "closure_memory_entry": asdict(entry),
+            },
+        )
+        return entry
+
+    def decide_closure_learning(self, command_id: str) -> ClosureLearningDecision:
+        """Decide whether terminal closure memory may guide future planning."""
+        certificate = self.terminal_certificate_for(command_id)
+        memory_entry = self._closure_memory.get(command_id)
+        if certificate is None:
+            raise ValueError("learning admission requires terminal certificate")
+        if memory_entry is None:
+            raise ValueError("learning admission requires closure memory")
+        if certificate.disposition in (ClosureDisposition.COMMITTED, ClosureDisposition.COMPENSATED):
+            status = "admit"
+            reasons = ("terminal_closure_trusted",)
+        elif certificate.disposition is ClosureDisposition.ACCEPTED_RISK:
+            status = "defer"
+            reasons = ("accepted_risk_deferred",)
+        else:
+            status = "reject"
+            reasons = ("requires_review_rejected",)
+        decision_hash = canonical_hash({
+            "command_id": command_id,
+            "terminal_certificate_id": certificate.certificate_id,
+            "memory_entry_id": memory_entry.entry_id,
+            "status": status,
+            "reasons": reasons,
+        })
+        decision = ClosureLearningDecision(
+            admission_id=f"closure-learning-{decision_hash[:16]}",
+            command_id=command_id,
+            terminal_certificate_id=certificate.certificate_id,
+            memory_entry_id=memory_entry.entry_id,
+            status=status,
+            reasons=reasons,
+            decided_at=self._clock(),
+        )
+        self._closure_learning[command_id] = decision
+        self.transition(
+            command_id,
+            CommandState.LEARNING_DECIDED,
+            output=asdict(decision),
+            detail={
+                "cause": "closure_learning_decided",
+                "closure_learning_decision": asdict(decision),
+            },
+        )
+        return decision
+
+    def assert_success_response_allowed(self, command_id: str) -> TerminalClosureCertificate:
+        """Return the certificate required before a success response can be sent."""
+        certificate = self.terminal_certificate_for(command_id)
+        if certificate is None:
+            raise ValueError("success response requires terminal closure certificate")
+        if certificate.disposition is not ClosureDisposition.COMMITTED:
+            raise ValueError("success response requires committed terminal closure")
+        if not certificate.evidence_refs:
+            raise ValueError("success response requires terminal evidence references")
+        return certificate
+
     def fracture_test(self, command_id: str) -> FractureResult:
         """Run bounded contradiction checks before high-risk dispatch."""
         command = self.get(command_id)
@@ -2453,6 +2721,8 @@ class CommandLedger:
         current = self._commands.get(command_id)
         if current is None:
             raise KeyError(f"unknown command_id: {command_id}")
+        if next_state is CommandState.RESPONDED and (detail or {}).get("success_claim") is True:
+            self.assert_success_response_allowed(command_id)
         updated = CommandEnvelope(
             command_id=current.command_id,
             tenant_id=current.tenant_id,
@@ -2508,6 +2778,9 @@ class CommandLedger:
             "claims": sum(len(claims) for claims in self._claims.values()),
             "evidence_records": sum(len(records) for records in self._evidence_records.values()),
             "fracture_results": len(self._fracture_results),
+            "terminal_certificates": len(self._terminal_certificates),
+            "closure_memory_entries": len(self._closure_memory),
+            "closure_learning_decisions": len(self._closure_learning),
             "states": state_counts,
             "last_event_hash": self._last_event_hash,
             "anchors": len(self._store.list_anchors(limit=10)),

@@ -107,6 +107,27 @@ jobs:
       - name: Validate release status
         run: python scripts/validate_release_status.py
 
+  gateway-closure:
+    name: Gateway Closure and Witness Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]"
+
+      - name: Run gateway closure tests
+        run: python -m pytest tests/test_gateway -q
+
+      - name: Validate gateway deployment environment
+        run: python scripts/validate_gateway_deployment_env.py --strict
+
   reflective-contract-guard:
     name: Reflective Contract Guard
     runs-on: ubuntu-latest
@@ -126,7 +147,7 @@ jobs:
     name: Build Verification
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [python-tests, rust-tests, schema-validation, reflective-contract-guard]
+    needs: [python-tests, rust-tests, schema-validation, gateway-closure, reflective-contract-guard]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -158,6 +179,9 @@ jobs:
 
       - name: Public repository surface check
         run: python scripts/validate_public_repository_surface.py --local-only
+
+      - name: Gateway deployment environment check
+        run: python scripts/validate_gateway_deployment_env.py --strict
 
       - name: Governed evolution certification
         run: python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md

@@ -13,12 +13,15 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-from dataclasses import asdict, dataclass, field, replace
+import hmac
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
 from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus
 from gateway.authority import evaluate_approval_authority
+from gateway.capability_isolation import CapabilityIsolationPolicy, IsolatedCapabilityExecutor
+from gateway.causal_closure_kernel import CausalClosureKernel
 from gateway.command_spine import CommandAnchor, CommandEnvelope, CommandLedger, CommandState, canonical_hash
 from gateway.dedup import MessageDeduplicator
 from gateway.memory_constitution import (
@@ -90,6 +93,8 @@ class GatewayRouter:
         tenant_identity_store: TenantIdentityStore | None = None,
         memory_store: GovernedMemoryStore | None = None,
         defer_approved_execution: bool = False,
+        environment: str = "local_dev",
+        isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
     ) -> None:
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
@@ -100,6 +105,15 @@ class GatewayRouter:
         self._tenant_identities = tenant_identity_store or InMemoryTenantIdentityStore(clock=self._clock)
         self._memory = memory_store or InMemoryGovernedMemoryStore(clock=self._clock)
         self._defer_approved_execution = defer_approved_execution
+        self._closure_kernel = CausalClosureKernel(
+            commands=self._commands,
+            platform=self._platform,
+            skills=self._skills,
+            skill_intent_loader=self._skill_intent_from_command,
+            error_recorder=self._record_error,
+            isolation_policy=CapabilityIsolationPolicy(environment=environment),
+            isolated_executor=isolated_capability_executor,
+        )
         self._channels: dict[str, ChannelAdapter] = {}
         self._message_count = 0
         self._duplicate_count = 0
@@ -269,310 +283,41 @@ class GatewayRouter:
             return None
         return SkillIntent(skill, action, dict(params))
 
+    def _record_error(self) -> None:
+        """Record a kernel-visible gateway error."""
+        self._error_count += 1
+
     def _execute_command(self, command: CommandEnvelope, *, recipient_id: str) -> GatewayResponse:
         """Execute an allowed command through the stored canonical payload."""
-        governed_action = self._commands.governed_action_for(command.command_id)
-        if governed_action is None:
-            self._error_count += 1
-            self._commands.transition(
-                command.command_id,
-                CommandState.DENIED,
-                detail={"cause": "missing_governed_action"},
-            )
-            return GatewayResponse(
-                message_id=self._gen_id("resp", command.command_id),
-                channel=command.source,
-                recipient_id=recipient_id,
-                body="This action cannot execute because its governed action contract is missing.",
-                governed=True,
-                metadata={"error": "missing_governed_action", "command_id": command.command_id},
-            )
-        if governed_action.risk_tier == "high" and not governed_action.predicted_effect_hash:
-            self._error_count += 1
-            self._commands.transition(
-                command.command_id,
-                CommandState.DENIED,
-                risk_tier=governed_action.risk_tier,
-                detail={"cause": "missing_effect_prediction"},
-            )
-            return GatewayResponse(
-                message_id=self._gen_id("resp", command.command_id),
-                channel=command.source,
-                recipient_id=recipient_id,
-                body="This high-risk action cannot execute because its predicted effect contract is missing.",
-                governed=True,
-                metadata={"error": "missing_effect_prediction", "command_id": command.command_id},
-            )
-        if (
-            governed_action.risk_tier == "high"
-            and (not governed_action.rollback_plan_hash or not self._commands.recovery_plan_for(command.command_id))
-        ):
-            self._error_count += 1
-            self._commands.transition(
-                command.command_id,
-                CommandState.REQUIRES_REVIEW,
-                risk_tier=governed_action.risk_tier,
-                detail={"cause": "missing_recovery_plan"},
-            )
-            return GatewayResponse(
-                message_id=self._gen_id("resp", command.command_id),
-                channel=command.source,
-                recipient_id=recipient_id,
-                body="This high-risk action requires a rollback or compensation plan before execution.",
-                governed=True,
-                metadata={"error": "missing_recovery_plan", "command_id": command.command_id},
-            )
-        if governed_action.risk_tier == "high":
-            fracture = self._commands.fracture_test(command.command_id)
-            if not fracture.passed:
-                self._error_count += 1
-                return GatewayResponse(
-                    message_id=self._gen_id("resp", command.command_id),
-                    channel=command.source,
-                    recipient_id=recipient_id,
-                    body="This high-risk action requires review because fracture testing found a contradiction.",
-                    governed=True,
-                    metadata={
-                        "error": "fracture_test_failed",
-                        "command_id": command.command_id,
-                        "fractures": fracture.fractures,
-                        "fracture_result_hash": fracture.result_hash,
-                    },
-                )
-        body = str(command.redacted_payload.get("body", ""))
-        try:
-            session = self._platform.connect(
-                identity_id=command.actor_id,
-                tenant_id=command.tenant_id,
-            )
-        except PermissionError:
-            self._error_count += 1
-            self._commands.transition(
-                command.command_id,
-                CommandState.DENIED,
-                detail={"cause": "platform_connect_denied"},
-            )
-            return GatewayResponse(
-                message_id=self._gen_id("resp", command.command_id),
-                channel=command.source,
-                recipient_id=recipient_id,
-                body="Access denied.",
-                governed=True,
-                metadata={"error": "access_denied", "command_id": command.command_id},
-            )
-
-        try:
-            self._commands.transition(command.command_id, CommandState.BUDGET_RESERVED, budget_decision="session")
-            self._commands.transition(command.command_id, CommandState.DISPATCHED, tool_name=command.intent)
-            skill_intent = self._skill_intent_from_command(command)
-            if skill_intent is not None:
-                skill_result = self._skills.dispatch(skill_intent, command.tenant_id, command.actor_id)
-                if skill_result is not None:
-                    response_body = skill_result.get("response", "Skill executed.")
-                    self._commands.transition(
-                        command.command_id,
-                        CommandState.OBSERVED,
-                        tool_name=command.intent,
-                        output=skill_result,
-                    )
-                    reconciliation = self._commands.observe_and_reconcile_effect(
-                        command.command_id,
-                        output=skill_result,
-                    )
-                    if not reconciliation.reconciled:
-                        self._error_count += 1
-                        return GatewayResponse(
-                            message_id=self._gen_id("resp", command.command_id),
-                            channel=command.source,
-                            recipient_id=recipient_id,
-                            body="This action could not be committed because observed effects did not match prediction.",
-                            governed=True,
-                            metadata={
-                                "error": "effect_reconciliation_failed",
-                                "command_id": command.command_id,
-                                "mismatch_reason": reconciliation.mismatch_reason,
-                            },
-                    )
-                    self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "skill_dispatch"})
-                    self._commands.transition(command.command_id, CommandState.COMMITTED)
-                    receipt_promotions = self._commands.promote_provider_receipts_to_graph(command.command_id)
-                    claim = self._commands.record_operational_claim(
-                        command.command_id,
-                        text=f"Command {command.intent} completed.",
-                        verified=True,
-                    )
-                    try:
-                        response_closure = self._commands.close_success_response_evidence(
-                            command.command_id,
-                            claim_id=claim.claim_id,
-                        )
-                    except ValueError as exc:
-                        self._error_count += 1
-                        self._commands.transition(
-                            command.command_id,
-                            CommandState.REQUIRES_REVIEW,
-                            detail={"cause": "response_evidence_closure_failed"},
-                        )
-                        return GatewayResponse(
-                            message_id=self._gen_id("resp", command.command_id),
-                            channel=command.source,
-                            recipient_id=recipient_id,
-                            body="This action could not return success because response evidence closure failed.",
-                            governed=True,
-                            metadata={
-                                "error": "response_evidence_closure_failed",
-                                "command_id": command.command_id,
-                                "reason": str(exc),
-                            },
-                        )
-                    response = GatewayResponse(
-                        message_id=self._gen_id("resp", command.command_id),
-                        channel=command.source,
-                        recipient_id=recipient_id,
-                        body=response_body,
-                        governed=True,
-                        metadata={
-                            **skill_result,
-                            "command_id": command.command_id,
-                            "claims": [asdict(claim)],
-                            "response_evidence_closure": asdict(response_closure),
-                            "provider_receipt_graph_promotions": [
-                                asdict(promotion) for promotion in receipt_promotions
-                            ],
-                            "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
-                        },
-                    )
-                    self._commands.transition(
-                        command.command_id,
-                        CommandState.RESPONDED,
-                        output={"body": response_body},
-                        detail={"response_evidence_closure": asdict(response_closure)},
-                    )
-                    return response
-
-            result = session.llm(body)
-            response_body = result.content if result.succeeded else f"I couldn't process that: {result.error}"
-            self._commands.transition(
-                command.command_id,
-                CommandState.OBSERVED,
-                tool_name="llm_completion",
-                output={"succeeded": bool(result.succeeded), "content": response_body},
-            )
-            reconciliation = self._commands.observe_and_reconcile_effect(
-                command.command_id,
-                output={"succeeded": bool(result.succeeded), "content": response_body},
-            )
-            if not reconciliation.reconciled:
-                self._error_count += 1
-                return GatewayResponse(
-                    message_id=self._gen_id("resp", command.command_id),
-                    channel=command.source,
-                    recipient_id=recipient_id,
-                    body="This action could not be committed because observed effects did not match prediction.",
-                    governed=True,
-                    metadata={
-                        "error": "effect_reconciliation_failed",
-                        "command_id": command.command_id,
-                        "mismatch_reason": reconciliation.mismatch_reason,
-                    },
-            )
-            self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "governed_session"})
-            self._commands.transition(command.command_id, CommandState.COMMITTED)
-            receipt_promotions = []
-            if result.succeeded:
-                receipt_promotions = self._commands.promote_provider_receipts_to_graph(command.command_id)
-            claim = self._commands.record_operational_claim(
-                command.command_id,
-                text=f"Command {command.intent} completed.",
-                verified=bool(result.succeeded),
-            )
-            response_closure = None
-            if result.succeeded:
-                try:
-                    response_closure = self._commands.close_success_response_evidence(
-                        command.command_id,
-                        claim_id=claim.claim_id,
-                    )
-                except ValueError as exc:
-                    self._error_count += 1
-                    self._commands.transition(
-                        command.command_id,
-                        CommandState.REQUIRES_REVIEW,
-                        detail={"cause": "response_evidence_closure_failed"},
-                    )
-                    return GatewayResponse(
-                        message_id=self._gen_id("resp", command.command_id),
-                        channel=command.source,
-                        recipient_id=recipient_id,
-                        body="This action could not return success because response evidence closure failed.",
-                        governed=True,
-                        metadata={
-                            "error": "response_evidence_closure_failed",
-                            "command_id": command.command_id,
-                            "reason": str(exc),
-                        },
-                    )
-            metadata = {
-                "command_id": command.command_id,
-                "claims": [asdict(claim)],
-                "evidence": [asdict(record) for record in self._commands.evidence_for(command.command_id)],
-            }
-            if receipt_promotions:
-                metadata["provider_receipt_graph_promotions"] = [
-                    asdict(promotion) for promotion in receipt_promotions
-                ]
-            if response_closure is not None:
-                metadata["response_evidence_closure"] = asdict(response_closure)
-            response = GatewayResponse(
-                message_id=self._gen_id("resp", command.command_id),
-                channel=command.source,
-                recipient_id=recipient_id,
-                body=response_body,
-                governed=True,
-                metadata=metadata,
-            )
-            self._commands.transition(
-                command.command_id,
-                CommandState.RESPONDED,
-                output={"body": response_body},
-                detail=(
-                    {"response_evidence_closure": asdict(response_closure)}
-                    if response_closure is not None else {}
-                ),
-            )
-            return response
-        except ValueError:
-            self._commands.transition(command.command_id, CommandState.DENIED, detail={"cause": "content_blocked"})
-            return GatewayResponse(
-                message_id=self._gen_id("resp", command.command_id),
-                channel=command.source,
-                recipient_id=recipient_id,
-                body="I can't process that request due to safety policies.",
-                governed=True,
-                metadata={"error": "content_blocked", "command_id": command.command_id},
-            )
-        except RuntimeError:
-            self._error_count += 1
-            response_body = "Service temporarily unavailable."
-        except Exception:
-            self._error_count += 1
-            response_body = "An error occurred. Please try again."
-        finally:
-            try:
-                session.close()
-            except Exception:
-                self._error_count += 1
-
-        self._commands.transition(command.command_id, CommandState.OBSERVED, output={"error": response_body})
+        closure = self._closure_kernel.run(command.command_id)
         response = GatewayResponse(
             message_id=self._gen_id("resp", command.command_id),
             channel=command.source,
             recipient_id=recipient_id,
-            body=response_body,
+            body=closure.response_body,
             governed=True,
-            metadata={"command_id": command.command_id},
+            metadata={
+                **closure.metadata,
+                "closure_response_kind": closure.response_kind.value,
+                "closure_disposition": closure.disposition.value if closure.disposition else None,
+                "response_allowed": closure.response_allowed,
+                "success_claim_allowed": closure.success_claim_allowed,
+            },
         )
-        self._commands.transition(command.command_id, CommandState.RESPONDED, output={"body": response_body})
+        self._commands.transition(
+            command.command_id,
+            CommandState.RESPONDED,
+            output={"body": closure.response_body},
+            detail={
+                "causal_closure_result": {
+                    "disposition": closure.disposition.value if closure.disposition else None,
+                    "response_kind": closure.response_kind.value,
+                    "response_allowed": closure.response_allowed,
+                    "success_claim_allowed": closure.success_claim_allowed,
+                },
+                "success_claim": closure.success_claim_allowed,
+            },
+        )
         return response
 
     def _approval_response(
@@ -987,4 +732,39 @@ class GatewayRouter:
             "memory_store": self._memory.status(),
             "dedup": self._dedup.status(),
             "command_ledger": self._commands.summary(),
+        }
+
+    def runtime_witness(self, *, environment: str, signature_key_id: str, signing_secret: str) -> dict[str, Any]:
+        """Publish a signed witness for gateway closure and anchor state."""
+        ledger_summary = self._commands.summary()
+        state_counts = dict(ledger_summary.get("states", {}))
+        anchors = self._commands.list_anchors(limit=1)
+        latest_anchor = anchors[0] if anchors else None
+        latest_certificate = self._commands.latest_terminal_certificate()
+        witness_payload = {
+            "witness_id": self._gen_id("runtime-witness", ledger_summary.get("last_event_hash", "")),
+            "environment": environment,
+            "runtime_status": "healthy",
+            "gateway_status": "healthy" if self._error_count == 0 else "degraded",
+            "latest_command_event_hash": ledger_summary.get("last_event_hash", ""),
+            "latest_anchor_id": latest_anchor.anchor_id if latest_anchor else None,
+            "latest_terminal_certificate_id": (
+                latest_certificate.certificate_id if latest_certificate is not None else None
+            ),
+            "open_case_count": int(state_counts.get(CommandState.REQUIRES_REVIEW.value, 0)),
+            "active_accepted_risk_count": int(state_counts.get("accepted_risk", 0)),
+            "unresolved_reconciliation_count": int(state_counts.get(CommandState.REQUIRES_REVIEW.value, 0)),
+            "last_change_certificate_id": None,
+            "signed_at": self._clock(),
+            "signature_key_id": signature_key_id,
+        }
+        signature_payload = canonical_hash(witness_payload)
+        signature = hmac.new(
+            signing_secret.encode("utf-8"),
+            signature_payload.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        return {
+            **witness_payload,
+            "signature": f"hmac-sha256:{signature}",
         }
