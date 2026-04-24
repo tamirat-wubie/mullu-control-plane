@@ -229,6 +229,30 @@ class EffectReconciliation:
     mismatch_reason: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class EvidenceRecord:
+    """Evidence reference backing an operational claim."""
+
+    evidence_id: str
+    command_id: str
+    evidence_type: str
+    ref: str
+    ref_hash: str
+    verified: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Claim:
+    """Operational claim bound to evidence references."""
+
+    claim_id: str
+    command_id: str
+    text: str
+    evidence_refs: tuple[str, ...]
+    confidence: float
+    verified: bool
+
+
 class CommandLedgerStore:
     """Persistence contract for command envelopes and transition events."""
 
@@ -1382,6 +1406,8 @@ class CommandLedger:
         self._recovery_plans: dict[str, RecoveryPlan] = {}
         self._effect_observations: dict[str, EffectObservation] = {}
         self._effect_reconciliations: dict[str, EffectReconciliation] = {}
+        self._claims: dict[str, list[Claim]] = {}
+        self._evidence_records: dict[str, list[EvidenceRecord]] = {}
         self._store = store or InMemoryCommandLedgerStore()
         self._last_event_hash = self._store.latest_event_hash()
 
@@ -1787,6 +1813,152 @@ class CommandLedger:
             return reconciliation
         return None
 
+    def record_operational_claim(
+        self,
+        command_id: str,
+        *,
+        text: str,
+        verified: bool,
+        confidence: float = 1.0,
+    ) -> Claim:
+        """Record one evidence-backed operational claim."""
+        command = self.get(command_id)
+        if command is None:
+            raise KeyError(f"unknown command_id: {command_id}")
+        if not text:
+            raise ValueError("claim text is required")
+        if confidence < 0.0 or confidence > 1.0:
+            raise ValueError("claim confidence must be between 0 and 1")
+
+        evidence_records = self._build_evidence_records(command_id, verified=verified)
+        evidence_refs = tuple(record.evidence_id for record in evidence_records)
+        claim_hash = canonical_hash({
+            "command_id": command_id,
+            "text": text,
+            "evidence_refs": evidence_refs,
+            "verified": verified,
+            "confidence": confidence,
+        })
+        claim = Claim(
+            claim_id=f"claim-{claim_hash[:16]}",
+            command_id=command_id,
+            text=text,
+            evidence_refs=evidence_refs,
+            confidence=confidence,
+            verified=verified,
+        )
+        self._evidence_records.setdefault(command_id, []).extend(evidence_records)
+        self._claims.setdefault(command_id, []).append(claim)
+        self.transition(
+            command_id,
+            command.state,
+            output=asdict(claim),
+            detail={
+                "cause": "evidence_claim_recorded",
+                "claim": asdict(claim),
+                "evidence": [asdict(record) for record in evidence_records],
+            },
+        )
+        return claim
+
+    def claims_for(self, command_id: str) -> list[Claim]:
+        """Return recorded claims for one command."""
+        claims = self._claims.get(command_id)
+        if claims:
+            return list(claims)
+        loaded: list[Claim] = []
+        for event in self.events_for(command_id):
+            raw_claim = event.detail.get("claim")
+            if not isinstance(raw_claim, dict):
+                continue
+            try:
+                loaded.append(Claim(
+                    claim_id=str(raw_claim["claim_id"]),
+                    command_id=str(raw_claim["command_id"]),
+                    text=str(raw_claim["text"]),
+                    evidence_refs=tuple(raw_claim["evidence_refs"]),
+                    confidence=float(raw_claim["confidence"]),
+                    verified=bool(raw_claim["verified"]),
+                ))
+            except (KeyError, TypeError, ValueError):
+                continue
+        if loaded:
+            self._claims[command_id] = loaded
+        return loaded
+
+    def evidence_for(self, command_id: str) -> list[EvidenceRecord]:
+        """Return recorded evidence for one command."""
+        records = self._evidence_records.get(command_id)
+        if records:
+            return list(records)
+        loaded: list[EvidenceRecord] = []
+        for event in self.events_for(command_id):
+            raw_records = event.detail.get("evidence")
+            if not isinstance(raw_records, list):
+                continue
+            for raw_record in raw_records:
+                if not isinstance(raw_record, dict):
+                    continue
+                try:
+                    loaded.append(EvidenceRecord(
+                        evidence_id=str(raw_record["evidence_id"]),
+                        command_id=str(raw_record["command_id"]),
+                        evidence_type=str(raw_record["evidence_type"]),
+                        ref=str(raw_record["ref"]),
+                        ref_hash=str(raw_record["ref_hash"]),
+                        verified=bool(raw_record["verified"]),
+                    ))
+                except (KeyError, TypeError, ValueError):
+                    continue
+        if loaded:
+            self._evidence_records[command_id] = loaded
+        return loaded
+
+    def _build_evidence_records(self, command_id: str, *, verified: bool) -> list[EvidenceRecord]:
+        """Build canonical evidence records from command witnesses."""
+        command = self.get(command_id)
+        if command is None:
+            raise KeyError(f"unknown command_id: {command_id}")
+        refs: list[tuple[str, str]] = [
+            ("payload_hash", command.payload_hash),
+        ]
+        action = self.governed_action_for(command_id)
+        if action is not None:
+            refs.extend([
+                ("intent_hash", action.intent_hash),
+                ("capability_passport_hash", action.capability_passport_hash),
+            ])
+            if action.predicted_effect_hash:
+                refs.append(("predicted_effect_hash", action.predicted_effect_hash))
+            if action.rollback_plan_hash:
+                refs.append(("rollback_plan_hash", action.rollback_plan_hash))
+        reconciliation = self.effect_reconciliation_for(command_id)
+        if reconciliation is not None:
+            refs.extend([
+                ("observed_effect_hash", reconciliation.observed_effect_hash),
+                ("effect_reconciliation", canonical_hash(asdict(reconciliation))),
+            ])
+        events = self.events_for(command_id)
+        if events:
+            refs.append(("latest_event_hash", events[-1].event_hash))
+
+        records: list[EvidenceRecord] = []
+        for evidence_type, ref in refs:
+            evidence_hash = canonical_hash({
+                "command_id": command_id,
+                "evidence_type": evidence_type,
+                "ref": ref,
+            })
+            records.append(EvidenceRecord(
+                evidence_id=f"evidence-{evidence_hash[:16]}",
+                command_id=command_id,
+                evidence_type=evidence_type,
+                ref=ref,
+                ref_hash=evidence_hash,
+                verified=verified,
+            ))
+        return records
+
     def transition(
         self,
         command_id: str,
@@ -1855,6 +2027,8 @@ class CommandLedger:
             "recovery_plans": len(self._recovery_plans),
             "effect_observations": len(self._effect_observations),
             "effect_reconciliations": len(self._effect_reconciliations),
+            "claims": sum(len(claims) for claims in self._claims.values()),
+            "evidence_records": sum(len(records) for records in self._evidence_records.values()),
             "states": state_counts,
             "last_event_hash": self._last_event_hash,
             "anchors": len(self._store.list_anchors(limit=10)),

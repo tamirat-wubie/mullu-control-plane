@@ -370,6 +370,45 @@ def test_command_ledger_reconciles_read_only_effect_observation():
     assert events[-1].detail["effect_assurance_reconciliation"]["status"] == "match"
 
 
+def test_command_ledger_records_evidence_backed_claim():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-claim",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"content": "hello", "succeeded": True},
+    )
+
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command llm_completion completed.",
+        verified=True,
+    )
+    claims = ledger.claims_for(command.command_id)
+    evidence = ledger.evidence_for(command.command_id)
+    events = ledger.events_for(command.command_id)
+
+    assert claim.verified is True
+    assert claim.confidence == 1.0
+    assert claim.evidence_refs
+    assert claims == [claim]
+    assert evidence
+    assert {record.evidence_type for record in evidence} >= {"payload_hash", "latest_event_hash"}
+    assert events[-1].detail["claim"]["claim_id"] == claim.claim_id
+    assert events[-1].detail["evidence"]
+
+
 def test_command_ledger_blocks_mutating_effect_without_required_receipts():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",
@@ -408,3 +447,74 @@ def test_command_ledger_blocks_mutating_effect_without_required_receipts():
     assert events[-1].detail["effect_verification"]["status"] == "fail"
     assert events[-1].detail["effect_assurance_reconciliation"]["status"] == "mismatch"
     assert events[-1].detail["effect_assurance_reconciliation"]["case_id"] == f"case-{command.command_id}"
+
+
+def test_command_ledger_records_operational_claim_with_evidence():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-claim",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"succeeded": True, "content": "hello"},
+    )
+
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command completed with reconciled effects.",
+        verified=True,
+        confidence=0.95,
+    )
+    claims = ledger.claims_for(command.command_id)
+    evidence = ledger.evidence_for(command.command_id)
+
+    assert claim.verified is True
+    assert claim.confidence == 0.95
+    assert claims == [claim]
+    assert len(evidence) >= 5
+    assert "latest_event_hash" in {record.evidence_type for record in evidence}
+
+
+def test_command_ledger_reloads_claims_and_evidence_from_events():
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-claim-reload",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command has immutable evidence.",
+        verified=True,
+    )
+
+    reloaded = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    claims = reloaded.claims_for(command.command_id)
+    evidence = reloaded.evidence_for(command.command_id)
+
+    assert claims == [claim]
+    assert evidence
+    assert all(record.command_id == command.command_id for record in evidence)
+    assert all(record.ref_hash for record in evidence)
