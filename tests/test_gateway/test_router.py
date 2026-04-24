@@ -23,27 +23,36 @@ from gateway.skill_dispatch import SkillDispatcher  # noqa: E402
 class StubPlatform:
     """Minimal platform stub for gateway testing."""
 
-    def __init__(self, llm_response: str = "Hello! How can I help?", fail: bool = False):
+    def __init__(
+        self,
+        llm_response: str = "Hello! How can I help?",
+        fail: bool = False,
+        close_fail: bool = False,
+    ):
         self._llm_response = llm_response
         self._fail = fail
+        self._close_fail = close_fail
         self.sessions_opened = 0
 
     def connect(self, *, identity_id: str, tenant_id: str):
         self.sessions_opened += 1
         if self._fail:
             raise PermissionError("tenant suspended")
-        return StubSession(self._llm_response)
+        return StubSession(self._llm_response, close_fail=self._close_fail)
 
 
 class StubSession:
-    def __init__(self, response: str):
+    def __init__(self, response: str, *, close_fail: bool = False):
         self._response = response
+        self._close_fail = close_fail
         self.closed = False
 
     def llm(self, prompt, **kwargs):
         return StubLLMResult(self._response)
 
     def close(self):
+        if self._close_fail:
+            raise RuntimeError("session close failed")
         self.closed = True
 
 
@@ -281,6 +290,20 @@ class TestMessageRouting:
         router.handle_message(GatewayMessage(message_id="m1", channel="web", sender_id="u1", body="hi"))
         router.handle_message(GatewayMessage(message_id="m2", channel="web", sender_id="u1", body="there"))
         assert router.message_count == 2
+
+    def test_session_close_failure_increments_error_count(self):
+        router = GatewayRouter(platform=StubPlatform(llm_response="ok", close_fail=True))
+        router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="u1", tenant_id="t1", identity_id="u1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="m1", channel="web", sender_id="u1", body="hello",
+        ))
+
+        assert response.body == "ok"
+        assert response.metadata["delivery_status"] == "skipped_no_adapter"
+        assert router.error_count == 1
 
 
 # ═══ Channel Adapter Integration ═══

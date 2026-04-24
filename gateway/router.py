@@ -491,7 +491,7 @@ class GatewayRouter:
             try:
                 session.close()
             except Exception:
-                pass
+                self._error_count += 1
 
         self._commands.transition(command.command_id, CommandState.OBSERVED, output={"error": response_body})
         response = GatewayResponse(
