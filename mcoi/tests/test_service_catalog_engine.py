@@ -2168,7 +2168,7 @@ class TestAssessCatalogItem:
         assert asmt.assessed_by == "catalog-assessor-1"
 
     def test_missing_assessed_by_rejected(self, engine_with_item: ServiceCatalogEngine) -> None:
-        with pytest.raises(RuntimeCoreInvariantError, match="assessed_by"):
+        with pytest.raises(RuntimeCoreInvariantError, match="must be a non-empty string"):
             engine_with_item.assess_catalog_item("as1", "item-1", 0.5, 0.5)
 
     def test_system_assessed_by_rejected(self, engine_with_item: ServiceCatalogEngine) -> None:
