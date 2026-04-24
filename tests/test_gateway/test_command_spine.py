@@ -8,15 +8,19 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.command_spine import (  # noqa: E402
+    CapabilityPassport,
     CommandAnchorProof,
     CommandLedger,
     CommandState,
     InMemoryCommandLedgerStore,
+    build_governed_action,
     build_command_ledger_from_env,
     capability_passport_for,
     compile_typed_intent,
@@ -284,6 +288,78 @@ def test_typed_intent_compiler_binds_skill_payload_to_contract():
     assert passport.capability == typed_intent.name
     assert passport.risk_tier == "high"
     assert "financial_admin" in passport.authority_required
+    assert "payment_provider_request_created" in passport.declared_effects
+    assert "duplicate_payment" in passport.forbidden_effects
+    assert "ledger_hash" in passport.evidence_required
+    assert "provider_action" in passport.graph_projection["nodes"]
+
+
+def test_high_risk_passport_requires_effect_contract_before_action_binding():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-effect-contract",
+        intent="financial.send_payment",
+        payload={
+            "body": "pay vendor $50",
+            "skill_intent": {
+                "skill": "financial",
+                "action": "send_payment",
+                "params": {"amount": "50"},
+            },
+        },
+    )
+    typed_intent = compile_typed_intent(command)
+    incomplete_passport = CapabilityPassport(
+        capability="financial.send_payment",
+        version="1",
+        risk_tier="high",
+        input_schema="PaymentIntent.v1",
+        output_schema="PaymentReceipt.v1",
+        authority_required=("financial_admin",),
+        requires=("tenant_bound",),
+        mutates_world=True,
+        external_system="payment_provider",
+        rollback_type="compensatable",
+        compensation_capability="financial.refund",
+        proof_required_fields=("transaction_id",),
+    )
+
+    with pytest.raises(ValueError, match="^effect-bearing capability requires declared effects$"):
+        build_governed_action(command, typed_intent, incomplete_passport)
+
+
+def test_capability_passports_declare_effect_contracts():
+    llm_passport = capability_passport_for("llm_completion")
+    balance_passport = capability_passport_for("financial.balance_check")
+    payment_passport = capability_passport_for("financial.send_payment")
+
+    assert llm_passport.declared_effects == ("response_emitted",)
+    assert llm_passport.forbidden_effects == ("unauthorized_state_mutation",)
+    assert llm_passport.evidence_required == ("command_id", "trace_id", "output_hash")
+    assert llm_passport.graph_projection["nodes"] == ("command", "provider_action", "verification")
+    assert balance_passport.declared_effects == ("balance_snapshot_read", "provider_receipt_received")
+    assert balance_passport.forbidden_effects == ("account_state_mutation", "budget_mutation")
+    assert balance_passport.evidence_required == ("command_id", "provider_receipt_hash")
+    assert payment_passport.declared_effects == (
+        "payment_provider_request_created",
+        "payment_receipt_received",
+        "ledger_entry_created",
+        "tenant_budget_decremented",
+    )
+    assert payment_passport.forbidden_effects == (
+        "duplicate_payment",
+        "amount_mismatch",
+        "recipient_mismatch",
+        "unapproved_budget_mutation",
+    )
+    assert payment_passport.graph_projection["edges"] == ("decided_by", "verified_by", "produced")
 
 
 def test_command_ledger_binds_governed_action_before_policy():
@@ -367,7 +443,17 @@ def test_command_ledger_predicts_high_risk_payment_effects():
     assert "financial.refund" in prediction.rollback_plan
     assert events[-1].next_state == CommandState.EFFECT_PLANNED
     assert events[-1].detail["effect_plan"]["capability_id"] == "financial.send_payment"
+    effect_names = {
+        effect["name"]
+        for effect in events[-1].detail["effect_plan"]["expected_effects"]
+    }
+    assert "payment_provider_request_created" in effect_names
+    assert "tenant_budget_decremented" in effect_names
+    assert "transaction_id" in effect_names
     assert events[-1].detail["effect_plan"]["forbidden_effects"]
+    assert "duplicate_payment" in events[-1].detail["effect_plan"]["forbidden_effects"]
+    assert "projected:provider_action" in events[-1].detail["effect_plan"]["graph_node_refs"]
+    assert "projected:verified_by" in events[-1].detail["effect_plan"]["graph_edge_refs"]
     assert events[-1].detail["effect_plan_hash"]
 
 
