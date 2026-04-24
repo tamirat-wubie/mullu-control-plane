@@ -74,6 +74,11 @@ class EffectAssuranceGate:
         self._graph = graph
         self._simulation_engine = simulation_engine
 
+    @property
+    def graph_commit_available(self) -> bool:
+        """Return whether matched effects can be committed to an operational graph."""
+        return self._graph is not None
+
     def create_plan(
         self,
         *,
