@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Callable
+from typing import Callable
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,14 +131,14 @@ class SpendBudgetManager:
         if budget.spent_this_week + amount > budget.weekly_limit:
             return SpendCheckResult(
                 allowed=False,
-                reason=f"weekly limit would be exceeded",
+                reason="weekly limit would be exceeded",
                 budget_id=budget.budget_id,
             )
 
         if budget.spent_this_month + amount > budget.monthly_limit:
             return SpendCheckResult(
                 allowed=False,
-                reason=f"monthly limit would be exceeded",
+                reason="monthly limit would be exceeded",
                 budget_id=budget.budget_id,
                 remaining_monthly=budget.monthly_limit - budget.spent_this_month,
             )

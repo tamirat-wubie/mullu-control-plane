@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from skills.financial.providers.base import ReadOnlyFinancialProvider, ProviderResult
+from skills.financial.providers.base import ReadOnlyFinancialProvider
 
 
 @dataclass(frozen=True, slots=True)
