@@ -5,6 +5,7 @@ Tests: durable identity store contract, revocation behavior, and router wiring.
 
 import os
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from gateway.router import GatewayRouter  # noqa: E402
 import gateway.tenant_identity as tenant_identity_module  # noqa: E402
 from gateway.tenant_identity import (  # noqa: E402
     InMemoryTenantIdentityStore,
+    PostgresTenantIdentityStore,
     TenantMapping,
     TenantIdentityConfigurationError,
     build_tenant_identity_store_from_env,
@@ -28,6 +30,53 @@ class StubPlatform:
 
     def connect(self, *, identity_id: str, tenant_id: str):
         raise AssertionError("tenant identity tests should not open sessions")
+
+
+class _CountingCursor:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def execute(self, *_args, **_kwargs):
+        return None
+
+    def fetchone(self):
+        return (0,)
+
+
+class _RollbackFailingConnection:
+    def __init__(self):
+        self.rollback_attempts = 0
+
+    def rollback(self):
+        self.rollback_attempts += 1
+        raise RuntimeError("rollback failed")
+
+    def cursor(self):
+        return _CountingCursor()
+
+    def close(self):
+        return None
+
+
+class _CloseFailingConnection:
+    def close(self):
+        raise RuntimeError("close failed")
+
+
+def _postgres_store_for_fault_tests(conn):
+    store = PostgresTenantIdentityStore.__new__(PostgresTenantIdentityStore)
+    store._connection_string = "postgresql://example/mullu"
+    store._clock = lambda: "2026-04-24T12:00:00+00:00"
+    store._conn = conn
+    store._lock = threading.Lock()
+    store._available = True
+    store._operation_failures = 0
+    store._rollback_failures = 0
+    store._close_failures = 0
+    return store
 
 
 def test_in_memory_tenant_identity_store_resolves_active_mapping():
@@ -131,6 +180,31 @@ def test_build_tenant_identity_store_rejects_unavailable_postgres_when_required(
         match="^persistent tenant identity store unavailable$",
     ):
         build_tenant_identity_store_from_env(clock=lambda: "2026-04-24T12:00:00+00:00")
+
+
+def test_postgres_operation_failure_counts_rollback_failure():
+    conn = _RollbackFailingConnection()
+    store = _postgres_store_for_fault_tests(conn)
+
+    result = store._safe_execute(lambda: (_ for _ in ()).throw(RuntimeError("write failed")))
+    status = store.status()
+
+    assert result is None
+    assert conn.rollback_attempts == 1
+    assert status["operation_failures"] == 1
+    assert status["rollback_failures"] == 1
+    assert status["active_mappings"] == 0
+
+
+def test_postgres_close_failure_is_counted_and_connection_cleared():
+    store = _postgres_store_for_fault_tests(_CloseFailingConnection())
+
+    store.close()
+    status = store.status()
+
+    assert store._conn is None
+    assert status["available"] is False
+    assert status["close_failures"] == 1
 
 
 def test_router_uses_injected_tenant_identity_store():
