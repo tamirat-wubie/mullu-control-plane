@@ -19,6 +19,9 @@ from mcoi_runtime.contracts.communication import (
     DeliveryResult,
     DeliveryStatus,
 )
+from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.core.effect_result_adapter import execution_result_from_delivery
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from .provider_registry import ProviderRegistry
 
@@ -96,12 +99,19 @@ class CommunicationEngine:
         adapters: Mapping[CommunicationChannel, DeliveryAdapter] | None = None,
         provider_registry: ProviderRegistry | None = None,
         channel_provider_map: Mapping[CommunicationChannel, str] | None = None,
+        effect_assurance: EffectAssuranceGate | None = None,
+        effect_assurance_tenant_id: str = "communication",
     ) -> None:
         self._sender_id = ensure_non_empty_text("sender_id", sender_id)
         self._clock = clock
         self._adapters: dict[CommunicationChannel, DeliveryAdapter] = dict(adapters or {})
         self._provider_registry = provider_registry
         self._channel_provider_map: dict[CommunicationChannel, str] = dict(channel_provider_map or {})
+        self._effect_assurance = effect_assurance
+        self._effect_assurance_tenant_id = ensure_non_empty_text(
+            "effect_assurance_tenant_id",
+            effect_assurance_tenant_id,
+        )
 
     def request_approval(
         self,
@@ -240,6 +250,8 @@ class CommunicationEngine:
                 )
 
         result = adapter.deliver(message)
+        if self._effect_assurance is not None:
+            result = self._assure_delivery_effect(message, result)
 
         # Update provider health
         if self._provider_registry is not None and provider_id is not None:
@@ -249,3 +261,78 @@ class CommunicationEngine:
                 self._provider_registry.record_failure(provider_id, result.error_code or "delivery_failed")
 
         return result
+
+    def _assure_delivery_effect(
+        self,
+        message: CommunicationMessage,
+        result: DeliveryResult,
+    ) -> DeliveryResult:
+        try:
+            execution_result = execution_result_from_delivery(
+                result,
+                goal_id=str(message.payload.get("goal_id") or message.correlation_id),
+            )
+            effect = execution_result.actual_effects[0]
+            plan = self._effect_assurance.create_plan(
+                command_id=result.delivery_id,
+                tenant_id=self._effect_assurance_tenant_id,
+                capability_id=f"communication:{message.channel.value}",
+                expected_effects=(
+                    ExpectedEffect(
+                        effect_id=effect.name,
+                        name=effect.name,
+                        target_ref=result.message_id,
+                        required=True,
+                        verification_method="receipt",
+                    ),
+                ),
+                forbidden_effects=("communication_duplicate",),
+            )
+            observed = self._effect_assurance.observe(execution_result)
+            verification = self._effect_assurance.verify(
+                plan=plan,
+                execution_result=execution_result,
+                observed_effects=observed,
+            )
+            reconciliation = self._effect_assurance.reconcile(
+                plan=plan,
+                observed_effects=observed,
+                verification_result=verification,
+            )
+        except RuntimeCoreInvariantError as exc:
+            return DeliveryResult(
+                delivery_id=result.delivery_id,
+                message_id=result.message_id,
+                status=DeliveryStatus.FAILED,
+                channel=result.channel,
+                error_code="effect_assurance_failed",
+                metadata={
+                    **dict(result.metadata),
+                    "effect_assurance_error": str(exc),
+                },
+            )
+
+        assurance_metadata = {
+            "effect_plan_id": plan.effect_plan_id,
+            "verification_result_id": verification.verification_id,
+            "reconciliation_id": reconciliation.reconciliation_id,
+            "reconciliation_status": reconciliation.status.value,
+        }
+        if reconciliation.status is not ReconciliationStatus.MATCH:
+            return DeliveryResult(
+                delivery_id=result.delivery_id,
+                message_id=result.message_id,
+                status=DeliveryStatus.FAILED,
+                channel=result.channel,
+                error_code="effect_reconciliation_mismatch",
+                metadata={**dict(result.metadata), "effect_assurance": assurance_metadata},
+            )
+        return DeliveryResult(
+            delivery_id=result.delivery_id,
+            message_id=result.message_id,
+            status=result.status,
+            channel=result.channel,
+            delivered_at=result.delivered_at,
+            error_code=result.error_code,
+            metadata={**dict(result.metadata), "effect_assurance": assurance_metadata},
+        )

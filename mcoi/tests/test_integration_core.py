@@ -19,6 +19,7 @@ from mcoi_runtime.core.integration import (
     IntegrationEngine,
     InvocationRequest,
 )
+from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
 
@@ -26,19 +27,32 @@ _CLOCK = "2026-03-19T00:00:00+00:00"
 
 
 class FakeConnectorAdapter:
-    def __init__(self, response_digest: str = "resp-digest") -> None:
+    def __init__(self, response_digest: str = "resp-digest", *, include_receipt: bool = False) -> None:
         self._digest = response_digest
+        self._include_receipt = include_receipt
         self.invoked: list[dict] = []
 
     def invoke(self, connector: ConnectorDescriptor, request: dict) -> ConnectorResult:
         self.invoked.append(request)
+        result_id = stable_identifier("res", {"connector_id": connector.connector_id})
+        metadata = {}
+        if self._include_receipt:
+            metadata = {
+                "connector_receipt": {
+                    "receipt_id": "connector-receipt-1",
+                    "evidence_ref": f"connector-invocation:{connector.connector_id}:receipt-1",
+                    "status": "succeeded",
+                    "response_digest": self._digest,
+                }
+            }
         return ConnectorResult(
-            result_id=stable_identifier("res", {"connector_id": connector.connector_id}),
+            result_id=result_id,
             connector_id=connector.connector_id,
             status=ConnectorStatus.SUCCEEDED,
             response_digest=self._digest,
             started_at=_CLOCK,
             finished_at=_CLOCK,
+            metadata=metadata,
         )
 
 
@@ -120,3 +134,42 @@ def test_get_connector() -> None:
 
     assert engine.get_connector("conn-1") is not None
     assert engine.get_connector("nonexistent") is None
+
+
+def test_invoke_with_effect_assurance_reconciles_receipt() -> None:
+    engine = IntegrationEngine(
+        clock=lambda: _CLOCK,
+        effect_assurance=EffectAssuranceGate(clock=lambda: _CLOCK),
+    )
+    adapter = FakeConnectorAdapter(include_receipt=True)
+    engine.register(_descriptor(), adapter)
+
+    result = engine.invoke(InvocationRequest(
+        connector_id="conn-1",
+        operation="list_repos",
+        parameters={"org": "mullu"},
+    ))
+
+    assurance = result.metadata["effect_assurance"]
+    assert result.status is ConnectorStatus.SUCCEEDED
+    assert assurance["reconciliation_status"] == "match"
+    assert assurance["effect_plan_id"].startswith("effect-plan-")
+    assert assurance["verification_result_id"].startswith("effect-verification-")
+
+
+def test_invoke_with_effect_assurance_fails_without_receipt() -> None:
+    engine = IntegrationEngine(
+        clock=lambda: _CLOCK,
+        effect_assurance=EffectAssuranceGate(clock=lambda: _CLOCK),
+    )
+    engine.register(_descriptor(), FakeConnectorAdapter())
+
+    result = engine.invoke(InvocationRequest(
+        connector_id="conn-1",
+        operation="list_repos",
+        parameters={"org": "mullu"},
+    ))
+
+    assert result.status is ConnectorStatus.FAILED
+    assert result.error_code == "effect_assurance_failed"
+    assert "required for effect observation" in result.metadata["effect_assurance_error"]
