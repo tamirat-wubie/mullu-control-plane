@@ -174,6 +174,13 @@ they must be approved, dispatched through an injected capability, observed,
 verified, reconciled, and graph-anchored before recovery can be claimed. See
 `docs/35_compensation_assurance.md`.
 
+### Closure Memory Promotion
+
+Verified execution closures, explicit accepted-risk closures, failure records,
+and successful compensation outcomes can be admitted into append-only episodic
+memory without skipping into semantic or procedural memory. See
+`docs/36_closure_memory_promotion.md`.
+
 ## Deployment
 
 ```bash
