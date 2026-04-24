@@ -13,7 +13,7 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
@@ -162,15 +162,46 @@ class GatewayRouter:
             return "expired"
         return "denied"
 
-    def _send_response(self, response: GatewayResponse) -> None:
+    def _send_response(self, response: GatewayResponse) -> GatewayResponse:
         """Send a response through its registered channel adapter when present."""
         adapter = self._channels.get(response.channel)
         if adapter is None:
-            return
+            return replace(
+                response,
+                metadata={
+                    **response.metadata,
+                    "delivery_status": "skipped_no_adapter",
+                },
+            )
         try:
-            adapter.send(response.recipient_id, response.body)
+            sent = bool(adapter.send(response.recipient_id, response.body))
         except Exception:
-            pass
+            self._error_count += 1
+            return replace(
+                response,
+                metadata={
+                    **response.metadata,
+                    "delivery_status": "failed",
+                    "delivery_error_type": "adapter_exception",
+                },
+            )
+        if not sent:
+            self._error_count += 1
+            return replace(
+                response,
+                metadata={
+                    **response.metadata,
+                    "delivery_status": "failed",
+                    "delivery_error_type": "adapter_rejected",
+                },
+            )
+        return replace(
+            response,
+            metadata={
+                **response.metadata,
+                "delivery_status": "sent",
+            },
+        )
 
     def _intent_name(self, intent: SkillIntent | None) -> str:
         """Return the canonical command intent string."""
@@ -634,12 +665,7 @@ class GatewayRouter:
         if approval_command is not None:
             request_id, approved = approval_command
             response = self._handle_approval_message(message, mapping, request_id, approved)
-            adapter = self._channels.get(message.channel)
-            if adapter is not None:
-                try:
-                    adapter.send(message.sender_id, response.body)
-                except Exception:
-                    pass
+            response = self._send_response(response)
             self._dedup.record(message.channel, message.sender_id, message.message_id, response)
             return response
 
@@ -687,7 +713,7 @@ class GatewayRouter:
             risk_tier=approval.risk_tier.value,
         )
         response = self._execute_command(command, recipient_id=message.sender_id)
-        self._send_response(response)
+        response = self._send_response(response)
         self._dedup.record(message.channel, message.sender_id, message.message_id, response)
         return response
 
@@ -709,7 +735,7 @@ class GatewayRouter:
             recipient_id = str(command.redacted_payload.get("sender_id", command.actor_id))
             try:
                 response = self._execute_command(command, recipient_id=recipient_id)
-                self._send_response(response)
+                response = self._send_response(response)
                 responses.append(response)
             finally:
                 self._commands.release_command(command.command_id, worker_id)
