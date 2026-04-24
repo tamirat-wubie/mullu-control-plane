@@ -13,6 +13,13 @@ from .accepted_risk import (
     AcceptedRiskRecord,
     AcceptedRiskScope,
 )
+from .compensation import (
+    CompensationAttempt,
+    CompensationKind,
+    CompensationOutcome,
+    CompensationPlan,
+    CompensationStatus,
+)
 from .change_assurance import (
     AssuranceDisposition,
     BlastRadiusReport,

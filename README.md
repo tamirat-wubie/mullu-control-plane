@@ -167,6 +167,13 @@ Unresolved verification gaps can be held open only through bounded accepted-risk
 records with owner, approver, case, expiry, review obligation, and evidence.
 See `docs/34_accepted_risk_closure.md`.
 
+### Compensation Assurance
+
+Rollback and compensation actions are treated as evidence-bearing recoveries:
+they must be approved, dispatched through an injected capability, observed,
+verified, reconciled, and graph-anchored before recovery can be claimed. See
+`docs/35_compensation_assurance.md`.
+
 ## Deployment
 
 ```bash
