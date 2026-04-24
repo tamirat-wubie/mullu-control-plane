@@ -145,6 +145,9 @@ class PostgresTenantIdentityStore(TenantIdentityStore):
         self._conn: Any | None = None
         self._lock = threading.Lock()
         self._available = False
+        self._operation_failures = 0
+        self._rollback_failures = 0
+        self._close_failures = 0
         try:
             import psycopg2  # noqa: F401
             self._available = True
@@ -178,10 +181,15 @@ class PostgresTenantIdentityStore(TenantIdentityStore):
         try:
             return operation()
         except Exception as exc:
+            self._operation_failures += 1
             try:
                 self._conn.rollback()
-            except Exception:
-                pass
+            except Exception as rollback_exc:
+                self._rollback_failures += 1
+                _log.warning(
+                    "tenant identity postgres rollback failed (%s)",
+                    type(rollback_exc).__name__,
+                )
             _log.warning("tenant identity postgres operation failed (%s)", type(exc).__name__)
             return None
 
@@ -275,14 +283,18 @@ class PostgresTenantIdentityStore(TenantIdentityStore):
             "available": self._conn is not None,
             "driver_available": self._available,
             "active_mappings": self.count(),
+            "operation_failures": self._operation_failures,
+            "rollback_failures": self._rollback_failures,
+            "close_failures": self._close_failures,
         }
 
     def close(self) -> None:
         if self._conn is not None:
             try:
                 self._conn.close()
-            except Exception:
-                pass
+            except Exception as exc:
+                self._close_failures += 1
+                _log.warning("tenant identity postgres close failed (%s)", type(exc).__name__)
             self._conn = None
 
 
