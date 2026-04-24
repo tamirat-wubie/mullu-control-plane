@@ -7,7 +7,6 @@ Tests: Session lifecycle, LLM calls with full governance pipeline,
 
 import pytest
 from mcoi_runtime.core.governed_session import (
-    GovernedSession,
     Platform,
     SessionClosureReport,
     _build_session_dispatch_request,
@@ -626,7 +625,7 @@ class TestPlatformFromServer:
         os.environ["MULLU_ENV"] = "local_dev"
         os.environ["MULLU_DB_BACKEND"] = "memory"
         from mcoi_runtime.app.server import access_runtime as ar
-        from mcoi_runtime.contracts.access_runtime import IdentityKind, RoleKind, AuthContextKind
+        from mcoi_runtime.contracts.access_runtime import IdentityKind, AuthContextKind
         # Register identity so RBAC doesn't deny
         try:
             ar.register_identity("test-audit-user", "Test Audit", kind=IdentityKind.HUMAN, tenant_id="test-tenant")
@@ -659,6 +658,10 @@ class TestPlatformFromEnv:
         assert "llm_bridge" in p.bootstrap_components
         assert "tenant_gating" in p.bootstrap_components
         assert "proof_bridge" in p.bootstrap_components
+        assert "llm_cache" in p.bootstrap_components
+        assert "usage_tracker" in p.bootstrap_components
+        assert "decision_log" in p.bootstrap_components
+        assert "cross_session_memory" in p.bootstrap_components
 
     def test_from_env_records_bootstrap_failures(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "local_dev")
@@ -682,6 +685,35 @@ class TestPlatformFromEnv:
         assert p.bootstrap_components["llm_bridge"] is False
         assert "access runtime bootstrap failed (RuntimeError)" in p.bootstrap_warnings
         assert "llm bootstrap failed (RuntimeError)" in p.bootstrap_warnings
+
+    def test_from_env_records_optional_bootstrap_failures(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "local_dev")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+
+        from mcoi_runtime.core import cross_session_memory
+        from mcoi_runtime.core import governance_decision_log
+        from mcoi_runtime.core import llm_cache
+        from mcoi_runtime.core import tenant_usage_tracker
+
+        def _raise_optional(*args, **kwargs):
+            raise RuntimeError("secret optional bootstrap failure")
+
+        monkeypatch.setattr(llm_cache, "LLMResponseCache", _raise_optional)
+        monkeypatch.setattr(tenant_usage_tracker, "TenantUsageTracker", _raise_optional)
+        monkeypatch.setattr(governance_decision_log, "GovernanceDecisionLog", _raise_optional)
+        monkeypatch.setattr(cross_session_memory, "CrossSessionMemory", _raise_optional)
+
+        p = Platform.from_env()
+
+        assert p.bootstrap_components["llm_cache"] is False
+        assert p.bootstrap_components["usage_tracker"] is False
+        assert p.bootstrap_components["decision_log"] is False
+        assert p.bootstrap_components["cross_session_memory"] is False
+        assert "llm cache bootstrap failed (RuntimeError)" in p.bootstrap_warnings
+        assert "usage tracker bootstrap failed (RuntimeError)" in p.bootstrap_warnings
+        assert "decision log bootstrap failed (RuntimeError)" in p.bootstrap_warnings
+        assert "cross-session memory bootstrap failed (RuntimeError)" in p.bootstrap_warnings
+        assert not any("secret optional bootstrap failure" in warning for warning in p.bootstrap_warnings)
 
     def test_from_env_disables_partial_access_runtime_on_seed_failure(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "local_dev")
@@ -719,7 +751,8 @@ class TestPlatformInDeps:
         import os
         os.environ["MULLU_ENV"] = "local_dev"
         os.environ["MULLU_DB_BACKEND"] = "memory"
-        import mcoi_runtime.app.server
+        from importlib import import_module
+        import_module("mcoi_runtime.app.server")
         from mcoi_runtime.app.routers.deps import deps
         p = deps.get("platform")
         assert p is not None
