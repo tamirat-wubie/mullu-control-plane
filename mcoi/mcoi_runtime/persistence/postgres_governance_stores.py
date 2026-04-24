@@ -18,6 +18,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import logging as _logging
 import threading
 from datetime import datetime, timezone
 from typing import Any
@@ -98,9 +99,6 @@ GOVERNANCE_MIGRATIONS: list[str] = [
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-
-import logging as _logging
-
 _log = _logging.getLogger(__name__)
 
 
@@ -167,8 +165,11 @@ class _PostgresBase:
             if self._conn is not None:
                 try:
                     self._conn.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    _log.warning(
+                        "governance store connection close failed during reconnect (%s)",
+                        _bounded_store_failure(exc),
+                    )
             self._connect()
             return True
         except Exception as exc:
@@ -213,9 +214,13 @@ class _PostgresBase:
         if self._conn is not None:
             try:
                 self._conn.close()
-            except Exception:
-                pass
-            self._conn = None
+            except Exception as exc:
+                _log.warning(
+                    "governance store close failed (%s)",
+                    _bounded_store_failure(exc),
+                )
+            finally:
+                self._conn = None
 
 
 # â•â•â• PostgresBudgetStore â•â•â•
@@ -660,8 +665,11 @@ class GovernanceStoreBundle:
             if hasattr(store, "close"):
                 try:
                     store.close()
-                except Exception:
-                    pass
+                except Exception as exc:
+                    _log.warning(
+                        "governance store bundle close failed (%s)",
+                        _bounded_store_failure(exc),
+                    )
 
 
 def create_governance_stores(
