@@ -76,6 +76,19 @@ def test_validate_required_document_text_rejects_missing_literals() -> None:
     assert "not-declared" in errors[0]
 
 
+def test_validate_status_document_text_rejects_missing_public_anchors() -> None:
+    errors = validate_public_repository_surface.validate_required_document_text(
+        document_name="STATUS.md",
+        content="# Repository Status Witness\n\n| Branch witness | Reflected |\n",
+        required_literals=validate_public_repository_surface.STATUS_REQUIRED_LITERALS,
+    )
+
+    assert len(errors) == 1
+    assert "STATUS.md missing required literals" in errors[0]
+    assert "Release witness" in errors[0]
+    assert "DEPLOYMENT_STATUS.md" in errors[0]
+
+
 def test_validate_local_public_documents_passes_current_repo() -> None:
     errors = validate_public_repository_surface.validate_local_public_documents()
 

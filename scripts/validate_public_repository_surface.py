@@ -60,6 +60,17 @@ GITHUB_SURFACE_REQUIRED_LITERALS = (
     "symbolic-intelligence",
     "python scripts/validate_public_repository_surface.py",
 )
+STATUS_REQUIRED_LITERALS = (
+    "Repository Status Witness",
+    "Branch witness",
+    "Release witness",
+    "CI witness",
+    "Governance witness",
+    "Known Reflection Gaps",
+    "GITHUB_SURFACE.md",
+    "DEPLOYMENT_STATUS.md",
+    "python scripts/validate_public_repository_surface.py",
+)
 DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "Deployment Status Witness",
     "**Deployment witness state:** `not-published`",
@@ -162,6 +173,16 @@ def validate_local_public_documents() -> list[str]:
                 document_name="GITHUB_SURFACE.md",
                 content=github_surface_path.read_text(encoding="utf-8"),
                 required_literals=GITHUB_SURFACE_REQUIRED_LITERALS,
+            )
+        )
+
+    status_path = REPO_ROOT / "STATUS.md"
+    if status_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name="STATUS.md",
+                content=status_path.read_text(encoding="utf-8"),
+                required_literals=STATUS_REQUIRED_LITERALS,
             )
         )
 
