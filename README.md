@@ -193,6 +193,12 @@ Terminal closure certificates and episodic closure memory now pass through an
 explicit learning admission gate before they can be used as semantic or
 procedural planning knowledge. See `docs/38_closure_learning_admission.md`.
 
+### Procedural Memory Admission
+
+Runbook admission now requires an explicit admitted learning decision in
+addition to successful execution, passing verification, and replay integrity.
+The learning admission id is carried in runbook provenance.
+
 ## Deployment
 
 ```bash

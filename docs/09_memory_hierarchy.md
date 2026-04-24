@@ -89,6 +89,8 @@ Rules:
 - Procedural Memory entries MUST declare their preconditions and postconditions.
 - A procedural entry MUST NOT be applied if its preconditions are not met in the current world state.
 - Procedural entries MUST be re-validated when the capability registry changes.
+- Procedural Memory write paths MUST require a recorded `LearningAdmissionDecision`
+  with `status=admit`; replay success alone is not sufficient admission.
 
 ### Tier 5: Archive Memory
 
