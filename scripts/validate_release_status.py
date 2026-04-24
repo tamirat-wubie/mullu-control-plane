@@ -35,6 +35,7 @@ from scripts import validate_artifacts, validate_schemas  # noqa: E402
 
 REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
     "README.md",
+    "STATUS.md",
     "RELEASE_NOTES_v0.1.md",
     "RELEASE_CHECKLIST_v0.1.md",
     "KNOWN_LIMITATIONS_v0.1.md",
@@ -67,6 +68,17 @@ METADATA_DOCUMENTS: tuple[str, ...] = (
     "RELEASE_NOTES_v0.1.md",
     "KNOWN_LIMITATIONS_v0.1.md",
     "SECURITY_MODEL_v0.1.md",
+)
+
+STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
+    "Repository Status Witness",
+    "Branch witness",
+    "Release witness",
+    "CI witness",
+    "Governance witness",
+    "Known Reflection Gaps",
+    "python scripts/validate_release_status.py --strict",
+    "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
 ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
@@ -254,6 +266,21 @@ def validate_release_limitation_coverage(
     return errors
 
 
+def validate_status_document_text(content: str) -> list[str]:
+    """Validate that the public repository-status witness has required anchors."""
+    errors: list[str] = []
+    missing_literals = tuple(
+        literal
+        for literal in STATUS_DOCUMENT_REQUIRED_LITERALS
+        if literal not in content
+    )
+    if missing_literals:
+        errors.append(
+            f"STATUS.md missing required public-state anchors: {list(missing_literals)}"
+        )
+    return errors
+
+
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for pattern in SOURCE_HYGIENE_GLOBS:
@@ -311,6 +338,11 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     else:
         ci_content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
         errors.extend(validate_ci_workflow_text(ci_content))
+
+    status_document_path = REPO_ROOT / "STATUS.md"
+    if status_document_path.exists():
+        status_content = status_document_path.read_text(encoding="utf-8")
+        errors.extend(validate_status_document_text(status_content))
 
     metadata_texts = {
         document_name: (REPO_ROOT / document_name).read_text(encoding="utf-8")

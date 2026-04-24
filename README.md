@@ -208,6 +208,12 @@ kubectl apply -f k8s/
 
 **Security hardened:** restart policies, resource limits, network isolation, securityContext (runAsNonRoot), NetworkPolicy, PodDisruptionBudget.
 
+## Repository Status
+
+The public repository surface is bounded by a versioned status witness:
+[STATUS.md](STATUS.md). That witness names the audited branch head, release
+alignment, CI gates, governance checks, and known reflection gaps.
+
 ## Docs
 
 - [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) — profiles, CLI, env vars
