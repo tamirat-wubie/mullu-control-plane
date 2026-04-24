@@ -1,8 +1,5 @@
 """Task Store Persistence Tests — Save and restore scheduled tasks."""
 
-import json
-
-import pytest
 from skills.enterprise.task_scheduler import (
     ScheduleInterval,
     ScheduledTask,
@@ -240,7 +237,26 @@ class TestSchedulerStoreIntegration:
         sched = TaskScheduler(clock=lambda: "2026-04-07T12:00:00Z", store=BrokenStore())
         task = sched.register_task(tenant_id="t1", name="job", action="run")
         sched.execute_task(task.task_id)  # Should not raise
+        summary = sched.summary()
         assert sched.task_count == 1
+        assert summary["store_load_failures"] == 0
+        assert summary["store_task_save_failures"] == 2
+        assert summary["store_execution_save_failures"] == 1
+
+    def test_store_load_failure_counted_and_non_fatal(self):
+        """Store load failure is visible but does not block startup."""
+        class BrokenLoadStore(TaskStore):
+            def load_tasks(self):
+                raise IOError("disk unavailable")
+
+        sched = TaskScheduler(clock=lambda: "2026-04-07T12:00:00Z", store=BrokenLoadStore())
+        summary = sched.summary()
+        assert sched.task_count == 0
+        assert sched.execution_count == 0
+        assert sched.store_load_failures == 1
+        assert summary["store_load_failures"] == 1
+        assert summary["store_task_save_failures"] == 0
+        assert summary["store_execution_save_failures"] == 0
 
 
 # ── Base TaskStore ─────────────────────────────────────────────

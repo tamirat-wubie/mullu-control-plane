@@ -92,6 +92,9 @@ class TaskScheduler:
         self._executions: list[TaskExecution] = []
         self._running: set[str] = set()  # task_ids currently executing
         self._store = store
+        self._store_load_failures = 0
+        self._store_task_save_failures = 0
+        self._store_execution_save_failures = 0
 
         # Load persisted state if store is available
         if self._store is not None:
@@ -106,7 +109,7 @@ class TaskScheduler:
             executions = self._store.load_executions()
             self._executions = executions
         except Exception:
-            pass  # Store failure should not prevent scheduler startup
+            self._store_load_failures += 1
 
     def _save_tasks(self) -> None:
         """Persist current task definitions to store."""
@@ -114,7 +117,7 @@ class TaskScheduler:
             try:
                 self._store.save_tasks(list(self._tasks.values()))
             except Exception:
-                pass  # Store write failure is non-fatal
+                self._store_task_save_failures += 1
 
     def _save_executions(self) -> None:
         """Persist execution history to store."""
@@ -122,7 +125,7 @@ class TaskScheduler:
             try:
                 self._store.save_executions(self._executions)
             except Exception:
-                pass
+                self._store_execution_save_failures += 1
 
     def register_task(
         self,
@@ -275,6 +278,18 @@ class TaskScheduler:
     def execution_count(self) -> int:
         return len(self._executions)
 
+    @property
+    def store_load_failures(self) -> int:
+        return self._store_load_failures
+
+    @property
+    def store_task_save_failures(self) -> int:
+        return self._store_task_save_failures
+
+    @property
+    def store_execution_save_failures(self) -> int:
+        return self._store_execution_save_failures
+
     def summary(self) -> dict[str, Any]:
         enabled = sum(1 for t in self._tasks.values() if t.enabled)
         return {
@@ -282,4 +297,7 @@ class TaskScheduler:
             "enabled_tasks": enabled,
             "total_executions": self.execution_count,
             "currently_running": len(self._running),
+            "store_load_failures": self._store_load_failures,
+            "store_task_save_failures": self._store_task_save_failures,
+            "store_execution_save_failures": self._store_execution_save_failures,
         }
