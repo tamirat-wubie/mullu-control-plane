@@ -21,3 +21,22 @@ Learning admission controls what knowledge may enter planning.
 - An implementation MUST be able to prove whether a knowledge item was admitted.
 - An implementation MUST be able to prove whether planning consumed admitted knowledge only.
 - An implementation that cannot distinguish admitted from non-admitted knowledge is non-compliant.
+
+## Planning consumption proof
+
+Planning may use the ordinary lifecycle/class boundary for local runtime checks,
+but any path that claims learning-governed knowledge must use an explicit
+`LearningAdmissionDecision`.
+
+The proof boundary is:
+
+```text
+PlanningKnowledge
+  -> lifecycle/class check
+  -> LearningAdmissionDecision lookup
+  -> status == admit
+  -> planning input admitted
+```
+
+`defer`, `reject`, missing, duplicate, or mismatched admission decisions MUST
+block planning use with an explicit rejection reason.
