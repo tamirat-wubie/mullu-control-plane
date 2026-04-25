@@ -403,6 +403,49 @@ def test_command_capability_admission_accepts_installed_typed_intent() -> None:
     assert decision.evidence_required == ("crm_update_receipt", "before_after_record_hash")
 
 
+def test_command_capability_admission_audit_survives_store_reload_for_acceptance() -> None:
+    compiler = DomainCapsuleCompiler(clock=_clock)
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    entry = _certified_entry()
+    result = compiler.compile(_certified_capsule(), [entry])
+    registry.install(result, (entry,))
+    gate = CommandCapabilityAdmissionGate(registry=registry, clock=_clock)
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store, capability_admission_gate=gate)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-fabric-reload-accepted",
+        intent="crm.update_customer_address",
+        payload={
+            "body": "update customer address",
+            "skill_intent": {
+                "skill": "crm",
+                "action": "update_customer_address",
+                "params": {"customer_id": "cus-1", "address_id": "addr-1"},
+            },
+        },
+    )
+
+    ledger.bind_governed_action(command.command_id)
+    reloaded = CommandLedger(clock=_clock, store=store)
+    audit = reloaded.capability_admission_audit_for(command.command_id)
+
+    assert audit is not None
+    assert audit["fabric_configured"] is True
+    assert audit["status"] == "accepted"
+    assert audit["intent_name"] == "crm.update_customer_address"
+    assert audit["capability_id"] == "crm.update_customer_address"
+    assert audit["capability_registry_entry"]["capability_id"] == "crm.update_customer_address"
+    assert audit["admission_event_hash"]
+    assert audit["registry_event_hash"]
+    audits = reloaded.capability_admission_audits(tenant_id="tenant-1", status="accepted")
+    assert len(audits) == 1
+    assert audits[0]["command_id"] == command.command_id
+
+
 def test_command_capability_admission_rejects_uninstalled_typed_intent() -> None:
     registry = GovernedCapabilityRegistry(clock=_clock)
     gate = CommandCapabilityAdmissionGate(registry=registry, clock=_clock)
@@ -431,6 +474,50 @@ def test_command_capability_admission_rejects_uninstalled_typed_intent() -> None
     assert decision.capability_id == ""
     assert decision.evidence_required == ()
     assert decision.reason == "no installed capability for typed intent"
+
+
+def test_command_capability_admission_audit_survives_store_reload_for_rejection() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    gate = CommandCapabilityAdmissionGate(registry=registry, clock=_clock)
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store, capability_admission_gate=gate)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-fabric-reload-rejected",
+        intent="crm.update_customer_address",
+        payload={
+            "body": "update customer address",
+            "skill_intent": {
+                "skill": "crm",
+                "action": "update_customer_address",
+                "params": {"customer_id": "cus-1"},
+            },
+        },
+    )
+
+    try:
+        ledger.bind_governed_action(command.command_id)
+    except ValueError as exc:
+        assert str(exc).startswith("capability fabric admission rejected:")
+    else:
+        raise AssertionError("uninstalled capability should reject during binding")
+    reloaded = CommandLedger(clock=_clock, store=store)
+    audit = reloaded.capability_admission_audit_for(command.command_id)
+
+    assert audit is not None
+    assert audit["fabric_configured"] is True
+    assert audit["command_state"] == "denied"
+    assert audit["status"] == "rejected"
+    assert audit["intent_name"] == "crm.update_customer_address"
+    assert audit["reason"] == "no installed capability for typed intent"
+    assert audit["capability_registry_entry"] is None
+    assert audit["admission_event_hash"]
+    audits = reloaded.capability_admission_audits(tenant_id="tenant-1", status="rejected")
+    assert len(audits) == 1
+    assert audits[0]["command_id"] == command.command_id
 
 
 def test_domain_capsule_compiler_is_deterministic_for_fixed_clock() -> None:
