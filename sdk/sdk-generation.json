@@ -1,0 +1,42 @@
+{
+  "governed": true,
+  "schema_version": 1,
+  "source_spec": "sdk/openapi/mullu.openapi.json",
+  "generators": [
+    {
+      "language": "python",
+      "package_name": "mullu-client",
+      "spec_path": "sdk/openapi/mullu.openapi.json",
+      "output_path": "sdk/python/mullu_client",
+      "generator": "openapi-python-client",
+      "command": [
+        "openapi-python-client",
+        "generate",
+        "--path",
+        "sdk/openapi/mullu.openapi.json",
+        "--config",
+        "sdk/python/openapi-python-client.yaml",
+        "--output-path",
+        "sdk/python/mullu_client",
+        "--overwrite"
+      ]
+    },
+    {
+      "language": "typescript",
+      "package_name": "@mullusi/client",
+      "spec_path": "sdk/openapi/mullu.openapi.json",
+      "output_path": "sdk/typescript/src",
+      "generator": "@hey-api/openapi-ts",
+      "command": [
+        "npx",
+        "@hey-api/openapi-ts",
+        "-i",
+        "sdk/openapi/mullu.openapi.json",
+        "-o",
+        "sdk/typescript/src",
+        "-c",
+        "sdk/typescript/openapi-ts.config.ts"
+      ]
+    }
+  ]
+}

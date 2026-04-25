@@ -45,7 +45,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 11,
+      "action_proof": 12,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 4,
@@ -53,7 +53,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 13,
+      "audit_chain": 14,
       "gap": 0,
       "read_model": 2,
       "request_proof": 0
@@ -61,16 +61,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 14
+      "witnessed": 15
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 4,
-      "request_proof": 11
+      "request_proof": 12
     },
-    "surface_count": 15
+    "surface_count": 16
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -297,6 +297,25 @@
         "overdue_obligation_count"
       ],
       "surface_id": "gateway_runtime_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/replay.py",
+        "mcoi/mcoi_runtime/core/replay_determinism_harness.py",
+        "mcoi/tests/test_replay_determinism_endpoints.py",
+        "mcoi/tests/test_replay_determinism_harness.py",
+        "docs/03_trace_and_replay.md"
+      ],
+      "notes": "Replay determinism route emits governed reports over completed traces with bounded operation specs.",
+      "representative_paths": [
+        "/api/v1/replay/{trace_id}/determinism"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "replay_determinism"
     },
     {
       "action_proof": "action_proof",
