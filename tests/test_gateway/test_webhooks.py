@@ -317,6 +317,15 @@ class TestWebChatWebhook:
         assert resp.status_code == 200
         assert resp.json()["body"] == "Fabric governed response"
 
+    def test_capability_fabric_read_model_reports_disabled_state(self, client):
+        resp = client.get("/capability-fabric/read-model")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["enabled"] is False
+        assert data["capsule_count"] == 0
+        assert data["capability_count"] == 0
+
     def test_fabric_admission_accepts_capability_pack_source(self, monkeypatch, tmp_path):
         _configure_fabric_env(
             monkeypatch,
@@ -591,6 +600,64 @@ class TestGatewayStatus:
         assert allowed.json()["open_obligation_count"] == 0
         assert console_allowed.status_code == 200
         assert "Mullu Authority Operator Console" in console_allowed.text
+
+    def test_authority_operator_identity_role_allowed_in_production(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.delenv("MULLU_AUTHORITY_OPERATOR_SECRET", raising=False)
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="authority-user",
+            tenant_id="t1", identity_id="authority-1",
+            roles=("authority_operator",),
+        ))
+        local_client = TestClient(app)
+
+        allowed = local_client.get(
+            "/authority/witness",
+            headers={
+                "X-Mullu-Authority-Channel": "web",
+                "X-Mullu-Authority-Sender-Id": "authority-user",
+                "X-Mullu-Authority-Tenant-Id": "t1",
+            },
+        )
+        denied_wrong_tenant = local_client.get(
+            "/authority/witness",
+            headers={
+                "X-Mullu-Authority-Channel": "web",
+                "X-Mullu-Authority-Sender-Id": "authority-user",
+                "X-Mullu-Authority-Tenant-Id": "other-tenant",
+            },
+        )
+
+        assert allowed.status_code == 200
+        assert allowed.json()["open_obligation_count"] == 0
+        assert denied_wrong_tenant.status_code == 403
+        assert denied_wrong_tenant.json()["detail"] == "Authority operator access not authorized"
+
+    def test_authority_operator_identity_role_denied_in_production(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.delenv("MULLU_AUTHORITY_OPERATOR_SECRET", raising=False)
+        app = create_gateway_app(platform=StubPlatform())
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="member-user",
+            tenant_id="t1", identity_id="member-1",
+            roles=("tenant_member",),
+        ))
+        local_client = TestClient(app)
+
+        denied = local_client.get(
+            "/authority/operator",
+            headers={
+                "X-Mullu-Authority-Channel": "web",
+                "X-Mullu-Authority-Sender-Id": "member-user",
+                "X-Mullu-Authority-Tenant-Id": "t1",
+            },
+        )
+
+        assert denied.status_code == 403
+        assert denied.json()["detail"] == "Authority operator access not authorized"
 
     def test_authority_approval_chain_read_model(self, client):
         msg_resp = client.post(

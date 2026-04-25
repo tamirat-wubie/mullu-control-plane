@@ -2,15 +2,15 @@
 
 Purpose: Builds an optional registry-backed command capability admission gate
     for gateway command execution.
-Governance scope: environment-gated domain capsule loading, capability pack
-    loading, capability registry installation, and command admission gate
-    construction.
+Governance scope: environment-gated domain capsule loading, capsule pack
+    loading, capability pack loading, capability registry installation, and
+    command admission gate construction.
 Dependencies: governed capability fabric contracts, compiler, registry, and
     command admission core.
 Invariants:
   - Fabric admission is disabled unless explicitly enabled.
-  - Enabled fabric admission requires a capsule JSON path and at least one
-    capability JSON source.
+  - Enabled fabric admission requires at least one capsule JSON source and at
+    least one capability JSON source.
   - Installed capabilities are resolved from explicit capsule references.
   - Failed compilation or installation fails gateway startup instead of running
     with a partial capability fabric.
@@ -41,28 +41,29 @@ def build_capability_admission_gate_from_env(
         return None
 
     capsule_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", "").strip()
+    capsule_pack_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPSULE_PACK_PATH", "").strip()
     capability_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPABILITY_PATH", "").strip()
     capability_pack_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", "").strip()
-    if not capsule_path or not (capability_path or capability_pack_path):
-        raise ValueError("fabric admission requires capsule JSON path and at least one capability JSON source")
+    if not (capsule_path or capsule_pack_path) or not (capability_path or capability_pack_path):
+        raise ValueError("fabric admission requires capsule JSON source and capability JSON source")
 
     require_certified = not _falsey(os.environ.get("MULLU_CAPABILITY_FABRIC_REQUIRE_CERTIFIED", "true"))
-    capsule = DomainCapsule.from_mapping(_load_object(Path(capsule_path)))
+    capsules = _load_capsule_sources(capsule_path=capsule_path, capsule_pack_path=capsule_pack_path)
     loaded_capabilities = _load_capability_sources(
         capability_path=capability_path,
         capability_pack_path=capability_pack_path,
     )
-    capabilities = _capabilities_referenced_by_capsule(capsule, loaded_capabilities)
 
     compiler = DomainCapsuleCompiler(clock=clock)
-    compilation = compiler.compile(capsule, capabilities)
-    if not compilation.succeeded:
-        raise ValueError(f"fabric capsule compilation failed: {list(compilation.errors)}")
-
     registry = GovernedCapabilityRegistry(clock=clock, require_certified=require_certified)
-    installation = registry.install(compilation, capabilities)
-    if installation.errors:
-        raise ValueError(f"fabric capsule installation failed: {list(installation.errors)}")
+    for capsule in capsules:
+        capabilities = _capabilities_referenced_by_capsule(capsule, loaded_capabilities)
+        compilation = compiler.compile(capsule, capabilities)
+        if not compilation.succeeded:
+            raise ValueError(f"fabric capsule compilation failed for {capsule.capsule_id}: {list(compilation.errors)}")
+        installation = registry.install(compilation, capabilities)
+        if installation.errors:
+            raise ValueError(f"fabric capsule installation failed for {capsule.capsule_id}: {list(installation.errors)}")
 
     return CommandCapabilityAdmissionGate(registry=registry, clock=clock)
 
@@ -73,6 +74,34 @@ def _load_object(path: Path) -> dict:
     if not isinstance(payload, dict):
         raise ValueError(f"fabric JSON root must be an object: {path}")
     return payload
+
+
+def _load_capsule_sources(*, capsule_path: str, capsule_pack_path: str) -> tuple[DomainCapsule, ...]:
+    capsules: list[DomainCapsule] = []
+    if capsule_path:
+        capsules.append(DomainCapsule.from_mapping(_load_object(Path(capsule_path))))
+    if capsule_pack_path:
+        capsules.extend(_load_capsule_pack(Path(capsule_pack_path)))
+    return tuple(capsules)
+
+
+def _load_capsule_pack(path: Path) -> tuple[DomainCapsule, ...]:
+    with open(path, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if isinstance(payload, dict):
+        raw_capsules = payload.get("capsules")
+    elif isinstance(payload, list):
+        raw_capsules = payload
+    else:
+        raise ValueError(f"fabric capsule pack root must be an object or array: {path}")
+    if not isinstance(raw_capsules, list):
+        raise ValueError(f"fabric capsule pack must contain a capsules array: {path}")
+    capsules: list[DomainCapsule] = []
+    for index, raw_capsule in enumerate(raw_capsules):
+        if not isinstance(raw_capsule, dict):
+            raise ValueError(f"fabric capsule pack entry must be an object: {path} capsules[{index}]")
+        capsules.append(DomainCapsule.from_mapping(raw_capsule))
+    return tuple(capsules)
 
 
 def _load_capability_sources(
@@ -99,7 +128,6 @@ def _load_capability_pack(path: Path) -> tuple[CapabilityRegistryEntry, ...]:
         raise ValueError(f"fabric capability pack root must be an object or array: {path}")
     if not isinstance(raw_capabilities, list):
         raise ValueError(f"fabric capability pack must contain a capabilities array: {path}")
-
     entries: list[CapabilityRegistryEntry] = []
     for index, raw_capability in enumerate(raw_capabilities):
         if not isinstance(raw_capability, dict):
