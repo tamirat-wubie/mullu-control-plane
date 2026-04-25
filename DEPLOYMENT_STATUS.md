@@ -37,6 +37,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Gateway publication readiness handoff | `scripts/dispatch_gateway_publication.py --readiness-report` consumes a ready publication report and re-validates dispatch prerequisites | Reflected |
 | Gateway publication publisher | `scripts/publish_gateway_publication.py` writes readiness evidence, then optionally dispatches from that report through the handoff contract | Reflected |
 | Gateway publication receipt | `.change_assurance/gateway_publication_receipt.json` records the publisher terminal local decision state and dispatch run metadata when present | Reflected |
+| Gateway publication receipt validator | `scripts/validate_gateway_publication_receipt.py` validates receipt structure, readiness consistency, policy gates, and writes a validation report | Reflected |
 | Gateway publication dispatcher | `scripts/dispatch_gateway_publication.py` verifies publication workflow prerequisites, dispatches `.github/workflows/gateway-publication.yml`, and downloads the witness artifact | Reflected |
 | Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies the runtime witness secret, dispatches the workflow, and downloads the artifact | Reflected |
 | Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, optional preflight gating, and optional dispatch | Reflected |
@@ -74,6 +75,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway publication readiness | `python scripts/report_gateway_publication_readiness.py --gateway-url "$MULLU_GATEWAY_URL" --dispatch-witness` |
 | Gateway publication readiness handoff | `python scripts/dispatch_gateway_publication.py --readiness-report .change_assurance/gateway_publication_readiness.json` |
 | Gateway publication publisher | `python scripts/publish_gateway_publication.py --gateway-url "$MULLU_GATEWAY_URL" --dispatch-witness --dispatch --receipt-output .change_assurance/gateway_publication_receipt.json` |
+| Gateway publication receipt validation | `python scripts/validate_gateway_publication_receipt.py --receipt .change_assurance/gateway_publication_receipt.json --require-ready --require-dispatched --require-success` |
 | Gateway publication dispatch | `python scripts/dispatch_gateway_publication.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --dispatch-witness` |
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py` |
 | Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --dispatch` |
