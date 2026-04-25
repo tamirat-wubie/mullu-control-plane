@@ -67,6 +67,9 @@ Rules:
 - Semantic Memory MUST NOT contain unadmitted knowledge.
 - Semantic Memory MUST NOT mutate kernel invariants (Invariant 8).
 - Every Semantic Memory entry MUST reference the episodic source(s) it was derived from.
+- Semantic Memory write paths MUST require a recorded `LearningAdmissionDecision`
+  with `status=admit`.
+- Semantic Memory updates MUST append a new version and preserve the old version.
 
 ### Tier 4: Procedural Memory
 
