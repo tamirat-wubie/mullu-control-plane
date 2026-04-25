@@ -175,6 +175,31 @@ def test_orchestrate_deployment_witness_can_gate_dispatch_with_preflight(tmp_pat
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
+def test_orchestrate_deployment_witness_accepts_mounted_runtime_secret(tmp_path: Path) -> None:
+    runner = FakeRunner()
+
+    orchestration = orchestrate_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        rendered_ingress_output=tmp_path / "ingress.yaml",
+        require_preflight=True,
+        preflight_output=tmp_path / "preflight.json",
+        dispatch=True,
+        runtime_secret_present=True,
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_healthy_getter,
+    )
+
+    assert orchestration.preflight is not None
+    assert orchestration.preflight.ready is True
+    assert orchestration.dispatch is not None
+    assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
+    assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
 def test_orchestrate_deployment_witness_blocks_dispatch_when_preflight_fails(tmp_path: Path) -> None:
     runner = FakeRunner()
 

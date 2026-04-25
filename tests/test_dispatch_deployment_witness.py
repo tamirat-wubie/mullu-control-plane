@@ -159,6 +159,24 @@ def test_dispatch_deployment_witness_fails_before_dispatch_without_secret(tmp_pa
     assert not (tmp_path / "artifact").exists()
 
 
+def test_dispatch_deployment_witness_accepts_mounted_runtime_secret(tmp_path: Path) -> None:
+    runner = FakeRunner(secret_present=False)
+
+    result = dispatch_deployment_witness(
+        gateway_url="https://gateway.example.com",
+        expected_environment="pilot",
+        runtime_secret_present=True,
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+    )
+
+    assert result.conclusion == "success"
+    assert result.run_id == 1234
+    assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
+    assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
 def test_dispatch_deployment_witness_fails_before_dispatch_when_workflow_inactive(tmp_path: Path) -> None:
     runner = FakeRunner(workflow_state="disabled_manually")
 
