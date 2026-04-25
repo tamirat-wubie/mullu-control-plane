@@ -349,6 +349,7 @@ class TestMessageRouting:
         response = router.handle_message(msg)
         assert "don't recognize" in response.body
         assert response.metadata.get("error") == "tenant_not_found"
+        assert router.summary()["error_reasons"] == {"tenant_not_found": 1}
 
     def test_suspended_tenant_returns_denial(self):
         router = GatewayRouter(platform=StubPlatform(fail=True))
@@ -386,6 +387,7 @@ class TestMessageRouting:
         assert response.body == "ok"
         assert response.metadata["delivery_status"] == "skipped_no_adapter"
         assert router.error_count == 1
+        assert router.summary()["error_reasons"] == {"gateway_runtime_error": 1}
 
 
 # ═══ Channel Adapter Integration ═══
@@ -429,6 +431,7 @@ class TestChannelAdapterIntegration:
         assert response.metadata["delivery_status"] == "failed"
         assert response.metadata["delivery_error_type"] == "adapter_exception"
         assert router.error_count == 1
+        assert router.summary()["error_reasons"] == {"adapter_exception": 1}
 
     def test_channel_send_rejection_is_recorded(self):
         router = GatewayRouter(platform=StubPlatform(llm_response="Response"))
@@ -443,6 +446,7 @@ class TestChannelAdapterIntegration:
         assert response.metadata["delivery_status"] == "failed"
         assert response.metadata["delivery_error_type"] == "adapter_rejected"
         assert router.error_count == 1
+        assert router.summary()["error_reasons"] == {"adapter_rejected": 1}
 
     def test_channel_approval_callback_resolves_for_same_identity(self):
         times = [
@@ -973,3 +977,31 @@ class TestRouterSummary:
         summary = router.summary()
         assert summary["channels"] == ["test"]
         assert summary["tenant_mappings"] == 1
+        assert summary["error_reasons"] == {}
+
+    def test_summary_counts_bounded_error_reasons(self):
+        router = GatewayRouter(platform=StubPlatform())
+        router.register_channel(FailingChannel())
+        router.handle_message(GatewayMessage(
+            message_id="missing-tenant",
+            channel="test",
+            sender_id="missing-user",
+            body="hello",
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="u1", tenant_id="t1", identity_id="u1",
+        ))
+        router.handle_message(GatewayMessage(
+            message_id="delivery-fails",
+            channel="test",
+            sender_id="u1",
+            body="hello",
+        ))
+        summary = router.summary()
+
+        assert summary["error_count"] == 2
+        assert summary["error_reasons"] == {
+            "adapter_exception": 1,
+            "tenant_not_found": 1,
+        }
+        assert "missing-user" not in summary["error_reasons"]
