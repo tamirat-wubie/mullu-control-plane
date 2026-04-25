@@ -158,6 +158,22 @@ environment, and configure the repository secret
 `.change_assurance/deployment_witness.json` as the `deployment-witness`
 artifact.
 
+To reduce manual operator steps, dispatch the workflow and download the
+artifact with the guarded shortcut:
+
+```bash
+export MULLU_GATEWAY_URL="https://gateway.example.com"
+python scripts/dispatch_deployment_witness.py \
+  --gateway-url "$MULLU_GATEWAY_URL" \
+  --expected-environment pilot
+```
+
+The dispatcher verifies that `MULLU_RUNTIME_WITNESS_SECRET` exists as a GitHub
+repository secret and that the deployment witness workflow is active before it
+dispatches the run. It waits for the run to finish and downloads the
+`deployment-witness` artifact into
+`.change_assurance/deployment-witness-artifact`.
+
 The probe checks:
 
 1. Gateway `/health`.

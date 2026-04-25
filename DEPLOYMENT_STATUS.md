@@ -28,6 +28,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Local pilot proof slice | `scripts/pilot_proof_slice.py` emits `.change_assurance/pilot_proof_slice_witness.json` through gateway closure | Reflected |
 | Live deployment witness collector | `scripts/collect_deployment_witness.py` writes `.change_assurance/deployment_witness.json` from `/health` and `/gateway/witness` | Reflected |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` uploads `deployment-witness` artifact from the collector | Reflected |
+| Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies the runtime witness secret, dispatches the workflow, and downloads the artifact | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
@@ -53,5 +54,6 @@ Before this witness can claim public deployment health, the repository must name
 | Local pilot proof slice | `python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json` |
 | Live deployment witness collection | `python scripts/collect_deployment_witness.py --gateway-url "$MULLU_GATEWAY_URL" --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" --output .change_assurance/deployment_witness.json` |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` |
+| Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py --gateway-url "$MULLU_GATEWAY_URL" --expected-environment pilot` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 
