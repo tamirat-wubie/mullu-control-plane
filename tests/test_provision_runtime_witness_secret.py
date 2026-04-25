@@ -68,8 +68,6 @@ def test_provision_runtime_witness_secret_sets_github_secret_from_stdin() -> Non
             "MULLU_RUNTIME_WITNESS_SECRET",
             "--repo",
             "tamirat-wubie/mullu-control-plane",
-            "--body-file",
-            "-",
         ]
     ]
     assert runner.inputs == [secret_value]

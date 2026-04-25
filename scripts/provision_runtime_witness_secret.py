@@ -10,7 +10,7 @@ Invariants:
   - Supplied secrets are read from stdin, not command-line arguments.
   - Secret values are never printed.
   - Generated secrets require an explicit ignored runtime env output path.
-  - GitHub secret updates are performed through gh secret set --body-file -.
+  - GitHub secret updates are performed through gh secret set with stdin input.
 """
 
 from __future__ import annotations
@@ -132,7 +132,7 @@ def _set_github_secret(
     secret_value: str,
     runner: CommandRunner,
 ) -> None:
-    command = ["gh", "secret", "set", secret_name, "--repo", repository, "--body-file", "-"]
+    command = ["gh", "secret", "set", secret_name, "--repo", repository]
     try:
         runner(command, input=secret_value, check=True, capture_output=True, text=True)
     except FileNotFoundError as exc:
