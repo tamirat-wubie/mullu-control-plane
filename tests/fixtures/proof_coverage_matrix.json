@@ -342,7 +342,7 @@
         "schemas/trace_entry.schema.json",
         "schemas/replay_record.schema.json"
       ],
-      "notes": "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
+      "notes": "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
       "representative_paths": [
         "/api/v1/lineage/resolve",
         "/api/v1/lineage/{trace_id}",

@@ -266,7 +266,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/trace_entry.schema.json",
                 "schemas/replay_record.schema.json",
             ],
-            "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
+            "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
         ),
     ]
     closure_actions = [

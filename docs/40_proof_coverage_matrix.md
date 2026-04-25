@@ -53,5 +53,5 @@ Open closure actions:
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan
-  Open issues: lineage policy-version index is not yet connected beyond projected frame context
+  Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`
