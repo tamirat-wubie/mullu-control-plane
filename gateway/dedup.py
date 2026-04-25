@@ -82,11 +82,17 @@ class MessageDeduplicator:
         self._miss_count = 0
         self._miss_reasons: dict[str, int] = {}
         self._evicted_count = 0
+        self._eviction_reasons: dict[str, int] = {}
 
     def _record_miss(self, reason_code: str) -> None:
         """Record a bounded miss reason for operator summaries."""
         self._miss_count += 1
         self._miss_reasons[reason_code] = self._miss_reasons.get(reason_code, 0) + 1
+
+    def _record_eviction(self, reason_code: str) -> None:
+        """Record a bounded eviction reason for operator summaries."""
+        self._evicted_count += 1
+        self._eviction_reasons[reason_code] = self._eviction_reasons.get(reason_code, 0) + 1
 
     @staticmethod
     def _make_key(channel: str, sender_id: str, message_id: str) -> str:
@@ -103,7 +109,7 @@ class MessageDeduplicator:
             if (now - entry.processed_at) > entry.ttl_seconds:
                 del self._entries[key]
                 reaped += 1
-                self._evicted_count += 1
+                self._record_eviction("ttl_expired")
             else:
                 break  # Remaining entries are newer
         return reaped
@@ -140,7 +146,7 @@ class MessageDeduplicator:
                     )
                 # Expired — remove it
                 del self._entries[key]
-                self._evicted_count += 1
+                self._record_eviction("ttl_expired")
 
         self._record_miss("new_message")
         return DedupResult(is_duplicate=False, dedup_key=key)
@@ -176,7 +182,7 @@ class MessageDeduplicator:
                 # If still at capacity after reaping, evict oldest
                 while len(self._entries) >= self._max_entries:
                     self._entries.popitem(last=False)
-                    self._evicted_count += 1
+                    self._record_eviction("capacity_pressure")
 
             self._entries[key] = DedupEntry(
                 dedup_key=key,
@@ -218,6 +224,7 @@ class MessageDeduplicator:
                 "miss_reasons": dict(sorted(self._miss_reasons.items())),
                 "hit_rate": self.hit_rate(),
                 "total_evicted": self._evicted_count,
+                "eviction_reasons": dict(sorted(self._eviction_reasons.items())),
                 "capacity": self._max_entries,
                 "default_ttl": self._default_ttl,
             }
