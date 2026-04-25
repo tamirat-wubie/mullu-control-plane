@@ -1,0 +1,48 @@
+name: Deployment Witness Collection
+
+on:
+  workflow_dispatch:
+    inputs:
+      gateway_url:
+        description: "Gateway base URL, for example https://gateway.example.com"
+        required: true
+        type: string
+      expected_environment:
+        description: "Expected runtime environment reported by /gateway/witness"
+        required: true
+        default: "pilot"
+        type: choice
+        options:
+          - pilot
+          - production
+
+jobs:
+  collect-deployment-witness:
+    name: Collect Deployment Witness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Collect live deployment witness
+        env:
+          MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+        run: |
+          python scripts/collect_deployment_witness.py \
+            --gateway-url "${{ inputs.gateway_url }}" \
+            --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" \
+            --expected-environment "${{ inputs.expected_environment }}" \
+            --output .change_assurance/deployment_witness.json
+
+      - name: Upload deployment witness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-witness
+          path: .change_assurance/deployment_witness.json
+          if-no-files-found: error

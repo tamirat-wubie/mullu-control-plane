@@ -53,6 +53,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
 )
+DEPLOYMENT_WITNESS_WORKFLOW_PATH = ".github/workflows/deployment-witness.yml"
 GITHUB_SURFACE_REQUIRED_LITERALS = (
     "GitHub Surface Witness",
     EXPECTED_DESCRIPTION,
@@ -79,8 +80,18 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/collect_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --witness-secret \"$MULLU_RUNTIME_WITNESS_SECRET\" --output .change_assurance/deployment_witness.json",
+    ".github/workflows/deployment-witness.yml",
     "python scripts/gateway_runtime_smoke.py",
     "python scripts/validate_public_repository_surface.py",
+)
+DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
+    "Deployment Witness Collection",
+    "workflow_dispatch",
+    "gateway_url",
+    "MULLU_RUNTIME_WITNESS_SECRET",
+    "python scripts/collect_deployment_witness.py",
+    ".change_assurance/deployment_witness.json",
+    "actions/upload-artifact@v4",
 )
 
 
@@ -197,6 +208,18 @@ def validate_local_public_documents() -> list[str]:
                 document_name="DEPLOYMENT_STATUS.md",
                 content=deployment_status_path.read_text(encoding="utf-8"),
                 required_literals=DEPLOYMENT_STATUS_REQUIRED_LITERALS,
+            )
+        )
+
+    workflow_path = REPO_ROOT / DEPLOYMENT_WITNESS_WORKFLOW_PATH
+    if not workflow_path.exists():
+        errors.append(f"missing required deployment witness workflow: {DEPLOYMENT_WITNESS_WORKFLOW_PATH}")
+    else:
+        errors.extend(
+            validate_required_document_text(
+                document_name=DEPLOYMENT_WITNESS_WORKFLOW_PATH,
+                content=workflow_path.read_text(encoding="utf-8"),
+                required_literals=DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
             )
         )
 
