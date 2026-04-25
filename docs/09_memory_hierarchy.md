@@ -97,6 +97,9 @@ Rules:
 - Procedural entries MUST be re-validated when the capability registry changes.
 - Procedural Memory write paths MUST require a recorded `LearningAdmissionDecision`
   with `status=admit`; replay success alone is not sufficient admission.
+- Procedural Memory revocation MUST record the revocation reason, actor, and
+  evidence, preserve the admitted runbook history, and remove the revoked
+  runbook from active selection.
 
 ### Tier 5: Archive Memory
 

@@ -5,6 +5,7 @@ Invariants:
   - Only verified, replay-matching runs get admitted.
   - Unverified, failed, or mismatched runs are rejected.
   - Provenance is preserved.
+  - Revoked runbooks are hidden from active selection without deleting history.
 """
 
 from __future__ import annotations
@@ -12,9 +13,12 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+import pytest
+
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.contracts.trace import TraceEntry
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
 from mcoi_runtime.core.replay_engine import (
     EffectControl,
@@ -72,7 +76,10 @@ def _setup(tmp_path: Path) -> tuple[RunbookLibrary, ReplayStore, TraceStore]:
         replay_store=replay_store,
         trace_store=trace_store,
     )
-    library = RunbookLibrary(replay_validator=validator)
+    library = RunbookLibrary(
+        replay_validator=validator,
+        clock=lambda: "2026-03-19T01:00:00+00:00",
+    )
     return library, replay_store, trace_store
 
 
@@ -380,6 +387,168 @@ def test_get_and_list_runbooks(tmp_path: Path) -> None:
     assert len(listed) == 2
     assert listed[0].runbook_id == "rb-a"
     assert listed[1].runbook_id == "rb-b"
+
+
+def test_revoke_runbook_removes_active_selection_and_preserves_history(tmp_path: Path) -> None:
+    library, replay_store, trace_store = _setup(tmp_path)
+    replay_store.save(_make_replay_record())
+    trace_store.append(_make_trace())
+    admitted = library.admit(
+        runbook_id="rb-1",
+        name="revocable",
+        description="revocable runbook",
+        template=_TEMPLATE,
+        bindings_schema=_BINDINGS,
+        replay_id="replay-1",
+        execution_id="exec-1",
+        verification_id="ver-1",
+        execution_succeeded=True,
+        verification_passed=True,
+        learning_admission=_admission("rb-1"),
+        context=_CONTEXT,
+    )
+
+    revocation = library.revoke(
+        "rb-1",
+        reason="post-admission replay no longer matches environment",
+        revoked_by="procedural-governance",
+        evidence_refs=("case:runbook-review-1",),
+    )
+
+    assert admitted.entry is not None
+    assert revocation.runbook_id == "rb-1"
+    assert revocation.reason == "post-admission replay no longer matches environment"
+    assert revocation.revoked_by == "procedural-governance"
+    assert revocation.evidence_refs == ("case:runbook-review-1",)
+    assert library.get("rb-1") is None
+    assert library.get_historical("rb-1") is admitted.entry
+    assert library.list_runbooks() == ()
+    assert library.list_historical_runbooks() == (admitted.entry,)
+    assert library.revocation_for("rb-1") is revocation
+    assert library.revocation_count == 1
+    assert library.size == 1
+    assert library.active_size == 0
+
+
+def test_rejects_duplicate_runbook_revocation(tmp_path: Path) -> None:
+    library, replay_store, trace_store = _setup(tmp_path)
+    replay_store.save(_make_replay_record())
+    trace_store.append(_make_trace())
+    admitted = library.admit(
+        runbook_id="rb-1",
+        name="revocable",
+        description="revocable runbook",
+        template=_TEMPLATE,
+        bindings_schema=_BINDINGS,
+        replay_id="replay-1",
+        execution_id="exec-1",
+        verification_id="ver-1",
+        execution_succeeded=True,
+        verification_passed=True,
+        learning_admission=_admission("rb-1"),
+        context=_CONTEXT,
+    )
+    first_revocation = library.revoke(
+        "rb-1",
+        reason="post-admission replay no longer matches environment",
+        revoked_by="procedural-governance",
+        evidence_refs=("case:runbook-review-1",),
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="already revoked"):
+        library.revoke(
+            "rb-1",
+            reason="duplicate revocation",
+            revoked_by="procedural-governance",
+            evidence_refs=("case:runbook-review-2",),
+        )
+
+    assert admitted.entry is not None
+    assert library.revocation_for("rb-1") is first_revocation
+    assert library.revocation_count == 1
+    assert library.get("rb-1") is None
+    assert library.get_historical("rb-1") is admitted.entry
+
+
+def test_rejects_runbook_revocation_without_evidence_refs(tmp_path: Path) -> None:
+    library, replay_store, trace_store = _setup(tmp_path)
+    replay_store.save(_make_replay_record())
+    trace_store.append(_make_trace())
+    admitted = library.admit(
+        runbook_id="rb-1",
+        name="revocable",
+        description="revocable runbook",
+        template=_TEMPLATE,
+        bindings_schema=_BINDINGS,
+        replay_id="replay-1",
+        execution_id="exec-1",
+        verification_id="ver-1",
+        execution_succeeded=True,
+        verification_passed=True,
+        learning_admission=_admission("rb-1"),
+        context=_CONTEXT,
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="requires evidence refs"):
+        library.revoke(
+            "rb-1",
+            reason="post-admission replay no longer matches environment",
+            revoked_by="procedural-governance",
+            evidence_refs=(),
+        )
+
+    assert admitted.entry is not None
+    assert library.revocation_count == 0
+    assert library.get("rb-1") is admitted.entry
+    assert library.list_runbooks() == (admitted.entry,)
+
+
+def test_rejects_reuse_of_revoked_runbook_id(tmp_path: Path) -> None:
+    library, replay_store, trace_store = _setup(tmp_path)
+    replay_store.save(_make_replay_record())
+    trace_store.append(_make_trace())
+    admitted = library.admit(
+        runbook_id="rb-1",
+        name="revocable",
+        description="revocable runbook",
+        template=_TEMPLATE,
+        bindings_schema=_BINDINGS,
+        replay_id="replay-1",
+        execution_id="exec-1",
+        verification_id="ver-1",
+        execution_succeeded=True,
+        verification_passed=True,
+        learning_admission=_admission("rb-1"),
+        context=_CONTEXT,
+    )
+    library.revoke(
+        "rb-1",
+        reason="post-admission replay no longer matches environment",
+        revoked_by="procedural-governance",
+        evidence_refs=("case:runbook-review-1",),
+    )
+
+    result = library.admit(
+        runbook_id="rb-1",
+        name="replacement",
+        description="replacement attempt",
+        template=_TEMPLATE,
+        bindings_schema=_BINDINGS,
+        replay_id="replay-1",
+        execution_id="exec-2",
+        verification_id="ver-2",
+        execution_succeeded=True,
+        verification_passed=True,
+        learning_admission=_admission("rb-1"),
+        context=_CONTEXT,
+    )
+
+    assert admitted.entry is not None
+    assert result.status is RunbookAdmissionStatus.REJECTED
+    assert "runbook_id_already_exists" in result.reasons
+    assert "runbook_id_revoked" in result.reasons
+    assert library.size == 1
+    assert library.active_size == 0
 
 
 def test_runbook_carries_preconditions_postconditions(tmp_path: Path) -> None:
