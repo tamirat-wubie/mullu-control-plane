@@ -42,6 +42,6 @@ Trace is the causal record. Replay is a controlled reconstruction of that record
 
 STATUS:
   Completeness: 100%
-  Invariants verified: trace causality, fail-closed replay, deterministic frame hashing, sequence verification, bounded reason codes, deterministic report hashing
+  Invariants verified: trace causality, fail-closed replay, deterministic frame hashing, sequence verification, bounded reason codes, deterministic report hashing, operator replay report route
   Open issues: none
-  Next action: expose replay harness reports through operator API routes
+  Next action: persist replay reports for operator history queries

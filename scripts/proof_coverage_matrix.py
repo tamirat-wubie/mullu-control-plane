@@ -231,6 +231,22 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "replay_determinism",
+            ["/api/v1/replay/{trace_id}/determinism"],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/replay.py",
+                "mcoi/mcoi_runtime/core/replay_determinism_harness.py",
+                "mcoi/tests/test_replay_determinism_endpoints.py",
+                "mcoi/tests/test_replay_determinism_harness.py",
+                "docs/03_trace_and_replay.md",
+            ],
+            "Replay determinism route emits governed reports over completed traces with bounded operation specs.",
+        ),
+        _surface(
             "tool_invocation",
             ["/api/v1/tools/invoke", "/api/v1/workflow/tools"],
             "request_proof",

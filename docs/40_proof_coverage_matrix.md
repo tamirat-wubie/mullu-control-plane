@@ -20,6 +20,7 @@ document is the operator-readable witness.
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
 | `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state. |
+| `replay_determinism` | `/api/v1/replay/{trace_id}/determinism` | yes | yes | replay report hash | hash-chain | witnessed | Replay determinism route emits governed reports over completed traces with bounded operation specs. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation routes bind action proof ids to capability policy receipts over argument hashes. |
 | `governed_session` | `GovernedSession.llm`, `GovernedSession.execute`, `GovernedSession.query` | yes | yes | request envelopes | hash-chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
 | `health_docs_exempt` | `/health`, `/docs`, `/openapi.json`, `/redoc` | read-model | read-model | liveness/doc routes | read-model | witnessed | Operational liveness and documentation surfaces are outside the proof-critical path. |
@@ -29,9 +30,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 15 |
+| Total surfaces | 16 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 14 |
+| Witnessed surfaces | 15 |
 | Unproven surfaces | 0 |
 
 Gateway runtime witness invariants:
