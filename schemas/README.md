@@ -23,6 +23,7 @@ These schemas define the canonical shared JSON interchange surface for Mullu Pla
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
 | `replay_record.schema.json` | Canonical replay and audit capture |
+| `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |

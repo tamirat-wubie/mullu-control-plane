@@ -38,11 +38,14 @@ def test_fixture_contract_is_canonical() -> None:
 def test_coverage_levels_are_bounded() -> None:
     matrix = _load_fixture()
     coverage_levels = set(matrix["coverage_levels"])
+    coverage_states = {"proven", "witnessed", "unproven"}
 
     assert {"gap", "request_proof", "action_proof", "audit_chain"} <= coverage_levels
     assert all(surface["request_proof"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["action_proof"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["audit"] in coverage_levels for surface in matrix["surfaces"])
+    assert all(surface["coverage_state"] in coverage_states for surface in matrix["surfaces"])
+    assert {surface["coverage_state"] for surface in matrix["surfaces"]} >= coverage_states
 
 
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
@@ -101,8 +104,23 @@ def test_evidence_files_exist() -> None:
     evidence_files = {evidence_file for surface in matrix["surfaces"] for evidence_file in surface["evidence_files"]}
 
     assert "mcoi/mcoi_runtime/app/streaming.py" in evidence_files
+    assert "schemas/streaming_budget_enforcement.schema.json" in evidence_files
+    assert "docs/42_lineage_query_api.md" in evidence_files
     assert "gateway/server.py" in evidence_files
     assert all((REPO_ROOT / evidence_file).exists() for evidence_file in evidence_files)
+
+
+def test_lineage_query_api_is_honestly_marked_unproven() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    lineage_surface = surfaces["lineage_query_api"]
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    assert lineage_surface["coverage_state"] == "unproven"
+    assert lineage_surface["request_proof"] == "gap"
+    assert lineage_surface["action_proof"] == "gap"
+    assert "docs/42_lineage_query_api.md" in lineage_surface["evidence_files"]
+    assert closure_actions["implement_lineage_query_routes_and_schema"]["status"] == "open"
 
 
 def test_representative_http_paths_are_declared() -> None:
