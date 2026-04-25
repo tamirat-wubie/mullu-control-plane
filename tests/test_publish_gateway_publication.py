@@ -102,27 +102,35 @@ class FakeRunner:
 def test_publish_writes_ready_report_without_dispatch(tmp_path: Path) -> None:
     runner = FakeRunner(kubeconfig_secret_present=False)
     report_path = tmp_path / "readiness.json"
+    receipt_path = tmp_path / "receipt.json"
 
     result = publish_gateway_publication(
         gateway_host="gateway.mullusi.com",
         expected_environment="pilot",
         readiness_report_path=report_path,
+        receipt_output_path=receipt_path,
         runner=runner,
         resolver=_resolve_ok,
     )
     payload = json.loads(report_path.read_text(encoding="utf-8"))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
 
     assert result.readiness.ready is True
     assert result.dispatch_requested is False
     assert result.dispatch is None
+    assert result.receipt_path == receipt_path
     assert payload["ready"] is True
     assert payload["gateway_host"] == "gateway.mullusi.com"
+    assert receipt["resolution_state"] == "ready-only"
+    assert receipt["dispatch_performed"] is False
+    assert receipt["readiness_ready"] is True
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
 def test_publish_dispatches_from_written_readiness_report(tmp_path: Path) -> None:
     runner = FakeRunner()
     report_path = tmp_path / "readiness.json"
+    receipt_path = tmp_path / "receipt.json"
 
     result = publish_gateway_publication(
         gateway_host="gateway.mullusi.com",
@@ -132,6 +140,7 @@ def test_publish_dispatches_from_written_readiness_report(tmp_path: Path) -> Non
         skip_preflight_endpoint_probes=True,
         dispatch=True,
         readiness_report_path=report_path,
+        receipt_output_path=receipt_path,
         download_dir=tmp_path / "artifact",
         poll_seconds=1,
         runner=runner,
@@ -140,40 +149,53 @@ def test_publish_dispatches_from_written_readiness_report(tmp_path: Path) -> Non
     workflow_run_command = next(
         command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
     )
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
 
     assert result.readiness.ready is True
     assert result.dispatch_requested is True
     assert result.dispatch is not None
     assert result.dispatch.conclusion == "success"
+    assert result.receipt_path == receipt_path
     assert "gateway_host=gateway.mullusi.com" in workflow_run_command
     assert "gateway_url=https://gateway.mullusi.com" in workflow_run_command
     assert "expected_environment=production" in workflow_run_command
     assert "dispatch_witness=true" in workflow_run_command
     assert "skip_preflight_endpoint_probes=true" in workflow_run_command
     assert report_path.exists()
+    assert receipt["resolution_state"] == "dispatched"
+    assert receipt["dispatch_performed"] is True
+    assert receipt["dispatch_run_id"] == 4567
+    assert receipt["dispatch_conclusion"] == "success"
 
 
 def test_publish_blocks_dispatch_when_readiness_fails(tmp_path: Path) -> None:
     runner = FakeRunner(runtime_secret_present=False)
     report_path = tmp_path / "readiness.json"
+    receipt_path = tmp_path / "receipt.json"
 
     result = publish_gateway_publication(
         gateway_host="gateway.mullusi.com",
         expected_environment="pilot",
         dispatch=True,
         readiness_report_path=report_path,
+        receipt_output_path=receipt_path,
         runner=runner,
         resolver=_resolve_ok,
     )
     payload = json.loads(report_path.read_text(encoding="utf-8"))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
 
     assert result.readiness.ready is False
     assert result.dispatch_requested is True
     assert result.dispatch is None
+    assert result.receipt_path == receipt_path
     assert payload["ready"] is False
     assert "missing=MULLU_RUNTIME_WITNESS_SECRET" in [
         step["detail"] for step in payload["steps"]
     ]
+    assert receipt["resolution_state"] == "blocked-not-ready"
+    assert receipt["dispatch_requested"] is True
+    assert receipt["dispatch_performed"] is False
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
@@ -184,6 +206,7 @@ def test_cli_returns_success_for_ready_report_only(
 ) -> None:
     runner = FakeRunner()
     report_path = tmp_path / "readiness.json"
+    receipt_path = tmp_path / "receipt.json"
     monkeypatch.setattr("scripts.publish_gateway_publication.subprocess.run", runner)
     monkeypatch.setattr(
         "scripts.report_gateway_publication_readiness.socket.getaddrinfo",
@@ -198,14 +221,19 @@ def test_cli_returns_success_for_ready_report_only(
             "pilot",
             "--readiness-report-output",
             str(report_path),
+            "--receipt-output",
+            str(receipt_path),
         ]
     )
     captured = capsys.readouterr()
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
 
     assert exit_code == 0
     assert "ready: true" in captured.out
+    assert f"receipt: {receipt_path}" in captured.out
     assert "dispatch_requested: false" in captured.out
     assert "handoff_command:" in captured.out
+    assert receipt["resolution_state"] == "ready-only"
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 

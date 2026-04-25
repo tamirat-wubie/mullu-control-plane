@@ -11,11 +11,13 @@ Invariants:
   - Workflow dispatch requires the explicit --dispatch flag.
   - Dispatch inputs are reloaded from the written readiness report.
   - Dispatch re-validates secret names and workflow state before mutation.
+  - A publication receipt records the terminal local decision state.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 from dataclasses import dataclass
@@ -42,6 +44,8 @@ from scripts.report_gateway_publication_readiness import (
     write_gateway_publication_readiness,
 )
 
+DEFAULT_RECEIPT_OUTPUT = Path(".change_assurance") / "gateway_publication_receipt.json"
+
 
 @dataclass(frozen=True, slots=True)
 class GatewayPublicationPublish:
@@ -51,6 +55,7 @@ class GatewayPublicationPublish:
     readiness: GatewayPublicationReadiness
     dispatch_requested: bool
     dispatch: GatewayPublicationDispatch | None
+    receipt_path: Path
 
 
 def publish_gateway_publication(
@@ -70,6 +75,7 @@ def publish_gateway_publication(
     kubeconfig_secret_name: str = DEFAULT_KUBECONFIG_SECRET_NAME,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
+    receipt_output_path: Path = DEFAULT_RECEIPT_OUTPUT,
     timeout_seconds: int = 900,
     poll_seconds: int = 10,
     runner: CommandRunner | None = None,
@@ -95,12 +101,15 @@ def publish_gateway_publication(
     write_gateway_publication_readiness(readiness, readiness_report_path)
 
     if not readiness.ready or not dispatch:
-        return GatewayPublicationPublish(
+        result = GatewayPublicationPublish(
             readiness_report_path=readiness_report_path,
             readiness=readiness,
             dispatch_requested=dispatch,
             dispatch=None,
+            receipt_path=receipt_output_path,
         )
+        write_gateway_publication_receipt(result, receipt_output_path)
+        return result
 
     dispatch_inputs = load_readiness_dispatch_inputs(
         readiness_report_path,
@@ -126,12 +135,61 @@ def publish_gateway_publication(
         poll_seconds=poll_seconds,
         runner=command_runner,
     )
-    return GatewayPublicationPublish(
+    result = GatewayPublicationPublish(
         readiness_report_path=readiness_report_path,
         readiness=readiness,
         dispatch_requested=dispatch,
         dispatch=dispatch_result,
+        receipt_path=receipt_output_path,
     )
+    write_gateway_publication_receipt(result, receipt_output_path)
+    return result
+
+
+def write_gateway_publication_receipt(
+    result: GatewayPublicationPublish,
+    receipt_output_path: Path,
+) -> Path:
+    """Write one local gateway publication proof-of-resolution receipt."""
+    receipt_output_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_output_path.write_text(
+        json.dumps(_receipt_payload(result), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return receipt_output_path
+
+
+def _receipt_payload(result: GatewayPublicationPublish) -> dict[str, object]:
+    readiness = result.readiness
+    dispatch = result.dispatch
+    return {
+        "artifact_dir": str(dispatch.artifact_dir) if dispatch else "",
+        "dispatch_conclusion": dispatch.conclusion if dispatch else "",
+        "dispatch_performed": dispatch is not None,
+        "dispatch_requested": result.dispatch_requested,
+        "dispatch_run_id": dispatch.run_id if dispatch else 0,
+        "dispatch_run_url": dispatch.run_url if dispatch else "",
+        "dispatch_status": dispatch.status if dispatch else "",
+        "expected_environment": readiness.expected_environment,
+        "gateway_host": readiness.gateway_host,
+        "gateway_url": readiness.gateway_url,
+        "readiness": readiness.to_json_dict(),
+        "readiness_ready": readiness.ready,
+        "readiness_report": str(result.readiness_report_path),
+        "receipt": str(result.receipt_path),
+        "repository": readiness.repository,
+        "resolution_state": _resolution_state(result),
+    }
+
+
+def _resolution_state(result: GatewayPublicationPublish) -> str:
+    if result.dispatch:
+        return "dispatched"
+    if result.dispatch_requested:
+        return "blocked-not-ready"
+    if result.readiness.ready:
+        return "ready-only"
+    return "not-ready"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -152,6 +210,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--skip-preflight-endpoint-probes", action="store_true")
     parser.add_argument("--dispatch", action="store_true")
     parser.add_argument("--readiness-report-output", default=str(DEFAULT_READINESS_REPORT))
+    parser.add_argument("--receipt-output", default=str(DEFAULT_RECEIPT_OUTPUT))
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--runtime-secret-name", default=DEFAULT_RUNTIME_SECRET_NAME)
@@ -183,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
             kubeconfig_secret_name=args.kubeconfig_secret_name,
             artifact_name=args.artifact_name,
             download_dir=Path(args.download_dir),
+            receipt_output_path=Path(args.receipt_output),
             timeout_seconds=args.timeout_seconds,
             poll_seconds=args.poll_seconds,
         )
@@ -201,6 +261,7 @@ def main(argv: list[str] | None = None) -> int:
 def _print_publish_result(result: GatewayPublicationPublish) -> None:
     readiness = result.readiness
     print(f"readiness_report: {result.readiness_report_path}")
+    print(f"receipt: {result.receipt_path}")
     print(f"gateway_host: {readiness.gateway_host}")
     print(f"gateway_url: {readiness.gateway_url}")
     print(f"expected_environment: {readiness.expected_environment}")

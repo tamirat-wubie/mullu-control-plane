@@ -284,7 +284,9 @@ python scripts/publish_gateway_publication.py \
 The publisher writes `.change_assurance/gateway_publication_readiness.json`
 before any workflow mutation, refuses dispatch when readiness is false, and
 then dispatches from the written readiness report so the same handoff contract
-is exercised.
+is exercised. It also writes
+`.change_assurance/gateway_publication_receipt.json` with the terminal local
+decision state: ready-only, blocked-not-ready, or dispatched.
 
 To dispatch that GitHub workflow from a local operator shell and download the
 `gateway-publication-witness` artifact, run:
