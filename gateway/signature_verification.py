@@ -42,6 +42,7 @@ class VerificationResult:
     error: str = ""
     replay_checked: bool = False
     skip_reason: str = ""
+    reject_reason: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,12 +87,18 @@ class WebhookVerifier:
         self._verified_count = 0
         self._rejected_count = 0
         self._skipped_count = 0
+        self._reject_reasons: dict[str, int] = {}
         self._skip_reasons: dict[str, int] = {}
 
     def _record_skip(self, reason_code: str) -> None:
         """Record a bounded verification skip reason for audit summaries."""
         self._skipped_count += 1
         self._skip_reasons[reason_code] = self._skip_reasons.get(reason_code, 0) + 1
+
+    def _record_reject(self, reason_code: str) -> None:
+        """Record a bounded verification rejection reason for audit summaries."""
+        self._rejected_count += 1
+        self._reject_reasons[reason_code] = self._reject_reasons.get(reason_code, 0) + 1
 
     def register(self, channel: str, config: ChannelVerifierConfig) -> None:
         """Register a channel's verification configuration."""
@@ -118,6 +125,15 @@ class WebhookVerifier:
         if age > window:
             return False, f"request too old ({int(age)}s > {int(window)}s)"
         return True, ""
+
+    @staticmethod
+    def _replay_reject_reason(error: str) -> str:
+        """Classify replay-check failures into bounded reason codes."""
+        if error == "invalid timestamp format":
+            return "invalid_timestamp"
+        if error.startswith("request too old"):
+            return "timestamp_out_of_window"
+        return "replay_check_failed"
 
     def verify_hmac(
         self,
@@ -153,11 +169,12 @@ class WebhookVerifier:
             )  # No secret — pass
 
         if not signature:
-            self._rejected_count += 1
+            self._record_reject("missing_signature")
             return VerificationResult(
                 verified=False, channel=channel,
                 method=VerificationMethod.HMAC_SHA256,
                 error="missing signature",
+                reject_reason="missing_signature",
             )
 
         # Replay check
@@ -166,11 +183,13 @@ class WebhookVerifier:
             valid, err = self._check_replay(timestamp, config.replay_window_seconds)
             replay_checked = True
             if not valid:
-                self._rejected_count += 1
+                reject_reason = self._replay_reject_reason(err)
+                self._record_reject(reject_reason)
                 return VerificationResult(
                     verified=False, channel=channel,
                     method=VerificationMethod.HMAC_SHA256,
                     error=err, replay_checked=True,
+                    reject_reason=reject_reason,
                 )
 
         # Build basestring
@@ -200,12 +219,13 @@ class WebhookVerifier:
                 replay_checked=replay_checked,
             )
 
-        self._rejected_count += 1
+        self._record_reject("signature_mismatch")
         return VerificationResult(
             verified=False, channel=channel,
             method=VerificationMethod.HMAC_SHA256,
             error="signature mismatch",
             replay_checked=replay_checked,
+            reject_reason="signature_mismatch",
         )
 
     def verify_ed25519(
@@ -235,11 +255,12 @@ class WebhookVerifier:
             )
 
         if not signature:
-            self._rejected_count += 1
+            self._record_reject("missing_signature")
             return VerificationResult(
                 verified=False, channel=channel,
                 method=VerificationMethod.ED25519,
                 error="missing signature",
+                reject_reason="missing_signature",
             )
 
         try:
@@ -253,18 +274,20 @@ class WebhookVerifier:
                 method=VerificationMethod.ED25519,
             )
         except ImportError:
-            self._rejected_count += 1
+            self._record_reject("verification_dependency_missing")
             return VerificationResult(
                 verified=False, channel=channel,
                 method=VerificationMethod.ED25519,
                 error="nacl library not installed",
+                reject_reason="verification_dependency_missing",
             )
         except Exception:
-            self._rejected_count += 1
+            self._record_reject("signature_verification_failed")
             return VerificationResult(
                 verified=False, channel=channel,
                 method=VerificationMethod.ED25519,
                 error="signature verification failed",
+                reject_reason="signature_verification_failed",
             )
 
     def verify_token(
@@ -291,11 +314,12 @@ class WebhookVerifier:
             )
 
         if not provided_token:
-            self._rejected_count += 1
+            self._record_reject("missing_token")
             return VerificationResult(
                 verified=False, channel=channel,
                 method=VerificationMethod.TOKEN_COMPARE,
                 error="missing token",
+                reject_reason="missing_token",
             )
 
         if hmac.compare_digest(config.secret, provided_token):
@@ -305,11 +329,12 @@ class WebhookVerifier:
                 method=VerificationMethod.TOKEN_COMPARE,
             )
 
-        self._rejected_count += 1
+        self._record_reject("token_mismatch")
         return VerificationResult(
             verified=False, channel=channel,
             method=VerificationMethod.TOKEN_COMPARE,
             error="token mismatch",
+            reject_reason="token_mismatch",
         )
 
     def verify(
@@ -367,5 +392,6 @@ class WebhookVerifier:
             "total_verified": self._verified_count,
             "total_rejected": self._rejected_count,
             "total_skipped": self._skipped_count,
+            "reject_reasons": dict(sorted(self._reject_reasons.items())),
             "skip_reasons": dict(sorted(self._skip_reasons.items())),
         }
