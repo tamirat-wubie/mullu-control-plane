@@ -24,6 +24,36 @@ from enum import Enum
 from typing import Any, Callable
 
 
+def classify_delivery_error(error: str) -> str:
+    """Return a bounded delivery-failure reason for operator summaries."""
+    normalized = error.strip().lower()
+    if not normalized:
+        return "missing_error"
+    if "timeout" in normalized or "timed out" in normalized:
+        return "timeout"
+    if "rate limit" in normalized or "too many requests" in normalized or "429" in normalized:
+        return "rate_limited"
+    if (
+        "unauthorized" in normalized
+        or "forbidden" in normalized
+        or "permission" in normalized
+        or "401" in normalized
+        or "403" in normalized
+    ):
+        return "permission_denied"
+    if "invalid recipient" in normalized or "recipient" in normalized or "not found" in normalized:
+        return "invalid_recipient"
+    if (
+        "connection" in normalized
+        or "network" in normalized
+        or "unavailable" in normalized
+        or "outage" in normalized
+        or "503" in normalized
+    ):
+        return "channel_unavailable"
+    return "delivery_failed"
+
+
 class DLQEntryStatus(Enum):
     """Status of a DLQ entry."""
 
@@ -113,6 +143,14 @@ class WebhookDLQ:
         self._enqueued_count = 0
         self._delivered_count = 0
         self._exhausted_count = 0
+        self._enqueue_reasons: dict[str, int] = {}
+        self._retry_failure_reasons: dict[str, int] = {}
+        self._exhaustion_reasons: dict[str, int] = {}
+
+    @staticmethod
+    def _record_reason(counter: dict[str, int], reason_code: str) -> None:
+        """Record one bounded reason code."""
+        counter[reason_code] = counter.get(reason_code, 0) + 1
 
     def _next_retry_delay(self, attempt: int) -> float:
         """Exponential backoff with full jitter."""
@@ -153,6 +191,7 @@ class WebhookDLQ:
             )
             self._entries[entry_id] = entry
             self._enqueued_count += 1
+            self._record_reason(self._enqueue_reasons, classify_delivery_error(error))
             return entry
 
     def _evict_oldest(self) -> None:
@@ -210,11 +249,13 @@ class WebhookDLQ:
         for entry in to_retry:
             entry.attempt_count += 1
             entry.last_attempt_at = self._clock()
+            failure_reason = "send_rejected"
 
             try:
                 success = send_fn(entry.channel, entry.recipient_id, entry.body)
             except Exception as exc:
                 success = False
+                failure_reason = "send_exception"
                 entry.last_error = f"retry failed ({type(exc).__name__})"
 
             if success:
@@ -229,10 +270,13 @@ class WebhookDLQ:
                     exhausted += 1
                     with self._lock:
                         self._exhausted_count += 1
+                        self._record_reason(self._exhaustion_reasons, failure_reason)
                 else:
                     entry.status = DLQEntryStatus.PENDING
                     entry.next_retry_at = self._clock() + self._next_retry_delay(entry.attempt_count)
                 failed += 1
+                with self._lock:
+                    self._record_reason(self._retry_failure_reasons, failure_reason)
 
         return {
             "processed": len(to_retry),
@@ -279,11 +323,13 @@ class WebhookDLQ:
         entry.status = DLQEntryStatus.RETRYING
         entry.attempt_count += 1
         entry.last_attempt_at = self._clock()
+        failure_reason = "send_rejected"
 
         try:
             success = send_fn(entry.channel, entry.recipient_id, entry.body)
         except Exception as exc:
             success = False
+            failure_reason = "send_exception"
             entry.last_error = f"manual retry failed ({type(exc).__name__})"
 
         if success:
@@ -294,6 +340,9 @@ class WebhookDLQ:
             return True
 
         entry.status = DLQEntryStatus.EXHAUSTED
+        with self._lock:
+            self._record_reason(self._retry_failure_reasons, failure_reason)
+            self._record_reason(self._exhaustion_reasons, failure_reason)
         return False
 
     def purge_delivered(self) -> int:
@@ -327,5 +376,8 @@ class WebhookDLQ:
                 "total_enqueued": self._enqueued_count,
                 "total_delivered": self._delivered_count,
                 "total_exhausted": self._exhausted_count,
+                "enqueue_reasons": dict(sorted(self._enqueue_reasons.items())),
+                "retry_failure_reasons": dict(sorted(self._retry_failure_reasons.items())),
+                "exhaustion_reasons": dict(sorted(self._exhaustion_reasons.items())),
                 "max_retries": self._max_retries,
             }
