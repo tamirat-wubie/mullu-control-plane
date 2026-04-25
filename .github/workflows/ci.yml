@@ -123,7 +123,10 @@ jobs:
         run: python -m pip install --upgrade pip && python -m pip install -e "mcoi[dev]"
 
       - name: Run gateway closure tests
-        run: python -m pytest tests/test_gateway -q
+        run: python -m pytest tests/test_gateway tests/test_pilot_proof_slice.py -q
+
+      - name: Emit pilot proof-slice witness
+        run: python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json
 
       - name: Validate gateway deployment environment
         run: python scripts/validate_gateway_deployment_env.py --strict
