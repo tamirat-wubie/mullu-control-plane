@@ -199,6 +199,10 @@ class OperatorRunReport:
     communication_provider_id: str | None = None
     model_provider_id: str | None = None
     provider_attributions: tuple[ProviderAttribution, ...] = ()
+    provider_attribution_count: int = 0
+    receipt_attributed_provider_operation_count: int = 0
+    routing_attributed_provider_operation_count: int = 0
+    plane_attributed_provider_operation_count: int = 0
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
 

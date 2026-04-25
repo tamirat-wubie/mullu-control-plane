@@ -113,6 +113,12 @@
       "surface": "replay"
     },
     {
+      "schema_id": "runtime-conformance-certificate",
+      "path": "schemas/runtime_conformance_certificate.schema.json",
+      "urn": "urn:mullusi:schema:runtime-conformance-certificate:1",
+      "surface": "conformance"
+    },
+    {
       "schema_id": "streaming-budget-enforcement",
       "path": "schemas/streaming_budget_enforcement.schema.json",
       "urn": "urn:mullusi:schema:streaming-budget-enforcement:1",
