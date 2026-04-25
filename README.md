@@ -161,6 +161,20 @@ The command emits `.change_assurance/change_command.json`,
 `.change_assurance/release_certificate.json`. See
 `docs/33_governed_evolution.md`.
 
+### Pilot Proof Slice
+
+Pilot readiness can be checked without live providers by emitting a local
+proof-slice witness:
+
+```bash
+python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json
+```
+
+The proof slice sends one deterministic tenant-scoped web message through the
+gateway router, command ledger, causal closure kernel, terminal certificate,
+closure memory promotion, and learning admission path. CI runs the proof-slice
+tests and emits the witness in the gateway closure job.
+
 ### Accepted Risk Closure
 
 Unresolved verification gaps can be held open only through bounded accepted-risk

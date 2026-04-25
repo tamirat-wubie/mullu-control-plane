@@ -122,6 +122,17 @@ export MULLU_CAPABILITY_WORKER_URL="http://localhost:8010/capability/execute"
 python scripts/gateway_runtime_smoke.py
 ```
 
+Before claiming pilot readiness, emit the local proof-slice witness:
+
+```bash
+python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json
+```
+
+The proof slice sends one deterministic tenant-scoped web message through the
+gateway router, command ledger, causal closure kernel, terminal certificate,
+closure memory promotion, and learning admission path. It is local deployment
+evidence only; it does not replace live endpoint health evidence.
+
 The probe checks:
 
 1. Gateway `/health`.
