@@ -491,6 +491,41 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "count": len(obligations),
         }
 
+    @app.post("/authority/obligations/{obligation_id}/satisfy")
+    def satisfy_authority_obligation(obligation_id: str, payload: dict[str, Any]):
+        raw_evidence_refs = payload.get("evidence_refs", ())
+        if isinstance(raw_evidence_refs, str):
+            raw_evidence_refs = (raw_evidence_refs,)
+        if not isinstance(raw_evidence_refs, (list, tuple)):
+            raise HTTPException(400, detail="evidence_refs must be a list of strings")
+        evidence_refs = tuple(str(ref).strip() for ref in raw_evidence_refs)
+        evidence_refs = tuple(ref for ref in evidence_refs if ref)
+        try:
+            obligation = authority_obligation_mesh.satisfy_obligation(
+                obligation_id,
+                evidence_refs=evidence_refs,
+            )
+        except KeyError as exc:
+            raise HTTPException(404, detail="obligation not found") from exc
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {
+            "status": "satisfied",
+            "obligation": asdict(obligation),
+            "evidence_refs": list(evidence_refs),
+            "authority_witness": asdict(authority_obligation_mesh.responsibility_witness()),
+        }
+
+    @app.post("/authority/obligations/escalate-overdue")
+    def escalate_overdue_authority_obligations():
+        obligations = authority_obligation_mesh.escalate_overdue()
+        return {
+            "status": "escalated",
+            "obligations": [asdict(obligation) for obligation in obligations],
+            "count": len(obligations),
+            "authority_witness": asdict(authority_obligation_mesh.responsibility_witness()),
+        }
+
     @app.get("/authority/escalations")
     def authority_escalations(tenant_id: str = "", command_id: str = ""):
         events = authority_mesh_store.list_escalation_events()
