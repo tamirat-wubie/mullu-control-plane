@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:runtime-conformance-certificate:1",
+  "title": "Runtime Conformance Certificate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "certificate_id",
+    "environment",
+    "issued_at",
+    "expires_at",
+    "gateway_witness_valid",
+    "runtime_witness_valid",
+    "latest_anchor_valid",
+    "command_closure_canary_passed",
+    "capability_admission_canary_passed",
+    "dangerous_capability_isolation_canary_passed",
+    "streaming_budget_canary_passed",
+    "lineage_query_canary_passed",
+    "authority_obligation_canary_passed",
+    "capsule_registry_certified",
+    "proof_coverage_matrix_current",
+    "known_limitations_aligned",
+    "security_model_aligned",
+    "open_conformance_gaps",
+    "terminal_status",
+    "evidence_refs",
+    "checks",
+    "signature_key_id",
+    "signature"
+  ],
+  "properties": {
+    "certificate_id": {
+      "type": "string",
+      "pattern": "^conf-[0-9a-f]{16}$"
+    },
+    "environment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "issued_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expires_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateway_witness_valid": {
+      "type": "boolean"
+    },
+    "runtime_witness_valid": {
+      "type": "boolean"
+    },
+    "latest_anchor_valid": {
+      "type": "boolean"
+    },
+    "command_closure_canary_passed": {
+      "type": "boolean"
+    },
+    "capability_admission_canary_passed": {
+      "type": "boolean"
+    },
+    "dangerous_capability_isolation_canary_passed": {
+      "type": "boolean"
+    },
+    "streaming_budget_canary_passed": {
+      "type": "boolean"
+    },
+    "lineage_query_canary_passed": {
+      "type": "boolean"
+    },
+    "authority_obligation_canary_passed": {
+      "type": "boolean"
+    },
+    "capsule_registry_certified": {
+      "type": "boolean"
+    },
+    "proof_coverage_matrix_current": {
+      "type": "boolean"
+    },
+    "known_limitations_aligned": {
+      "type": "boolean"
+    },
+    "security_model_aligned": {
+      "type": "boolean"
+    },
+    "open_conformance_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "terminal_status": {
+      "type": "string",
+      "enum": [
+        "conformant",
+        "conformant_with_gaps",
+        "degraded",
+        "non_conformant"
+      ]
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "passed",
+          "evidence_ref",
+          "detail"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "signature_key_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^hmac-sha256:[0-9a-f]{64}$"
+    }
+  }
+}
