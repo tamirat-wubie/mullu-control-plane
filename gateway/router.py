@@ -20,6 +20,7 @@ from typing import Any, Callable, Protocol
 
 from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus
 from gateway.authority import evaluate_approval_authority
+from gateway.authority_obligation_mesh import AuthorityObligationMesh
 from gateway.capability_isolation import CapabilityIsolationPolicy, IsolatedCapabilityExecutor
 from gateway.causal_closure_kernel import CausalClosureKernel
 from gateway.command_spine import CommandAnchor, CommandEnvelope, CommandLedger, CommandState, canonical_hash
@@ -92,6 +93,7 @@ class GatewayRouter:
         command_ledger: CommandLedger | None = None,
         tenant_identity_store: TenantIdentityStore | None = None,
         memory_store: GovernedMemoryStore | None = None,
+        authority_obligation_mesh: AuthorityObligationMesh | None = None,
         defer_approved_execution: bool = False,
         environment: str = "local_dev",
         isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
@@ -104,6 +106,10 @@ class GatewayRouter:
         self._commands = command_ledger or CommandLedger(clock=self._clock)
         self._tenant_identities = tenant_identity_store or InMemoryTenantIdentityStore(clock=self._clock)
         self._memory = memory_store or InMemoryGovernedMemoryStore(clock=self._clock)
+        self._authority_obligation_mesh = authority_obligation_mesh or AuthorityObligationMesh(
+            commands=self._commands,
+            clock=self._clock,
+        )
         self._defer_approved_execution = defer_approved_execution
         self._closure_kernel = CausalClosureKernel(
             commands=self._commands,
@@ -268,6 +274,7 @@ class GatewayRouter:
         self._commands.transition(command.command_id, CommandState.NORMALIZED)
         tenant_bound = self._commands.transition(command.command_id, CommandState.TENANT_BOUND)
         self._commands.bind_governed_action(tenant_bound.command_id)
+        self._authority_obligation_mesh.prepare_authority(tenant_bound.command_id)
         governed = self._commands.get(tenant_bound.command_id)
         if governed is None:
             raise RuntimeError("governed action binding lost command")
@@ -293,6 +300,12 @@ class GatewayRouter:
     def _execute_command(self, command: CommandEnvelope, *, recipient_id: str) -> GatewayResponse:
         """Execute an allowed command through the stored canonical payload."""
         closure = self._closure_kernel.run(command.command_id)
+        certificate = self._commands.terminal_certificate_for(command.command_id)
+        if certificate is not None:
+            self._authority_obligation_mesh.open_post_closure_obligations(
+                command_id=command.command_id,
+                certificate=certificate,
+            )
         response = GatewayResponse(
             message_id=f"resp-{command.command_id}",
             channel=command.source,
@@ -417,6 +430,12 @@ class GatewayRouter:
                 metadata={"error": "approval_not_found"},
             )
         if result.command_id:
+            self._authority_obligation_mesh.record_approval(
+                command_id=result.command_id,
+                approver_id=mapping.identity_id,
+                approver_roles=tuple(mapping.roles),
+                approved=result.status == ApprovalStatus.APPROVED,
+            )
             next_state = CommandState.APPROVED if result.status == ApprovalStatus.APPROVED else CommandState.DENIED
             self._commands.transition(
                 result.command_id,
@@ -580,6 +599,13 @@ class GatewayRouter:
         if result is None:
             return None
         if result.command_id:
+            chain = self._authority_obligation_mesh.approval_chain_for(result.command_id)
+            self._authority_obligation_mesh.record_approval(
+                command_id=result.command_id,
+                approver_id=resolved_by,
+                approver_roles=chain.required_roles if chain is not None else (),
+                approved=result.status == ApprovalStatus.APPROVED,
+            )
             next_state = CommandState.APPROVED if result.status == ApprovalStatus.APPROVED else CommandState.DENIED
             self._commands.transition(
                 result.command_id,
@@ -672,6 +698,12 @@ class GatewayRouter:
         if result is None:
             return None
         if result.command_id:
+            self._authority_obligation_mesh.record_approval(
+                command_id=result.command_id,
+                approver_id=resolver.identity_id,
+                approver_roles=tuple(resolver.roles),
+                approved=result.status == ApprovalStatus.APPROVED,
+            )
             next_state = CommandState.APPROVED if result.status == ApprovalStatus.APPROVED else CommandState.DENIED
             self._commands.transition(
                 result.command_id,
@@ -736,6 +768,7 @@ class GatewayRouter:
             "memory_store": self._memory.status(),
             "dedup": self._dedup.status(),
             "command_ledger": self._commands.summary(),
+            "authority_obligation_mesh": self._authority_obligation_mesh.summary(),
         }
 
     def runtime_witness(self, *, environment: str, signature_key_id: str, signing_secret: str) -> dict[str, Any]:
@@ -745,6 +778,7 @@ class GatewayRouter:
         anchors = self._commands.list_anchors(limit=1)
         latest_anchor = anchors[0] if anchors else None
         latest_certificate = self._commands.latest_terminal_certificate()
+        responsibility_witness = self._authority_obligation_mesh.responsibility_witness()
         witness_payload = {
             "witness_id": self._gen_id("runtime-witness", ledger_summary.get("last_event_hash", "")),
             "environment": environment,
@@ -756,7 +790,13 @@ class GatewayRouter:
                 latest_certificate.certificate_id if latest_certificate is not None else None
             ),
             "open_case_count": int(state_counts.get(CommandState.REQUIRES_REVIEW.value, 0)),
-            "active_accepted_risk_count": int(state_counts.get("accepted_risk", 0)),
+            "active_accepted_risk_count": responsibility_witness.active_accepted_risk_count,
+            "requires_review_count": responsibility_witness.requires_review_count,
+            "pending_approval_chain_count": responsibility_witness.pending_approval_chain_count,
+            "open_obligation_count": responsibility_witness.open_obligation_count,
+            "overdue_obligation_count": responsibility_witness.overdue_obligation_count,
+            "escalated_obligation_count": responsibility_witness.escalated_obligation_count,
+            "unowned_high_risk_capability_count": responsibility_witness.unowned_high_risk_capability_count,
             "unresolved_reconciliation_count": int(state_counts.get(CommandState.REQUIRES_REVIEW.value, 0)),
             "last_change_certificate_id": None,
             "signed_at": self._clock(),

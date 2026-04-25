@@ -21,6 +21,10 @@ from gateway.channels.slack import SlackAdapter
 from gateway.channels.telegram import TelegramAdapter
 from gateway.channels.web import WebChatAdapter
 from gateway.channels.whatsapp import WhatsAppAdapter
+from gateway.authority_obligation_mesh import (
+    AuthorityObligationMesh,
+    build_authority_obligation_mesh_store_from_env,
+)
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.event_log import WebhookEventLog
@@ -74,12 +78,18 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     verifier = WebhookVerifier()
     command_ledger = build_command_ledger_from_env(clock=_clock)
     tenant_identity_store = build_tenant_identity_store_from_env(clock=_clock)
+    authority_mesh_store = build_authority_obligation_mesh_store_from_env()
     skill_dispatcher = build_skill_dispatcher_from_platform(platform)
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,
         tenant_identity_store=tenant_identity_store,
+        authority_obligation_mesh=AuthorityObligationMesh(
+            commands=command_ledger,
+            clock=_clock,
+            store=authority_mesh_store,
+        ),
         skill_dispatcher=skill_dispatcher,
         defer_approved_execution=defer_approved_execution,
         environment=gateway_env,
@@ -464,6 +474,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app.state.router = router
     app.state.command_ledger = command_ledger
     app.state.tenant_identity_store = tenant_identity_store
+    app.state.authority_mesh_store = authority_mesh_store
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.verifier = verifier
