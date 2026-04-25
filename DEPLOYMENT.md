@@ -259,6 +259,17 @@ workflow state and DNS resolution, writes
 `.change_assurance/gateway_publication_readiness.json`, and prints the exact
 `scripts/dispatch_gateway_publication.py` command to run next.
 
+To dispatch directly from that witnessed report, run:
+
+```bash
+python scripts/dispatch_gateway_publication.py \
+  --readiness-report .change_assurance/gateway_publication_readiness.json
+```
+
+The dispatcher fails closed unless the report has `ready: true`, belongs to the
+selected repository, and contains the required publication fields. It then
+re-validates secret presence and workflow state before dispatch.
+
 To dispatch that GitHub workflow from a local operator shell and download the
 `gateway-publication-witness` artifact, run:
 

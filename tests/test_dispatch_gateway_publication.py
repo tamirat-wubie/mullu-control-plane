@@ -18,7 +18,11 @@ from pathlib import Path
 
 import pytest
 
-from scripts.dispatch_gateway_publication import dispatch_gateway_publication, main
+from scripts.dispatch_gateway_publication import (
+    DEFAULT_REPOSITORY,
+    dispatch_gateway_publication,
+    main,
+)
 
 
 class FakeRunner:
@@ -219,6 +223,115 @@ def test_cli_reports_missing_host(monkeypatch, capsys) -> None:
     assert "gateway host is required" in captured.out
 
 
+def test_cli_dispatches_from_ready_readiness_report(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    runner = FakeRunner(kubeconfig_secret_present=False)
+    report_path = tmp_path / "readiness.json"
+    _write_readiness_report(
+        report_path,
+        expected_environment="production",
+        dispatch_witness=True,
+        skip_preflight_endpoint_probes=True,
+    )
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(
+        [
+            "--readiness-report",
+            str(report_path),
+            "--download-dir",
+            str(tmp_path / "artifact"),
+        ]
+    )
+    workflow_run_command = next(
+        command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
+    )
+
+    assert exit_code == 0
+    assert "gateway_host=gateway.mullusi.com" in workflow_run_command
+    assert "gateway_url=https://gateway.mullusi.com" in workflow_run_command
+    assert "expected_environment=production" in workflow_run_command
+    assert "dispatch_witness=true" in workflow_run_command
+    assert "skip_preflight_endpoint_probes=true" in workflow_run_command
+
+
+def test_cli_refuses_unready_readiness_report(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    report_path = tmp_path / "readiness.json"
+    _write_readiness_report(report_path, ready=False)
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(["--readiness-report", str(report_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert runner.commands == []
+    assert "readiness report is not ready" in captured.out
+    assert "gateway publication dispatch failed" in captured.out
+
+
+def test_cli_refuses_readiness_report_repository_mismatch(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    report_path = tmp_path / "readiness.json"
+    _write_readiness_report(report_path, repository="tamirat-wubie/other")
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(["--readiness-report", str(report_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert runner.commands == []
+    assert "repository mismatch" in captured.out
+    assert "tamirat-wubie/other" in captured.out
+
+
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:
     stdout = payload if isinstance(payload, str) else json.dumps(payload)
     return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+
+def _write_readiness_report(
+    report_path: Path,
+    *,
+    repository: str = DEFAULT_REPOSITORY,
+    ready: bool = True,
+    expected_environment: str = "pilot",
+    apply_ingress: bool = False,
+    dispatch_witness: bool = False,
+    skip_preflight_endpoint_probes: bool = False,
+) -> None:
+    report_path.write_text(
+        json.dumps(
+            {
+                "repository": repository,
+                "gateway_host": "gateway.mullusi.com",
+                "gateway_url": "https://gateway.mullusi.com",
+                "expected_environment": expected_environment,
+                "apply_ingress": apply_ingress,
+                "dispatch_witness": dispatch_witness,
+                "skip_preflight_endpoint_probes": skip_preflight_endpoint_probes,
+                "ready": ready,
+                "steps": [],
+            }
+        ),
+        encoding="utf-8",
+    )
