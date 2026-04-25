@@ -1,0 +1,45 @@
+{
+  "capsule_id": "customer_ops.address_change",
+  "domain": "customer_ops",
+  "version": "1.0.0",
+  "ontology_refs": [
+    "ontology/customer",
+    "ontology/address"
+  ],
+  "capability_refs": [
+    "crm.update_customer_address"
+  ],
+  "policy_refs": [
+    "policies/customer_ops/address_change_authority",
+    "policies/customer_ops/address_change_privacy"
+  ],
+  "evidence_rules": [
+    "crm_update_receipt_required",
+    "before_after_hash_required"
+  ],
+  "approval_rules": [
+    "customer_ops_manager_required",
+    "requester_separation_of_duty"
+  ],
+  "recovery_rules": [
+    "restore_previous_customer_address",
+    "notify_customer_ops_review"
+  ],
+  "test_fixture_refs": [
+    "fixtures/customer_ops/address_change_success",
+    "fixtures/customer_ops/address_change_rejected"
+  ],
+  "read_model_refs": [
+    "read_models/customer_ops/command_closure"
+  ],
+  "operator_view_refs": [
+    "views/customer_ops/effects",
+    "views/customer_ops/obligations"
+  ],
+  "owner_team": "customer_ops",
+  "certification_status": "draft",
+  "metadata": {
+    "purpose": "Domain capsule fixture for governed customer address changes"
+  },
+  "extensions": {}
+}

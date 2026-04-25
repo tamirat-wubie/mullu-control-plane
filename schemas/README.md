@@ -17,6 +17,8 @@ These schemas define the canonical shared JSON interchange surface for Mullu Pla
 | File | Purpose |
 | --- | --- |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
+| `capability_registry_entry.schema.json` | Universal governed capability registry entry |
+| `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
