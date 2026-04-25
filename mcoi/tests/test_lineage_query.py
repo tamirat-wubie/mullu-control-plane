@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLedgerStore
 from mcoi_runtime.core.execution_replay import ReplayRecorder
 from mcoi_runtime.core.lineage_query import parse_lineage_uri, resolve_lineage_uri
 from scripts.validate_schemas import _validate_schema_instance
@@ -83,6 +84,22 @@ def _recorder_with_indexed_refs() -> ReplayRecorder:
     )
     recorder.complete_trace("trace-indexed")
     return recorder
+
+
+def _command_ledger_with_events() -> tuple[CommandLedger, str]:
+    ledger = CommandLedger(clock=fixed_clock, store=InMemoryCommandLedgerStore())
+    command = ledger.create_command(
+        tenant_id="tenant-command",
+        actor_id="actor-command",
+        source="web",
+        conversation_id="conversation-command",
+        idempotency_key="idem-command",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.transition(command.command_id, CommandState.ALLOWED, risk_tier="low", budget_decision="reserved")
+    ledger.transition(command.command_id, CommandState.RESPONDED, output={"output_id": "out-command"})
+    return ledger, command.command_id
 
 
 def test_parse_lineage_uri_extracts_bounded_query() -> None:
@@ -176,6 +193,25 @@ def test_resolve_command_lineage_uses_bounded_replay_index() -> None:
     assert document["depth"] == 1
     assert len(document["nodes"]) == 1
     assert document["nodes"][0]["trace_id"] == "trace-indexed"
+
+
+def test_resolve_command_lineage_prefers_command_source_when_available() -> None:
+    replay_recorder = ReplayRecorder(clock=fixed_clock)
+    command_ledger, command_id = _command_ledger_with_events()
+
+    document = resolve_lineage_uri(
+        f"lineage://command/{command_id}?depth=3",
+        replay_source=replay_recorder,
+        command_source=command_ledger,
+        clock=fixed_clock,
+    )
+
+    assert document["verified"] is True
+    assert document["nodes"][0]["node_id"] == f"command:{command_id}"
+    assert document["nodes"][0]["tenant_id"] == "tenant-command"
+    assert document["nodes"][1]["node_type"] == "command.received"
+    assert document["nodes"][2]["budget_ref"] == "reserved"
+    assert len(document["edges"]) == 2
 
 
 def test_invalid_lineage_uri_is_rejected() -> None:
