@@ -40,7 +40,8 @@ runtime does not yet behave as intended by the architecture specification.
   a provider attribution ledger. Records bind request/execution identity, provider
   class, provider id, attribution source, evidence id, and timestamp.
 - Current attribution distinguishes healthy-plane resolution from routing or execution
-  receipts. Provider-specific execution receipts remain dependent on adapter support.
+  receipts. Communication and integration effect-result adapters now promote
+  receipt-level provider ids into execution-receipt attribution metadata.
 
 ## Memory
 
