@@ -38,6 +38,96 @@ class StubSession:
         pass
 
 
+def _fabric_capability_payload(capability_id: str) -> dict:
+    return {
+        "capability_id": capability_id,
+        "domain": "gateway",
+        "version": "1.0.0",
+        "input_schema_ref": f"schemas/gateway/{capability_id}.input.schema.json",
+        "output_schema_ref": f"schemas/gateway/{capability_id}.output.schema.json",
+        "effect_model": {
+            "expected_effects": ["gateway_response_emitted"],
+            "forbidden_effects": ["unauthorized_state_mutation"],
+            "reconciliation_required": False,
+        },
+        "evidence_model": {
+            "required_evidence": ["command_id", "trace_id", "output_hash"],
+            "terminal_certificate_required": True,
+        },
+        "authority_policy": {
+            "required_roles": ["tenant_member"],
+            "approval_chain": [],
+            "separation_of_duty": False,
+        },
+        "isolation_profile": {
+            "execution_plane": "model_provider",
+            "network_allowlist": ["api.mullusi.com"],
+            "secret_scope": "tenant:gateway:model_provider",
+        },
+        "recovery_plan": {
+            "rollback_capability": "",
+            "compensation_capability": "create_correction_response",
+            "review_required_on_failure": True,
+        },
+        "cost_model": {
+            "budget_class": "gateway_model_call",
+            "max_estimated_cost": 0.25,
+        },
+        "obligation_model": {
+            "owner_team": "gateway_ops",
+            "failure_due_seconds": 3600,
+            "escalation_route": "gateway_ops_lead",
+        },
+        "certification_status": "certified",
+        "metadata": {"risk_tier": "low"},
+        "extensions": {},
+    }
+
+
+def _fabric_capsule_payload(capability_refs: str | list[str]) -> dict:
+    refs = [capability_refs] if isinstance(capability_refs, str) else list(capability_refs)
+    return {
+        "capsule_id": "gateway.web_chat",
+        "domain": "gateway",
+        "version": "1.0.0",
+        "ontology_refs": ["ontology/gateway/web_chat"],
+        "capability_refs": refs,
+        "policy_refs": ["policies/gateway/member_access"],
+        "evidence_rules": ["gateway_response_evidence_required"],
+        "approval_rules": ["tenant_member_required"],
+        "recovery_rules": ["correction_response_available"],
+        "test_fixture_refs": ["fixtures/gateway/web_chat_success"],
+        "read_model_refs": ["read_models/gateway/command_closure"],
+        "operator_view_refs": ["views/gateway/effects"],
+        "owner_team": "gateway_ops",
+        "certification_status": "certified",
+        "metadata": {"purpose": "Gateway web chat fabric test capsule"},
+        "extensions": {},
+    }
+
+
+def _configure_fabric_env(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    *,
+    capability_refs: list[str],
+    capability_payloads: list[dict],
+    use_pack: bool,
+) -> None:
+    capsule_path = tmp_path / "domain_capsule.json"
+    capsule_path.write_text(json.dumps(_fabric_capsule_payload(capability_refs)), encoding="utf-8")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", str(capsule_path))
+    if use_pack:
+        pack_path = tmp_path / "capability_pack.json"
+        pack_path.write_text(json.dumps({"capabilities": capability_payloads}), encoding="utf-8")
+        monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(pack_path))
+    else:
+        capability_path = tmp_path / "capability.json"
+        capability_path.write_text(json.dumps(capability_payloads[0]), encoding="utf-8")
+        monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PATH", str(capability_path))
+
+
 @pytest.fixture
 def gateway_app():
     app = create_gateway_app(platform=StubPlatform())
@@ -201,6 +291,97 @@ class TestWebChatWebhook:
             headers={"X-Session-Token": "test-token"},
         )
         assert resp.status_code == 400
+
+    def test_fabric_admission_accepts_single_capability_source(self, monkeypatch, tmp_path):
+        _configure_fabric_env(
+            monkeypatch,
+            tmp_path,
+            capability_refs=["llm_completion"],
+            capability_payloads=[_fabric_capability_payload("llm_completion")],
+            use_pack=False,
+        )
+        app = create_gateway_app(platform=StubPlatform(response="Fabric governed response"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="web-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+
+        resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "sess1"},
+        )
+
+        assert app.state.capability_admission_gate is not None
+        assert resp.status_code == 200
+        assert resp.json()["body"] == "Fabric governed response"
+
+    def test_fabric_admission_accepts_capability_pack_source(self, monkeypatch, tmp_path):
+        _configure_fabric_env(
+            monkeypatch,
+            tmp_path,
+            capability_refs=["llm_completion"],
+            capability_payloads=[
+                _fabric_capability_payload("llm_completion"),
+                _fabric_capability_payload("financial.balance_check"),
+            ],
+            use_pack=True,
+        )
+        app = create_gateway_app(platform=StubPlatform(response="Pack governed response"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="web-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+
+        resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "sess1"},
+        )
+
+        assert app.state.capability_admission_gate is not None
+        assert resp.status_code == 200
+        assert resp.json()["body"] == "Pack governed response"
+
+    def test_fabric_admission_rejects_missing_pack_capability(self, monkeypatch, tmp_path):
+        _configure_fabric_env(
+            monkeypatch,
+            tmp_path,
+            capability_refs=["llm_completion", "financial.balance_check"],
+            capability_payloads=[_fabric_capability_payload("llm_completion")],
+            use_pack=True,
+        )
+
+        with pytest.raises(ValueError, match="missing capabilities"):
+            create_gateway_app(platform=StubPlatform())
+
+    def test_fabric_admission_blocks_uninstalled_runtime_intent(self, monkeypatch, tmp_path):
+        _configure_fabric_env(
+            monkeypatch,
+            tmp_path,
+            capability_refs=["financial.balance_check"],
+            capability_payloads=[_fabric_capability_payload("financial.balance_check")],
+            use_pack=True,
+        )
+        app = create_gateway_app(platform=StubPlatform(response="should not execute"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="web-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+
+        resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "fabric-runtime-reject"},
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["metadata"]["error"] == "capability_admission_rejected"
+        assert resp.json()["body"] == "This command requires capability review before execution."
+        assert "llm_completion" in resp.json()["metadata"]["reason"]
 
 
 # ═══ Approval Callback ═══
@@ -379,6 +560,38 @@ class TestGatewayStatus:
         assert data["open_obligation_count"] == 0
         assert data["unowned_high_risk_capability_count"] == 0
 
+    def test_authority_operator_console_renders_empty_state(self, client):
+        resp = client.get("/authority/operator")
+
+        assert resp.status_code == 200
+        assert "Mullu Authority Operator Console" in resp.text
+        assert "Responsibility Witness" in resp.text
+        assert "No records" in resp.text
+
+    def test_authority_operator_secret_required_in_production(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.setenv("MULLU_AUTHORITY_OPERATOR_SECRET", "authority-secret")
+        app = create_gateway_app(platform=StubPlatform())
+        local_client = TestClient(app)
+
+        denied = local_client.get("/authority/witness")
+        allowed = local_client.get(
+            "/authority/witness",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+        console_allowed = local_client.get(
+            "/authority/operator",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+
+        assert denied.status_code == 403
+        assert denied.json()["detail"] == "Authority operator access not authorized"
+        assert allowed.status_code == 200
+        assert allowed.json()["open_obligation_count"] == 0
+        assert console_allowed.status_code == 200
+        assert "Mullu Authority Operator Console" in console_allowed.text
+
     def test_authority_approval_chain_read_model(self, client):
         msg_resp = client.post(
             "/webhook/web",
@@ -394,6 +607,7 @@ class TestGatewayStatus:
         command_id = chains[0]["command_id"]
         command_resp = client.get(f"/commands/{command_id}/authority")
         witness_resp = client.get("/authority/witness")
+        console_resp = client.get("/authority/operator")
 
         assert any(chain["command_id"] == command_id for chain in chains)
         assert command_resp.status_code == 200
@@ -401,6 +615,9 @@ class TestGatewayStatus:
         assert command_data["approval_chain"]["command_id"] == command_id
         assert command_data["approval_chain"]["status"] == "pending"
         assert witness_resp.json()["pending_approval_chain_count"] >= 1
+        assert console_resp.status_code == 200
+        assert command_id in console_resp.text
+        assert "pending" in console_resp.text
 
     def test_authority_obligation_and_escalation_read_models(self, gateway_app, client):
         msg_resp = client.post(
@@ -448,6 +665,7 @@ class TestGatewayStatus:
         escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}")
         satisfied_resp = client.get("/authority/obligations?tenant_id=t1&status=satisfied")
         witness_resp = client.get("/authority/witness")
+        console_resp = client.get("/authority/operator")
 
         assert obligations_resp.status_code == 200
         assert obligations_resp.json()["count"] == 1
@@ -464,6 +682,9 @@ class TestGatewayStatus:
         assert escalations_resp.json()["escalation_events"][0]["obligation_id"] == obligation.obligation_id
         assert satisfied_resp.json()["count"] == 1
         assert witness_resp.json()["requires_review_count"] == 0
+        assert console_resp.status_code == 200
+        assert obligation.obligation_id in console_resp.text
+        assert "case_review" in console_resp.text
 
     def test_authority_obligation_satisfaction_rejects_missing_obligation(self, client):
         resp = client.post(

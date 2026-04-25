@@ -507,7 +507,25 @@ class GatewayRouter:
             return response
 
         intent = detect_intent(message.body)
-        command = self._create_command(message, mapping, intent)
+        try:
+            command = self._create_command(message, mapping, intent)
+        except ValueError as exc:
+            if not str(exc).startswith("capability fabric admission rejected:"):
+                raise
+            self._record_error("capability_admission_rejected")
+            resp = GatewayResponse(
+                message_id=self._gen_id("resp", message.message_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body="This command requires capability review before execution.",
+                governed=True,
+                metadata={
+                    "error": "capability_admission_rejected",
+                    "reason": str(exc),
+                },
+            )
+            self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
+            return resp
         self._commands.transition(command.command_id, CommandState.POLICY_EVALUATED)
         approval = self._approval.request_approval(
             tenant_id=mapping.tenant_id,

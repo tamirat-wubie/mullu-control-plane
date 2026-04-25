@@ -22,7 +22,7 @@ import threading
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from uuid import uuid4
 
 from mcoi_runtime.contracts.effect_assurance import (
@@ -37,6 +37,10 @@ from mcoi_runtime.contracts.execution import (
     ExecutionOutcome as CoreExecutionOutcome,
     ExecutionResult as CoreExecutionResult,
 )
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityRegistryEntry as CoreCapabilityRegistryEntry,
+    CommandCapabilityAdmissionStatus as CoreCommandCapabilityAdmissionStatus,
+)
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition as CoreTerminalClosureDisposition
 from mcoi_runtime.contracts.verification import (
     VerificationCheck as CoreVerificationCheck,
@@ -45,6 +49,9 @@ from mcoi_runtime.contracts.verification import (
 )
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
+
+if TYPE_CHECKING:
+    from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
 
 _log = logging.getLogger(__name__)
 
@@ -1291,6 +1298,41 @@ def capability_passport_for(intent_name: str) -> CapabilityPassport:
     return passport
 
 
+def capability_passport_from_registry_entry(entry: CoreCapabilityRegistryEntry) -> CapabilityPassport:
+    """Project a governed capability registry entry into gateway passport form."""
+    rollback_type = "irreversible"
+    if entry.recovery_plan.rollback_capability:
+        rollback_type = "reversible"
+    elif entry.recovery_plan.compensation_capability:
+        rollback_type = "compensatable"
+    return CapabilityPassport(
+        capability=entry.capability_id,
+        version=entry.version,
+        risk_tier=str(entry.metadata.get("risk_tier", "medium")),
+        input_schema=entry.input_schema_ref,
+        output_schema=entry.output_schema_ref,
+        authority_required=entry.authority_policy.required_roles,
+        requires=(
+            "tenant_bound",
+            "capability_registry_admitted",
+            f"isolation:{entry.isolation_profile.execution_plane}",
+        ),
+        mutates_world=entry.effect_model.reconciliation_required,
+        external_system=entry.isolation_profile.execution_plane,
+        rollback_type=rollback_type,
+        rollback_capability=entry.recovery_plan.rollback_capability,
+        compensation_capability=entry.recovery_plan.compensation_capability,
+        proof_required_fields=entry.evidence_model.required_evidence,
+        declared_effects=entry.effect_model.expected_effects,
+        forbidden_effects=entry.effect_model.forbidden_effects,
+        evidence_required=entry.evidence_model.required_evidence,
+        graph_projection={
+            "nodes": ("command", "capability", "provider_action", "verification", "evidence"),
+            "edges": ("admitted_by", "verified_by", "produced"),
+        },
+    )
+
+
 def _require_passport_effect_contract(passport: CapabilityPassport) -> None:
     """Fail closed when an effect-bearing passport lacks assurance semantics."""
     requires_effect_contract = passport.mutates_world or passport.risk_tier == "high"
@@ -1883,9 +1925,11 @@ class CommandLedger:
         clock: Callable[[], str] | None = None,
         policy_version: str = "gateway-policy-v1",
         store: CommandLedgerStore | None = None,
+        capability_admission_gate: CommandCapabilityAdmissionGate | None = None,
     ) -> None:
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._policy_version = policy_version
+        self._capability_admission_gate = capability_admission_gate
         self._commands: dict[str, CommandEnvelope] = {}
         self._events: list[CommandEvent] = []
         self._governed_actions: dict[str, GovernedAction] = {}
@@ -1974,7 +2018,34 @@ class CommandLedger:
         if command is None:
             raise KeyError(f"unknown command_id: {command_id}")
 
-        passport = capability_passport_for(typed_intent.name)
+        capability_admission = None
+        capability_registry_entry = None
+        if self._capability_admission_gate is not None:
+            capability_admission = self._capability_admission_gate.admit(
+                command_id=command.command_id,
+                intent_name=typed_intent.name,
+            )
+            if capability_admission.status is not CoreCommandCapabilityAdmissionStatus.ACCEPTED:
+                self.transition(
+                    command.command_id,
+                    CommandState.DENIED,
+                    detail={
+                        "cause": "capability_fabric_admission_rejected",
+                        "intent_name": typed_intent.name,
+                        "reason": capability_admission.reason,
+                    },
+                )
+                raise ValueError(
+                    "capability fabric admission rejected: "
+                    f"{typed_intent.name}: {capability_admission.reason}"
+                )
+            capability_registry_entry = self._capability_admission_gate.capability_for_intent(typed_intent.name)
+
+        passport = (
+            capability_passport_from_registry_entry(capability_registry_entry)
+            if capability_registry_entry is not None
+            else capability_passport_for(typed_intent.name)
+        )
         self.transition(
             command.command_id,
             CommandState.CAPABILITY_BOUND,
@@ -1985,6 +2056,12 @@ class CommandLedger:
                 "capability_version": passport.version,
                 "capability_passport_hash": canonical_hash(asdict(passport)),
                 "authority_required": list(passport.authority_required),
+                "capability_admission_status": (
+                    capability_admission.status.value if capability_admission is not None else "not_configured"
+                ),
+                "capability_registry_entry": (
+                    capability_registry_entry.to_json_dict() if capability_registry_entry is not None else None
+                ),
             },
         )
         command = self.get(command_id)
@@ -3344,6 +3421,7 @@ def build_command_ledger_from_env(
     *,
     clock: Callable[[], str] | None = None,
     policy_version: str = "gateway-policy-v1",
+    capability_admission_gate: CommandCapabilityAdmissionGate | None = None,
 ) -> CommandLedger:
     """Create a command ledger using the gateway persistence environment."""
     import os
@@ -3363,4 +3441,9 @@ def build_command_ledger_from_env(
         store = InMemoryCommandLedgerStore()
     else:
         raise ValueError("unsupported command ledger backend")
-    return CommandLedger(clock=clock, policy_version=policy_version, store=store)
+    return CommandLedger(
+        clock=clock,
+        policy_version=policy_version,
+        store=store,
+        capability_admission_gate=capability_admission_gate,
+    )
