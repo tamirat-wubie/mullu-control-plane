@@ -1,18 +1,22 @@
 """Purpose: verified runbook library — procedural memory from verified replayable runs.
 Governance scope: procedural memory admission per docs/09_memory_hierarchy.md.
-Dependencies: persisted replay validator, execution/verification contracts, memory hierarchy.
+Dependencies: learning admission, persisted replay validator,
+execution/verification contracts, memory hierarchy.
 Invariants:
   - Only runs with successful execution, verification closure, persisted replay integrity,
     and no replay mismatch may be promoted into reusable runbooks.
+  - Procedural memory admission requires LearningAdmissionDecision(status=admit).
   - Runbooks carry full provenance: execution_id, verification_id, replay_id, trace_id.
   - Runbook admission is explicit, never implicit.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Mapping
+
+from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text
 from .persisted_replay import PersistedReplayValidator
@@ -32,10 +36,17 @@ class RunbookProvenance:
     verification_id: str
     replay_id: str
     trace_id: str
+    learning_admission_id: str | None = None
 
     def __post_init__(self) -> None:
         for field_name in ("execution_id", "verification_id", "replay_id", "trace_id"):
             object.__setattr__(self, field_name, ensure_non_empty_text(field_name, getattr(self, field_name)))
+        if self.learning_admission_id is not None:
+            object.__setattr__(
+                self,
+                "learning_admission_id",
+                ensure_non_empty_text("learning_admission_id", self.learning_admission_id),
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +110,7 @@ class RunbookLibrary:
         verification_id: str,
         execution_succeeded: bool,
         verification_passed: bool,
+        learning_admission: LearningAdmissionDecision | None = None,
         context: ReplayContext | None = None,
         preconditions: tuple[str, ...] = (),
         postconditions: tuple[str, ...] = (),
@@ -118,7 +130,16 @@ class RunbookLibrary:
         if not verification_passed:
             reasons.append("verification_did_not_pass")
 
-        # Gate 3: replay must validate as MATCH from persistence
+        # Gate 3: learning admission must explicitly admit this procedural candidate
+        if learning_admission is None:
+            reasons.append("learning_admission_missing")
+        else:
+            if learning_admission.knowledge_id != runbook_id:
+                reasons.append("learning_admission_knowledge_mismatch")
+            if learning_admission.status is not LearningAdmissionStatus.ADMIT:
+                reasons.append(f"learning_admission_status:{learning_admission.status.value}")
+
+        # Gate 4: replay must validate as MATCH from persistence
         replay_result = self._replay_validator.validate(replay_id, context)
 
         if not replay_result.validation.ready:
@@ -128,7 +149,7 @@ class RunbookLibrary:
             if "replay_not_ready" not in reasons[0] if reasons else True:
                 reasons.append(f"replay_verdict:{replay_result.validation.verdict.value}")
 
-        # Gate 4: duplicate check
+        # Gate 5: duplicate check
         if runbook_id in self._entries:
             reasons.append("runbook_id_already_exists")
 
@@ -145,6 +166,7 @@ class RunbookLibrary:
             verification_id=verification_id,
             replay_id=replay_id,
             trace_id=replay_result.trace_id,
+            learning_admission_id=learning_admission.admission_id,
         )
 
         entry = RunbookEntry(

@@ -31,7 +31,9 @@ from mcoi_runtime.contracts.integration import (
     EffectClass,
     TrustClass,
 )
+from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.model import ModelInvocation, ModelStatus
+from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.contracts.provider import (
     CredentialScope,
     ProviderClass,
@@ -71,6 +73,16 @@ _TEMPLATE = {
     "action_type": "shell_command",
     "command_argv": [sys.executable, "-c", "print('golden')"],
 }
+
+
+def _learning_admission(knowledge_id: str) -> LearningAdmissionDecision:
+    return LearningAdmissionDecision(
+        admission_id=f"golden-admission-{knowledge_id}",
+        knowledge_id=knowledge_id,
+        status=LearningAdmissionStatus.ADMIT,
+        reasons=(DecisionReason(message="golden runbook admission"),),
+        issued_at=_CLOCK,
+    )
 
 
 def _make_loop() -> OperatorLoop:
@@ -298,12 +310,14 @@ def test_scenario_runbook_admission(tmp_path: Path) -> None:
         template=_TEMPLATE, bindings_schema={},
         replay_id="rb-replay", execution_id="exec-rb", verification_id="ver-rb",
         execution_succeeded=True, verification_passed=True,
+        learning_admission=_learning_admission("golden-runbook"),
         context=ReplayContext(state_hash="state-rb", environment_digest="env-rb"),
     )
 
     assert result.status is RunbookAdmissionStatus.ADMITTED
     assert result.entry is not None
     assert result.entry.provenance.replay_id == "rb-replay"
+    assert result.entry.provenance.learning_admission_id == "golden-admission-golden-runbook"
     assert library.size == 1
 
 
