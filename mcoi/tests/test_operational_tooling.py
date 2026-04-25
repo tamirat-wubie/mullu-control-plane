@@ -1,12 +1,9 @@
 """Operational Tooling Tests — Replay, dashboard, onboarding."""
 
-import pytest
 from gateway.event_log import WebhookEventLog
-from gateway.webhook_replay import ReplayBatchResult, ReplayResult, WebhookReplayEngine
-from mcoi_runtime.core.ops_dashboard import DashboardSnapshot, OpsDashboard, SubsystemStatus
-from mcoi_runtime.core.tenant_onboarding import (
-    OnboardingRequest, OnboardingResult, TenantOnboarding,
-)
+from gateway.webhook_replay import WebhookReplayEngine
+from mcoi_runtime.core.ops_dashboard import OpsDashboard
+from mcoi_runtime.core.tenant_onboarding import OnboardingRequest, TenantOnboarding
 
 
 # ── Webhook Replay ─────────────────────────────────────────────
@@ -64,6 +61,23 @@ class TestWebhookReplay:
         s = engine.summary()
         assert s["total_replays"] == 1
         assert s["succeeded"] == 1
+        assert s["skipped"] == 0
+
+    def test_summary_counts_skipped_replay_reasons(self):
+        _, engine = self._setup()
+        missing = engine.replay_event("evt-999")
+        processed = engine.replay_event("evt-2")
+        s = engine.summary()
+
+        assert missing.replay_status == "skipped"
+        assert processed.replay_status == "skipped"
+        assert s["total_replays"] == 0
+        assert s["skipped"] == 2
+        assert s["skip_reasons"] == {
+            "already_processed": 1,
+            "event_not_found": 1,
+        }
+        assert "evt-999" not in s["skip_reasons"]
 
     def test_batch_to_dict(self):
         _, engine = self._setup()
