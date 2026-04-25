@@ -199,6 +199,12 @@ Runbook admission now requires an explicit admitted learning decision in
 addition to successful execution, passing verification, and replay integrity.
 The learning admission id is carried in runbook provenance.
 
+### Semantic Memory Admission
+
+Generalized knowledge now has a versioned semantic memory write gate:
+`KnowledgeRecord` entries require an admitted learning decision, source refs,
+and evidence before storage. Updates append new versions.
+
 ## Deployment
 
 ```bash
