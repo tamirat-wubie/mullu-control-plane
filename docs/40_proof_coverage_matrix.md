@@ -26,6 +26,7 @@ Resolved closure actions:
 1. `bind_tool_arguments_to_capability_policy_receipts`
 2. `normalize_gateway_request_receipt_envelopes`
 3. `bound_authority_read_models_to_paginated_windows`
+4. `implement_lineage_query_routes_and_schema`
 
 Open closure actions:
 
