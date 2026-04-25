@@ -11,6 +11,8 @@ context is always present; verification state is bounded.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 from urllib.parse import parse_qs, urlparse
@@ -127,6 +129,23 @@ class LineageEdge:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class PolicyVersionProjection:
+    """Top-level read-model projection for lineage policy versions."""
+
+    policy_version: str
+    node_ids: tuple[str, ...]
+    tenant_ids: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "policy_version": self.policy_version,
+            "node_count": len(self.node_ids),
+            "node_ids": list(self.node_ids),
+            "tenant_ids": list(self.tenant_ids),
+        }
+
+
 def parse_lineage_uri(uri: str) -> LineageQuery:
     """Parse a lineage URI into a bounded query envelope."""
     parsed = urlparse(uri)
@@ -165,7 +184,7 @@ def resolve_lineage_query(
         if command is not None:
             nodes = tuple(_nodes_from_command(command, command_source.events_for(query.ref.ref_id), depth=query.depth))
             edges = tuple(_edges_from_nodes(nodes))
-            reason_codes = _verify_nodes(nodes) if query.verify else ()
+            reason_codes = _verify_graph(nodes, edges) if query.verify else ()
             verified = not reason_codes
             return _document(query, nodes=nodes, edges=edges, verified=verified, reason_codes=reason_codes)
 
@@ -176,7 +195,7 @@ def resolve_lineage_query(
 
     nodes = tuple(_nodes_from_replay_trace(trace, depth=query.depth))
     edges = tuple(_edges_from_nodes(nodes))
-    reason_codes = _verify_nodes(nodes) if query.verify else ()
+    reason_codes = _verify_graph(nodes, edges) if query.verify else ()
     verified = not reason_codes
     return _document(query, nodes=nodes, edges=edges, verified=verified, reason_codes=reason_codes)
 
@@ -336,16 +355,52 @@ def _unresolved_node(query: LineageQuery, *, trace_id: str, timestamp: str) -> L
     )
 
 
-def _verify_nodes(nodes: tuple[LineageNode, ...]) -> tuple[str, ...]:
+def _verify_graph(nodes: tuple[LineageNode, ...], edges: tuple[LineageEdge, ...]) -> tuple[str, ...]:
+    """Verify bounded lineage graph integrity."""
     if not nodes:
         return ("empty_lineage",)
+    reason_codes: list[str] = []
     unresolved = [node.node_id for node in nodes if node.unresolved]
     if unresolved:
-        return ("unresolved_nodes",)
+        reason_codes.append("unresolved_nodes")
     missing_tenant = [node.node_id for node in nodes if not node.tenant_id or node.tenant_id == "unknown"]
     if missing_tenant:
-        return ("tenant_context_missing",)
-    return ()
+        reason_codes.append("tenant_context_missing")
+    node_ids = {node.node_id for node in nodes}
+    missing_edge_nodes = [
+        edge
+        for edge in edges
+        if edge.from_node_id not in node_ids or edge.to_node_id not in node_ids
+    ]
+    if missing_edge_nodes:
+        reason_codes.append("edge_endpoint_missing")
+    declared_parent_edges = {
+        (parent_id, node.node_id)
+        for node in nodes
+        for parent_id in node.parent_node_ids
+    }
+    actual_edges = {(edge.from_node_id, edge.to_node_id) for edge in edges}
+    if declared_parent_edges != actual_edges:
+        reason_codes.append("parent_edge_mismatch")
+    return tuple(reason_codes)
+
+
+def _policy_version_projection(nodes: tuple[LineageNode, ...]) -> list[PolicyVersionProjection]:
+    policy_index: dict[str, dict[str, set[str]]] = {}
+    for node in nodes:
+        policy_version = node.policy_version or "unknown"
+        entry = policy_index.setdefault(policy_version, {"node_ids": set(), "tenant_ids": set()})
+        entry["node_ids"].add(node.node_id)
+        if node.tenant_id:
+            entry["tenant_ids"].add(node.tenant_id)
+    return [
+        PolicyVersionProjection(
+            policy_version=policy_version,
+            node_ids=tuple(sorted(entry["node_ids"])),
+            tenant_ids=tuple(sorted(entry["tenant_ids"])),
+        )
+        for policy_version, entry in sorted(policy_index.items())
+    ]
 
 
 def _document(
@@ -357,19 +412,34 @@ def _document(
     reason_codes: tuple[str, ...],
 ) -> dict[str, Any]:
     unresolved_nodes = [node.node_id for node in nodes if node.unresolved]
-    return {
+    document = {
         "schema_version": 1,
         "lineage_uri": query.uri,
         "root_ref": {"ref_type": query.ref.ref_type, "ref_id": query.ref.ref_id},
+        "permalink": f"lineage://{query.ref.ref_type}/{query.ref.ref_id}",
         "depth": query.depth,
         "include": list(query.include),
         "verified": verified,
         "verification": {
             "reason_codes": list(reason_codes),
             "checked_nodes": len(nodes),
+            "checked_edges": len(edges),
         },
+        "policy_versions": [projection.to_dict() for projection in _policy_version_projection(nodes)],
         "nodes": [node.to_dict() for node in nodes],
         "edges": [edge.to_dict() for edge in edges],
         "unresolved_nodes": unresolved_nodes,
         "governed": True,
     }
+    document_hash = _document_hash(document)
+    return {
+        **document,
+        "document_id": f"lineage-doc:{document_hash[:16]}",
+        "document_hash": f"sha256:{document_hash}",
+    }
+
+
+def _document_hash(document: dict[str, Any]) -> str:
+    """Return a deterministic hash over the lineage document body."""
+    canonical = json.dumps(document, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

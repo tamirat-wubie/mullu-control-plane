@@ -21,6 +21,7 @@ ASSURANCE_OUTPUT = REPO_ROOT / ".change_assurance" / "proof_coverage_matrix.json
 ROUTE_PATTERN = re.compile(r"@(?:router|app)\.(?:get|post|put|delete|patch)\(\s*[\"']([^\"']+)[\"']")
 FRAMEWORK_GENERATED_ROUTES = frozenset({"/docs", "/openapi.json", "/redoc"})
 COVERAGE_LEVELS = ["gap", "read_model", "request_proof", "action_proof", "audit_chain"]
+COVERAGE_STATES = ["proven", "witnessed", "unproven"]
 
 
 def _surface(
@@ -138,6 +139,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             ["mcoi/mcoi_runtime/app/routers/llm.py"],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
+        ),
+        _surface(
+            "policy_version_registry",
+            [
+                "/api/v1/policies/{policy_id}/versions",
+                "/api/v1/policies/{policy_id}/versions/{version}",
+                "/api/v1/policies/{policy_id}/versions/{version}/promote",
+                "/api/v1/policies/{policy_id}/rollback",
+                "/api/v1/policies/{policy_id}/diff",
+                "/api/v1/policies/{policy_id}/shadow/{shadow_version}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/policy_versions.py",
+                "mcoi/mcoi_runtime/core/policy_versioning.py",
+                "mcoi/tests/test_policy_version_endpoints.py",
+                "mcoi/tests/test_policy_versioning.py",
+            ],
+            "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
         ),
         _surface(
             "gateway_webhook_ingress",
@@ -265,36 +288,59 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/trace_entry.schema.json",
                 "schemas/replay_record.schema.json",
             ],
-            "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
+            "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
         ),
+    ]
+    closure_actions = [
+        {
+            "action_id": "bind_tool_arguments_to_capability_policy_receipts",
+            "surfaces": ["tool_invocation", "gateway_capability_fabric"],
+            "status": "closed",
+        },
+        {
+            "action_id": "normalize_gateway_request_receipt_envelopes",
+            "surfaces": ["gateway_capability_fabric"],
+            "status": "closed",
+        },
+        {
+            "action_id": "bound_authority_read_models_to_paginated_windows",
+            "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "implement_lineage_query_routes_and_schema",
+            "surfaces": ["lineage_query_api"],
+            "status": "closed",
+        },
     ]
     return {
         "schema_version": 1,
         "generated_by": "scripts/proof_coverage_matrix.py",
         "coverage_levels": COVERAGE_LEVELS,
+        "coverage_states": COVERAGE_STATES,
+        "coverage_summary": coverage_summary(surfaces),
         "surfaces": surfaces,
-        "closure_actions": [
-            {
-                "action_id": "bind_tool_arguments_to_capability_policy_receipts",
-                "surfaces": ["tool_invocation", "gateway_capability_fabric"],
-                "status": "closed",
-            },
-            {
-                "action_id": "normalize_gateway_request_receipt_envelopes",
-                "surfaces": ["gateway_capability_fabric"],
-                "status": "closed",
-            },
-            {
-                "action_id": "bound_authority_read_models_to_paginated_windows",
-                "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
-                "status": "closed",
-            },
-            {
-                "action_id": "implement_lineage_query_routes_and_schema",
-                "surfaces": ["lineage_query_api"],
-                "status": "closed",
-            },
-        ],
+        "closure_actions": closure_actions,
+    }
+
+
+def coverage_summary(surfaces: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return deterministic aggregate proof coverage counts."""
+    by_state = {state: 0 for state in COVERAGE_STATES}
+    by_request_proof = {level: 0 for level in COVERAGE_LEVELS}
+    by_action_proof = {level: 0 for level in COVERAGE_LEVELS}
+    by_audit = {level: 0 for level in COVERAGE_LEVELS}
+    for surface in surfaces:
+        by_state[surface["coverage_state"]] = by_state.get(surface["coverage_state"], 0) + 1
+        by_request_proof[surface["request_proof"]] = by_request_proof.get(surface["request_proof"], 0) + 1
+        by_action_proof[surface["action_proof"]] = by_action_proof.get(surface["action_proof"], 0) + 1
+        by_audit[surface["audit"]] = by_audit.get(surface["audit"], 0) + 1
+    return {
+        "surface_count": len(surfaces),
+        "by_coverage_state": by_state,
+        "by_request_proof": by_request_proof,
+        "by_action_proof": by_action_proof,
+        "by_audit": by_audit,
     }
 
 

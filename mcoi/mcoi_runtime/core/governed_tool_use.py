@@ -20,6 +20,12 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from .tool_permission_primitives import (
+    ToolPermissionDecision,
+    ToolPermissionRegistry,
+    ToolPermissionRequest,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ToolDefinition:
@@ -44,6 +50,7 @@ class ToolInvocationResult:
     result: Any | None = None
     error: str = ""
     audit_id: str = ""
+    permission_decision: ToolPermissionDecision | None = None
 
 
 @dataclass
@@ -86,6 +93,11 @@ class GovernedToolRegistry:
         self._clock = clock or (lambda: "")
         self._total_invocations = 0
         self._total_denied = 0
+        self._permission_registry: ToolPermissionRegistry | None = None
+
+    def bind_permission_registry(self, registry: ToolPermissionRegistry) -> None:
+        """Attach tenant/tool permission primitives to invocation checks."""
+        self._permission_registry = registry
 
     def register(
         self,
@@ -159,10 +171,12 @@ class GovernedToolRegistry:
         executor: Callable[[str, dict[str, Any]], Any] | None = None,
         session_id: str = "",
         tenant_id: str = "",
+        budget_ref: str = "default",
+        audit_present: bool = True,
     ) -> ToolInvocationResult:
         """Invoke a tool with full governance checks.
 
-        Pipeline: allowlist → enabled → params → session limit → execute → audit.
+        Pipeline: allowlist → enabled → params → permission → session limit → execute → audit.
         """
         # 1. Allowlist check
         tool = self._tools.get(tool_name)
@@ -190,29 +204,53 @@ class GovernedToolRegistry:
                 error=param_error,
             )
 
-        # 4. Session limit check
+        # 4. Permission primitive check
+        permission_decision: ToolPermissionDecision | None = None
+        if self._permission_registry is not None:
+            permission_decision = self._permission_registry.evaluate(
+                ToolPermissionRequest(
+                    tenant_id=tenant_id or "system",
+                    tool_name=tool_name,
+                    arguments=arguments,
+                    budget_ref=budget_ref,
+                    audit_present=audit_present,
+                )
+            )
+            if not permission_decision.allowed:
+                self._record_usage(tool_name, session_id, denied=True)
+                return ToolInvocationResult(
+                    tool_name=tool_name,
+                    allowed=False,
+                    error="tool permission denied",
+                    permission_decision=permission_decision,
+                )
+
+        # 5. Session limit check
         if session_id and not self._check_session_limit(tool, session_id):
             self._record_usage(tool_name, session_id, denied=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="session tool call limit reached",
+                permission_decision=permission_decision,
             )
 
-        # 5. Approval check
+        # 6. Approval check
         if tool.requires_approval:
             self._record_usage(tool_name, session_id, denied=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=False,
                 error="tool requires approval",
+                permission_decision=permission_decision,
             )
 
-        # 6. Execute
+        # 7. Execute
         exec_fn = executor or self._executors.get(tool_name)
         if exec_fn is None:
             self._record_usage(tool_name, session_id, error=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=True,
                 error="no executor registered",
+                permission_decision=permission_decision,
             )
 
         try:
@@ -221,12 +259,14 @@ class GovernedToolRegistry:
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=True,
                 result=result,
+                permission_decision=permission_decision,
             )
         except Exception as exc:
             self._record_usage(tool_name, session_id, error=True)
             return ToolInvocationResult(
                 tool_name=tool_name, allowed=True,
                 error=f"tool execution failed ({type(exc).__name__})",
+                permission_decision=permission_decision,
             )
 
     def session_usage(self, session_id: str) -> dict[str, ToolUsageStats]:

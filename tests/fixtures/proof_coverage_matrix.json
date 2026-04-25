@@ -38,6 +38,40 @@
     "action_proof",
     "audit_chain"
   ],
+  "coverage_states": [
+    "proven",
+    "witnessed",
+    "unproven"
+  ],
+  "coverage_summary": {
+    "by_action_proof": {
+      "action_proof": 11,
+      "audit_chain": 0,
+      "gap": 0,
+      "read_model": 4,
+      "request_proof": 0
+    },
+    "by_audit": {
+      "action_proof": 0,
+      "audit_chain": 13,
+      "gap": 0,
+      "read_model": 2,
+      "request_proof": 0
+    },
+    "by_coverage_state": {
+      "proven": 1,
+      "unproven": 0,
+      "witnessed": 14
+    },
+    "by_request_proof": {
+      "action_proof": 0,
+      "audit_chain": 0,
+      "gap": 0,
+      "read_model": 4,
+      "request_proof": 11
+    },
+    "surface_count": 15
+  },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
   "surfaces": [
@@ -155,6 +189,29 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [],
       "surface_id": "model_experiment_control"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/policy_versions.py",
+        "mcoi/mcoi_runtime/core/policy_versioning.py",
+        "mcoi/tests/test_policy_version_endpoints.py",
+        "mcoi/tests/test_policy_versioning.py"
+      ],
+      "notes": "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+      "representative_paths": [
+        "/api/v1/policies/{policy_id}/versions",
+        "/api/v1/policies/{policy_id}/versions/{version}",
+        "/api/v1/policies/{policy_id}/versions/{version}/promote",
+        "/api/v1/policies/{policy_id}/rollback",
+        "/api/v1/policies/{policy_id}/diff",
+        "/api/v1/policies/{policy_id}/shadow/{shadow_version}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "policy_version_registry"
     },
     {
       "action_proof": "action_proof",
@@ -308,7 +365,7 @@
         "schemas/trace_entry.schema.json",
         "schemas/replay_record.schema.json"
       ],
-      "notes": "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
+      "notes": "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
       "representative_paths": [
         "/api/v1/lineage/resolve",
         "/api/v1/lineage/{trace_id}",

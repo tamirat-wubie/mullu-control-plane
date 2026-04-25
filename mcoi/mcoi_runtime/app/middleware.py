@@ -22,7 +22,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from mcoi_runtime.core.content_safety import ContentSafetyChain, create_content_safety_guard
+from mcoi_runtime.core.content_safety import ContentSafetyChain, create_input_safety_guard
 from mcoi_runtime.core.governance_guard import (
     GovernanceGuardChain,
     create_api_key_guard,
@@ -255,7 +255,7 @@ def build_guard_chain(
     2. Tenant validation (is tenant_id valid?)
     3. Tenant gating (is tenant active?)
     4. RBAC (does this identity have permission?)
-    5. Content safety (is the prompt safe?)
+    5. Lambda_input_safety (is the prompt/content safe?)
     6. Rate limit (within limits?)
     7. Budget (can you afford this?)
     """
@@ -271,7 +271,7 @@ def build_guard_chain(
     if access_runtime is not None:
         chain.add(create_rbac_guard(access_runtime))
     if content_safety_chain is not None:
-        chain.add(create_content_safety_guard(content_safety_chain))
+        chain.add(create_input_safety_guard(content_safety_chain))
     chain.add(create_rate_limit_guard(rate_limiter))
     chain.add(create_budget_guard(budget_mgr))
     return chain

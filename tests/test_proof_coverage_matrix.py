@@ -38,14 +38,30 @@ def test_fixture_contract_is_canonical() -> None:
 def test_coverage_levels_are_bounded() -> None:
     matrix = _load_fixture()
     coverage_levels = set(matrix["coverage_levels"])
-    coverage_states = {"proven", "witnessed", "unproven"}
+    coverage_states = set(matrix["coverage_states"])
 
     assert {"gap", "request_proof", "action_proof", "audit_chain"} <= coverage_levels
+    assert coverage_states == {"proven", "witnessed", "unproven"}
     assert all(surface["request_proof"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["action_proof"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["audit"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["coverage_state"] in coverage_states for surface in matrix["surfaces"])
     assert {"proven", "witnessed"} <= {surface["coverage_state"] for surface in matrix["surfaces"]}
+
+
+def test_coverage_summary_matches_surfaces() -> None:
+    matrix = _load_fixture()
+    summary = matrix["coverage_summary"]
+    surfaces = matrix["surfaces"]
+
+    assert summary["surface_count"] == len(surfaces)
+    assert sum(summary["by_coverage_state"].values()) == len(surfaces)
+    assert sum(summary["by_request_proof"].values()) == len(surfaces)
+    assert sum(summary["by_action_proof"].values()) == len(surfaces)
+    assert sum(summary["by_audit"].values()) == len(surfaces)
+    assert summary["by_coverage_state"]["unproven"] == 0
+    assert summary["by_coverage_state"]["proven"] >= 1
+    assert summary["by_coverage_state"]["witnessed"] >= 1
 
 
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
@@ -99,6 +115,18 @@ def test_gaps_have_closure_actions() -> None:
     assert all(action["surfaces"] for action in matrix["closure_actions"])
 
 
+def test_closure_actions_reference_declared_surfaces() -> None:
+    matrix = _load_fixture()
+    declared_surfaces = {surface["surface_id"] for surface in matrix["surfaces"]}
+
+    assert all(
+        surface_id in declared_surfaces
+        for action in matrix["closure_actions"]
+        for surface_id in action["surfaces"]
+    )
+    assert {action["status"] for action in matrix["closure_actions"]} <= {"open", "closed"}
+
+
 def test_evidence_files_exist() -> None:
     matrix = _load_fixture()
     evidence_files = {evidence_file for surface in matrix["surfaces"] for evidence_file in surface["evidence_files"]}
@@ -147,3 +175,10 @@ def test_generated_assurance_copy_matches_when_present() -> None:
         assert [surface["surface_id"] for surface in assurance["surfaces"]] == [
             surface["surface_id"] for surface in matrix["surfaces"]
         ]
+
+
+def test_operator_document_mentions_every_surface() -> None:
+    matrix = _load_fixture()
+    doc = (REPO_ROOT / "docs" / "40_proof_coverage_matrix.md").read_text(encoding="utf-8")
+
+    assert all(f"`{surface['surface_id']}`" in doc for surface in matrix["surfaces"])

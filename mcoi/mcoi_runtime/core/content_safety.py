@@ -26,6 +26,10 @@ if TYPE_CHECKING:
     from mcoi_runtime.core.governance_guard import GovernanceGuard
 
 
+LAMBDA_INPUT_SAFETY = "Lambda_input_safety"
+LAMBDA_OUTPUT_SAFETY = "Lambda_output_safety"
+
+
 _ETHIOPIC_RANGES: tuple[tuple[int, int], ...] = (
     (0x1200, 0x137F),
     (0x1380, 0x139F),
@@ -118,6 +122,19 @@ class ContentSafetyResult:
     @property
     def flagged_count(self) -> int:
         return sum(1 for r in self.filter_results if r.verdict == SafetyVerdict.FLAGGED)
+
+
+@dataclass(frozen=True, slots=True)
+class OutputSafetyResult:
+    """Result of output safety validation and deterministic scrubbing."""
+
+    allowed: bool
+    content: str
+    stage_name: str = LAMBDA_OUTPUT_SAFETY
+    reason: str = ""
+    pii_redacted: bool = False
+    content_verdict: SafetyVerdict = SafetyVerdict.SAFE
+    flags: tuple[dict[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -399,3 +416,123 @@ def create_content_safety_guard(
         return GuardResult(allowed=True, guard_name="content_safety")
 
     return GovernanceGuard("content_safety", check)
+
+
+def create_input_safety_guard(
+    chain: ContentSafetyChain,
+) -> GovernanceGuard:
+    """Create Lambda_input_safety for the governance guard chain."""
+    from mcoi_runtime.core.governance_guard import GovernanceGuard, GuardResult
+
+    def check(ctx: dict[str, Any]) -> GuardResult:
+        content = ctx.get("prompt", "") or ctx.get("content", "")
+        if not content:
+            return GuardResult(allowed=True, guard_name=LAMBDA_INPUT_SAFETY)
+
+        result = chain.evaluate(content)
+        if result.verdict == SafetyVerdict.BLOCKED:
+            return GuardResult(
+                allowed=False,
+                guard_name=LAMBDA_INPUT_SAFETY,
+                reason="input safety blocked",
+                detail={
+                    "category": result.filter_results[-1].category.value if result.filter_results else "",
+                    "blocking_filter": result.blocking_filter,
+                },
+            )
+
+        if result.verdict == SafetyVerdict.FLAGGED:
+            ctx["content_safety_flags"] = [
+                {"filter": r.filter_name, "category": r.category.value, "reason": r.reason}
+                for r in result.filter_results
+                if r.verdict == SafetyVerdict.FLAGGED
+            ]
+            ctx["input_safety_stage"] = LAMBDA_INPUT_SAFETY
+
+        return GuardResult(allowed=True, guard_name=LAMBDA_INPUT_SAFETY)
+
+    return GovernanceGuard(LAMBDA_INPUT_SAFETY, check)
+
+
+def evaluate_output_safety(
+    content: str,
+    *,
+    chain: ContentSafetyChain | None = None,
+    pii_scanner: Any | None = None,
+) -> OutputSafetyResult:
+    """Run Lambda_output_safety over model output and return scrubbed content."""
+    safe_content = content or ""
+    pii_redacted = False
+    flags: list[dict[str, str]] = []
+
+    if pii_scanner is not None and safe_content:
+        scan_result = pii_scanner.scan(safe_content)
+        safe_content = scan_result.redacted_text
+        pii_redacted = bool(scan_result.pii_detected)
+        if scan_result.pii_detected:
+            flags.append({
+                "filter": "pii_scanner",
+                "category": ThreatCategory.PII_EXPOSURE.value,
+                "reason": "output PII redacted",
+            })
+
+    if chain is not None and safe_content:
+        safety_result = chain.evaluate(safe_content)
+        if safety_result.verdict == SafetyVerdict.BLOCKED:
+            return OutputSafetyResult(
+                allowed=False,
+                content="",
+                reason="output safety blocked",
+                pii_redacted=pii_redacted,
+                content_verdict=safety_result.verdict,
+                flags=tuple(flags),
+            )
+        for result in safety_result.filter_results:
+            if result.verdict == SafetyVerdict.FLAGGED:
+                flags.append({
+                    "filter": result.filter_name,
+                    "category": result.category.value,
+                    "reason": result.reason,
+                })
+        return OutputSafetyResult(
+            allowed=True,
+            content=safe_content,
+            pii_redacted=pii_redacted,
+            content_verdict=safety_result.verdict,
+            flags=tuple(flags),
+        )
+
+    return OutputSafetyResult(
+        allowed=True,
+        content=safe_content,
+        pii_redacted=pii_redacted,
+        flags=tuple(flags),
+    )
+
+
+def create_output_safety_guard(
+    *,
+    chain: ContentSafetyChain | None = None,
+    pii_scanner: Any | None = None,
+) -> GovernanceGuard:
+    """Create Lambda_output_safety for contexts that carry model output."""
+    from mcoi_runtime.core.governance_guard import GovernanceGuard, GuardResult
+
+    def check(ctx: dict[str, Any]) -> GuardResult:
+        content = ctx.get("output", "")
+        if not isinstance(content, str) or not content:
+            return GuardResult(allowed=True, guard_name=LAMBDA_OUTPUT_SAFETY)
+
+        result = evaluate_output_safety(content, chain=chain, pii_scanner=pii_scanner)
+        ctx["output_safety_stage"] = LAMBDA_OUTPUT_SAFETY
+        ctx["output_safety_flags"] = list(result.flags)
+        ctx["output"] = result.content
+        if not result.allowed:
+            return GuardResult(
+                allowed=False,
+                guard_name=LAMBDA_OUTPUT_SAFETY,
+                reason=result.reason,
+            )
+        return GuardResult(allowed=True, guard_name=LAMBDA_OUTPUT_SAFETY)
+
+    return GovernanceGuard(LAMBDA_OUTPUT_SAFETY, check)

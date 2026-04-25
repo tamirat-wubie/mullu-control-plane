@@ -11,9 +11,28 @@ document is the operator-readable witness.
 |---|---|---|---|---|---|---|---|
 | `gateway_capability_fabric` | `/webhook/*`, `/capability-fabric/read-model`, `/commands/{command_id}/closure` | yes | yes | closure invariants | hash-chain | proven | Command admission, request receipt envelopes, and terminal closure expose runtime witnesses. |
 | `llm_streaming` | `/api/v1/stream`, `/api/v1/chat/stream` | yes | yes | streaming budget protocol | hash-chain | witnessed | Streaming emits precharge, first-byte, chunk-debit, cutoff, and final-reconcile proof identifiers. |
+| `llm_completion` | `/api/v1/complete`, `/api/v1/complete/safe`, `/api/v1/complete/auto` | yes | yes | proof bridge | hash-chain | witnessed | Completion routes are governed through budget, model routing, and proof bridge checks. |
+| `llm_chat_workflow` | `/api/v1/chat`, `/api/v1/chat/workflow`, `/api/v1/chat/workflow/history` | yes | yes | proof bridge | hash-chain | witnessed | Chat and workflow routes preserve governed request and action proof boundaries. |
+| `cost_budget_read_models` | `/api/v1/budget`, `/api/v1/costs`, `/api/v1/costs/top-spenders` | read-model | read-model | tenant budget state | hash-chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
+| `model_experiment_control` | `/api/v1/models`, `/api/v1/ab-test`, `/api/v1/ab-test/summary` | yes | yes | experiment control | hash-chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
+| `policy_version_registry` | `/api/v1/policies/{policy_id}/versions`, `/api/v1/policies/{policy_id}/versions/{version}`, `/api/v1/policies/{policy_id}/versions/{version}/promote`, `/api/v1/policies/{policy_id}/rollback`, `/api/v1/policies/{policy_id}/diff`, `/api/v1/policies/{policy_id}/shadow/{shadow_version}` | yes | yes | policy artifact registry | hash-chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
+| `gateway_webhook_ingress` | `/webhook/web`, `/webhook/slack`, `/webhook/telegram` | yes | yes | command ledger | hash-chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
+| `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
+| `authority_obligation_mesh` | `/authority/witness`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
+| `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation routes bind action proof ids to capability policy receipts over argument hashes. |
 | `governed_session` | `GovernedSession.llm`, `GovernedSession.execute`, `GovernedSession.query` | yes | yes | request envelopes | hash-chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
+| `health_docs_exempt` | `/health`, `/docs`, `/openapi.json`, `/redoc` | read-model | read-model | liveness/doc routes | read-model | witnessed | Operational liveness and documentation surfaces are outside the proof-critical path. |
 | `lineage_query_api` | `/api/v1/lineage/resolve`, `/api/v1/lineage/{trace_id}`, `/api/v1/lineage/output/{output_id}`, `/api/v1/lineage/command/{command_id}` | read-model | read-model | replay trace projection | read-model | witnessed | URI semantics, routes, response schema, bounded output/command index scans, and unresolved-node behavior are implemented. |
+
+Coverage summary:
+
+| Metric | Count |
+|---|---:|
+| Total surfaces | 15 |
+| Proven surfaces | 1 |
+| Witnessed surfaces | 14 |
+| Unproven surfaces | 0 |
 
 Gateway runtime witness invariants:
 
@@ -35,5 +54,5 @@ Open closure actions:
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan
-  Open issues: lineage policy-version index is not yet connected beyond projected frame context
+  Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`

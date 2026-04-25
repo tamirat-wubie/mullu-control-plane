@@ -16,7 +16,13 @@ import pytest
 
 from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLedgerStore
 from mcoi_runtime.core.execution_replay import ReplayRecorder
-from mcoi_runtime.core.lineage_query import parse_lineage_uri, resolve_lineage_uri
+from mcoi_runtime.core.lineage_query import (
+    LineageEdge,
+    LineageNode,
+    _verify_graph,
+    parse_lineage_uri,
+    resolve_lineage_uri,
+)
 from scripts.validate_schemas import _validate_schema_instance
 
 
@@ -142,9 +148,86 @@ def test_resolved_lineage_document_satisfies_schema() -> None:
 
     assert _validate_schema_instance(schema, document) == []
     assert document["schema_version"] == 1
+    assert document["document_id"].startswith("lineage-doc:")
+    assert document["document_hash"].startswith("sha256:")
+    assert len(document["document_hash"]) == 71
+    assert document["permalink"] == "lineage://trace/trace-1"
     assert document["governed"] is True
+    assert document["verification"]["checked_nodes"] == 2
+    assert document["verification"]["checked_edges"] == 1
     assert document["nodes"][0]["metadata"]["sequence"] == 1
     assert any("undocumented_field" in error for error in _validate_schema_instance(schema, invalid_document))
+
+
+def test_lineage_document_projects_policy_version_read_model() -> None:
+    recorder = _recorder_with_trace()
+
+    document = resolve_lineage_uri(
+        "lineage://trace/trace-1?depth=10",
+        replay_source=recorder,
+        clock=fixed_clock,
+    )
+    policy_projection = document["policy_versions"][0]
+
+    assert policy_projection["policy_version"] == "policy:v1"
+    assert policy_projection["node_count"] == 2
+    assert policy_projection["tenant_ids"] == ["tenant-1"]
+    assert set(policy_projection["node_ids"]) == {node["node_id"] for node in document["nodes"]}
+
+
+def test_lineage_document_hash_is_deterministic() -> None:
+    recorder = _recorder_with_trace()
+
+    first_document = resolve_lineage_uri(
+        "lineage://trace/trace-1?depth=10",
+        replay_source=recorder,
+        clock=fixed_clock,
+    )
+    second_document = resolve_lineage_uri(
+        "lineage://trace/trace-1?depth=10",
+        replay_source=recorder,
+        clock=fixed_clock,
+    )
+
+    assert first_document["document_id"] == second_document["document_id"]
+    assert first_document["document_hash"] == second_document["document_hash"]
+    assert first_document["document_hash"].startswith("sha256:")
+
+
+def test_lineage_graph_verification_detects_edge_mismatches() -> None:
+    parent = LineageNode(
+        node_id="node-parent",
+        node_type="request.accepted",
+        parent_node_ids=(),
+        trace_id="trace-graph",
+        policy_version="policy:v1",
+        model_version="model:v1",
+        tenant_id="tenant-1",
+        budget_ref="budget-1",
+        proof_id="proof:parent",
+        state_hash="hash-parent",
+        timestamp=fixed_clock(),
+    )
+    child = LineageNode(
+        node_id="node-child",
+        node_type="output.completed",
+        parent_node_ids=("node-parent",),
+        trace_id="trace-graph",
+        policy_version="policy:v1",
+        model_version="model:v1",
+        tenant_id="tenant-1",
+        budget_ref="budget-1",
+        proof_id="proof:child",
+        state_hash="hash-child",
+        timestamp=fixed_clock(),
+    )
+    dangling_edge = LineageEdge(from_node_id="missing-node", to_node_id="node-child", relation="caused")
+
+    reason_codes = _verify_graph((parent, child), (dangling_edge,))
+
+    assert "edge_endpoint_missing" in reason_codes
+    assert "parent_edge_mismatch" in reason_codes
+    assert "tenant_context_missing" not in reason_codes
 
 
 def test_resolve_missing_trace_returns_unresolved_node() -> None:

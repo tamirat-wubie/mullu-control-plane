@@ -21,6 +21,7 @@ from mcoi_runtime.app.server_deps import (
     wire_runtime_dependencies,
 )
 from mcoi_runtime.core.governed_session import Platform as GovernedPlatform
+from mcoi_runtime.core.policy_versioning import PolicyVersionRegistry
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,7 @@ def bootstrap_dependency_registry(
     operational_bootstrap: Any,
     capability_bootstrap: Any,
     platform_cls: type[Any] = GovernedPlatform,
+    policy_version_registry_cls: type[Any] = PolicyVersionRegistry,
     wire_runtime_dependencies_fn: Callable[..., Any] = wire_runtime_dependencies,
     register_dependency_groups_fn: Callable[..., Any] = register_dependency_groups,
 ) -> DependencyRegistryBootstrap:
@@ -147,6 +149,7 @@ def bootstrap_dependency_registry(
     tenant_analytics = capability_bootstrap.tenant_analytics
     wf_templates = capability_bootstrap.wf_templates
     event_store = capability_bootstrap.event_store
+    policy_version_registry = policy_version_registry_cls()
 
     platform = platform_cls(
         clock=clock,
@@ -236,6 +239,7 @@ def bootstrap_dependency_registry(
             "connector_framework": connector_framework,
             "access_runtime": access_runtime,
             "policy_sandbox": policy_sandbox,
+            "policy_version_registry": policy_version_registry,
             "runbook_learning": runbook_learning,
             "explanation_engine": explanation_engine,
             "knowledge_graph": knowledge_graph,
