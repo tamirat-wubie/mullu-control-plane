@@ -286,6 +286,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "runtime_conformance_attestation",
+            ["/runtime/conformance"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/server.py",
+                "gateway/conformance.py",
+                "scripts/collect_runtime_conformance.py",
+                "schemas/runtime_conformance_certificate.schema.json",
+                "tests/test_gateway/test_conformance.py",
+                "tests/test_collect_runtime_conformance.py",
+            ],
+            "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, proof-matrix, and document-drift checks into one signed attestation.",
+            [
+                "gateway_witness_valid",
+                "runtime_witness_valid",
+                "command_closure_canary_passed",
+                "capability_admission_canary_passed",
+                "dangerous_capability_isolation_canary_passed",
+                "lineage_query_canary_passed",
+            ],
+        ),
+        _surface(
             "replay_determinism",
             ["/api/v1/replay/{trace_id}/determinism"],
             "request_proof",
@@ -396,6 +421,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_federated_control_plane_read_model",
             "surfaces": ["federated_control_plane"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_runtime_conformance_attestation",
+            "surfaces": ["runtime_conformance_attestation"],
             "status": "closed",
         },
     ]

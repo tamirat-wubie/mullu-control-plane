@@ -23,6 +23,7 @@ document is the operator-readable witness.
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
 | `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state. |
+| `runtime_conformance_attestation` | `/runtime/conformance` | read-model | read-model | conformance certificate | hash-chain | witnessed | Runtime conformance binds witness, closure, fabric, isolation, lineage, authority, proof-matrix, and document-drift checks into one signed attestation. |
 | `replay_determinism` | `/api/v1/replay/{trace_id}/determinism` | yes | yes | replay report hash | hash-chain | witnessed | Replay determinism route emits governed reports over completed traces with bounded operation specs. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation routes bind action proof ids to capability policy receipts over argument hashes. |
 | `governed_session` | `GovernedSession.llm`, `GovernedSession.execute`, `GovernedSession.query` | yes | yes | request envelopes | hash-chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
@@ -33,9 +34,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 19 |
+| Total surfaces | 20 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 18 |
+| Witnessed surfaces | 19 |
 | Unproven surfaces | 0 |
 
 Gateway runtime witness invariants:
@@ -53,6 +54,7 @@ Resolved closure actions:
 5. `connect_pilot_scaffold_to_hosted_provisioning_endpoint`
 6. `publish_hosted_demo_sandbox_read_models`
 7. `publish_federated_control_plane_read_model`
+8. `publish_runtime_conformance_attestation`
 
 Open closure actions:
 
@@ -60,6 +62,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
+  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, runtime conformance attestation mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
   Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`
