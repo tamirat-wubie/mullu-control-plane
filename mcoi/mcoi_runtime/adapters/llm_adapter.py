@@ -15,6 +15,7 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import os
 from typing import Any, Callable, Protocol
 
@@ -143,12 +144,7 @@ class AnthropicBackend:
         self._api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self._default_model = default_model
         self._client: Any = None
-        self._sdk_available = False
-        try:
-            import anthropic
-            self._sdk_available = True
-        except ImportError:
-            pass
+        self._sdk_available = importlib.util.find_spec("anthropic") is not None
 
     @property
     def provider(self) -> LLMProvider:
@@ -259,12 +255,7 @@ class OpenAIBackend:
         self._api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self._default_model = default_model
         self._client: Any = None
-        self._sdk_available = False
-        try:
-            import openai
-            self._sdk_available = True
-        except ImportError:
-            pass
+        self._sdk_available = importlib.util.find_spec("openai") is not None
 
     @property
     def provider(self) -> LLMProvider:
@@ -682,12 +673,20 @@ class GovernedLLMAdapter:
         # Backend call
         result = self._backend.call(params)
 
-        # PII redaction on output (post-call)
-        if self._pii_scanner is not None and result.succeeded and result.content:
-            scan_result = self._pii_scanner.scan(result.content)
-            if scan_result.pii_detected:
-                from dataclasses import replace
-                result = replace(result, content=scan_result.redacted_text)
+        # Lambda_output_safety on output (post-call)
+        if result.succeeded and result.content:
+            from dataclasses import replace
+            from mcoi_runtime.core.content_safety import evaluate_output_safety
+
+            output_safety = evaluate_output_safety(
+                result.content,
+                chain=self._content_safety_chain,
+                pii_scanner=self._pii_scanner,
+            )
+            if not output_safety.allowed:
+                result = replace(result, content="", error=output_safety.reason)
+            elif output_safety.content != result.content:
+                result = replace(result, content=output_safety.content)
 
         # Record cost
         if params.budget_id and result.succeeded:

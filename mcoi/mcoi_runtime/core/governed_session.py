@@ -506,19 +506,32 @@ class GovernedSession:
                     policy_context=cache_policy_context,
                 )
 
-        # PII redaction on response
-        if result.succeeded and result.content:
-            redacted = self._redact_pii(result.content)
-            if redacted != result.content:
-                from dataclasses import replace
-                result = replace(result, content=redacted)
-
         from dataclasses import fields, is_dataclass, replace
-        result_metadata = dict(getattr(result, "metadata", {}) or {})
-        result_metadata["request_envelope_proof"] = request_proof
         result_field_names = {
             field.name for field in fields(result)
         } if is_dataclass(result) else set()
+
+        # Lambda_output_safety on response
+        if result.succeeded and result.content:
+            from mcoi_runtime.core.content_safety import evaluate_output_safety
+
+            output_safety = evaluate_output_safety(
+                result.content,
+                chain=self._content_safety,
+                pii_scanner=self._pii_scanner,
+            )
+            if not output_safety.allowed:
+                replacement = {"content": "", "error": output_safety.reason}
+                if "finished" in result_field_names:
+                    replacement["finished"] = False
+                if "succeeded" in result_field_names:
+                    replacement["succeeded"] = False
+                result = replace(result, **replacement)
+            elif output_safety.content != result.content:
+                result = replace(result, content=output_safety.content)
+
+        result_metadata = dict(getattr(result, "metadata", {}) or {})
+        result_metadata["request_envelope_proof"] = request_proof
         if "metadata" in result_field_names:
             result = replace(result, metadata=result_metadata)
         else:
