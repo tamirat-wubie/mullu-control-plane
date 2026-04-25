@@ -76,8 +76,23 @@ class WebhookReplayEngine:
         self._replay_count = 0
         self._success_count = 0
         self._failure_count = 0
+        self._failure_reasons: dict[str, int] = {}
         self._skipped_count = 0
         self._skip_reasons: dict[str, int] = {}
+
+    @staticmethod
+    def _failure_reason_for_outcome(outcome: str) -> str:
+        if outcome == "no_processor":
+            return "no_processor"
+        if outcome == "failed":
+            return "dispatch_failed"
+        return "unexpected_outcome"
+
+    def _record_failure(self, reason_code: str) -> None:
+        """Record a bounded replay failure reason for operator summaries."""
+        with self._lock:
+            self._failure_count += 1
+            self._failure_reasons[reason_code] = self._failure_reasons.get(reason_code, 0) + 1
 
     def _record_skip(self, reason_code: str) -> None:
         """Record a bounded replay skip reason for operator summaries."""
@@ -146,8 +161,8 @@ class WebhookReplayEngine:
             with self._lock:
                 if success:
                     self._success_count += 1
-                else:
-                    self._failure_count += 1
+            if not success:
+                self._record_failure(self._failure_reason_for_outcome(outcome))
 
             return ReplayResult(
                 event_id=event_id,
@@ -157,8 +172,7 @@ class WebhookReplayEngine:
             )
 
         except Exception as exc:
-            with self._lock:
-                self._failure_count += 1
+            self._record_failure(f"replay_error:{type(exc).__name__}")
             return ReplayResult(
                 event_id=event_id,
                 original_status=event.status,
@@ -204,6 +218,7 @@ class WebhookReplayEngine:
                 "total_replays": self._replay_count,
                 "succeeded": self._success_count,
                 "failed": self._failure_count,
+                "failure_reasons": dict(sorted(self._failure_reasons.items())),
                 "skipped": self._skipped_count,
                 "skip_reasons": dict(sorted(self._skip_reasons.items())),
             }
