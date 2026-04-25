@@ -288,6 +288,20 @@ is exercised. It also writes
 `.change_assurance/gateway_publication_receipt.json` with the terminal local
 decision state: ready-only, blocked-not-ready, or dispatched.
 
+To validate the receipt as a dispatch-success gate, run:
+
+```bash
+python scripts/validate_gateway_publication_receipt.py \
+  --receipt .change_assurance/gateway_publication_receipt.json \
+  --require-ready \
+  --require-dispatched \
+  --require-success
+```
+
+The validator checks receipt structure, internal readiness consistency, terminal
+state, optional expected repository/host/URL/environment values, and writes
+`.change_assurance/gateway_publication_receipt_validation.json`.
+
 To dispatch that GitHub workflow from a local operator shell and download the
 `gateway-publication-witness` artifact, run:
 
