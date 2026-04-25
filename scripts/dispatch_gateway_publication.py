@@ -9,6 +9,7 @@ Invariants:
   - Gateway host is explicit and fully qualified before dispatch.
   - Runtime witness secret presence is checked by name, not value.
   - Kubeconfig secret presence is required only when ingress apply is requested.
+  - Readiness-report handoff fails closed unless the report is ready.
   - The gateway-publication-witness artifact is downloaded after completion.
 """
 
@@ -34,6 +35,7 @@ DEFAULT_RUNTIME_SECRET_NAME = "MULLU_RUNTIME_WITNESS_SECRET"
 DEFAULT_KUBECONFIG_SECRET_NAME = "MULLU_KUBECONFIG_B64"
 DEFAULT_ARTIFACT_NAME = "gateway-publication-witness"
 DEFAULT_DOWNLOAD_DIR = Path(".change_assurance") / "gateway-publication-artifact"
+DEFAULT_READINESS_REPORT = Path(".change_assurance") / "gateway_publication_readiness.json"
 
 
 class CommandRunner(Protocol):
@@ -59,6 +61,19 @@ class GatewayPublicationDispatch:
     status: str
     conclusion: str
     artifact_dir: Path
+
+
+@dataclass(frozen=True, slots=True)
+class GatewayPublicationDispatchInputs:
+    """Validated inputs used for one gateway publication dispatch."""
+
+    repository: str
+    gateway_host: str
+    gateway_url: str
+    expected_environment: str
+    apply_ingress: bool
+    dispatch_witness: bool
+    skip_preflight_endpoint_probes: bool
 
 
 def dispatch_gateway_publication(
@@ -364,6 +379,74 @@ def _bool_field(value: bool) -> str:
     return str(value).lower()
 
 
+def load_readiness_dispatch_inputs(
+    readiness_report_path: Path,
+    *,
+    repository: str,
+) -> GatewayPublicationDispatchInputs:
+    """Load dispatch inputs from a ready gateway publication readiness report."""
+    payload = _readiness_json_object(readiness_report_path)
+    ready = _readiness_bool(payload, "ready")
+    if not ready:
+        raise RuntimeError(f"readiness report is not ready: {readiness_report_path}")
+
+    report_repository = _readiness_string(payload, "repository")
+    if report_repository != repository:
+        raise RuntimeError(
+            f"readiness report repository mismatch: {report_repository} != {repository}"
+        )
+
+    return GatewayPublicationDispatchInputs(
+        repository=repository,
+        gateway_host=_readiness_string(payload, "gateway_host"),
+        gateway_url=_readiness_string(payload, "gateway_url"),
+        expected_environment=_readiness_string(payload, "expected_environment"),
+        apply_ingress=_readiness_bool(payload, "apply_ingress"),
+        dispatch_witness=_readiness_bool(payload, "dispatch_witness"),
+        skip_preflight_endpoint_probes=_readiness_bool(
+            payload,
+            "skip_preflight_endpoint_probes",
+        ),
+    )
+
+
+def _readiness_json_object(readiness_report_path: Path) -> dict[str, Any]:
+    try:
+        raw_text = readiness_report_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeError(f"failed to read readiness report {readiness_report_path}") from exc
+    parsed = _loads_json(raw_text, "gateway publication readiness report")
+    if not isinstance(parsed, dict):
+        raise RuntimeError("gateway publication readiness report was not a JSON object")
+    return parsed
+
+
+def _readiness_string(payload: dict[str, Any], field_name: str) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeError(f"readiness report field {field_name} must be a string")
+    return value.strip()
+
+
+def _readiness_bool(payload: dict[str, Any], field_name: str) -> bool:
+    value = payload.get(field_name)
+    if not isinstance(value, bool):
+        raise RuntimeError(f"readiness report field {field_name} must be a boolean")
+    return value
+
+
+def _cli_dispatch_inputs(args: argparse.Namespace) -> GatewayPublicationDispatchInputs:
+    return GatewayPublicationDispatchInputs(
+        repository=args.repo,
+        gateway_host=args.gateway_host,
+        gateway_url=args.gateway_url,
+        expected_environment=args.expected_environment,
+        apply_ingress=args.apply_ingress,
+        dispatch_witness=args.dispatch_witness,
+        skip_preflight_endpoint_probes=args.skip_preflight_endpoint_probes,
+    )
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse gateway publication dispatch CLI arguments."""
     parser = argparse.ArgumentParser(
@@ -380,6 +463,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--apply-ingress", action="store_true")
     parser.add_argument("--dispatch-witness", action="store_true")
     parser.add_argument("--skip-preflight-endpoint-probes", action="store_true")
+    parser.add_argument(
+        "--readiness-report",
+        default="",
+        help=f"Dispatch from a ready report such as {DEFAULT_READINESS_REPORT}",
+    )
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--runtime-secret-name", default=DEFAULT_RUNTIME_SECRET_NAME)
@@ -395,14 +483,24 @@ def main(argv: list[str] | None = None) -> int:
     """CLI entry point for gateway publication workflow dispatch."""
     args = parse_args(argv)
     try:
+        dispatch_inputs = (
+            load_readiness_dispatch_inputs(
+                Path(args.readiness_report),
+                repository=args.repo,
+            )
+            if args.readiness_report
+            else _cli_dispatch_inputs(args)
+        )
         result = dispatch_gateway_publication(
-            gateway_host=args.gateway_host,
-            gateway_url=args.gateway_url,
-            expected_environment=args.expected_environment,
-            apply_ingress=args.apply_ingress,
-            dispatch_witness=args.dispatch_witness,
-            skip_preflight_endpoint_probes=args.skip_preflight_endpoint_probes,
-            repository=args.repo,
+            gateway_host=dispatch_inputs.gateway_host,
+            gateway_url=dispatch_inputs.gateway_url,
+            expected_environment=dispatch_inputs.expected_environment,
+            apply_ingress=dispatch_inputs.apply_ingress,
+            dispatch_witness=dispatch_inputs.dispatch_witness,
+            skip_preflight_endpoint_probes=(
+                dispatch_inputs.skip_preflight_endpoint_probes
+            ),
+            repository=dispatch_inputs.repository,
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             runtime_secret_name=args.runtime_secret_name,
