@@ -141,6 +141,28 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Model catalog and experiment control routes are declared as governed control surfaces.",
         ),
         _surface(
+            "policy_version_registry",
+            [
+                "/api/v1/policies/{policy_id}/versions",
+                "/api/v1/policies/{policy_id}/versions/{version}",
+                "/api/v1/policies/{policy_id}/versions/{version}/promote",
+                "/api/v1/policies/{policy_id}/rollback",
+                "/api/v1/policies/{policy_id}/diff",
+                "/api/v1/policies/{policy_id}/shadow/{shadow_version}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/policy_versions.py",
+                "mcoi/mcoi_runtime/core/policy_versioning.py",
+                "mcoi/tests/test_policy_version_endpoints.py",
+                "mcoi/tests/test_policy_versioning.py",
+            ],
+            "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+        ),
+        _surface(
             "gateway_webhook_ingress",
             ["/webhook/web", "/webhook/slack", "/webhook/telegram"],
             "request_proof",

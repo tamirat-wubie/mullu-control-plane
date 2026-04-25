@@ -15,6 +15,7 @@ document is the operator-readable witness.
 | `llm_chat_workflow` | `/api/v1/chat`, `/api/v1/chat/workflow`, `/api/v1/chat/workflow/history` | yes | yes | proof bridge | hash-chain | witnessed | Chat and workflow routes preserve governed request and action proof boundaries. |
 | `cost_budget_read_models` | `/api/v1/budget`, `/api/v1/costs`, `/api/v1/costs/top-spenders` | read-model | read-model | tenant budget state | hash-chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
 | `model_experiment_control` | `/api/v1/models`, `/api/v1/ab-test`, `/api/v1/ab-test/summary` | yes | yes | experiment control | hash-chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
+| `policy_version_registry` | `/api/v1/policies/{policy_id}/versions`, `/api/v1/policies/{policy_id}/versions/{version}`, `/api/v1/policies/{policy_id}/versions/{version}/promote`, `/api/v1/policies/{policy_id}/rollback`, `/api/v1/policies/{policy_id}/diff`, `/api/v1/policies/{policy_id}/shadow/{shadow_version}` | yes | yes | policy artifact registry | hash-chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
 | `gateway_webhook_ingress` | `/webhook/web`, `/webhook/slack`, `/webhook/telegram` | yes | yes | command ledger | hash-chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
@@ -28,9 +29,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 14 |
+| Total surfaces | 15 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 13 |
+| Witnessed surfaces | 14 |
 | Unproven surfaces | 0 |
 
 Gateway runtime witness invariants:

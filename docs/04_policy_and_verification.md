@@ -40,6 +40,6 @@ Policy gate precedes execution. Verification closes execution.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: policy gate precedence, immutable policy artifacts, deterministic artifact hashes, explicit promotion, explicit rollback, diff visibility, shadow-mode non-promotion
+  Invariants verified: policy gate precedence, immutable policy artifacts, deterministic artifact hashes, explicit promotion, explicit rollback, diff visibility, shadow-mode non-promotion, operator-facing policy version routes
   Open issues: none
-  Next action: connect policy version registry to operator-facing API routes
+  Next action: persist policy version registry beyond process memory
