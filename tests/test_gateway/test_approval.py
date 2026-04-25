@@ -189,6 +189,11 @@ class TestApprovalSummary:
         assert summary["total"] == 2
         assert summary["pending"] == 1
         assert summary["history_count"] == 1  # Low-risk auto-approved
+        assert summary["by_status"] == {"approved": 1, "pending": 1}
+        assert summary["by_risk_tier"] == {"high": 1, "low": 1}
+        assert summary["pending_by_risk_tier"] == {"high": 1}
+        assert summary["resolution_reasons"] == {"auto_approved": 1}
+        assert summary["total_evicted"] == 0
 
     def test_summary_counts_expired_requests_in_history(self):
         times = [
@@ -208,3 +213,56 @@ class TestApprovalSummary:
         assert summary["pending"] == 0
         assert summary["history_count"] == 1
         assert summary["total"] == 1
+        assert summary["by_status"] == {"expired": 1}
+        assert summary["resolution_reasons"] == {"timed_out": 1}
+
+    def test_summary_uses_bounded_resolution_reasons(self):
+        router = ApprovalRouter()
+        approved = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="web",
+            action_description="send_email", body="send report",
+        )
+        denied = router.request_approval(
+            tenant_id="t1", identity_id="u2", channel="web",
+            action_description="delete", body="delete file",
+        )
+
+        router.resolve(approved.request_id, approved=True, resolved_by="operator-secret")
+        router.resolve(denied.request_id, approved=False, resolved_by="operator-secret")
+        summary = router.summary()
+
+        assert summary["total"] == 2
+        assert summary["by_status"] == {"approved": 1, "denied": 1}
+        assert summary["resolution_reasons"] == {
+            "operator_approved": 1,
+            "operator_denied": 1,
+        }
+        assert "operator-secret" not in summary["resolution_reasons"]
+
+    def test_capacity_eviction_is_recorded_as_bounded_resolution(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+        ]
+
+        def clock() -> str:
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        router = ApprovalRouter(clock=clock)
+        router.MAX_PENDING = 1
+        first = router.request_approval(
+            tenant_id="t1", identity_id="u1", channel="web",
+            action_description="delete", body="delete first",
+        )
+        second = router.request_approval(
+            tenant_id="t1", identity_id="u2", channel="web",
+            action_description="delete", body="delete second",
+        )
+        summary = router.summary()
+
+        assert router.lookup_request(first.request_id) is None
+        assert router.lookup_request(second.request_id) is not None
+        assert summary["pending"] == 1
+        assert summary["history_count"] == 1
+        assert summary["total_evicted"] == 1
+        assert summary["resolution_reasons"] == {"capacity_evicted": 1}
