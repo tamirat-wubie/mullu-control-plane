@@ -133,6 +133,23 @@ gateway router, command ledger, causal closure kernel, terminal certificate,
 closure memory promotion, and learning admission path. It is local deployment
 evidence only; it does not replace live endpoint health evidence.
 
+When a gateway endpoint is deployed, collect live deployment evidence:
+
+```bash
+export MULLU_GATEWAY_URL="https://gateway.example.com"
+export MULLU_RUNTIME_WITNESS_SECRET="<runtime-witness-secret>"
+python scripts/collect_deployment_witness.py \
+  --gateway-url "$MULLU_GATEWAY_URL" \
+  --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" \
+  --expected-environment pilot \
+  --output .change_assurance/deployment_witness.json
+```
+
+The collector probes `/health` and `/gateway/witness`, verifies the runtime
+witness signature when the secret is supplied, and emits `published` only when
+all evidence checks pass. Without signature verification, the deployment witness
+fails closed as `not-published`.
+
 The probe checks:
 
 1. Gateway `/health`.
