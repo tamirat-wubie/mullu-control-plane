@@ -87,6 +87,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     ".github/workflows/deployment-witness.yml",
     "python scripts/dispatch_deployment_witness.py",
     "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --dispatch",
+    "python scripts/preflight_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot",
     "python scripts/gateway_runtime_smoke.py",
     "python scripts/validate_public_repository_surface.py",
 )
