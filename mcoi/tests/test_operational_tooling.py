@@ -39,8 +39,30 @@ class TestWebhookReplay:
         def bad_processor(c, s, b):
             raise ConnectionError("down")
         result = engine.replay_event("evt-1", processor=bad_processor)
+        s = engine.summary()
         assert result.replay_status == "failed"
         assert "ConnectionError" in result.detail
+        assert s["failed"] == 1
+        assert s["failure_reasons"] == {"replay_error:ConnectionError": 1}
+        assert "down" not in s["failure_reasons"]
+
+    def test_summary_counts_bounded_failure_reasons(self):
+        _, engine = self._setup()
+        no_processor = engine.replay_event("evt-1")
+        arbitrary_outcome = engine.replay_event(
+            "evt-1",
+            processor=lambda c, s, b: "tenant-secret-outcome",
+        )
+        s = engine.summary()
+
+        assert no_processor.replay_status == "failed"
+        assert arbitrary_outcome.replay_status == "failed"
+        assert s["failed"] == 2
+        assert s["failure_reasons"] == {
+            "no_processor": 1,
+            "unexpected_outcome": 1,
+        }
+        assert "tenant-secret-outcome" not in s["failure_reasons"]
 
     def test_replay_failed_batch(self):
         log, engine = self._setup()
@@ -61,6 +83,8 @@ class TestWebhookReplay:
         s = engine.summary()
         assert s["total_replays"] == 1
         assert s["succeeded"] == 1
+        assert s["failed"] == 0
+        assert s["failure_reasons"] == {}
         assert s["skipped"] == 0
 
     def test_summary_counts_skipped_replay_reasons(self):
