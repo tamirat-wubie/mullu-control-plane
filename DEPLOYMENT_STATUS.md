@@ -27,6 +27,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Restricted capability worker | `DEPLOYMENT.md`, `docker-compose.yml`, and `k8s/mullu-api.yaml` declare `gateway.capability_worker:app` | Reflected |
 | Local pilot proof slice | `scripts/pilot_proof_slice.py` emits `.change_assurance/pilot_proof_slice_witness.json` through gateway closure | Reflected |
 | Live deployment witness collector | `scripts/collect_deployment_witness.py` writes `.change_assurance/deployment_witness.json` from `/health` and `/gateway/witness` | Reflected |
+| Runtime witness secret provisioner | `scripts/provision_runtime_witness_secret.py` binds `MULLU_RUNTIME_WITNESS_SECRET` into GitHub Actions without printing the secret | Reflected |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` uploads `deployment-witness` artifact from the collector | Reflected |
 | Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies the runtime witness secret, dispatches the workflow, and downloads the artifact | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
@@ -53,6 +54,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
 | Local pilot proof slice | `python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json` |
 | Live deployment witness collection | `python scripts/collect_deployment_witness.py --gateway-url "$MULLU_GATEWAY_URL" --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" --output .change_assurance/deployment_witness.json` |
+| Runtime witness secret provisioning | `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` |
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py --gateway-url "$MULLU_GATEWAY_URL" --expected-environment pilot` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |

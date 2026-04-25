@@ -80,6 +80,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/collect_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --witness-secret \"$MULLU_RUNTIME_WITNESS_SECRET\" --output .change_assurance/deployment_witness.json",
+    "python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env",
     ".github/workflows/deployment-witness.yml",
     "python scripts/dispatch_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment pilot",
     "python scripts/gateway_runtime_smoke.py",
