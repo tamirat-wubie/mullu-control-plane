@@ -1,7 +1,6 @@
 """Webhook Event Log Tests."""
 
-import pytest
-from gateway.event_log import WebhookEvent, WebhookEventLog
+from gateway.event_log import WebhookEventLog
 
 
 def _log():
@@ -95,6 +94,20 @@ class TestSummary:
         assert s["total_events"] == 2
         assert s["by_status"]["processed"] == 1
         assert s["by_status"]["error"] == 1
+        assert s["by_status_class"]["processed"] == 1
+        assert s["by_status_class"]["error"] == 1
+
+    def test_summary_status_classes_are_bounded(self):
+        log = _log()
+        log.record(channel="wa", sender_id="+1", status="replayed:tenant-secret-outcome")
+        log.record(channel="wa", sender_id="+2", status="custom-secret-status")
+        s = log.summary()
+
+        assert s["by_status"]["replayed:tenant-secret-outcome"] == 1
+        assert s["by_status"]["custom-secret-status"] == 1
+        assert s["by_status_class"] == {"other": 1, "replayed": 1}
+        assert "tenant-secret-outcome" not in s["by_status_class"]
+        assert "custom-secret-status" not in s["by_status_class"]
 
     def test_to_dict(self):
         log = _log()

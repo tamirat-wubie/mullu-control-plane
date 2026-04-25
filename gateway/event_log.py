@@ -86,6 +86,16 @@ class WebhookEventLog:
         self._lock = threading.Lock()
         self._sequence = 0
         self._by_status: dict[str, int] = {}
+        self._by_status_class: dict[str, int] = {}
+
+    @staticmethod
+    def _status_class(status: str) -> str:
+        """Return a bounded status class for operator summaries."""
+        if status.startswith("replayed:"):
+            return "replayed"
+        if status in {"processed", "rejected", "duplicate", "error"}:
+            return status
+        return "other"
 
     def record(
         self,
@@ -132,6 +142,8 @@ class WebhookEventLog:
             self._events.append(event)
             self._index[event_id] = event
             self._by_status[status] = self._by_status.get(status, 0) + 1
+            status_class = self._status_class(status)
+            self._by_status_class[status_class] = self._by_status_class.get(status_class, 0) + 1
 
             # Trim index if over capacity
             while len(self._index) > self._max_events:
@@ -185,5 +197,6 @@ class WebhookEventLog:
             return {
                 "total_events": len(self._events),
                 "by_status": dict(self._by_status),
+                "by_status_class": dict(sorted(self._by_status_class.items())),
                 "capacity": self._max_events,
             }
