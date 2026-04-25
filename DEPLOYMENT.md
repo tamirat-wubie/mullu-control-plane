@@ -219,6 +219,21 @@ variables. It waits for the run to finish and downloads the
 `deployment-witness` artifact into
 `.change_assurance/deployment-witness-artifact`.
 
+To collapse ingress rendering, target provisioning, and workflow dispatch into
+one guarded operator action, run:
+
+```bash
+python scripts/orchestrate_deployment_witness.py \
+  --gateway-host gateway.mullusi.com \
+  --expected-environment pilot \
+  --apply-ingress \
+  --dispatch
+```
+
+The orchestrator validates the host before writing repository variables, derives
+`MULLU_GATEWAY_URL` from the validated host unless `--gateway-url` is provided,
+and keeps live cluster apply and workflow dispatch behind explicit flags.
+
 The probe checks:
 
 1. Gateway `/health`.
