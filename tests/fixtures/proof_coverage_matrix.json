@@ -38,6 +38,40 @@
     "action_proof",
     "audit_chain"
   ],
+  "coverage_states": [
+    "proven",
+    "witnessed",
+    "unproven"
+  ],
+  "coverage_summary": {
+    "by_action_proof": {
+      "action_proof": 10,
+      "audit_chain": 0,
+      "gap": 0,
+      "read_model": 4,
+      "request_proof": 0
+    },
+    "by_audit": {
+      "action_proof": 0,
+      "audit_chain": 12,
+      "gap": 0,
+      "read_model": 2,
+      "request_proof": 0
+    },
+    "by_coverage_state": {
+      "proven": 1,
+      "unproven": 0,
+      "witnessed": 13
+    },
+    "by_request_proof": {
+      "action_proof": 0,
+      "audit_chain": 0,
+      "gap": 0,
+      "read_model": 4,
+      "request_proof": 10
+    },
+    "surface_count": 14
+  },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
   "surfaces": [
