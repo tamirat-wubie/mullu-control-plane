@@ -158,6 +158,26 @@ environment, and configure the repository secret
 `.change_assurance/deployment_witness.json` as the `deployment-witness`
 artifact.
 
+Provision the runtime witness secret before dispatching the workflow:
+
+```bash
+python scripts/provision_runtime_witness_secret.py \
+  --runtime-env-output .change_assurance/runtime_witness_secret.env
+```
+
+The provisioner generates a new secret from operating-system entropy, sets it
+as the GitHub repository secret `MULLU_RUNTIME_WITNESS_SECRET`, and prints only
+a fingerprint. It writes the runtime-side value only to the explicit ignored
+env output path. Load that value into the deployed gateway runtime as
+`MULLU_RUNTIME_WITNESS_SECRET`, then remove the local file after the runtime
+secret manager is updated. If the runtime secret already exists, pipe it
+through stdin instead of placing it in shell history:
+
+```bash
+printf "%s" "$MULLU_RUNTIME_WITNESS_SECRET" \
+  | python scripts/provision_runtime_witness_secret.py --secret-stdin
+```
+
 To reduce manual operator steps, dispatch the workflow and download the
 artifact with the guarded shortcut:
 
@@ -208,7 +228,7 @@ Do not enable `MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB` in `pilot` or
 12. Set `MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY=true` so gateway startup fails closed if identity storage is unavailable
 13. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
 14. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
-15. Set `MULLU_RUNTIME_WITNESS_SECRET` so `/gateway/witness` and `/runtime/witness` are signed
+15. Run `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` and set the same `MULLU_RUNTIME_WITNESS_SECRET` value in the deployed gateway runtime
 16. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
 17. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
 18. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
