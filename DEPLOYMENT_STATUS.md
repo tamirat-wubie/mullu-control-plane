@@ -34,6 +34,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` uploads `deployment-witness` artifact from the collector | Reflected |
 | Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies the runtime witness secret, dispatches the workflow, and downloads the artifact | Reflected |
 | Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, and optional dispatch | Reflected |
+| Deployment witness preflight | `scripts/preflight_deployment_witness.py` verifies DNS, GitHub variables, secret presence, workflow state, and endpoint contracts before dispatch | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
@@ -65,5 +66,6 @@ Before this witness can claim public deployment health, the repository must name
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` |
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py` |
 | Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --dispatch` |
+| Deployment witness preflight | `python scripts/preflight_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 

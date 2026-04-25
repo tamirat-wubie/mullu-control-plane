@@ -234,6 +234,19 @@ The orchestrator validates the host before writing repository variables, derives
 `MULLU_GATEWAY_URL` from the validated host unless `--gateway-url` is provided,
 and keeps live cluster apply and workflow dispatch behind explicit flags.
 
+Before dispatching the witness, run the preflight gate:
+
+```bash
+python scripts/preflight_deployment_witness.py \
+  --gateway-host gateway.mullusi.com \
+  --expected-environment pilot
+```
+
+The preflight writes `.change_assurance/deployment_witness_preflight.json` and
+verifies DNS resolution, repository variables, runtime witness secret presence,
+workflow state, `/health`, and `/gateway/witness`. To verify only DNS and
+GitHub readiness before the ingress is live, add `--skip-endpoint-probes`.
+
 The probe checks:
 
 1. Gateway `/health`.
