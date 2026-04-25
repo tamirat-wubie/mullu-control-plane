@@ -227,12 +227,14 @@ python scripts/orchestrate_deployment_witness.py \
   --gateway-host gateway.mullusi.com \
   --expected-environment pilot \
   --apply-ingress \
+  --require-preflight \
   --dispatch
 ```
 
 The orchestrator validates the host before writing repository variables, derives
 `MULLU_GATEWAY_URL` from the validated host unless `--gateway-url` is provided,
-and keeps live cluster apply and workflow dispatch behind explicit flags.
+keeps live cluster apply and workflow dispatch behind explicit flags, and
+refuses dispatch when `--require-preflight` is present and readiness checks fail.
 
 Before dispatching the witness, run the preflight gate:
 

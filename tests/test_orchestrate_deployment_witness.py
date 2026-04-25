@@ -48,6 +48,14 @@ class FakeRunner:
             return _completed(command, "")
         if command[:3] == ["gh", "variable", "set"]:
             return _completed(command, "")
+        if command[:3] == ["gh", "variable", "list"]:
+            return _completed(
+                command,
+                [
+                    {"name": "MULLU_GATEWAY_URL", "value": "https://gateway.mullusi.com"},
+                    {"name": "MULLU_EXPECTED_RUNTIME_ENV", "value": "pilot"},
+                ],
+            )
         if command[:3] == ["gh", "secret", "list"]:
             return _completed(command, [{"name": "MULLU_RUNTIME_WITNESS_SECRET"}])
         if command[:3] == ["gh", "workflow", "list"]:
@@ -108,6 +116,7 @@ def test_orchestrate_deployment_witness_renders_and_provisions(tmp_path: Path) -
     assert orchestration.ingress.applied is False
     assert orchestration.target.gateway_url == "https://gateway.mullusi.com"
     assert orchestration.target.expected_environment == "pilot"
+    assert orchestration.preflight is None
     assert orchestration.dispatch is None
     assert len(variable_commands) == 2
     assert not any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
@@ -132,12 +141,58 @@ def test_orchestrate_deployment_witness_can_apply_and_dispatch(tmp_path: Path) -
     assert orchestration.ingress.applied is True
     assert orchestration.target.gateway_url == "https://gateway.mullusi.com"
     assert orchestration.target.expected_environment == "production"
+    assert orchestration.preflight is None
     assert orchestration.dispatch is not None
     assert orchestration.dispatch.run_id == 5678
     assert orchestration.dispatch.conclusion == "success"
     assert any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
     assert any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
+
+
+def test_orchestrate_deployment_witness_can_gate_dispatch_with_preflight(tmp_path: Path) -> None:
+    runner = FakeRunner()
+
+    orchestration = orchestrate_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        rendered_ingress_output=tmp_path / "ingress.yaml",
+        require_preflight=True,
+        preflight_output=tmp_path / "preflight.json",
+        dispatch=True,
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_healthy_getter,
+    )
+
+    assert orchestration.preflight is not None
+    assert orchestration.preflight.ready is True
+    assert orchestration.dispatch is not None
+    assert orchestration.dispatch.conclusion == "success"
+    assert (tmp_path / "preflight.json").exists()
+    assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_orchestrate_deployment_witness_blocks_dispatch_when_preflight_fails(tmp_path: Path) -> None:
+    runner = FakeRunner()
+
+    with pytest.raises(RuntimeError, match="deployment witness preflight failed"):
+        orchestrate_deployment_witness(
+            gateway_host="gateway.mullusi.com",
+            expected_environment="pilot",
+            rendered_ingress_output=tmp_path / "ingress.yaml",
+            require_preflight=True,
+            preflight_output=tmp_path / "preflight.json",
+            dispatch=True,
+            runner=runner,
+            resolver=lambda host: (),
+            json_getter=_healthy_getter,
+        )
+
+    assert (tmp_path / "preflight.json").exists()
+    assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
 def test_orchestrate_deployment_witness_rejects_host_before_provision(tmp_path: Path) -> None:
@@ -178,3 +233,21 @@ def test_cli_reports_invalid_host(monkeypatch, tmp_path: Path, capsys) -> None:
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:
     stdout = payload if isinstance(payload, str) else json.dumps(payload)
     return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+
+def _healthy_getter(url: str) -> tuple[int, dict[str, str]]:
+    if url.endswith("/health"):
+        return 200, {"status": "healthy"}
+    if url.endswith("/gateway/witness"):
+        return 200, {
+            "witness_id": "runtime-witness-1",
+            "environment": "pilot",
+            "runtime_status": "healthy",
+            "gateway_status": "healthy",
+            "latest_command_event_hash": "abc123",
+            "latest_terminal_certificate_id": "terminal-1",
+            "signed_at": "2026-04-25T00:00:00Z",
+            "signature_key_id": "runtime",
+            "signature": "hmac-sha256:placeholder",
+        }
+    raise AssertionError(f"unexpected url: {url}")

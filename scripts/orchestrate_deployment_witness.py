@@ -5,12 +5,14 @@ Purpose: compose ingress rendering, deployment target provisioning, and optional
 workflow dispatch into one governed operator command.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: scripts.render_gateway_ingress, scripts.provision_deployment_target,
-scripts.dispatch_deployment_witness, kubectl when --apply-ingress is used, GitHub
-CLI for repository variables and workflow dispatch.
+scripts.preflight_deployment_witness, scripts.dispatch_deployment_witness,
+kubectl when --apply-ingress is used, GitHub CLI for repository variables and
+workflow dispatch.
 Invariants:
   - Gateway host is validated before any repository variable is written.
   - Gateway URL is derived from the validated host unless explicitly provided.
   - Live cluster apply and workflow dispatch are explicit operator choices.
+  - Dispatch can be gated by a fresh preflight report.
   - The runtime witness secret is never read from or written to stdout.
 """
 
@@ -37,6 +39,14 @@ from scripts.provision_deployment_target import (
     VALID_ENVIRONMENTS,
     DeploymentTarget,
     provision_deployment_target,
+)
+from scripts.preflight_deployment_witness import (
+    DEFAULT_OUTPUT as DEFAULT_PREFLIGHT_OUTPUT,
+    DeploymentWitnessPreflight,
+    JsonGetter,
+    Resolver,
+    preflight_deployment_witness,
+    write_preflight_report,
 )
 from scripts.render_gateway_ingress import (
     DEFAULT_OUTPUT,
@@ -65,6 +75,7 @@ class DeploymentWitnessOrchestration:
 
     ingress: RenderedGatewayIngress
     target: DeploymentTarget
+    preflight: DeploymentWitnessPreflight | None
     dispatch: DispatchResult | None
 
 
@@ -77,6 +88,9 @@ def orchestrate_deployment_witness(
     rendered_ingress_output: Path = DEFAULT_OUTPUT,
     apply_ingress: bool = False,
     dispatch: bool = False,
+    require_preflight: bool = False,
+    preflight_output: Path = DEFAULT_PREFLIGHT_OUTPUT,
+    preflight_probe_endpoints: bool = True,
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
@@ -85,6 +99,8 @@ def orchestrate_deployment_witness(
     timeout_seconds: int = 600,
     poll_seconds: int = 10,
     runner: CommandRunner | None = None,
+    resolver: Resolver | None = None,
+    json_getter: JsonGetter | None = None,
 ) -> DeploymentWitnessOrchestration:
     """Render ingress, bind target variables, and optionally dispatch evidence."""
     command_runner = runner or subprocess.run
@@ -101,6 +117,34 @@ def orchestrate_deployment_witness(
         repository=repository,
         runner=command_runner,
     )
+    preflight_report = (
+        preflight_deployment_witness(
+            gateway_host=ingress.host,
+            gateway_url=target.gateway_url,
+            expected_environment=target.expected_environment,
+            repository=repository,
+            workflow_file=workflow_file,
+            workflow_name=workflow_name,
+            secret_name=secret_name,
+            probe_endpoints=preflight_probe_endpoints,
+            runner=command_runner,
+            resolver=resolver,
+            json_getter=json_getter,
+        )
+        if require_preflight
+        else None
+    )
+    if preflight_report is not None:
+        write_preflight_report(preflight_report, preflight_output)
+        if not preflight_report.ready:
+            failed_steps = [
+                f"{step.name}: {step.detail}"
+                for step in preflight_report.steps
+                if not step.passed
+            ]
+            raise RuntimeError(
+                "deployment witness preflight failed: " + "; ".join(failed_steps)
+            )
     dispatch_result = (
         dispatch_deployment_witness(
             gateway_url=target.gateway_url,
@@ -121,6 +165,7 @@ def orchestrate_deployment_witness(
     return DeploymentWitnessOrchestration(
         ingress=ingress,
         target=target,
+        preflight=preflight_report,
         dispatch=dispatch_result,
     )
 
@@ -141,6 +186,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--rendered-ingress-output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--apply-ingress", action="store_true")
     parser.add_argument("--dispatch", action="store_true")
+    parser.add_argument("--require-preflight", action="store_true")
+    parser.add_argument("--preflight-output", default=str(DEFAULT_PREFLIGHT_OUTPUT))
+    parser.add_argument("--skip-preflight-endpoint-probes", action="store_true")
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
@@ -163,6 +211,9 @@ def main(argv: list[str] | None = None) -> int:
             rendered_ingress_output=Path(args.rendered_ingress_output),
             apply_ingress=args.apply_ingress,
             dispatch=args.dispatch,
+            require_preflight=args.require_preflight,
+            preflight_output=Path(args.preflight_output),
+            preflight_probe_endpoints=not args.skip_preflight_endpoint_probes,
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
@@ -181,6 +232,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"repository: {orchestration.target.repository}")
     print(f"gateway_url: {orchestration.target.gateway_url}")
     print(f"expected_environment: {orchestration.target.expected_environment}")
+    if orchestration.preflight is not None:
+        print(f"preflight_ready: {str(orchestration.preflight.ready).lower()}")
     if orchestration.dispatch is None:
         print("deployment_witness_dispatch: skipped")
         return 0
