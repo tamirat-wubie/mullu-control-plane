@@ -178,19 +178,31 @@ printf "%s" "$MULLU_RUNTIME_WITNESS_SECRET" \
   | python scripts/provision_runtime_witness_secret.py --secret-stdin
 ```
 
+Provision the live gateway target as repository variables once the endpoint is
+known:
+
+```bash
+python scripts/provision_deployment_target.py \
+  --gateway-url "https://gateway.example.com" \
+  --expected-environment pilot
+```
+
+This sets `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` as GitHub
+repository variables. The deployment witness dispatcher can use those variables
+when local CLI arguments are omitted.
+
 To reduce manual operator steps, dispatch the workflow and download the
 artifact with the guarded shortcut:
 
 ```bash
-export MULLU_GATEWAY_URL="https://gateway.example.com"
-python scripts/dispatch_deployment_witness.py \
-  --gateway-url "$MULLU_GATEWAY_URL" \
-  --expected-environment pilot
+python scripts/dispatch_deployment_witness.py
 ```
 
 The dispatcher verifies that `MULLU_RUNTIME_WITNESS_SECRET` exists as a GitHub
 repository secret and that the deployment witness workflow is active before it
-dispatches the run. It waits for the run to finish and downloads the
+dispatches the run. It resolves the gateway URL and expected runtime
+environment from local arguments, environment variables, or GitHub repository
+variables. It waits for the run to finish and downloads the
 `deployment-witness` artifact into
 `.change_assurance/deployment-witness-artifact`.
 
@@ -229,10 +241,11 @@ Do not enable `MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB` in `pilot` or
 13. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
 14. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
 15. Run `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` and set the same `MULLU_RUNTIME_WITNESS_SECRET` value in the deployed gateway runtime
-16. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
-17. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
-18. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
-19. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
+16. Run `python scripts/provision_deployment_target.py --gateway-url "<deployed-gateway-url>" --expected-environment production`
+17. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
+18. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
+19. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
+20. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
 
 ## Startup Behavior
 
