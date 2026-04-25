@@ -18,6 +18,7 @@ from mcoi_runtime.contracts.provider_attribution import (
     ProviderAttribution,
     ProviderAttributionSource,
 )
+from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.core.provider_attribution import ProviderAttributionLedger
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 
@@ -65,6 +66,7 @@ def test_provider_attribution_contract_rejects_empty_identity() -> None:
             provider_id="provider-1",
             provider_class=ProviderClass.MODEL,
             source=ProviderAttributionSource.HEALTHY_PLANE_RESOLUTION,
+            source_ref_id="operation-1",
             evidence_id="evidence-1",
             attributed_at=FIXED_CLOCK,
         )
@@ -89,6 +91,7 @@ def test_attribute_healthy_planes_records_enabled_healthy_provider_per_class() -
     assert {record.provider_id for record in records} == {"provider-int", "provider-model"}
     assert {record.provider_class for record in records} == {ProviderClass.INTEGRATION, ProviderClass.MODEL}
     assert all(record.source is ProviderAttributionSource.HEALTHY_PLANE_RESOLUTION for record in records)
+    assert all(record.source_ref_id == "execution-1" for record in records)
     assert all(record.evidence_id.startswith("provider-attr-evidence-") for record in records)
 
 
@@ -133,3 +136,36 @@ def test_attribute_healthy_planes_is_idempotent_for_same_operation() -> None:
     assert first == second
     assert ledger.attribution_count == 1
     assert ledger.list_for_operation("execution-3") == first
+
+
+def test_attribute_execution_result_receipt_records_provider_receipt_source() -> None:
+    registry = _registry()
+    ledger = _ledger()
+    _register_provider(registry, "provider-http", ProviderClass.INTEGRATION)
+    execution_result = ExecutionResult(
+        execution_id="execution-receipt-1",
+        goal_id="goal-receipt-1",
+        status=ExecutionOutcome.SUCCEEDED,
+        actual_effects=(),
+        assumed_effects=(),
+        started_at=FIXED_CLOCK,
+        finished_at=FIXED_CLOCK,
+        metadata={
+            "provider_id": "provider-http",
+            "provider_class": "integration",
+            "provider_source_ref_id": "connector-receipt-1",
+        },
+    )
+
+    records = ledger.attribute_execution_result_receipt(
+        request_id="request-receipt-1",
+        operation_id="execution-receipt-1",
+        execution_result=execution_result,
+        provider_registry=registry,
+    )
+
+    assert len(records) == 1
+    assert records[0].provider_id == "provider-http"
+    assert records[0].provider_class is ProviderClass.INTEGRATION
+    assert records[0].source is ProviderAttributionSource.EXECUTION_RECEIPT
+    assert records[0].source_ref_id == "connector-receipt-1"

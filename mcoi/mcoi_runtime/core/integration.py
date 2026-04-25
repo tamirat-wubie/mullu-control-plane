@@ -140,6 +140,17 @@ class IntegrationEngine:
             result = adapter.invoke(connector, request.parameters)
         except Exception as exc:
             result = self._failure_result(request.connector_id, started_at, f"adapter_error:{type(exc).__name__}")
+        if provider_id is not None:
+            result = ConnectorResult(
+                result_id=result.result_id,
+                connector_id=result.connector_id,
+                status=result.status,
+                response_digest=result.response_digest,
+                started_at=result.started_at,
+                finished_at=result.finished_at,
+                error_code=result.error_code,
+                metadata={**dict(result.metadata), "provider_id": provider_id},
+            )
         if self._effect_assurance is not None:
             result = self._assure_connector_effect(connector, request, result)
 

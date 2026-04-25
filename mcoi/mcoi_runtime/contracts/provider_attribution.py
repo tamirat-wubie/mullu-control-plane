@@ -3,7 +3,7 @@ Governance scope: provider identity attribution records only.
 Dependencies: provider contracts and shared contract validation helpers.
 Invariants:
   - Attribution never fabricates a provider outside the provider registry.
-  - Each record binds one operation, one provider class, one provider id, and one evidence id.
+  - Each record binds one operation, one provider class, one provider id, one source reference, and one evidence id.
   - Attribution source is explicit so selection, routing, and fallback paths remain distinguishable.
   - Datetime fields are valid ISO 8601 strings.
 """
@@ -36,12 +36,20 @@ class ProviderAttribution(ContractRecord):
     provider_id: str
     provider_class: ProviderClass
     source: ProviderAttributionSource
+    source_ref_id: str
     evidence_id: str
     attributed_at: str
     execution_id: str | None = None
 
     def __post_init__(self) -> None:
-        for field_name in ("attribution_id", "operation_id", "request_id", "provider_id", "evidence_id"):
+        for field_name in (
+            "attribution_id",
+            "operation_id",
+            "request_id",
+            "provider_id",
+            "source_ref_id",
+            "evidence_id",
+        ):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         if self.execution_id is not None:
             object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))

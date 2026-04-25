@@ -254,6 +254,16 @@ class CommunicationEngine:
                 )
 
         result = adapter.deliver(message)
+        if provider_id is not None:
+            result = DeliveryResult(
+                delivery_id=result.delivery_id,
+                message_id=result.message_id,
+                status=result.status,
+                channel=result.channel,
+                delivered_at=result.delivered_at,
+                error_code=result.error_code,
+                metadata={**dict(result.metadata), "provider_id": provider_id},
+            )
         if self._effect_assurance is not None:
             result = self._assure_delivery_effect(message, result)
 

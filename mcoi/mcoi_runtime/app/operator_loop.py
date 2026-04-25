@@ -224,12 +224,19 @@ class OperatorLoop:
             errors.append(entity_registration_error)
 
         self._update_capability_confidence(route, execution_result, verification_closure)
-        provider_attributions = self.runtime.provider_attribution_ledger.attribute_healthy_planes(
+        provider_attributions = self.runtime.provider_attribution_ledger.attribute_execution_result_receipt(
             request_id=request.request_id,
             operation_id=execution_result.execution_id,
-            execution_id=execution_result.execution_id,
+            execution_result=execution_result,
             provider_registry=self.runtime.provider_registry,
         )
+        if not provider_attributions:
+            provider_attributions = self.runtime.provider_attribution_ledger.attribute_healthy_planes(
+                request_id=request.request_id,
+                operation_id=execution_result.execution_id,
+                execution_id=execution_result.execution_id,
+                provider_registry=self.runtime.provider_registry,
+            )
 
         world_state = self.runtime.world_state
         meta_reasoning = self.runtime.meta_reasoning

@@ -1,11 +1,11 @@
 """Purpose: provider attribution ledger for per-operation provider-plane identity.
 Governance scope: deterministic attribution of provider ids to runtime operations.
-Dependencies: provider attribution contracts, provider registry, and invariant helpers.
+Dependencies: provider attribution contracts, provider routing contracts, provider registry, and invariant helpers.
 Invariants:
   - Only enabled, healthy, registered providers can be attributed through plane resolution.
   - Each operation/provider-class pair has at most one attribution record.
   - Ledger mutation is append-only for new attribution identities.
-  - Attribution exposes source and evidence id instead of implying hidden invocation facts.
+  - Attribution exposes source, source reference, and evidence id instead of implying hidden invocation facts.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ from mcoi_runtime.contracts.provider_attribution import (
     ProviderAttribution,
     ProviderAttributionSource,
 )
+from mcoi_runtime.contracts.execution import ExecutionResult
+from mcoi_runtime.contracts.provider_routing import RoutingDecision, RoutingOutcome
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from mcoi_runtime.core.provider_registry import ProviderRegistry
 
@@ -38,7 +40,12 @@ class ProviderAttributionLedger:
         """Return records for an operation in provider-class order."""
         ensure_non_empty_text("operation_id", operation_id)
         attribution_ids = self._operation_index.get(operation_id, ())
-        return tuple(self._records[attribution_id] for attribution_id in attribution_ids)
+        return tuple(
+            sorted(
+                (self._records[attribution_id] for attribution_id in attribution_ids),
+                key=lambda record: (record.provider_class.value, record.provider_id, record.source.value),
+            )
+        )
 
     def attribute_healthy_planes(
         self,
@@ -75,9 +82,86 @@ class ProviderAttributionLedger:
                     provider_id=provider_id,
                     provider_class=provider_class,
                     source=ProviderAttributionSource.HEALTHY_PLANE_RESOLUTION,
+                    source_ref_id=operation_id,
                 )
             )
         return tuple(records)
+
+    def attribute_routing_decision(
+        self,
+        *,
+        request_id: str,
+        operation_id: str,
+        execution_id: str | None,
+        decision: RoutingDecision,
+        provider_registry: ProviderRegistry,
+    ) -> ProviderAttribution:
+        """Attribute an operation to the provider selected by a routing decision."""
+        provider_class = self._provider_class_for(provider_registry, decision.selected_provider_id)
+        return self.record_attribution(
+            request_id=request_id,
+            operation_id=operation_id,
+            execution_id=execution_id,
+            provider_id=decision.selected_provider_id,
+            provider_class=provider_class,
+            source=ProviderAttributionSource.ROUTING_DECISION,
+            source_ref_id=decision.decision_id,
+        )
+
+    def attribute_routing_outcome(
+        self,
+        *,
+        request_id: str,
+        operation_id: str,
+        execution_id: str | None,
+        outcome: RoutingOutcome,
+        provider_registry: ProviderRegistry,
+    ) -> ProviderAttribution:
+        """Attribute an operation to the provider named by a routing outcome receipt."""
+        provider_class = self._provider_class_for(provider_registry, outcome.provider_id)
+        return self.record_attribution(
+            request_id=request_id,
+            operation_id=operation_id,
+            execution_id=execution_id,
+            provider_id=outcome.provider_id,
+            provider_class=provider_class,
+            source=ProviderAttributionSource.EXECUTION_RECEIPT,
+            source_ref_id=outcome.outcome_id,
+        )
+
+    def attribute_execution_result_receipt(
+        self,
+        *,
+        request_id: str,
+        operation_id: str,
+        execution_result: ExecutionResult,
+        provider_registry: ProviderRegistry,
+    ) -> tuple[ProviderAttribution, ...]:
+        """Attribute an operation from provider receipt metadata on an execution result."""
+        metadata = execution_result.metadata
+        provider_id = metadata.get("provider_id")
+        source_ref_id = metadata.get("provider_source_ref_id")
+        provider_class_value = metadata.get("provider_class")
+        if provider_id is None and source_ref_id is None and provider_class_value is None:
+            return ()
+        if not isinstance(provider_id, str) or not provider_id.strip():
+            raise RuntimeCoreInvariantError("execution receipt provider_id must be a non-empty string")
+        if not isinstance(source_ref_id, str) or not source_ref_id.strip():
+            raise RuntimeCoreInvariantError("execution receipt provider_source_ref_id must be a non-empty string")
+        provider_class = self._provider_class_for(provider_registry, provider_id)
+        if provider_class_value is not None and provider_class.value != provider_class_value:
+            raise RuntimeCoreInvariantError("execution receipt provider_class must match registry provider class")
+        return (
+            self.record_attribution(
+                request_id=request_id,
+                operation_id=operation_id,
+                execution_id=execution_result.execution_id,
+                provider_id=provider_id,
+                provider_class=provider_class,
+                source=ProviderAttributionSource.EXECUTION_RECEIPT,
+                source_ref_id=source_ref_id,
+            ),
+        )
 
     def record_attribution(
         self,
@@ -88,11 +172,13 @@ class ProviderAttributionLedger:
         provider_id: str,
         provider_class: ProviderClass,
         source: ProviderAttributionSource,
+        source_ref_id: str,
     ) -> ProviderAttribution:
         """Record one provider attribution after validating explicit identity fields."""
         ensure_non_empty_text("request_id", request_id)
         ensure_non_empty_text("operation_id", operation_id)
         ensure_non_empty_text("provider_id", provider_id)
+        ensure_non_empty_text("source_ref_id", source_ref_id)
         if execution_id is not None:
             ensure_non_empty_text("execution_id", execution_id)
         if not isinstance(provider_class, ProviderClass):
@@ -108,6 +194,7 @@ class ProviderAttributionLedger:
                 "provider_id": provider_id,
                 "provider_class": provider_class.value,
                 "source": source.value,
+                "source_ref_id": source_ref_id,
             },
         )
         attribution_id = stable_identifier(
@@ -116,6 +203,7 @@ class ProviderAttributionLedger:
                 "operation_id": operation_id,
                 "provider_id": provider_id,
                 "provider_class": provider_class.value,
+                "source": source.value,
                 "evidence_id": evidence_id,
             },
         )
@@ -130,6 +218,7 @@ class ProviderAttributionLedger:
             provider_id=provider_id,
             provider_class=provider_class,
             source=source,
+            source_ref_id=source_ref_id,
             evidence_id=evidence_id,
             attributed_at=now,
         )
@@ -151,3 +240,13 @@ class ProviderAttributionLedger:
             if health is not None and health.status is ProviderHealthStatus.HEALTHY:
                 return provider.provider_id
         return None
+
+    @staticmethod
+    def _provider_class_for(
+        provider_registry: ProviderRegistry,
+        provider_id: str,
+    ) -> ProviderClass:
+        provider = provider_registry.get_provider(provider_id)
+        if provider is None:
+            raise RuntimeCoreInvariantError("attributed provider must be registered")
+        return provider.provider_class

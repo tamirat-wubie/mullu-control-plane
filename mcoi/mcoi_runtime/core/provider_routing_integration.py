@@ -2,7 +2,7 @@
 provider registry, decision learning, and utility subsystems.
 Governance scope: provider routing invocation for cost-aware provider selection.
 Dependencies: provider cost router, provider registry, decision learning engine,
-    provider routing contracts.
+    provider routing contracts, provider attribution ledger.
 Invariants:
   - Bridge methods are stateless static helpers.
   - Each method composes existing engine calls.
@@ -21,9 +21,9 @@ from mcoi_runtime.contracts.provider_routing import (
     RoutingConstraints,
     RoutingDecision,
     RoutingOutcome,
-    RoutingStrategy,
 )
 from .decision_learning import DecisionLearningEngine
+from .provider_attribution import ProviderAttributionLedger
 from .provider_cost_routing import ProviderCostRouter
 from .provider_registry import ProviderRegistry
 
@@ -106,6 +106,10 @@ class ProviderRoutingBridge:
         constraints: RoutingConstraints,
         *,
         default_cost: float = 0.0,
+        attribution_ledger: ProviderAttributionLedger | None = None,
+        request_id: str | None = None,
+        operation_id: str | None = None,
+        execution_id: str | None = None,
     ) -> RoutingDecision:
         """Select the best provider using registry health, learned preferences, and cost constraints.
 
@@ -119,7 +123,18 @@ class ProviderRoutingBridge:
             context_type=context_type,
             default_cost=default_cost,
         )
-        return router.select_provider(entries, context_type, constraints)
+        decision = router.select_provider(entries, context_type, constraints)
+        if attribution_ledger is not None:
+            if request_id is None or operation_id is None:
+                raise ValueError("provider routing attribution requires request_id and operation_id")
+            attribution_ledger.attribute_routing_decision(
+                request_id=request_id,
+                operation_id=operation_id,
+                execution_id=execution_id,
+                decision=decision,
+                provider_registry=registry,
+            )
+        return decision
 
     @staticmethod
     def record_and_learn(
@@ -129,6 +144,12 @@ class ProviderRoutingBridge:
         actual_cost: float,
         success: bool,
         context_type: str,
+        *,
+        attribution_ledger: ProviderAttributionLedger | None = None,
+        provider_registry: ProviderRegistry | None = None,
+        request_id: str | None = None,
+        operation_id: str | None = None,
+        execution_id: str | None = None,
     ) -> RoutingOutcome:
         """Record a routing outcome and feed it back to the learning engine.
 
@@ -141,6 +162,16 @@ class ProviderRoutingBridge:
             actual_cost=actual_cost,
             success=success,
         )
+        if attribution_ledger is not None:
+            if provider_registry is None or request_id is None or operation_id is None:
+                raise ValueError("provider outcome attribution requires registry, request_id, and operation_id")
+            attribution_ledger.attribute_routing_outcome(
+                request_id=request_id,
+                operation_id=operation_id,
+                execution_id=execution_id,
+                outcome=outcome,
+                provider_registry=provider_registry,
+            )
 
         learning_engine.update_provider_preference(
             provider_id=decision.selected_provider_id,
