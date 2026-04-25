@@ -1199,6 +1199,46 @@
         "title": "ParseOutputRequest",
         "type": "object"
       },
+      "PilotProvisionRequest": {
+        "properties": {
+          "max_calls": {
+            "default": 1000,
+            "minimum": 1.0,
+            "title": "Max Calls",
+            "type": "integer"
+          },
+          "max_cost": {
+            "default": 100.0,
+            "minimum": 0.0,
+            "title": "Max Cost",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_pack": {
+            "default": "default-safe",
+            "title": "Policy Pack",
+            "type": "string"
+          },
+          "policy_version": {
+            "default": "v0.1",
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "name"
+        ],
+        "title": "PilotProvisionRequest",
+        "type": "object"
+      },
       "PipelineRequest": {
         "properties": {
           "budget_id": {
@@ -5104,6 +5144,30 @@
         "summary": "List Export Sources"
       }
     },
+    "/api/v1/federation/summary": {
+      "get": {
+        "description": "Return a read-only federated control-plane summary.",
+        "operationId": "federation_summary_api_v1_federation_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Federation Summary Api V1 Federation Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Federation Summary",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
     "/api/v1/flags": {
       "get": {
         "description": "List feature flags.",
@@ -6596,6 +6660,152 @@
         "summary": "Get Partitions"
       }
     },
+    "/api/v1/pilots/provision": {
+      "post": {
+        "description": "Return a deterministic pilot scaffold bundle for hosted provisioning.",
+        "operationId": "provision_pilot_api_v1_pilots_provision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PilotProvisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Provision Pilot Api V1 Pilots Provision Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provision Pilot"
+      }
+    },
+    "/api/v1/pilots/provisions": {
+      "get": {
+        "description": "List accepted hosted pilot provisioning records.",
+        "operationId": "list_pilot_provisions_api_v1_pilots_provisions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Pilot Provisions Api V1 Pilots Provisions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Pilot Provisions"
+      }
+    },
+    "/api/v1/pilots/provisions/{pilot_id}": {
+      "get": {
+        "description": "Fetch one accepted hosted pilot provisioning record.",
+        "operationId": "get_pilot_provision_api_v1_pilots_provisions__pilot_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pilot_id",
+            "required": true,
+            "schema": {
+              "title": "Pilot Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Pilot Provision Api V1 Pilots Provisions  Pilot Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Pilot Provision"
+      }
+    },
     "/api/v1/pipeline/execute": {
       "post": {
         "description": "Execute a multi-step governed LLM pipeline.",
@@ -7945,6 +8155,123 @@
           }
         },
         "summary": "Retire Runbook"
+      }
+    },
+    "/api/v1/sandbox/lineage/{trace_id}": {
+      "get": {
+        "description": "Return read-only lineage projection for a sandbox trace.",
+        "operationId": "sandbox_lineage_api_v1_sandbox_lineage__trace_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "trace_id",
+            "required": true,
+            "schema": {
+              "title": "Trace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sandbox Lineage Api V1 Sandbox Lineage  Trace Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sandbox Lineage",
+        "tags": [
+          "sandbox"
+        ]
+      }
+    },
+    "/api/v1/sandbox/policy-evaluations": {
+      "get": {
+        "description": "Return read-only sandbox policy evaluations.",
+        "operationId": "sandbox_policy_evaluations_api_v1_sandbox_policy_evaluations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sandbox Policy Evaluations Api V1 Sandbox Policy Evaluations Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sandbox Policy Evaluations",
+        "tags": [
+          "sandbox"
+        ]
+      }
+    },
+    "/api/v1/sandbox/summary": {
+      "get": {
+        "description": "Return hosted sandbox summary and query examples.",
+        "operationId": "sandbox_summary_api_v1_sandbox_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sandbox Summary Api V1 Sandbox Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sandbox Summary",
+        "tags": [
+          "sandbox"
+        ]
+      }
+    },
+    "/api/v1/sandbox/traces": {
+      "get": {
+        "description": "Return read-only sandbox traces.",
+        "operationId": "sandbox_traces_api_v1_sandbox_traces_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sandbox Traces Api V1 Sandbox Traces Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sandbox Traces",
+        "tags": [
+          "sandbox"
+        ]
       }
     },
     "/api/v1/scheduler/execute": {
