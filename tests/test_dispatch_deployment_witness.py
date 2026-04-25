@@ -30,10 +30,12 @@ class FakeRunner:
         secret_present: bool = True,
         workflow_state: str = "active",
         run_conclusion: str = "success",
+        variables: dict[str, str] | None = None,
     ) -> None:
         self.secret_present = secret_present
         self.workflow_state = workflow_state
         self.run_conclusion = run_conclusion
+        self.variables = variables or {}
         self.commands: list[list[str]] = []
 
     def __call__(
@@ -49,6 +51,12 @@ class FakeRunner:
         assert capture_output is True
         assert text is True
 
+        if command[:3] == ["gh", "variable", "list"]:
+            payload = [
+                {"name": name, "value": value}
+                for name, value in sorted(self.variables.items())
+            ]
+            return _completed(command, payload)
         if command[:3] == ["gh", "secret", "list"]:
             payload = [{"name": "MULLU_RUNTIME_WITNESS_SECRET"}] if self.secret_present else []
             return _completed(command, payload)
@@ -111,6 +119,30 @@ def test_dispatch_deployment_witness_runs_workflow_and_downloads_artifact(tmp_pa
     assert any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
 
 
+def test_dispatch_deployment_witness_uses_repository_variables(tmp_path: Path) -> None:
+    runner = FakeRunner(
+        variables={
+            "MULLU_GATEWAY_URL": "https://gateway.example.com/",
+            "MULLU_EXPECTED_RUNTIME_ENV": "production",
+        }
+    )
+
+    result = dispatch_deployment_witness(
+        gateway_url="",
+        expected_environment="",
+        download_dir=tmp_path / "artifact",
+        poll_seconds=1,
+        runner=runner,
+    )
+
+    workflow_run_command = next(
+        command for command in runner.commands if command[:3] == ["gh", "workflow", "run"]
+    )
+    assert result.conclusion == "success"
+    assert "gateway_url=https://gateway.example.com" in workflow_run_command
+    assert "expected_environment=production" in workflow_run_command
+
+
 def test_dispatch_deployment_witness_fails_before_dispatch_without_secret(tmp_path: Path) -> None:
     runner = FakeRunner(secret_present=False)
 
@@ -143,7 +175,12 @@ def test_dispatch_deployment_witness_fails_before_dispatch_when_workflow_inactiv
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
-def test_cli_reports_missing_gateway_url(capsys) -> None:
+def test_cli_reports_missing_gateway_url(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "scripts.dispatch_deployment_witness.subprocess.run",
+        FakeRunner(),
+    )
+
     exit_code = main(["--gateway-url", ""])
     captured = capsys.readouterr()
 

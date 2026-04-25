@@ -30,6 +30,8 @@ DEFAULT_WORKFLOW_NAME = "Deployment Witness Collection"
 DEFAULT_SECRET_NAME = "MULLU_RUNTIME_WITNESS_SECRET"
 DEFAULT_ARTIFACT_NAME = "deployment-witness"
 DEFAULT_DOWNLOAD_DIR = Path(".change_assurance") / "deployment-witness-artifact"
+DEFAULT_GATEWAY_URL_VARIABLE = "MULLU_GATEWAY_URL"
+DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE = "MULLU_EXPECTED_RUNTIME_ENV"
 VALID_ENVIRONMENTS = ("pilot", "production")
 
 
@@ -70,22 +72,35 @@ def dispatch_deployment_witness(
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     timeout_seconds: int = 600,
     poll_seconds: int = 10,
-    runner: CommandRunner = subprocess.run,
+    runner: CommandRunner | None = None,
 ) -> DispatchResult:
     """Dispatch the deployment witness workflow and download its artifact."""
-    normalized_gateway_url = _require_gateway_url(gateway_url)
-    _require_expected_environment(expected_environment)
-    _require_secret(repository=repository, secret_name=secret_name, runner=runner)
+    command_runner = runner or subprocess.run
+    repository_variables = (
+        _read_repository_variables(repository=repository, runner=command_runner)
+        if not gateway_url or not expected_environment
+        else {}
+    )
+    normalized_gateway_url = _require_gateway_url(
+        gateway_url or repository_variables.get(DEFAULT_GATEWAY_URL_VARIABLE, "")
+    )
+    resolved_environment = (
+        expected_environment
+        or repository_variables.get(DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE, "")
+        or "pilot"
+    )
+    _require_expected_environment(resolved_environment)
+    _require_secret(repository=repository, secret_name=secret_name, runner=command_runner)
     _require_active_workflow(
         repository=repository,
         workflow_file=workflow_file,
         workflow_name=workflow_name,
-        runner=runner,
+        runner=command_runner,
     )
 
     dispatched_at = _utc_now()
     _run_checked(
-        runner,
+        command_runner,
         [
             "gh",
             "workflow",
@@ -98,7 +113,7 @@ def dispatch_deployment_witness(
             "--field",
             f"gateway_url={normalized_gateway_url}",
             "--field",
-            f"expected_environment={expected_environment}",
+            f"expected_environment={resolved_environment}",
         ],
     )
     run_id = _wait_for_dispatched_run(
@@ -107,15 +122,15 @@ def dispatch_deployment_witness(
         dispatched_at=dispatched_at,
         timeout_seconds=timeout_seconds,
         poll_seconds=poll_seconds,
-        runner=runner,
+        runner=command_runner,
     )
-    final_payload = _read_run(repository=repository, run_id=run_id, runner=runner)
+    final_payload = _read_run(repository=repository, run_id=run_id, runner=command_runner)
     artifact_dir = _download_artifact(
         repository=repository,
         run_id=run_id,
         artifact_name=artifact_name,
         download_dir=download_dir,
-        runner=runner,
+        runner=command_runner,
     )
     return DispatchResult(
         run_id=run_id,
@@ -140,6 +155,22 @@ def _require_expected_environment(expected_environment: str) -> None:
         raise RuntimeError(
             f"expected environment must be one of {list(VALID_ENVIRONMENTS)}"
         )
+
+
+def _read_repository_variables(
+    *,
+    repository: str,
+    runner: CommandRunner,
+) -> dict[str, str]:
+    completed = _run_checked(
+        runner,
+        ["gh", "variable", "list", "--repo", repository, "--json", "name,value"],
+    )
+    variables = _json_list(completed.stdout, "gh variable list")
+    return {
+        str(variable.get("name", "")): str(variable.get("value", ""))
+        for variable in variables
+    }
 
 
 def _require_secret(
@@ -335,7 +366,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--expected-environment",
         choices=VALID_ENVIRONMENTS,
-        default=os.environ.get("MULLU_EXPECTED_RUNTIME_ENV", "pilot"),
+        default=os.environ.get("MULLU_EXPECTED_RUNTIME_ENV", ""),
     )
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
