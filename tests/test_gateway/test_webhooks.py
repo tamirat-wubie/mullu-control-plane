@@ -885,7 +885,9 @@ class TestGatewayStatus:
         assert msg_resp.status_code == 200
 
         list_resp = client.get("/authority/approval-chains?status=pending")
+        paged_resp = client.get("/authority/approval-chains?status=pending&limit=1&offset=0")
         assert list_resp.status_code == 200
+        assert paged_resp.status_code == 200
         chains = list_resp.json()["approval_chains"]
         assert chains
         command_id = chains[0]["command_id"]
@@ -894,6 +896,10 @@ class TestGatewayStatus:
         console_resp = client.get("/authority/operator")
 
         assert any(chain["command_id"] == command_id for chain in chains)
+        assert paged_resp.json()["count"] == 1
+        assert paged_resp.json()["total"] >= 1
+        assert paged_resp.json()["limit"] == 1
+        assert paged_resp.json()["offset"] == 0
         assert command_resp.status_code == 200
         command_data = command_resp.json()
         assert command_data["approval_chain"]["command_id"] == command_id
@@ -935,8 +941,31 @@ class TestGatewayStatus:
             "owner_team": obligation.owner_team,
             "escalated_at": "2026-04-24T13:00:00+00:00",
         })
+        second_obligation = Obligation(
+            obligation_id="obligation-test-read-model-second",
+            command_id=certificate.command_id,
+            tenant_id="t1",
+            owner_id="u2",
+            owner_team="ops",
+            obligation_type="operator_followup",
+            due_at="2026-04-25T12:00:00+00:00",
+            status=ObligationStatus.OPEN,
+            evidence_required=("case_disposition",),
+            escalation_policy_id="default",
+            terminal_certificate_id="terminal-test-read-model",
+        )
+        gateway_app.state.authority_mesh_store.save_obligation(second_obligation)
+        gateway_app.state.authority_mesh_store.append_escalation_event({
+            "event_id": "obl-escalation-test-read-model-second",
+            "obligation_id": second_obligation.obligation_id,
+            "command_id": second_obligation.command_id,
+            "tenant_id": second_obligation.tenant_id,
+            "owner_id": second_obligation.owner_id,
+            "owner_team": second_obligation.owner_team,
+            "escalated_at": "2026-04-25T13:00:00+00:00",
+        })
 
-        obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open")
+        obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open&limit=1")
         missing_evidence_resp = client.post(
             f"/authority/obligations/{obligation.obligation_id}/satisfy",
             json={"evidence_refs": []},
@@ -946,13 +975,17 @@ class TestGatewayStatus:
             json={"evidence_refs": ["case:read-model-closed"]},
         )
         command_resp = client.get(f"/commands/{obligation.command_id}/authority")
-        escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}")
+        escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}&limit=1")
         satisfied_resp = client.get("/authority/obligations?tenant_id=t1&status=satisfied")
         witness_resp = client.get("/authority/witness")
         console_resp = client.get("/authority/operator")
 
         assert obligations_resp.status_code == 200
         assert obligations_resp.json()["count"] == 1
+        assert obligations_resp.json()["total"] == 2
+        assert obligations_resp.json()["limit"] == 1
+        assert obligations_resp.json()["offset"] == 0
+        assert obligations_resp.json()["next_offset"] == 1
         assert obligations_resp.json()["obligations"][0]["obligation_id"] == obligation.obligation_id
         assert missing_evidence_resp.status_code == 400
         assert satisfy_resp.status_code == 200
@@ -964,6 +997,9 @@ class TestGatewayStatus:
         assert command_resp.json()["obligations"][0]["status"] == "satisfied"
         assert escalations_resp.status_code == 200
         assert escalations_resp.json()["escalation_events"][0]["obligation_id"] == obligation.obligation_id
+        assert escalations_resp.json()["count"] == 1
+        assert escalations_resp.json()["total"] == 2
+        assert escalations_resp.json()["next_offset"] == 1
         assert satisfied_resp.json()["count"] == 1
         assert witness_resp.json()["requires_review_count"] == 0
         assert console_resp.status_code == 200

@@ -24,9 +24,10 @@ Resolved closure actions:
 
 1. `bind_tool_arguments_to_capability_policy_receipts`
 2. `normalize_gateway_request_receipt_envelopes`
+3. `bound_authority_read_models_to_paginated_windows`
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, closure action mapping, gateway runtime witness mapping, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization
+  Invariants verified: route declarations, coverage levels, closure action mapping, gateway runtime witness mapping, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination
   Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`

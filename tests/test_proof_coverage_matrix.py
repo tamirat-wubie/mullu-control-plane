@@ -89,8 +89,10 @@ def test_gaps_have_closure_actions() -> None:
 
     assert closure_actions["bind_tool_arguments_to_capability_policy_receipts"]["status"] == "closed"
     assert closure_actions["normalize_gateway_request_receipt_envelopes"]["status"] == "closed"
+    assert closure_actions["bound_authority_read_models_to_paginated_windows"]["status"] == "closed"
     assert surfaces["gateway_capability_fabric"]["request_proof"] == "request_proof"
     assert surfaces["tool_invocation"]["action_proof"] == "action_proof"
+    assert "authority_obligation_mesh" in closure_actions["bound_authority_read_models_to_paginated_windows"]["surfaces"]
     assert all(action["surfaces"] for action in matrix["closure_actions"])
 
 

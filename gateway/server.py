@@ -524,6 +524,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         tenant_id: str = "",
         status: str = "",
         command_id: str = "",
+        limit: int = 100,
+        offset: int = 0,
     ):
         _require_authority_operator(request)
         chains = authority_mesh_store.list_approval_chains()
@@ -533,9 +535,15 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             chains = tuple(chain for chain in chains if chain.status.value == status)
         if command_id:
             chains = tuple(chain for chain in chains if chain.command_id == command_id)
+        page, page_meta = _read_model_page(
+            chains,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
         return {
-            "approval_chains": [asdict(chain) for chain in chains],
-            "count": len(chains),
+            "approval_chains": [asdict(chain) for chain in page],
+            "count": len(page),
+            **page_meta,
         }
 
     @app.get("/commands/{command_id}/authority")
@@ -559,6 +567,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         command_id: str = "",
         owner_id: str = "",
         owner_team: str = "",
+        limit: int = 100,
+        offset: int = 0,
     ):
         _require_authority_operator(request)
         obligations = authority_mesh_store.list_obligations(command_id)
@@ -570,9 +580,15 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             obligations = tuple(obligation for obligation in obligations if obligation.owner_id == owner_id)
         if owner_team:
             obligations = tuple(obligation for obligation in obligations if obligation.owner_team == owner_team)
+        page, page_meta = _read_model_page(
+            obligations,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
         return {
-            "obligations": [asdict(obligation) for obligation in obligations],
-            "count": len(obligations),
+            "obligations": [asdict(obligation) for obligation in page],
+            "count": len(page),
+            **page_meta,
         }
 
     @app.post("/authority/obligations/{obligation_id}/satisfy")
@@ -613,16 +629,28 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         }
 
     @app.get("/authority/escalations")
-    def authority_escalations(request: Request, tenant_id: str = "", command_id: str = ""):
+    def authority_escalations(
+        request: Request,
+        tenant_id: str = "",
+        command_id: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
         _require_authority_operator(request)
         events = authority_mesh_store.list_escalation_events()
         if tenant_id:
             events = tuple(event for event in events if event.get("tenant_id") == tenant_id)
         if command_id:
             events = tuple(event for event in events if event.get("command_id") == command_id)
+        page, page_meta = _read_model_page(
+            events,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
         return {
-            "escalation_events": list(events),
-            "count": len(events),
+            "escalation_events": list(page),
+            "count": len(page),
+            **page_meta,
         }
 
     @app.get("/authority/operator", response_class=HTMLResponse)
@@ -913,6 +941,29 @@ def _gateway_request_receipt(
 def _sensitive_header_name(name: str) -> bool:
     lowered = name.lower()
     return any(marker in lowered for marker in ("authorization", "secret", "signature", "token", "cookie"))
+
+
+def _bounded_read_model_limit(limit: int, *, maximum: int = 500) -> int:
+    """Return a positive bounded read-model page size."""
+    return max(1, min(int(limit), maximum))
+
+
+def _bounded_read_model_offset(offset: int) -> int:
+    """Return a non-negative read-model offset."""
+    return max(0, int(offset))
+
+
+def _read_model_page(items: tuple[Any, ...], *, limit: int, offset: int) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    """Return a bounded read-model page and pagination metadata."""
+    total = len(items)
+    page = items[offset:offset + limit]
+    next_offset = offset + len(page)
+    return page, {
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "next_offset": next_offset if next_offset < total else None,
+    }
 
 
 # Default app instance
