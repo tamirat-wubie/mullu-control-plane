@@ -242,6 +242,23 @@ The same gated path is also available as the manual GitHub Actions workflow
 `apply_ingress` is true, the workflow requires `MULLU_KUBECONFIG_B64`; it always
 requires `MULLU_RUNTIME_WITNESS_SECRET` to be mounted before the readiness gate.
 
+Before dispatching that workflow, emit a machine-readable publication readiness
+report:
+
+```bash
+python scripts/report_gateway_publication_readiness.py \
+  --gateway-url "https://gateway.mullusi.com" \
+  --expected-environment pilot \
+  --dispatch-witness
+```
+
+The reporter derives the gateway host from explicit input or repository
+variables, checks the runtime witness secret name, checks the optional
+kubeconfig secret name only when `--apply-ingress` is requested, verifies the
+workflow state and DNS resolution, writes
+`.change_assurance/gateway_publication_readiness.json`, and prints the exact
+`scripts/dispatch_gateway_publication.py` command to run next.
+
 To dispatch that GitHub workflow from a local operator shell and download the
 `gateway-publication-witness` artifact, run:
 

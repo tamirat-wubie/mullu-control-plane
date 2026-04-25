@@ -87,6 +87,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/render_gateway_ingress.py --gateway-host \"$MULLU_GATEWAY_HOST\"",
     ".github/workflows/deployment-witness.yml",
     ".github/workflows/gateway-publication.yml",
+    "python scripts/report_gateway_publication_readiness.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness",
     "python scripts/dispatch_gateway_publication.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --dispatch-witness",
     "python scripts/dispatch_deployment_witness.py",
     "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --dispatch",
