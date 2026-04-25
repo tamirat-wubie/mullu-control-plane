@@ -4,6 +4,7 @@ Invariants:
   - Semantic memory requires admitted learning decisions.
   - Entries carry source and evidence anchors.
   - Supersede appends a new version without mutating old entries.
+  - Revocation removes planning projection without deleting version history.
   - Deferred, rejected, missing, or mismatched admission is rejected.
 """
 
@@ -176,6 +177,110 @@ def test_supersede_appends_new_version_and_preserves_old_entry():
     assert first.knowledge.content_hash == "hash-semantic-1"
     assert store.current("knowledge-semantic-1") is second
     assert store.list_versions("knowledge-semantic-1") == (first, second)
+
+
+def test_revokes_current_semantic_memory_without_deleting_history():
+    store = SemanticMemoryStore(clock=_clock())
+    entry = store.admit(
+        knowledge=_knowledge(),
+        learning_admission=_admission(),
+        source_refs=("episodic:closure-1",),
+    )
+    revocation = store.revoke_current(
+        "knowledge-semantic-1",
+        reason="source evidence contradicted by later verification",
+        revoked_by="learning-governance",
+        evidence_refs=("case:semantic-review-1",),
+    )
+
+    assert revocation.knowledge_id == "knowledge-semantic-1"
+    assert revocation.entry_id == entry.entry_id
+    assert revocation.reason == "source evidence contradicted by later verification"
+    assert revocation.revoked_by == "learning-governance"
+    assert revocation.evidence_refs == ("case:semantic-review-1",)
+    assert store.revocation_count == 1
+    assert store.revocation_for_knowledge("knowledge-semantic-1") is revocation
+    assert store.current("knowledge-semantic-1") is None
+    assert store.planning_knowledge("knowledge-semantic-1", knowledge_class="capability_profile") is None
+    assert store.list_versions("knowledge-semantic-1") == (entry,)
+
+
+def test_rejects_duplicate_semantic_memory_revocation():
+    store = SemanticMemoryStore(clock=_clock())
+    entry = store.admit(
+        knowledge=_knowledge(),
+        learning_admission=_admission(),
+        source_refs=("episodic:closure-1",),
+    )
+    first_revocation = store.revoke_current(
+        "knowledge-semantic-1",
+        reason="source evidence contradicted by later verification",
+        revoked_by="learning-governance",
+        evidence_refs=("case:semantic-review-1",),
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="already revoked"):
+        store.revoke_current(
+            "knowledge-semantic-1",
+            reason="duplicate revocation attempt",
+            revoked_by="learning-governance",
+            evidence_refs=("case:semantic-review-2",),
+        )
+
+    assert first_revocation.entry_id == entry.entry_id
+    assert store.revocation_count == 1
+    assert store.revocation_for_knowledge("knowledge-semantic-1") is first_revocation
+    assert store.current("knowledge-semantic-1") is None
+    assert store.list_versions("knowledge-semantic-1") == (entry,)
+
+
+def test_rejects_reuse_of_revoked_semantic_knowledge_id():
+    store = SemanticMemoryStore(clock=_clock())
+    entry = store.admit(
+        knowledge=_knowledge(),
+        learning_admission=_admission(),
+        source_refs=("episodic:closure-1",),
+    )
+    revocation = store.revoke_current(
+        "knowledge-semantic-1",
+        reason="source evidence contradicted by later verification",
+        revoked_by="learning-governance",
+        evidence_refs=("case:semantic-review-1",),
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="is revoked"):
+        store.admit(
+            knowledge=_knowledge(content_hash="hash-semantic-2"),
+            learning_admission=_admission(),
+            source_refs=("episodic:closure-2",),
+        )
+
+    assert revocation.entry_id == entry.entry_id
+    assert store.size == 1
+    assert store.current("knowledge-semantic-1") is None
+    assert store.list_versions("knowledge-semantic-1") == (entry,)
+
+
+def test_rejects_semantic_memory_revocation_without_evidence_refs():
+    store = SemanticMemoryStore(clock=_clock())
+    entry = store.admit(
+        knowledge=_knowledge(),
+        learning_admission=_admission(),
+        source_refs=("episodic:closure-1",),
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="requires evidence refs"):
+        store.revoke_current(
+            "knowledge-semantic-1",
+            reason="source evidence contradicted by later verification",
+            revoked_by="learning-governance",
+            evidence_refs=(),
+        )
+
+    assert store.revocation_count == 0
+    assert store.current("knowledge-semantic-1") is entry
+    assert store.planning_knowledge("knowledge-semantic-1", knowledge_class="capability_profile") is not None
+    assert store.list_versions("knowledge-semantic-1") == (entry,)
 
 
 def test_rejects_supersede_that_does_not_target_current_version():
