@@ -1199,6 +1199,8 @@ class AuthorityObligationMesh:
         obligation = self._store.load_obligation(obligation_id)
         if obligation is None:
             raise KeyError(f"unknown obligation_id: {obligation_id}")
+        if obligation.status not in {ObligationStatus.OPEN, ObligationStatus.ESCALATED}:
+            raise ValueError("obligation must be open or escalated before satisfaction")
         if obligation.evidence_required and not evidence_refs:
             raise ValueError("obligation satisfaction requires evidence_refs")
         updated = self._replace_obligation(obligation, status=ObligationStatus.SATISFIED)

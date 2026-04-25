@@ -14,6 +14,7 @@ if str(_ROOT) not in sys.path:
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from gateway.authority_obligation_mesh import Obligation, ObligationStatus  # noqa: E402
+from gateway.command_spine import CommandState  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
 
@@ -402,9 +403,17 @@ class TestGatewayStatus:
         assert witness_resp.json()["pending_approval_chain_count"] >= 1
 
     def test_authority_obligation_and_escalation_read_models(self, gateway_app, client):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "authority-obligation-read-model-token"},
+        )
+        assert msg_resp.status_code == 200
+        certificate = gateway_app.state.command_ledger.latest_terminal_certificate()
+        assert certificate is not None
         obligation = Obligation(
             obligation_id="obligation-test-read-model",
-            command_id="cmd-test-read-model",
+            command_id=certificate.command_id,
             tenant_id="t1",
             owner_id="u1",
             owner_team="ops",
@@ -427,16 +436,80 @@ class TestGatewayStatus:
         })
 
         obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open")
+        missing_evidence_resp = client.post(
+            f"/authority/obligations/{obligation.obligation_id}/satisfy",
+            json={"evidence_refs": []},
+        )
+        satisfy_resp = client.post(
+            f"/authority/obligations/{obligation.obligation_id}/satisfy",
+            json={"evidence_refs": ["case:read-model-closed"]},
+        )
         command_resp = client.get(f"/commands/{obligation.command_id}/authority")
         escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}")
+        satisfied_resp = client.get("/authority/obligations?tenant_id=t1&status=satisfied")
+        witness_resp = client.get("/authority/witness")
 
         assert obligations_resp.status_code == 200
         assert obligations_resp.json()["count"] == 1
         assert obligations_resp.json()["obligations"][0]["obligation_id"] == obligation.obligation_id
+        assert missing_evidence_resp.status_code == 400
+        assert satisfy_resp.status_code == 200
+        assert satisfy_resp.json()["status"] == "satisfied"
+        assert satisfy_resp.json()["obligation"]["status"] == "satisfied"
+        assert satisfy_resp.json()["evidence_refs"] == ["case:read-model-closed"]
         assert command_resp.status_code == 200
         assert command_resp.json()["obligations"][0]["owner_team"] == "ops"
+        assert command_resp.json()["obligations"][0]["status"] == "satisfied"
         assert escalations_resp.status_code == 200
         assert escalations_resp.json()["escalation_events"][0]["obligation_id"] == obligation.obligation_id
+        assert satisfied_resp.json()["count"] == 1
+        assert witness_resp.json()["requires_review_count"] == 0
+
+    def test_authority_obligation_satisfaction_rejects_missing_obligation(self, client):
+        resp = client.post(
+            "/authority/obligations/missing-obligation/satisfy",
+            json={"evidence_refs": ["case:missing"]},
+        )
+
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "obligation not found"
+
+    def test_escalate_overdue_authority_obligations_records_transition(self, gateway_app, client):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "authority-escalate-overdue-token"},
+        )
+        assert msg_resp.status_code == 200
+        certificate = gateway_app.state.command_ledger.latest_terminal_certificate()
+        assert certificate is not None
+        obligation = Obligation(
+            obligation_id="obligation-test-escalate-overdue",
+            command_id=certificate.command_id,
+            tenant_id="t1",
+            owner_id="u1",
+            owner_team="ops",
+            obligation_type="case_review",
+            due_at="2026-04-24T12:00:00+00:00",
+            status=ObligationStatus.OPEN,
+            evidence_required=("case_disposition",),
+            escalation_policy_id="default",
+            terminal_certificate_id=certificate.certificate_id,
+        )
+        gateway_app.state.authority_mesh_store.save_obligation(obligation)
+
+        resp = client.post("/authority/obligations/escalate-overdue")
+        updated = gateway_app.state.authority_mesh_store.load_obligation(obligation.obligation_id)
+        events = gateway_app.state.command_ledger.events_for(certificate.command_id)
+
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "escalated"
+        assert any(item["obligation_id"] == obligation.obligation_id for item in resp.json()["obligations"])
+        assert resp.json()["authority_witness"]["escalated_obligation_count"] >= 1
+        assert updated is not None
+        assert updated.status is ObligationStatus.ESCALATED
+        assert events[-1].next_state is CommandState.OBLIGATIONS_ESCALATED
+        assert gateway_app.state.authority_mesh_store.list_escalation_events()
 
     def test_command_closure_read_model(self, gateway_app, client):
         msg_resp = client.post(

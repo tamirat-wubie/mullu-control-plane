@@ -296,6 +296,50 @@ def test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_o
     assert mesh.escalation_events()[0]["obligation_id"] == escalated[0].obligation_id
 
 
+def test_satisfy_obligation_requires_evidence_and_active_status():
+    ledger = _ledger()
+    command = _payment_command(ledger)
+    ledger.record_operational_claim(
+        command.command_id,
+        text="Command requires review.",
+        verified=False,
+        confidence=0.0,
+    )
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.REQUIRES_REVIEW,
+        case_id="case-authority-mesh",
+    )
+    mesh = AuthorityObligationMesh(commands=ledger, clock=ledger._clock)
+    _register_payment_owner(mesh)
+    obligation = mesh.open_post_closure_obligations(
+        command_id=command.command_id,
+        certificate=certificate,
+    )[0]
+
+    with pytest.raises(ValueError, match="requires evidence_refs"):
+        mesh.satisfy_obligation(obligation.obligation_id, evidence_refs=())
+
+    satisfied = mesh.satisfy_obligation(
+        obligation.obligation_id,
+        evidence_refs=("case:authority-review-closed",),
+    )
+    events = ledger.events_for(command.command_id)
+    witness = mesh.responsibility_witness()
+
+    assert satisfied.status is ObligationStatus.SATISFIED
+    assert events[-1].next_state is CommandState.OBLIGATIONS_SATISFIED
+    assert events[-1].detail["evidence_refs"] == ("case:authority-review-closed",)
+    assert witness.open_obligation_count == 0
+    assert witness.requires_review_count == 0
+
+    with pytest.raises(ValueError, match="open or escalated"):
+        mesh.satisfy_obligation(
+            obligation.obligation_id,
+            evidence_refs=("case:duplicate-authority-review-closed",),
+        )
+
+
 def test_postgres_mesh_store_counts_operation_and_rollback_failure():
     conn = _RollbackFailingConnection()
     store = _postgres_mesh_store_for_fault_tests(conn)
