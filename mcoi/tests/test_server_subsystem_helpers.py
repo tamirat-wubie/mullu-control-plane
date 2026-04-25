@@ -225,9 +225,13 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
         "explanations",
         "audit_anchors",
         "knowledge",
+        "data_governance",
         "event_bus",
         "pipelines",
     }
+    assert sources["data_governance"]()["records"] == 0
+    assert sources["data_governance"]()["policies"] == 0
+    assert "state_hash" in sources["data_governance"]()
     assert sources["rbac"]() == {
         "identities": 1,
         "roles": 2,

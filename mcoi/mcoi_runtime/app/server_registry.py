@@ -20,6 +20,8 @@ from mcoi_runtime.app.server_deps import (
     register_dependency_groups,
     wire_runtime_dependencies,
 )
+from mcoi_runtime.core.data_governance import DataGovernanceEngine
+from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.governed_session import Platform as GovernedPlatform
 from mcoi_runtime.core.policy_versioning import PolicyVersionRegistry
 
@@ -81,6 +83,9 @@ def bootstrap_dependency_registry(
     explanation_engine = subsystem_bootstrap.explanation_engine
     audit_anchor = subsystem_bootstrap.audit_anchor
     knowledge_graph = subsystem_bootstrap.knowledge_graph
+    data_governance = getattr(subsystem_bootstrap, "data_governance", None)
+    if data_governance is None:
+        data_governance = DataGovernanceEngine(EventSpineEngine(clock=clock))
     event_bus = subsystem_bootstrap.event_bus
     batch_pipeline = subsystem_bootstrap.batch_pipeline
     guard_chain = operational_bootstrap.guard_chain
@@ -244,6 +249,7 @@ def bootstrap_dependency_registry(
             "explanation_engine": explanation_engine,
             "knowledge_graph": knowledge_graph,
             "audit_anchor": audit_anchor,
+            "data_governance": data_governance,
             "tool_registry": tool_registry,
             "tool_agent": tool_agent,
             "agent_memory": agent_memory,
