@@ -45,7 +45,7 @@ def test_coverage_levels_are_bounded() -> None:
     assert all(surface["action_proof"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["audit"] in coverage_levels for surface in matrix["surfaces"])
     assert all(surface["coverage_state"] in coverage_states for surface in matrix["surfaces"])
-    assert {surface["coverage_state"] for surface in matrix["surfaces"]} >= coverage_states
+    assert {"proven", "witnessed"} <= {surface["coverage_state"] for surface in matrix["surfaces"]}
 
 
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
@@ -105,22 +105,27 @@ def test_evidence_files_exist() -> None:
 
     assert "mcoi/mcoi_runtime/app/streaming.py" in evidence_files
     assert "schemas/streaming_budget_enforcement.schema.json" in evidence_files
+    assert "schemas/lineage_query.schema.json" in evidence_files
+    assert "mcoi/mcoi_runtime/app/routers/lineage.py" in evidence_files
     assert "docs/42_lineage_query_api.md" in evidence_files
     assert "gateway/server.py" in evidence_files
     assert all((REPO_ROOT / evidence_file).exists() for evidence_file in evidence_files)
 
 
-def test_lineage_query_api_is_honestly_marked_unproven() -> None:
+def test_lineage_query_api_is_witnessed_read_model() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     lineage_surface = surfaces["lineage_query_api"]
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
 
-    assert lineage_surface["coverage_state"] == "unproven"
-    assert lineage_surface["request_proof"] == "gap"
-    assert lineage_surface["action_proof"] == "gap"
+    assert lineage_surface["coverage_state"] == "witnessed"
+    assert lineage_surface["request_proof"] == "read_model"
+    assert lineage_surface["action_proof"] == "read_model"
+    assert "/api/v1/lineage/command/{command_id}" in lineage_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/core/lineage_query.py" in lineage_surface["evidence_files"]
+    assert "schemas/lineage_query.schema.json" in lineage_surface["evidence_files"]
     assert "docs/42_lineage_query_api.md" in lineage_surface["evidence_files"]
-    assert closure_actions["implement_lineage_query_routes_and_schema"]["status"] == "open"
+    assert closure_actions["implement_lineage_query_routes_and_schema"]["status"] == "closed"
 
 
 def test_representative_http_paths_are_declared() -> None:

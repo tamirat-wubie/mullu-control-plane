@@ -25,7 +25,7 @@
     },
     {
       "action_id": "implement_lineage_query_routes_and_schema",
-      "status": "open",
+      "status": "closed",
       "surfaces": [
         "lineage_query_api"
       ]
@@ -297,21 +297,25 @@
       "surface_id": "health_docs_exempt"
     },
     {
-      "action_proof": "gap",
+      "action_proof": "read_model",
       "audit": "read_model",
-      "coverage_state": "unproven",
+      "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/lineage.py",
+        "mcoi/mcoi_runtime/core/lineage_query.py",
         "docs/42_lineage_query_api.md",
+        "schemas/lineage_query.schema.json",
         "schemas/trace_entry.schema.json",
         "schemas/replay_record.schema.json"
       ],
-      "notes": "Lineage query API has published URI semantics but no declared runtime routes yet.",
+      "notes": "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
       "representative_paths": [
         "/api/v1/lineage/resolve",
         "/api/v1/lineage/{trace_id}",
-        "/api/v1/lineage/output/{output_id}"
+        "/api/v1/lineage/output/{output_id}",
+        "/api/v1/lineage/command/{command_id}"
       ],
-      "request_proof": "gap",
+      "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "lineage_query_api"
     }

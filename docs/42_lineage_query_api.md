@@ -12,7 +12,7 @@ tool receipts, and replay witnesses.
 | Component | Responsibility | Input | Output |
 |---|---|---|---|
 | URI parser | Parse and validate `lineage://` references | Lineage URI | bounded query envelope |
-| Lineage resolver | Locate root output and ancestor chain | output id or trace id | ordered causal graph |
+| Lineage resolver | Locate root trace, output, or command and ancestor chain | trace, output, or command id | ordered causal graph |
 | Context projector | Attach policy, model, tenant, and budget context | trace node ids | decorated lineage nodes |
 | Proof verifier | Validate hash links and proof references | decorated nodes | verification summary |
 | Read API | Return bounded graph slices | query envelope | JSON lineage document |
@@ -29,7 +29,7 @@ Optional query parameters:
 
 | Parameter | Meaning | Default |
 |---|---|---|
-| `depth` | Maximum ancestor depth | `25` |
+| `depth` | Maximum ancestor depth, bounded to `1..100` | `25` |
 | `include` | Comma-separated context families | `policy,model,tenant,budget,tool,replay` |
 | `verify` | Recompute proof and hash-chain validity | `true` |
 | `at` | Point-in-time version boundary | latest visible state |
@@ -73,9 +73,23 @@ lineage://command/cmd-7?include=policy,tool
 | `/api/v1/lineage/resolve` | `POST` | Resolve a `lineage://` URI into a causal graph |
 | `/api/v1/lineage/{trace_id}` | `GET` | Fetch lineage by trace id |
 | `/api/v1/lineage/output/{output_id}` | `GET` | Fetch lineage by output id |
+| `/api/v1/lineage/command/{command_id}` | `GET` | Fetch lineage by command id |
+
+## Index Resolution
+
+Trace references resolve directly through `ReplayRecorder.get_trace`.
+
+Output and command references resolve through a bounded replay index scan over
+completed traces. The resolver inspects frame input and output contracts for:
+
+1. `output_id`
+2. `command_id`
+
+The scan is capped at `MAX_TRACE_INDEX_SCAN` traces and returns the newest
+matching trace first. Missing references remain explicit unresolved nodes.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: URI grammar, read-only boundary, tenant context retention, missing ancestor visibility, proof verification position
-  Open issues: route implementation and response schema remain pending
-  Next action: add `lineage_query.schema.json` and a resolver backed by trace/replay stores
+  Invariants verified: URI grammar, read-only boundary, tenant context retention, missing ancestor visibility, proof verification position, bounded output index scan, bounded command index scan
+  Open issues: policy-version index is not yet connected beyond projected frame context
+  Next action: connect lineage resolver to policy-version read models

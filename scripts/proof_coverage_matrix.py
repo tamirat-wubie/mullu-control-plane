@@ -247,17 +247,25 @@ def proof_coverage_matrix() -> dict[str, Any]:
         ),
         _surface(
             "lineage_query_api",
-            ["/api/v1/lineage/resolve", "/api/v1/lineage/{trace_id}", "/api/v1/lineage/output/{output_id}"],
-            "gap",
-            "gap",
-            "read_model",
-            "unproven",
             [
+                "/api/v1/lineage/resolve",
+                "/api/v1/lineage/{trace_id}",
+                "/api/v1/lineage/output/{output_id}",
+                "/api/v1/lineage/command/{command_id}",
+            ],
+            "read_model",
+            "read_model",
+            "read_model",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/lineage.py",
+                "mcoi/mcoi_runtime/core/lineage_query.py",
                 "docs/42_lineage_query_api.md",
+                "schemas/lineage_query.schema.json",
                 "schemas/trace_entry.schema.json",
                 "schemas/replay_record.schema.json",
             ],
-            "Lineage query API has published URI semantics but no declared runtime routes yet.",
+            "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
         ),
     ]
     return {
@@ -284,7 +292,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             {
                 "action_id": "implement_lineage_query_routes_and_schema",
                 "surfaces": ["lineage_query_api"],
-                "status": "open",
+                "status": "closed",
             },
         ],
     }

@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:lineage-query:1",
+  "title": "Lineage Query Document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "lineage_uri",
+    "root_ref",
+    "depth",
+    "include",
+    "verified",
+    "verification",
+    "nodes",
+    "edges",
+    "unresolved_nodes",
+    "governed"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "lineage_uri": {
+      "type": "string",
+      "pattern": "^lineage://"
+    },
+    "root_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref_type",
+        "ref_id"
+      ],
+      "properties": {
+        "ref_type": {
+          "type": "string",
+          "enum": [
+            "trace",
+            "output",
+            "command"
+          ]
+        },
+        "ref_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "include": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason_codes",
+        "checked_nodes"
+      ],
+      "properties": {
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "checked_nodes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id",
+          "node_type",
+          "parent_node_ids",
+          "trace_id",
+          "policy_version",
+          "model_version",
+          "tenant_id",
+          "budget_ref",
+          "proof_id",
+          "state_hash",
+          "timestamp",
+          "unresolved",
+          "metadata"
+        ],
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "node_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parent_node_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "policy_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model_version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tenant_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "budget_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "proof_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state_hash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "timestamp": {
+            "type": "string",
+            "minLength": 1
+          },
+          "unresolved": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from_node_id",
+          "to_node_id",
+          "relation"
+        ],
+        "properties": {
+          "from_node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "to_node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "caused"
+            ]
+          }
+        }
+      }
+    },
+    "unresolved_nodes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "governed": {
+      "const": true
+    }
+  }
+}

@@ -27,6 +27,7 @@ These schemas define the canonical shared JSON interchange surface for Mullu Pla
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
+| `lineage_query.schema.json` | Canonical lineage query response document |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 

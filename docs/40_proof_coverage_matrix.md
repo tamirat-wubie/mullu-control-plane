@@ -13,7 +13,7 @@ document is the operator-readable witness.
 | `llm_streaming` | `/api/v1/stream`, `/api/v1/chat/stream` | yes | yes | streaming budget protocol | hash-chain | witnessed | Streaming emits precharge, first-byte, chunk-debit, cutoff, and final-reconcile proof identifiers. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation routes bind action proof ids to capability policy receipts over argument hashes. |
 | `governed_session` | `GovernedSession.llm`, `GovernedSession.execute`, `GovernedSession.query` | yes | yes | request envelopes | hash-chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
-| `lineage_query_api` | `/api/v1/lineage/resolve`, `/api/v1/lineage/{trace_id}`, `/api/v1/lineage/output/{output_id}` | gap | gap | none | read-model | unproven | URI semantics are specified, but routes and response schema are not yet implemented. |
+| `lineage_query_api` | `/api/v1/lineage/resolve`, `/api/v1/lineage/{trace_id}`, `/api/v1/lineage/output/{output_id}`, `/api/v1/lineage/command/{command_id}` | read-model | read-model | replay trace projection | read-model | witnessed | URI semantics, routes, response schema, bounded output/command index scans, and unresolved-node behavior are implemented. |
 
 Gateway runtime witness invariants:
 
@@ -29,10 +29,10 @@ Resolved closure actions:
 
 Open closure actions:
 
-1. `implement_lineage_query_routes_and_schema`
+1. none
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination
-  Open issues: lineage query routes and response schema remain unproven
+  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan
+  Open issues: lineage policy-version index is not yet connected beyond projected frame context
   Next action: run `python scripts/proof_coverage_matrix.py --check`
