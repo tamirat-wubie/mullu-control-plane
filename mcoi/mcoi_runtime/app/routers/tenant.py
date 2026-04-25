@@ -54,6 +54,38 @@ def _budget_report(r: TenantBudgetReport) -> dict[str, Any]:
     }
 
 
+def _certify_action_proof(
+    *,
+    endpoint: str,
+    tenant_id: str,
+    actor_id: str,
+    action: str,
+    succeeded: bool = True,
+) -> dict[str, str]:
+    """Create a bounded response proof for a tenant governance action."""
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=tenant_id or "system",
+        endpoint=endpoint,
+        guard_results=[
+            {
+                "guard_name": "tenant_action_result",
+                "allowed": succeeded,
+                "reason": "tenant action reached response boundary",
+            }
+        ],
+        decision="allowed" if succeeded else "denied",
+        actor_id=actor_id or "anonymous",
+        reason="tenant action response certified",
+    )
+    return {
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "proof_hash": proof.receipt_hash,
+        "proof_phase": action,
+        "action": action,
+        "succeeded": succeeded,
+    }
+
+
 # ── Budget CRUD ──────────────────────────────────────────────────────────
 
 
@@ -69,7 +101,14 @@ def create_tenant_budget(req: TenantBudgetRequest):
         tenant_id=req.tenant_id, target=req.tenant_id, outcome="success",
     )
     deps.metrics.inc("requests_governed")
-    return _budget_report(deps.tenant_budget_mgr.report(req.tenant_id))
+    report = _budget_report(deps.tenant_budget_mgr.report(req.tenant_id))
+    report["action_proof"] = _certify_action_proof(
+        endpoint="/api/v1/tenant/budget",
+        tenant_id=req.tenant_id,
+        actor_id="system",
+        action="tenant.budget.create",
+    )
+    return report
 
 
 @router.get("/api/v1/tenant/{tenant_id}/budget")
@@ -274,6 +313,12 @@ def register_tenant(req: TenantRegisterRequest):
         "reason": gate.reason,
         "gated_at": gate.gated_at,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/tenant/register",
+            tenant_id=req.tenant_id,
+            actor_id="api",
+            action="tenant.register",
+        ),
     }
 
 
@@ -304,6 +349,12 @@ def update_tenant_status(tenant_id: str, req: TenantStatusUpdateRequest):
         "reason": gate.reason,
         "gated_at": gate.gated_at,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/tenant/{tenant_id}/status",
+            tenant_id=tenant_id,
+            actor_id="api",
+            action="tenant.status.update",
+        ),
     }
 
 

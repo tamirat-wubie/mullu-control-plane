@@ -32,6 +32,10 @@ class TestWorkflowEndpoints:
         assert data["status"] == "completed"
         assert data["agent_id"] == "llm-agent"
         assert len(data["steps"]) >= 4
+        assert data["action_proof"]["action"] == "workflow.execute"
+        assert data["action_proof"]["succeeded"] is True
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
 
     def test_execute_workflow_bad_capability(self, client):
         resp = client.post("/api/v1/workflow/execute", json={

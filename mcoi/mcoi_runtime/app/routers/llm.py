@@ -132,6 +132,38 @@ def _raise_governed_http_error(
     )
 
 
+def _certify_action_proof(
+    *,
+    endpoint: str,
+    tenant_id: str,
+    actor_id: str,
+    action: str,
+    succeeded: bool,
+) -> dict[str, str]:
+    """Create a bounded response proof for a completed LLM action."""
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=tenant_id or "system",
+        endpoint=endpoint,
+        guard_results=[
+            {
+                "guard_name": "llm_action_result",
+                "allowed": succeeded,
+                "reason": "llm action reached response boundary",
+            }
+        ],
+        decision="allowed" if succeeded else "denied",
+        actor_id=actor_id or "anonymous",
+        reason="llm action response certified",
+    )
+    return {
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "proof_hash": proof.receipt_hash,
+        "proof_phase": action,
+        "action": action,
+        "succeeded": succeeded,
+    }
+
+
 # ═══ Phase 199A — LLM Completion Endpoint ═══
 
 
@@ -190,6 +222,13 @@ def complete(req: CompletionRequest):
         "cost": result.cost,
         "circuit_state": deps.llm_circuit.state.value,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/complete",
+            tenant_id=req.tenant_id,
+            actor_id=req.actor_id,
+            action="llm.complete",
+            succeeded=True,
+        ),
     }
 
 
@@ -534,6 +573,13 @@ def safe_completion(req: CompletionRequest):
             "provider": result.provider.value, "tokens": result.total_tokens,
             "cost": result.cost, "succeeded": result.succeeded,
             "circuit_state": deps.llm_circuit.state.value, "governed": True,
+            "action_proof": _certify_action_proof(
+                endpoint="/api/v1/complete/safe",
+                tenant_id=req.tenant_id,
+                actor_id=req.actor_id,
+                action="llm.complete.safe",
+                succeeded=result.succeeded,
+            ),
         }
     except Exception as exc:
         _raise_llm_service_unavailable(
@@ -594,6 +640,13 @@ def auto_routed_completion(req: AutoCompleteRequest):
         "cost": result.cost,
         "succeeded": result.succeeded,
         "governed": True,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/complete/auto",
+            tenant_id=req.tenant_id,
+            actor_id=req.actor_id,
+            action="llm.complete.auto",
+            succeeded=result.succeeded,
+        ),
     }
 
 

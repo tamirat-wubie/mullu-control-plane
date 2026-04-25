@@ -17,6 +17,7 @@ from mcoi_runtime.core.pii_scanner import PIIScanner
 from mcoi_runtime.core.proof_bridge import ProofBridge
 from mcoi_runtime.core.tenant_budget import TenantBudgetManager
 from mcoi_runtime.core.tenant_gating import TenantGatingRegistry, TenantStatus
+from mcoi_runtime.contracts.llm import LLMProvider, LLMResult
 from mcoi_runtime.persistence.postgres_governance_stores import (
     InMemoryBudgetStore,
     InMemoryTenantGatingStore,
@@ -300,6 +301,50 @@ class TestSessionProof:
         initial = proof.receipt_count
         session.execute("test_action")
         assert proof.receipt_count > initial
+
+    def test_query_returns_request_envelope_proof(self):
+        p = _platform()
+        session = p.connect(identity_id="user1", tenant_id="t1")
+        result = session.query("tenants")
+
+        envelope = result["request_envelope_proof"]
+        assert envelope["endpoint"] == "session/query"
+        assert envelope["decision"] == "allowed"
+        assert envelope["proof_receipt_id"]
+        assert envelope["proof_hash"]
+
+    def test_execute_returns_request_envelope_proof(self):
+        p = _platform()
+        session = p.connect(identity_id="user1", tenant_id="t1")
+        result = session.execute("test_action")
+
+        envelope = result["request_envelope_proof"]
+        assert envelope["endpoint"] == "session/execute"
+        assert envelope["decision"] == "allowed"
+        assert envelope["proof_receipt_id"]
+        assert envelope["proof_hash"]
+
+    def test_llm_result_metadata_has_request_envelope_proof(self):
+        class StubLLMBridge:
+            def complete(self, *args, **kwargs):
+                return LLMResult(
+                    content="ok",
+                    input_tokens=1,
+                    output_tokens=1,
+                    cost=0.001,
+                    model_name="stub-model",
+                    provider=LLMProvider.STUB,
+                )
+
+        p = _platform(llm_bridge=StubLLMBridge())
+        session = p.connect(identity_id="user1", tenant_id="t1")
+        result = session.llm("hello")
+
+        envelope = result.metadata["request_envelope_proof"]
+        assert envelope["endpoint"] == "session/llm"
+        assert envelope["decision"] == "allowed"
+        assert envelope["proof_receipt_id"]
+        assert envelope["proof_hash"]
 
     def test_query_proof_failure_is_audited_and_blocks_operation(self):
         class BrokenProofBridge:
