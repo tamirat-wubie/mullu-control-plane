@@ -29,6 +29,7 @@ def _surface(
     request_proof: str,
     action_proof: str,
     audit: str,
+    coverage_state: str,
     evidence_files: list[str],
     notes: str,
     runtime_witnesses: list[str] | None = None,
@@ -39,6 +40,7 @@ def _surface(
         "request_proof": request_proof,
         "action_proof": action_proof,
         "audit": audit,
+        "coverage_state": coverage_state,
         "evidence_files": evidence_files,
         "notes": notes,
         "runtime_witnesses": runtime_witnesses or [],
@@ -62,6 +64,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "proven",
             [
                 "gateway/server.py",
                 "gateway/capability_fabric.py",
@@ -76,11 +79,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/llm.py",
                 "mcoi/mcoi_runtime/app/streaming.py",
                 "mcoi/tests/test_streaming.py",
                 "mcoi/tests/test_server_phase200.py",
+                "schemas/streaming_budget_enforcement.schema.json",
+                "docs/41_streaming_budget_enforcement.md",
             ],
             "SSE responses include precharge, first-byte, chunk-debit, and final-reconcile proof identifiers.",
         ),
@@ -90,6 +96,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/llm.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
@@ -102,6 +109,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/llm.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
@@ -114,6 +122,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "audit_chain",
+            "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/llm.py",
                 "mcoi/mcoi_runtime/core/tenant_budget.py",
@@ -126,6 +135,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             ["mcoi/mcoi_runtime/app/routers/llm.py"],
             "Model catalog and experiment control routes are declared as governed control surfaces.",
         ),
@@ -135,6 +145,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "gateway/server.py",
                 "gateway/router.py",
@@ -148,6 +159,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "gateway/server.py",
                 "gateway/approval.py",
@@ -161,6 +173,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "gateway/server.py",
                 "gateway/authority_obligation_mesh.py",
@@ -180,6 +193,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "audit_chain",
+            "witnessed",
             [
                 "gateway/server.py",
                 "scripts/collect_deployment_witness.py",
@@ -199,6 +213,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/data.py",
                 "mcoi/mcoi_runtime/app/routers/workflow.py",
@@ -212,6 +227,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "request_proof",
             "action_proof",
             "audit_chain",
+            "witnessed",
             [
                 "mcoi/mcoi_runtime/core/governed_session.py",
                 "mcoi/mcoi_runtime/core/proof_bridge.py",
@@ -225,8 +241,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "read_model",
             "read_model",
             "read_model",
+            "witnessed",
             ["gateway/server.py"],
             "Operational liveness and documentation surfaces are outside the proof-critical path.",
+        ),
+        _surface(
+            "lineage_query_api",
+            [
+                "/api/v1/lineage/resolve",
+                "/api/v1/lineage/{trace_id}",
+                "/api/v1/lineage/output/{output_id}",
+                "/api/v1/lineage/command/{command_id}",
+            ],
+            "read_model",
+            "read_model",
+            "read_model",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/lineage.py",
+                "mcoi/mcoi_runtime/core/lineage_query.py",
+                "docs/42_lineage_query_api.md",
+                "schemas/lineage_query.schema.json",
+                "schemas/trace_entry.schema.json",
+                "schemas/replay_record.schema.json",
+            ],
+            "Lineage query API resolves read-only lineage:// URIs over replay traces with bounded output and command index scans.",
         ),
     ]
     return {
@@ -250,6 +289,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
                 "status": "closed",
             },
+            {
+                "action_id": "implement_lineage_query_routes_and_schema",
+                "surfaces": ["lineage_query_api"],
+                "status": "closed",
+            },
         ],
     }
 
@@ -270,6 +314,8 @@ def discover_declared_routes(repo_root: Path = REPO_ROOT) -> set[str]:
 def validate_matrix_routes(matrix: dict[str, Any], routes: set[str]) -> list[str]:
     missing: list[str] = []
     for surface in matrix["surfaces"]:
+        if surface.get("coverage_state") == "unproven":
+            continue
         for path in surface["representative_paths"]:
             if not path.startswith("/"):
                 continue

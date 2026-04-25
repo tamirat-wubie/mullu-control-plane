@@ -289,7 +289,14 @@ def stream_completion(req: CompletionRequest):
             exc=exc,
         )
     return StreamingResponse(
-        deps.streaming_adapter.stream_to_sse(result, request_id=f"stream-{id(req)}"),
+        deps.streaming_adapter.stream_to_sse(
+            result,
+            request_id=f"stream-{id(req)}",
+            tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+            estimated_input_tokens=result.input_tokens,
+            estimated_output_tokens=req.max_tokens,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -411,7 +418,13 @@ def streaming_chat(req: ChatRequest):
 
     # Stream as SSE
     return StreamingResponse(
-        deps.streaming_adapter.stream_to_sse(result, request_id=f"chat-{req.conversation_id}"),
+        deps.streaming_adapter.stream_to_sse(
+            result,
+            request_id=f"chat-{req.conversation_id}",
+            tenant_id=req.tenant_id,
+            budget_id=req.budget_id,
+            estimated_input_tokens=result.input_tokens,
+        ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

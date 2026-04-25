@@ -132,6 +132,20 @@ class TestStreamingChat:
         })
         assert "governed" in resp.text.lower() or resp.status_code == 200
 
+    def test_streaming_chat_contains_budget_witnesses(self, client):
+        resp = client.post("/api/v1/chat/stream", json={
+            "conversation_id": "stream-budget",
+            "message": "test",
+            "tenant_id": "tenant-chat-stream",
+        })
+        body = resp.text
+
+        assert resp.status_code == 200
+        assert '"budget_reservation"' in body
+        assert '"tenant_id": "tenant-chat-stream"' in body
+        assert '"budget_id": "default"' in body
+        assert '"budget_settlement"' in body
+
     def test_streaming_chat_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
 

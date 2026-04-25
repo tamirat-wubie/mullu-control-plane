@@ -40,6 +40,21 @@ class TestStreamingEndpoint:
         assert "event: done" in body
         assert '"governed": true' in body
 
+    def test_stream_contains_budget_witnesses(self, client):
+        resp = client.post("/api/v1/stream", json={
+            "prompt": "hello",
+            "tenant_id": "tenant-stream",
+            "max_tokens": 12,
+        })
+        body = resp.text
+
+        assert resp.status_code == 200
+        assert '"budget_reservation"' in body
+        assert '"tenant_id": "tenant-stream"' in body
+        assert '"budget_id": "default"' in body
+        assert '"budget_settlement"' in body
+        assert "stream-proof:" in body
+
     def test_stream_with_system(self, client):
         resp = client.post("/api/v1/stream", json={
             "prompt": "hello", "system": "you are helpful"

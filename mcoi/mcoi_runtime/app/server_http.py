@@ -80,6 +80,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.explain import router as explain_router
     from mcoi_runtime.app.routers.health import router as health_router
     from mcoi_runtime.app.routers.knowledge import router as knowledge_router
+    from mcoi_runtime.app.routers.lineage import router as lineage_router
     from mcoi_runtime.app.routers.llm import router as llm_router
     from mcoi_runtime.app.routers.multi_agent import router as multi_agent_router
     from mcoi_runtime.app.routers.ops import router as ops_router
@@ -92,6 +93,7 @@ def include_default_routers(app: FastAPI) -> None:
 
     app.include_router(health_router)
     app.include_router(llm_router)
+    app.include_router(lineage_router)
     app.include_router(tenant_router)
     app.include_router(audit_router)
     app.include_router(workflow_router)

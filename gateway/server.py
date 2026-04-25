@@ -72,6 +72,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         ).split(",")
         if role.strip()
     )
+    authority_operator_audit_events: list[dict[str, Any]] = []
     defer_approved_execution = (
         os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
         in {"1", "true", "yes", "on"}
@@ -107,8 +108,45 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         return bool(roles.intersection(authority_operator_roles))
 
     def _require_authority_operator(request: Request) -> None:
-        if not _authority_operator_authorized(request):
+        authorized = _authority_operator_authorized(request)
+        _record_authority_operator_audit(request, authorized=authorized)
+        if not authorized:
             raise HTTPException(403, detail="Authority operator access not authorized")
+
+    def _record_authority_operator_audit(request: Request, *, authorized: bool) -> None:
+        """Record bounded authority operator access without storing bearer secrets."""
+        channel = request.headers.get("X-Mullu-Authority-Channel", "").strip()
+        sender_id = request.headers.get("X-Mullu-Authority-Sender-Id", "").strip()
+        tenant_id = request.headers.get("X-Mullu-Authority-Tenant-Id", "").strip()
+        provided_secret = request.headers.get("X-Mullu-Authority-Secret", "")
+        credential_type = "none"
+        if gateway_env in {"local_dev", "test"}:
+            credential_type = "local_dev"
+        elif provided_secret:
+            credential_type = "operator_secret"
+        elif channel or sender_id:
+            credential_type = "tenant_identity"
+        event_payload = {
+            "event_type": "authority_operator_access_v1",
+            "observed_at": _clock(),
+            "method": request.method,
+            "path": request.url.path,
+            "authorized": authorized,
+            "reason": "authorized" if authorized else "not_authorized",
+            "credential_type": credential_type,
+            "tenant_id": tenant_id,
+            "channel": channel,
+            "sender_id_hash": sha256(sender_id.encode()).hexdigest() if sender_id else "",
+        }
+        event_hash = sha256(
+            json.dumps(event_payload, sort_keys=True, default=str).encode()
+        ).hexdigest()
+        authority_operator_audit_events.append({
+            "event_id": f"authority-operator-access-{event_hash[:16]}",
+            "event_hash": event_hash,
+            **event_payload,
+        })
+        del authority_operator_audit_events[:-500]
 
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
     event_log = WebhookEventLog(clock=_clock)
@@ -653,6 +691,35 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             **page_meta,
         }
 
+    @app.get("/authority/operator-audit")
+    def authority_operator_audit(
+        request: Request,
+        path: str = "",
+        authorized: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        audit_events = tuple(authority_operator_audit_events)
+        if path:
+            audit_events = tuple(event for event in audit_events if event.get("path") == path)
+        if authorized:
+            requested_authorized = authorized.strip().lower()
+            if requested_authorized not in {"true", "false"}:
+                raise HTTPException(400, detail="authorized must be true or false")
+            expected = requested_authorized == "true"
+            audit_events = tuple(event for event in audit_events if event.get("authorized") is expected)
+        page, page_meta = _read_model_page(
+            audit_events,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        return {
+            "operator_audit_events": list(page),
+            "count": len(page),
+            **page_meta,
+        }
+
     @app.get("/authority/operator", response_class=HTMLResponse)
     def authority_operator_console(request: Request):
         _require_authority_operator(request)
@@ -666,6 +733,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
                 approval_chains=[asdict(chain) for chain in chains],
                 obligations=[asdict(obligation) for obligation in obligations],
                 escalation_events=list(escalations),
+                operator_audit_events=list(authority_operator_audit_events[-100:]),
             )
         )
 
@@ -763,6 +831,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app.state.tenant_identity_store = tenant_identity_store
     app.state.authority_mesh_store = authority_mesh_store
     app.state.authority_obligation_mesh = authority_obligation_mesh
+    app.state.authority_operator_audit_events = authority_operator_audit_events
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.capability_admission_gate = capability_admission_gate
@@ -777,6 +846,7 @@ def _authority_operator_console_html(
     approval_chains: list[dict[str, Any]],
     obligations: list[dict[str, Any]],
     escalation_events: list[dict[str, Any]],
+    operator_audit_events: list[dict[str, Any]],
 ) -> str:
     """Render authority responsibility state as a small governed read model."""
     from html import escape
@@ -807,6 +877,15 @@ def _authority_operator_console_html(
         "due_at",
     )
     escalation_columns = ("event_id", "obligation_id", "command_id", "tenant_id", "owner_team", "escalated_at")
+    operator_audit_columns = (
+        "event_id",
+        "observed_at",
+        "method",
+        "path",
+        "authorized",
+        "credential_type",
+        "tenant_id",
+    )
     metric_items = "\n".join(
         f"<li><span>{escape(key.replace('_', ' ').title())}</span><strong>{_cell(value)}</strong></li>"
         for key, value in witness.items()
@@ -842,6 +921,7 @@ def _authority_operator_console_html(
     <a href="/authority/approval-chains">approval chains json</a>
     <a href="/authority/obligations">obligations json</a>
     <a href="/authority/escalations">escalations json</a>
+    <a href="/authority/operator-audit">operator audit json</a>
   </nav>
   <h2>Responsibility Witness</h2>
   <ul>{metric_items}</ul>
@@ -859,6 +939,11 @@ def _authority_operator_console_html(
   <table>
     <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in escalation_columns)}</tr></thead>
     <tbody>{_rows(escalation_events, escalation_columns)}</tbody>
+  </table>
+  <h2>Operator Audit</h2>
+  <table>
+    <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in operator_audit_columns)}</tr></thead>
+    <tbody>{_rows(operator_audit_events, operator_audit_columns)}</tbody>
   </table>
 </main>
 </body>

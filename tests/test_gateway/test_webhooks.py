@@ -810,6 +810,10 @@ class TestGatewayStatus:
             "/authority/operator",
             headers={"X-Mullu-Authority-Secret": "authority-secret"},
         )
+        audit_allowed = local_client.get(
+            "/authority/operator-audit?authorized=false",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
 
         assert denied.status_code == 403
         assert denied.json()["detail"] == "Authority operator access not authorized"
@@ -817,6 +821,11 @@ class TestGatewayStatus:
         assert allowed.json()["open_obligation_count"] == 0
         assert console_allowed.status_code == 200
         assert "Mullu Authority Operator Console" in console_allowed.text
+        assert audit_allowed.status_code == 200
+        assert audit_allowed.json()["count"] == 1
+        assert audit_allowed.json()["operator_audit_events"][0]["path"] == "/authority/witness"
+        assert audit_allowed.json()["operator_audit_events"][0]["authorized"] is False
+        assert "authority-secret" not in json.dumps(audit_allowed.json())
 
     def test_authority_operator_identity_role_allowed_in_production(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "production")
@@ -908,6 +917,32 @@ class TestGatewayStatus:
         assert console_resp.status_code == 200
         assert command_id in console_resp.text
         assert "pending" in console_resp.text
+
+    def test_authority_operator_audit_read_model(self, client):
+        witness_resp = client.get("/authority/witness")
+        obligations_resp = client.get("/authority/obligations?limit=1")
+        audit_resp = client.get("/authority/operator-audit?limit=2&offset=0")
+        filtered_resp = client.get("/authority/operator-audit?path=/authority/witness&authorized=true")
+        invalid_resp = client.get("/authority/operator-audit?authorized=maybe")
+        console_resp = client.get("/authority/operator")
+
+        assert witness_resp.status_code == 200
+        assert obligations_resp.status_code == 200
+        assert audit_resp.status_code == 200
+        assert audit_resp.json()["count"] == 2
+        assert audit_resp.json()["total"] >= 3
+        assert audit_resp.json()["limit"] == 2
+        assert audit_resp.json()["offset"] == 0
+        assert audit_resp.json()["next_offset"] == 2
+        assert any(
+            event["path"] == "/authority/witness" and event["authorized"] is True
+            for event in filtered_resp.json()["operator_audit_events"]
+        )
+        assert all("sender_id" not in event for event in audit_resp.json()["operator_audit_events"])
+        assert invalid_resp.status_code == 400
+        assert invalid_resp.json()["detail"] == "authorized must be true or false"
+        assert console_resp.status_code == 200
+        assert "Operator Audit" in console_resp.text
 
     def test_authority_obligation_and_escalation_read_models(self, gateway_app, client):
         msg_resp = client.post(
