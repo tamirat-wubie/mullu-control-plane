@@ -62,6 +62,14 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     gateway_env = (os.environ.get("MULLU_ENV", "local_dev") or "local_dev").strip().lower()
     approval_secret = os.environ.get("MULLU_GATEWAY_APPROVAL_SECRET", "")
     authority_operator_secret = os.environ.get("MULLU_AUTHORITY_OPERATOR_SECRET", "")
+    authority_operator_roles = tuple(
+        role.strip()
+        for role in os.environ.get(
+            "MULLU_AUTHORITY_OPERATOR_ROLES",
+            "authority_operator,tenant_owner,platform_operator",
+        ).split(",")
+        if role.strip()
+    )
     defer_approved_execution = (
         os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
         in {"1", "true", "yes", "on"}
@@ -77,13 +85,24 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         return hmac.compare_digest(provided, approval_secret)
 
     def _authority_operator_authorized(request: Request) -> bool:
-        """Fail closed outside local and test unless an explicit operator secret matches."""
+        """Fail closed outside local and test unless operator identity or secret matches."""
         if gateway_env in {"local_dev", "test"}:
             return True
         provided = request.headers.get("X-Mullu-Authority-Secret", "")
-        if not authority_operator_secret:
+        if authority_operator_secret and hmac.compare_digest(provided, authority_operator_secret):
+            return True
+        channel = request.headers.get("X-Mullu-Authority-Channel", "").strip()
+        sender_id = request.headers.get("X-Mullu-Authority-Sender-Id", "").strip()
+        if not channel or not sender_id:
             return False
-        return hmac.compare_digest(provided, authority_operator_secret)
+        mapping = tenant_identity_store.resolve(channel, sender_id)
+        if mapping is None:
+            return False
+        tenant_id = request.headers.get("X-Mullu-Authority-Tenant-Id", "").strip()
+        if tenant_id and mapping.tenant_id != tenant_id:
+            return False
+        roles = set(mapping.roles)
+        return bool(roles.intersection(authority_operator_roles))
 
     def _require_authority_operator(request: Request) -> None:
         if not _authority_operator_authorized(request):
@@ -582,6 +601,25 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
                 escalation_events=list(escalations),
             )
         )
+
+    @app.get("/capability-fabric/read-model")
+    def capability_fabric_read_model(request: Request):
+        _require_authority_operator(request)
+        if capability_admission_gate is None:
+            return {
+                "enabled": False,
+                "require_certified": None,
+                "capsule_count": 0,
+                "capability_count": 0,
+                "artifact_count": 0,
+                "installations": (),
+                "capabilities": (),
+                "domains": (),
+            }
+        return {
+            "enabled": True,
+            **capability_admission_gate.read_model(),
+        }
 
     @app.get("/commands/{command_id}/closure")
     def command_closure(command_id: str):

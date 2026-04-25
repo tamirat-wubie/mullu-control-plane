@@ -11,7 +11,7 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable
 
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityRegistryEntry,
@@ -130,6 +130,36 @@ class GovernedCapabilityRegistry:
         if capsule_id is None:
             raise RuntimeCoreInvariantError("Unknown capability_id")
         return capsule_id
+
+    def read_model(self) -> dict[str, Any]:
+        """Return a deterministic operator read model for installed fabric state."""
+        installations = tuple(
+            self._installations[capsule_id].to_json_dict()
+            for capsule_id in sorted(self._installations)
+        )
+        capabilities = tuple(
+            {
+                **self._capabilities[capability_id].to_json_dict(),
+                "capsule_id": self._capability_to_capsule[capability_id],
+            }
+            for capability_id in sorted(self._capabilities)
+        )
+        domains = tuple(
+            {
+                "domain": domain,
+                "capability_ids": tuple(sorted(capability_ids)),
+            }
+            for domain, capability_ids in sorted(self._domain_to_capability_ids.items())
+        )
+        return {
+            "require_certified": self._require_certified,
+            "capsule_count": self.capsule_count,
+            "capability_count": self.capability_count,
+            "artifact_count": self.artifact_count,
+            "installations": installations,
+            "capabilities": capabilities,
+            "domains": domains,
+        }
 
     def _admission_errors(
         self,

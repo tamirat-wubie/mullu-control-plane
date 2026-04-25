@@ -10,7 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable
 
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityRegistryEntry,
@@ -66,3 +66,7 @@ class CommandCapabilityAdmissionGate:
         """Return the installed capability contract for an admitted typed intent."""
         intent_name = ensure_non_empty_text("intent_name", intent_name)
         return self._registry.get_capability(intent_name)
+
+    def read_model(self) -> dict[str, Any]:
+        """Return the operator read model for the underlying governed registry."""
+        return self._registry.read_model()
