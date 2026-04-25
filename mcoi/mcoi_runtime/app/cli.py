@@ -1,6 +1,7 @@
 """Purpose: CLI entrypoint for the MCOI operator runtime.
 Governance scope: operator-facing CLI only.
-Dependencies: bootstrap, operator loop, console renderer, profiles, policy packs.
+Dependencies: bootstrap, operator loop, console renderer, profiles, policy packs,
+pilot scaffold generation.
 Invariants:
   - CLI is a thin shell over the operator loop.
   - No hidden behavior beyond what the operator loop provides.
@@ -24,6 +25,7 @@ from .console import (
 )
 from .operator_models import OperatorRequest
 from .operator_loop import OperatorLoop
+from .pilot_init import PilotInitRequest, initialize_pilot
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
@@ -320,6 +322,35 @@ def packs_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def pilot_init_command(args: argparse.Namespace) -> int:
+    """Scaffold a governed pilot bundle without live infrastructure mutation."""
+    try:
+        result = initialize_pilot(
+            PilotInitRequest(
+                tenant_id=args.tenant_id,
+                pilot_name=args.name,
+                output_dir=Path(args.output),
+                policy_pack_id=args.policy_pack,
+                policy_version=args.policy_version,
+                max_cost=args.max_cost,
+                max_calls=args.max_calls,
+                force=args.force,
+            )
+        )
+    except (OSError, ValueError) as exc:
+        _fatal(f"pilot init failed: {type(exc).__name__}")
+
+    print(json.dumps(result.to_dict(), sort_keys=True, indent=2))
+    return 0
+
+
+def pilot_command(args: argparse.Namespace) -> int:
+    """Route pilot subcommands."""
+    if getattr(args, "pilot_command", None) == "init":
+        return pilot_init_command(args)
+    _fatal("pilot subcommand is required")
+
+
 def _load_json_object(*, content: str, kind: str, source_name: str) -> dict:
     """Load a JSON object and fail closed on malformed or non-object input."""
     try:
@@ -381,6 +412,17 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("packs", help="List available policy packs")
     subparsers.add_parser("init", help="Initialize a new Mullu project in current directory")
     subparsers.add_parser("demo", help="Run a governed demo showing allow/deny flow")
+    pilot_parser = subparsers.add_parser("pilot", help="Pilot bring-up commands")
+    pilot_subparsers = pilot_parser.add_subparsers(dest="pilot_command")
+    pilot_init_parser = pilot_subparsers.add_parser("init", help="Scaffold a governed pilot bundle")
+    pilot_init_parser.add_argument("--tenant-id", required=True, help="Pilot tenant identifier")
+    pilot_init_parser.add_argument("--name", required=True, help="Human-readable pilot name")
+    pilot_init_parser.add_argument("--output", default="pilot", help="Output directory")
+    pilot_init_parser.add_argument("--policy-pack", default="default-safe", help="Policy pack id")
+    pilot_init_parser.add_argument("--policy-version", default="v0.1", help="Policy version")
+    pilot_init_parser.add_argument("--max-cost", type=float, default=100.0, help="Pilot budget cost limit")
+    pilot_init_parser.add_argument("--max-calls", type=int, default=1000, help="Pilot budget call limit")
+    pilot_init_parser.add_argument("--force", action="store_true", help="Overwrite existing scaffold files")
 
     return parser
 
@@ -560,6 +602,7 @@ def main(argv: list[str] | None = None) -> int:
         "status": status_command,
         "profiles": profiles_command,
         "packs": packs_command,
+        "pilot": pilot_command,
         "init": init_command,
         "demo": demo_command,
     }

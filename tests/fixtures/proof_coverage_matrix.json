@@ -29,6 +29,20 @@
       "surfaces": [
         "lineage_query_api"
       ]
+    },
+    {
+      "action_id": "connect_pilot_scaffold_to_hosted_provisioning_endpoint",
+      "status": "closed",
+      "surfaces": [
+        "pilot_provisioning"
+      ]
+    },
+    {
+      "action_id": "publish_hosted_demo_sandbox_read_models",
+      "status": "closed",
+      "surfaces": [
+        "hosted_demo_sandbox"
+      ]
     }
   ],
   "coverage_levels": [
@@ -45,32 +59,32 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 12,
+      "action_proof": 13,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 4,
+      "read_model": 5,
       "request_proof": 0
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 14,
+      "audit_chain": 15,
       "gap": 0,
-      "read_model": 2,
+      "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 15
+      "witnessed": 17
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 4,
-      "request_proof": 12
+      "read_model": 5,
+      "request_proof": 13
     },
-    "surface_count": 16
+    "surface_count": 18
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -212,6 +226,47 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [],
       "surface_id": "policy_version_registry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/pilot.py",
+        "mcoi/mcoi_runtime/app/pilot_init.py",
+        "mcoi/tests/test_pilot_init.py",
+        "docs/47_one_command_pilot_bringup.md"
+      ],
+      "notes": "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models.",
+      "representative_paths": [
+        "/api/v1/pilots/provision",
+        "/api/v1/pilots/provisions",
+        "/api/v1/pilots/provisions/{pilot_id}"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "pilot_provisioning"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/sandbox.py",
+        "mcoi/mcoi_runtime/core/hosted_demo_sandbox.py",
+        "mcoi/tests/test_hosted_demo_sandbox.py",
+        "docs/48_hosted_demo_sandbox.md"
+      ],
+      "notes": "Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation.",
+      "representative_paths": [
+        "/api/v1/sandbox/summary",
+        "/api/v1/sandbox/traces",
+        "/api/v1/sandbox/lineage/{trace_id}",
+        "/api/v1/sandbox/policy-evaluations"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "hosted_demo_sandbox"
     },
     {
       "action_proof": "action_proof",
