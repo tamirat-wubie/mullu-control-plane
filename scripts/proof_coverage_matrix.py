@@ -19,6 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CANONICAL_OUTPUT = REPO_ROOT / "tests" / "fixtures" / "proof_coverage_matrix.json"
 ASSURANCE_OUTPUT = REPO_ROOT / ".change_assurance" / "proof_coverage_matrix.json"
 ROUTE_PATTERN = re.compile(r"@(?:router|app)\.(?:get|post|put|delete|patch)\(\s*[\"']([^\"']+)[\"']")
+ROUTER_PREFIX_PATTERN = re.compile(r"APIRouter\([^)]*prefix\s*=\s*[\"']([^\"']+)[\"']")
 FRAMEWORK_GENERATED_ROUTES = frozenset({"/docs", "/openapi.json", "/redoc"})
 COVERAGE_LEVELS = ["gap", "read_model", "request_proof", "action_proof", "audit_chain"]
 COVERAGE_STATES = ["proven", "witnessed", "unproven"]
@@ -161,6 +162,45 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_policy_versioning.py",
             ],
             "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+        ),
+        _surface(
+            "pilot_provisioning",
+            [
+                "/api/v1/pilots/provision",
+                "/api/v1/pilots/provisions",
+                "/api/v1/pilots/provisions/{pilot_id}",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/pilot.py",
+                "mcoi/mcoi_runtime/app/pilot_init.py",
+                "mcoi/tests/test_pilot_init.py",
+                "docs/47_one_command_pilot_bringup.md",
+            ],
+            "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models.",
+        ),
+        _surface(
+            "hosted_demo_sandbox",
+            [
+                "/api/v1/sandbox/summary",
+                "/api/v1/sandbox/traces",
+                "/api/v1/sandbox/lineage/{trace_id}",
+                "/api/v1/sandbox/policy-evaluations",
+            ],
+            "read_model",
+            "read_model",
+            "read_model",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/sandbox.py",
+                "mcoi/mcoi_runtime/core/hosted_demo_sandbox.py",
+                "mcoi/tests/test_hosted_demo_sandbox.py",
+                "docs/48_hosted_demo_sandbox.md",
+            ],
+            "Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation.",
         ),
         _surface(
             "gateway_webhook_ingress",
@@ -328,6 +368,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "surfaces": ["lineage_query_api"],
             "status": "closed",
         },
+        {
+            "action_id": "connect_pilot_scaffold_to_hosted_provisioning_endpoint",
+            "surfaces": ["pilot_provisioning"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_hosted_demo_sandbox_read_models",
+            "surfaces": ["hosted_demo_sandbox"],
+            "status": "closed",
+        },
     ]
     return {
         "schema_version": 1,
@@ -369,7 +419,12 @@ def discover_declared_routes(repo_root: Path = REPO_ROOT) -> set[str]:
         for python_file in route_root.rglob("*.py"):
             if "__pycache__" in python_file.parts:
                 continue
-            routes.update(ROUTE_PATTERN.findall(python_file.read_text(encoding="utf-8")))
+            source = python_file.read_text(encoding="utf-8")
+            file_routes = ROUTE_PATTERN.findall(source)
+            routes.update(file_routes)
+            prefixes = ROUTER_PREFIX_PATTERN.findall(source)
+            for prefix in prefixes:
+                routes.update(f"{prefix}{route}" for route in file_routes if route.startswith("/"))
     return routes
 
 

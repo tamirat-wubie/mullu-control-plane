@@ -44,8 +44,22 @@ Optional controls:
 4. Pilot id MUST be deterministic for identical tenant, name, policy pack, and policy version.
 5. Every scaffold MUST include audit and lineage examples before demo use.
 
+## Hosted Provisioning Endpoint
+
+```powershell
+POST /api/v1/pilots/provision
+GET /api/v1/pilots/provisions
+GET /api/v1/pilots/provisions/{pilot_id}
+```
+
+The hosted endpoint returns the same deterministic artifact bundle without
+writing server-local files. Authentication is enforced by the existing API guard
+in pilot and production profiles, and each accepted request records
+`pilot.provision.scaffold` audit evidence. Accepted provisions are retained in a
+bounded operator history read model for list and detail queries.
+
 STATUS:
   Completeness: 100%
-  Invariants verified: local-only scaffold, deterministic pilot id, stable JSON output, no silent overwrite, tenant/policy/budget/dashboard/audit/lineage artifacts
+  Invariants verified: local-only scaffold, deterministic pilot id, stable JSON output, no silent overwrite, tenant/policy/budget/dashboard/audit/lineage artifacts, hosted endpoint has no filesystem mutation, hosted endpoint records audit evidence, accepted provisions persist to bounded history
   Open issues: none
-  Next action: connect scaffold application to an authenticated hosted pilot provisioning endpoint
+  Next action: back hosted pilot provisioning history with the persistent governance store bundle

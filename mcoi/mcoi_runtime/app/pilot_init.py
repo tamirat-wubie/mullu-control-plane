@@ -11,6 +11,7 @@ policy, budget, dashboard, audit, and lineage examples.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 import json
 from pathlib import Path
 from typing import Any
@@ -77,17 +78,119 @@ class PilotInitResult:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class PilotScaffoldBundle:
+    """Provisionable pilot scaffold payload without filesystem side effects."""
+
+    pilot_id: str
+    artifacts: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "pilot_id": self.pilot_id,
+            "artifacts": self.artifacts,
+            "artifact_names": tuple(self.artifacts),
+            "governed": True,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class PilotProvisionRecord:
+    """Accepted hosted pilot provisioning record."""
+
+    pilot_id: str
+    tenant_id: str
+    pilot_name: str
+    policy_pack_id: str
+    policy_version: str
+    artifact_names: tuple[str, ...]
+    artifact_count: int
+    accepted_at: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "pilot_id": self.pilot_id,
+            "tenant_id": self.tenant_id,
+            "pilot_name": self.pilot_name,
+            "policy_pack_id": self.policy_pack_id,
+            "policy_version": self.policy_version,
+            "artifact_names": list(self.artifact_names),
+            "artifact_count": self.artifact_count,
+            "accepted_at": self.accepted_at,
+            "governed": True,
+        }
+
+
+class PilotProvisionRegistry:
+    """Bounded in-memory read model of accepted hosted pilot provisions."""
+
+    def __init__(self, *, max_records: int = 500) -> None:
+        if max_records < 1:
+            raise ValueError("max_records must be at least 1")
+        self._max_records = max_records
+        self._records: dict[str, PilotProvisionRecord] = {}
+        self._order: list[str] = []
+
+    def accept(
+        self,
+        *,
+        request: PilotInitRequest,
+        bundle: PilotScaffoldBundle,
+        accepted_at: str | None = None,
+    ) -> PilotProvisionRecord:
+        """Persist one accepted hosted provision in the bounded read model."""
+        timestamp = accepted_at or datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        record = PilotProvisionRecord(
+            pilot_id=bundle.pilot_id,
+            tenant_id=request.tenant_id,
+            pilot_name=request.pilot_name,
+            policy_pack_id=request.policy_pack_id,
+            policy_version=request.policy_version,
+            artifact_names=tuple(bundle.artifacts),
+            artifact_count=len(bundle.artifacts),
+            accepted_at=timestamp,
+        )
+        if record.pilot_id not in self._records:
+            self._order.append(record.pilot_id)
+        self._records[record.pilot_id] = record
+        while len(self._order) > self._max_records:
+            oldest = self._order.pop(0)
+            self._records.pop(oldest, None)
+        return record
+
+    def get(self, pilot_id: str) -> PilotProvisionRecord | None:
+        """Fetch one accepted pilot provision by pilot id."""
+        return self._records.get(pilot_id)
+
+    def list_records(
+        self,
+        *,
+        tenant_id: str = "",
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[PilotProvisionRecord, ...]:
+        """List accepted provisions newest-first with bounded paging."""
+        bounded_limit = min(max(limit, 1), 100)
+        bounded_offset = max(offset, 0)
+        records = [
+            self._records[pilot_id]
+            for pilot_id in reversed(self._order)
+            if pilot_id in self._records and (not tenant_id or self._records[pilot_id].tenant_id == tenant_id)
+        ]
+        return tuple(records[bounded_offset : bounded_offset + bounded_limit])
+
+    def count(self, *, tenant_id: str = "") -> int:
+        """Count accepted provision records, optionally scoped to a tenant."""
+        if not tenant_id:
+            return len(self._records)
+        return sum(1 for record in self._records.values() if record.tenant_id == tenant_id)
+
+
 def initialize_pilot(request: PilotInitRequest) -> PilotInitResult:
     """Create a complete local pilot scaffold."""
-    pilot_id = stable_identifier(
-        "pilot",
-        {
-            "tenant_id": request.tenant_id,
-            "pilot_name": request.pilot_name,
-            "policy_pack_id": request.policy_pack_id,
-            "policy_version": request.policy_version,
-        },
-    )
+    bundle = build_pilot_scaffold(request)
+    pilot_id = bundle.pilot_id
+    payloads = bundle.artifacts
     output_dir = request.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -96,7 +199,6 @@ def initialize_pilot(request: PilotInitRequest) -> PilotInitResult:
     if existing and not request.force:
         raise FileExistsError("pilot scaffold target contains existing files")
 
-    payloads = _pilot_payloads(request, pilot_id)
     written: list[Path] = []
     for file_name, payload in payloads.items():
         path = output_dir / file_name
@@ -111,6 +213,23 @@ def initialize_pilot(request: PilotInitRequest) -> PilotInitResult:
         output_dir=output_dir,
         files_written=tuple(written),
         manifest_path=output_dir / "pilot.manifest.json",
+    )
+
+
+def build_pilot_scaffold(request: PilotInitRequest) -> PilotScaffoldBundle:
+    """Build deterministic pilot artifacts without writing to disk."""
+    pilot_id = stable_identifier(
+        "pilot",
+        {
+            "tenant_id": request.tenant_id,
+            "pilot_name": request.pilot_name,
+            "policy_pack_id": request.policy_pack_id,
+            "policy_version": request.policy_version,
+        },
+    )
+    return PilotScaffoldBundle(
+        pilot_id=pilot_id,
+        artifacts=_pilot_payloads(request, pilot_id),
     )
 
 

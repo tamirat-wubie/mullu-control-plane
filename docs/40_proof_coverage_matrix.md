@@ -16,6 +16,7 @@ document is the operator-readable witness.
 | `cost_budget_read_models` | `/api/v1/budget`, `/api/v1/costs`, `/api/v1/costs/top-spenders` | read-model | read-model | tenant budget state | hash-chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
 | `model_experiment_control` | `/api/v1/models`, `/api/v1/ab-test`, `/api/v1/ab-test/summary` | yes | yes | experiment control | hash-chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
 | `policy_version_registry` | `/api/v1/policies/{policy_id}/versions`, `/api/v1/policies/{policy_id}/versions/{version}`, `/api/v1/policies/{policy_id}/versions/{version}/promote`, `/api/v1/policies/{policy_id}/rollback`, `/api/v1/policies/{policy_id}/diff`, `/api/v1/policies/{policy_id}/shadow/{shadow_version}` | yes | yes | policy artifact registry | hash-chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
+| `pilot_provisioning` | `/api/v1/pilots/provision`, `/api/v1/pilots/provisions`, `/api/v1/pilots/provisions/{pilot_id}` | yes | yes | pilot artifact scaffold | hash-chain | witnessed | Hosted pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models. |
 | `gateway_webhook_ingress` | `/webhook/web`, `/webhook/slack`, `/webhook/telegram` | yes | yes | command ledger | hash-chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
@@ -47,6 +48,7 @@ Resolved closure actions:
 2. `normalize_gateway_request_receipt_envelopes`
 3. `bound_authority_read_models_to_paginated_windows`
 4. `implement_lineage_query_routes_and_schema`
+5. `connect_pilot_scaffold_to_hosted_provisioning_endpoint`
 
 Open closure actions:
 
@@ -54,6 +56,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan
+  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models
   Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`
