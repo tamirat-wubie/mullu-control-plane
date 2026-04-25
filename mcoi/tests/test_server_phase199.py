@@ -58,6 +58,9 @@ class TestCompletionEndpoint:
         assert data["governed"] is True
         assert data["cost"] >= 0
         assert data["provider"] == "stub"
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
+        assert data["action_proof"]["proof_phase"] == "llm.complete"
 
     def test_completion_with_system(self, client):
         resp = client.post("/api/v1/complete", json={
@@ -168,6 +171,9 @@ class TestCertificationEndpoint:
         assert "chain_id" in data
         assert "all_passed" in data
         assert "chain_hash" in data
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
+        assert data["action_proof"]["proof_phase"] == "certification.run"
         assert "steps" in data
         assert len(data["steps"]) == 5
 

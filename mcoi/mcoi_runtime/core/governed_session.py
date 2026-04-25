@@ -407,17 +407,33 @@ class GovernedSession:
             detail=detail or {},
         )
 
-    def _certify_proof(self, endpoint: str, decision: str, guard_results: list[dict[str, Any]] | None = None) -> None:
+    def _certify_proof(
+        self,
+        endpoint: str,
+        decision: str,
+        guard_results: list[dict[str, Any]] | None = None,
+    ) -> dict[str, str]:
         if self._proof_bridge is None:
-            return
+            return {
+                "endpoint": endpoint,
+                "decision": decision,
+                "proof_receipt_id": "",
+                "proof_hash": "",
+            }
         try:
-            self._proof_bridge.certify_governance_decision(
+            proof = self._proof_bridge.certify_governance_decision(
                 tenant_id=self._tenant_id,
                 endpoint=endpoint,
                 guard_results=guard_results or [],
                 decision=decision,
                 actor_id=self._identity_id,
             )
+            return {
+                "endpoint": endpoint,
+                "decision": decision,
+                "proof_receipt_id": proof.capsule.receipt.receipt_id,
+                "proof_hash": proof.receipt_hash,
+            }
         except Exception as exc:
             self._record_audit(
                 action="session.proof",
@@ -445,7 +461,7 @@ class GovernedSession:
         if self._llm_bridge is None:
             raise RuntimeError("no LLM bridge configured")
 
-        self._certify_proof("session/llm", "allowed")
+        request_proof = self._certify_proof("session/llm", "allowed")
 
         # Check LLM cache before calling provider
         cache_hit = False
@@ -483,6 +499,20 @@ class GovernedSession:
             if redacted != result.content:
                 from dataclasses import replace
                 result = replace(result, content=redacted)
+
+        from dataclasses import fields, is_dataclass, replace
+        result_metadata = dict(getattr(result, "metadata", {}) or {})
+        result_metadata["request_envelope_proof"] = request_proof
+        result_field_names = {
+            field.name for field in fields(result)
+        } if is_dataclass(result) else set()
+        if "metadata" in result_field_names:
+            result = replace(result, metadata=result_metadata)
+        else:
+            try:
+                setattr(result, "metadata", result_metadata)
+            except (AttributeError, TypeError):
+                pass
 
         with self._lock:
             self._operations += 1
@@ -527,9 +557,13 @@ class GovernedSession:
         self._check_tenant_gating()
         self._check_rbac("execute", "POST")
         self._check_rate_limit("session/execute")
-        self._certify_proof("session/execute", "allowed")
+        request_proof = self._certify_proof("session/execute", "allowed")
 
-        result_detail: dict[str, Any] = {"action_type": action_type, "bindings": dict(bindings)}
+        result_detail: dict[str, Any] = {
+            "action_type": action_type,
+            "bindings": dict(bindings),
+            "request_envelope_proof": request_proof,
+        }
 
         # Route through GovernedDispatcher if available
         if self._governed_dispatcher is not None:
@@ -583,7 +617,7 @@ class GovernedSession:
         self._check_policy("query")
         self._check_rbac(resource_type, "GET")
         self._check_rate_limit("session/query")
-        self._certify_proof("session/query", "allowed")
+        request_proof = self._certify_proof("session/query", "allowed")
 
         self._operations += 1
         self._record_audit(
@@ -594,7 +628,12 @@ class GovernedSession:
         )
 
         self._maybe_checkpoint()
-        return {"resource_type": resource_type, "filters": filters, "governed": True}
+        return {
+            "resource_type": resource_type,
+            "filters": filters,
+            "governed": True,
+            "request_envelope_proof": request_proof,
+        }
 
     # ── Identity & access ──
 

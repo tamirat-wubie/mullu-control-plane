@@ -12,6 +12,8 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import asdict
+from hashlib import sha256
+import json
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -259,22 +261,29 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         signature = request.headers.get("X-Hub-Signature-256", "")
         if not whatsapp.verify_signature(body, signature):
             raise HTTPException(403, detail="Invalid signature")
-        import json
         import time as _time
         _t0 = _time.monotonic()
         payload = json.loads(body)
         msg = whatsapp.parse_message(payload)
+        request_receipt = _gateway_request_receipt(
+            channel="whatsapp",
+            request=request,
+            body=body,
+            message=msg,
+        )
         if msg is None:
             event_log.record(channel="whatsapp", sender_id="", status="ignored",
                              body=body.decode("utf-8", errors="replace")[:200],
-                             headers=dict(request.headers))
-            return JSONResponse({"status": "ignored"})
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
         response = router.handle_message(msg)
         event_log.record(channel="whatsapp", sender_id=msg.sender_id,
                          message_id=msg.message_id, status="processed",
                          body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
                          processing_ms=(_time.monotonic() - _t0) * 1000)
-        return JSONResponse({"status": "ok", "response": response.body})
+        return JSONResponse({"status": "ok", "response": response.body, "request_receipt": request_receipt})
 
     # ── Telegram Webhook ──
 
@@ -283,7 +292,6 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         """Telegram Bot API webhook (POST)."""
         if telegram is None:
             raise HTTPException(503, detail="Telegram not configured")
-        import json
         import time as _time
         _t0 = _time.monotonic()
         body_bytes = await request.body()
@@ -297,16 +305,24 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         except (json.JSONDecodeError, ValueError):
             raise HTTPException(400, detail="Invalid JSON payload")
         msg = telegram.parse_message(payload)
+        request_receipt = _gateway_request_receipt(
+            channel="telegram",
+            request=request,
+            body=body_bytes,
+            message=msg,
+        )
         if msg is None:
             event_log.record(channel="telegram", sender_id="", status="ignored",
-                             headers=dict(request.headers))
-            return JSONResponse({"status": "ignored"})
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
         response = router.handle_message(msg)
         event_log.record(channel="telegram", sender_id=msg.sender_id,
                          message_id=msg.message_id, status="processed",
                          body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
                          processing_ms=(_time.monotonic() - _t0) * 1000)
-        return JSONResponse({"status": "ok", "response": response.body})
+        return JSONResponse({"status": "ok", "response": response.body, "request_receipt": request_receipt})
 
     # ── Slack Events API ──
 
@@ -317,7 +333,6 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             raise HTTPException(503, detail="Slack not configured")
         body_bytes = await request.body()
         body_str = body_bytes.decode("utf-8")
-        import json
         payload = json.loads(body_str)
 
         # URL verification challenge
@@ -332,18 +347,26 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             raise HTTPException(403, detail="Invalid signature")
 
         msg = slack.parse_message(payload)
+        request_receipt = _gateway_request_receipt(
+            channel="slack",
+            request=request,
+            body=body_bytes,
+            message=msg,
+        )
         if msg is None:
             event_log.record(channel="slack", sender_id="", status="ignored",
-                             headers=dict(request.headers))
-            return JSONResponse({"status": "ignored"})
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
         import time as _time
         _t0 = _time.monotonic()
         response = router.handle_message(msg)
         event_log.record(channel="slack", sender_id=msg.sender_id,
                          message_id=msg.message_id, status="processed",
                          body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
                          processing_ms=(_time.monotonic() - _t0) * 1000)
-        return JSONResponse({"status": "ok", "response": response.body})
+        return JSONResponse({"status": "ok", "response": response.body, "request_receipt": request_receipt})
 
     # ── Discord Interactions ──
 
@@ -352,8 +375,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         """Discord interaction webhook (POST)."""
         if discord is None:
             raise HTTPException(503, detail="Discord not configured")
-        import json
-        body_str = (await request.body()).decode("utf-8")
+        body_bytes = await request.body()
+        body_str = body_bytes.decode("utf-8")
         payload = json.loads(body_str)
 
         # Verify interaction
@@ -367,10 +390,17 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             return JSONResponse({"type": 1})
 
         msg = discord.parse_interaction(payload)
+        request_receipt = _gateway_request_receipt(
+            channel="discord",
+            request=request,
+            body=body_bytes,
+            message=msg,
+        )
         if msg is None:
             event_log.record(channel="discord", sender_id="", status="ignored",
-                             headers=dict(request.headers))
-            return JSONResponse({"status": "ignored"})
+                             headers=dict(request.headers),
+                             outcome_detail=request_receipt["receipt_id"])
+            return JSONResponse({"status": "ignored", "request_receipt": request_receipt})
         import time as _time
         _t0 = _time.monotonic()
         response = router.handle_message(msg)
@@ -378,10 +408,12 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         event_log.record(channel="discord", sender_id=msg.sender_id,
                          message_id=msg.message_id, status="processed",
                          body=msg.body[:200], headers=dict(request.headers),
+                         outcome_detail=request_receipt["receipt_id"],
                          processing_ms=(_time.monotonic() - _t0) * 1000)
         return JSONResponse({
             "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
             "data": {"content": response.body},
+            "request_receipt": request_receipt,
         })
 
     # ── Web Chat ──
@@ -389,9 +421,9 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     @app.post("/webhook/web")
     async def web_receive(request: Request):
         """Web chat message endpoint (POST)."""
-        import json
+        body = await request.body()
         try:
-            payload = json.loads(await request.body())
+            payload = json.loads(body)
         except (json.JSONDecodeError, ValueError):
             raise HTTPException(400, detail="Invalid JSON payload")
         session_token = request.headers.get("X-Session-Token", "")
@@ -400,12 +432,19 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         msg = web.parse_message(payload, session_token=session_token)
         if msg is None:
             raise HTTPException(400, detail="Invalid message")
+        request_receipt = _gateway_request_receipt(
+            channel="web",
+            request=request,
+            body=body,
+            message=msg,
+        )
         response = router.handle_message(msg)
         return JSONResponse({
             "status": "ok",
             "message_id": response.message_id,
             "body": response.body,
             "governed": response.governed,
+            "request_receipt": request_receipt,
             "metadata": response.metadata,
         })
 
@@ -626,19 +665,25 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         certificate = command_ledger.terminal_certificate_for(command_id)
         if certificate is None:
             raise HTTPException(404, detail="terminal closure certificate not found")
+        events = [
+            {
+                "event_id": event.event_id,
+                "previous_state": event.previous_state.value,
+                "next_state": event.next_state.value,
+                "event_hash": event.event_hash,
+                "timestamp": event.timestamp,
+            }
+            for event in command_ledger.events_for(command_id)
+        ]
+        certificate_payload = asdict(certificate)
         return {
             "command_id": command_id,
             "terminal_certificate": certificate,
-            "events": [
-                {
-                    "event_id": event.event_id,
-                    "previous_state": event.previous_state.value,
-                    "next_state": event.next_state.value,
-                    "event_hash": event.event_hash,
-                    "timestamp": event.timestamp,
-                }
-                for event in command_ledger.events_for(command_id)
-            ],
+            "proof_coverage_witnesses": _closure_proof_coverage_witnesses(
+                terminal_certificate=certificate_payload,
+                events=events,
+            ),
+            "events": events,
         }
 
     @app.get("/capability-fabric/admission-audits")
@@ -790,6 +835,85 @@ def _authority_operator_console_html(
 </main>
 </body>
 </html>"""
+
+
+def _closure_proof_coverage_witnesses(
+    *,
+    terminal_certificate: dict[str, Any],
+    events: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Bind closure proof matrix claims to runtime witness references."""
+    event_hashes = tuple(
+        str(event["event_hash"])
+        for event in events
+        if event.get("event_hash")
+    )
+    witnesses: list[dict[str, Any]] = [
+        {
+            "matrix_surface_id": "gateway_capability_fabric",
+            "invariant_id": "command_lifecycle_events_are_hash_linked",
+            "witness_type": "command_event_hash_chain",
+            "witness_refs": event_hashes,
+        },
+        {
+            "matrix_surface_id": "gateway_capability_fabric",
+            "invariant_id": "terminal_closure_requires_evidence_refs",
+            "witness_type": "terminal_closure_certificate",
+            "witness_ref": terminal_certificate["certificate_id"],
+            "evidence_refs": tuple(terminal_certificate["evidence_refs"]),
+        },
+    ]
+    response_evidence_closure_id = terminal_certificate.get("response_evidence_closure_id")
+    if response_evidence_closure_id:
+        witnesses.append({
+            "matrix_surface_id": "gateway_capability_fabric",
+            "invariant_id": "successful_response_is_bound_to_response_evidence_closure",
+            "witness_type": "response_evidence_closure",
+            "witness_ref": response_evidence_closure_id,
+        })
+    return witnesses
+
+
+def _gateway_request_receipt(
+    *,
+    channel: str,
+    request: Request,
+    body: bytes,
+    message: Any | None,
+) -> dict[str, Any]:
+    """Normalize a request-bound proof envelope for gateway ingress."""
+    safe_header_names = tuple(sorted(
+        name.lower()
+        for name in request.headers
+        if not _sensitive_header_name(name)
+    ))
+    message_id = str(getattr(message, "message_id", "") or "")
+    sender_id = str(getattr(message, "sender_id", "") or "")
+    body_hash = sha256(body).hexdigest()
+    receipt_payload = {
+        "channel": channel,
+        "method": request.method,
+        "path": request.url.path,
+        "message_id": message_id,
+        "sender_id_hash": sha256(sender_id.encode()).hexdigest() if sender_id else "",
+        "body_hash": body_hash,
+        "safe_header_names": safe_header_names,
+        "receipt_type": "gateway_request_receipt_v1",
+    }
+    receipt_hash = sha256(
+        json.dumps(receipt_payload, sort_keys=True, default=str).encode()
+    ).hexdigest()
+    return {
+        "receipt_id": f"gateway-request-{receipt_hash[:16]}",
+        "receipt_hash": receipt_hash,
+        **receipt_payload,
+    }
+
+
+def _sensitive_header_name(name: str) -> bool:
+    lowered = name.lower()
+    return any(marker in lowered for marker in ("authorization", "secret", "signature", "token", "cookie"))
+
 
 # Default app instance
 app = create_gateway_app()

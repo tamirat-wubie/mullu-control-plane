@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.data_export import ExportFormat, ExportRequest
+from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 from mcoi_runtime.persistence import PathTraversalError
 
 router = APIRouter()
@@ -23,6 +24,40 @@ router = APIRouter()
 
 def _data_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _certify_action_proof(
+    *,
+    endpoint: str,
+    tenant_id: str,
+    actor_id: str,
+    target: str,
+    action: str,
+    succeeded: bool,
+) -> dict[str, object]:
+    """Certify a data-plane action response with a proof bridge receipt."""
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=tenant_id or "system",
+        endpoint=endpoint,
+        guard_results=[
+            {
+                "guard_name": "data_action_closure",
+                "allowed": True,
+                "reason": "data action reached response boundary",
+            }
+        ],
+        decision="allowed",
+        actor_id=actor_id or "anonymous",
+        reason="data action response certified",
+    )
+    return {
+        "endpoint": endpoint,
+        "target": target,
+        "proof_phase": action,
+        "succeeded": succeeded,
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "proof_hash": proof.receipt_hash,
+    }
 
 
 # ── Pydantic request models ──────────────────────────────────────────────
@@ -263,14 +298,37 @@ def list_tools(category: str | None = None):
 def invoke_tool(req: ToolInvokeRequest):
     """Invoke a registered tool."""
     deps.metrics.inc("requests_governed")
+    tool = deps.tool_registry.get(req.tool_id)
     result = deps.tool_registry.invoke(req.tool_id, req.arguments, tenant_id=req.tenant_id)
+    policy_receipt = certify_tool_capability_policy_receipt(
+        tool=tool,
+        tool_id=req.tool_id,
+        arguments=req.arguments,
+        tenant_id=req.tenant_id,
+        invocation_id=result.invocation_id,
+        execution_succeeded=result.succeeded,
+    )
     deps.audit_trail.record(
         action="tool.invoke", actor_id="api", tenant_id=req.tenant_id,
         target=req.tool_id, outcome="success" if result.succeeded else "error",
+        detail={
+            "capability_policy_receipt_id": policy_receipt["receipt_id"],
+            "argument_hash": policy_receipt["argument_hash"],
+            "policy_allowed": policy_receipt["policy_allowed"],
+        },
     )
     return {
         "invocation_id": result.invocation_id, "tool_id": result.tool_id,
         "output": result.output, "succeeded": result.succeeded, "error": result.error,
+        "capability_policy_receipt": policy_receipt,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/tools/invoke",
+            tenant_id=req.tenant_id,
+            actor_id="api",
+            target=req.tool_id,
+            action="tool.invoke",
+            succeeded=result.succeeded,
+        ),
     }
 
 
@@ -369,6 +427,14 @@ def run_certification():
         "chain_id": chain.chain_id,
         "all_passed": chain.all_passed,
         "chain_hash": chain.chain_hash,
+        "action_proof": _certify_action_proof(
+            endpoint="/api/v1/certify",
+            tenant_id="system",
+            actor_id="api",
+            target=chain.chain_id,
+            action="certification.run",
+            succeeded=chain.all_passed,
+        ),
         "steps": [
             {"name": s.name, "status": s.status.value, "proof_hash": s.proof_hash, "detail": s.detail}
             for s in chain.steps

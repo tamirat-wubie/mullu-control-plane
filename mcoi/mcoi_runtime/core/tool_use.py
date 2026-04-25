@@ -14,7 +14,7 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 from hashlib import sha256
 import json
@@ -30,6 +30,45 @@ def _classify_tool_exception(exc: Exception) -> str:
     if isinstance(exc, ValueError):
         return f"tool validation error ({error_type})"
     return f"tool handler error ({error_type})"
+
+
+def certify_tool_capability_policy_receipt(
+    *,
+    tool: ToolDefinition | None,
+    tool_id: str,
+    arguments: dict[str, Any],
+    tenant_id: str,
+    invocation_id: str,
+    execution_succeeded: bool,
+) -> dict[str, Any]:
+    """Bind tool arguments to the capability policy evaluated for invocation."""
+    required_parameters = tuple(param.name for param in tool.parameters if param.required) if tool else ()
+    provided_parameters = tuple(sorted(arguments))
+    missing_required = tuple(name for name in required_parameters if name not in arguments)
+    arguments_hash = sha256(
+        json.dumps(arguments, sort_keys=True, default=str).encode()
+    ).hexdigest()
+    policy_allowed = tool is not None and tool.enabled and not missing_required
+    receipt_payload = {
+        "tool_id": tool_id,
+        "tenant_id": tenant_id or "system",
+        "invocation_id": invocation_id,
+        "policy_id": "tool_argument_capability_policy_v1",
+        "argument_hash": arguments_hash,
+        "provided_parameters": provided_parameters,
+        "required_parameters": required_parameters,
+        "missing_required": missing_required,
+        "policy_allowed": policy_allowed,
+        "execution_succeeded": execution_succeeded,
+    }
+    receipt_hash = sha256(
+        json.dumps(receipt_payload, sort_keys=True, default=str).encode()
+    ).hexdigest()
+    return {
+        "receipt_id": f"tool-policy-{receipt_hash[:16]}",
+        "receipt_hash": receipt_hash,
+        **receipt_payload,
+    }
 
 
 @dataclass(frozen=True, slots=True)

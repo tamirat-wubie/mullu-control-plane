@@ -1,0 +1,270 @@
+{
+  "closure_actions": [
+    {
+      "action_id": "bind_tool_arguments_to_capability_policy_receipts",
+      "status": "closed",
+      "surfaces": [
+        "tool_invocation",
+        "gateway_capability_fabric"
+      ]
+    },
+    {
+      "action_id": "normalize_gateway_request_receipt_envelopes",
+      "status": "closed",
+      "surfaces": [
+        "gateway_capability_fabric"
+      ]
+    }
+  ],
+  "coverage_levels": [
+    "gap",
+    "read_model",
+    "request_proof",
+    "action_proof",
+    "audit_chain"
+  ],
+  "generated_by": "scripts/proof_coverage_matrix.py",
+  "schema_version": 1,
+  "surfaces": [
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/capability_fabric.py",
+        "mcoi/mcoi_runtime/core/command_capability_admission.py"
+      ],
+      "notes": "Gateway command admission, request receipt envelopes, and terminal closure expose runtime witnesses.",
+      "representative_paths": [
+        "/webhook/*",
+        "/capability-fabric/read-model",
+        "/commands/{command_id}/closure"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "command_lifecycle_events_are_hash_linked",
+        "terminal_closure_requires_evidence_refs",
+        "successful_response_is_bound_to_response_evidence_closure"
+      ],
+      "surface_id": "gateway_capability_fabric"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/app/streaming.py",
+        "mcoi/tests/test_streaming.py",
+        "mcoi/tests/test_server_phase200.py"
+      ],
+      "notes": "SSE responses include precharge, first-byte, chunk-debit, and final-reconcile proof identifiers.",
+      "representative_paths": [
+        "/api/v1/stream",
+        "/api/v1/chat/stream"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "llm_streaming"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py"
+      ],
+      "notes": "Completion routes are governed through budget, model routing, and proof bridge checks.",
+      "representative_paths": [
+        "/api/v1/complete",
+        "/api/v1/complete/safe",
+        "/api/v1/complete/auto"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "llm_completion"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py"
+      ],
+      "notes": "Chat and workflow routes preserve governed request and action proof boundaries.",
+      "representative_paths": [
+        "/api/v1/chat",
+        "/api/v1/chat/workflow",
+        "/api/v1/chat/workflow/history"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "llm_chat_workflow"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py",
+        "mcoi/mcoi_runtime/core/tenant_budget.py"
+      ],
+      "notes": "Budget and cost surfaces expose bounded read models over governed spend state.",
+      "representative_paths": [
+        "/api/v1/budget",
+        "/api/v1/costs",
+        "/api/v1/costs/top-spenders"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "cost_budget_read_models"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/llm.py"
+      ],
+      "notes": "Model catalog and experiment control routes are declared as governed control surfaces.",
+      "representative_paths": [
+        "/api/v1/models",
+        "/api/v1/ab-test",
+        "/api/v1/ab-test/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "model_experiment_control"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/router.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Webhook ingress binds tenant resolution, command ledger, and event-log evidence.",
+      "representative_paths": [
+        "/webhook/web",
+        "/webhook/slack",
+        "/webhook/telegram"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "gateway_webhook_ingress"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/approval.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Approval resolution exposes protected operator paths and audited chain state.",
+      "representative_paths": [
+        "/webhook/approve/{request_id}",
+        "/authority/approval-chains"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "gateway_approval_resolution"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/authority_obligation_mesh.py",
+        "tests/test_gateway/test_authority_obligation_mesh.py"
+      ],
+      "notes": "Authority and obligation surfaces expose unresolved responsibility state.",
+      "representative_paths": [
+        "/authority/witness",
+        "/authority/obligations",
+        "/authority/escalations"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "pending_approval_chain_count",
+        "open_obligation_count",
+        "overdue_obligation_count",
+        "escalated_obligation_count"
+      ],
+      "surface_id": "authority_obligation_mesh"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "gateway/server.py",
+        "scripts/collect_deployment_witness.py",
+        "tests/test_collect_deployment_witness.py"
+      ],
+      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state.",
+      "representative_paths": [
+        "/gateway/witness",
+        "/runtime/witness",
+        "/anchors/latest"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "latest_command_event_hash",
+        "latest_terminal_certificate_id",
+        "open_obligation_count",
+        "overdue_obligation_count"
+      ],
+      "surface_id": "gateway_runtime_witness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/app/routers/workflow.py",
+        "mcoi/mcoi_runtime/core/tool_use.py"
+      ],
+      "notes": "Tool invocation routes bind action proof ids to capability policy receipts over argument hashes.",
+      "representative_paths": [
+        "/api/v1/tools/invoke",
+        "/api/v1/workflow/tools"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "tool_invocation"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/core/governed_session.py",
+        "mcoi/mcoi_runtime/core/proof_bridge.py",
+        "mcoi/tests/test_governed_session.py"
+      ],
+      "notes": "Session entry points return request-envelope proofs and retain action proof lineage.",
+      "representative_paths": [
+        "GovernedSession.llm",
+        "GovernedSession.execute",
+        "GovernedSession.query"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [],
+      "surface_id": "governed_session"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "evidence_files": [
+        "gateway/server.py"
+      ],
+      "notes": "Operational liveness and documentation surfaces are outside the proof-critical path.",
+      "representative_paths": [
+        "/health",
+        "/docs",
+        "/openapi.json",
+        "/redoc"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "health_docs_exempt"
+    }
+  ]
+}

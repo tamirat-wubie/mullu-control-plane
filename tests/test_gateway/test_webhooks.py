@@ -3,8 +3,11 @@
 Tests: HTTP webhook endpoints for all channels using FastAPI TestClient.
 """
 
-import sys
+import hashlib
+import hmac
 import json
+import sys
+import time
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
@@ -36,6 +39,38 @@ class StubSession:
 
     def close(self):
         pass
+
+
+def _assert_gateway_request_receipt(
+    receipt: dict,
+    *,
+    channel: str,
+    path: str,
+    message_id_prefix: str = "",
+    sender_expected: bool = True,
+) -> None:
+    assert receipt["receipt_type"] == "gateway_request_receipt_v1"
+    assert receipt["channel"] == channel
+    assert receipt["path"] == path
+    assert receipt["body_hash"]
+    assert receipt["receipt_hash"]
+    assert receipt["receipt_id"].startswith("gateway-request-")
+    if message_id_prefix:
+        assert receipt["message_id"].startswith(message_id_prefix)
+    else:
+        assert receipt["message_id"] == ""
+    if sender_expected:
+        assert receipt["sender_id_hash"]
+    else:
+        assert receipt["sender_id_hash"] == ""
+
+
+def _slack_signature(*, secret: str, timestamp: str, body: str) -> str:
+    return "v0=" + hmac.new(
+        secret.encode(),
+        f"v0:{timestamp}:{body}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
 
 
 def _fabric_capability_payload(capability_id: str) -> dict:
@@ -198,6 +233,38 @@ class TestWhatsAppConfigured:
         resp = client.get("/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=c")
         assert resp.status_code == 403
 
+    def test_receive_with_message_returns_request_receipt(self):
+        app = create_gateway_app(platform=StubPlatform(response="WA reply"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="whatsapp", sender_id="+1234567890",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+        payload = {
+            "entry": [{
+                "changes": [{
+                    "value": {
+                        "messages": [{
+                            "from": "+1234567890",
+                            "id": "wamid.1",
+                            "type": "text",
+                            "text": {"body": "Hello"},
+                        }]
+                    }
+                }]
+            }]
+        }
+        resp = client.post("/webhook/whatsapp", content=json.dumps(payload))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["response"] == "WA reply"
+        _assert_gateway_request_receipt(
+            data["request_receipt"],
+            channel="whatsapp",
+            path="/webhook/whatsapp",
+            message_id_prefix="wamid.",
+        )
+
 
 # ═══ Telegram ═══
 
@@ -226,7 +293,29 @@ class TestTelegramWebhook:
         }
         resp = client.post("/webhook/telegram", content=json.dumps(payload))
         assert resp.status_code == 200
-        assert resp.json()["response"] == "TG reply"
+        data = resp.json()
+        assert data["response"] == "TG reply"
+        _assert_gateway_request_receipt(
+            data["request_receipt"],
+            channel="telegram",
+            path="/webhook/telegram",
+            message_id_prefix="tg-",
+        )
+
+    def test_ignored_update_returns_request_receipt(self, monkeypatch):
+        monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:ABC")
+        app = create_gateway_app(platform=StubPlatform(response="ignored"))
+        client = TestClient(app)
+        resp = client.post("/webhook/telegram", content=json.dumps({"update_id": 2}))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "ignored"
+        _assert_gateway_request_receipt(
+            data["request_receipt"],
+            channel="telegram",
+            path="/webhook/telegram",
+            sender_expected=False,
+        )
 
 
 # ═══ Slack ═══
@@ -247,6 +336,50 @@ class TestSlackWebhook:
         assert resp.status_code == 200
         assert resp.json()["challenge"] == "test_challenge"
 
+    def test_receive_with_message_returns_request_receipt(self, monkeypatch):
+        monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-123")
+        monkeypatch.setenv("SLACK_SIGNING_SECRET", "secret")
+        app = create_gateway_app(platform=StubPlatform(response="Slack reply"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="slack", sender_id="U123",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+        payload = {
+            "type": "event_callback",
+            "team_id": "T1",
+            "event": {
+                "type": "message",
+                "user": "U123",
+                "channel": "C1",
+                "text": "Hello",
+                "ts": "1710000000.000100",
+            },
+        }
+        body = json.dumps(payload)
+        timestamp = str(int(time.time()))
+        resp = client.post(
+            "/webhook/slack",
+            content=body,
+            headers={
+                "X-Slack-Request-Timestamp": timestamp,
+                "X-Slack-Signature": _slack_signature(
+                    secret="secret",
+                    timestamp=timestamp,
+                    body=body,
+                ),
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["response"] == "Slack reply"
+        _assert_gateway_request_receipt(
+            data["request_receipt"],
+            channel="slack",
+            path="/webhook/slack",
+            message_id_prefix="slack-",
+        )
+
 
 # ═══ Discord ═══
 
@@ -264,6 +397,33 @@ class TestDiscordWebhook:
         assert resp.status_code == 200
         assert resp.json()["type"] == 1
 
+    def test_receive_with_command_returns_request_receipt(self, monkeypatch):
+        monkeypatch.setenv("DISCORD_BOT_TOKEN", "bot-123")
+        app = create_gateway_app(platform=StubPlatform(response="Discord reply"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="discord", sender_id="D123",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+        payload = {
+            "type": 2,
+            "id": "interaction-1",
+            "guild_id": "G1",
+            "channel_id": "C1",
+            "member": {"user": {"id": "D123"}},
+            "data": {"name": "hello"},
+        }
+        resp = client.post("/webhook/discord", content=json.dumps(payload))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["data"]["content"] == "Discord reply"
+        _assert_gateway_request_receipt(
+            data["request_receipt"],
+            channel="discord",
+            path="/webhook/discord",
+            message_id_prefix="discord-",
+        )
+
 
 # ═══ Web Chat ═══
 
@@ -280,6 +440,13 @@ class TestWebChatWebhook:
         data = resp.json()
         assert data["governed"] is True
         assert data["body"] == "Governed response"
+        _assert_gateway_request_receipt(
+            data["request_receipt"],
+            channel="web",
+            path="/webhook/web",
+            message_id_prefix="web-",
+        )
+        assert "x-session-token" not in data["request_receipt"]["safe_header_names"]
 
     def test_missing_token_rejected(self, client):
         resp = client.post("/webhook/web", content=json.dumps({}))
@@ -867,6 +1034,13 @@ class TestGatewayStatus:
         assert data["terminal_certificate"]["disposition"] == "committed"
         assert data["terminal_certificate"]["evidence_refs"]
         assert len(data["events"]) >= 3
+        witnesses = data["proof_coverage_witnesses"]
+        invariant_ids = {witness["invariant_id"] for witness in witnesses}
+        assert "command_lifecycle_events_are_hash_linked" in invariant_ids
+        assert "terminal_closure_requires_evidence_refs" in invariant_ids
+        assert all(witness["matrix_surface_id"] == "gateway_capability_fabric" for witness in witnesses)
+        assert witnesses[0]["witness_refs"]
+        assert witnesses[1]["evidence_refs"] == data["terminal_certificate"]["evidence_refs"]
 
     def test_latest_anchor_read_model(self, gateway_app, client):
         msg_resp = client.post(

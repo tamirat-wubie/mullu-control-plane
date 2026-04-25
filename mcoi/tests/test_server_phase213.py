@@ -65,6 +65,9 @@ class TestToolWorkflowEndpoint:
         data = resp.json()
         assert data["content"]
         assert data["governed"] is True
+        assert data["action_proof"]["action"] == "workflow.tools"
+        assert data["action_proof"]["proof_receipt_id"]
+        assert data["action_proof"]["proof_hash"]
 
     def test_tool_workflow_with_filter(self, client):
         resp = client.post("/api/v1/workflow/tools", json={
@@ -79,6 +82,24 @@ class TestToolWorkflowEndpoint:
             "tenant_id": "tool-tenant",
         })
         assert resp.json()["governed"] is True
+
+    def test_tool_workflow_tool_calls_include_policy_receipts(self, client, monkeypatch):
+        from mcoi_runtime.app.routers.deps import deps
+
+        monkeypatch.setattr(
+            deps.tool_agent,
+            "_llm_fn",
+            lambda prompt: "TOOL_CALL: calculator(expression='2+2')",
+        )
+        resp = client.post("/api/v1/workflow/tools", json={"prompt": "calc"})
+        data = resp.json()
+        receipt = data["tool_calls"][0]["capability_policy_receipt"]
+
+        assert resp.status_code == 200
+        assert receipt["tool_id"] == "calculator"
+        assert receipt["policy_allowed"] is True
+        assert receipt["execution_succeeded"] is True
+        assert receipt["argument_hash"]
 
 
 class TestStreamingChat:
