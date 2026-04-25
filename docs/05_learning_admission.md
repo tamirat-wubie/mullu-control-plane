@@ -40,3 +40,7 @@ PlanningKnowledge
 
 `defer`, `reject`, missing, duplicate, or mismatched admission decisions MUST
 block planning use with an explicit rejection reason.
+
+Semantic memory entries projected into planning MUST carry the same
+`admission_id` that admitted the semantic version. This keeps the write-time
+learning gate and the planning-time proof gate on the same causal chain.

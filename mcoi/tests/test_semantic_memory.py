@@ -16,7 +16,8 @@ from mcoi_runtime.contracts.knowledge import KnowledgeRecord
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
-from mcoi_runtime.core.semantic_memory import SemanticMemoryStore
+from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningBoundary
+from mcoi_runtime.core.semantic_memory import SemanticMemoryStore, semantic_entry_to_planning_knowledge
 
 
 def _clock():
@@ -75,6 +76,42 @@ def test_admits_semantic_memory_with_learning_admission_and_sources():
     assert entry.source_refs == ("episodic:closure-1",)
     assert store.current("knowledge-semantic-1") is entry
     assert store.list_versions("knowledge-semantic-1") == (entry,)
+
+
+def test_projects_current_semantic_entry_into_planning_knowledge():
+    store = SemanticMemoryStore(clock=_clock())
+    entry = store.admit(
+        knowledge=_knowledge(),
+        learning_admission=_admission(),
+        source_refs=("episodic:closure-1",),
+    )
+    projected = store.planning_knowledge("knowledge-semantic-1", knowledge_class="capability_profile")
+
+    assert projected is not None
+    assert projected.knowledge_id == entry.knowledge.knowledge_id
+    assert projected.knowledge_class == "capability_profile"
+    assert projected.lifecycle is KnowledgeLifecycle.ADMITTED
+    assert projected.admission_id == entry.learning_admission_id
+    assert store.planning_knowledge("missing", knowledge_class="capability_profile") is None
+
+
+def test_projected_semantic_entry_passes_learning_admission_boundary():
+    store = SemanticMemoryStore(clock=_clock())
+    entry = store.admit(
+        knowledge=_knowledge(),
+        learning_admission=_admission(),
+        source_refs=("episodic:closure-1",),
+    )
+    projected = semantic_entry_to_planning_knowledge(entry, knowledge_class="capability_profile")
+    result = PlanningBoundary().evaluate_with_learning_admission(
+        (projected,),
+        admitted_classes=("capability_profile",),
+        admission_decisions=(_admission(),),
+    )
+
+    assert result.admitted == (projected,)
+    assert result.rejected == ()
+    assert result.admission_decision_ids == (entry.learning_admission_id,)
 
 
 def test_rejects_semantic_memory_without_evidence():

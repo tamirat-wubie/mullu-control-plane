@@ -5,6 +5,7 @@ Invariants:
   - Semantic memory never stores knowledge without LearningAdmissionDecision(status=admit).
   - Every semantic entry references source memory and evidence.
   - Updates create new versions; existing entries are never mutated.
+  - Planning projection carries the recorded learning admission id.
   - Current-version lookup is explicit and deterministic.
 """
 
@@ -17,6 +18,7 @@ from mcoi_runtime.contracts.knowledge import KnowledgeRecord
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 
 from .invariants import RuntimeCoreInvariantError, ensure_iso_timestamp, ensure_non_empty_text, stable_identifier
+from .planning_boundary import KnowledgeLifecycle, PlanningKnowledge
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +85,13 @@ class SemanticMemoryStore:
         """Return all versions for one knowledge id in version order."""
         ensure_non_empty_text("knowledge_id", knowledge_id)
         return tuple(self._entries[entry_id] for entry_id in self._versions_by_knowledge.get(knowledge_id, ()))
+
+    def planning_knowledge(self, knowledge_id: str, *, knowledge_class: str) -> PlanningKnowledge | None:
+        """Project the current semantic version into a planning-boundary input."""
+        current = self.current(knowledge_id)
+        if current is None:
+            return None
+        return semantic_entry_to_planning_knowledge(current, knowledge_class=knowledge_class)
 
     def admit(
         self,
@@ -174,6 +183,22 @@ def _require_admission(
         raise RuntimeCoreInvariantError("learning admission knowledge mismatch")
     if learning_admission.status is not LearningAdmissionStatus.ADMIT:
         raise RuntimeCoreInvariantError("semantic memory requires admitted learning decision")
+
+
+def semantic_entry_to_planning_knowledge(
+    entry: SemanticMemoryEntry,
+    *,
+    knowledge_class: str,
+) -> PlanningKnowledge:
+    """Convert an admitted semantic entry into planning knowledge."""
+    if not isinstance(entry, SemanticMemoryEntry):
+        raise RuntimeCoreInvariantError("entry must be a SemanticMemoryEntry")
+    return PlanningKnowledge(
+        knowledge_id=entry.knowledge.knowledge_id,
+        knowledge_class=ensure_non_empty_text("knowledge_class", knowledge_class),
+        lifecycle=KnowledgeLifecycle.ADMITTED,
+        admission_id=entry.learning_admission_id,
+    )
 
 
 def _require_knowledge_evidence(knowledge: KnowledgeRecord) -> None:
