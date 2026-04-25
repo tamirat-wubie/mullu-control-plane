@@ -5,6 +5,7 @@ Invariants:
   - Semantic memory never stores knowledge without LearningAdmissionDecision(status=admit).
   - Every semantic entry references source memory and evidence.
   - Updates create new versions; existing entries are never mutated.
+  - Revocation preserves historical versions and removes current planning projection.
   - Planning projection carries the recorded learning admission id.
   - Current-version lookup is explicit and deterministic.
 """
@@ -54,6 +55,28 @@ class SemanticMemoryEntry:
             )
 
 
+@dataclass(frozen=True, slots=True)
+class SemanticMemoryRevocation:
+    """Append-only revocation record for one semantic memory current entry."""
+
+    revocation_id: str
+    knowledge_id: str
+    entry_id: str
+    reason: str
+    revoked_by: str
+    evidence_refs: tuple[str, ...]
+    revoked_at: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "revocation_id", ensure_non_empty_text("revocation_id", self.revocation_id))
+        object.__setattr__(self, "knowledge_id", ensure_non_empty_text("knowledge_id", self.knowledge_id))
+        object.__setattr__(self, "entry_id", ensure_non_empty_text("entry_id", self.entry_id))
+        object.__setattr__(self, "reason", ensure_non_empty_text("reason", self.reason))
+        object.__setattr__(self, "revoked_by", ensure_non_empty_text("revoked_by", self.revoked_by))
+        object.__setattr__(self, "evidence_refs", _require_evidence_refs(self.evidence_refs))
+        object.__setattr__(self, "revoked_at", ensure_iso_timestamp("revoked_at", self.revoked_at))
+
+
 class SemanticMemoryStore:
     """Append-only semantic memory store with admission enforcement."""
 
@@ -62,11 +85,18 @@ class SemanticMemoryStore:
         self._entries: dict[str, SemanticMemoryEntry] = {}
         self._versions_by_knowledge: dict[str, list[str]] = {}
         self._current_by_knowledge: dict[str, str] = {}
+        self._revocations: dict[str, SemanticMemoryRevocation] = {}
+        self._revoked_by_knowledge: dict[str, str] = {}
 
     @property
     def size(self) -> int:
         """Return total semantic memory entries."""
         return len(self._entries)
+
+    @property
+    def revocation_count(self) -> int:
+        """Return total semantic memory revocations."""
+        return len(self._revocations)
 
     def get(self, entry_id: str) -> SemanticMemoryEntry | None:
         """Return a semantic memory entry by entry id."""
@@ -93,6 +123,14 @@ class SemanticMemoryStore:
             return None
         return semantic_entry_to_planning_knowledge(current, knowledge_class=knowledge_class)
 
+    def revocation_for_knowledge(self, knowledge_id: str) -> SemanticMemoryRevocation | None:
+        """Return the revocation record for a knowledge id, when one exists."""
+        ensure_non_empty_text("knowledge_id", knowledge_id)
+        revocation_id = self._revoked_by_knowledge.get(knowledge_id)
+        if revocation_id is None:
+            return None
+        return self._revocations[revocation_id]
+
     def admit(
         self,
         *,
@@ -105,6 +143,8 @@ class SemanticMemoryStore:
         _require_knowledge_evidence(knowledge)
         if knowledge.knowledge_id in self._current_by_knowledge:
             raise RuntimeCoreInvariantError("semantic knowledge already admitted")
+        if knowledge.knowledge_id in self._revoked_by_knowledge:
+            raise RuntimeCoreInvariantError("semantic knowledge is revoked")
         return self._append(
             knowledge=knowledge,
             learning_admission=learning_admission,
@@ -136,6 +176,47 @@ class SemanticMemoryStore:
             version=current.version + 1,
             supersedes_entry_id=current.entry_id,
         )
+
+    def revoke_current(
+        self,
+        knowledge_id: str,
+        *,
+        reason: str,
+        revoked_by: str,
+        evidence_refs: tuple[str, ...],
+    ) -> SemanticMemoryRevocation:
+        """Revoke the current semantic version without deleting version history."""
+        knowledge_id = ensure_non_empty_text("knowledge_id", knowledge_id)
+        if knowledge_id in self._revoked_by_knowledge:
+            raise RuntimeCoreInvariantError("semantic knowledge already revoked")
+        current = self.current(knowledge_id)
+        if current is None:
+            raise RuntimeCoreInvariantError("semantic knowledge must exist before revocation")
+        revoked_at = self._clock()
+        revocation = SemanticMemoryRevocation(
+            revocation_id=stable_identifier(
+                "semantic-memory-revocation",
+                {
+                    "knowledge_id": knowledge_id,
+                    "entry_id": current.entry_id,
+                    "reason": reason,
+                    "revoked_by": revoked_by,
+                    "revoked_at": revoked_at,
+                },
+            ),
+            knowledge_id=knowledge_id,
+            entry_id=current.entry_id,
+            reason=reason,
+            revoked_by=revoked_by,
+            evidence_refs=evidence_refs,
+            revoked_at=revoked_at,
+        )
+        if revocation.revocation_id in self._revocations:
+            raise RuntimeCoreInvariantError("semantic memory revocation already exists")
+        self._revocations[revocation.revocation_id] = revocation
+        self._revoked_by_knowledge[knowledge_id] = revocation.revocation_id
+        del self._current_by_knowledge[knowledge_id]
+        return revocation
 
     def _append(
         self,
@@ -215,4 +296,13 @@ def _require_source_refs(source_refs: tuple[str, ...]) -> tuple[str, ...]:
         raise RuntimeCoreInvariantError("semantic memory requires source refs")
     for source_ref in refs:
         ensure_non_empty_text("source_ref", source_ref)
+    return refs
+
+
+def _require_evidence_refs(evidence_refs: tuple[str, ...]) -> tuple[str, ...]:
+    refs = tuple(evidence_refs)
+    if not refs:
+        raise RuntimeCoreInvariantError("semantic memory revocation requires evidence refs")
+    for evidence_ref in refs:
+        ensure_non_empty_text("evidence_ref", evidence_ref)
     return refs

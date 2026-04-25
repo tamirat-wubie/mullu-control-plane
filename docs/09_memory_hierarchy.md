@@ -70,6 +70,9 @@ Rules:
 - Semantic Memory write paths MUST require a recorded `LearningAdmissionDecision`
   with `status=admit`.
 - Semantic Memory updates MUST append a new version and preserve the old version.
+- Semantic Memory revocation MUST record the revocation reason, actor, and evidence,
+  preserve every historical version, and remove the revoked knowledge from current
+  planning projection.
 
 ### Tier 4: Procedural Memory
 
