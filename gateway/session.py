@@ -62,10 +62,17 @@ class SessionManager:
         self._ttl = session_ttl_seconds
         self._contexts: dict[str, ConversationContext] = {}
         self._ttl_parse_failures = 0
+        self._evicted_count = 0
+        self._eviction_reasons: dict[str, int] = {}
         self._lock = threading.Lock()
 
     def _key(self, channel: str, sender_id: str, tenant_id: str = "") -> str:
         return f"{tenant_id}:{channel}:{sender_id}" if tenant_id else f":{channel}:{sender_id}"
+
+    def _record_eviction(self, reason_code: str) -> None:
+        """Record a bounded session-removal reason for operator summaries."""
+        self._evicted_count += 1
+        self._eviction_reasons[reason_code] = self._eviction_reasons.get(reason_code, 0) + 1
 
     def get_or_create(
         self,
@@ -90,10 +97,12 @@ class SessionManager:
                         current = _dt.fromisoformat(now.replace("Z", "+00:00"))
                         if (current - last).total_seconds() > self._ttl:
                             del self._contexts[key]
+                            self._record_eviction("ttl_expired")
                             ctx = None
                     except (AttributeError, TypeError, ValueError, OverflowError):
                         self._ttl_parse_failures += 1
                         self._contexts.pop(key, None)
+                        self._record_eviction("invalid_ttl_timestamp")
                         ctx = None
                 if ctx is not None:
                     ctx.last_active_at = now
@@ -103,6 +112,7 @@ class SessionManager:
             if len(self._contexts) >= self.MAX_SESSIONS:
                 oldest_key = min(self._contexts, key=lambda k: self._contexts[k].last_active_at)
                 del self._contexts[oldest_key]
+                self._record_eviction("capacity_pressure")
 
             session_id = f"conv-{hashlib.sha256(f'{key}:{now}'.encode()).hexdigest()[:12]}"
             ctx = ConversationContext(
@@ -158,4 +168,6 @@ class SessionManager:
             "max_context_messages": self._max_messages,
             "max_sessions": self.MAX_SESSIONS,
             "ttl_parse_failures": self._ttl_parse_failures,
+            "total_evicted": self._evicted_count,
+            "eviction_reasons": dict(sorted(self._eviction_reasons.items())),
         }
