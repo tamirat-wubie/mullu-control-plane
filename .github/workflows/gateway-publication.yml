@@ -1,0 +1,116 @@
+name: Gateway Publication Orchestration
+
+on:
+  workflow_dispatch:
+    inputs:
+      gateway_host:
+        description: "Gateway DNS host, for example gateway.mullusi.com"
+        required: true
+        type: string
+      gateway_url:
+        description: "Optional gateway base URL; defaults to https://<gateway_host>"
+        required: false
+        type: string
+      expected_environment:
+        description: "Expected runtime environment reported by /gateway/witness"
+        required: true
+        default: "pilot"
+        type: choice
+        options:
+          - pilot
+          - production
+      apply_ingress:
+        description: "Apply the rendered ingress with kubectl"
+        required: true
+        default: false
+        type: boolean
+      dispatch_witness:
+        description: "Dispatch the deployment witness workflow after preflight"
+        required: true
+        default: false
+        type: boolean
+      skip_preflight_endpoint_probes:
+        description: "Skip /health and /gateway/witness probes during preflight"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  publish-gateway:
+    name: Publish Gateway With Witness Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Verify runtime witness secret is mounted
+        env:
+          MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+        run: |
+          if [ -z "$MULLU_RUNTIME_WITNESS_SECRET" ]; then
+            echo "MULLU_RUNTIME_WITNESS_SECRET is required for gateway publication"
+            exit 1
+          fi
+
+      - name: Set up kubectl
+        if: ${{ inputs.apply_ingress }}
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        if: ${{ inputs.apply_ingress }}
+        env:
+          MULLU_KUBECONFIG_B64: ${{ secrets.MULLU_KUBECONFIG_B64 }}
+        run: |
+          if [ -z "$MULLU_KUBECONFIG_B64" ]; then
+            echo "MULLU_KUBECONFIG_B64 is required when apply_ingress is true"
+            exit 1
+          fi
+          printf "%s" "$MULLU_KUBECONFIG_B64" | base64 -d > "$RUNNER_TEMP/kubeconfig"
+          chmod 600 "$RUNNER_TEMP/kubeconfig"
+          echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
+
+      - name: Run self-gating publication orchestration
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+        run: |
+          args=(
+            --gateway-host "${{ inputs.gateway_host }}"
+            --expected-environment "${{ inputs.expected_environment }}"
+            --require-preflight
+            --accept-runtime-secret-env
+            --preflight-output .change_assurance/deployment_witness_preflight.json
+          )
+          if [ -n "${{ inputs.gateway_url }}" ]; then
+            args+=(--gateway-url "${{ inputs.gateway_url }}")
+          fi
+          if [ "${{ inputs.apply_ingress }}" = "true" ]; then
+            args+=(--apply-ingress)
+          fi
+          if [ "${{ inputs.dispatch_witness }}" = "true" ]; then
+            args+=(--dispatch)
+          fi
+          if [ "${{ inputs.skip_preflight_endpoint_probes }}" = "true" ]; then
+            args+=(--skip-preflight-endpoint-probes)
+          fi
+          python scripts/orchestrate_deployment_witness.py "${args[@]}"
+
+      - name: Upload gateway publication witness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-publication-witness
+          path: |
+            .change_assurance/deployment_witness_preflight.json
+            .change_assurance/mullu-gateway-ingress.rendered.yaml
+            .change_assurance/deployment-witness-artifact/**
+          if-no-files-found: ignore

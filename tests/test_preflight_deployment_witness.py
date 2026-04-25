@@ -139,6 +139,25 @@ def test_preflight_deployment_witness_can_skip_endpoint_probes() -> None:
     assert any(step.name == "runtime witness secret" for step in report.steps)
 
 
+def test_preflight_deployment_witness_accepts_mounted_runtime_secret() -> None:
+    runner = FakeRunner(secret_present=False)
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runtime_secret_present=True,
+        probe_endpoints=False,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+    )
+
+    secret_step = next(step for step in report.steps if step.name == "runtime witness secret")
+    assert report.ready is True
+    assert secret_step.passed is True
+    assert secret_step.detail == "present:mounted-environment"
+    assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
+
+
 def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     runner = FakeRunner()
 

@@ -8,6 +8,7 @@ Dependencies: GitHub CLI for repository metadata, DNS resolution, standard
 library HTTP client for endpoint probes.
 Invariants:
   - The runtime witness secret value is never read or printed.
+  - A mounted runtime secret can witness presence without listing secrets.
   - Workflow dispatch is never performed by this preflight.
   - Each readiness transition is represented as an explicit step.
   - Endpoint probes are opt-out and report bounded failure detail.
@@ -95,6 +96,7 @@ def preflight_deployment_witness(
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
+    runtime_secret_present: bool = False,
     probe_endpoints: bool = True,
     runner: CommandRunner | None = None,
     resolver: Resolver | None = None,
@@ -116,7 +118,12 @@ def preflight_deployment_witness(
             expected_environment=expected_environment,
             runner=command_runner,
         ),
-        _check_secret(repository=repository, secret_name=secret_name, runner=command_runner),
+        _check_secret(
+            repository=repository,
+            secret_name=secret_name,
+            runtime_secret_present=runtime_secret_present,
+            runner=command_runner,
+        ),
         _check_workflow(
             repository=repository,
             workflow_file=workflow_file,
@@ -222,7 +229,15 @@ def _check_repository_variables(
     return PreflightStep("repository variables", True, "matched")
 
 
-def _check_secret(*, repository: str, secret_name: str, runner: CommandRunner) -> PreflightStep:
+def _check_secret(
+    *,
+    repository: str,
+    secret_name: str,
+    runtime_secret_present: bool,
+    runner: CommandRunner,
+) -> PreflightStep:
+    if runtime_secret_present:
+        return PreflightStep("runtime witness secret", True, "present:mounted-environment")
     completed = _run_checked(
         runner,
         ["gh", "secret", "list", "--repo", repository, "--json", "name"],
@@ -371,6 +386,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
+    parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--skip-endpoint-probes", action="store_true")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     return parser.parse_args(argv)
@@ -388,6 +404,10 @@ def main(argv: list[str] | None = None) -> int:
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
+            runtime_secret_present=(
+                args.accept_runtime_secret_env
+                and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
+            ),
             probe_endpoints=not args.skip_endpoint_probes,
         )
     except RuntimeError as exc:

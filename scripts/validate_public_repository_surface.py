@@ -54,6 +54,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
     "DEPLOYMENT_STATUS.md",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = ".github/workflows/deployment-witness.yml"
+GATEWAY_PUBLICATION_WORKFLOW_PATH = ".github/workflows/gateway-publication.yml"
 GITHUB_SURFACE_REQUIRED_LITERALS = (
     "GitHub Surface Witness",
     EXPECTED_DESCRIPTION,
@@ -85,6 +86,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/validate_gateway_ingress_manifest.py --allow-placeholder",
     "python scripts/render_gateway_ingress.py --gateway-host \"$MULLU_GATEWAY_HOST\"",
     ".github/workflows/deployment-witness.yml",
+    ".github/workflows/gateway-publication.yml",
     "python scripts/dispatch_deployment_witness.py",
     "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --dispatch",
     "python scripts/preflight_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot",
@@ -98,6 +100,19 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "MULLU_RUNTIME_WITNESS_SECRET",
     "python scripts/collect_deployment_witness.py",
     ".change_assurance/deployment_witness.json",
+    "actions/upload-artifact@v4",
+)
+GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
+    "Gateway Publication Orchestration",
+    "workflow_dispatch",
+    "gateway_host",
+    "apply_ingress",
+    "dispatch_witness",
+    "MULLU_RUNTIME_WITNESS_SECRET",
+    "MULLU_KUBECONFIG_B64",
+    "python scripts/orchestrate_deployment_witness.py",
+    "--require-preflight",
+    "--accept-runtime-secret-env",
     "actions/upload-artifact@v4",
 )
 
@@ -227,6 +242,18 @@ def validate_local_public_documents() -> list[str]:
                 document_name=DEPLOYMENT_WITNESS_WORKFLOW_PATH,
                 content=workflow_path.read_text(encoding="utf-8"),
                 required_literals=DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
+            )
+        )
+
+    publication_workflow_path = REPO_ROOT / GATEWAY_PUBLICATION_WORKFLOW_PATH
+    if not publication_workflow_path.exists():
+        errors.append(f"missing required gateway publication workflow: {GATEWAY_PUBLICATION_WORKFLOW_PATH}")
+    else:
+        errors.extend(
+            validate_required_document_text(
+                document_name=GATEWAY_PUBLICATION_WORKFLOW_PATH,
+                content=publication_workflow_path.read_text(encoding="utf-8"),
+                required_literals=GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
             )
         )
 

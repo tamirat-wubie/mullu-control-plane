@@ -236,6 +236,12 @@ The orchestrator validates the host before writing repository variables, derives
 keeps live cluster apply and workflow dispatch behind explicit flags, and
 refuses dispatch when `--require-preflight` is present and readiness checks fail.
 
+The same gated path is also available as the manual GitHub Actions workflow
+`.github/workflows/gateway-publication.yml`. It accepts `gateway_host`,
+`expected_environment`, `apply_ingress`, and `dispatch_witness` inputs. When
+`apply_ingress` is true, the workflow requires `MULLU_KUBECONFIG_B64`; it always
+requires `MULLU_RUNTIME_WITNESS_SECRET` to be mounted before the readiness gate.
+
 Before dispatching the witness, run the preflight gate:
 
 ```bash
