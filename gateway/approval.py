@@ -116,6 +116,7 @@ class ApprovalRouter:
         self._timeout_seconds = timeout_seconds
         self._pending: dict[str, ApprovalRequest] = {}
         self._history: list[ApprovalRequest] = []
+        self._evicted_count = 0
 
     def _parse_timestamp(self, value: str) -> datetime | None:
         """Parse an ISO timestamp, returning None when parsing fails."""
@@ -142,6 +143,20 @@ class ApprovalRouter:
         if len(self._history) > self.MAX_HISTORY:
             self._history = self._history[-self.MAX_HISTORY:]
 
+    def _resolution_reason(self, request: ApprovalRequest) -> str:
+        """Return a bounded resolution reason for summaries."""
+        if request.status == ApprovalStatus.APPROVED:
+            if request.resolved_by == "auto":
+                return "auto_approved"
+            return "operator_approved"
+        if request.status == ApprovalStatus.DENIED:
+            return "operator_denied"
+        if request.status == ApprovalStatus.EXPIRED:
+            if request.resolved_by == "capacity_eviction":
+                return "capacity_evicted"
+            return "timed_out"
+        return request.status.value
+
     def _expire_pending(self, request_id: str, pending: ApprovalRequest, now_text: str) -> ApprovalRequest:
         """Expire a pending request and record it in history."""
         expired = ApprovalRequest(
@@ -161,6 +176,30 @@ class ApprovalRouter:
         )
         self._append_history(expired)
         return expired
+
+    def _evict_oldest_pending(self, now_text: str) -> None:
+        """Move the oldest pending request into bounded history on capacity pressure."""
+        if not self._pending:
+            return
+        oldest_id = next(iter(self._pending))
+        pending = self._pending.pop(oldest_id)
+        evicted = ApprovalRequest(
+            request_id=pending.request_id,
+            tenant_id=pending.tenant_id,
+            identity_id=pending.identity_id,
+            channel=pending.channel,
+            action_description=pending.action_description,
+            risk_tier=pending.risk_tier,
+            command_id=pending.command_id,
+            payload_hash=pending.payload_hash,
+            policy_version=pending.policy_version,
+            status=ApprovalStatus.EXPIRED,
+            requested_at=pending.requested_at,
+            resolved_at=now_text,
+            resolved_by="capacity_eviction",
+        )
+        self._evicted_count += 1
+        self._append_history(evicted)
 
     def _prune_expired_pending(self, now_text: str | None = None) -> None:
         """Expire all stale pending requests."""
@@ -224,8 +263,7 @@ class ApprovalRouter:
 
         # Evict oldest pending if at capacity
         if len(self._pending) >= self.MAX_PENDING:
-            oldest_id = next(iter(self._pending))
-            self._pending.pop(oldest_id)
+            self._evict_oldest_pending(now)
 
         # Medium or High — create pending request
         request = ApprovalRequest(
@@ -310,8 +348,31 @@ class ApprovalRouter:
         return len(self._history) + len(self._pending)
 
     def summary(self) -> dict[str, Any]:
+        self._prune_expired_pending()
+        by_status: dict[str, int] = {}
+        by_risk_tier: dict[str, int] = {}
+        pending_by_risk_tier: dict[str, int] = {}
+        resolution_reasons: dict[str, int] = {}
+
+        for request in (*self._history, *self._pending.values()):
+            by_status[request.status.value] = by_status.get(request.status.value, 0) + 1
+            by_risk_tier[request.risk_tier.value] = by_risk_tier.get(request.risk_tier.value, 0) + 1
+
+        for request in self._pending.values():
+            risk_tier = request.risk_tier.value
+            pending_by_risk_tier[risk_tier] = pending_by_risk_tier.get(risk_tier, 0) + 1
+
+        for request in self._history:
+            reason = self._resolution_reason(request)
+            resolution_reasons[reason] = resolution_reasons.get(reason, 0) + 1
+
         return {
-            "pending": self.pending_count,
-            "total": self.total_requests,
+            "pending": len(self._pending),
+            "total": len(self._history) + len(self._pending),
             "history_count": len(self._history),
+            "by_status": dict(sorted(by_status.items())),
+            "by_risk_tier": dict(sorted(by_risk_tier.items())),
+            "pending_by_risk_tier": dict(sorted(pending_by_risk_tier.items())),
+            "resolution_reasons": dict(sorted(resolution_reasons.items())),
+            "total_evicted": self._evicted_count,
         }
