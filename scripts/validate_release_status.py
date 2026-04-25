@@ -49,6 +49,7 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
 )
 
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+DEPLOYMENT_WITNESS_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "deployment-witness.yml"
 
 REQUIRED_CI_LITERALS: tuple[str, ...] = (
     'branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]',
@@ -108,10 +109,21 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "python scripts/validate_gateway_deployment_env.py --strict",
         "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
         "python scripts/collect_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --witness-secret \"$MULLU_RUNTIME_WITNESS_SECRET\" --output .change_assurance/deployment_witness.json",
+        ".github/workflows/deployment-witness.yml",
         "python scripts/gateway_runtime_smoke.py",
         "python scripts/validate_public_repository_surface.py",
     ),
 }
+
+DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
+    "Deployment Witness Collection",
+    "workflow_dispatch",
+    "gateway_url",
+    "MULLU_RUNTIME_WITNESS_SECRET",
+    "python scripts/collect_deployment_witness.py",
+    ".change_assurance/deployment_witness.json",
+    "actions/upload-artifact@v4",
+)
 
 ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     "registry_backend_limitation": (
@@ -215,6 +227,19 @@ def validate_ci_workflow_text(content: str) -> list[str]:
     if missing_literals:
         errors.append(f"ci workflow missing required literals: {list(missing_literals)}")
 
+    return errors
+
+
+def validate_deployment_witness_workflow_text(content: str) -> list[str]:
+    """Validate the manual deployment witness workflow is still evidence-bearing."""
+    errors: list[str] = []
+    missing_literals = tuple(
+        literal for literal in DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS if literal not in content
+    )
+    if missing_literals:
+        errors.append(
+            f"deployment witness workflow missing required literals: {list(missing_literals)}"
+        )
     return errors
 
 
@@ -390,6 +415,11 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     else:
         ci_content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
         errors.extend(validate_ci_workflow_text(ci_content))
+    if not DEPLOYMENT_WITNESS_WORKFLOW_PATH.exists():
+        errors.append("missing required workflow: .github/workflows/deployment-witness.yml")
+    else:
+        workflow_content = DEPLOYMENT_WITNESS_WORKFLOW_PATH.read_text(encoding="utf-8")
+        errors.extend(validate_deployment_witness_workflow_text(workflow_content))
 
     status_document_path = REPO_ROOT / "STATUS.md"
     if status_document_path.exists():

@@ -150,6 +150,14 @@ witness signature when the secret is supplied, and emits `published` only when
 all evidence checks pass. Without signature verification, the deployment witness
 fails closed as `not-published`.
 
+The same collector can be run from GitHub Actions with
+`.github/workflows/deployment-witness.yml`. Use the manual
+`Deployment Witness Collection` workflow, provide the gateway URL and expected
+environment, and configure the repository secret
+`MULLU_RUNTIME_WITNESS_SECRET`. The workflow uploads
+`.change_assurance/deployment_witness.json` as the `deployment-witness`
+artifact.
+
 The probe checks:
 
 1. Gateway `/health`.
