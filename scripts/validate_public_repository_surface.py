@@ -18,6 +18,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -120,12 +121,17 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
 
 def read_json_url(url: str) -> dict[str, Any]:
     """Read one GitHub JSON endpoint with explicit timeout and error context."""
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "mullu-public-surface-validator",
+    }
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+        headers["X-GitHub-Api-Version"] = "2022-11-28"
     request = Request(
         url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "mullu-public-surface-validator",
-        },
+        headers=headers,
     )
     try:
         with urlopen(request, timeout=10) as response:

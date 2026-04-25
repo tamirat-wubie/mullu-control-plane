@@ -103,9 +103,13 @@ jobs:
 
       - name: Validate public repository surface
         run: python scripts/validate_public_repository_surface.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Validate release status
         run: python scripts/validate_release_status.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   gateway-closure:
     name: Gateway Closure and Witness Tests
