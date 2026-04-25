@@ -18,7 +18,11 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 from mcoi_runtime.contracts.llm import LLMProvider, LLMResult
-from mcoi_runtime.app.streaming import StreamEvent
+from mcoi_runtime.app.streaming import (
+    StreamCutoffSemantic,
+    StreamEvent,
+    StreamingBudgetProtocol,
+)
 
 
 def _bounded_stream_error(exc: Exception) -> str:
@@ -35,6 +39,22 @@ class StreamChunk:
     input_tokens: int = 0
     output_tokens: int = 0
     is_final: bool = False
+
+
+def _anthropic_reservation_cost_per_token() -> float:
+    """Return a conservative reservation rate for mixed Anthropic usage."""
+    return 15.0 / 1_000_000
+
+
+def _chunk_output_delta(chunk: StreamChunk, *, last_observed_output_tokens: int) -> int:
+    """Return provider-native output delta when usage is present."""
+    if chunk.output_tokens <= 0:
+        return 0
+    return max(chunk.output_tokens - last_observed_output_tokens, 0)
+
+
+def _stream_proof_id(request_id: str, stage: str) -> str:
+    return f"stream-proof:{request_id or 'anonymous'}:{stage}"
 
 
 class AnthropicStreamingAdapter:
@@ -127,6 +147,7 @@ class AnthropicStreamingAdapter:
                                 yield StreamChunk(text=text, index=index)
                         elif event.type == "message_delta":
                             output_tokens = getattr(event.usage, "output_tokens", 0)
+                            yield StreamChunk(text="", index=index, output_tokens=output_tokens)
                         elif event.type == "message_start":
                             if hasattr(event.message, "usage"):
                                 input_tokens = getattr(event.message.usage, "input_tokens", 0)
@@ -166,52 +187,140 @@ class AnthropicStreamingAdapter:
         system: str = "",
         max_tokens: int = 1024,
         request_id: str = "",
+        tenant_id: str = "system",
+        budget_id: str = "default",
+        estimated_input_tokens: int | None = None,
+        estimated_output_tokens: int | None = None,
+        policy_version: str = "streaming-budget:v1",
     ) -> Iterator[StreamEvent]:
         """Stream as StreamEvents for SSE delivery."""
         model = model or self._default_model
+        request_ref = request_id or "anonymous"
+        provider = "anthropic" if self._available else "stub"
+        reserved_input_tokens = estimated_input_tokens if estimated_input_tokens is not None else max(len(prompt) // 4, 0)
+        reserved_output_tokens = estimated_output_tokens if estimated_output_tokens is not None else max(max_tokens, 0)
+        protocol = StreamingBudgetProtocol(
+            cost_per_token=_anthropic_reservation_cost_per_token(),
+            proof_id_factory=lambda stage: _stream_proof_id(request_ref, stage),
+        )
+        cursor = protocol.reserve(
+            reservation_id=f"stream-reservation:{request_ref}",
+            request_id=request_ref,
+            tenant_id=tenant_id or "system",
+            budget_id=budget_id or "default",
+            estimated_input_tokens=reserved_input_tokens,
+            estimated_output_tokens=reserved_output_tokens,
+            policy_version=policy_version,
+        )
 
         yield StreamEvent(
             event_type="meta",
             data={
                 "request_id": request_id,
                 "model": model,
-                "provider": "anthropic" if self._available else "stub",
+                "provider": provider,
                 "streaming": True,
                 "started_at": self._clock(),
+                "budget_reservation": {
+                    "reservation_id": cursor.reservation.reservation_id,
+                    "tenant_id": cursor.reservation.tenant_id,
+                    "budget_id": cursor.reservation.budget_id,
+                    "reserved_total_tokens": cursor.reservation.reserved_total_tokens,
+                    "reserved_output_tokens": cursor.reservation.reserved_output_tokens,
+                    "reserved_cost": cursor.reservation.reserved_cost,
+                    "policy_version": cursor.reservation.policy_version,
+                    "proof_id": cursor.reservation.proof_id,
+                },
             },
         )
 
         content_parts: list[str] = []
         input_tokens = 0
         output_tokens = 0
+        last_observed_output_tokens = 0
 
         for chunk in self.stream_completion(prompt, model=model, system=system, max_tokens=max_tokens):
+            requested_output_tokens = _chunk_output_delta(
+                chunk,
+                last_observed_output_tokens=last_observed_output_tokens,
+            )
             if chunk.is_final:
                 input_tokens = chunk.input_tokens
                 output_tokens = chunk.output_tokens
-            elif chunk.text:
+                last_observed_output_tokens = max(last_observed_output_tokens, output_tokens)
+                continue
+
+            cutoff: StreamEvent | None = None
+            debit_output_tokens = requested_output_tokens or (1 if chunk.text else 0)
+            allowed_tokens = 0
+            if debit_output_tokens > 0:
+                cursor, allowed_tokens, cutoff = protocol.debit_chunk(
+                    cursor,
+                    output_tokens=debit_output_tokens,
+                    cutoff_semantic=StreamCutoffSemantic.GRACEFUL,
+                )
+                last_observed_output_tokens = max(last_observed_output_tokens, chunk.output_tokens)
+                if allowed_tokens == 0:
+                    if cutoff is not None:
+                        yield cutoff
+                    break
+                if chunk.text and allowed_tokens < debit_output_tokens:
+                    if cutoff is not None:
+                        yield cutoff
+                    break
+
+            if chunk.text:
                 content_parts.append(chunk.text)
                 yield StreamEvent(
                     event_type="token",
-                    data={"text": chunk.text, "index": chunk.index},
+                    data={
+                        "text": chunk.text,
+                        "index": chunk.index,
+                        "reservation_id": cursor.reservation.reservation_id,
+                        "debit_output_tokens": debit_output_tokens,
+                        "emitted_output_tokens": cursor.emitted_output_tokens,
+                        "remaining_output_tokens": cursor.remaining_output_tokens,
+                        "proof_id": _stream_proof_id(request_ref, "chunk-debit"),
+                    },
                 )
+                if cutoff is not None:
+                    yield cutoff
+                    break
 
         # Estimate cost (Anthropic pricing)
         cost_per_input = 3.0 / 1_000_000  # Sonnet pricing
         cost_per_output = 15.0 / 1_000_000
-        cost = input_tokens * cost_per_input + output_tokens * cost_per_output
+        observed_output_tokens = output_tokens or last_observed_output_tokens
+        cost = input_tokens * cost_per_input + observed_output_tokens * cost_per_output
+        settled_cost = round(cost, 6)
+        settlement = protocol.settle(
+            cursor,
+            actual_input_tokens=input_tokens,
+            actual_output_tokens=observed_output_tokens,
+            actual_cost=settled_cost,
+        )
 
         yield StreamEvent(
             event_type="done",
             data={
                 "request_id": request_id,
                 "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "cost": round(cost, 6),
+                "output_tokens": observed_output_tokens,
+                "cost": settled_cost,
                 "model": model,
-                "provider": "anthropic" if self._available else "stub",
+                "provider": provider,
                 "finished_at": self._clock(),
                 "governed": True,
+                "budget_settlement": {
+                    "reservation_id": settlement.reservation_id,
+                    "actual_input_tokens": settlement.actual_input_tokens,
+                    "actual_output_tokens": settlement.actual_output_tokens,
+                    "actual_cost": settlement.actual_cost,
+                    "delta_tokens": settlement.delta_tokens,
+                    "delta_cost": settlement.delta_cost,
+                    "cutoff_semantic": settlement.cutoff_semantic.value if settlement.cutoff_semantic else None,
+                    "proof_id": settlement.proof_id,
+                },
             },
         )
 

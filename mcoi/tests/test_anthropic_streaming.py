@@ -1,12 +1,14 @@
 """Phase 211B — Anthropic streaming adapter tests."""
 
-import pytest
 from types import SimpleNamespace
+
 from mcoi_runtime.adapters.anthropic_streaming import (
     AnthropicStreamingAdapter, StreamChunk,
 )
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 class TestAnthropicStreamingAdapter:
@@ -51,6 +53,67 @@ class TestAnthropicStreamingAdapter:
         done = events[-1]
         assert done.data["governed"] is True
         assert "cost" in done.data
+
+    def test_events_carry_budget_reservation_and_settlement(self):
+        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        events = list(adapter.stream_to_events(
+            "test",
+            request_id="r-budget",
+            tenant_id="tenant-alpha",
+            budget_id="budget-stream",
+            estimated_input_tokens=2,
+            estimated_output_tokens=4,
+        ))
+
+        meta = events[0]
+        done = events[-1]
+        assert meta.data["budget_reservation"]["tenant_id"] == "tenant-alpha"
+        assert meta.data["budget_reservation"]["budget_id"] == "budget-stream"
+        assert meta.data["budget_reservation"]["proof_id"] == "stream-proof:r-budget:precharge"
+        assert done.data["budget_settlement"]["proof_id"] == "stream-proof:r-budget:final-reconcile"
+
+    def test_provider_native_output_delta_debits_stream_tokens(self):
+        class NativeUsageAdapter(AnthropicStreamingAdapter):
+            def stream_completion(self, *args, **kwargs):
+                yield StreamChunk(text="alpha", index=1, output_tokens=2)
+                yield StreamChunk(text=" beta", index=2, output_tokens=3)
+                yield StreamChunk(text="", index=3, input_tokens=5, output_tokens=3, is_final=True)
+
+        adapter = NativeUsageAdapter(clock=FIXED_CLOCK)
+        events = list(adapter.stream_to_events(
+            "test",
+            request_id="r-native",
+            estimated_input_tokens=1,
+            estimated_output_tokens=3,
+        ))
+        tokens = [event for event in events if event.event_type == "token"]
+
+        assert tokens[0].data["debit_output_tokens"] == 2
+        assert tokens[0].data["emitted_output_tokens"] == 2
+        assert tokens[1].data["debit_output_tokens"] == 1
+        assert events[-1].data["budget_settlement"]["actual_output_tokens"] == 3
+
+    def test_provider_native_output_delta_hard_cuts_before_overrun_text(self):
+        class NativeUsageAdapter(AnthropicStreamingAdapter):
+            def stream_completion(self, *args, **kwargs):
+                yield StreamChunk(text="alpha", index=1, output_tokens=2)
+                yield StreamChunk(text=" blocked", index=2, output_tokens=5)
+                yield StreamChunk(text="", index=3, input_tokens=5, output_tokens=5, is_final=True)
+
+        adapter = NativeUsageAdapter(clock=FIXED_CLOCK)
+        events = list(adapter.stream_to_events(
+            "test",
+            request_id="r-cut",
+            estimated_input_tokens=1,
+            estimated_output_tokens=3,
+        ))
+        token_text = "".join(event.data["text"] for event in events if event.event_type == "token")
+        cutoff = next(event for event in events if event.event_type == "cutoff")
+
+        assert "blocked" not in token_text
+        assert cutoff.data["semantic"] == "graceful"
+        assert cutoff.data["emitted_output_tokens"] == 3
+        assert events[-1].data["budget_settlement"]["cutoff_semantic"] == "graceful"
 
     def test_to_result(self):
         adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
