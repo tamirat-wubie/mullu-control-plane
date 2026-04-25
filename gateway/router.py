@@ -119,6 +119,7 @@ class GatewayRouter:
         self._message_count = 0
         self._duplicate_count = 0
         self._error_count = 0
+        self._error_reasons: dict[str, int] = {}
 
     def register_channel(self, adapter: ChannelAdapter) -> None:
         """Register a channel adapter."""
@@ -191,7 +192,7 @@ class GatewayRouter:
         try:
             sent = bool(adapter.send(response.recipient_id, response.body))
         except Exception:
-            self._error_count += 1
+            self._record_error("adapter_exception")
             return replace(
                 response,
                 metadata={
@@ -201,7 +202,7 @@ class GatewayRouter:
                 },
             )
         if not sent:
-            self._error_count += 1
+            self._record_error("adapter_rejected")
             return replace(
                 response,
                 metadata={
@@ -284,9 +285,10 @@ class GatewayRouter:
             return None
         return SkillIntent(skill, action, dict(params))
 
-    def _record_error(self) -> None:
+    def _record_error(self, reason_code: str = "gateway_runtime_error") -> None:
         """Record a kernel-visible gateway error."""
         self._error_count += 1
+        self._error_reasons[reason_code] = self._error_reasons.get(reason_code, 0) + 1
 
     def _execute_command(self, command: CommandEnvelope, *, recipient_id: str) -> GatewayResponse:
         """Execute an allowed command through the stored canonical payload."""
@@ -372,7 +374,7 @@ class GatewayRouter:
         """Resolve a channel-native approval callback for the mapped identity."""
         request = self._approval.lookup_request(request_id)
         if request is None:
-            self._error_count += 1
+            self._record_error("approval_not_found")
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=message.channel,
@@ -389,7 +391,7 @@ class GatewayRouter:
             governed_action=self._commands.governed_action_for(request.command_id) if request.command_id else None,
         )
         if not authority.allowed:
-            self._error_count += 1
+            self._record_error("approval_context_denied")
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=message.channel,
@@ -405,7 +407,7 @@ class GatewayRouter:
             )
         result = self._approval.resolve(request_id, approved=approved, resolved_by=mapping.identity_id)
         if result is None:
-            self._error_count += 1
+            self._record_error("approval_not_found")
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=message.channel,
@@ -465,7 +467,7 @@ class GatewayRouter:
         # 1. Resolve tenant
         mapping = self.resolve_tenant(message.channel, message.sender_id)
         if mapping is None:
-            self._error_count += 1
+            self._record_error("tenant_not_found")
             resp = GatewayResponse(
                 message_id=self._gen_id("resp", message.message_id),
                 channel=message.channel,
@@ -628,7 +630,7 @@ class GatewayRouter:
 
         resolver = self.resolve_tenant(resolver_channel, resolver_sender_id)
         if resolver is None:
-            self._error_count += 1
+            self._record_error("approval_context_denied")
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=request.channel,
@@ -650,7 +652,7 @@ class GatewayRouter:
             governed_action=self._commands.governed_action_for(request.command_id) if request.command_id else None,
         )
         if not authority.allowed:
-            self._error_count += 1
+            self._record_error("approval_context_denied")
             return GatewayResponse(
                 message_id=self._gen_id("apr-resp", request_id),
                 channel=request.channel,
@@ -727,6 +729,7 @@ class GatewayRouter:
             "message_count": self._message_count,
             "duplicate_count": self._duplicate_count,
             "error_count": self._error_count,
+            "error_reasons": dict(sorted(self._error_reasons.items())),
             "channels": list(self._channels.keys()),
             "tenant_mappings": self._tenant_identities.count(),
             "tenant_identity_store": self._tenant_identities.status(),
