@@ -161,6 +161,8 @@ class TestSessionManager:
         assert ctx2.message_count == 0
         assert ctx2.last_active_at == "2026-04-24T00:00:30+00:00"
         assert mgr.active_sessions == 1
+        assert mgr.summary()["total_evicted"] == 1
+        assert mgr.summary()["eviction_reasons"] == {"ttl_expired": 1}
 
     def test_invalid_ttl_timestamp_evicts_context_and_counts_repair(self):
         timestamps = iter((
@@ -178,7 +180,28 @@ class TestSessionManager:
         assert ctx2.message_count == 0
         assert mgr.ttl_parse_failures == 1
         assert mgr.summary()["ttl_parse_failures"] == 1
+        assert mgr.summary()["total_evicted"] == 1
+        assert mgr.summary()["eviction_reasons"] == {"invalid_ttl_timestamp": 1}
         assert mgr.active_sessions == 1
+
+    def test_capacity_eviction_reports_bounded_reason(self):
+        timestamps = iter((
+            "2026-04-24T00:00:00+00:00",
+            "2026-04-24T00:00:01+00:00",
+        ))
+        mgr = SessionManager(clock=lambda: next(timestamps))
+        mgr.MAX_SESSIONS = 1
+        first = mgr.get_or_create(channel="web", sender_id="secret-user-1", tenant_id="t1", identity_id="u1")
+        second = mgr.get_or_create(channel="web", sender_id="secret-user-2", tenant_id="t1", identity_id="u2")
+        summary = mgr.summary()
+
+        assert first.session_id != second.session_id
+        assert mgr.active_sessions == 1
+        assert mgr.get_context("web", "secret-user-1", tenant_id="t1") is None
+        assert mgr.get_context("web", "secret-user-2", tenant_id="t1") is not None
+        assert summary["total_evicted"] == 1
+        assert summary["eviction_reasons"] == {"capacity_pressure": 1}
+        assert "secret-user-1" not in summary["eviction_reasons"]
 
     def test_add_message(self):
         mgr = SessionManager()
@@ -227,3 +250,5 @@ class TestSessionManager:
         assert mgr.summary()["active_sessions"] == 0
         assert mgr.summary()["max_context_messages"] == 10
         assert mgr.summary()["ttl_parse_failures"] == 0
+        assert mgr.summary()["total_evicted"] == 0
+        assert mgr.summary()["eviction_reasons"] == {}
