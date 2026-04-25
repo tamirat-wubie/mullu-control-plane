@@ -316,6 +316,17 @@ class TestWebChatWebhook:
         assert app.state.capability_admission_gate is not None
         assert resp.status_code == 200
         assert resp.json()["body"] == "Fabric governed response"
+        command_id = resp.json()["message_id"].removeprefix("resp-")
+        audit_resp = client.get(f"/commands/{command_id}/capability-admission")
+        audits_resp = client.get("/capability-fabric/admission-audits?tenant_id=t1&status=accepted")
+
+        assert audit_resp.status_code == 200
+        assert audit_resp.json()["status"] == "accepted"
+        assert audit_resp.json()["capability_id"] == "llm_completion"
+        assert audit_resp.json()["admission_event_hash"]
+        assert audits_resp.status_code == 200
+        assert audits_resp.json()["count"] == 1
+        assert audits_resp.json()["admission_audits"][0]["command_id"] == command_id
 
     def test_capability_fabric_read_model_reports_disabled_state(self, client):
         resp = client.get("/capability-fabric/read-model")
@@ -354,6 +365,41 @@ class TestWebChatWebhook:
         assert resp.status_code == 200
         assert resp.json()["body"] == "Pack governed response"
 
+    def test_command_capability_admission_read_model_reports_accepted_witness(self, monkeypatch, tmp_path):
+        _configure_fabric_env(
+            monkeypatch,
+            tmp_path,
+            capability_refs=["llm_completion"],
+            capability_payloads=[_fabric_capability_payload("llm_completion")],
+            use_pack=True,
+        )
+        app = create_gateway_app(platform=StubPlatform(response="Audit governed response"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="web-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        client = TestClient(app)
+
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
+            headers={"X-Session-Token": "fabric-audit-accepted"},
+        )
+        certificate = app.state.command_ledger.latest_terminal_certificate()
+        assert certificate is not None
+        audit_resp = client.get(f"/commands/{certificate.command_id}/capability-admission")
+
+        assert msg_resp.status_code == 200
+        assert audit_resp.status_code == 200
+        audit = audit_resp.json()
+        assert audit["command_id"] == certificate.command_id
+        assert audit["fabric_configured"] is True
+        assert audit["status"] == "accepted"
+        assert audit["capability_id"] == "llm_completion"
+        assert audit["capability_registry_entry"]["capability_id"] == "llm_completion"
+        assert audit["admission_event_hash"]
+        assert audit["registry_event_hash"]
+
     def test_fabric_admission_rejects_missing_pack_capability(self, monkeypatch, tmp_path):
         _configure_fabric_env(
             monkeypatch,
@@ -386,11 +432,15 @@ class TestWebChatWebhook:
             content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
             headers={"X-Session-Token": "fabric-runtime-reject"},
         )
+        audits_resp = client.get("/capability-fabric/admission-audits?tenant_id=t1&status=rejected")
 
         assert resp.status_code == 200
         assert resp.json()["metadata"]["error"] == "capability_admission_rejected"
         assert resp.json()["body"] == "This command requires capability review before execution."
         assert "llm_completion" in resp.json()["metadata"]["reason"]
+        assert audits_resp.status_code == 200
+        assert audits_resp.json()["count"] == 1
+        assert audits_resp.json()["admission_audits"][0]["status"] == "rejected"
 
 
 # ═══ Approval Callback ═══

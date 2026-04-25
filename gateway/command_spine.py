@@ -418,6 +418,10 @@ class CommandLedgerStore:
         """Load one command envelope by ID."""
         raise NotImplementedError
 
+    def list_commands(self, *, tenant_id: str = "", limit: int = 100) -> list[CommandEnvelope]:
+        """Return recent command envelopes, newest first."""
+        return []
+
     def append_event(self, event: CommandEvent) -> None:
         """Append one command transition event."""
         raise NotImplementedError
@@ -477,6 +481,14 @@ class InMemoryCommandLedgerStore(CommandLedgerStore):
 
     def load_command(self, command_id: str) -> CommandEnvelope | None:
         return self._commands.get(command_id)
+
+    def list_commands(self, *, tenant_id: str = "", limit: int = 100) -> list[CommandEnvelope]:
+        if limit < 1:
+            return []
+        commands = list(self._commands.values())
+        if tenant_id:
+            commands = [command for command in commands if command.tenant_id == tenant_id]
+        return sorted(commands, key=lambda item: item.created_at, reverse=True)[:limit]
 
     def append_event(self, event: CommandEvent) -> None:
         self._events.append(event)
@@ -762,6 +774,54 @@ class PostgresCommandLedgerStore(CommandLedgerStore):
 
         result = self._safe_execute(_read)
         return result if isinstance(result, CommandEnvelope) else None
+
+    def list_commands(self, *, tenant_id: str = "", limit: int = 100) -> list[CommandEnvelope]:
+        def _read() -> list[CommandEnvelope]:
+            bounded_limit = max(1, min(limit, 1000))
+            with self._lock:
+                with self._conn.cursor() as cur:
+                    if tenant_id:
+                        cur.execute(
+                            "SELECT command_id, tenant_id, actor_id, source, conversation_id, "
+                            "idempotency_key, intent, payload_hash, redacted_payload, state, "
+                            "policy_version, trace_id, created_at "
+                            "FROM gateway_commands WHERE tenant_id = %s "
+                            "ORDER BY created_at DESC, command_id DESC LIMIT %s",
+                            (tenant_id, bounded_limit),
+                        )
+                    else:
+                        cur.execute(
+                            "SELECT command_id, tenant_id, actor_id, source, conversation_id, "
+                            "idempotency_key, intent, payload_hash, redacted_payload, state, "
+                            "policy_version, trace_id, created_at "
+                            "FROM gateway_commands ORDER BY created_at DESC, command_id DESC LIMIT %s",
+                            (bounded_limit,),
+                        )
+                    rows = cur.fetchall()
+            commands: list[CommandEnvelope] = []
+            for row in rows:
+                payload = row[8]
+                if isinstance(payload, str):
+                    payload = json.loads(payload)
+                commands.append(CommandEnvelope(
+                    command_id=row[0],
+                    tenant_id=row[1],
+                    actor_id=row[2],
+                    source=row[3],
+                    conversation_id=row[4],
+                    idempotency_key=row[5],
+                    intent=row[6],
+                    payload_hash=row[7],
+                    redacted_payload=dict(payload),
+                    state=CommandState(row[9]),
+                    policy_version=row[10],
+                    trace_id=row[11],
+                    created_at=row[12],
+                ))
+            return commands
+
+        result = self._safe_execute(_read)
+        return result if isinstance(result, list) else []
 
     def append_event(self, event: CommandEvent) -> None:
         def _write() -> None:
@@ -2033,6 +2093,7 @@ class CommandLedger:
                         "cause": "capability_fabric_admission_rejected",
                         "intent_name": typed_intent.name,
                         "reason": capability_admission.reason,
+                        "capability_admission": capability_admission.to_json_dict(),
                     },
                 )
                 raise ValueError(
@@ -2059,6 +2120,9 @@ class CommandLedger:
                 "capability_admission_status": (
                     capability_admission.status.value if capability_admission is not None else "not_configured"
                 ),
+                "capability_admission": (
+                    capability_admission.to_json_dict() if capability_admission is not None else None
+                ),
                 "capability_registry_entry": (
                     capability_registry_entry.to_json_dict() if capability_registry_entry is not None else None
                 ),
@@ -2080,6 +2144,82 @@ class CommandLedger:
             },
         )
         return self.bind_effect_prediction(command.command_id, passport=passport)
+
+    def capability_admission_audit_for(self, command_id: str) -> dict[str, Any] | None:
+        """Return command-local fabric admission witness state."""
+        command = self.get(command_id)
+        if command is None:
+            return None
+
+        audit: dict[str, Any] = {
+            "command_id": command_id,
+            "fabric_configured": self._capability_admission_gate is not None,
+            "command_state": command.state.value,
+            "intent_name": "",
+            "intent_hash": "",
+            "status": "not_evaluated",
+            "capability_id": "",
+            "domain": "",
+            "owner_team": "",
+            "evidence_required": (),
+            "reason": "",
+            "decided_at": "",
+            "capability_registry_entry": None,
+            "admission_event_hash": "",
+            "registry_event_hash": "",
+            "event_count": 0,
+        }
+        events = self.events_for(command_id)
+        audit["event_count"] = len(events)
+        for event in events:
+            detail = event.detail
+            if detail.get("cause") == "typed_intent_compiled":
+                audit["intent_name"] = str(detail.get("intent_name", ""))
+                audit["intent_hash"] = str(detail.get("intent_hash", ""))
+            raw_admission = detail.get("capability_admission")
+            if isinstance(raw_admission, dict):
+                audit["fabric_configured"] = True
+                audit["status"] = str(raw_admission.get("status", ""))
+                audit["capability_id"] = str(raw_admission.get("capability_id", ""))
+                audit["domain"] = str(raw_admission.get("domain", ""))
+                audit["owner_team"] = str(raw_admission.get("owner_team", ""))
+                audit["evidence_required"] = tuple(raw_admission.get("evidence_required", ()))
+                audit["reason"] = str(raw_admission.get("reason", ""))
+                audit["decided_at"] = str(raw_admission.get("decided_at", ""))
+                audit["admission_event_hash"] = event.event_hash
+            admission_status = detail.get("capability_admission_status")
+            if isinstance(admission_status, str) and admission_status:
+                audit["fabric_configured"] = admission_status != "not_configured"
+                audit["status"] = admission_status
+                audit["admission_event_hash"] = event.event_hash
+            raw_registry_entry = detail.get("capability_registry_entry")
+            if isinstance(raw_registry_entry, dict):
+                audit["capability_registry_entry"] = raw_registry_entry
+                audit["capability_id"] = str(raw_registry_entry.get("capability_id", audit["capability_id"]))
+                audit["domain"] = str(raw_registry_entry.get("domain", audit["domain"]))
+                audit["registry_event_hash"] = event.event_hash
+        return audit
+
+    def capability_admission_audits(
+        self,
+        *,
+        tenant_id: str = "",
+        status: str = "",
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Return recent command-local capability admission audits."""
+        bounded_limit = max(1, min(limit, 1000))
+        audits: list[dict[str, Any]] = []
+        for command in self._store.list_commands(tenant_id=tenant_id, limit=bounded_limit):
+            audit = self.capability_admission_audit_for(command.command_id)
+            if audit is None:
+                continue
+            if status and audit["status"] != status:
+                continue
+            audits.append(audit)
+            if len(audits) >= bounded_limit:
+                break
+        return audits
 
     def bind_effect_prediction(
         self,

@@ -641,6 +641,32 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             ],
         }
 
+    @app.get("/capability-fabric/admission-audits")
+    def capability_fabric_admission_audits(
+        request: Request,
+        tenant_id: str = "",
+        status: str = "",
+        limit: int = 100,
+    ):
+        _require_authority_operator(request)
+        audits = command_ledger.capability_admission_audits(
+            tenant_id=tenant_id,
+            status=status,
+            limit=limit,
+        )
+        return {
+            "admission_audits": audits,
+            "count": len(audits),
+        }
+
+    @app.get("/commands/{command_id}/capability-admission")
+    def command_capability_admission(command_id: str, request: Request):
+        _require_authority_operator(request)
+        audit = command_ledger.capability_admission_audit_for(command_id)
+        if audit is None:
+            raise HTTPException(404, detail="command capability admission audit not found")
+        return audit
+
     @app.get("/anchors/latest")
     def latest_anchor():
         anchors = command_ledger.list_anchors(limit=1)
@@ -764,7 +790,6 @@ def _authority_operator_console_html(
 </main>
 </body>
 </html>"""
-
 
 # Default app instance
 app = create_gateway_app()
