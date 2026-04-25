@@ -22,6 +22,15 @@ Invariants: policy artifacts may federate; tenant data does not replicate to the
 4. Runtime enforcement happens in the cluster where the tenant data resides.
 5. Enforcement receipts explicitly state `central_data_transfer: false`.
 
+## Read-Only Route
+
+```powershell
+GET /api/v1/federation/summary
+```
+
+The route exposes seeded policy distribution and local-enforcement receipts as a
+read model. It does not publish policy, sync new clusters, or move tenant data.
+
 ## Failure Semantics
 
 | Condition | Result |
@@ -35,6 +44,6 @@ Invariants: policy artifacts may federate; tenant data does not replicate to the
 
 STATUS:
   Completeness: 100%
-  Invariants verified: signed registry, local enforcement, no tenant-data replication, residency boundary receipts, deterministic receipt hashes
+  Invariants verified: signed registry, local enforcement, no tenant-data replication, residency boundary receipts, deterministic receipt hashes, read-only federation summary route
   Open issues: none
-  Next action: expose a read-only federated control-plane route after operator authentication requirements are finalized
+  Next action: add authenticated regional policy-sync control routes with explicit operator authority
