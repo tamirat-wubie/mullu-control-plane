@@ -170,7 +170,7 @@ class TestGuardChainIntegration:
         os.environ["MULLU_DB_BACKEND"] = "memory"
         from mcoi_runtime.app.server import guard_chain
         names = guard_chain.guard_names()
-        assert "content_safety" in names
+        assert "Lambda_input_safety" in names
         assert "rbac" in names
 
     def test_guard_chain_order(self):
@@ -182,7 +182,7 @@ class TestGuardChainIntegration:
         tenant_idx = names.index("tenant")
         gating_idx = names.index("tenant_gating")
         rbac_idx = names.index("rbac")
-        safety_idx = names.index("content_safety")
+        safety_idx = names.index("Lambda_input_safety")
         rate_idx = names.index("rate_limit")
         budget_idx = names.index("budget")
         assert tenant_idx < gating_idx < rbac_idx < safety_idx < rate_idx < budget_idx
