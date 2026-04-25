@@ -8,6 +8,7 @@ Invariants: signatures are deterministic, sync receipts preserve residency, and 
 from __future__ import annotations
 
 import pytest
+from fastapi.testclient import TestClient
 
 from mcoi_runtime.core.federated_control_plane import (
     FederatedCluster,
@@ -147,3 +148,18 @@ def test_federated_control_plane_rejects_non_local_cluster() -> None:
             allowed_policy_ids=("regulated-agent-policy",),
             enforcement_local=False,
         )
+
+
+def test_federation_summary_route_exposes_read_only_witness() -> None:
+    from mcoi_runtime.app.server import app
+
+    client = TestClient(app)
+    response = client.get("/api/v1/federation/summary")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["governed"] is True
+    assert data["read_only"] is True
+    assert data["summary"]["tenant_data_replication"] is False
+    assert data["witness"]["sync_receipt"]["accepted"] is True
+    assert data["witness"]["enforcement_receipt"]["central_data_transfer"] is False

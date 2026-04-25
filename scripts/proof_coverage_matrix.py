@@ -203,6 +203,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation.",
         ),
         _surface(
+            "federated_control_plane",
+            ["/api/v1/federation/summary"],
+            "read_model",
+            "read_model",
+            "read_model",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/federation.py",
+                "mcoi/mcoi_runtime/core/federated_control_plane.py",
+                "mcoi/tests/test_federated_control_plane.py",
+                "docs/51_federated_control_plane.md",
+            ],
+            "Federated control-plane route exposes signed policy distribution and local-enforcement receipts without tenant data replication.",
+        ),
+        _surface(
             "gateway_webhook_ingress",
             ["/webhook/web", "/webhook/slack", "/webhook/telegram"],
             "request_proof",
@@ -376,6 +391,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_hosted_demo_sandbox_read_models",
             "surfaces": ["hosted_demo_sandbox"],
+            "status": "closed",
+        },
+        {
+            "action_id": "expose_federated_control_plane_read_model",
+            "surfaces": ["federated_control_plane"],
             "status": "closed",
         },
     ]

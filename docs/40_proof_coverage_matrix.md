@@ -18,6 +18,7 @@ document is the operator-readable witness.
 | `policy_version_registry` | `/api/v1/policies/{policy_id}/versions`, `/api/v1/policies/{policy_id}/versions/{version}`, `/api/v1/policies/{policy_id}/versions/{version}/promote`, `/api/v1/policies/{policy_id}/rollback`, `/api/v1/policies/{policy_id}/diff`, `/api/v1/policies/{policy_id}/shadow/{shadow_version}` | yes | yes | policy artifact registry | hash-chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
 | `pilot_provisioning` | `/api/v1/pilots/provision`, `/api/v1/pilots/provisions`, `/api/v1/pilots/provisions/{pilot_id}` | yes | yes | pilot artifact scaffold | hash-chain | witnessed | Hosted pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models. |
 | `hosted_demo_sandbox` | `/api/v1/sandbox/summary`, `/api/v1/sandbox/traces`, `/api/v1/sandbox/lineage/{trace_id}`, `/api/v1/sandbox/policy-evaluations` | read-model | read-model | sandbox trace projection | read-model | witnessed | Hosted demo sandbox exposes deterministic read-only traces, lineage projections, and policy evaluations without runtime mutation. |
+| `federated_control_plane` | `/api/v1/federation/summary` | read-model | read-model | federated policy witness | read-model | witnessed | Federated control-plane route exposes signed policy distribution and local-enforcement receipts without tenant data replication. |
 | `gateway_webhook_ingress` | `/webhook/web`, `/webhook/slack`, `/webhook/telegram` | yes | yes | command ledger | hash-chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
@@ -32,9 +33,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 18 |
+| Total surfaces | 19 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 17 |
+| Witnessed surfaces | 18 |
 | Unproven surfaces | 0 |
 
 Gateway runtime witness invariants:
@@ -51,6 +52,7 @@ Resolved closure actions:
 4. `implement_lineage_query_routes_and_schema`
 5. `connect_pilot_scaffold_to_hosted_provisioning_endpoint`
 6. `publish_hosted_demo_sandbox_read_models`
+7. `expose_federated_control_plane_read_model`
 
 Open closure actions:
 
@@ -58,6 +60,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes
+  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
   Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`

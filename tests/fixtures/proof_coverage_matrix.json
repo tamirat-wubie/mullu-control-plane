@@ -43,6 +43,13 @@
       "surfaces": [
         "hosted_demo_sandbox"
       ]
+    },
+    {
+      "action_id": "expose_federated_control_plane_read_model",
+      "status": "closed",
+      "surfaces": [
+        "federated_control_plane"
+      ]
     }
   ],
   "coverage_levels": [
@@ -62,29 +69,29 @@
       "action_proof": 13,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 5,
+      "read_model": 6,
       "request_proof": 0
     },
     "by_audit": {
       "action_proof": 0,
       "audit_chain": 15,
       "gap": 0,
-      "read_model": 3,
+      "read_model": 4,
       "request_proof": 0
     },
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 17
+      "witnessed": 18
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 5,
+      "read_model": 6,
       "request_proof": 13
     },
-    "surface_count": 18
+    "surface_count": 19
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -267,6 +274,24 @@
       "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "hosted_demo_sandbox"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "read_model",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/federation.py",
+        "mcoi/mcoi_runtime/core/federated_control_plane.py",
+        "mcoi/tests/test_federated_control_plane.py",
+        "docs/51_federated_control_plane.md"
+      ],
+      "notes": "Federated control-plane route exposes signed policy distribution and local-enforcement receipts without tenant data replication.",
+      "representative_paths": [
+        "/api/v1/federation/summary"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [],
+      "surface_id": "federated_control_plane"
     },
     {
       "action_proof": "action_proof",
