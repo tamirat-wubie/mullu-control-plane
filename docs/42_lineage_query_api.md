@@ -1,4 +1,4 @@
-# Lineage Query API Skeleton
+# Lineage Query API
 
 Purpose: define `lineage://` URI semantics for querying every governed action
 that causally contributed to a symbolic intelligence output.
@@ -14,7 +14,8 @@ tool receipts, and replay witnesses.
 | URI parser | Parse and validate `lineage://` references | Lineage URI | bounded query envelope |
 | Lineage resolver | Locate root trace, output, or command and ancestor chain | trace, output, or command id | ordered causal graph |
 | Context projector | Attach policy, model, tenant, and budget context | trace node ids | decorated lineage nodes |
-| Proof verifier | Validate hash links and proof references | decorated nodes | verification summary |
+| Proof verifier | Validate graph edges, hash links, and proof references | decorated nodes and edges | verification summary |
+| Policy-version projector | Build a bounded policy-version index from lineage nodes | decorated nodes | policy-version read model |
 | Read API | Return bounded graph slices | query envelope | JSON lineage document |
 
 ## URI Form
@@ -50,6 +51,22 @@ Each node must include:
 10. `state_hash`
 11. `timestamp`
 
+## Lineage Document Contract
+
+Each resolved document must include:
+
+| Field | Meaning |
+|---|---|
+| `lineage_uri` | Caller-supplied query URI |
+| `document_id` | Stable short identifier derived from the document hash |
+| `document_hash` | `sha256:` hash over the canonical document body |
+| `permalink` | Canonical `lineage://{type}/{id}` reference for the root |
+| `root_ref` | Root reference type and id |
+| `verification.checked_nodes` | Number of nodes included in graph verification |
+| `verification.checked_edges` | Number of edges included in graph verification |
+| `verification.reason_codes` | Bounded causes for unresolved or unverifiable graph state |
+| `policy_versions` | Top-level index of policy versions, node ids, tenant ids, and counts |
+
 ## Query Examples
 
 ```text
@@ -65,6 +82,8 @@ lineage://command/cmd-7?include=policy,tool
 3. Verification failures return `verified=false` with bounded reason codes.
 4. Tenant context is always included, even when omitted from `include`.
 5. Redaction happens after proof verification so hashes remain auditable.
+6. Parent declarations and edge endpoints must match exactly.
+7. The document hash is computed after verification and before response return.
 
 ## Initial Endpoint Shape
 
@@ -88,8 +107,21 @@ completed traces. The resolver inspects frame input and output contracts for:
 The scan is capped at `MAX_TRACE_INDEX_SCAN` traces and returns the newest
 matching trace first. Missing references remain explicit unresolved nodes.
 
+## Policy-Version Read Model
+
+Every lineage document includes a top-level `policy_versions` projection. Each
+entry records:
+
+1. `policy_version`
+2. `node_count`
+3. `node_ids`
+4. `tenant_ids`
+
+This lets operators query which policy versions governed the returned lineage
+without walking every node manually.
+
 STATUS:
   Completeness: 100%
-  Invariants verified: URI grammar, read-only boundary, tenant context retention, missing ancestor visibility, proof verification position, bounded output index scan, bounded command index scan
-  Open issues: policy-version index is not yet connected beyond projected frame context
-  Next action: connect lineage resolver to policy-version read models
+  Invariants verified: URI grammar, read-only boundary, tenant context retention, missing ancestor visibility, proof verification position, bounded output index scan, bounded command index scan, edge endpoint verification, parent edge consistency, deterministic document hash, policy-version projection
+  Open issues: none
+  Next action: connect external policy registry metadata when a durable registry is introduced
