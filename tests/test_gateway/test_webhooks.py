@@ -13,6 +13,7 @@ if str(_ROOT) not in sys.path:
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+from gateway.authority_obligation_mesh import Obligation, ObligationStatus  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
 
@@ -368,6 +369,74 @@ class TestGatewayStatus:
         data = resp.json()
         assert data["witness_id"].startswith("runtime-witness-")
         assert data["signature"].startswith("hmac-sha256:")
+
+    def test_authority_witness_read_model(self, client):
+        resp = client.get("/authority/witness")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["pending_approval_chain_count"] == 0
+        assert data["open_obligation_count"] == 0
+        assert data["unowned_high_risk_capability_count"] == 0
+
+    def test_authority_approval_chain_read_model(self, client):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "make a payment of $50", "user_id": "web-user"}),
+            headers={"X-Session-Token": "authority-chain-token"},
+        )
+        assert msg_resp.status_code == 200
+
+        list_resp = client.get("/authority/approval-chains?status=pending")
+        assert list_resp.status_code == 200
+        chains = list_resp.json()["approval_chains"]
+        assert chains
+        command_id = chains[0]["command_id"]
+        command_resp = client.get(f"/commands/{command_id}/authority")
+        witness_resp = client.get("/authority/witness")
+
+        assert any(chain["command_id"] == command_id for chain in chains)
+        assert command_resp.status_code == 200
+        command_data = command_resp.json()
+        assert command_data["approval_chain"]["command_id"] == command_id
+        assert command_data["approval_chain"]["status"] == "pending"
+        assert witness_resp.json()["pending_approval_chain_count"] >= 1
+
+    def test_authority_obligation_and_escalation_read_models(self, gateway_app, client):
+        obligation = Obligation(
+            obligation_id="obligation-test-read-model",
+            command_id="cmd-test-read-model",
+            tenant_id="t1",
+            owner_id="u1",
+            owner_team="ops",
+            obligation_type="case_review",
+            due_at="2026-04-24T12:00:00+00:00",
+            status=ObligationStatus.OPEN,
+            evidence_required=("case_disposition",),
+            escalation_policy_id="default",
+            terminal_certificate_id="terminal-test-read-model",
+        )
+        gateway_app.state.authority_mesh_store.save_obligation(obligation)
+        gateway_app.state.authority_mesh_store.append_escalation_event({
+            "event_id": "obl-escalation-test-read-model",
+            "obligation_id": obligation.obligation_id,
+            "command_id": obligation.command_id,
+            "tenant_id": obligation.tenant_id,
+            "owner_id": obligation.owner_id,
+            "owner_team": obligation.owner_team,
+            "escalated_at": "2026-04-24T13:00:00+00:00",
+        })
+
+        obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open")
+        command_resp = client.get(f"/commands/{obligation.command_id}/authority")
+        escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}")
+
+        assert obligations_resp.status_code == 200
+        assert obligations_resp.json()["count"] == 1
+        assert obligations_resp.json()["obligations"][0]["obligation_id"] == obligation.obligation_id
+        assert command_resp.status_code == 200
+        assert command_resp.json()["obligations"][0]["owner_team"] == "ops"
+        assert escalations_resp.status_code == 200
+        assert escalations_resp.json()["escalation_events"][0]["obligation_id"] == obligation.obligation_id
 
     def test_command_closure_read_model(self, gateway_app, client):
         msg_resp = client.post(
