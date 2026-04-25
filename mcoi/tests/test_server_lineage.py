@@ -57,6 +57,9 @@ def test_lineage_resolve_route_returns_trace_document(client) -> None:
     assert response.status_code == 200
     assert data["governed"] is True
     assert data["verified"] is True
+    assert data["document_id"].startswith("lineage-doc:")
+    assert data["document_hash"].startswith("sha256:")
+    assert data["permalink"] == "lineage://trace/lineage-http-trace"
     assert data["nodes"][0]["tenant_id"] == "tenant-http"
     assert data["nodes"][0]["proof_id"] == "proof:http"
 
