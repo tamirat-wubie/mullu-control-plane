@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+from dataclasses import asdict
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -79,17 +80,18 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     command_ledger = build_command_ledger_from_env(clock=_clock)
     tenant_identity_store = build_tenant_identity_store_from_env(clock=_clock)
     authority_mesh_store = build_authority_obligation_mesh_store_from_env()
+    authority_obligation_mesh = AuthorityObligationMesh(
+        commands=command_ledger,
+        clock=_clock,
+        store=authority_mesh_store,
+    )
     skill_dispatcher = build_skill_dispatcher_from_platform(platform)
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,
         tenant_identity_store=tenant_identity_store,
-        authority_obligation_mesh=AuthorityObligationMesh(
-            commands=command_ledger,
-            clock=_clock,
-            store=authority_mesh_store,
-        ),
+        authority_obligation_mesh=authority_obligation_mesh,
         skill_dispatcher=skill_dispatcher,
         defer_approved_execution=defer_approved_execution,
         environment=gateway_env,
@@ -433,6 +435,74 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             signing_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
 
+    @app.get("/authority/witness")
+    def authority_witness():
+        return asdict(authority_obligation_mesh.responsibility_witness())
+
+    @app.get("/authority/approval-chains")
+    def authority_approval_chains(
+        tenant_id: str = "",
+        status: str = "",
+        command_id: str = "",
+    ):
+        chains = authority_mesh_store.list_approval_chains()
+        if tenant_id:
+            chains = tuple(chain for chain in chains if chain.tenant_id == tenant_id)
+        if status:
+            chains = tuple(chain for chain in chains if chain.status.value == status)
+        if command_id:
+            chains = tuple(chain for chain in chains if chain.command_id == command_id)
+        return {
+            "approval_chains": [asdict(chain) for chain in chains],
+            "count": len(chains),
+        }
+
+    @app.get("/commands/{command_id}/authority")
+    def command_authority(command_id: str):
+        chain = authority_obligation_mesh.approval_chain_for(command_id)
+        obligations = authority_obligation_mesh.obligations_for(command_id)
+        if chain is None and not obligations:
+            raise HTTPException(404, detail="authority records not found")
+        return {
+            "command_id": command_id,
+            "approval_chain": asdict(chain) if chain is not None else None,
+            "obligations": [asdict(obligation) for obligation in obligations],
+        }
+
+    @app.get("/authority/obligations")
+    def authority_obligations(
+        tenant_id: str = "",
+        status: str = "",
+        command_id: str = "",
+        owner_id: str = "",
+        owner_team: str = "",
+    ):
+        obligations = authority_mesh_store.list_obligations(command_id)
+        if tenant_id:
+            obligations = tuple(obligation for obligation in obligations if obligation.tenant_id == tenant_id)
+        if status:
+            obligations = tuple(obligation for obligation in obligations if obligation.status.value == status)
+        if owner_id:
+            obligations = tuple(obligation for obligation in obligations if obligation.owner_id == owner_id)
+        if owner_team:
+            obligations = tuple(obligation for obligation in obligations if obligation.owner_team == owner_team)
+        return {
+            "obligations": [asdict(obligation) for obligation in obligations],
+            "count": len(obligations),
+        }
+
+    @app.get("/authority/escalations")
+    def authority_escalations(tenant_id: str = "", command_id: str = ""):
+        events = authority_mesh_store.list_escalation_events()
+        if tenant_id:
+            events = tuple(event for event in events if event.get("tenant_id") == tenant_id)
+        if command_id:
+            events = tuple(event for event in events if event.get("command_id") == command_id)
+        return {
+            "escalation_events": list(events),
+            "count": len(events),
+        }
+
     @app.get("/commands/{command_id}/closure")
     def command_closure(command_id: str):
         certificate = command_ledger.terminal_certificate_for(command_id)
@@ -475,6 +545,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app.state.command_ledger = command_ledger
     app.state.tenant_identity_store = tenant_identity_store
     app.state.authority_mesh_store = authority_mesh_store
+    app.state.authority_obligation_mesh = authority_obligation_mesh
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.verifier = verifier
