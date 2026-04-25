@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "generated_by": "scripts/compliance_alignment_matrix.py",
+  "claim_boundary": {
+    "certification_claimed": false,
+    "statement": "alignment_only",
+    "review_required_before_external_publication": true
+  },
+  "source_refs": [
+    {
+      "framework": "SOC2",
+      "label": "AICPA Trust Services Criteria categories",
+      "url": "https://www.aicpa-cima.com/resources/landing/system-and-organization-controls-soc-suite-of-services"
+    },
+    {
+      "framework": "HIPAA",
+      "label": "HHS HIPAA Security Rule overview",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/security/index.html"
+    },
+    {
+      "framework": "EU_ACT",
+      "label": "European Commission high-risk deployer obligations",
+      "url": "https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-26"
+    },
+    {
+      "framework": "ISO_IEC_42001",
+      "label": "ISO/IEC 42001 management system overview",
+      "url": "https://www.iso.org/standard/42001"
+    }
+  ],
+  "capabilities": [
+    {
+      "capability_id": "hash_chain_audit",
+      "capability": "Hash-chain audit and immutable event evidence",
+      "evidence_files": [
+        "docs/03_trace_and_replay.md",
+        "docs/37_terminal_closure_certificate.md",
+        "mcoi/mcoi_runtime/core/audit_trail.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Security, processing integrity, confidentiality",
+          "alignment": "auditability_and_tamper_evidence"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Technical safeguards: audit controls and integrity",
+          "alignment": "electronic_activity_traceability"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Logging and post-deployment monitoring",
+          "alignment": "operation_records_for_trace_review"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Performance evaluation and documented information",
+          "alignment": "retained_evidence_for_management_review"
+        }
+      ]
+    },
+    {
+      "capability_id": "lineage_query_api",
+      "capability": "Causal lineage query API",
+      "evidence_files": [
+        "docs/42_lineage_query_api.md",
+        "mcoi/mcoi_runtime/core/lineage_query.py",
+        "mcoi/mcoi_runtime/app/routers/lineage.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Processing integrity and confidentiality",
+          "alignment": "output_decision_path_reconstruction"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Technical safeguards: access and audit evidence",
+          "alignment": "bounded_trace_read_models"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Transparency and logging",
+          "alignment": "explainable_causal_record_for_outputs"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Traceability and transparency",
+          "alignment": "managed_lifecycle_evidence"
+        }
+      ]
+    },
+    {
+      "capability_id": "policy_versioning_shadow_mode",
+      "capability": "Policy versioning, rollback, diff, and shadow evaluation",
+      "evidence_files": [
+        "docs/04_policy_and_verification.md",
+        "mcoi/mcoi_runtime/core/policy_versioning.py",
+        "mcoi/mcoi_runtime/app/routers/policy_versions.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Security and change management evidence",
+          "alignment": "controlled_policy_change_records"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Administrative safeguards: security management process",
+          "alignment": "governed_policy_change_review"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Risk management and human oversight",
+          "alignment": "shadow_evaluation_before_policy_promotion"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Planning, operation, and improvement",
+          "alignment": "managed_policy_lifecycle"
+        }
+      ]
+    },
+    {
+      "capability_id": "streaming_budget_enforcement",
+      "capability": "Predictive debit and mid-stream budget cutoff",
+      "evidence_files": [
+        "docs/41_streaming_budget_enforcement.md",
+        "schemas/streaming_budget_enforcement.schema.json",
+        "mcoi/mcoi_runtime/app/streaming.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Availability and processing integrity",
+          "alignment": "bounded_resource_use_and_deterministic_settlement"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Administrative safeguards: risk management",
+          "alignment": "tenant_budget_constraint_enforcement"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Accuracy, robustness, and incident containment",
+          "alignment": "bounded_streaming_behavior_under_constraint"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Risk treatment and operational controls",
+          "alignment": "resource_risk_control_with_settlement_evidence"
+        }
+      ]
+    },
+    {
+      "capability_id": "lambda_safety_guard_chain",
+      "capability": "Input and output safety guard-chain stages",
+      "evidence_files": [
+        "docs/44_lambda_safety_guard_chain.md",
+        "mcoi/mcoi_runtime/core/content_safety.py",
+        "mcoi/tests/test_content_safety.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Security and confidentiality",
+          "alignment": "injection_and_sensitive_data_guardrails"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Technical safeguards: access control and transmission protection support",
+          "alignment": "sensitive_data_detection_and_scrubbing_stage"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Data governance and cybersecurity",
+          "alignment": "adversarial_input_and_output_control"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Risk assessment and operational controls",
+          "alignment": "governed_safety_stage_in_execution_chain"
+        }
+      ]
+    },
+    {
+      "capability_id": "tool_permission_primitives",
+      "capability": "Tool-call permission grammar and audited capability receipts",
+      "evidence_files": [
+        "docs/45_tool_call_permission_primitives.md",
+        "mcoi/mcoi_runtime/core/tool_permission_primitives.py",
+        "mcoi/tests/test_tool_permission_primitives.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Security and logical access",
+          "alignment": "least_privilege_tool_invocation"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Technical safeguards: access control",
+          "alignment": "tenant_scoped_capability_authorization"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Human oversight and operational control",
+          "alignment": "bounded_tool_execution_authority"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Operational controls and supplier/tool governance",
+          "alignment": "capability_contract_before_execution"
+        }
+      ]
+    },
+    {
+      "capability_id": "replay_determinism_harness",
+      "capability": "Replay and determinism harness",
+      "evidence_files": [
+        "docs/03_trace_and_replay.md",
+        "mcoi/mcoi_runtime/core/replay_engine.py",
+        "mcoi/tests/test_runtime_kernel.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Processing integrity and availability",
+          "alignment": "incident_reconstruction_and_repeatability"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Administrative safeguards: evaluation and incident support",
+          "alignment": "deterministic_review_of_governed_decisions"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Post-deployment monitoring and logs",
+          "alignment": "replayable_decision_path_for_review"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Performance evaluation and continual improvement",
+          "alignment": "repeatable_evidence_for_corrective_action"
+        }
+      ]
+    },
+    {
+      "capability_id": "hosted_demo_sandbox",
+      "capability": "Read-only hosted demo sandbox",
+      "evidence_files": [
+        "docs/48_hosted_demo_sandbox.md",
+        "mcoi/mcoi_runtime/core/hosted_demo_sandbox.py",
+        "mcoi/mcoi_runtime/app/routers/sandbox.py"
+      ],
+      "mappings": [
+        {
+          "framework": "SOC2",
+          "control_area": "Security and confidentiality",
+          "alignment": "public_read_only_evidence_surface"
+        },
+        {
+          "framework": "HIPAA",
+          "control_area": "Administrative and technical safeguards boundary",
+          "alignment": "no_runtime_mutation_or_sensitive_tenant_state"
+        },
+        {
+          "framework": "EU_ACT",
+          "control_area": "Transparency",
+          "alignment": "bounded_public_trace_examples"
+        },
+        {
+          "framework": "ISO_IEC_42001",
+          "control_area": "Communication and documented information",
+          "alignment": "public_evidence_without_control_plane_write_access"
+        }
+      ]
+    }
+  ]
+}
