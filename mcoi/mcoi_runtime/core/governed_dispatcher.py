@@ -18,9 +18,13 @@ from mcoi_runtime.contracts.effect_assurance import (
     ReconciliationStatus,
 )
 from mcoi_runtime.contracts.execution import ExecutionResult, ExecutionOutcome
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CommandCapabilityAdmissionStatus,
+)
 from mcoi_runtime.contracts.case_runtime import CaseKind, CaseSeverity, FindingSeverity
 from mcoi_runtime.adapters.executor_base import build_failure_result, ExecutionFailure, utc_now_text
 from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
+from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
@@ -93,6 +97,7 @@ class GovernedDispatcher:
         verifier: ExecutionVerificationLoop | None = None,
         recovery: FailureRecoveryEngine | None = None,
         boundary: SimRealityBoundary | None = None,
+        capability_admission: CommandCapabilityAdmissionGate | None = None,
         effect_assurance: EffectAssuranceGate | None = None,
         effect_assurance_tenant_id: str = "operator",
         case_runtime: CaseRuntimeEngine | None = None,
@@ -109,6 +114,7 @@ class GovernedDispatcher:
         self._verifier = verifier or ExecutionVerificationLoop()
         self._recovery = recovery or FailureRecoveryEngine()
         self._boundary = boundary or SimRealityBoundary()
+        self._capability_admission = capability_admission
         self._effect_assurance = effect_assurance
         self._effect_assurance_tenant_id = effect_assurance_tenant_id
         self._case_runtime = case_runtime
@@ -178,6 +184,36 @@ class GovernedDispatcher:
             self._emit_ledger(context, result, now)
             return result
         result.gates_passed.append(GateResult("promotion_boundary", True, f"mode={self._boundary.current_mode}"))
+
+        # --- Gate 6: Governed Capability Admission ---
+        if self._capability_admission is not None:
+            try:
+                admission = self._capability_admission.admit(
+                    command_id=context.intent_id,
+                    intent_name=context.request.route,
+                )
+            except (RuntimeCoreInvariantError, ValueError) as exc:
+                bounded_error = _bounded_gate_error("capability admission failed", exc)
+                result.gates_failed.append(GateResult("capability_admission", False, bounded_error))
+                result.blocked = True
+                result.block_reason = "capability_admission blocked"
+                self._emit_ledger(context, result, now)
+                return result
+            if admission.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
+                result.gates_failed.append(
+                    GateResult("capability_admission", False, admission.reason)
+                )
+                result.blocked = True
+                result.block_reason = "capability_admission blocked"
+                self._emit_ledger(context, result, now)
+                return result
+            result.gates_passed.append(
+                GateResult(
+                    "capability_admission",
+                    True,
+                    f"capability_id={admission.capability_id};owner_team={admission.owner_team}",
+                )
+            )
 
         # --- DISPATCH ---
         effect_plan = None

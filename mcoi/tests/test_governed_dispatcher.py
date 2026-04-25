@@ -5,15 +5,25 @@ Invariants: fail-closed on any gate failure, all actions identity-bound and ledg
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityCertificationStatus,
+    CapabilityRegistryEntry,
+    DomainCapsule,
+    DomainCapsuleCertificationStatus,
+)
+from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
+from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
+from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
     GovernedDispatcher,
-    GovernedDispatchResult,
 )
 from mcoi_runtime.core.system_closure import (
     ExecutionVerificationLoop,
@@ -29,7 +39,12 @@ from mcoi_runtime.core.system_stabilization import (
 from mcoi_runtime.core.template_validator import TemplateValidator
 
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00+00:00"
+def fixed_clock() -> str:
+    return "2026-03-26T12:00:00+00:00"
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FABRIC_FIXTURE_DIR = REPO_ROOT / "integration" / "governed_capability_fabric" / "fixtures"
 
 VALID_TEMPLATE = {
     "template_id": "tpl-gov-1",
@@ -79,12 +94,13 @@ def _make_governed(
     boundary: SimRealityBoundary | None = None,
     verifier: ExecutionVerificationLoop | None = None,
     recovery: FailureRecoveryEngine | None = None,
+    capability_admission: CommandCapabilityAdmissionGate | None = None,
 ) -> tuple[GovernedDispatcher, FakeExecutor]:
     exe = executor or FakeExecutor()
     dispatcher = Dispatcher(
         template_validator=TemplateValidator(),
         executors={"shell_command": exe},
-        clock=FIXED_CLOCK,
+        clock=fixed_clock,
     )
     eq = equilibrium or EquilibriumEngine()
     governed = GovernedDispatcher(
@@ -96,7 +112,8 @@ def _make_governed(
         boundary=boundary,
         verifier=verifier,
         recovery=recovery,
-        clock=FIXED_CLOCK,
+        capability_admission=capability_admission,
+        clock=fixed_clock,
     )
     return governed, exe
 
@@ -117,6 +134,67 @@ def _make_context(
 
 
 # ── 1. Happy path ──
+
+def _fixture(name: str) -> dict:
+    with open(FABRIC_FIXTURE_DIR / name, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    assert isinstance(payload, dict)
+    return payload
+
+
+def _certified_entry(capability_id: str = "shell_command") -> CapabilityRegistryEntry:
+    entry = CapabilityRegistryEntry.from_mapping(_fixture("capability_registry_entry.json"))
+    return CapabilityRegistryEntry(
+        capability_id=capability_id,
+        domain=entry.domain,
+        version=entry.version,
+        input_schema_ref=entry.input_schema_ref,
+        output_schema_ref=entry.output_schema_ref,
+        effect_model=entry.effect_model,
+        evidence_model=entry.evidence_model,
+        authority_policy=entry.authority_policy,
+        isolation_profile=entry.isolation_profile,
+        recovery_plan=entry.recovery_plan,
+        cost_model=entry.cost_model,
+        obligation_model=entry.obligation_model,
+        certification_status=CapabilityCertificationStatus.CERTIFIED,
+        metadata=entry.metadata,
+        extensions=entry.extensions,
+    )
+
+
+def _certified_capsule(capability_id: str = "shell_command") -> DomainCapsule:
+    capsule = DomainCapsule.from_mapping(_fixture("domain_capsule.json"))
+    return DomainCapsule(
+        capsule_id=capsule.capsule_id,
+        domain=capsule.domain,
+        version=capsule.version,
+        ontology_refs=capsule.ontology_refs,
+        capability_refs=(capability_id,),
+        policy_refs=capsule.policy_refs,
+        evidence_rules=capsule.evidence_rules,
+        approval_rules=capsule.approval_rules,
+        recovery_rules=capsule.recovery_rules,
+        test_fixture_refs=capsule.test_fixture_refs,
+        read_model_refs=capsule.read_model_refs,
+        operator_view_refs=capsule.operator_view_refs,
+        owner_team=capsule.owner_team,
+        certification_status=DomainCapsuleCertificationStatus.CERTIFIED,
+        metadata=capsule.metadata,
+        extensions=capsule.extensions,
+    )
+
+
+def _capability_admission_gate(capability_id: str = "shell_command") -> CommandCapabilityAdmissionGate:
+    registry = GovernedCapabilityRegistry(clock=fixed_clock)
+    compiler = DomainCapsuleCompiler(clock=fixed_clock)
+    entry = _certified_entry(capability_id)
+    capsule = _certified_capsule(capability_id)
+    compilation = compiler.compile(capsule=capsule, registry_entries=(entry,))
+    installation = registry.install(compilation, (entry,))
+    assert installation.errors == ()
+    return CommandCapabilityAdmissionGate(registry=registry, clock=fixed_clock)
+
 
 def test_happy_path_all_gates_pass() -> None:
     eq = EquilibriumEngine()
@@ -139,6 +217,44 @@ def test_happy_path_all_gates_pass() -> None:
 
 
 # ── 2. Identity binding required ──
+
+def test_capability_admission_gate_accepts_installed_route_before_dispatch() -> None:
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(
+        equilibrium=eq,
+        capability_admission=_capability_admission_gate("shell_command"),
+    )
+
+    result = governed.governed_dispatch(_make_context(intent_id="intent-capability-ok"))
+
+    assert result.all_gates_passed
+    assert not result.blocked
+    assert exe.calls == 1
+    assert governed.ledger_count == 1
+    capability_gate = next(g for g in result.gates_passed if g.gate_name == "capability_admission")
+    assert "capability_id=shell_command" in capability_gate.reason
+    assert "owner_team=customer_ops" in capability_gate.reason
+
+
+def test_capability_admission_gate_blocks_uninstalled_route_before_dispatch() -> None:
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(
+        equilibrium=eq,
+        capability_admission=_capability_admission_gate("customer.notify"),
+    )
+
+    result = governed.governed_dispatch(_make_context(intent_id="intent-capability-block"))
+
+    assert result.blocked
+    assert result.block_reason == "capability_admission blocked"
+    assert result.gates_failed[-1].gate_name == "capability_admission"
+    assert result.gates_failed[-1].reason == "no installed capability for typed intent"
+    assert exe.calls == 0
+    assert result.execution_result is None
+    assert governed.ledger_count == 1
+
 
 def test_identity_binding_required() -> None:
     identity = IdentityBindingEngine()
