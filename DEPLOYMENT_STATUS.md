@@ -33,6 +33,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Gateway ingress renderer | `scripts/render_gateway_ingress.py` renders a concrete ignored ingress manifest and optionally applies it through `kubectl` | Reflected |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` uploads `deployment-witness` artifact from the collector | Reflected |
 | Gateway publication workflow | `.github/workflows/gateway-publication.yml` runs the self-gating publication orchestrator from GitHub with optional kubeconfig-backed ingress apply | Reflected |
+| Gateway publication readiness report | `scripts/report_gateway_publication_readiness.py` derives the publication host, verifies GitHub/DNS readiness gates, and emits the exact dispatch command without exposing secret values | Reflected |
 | Gateway publication dispatcher | `scripts/dispatch_gateway_publication.py` verifies publication workflow prerequisites, dispatches `.github/workflows/gateway-publication.yml`, and downloads the witness artifact | Reflected |
 | Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies the runtime witness secret, dispatches the workflow, and downloads the artifact | Reflected |
 | Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, optional preflight gating, and optional dispatch | Reflected |
@@ -67,6 +68,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway ingress rendering | `python scripts/render_gateway_ingress.py --gateway-host "$MULLU_GATEWAY_HOST"` |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` |
 | Gateway publication workflow | `.github/workflows/gateway-publication.yml` |
+| Gateway publication readiness | `python scripts/report_gateway_publication_readiness.py --gateway-url "$MULLU_GATEWAY_URL" --dispatch-witness` |
 | Gateway publication dispatch | `python scripts/dispatch_gateway_publication.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --dispatch-witness` |
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py` |
 | Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --dispatch` |
