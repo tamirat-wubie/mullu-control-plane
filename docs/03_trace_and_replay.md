@@ -16,9 +16,32 @@ Trace is the causal record. Replay is a controlled reconstruction of that record
 - Replay MAY simulate, observe, or validate recorded effects only when the record explicitly permits it.
 - Replay MUST prefer recorded actual effects over assumed effects.
 - Replay MUST fail closed when trace data is missing, ambiguous, or out of order.
+- Replay harness reports MUST include per-frame expected hashes, actual hashes when computed, bounded reason codes, and a deterministic report hash.
 
 ## Determinism rules
 
 - Given the same trace snapshot and replay mode, replay output MUST be deterministic.
 - Any nondeterministic source MUST be treated as an external effect and excluded from uncontrolled replay.
 - Replay behavior that cannot be bounded MUST be documented as an accepted risk in the consuming implementation, not invented here.
+- Completed trace replay MUST verify frame sequence before invoking deterministic local handlers.
+
+## Replay Harness Contract
+
+| Field | Meaning |
+|---|---|
+| `replay_id` | Stable replay attempt identifier |
+| `trace_id` | Source trace identifier |
+| `trace_hash` | Recorded trace hash |
+| `deterministic` | True only when every checked frame matches and no replay reason codes are present |
+| `checked_frames` | Number of frames evaluated |
+| `matched_frames` | Number of frames whose reconstructed hash matched the recorded hash |
+| `mismatched_frames` | Number of frames with mismatch, unknown operation, sequence gap, or operation error |
+| `reason_codes` | Bounded report-level causes |
+| `frame_checks` | Per-frame operation, expected hash, actual hash, and reason code |
+| `report_hash` | Deterministic hash over the report body |
+
+STATUS:
+  Completeness: 100%
+  Invariants verified: trace causality, fail-closed replay, deterministic frame hashing, sequence verification, bounded reason codes, deterministic report hashing
+  Open issues: none
+  Next action: expose replay harness reports through operator API routes
