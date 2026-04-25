@@ -191,6 +191,18 @@ This sets `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` as GitHub
 repository variables. The deployment witness dispatcher can use those variables
 when local CLI arguments are omitted.
 
+Publish the Kubernetes gateway route by replacing `gateway.example.com` in
+`k8s/mullu-gateway-ingress.yaml` with the real DNS name and applying the
+manifest:
+
+```bash
+python scripts/validate_gateway_ingress_manifest.py --allow-placeholder
+kubectl apply -f k8s/mullu-gateway-ingress.yaml
+```
+
+Before claiming public readiness, run the same validator without
+`--allow-placeholder`; it fails closed until the placeholder host is replaced.
+
 To reduce manual operator steps, dispatch the workflow and download the
 artifact with the guarded shortcut:
 
@@ -242,10 +254,11 @@ Do not enable `MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB` in `pilot` or
 14. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
 15. Run `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` and set the same `MULLU_RUNTIME_WITNESS_SECRET` value in the deployed gateway runtime
 16. Run `python scripts/provision_deployment_target.py --gateway-url "<deployed-gateway-url>" --expected-environment production`
-17. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
-18. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
-19. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
-20. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
+17. Replace `gateway.example.com` in `k8s/mullu-gateway-ingress.yaml`, apply the manifest, and run `python scripts/validate_gateway_ingress_manifest.py`
+18. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
+19. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
+20. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
+21. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
 
 ## Startup Behavior
 
