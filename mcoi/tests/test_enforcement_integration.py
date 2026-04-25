@@ -136,7 +136,7 @@ class TestGuardChainComposition:
         assert "tenant" in names
         assert "tenant_gating" in names
         assert "rbac" in names
-        assert "content_safety" in names
+        assert "Lambda_input_safety" in names
         assert "rate_limit" in names
         assert "budget" in names
         assert len(names) == 7
