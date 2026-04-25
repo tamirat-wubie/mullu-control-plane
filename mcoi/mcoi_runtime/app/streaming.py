@@ -253,7 +253,17 @@ class StreamingAdapter:
         self._clock = clock
         self._chunk_size = chunk_size
 
-    def stream_result(self, result: LLMResult, request_id: str = "") -> Iterator[StreamEvent]:
+    def stream_result(
+        self,
+        result: LLMResult,
+        request_id: str = "",
+        *,
+        tenant_id: str = "system",
+        budget_id: str = "default",
+        estimated_input_tokens: int | None = None,
+        estimated_output_tokens: int | None = None,
+        policy_version: str = "streaming-budget:v1",
+    ) -> Iterator[StreamEvent]:
         """Convert a complete LLM result into a stream of events."""
         if not result.succeeded:
             yield StreamEvent(
@@ -261,6 +271,27 @@ class StreamingAdapter:
                 data={"error": result.error, "request_id": request_id},
             )
             return
+
+        runtime_chunks = _chunk_count(result.content, self._chunk_size)
+        reserved_output_tokens = estimated_output_tokens if estimated_output_tokens is not None else max(
+            result.output_tokens,
+            runtime_chunks,
+        )
+        reserved_input_tokens = estimated_input_tokens if estimated_input_tokens is not None else result.input_tokens
+        cost_per_token = _cost_per_token(result)
+        protocol = StreamingBudgetProtocol(
+            cost_per_token=cost_per_token,
+            proof_id_factory=lambda stage: _stream_proof_id(request_id, stage),
+        )
+        cursor = protocol.reserve(
+            reservation_id=f"stream-reservation:{request_id or 'anonymous'}",
+            request_id=request_id or "anonymous",
+            tenant_id=tenant_id or "system",
+            budget_id=budget_id or "default",
+            estimated_input_tokens=reserved_input_tokens,
+            estimated_output_tokens=reserved_output_tokens,
+            policy_version=policy_version,
+        )
 
         # Yield meta event first
         yield StreamEvent(
@@ -270,6 +301,16 @@ class StreamingAdapter:
                 "model": result.model_name,
                 "provider": result.provider.value,
                 "started_at": self._clock(),
+                "budget_reservation": {
+                    "reservation_id": cursor.reservation.reservation_id,
+                    "tenant_id": cursor.reservation.tenant_id,
+                    "budget_id": cursor.reservation.budget_id,
+                    "reserved_total_tokens": cursor.reservation.reserved_total_tokens,
+                    "reserved_output_tokens": cursor.reservation.reserved_output_tokens,
+                    "reserved_cost": cursor.reservation.reserved_cost,
+                    "policy_version": cursor.reservation.policy_version,
+                    "proof_id": cursor.reservation.proof_id,
+                },
             },
         )
 
@@ -279,13 +320,35 @@ class StreamingAdapter:
         token_count = 0
         while offset < len(content):
             chunk = content[offset:offset + self._chunk_size]
+            cursor, allowed_tokens, cutoff = protocol.debit_chunk(cursor, output_tokens=1)
+            if allowed_tokens == 0:
+                if cutoff is not None:
+                    yield cutoff
+                break
             token_count += 1
             yield StreamEvent(
                 event_type="token",
-                data={"text": chunk, "index": token_count},
+                data={
+                    "text": chunk,
+                    "index": token_count,
+                    "reservation_id": cursor.reservation.reservation_id,
+                    "debit_output_tokens": allowed_tokens,
+                    "emitted_output_tokens": cursor.emitted_output_tokens,
+                    "remaining_output_tokens": cursor.remaining_output_tokens,
+                    "proof_id": _stream_proof_id(request_id, "chunk-debit"),
+                },
             )
             offset += self._chunk_size
+            if cutoff is not None:
+                yield cutoff
+                break
 
+        settlement = protocol.settle(
+            cursor,
+            actual_input_tokens=result.input_tokens,
+            actual_output_tokens=result.output_tokens,
+            actual_cost=result.cost,
+        )
         # Yield done event with final stats
         yield StreamEvent(
             event_type="done",
@@ -298,12 +361,22 @@ class StreamingAdapter:
                 "provider": result.provider.value,
                 "finished_at": self._clock(),
                 "governed": True,
+                "budget_settlement": {
+                    "reservation_id": settlement.reservation_id,
+                    "actual_input_tokens": settlement.actual_input_tokens,
+                    "actual_output_tokens": settlement.actual_output_tokens,
+                    "actual_cost": settlement.actual_cost,
+                    "delta_tokens": settlement.delta_tokens,
+                    "delta_cost": settlement.delta_cost,
+                    "cutoff_semantic": settlement.cutoff_semantic.value if settlement.cutoff_semantic else None,
+                    "proof_id": settlement.proof_id,
+                },
             },
         )
 
-    def stream_to_sse(self, result: LLMResult, request_id: str = "") -> Iterator[str]:
+    def stream_to_sse(self, result: LLMResult, request_id: str = "", **kwargs: Any) -> Iterator[str]:
         """Stream as raw SSE strings for HTTP response."""
-        for event in self.stream_result(result, request_id):
+        for event in self.stream_result(result, request_id, **kwargs):
             yield event.to_sse()
 
 
@@ -353,3 +426,21 @@ class StreamBuffer:
     @property
     def succeeded(self) -> bool:
         return self.done_event is not None and self.error_event is None
+
+
+def _chunk_count(content: str, chunk_size: int) -> int:
+    if not content:
+        return 0
+    return (len(content) + chunk_size - 1) // chunk_size
+
+
+def _cost_per_token(result: LLMResult) -> float:
+    total_tokens = result.input_tokens + result.output_tokens
+    if total_tokens <= 0:
+        return 0.0
+    return result.cost / total_tokens
+
+
+def _stream_proof_id(request_id: str, stage: str) -> str:
+    request_ref = request_id or "anonymous"
+    return f"stream-proof:{request_ref}:{stage}"

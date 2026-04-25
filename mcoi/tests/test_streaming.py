@@ -119,6 +119,49 @@ class TestStreamingAdapter:
         assert meta.data["request_id"] == "req-42"
         assert done.data["request_id"] == "req-42"
 
+    def test_stream_carries_budget_reservation_and_settlement(self):
+        adapter = StreamingAdapter(clock=fixed_clock, chunk_size=100)
+        events = list(
+            adapter.stream_result(
+                _result(),
+                request_id="req-budget",
+                tenant_id="tenant-budget",
+                budget_id="budget-stream",
+                estimated_input_tokens=10,
+                estimated_output_tokens=5,
+            )
+        )
+        meta = events[0]
+        token = next(event for event in events if event.event_type == "token")
+        done = events[-1]
+
+        assert meta.data["budget_reservation"]["tenant_id"] == "tenant-budget"
+        assert meta.data["budget_reservation"]["budget_id"] == "budget-stream"
+        assert meta.data["budget_reservation"]["proof_id"] == "stream-proof:req-budget:precharge"
+        assert token.data["proof_id"] == "stream-proof:req-budget:chunk-debit"
+        assert done.data["budget_settlement"]["proof_id"] == "stream-proof:req-budget:final-reconcile"
+
+    def test_stream_budget_cutoff_stops_delivery(self):
+        adapter = StreamingAdapter(clock=fixed_clock, chunk_size=5)
+        events = list(
+            adapter.stream_result(
+                _result(content="abcdefghijklmnopqrst", succeeded=True),
+                request_id="req-cutoff",
+                tenant_id="tenant-budget",
+                budget_id="budget-stream",
+                estimated_input_tokens=10,
+                estimated_output_tokens=2,
+            )
+        )
+        token_events = [event for event in events if event.event_type == "token"]
+        cutoff = next(event for event in events if event.event_type == "cutoff")
+        done = events[-1]
+
+        assert len(token_events) == 2
+        assert cutoff.data["semantic"] == "graceful"
+        assert cutoff.data["proof_id"] == "stream-proof:req-cutoff:cutoff"
+        assert done.data["budget_settlement"]["cutoff_semantic"] == "graceful"
+
 
 class TestStreamingBudgetProtocol:
     def test_reserve_creates_predictive_precharge(self):

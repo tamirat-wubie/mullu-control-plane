@@ -59,6 +59,6 @@ The canonical event surface is
 
 STATUS:
   Completeness: 100%
-  Invariants verified: reservation arithmetic, bounded cutoff semantics, settlement delta, policy-bound witness fields
-  Open issues: runtime endpoint integration is represented by protocol primitives and tests, not yet wired into live provider streaming
-  Next action: bind `StreamingBudgetProtocol` into `/api/v1/stream` once provider-native token streams are enabled
+  Invariants verified: reservation arithmetic, bounded cutoff semantics, settlement delta, policy-bound witness fields, `/api/v1/stream` binding, `/api/v1/chat/stream` binding
+  Open issues: provider-native token streams are not yet enabled; current runtime binding debits deterministic adapter chunks
+  Next action: connect provider-native token deltas to `StreamingBudgetProtocol.debit_chunk`
