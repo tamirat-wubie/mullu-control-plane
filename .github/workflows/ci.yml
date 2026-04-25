@@ -131,6 +131,9 @@ jobs:
       - name: Validate gateway deployment environment
         run: python scripts/validate_gateway_deployment_env.py --strict
 
+      - name: Validate gateway ingress manifest
+        run: python scripts/validate_gateway_ingress_manifest.py --allow-placeholder
+
   reflective-contract-guard:
     name: Reflective Contract Guard
     runs-on: ubuntu-latest
@@ -185,6 +188,9 @@ jobs:
 
       - name: Gateway deployment environment check
         run: python scripts/validate_gateway_deployment_env.py --strict
+
+      - name: Gateway ingress manifest check
+        run: python scripts/validate_gateway_ingress_manifest.py --allow-placeholder
 
       - name: Governed evolution certification
         run: python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md
