@@ -5,7 +5,6 @@ Covers JWT, encryption, PII, content safety, benchmarks, guard chain,
 store integrity, and integration gaps.
 """
 
-import json
 import os
 
 import pytest
