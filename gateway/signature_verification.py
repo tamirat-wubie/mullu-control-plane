@@ -41,6 +41,7 @@ class VerificationResult:
     method: VerificationMethod | None = None
     error: str = ""
     replay_checked: bool = False
+    skip_reason: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +86,12 @@ class WebhookVerifier:
         self._verified_count = 0
         self._rejected_count = 0
         self._skipped_count = 0
+        self._skip_reasons: dict[str, int] = {}
+
+    def _record_skip(self, reason_code: str) -> None:
+        """Record a bounded verification skip reason for audit summaries."""
+        self._skipped_count += 1
+        self._skip_reasons[reason_code] = self._skip_reasons.get(reason_code, 0) + 1
 
     def register(self, channel: str, config: ChannelVerifierConfig) -> None:
         """Register a channel's verification configuration."""
@@ -134,12 +141,16 @@ class WebhookVerifier:
         """
         config = self._configs.get(channel)
         if config is None:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)  # Not configured — pass
+            self._record_skip("channel_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="channel_not_configured",
+            )  # Not configured — pass
 
         if not config.secret:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)  # No secret — pass
+            self._record_skip("secret_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="secret_not_configured",
+            )  # No secret — pass
 
         if not signature:
             self._rejected_count += 1
@@ -212,12 +223,16 @@ class WebhookVerifier:
         """
         config = self._configs.get(channel)
         if config is None:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)
+            self._record_skip("channel_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="channel_not_configured",
+            )
 
         if not config.secret:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)
+            self._record_skip("secret_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="secret_not_configured",
+            )
 
         if not signature:
             self._rejected_count += 1
@@ -264,12 +279,16 @@ class WebhookVerifier:
         """
         config = self._configs.get(channel)
         if config is None:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)
+            self._record_skip("channel_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="channel_not_configured",
+            )
 
         if not config.secret:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)
+            self._record_skip("secret_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="secret_not_configured",
+            )
 
         if not provided_token:
             self._rejected_count += 1
@@ -306,8 +325,10 @@ class WebhookVerifier:
         """Auto-dispatch to the correct verification method based on channel config."""
         config = self._configs.get(channel)
         if config is None:
-            self._skipped_count += 1
-            return VerificationResult(verified=True, channel=channel)
+            self._record_skip("channel_not_configured")
+            return VerificationResult(
+                verified=True, channel=channel, skip_reason="channel_not_configured",
+            )
 
         if config.method == VerificationMethod.HMAC_SHA256:
             return self.verify_hmac(
@@ -323,8 +344,10 @@ class WebhookVerifier:
         elif config.method == VerificationMethod.TOKEN_COMPARE:
             return self.verify_token(channel=channel, provided_token=token)
 
-        self._skipped_count += 1
-        return VerificationResult(verified=True, channel=channel)
+        self._record_skip("method_not_supported")
+        return VerificationResult(
+            verified=True, channel=channel, skip_reason="method_not_supported",
+        )
 
     @property
     def verified_count(self) -> int:
@@ -344,4 +367,5 @@ class WebhookVerifier:
             "total_verified": self._verified_count,
             "total_rejected": self._rejected_count,
             "total_skipped": self._skipped_count,
+            "skip_reasons": dict(sorted(self._skip_reasons.items())),
         }

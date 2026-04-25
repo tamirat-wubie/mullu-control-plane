@@ -2,13 +2,10 @@
 
 import hashlib
 import hmac as hmac_mod
-import time
 
-import pytest
 from gateway.signature_verification import (
     ChannelVerifierConfig,
     VerificationMethod,
-    VerificationResult,
     WebhookVerifier,
 )
 
@@ -224,6 +221,7 @@ class TestUnconfiguredChannels:
         v = WebhookVerifier()
         result = v.verify_hmac(channel="unknown", body="body", signature="sig")
         assert result.verified is True  # Fail-open for unconfigured
+        assert result.skip_reason == "channel_not_configured"
 
     def test_empty_secret_passes(self):
         v = WebhookVerifier()
@@ -234,6 +232,7 @@ class TestUnconfiguredChannels:
         ))
         result = v.verify_hmac(channel="web", body="body", signature="")
         assert result.verified is True
+        assert result.skip_reason == "secret_not_configured"
 
     def test_is_configured(self):
         v = WebhookVerifier()
@@ -286,6 +285,7 @@ class TestAutoDispatch:
         v = WebhookVerifier()
         result = v.verify(channel="unknown", body="test")
         assert result.verified is True
+        assert result.skip_reason == "channel_not_configured"
 
 
 # ── Counters and status ───────────────────────────────────────
@@ -317,6 +317,26 @@ class TestCountersAndStatus:
         v = WebhookVerifier()
         v.verify_hmac(channel="unknown", body="test", signature="sig")
         assert v.skipped_count == 1
+
+    def test_status_reports_bounded_skip_reasons(self):
+        v = WebhookVerifier()
+        v.register("web", ChannelVerifierConfig(
+            channel="web",
+            method=VerificationMethod.HMAC_SHA256,
+            secret="",
+        ))
+        unconfigured = v.verify_hmac(channel="unknown-secret-channel", body="test", signature="sig")
+        empty_secret = v.verify_hmac(channel="web", body="test", signature="sig")
+        status = v.status()
+
+        assert unconfigured.verified is True
+        assert empty_secret.verified is True
+        assert status["total_skipped"] == 2
+        assert status["skip_reasons"] == {
+            "channel_not_configured": 1,
+            "secret_not_configured": 1,
+        }
+        assert "unknown-secret-channel" not in status["skip_reasons"]
 
     def test_status(self):
         v = WebhookVerifier()
