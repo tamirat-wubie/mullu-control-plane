@@ -270,6 +270,22 @@ The dispatcher fails closed unless the report has `ready: true`, belongs to the
 selected repository, and contains the required publication fields. It then
 re-validates secret presence and workflow state before dispatch.
 
+To combine the readiness report and readiness-report dispatch handoff in one
+operator command, run:
+
+```bash
+python scripts/publish_gateway_publication.py \
+  --gateway-url "https://gateway.mullusi.com" \
+  --expected-environment pilot \
+  --dispatch-witness \
+  --dispatch
+```
+
+The publisher writes `.change_assurance/gateway_publication_readiness.json`
+before any workflow mutation, refuses dispatch when readiness is false, and
+then dispatches from the written readiness report so the same handoff contract
+is exercised.
+
 To dispatch that GitHub workflow from a local operator shell and download the
 `gateway-publication-witness` artifact, run:
 
