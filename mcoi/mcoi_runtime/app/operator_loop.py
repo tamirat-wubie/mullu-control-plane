@@ -240,6 +240,7 @@ class OperatorLoop:
 
         world_state = self.runtime.world_state
         meta_reasoning = self.runtime.meta_reasoning
+        provider_attribution_counters = self.runtime.provider_attribution_ledger.witness_counters()
 
         return OperatorRunReport(
             request_id=request.request_id,
@@ -285,6 +286,7 @@ class OperatorLoop:
             ),
             execution_route=route,
             provider_attributions=provider_attributions,
+            **provider_attribution_counters,
             autonomy_mode=self.runtime.autonomy.mode.value,
             **self._resolve_provider_ids(),
         )
@@ -332,6 +334,14 @@ class OperatorLoop:
             communication_provider_id=runtime_state_fields.get("communication_provider_id"),
             model_provider_id=runtime_state_fields.get("model_provider_id"),
             provider_attributions=(),
+            provider_attribution_count=runtime_state_fields["provider_attribution_count"],
+            receipt_attributed_provider_operation_count=runtime_state_fields[
+                "receipt_attributed_provider_operation_count"
+            ],
+            routing_attributed_provider_operation_count=runtime_state_fields[
+                "routing_attributed_provider_operation_count"
+            ],
+            plane_attributed_provider_operation_count=runtime_state_fields["plane_attributed_provider_operation_count"],
         )
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
@@ -378,6 +388,7 @@ class OperatorLoop:
                 in (ProviderHealthStatus.DEGRADED, ProviderHealthStatus.UNAVAILABLE)
             ),
             "autonomy_mode": self.runtime.autonomy.mode.value,
+            **self.runtime.provider_attribution_ledger.witness_counters(),
             **self._resolve_provider_ids(),
         }
 

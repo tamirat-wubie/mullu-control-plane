@@ -393,6 +393,9 @@ def test_operator_loop_records_provider_attributions_for_healthy_planes() -> Non
     }
     assert all(record.operation_id == report.execution_result.execution_id for record in report.provider_attributions)
     assert loop.runtime.provider_attribution_ledger.attribution_count == 2
+    assert report.provider_attribution_count == 2
+    assert report.plane_attributed_provider_operation_count == 2
+    assert report.receipt_attributed_provider_operation_count == 0
 
 
 def test_operator_loop_prefers_execution_receipt_attribution_over_plane_resolution() -> None:
@@ -430,6 +433,9 @@ def test_operator_loop_prefers_execution_receipt_attribution_over_plane_resoluti
     assert report.provider_attributions[0].provider_id == "provider-http"
     assert report.provider_attributions[0].source.value == "execution_receipt"
     assert report.provider_attributions[0].source_ref_id == "connector-receipt-1"
+    assert report.provider_attribution_count == 1
+    assert report.receipt_attributed_provider_operation_count == 1
+    assert report.plane_attributed_provider_operation_count == 0
 
 
 def test_operator_loop_closes_but_does_not_complete_on_failed_verification() -> None:
