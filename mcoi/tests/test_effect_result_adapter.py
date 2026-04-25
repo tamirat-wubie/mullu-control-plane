@@ -54,6 +54,26 @@ def test_delivery_receipt_adapts_to_observed_effect() -> None:
     assert observed[0].source == "delivery-1"
 
 
+def test_delivery_receipt_carries_provider_attribution_metadata() -> None:
+    delivery = DeliveryResult(
+        delivery_id="delivery-provider-1",
+        message_id="msg-provider-1",
+        status=DeliveryStatus.DELIVERED,
+        channel=CommunicationChannel.NOTIFICATION,
+        delivered_at=NOW,
+        metadata={
+            "provider_id": "provider-smtp",
+            "delivery_receipt": _delivery_receipt(receipt_id="receipt-provider-1"),
+        },
+    )
+
+    result = execution_result_from_delivery(delivery, goal_id="goal-provider-1")
+
+    assert result.metadata["provider_id"] == "provider-smtp"
+    assert result.metadata["provider_class"] == "communication"
+    assert result.metadata["provider_source_ref_id"] == "receipt-provider-1"
+
+
 def test_file_write_receipt_adapts_to_file_effect() -> None:
     delivery = DeliveryResult(
         delivery_id="delivery-file-1",
@@ -93,6 +113,7 @@ def test_connector_receipt_adapts_to_observed_effect() -> None:
             "connector_receipt": {
                 "receipt_id": "connector-receipt-1",
                 "evidence_ref": "connector-invocation:connector-1:receipt-1",
+                "provider": "provider-http",
                 "status": "succeeded",
                 "response_digest": "digest-1",
             }
@@ -107,6 +128,9 @@ def test_connector_receipt_adapts_to_observed_effect() -> None:
     assert observed[0].evidence_ref == "connector-invocation:connector-1:receipt-1"
     assert observed[0].observed_value["response_digest"] == "digest-1"
     assert result.metadata["connector_id"] == "connector-1"
+    assert result.metadata["provider_id"] == "provider-http"
+    assert result.metadata["provider_class"] == "integration"
+    assert result.metadata["provider_source_ref_id"] == "connector-receipt-1"
 
 
 def test_missing_receipt_fails_closed() -> None:

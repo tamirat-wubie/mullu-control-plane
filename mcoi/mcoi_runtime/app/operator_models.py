@@ -15,6 +15,7 @@ from mcoi_runtime.adapters.process_observer import ProcessObservationRequest
 from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.goal import GoalStatus
 from mcoi_runtime.contracts.policy import PolicyDecision
+from mcoi_runtime.contracts.provider_attribution import ProviderAttribution
 from mcoi_runtime.contracts.skill import (
     SkillExecutionRecord,
     SkillOutcomeStatus,
@@ -197,6 +198,7 @@ class OperatorRunReport:
     integration_provider_id: str | None = None
     communication_provider_id: str | None = None
     model_provider_id: str | None = None
+    provider_attributions: tuple[ProviderAttribution, ...] = ()
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
 

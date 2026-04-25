@@ -25,6 +25,7 @@ from mcoi_runtime.core.audit_anchor import AuditAnchorStore
 from mcoi_runtime.core.batch_pipeline import BatchPipeline
 from mcoi_runtime.core.connector_framework import GovernedConnectorFramework
 from mcoi_runtime.core.coordination import CoordinationEngine
+from mcoi_runtime.core.data_governance import DataGovernanceEngine
 from mcoi_runtime.core.event_bus import EventBus
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.explanation_engine import ExplanationEngine
@@ -51,6 +52,7 @@ class SubsystemBootstrap:
     explanation_engine: Any
     audit_anchor: Any
     knowledge_graph: Any
+    data_governance: Any
     event_bus: Any
     batch_pipeline: Any
 
@@ -75,6 +77,7 @@ def bootstrap_subsystems(
     explanation_engine_cls: type[Any] = ExplanationEngine,
     audit_anchor_store_cls: type[Any] = AuditAnchorStore,
     knowledge_graph_cls: type[Any] = KnowledgeGraph,
+    data_governance_engine_cls: type[Any] = DataGovernanceEngine,
     event_bus_cls: type[Any] = EventBus,
     batch_pipeline_cls: type[Any] = BatchPipeline,
     tempdir_getter: Callable[[], str] = tempfile.gettempdir,
@@ -145,6 +148,22 @@ def bootstrap_subsystems(
     knowledge_graph = knowledge_graph_cls(clock=clock)
     observability.register_source("knowledge", lambda: knowledge_graph.summary())
 
+    data_governance = data_governance_engine_cls(EventSpineEngine(clock=clock))
+    observability.register_source(
+        "data_governance",
+        lambda: {
+            "records": data_governance.record_count,
+            "policies": data_governance.policy_count,
+            "residency_constraints": data_governance.residency_constraint_count,
+            "privacy_rules": data_governance.privacy_rule_count,
+            "redaction_rules": data_governance.redaction_rule_count,
+            "retention_rules": data_governance.retention_rule_count,
+            "decisions": data_governance.decision_count,
+            "violations": data_governance.violation_count,
+            "state_hash": data_governance.state_hash(),
+        },
+    )
+
     event_bus = event_bus_cls(clock=clock)
     observability.register_source("event_bus", lambda: event_bus.summary())
     deep_health.register(
@@ -174,6 +193,7 @@ def bootstrap_subsystems(
         explanation_engine=explanation_engine,
         audit_anchor=audit_anchor,
         knowledge_graph=knowledge_graph,
+        data_governance=data_governance,
         event_bus=event_bus,
         batch_pipeline=batch_pipeline,
     )

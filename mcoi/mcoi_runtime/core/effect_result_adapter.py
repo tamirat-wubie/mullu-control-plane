@@ -15,6 +15,7 @@ from typing import Any
 from mcoi_runtime.contracts.communication import DeliveryResult, DeliveryStatus
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.integration import ConnectorResult, ConnectorStatus
+from mcoi_runtime.contracts.provider import ProviderClass
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
@@ -26,6 +27,25 @@ def _require_receipt(metadata: Mapping[str, Any], key: str) -> Mapping[str, Any]
     if not isinstance(evidence_ref, str) or not evidence_ref.strip():
         raise RuntimeCoreInvariantError("receipt evidence_ref required for effect observation")
     return receipt
+
+
+def _provider_attribution_metadata(
+    *,
+    receipt: Mapping[str, Any],
+    fallback_provider_id: object,
+    provider_class: ProviderClass,
+) -> dict[str, str]:
+    provider_id = receipt.get("provider_id") or fallback_provider_id
+    if not isinstance(provider_id, str) or not provider_id.strip():
+        return {}
+    source_ref_id = receipt.get("receipt_id")
+    if not isinstance(source_ref_id, str) or not source_ref_id.strip():
+        return {}
+    return {
+        "provider_id": provider_id,
+        "provider_class": provider_class.value,
+        "provider_source_ref_id": source_ref_id,
+    }
 
 
 def _delivery_outcome(status: DeliveryStatus) -> ExecutionOutcome:
@@ -91,6 +111,11 @@ def execution_result_from_delivery(
             "adapter": "delivery",
             "receipt_key": receipt_key,
             "delivery_id": delivery_result.delivery_id,
+            **_provider_attribution_metadata(
+                receipt=receipt,
+                fallback_provider_id=delivery_result.metadata.get("provider_id") or receipt.get("provider"),
+                provider_class=ProviderClass.COMMUNICATION,
+            ),
         },
     )
 
@@ -142,5 +167,10 @@ def execution_result_from_connector(
             "adapter": "connector",
             "connector_id": connector_result.connector_id,
             "result_id": connector_result.result_id,
+            **_provider_attribution_metadata(
+                receipt=receipt,
+                fallback_provider_id=connector_result.metadata.get("provider_id") or receipt.get("provider"),
+                provider_class=ProviderClass.INTEGRATION,
+            ),
         },
     )

@@ -55,6 +55,7 @@ def _server_registry_kwargs() -> dict[str, object]:
             explanation_engine=object(),
             audit_anchor=object(),
             knowledge_graph=object(),
+            data_governance=object(),
             event_bus=object(),
             batch_pipeline=object(),
         ),
@@ -188,6 +189,7 @@ def test_bootstrap_dependency_registry_registers_expected_dependency_keys() -> N
     assert "surface" in group_keys
     assert "store" in group_keys
     assert "platform" in group_keys
+    assert "data_governance" in group_keys
     assert "tool_registry" in group_keys
     assert "event_bus" in group_keys
     assert "shutdown_mgr" in group_keys

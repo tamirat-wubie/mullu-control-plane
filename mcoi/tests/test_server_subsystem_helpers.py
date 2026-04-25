@@ -95,6 +95,21 @@ def test_bootstrap_subsystems_wires_coordination_and_governed_services() -> None
         def summary(self):
             return {"knowledge": 1}
 
+    class FakeDataGovernance:
+        def __init__(self, spine):
+            self.spine = spine
+            self.record_count = 1
+            self.policy_count = 2
+            self.residency_constraint_count = 3
+            self.privacy_rule_count = 4
+            self.redaction_rule_count = 5
+            self.retention_rule_count = 6
+            self.decision_count = 7
+            self.violation_count = 8
+
+        def state_hash(self):
+            return "data-hash"
+
     class FakeEventBus:
         def __init__(self, **kwargs):
             self.kwargs = kwargs
@@ -138,6 +153,7 @@ def test_bootstrap_subsystems_wires_coordination_and_governed_services() -> None
         explanation_engine_cls=FakeExplanationEngine,
         audit_anchor_store_cls=FakeAuditAnchor,
         knowledge_graph_cls=FakeKnowledgeGraph,
+        data_governance_engine_cls=FakeDataGovernance,
         event_bus_cls=FakeEventBus,
         batch_pipeline_cls=FakeBatchPipeline,
         tempdir_getter=lambda: "C:\\temp",
@@ -202,6 +218,21 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
         explanation_engine_cls=lambda **kwargs: type("Explain", (), {"summary": lambda self: {"exp": 1}})(),
         audit_anchor_store_cls=lambda **kwargs: type("Anchor", (), {"summary": lambda self: {"anchor": 1}})(),
         knowledge_graph_cls=lambda **kwargs: type("Graph", (), {"summary": lambda self: {"kg": 1}})(),
+        data_governance_engine_cls=lambda spine: type(
+            "DataGov",
+            (),
+            {
+                "record_count": 1,
+                "policy_count": 2,
+                "residency_constraint_count": 3,
+                "privacy_rule_count": 4,
+                "redaction_rule_count": 5,
+                "retention_rule_count": 6,
+                "decision_count": 7,
+                "violation_count": 8,
+                "state_hash": lambda self: "data-hash",
+            },
+        )(),
         event_bus_cls=lambda **kwargs: type(
             "Bus",
             (),
@@ -225,6 +256,7 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
         "explanations",
         "audit_anchors",
         "knowledge",
+        "data_governance",
         "event_bus",
         "pipelines",
     }
@@ -233,6 +265,17 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
         "roles": 2,
         "bindings": 3,
         "rules_seeded": 4,
+    }
+    assert sources["data_governance"]() == {
+        "records": 1,
+        "policies": 2,
+        "residency_constraints": 3,
+        "privacy_rules": 4,
+        "redaction_rules": 5,
+        "retention_rules": 6,
+        "decisions": 7,
+        "violations": 8,
+        "state_hash": "data-hash",
     }
     assert deep_health.probes["event_bus"]() == {
         "status": "healthy",

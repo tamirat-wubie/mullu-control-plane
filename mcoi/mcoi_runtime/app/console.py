@@ -71,6 +71,14 @@ def render_run_summary(view: RunSummaryView) -> str:
         lines.append(f"  communication_prov: {view.communication_provider_id}")
     if view.model_provider_id:
         lines.append(f"  model_prov:         {view.model_provider_id}")
+    if view.provider_attributions:
+        lines.append(f"  provider_attrs:     {len(view.provider_attributions)}")
+        for attribution in view.provider_attributions:
+            lines.append(
+                "    "
+                f"{attribution.provider_class.value}: {attribution.provider_id} "
+                f"({attribution.source.value})"
+            )
     if view.autonomy_mode:
         lines.append(f"  autonomy_mode:      {view.autonomy_mode}")
     if view.autonomy_decision:

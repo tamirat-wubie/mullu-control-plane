@@ -224,6 +224,19 @@ class OperatorLoop:
             errors.append(entity_registration_error)
 
         self._update_capability_confidence(route, execution_result, verification_closure)
+        provider_attributions = self.runtime.provider_attribution_ledger.attribute_execution_result_receipt(
+            request_id=request.request_id,
+            operation_id=execution_result.execution_id,
+            execution_result=execution_result,
+            provider_registry=self.runtime.provider_registry,
+        )
+        if not provider_attributions:
+            provider_attributions = self.runtime.provider_attribution_ledger.attribute_healthy_planes(
+                request_id=request.request_id,
+                operation_id=execution_result.execution_id,
+                execution_id=execution_result.execution_id,
+                provider_registry=self.runtime.provider_registry,
+            )
 
         world_state = self.runtime.world_state
         meta_reasoning = self.runtime.meta_reasoning
@@ -271,6 +284,7 @@ class OperatorLoop:
                 in (ProviderHealthStatus.DEGRADED, ProviderHealthStatus.UNAVAILABLE)
             ),
             execution_route=route,
+            provider_attributions=provider_attributions,
             autonomy_mode=self.runtime.autonomy.mode.value,
             **self._resolve_provider_ids(),
         )
@@ -317,6 +331,7 @@ class OperatorLoop:
             integration_provider_id=runtime_state_fields.get("integration_provider_id"),
             communication_provider_id=runtime_state_fields.get("communication_provider_id"),
             model_provider_id=runtime_state_fields.get("model_provider_id"),
+            provider_attributions=(),
         )
 
     def run_skill(self, request: SkillRequest) -> SkillRunReport:
