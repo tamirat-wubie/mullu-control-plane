@@ -1,10 +1,8 @@
 """Governed Tool Use Tests — LLM function calling governance."""
 
-import pytest
 from mcoi_runtime.core.governed_tool_use import (
     GovernedToolRegistry,
     ToolDefinition,
-    ToolInvocationResult,
 )
 
 
