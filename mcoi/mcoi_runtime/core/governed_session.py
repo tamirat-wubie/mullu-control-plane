@@ -462,11 +462,22 @@ class GovernedSession:
             raise RuntimeError("no LLM bridge configured")
 
         request_proof = self._certify_proof("session/llm", "allowed")
+        cache_policy_context = {
+            "policy_version": str(kwargs.get("policy_version", "session-governance:v1")),
+            "endpoint": "session/llm",
+            "decision": "allowed",
+        }
 
         # Check LLM cache before calling provider
         cache_hit = False
         if self._llm_cache is not None:
-            cache_result = self._llm_cache.get(self._tenant_id, "default", "default", prompt)
+            cache_result = self._llm_cache.get(
+                self._tenant_id,
+                "default",
+                "default",
+                prompt,
+                policy_context=cache_policy_context,
+            )
             if cache_result.hit:
                 result = cache_result.response
                 cache_hit = True
@@ -490,7 +501,9 @@ class GovernedSession:
             if self._llm_cache is not None and result.succeeded:
                 self._llm_cache.put(
                     self._tenant_id, "default", "default", prompt,
-                    result, cost=result.cost,
+                    result,
+                    cost=result.cost,
+                    policy_context=cache_policy_context,
                 )
 
         # PII redaction on response

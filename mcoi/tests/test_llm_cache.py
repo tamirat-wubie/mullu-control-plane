@@ -1,7 +1,7 @@
 """LLM Response Cache Tests."""
 
 import pytest
-from mcoi_runtime.core.llm_cache import LLMResponseCache, CacheLookupResult
+from mcoi_runtime.core.llm_cache import LLMResponseCache
 
 
 class TestBasicCaching:
@@ -48,6 +48,47 @@ class TestTenantIsolation:
         removed = cache.invalidate_tenant("t1")
         assert removed == 2
         assert cache.entry_count == 1
+
+
+class TestGovernedContext:
+    def test_policy_context_partitions_cache_hits(self):
+        cache = LLMResponseCache()
+        context_v1 = {"policy_version": "v1", "risk": "low"}
+        context_v2 = {"policy_version": "v2", "risk": "low"}
+
+        cache.put("t1", "anthropic", "sonnet", "prompt", "resp-v1", policy_context=context_v1)
+        miss = cache.get("t1", "anthropic", "sonnet", "prompt", policy_context=context_v2)
+        hit = cache.get("t1", "anthropic", "sonnet", "prompt", policy_context=context_v1)
+
+        assert miss.hit is False
+        assert miss.policy_context_hash != hit.policy_context_hash
+        assert hit.hit is True
+        assert hit.response == "resp-v1"
+
+    def test_semantic_lookup_respects_policy_context(self):
+        cache = LLMResponseCache(enable_semantic_lookup=True, semantic_threshold=0.5)
+        context = {"policy_version": "v1"}
+
+        cache.put("t1", "anthropic", "sonnet", "summarize customer invoice", "summary", policy_context=context)
+        semantic_hit = cache.get(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize customer invoice now",
+            policy_context=context,
+        )
+        policy_miss = cache.get(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize customer invoice now",
+            policy_context={"policy_version": "v2"},
+        )
+
+        assert semantic_hit.hit is True
+        assert semantic_hit.hit_kind == "semantic"
+        assert semantic_hit.similarity >= 0.5
+        assert policy_miss.hit is False
 
 
 class TestTTL:
@@ -120,6 +161,30 @@ class TestInvalidation:
         assert removed == 2
         assert cache.entry_count == 0
 
+    def test_policy_version_invalidation(self):
+        cache = LLMResponseCache()
+        policy_v1 = {"policy_version": "policy:v1", "guard_chain": ["budget", "policy"]}
+        policy_v2 = {"policy_version": "policy:v2", "guard_chain": ["budget", "policy"]}
+        cache.put("t1", "a", "m", "prompt", "resp-v1", policy_context=policy_v1)
+        cache.put("t1", "a", "m", "prompt", "resp-v2", policy_context=policy_v2)
+
+        removed = cache.invalidate_policy_version("policy:v1")
+
+        assert removed == 1
+        assert cache.get("t1", "a", "m", "prompt", policy_context=policy_v1).hit is False
+        assert cache.get("t1", "a", "m", "prompt", policy_context=policy_v2).hit is True
+
+    def test_policy_context_invalidation(self):
+        cache = LLMResponseCache()
+        policy_context = {"policy_version": "policy:v1", "tenant_policy": "strict"}
+        cache.put("t1", "a", "m", "prompt", "resp", policy_context=policy_context)
+
+        removed = cache.invalidate_policy_context(policy_context)
+
+        assert removed == 1
+        assert cache.entry_count == 0
+        assert cache.get("t1", "a", "m", "prompt", policy_context=policy_context).invalidation_reason == "miss"
+
 
 class TestHitTracking:
     def test_hit_miss_counts(self):
@@ -145,6 +210,113 @@ class TestHitTracking:
         cache.put("t1", "a", "m", "p", "r", cost=0.05)
         s = cache.summary()
         assert s["saved_cost"] == 0.05
+
+
+class TestGovernedSemanticCache:
+    def test_policy_context_is_part_of_cache_identity(self):
+        cache = LLMResponseCache()
+        cache.put(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize budget rules",
+            "policy-v1-response",
+            policy_context={"policy_version": "policy:v1"},
+            approval_proof_id="proof-1",
+            approval_guard_chain=("budget", "policy"),
+        )
+
+        same_policy = cache.get(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize budget rules",
+            policy_context={"policy_version": "policy:v1"},
+        )
+        changed_policy = cache.get(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize budget rules",
+            policy_context={"policy_version": "policy:v2"},
+        )
+
+        assert same_policy.hit is True
+        assert same_policy.hit_kind == "exact"
+        assert changed_policy.hit is False
+        assert same_policy.policy_context_hash != changed_policy.policy_context_hash
+
+    def test_semantic_hit_reuses_only_same_policy_context(self):
+        cache = LLMResponseCache(enable_semantic_lookup=True, semantic_threshold=0.5)
+        policy_context = {"policy_version": "policy:v1", "guard_chain": ["safety", "policy"]}
+        cache.put(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize tenant budget policy",
+            "cached-response",
+            policy_context=policy_context,
+        )
+
+        result = cache.get(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize budget policy",
+            policy_context=policy_context,
+        )
+
+        assert result.hit is True
+        assert result.hit_kind == "semantic"
+        assert result.response == "cached-response"
+        assert result.similarity >= 0.5
+
+    def test_semantic_lookup_does_not_cross_policy_versions(self):
+        cache = LLMResponseCache(enable_semantic_lookup=True, semantic_threshold=0.5)
+        cache.put(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize tenant budget policy",
+            "cached-response",
+            policy_context={"policy_version": "policy:v1"},
+        )
+
+        result = cache.get(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize budget policy",
+            policy_context={"policy_version": "policy:v2"},
+        )
+
+        assert result.hit is False
+        assert result.hit_kind == "miss"
+        assert result.invalidation_reason == "miss"
+
+    def test_semantic_lookup_does_not_cross_tenants(self):
+        cache = LLMResponseCache(enable_semantic_lookup=True, semantic_threshold=0.5)
+        policy_context = {"policy_version": "policy:v1"}
+        cache.put(
+            "t1",
+            "anthropic",
+            "sonnet",
+            "summarize tenant budget policy",
+            "tenant-one-response",
+            policy_context=policy_context,
+        )
+
+        result = cache.get(
+            "t2",
+            "anthropic",
+            "sonnet",
+            "summarize budget policy",
+            policy_context=policy_context,
+        )
+
+        assert result.hit is False
+        assert result.response is None
+        assert result.invalidation_reason == "miss"
 
 
 class TestSummary:

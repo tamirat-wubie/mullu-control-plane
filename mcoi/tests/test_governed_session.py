@@ -15,6 +15,7 @@ from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.content_safety import build_default_safety_chain
 from mcoi_runtime.core.pii_scanner import PIIScanner
 from mcoi_runtime.core.proof_bridge import ProofBridge
+from mcoi_runtime.core.llm_cache import LLMResponseCache
 from mcoi_runtime.core.tenant_budget import TenantBudgetManager
 from mcoi_runtime.core.tenant_gating import TenantGatingRegistry, TenantStatus
 from mcoi_runtime.contracts.llm import LLMProvider, LLMResult
@@ -345,6 +346,35 @@ class TestSessionProof:
         assert envelope["decision"] == "allowed"
         assert envelope["proof_receipt_id"]
         assert envelope["proof_hash"]
+
+    def test_llm_cache_is_partitioned_by_policy_context(self):
+        class CountingLLMBridge:
+            def __init__(self):
+                self.calls = 0
+
+            def complete(self, *args, **kwargs):
+                self.calls += 1
+                return LLMResult(
+                    content=f"ok-{self.calls}",
+                    input_tokens=1,
+                    output_tokens=1,
+                    cost=0.001,
+                    model_name="stub-model",
+                    provider=LLMProvider.STUB,
+                )
+
+        bridge = CountingLLMBridge()
+        p = _platform(llm_bridge=bridge, llm_cache=LLMResponseCache())
+        session = p.connect(identity_id="user1", tenant_id="t1")
+
+        first = session.llm("hello", policy_version="policy:v1")
+        second = session.llm("hello", policy_version="policy:v1")
+        third = session.llm("hello", policy_version="policy:v2")
+
+        assert bridge.calls == 2
+        assert first.content == "ok-1"
+        assert second.content == "ok-1"
+        assert third.content == "ok-2"
 
     def test_query_proof_failure_is_audited_and_blocks_operation(self):
         class BrokenProofBridge:
