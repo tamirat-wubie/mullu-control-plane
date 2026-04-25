@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Callable
 
 from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityRegistryEntry,
     CommandCapabilityAdmissionDecision,
     CommandCapabilityAdmissionStatus,
 )
@@ -60,3 +61,8 @@ class CommandCapabilityAdmissionGate:
             reason="typed intent resolved to installed governed capability",
             decided_at=now,
         )
+
+    def capability_for_intent(self, intent_name: str) -> CapabilityRegistryEntry:
+        """Return the installed capability contract for an admitted typed intent."""
+        intent_name = ensure_non_empty_text("intent_name", intent_name)
+        return self._registry.get_capability(intent_name)

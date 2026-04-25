@@ -15,7 +15,7 @@ from dataclasses import asdict
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 from gateway.channels.discord import DiscordAdapter
 from gateway.channels.slack import SlackAdapter
@@ -26,6 +26,7 @@ from gateway.authority_obligation_mesh import (
     AuthorityObligationMesh,
     build_authority_obligation_mesh_store_from_env,
 )
+from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.event_log import WebhookEventLog
@@ -60,6 +61,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     gateway_env = (os.environ.get("MULLU_ENV", "local_dev") or "local_dev").strip().lower()
     approval_secret = os.environ.get("MULLU_GATEWAY_APPROVAL_SECRET", "")
+    authority_operator_secret = os.environ.get("MULLU_AUTHORITY_OPERATOR_SECRET", "")
     defer_approved_execution = (
         os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
         in {"1", "true", "yes", "on"}
@@ -74,10 +76,27 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             return False
         return hmac.compare_digest(provided, approval_secret)
 
+    def _authority_operator_authorized(request: Request) -> bool:
+        """Fail closed outside local and test unless an explicit operator secret matches."""
+        if gateway_env in {"local_dev", "test"}:
+            return True
+        provided = request.headers.get("X-Mullu-Authority-Secret", "")
+        if not authority_operator_secret:
+            return False
+        return hmac.compare_digest(provided, authority_operator_secret)
+
+    def _require_authority_operator(request: Request) -> None:
+        if not _authority_operator_authorized(request):
+            raise HTTPException(403, detail="Authority operator access not authorized")
+
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
     event_log = WebhookEventLog(clock=_clock)
     verifier = WebhookVerifier()
-    command_ledger = build_command_ledger_from_env(clock=_clock)
+    capability_admission_gate = build_capability_admission_gate_from_env(clock=_clock)
+    command_ledger = build_command_ledger_from_env(
+        clock=_clock,
+        capability_admission_gate=capability_admission_gate,
+    )
     tenant_identity_store = build_tenant_identity_store_from_env(clock=_clock)
     authority_mesh_store = build_authority_obligation_mesh_store_from_env()
     authority_obligation_mesh = AuthorityObligationMesh(
@@ -368,6 +387,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "message_id": response.message_id,
             "body": response.body,
             "governed": response.governed,
+            "metadata": response.metadata,
         })
 
     # ── Approval Callback ──
@@ -436,15 +456,18 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         )
 
     @app.get("/authority/witness")
-    def authority_witness():
+    def authority_witness(request: Request):
+        _require_authority_operator(request)
         return asdict(authority_obligation_mesh.responsibility_witness())
 
     @app.get("/authority/approval-chains")
     def authority_approval_chains(
+        request: Request,
         tenant_id: str = "",
         status: str = "",
         command_id: str = "",
     ):
+        _require_authority_operator(request)
         chains = authority_mesh_store.list_approval_chains()
         if tenant_id:
             chains = tuple(chain for chain in chains if chain.tenant_id == tenant_id)
@@ -458,7 +481,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         }
 
     @app.get("/commands/{command_id}/authority")
-    def command_authority(command_id: str):
+    def command_authority(command_id: str, request: Request):
+        _require_authority_operator(request)
         chain = authority_obligation_mesh.approval_chain_for(command_id)
         obligations = authority_obligation_mesh.obligations_for(command_id)
         if chain is None and not obligations:
@@ -471,12 +495,14 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     @app.get("/authority/obligations")
     def authority_obligations(
+        request: Request,
         tenant_id: str = "",
         status: str = "",
         command_id: str = "",
         owner_id: str = "",
         owner_team: str = "",
     ):
+        _require_authority_operator(request)
         obligations = authority_mesh_store.list_obligations(command_id)
         if tenant_id:
             obligations = tuple(obligation for obligation in obligations if obligation.tenant_id == tenant_id)
@@ -492,7 +518,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         }
 
     @app.post("/authority/obligations/{obligation_id}/satisfy")
-    def satisfy_authority_obligation(obligation_id: str, payload: dict[str, Any]):
+    def satisfy_authority_obligation(obligation_id: str, payload: dict[str, Any], request: Request):
+        _require_authority_operator(request)
         raw_evidence_refs = payload.get("evidence_refs", ())
         if isinstance(raw_evidence_refs, str):
             raw_evidence_refs = (raw_evidence_refs,)
@@ -517,7 +544,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         }
 
     @app.post("/authority/obligations/escalate-overdue")
-    def escalate_overdue_authority_obligations():
+    def escalate_overdue_authority_obligations(request: Request):
+        _require_authority_operator(request)
         obligations = authority_obligation_mesh.escalate_overdue()
         return {
             "status": "escalated",
@@ -527,7 +555,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         }
 
     @app.get("/authority/escalations")
-    def authority_escalations(tenant_id: str = "", command_id: str = ""):
+    def authority_escalations(request: Request, tenant_id: str = "", command_id: str = ""):
+        _require_authority_operator(request)
         events = authority_mesh_store.list_escalation_events()
         if tenant_id:
             events = tuple(event for event in events if event.get("tenant_id") == tenant_id)
@@ -537,6 +566,22 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "escalation_events": list(events),
             "count": len(events),
         }
+
+    @app.get("/authority/operator", response_class=HTMLResponse)
+    def authority_operator_console(request: Request):
+        _require_authority_operator(request)
+        witness = authority_obligation_mesh.responsibility_witness()
+        chains = authority_mesh_store.list_approval_chains()
+        obligations = authority_mesh_store.list_obligations()
+        escalations = authority_mesh_store.list_escalation_events()
+        return HTMLResponse(
+            _authority_operator_console_html(
+                witness=asdict(witness),
+                approval_chains=[asdict(chain) for chain in chains],
+                obligations=[asdict(obligation) for obligation in obligations],
+                escalation_events=list(escalations),
+            )
+        )
 
     @app.get("/commands/{command_id}/closure")
     def command_closure(command_id: str):
@@ -583,9 +628,104 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app.state.authority_obligation_mesh = authority_obligation_mesh
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
+    app.state.capability_admission_gate = capability_admission_gate
     app.state.verifier = verifier
 
     return app
+
+
+def _authority_operator_console_html(
+    *,
+    witness: dict[str, Any],
+    approval_chains: list[dict[str, Any]],
+    obligations: list[dict[str, Any]],
+    escalation_events: list[dict[str, Any]],
+) -> str:
+    """Render authority responsibility state as a small governed read model."""
+    from html import escape
+
+    def _cell(value: Any) -> str:
+        if isinstance(value, (list, tuple)):
+            rendered = ", ".join(str(item) for item in value)
+        else:
+            rendered = str(value)
+        return escape(rendered)
+
+    def _rows(records: list[dict[str, Any]], columns: tuple[str, ...]) -> str:
+        if not records:
+            return f'<tr><td colspan="{len(columns)}">No records</td></tr>'
+        return "\n".join(
+            "<tr>" + "".join(f"<td>{_cell(record.get(column, ''))}</td>" for column in columns) + "</tr>"
+            for record in records
+        )
+
+    chain_columns = ("chain_id", "command_id", "tenant_id", "status", "required_roles", "approvals_received")
+    obligation_columns = (
+        "obligation_id",
+        "command_id",
+        "tenant_id",
+        "owner_team",
+        "obligation_type",
+        "status",
+        "due_at",
+    )
+    escalation_columns = ("event_id", "obligation_id", "command_id", "tenant_id", "owner_team", "escalated_at")
+    metric_items = "\n".join(
+        f"<li><span>{escape(key.replace('_', ' ').title())}</span><strong>{_cell(value)}</strong></li>"
+        for key, value in witness.items()
+    )
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Authority Operator Console</title>
+  <style>
+    :root {{ color-scheme: light; font-family: Arial, sans-serif; }}
+    body {{ margin: 0; background: #f6f7f9; color: #1b1f24; }}
+    main {{ max-width: 1180px; margin: 0 auto; padding: 32px 24px 48px; }}
+    h1 {{ margin: 0 0 8px; font-size: 28px; }}
+    h2 {{ margin: 32px 0 12px; font-size: 18px; }}
+    p {{ margin: 0 0 20px; color: #57606a; }}
+    ul {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 0; }}
+    li {{ display: flex; justify-content: space-between; gap: 16px; list-style: none; background: #fff; border: 1px solid #d8dee4; border-radius: 8px; padding: 14px; }}
+    table {{ width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d8dee4; }}
+    th, td {{ padding: 10px 12px; border-bottom: 1px solid #d8dee4; text-align: left; vertical-align: top; font-size: 13px; }}
+    th {{ background: #eef1f4; font-weight: 700; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }}
+    a {{ color: #0969da; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullu Authority Operator Console</h1>
+  <p>Organizational responsibility witness for approval chains, obligations, and escalation debt.</p>
+  <nav>
+    <a href="/authority/witness">witness json</a>
+    <a href="/authority/approval-chains">approval chains json</a>
+    <a href="/authority/obligations">obligations json</a>
+    <a href="/authority/escalations">escalations json</a>
+  </nav>
+  <h2>Responsibility Witness</h2>
+  <ul>{metric_items}</ul>
+  <h2>Approval Chains</h2>
+  <table>
+    <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in chain_columns)}</tr></thead>
+    <tbody>{_rows(approval_chains, chain_columns)}</tbody>
+  </table>
+  <h2>Obligations</h2>
+  <table>
+    <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in obligation_columns)}</tr></thead>
+    <tbody>{_rows(obligations, obligation_columns)}</tbody>
+  </table>
+  <h2>Escalations</h2>
+  <table>
+    <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in escalation_columns)}</tr></thead>
+    <tbody>{_rows(escalation_events, escalation_columns)}</tbody>
+  </table>
+</main>
+</body>
+</html>"""
 
 
 # Default app instance
