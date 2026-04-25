@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "protocol_id": "mullu-governance-protocol",
+  "protocol_name": "Mullu Governance Protocol",
+  "protocol_uri_scheme": "mgp://",
+  "claim_boundary": {
+    "open_surface": "schemas_and_wire_contracts",
+    "closed_surface": "runtime_implementation",
+    "reference_runtime": "mullu-control-plane",
+    "third_party_implementation_allowed": true
+  },
+  "compatibility": {
+    "json_schema_draft": "2020-12",
+    "breaking_change_requires_major_version": true,
+    "additive_fields_require_metadata_or_extensions": true,
+    "runtime_private_modules_are_not_protocol_contracts": true
+  },
+  "schemas": [
+    {
+      "schema_id": "capability-descriptor",
+      "path": "schemas/capability_descriptor.schema.json",
+      "urn": "urn:mullusi:schema:capability-descriptor:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-registry-entry",
+      "path": "schemas/capability_registry_entry.schema.json",
+      "urn": "urn:mullusi:schema:capability-registry-entry:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "communication-message",
+      "path": "schemas/communication_message.schema.json",
+      "urn": "urn:mullusi:schema:communication-message:1",
+      "surface": "communication"
+    },
+    {
+      "schema_id": "connector-descriptor",
+      "path": "schemas/connector_descriptor.schema.json",
+      "urn": "urn:mullusi:schema:connector-descriptor:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "connector-result",
+      "path": "schemas/connector_result.schema.json",
+      "urn": "urn:mullusi:schema:connector-result:1",
+      "surface": "connector"
+    },
+    {
+      "schema_id": "delivery-result",
+      "path": "schemas/delivery_result.schema.json",
+      "urn": "urn:mullusi:schema:delivery-result:1",
+      "surface": "communication"
+    },
+    {
+      "schema_id": "domain-capsule",
+      "path": "schemas/domain_capsule.schema.json",
+      "urn": "urn:mullusi:schema:domain-capsule:1",
+      "surface": "domain"
+    },
+    {
+      "schema_id": "environment-fingerprint",
+      "path": "schemas/environment_fingerprint.schema.json",
+      "urn": "urn:mullusi:schema:environment-fingerprint:1",
+      "surface": "environment"
+    },
+    {
+      "schema_id": "execution-result",
+      "path": "schemas/execution_result.schema.json",
+      "urn": "urn:mullusi:schema:execution-result:1",
+      "surface": "execution"
+    },
+    {
+      "schema_id": "learning-admission",
+      "path": "schemas/learning_admission.schema.json",
+      "urn": "urn:mullusi:schema:learning-admission:1",
+      "surface": "learning"
+    },
+    {
+      "schema_id": "lineage-query",
+      "path": "schemas/lineage_query.schema.json",
+      "urn": "urn:mullusi:schema:lineage-query:1",
+      "surface": "lineage"
+    },
+    {
+      "schema_id": "model-invocation",
+      "path": "schemas/model_invocation.schema.json",
+      "urn": "urn:mullusi:schema:model-invocation:1",
+      "surface": "model"
+    },
+    {
+      "schema_id": "model-response",
+      "path": "schemas/model_response.schema.json",
+      "urn": "urn:mullusi:schema:model-response:1",
+      "surface": "model"
+    },
+    {
+      "schema_id": "plan",
+      "path": "schemas/plan.schema.json",
+      "urn": "urn:mullusi:schema:plan:1",
+      "surface": "coordination"
+    },
+    {
+      "schema_id": "policy-decision",
+      "path": "schemas/policy_decision.schema.json",
+      "urn": "urn:mullusi:schema:policy-decision:1",
+      "surface": "policy"
+    },
+    {
+      "schema_id": "replay-record",
+      "path": "schemas/replay_record.schema.json",
+      "urn": "urn:mullusi:schema:replay-record:1",
+      "surface": "replay"
+    },
+    {
+      "schema_id": "streaming-budget-enforcement",
+      "path": "schemas/streaming_budget_enforcement.schema.json",
+      "urn": "urn:mullusi:schema:streaming-budget-enforcement:1",
+      "surface": "budget"
+    },
+    {
+      "schema_id": "trace-entry",
+      "path": "schemas/trace_entry.schema.json",
+      "urn": "urn:mullusi:schema:trace-entry:1",
+      "surface": "trace"
+    },
+    {
+      "schema_id": "verification-result",
+      "path": "schemas/verification_result.schema.json",
+      "urn": "urn:mullusi:schema:verification-result:1",
+      "surface": "verification"
+    },
+    {
+      "schema_id": "workflow",
+      "path": "schemas/workflow.schema.json",
+      "urn": "urn:mullusi:schema:workflow:1",
+      "surface": "coordination"
+    }
+  ],
+  "uri_schemes": [
+    {
+      "scheme": "lineage://",
+      "purpose": "stable causal lineage permalink"
+    },
+    {
+      "scheme": "proof://",
+      "purpose": "proof and audit evidence reference"
+    },
+    {
+      "scheme": "mgp://",
+      "purpose": "Mullu Governance Protocol artifact reference"
+    }
+  ],
+  "non_contract_paths": [
+    "mcoi/mcoi_runtime/core",
+    "mcoi/mcoi_runtime/app",
+    "gateway",
+    "scripts"
+  ]
+}

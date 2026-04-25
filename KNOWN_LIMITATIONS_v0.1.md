@@ -36,9 +36,11 @@ runtime does not yet behave as intended by the architecture specification.
 
 - Aggregate provider counts appear in operator reports.
 - Per-run route tracking is present (the report shows which executor route was used).
-- Per-plane `provider_id` attribution is not yet implemented -- you can see how many
-  providers are registered and which are unhealthy, but individual plane operations
-  do not tag which provider serviced them.
+- Per-plane `provider_id` attribution is implemented for runtime run reports through
+  a provider attribution ledger. Records bind request/execution identity, provider
+  class, provider id, attribution source, evidence id, and timestamp.
+- Current attribution distinguishes healthy-plane resolution from routing or execution
+  receipts. Provider-specific execution receipts remain dependent on adapter support.
 
 ## Memory
 

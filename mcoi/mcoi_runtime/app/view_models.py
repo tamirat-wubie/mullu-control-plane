@@ -22,6 +22,7 @@ from mcoi_runtime.core.persisted_replay import PersistedReplayResult
 from mcoi_runtime.core.runbook import RunbookAdmissionResult
 
 from mcoi_runtime.contracts.simulation import SimulationComparison, SimulationVerdict
+from mcoi_runtime.contracts.provider_attribution import ProviderAttribution
 
 if TYPE_CHECKING:
     from mcoi_runtime.core.operational_graph import OperationalGraph
@@ -58,6 +59,7 @@ class RunSummaryView:
     integration_provider_id: str | None = None
     communication_provider_id: str | None = None
     model_provider_id: str | None = None
+    provider_attributions: tuple[ProviderAttribution, ...] = ()
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
 
@@ -87,6 +89,7 @@ class RunSummaryView:
             integration_provider_id=report.integration_provider_id,
             communication_provider_id=report.communication_provider_id,
             model_provider_id=report.model_provider_id,
+            provider_attributions=report.provider_attributions,
             autonomy_mode=report.autonomy_mode,
             autonomy_decision=report.autonomy_decision,
         )

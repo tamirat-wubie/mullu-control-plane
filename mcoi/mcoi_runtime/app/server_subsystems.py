@@ -77,6 +77,7 @@ def bootstrap_subsystems(
     explanation_engine_cls: type[Any] = ExplanationEngine,
     audit_anchor_store_cls: type[Any] = AuditAnchorStore,
     knowledge_graph_cls: type[Any] = KnowledgeGraph,
+    data_governance_engine_cls: type[Any] = DataGovernanceEngine,
     event_bus_cls: type[Any] = EventBus,
     batch_pipeline_cls: type[Any] = BatchPipeline,
     tempdir_getter: Callable[[], str] = tempfile.gettempdir,
@@ -147,7 +148,7 @@ def bootstrap_subsystems(
     knowledge_graph = knowledge_graph_cls(clock=clock)
     observability.register_source("knowledge", lambda: knowledge_graph.summary())
 
-    data_governance = DataGovernanceEngine(event_spine_engine_cls(clock=clock))
+    data_governance = data_governance_engine_cls(EventSpineEngine(clock=clock))
     observability.register_source(
         "data_governance",
         lambda: {

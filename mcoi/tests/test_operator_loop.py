@@ -331,6 +331,47 @@ def test_operator_loop_reports_first_healthy_provider_per_class() -> None:
     assert report.unhealthy_providers == ("provider-a",)
 
 
+def test_operator_loop_records_provider_attributions_for_healthy_planes() -> None:
+    executor = FakeExecutor()
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        executors={"shell_command": executor},
+        observers={},
+    )
+    loop = OperatorLoop(runtime)
+    _register_provider(loop, provider_id="provider-model", provider_class=ProviderClass.MODEL)
+    _register_provider(loop, provider_id="provider-int", provider_class=ProviderClass.INTEGRATION)
+    loop.runtime.provider_registry.record_success("provider-model")
+    loop.runtime.provider_registry.record_success("provider-int")
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-provider-attrs-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template={
+                "template_id": "template-provider-attrs-1",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('{message}')"),
+                "required_parameters": ("message",),
+            },
+            bindings={"message": "hello"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+        )
+    )
+
+    assert report.execution_result is not None
+    assert len(report.provider_attributions) == 2
+    assert {record.provider_id for record in report.provider_attributions} == {
+        "provider-int",
+        "provider-model",
+    }
+    assert all(record.operation_id == report.execution_result.execution_id for record in report.provider_attributions)
+    assert loop.runtime.provider_attribution_ledger.attribution_count == 2
+
+
 def test_operator_loop_closes_but_does_not_complete_on_failed_verification() -> None:
     executor = FakeExecutor()
     runtime = bootstrap_runtime(

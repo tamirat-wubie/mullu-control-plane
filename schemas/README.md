@@ -1,6 +1,10 @@
 # Schema Compatibility Policy
 
 These schemas define the canonical shared JSON interchange surface for Mullu Platform.
+The public Mullu Governance Protocol manifest lives at
+`schemas/mullu_governance_protocol.manifest.json` and declares which schema
+files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
+`scripts/` remain reference implementation surfaces, not protocol contracts.
 
 ## Compatibility Rules
 

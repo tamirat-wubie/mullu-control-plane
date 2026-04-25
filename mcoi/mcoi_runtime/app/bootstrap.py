@@ -41,6 +41,7 @@ from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
+from mcoi_runtime.core.provider_attribution import ProviderAttributionLedger
 from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.core.workflow import WorkflowEngine
 from mcoi_runtime.core.world_state import WorldStateEngine
@@ -69,6 +70,7 @@ class BootstrappedRuntime:
     world_state: WorldStateEngine
     meta_reasoning: MetaReasoningEngine
     provider_registry: ProviderRegistry
+    provider_attribution_ledger: ProviderAttributionLedger
     skill_registry: SkillRegistry
     skill_selector: SkillSelector
     skill_executor: SkillExecutor
@@ -186,6 +188,7 @@ def bootstrap_runtime(
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
+    provider_attribution_ledger = ProviderAttributionLedger(clock=runtime_clock)
     skill_registry = SkillRegistry()
     skill_selector = SkillSelector()
     skill_executor = SkillExecutor(clock=runtime_clock)
@@ -250,6 +253,7 @@ def bootstrap_runtime(
         world_state=world_state,
         meta_reasoning=meta_reasoning,
         provider_registry=provider_registry,
+        provider_attribution_ledger=provider_attribution_ledger,
         skill_registry=skill_registry,
         skill_selector=skill_selector,
         skill_executor=skill_executor,
