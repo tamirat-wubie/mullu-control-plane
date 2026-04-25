@@ -80,7 +80,13 @@ class MessageDeduplicator:
         self._lock = threading.Lock()
         self._hit_count = 0
         self._miss_count = 0
+        self._miss_reasons: dict[str, int] = {}
         self._evicted_count = 0
+
+    def _record_miss(self, reason_code: str) -> None:
+        """Record a bounded miss reason for operator summaries."""
+        self._miss_count += 1
+        self._miss_reasons[reason_code] = self._miss_reasons.get(reason_code, 0) + 1
 
     @staticmethod
     def _make_key(channel: str, sender_id: str, message_id: str) -> str:
@@ -115,7 +121,7 @@ class MessageDeduplicator:
         """
         if not message_id:
             # No message ID — cannot deduplicate, treat as new
-            self._miss_count += 1
+            self._record_miss("missing_message_id")
             return DedupResult(is_duplicate=False)
 
         key = self._make_key(channel, sender_id, message_id)
@@ -136,7 +142,7 @@ class MessageDeduplicator:
                 del self._entries[key]
                 self._evicted_count += 1
 
-        self._miss_count += 1
+        self._record_miss("new_message")
         return DedupResult(is_duplicate=False, dedup_key=key)
 
     def record(
@@ -209,6 +215,7 @@ class MessageDeduplicator:
                 "active_entries": len(self._entries),
                 "total_hits": self._hit_count,
                 "total_misses": self._miss_count,
+                "miss_reasons": dict(sorted(self._miss_reasons.items())),
                 "hit_rate": self.hit_rate(),
                 "total_evicted": self._evicted_count,
                 "capacity": self._max_entries,
