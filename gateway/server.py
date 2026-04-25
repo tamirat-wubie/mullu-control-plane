@@ -31,6 +31,7 @@ from gateway.authority_obligation_mesh import (
 from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
 from gateway.command_spine import build_command_ledger_from_env
+from gateway.conformance import issue_conformance_certificate
 from gateway.event_log import WebhookEventLog
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
@@ -550,6 +551,21 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             signature_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
             signing_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
+
+    @app.get("/runtime/conformance")
+    def runtime_conformance():
+        certificate = issue_conformance_certificate(
+            router=router,
+            command_ledger=command_ledger,
+            authority_obligation_mesh=authority_obligation_mesh,
+            capability_admission_gate=capability_admission_gate,
+            environment=gateway_env,
+            signing_secret=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", "local-runtime-conformance-secret"),
+            signature_key_id=os.environ.get("MULLU_RUNTIME_CONFORMANCE_KEY_ID", "runtime-conformance-local"),
+            runtime_witness_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
+            runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
+        )
+        return certificate.to_json_dict()
 
     @app.get("/authority/witness")
     def authority_witness(request: Request):

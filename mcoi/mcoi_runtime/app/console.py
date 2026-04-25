@@ -79,6 +79,11 @@ def render_run_summary(view: RunSummaryView) -> str:
                 f"{attribution.provider_class.value}: {attribution.provider_id} "
                 f"({attribution.source.value})"
             )
+    if view.provider_attribution_count:
+        lines.append(f"  provider_attr_total:{view.provider_attribution_count}")
+        lines.append(f"  provider_attr_receipt:{view.receipt_attributed_provider_operation_count}")
+        lines.append(f"  provider_attr_routing:{view.routing_attributed_provider_operation_count}")
+        lines.append(f"  provider_attr_plane:{view.plane_attributed_provider_operation_count}")
     if view.autonomy_mode:
         lines.append(f"  autonomy_mode:      {view.autonomy_mode}")
     if view.autonomy_decision:

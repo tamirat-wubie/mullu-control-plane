@@ -169,3 +169,33 @@ def test_attribute_execution_result_receipt_records_provider_receipt_source() ->
     assert records[0].provider_class is ProviderClass.INTEGRATION
     assert records[0].source is ProviderAttributionSource.EXECUTION_RECEIPT
     assert records[0].source_ref_id == "connector-receipt-1"
+
+
+def test_witness_counters_partition_attribution_sources() -> None:
+    registry = _registry()
+    ledger = _ledger()
+    _register_provider(registry, "provider-http", ProviderClass.INTEGRATION)
+    _register_provider(registry, "provider-model", ProviderClass.MODEL)
+    registry.record_success("provider-model")
+    ledger.record_attribution(
+        request_id="request-counter-1",
+        operation_id="operation-counter-1",
+        execution_id="execution-counter-1",
+        provider_id="provider-http",
+        provider_class=ProviderClass.INTEGRATION,
+        source=ProviderAttributionSource.EXECUTION_RECEIPT,
+        source_ref_id="receipt-counter-1",
+    )
+    ledger.attribute_healthy_planes(
+        request_id="request-counter-2",
+        operation_id="operation-counter-2",
+        execution_id="execution-counter-2",
+        provider_registry=registry,
+    )
+
+    counters = ledger.witness_counters()
+
+    assert counters["provider_attribution_count"] == 2
+    assert counters["receipt_attributed_provider_operation_count"] == 1
+    assert counters["plane_attributed_provider_operation_count"] == 1
+    assert counters["routing_attributed_provider_operation_count"] == 0

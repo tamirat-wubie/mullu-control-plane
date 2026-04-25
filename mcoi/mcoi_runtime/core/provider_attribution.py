@@ -36,6 +36,25 @@ class ProviderAttributionLedger:
         """Return the number of attribution records."""
         return len(self._records)
 
+    def source_counts(self) -> dict[str, int]:
+        """Return deterministic attribution counts by source."""
+        counts = {source.value: 0 for source in ProviderAttributionSource}
+        for record in self._records.values():
+            counts[record.source.value] += 1
+        return counts
+
+    def witness_counters(self) -> dict[str, int]:
+        """Return operator-facing provider attribution witness counters."""
+        counts = self.source_counts()
+        return {
+            "provider_attribution_count": self.attribution_count,
+            "receipt_attributed_provider_operation_count": counts[ProviderAttributionSource.EXECUTION_RECEIPT.value],
+            "routing_attributed_provider_operation_count": counts[ProviderAttributionSource.ROUTING_DECISION.value],
+            "plane_attributed_provider_operation_count": counts[
+                ProviderAttributionSource.HEALTHY_PLANE_RESOLUTION.value
+            ],
+        }
+
     def list_for_operation(self, operation_id: str) -> tuple[ProviderAttribution, ...]:
         """Return records for an operation in provider-class order."""
         ensure_non_empty_text("operation_id", operation_id)

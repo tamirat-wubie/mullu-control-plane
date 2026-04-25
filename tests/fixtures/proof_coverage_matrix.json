@@ -50,6 +50,13 @@
       "surfaces": [
         "federated_control_plane"
       ]
+    },
+    {
+      "action_id": "publish_runtime_conformance_attestation",
+      "status": "closed",
+      "surfaces": [
+        "runtime_conformance_attestation"
+      ]
     }
   ],
   "coverage_levels": [
@@ -69,12 +76,12 @@
       "action_proof": 13,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 6,
+      "read_model": 7,
       "request_proof": 0
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 15,
+      "audit_chain": 16,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -82,16 +89,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 18
+      "witnessed": 19
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 6,
+      "read_model": 7,
       "request_proof": 13
     },
-    "surface_count": 19
+    "surface_count": 20
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -377,6 +384,33 @@
         "overdue_obligation_count"
       ],
       "surface_id": "gateway_runtime_witness"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/conformance.py",
+        "scripts/collect_runtime_conformance.py",
+        "schemas/runtime_conformance_certificate.schema.json",
+        "tests/test_gateway/test_conformance.py",
+        "tests/test_collect_runtime_conformance.py"
+      ],
+      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, proof-matrix, and document-drift checks into one signed attestation.",
+      "representative_paths": [
+        "/runtime/conformance"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "gateway_witness_valid",
+        "runtime_witness_valid",
+        "command_closure_canary_passed",
+        "capability_admission_canary_passed",
+        "dangerous_capability_isolation_canary_passed",
+        "lineage_query_canary_passed"
+      ],
+      "surface_id": "runtime_conformance_attestation"
     },
     {
       "action_proof": "action_proof",

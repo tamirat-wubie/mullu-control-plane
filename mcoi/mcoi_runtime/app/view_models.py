@@ -60,6 +60,10 @@ class RunSummaryView:
     communication_provider_id: str | None = None
     model_provider_id: str | None = None
     provider_attributions: tuple[ProviderAttribution, ...] = ()
+    provider_attribution_count: int = 0
+    receipt_attributed_provider_operation_count: int = 0
+    routing_attributed_provider_operation_count: int = 0
+    plane_attributed_provider_operation_count: int = 0
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
 
@@ -90,6 +94,10 @@ class RunSummaryView:
             communication_provider_id=report.communication_provider_id,
             model_provider_id=report.model_provider_id,
             provider_attributions=report.provider_attributions,
+            provider_attribution_count=report.provider_attribution_count,
+            receipt_attributed_provider_operation_count=report.receipt_attributed_provider_operation_count,
+            routing_attributed_provider_operation_count=report.routing_attributed_provider_operation_count,
+            plane_attributed_provider_operation_count=report.plane_attributed_provider_operation_count,
             autonomy_mode=report.autonomy_mode,
             autonomy_decision=report.autonomy_decision,
         )
