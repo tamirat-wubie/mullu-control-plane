@@ -603,8 +603,6 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             now = datetime.fromisoformat(_clock().replace("Z", "+00:00"))
             if now.tzinfo is None:
                 now = now.replace(tzinfo=timezone.utc)
-            if now.tzinfo is None:
-                now = now.replace(tzinfo=timezone.utc)
 
             def _chain_overdue(chain: Any) -> bool:
                 try:
