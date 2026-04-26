@@ -40,7 +40,7 @@ Every message flows through the full governance pipeline. No bypass path.
 |---|---|
 | **7-Guard Chain** | API key → JWT → tenant → gating → RBAC → content safety → rate limit → budget |
 | **GovernedSession** | `session = platform.connect(identity_id, tenant_id)` then `session.llm("prompt")` |
-| **ProofBridge** | Every governance decision produces a cryptographic TransitionReceipt |
+| **ProofBridge** | Governance decisions on `/api/v1/*` produce a deterministic TransitionReceipt via middleware. Coverage and known gaps documented in [`docs/MAF_RECEIPT_COVERAGE.md`](docs/MAF_RECEIPT_COVERAGE.md). |
 | **Content Safety** | 6 prompt injection patterns + Unicode normalization + base64 decode |
 | **PII Scanner** | 7 patterns (email, phone, SSN, credit card, IP, API key, password) |
 | **Field Encryption** | AES-256-GCM on audit store detail fields |
@@ -141,7 +141,7 @@ mullu-control-plane/
 │   ├── creative/           # Documents, data analysis, images, translation
 │   └── enterprise/         # RAG, notifications, scheduler
 ├── installer/              # mullusi init interactive setup wizard
-├── maf/                    # MAF Rust certifying substrate
+├── maf/                    # MAF Rust crate (transition-receipt protocol; see docs/MAF_RECEIPT_COVERAGE.md)
 ├── schemas/                # 17 canonical JSON schemas
 ├── k8s/                    # Kubernetes manifests (security hardened)
 └── docker-compose.yml      # 3-service deployment (postgres + API + gateway)

@@ -21,7 +21,7 @@ exactly what's claimed, what's verified, and what's NOT.
 
 | Claim | Status |
 |-------|--------|
-| "Every governance decision produces a transition receipt." | **Conditionally true** — see "Coverage gaps" below. True for 100% of `/api/v1/*` endpoints via middleware. False for 7 gateway webhook endpoints. |
+| "Every governance decision produces a transition receipt." | **Verified** for the HTTP entry surface. 100% of `/api/v1/*` endpoints certified via `GovernanceMiddleware`. 100% of gateway `POST /webhook/*` and `POST /authority/*` certified via `GatewayReceiptMiddleware` (closed in commit shipping G10.1). |
 | "Transition receipts are deterministically hashed." | **Verified** — both Rust and Python implementations hash receipt content with SHA-256 in a fixed canonical order. |
 | "The Rust MAF substrate certifies the Python control plane." | **NOT a claim today.** Python does not call into Rust. Both sides implement the same protocol independently. Receipts emitted by Python are not (currently) cross-verified by Rust. |
 | "Receipts are persisted." | **NOT a claim today.** `ProofBridge._lineage` is an in-memory dict. Service restart loses the lineage. Receipts shipped to clients in HTTP responses are not retained server-side. |
@@ -125,33 +125,47 @@ These receipts are richer than the middleware receipt (they include
 domain-specific guard verdicts) and are intended for downstream
 consumers that need per-action proof.
 
-### Routes NOT covered (acknowledged gap)
+### Gateway entry-point coverage (G10.1 — closed)
 
-The gateway webhook surface in `gateway/server.py` bypasses
-`GovernanceMiddleware` entirely. Seven endpoints are affected:
+Gateway webhook and authority endpoints are now certified by
+`GatewayReceiptMiddleware` in `gateway/receipt_middleware.py`. Every
+POST to a `/webhook/*` or `/authority/*` path produces a receipt
+regardless of which handler runs:
 
 | Endpoint | Receipt status |
 |----------|----------------|
-| `POST /webhook/whatsapp` | Not certified at the webhook layer. |
-| `POST /webhook/telegram` | Not certified at the webhook layer. |
-| `POST /webhook/slack` | Not certified at the webhook layer. |
-| `POST /webhook/discord` | Not certified at the webhook layer. |
-| `POST /webhook/web` | Not certified at the webhook layer. |
-| `POST /webhook/approve/{request_id}` | Not certified at the webhook layer. |
-| `POST /authority/approval-chains/expire-overdue` | Not certified at the webhook layer. |
+| `POST /webhook/whatsapp` | Certified (G10.1). |
+| `POST /webhook/telegram` | Certified (G10.1). |
+| `POST /webhook/slack` | Certified (G10.1). |
+| `POST /webhook/discord` | Certified (G10.1). |
+| `POST /webhook/web` | Certified (G10.1). |
+| `POST /webhook/approve/{request_id}` | Certified (G10.1). |
+| `POST /authority/approval-chains/expire-overdue` | Certified (G10.1). |
+| `POST /authority/obligations/{id}/satisfy` | Certified (G10.1). |
+| `POST /authority/obligations/escalate-overdue` | Certified (G10.1). |
 
-These webhooks **may** trigger downstream `/api/v1/*` calls that are
-certified, in which case the certification happens at the secondary
-call site, not at the webhook itself. But the webhook receipt itself —
-the certification that "this external request was admitted into the
-governed plane" — does not exist.
+The middleware certifies the **boundary decision** (was this request
+admitted, denied, or did the handler error?), not the business
+decision. Outcome mapping is HTTP-status-driven:
 
-**Implication:** the entry-point trust boundary is not certified on the
-webhook surface. An attacker who can deliver a forged webhook payload
-that nevertheless validates at the channel level (e.g., HMAC-correct
-but semantically forged) gets one un-certified entry into the system.
-Downstream operations are still certified, so the damage is bounded —
-but the boundary itself is opaque to receipt verification.
+| Status | Decision | Audit outcome |
+|--------|----------|---------------|
+| 2xx | `allowed` | `success` |
+| 4xx | `denied` | `denied` |
+| 5xx | `denied` | `error` |
+| handler exception (uncaught) | `denied` | `error` (re-raised after receipt) |
+
+The middleware is observability, not a gate: if `proof_bridge` raises
+or is None, the gateway continues to function and a warning is logged.
+A drift between request-log volume and `proof_bridge.receipt_count` is
+the operational signal that something is wrong.
+
+**What the gateway receipt does NOT prove:** the receipt captures the
+admission decision, not the legitimacy of the upstream caller. A
+channel-level forgery (e.g., HMAC-correct but semantically false
+payload) still produces an `allowed` receipt. The HMAC/signature checks
+at each handler are the layer that detects forgery; the receipt simply
+records what they decided.
 
 ## What this spec does NOT claim
 
@@ -206,14 +220,14 @@ content; this is a follow-up document.
 
 ## Known gaps (issue-tracker-ready)
 
-| Gap | Severity | Resolution path |
-|-----|----------|-----------------|
-| Gateway webhooks bypass receipt emission | High | Add a receipt-emission decorator or middleware-equivalent for `gateway/server.py` routes. |
-| Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. |
-| No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. |
-| Rust ↔ Python protocol drift caught only by code review | Medium | Add a contract test that both implementations produce the same `receipt_hash` for the same input. |
-| State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. |
-| Coverage invariant not CI-enforced | Medium | After this spec stabilizes: add `scripts/validate_receipt_coverage.py` enumerating routes and asserting each has a known emission path or is in the "Acknowledged exclusions" list. |
+| Gap | Severity | Resolution path | Status |
+|-----|----------|-----------------|--------|
+| Gateway webhooks bypass receipt emission | High | `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py` | **Closed (G10.1)** |
+| Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Open |
+| No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. | Open |
+| Rust ↔ Python protocol drift caught only by code review | Medium | Add a contract test that both implementations produce the same `receipt_hash` for the same input. | Open |
+| State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. | Open |
+| Coverage invariant not CI-enforced | Medium | Add `scripts/validate_receipt_coverage.py` enumerating routes and asserting each has a known emission path or is in the "Acknowledged exclusions" list. | Open |
 
 These are real gaps, not aspirational items. Each has a defined
 resolution path and a severity rating. The platform's claims should

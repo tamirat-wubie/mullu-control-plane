@@ -150,6 +150,14 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         del authority_operator_audit_events[:-500]
 
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
+
+    # G10.1 — install entry-point receipt middleware. Closes the
+    # gap documented in docs/MAF_RECEIPT_COVERAGE.md §"Routes NOT
+    # covered". Every webhook/authority POST now produces a
+    # TransitionReceipt regardless of which handler runs.
+    from gateway.receipt_middleware import install_gateway_receipt_middleware
+    install_gateway_receipt_middleware(app, platform)
+
     event_log = WebhookEventLog(clock=_clock)
     verifier = WebhookVerifier()
     capability_admission_gate = build_capability_admission_gate_from_env(clock=_clock)
