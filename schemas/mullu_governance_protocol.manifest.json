@@ -107,6 +107,12 @@
       "surface": "policy"
     },
     {
+      "schema_id": "provider-attribution-witness",
+      "path": "schemas/provider_attribution_witness.schema.json",
+      "urn": "urn:mullusi:schema:provider-attribution-witness:1",
+      "surface": "provider"
+    },
+    {
       "schema_id": "replay-record",
       "path": "schemas/replay_record.schema.json",
       "urn": "urn:mullusi:schema:replay-record:1",

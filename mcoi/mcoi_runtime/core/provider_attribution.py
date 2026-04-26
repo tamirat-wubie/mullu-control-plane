@@ -55,6 +55,47 @@ class ProviderAttributionLedger:
             ],
         }
 
+    def attribution_witness(self, *, operation_id: str, generated_at: str) -> dict[str, object]:
+        """Return a Provider Attribution Witness schema payload for one operation."""
+        ensure_non_empty_text("operation_id", operation_id)
+        ensure_non_empty_text("generated_at", generated_at)
+        records = self.list_for_operation(operation_id)
+        source_counts = {source.value: 0 for source in ProviderAttributionSource}
+        for record in records:
+            source_counts[record.source.value] += 1
+        return {
+            "witness_id": stable_identifier(
+                "provider-attribution-witness",
+                {
+                    "operation_id": operation_id,
+                    "generated_at": generated_at,
+                    "record_count": len(records),
+                },
+            ),
+            "operation_id": operation_id,
+            "provider_attribution_count": len(records),
+            "receipt_attributed_provider_operation_count": source_counts[
+                ProviderAttributionSource.EXECUTION_RECEIPT.value
+            ],
+            "routing_attributed_provider_operation_count": source_counts[
+                ProviderAttributionSource.ROUTING_DECISION.value
+            ],
+            "plane_attributed_provider_operation_count": source_counts[
+                ProviderAttributionSource.HEALTHY_PLANE_RESOLUTION.value
+            ],
+            "provider_attributions": [
+                {
+                    "provider_id": record.provider_id,
+                    "provider_class": record.provider_class.value,
+                    "source": record.source.value,
+                    "source_ref_id": record.source_ref_id,
+                    "evidence_id": record.evidence_id,
+                }
+                for record in records
+            ],
+            "generated_at": generated_at,
+        }
+
     def list_for_operation(self, operation_id: str) -> tuple[ProviderAttribution, ...]:
         """Return records for an operation in provider-class order."""
         ensure_non_empty_text("operation_id", operation_id)

@@ -32,10 +32,12 @@ jobs:
       - name: Collect live deployment witness
         env:
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
         run: |
           python scripts/collect_deployment_witness.py \
             --gateway-url "${{ inputs.gateway_url }}" \
             --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" \
+            --conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET" \
             --expected-environment "${{ inputs.expected_environment }}" \
             --output .change_assurance/deployment_witness.json
 
