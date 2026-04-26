@@ -2877,9 +2877,26 @@ class CommandLedger:
         elif disposition is ClosureDisposition.COMPENSATED:
             if not compensation_outcome_id:
                 raise ValueError("compensated terminal closure requires compensation outcome")
+            compensation_reviewer_id = str((metadata or {}).get("compensation_reviewer_id", ""))
+            if not compensation_reviewer_id:
+                raise ValueError("compensated terminal closure requires compensation_reviewer_id")
         elif disposition is ClosureDisposition.ACCEPTED_RISK:
             if not accepted_risk_id or not case_id:
                 raise ValueError("accepted-risk terminal closure requires active risk and case")
+            risk_expires_at = str((metadata or {}).get("risk_expires_at", ""))
+            if not risk_expires_at:
+                raise ValueError("accepted-risk terminal closure requires risk_expires_at")
+            try:
+                parsed_risk_expiry = datetime.fromisoformat(risk_expires_at.replace("Z", "+00:00"))
+                observed_at = datetime.fromisoformat(self._clock().replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise ValueError("accepted-risk terminal closure requires valid risk_expires_at") from exc
+            if parsed_risk_expiry.tzinfo is None:
+                parsed_risk_expiry = parsed_risk_expiry.replace(tzinfo=timezone.utc)
+            if observed_at.tzinfo is None:
+                observed_at = observed_at.replace(tzinfo=timezone.utc)
+            if parsed_risk_expiry <= observed_at:
+                raise ValueError("accepted-risk terminal closure requires future risk_expires_at")
         elif disposition is ClosureDisposition.REQUIRES_REVIEW:
             if not case_id:
                 raise ValueError("review terminal closure requires case")

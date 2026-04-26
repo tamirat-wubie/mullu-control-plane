@@ -859,6 +859,7 @@ class GatewayRouter:
             ),
             "open_case_count": int(state_counts.get(CommandState.REQUIRES_REVIEW.value, 0)),
             "active_accepted_risk_count": responsibility_witness.active_accepted_risk_count,
+            "active_compensation_review_count": responsibility_witness.active_compensation_review_count,
             "requires_review_count": responsibility_witness.requires_review_count,
             "pending_approval_chain_count": responsibility_witness.pending_approval_chain_count,
             "open_obligation_count": responsibility_witness.open_obligation_count,

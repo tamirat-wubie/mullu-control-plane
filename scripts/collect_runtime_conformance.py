@@ -9,6 +9,7 @@ Invariants:
   - Missing endpoint evidence is recorded as a failed collection.
   - HMAC verification is explicit when a conformance secret is supplied.
   - Production readiness is not inferred from an unsigned or expired certificate.
+  - Conformance status requires embedded gateway and runtime witness validity.
   - Output preserves the original certificate payload plus collection witness.
 """
 
@@ -41,6 +42,7 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "signature_key_id",
     "signature",
 )
+ACCEPTED_CONFORMANCE_STATUSES = frozenset({"conformant", "conformant_with_gaps"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +122,30 @@ def collect_runtime_conformance(
     if not freshness_passed:
         errors.append("runtime conformance certificate was expired or malformed")
 
+    certificate_status = str(certificate.get("terminal_status", "missing"))
+    status_passed = certificate_status in ACCEPTED_CONFORMANCE_STATUSES
+    steps.append(CollectionStep(
+        name="runtime conformance terminal status",
+        passed=status_passed,
+        detail=f"terminal_status={certificate_status}",
+    ))
+    if not status_passed:
+        errors.append("runtime conformance terminal status was not acceptable")
+
+    witness_validity_passed = bool(certificate.get("gateway_witness_valid")) and bool(
+        certificate.get("runtime_witness_valid")
+    )
+    steps.append(CollectionStep(
+        name="runtime conformance witness validity",
+        passed=witness_validity_passed,
+        detail=(
+            f"gateway_witness_valid={bool(certificate.get('gateway_witness_valid'))} "
+            f"runtime_witness_valid={bool(certificate.get('runtime_witness_valid'))}"
+        ),
+    ))
+    if not witness_validity_passed:
+        errors.append("runtime conformance embedded witness validity failed")
+
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(
         name="runtime conformance signature",
@@ -129,7 +155,6 @@ def collect_runtime_conformance(
     if not signature_passed:
         errors.append("runtime conformance signature was not verified")
 
-    certificate_status = str(certificate.get("terminal_status", "missing"))
     collection_seed = {
         "gateway_url": gateway_base,
         "collected_at": collected_at,

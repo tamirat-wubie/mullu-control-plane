@@ -8,6 +8,7 @@ Invariants:
   - A complete signed certificate can be collected and verified.
   - Missing conformance secrets keep signature status explicit.
   - Expired certificates are rejected even when signature verification passes.
+  - Degraded status and embedded witness invalidity are rejected.
   - Written output preserves collection and certificate evidence.
 """
 
@@ -107,6 +108,49 @@ def test_collect_runtime_conformance_rejects_expired_certificate(monkeypatch) ->
     assert "runtime conformance certificate was expired or malformed" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_degraded_status(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(secret=secret, terminal_status="degraded")
+
+    def fake_urlopen(request, timeout):
+        return StubHttpResponse(status=200, payload=certificate)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    status_step = next(step for step in collection.steps if step.name == "runtime conformance terminal status")
+
+    assert collection.certificate_status == "degraded"
+    assert collection.signature_status == "verified"
+    assert status_step.passed is False
+    assert "terminal_status=degraded" in status_step.detail
+    assert "runtime conformance terminal status was not acceptable" in collection.errors
+
+
+def test_collect_runtime_conformance_rejects_invalid_embedded_witness(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(secret=secret, runtime_witness_valid=False)
+
+    def fake_urlopen(request, timeout):
+        return StubHttpResponse(status=200, payload=certificate)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    witness_step = next(step for step in collection.steps if step.name == "runtime conformance witness validity")
+
+    assert collection.signature_status == "verified"
+    assert witness_step.passed is False
+    assert "runtime_witness_valid=False" in witness_step.detail
+    assert "runtime conformance embedded witness validity failed" in collection.errors
+
+
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
@@ -154,14 +198,17 @@ def _signed_certificate(
     *,
     secret: str,
     expires_at: str = "2099-04-25T12:30:00+00:00",
+    terminal_status: str = "conformant_with_gaps",
+    gateway_witness_valid: bool = True,
+    runtime_witness_valid: bool = True,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
         "environment": "pilot",
         "issued_at": "2026-04-25T12:00:00+00:00",
         "expires_at": expires_at,
-        "gateway_witness_valid": True,
-        "runtime_witness_valid": True,
+        "gateway_witness_valid": gateway_witness_valid,
+        "runtime_witness_valid": runtime_witness_valid,
         "latest_anchor_valid": True,
         "command_closure_canary_passed": True,
         "capability_admission_canary_passed": True,
@@ -174,7 +221,7 @@ def _signed_certificate(
         "known_limitations_aligned": False,
         "security_model_aligned": False,
         "open_conformance_gaps": ["known_limitations_documentation_drift"],
-        "terminal_status": "conformant_with_gaps",
+        "terminal_status": terminal_status,
         "evidence_refs": ["gateway_witness:test"],
         "checks": [
             {

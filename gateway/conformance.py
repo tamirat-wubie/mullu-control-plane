@@ -373,6 +373,7 @@ def _authority_obligation_canary(authority_obligation_mesh: Any) -> bool:
         "overdue_obligation_count",
         "escalated_obligation_count",
         "active_accepted_risk_count",
+        "active_compensation_review_count",
         "requires_review_count",
     }
     return required <= set(witness)

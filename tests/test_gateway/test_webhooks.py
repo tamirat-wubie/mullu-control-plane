@@ -789,6 +789,7 @@ class TestGatewayStatus:
         data = resp.json()
         assert data["pending_approval_chain_count"] == 0
         assert data["open_obligation_count"] == 0
+        assert data["active_compensation_review_count"] == 0
         assert data["unowned_high_risk_capability_count"] == 0
 
     def test_authority_operator_console_renders_empty_state(self, client):
