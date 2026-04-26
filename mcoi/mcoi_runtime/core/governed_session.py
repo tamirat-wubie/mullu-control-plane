@@ -1199,3 +1199,14 @@ class Platform:
     @property
     def bootstrap_components(self) -> dict[str, bool]:
         return dict(self._bootstrap_components)
+
+    @property
+    def proof_bridge(self) -> Any | None:
+        """Public accessor for the platform's ProofBridge.
+
+        Exposed so external entry-point surfaces (e.g., the gateway
+        webhook layer) can emit transition receipts at their own trust
+        boundary, closing the gap documented in
+        docs/MAF_RECEIPT_COVERAGE.md §"Routes NOT covered".
+        """
+        return self._proof_bridge
