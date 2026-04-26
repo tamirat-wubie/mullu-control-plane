@@ -9,6 +9,7 @@ Invariants:
   - Missing conformance secrets keep signature status explicit.
   - Expired certificates are rejected even when signature verification passes.
   - Degraded or non-conformant terminal status is rejected.
+  - Certificates with invalid embedded runtime or gateway witness state are rejected.
   - Written output preserves collection and certificate evidence.
 """
 
@@ -47,11 +48,7 @@ def test_collect_runtime_conformance_verifies_signed_certificate(monkeypatch) ->
     secret = "conformance-secret"
     certificate = _signed_certificate(secret=secret)
 
-    def fake_urlopen(request, timeout):
-        assert str(request).endswith("/runtime/conformance")
-        return StubHttpResponse(status=200, payload=certificate)
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
 
     collection = collect_runtime_conformance(
         gateway_url="http://localhost:8001",
@@ -68,18 +65,16 @@ def test_collect_runtime_conformance_verifies_signed_certificate(monkeypatch) ->
 def test_collect_runtime_conformance_records_missing_secret(monkeypatch) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
-    def fake_urlopen(request, timeout):
-        return StubHttpResponse(status=200, payload=certificate)
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
 
     collection = collect_runtime_conformance(
         gateway_url="http://localhost:8001",
         conformance_secret="",
     )
+    signature_step = next(step for step in collection.steps if step.name == "runtime conformance signature")
 
     assert collection.signature_status == "skipped:no_conformance_secret"
-    assert collection.steps[-1].passed is False
+    assert signature_step.passed is False
     assert "runtime conformance signature was not verified" in collection.errors
 
 
@@ -90,10 +85,7 @@ def test_collect_runtime_conformance_rejects_expired_certificate(monkeypatch) ->
         expires_at="2026-04-25T12:00:00+00:00",
     )
 
-    def fake_urlopen(request, timeout):
-        return StubHttpResponse(status=200, payload=certificate)
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
 
     collection = collect_runtime_conformance(
         gateway_url="http://localhost:8001",
@@ -112,10 +104,7 @@ def test_collect_runtime_conformance_rejects_degraded_status(monkeypatch) -> Non
     secret = "conformance-secret"
     certificate = _signed_certificate(secret=secret, terminal_status="degraded")
 
-    def fake_urlopen(request, timeout):
-        return StubHttpResponse(status=200, payload=certificate)
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
 
     collection = collect_runtime_conformance(
         gateway_url="http://localhost:8001",
@@ -130,13 +119,66 @@ def test_collect_runtime_conformance_rejects_degraded_status(monkeypatch) -> Non
     assert "runtime conformance terminal status was not acceptable" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_invalid_embedded_witness(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        gateway_witness_valid=False,
+        runtime_witness_valid=True,
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    witness_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance witness validity"
+    )
+
+    assert collection.certificate_status == "conformant_with_gaps"
+    assert collection.signature_status == "verified"
+    assert witness_step.passed is False
+    assert "gateway_witness_valid=False" in witness_step.detail
+    assert "runtime_witness_valid=True" in witness_step.detail
+    assert "runtime conformance embedded witness validity failed" in collection.errors
+
+
+def test_collect_runtime_conformance_records_authority_read_model_failures(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(secret=secret)
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        _urlopen_for_certificate(certificate, authority_status=404),
+    )
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    approval_step = next(
+        step for step in collection.steps
+        if step.name == "authority overdue approval chain read model"
+    )
+    obligation_step = next(
+        step for step in collection.steps
+        if step.name == "authority overdue obligation read model"
+    )
+
+    assert approval_step.passed is False
+    assert obligation_step.passed is False
+    assert "status=404" in approval_step.detail
+    assert "status=404" in obligation_step.detail
+    assert "authority overdue approval chain read model was not available" in collection.errors
+    assert "authority overdue obligation read model was not available" in collection.errors
+
+
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
-    def fake_urlopen(request, timeout):
-        return StubHttpResponse(status=200, payload=certificate)
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
     collection = collect_runtime_conformance(
         gateway_url="http://localhost:8001",
         conformance_secret="conformance-secret",
@@ -154,10 +196,7 @@ def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
 def test_runtime_conformance_cli_writes_collection(tmp_path, monkeypatch, capsys) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
-    def fake_urlopen(request, timeout):
-        return StubHttpResponse(status=200, payload=certificate)
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
     output_path = tmp_path / "runtime_conformance_certificate.json"
 
     exit_code = main([
@@ -173,19 +212,45 @@ def test_runtime_conformance_cli_writes_collection(tmp_path, monkeypatch, capsys
     assert loaded["signature_status"] == "verified"
 
 
+def _urlopen_for_certificate(
+    certificate: dict[str, Any],
+    *,
+    authority_status: int = 200,
+) -> Any:
+    def fake_urlopen(request, timeout):
+        url = request.full_url if hasattr(request, "full_url") else str(request)
+        if url.endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=certificate)
+        if "/authority/approval-chains?overdue=true&limit=1" in url:
+            return StubHttpResponse(
+                status=authority_status,
+                payload={"approval_chains": [], "count": 0} if authority_status == 200 else {},
+            )
+        if "/authority/obligations?overdue=true&limit=1" in url:
+            return StubHttpResponse(
+                status=authority_status,
+                payload={"obligations": [], "count": 0} if authority_status == 200 else {},
+            )
+        return StubHttpResponse(status=404, payload={})
+
+    return fake_urlopen
+
+
 def _signed_certificate(
     *,
     secret: str,
     expires_at: str = "2099-04-25T12:30:00+00:00",
     terminal_status: str = "conformant_with_gaps",
+    gateway_witness_valid: bool = True,
+    runtime_witness_valid: bool = True,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
         "environment": "pilot",
         "issued_at": "2026-04-25T12:00:00+00:00",
         "expires_at": expires_at,
-        "gateway_witness_valid": True,
-        "runtime_witness_valid": True,
+        "gateway_witness_valid": gateway_witness_valid,
+        "runtime_witness_valid": runtime_witness_valid,
         "latest_anchor_valid": True,
         "command_closure_canary_passed": True,
         "capability_admission_canary_passed": True,

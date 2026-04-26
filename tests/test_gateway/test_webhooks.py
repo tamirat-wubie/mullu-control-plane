@@ -1037,7 +1037,7 @@ class TestGatewayStatus:
             owner_id="u3",
             owner_team="finance_ops",
             obligation_type="compensation_review",
-            due_at="2026-04-26T12:00:00+00:00",
+            due_at="2099-04-26T12:00:00+00:00",
             status=ObligationStatus.OPEN,
             evidence_required=("compensation_receipt", "compensation_reviewer_attestation"),
             escalation_policy_id="default",
@@ -1059,6 +1059,9 @@ class TestGatewayStatus:
         compensation_obligations_resp = client.get(
             "/authority/obligations?tenant_id=t1&obligation_type=compensation_review"
         )
+        overdue_obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open&overdue=true")
+        not_overdue_obligations_resp = client.get("/authority/obligations?tenant_id=t1&overdue=false")
+        invalid_overdue_obligations_resp = client.get("/authority/obligations?overdue=maybe")
         missing_evidence_resp = client.post(
             f"/authority/obligations/{obligation.obligation_id}/satisfy",
             json={"evidence_refs": []},
@@ -1090,6 +1093,19 @@ class TestGatewayStatus:
             compensation_obligations_resp.json()["obligations"][0]["evidence_required"]
             == ["compensation_receipt", "compensation_reviewer_attestation"]
         )
+        assert overdue_obligations_resp.status_code == 200
+        assert overdue_obligations_resp.json()["count"] == 2
+        assert {
+            item["obligation_id"] for item in overdue_obligations_resp.json()["obligations"]
+        } == {obligation.obligation_id, second_obligation.obligation_id}
+        assert not_overdue_obligations_resp.status_code == 200
+        assert not_overdue_obligations_resp.json()["count"] == 1
+        assert (
+            not_overdue_obligations_resp.json()["obligations"][0]["obligation_id"]
+            == compensation_obligation.obligation_id
+        )
+        assert invalid_overdue_obligations_resp.status_code == 400
+        assert invalid_overdue_obligations_resp.json()["detail"] == "overdue must be true or false"
         assert missing_evidence_resp.status_code == 400
         assert satisfy_resp.status_code == 200
         assert satisfy_resp.json()["status"] == "satisfied"
