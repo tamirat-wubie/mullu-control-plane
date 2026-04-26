@@ -632,6 +632,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         command_id: str = "",
         owner_id: str = "",
         owner_team: str = "",
+        obligation_type: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
@@ -645,6 +646,11 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             obligations = tuple(obligation for obligation in obligations if obligation.owner_id == owner_id)
         if owner_team:
             obligations = tuple(obligation for obligation in obligations if obligation.owner_team == owner_team)
+        if obligation_type:
+            obligations = tuple(
+                obligation for obligation in obligations
+                if obligation.obligation_type == obligation_type
+            )
         page, page_meta = _read_model_page(
             obligations,
             limit=_bounded_read_model_limit(limit),

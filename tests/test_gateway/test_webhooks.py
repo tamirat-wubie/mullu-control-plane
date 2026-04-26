@@ -995,6 +995,20 @@ class TestGatewayStatus:
             terminal_certificate_id="terminal-test-read-model",
         )
         gateway_app.state.authority_mesh_store.save_obligation(second_obligation)
+        compensation_obligation = Obligation(
+            obligation_id="obligation-test-read-model-compensation",
+            command_id=certificate.command_id,
+            tenant_id="t1",
+            owner_id="u3",
+            owner_team="finance_ops",
+            obligation_type="compensation_review",
+            due_at="2026-04-26T12:00:00+00:00",
+            status=ObligationStatus.OPEN,
+            evidence_required=("compensation_receipt", "compensation_reviewer_attestation"),
+            escalation_policy_id="default",
+            terminal_certificate_id="terminal-test-read-model",
+        )
+        gateway_app.state.authority_mesh_store.save_obligation(compensation_obligation)
         gateway_app.state.authority_mesh_store.append_escalation_event({
             "event_id": "obl-escalation-test-read-model-second",
             "obligation_id": second_obligation.obligation_id,
@@ -1006,6 +1020,10 @@ class TestGatewayStatus:
         })
 
         obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open&limit=1")
+        case_obligations_resp = client.get("/authority/obligations?tenant_id=t1&obligation_type=case_review")
+        compensation_obligations_resp = client.get(
+            "/authority/obligations?tenant_id=t1&obligation_type=compensation_review"
+        )
         missing_evidence_resp = client.post(
             f"/authority/obligations/{obligation.obligation_id}/satisfy",
             json={"evidence_refs": []},
@@ -1022,11 +1040,21 @@ class TestGatewayStatus:
 
         assert obligations_resp.status_code == 200
         assert obligations_resp.json()["count"] == 1
-        assert obligations_resp.json()["total"] == 2
+        assert obligations_resp.json()["total"] == 3
         assert obligations_resp.json()["limit"] == 1
         assert obligations_resp.json()["offset"] == 0
         assert obligations_resp.json()["next_offset"] == 1
         assert obligations_resp.json()["obligations"][0]["obligation_id"] == obligation.obligation_id
+        assert case_obligations_resp.status_code == 200
+        assert case_obligations_resp.json()["count"] == 1
+        assert case_obligations_resp.json()["obligations"][0]["obligation_type"] == "case_review"
+        assert compensation_obligations_resp.status_code == 200
+        assert compensation_obligations_resp.json()["count"] == 1
+        assert compensation_obligations_resp.json()["obligations"][0]["owner_team"] == "finance_ops"
+        assert (
+            compensation_obligations_resp.json()["obligations"][0]["evidence_required"]
+            == ["compensation_receipt", "compensation_reviewer_attestation"]
+        )
         assert missing_evidence_resp.status_code == 400
         assert satisfy_resp.status_code == 200
         assert satisfy_resp.json()["status"] == "satisfied"
