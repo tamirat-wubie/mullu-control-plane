@@ -72,6 +72,15 @@ def _resolve_cors_origins(raw_value: str | None, env: str) -> list[str]:
 
 def _validate_cors_origins_for_env(origins: list[str], env: str) -> str | None:
     """Validate CORS posture against environment expectations."""
+    # Fail-closed: wildcard origins are forbidden in pilot/production.
+    # CORS "*" combined with credentialed requests is a documented
+    # cross-origin attack vector; explicit allowlists are required.
+    if "*" in origins and env in ("pilot", "production"):
+        raise RuntimeError(
+            f"MULLU_CORS_ORIGINS contains wildcard '*' in {env!r} environment. "
+            "Wildcards are forbidden in pilot/production. "
+            "Set explicit origins (for example https://app.mullu.io)."
+        )
     if origins:
         return None
     if env in ("pilot", "production"):

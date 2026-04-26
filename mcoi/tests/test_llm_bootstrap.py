@@ -175,3 +175,52 @@ class TestBootstrapLLM:
         config = LLMConfig(default_budget_max_cost=50.0)
         result = bootstrap_llm(clock=FIXED_CLOCK, config=config)
         assert result.config.default_budget_max_cost == 50.0
+
+
+class TestLLMConfigFromEnv:
+    """G6: stub backend must be refused in pilot/production environments."""
+
+    def test_stub_refused_in_production(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_LLM_BACKEND", "stub")
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        with pytest.raises(RuntimeError, match="stub.*forbidden.*production"):
+            LLMConfig.from_env()
+
+    def test_stub_refused_in_pilot(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_LLM_BACKEND", "stub")
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        with pytest.raises(RuntimeError, match="stub.*forbidden.*pilot"):
+            LLMConfig.from_env()
+
+    def test_stub_allowed_in_dev(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "local_dev")
+        monkeypatch.setenv("MULLU_LLM_BACKEND", "stub")
+        config = LLMConfig.from_env()
+        assert config.default_backend == "stub"
+
+    def test_stub_default_silent_in_dev(self, monkeypatch):
+        """No env vars set, dev environment → stub fallback is silent."""
+        monkeypatch.delenv("MULLU_ENV", raising=False)
+        monkeypatch.delenv("MULLU_LLM_BACKEND", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+        config = LLMConfig.from_env()
+        assert config.default_backend == "stub"
+
+    def test_anthropic_key_overrides_stub_in_production(self, monkeypatch):
+        """Production with API key → real backend, no error."""
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.delenv("MULLU_LLM_BACKEND", raising=False)
+        config = LLMConfig.from_env()
+        assert config.default_backend == "anthropic"

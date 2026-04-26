@@ -78,6 +78,9 @@ def test_server_rejects_empty_cors_in_production(
         "MULLU_ENCRYPTION_KEY",
         base64.b64encode(bytes([1] * 32)).decode("ascii"),
     )
+    # Provide a real backend so the LLM stub-refusal check passes;
+    # this test isolates the CORS validation path.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-for-cors-validation")
     monkeypatch.delenv("MULLU_CORS_ORIGINS", raising=False)
 
     with pytest.raises(
@@ -91,6 +94,7 @@ def test_server_rejects_empty_cors_in_production(
     monkeypatch.setenv("MULLU_ENV", "local_dev")
     monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
     monkeypatch.delenv("MULLU_ENCRYPTION_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv(
         "MULLU_CORS_ORIGINS",
         "http://localhost:3000,http://localhost:8080",
@@ -98,3 +102,18 @@ def test_server_rejects_empty_cors_in_production(
     from mcoi_runtime.app import server as server_module
 
     importlib.reload(server_module)
+
+
+def test_validate_cors_rejects_wildcard_in_production() -> None:
+    """G8: Wildcard '*' must be rejected in pilot/production."""
+    with pytest.raises(RuntimeError, match="wildcard '\\*'"):
+        server_policy._validate_cors_origins_for_env(["*"], "production")
+    with pytest.raises(RuntimeError, match="wildcard '\\*'"):
+        server_policy._validate_cors_origins_for_env(["*"], "pilot")
+
+
+def test_validate_cors_allows_wildcard_in_dev() -> None:
+    """Wildcard is allowed in dev/test environments."""
+    # No exception expected
+    assert server_policy._validate_cors_origins_for_env(["*"], "local_dev") is None
+    assert server_policy._validate_cors_origins_for_env(["*"], "test") is None

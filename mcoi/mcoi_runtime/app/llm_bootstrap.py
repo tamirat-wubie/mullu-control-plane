@@ -59,11 +59,16 @@ class LLMConfig:
 
     @classmethod
     def from_env(cls) -> LLMConfig:
-        """Build LLM config from environment variables."""
+        """Build LLM config from environment variables.
+
+        Fail-closed in pilot/production environments: refuses to boot with
+        the stub backend (which produces deterministic fake responses).
+        """
         anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
         openai_key = os.environ.get("OPENAI_API_KEY", "")
         gemini_key = os.environ.get("GEMINI_API_KEY", "")
         ollama_url = os.environ.get("OLLAMA_BASE_URL", "")
+        env = os.environ.get("MULLU_ENV", "").lower()
 
         # Auto-detect default backend from available keys (Tier 1 first)
         default_backend = os.environ.get("MULLU_LLM_BACKEND", "")
@@ -78,6 +83,19 @@ class LLMConfig:
                 default_backend = "ollama"
             else:
                 default_backend = "stub"
+
+        # Fail-closed: stub backend is forbidden in pilot/production.
+        # The stub returns deterministic fake responses suitable only
+        # for testing — running it under a "production" label is a
+        # silent governance failure (audit trail records "real" calls
+        # that never happened).
+        if default_backend == "stub" and env in ("pilot", "production"):
+            raise RuntimeError(
+                f"MULLU_LLM_BACKEND='stub' is forbidden in {env!r} environment. "
+                "Set MULLU_LLM_BACKEND explicitly or provide an API key "
+                "(ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY) "
+                "or OLLAMA_BASE_URL."
+            )
 
         return cls(
             default_backend=default_backend,
