@@ -1142,17 +1142,18 @@ class AuthorityObligationMesh:
             raise KeyError(f"unknown command_id: {command_id}")
         action = self._commands.governed_action_for(command_id)
         resource_ref = action.capability if action is not None else command.intent
-        ownership = self._resolve_ownership(
-            tenant_id=command.tenant_id,
-            resource_ref=resource_ref,
-            requester_id=command.actor_id,
-            risk_tier=action.risk_tier if action is not None else "medium",
-        )
         obligations: tuple[Obligation, ...]
         if certificate.disposition is ClosureDisposition.ACCEPTED_RISK:
+            ownership = self._store.load_ownership(command.tenant_id, resource_ref)
+            if ownership is None:
+                raise ValueError("accepted-risk closure requires explicit ownership binding")
+            if not certificate.accepted_risk_id or not certificate.case_id:
+                raise ValueError("accepted-risk closure requires accepted_risk_id and case_id")
             due_at = str(certificate.metadata.get("risk_expires_at", ""))
             if not due_at:
                 raise ValueError("accepted-risk closure requires risk_expires_at")
+            if self._parse_time(due_at) <= self._parse_time(self._clock()):
+                raise ValueError("accepted-risk closure requires future risk_expires_at")
             obligations = (self._open_obligation(
                 command_id=command_id,
                 tenant_id=command.tenant_id,
@@ -1163,6 +1164,12 @@ class AuthorityObligationMesh:
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         elif certificate.disposition is ClosureDisposition.REQUIRES_REVIEW:
+            ownership = self._resolve_ownership(
+                tenant_id=command.tenant_id,
+                resource_ref=resource_ref,
+                requester_id=command.actor_id,
+                risk_tier=action.risk_tier if action is not None else "medium",
+            )
             obligations = (self._open_obligation(
                 command_id=command_id,
                 tenant_id=command.tenant_id,
@@ -1173,13 +1180,20 @@ class AuthorityObligationMesh:
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         elif certificate.disposition is ClosureDisposition.COMPENSATED:
+            ownership = self._store.load_ownership(command.tenant_id, resource_ref)
+            if ownership is None:
+                raise ValueError("compensated closure requires explicit ownership binding")
+            if not certificate.compensation_outcome_id:
+                raise ValueError("compensated closure requires compensation_outcome_id")
+            if not str(certificate.metadata.get("compensation_reviewer_id", "")):
+                raise ValueError("compensated closure requires compensation_reviewer_id")
             obligations = (self._open_obligation(
                 command_id=command_id,
                 tenant_id=command.tenant_id,
                 owner=ownership,
                 obligation_type="compensation_review",
                 due_at=self._future_iso(hours=24),
-                evidence_required=("compensation_receipt", "operator_review"),
+                evidence_required=("compensation_receipt", "compensation_reviewer_attestation"),
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         else:
