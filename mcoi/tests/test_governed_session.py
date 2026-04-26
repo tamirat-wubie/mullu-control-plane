@@ -873,3 +873,141 @@ class TestPlatformInDeps:
         p = deps.get("platform")
         assert p is not None
         assert isinstance(p, Platform)
+
+
+# ═══════════════════════════════════════════
+# G4.1 — Fail-closed boot when RBAC bootstrap fails in pilot/production
+# ═══════════════════════════════════════════
+
+class TestG41RBACFailClosedBoot:
+    """G4.1: docs/GOVERNANCE_GUARD_CHAIN.md §"Known gaps".
+
+    Pre-G4.1: if AccessRuntimeEngine bootstrap raised, access_runtime
+    became None silently and the platform continued running with no RBAC
+    enforcement — the "appearance of governance without enforcement"
+    failure mode the audit thread has been chasing.
+
+    Post-G4.1: Platform.from_env() refuses to boot in pilot/production
+    if access_runtime is None. local_dev/test still permit None for
+    development convenience. Same shape as G6 (stub LLM in production)
+    and G8 (CORS wildcard in production).
+    """
+
+    @staticmethod
+    def _broken_access_runtime_module():
+        """Build a stand-in access_runtime module whose AccessRuntimeEngine
+        constructor raises. Bootstrap will catch and set access_runtime=None."""
+        class _BrokenModule:
+            class AccessRuntimeEngine:
+                def __init__(self, *a, **k):
+                    raise RuntimeError("simulated bootstrap failure")
+        return _BrokenModule()
+
+    def _install_broken_module(self, monkeypatch):
+        """Swap the access_runtime module with a broken one for the duration
+        of the test. monkeypatch.setitem auto-restores the dict entry on teardown."""
+        import sys
+        # Ensure the original module is in sys.modules so the restore step
+        # has something to restore to (and so future imports get the real one).
+        original = sys.modules.get("mcoi_runtime.core.access_runtime")
+        if original is None:
+            import mcoi_runtime.core.access_runtime as ar_mod  # noqa: F401
+            original = sys.modules["mcoi_runtime.core.access_runtime"]
+        # monkeypatch.setitem restores the prior value when the test ends.
+        monkeypatch.setitem(
+            sys.modules,
+            "mcoi_runtime.core.access_runtime",
+            self._broken_access_runtime_module(),
+        )
+
+    def test_pilot_refuses_to_boot_when_access_runtime_fails(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("MULLU_CORS_ORIGINS", "https://example.com")
+        self._install_broken_module(monkeypatch)
+        with pytest.raises(RuntimeError, match="RBAC engine"):
+            Platform.from_env()
+
+    def test_production_refuses_to_boot_when_access_runtime_fails(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("MULLU_CORS_ORIGINS", "https://example.com")
+        self._install_broken_module(monkeypatch)
+        with pytest.raises(RuntimeError, match="production"):
+            Platform.from_env()
+
+    def test_local_dev_permits_access_runtime_none(self, monkeypatch):
+        """local_dev preserves the optional path for contributors who
+        don't have a full environment configured."""
+        monkeypatch.setenv("MULLU_ENV", "local_dev")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+        self._install_broken_module(monkeypatch)
+        # Should not raise
+        platform = Platform.from_env()
+        assert platform is not None
+        # Bootstrap warning is recorded so the missing engine is observable
+        assert any("access runtime" in w for w in platform.bootstrap_warnings)
+
+    def test_pilot_boots_normally_when_access_runtime_succeeds(self, monkeypatch):
+        """The fail-closed check must not block legitimate pilot/production boots."""
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("MULLU_CORS_ORIGINS", "https://example.com")
+        platform = Platform.from_env()
+        assert platform is not None
+        assert platform.bootstrap_components.get("access_runtime") is True
+
+
+# ═══════════════════════════════════════════
+# Round-5 residual: gateway receipt middleware status is observable
+# ═══════════════════════════════════════════
+
+class TestGatewayReceiptMiddlewareStatus:
+    """Round-5 audit nit: proof_bridge=None was a silent no-op with
+    only a log warning. get_receipt_middleware_status() exposes the
+    install state for health checks and dashboards."""
+
+    def test_status_shape(self):
+        from gateway.receipt_middleware import get_receipt_middleware_status
+        status = get_receipt_middleware_status()
+        assert "installed" in status
+        assert "reason" in status
+        assert "certified_prefixes" in status
+        assert isinstance(status["installed"], bool)
+
+    def test_install_with_no_platform_marks_uninstalled(self):
+        from fastapi import FastAPI
+        from gateway.receipt_middleware import (
+            install_gateway_receipt_middleware,
+            get_receipt_middleware_status,
+        )
+        installed = install_gateway_receipt_middleware(FastAPI(), None)
+        assert installed is False
+        status = get_receipt_middleware_status()
+        assert status["installed"] is False
+        assert "no platform" in status["reason"].lower()
+
+    def test_install_with_platform_marks_installed(self):
+        from fastapi import FastAPI
+        from gateway.receipt_middleware import (
+            install_gateway_receipt_middleware,
+            get_receipt_middleware_status,
+        )
+
+        class _Bridge:
+            def certify_governance_decision(self, **k):
+                return None
+
+        class _Platform:
+            proof_bridge = _Bridge()
+
+        installed = install_gateway_receipt_middleware(FastAPI(), _Platform())
+        assert installed is True
+        status = get_receipt_middleware_status()
+        assert status["installed"] is True
+        assert status["reason"] == "active"
+        assert "/webhook/" in status["certified_prefixes"]
+        assert "/authority/" in status["certified_prefixes"]
