@@ -2880,6 +2880,23 @@ class CommandLedger:
         elif disposition is ClosureDisposition.ACCEPTED_RISK:
             if not accepted_risk_id or not case_id:
                 raise ValueError("accepted-risk terminal closure requires active risk and case")
+            risk_expires_at = str((metadata or {}).get("risk_expires_at", ""))
+            if not risk_expires_at:
+                raise ValueError("accepted-risk terminal closure requires risk_expires_at")
+            try:
+                parsed_risk_expiry = datetime.fromisoformat(risk_expires_at)
+            except ValueError as exc:
+                raise ValueError("accepted-risk terminal closure requires valid risk_expires_at") from exc
+            if parsed_risk_expiry.tzinfo is None:
+                parsed_risk_expiry = parsed_risk_expiry.replace(tzinfo=timezone.utc)
+            try:
+                current_time = datetime.fromisoformat(self._clock())
+            except ValueError as exc:
+                raise ValueError("accepted-risk terminal closure requires valid ledger clock") from exc
+            if current_time.tzinfo is None:
+                current_time = current_time.replace(tzinfo=timezone.utc)
+            if parsed_risk_expiry <= current_time:
+                raise ValueError("accepted-risk terminal closure requires future risk_expires_at")
         elif disposition is ClosureDisposition.REQUIRES_REVIEW:
             if not case_id:
                 raise ValueError("review terminal closure requires case")
@@ -2941,6 +2958,7 @@ class CommandLedger:
             "case_id": case_id,
             "accepted_risk_id": accepted_risk_id,
             "compensation_outcome_id": compensation_outcome_id,
+            "metadata": certificate_metadata,
         })
         certificate = TerminalClosureCertificate(
             certificate_id=f"terminal-closure-{certificate_hash[:16]}",

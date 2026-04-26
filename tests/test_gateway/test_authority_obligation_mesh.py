@@ -325,6 +325,90 @@ def test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_o
     assert mesh.escalation_events()[0]["obligation_id"] == escalated[0].obligation_id
 
 
+def test_accepted_risk_certificate_requires_expiry_before_mesh_review():
+    ledger = _ledger()
+    command = _payment_command(ledger)
+    ledger.record_operational_claim(
+        command.command_id,
+        text="Command risk is accepted temporarily.",
+        verified=False,
+        confidence=0.0,
+    )
+
+    with pytest.raises(ValueError, match="^accepted-risk terminal closure requires risk_expires_at$"):
+        ledger.certify_terminal_closure(
+            command.command_id,
+            disposition=ClosureDisposition.ACCEPTED_RISK,
+            case_id="case-risk",
+            accepted_risk_id="risk-1",
+        )
+
+
+def test_accepted_risk_certificate_accepts_naive_ledger_clock():
+    ledger = _ledger(clock=lambda: "2026-04-24T12:00:00")
+    command = _payment_command(ledger)
+    ledger.record_operational_claim(
+        command.command_id,
+        text="Command risk is accepted temporarily.",
+        verified=False,
+        confidence=0.0,
+    )
+
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.ACCEPTED_RISK,
+        case_id="case-risk",
+        accepted_risk_id="risk-1",
+        metadata={"risk_expires_at": "2026-04-25T12:00:00+00:00"},
+    )
+
+    assert certificate.accepted_risk_id == "risk-1"
+    assert certificate.case_id == "case-risk"
+    assert certificate.metadata["risk_expires_at"] == "2026-04-25T12:00:00+00:00"
+
+
+def test_accepted_risk_obligation_requires_explicit_owner_and_future_expiry():
+    ledger = _ledger()
+    command = _payment_command(ledger)
+    ledger.record_operational_claim(
+        command.command_id,
+        text="Command risk is accepted temporarily.",
+        verified=False,
+        confidence=0.0,
+    )
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.ACCEPTED_RISK,
+        case_id="case-risk",
+        accepted_risk_id="risk-1",
+        metadata={"risk_expires_at": "2026-04-25T12:00:00+00:00"},
+    )
+    mesh = AuthorityObligationMesh(commands=ledger, clock=ledger._clock)
+
+    with pytest.raises(ValueError, match="^accepted-risk closure requires explicit ownership binding$"):
+        mesh.open_post_closure_obligations(
+            command_id=command.command_id,
+            certificate=certificate,
+        )
+
+    _register_payment_owner(mesh)
+    obligations = mesh.open_post_closure_obligations(
+        command_id=command.command_id,
+        certificate=certificate,
+    )
+    witness = mesh.responsibility_witness()
+
+    assert len(obligations) == 1
+    assert obligations[0].owner_id == "finance-manager-1"
+    assert obligations[0].owner_team == "finance_ops"
+    assert obligations[0].obligation_type == "accepted_risk_review"
+    assert obligations[0].due_at == "2026-04-25T12:00:00+00:00"
+    assert obligations[0].evidence_required == ("review_decision", "risk_owner_attestation")
+    assert obligations[0].terminal_certificate_id == certificate.certificate_id
+    assert witness.active_accepted_risk_count == 1
+    assert witness.open_obligation_count == 1
+
+
 def test_satisfy_obligation_requires_evidence_and_active_status():
     ledger = _ledger()
     command = _payment_command(ledger)
