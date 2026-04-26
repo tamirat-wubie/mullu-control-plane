@@ -201,3 +201,69 @@ class TestCrossLanguageSerialization:
         expected = {"lineage_id", "entity_id", "receipt_chain", "root_receipt_id", "current_state", "depth"}
         actual = {f.name for f in lineage.__dataclass_fields__.values()}
         assert expected == actual
+
+
+# ═══════════════════════════════════════════
+# CORE_STRUCTURE.md — Type-asymmetry boundary checks
+# ═══════════════════════════════════════════
+
+class TestLineageDepthBoundary:
+    """`ProofCapsule.lineage_depth` is `u32` in Rust (`maf-kernel/src/lib.rs:387`)
+    and `int` in Python (`mcoi/contracts/proof.py:122`). The Python-side
+    validation in `__post_init__` enforces non-negative values, making the
+    Python type effectively `u32` at the boundary. These tests ensure that
+    boundary check stays load-bearing.
+
+    See docs/CORE_STRUCTURE.md §"Known gaps" entry for `lineage_depth`.
+    A future PR should align both sides to a bounded type; until then
+    this test guards against the validation being silently removed.
+    """
+
+    def test_negative_lineage_depth_rejected(self):
+        """Boundary: validation must reject negative values."""
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        with pytest.raises(ValueError, match="lineage_depth"):
+            ProofCapsule(
+                receipt=capsule.receipt,
+                audit_record=capsule.audit_record,
+                lineage_depth=-1,
+            )
+
+    def test_zero_lineage_depth_accepted(self):
+        """Boundary: zero is the genesis depth and must be accepted."""
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        # Reconstructing with depth=0 must not raise
+        rebuilt = ProofCapsule(
+            receipt=capsule.receipt,
+            audit_record=capsule.audit_record,
+            lineage_depth=0,
+        )
+        assert rebuilt.lineage_depth == 0
+
+    def test_large_lineage_depth_accepted(self):
+        """Boundary: any non-negative int is accepted Python-side. Rust
+        u32 max is 4_294_967_295. Python accepts larger; if a future
+        refactor tightens to match Rust, this test will need updating."""
+        m = _machine()
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            actor_id="actor", reason="start", timestamp="2026-03-27T12:00:00Z",
+        )
+        # u32 max value
+        rebuilt = ProofCapsule(
+            receipt=capsule.receipt,
+            audit_record=capsule.audit_record,
+            lineage_depth=4_294_967_295,
+        )
+        assert rebuilt.lineage_depth == 4_294_967_295

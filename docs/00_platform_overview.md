@@ -19,7 +19,18 @@ Invariants: shared meaning is defined once; MAF Core and MCOI Runtime remain spl
 - Python scaffold lives under `mcoi/`.
 - Cross-runtime compatibility work lives under `integration/`.
 
-## Deferred work
+## Status (2026-04-26)
 
-- No runtime behavior is implemented in Milestone 0.
-- No planner, policy engine, executor, or observer logic is implemented in Milestone 0.
+Milestone 0 is complete. The platform now implements the governed
+runtime end-to-end. See `docs/CORE_STRUCTURE.md` for the verified
+state of the foundational layer (MAF/MCOI split, contracts, schemas,
+layering) and the load-bearing-claims spec set:
+
+- `docs/CORE_STRUCTURE.md` — Foundation (this layer)
+- `docs/LEDGER_SPEC.md` — Hash-chain audit trail + external verifier
+- `docs/MAF_RECEIPT_COVERAGE.md` — Transition-receipt coverage
+- `docs/GOVERNANCE_GUARD_CHAIN.md` — Eight-guard chain semantics
+
+Each spec includes a compliance posture table that distinguishes
+verified from aspirational. The platform's architectural claims are
+load-bearing top-to-bottom.
