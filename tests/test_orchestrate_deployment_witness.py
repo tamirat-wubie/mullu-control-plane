@@ -288,7 +288,7 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "certificate_id": "conf-0123456789abcdef",
             "environment": "pilot",
             "issued_at": "2026-04-25T00:00:00+00:00",
-            "expires_at": "2026-04-25T00:30:00+00:00",
+            "expires_at": "2099-04-25T00:30:00+00:00",
             "gateway_witness_valid": True,
             "runtime_witness_valid": True,
             "terminal_status": "conformant_with_gaps",

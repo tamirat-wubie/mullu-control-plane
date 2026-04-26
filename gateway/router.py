@@ -20,7 +20,7 @@ from typing import Any, Callable, Protocol
 
 from gateway.approval import ApprovalRequest, ApprovalRouter, ApprovalStatus
 from gateway.authority import evaluate_approval_authority
-from gateway.authority_obligation_mesh import AuthorityObligationMesh
+from gateway.authority_obligation_mesh import ApprovalChain, ApprovalChainStatus, AuthorityObligationMesh
 from gateway.capability_isolation import CapabilityIsolationPolicy, IsolatedCapabilityExecutor
 from gateway.causal_closure_kernel import CausalClosureKernel
 from gateway.command_spine import CommandAnchor, CommandEnvelope, CommandLedger, CommandState, canonical_hash
@@ -336,6 +336,36 @@ class GatewayRouter:
         )
         return response
 
+    def _approval_chain_pending_response(
+        self,
+        request_id: str,
+        result: ApprovalRequest,
+        chain: ApprovalChain,
+        *,
+        recipient_id: str,
+    ) -> GatewayResponse:
+        """Return a governed response when approval is recorded but quorum is incomplete."""
+        return GatewayResponse(
+            message_id=self._gen_id("apr-resp", request_id),
+            channel=result.channel,
+            recipient_id=recipient_id,
+            body=(
+                f"Request {request_id} approval was recorded. "
+                f"Authority path {chain.chain_id} still requires "
+                f"{chain.required_approver_count - len(chain.approvals_received)} approval(s)."
+            ),
+            governed=True,
+            metadata={
+                "approval_resolved": True,
+                "approval_chain_pending": True,
+                "status": result.status.value,
+                "command_id": result.command_id,
+                "chain_id": chain.chain_id,
+                "approvals_received": chain.approvals_received,
+                "required_approver_count": chain.required_approver_count,
+            },
+        )
+
     def _approval_response(
         self,
         request_id: str,
@@ -430,7 +460,7 @@ class GatewayRouter:
                 metadata={"error": "approval_not_found"},
             )
         if result.command_id:
-            self._authority_obligation_mesh.record_approval(
+            chain = self._authority_obligation_mesh.record_approval(
                 command_id=result.command_id,
                 approver_id=mapping.identity_id,
                 approver_roles=tuple(mapping.roles),
@@ -444,6 +474,16 @@ class GatewayRouter:
                 risk_tier=result.risk_tier.value,
             )
             if result.status == ApprovalStatus.APPROVED:
+                if chain is not None and chain.status not in {
+                    ApprovalChainStatus.SATISFIED,
+                    ApprovalChainStatus.NOT_REQUIRED,
+                }:
+                    return self._approval_chain_pending_response(
+                        request_id,
+                        result,
+                        chain,
+                        recipient_id=message.sender_id,
+                    )
                 command = self._commands.get(result.command_id)
                 if command is not None:
                     if self._defer_approved_execution:
@@ -618,7 +658,7 @@ class GatewayRouter:
             return None
         if result.command_id:
             chain = self._authority_obligation_mesh.approval_chain_for(result.command_id)
-            self._authority_obligation_mesh.record_approval(
+            chain = self._authority_obligation_mesh.record_approval(
                 command_id=result.command_id,
                 approver_id=resolved_by,
                 approver_roles=chain.required_roles if chain is not None else (),
@@ -632,6 +672,16 @@ class GatewayRouter:
                 risk_tier=result.risk_tier.value,
             )
             if result.status == ApprovalStatus.APPROVED:
+                if chain is not None and chain.status not in {
+                    ApprovalChainStatus.SATISFIED,
+                    ApprovalChainStatus.NOT_REQUIRED,
+                }:
+                    return self._approval_chain_pending_response(
+                        request_id,
+                        result,
+                        chain,
+                        recipient_id=result.identity_id,
+                    )
                 command = self._commands.get(result.command_id)
                 if command is not None:
                     if self._defer_approved_execution:

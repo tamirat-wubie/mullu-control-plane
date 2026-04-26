@@ -224,6 +224,35 @@ def test_quorum_policy_requires_two_approvers():
     assert second.approvals_received == ("finance-manager-1", "tenant-owner-1")
 
 
+def test_overdue_approval_chain_expires_and_emits_escalation_event():
+    current_time = {"value": "2026-04-24T12:00:00+00:00"}
+
+    def clock() -> str:
+        return current_time["value"]
+
+    ledger = _ledger(clock=clock)
+    command = _payment_command(ledger)
+    mesh = AuthorityObligationMesh(commands=ledger, clock=clock)
+    _register_payment_owner(mesh)
+    chain = mesh.prepare_authority(command.command_id)
+
+    current_time["value"] = "2026-04-24T12:05:01+00:00"
+    expired = mesh.expire_overdue_approval_chains()
+    updated = mesh.approval_chain_for(command.command_id)
+    witness = mesh.responsibility_witness()
+    events = ledger.events_for(command.command_id)
+
+    assert chain.status is ApprovalChainStatus.PENDING
+    assert len(expired) == 1
+    assert updated is not None
+    assert updated.status is ApprovalChainStatus.EXPIRED
+    assert witness.pending_approval_chain_count == 0
+    assert witness.expired_approval_chain_count == 1
+    assert mesh.escalation_events()[0]["event_type"] == "approval_chain_expired"
+    assert events[-1].next_state is CommandState.DENIED
+    assert events[-1].detail["cause"] == "approval_chain_expired_escalated"
+
+
 def test_mesh_store_reloads_ownership_policies_and_approval_chain_across_instances():
     ledger = _ledger()
     command = _payment_command(ledger)

@@ -23,6 +23,7 @@ import os
 import socket
 import subprocess
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Protocol
 import urllib.error
@@ -340,6 +341,7 @@ def _check_runtime_conformance_endpoint(
     missing_fields = [field for field in REQUIRED_CONFORMANCE_FIELDS if field not in payload]
     terminal_status = str(payload.get("terminal_status", ""))
     runtime_environment = str(payload.get("environment", ""))
+    fresh = _certificate_fresh(str(payload.get("expires_at", "")))
     passed = (
         status == 200
         and not missing_fields
@@ -347,15 +349,26 @@ def _check_runtime_conformance_endpoint(
         and bool(payload.get("gateway_witness_valid"))
         and bool(payload.get("runtime_witness_valid"))
         and runtime_environment == expected_environment
+        and fresh
     )
     return PreflightStep(
         "runtime conformance endpoint",
         passed,
         (
             f"status={status} terminal_status={terminal_status} "
-            f"environment={runtime_environment} missing={missing_fields}"
+            f"environment={runtime_environment} fresh={fresh} missing={missing_fields}"
         ),
     )
+
+
+def _certificate_fresh(expires_at: str) -> bool:
+    try:
+        expires = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    return expires > datetime.now(timezone.utc)
 
 
 def _resolve_host(host: str) -> tuple[str, ...]:

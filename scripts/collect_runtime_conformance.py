@@ -8,7 +8,7 @@ Dependencies: standard-library HTTP client and `/runtime/conformance`.
 Invariants:
   - Missing endpoint evidence is recorded as a failed collection.
   - HMAC verification is explicit when a conformance secret is supplied.
-  - Production readiness is not inferred from an unsigned certificate.
+  - Production readiness is not inferred from an unsigned or expired certificate.
   - Output preserves the original certificate payload plus collection witness.
 """
 
@@ -105,8 +105,20 @@ def collect_runtime_conformance(
             passed=environment_passed,
             detail=f"expected={expected_environment} observed={certificate.get('environment', '')}",
         ))
-        if not environment_passed:
-            errors.append("runtime conformance environment did not match expected value")
+    if not environment_passed:
+        errors.append("runtime conformance environment did not match expected value")
+
+    freshness_passed = _certificate_fresh(
+        expires_at=str(certificate.get("expires_at", "")),
+        observed_at=collected_at,
+    )
+    steps.append(CollectionStep(
+        name="runtime conformance freshness",
+        passed=freshness_passed,
+        detail=f"expires_at={certificate.get('expires_at', '')} fresh={freshness_passed}",
+    ))
+    if not freshness_passed:
+        errors.append("runtime conformance certificate was expired or malformed")
 
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(
@@ -182,6 +194,19 @@ def _verify_certificate_signature(payload: dict[str, Any], conformance_secret: s
     ).hexdigest()
     observed = signature.removeprefix("hmac-sha256:")
     return ("verified", True) if hmac.compare_digest(expected, observed) else ("failed:mismatch", False)
+
+
+def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:
+    try:
+        expires = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if observed.tzinfo is None:
+        observed = observed.replace(tzinfo=timezone.utc)
+    return expires > observed
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:

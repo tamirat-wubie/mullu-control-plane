@@ -7,6 +7,7 @@ Dependencies: scripts.collect_runtime_conformance.
 Invariants:
   - A complete signed certificate can be collected and verified.
   - Missing conformance secrets keep signature status explicit.
+  - Expired certificates are rejected even when signature verification passes.
   - Written output preserves collection and certificate evidence.
 """
 
@@ -81,6 +82,31 @@ def test_collect_runtime_conformance_records_missing_secret(monkeypatch) -> None
     assert "runtime conformance signature was not verified" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_expired_certificate(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        expires_at="2026-04-25T12:00:00+00:00",
+    )
+
+    def fake_urlopen(request, timeout):
+        return StubHttpResponse(status=200, payload=certificate)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+        clock=lambda: "2026-04-25T12:30:00+00:00",
+    )
+    freshness_step = next(step for step in collection.steps if step.name == "runtime conformance freshness")
+
+    assert collection.signature_status == "verified"
+    assert freshness_step.passed is False
+    assert "fresh=False" in freshness_step.detail
+    assert "runtime conformance certificate was expired or malformed" in collection.errors
+
+
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
@@ -124,12 +150,16 @@ def test_runtime_conformance_cli_writes_collection(tmp_path, monkeypatch, capsys
     assert loaded["signature_status"] == "verified"
 
 
-def _signed_certificate(*, secret: str) -> dict[str, Any]:
+def _signed_certificate(
+    *,
+    secret: str,
+    expires_at: str = "2099-04-25T12:30:00+00:00",
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
         "environment": "pilot",
         "issued_at": "2026-04-25T12:00:00+00:00",
-        "expires_at": "2026-04-25T12:30:00+00:00",
+        "expires_at": expires_at,
         "gateway_witness_valid": True,
         "runtime_witness_valid": True,
         "latest_anchor_valid": True,
