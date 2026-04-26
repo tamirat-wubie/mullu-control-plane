@@ -580,6 +580,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         command_id: str = "",
         policy_id: str = "",
         required_role: str = "",
+        overdue: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
@@ -595,6 +596,25 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             chains = tuple(chain for chain in chains if chain.policy_id == policy_id)
         if required_role:
             chains = tuple(chain for chain in chains if required_role in chain.required_roles)
+        if overdue:
+            requested_overdue = overdue.strip().lower()
+            if requested_overdue not in {"true", "false"}:
+                raise HTTPException(400, detail="overdue must be true or false")
+            now = datetime.fromisoformat(_clock().replace("Z", "+00:00"))
+            if now.tzinfo is None:
+                now = now.replace(tzinfo=timezone.utc)
+
+            def _chain_overdue(chain: Any) -> bool:
+                try:
+                    due_at = datetime.fromisoformat(chain.due_at.replace("Z", "+00:00"))
+                except ValueError:
+                    return False
+                if due_at.tzinfo is None:
+                    due_at = due_at.replace(tzinfo=timezone.utc)
+                return due_at <= now
+
+            expected = requested_overdue == "true"
+            chains = tuple(chain for chain in chains if _chain_overdue(chain) is expected)
         page, page_meta = _read_model_page(
             chains,
             limit=_bounded_read_model_limit(limit),
