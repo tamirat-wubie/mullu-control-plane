@@ -33,13 +33,13 @@ PILOT_EXAMPLES_DIR = REPO_ROOT / "examples" / "pilots"
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.app.cli import _build_operator_request
-from mcoi_runtime.app.config import AppConfig
-from mcoi_runtime.app.policy_packs import PolicyPackRegistry
-from mcoi_runtime.app.profiles import list_profiles
-from mcoi_runtime.contracts.document import DocumentVerificationStatus
-from mcoi_runtime.core.document import extract_json_fields, ingest_document, verify_extraction
-from mcoi_runtime.core.template_validator import TemplateValidationError, TemplateValidator
+from mcoi_runtime.app.cli import _build_operator_request  # noqa: E402
+from mcoi_runtime.app.config import AppConfig  # noqa: E402
+from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
+from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
+from mcoi_runtime.contracts.document import DocumentVerificationStatus  # noqa: E402
+from mcoi_runtime.core.document import extract_json_fields, ingest_document, verify_extraction  # noqa: E402
+from mcoi_runtime.core.template_validator import TemplateValidationError, TemplateValidator  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,6 +189,8 @@ OPERATIONAL_DOCUMENT_EXPECTATIONS: dict[str, OperationalDocumentExpectation] = {
             "scripts/validate_schemas.py --strict",
             "scripts/validate_artifacts.py --strict",
             "scripts/validate_release_status.py --strict",
+            "scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0",
+            ".change_assurance/red_team_harness.json",
         ),
         forbidden_literals=(
             "352+ tests",
@@ -207,6 +209,10 @@ OPERATIONAL_DOCUMENT_EXPECTATIONS: dict[str, OperationalDocumentExpectation] = {
             "PILOT_OPERATIONS_GUIDE_v0.1.md",
             "scripts/validate_schemas.py --strict",
             "scripts/validate_release_status.py --strict",
+            "scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0",
+            ".change_assurance/red_team_harness.json",
+            "pass_rate: 1.0",
+            "sha256:86a63fb36fe94ff44d44a8124625367aa1ead6b99a698a4ebd1b61c6024e5710",
             "pytest -q",
             "cargo test",
         ),

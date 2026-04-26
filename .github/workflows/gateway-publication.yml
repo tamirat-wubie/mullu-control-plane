@@ -30,7 +30,7 @@ on:
         default: false
         type: boolean
       skip_preflight_endpoint_probes:
-        description: "Skip /health and /gateway/witness probes during preflight"
+        description: "Skip /health, /gateway/witness, and /runtime/conformance probes during preflight"
         required: true
         default: false
         type: boolean
@@ -52,12 +52,17 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Verify runtime witness secret is mounted
+      - name: Verify runtime witness secrets are mounted
         env:
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
         run: |
           if [ -z "$MULLU_RUNTIME_WITNESS_SECRET" ]; then
             echo "MULLU_RUNTIME_WITNESS_SECRET is required for gateway publication"
+            exit 1
+          fi
+          if [ -z "$MULLU_RUNTIME_CONFORMANCE_SECRET" ]; then
+            echo "MULLU_RUNTIME_CONFORMANCE_SECRET is required for gateway publication"
             exit 1
           fi
 
@@ -82,12 +87,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
         run: |
           args=(
             --gateway-host "${{ inputs.gateway_host }}"
             --expected-environment "${{ inputs.expected_environment }}"
             --require-preflight
             --accept-runtime-secret-env
+            --accept-conformance-secret-env
             --preflight-output .change_assurance/deployment_witness_preflight.json
           )
           if [ -n "${{ inputs.gateway_url }}" ]; then

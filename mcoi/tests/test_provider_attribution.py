@@ -6,6 +6,9 @@ Invariants: attribution is deterministic, registry-bound, and never assigned to 
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from mcoi_runtime.contracts.provider import (
@@ -24,6 +27,9 @@ from mcoi_runtime.core.provider_registry import ProviderRegistry
 
 
 FIXED_CLOCK = "2026-04-25T12:00:00+00:00"
+PROVIDER_ATTRIBUTION_SCHEMA = (
+    Path(__file__).resolve().parents[2] / "schemas" / "provider_attribution_witness.schema.json"
+)
 
 
 def _registry() -> ProviderRegistry:
@@ -199,3 +205,47 @@ def test_witness_counters_partition_attribution_sources() -> None:
     assert counters["receipt_attributed_provider_operation_count"] == 1
     assert counters["plane_attributed_provider_operation_count"] == 1
     assert counters["routing_attributed_provider_operation_count"] == 0
+
+
+def test_attribution_witness_matches_public_schema_shape() -> None:
+    registry = _registry()
+    ledger = _ledger()
+    _register_provider(registry, "provider-http", ProviderClass.INTEGRATION)
+    ledger.record_attribution(
+        request_id="request-witness-1",
+        operation_id="operation-witness-1",
+        execution_id="execution-witness-1",
+        provider_id="provider-http",
+        provider_class=ProviderClass.INTEGRATION,
+        source=ProviderAttributionSource.EXECUTION_RECEIPT,
+        source_ref_id="receipt-witness-1",
+    )
+
+    witness = ledger.attribution_witness(
+        operation_id="operation-witness-1",
+        generated_at=FIXED_CLOCK,
+    )
+
+    assert witness["witness_id"].startswith("provider-attribution-witness-")
+    assert witness["operation_id"] == "operation-witness-1"
+    assert witness["provider_attribution_count"] == 1
+    assert witness["receipt_attributed_provider_operation_count"] == 1
+    assert witness["routing_attributed_provider_operation_count"] == 0
+    assert witness["plane_attributed_provider_operation_count"] == 0
+    assert witness["provider_attributions"][0]["provider_id"] == "provider-http"
+    assert witness["provider_attributions"][0]["source_ref_id"] == "receipt-witness-1"
+
+
+def test_attribution_witness_satisfies_public_schema_required_fields() -> None:
+    ledger = _ledger()
+    schema = json.loads(PROVIDER_ATTRIBUTION_SCHEMA.read_text(encoding="utf-8"))
+
+    witness = ledger.attribution_witness(
+        operation_id="operation-schema-1",
+        generated_at=FIXED_CLOCK,
+    )
+
+    assert schema["$id"] == "urn:mullusi:schema:provider-attribution-witness:1"
+    assert set(schema["required"]) <= set(witness)
+    assert witness["provider_attribution_count"] == 0
+    assert witness["provider_attributions"] == []

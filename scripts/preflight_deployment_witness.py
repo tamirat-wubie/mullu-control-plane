@@ -7,8 +7,9 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: GitHub CLI for repository metadata, DNS resolution, standard
 library HTTP client for endpoint probes.
 Invariants:
-  - The runtime witness secret value is never read or printed.
-  - A mounted runtime secret can witness presence without listing secrets.
+  - Runtime witness and conformance secret values are never read or printed.
+  - Mounted runtime and conformance secrets can witness presence without listing
+    secrets.
   - Workflow dispatch is never performed by this preflight.
   - Each readiness transition is represented as an explicit step.
   - Endpoint probes are opt-out and report bounded failure detail.
@@ -27,8 +28,9 @@ from typing import Any, Callable, Protocol
 import urllib.error
 import urllib.request
 
-from scripts.collect_deployment_witness import REQUIRED_WITNESS_FIELDS
+from scripts.collect_deployment_witness import REQUIRED_CONFORMANCE_FIELDS, REQUIRED_WITNESS_FIELDS
 from scripts.dispatch_deployment_witness import (
+    DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE,
     DEFAULT_GATEWAY_URL_VARIABLE,
     DEFAULT_REPOSITORY,
@@ -96,7 +98,9 @@ def preflight_deployment_witness(
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
+    conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
     runtime_secret_present: bool = False,
+    conformance_secret_present: bool = False,
     probe_endpoints: bool = True,
     runner: CommandRunner | None = None,
     resolver: Resolver | None = None,
@@ -121,7 +125,15 @@ def preflight_deployment_witness(
         _check_secret(
             repository=repository,
             secret_name=secret_name,
-            runtime_secret_present=runtime_secret_present,
+            secret_present=runtime_secret_present,
+            step_name="runtime witness secret",
+            runner=command_runner,
+        ),
+        _check_secret(
+            repository=repository,
+            secret_name=conformance_secret_name,
+            secret_present=conformance_secret_present,
+            step_name="runtime conformance secret",
             runner=command_runner,
         ),
         _check_workflow(
@@ -136,6 +148,11 @@ def preflight_deployment_witness(
             (
                 _check_health_endpoint(gateway_url=normalized_url, json_getter=endpoint_getter),
                 _check_runtime_witness_endpoint(
+                    gateway_url=normalized_url,
+                    expected_environment=expected_environment,
+                    json_getter=endpoint_getter,
+                ),
+                _check_runtime_conformance_endpoint(
                     gateway_url=normalized_url,
                     expected_environment=expected_environment,
                     json_getter=endpoint_getter,
@@ -233,19 +250,20 @@ def _check_secret(
     *,
     repository: str,
     secret_name: str,
-    runtime_secret_present: bool,
+    secret_present: bool,
+    step_name: str,
     runner: CommandRunner,
 ) -> PreflightStep:
-    if runtime_secret_present:
-        return PreflightStep("runtime witness secret", True, "present:mounted-environment")
+    if secret_present:
+        return PreflightStep(step_name, True, "present:mounted-environment")
     completed = _run_checked(
         runner,
         ["gh", "secret", "list", "--repo", repository, "--json", "name"],
     )
     names = {str(secret.get("name", "")) for secret in _json_list(completed.stdout, "gh secret list")}
     if secret_name not in names:
-        return PreflightStep("runtime witness secret", False, f"missing={secret_name}")
-    return PreflightStep("runtime witness secret", True, "present")
+        return PreflightStep(step_name, False, f"missing={secret_name}")
+    return PreflightStep(step_name, True, "present")
 
 
 def _check_workflow(
@@ -308,6 +326,34 @@ def _check_runtime_witness_endpoint(
             f"status={status} runtime_status={runtime_status} "
             f"gateway_status={gateway_status} environment={runtime_environment} "
             f"missing={missing_fields}"
+        ),
+    )
+
+
+def _check_runtime_conformance_endpoint(
+    *,
+    gateway_url: str,
+    expected_environment: str,
+    json_getter: JsonGetter,
+) -> PreflightStep:
+    status, payload = json_getter(f"{gateway_url}/runtime/conformance")
+    missing_fields = [field for field in REQUIRED_CONFORMANCE_FIELDS if field not in payload]
+    terminal_status = str(payload.get("terminal_status", ""))
+    runtime_environment = str(payload.get("environment", ""))
+    passed = (
+        status == 200
+        and not missing_fields
+        and terminal_status in {"conformant", "conformant_with_gaps"}
+        and bool(payload.get("gateway_witness_valid"))
+        and bool(payload.get("runtime_witness_valid"))
+        and runtime_environment == expected_environment
+    )
+    return PreflightStep(
+        "runtime conformance endpoint",
+        passed,
+        (
+            f"status={status} terminal_status={terminal_status} "
+            f"environment={runtime_environment} missing={missing_fields}"
         ),
     )
 
@@ -386,7 +432,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
+    parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
+    parser.add_argument("--accept-conformance-secret-env", action="store_true")
     parser.add_argument("--skip-endpoint-probes", action="store_true")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     return parser.parse_args(argv)
@@ -404,9 +452,14 @@ def main(argv: list[str] | None = None) -> int:
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
+            conformance_secret_name=args.conformance_secret_name,
             runtime_secret_present=(
                 args.accept_runtime_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
+            ),
+            conformance_secret_present=(
+                args.accept_conformance_secret_env
+                and bool(os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET"))
             ),
             probe_endpoints=not args.skip_endpoint_probes,
         )
