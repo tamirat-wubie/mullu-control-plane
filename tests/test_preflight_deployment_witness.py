@@ -186,6 +186,23 @@ def test_preflight_deployment_witness_reports_missing_conformance_secret() -> No
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in secret_step.detail
 
 
+def test_preflight_deployment_witness_rejects_expired_conformance_certificate() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_expired_conformance_getter,
+    )
+    conformance_step = next(step for step in report.steps if step.name == "runtime conformance endpoint")
+
+    assert report.ready is False
+    assert conformance_step.passed is False
+    assert "fresh=False" in conformance_step.detail
+
+
 def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     runner = FakeRunner()
 
@@ -249,7 +266,7 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "certificate_id": "conf-0123456789abcdef",
             "environment": "pilot",
             "issued_at": "2026-04-25T00:00:00+00:00",
-            "expires_at": "2026-04-25T00:30:00+00:00",
+            "expires_at": "2099-04-25T00:30:00+00:00",
             "gateway_witness_valid": True,
             "runtime_witness_valid": True,
             "terminal_status": "conformant_with_gaps",
@@ -259,6 +276,13 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "signature": "hmac-sha256:placeholder",
         }
     raise AssertionError(f"unexpected url: {url}")
+
+
+def _expired_conformance_getter(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _healthy_getter(url)
+    if url.endswith("/runtime/conformance"):
+        return status, {**payload, "expires_at": "2026-04-25T00:30:00+00:00"}
+    return status, payload
 
 
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:

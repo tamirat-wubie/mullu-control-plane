@@ -15,6 +15,12 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.approval import ApprovalRouter  # noqa: E402
+from gateway.authority_obligation_mesh import (  # noqa: E402
+    ApprovalChainStatus,
+    ApprovalPolicy,
+    AuthorityObligationMesh,
+    TeamOwnership,
+)
 from gateway.capability_isolation import CapabilityExecutionReceipt  # noqa: E402
 from gateway.command_spine import CommandLedger, CommandState, GovernedAction, InMemoryCommandLedgerStore  # noqa: E402
 from gateway.router import GatewayMessage, GatewayRouter, TenantMapping  # noqa: E402
@@ -561,6 +567,74 @@ class TestChannelAdapterIntegration:
         assert approved.metadata["status"] == "approved"
         assert approved.metadata["command_id"] == pending.metadata["command_id"]
         assert platform.sessions_opened == 1
+
+    def test_channel_approval_waits_for_mesh_quorum_before_execution(self):
+        times = [
+            "2026-04-20T12:00:00+00:00",
+            "2026-04-20T12:00:01+00:00",
+            "2026-04-20T12:00:02+00:00",
+            "2026-04-20T12:00:03+00:00",
+            "2026-04-20T12:00:04+00:00",
+            "2026-04-20T12:00:05+00:00",
+        ]
+
+        def clock():
+            return times.pop(0) if len(times) > 1 else times[0]
+
+        ledger = CommandLedger(clock=clock)
+        mesh = AuthorityObligationMesh(commands=ledger, clock=clock)
+        mesh.register_ownership(TeamOwnership(
+            tenant_id="t1",
+            resource_ref="financial.send_payment",
+            owner_team="finance_ops",
+            primary_owner_id="identity-2",
+            fallback_owner_id="identity-3",
+            escalation_team="executive_ops",
+        ))
+        mesh.register_approval_policy(ApprovalPolicy(
+            policy_id="payment-two-approver-policy",
+            tenant_id="t1",
+            capability="financial.send_payment",
+            risk_tier="high",
+            required_roles=("financial_admin",),
+            required_approver_count=2,
+            separation_of_duty=True,
+            timeout_seconds=300,
+            escalation_policy_id="finance-escalation",
+        ))
+        platform = StubPlatform(llm_response="should wait for second approver")
+        router = GatewayRouter(
+            platform=platform,
+            clock=clock,
+            approval_router=ApprovalRouter(clock=clock, timeout_seconds=300),
+            command_ledger=ledger,
+            authority_obligation_mesh=mesh,
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="requester", tenant_id="t1", identity_id="identity-1",
+        ))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test", sender_id="approver", tenant_id="t1", identity_id="identity-2",
+            roles=("financial_admin",), approval_authority=True,
+        ))
+
+        pending = router.handle_message(GatewayMessage(
+            message_id="m1", channel="test", sender_id="requester", body="make a payment of $50",
+        ))
+        first_approval = router.handle_message(GatewayMessage(
+            message_id="m2", channel="test", sender_id="approver",
+            body=f"approve:{pending.metadata['request_id']}",
+        ))
+        chain = mesh.approval_chain_for(pending.metadata["command_id"])
+        event_states = tuple(event.next_state for event in ledger.events_for(pending.metadata["command_id"]))
+
+        assert first_approval.metadata["approval_chain_pending"] is True
+        assert first_approval.metadata["required_approver_count"] == 2
+        assert first_approval.metadata["approvals_received"] == ("identity-2",)
+        assert chain is not None
+        assert chain.status is ApprovalChainStatus.PENDING
+        assert platform.sessions_opened == 0
+        assert CommandState.DISPATCHED not in event_states
 
     def test_channel_approval_callback_blocks_self_approved_payment(self):
         times = [

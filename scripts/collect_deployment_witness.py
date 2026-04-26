@@ -174,12 +174,17 @@ def collect_deployment_witness(
     )
     conformance_status = str(conformance_payload.get("terminal_status", ""))
     conformance_environment = str(conformance_payload.get("environment", ""))
+    conformance_fresh = _certificate_fresh(
+        expires_at=str(conformance_payload.get("expires_at", "")),
+        observed_at=collected_at,
+    )
     conformance_passed = (
         conformance_endpoint_status == 200
         and not missing_conformance_fields
         and conformance_status in ACCEPTED_CONFORMANCE_STATUSES
         and bool(conformance_payload.get("gateway_witness_valid"))
         and bool(conformance_payload.get("runtime_witness_valid"))
+        and conformance_fresh
     )
     if expected_environment:
         conformance_passed = conformance_passed and conformance_environment == expected_environment
@@ -189,7 +194,8 @@ def collect_deployment_witness(
             passed=conformance_passed,
             detail=(
                 f"status={conformance_endpoint_status} terminal_status={conformance_status} "
-                f"environment={conformance_environment} missing={list(missing_conformance_fields)}"
+                f"environment={conformance_environment} fresh={conformance_fresh} "
+                f"missing={list(missing_conformance_fields)}"
             ),
         )
     )
@@ -325,6 +331,19 @@ def _verify_hmac_signature(
     ).hexdigest()
     observed = signature.removeprefix("hmac-sha256:")
     return ("verified", True) if hmac.compare_digest(expected, observed) else ("failed:mismatch", False)
+
+
+def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:
+    try:
+        expires = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+        observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if observed.tzinfo is None:
+        observed = observed.replace(tzinfo=timezone.utc)
+    return expires > observed
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:

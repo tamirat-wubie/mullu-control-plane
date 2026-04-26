@@ -102,6 +102,41 @@ def test_collect_deployment_witness_fails_closed_without_secret(monkeypatch) -> 
     assert any(step.name == "runtime witness signature" for step in witness.steps)
 
 
+def test_collect_deployment_witness_rejects_expired_conformance_certificate(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        expires_at="2026-04-25T00:00:00+00:00",
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:30:00+00:00",
+    )
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.conformance_signature_status == "verified"
+    assert conformance_step.passed is False
+    assert "fresh=False" in conformance_step.detail
+
+
 def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     witness_payload = _signed_runtime_witness(secret="runtime-secret")
     conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
@@ -190,12 +225,16 @@ def _signed_runtime_witness(*, secret: str) -> dict[str, Any]:
     return {**payload, "signature": f"hmac-sha256:{signature}"}
 
 
-def _signed_conformance_certificate(*, secret: str) -> dict[str, Any]:
+def _signed_conformance_certificate(
+    *,
+    secret: str,
+    expires_at: str = "2026-04-25T00:30:00+00:00",
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
         "environment": "pilot",
         "issued_at": "2026-04-25T00:00:00+00:00",
-        "expires_at": "2026-04-25T00:30:00+00:00",
+        "expires_at": expires_at,
         "gateway_witness_valid": True,
         "runtime_witness_valid": True,
         "latest_anchor_valid": True,
