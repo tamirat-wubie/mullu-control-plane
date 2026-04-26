@@ -138,6 +138,8 @@ class ResponsibilityWitness:
     """Runtime counts exposing unresolved organizational responsibility."""
 
     pending_approval_chain_count: int
+    overdue_approval_chain_count: int
+    expired_approval_chain_count: int
     open_obligation_count: int
     overdue_obligation_count: int
     escalated_obligation_count: int
@@ -1252,6 +1254,46 @@ class AuthorityObligationMesh:
             escalated.append(updated)
         return tuple(escalated)
 
+    def expire_overdue_approval_chains(self) -> tuple[ApprovalChain, ...]:
+        """Expire every overdue pending approval chain and emit an escalation witness."""
+        now = self._parse_time(self._clock())
+        expired: list[ApprovalChain] = []
+        for chain in self._store.list_approval_chains():
+            if chain.status is not ApprovalChainStatus.PENDING:
+                continue
+            due_at = self._parse_time(chain.due_at)
+            if due_at > now:
+                continue
+            updated = self._replace_chain(chain, status=ApprovalChainStatus.EXPIRED)
+            event = {
+                "event_id": f"approval-chain-expired-{uuid4().hex[:16]}",
+                "event_type": "approval_chain_expired",
+                "obligation_id": "",
+                "approval_chain_id": updated.chain_id,
+                "command_id": updated.command_id,
+                "tenant_id": updated.tenant_id,
+                "owner_id": "",
+                "owner_team": "",
+                "escalated_at": self._clock(),
+            }
+            self._store.append_escalation_event(event)
+            self._notifications.notify(
+                tenant_id=updated.tenant_id,
+                notification_type=NotificationType.APPROVAL_NEEDED,
+                priority=NotificationPriority.CRITICAL,
+                title="Approval chain expired",
+                body=f"Approval chain {updated.chain_id} expired for command {updated.command_id}.",
+                metadata=event,
+            )
+            self._commands.transition(
+                updated.command_id,
+                CommandState.DENIED,
+                approval_id=updated.chain_id,
+                detail={"cause": "approval_chain_expired_escalated", "escalation_event": event},
+            )
+            expired.append(updated)
+        return tuple(expired)
+
     def obligations_for(self, command_id: str) -> tuple[Obligation, ...]:
         """Return obligations opened for one command."""
         return self._store.list_obligations(command_id)
@@ -1276,6 +1318,14 @@ class AuthorityObligationMesh:
         return ResponsibilityWitness(
             pending_approval_chain_count=sum(
                 1 for chain in chains if chain.status is ApprovalChainStatus.PENDING
+            ),
+            overdue_approval_chain_count=sum(
+                1 for chain in chains
+                if chain.status is ApprovalChainStatus.PENDING
+                and self._parse_time(chain.due_at) <= now
+            ),
+            expired_approval_chain_count=sum(
+                1 for chain in chains if chain.status is ApprovalChainStatus.EXPIRED
             ),
             open_obligation_count=len(open_obligations),
             overdue_obligation_count=sum(

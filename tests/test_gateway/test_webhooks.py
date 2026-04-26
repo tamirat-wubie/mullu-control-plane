@@ -16,7 +16,12 @@ if str(_ROOT) not in sys.path:
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-from gateway.authority_obligation_mesh import Obligation, ObligationStatus  # noqa: E402
+from gateway.authority_obligation_mesh import (  # noqa: E402
+    ApprovalChain,
+    ApprovalChainStatus,
+    Obligation,
+    ObligationStatus,
+)
 from gateway.command_spine import CommandState  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
@@ -1086,6 +1091,41 @@ class TestGatewayStatus:
         assert updated.status is ObligationStatus.ESCALATED
         assert events[-1].next_state is CommandState.OBLIGATIONS_ESCALATED
         assert gateway_app.state.authority_mesh_store.list_escalation_events()
+
+    def test_expire_overdue_authority_approval_chains_records_transition(self, gateway_app, client):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({"body": "make a payment of $50", "user_id": "web-user"}),
+            headers={"X-Session-Token": "authority-expire-chain-token"},
+        )
+        command_id = msg_resp.json()["metadata"]["command_id"]
+        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(command_id)
+        assert chain is not None
+        expired_chain = ApprovalChain(
+            chain_id=chain.chain_id,
+            command_id=chain.command_id,
+            tenant_id=chain.tenant_id,
+            policy_id=chain.policy_id,
+            required_roles=chain.required_roles,
+            required_approver_count=chain.required_approver_count,
+            approvals_received=chain.approvals_received,
+            status=ApprovalChainStatus.PENDING,
+            due_at="2026-04-24T12:00:00+00:00",
+        )
+        gateway_app.state.authority_mesh_store.save_approval_chain(expired_chain)
+
+        resp = client.post("/authority/approval-chains/expire-overdue")
+        updated = gateway_app.state.authority_obligation_mesh.approval_chain_for(command_id)
+        events = gateway_app.state.command_ledger.events_for(command_id)
+
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "expired"
+        assert resp.json()["count"] == 1
+        assert resp.json()["approval_chains"][0]["status"] == "expired"
+        assert resp.json()["authority_witness"]["expired_approval_chain_count"] >= 1
+        assert updated is not None
+        assert updated.status.value == "expired"
+        assert events[-1].next_state is CommandState.DENIED
 
     def test_command_closure_read_model(self, gateway_app, client):
         msg_resp = client.post(

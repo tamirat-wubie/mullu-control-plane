@@ -613,6 +613,17 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "obligations": [asdict(obligation) for obligation in obligations],
         }
 
+    @app.post("/authority/approval-chains/expire-overdue")
+    def expire_overdue_authority_approval_chains(request: Request):
+        _require_authority_operator(request)
+        chains = authority_obligation_mesh.expire_overdue_approval_chains()
+        return {
+            "status": "expired",
+            "approval_chains": [asdict(chain) for chain in chains],
+            "count": len(chains),
+            "authority_witness": asdict(authority_obligation_mesh.responsibility_witness()),
+        }
+
     @app.get("/authority/obligations")
     def authority_obligations(
         request: Request,
