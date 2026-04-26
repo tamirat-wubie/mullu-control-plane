@@ -892,7 +892,7 @@ class TestGatewayStatus:
         assert denied.status_code == 403
         assert denied.json()["detail"] == "Authority operator access not authorized"
 
-    def test_authority_approval_chain_read_model(self, client):
+    def test_authority_approval_chain_read_model(self, gateway_app, client):
         msg_resp = client.post(
             "/webhook/web",
             content=json.dumps({"body": "make a payment of $50", "user_id": "web-user"}),
@@ -909,9 +909,25 @@ class TestGatewayStatus:
         command_id = chains[0]["command_id"]
         policy_id = chains[0]["policy_id"]
         required_role = chains[0]["required_roles"][0]
+        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(command_id)
+        assert chain is not None
+        gateway_app.state.authority_mesh_store.save_approval_chain(ApprovalChain(
+            chain_id=chain.chain_id,
+            command_id=chain.command_id,
+            tenant_id=chain.tenant_id,
+            policy_id=chain.policy_id,
+            required_roles=chain.required_roles,
+            required_approver_count=chain.required_approver_count,
+            approvals_received=chain.approvals_received,
+            status=chain.status,
+            due_at="2026-04-24T12:00:00+00:00",
+        ))
         policy_resp = client.get(f"/authority/approval-chains?policy_id={policy_id}")
         role_resp = client.get(f"/authority/approval-chains?required_role={required_role}")
         missing_role_resp = client.get("/authority/approval-chains?required_role=security_admin")
+        overdue_resp = client.get("/authority/approval-chains?status=pending&overdue=true")
+        not_overdue_resp = client.get(f"/authority/approval-chains?command_id={command_id}&overdue=false")
+        invalid_overdue_resp = client.get("/authority/approval-chains?overdue=maybe")
         command_resp = client.get(f"/commands/{command_id}/authority")
         witness_resp = client.get("/authority/witness")
         console_resp = client.get("/authority/operator")
@@ -927,6 +943,12 @@ class TestGatewayStatus:
         assert any(chain["command_id"] == command_id for chain in role_resp.json()["approval_chains"])
         assert missing_role_resp.status_code == 200
         assert missing_role_resp.json()["count"] == 0
+        assert overdue_resp.status_code == 200
+        assert any(chain["command_id"] == command_id for chain in overdue_resp.json()["approval_chains"])
+        assert not_overdue_resp.status_code == 200
+        assert not_overdue_resp.json()["count"] == 0
+        assert invalid_overdue_resp.status_code == 400
+        assert invalid_overdue_resp.json()["detail"] == "overdue must be true or false"
         assert command_resp.status_code == 200
         command_data = command_resp.json()
         assert command_data["approval_chain"]["command_id"] == command_id
