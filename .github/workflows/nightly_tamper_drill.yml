@@ -1,0 +1,43 @@
+name: Nightly Tamper Drill
+
+# G3.7 — exercises `mcoi verify-ledger` against real exported ledgers
+# and known-tampered variants. Catches verifier regressions that would
+# otherwise go unnoticed until a real audit. See LEDGER_SPEC.md and
+# scripts/nightly_tamper_drill.py.
+
+on:
+  schedule:
+    - cron: "47 4 * * *"  # 4:47 AM UTC daily
+  workflow_dispatch:      # Manual trigger
+  pull_request:
+    paths:
+      - 'mcoi/mcoi_runtime/core/audit_trail.py'
+      - 'mcoi/mcoi_runtime/app/cli.py'
+      - 'scripts/nightly_tamper_drill.py'
+      - 'docs/LEDGER_SPEC.md'
+      - '.github/workflows/nightly_tamper_drill.yml'
+
+jobs:
+  tamper-drill:
+    name: Verify ledger tamper detection (10 scenarios)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install MCOI runtime
+        working-directory: mcoi
+        run: pip install -e .
+
+      - name: Run nightly tamper drill (50 entries)
+        run: python scripts/nightly_tamper_drill.py --verbose --entries 50
+
+      - name: Run extended tamper drill (500 entries)
+        # Larger run catches scaling-related regressions that a small
+        # chain might miss (e.g., anchor selection at non-trivial offsets).
+        run: python scripts/nightly_tamper_drill.py --entries 500
