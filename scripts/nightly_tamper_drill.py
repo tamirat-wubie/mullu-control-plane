@@ -40,7 +40,6 @@ import os
 import subprocess
 import sys
 import tempfile
-from dataclasses import asdict
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -52,6 +51,7 @@ from mcoi_runtime.core.audit_trail import (  # noqa: E402
     LEDGER_SCHEMA_VERSION_MAX,
     _canonical_hash_v1,
 )
+from mcoi_runtime.core.audit_export import AuditExporter  # noqa: E402
 
 
 def _clock() -> str:
@@ -59,7 +59,13 @@ def _clock() -> str:
 
 
 def _build_chain(n: int) -> list[dict]:
-    """Build a real audit chain via the writer."""
+    """Build a real audit chain end-to-end: writer → exporter → JSONL → dicts.
+
+    G3.8 fix: previously used dataclasses.asdict() to bypass the export
+    path. Now exercises the full production code path so a regression
+    in audit_export.py (e.g., field rename, format change) is caught
+    by the drill, not by an external auditor.
+    """
     trail = AuditTrail(clock=_clock)
     for i in range(n):
         trail.record(
@@ -70,7 +76,16 @@ def _build_chain(n: int) -> list[dict]:
             outcome="success" if i % 7 != 0 else "denied",
             detail={"index": i, "payload": "x" * (i % 50)},
         )
-    return [asdict(e) for e in trail.query(limit=n + 100)]
+    # Use the real exporter (the production path operators run).
+    exporter = AuditExporter(audit_trail=trail, clock=_clock)
+    result = exporter.export_jsonl(limit=n + 100)
+    # Parse the JSONL back into dicts the way the verifier consumes them.
+    entries = []
+    for line in result.content.splitlines():
+        line = line.strip()
+        if line:
+            entries.append(json.loads(line))
+    return entries
 
 
 def _write_jsonl(entries: list[dict], path: Path) -> None:
