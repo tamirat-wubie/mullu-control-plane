@@ -120,3 +120,129 @@ class TestAuditSummary:
         assert summary["actions"]["llm.complete"] == 2
         assert summary["outcomes"]["success"] == 2
         assert summary["outcomes"]["denied"] == 1
+
+
+# ═══════════════════════════════════════════
+# G3 — External Verifier (tamper detection)
+# ═══════════════════════════════════════════
+
+from dataclasses import asdict
+from mcoi_runtime.core.audit_trail import (
+    GENESIS_HASH,
+    ExternalVerifyResult,
+    verify_chain_from_entries,
+)
+
+
+def _trail_to_entries(trail: AuditTrail) -> list[dict]:
+    """Convert recorded entries to dicts (as if exported to JSONL)."""
+    return [asdict(e) for e in trail.query(limit=10000)]
+
+
+class TestExternalVerifier:
+    def test_empty_chain_is_valid(self):
+        result = verify_chain_from_entries([])
+        assert result.valid is True
+        assert result.entries_checked == 0
+
+    def test_intact_chain_passes(self):
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        for i in range(5):
+            trail.record(
+                action=f"a{i}", actor_id="x", tenant_id="t",
+                target="y", outcome="ok",
+            )
+        entries = _trail_to_entries(trail)
+        result = verify_chain_from_entries(entries)
+        assert result.valid is True
+        assert result.entries_checked == 5
+
+    def test_tampered_detail_detected(self):
+        """Mutating an entry's detail should fail entry_hash check."""
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        trail.record(action="a", actor_id="x", tenant_id="t",
+                     target="y", outcome="ok", detail={"k": "original"})
+        trail.record(action="b", actor_id="x", tenant_id="t",
+                     target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        # Tamper with first entry's detail
+        entries[0]["detail"] = {"k": "tampered"}
+        result = verify_chain_from_entries(entries)
+        assert result.valid is False
+        assert result.failure_field == "entry_hash"
+        assert result.failure_sequence == 1
+
+    def test_tampered_action_detected(self):
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        trail.record(action="benign", actor_id="x", tenant_id="t",
+                     target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        entries[0]["action"] = "malicious"
+        result = verify_chain_from_entries(entries)
+        assert result.valid is False
+        assert result.failure_field == "entry_hash"
+
+    def test_broken_chain_link_detected(self):
+        """Mutating previous_hash should fail chain linkage check."""
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        for _ in range(3):
+            trail.record(action="a", actor_id="x", tenant_id="t",
+                         target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        # Tamper with second entry's previous_hash
+        entries[1]["previous_hash"] = "0" * 64
+        result = verify_chain_from_entries(entries)
+        assert result.valid is False
+        assert result.failure_field == "previous_hash"
+        assert result.failure_sequence == 2
+
+    def test_genesis_violation_detected(self):
+        """First entry's previous_hash must equal GENESIS_HASH."""
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        trail.record(action="a", actor_id="x", tenant_id="t",
+                     target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        entries[0]["previous_hash"] = "f" * 64
+        result = verify_chain_from_entries(entries)
+        assert result.valid is False
+        assert result.failure_field == "previous_hash"
+
+    def test_deleted_entry_detected(self):
+        """Removing an entry from the middle should break the chain."""
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        for _ in range(5):
+            trail.record(action="a", actor_id="x", tenant_id="t",
+                         target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        # Delete entry at index 2 (sequence 3)
+        del entries[2]
+        result = verify_chain_from_entries(entries)
+        assert result.valid is False
+        assert result.failure_field == "previous_hash"
+
+    def test_missing_required_field_detected(self):
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        trail.record(action="a", actor_id="x", tenant_id="t",
+                     target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        del entries[0]["entry_hash"]
+        result = verify_chain_from_entries(entries)
+        assert result.valid is False
+        assert result.failure_field == "schema"
+        assert "entry_hash" in result.failure_reason
+
+    def test_in_memory_verify_matches_external(self):
+        """AuditTrail.verify_chain() and verify_chain_from_entries() must agree."""
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        for _ in range(10):
+            trail.record(action="a", actor_id="x", tenant_id="t",
+                         target="y", outcome="ok")
+        in_memory_valid, in_memory_count = trail.verify_chain()
+        external = verify_chain_from_entries(_trail_to_entries(trail))
+        assert in_memory_valid == external.valid
+        assert in_memory_count == external.entries_checked
+
+    def test_genesis_hash_constant(self):
+        """GENESIS_HASH must be sha256(b'genesis') for spec stability."""
+        from hashlib import sha256
+        assert GENESIS_HASH == sha256(b"genesis").hexdigest()
