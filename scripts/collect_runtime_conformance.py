@@ -79,6 +79,7 @@ def collect_runtime_conformance(
     *,
     gateway_url: str,
     conformance_secret: str = "",
+    authority_operator_secret: str = "",
     expected_environment: str = "",
     clock: Callable[[], str] | None = None,
 ) -> RuntimeConformanceCollection:
@@ -87,6 +88,12 @@ def collect_runtime_conformance(
     gateway_base = gateway_url.rstrip("/")
     steps: list[CollectionStep] = []
     errors: list[str] = []
+
+    authority_headers = (
+        {"X-Mullu-Authority-Secret": authority_operator_secret}
+        if authority_operator_secret
+        else None
+    )
 
     endpoint_status, certificate = _get_json(f"{gateway_base}/runtime/conformance")
     missing_fields = tuple(field for field in REQUIRED_CERTIFICATE_FIELDS if field not in certificate)
@@ -156,6 +163,46 @@ def collect_runtime_conformance(
     if not signature_passed:
         errors.append("runtime conformance signature was not verified")
 
+    approval_filter_status, approval_filter_payload = _get_json(
+        f"{gateway_base}/authority/approval-chains?overdue=true&limit=1",
+        headers=authority_headers,
+    )
+    approval_filter_passed = (
+        approval_filter_status == 200
+        and isinstance(approval_filter_payload.get("approval_chains"), list)
+        and isinstance(approval_filter_payload.get("count"), int)
+    )
+    steps.append(CollectionStep(
+        name="authority overdue approval chain read model",
+        passed=approval_filter_passed,
+        detail=(
+            f"status={approval_filter_status} "
+            f"count={approval_filter_payload.get('count', 'missing')}"
+        ),
+    ))
+    if not approval_filter_passed:
+        errors.append("authority overdue approval chain read model was not available")
+
+    obligation_filter_status, obligation_filter_payload = _get_json(
+        f"{gateway_base}/authority/obligations?overdue=true&limit=1",
+        headers=authority_headers,
+    )
+    obligation_filter_passed = (
+        obligation_filter_status == 200
+        and isinstance(obligation_filter_payload.get("obligations"), list)
+        and isinstance(obligation_filter_payload.get("count"), int)
+    )
+    steps.append(CollectionStep(
+        name="authority overdue obligation read model",
+        passed=obligation_filter_passed,
+        detail=(
+            f"status={obligation_filter_status} "
+            f"count={obligation_filter_payload.get('count', 'missing')}"
+        ),
+    ))
+    if not obligation_filter_passed:
+        errors.append("authority overdue obligation read model was not available")
+
     collection_seed = {
         "gateway_url": gateway_base,
         "collected_at": collected_at,
@@ -185,9 +232,11 @@ def write_runtime_conformance(collection: RuntimeConformanceCollection, output_p
     return output_path
 
 
-def _get_json(url: str) -> tuple[int, dict[str, Any]]:
+def _get_json(url: str, *, headers: dict[str, str] | None = None) -> tuple[int, dict[str, Any]]:
+    request: str | urllib.request.Request
+    request = urllib.request.Request(url, headers=headers or {}) if headers else url
     try:
-        with urllib.request.urlopen(url, timeout=10) as response:
+        with urllib.request.urlopen(request, timeout=10) as response:
             return response.status, _loads_json(response.read())
     except urllib.error.HTTPError as exc:
         return exc.code, _loads_json(exc.read())
@@ -249,6 +298,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect live Mullu runtime conformance evidence.")
     parser.add_argument("--gateway-url", default=os.environ.get("MULLU_GATEWAY_URL", DEFAULT_GATEWAY_URL))
     parser.add_argument("--conformance-secret", default=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", ""))
+    parser.add_argument("--authority-operator-secret", default=os.environ.get("MULLU_AUTHORITY_OPERATOR_SECRET", ""))
     parser.add_argument("--expected-environment", default=os.environ.get("MULLU_EXPECTED_RUNTIME_ENV", ""))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
     return parser.parse_args(argv)
@@ -260,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
     collection = collect_runtime_conformance(
         gateway_url=args.gateway_url,
         conformance_secret=args.conformance_secret,
+        authority_operator_secret=args.authority_operator_secret,
         expected_environment=args.expected_environment,
     )
     output_path = write_runtime_conformance(collection, Path(args.output))
