@@ -175,12 +175,42 @@ class GatewayReceiptMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# Module-level status. Set by install_gateway_receipt_middleware so that
+# health-check endpoints and observability scrapers can confirm whether
+# entry-point certification is actually active. Closes the round-5
+# residual nit: previously "proof_bridge=None" was a silent no-op with
+# only a log warning — now it has a queryable signal.
+_RECEIPT_MIDDLEWARE_STATUS: dict[str, Any] = {
+    "installed": False,
+    "reason": "not yet attempted",
+    "certified_prefixes": list(_CERTIFIED_PREFIXES),
+}
+
+
+def get_receipt_middleware_status() -> dict[str, Any]:
+    """Return the current install status of the gateway receipt middleware.
+
+    Intended for health endpoints / metrics scrapers. Shape:
+
+        {
+            "installed": bool,        # True iff middleware is wired
+            "reason": str,            # human-readable status
+            "certified_prefixes": [str, ...],  # paths the middleware would cover
+        }
+
+    A dashboard alerting on `installed=False` catches the
+    "we thought receipts were on but they weren't" failure mode.
+    """
+    return dict(_RECEIPT_MIDDLEWARE_STATUS)
+
+
 def install_gateway_receipt_middleware(app: Any, platform: Any) -> bool:
     """Attach GatewayReceiptMiddleware to a FastAPI app if a platform is available.
 
     Returns True if installed, False if skipped (no platform or no
     proof_bridge). Skip is non-fatal — the gateway just falls back to
-    the pre-G10.1 behavior with a logged warning.
+    the pre-G10.1 behavior with a logged warning AND an observable
+    `installed=False` signal exposed via get_receipt_middleware_status().
     """
     if platform is None:
         _log.warning(
@@ -188,6 +218,10 @@ def install_gateway_receipt_middleware(app: Any, platform: Any) -> bool:
             "(entry-point boundary will not be certified — see "
             "docs/MAF_RECEIPT_COVERAGE.md)"
         )
+        _RECEIPT_MIDDLEWARE_STATUS.update({
+            "installed": False,
+            "reason": "no platform available",
+        })
         return False
 
     proof_bridge = getattr(platform, "proof_bridge", None)
@@ -196,6 +230,10 @@ def install_gateway_receipt_middleware(app: Any, platform: Any) -> bool:
             "gateway receipt middleware not installed: platform has no "
             "proof_bridge (entry-point boundary will not be certified)"
         )
+        _RECEIPT_MIDDLEWARE_STATUS.update({
+            "installed": False,
+            "reason": "platform.proof_bridge is None",
+        })
         return False
 
     app.add_middleware(GatewayReceiptMiddleware, proof_bridge=proof_bridge)
@@ -204,4 +242,8 @@ def install_gateway_receipt_middleware(app: Any, platform: Any) -> bool:
         "certified for %s",
         ", ".join(_CERTIFIED_PREFIXES),
     )
+    _RECEIPT_MIDDLEWARE_STATUS.update({
+        "installed": True,
+        "reason": "active",
+    })
     return True

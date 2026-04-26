@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import threading
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
@@ -975,7 +976,10 @@ class Platform:
         def _bootstrap_warning(component: str, exc: Exception) -> str:
             return f"{component} bootstrap failed ({type(exc).__name__})"
 
-        # Optional: RBAC
+        # RBAC — load-bearing in pilot/production. See docs/GOVERNANCE_GUARD_CHAIN.md
+        # §"Known gaps" entry G4.1. Pre-G4.1, a bootstrap failure here silently
+        # turned RBAC into a no-op. Now: in pilot/production we refuse to boot.
+        # local_dev/test still permit the optional path for development convenience.
         access_runtime = None
         try:
             from mcoi_runtime.core.event_spine import EventSpineEngine
@@ -987,6 +991,21 @@ class Platform:
         except Exception as exc:
             access_runtime = None
             bootstrap_warnings.append(_bootstrap_warning("access runtime", exc))
+
+        platform_env = (os.environ.get("MULLU_ENV", "") or "").strip().lower()
+        if access_runtime is None and platform_env in ("pilot", "production"):
+            # Fail-closed boot. Same shape as G6 (stub LLM in production) and
+            # G8 (CORS wildcard in production). Operating without RBAC in a
+            # production-grade environment is "appearance of governance without
+            # enforcement" — exactly the failure mode this spec exists to prevent.
+            raise RuntimeError(
+                f"RBAC engine (AccessRuntimeEngine) failed to bootstrap in "
+                f"{platform_env!r} environment. The guard chain cannot enforce "
+                f"access control without it. Investigate the bootstrap warning "
+                f"above and either fix the underlying cause or set "
+                f"MULLU_ENV=local_dev for development. See "
+                f"docs/GOVERNANCE_GUARD_CHAIN.md §'Guard inventory' #5 (RBAC)."
+            )
 
         # Optional: LLM
         llm_bridge = None

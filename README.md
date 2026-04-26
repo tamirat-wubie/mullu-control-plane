@@ -38,7 +38,7 @@ Every message flows through the full governance pipeline. No bypass path.
 
 | Capability | What |
 |---|---|
-| **7-Guard Chain** | API key → JWT → tenant → gating → RBAC → content safety → rate limit → budget |
+| **8-Guard Chain** | API key → JWT → tenant → gating → RBAC → content safety → rate limit → budget. Order, fail-closed semantics, and known gaps in [`docs/GOVERNANCE_GUARD_CHAIN.md`](docs/GOVERNANCE_GUARD_CHAIN.md). |
 | **GovernedSession** | `session = platform.connect(identity_id, tenant_id)` then `session.llm("prompt")` |
 | **ProofBridge** | Governance decisions on `/api/v1/*` produce a deterministic TransitionReceipt via middleware. Coverage and known gaps documented in [`docs/MAF_RECEIPT_COVERAGE.md`](docs/MAF_RECEIPT_COVERAGE.md). |
 | **Content Safety** | 6 prompt injection patterns + Unicode normalization + base64 decode |
