@@ -4,6 +4,7 @@
 
 - [x] All Python tests pass (`pytest -q`)
 - [x] All Rust tests pass (`cargo test`)
+- [x] Red-team harness passes (`python scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0`)
 - [x] Golden scenario suite passes (12 end-to-end scenarios)
 - [x] Deserialization hardening tests pass (nested dataclass round-trips)
 - [x] Persistence round-trip tests pass (all stores)
@@ -23,6 +24,7 @@
 - [x] Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`
 - [x] Release status derives from `scripts/validate_release_status.py --strict`
 - [x] CI workflow retains the full gated release command set in `.github/workflows/ci.yml`
+- [x] Release notes publish red-team pass rate and witness hash from `.change_assurance/red_team_harness.json`
 
 ## Configuration Gates
 

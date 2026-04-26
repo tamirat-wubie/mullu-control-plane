@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -57,7 +58,13 @@ class FakeRunner:
                 ],
             )
         if command[:3] == ["gh", "secret", "list"]:
-            return _completed(command, [{"name": "MULLU_RUNTIME_WITNESS_SECRET"}])
+            return _completed(
+                command,
+                [
+                    {"name": "MULLU_RUNTIME_WITNESS_SECRET"},
+                    {"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"},
+                ],
+            )
         if command[:3] == ["gh", "workflow", "list"]:
             return _completed(
                 command,
@@ -186,6 +193,7 @@ def test_orchestrate_deployment_witness_accepts_mounted_runtime_secret(tmp_path:
         preflight_output=tmp_path / "preflight.json",
         dispatch=True,
         runtime_secret_present=True,
+        conformance_secret_present=True,
         download_dir=tmp_path / "artifact",
         poll_seconds=1,
         runner=runner,
@@ -260,7 +268,7 @@ def _completed(command: list[str], payload: object) -> subprocess.CompletedProce
     return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
 
 
-def _healthy_getter(url: str) -> tuple[int, dict[str, str]]:
+def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
     if url.endswith("/health"):
         return 200, {"status": "healthy"}
     if url.endswith("/gateway/witness"):
@@ -273,6 +281,20 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, str]]:
             "latest_terminal_certificate_id": "terminal-1",
             "signed_at": "2026-04-25T00:00:00Z",
             "signature_key_id": "runtime",
+            "signature": "hmac-sha256:placeholder",
+        }
+    if url.endswith("/runtime/conformance"):
+        return 200, {
+            "certificate_id": "conf-0123456789abcdef",
+            "environment": "pilot",
+            "issued_at": "2026-04-25T00:00:00+00:00",
+            "expires_at": "2026-04-25T00:30:00+00:00",
+            "gateway_witness_valid": True,
+            "runtime_witness_valid": True,
+            "terminal_status": "conformant_with_gaps",
+            "open_conformance_gaps": ["known_limitations_documentation_drift"],
+            "evidence_refs": ["gateway_witness:test"],
+            "signature_key_id": "runtime-conformance-test",
             "signature": "hmac-sha256:placeholder",
         }
     raise AssertionError(f"unexpected url: {url}")

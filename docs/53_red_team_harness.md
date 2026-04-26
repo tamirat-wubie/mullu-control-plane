@@ -45,6 +45,6 @@ python scripts\run_red_team_harness.py --output .change_assurance\red_team_harne
 
 STATUS:
   Completeness: 100%
-  Invariants verified: explicit corpus, deterministic report hash, category pass rates, offline execution, CI minimum pass-rate gate
+  Invariants verified: explicit corpus, deterministic report hash, category pass rates, offline execution, CI minimum pass-rate gate, CI artifact witness
   Open issues: none
-  Next action: wire `scripts/run_red_team_harness.py --min-pass-rate 1.0` into release CI
+  Next action: publish pass rates per release from `.change_assurance/red_team_harness.json`

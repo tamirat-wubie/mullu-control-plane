@@ -66,6 +66,8 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_public_repository_surface.py --local-only",
     "python scripts/validate_release_status.py",
     "python scripts/validate_release_status.py --strict",
+    "python scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0",
+    "red-team-harness-witness",
     "python -m pytest tests/test_gateway tests/test_pilot_proof_slice.py -q",
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/validate_gateway_deployment_env.py --strict",
@@ -93,6 +95,13 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
+RELEASE_NOTES_REQUIRED_LITERALS: tuple[str, ...] = (
+    "scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0",
+    "pass_rate: 1.0",
+    ".change_assurance/red_team_harness.json",
+    "sha256:86a63fb36fe94ff44d44a8124625367aa1ead6b99a698a4ebd1b61c6024e5710",
+)
+
 PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     "GITHUB_SURFACE.md": (
         "GitHub Surface Witness",
@@ -108,7 +117,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "No governed production endpoint is declared in this repository",
         "python scripts/validate_gateway_deployment_env.py --strict",
         "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
-        "python scripts/collect_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --witness-secret \"$MULLU_RUNTIME_WITNESS_SECRET\" --output .change_assurance/deployment_witness.json",
+        "python scripts/collect_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --witness-secret \"$MULLU_RUNTIME_WITNESS_SECRET\" --conformance-secret \"$MULLU_RUNTIME_CONFORMANCE_SECRET\" --output .change_assurance/deployment_witness.json",
         ".github/workflows/deployment-witness.yml",
         "python scripts/gateway_runtime_smoke.py",
         "python scripts/validate_public_repository_surface.py",
@@ -120,6 +129,7 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "workflow_dispatch",
     "gateway_url",
     "MULLU_RUNTIME_WITNESS_SECRET",
+    "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "python scripts/collect_deployment_witness.py",
     ".change_assurance/deployment_witness.json",
     "actions/upload-artifact@v4",
@@ -358,6 +368,19 @@ def validate_public_surface_document_texts(
     return errors
 
 
+def validate_release_notes_text(content: str) -> list[str]:
+    """Validate release notes publish the red-team witness for this release."""
+    missing_literals = tuple(
+        literal for literal in RELEASE_NOTES_REQUIRED_LITERALS if literal not in content
+    )
+    if not missing_literals:
+        return []
+    return [
+        "RELEASE_NOTES_v0.1.md missing required red-team release anchors: "
+        f"{list(missing_literals)}"
+    ]
+
+
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for pattern in SOURCE_HYGIENE_GLOBS:
@@ -443,6 +466,7 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     )
     errors.extend(metadata_errors)
     if len(metadata_texts) == len(METADATA_DOCUMENTS):
+        errors.extend(validate_release_notes_text(metadata_texts["RELEASE_NOTES_v0.1.md"]))
         errors.extend(
             validate_release_limitation_coverage(
                 known_limitations_text=metadata_texts["KNOWN_LIMITATIONS_v0.1.md"],

@@ -6,9 +6,10 @@ witness without implying production readiness when evidence is missing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: standard-library HTTP client and gateway runtime witness contract.
 Invariants:
-  - Deployment health is claimed only when health and runtime witness pass.
+  - Deployment health is claimed only when health, runtime witness, and
+    runtime conformance certificate pass.
   - Missing or malformed endpoint evidence is recorded as a failed witness.
-  - HMAC verification is explicit when a runtime witness secret is supplied.
+  - HMAC verification is explicit for runtime and conformance signatures.
   - Output is structured JSON suitable for repository status reflection.
 """
 
@@ -39,6 +40,20 @@ REQUIRED_WITNESS_FIELDS = (
     "signature_key_id",
     "signature",
 )
+REQUIRED_CONFORMANCE_FIELDS = (
+    "certificate_id",
+    "environment",
+    "issued_at",
+    "expires_at",
+    "gateway_witness_valid",
+    "runtime_witness_valid",
+    "terminal_status",
+    "open_conformance_gaps",
+    "evidence_refs",
+    "signature_key_id",
+    "signature",
+)
+ACCEPTED_CONFORMANCE_STATUSES = frozenset({"conformant", "conformant_with_gaps"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +76,9 @@ class DeploymentWitness:
     health_status: str
     runtime_witness_status: str
     signature_status: str
+    conformance_status: str
+    conformance_signature_status: str
+    latest_conformance_certificate_id: str
     latest_terminal_certificate_id: str | None
     latest_command_event_hash: str
     runtime_witness_id: str
@@ -80,6 +98,7 @@ def collect_deployment_witness(
     *,
     gateway_url: str,
     witness_secret: str = "",
+    conformance_secret: str = "",
     expected_environment: str = "",
     clock: Callable[[], str] | None = None,
 ) -> DeploymentWitness:
@@ -149,6 +168,50 @@ def collect_deployment_witness(
     if not signature_passed:
         errors.append("runtime witness signature was not verified")
 
+    conformance_endpoint_status, conformance_payload = _probe_runtime_conformance(gateway_base)
+    missing_conformance_fields = tuple(
+        field for field in REQUIRED_CONFORMANCE_FIELDS if field not in conformance_payload
+    )
+    conformance_status = str(conformance_payload.get("terminal_status", ""))
+    conformance_environment = str(conformance_payload.get("environment", ""))
+    conformance_passed = (
+        conformance_endpoint_status == 200
+        and not missing_conformance_fields
+        and conformance_status in ACCEPTED_CONFORMANCE_STATUSES
+        and bool(conformance_payload.get("gateway_witness_valid"))
+        and bool(conformance_payload.get("runtime_witness_valid"))
+    )
+    if expected_environment:
+        conformance_passed = conformance_passed and conformance_environment == expected_environment
+    steps.append(
+        ProbeStep(
+            name="runtime conformance certificate",
+            passed=conformance_passed,
+            detail=(
+                f"status={conformance_endpoint_status} terminal_status={conformance_status} "
+                f"environment={conformance_environment} missing={list(missing_conformance_fields)}"
+            ),
+        )
+    )
+    if not conformance_passed:
+        errors.append("runtime conformance certificate is missing acceptable production evidence")
+
+    conformance_signature_status, conformance_signature_passed = _verify_hmac_signature(
+        conformance_payload,
+        conformance_secret,
+        missing_secret_status="skipped:no_conformance_secret",
+        missing_signature_status="failed:missing_hmac_sha256_signature",
+    )
+    steps.append(
+        ProbeStep(
+            name="runtime conformance signature",
+            passed=conformance_signature_passed,
+            detail=conformance_signature_status,
+        )
+    )
+    if not conformance_signature_passed:
+        errors.append("runtime conformance signature was not verified")
+
     claim_passed = all(step.passed for step in steps)
     deployment_claim = "published" if claim_passed else "not-published"
     latest_terminal_certificate_id = runtime_payload.get("latest_terminal_certificate_id")
@@ -162,6 +225,7 @@ def collect_deployment_witness(
         "collected_at": collected_at,
         "deployment_claim": deployment_claim,
         "runtime_witness_id": str(runtime_payload.get("witness_id", "")),
+        "conformance_certificate_id": str(conformance_payload.get("certificate_id", "")),
         "latest_command_event_hash": str(runtime_payload.get("latest_command_event_hash", "")),
     }
     return DeploymentWitness(
@@ -172,6 +236,9 @@ def collect_deployment_witness(
         health_status=str(health_payload.get("status", "")),
         runtime_witness_status=runtime_status,
         signature_status=signature_status,
+        conformance_status=conformance_status,
+        conformance_signature_status=conformance_signature_status,
+        latest_conformance_certificate_id=str(conformance_payload.get("certificate_id", "")),
         latest_terminal_certificate_id=latest_terminal_certificate_id,
         latest_command_event_hash=str(runtime_payload.get("latest_command_event_hash", "")),
         runtime_witness_id=str(runtime_payload.get("witness_id", "")),
@@ -202,6 +269,11 @@ def _probe_runtime_witness(gateway_base: str) -> tuple[int, dict[str, Any]]:
     return status, payload
 
 
+def _probe_runtime_conformance(gateway_base: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _get_json(f"{gateway_base}/runtime/conformance")
+    return status, payload
+
+
 def _get_json(url: str) -> tuple[int, dict[str, Any]]:
     try:
         with urllib.request.urlopen(url, timeout=10) as response:
@@ -223,16 +295,31 @@ def _loads_json(raw: bytes) -> dict[str, Any]:
 
 
 def _verify_runtime_signature(payload: dict[str, Any], witness_secret: str) -> tuple[str, bool]:
+    return _verify_hmac_signature(
+        payload,
+        witness_secret,
+        missing_secret_status="skipped:no_witness_secret",
+        missing_signature_status="failed:missing_hmac_sha256_signature",
+    )
+
+
+def _verify_hmac_signature(
+    payload: dict[str, Any],
+    secret: str,
+    *,
+    missing_secret_status: str,
+    missing_signature_status: str,
+) -> tuple[str, bool]:
     signature = str(payload.get("signature", ""))
-    if not witness_secret:
-        return "skipped:no_witness_secret", False
+    if not secret:
+        return missing_secret_status, False
     if not signature.startswith("hmac-sha256:"):
-        return "failed:missing_hmac_sha256_signature", False
+        return missing_signature_status, False
     signed_payload = dict(payload)
     signed_payload.pop("signature", None)
     signature_payload = _stable_hash(signed_payload)
     expected = hmac.new(
-        witness_secret.encode("utf-8"),
+        secret.encode("utf-8"),
         signature_payload.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
@@ -254,6 +341,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect live Mullu gateway deployment evidence.")
     parser.add_argument("--gateway-url", default=os.environ.get("MULLU_GATEWAY_URL", DEFAULT_GATEWAY_URL))
     parser.add_argument("--witness-secret", default=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", ""))
+    parser.add_argument("--conformance-secret", default=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", ""))
     parser.add_argument("--expected-environment", default=os.environ.get("MULLU_EXPECTED_RUNTIME_ENV", ""))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
     return parser.parse_args(argv)
@@ -265,6 +353,7 @@ def main(argv: list[str] | None = None) -> int:
     witness = collect_deployment_witness(
         gateway_url=args.gateway_url,
         witness_secret=args.witness_secret,
+        conformance_secret=args.conformance_secret,
         expected_environment=args.expected_environment,
     )
     output_path = write_deployment_witness(witness, Path(args.output))

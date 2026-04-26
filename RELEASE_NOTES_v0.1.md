@@ -48,11 +48,14 @@ architecture.
 - **Architecture docs:** governed platform, runtime, and pilot documentation under `docs/`
 - **JSON schemas:** canonical contract schemas validated by `scripts/validate_schemas.py --strict`
 - **Release gate:** deterministic summary derived by `scripts/validate_release_status.py --strict`
+- **Red-team release gate:** deterministic adversarial harness validated by `scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0`
 
 ## Test Coverage
 
 - **Python:** validated by the full `pytest -q` suite
 - **Rust:** validated by `cargo test`
+- **Red-team harness:** 8/8 cases passed (`pass_rate: 1.0`) across prompt injection, budget evasion, audit tampering, and policy bypass
+- **Red-team witness:** `.change_assurance/red_team_harness.json`, report hash `sha256:86a63fb36fe94ff44d44a8124625367aa1ead6b99a698a4ebd1b61c6024e5710`
 
 ## Breaking Changes
 

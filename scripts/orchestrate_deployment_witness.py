@@ -13,8 +13,9 @@ Invariants:
   - Gateway URL is derived from the validated host unless explicitly provided.
   - Live cluster apply and workflow dispatch are explicit operator choices.
   - Dispatch can be gated by a fresh preflight report.
-  - A mounted runtime secret can witness presence without listing secrets.
-  - The runtime witness secret is never read from or written to stdout.
+  - Mounted runtime and conformance secrets can witness presence without
+    listing secrets.
+  - Runtime witness and conformance secrets are never written to stdout.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ from typing import Protocol
 
 from scripts.dispatch_deployment_witness import (
     DEFAULT_ARTIFACT_NAME,
+    DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DOWNLOAD_DIR,
     DEFAULT_SECRET_NAME,
     DEFAULT_WORKFLOW_FILE,
@@ -95,7 +97,9 @@ def orchestrate_deployment_witness(
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
+    conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
     runtime_secret_present: bool = False,
+    conformance_secret_present: bool = False,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     timeout_seconds: int = 600,
@@ -128,7 +132,9 @@ def orchestrate_deployment_witness(
             workflow_file=workflow_file,
             workflow_name=workflow_name,
             secret_name=secret_name,
+            conformance_secret_name=conformance_secret_name,
             runtime_secret_present=runtime_secret_present,
+            conformance_secret_present=conformance_secret_present,
             probe_endpoints=preflight_probe_endpoints,
             runner=command_runner,
             resolver=resolver,
@@ -156,7 +162,9 @@ def orchestrate_deployment_witness(
             workflow_file=workflow_file,
             workflow_name=workflow_name,
             secret_name=secret_name,
+            conformance_secret_name=conformance_secret_name,
             runtime_secret_present=runtime_secret_present,
+            conformance_secret_present=conformance_secret_present,
             artifact_name=artifact_name,
             download_dir=download_dir,
             timeout_seconds=timeout_seconds,
@@ -196,7 +204,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
+    parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
+    parser.add_argument("--accept-conformance-secret-env", action="store_true")
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=600)
@@ -222,9 +232,14 @@ def main(argv: list[str] | None = None) -> int:
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
+            conformance_secret_name=args.conformance_secret_name,
             runtime_secret_present=(
                 args.accept_runtime_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
+            ),
+            conformance_secret_present=(
+                args.accept_conformance_secret_env
+                and bool(os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET"))
             ),
             artifact_name=args.artifact_name,
             download_dir=Path(args.download_dir),
