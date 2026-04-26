@@ -120,8 +120,11 @@ class AuditTrail:
         if len(detail_json) > self.MAX_DETAIL_SIZE:
             detail = {"_truncated": True, "_original_size": len(detail_json)}
 
-        # Compute content hash
-        content = {
+        # Compute content hash via the canonical v1 helper. The writer
+        # and the external verifier both call _canonical_hash_v1, so
+        # they cannot drift apart — the spec layout is enforced by
+        # construction, not by convention. See LEDGER_SPEC.md.
+        source = {
             "sequence": self._sequence,
             "action": action,
             "actor_id": actor_id,
@@ -132,8 +135,7 @@ class AuditTrail:
             "previous_hash": self._last_hash,
             "recorded_at": now,
         }
-        content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
-        entry_hash = sha256(content_bytes).hexdigest()
+        entry_hash = _canonical_hash_v1(source)
         entry_id = f"audit-{self._sequence}"
 
         entry = AuditEntry(
@@ -240,6 +242,48 @@ GENESIS_HASH = sha256(b"genesis").hexdigest()
 # Bump only when LEDGER_SPEC.md defines a new canonical content layout.
 LEDGER_SCHEMA_VERSION_MAX = 1
 
+# Single source of truth for v1 entry-hash content layout.
+# Both the writer (AuditTrail._record_locked) and the verifier
+# (verify_chain_from_entries / _recompute_entry_hash) MUST derive the
+# canonical content from this exact field set in this exact order.
+# Drift between writer and spec is structurally impossible because both
+# code paths use _canonical_content_v1 below.
+#
+# Changing this list is a breaking change to LEDGER_SPEC.md and requires
+# bumping LEDGER_SCHEMA_VERSION_MAX. See docs/LEDGER_SPEC.md
+# §"Canonical entry-hash content layout (v1)".
+LEDGER_V1_CONTENT_FIELDS: tuple[str, ...] = (
+    "sequence",
+    "action",
+    "actor_id",
+    "tenant_id",
+    "target",
+    "outcome",
+    "detail",
+    "previous_hash",
+    "recorded_at",
+)
+
+
+def _canonical_content_v1(source: Mapping[str, Any]) -> dict[str, Any]:
+    """Extract the v1 canonical content from a source mapping.
+
+    Used by both the writer (when computing entry_hash for a new entry)
+    and the verifier (when recomputing entry_hash for an existing entry).
+    Single source of truth for the v1 layout — drift is impossible.
+    """
+    return {field: source[field] for field in LEDGER_V1_CONTENT_FIELDS}
+
+
+def _canonical_hash_v1(source: Mapping[str, Any]) -> str:
+    """Compute SHA-256 of the canonical v1 content of `source`.
+
+    `source` must contain all keys in LEDGER_V1_CONTENT_FIELDS.
+    """
+    content = _canonical_content_v1(source)
+    content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
+    return sha256(content_bytes).hexdigest()
+
 
 @dataclass(frozen=True, slots=True)
 class ExternalVerifyResult:
@@ -263,23 +307,13 @@ class ExternalVerifyResult:
 
 
 def _recompute_entry_hash(entry: Mapping[str, Any]) -> str:
-    """Recompute the SHA-256 hash for an entry using the canonical content layout.
+    """Recompute the SHA-256 hash for an entry using the canonical v1 layout.
 
-    Mirrors AuditTrail.record() exactly: sorted JSON of the content fields.
+    Thin wrapper over _canonical_hash_v1 — kept for backward compatibility
+    of the test surface. Both this and AuditTrail._record_locked delegate
+    to _canonical_hash_v1, so writer/verifier drift is impossible.
     """
-    content = {
-        "sequence": entry["sequence"],
-        "action": entry["action"],
-        "actor_id": entry["actor_id"],
-        "tenant_id": entry["tenant_id"],
-        "target": entry["target"],
-        "outcome": entry["outcome"],
-        "detail": entry["detail"],
-        "previous_hash": entry["previous_hash"],
-        "recorded_at": entry["recorded_at"],
-    }
-    content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
-    return sha256(content_bytes).hexdigest()
+    return _canonical_hash_v1(entry)
 
 
 def verify_chain_from_entries(

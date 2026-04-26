@@ -467,3 +467,223 @@ class TestSpecDocExists:
                 assert "What the verifier does NOT prove" in content
                 return
         pytest.fail("docs/LEDGER_SPEC.md not found from any parent of test file")
+
+
+# ═══════════════════════════════════════════
+# G3.6 — Writer ↔ Spec drift (no asymmetry)
+# ═══════════════════════════════════════════
+
+from mcoi_runtime.core.audit_trail import (
+    LEDGER_V1_CONTENT_FIELDS,
+    _canonical_hash_v1,
+    _canonical_content_v1,
+)
+
+
+class TestWriterSpecAlignment:
+    """G3.6: The writer must obey LEDGER_SPEC.md §"Canonical entry-hash
+    content layout (v1)" exactly. Otherwise fresh ledgers fail external
+    verification and the failure mode is indistinguishable from tamper.
+
+    This is enforced *by construction* (writer and verifier share
+    _canonical_hash_v1) AND *by test* (these property tests catch any
+    future regression that re-introduces divergence).
+    """
+
+    def test_v1_field_set_exactly_matches_spec(self):
+        """LEDGER_SPEC.md §'Canonical entry-hash content layout (v1)' lists
+        exactly these nine fields. If anyone reorders, adds, or removes,
+        this test catches it before LEDGER_SPEC.md drifts from reality."""
+        expected = (
+            "sequence", "action", "actor_id", "tenant_id", "target",
+            "outcome", "detail", "previous_hash", "recorded_at",
+        )
+        assert LEDGER_V1_CONTENT_FIELDS == expected
+        # The spec also fixes a count of 9 fields exactly
+        assert len(LEDGER_V1_CONTENT_FIELDS) == 9
+
+    def test_writer_hash_matches_canonical_hash(self):
+        """Round-trip: a recorded entry's stored entry_hash must equal
+        what _canonical_hash_v1 produces from the same fields. If the
+        writer ever computes the hash differently from the spec, this
+        breaks immediately."""
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        entry = trail.record(
+            action="llm.complete", actor_id="actor-1", tenant_id="t1",
+            target="model/claude", outcome="success",
+            detail={"tokens": 42, "cost": 0.01},
+        )
+        # Reconstruct the source mapping the writer would have used
+        source = {
+            "sequence": entry.sequence,
+            "action": entry.action,
+            "actor_id": entry.actor_id,
+            "tenant_id": entry.tenant_id,
+            "target": entry.target,
+            "outcome": entry.outcome,
+            "detail": entry.detail,
+            "previous_hash": entry.previous_hash,
+            "recorded_at": entry.recorded_at,
+        }
+        assert _canonical_hash_v1(source) == entry.entry_hash
+
+    def test_canonical_content_only_contains_spec_fields(self):
+        """The hash content must include EXACTLY the spec fields and
+        nothing else — no entry_id, no entry_hash itself, no
+        schema_version. Future fields added to AuditEntry must not leak
+        into the hash unless the spec is bumped to v2."""
+        sample = {
+            "sequence": 1,
+            "action": "a", "actor_id": "x", "tenant_id": "t",
+            "target": "y", "outcome": "ok", "detail": {},
+            "previous_hash": GENESIS_HASH, "recorded_at": "2026-01-01T00:00:00Z",
+            # Distractor fields that MUST be ignored by the canonical hash:
+            "entry_id": "audit-1",
+            "entry_hash": "deadbeef" * 8,
+            "schema_version": 1,
+            "extra_future_field": "should not affect hash",
+        }
+        content = _canonical_content_v1(sample)
+        assert set(content.keys()) == set(LEDGER_V1_CONTENT_FIELDS)
+        assert "entry_id" not in content
+        assert "entry_hash" not in content
+        assert "schema_version" not in content
+        assert "extra_future_field" not in content
+
+    def test_distractor_fields_do_not_change_hash(self):
+        """Adding fields outside LEDGER_V1_CONTENT_FIELDS must not change
+        the hash. This is what makes schema_version safely additive (it
+        doesn't enter the hash, so v1 entries hash the same with or
+        without the field present)."""
+        base = {
+            "sequence": 1, "action": "a", "actor_id": "x", "tenant_id": "t",
+            "target": "y", "outcome": "ok", "detail": {},
+            "previous_hash": GENESIS_HASH, "recorded_at": "2026-01-01T00:00:00Z",
+        }
+        h1 = _canonical_hash_v1(base)
+        with_extras = {
+            **base,
+            "entry_id": "audit-1",
+            "schema_version": 1,
+            "future_field": ["a", "b", "c"],
+        }
+        h2 = _canonical_hash_v1(with_extras)
+        assert h1 == h2
+
+    def test_concurrent_writes_produce_verifiable_chain(self):
+        """Stress: multiple threads writing concurrently must produce a
+        chain that the external verifier accepts. Catches any drift
+        introduced by future thread-safety refactors."""
+        import threading
+        trail = AuditTrail(clock=FIXED_CLOCK)
+
+        def writer(action: str):
+            for i in range(20):
+                trail.record(
+                    action=action, actor_id="x", tenant_id="t",
+                    target=f"y{i}", outcome="ok", detail={"i": i},
+                )
+
+        threads = [threading.Thread(target=writer, args=(f"a{i}",)) for i in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        entries = _trail_to_entries(trail)
+        assert len(entries) == 100
+        result = verify_chain_from_entries(entries)
+        assert result.valid is True, (
+            f"concurrent-write chain failed verification: {result.failure_reason}"
+        )
+
+
+# ═══════════════════════════════════════════
+# G3.6c — Public API contract (signature pinning)
+# ═══════════════════════════════════════════
+
+class TestVerifierPublicAPI:
+    """`verify_chain_from_entries` is a public contract. Adding kwargs
+    with defaults is backward-compatible; reordering, renaming, or
+    removing parameters is breaking. These tests pin the signature so
+    breaking changes are caught at PR review."""
+
+    def test_signature_pinned(self):
+        import inspect
+        sig = inspect.signature(verify_chain_from_entries)
+        params = sig.parameters
+        # Required positional
+        assert "entries" in params
+        assert params["entries"].kind in (
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            inspect.Parameter.POSITIONAL_ONLY,
+        )
+        # Keyword-only with defaults (additive over time, never removed)
+        assert "anchor_hash" in params
+        assert params["anchor_hash"].kind == inspect.Parameter.KEYWORD_ONLY
+        assert params["anchor_hash"].default is None
+        assert "anchor_sequence" in params
+        assert params["anchor_sequence"].kind == inspect.Parameter.KEYWORD_ONLY
+        assert params["anchor_sequence"].default is None
+
+    def test_result_dataclass_fields_pinned(self):
+        """ExternalVerifyResult is part of the public contract. Adding
+        fields with defaults is backward-compatible; removing or renaming
+        fields breaks downstream consumers."""
+        from dataclasses import fields
+        names = {f.name for f in fields(ExternalVerifyResult)}
+        # Pinned fields (must remain)
+        assert "valid" in names
+        assert "entries_checked" in names
+        assert "failure_reason" in names
+        assert "failure_sequence" in names
+        assert "failure_field" in names
+
+    def test_failure_field_values_documented_in_spec(self):
+        """failure_field is part of the operational contract — exit code
+        mapping in the CLI and external alerting depend on it. Pin the
+        valid values so additions can't silently break operators."""
+        # Documented in LEDGER_SPEC.md and in ExternalVerifyResult docstring
+        documented_values = {"schema", "sequence", "previous_hash", "entry_hash", ""}
+
+        # Exhaust each by triggering it
+        produced: set[str] = set()
+
+        # Empty chain → "" (success)
+        produced.add(verify_chain_from_entries([]).failure_field)
+
+        # Schema
+        bad_schema = [{"sequence": 1}]  # missing many fields
+        produced.add(verify_chain_from_entries(bad_schema).failure_field)
+
+        # Sequence: build a chain with sequence gap
+        trail = AuditTrail(clock=FIXED_CLOCK)
+        for _ in range(3):
+            trail.record(action="a", actor_id="x", tenant_id="t",
+                         target="y", outcome="ok")
+        entries = _trail_to_entries(trail)
+        del entries[1]
+        produced.add(verify_chain_from_entries(entries).failure_field)
+
+        # previous_hash: tamper a previous_hash
+        trail2 = AuditTrail(clock=FIXED_CLOCK)
+        trail2.record(action="a", actor_id="x", tenant_id="t",
+                      target="y", outcome="ok")
+        trail2.record(action="b", actor_id="x", tenant_id="t",
+                      target="y", outcome="ok")
+        e2 = _trail_to_entries(trail2)
+        e2[1]["previous_hash"] = "0" * 64
+        produced.add(verify_chain_from_entries(e2).failure_field)
+
+        # entry_hash: tamper detail
+        trail3 = AuditTrail(clock=FIXED_CLOCK)
+        trail3.record(action="a", actor_id="x", tenant_id="t",
+                      target="y", outcome="ok")
+        e3 = _trail_to_entries(trail3)
+        e3[0]["detail"] = {"tampered": True}
+        produced.add(verify_chain_from_entries(e3).failure_field)
+
+        # All produced values must be in the documented set
+        assert produced.issubset(documented_values), (
+            f"undocumented failure_field values: {produced - documented_values}"
+        )
