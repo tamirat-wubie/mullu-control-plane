@@ -144,6 +144,7 @@ class ResponsibilityWitness:
     overdue_obligation_count: int
     escalated_obligation_count: int
     active_accepted_risk_count: int
+    active_compensation_review_count: int
     requires_review_count: int
     unowned_high_risk_capability_count: int
 
@@ -1351,6 +1352,11 @@ class AuthorityObligationMesh:
             active_accepted_risk_count=sum(
                 1 for obligation in obligations
                 if obligation.obligation_type == "accepted_risk_review"
+                and obligation.status in {ObligationStatus.OPEN, ObligationStatus.ESCALATED}
+            ),
+            active_compensation_review_count=sum(
+                1 for obligation in obligations
+                if obligation.obligation_type == "compensation_review"
                 and obligation.status in {ObligationStatus.OPEN, ObligationStatus.ESCALATED}
             ),
             requires_review_count=sum(

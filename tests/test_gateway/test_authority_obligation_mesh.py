@@ -462,6 +462,7 @@ def test_compensated_obligation_requires_explicit_owner_and_reviewer():
     assert obligations[0].evidence_required == ("compensation_receipt", "compensation_reviewer_attestation")
     assert obligations[0].terminal_certificate_id == certificate.certificate_id
     assert witness.open_obligation_count == 1
+    assert witness.active_compensation_review_count == 1
     assert witness.requires_review_count == 0
 
 

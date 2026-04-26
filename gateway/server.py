@@ -578,6 +578,8 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         tenant_id: str = "",
         status: str = "",
         command_id: str = "",
+        policy_id: str = "",
+        required_role: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
@@ -589,6 +591,10 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             chains = tuple(chain for chain in chains if chain.status.value == status)
         if command_id:
             chains = tuple(chain for chain in chains if chain.command_id == command_id)
+        if policy_id:
+            chains = tuple(chain for chain in chains if chain.policy_id == policy_id)
+        if required_role:
+            chains = tuple(chain for chain in chains if required_role in chain.required_roles)
         page, page_meta = _read_model_page(
             chains,
             limit=_bounded_read_model_limit(limit),

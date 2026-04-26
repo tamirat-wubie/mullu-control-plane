@@ -773,6 +773,7 @@ class TestGatewayStatus:
         assert data["gateway_status"] in {"healthy", "degraded"}
         assert "latest_command_event_hash" in data
         assert "latest_terminal_certificate_id" in data
+        assert "active_compensation_review_count" in data
         assert data["signature_key_id"]
         assert data["signature"].startswith("hmac-sha256:")
 
@@ -789,6 +790,7 @@ class TestGatewayStatus:
         data = resp.json()
         assert data["pending_approval_chain_count"] == 0
         assert data["open_obligation_count"] == 0
+        assert data["active_compensation_review_count"] == 0
         assert data["unowned_high_risk_capability_count"] == 0
 
     def test_authority_operator_console_renders_empty_state(self, client):
@@ -905,6 +907,11 @@ class TestGatewayStatus:
         chains = list_resp.json()["approval_chains"]
         assert chains
         command_id = chains[0]["command_id"]
+        policy_id = chains[0]["policy_id"]
+        required_role = chains[0]["required_roles"][0]
+        policy_resp = client.get(f"/authority/approval-chains?policy_id={policy_id}")
+        role_resp = client.get(f"/authority/approval-chains?required_role={required_role}")
+        missing_role_resp = client.get("/authority/approval-chains?required_role=security_admin")
         command_resp = client.get(f"/commands/{command_id}/authority")
         witness_resp = client.get("/authority/witness")
         console_resp = client.get("/authority/operator")
@@ -914,6 +921,12 @@ class TestGatewayStatus:
         assert paged_resp.json()["total"] >= 1
         assert paged_resp.json()["limit"] == 1
         assert paged_resp.json()["offset"] == 0
+        assert policy_resp.status_code == 200
+        assert any(chain["command_id"] == command_id for chain in policy_resp.json()["approval_chains"])
+        assert role_resp.status_code == 200
+        assert any(chain["command_id"] == command_id for chain in role_resp.json()["approval_chains"])
+        assert missing_role_resp.status_code == 200
+        assert missing_role_resp.json()["count"] == 0
         assert command_resp.status_code == 200
         command_data = command_resp.json()
         assert command_data["approval_chain"]["command_id"] == command_id
