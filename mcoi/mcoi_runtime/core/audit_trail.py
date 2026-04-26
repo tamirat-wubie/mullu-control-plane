@@ -17,7 +17,7 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass
 from hashlib import sha256
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 import json
 
 
@@ -228,3 +228,112 @@ class AuditTrail:
             "actions": action_counts,
             "outcomes": outcome_counts,
         }
+
+
+# ═══════════════════════════════════════════
+# External Verifier (operates on raw entry dicts)
+# ═══════════════════════════════════════════
+
+GENESIS_HASH = sha256(b"genesis").hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class ExternalVerifyResult:
+    """Result of externally verifying a hash chain from raw entry dicts."""
+
+    valid: bool
+    entries_checked: int
+    failure_reason: str = ""
+    failure_sequence: int = -1  # -1 if no failure
+    failure_field: str = ""     # "previous_hash" | "entry_hash" | "schema"
+
+
+def _recompute_entry_hash(entry: Mapping[str, Any]) -> str:
+    """Recompute the SHA-256 hash for an entry using the canonical content layout.
+
+    Mirrors AuditTrail.record() exactly: sorted JSON of the content fields.
+    """
+    content = {
+        "sequence": entry["sequence"],
+        "action": entry["action"],
+        "actor_id": entry["actor_id"],
+        "tenant_id": entry["tenant_id"],
+        "target": entry["target"],
+        "outcome": entry["outcome"],
+        "detail": entry["detail"],
+        "previous_hash": entry["previous_hash"],
+        "recorded_at": entry["recorded_at"],
+    }
+    content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
+    return sha256(content_bytes).hexdigest()
+
+
+def verify_chain_from_entries(
+    entries: list[dict[str, Any]],
+) -> ExternalVerifyResult:
+    """Verify a hash chain from a list of raw entry dicts.
+
+    External verification: recomputes each entry_hash and checks the
+    previous_hash linkage from the genesis anchor (sha256(b"genesis")).
+    This is the canonical verifier for exported audit ledgers and the
+    foundation of audit-trail integrity claims.
+
+    Detects:
+      - Schema corruption (missing required fields)
+      - Entry tampering (entry_hash mismatch)
+      - Chain breakage (previous_hash mismatch)
+      - Genesis violation (first entry's previous_hash != GENESIS_HASH)
+
+    Returns ExternalVerifyResult with detailed failure context.
+    """
+    if not entries:
+        return ExternalVerifyResult(valid=True, entries_checked=0)
+
+    required_fields = {
+        "sequence", "action", "actor_id", "tenant_id", "target",
+        "outcome", "detail", "entry_hash", "previous_hash", "recorded_at",
+    }
+
+    expected_prev = GENESIS_HASH
+    for i, entry in enumerate(entries):
+        # Schema check
+        missing = required_fields - set(entry.keys())
+        if missing:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=f"missing required fields: {sorted(missing)}",
+                failure_sequence=entry.get("sequence", -1),
+                failure_field="schema",
+            )
+
+        # Chain linkage check
+        if entry["previous_hash"] != expected_prev:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=(
+                    f"previous_hash mismatch at sequence {entry['sequence']}: "
+                    f"expected {expected_prev[:16]}..., got {entry['previous_hash'][:16]}..."
+                ),
+                failure_sequence=entry["sequence"],
+                failure_field="previous_hash",
+            )
+
+        # Entry hash check (tamper detection)
+        recomputed = _recompute_entry_hash(entry)
+        if recomputed != entry["entry_hash"]:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=(
+                    f"entry_hash mismatch at sequence {entry['sequence']}: "
+                    f"recomputed {recomputed[:16]}..., stored {entry['entry_hash'][:16]}..."
+                ),
+                failure_sequence=entry["sequence"],
+                failure_field="entry_hash",
+            )
+
+        expected_prev = entry["entry_hash"]
+
+    return ExternalVerifyResult(valid=True, entries_checked=len(entries))
