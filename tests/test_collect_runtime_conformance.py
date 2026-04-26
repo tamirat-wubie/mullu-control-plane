@@ -9,6 +9,7 @@ Invariants:
   - Missing conformance secrets keep signature status explicit.
   - Expired certificates are rejected even when signature verification passes.
   - Degraded or non-conformant terminal status is rejected.
+  - Certificates with invalid embedded runtime or gateway witness state are rejected.
   - Written output preserves collection and certificate evidence.
 """
 
@@ -130,6 +131,36 @@ def test_collect_runtime_conformance_rejects_degraded_status(monkeypatch) -> Non
     assert "runtime conformance terminal status was not acceptable" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_invalid_embedded_witness(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        gateway_witness_valid=False,
+        runtime_witness_valid=True,
+    )
+
+    def fake_urlopen(request, timeout):
+        return StubHttpResponse(status=200, payload=certificate)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    witness_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance witness validity"
+    )
+
+    assert collection.certificate_status == "conformant_with_gaps"
+    assert collection.signature_status == "verified"
+    assert witness_step.passed is False
+    assert "gateway_witness_valid=False" in witness_step.detail
+    assert "runtime_witness_valid=True" in witness_step.detail
+    assert "runtime conformance embedded witness validity failed" in collection.errors
+
+
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
@@ -178,14 +209,16 @@ def _signed_certificate(
     secret: str,
     expires_at: str = "2099-04-25T12:30:00+00:00",
     terminal_status: str = "conformant_with_gaps",
+    gateway_witness_valid: bool = True,
+    runtime_witness_valid: bool = True,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
         "environment": "pilot",
         "issued_at": "2026-04-25T12:00:00+00:00",
         "expires_at": expires_at,
-        "gateway_witness_valid": True,
-        "runtime_witness_valid": True,
+        "gateway_witness_valid": gateway_witness_valid,
+        "runtime_witness_valid": runtime_witness_valid,
         "latest_anchor_valid": True,
         "command_closure_canary_passed": True,
         "capability_admission_canary_passed": True,

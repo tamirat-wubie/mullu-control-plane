@@ -9,6 +9,7 @@ Invariants:
   - Missing endpoint evidence is recorded as a failed collection.
   - HMAC verification is explicit when a conformance secret is supplied.
   - Production readiness is not inferred from an unsigned or expired certificate.
+  - Production readiness requires embedded gateway and runtime witness validity.
   - Output preserves the original certificate payload plus collection witness.
 """
 
@@ -130,6 +131,21 @@ def collect_runtime_conformance(
     ))
     if not status_passed:
         errors.append("runtime conformance terminal status was not acceptable")
+
+    witness_validity_passed = (
+        bool(certificate.get("gateway_witness_valid"))
+        and bool(certificate.get("runtime_witness_valid"))
+    )
+    steps.append(CollectionStep(
+        name="runtime conformance witness validity",
+        passed=witness_validity_passed,
+        detail=(
+            f"gateway_witness_valid={bool(certificate.get('gateway_witness_valid'))} "
+            f"runtime_witness_valid={bool(certificate.get('runtime_witness_valid'))}"
+        ),
+    ))
+    if not witness_validity_passed:
+        errors.append("runtime conformance embedded witness validity failed")
 
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(

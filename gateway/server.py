@@ -659,6 +659,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         owner_id: str = "",
         owner_team: str = "",
         obligation_type: str = "",
+        overdue: str = "",
         limit: int = 100,
         offset: int = 0,
     ):
@@ -676,6 +677,28 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             obligations = tuple(
                 obligation for obligation in obligations
                 if obligation.obligation_type == obligation_type
+            )
+        if overdue:
+            requested_overdue = overdue.strip().lower()
+            if requested_overdue not in {"true", "false"}:
+                raise HTTPException(400, detail="overdue must be true or false")
+            now = datetime.fromisoformat(_clock().replace("Z", "+00:00"))
+            if now.tzinfo is None:
+                now = now.replace(tzinfo=timezone.utc)
+
+            def _obligation_overdue(obligation: Any) -> bool:
+                try:
+                    due_at = datetime.fromisoformat(obligation.due_at.replace("Z", "+00:00"))
+                except ValueError:
+                    return False
+                if due_at.tzinfo is None:
+                    due_at = due_at.replace(tzinfo=timezone.utc)
+                return due_at <= now
+
+            expected = requested_overdue == "true"
+            obligations = tuple(
+                obligation for obligation in obligations
+                if _obligation_overdue(obligation) is expected
             )
         page, page_meta = _read_model_page(
             obligations,
