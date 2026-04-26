@@ -424,6 +424,32 @@ def build_parser() -> argparse.ArgumentParser:
     pilot_init_parser.add_argument("--max-calls", type=int, default=1000, help="Pilot budget call limit")
     pilot_init_parser.add_argument("--force", action="store_true", help="Overwrite existing scaffold files")
 
+    verify_ledger_parser = subparsers.add_parser(
+        "verify-ledger",
+        help="Verify the hash chain of an exported audit ledger (JSONL)",
+    )
+    verify_ledger_parser.add_argument(
+        "input",
+        help="Path to audit ledger JSONL file (one JSON entry per line)",
+    )
+    verify_ledger_parser.add_argument(
+        "--from-sequence", type=int, default=None,
+        help="Verify only entries with sequence >= N (slice mode)",
+    )
+    verify_ledger_parser.add_argument(
+        "--to-sequence", type=int, default=None,
+        help="Verify only entries with sequence <= N (slice mode)",
+    )
+    verify_ledger_parser.add_argument(
+        "--anchor-hash", default=None,
+        help=(
+            "SHA-256 hex of the previous_hash that the first entry in the "
+            "(optionally sliced) input must link to. Required for "
+            "compliance-grade slice verification — without it, a fabricated "
+            "self-consistent slice will pass. See docs/LEDGER_SPEC.md."
+        ),
+    )
+
     return parser
 
 
@@ -593,6 +619,95 @@ def demo_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def verify_ledger_command(args: argparse.Namespace) -> int:
+    """Verify the hash chain of an exported audit ledger.
+
+    G3 — external ledger verifier. Reads JSONL, recomputes hashes,
+    checks chain linkage from genesis (or operator-supplied anchor for
+    slice mode), and validates sequence monotonicity. Foundation of
+    audit-trail integrity claims. See docs/LEDGER_SPEC.md.
+
+    Exit codes (per LEDGER_SPEC.md):
+      0 — chain valid
+      1 — chain broken: previous_hash mismatch, entry_hash mismatch, or
+          sequence gap (security event — investigate tamper)
+      2 — input error: file missing, invalid JSON, non-object lines
+      3 — schema corruption: missing fields, unknown schema version
+          (writer bug — investigate writer)
+    """
+    from mcoi_runtime.core.audit_trail import verify_chain_from_entries
+
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print(f"error: file not found: {input_path}")
+        return 2
+
+    entries: list[dict[str, Any]] = []
+    try:
+        with input_path.open("r", encoding="utf-8") as f:
+            for line_no, raw in enumerate(f, start=1):
+                raw = raw.strip()
+                if not raw:
+                    continue
+                try:
+                    entry = json.loads(raw)
+                except json.JSONDecodeError as exc:
+                    print(f"error: invalid JSON at line {line_no}: {exc.msg}")
+                    return 2
+                if not isinstance(entry, dict):
+                    print(f"error: line {line_no} is not a JSON object")
+                    return 2
+                entries.append(entry)
+    except OSError as exc:
+        print(f"error: cannot read {input_path}: {exc.strerror}")
+        return 2
+
+    # Optional sequence filter (verifies a contiguous slice).
+    # NOTE: bare slice verification without --anchor-hash proves only
+    # internal consistency of the slice, NOT that the slice belongs to
+    # the real chain. See LEDGER_SPEC.md §"Slice verification".
+    sliced = args.from_sequence is not None or args.to_sequence is not None
+    if args.from_sequence is not None:
+        entries = [e for e in entries if e.get("sequence", -1) >= args.from_sequence]
+    if args.to_sequence is not None:
+        entries = [e for e in entries if e.get("sequence", -1) <= args.to_sequence]
+
+    # Determine anchor sequence (for slice mode the first entry's
+    # sequence is whatever sequence the slice starts at, not 1).
+    anchor_seq: int | None = None
+    if args.anchor_hash is not None and entries:
+        anchor_seq = entries[0].get("sequence")
+
+    if sliced and args.anchor_hash is None:
+        print(
+            "warning: slice verification without --anchor-hash proves only "
+            "internal consistency. See docs/LEDGER_SPEC.md."
+        )
+
+    result = verify_chain_from_entries(
+        entries,
+        anchor_hash=args.anchor_hash,
+        anchor_sequence=anchor_seq,
+    )
+
+    if result.valid:
+        print(f"OK  ledger verified — {result.entries_checked} entries, chain intact")
+        return 0
+
+    print(f"FAIL ledger verification failed")
+    print(f"  entries_checked: {result.entries_checked}")
+    print(f"  failure_sequence: {result.failure_sequence}")
+    print(f"  failure_field: {result.failure_field}")
+    print(f"  reason: {result.failure_reason}")
+
+    # Split exit codes per LEDGER_SPEC.md:
+    # schema corruption → exit 3 (writer bug)
+    # everything else (sequence/previous_hash/entry_hash) → exit 1 (tamper)
+    if result.failure_field == "schema":
+        return 3
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -605,6 +720,7 @@ def main(argv: list[str] | None = None) -> int:
         "pilot": pilot_command,
         "init": init_command,
         "demo": demo_command,
+        "verify-ledger": verify_ledger_command,
     }
 
     handler = commands.get(args.command)

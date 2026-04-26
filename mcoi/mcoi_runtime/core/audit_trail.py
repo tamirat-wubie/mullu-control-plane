@@ -17,7 +17,7 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass
 from hashlib import sha256
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 import json
 
 
@@ -228,3 +228,187 @@ class AuditTrail:
             "actions": action_counts,
             "outcomes": outcome_counts,
         }
+
+
+# ═══════════════════════════════════════════
+# External Verifier (operates on raw entry dicts)
+# ═══════════════════════════════════════════
+
+GENESIS_HASH = sha256(b"genesis").hexdigest()
+
+# Maximum ledger schema version this verifier knows how to interpret.
+# Bump only when LEDGER_SPEC.md defines a new canonical content layout.
+LEDGER_SCHEMA_VERSION_MAX = 1
+
+
+@dataclass(frozen=True, slots=True)
+class ExternalVerifyResult:
+    """Result of externally verifying a hash chain from raw entry dicts.
+
+    failure_field values (from LEDGER_SPEC.md §"Verification semantics"):
+      - "schema"         — missing field or unknown schema_version (writer bug)
+      - "sequence"       — non-monotonic sequence numbers (deletion attack)
+      - "previous_hash"  — chain linkage broken (tamper or fabrication)
+      - "entry_hash"     — entry content modified after writing (tamper)
+
+    Operationally distinguish "schema" (writer bug, exit 3) from the
+    other three (security event, exit 1).
+    """
+
+    valid: bool
+    entries_checked: int
+    failure_reason: str = ""
+    failure_sequence: int = -1  # -1 if no failure
+    failure_field: str = ""     # "schema" | "sequence" | "previous_hash" | "entry_hash"
+
+
+def _recompute_entry_hash(entry: Mapping[str, Any]) -> str:
+    """Recompute the SHA-256 hash for an entry using the canonical content layout.
+
+    Mirrors AuditTrail.record() exactly: sorted JSON of the content fields.
+    """
+    content = {
+        "sequence": entry["sequence"],
+        "action": entry["action"],
+        "actor_id": entry["actor_id"],
+        "tenant_id": entry["tenant_id"],
+        "target": entry["target"],
+        "outcome": entry["outcome"],
+        "detail": entry["detail"],
+        "previous_hash": entry["previous_hash"],
+        "recorded_at": entry["recorded_at"],
+    }
+    content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
+    return sha256(content_bytes).hexdigest()
+
+
+def verify_chain_from_entries(
+    entries: list[dict[str, Any]],
+    *,
+    anchor_hash: str | None = None,
+    anchor_sequence: int | None = None,
+) -> ExternalVerifyResult:
+    """Verify a hash chain from a list of raw entry dicts.
+
+    External verification of an exported audit ledger. See
+    docs/LEDGER_SPEC.md for the full specification.
+
+    Args:
+        entries: List of entry dicts (e.g., loaded from JSONL).
+        anchor_hash: Required only for slice verification. If supplied,
+            entries[0].previous_hash must equal this value (instead of
+            GENESIS_HASH). Used to anchor a slice to a trusted external
+            checkpoint. None = full-chain verification from genesis.
+        anchor_sequence: First expected sequence number. Required when
+            anchor_hash is set (slices don't start at sequence 1).
+            None = full-chain verification (start at sequence 1).
+
+    Returns:
+        ExternalVerifyResult with detailed failure context.
+
+    The verifier checks (in order, per entry):
+      1. Schema completeness — every required field is present
+      2. Schema version — schema_version (if present) <= LEDGER_SCHEMA_VERSION_MAX
+      3. Sequence monotonicity — entries[i].sequence == entries[i-1].sequence + 1
+      4. Chain linkage — previous_hash matches prior entry's entry_hash
+      5. Entry-hash integrity — recomputed hash equals stored entry_hash
+    """
+    if not entries:
+        return ExternalVerifyResult(valid=True, entries_checked=0)
+
+    required_fields = {
+        "sequence", "action", "actor_id", "tenant_id", "target",
+        "outcome", "detail", "entry_hash", "previous_hash", "recorded_at",
+    }
+
+    # Determine the expected first-entry anchor.
+    if anchor_hash is not None:
+        expected_prev = anchor_hash
+        expected_sequence = anchor_sequence if anchor_sequence is not None else 1
+    else:
+        expected_prev = GENESIS_HASH
+        expected_sequence = 1
+
+    for i, entry in enumerate(entries):
+        # 1. Schema check
+        missing = required_fields - set(entry.keys())
+        if missing:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=f"missing required fields: {sorted(missing)}",
+                failure_sequence=entry.get("sequence", -1),
+                failure_field="schema",
+            )
+
+        # 2. Schema version check
+        version = entry.get("schema_version", 1)
+        if not isinstance(version, int) or version < 1:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=f"invalid schema_version: {version!r}",
+                failure_sequence=entry.get("sequence", -1),
+                failure_field="schema",
+            )
+        if version > LEDGER_SCHEMA_VERSION_MAX:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=(
+                    f"unknown schema_version {version} at sequence "
+                    f"{entry['sequence']}: this verifier supports up to "
+                    f"v{LEDGER_SCHEMA_VERSION_MAX}. Upgrade the verifier."
+                ),
+                failure_sequence=entry["sequence"],
+                failure_field="schema",
+            )
+
+        # 3. Sequence monotonicity check (G3.2)
+        # Detects deletion-with-rewrite: an attacker who deletes a middle
+        # entry and re-hashes downstream entries can pass chain linkage,
+        # but the sequence numbers will have a gap (or be renumbered
+        # consistently — caught by entry_hash since sequence is hashed).
+        if entry["sequence"] != expected_sequence:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=(
+                    f"sequence gap at index {i}: expected {expected_sequence}, "
+                    f"got {entry['sequence']}"
+                ),
+                failure_sequence=entry["sequence"],
+                failure_field="sequence",
+            )
+
+        # 4. Chain linkage check
+        if entry["previous_hash"] != expected_prev:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=(
+                    f"previous_hash mismatch at sequence {entry['sequence']}: "
+                    f"expected {expected_prev[:16]}..., got {entry['previous_hash'][:16]}..."
+                ),
+                failure_sequence=entry["sequence"],
+                failure_field="previous_hash",
+            )
+
+        # 5. Entry hash check (tamper detection)
+        recomputed = _recompute_entry_hash(entry)
+        if recomputed != entry["entry_hash"]:
+            return ExternalVerifyResult(
+                valid=False,
+                entries_checked=i,
+                failure_reason=(
+                    f"entry_hash mismatch at sequence {entry['sequence']}: "
+                    f"recomputed {recomputed[:16]}..., stored {entry['entry_hash'][:16]}..."
+                ),
+                failure_sequence=entry["sequence"],
+                failure_field="entry_hash",
+            )
+
+        expected_prev = entry["entry_hash"]
+        expected_sequence += 1
+
+    return ExternalVerifyResult(valid=True, entries_checked=len(entries))
