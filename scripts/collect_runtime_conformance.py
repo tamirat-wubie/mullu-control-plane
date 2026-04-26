@@ -41,6 +41,7 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "signature_key_id",
     "signature",
 )
+ACCEPTED_CONFORMANCE_STATUSES = frozenset({"conformant", "conformant_with_gaps"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +121,16 @@ def collect_runtime_conformance(
     if not freshness_passed:
         errors.append("runtime conformance certificate was expired or malformed")
 
+    certificate_status = str(certificate.get("terminal_status", "missing"))
+    status_passed = certificate_status in ACCEPTED_CONFORMANCE_STATUSES
+    steps.append(CollectionStep(
+        name="runtime conformance terminal status",
+        passed=status_passed,
+        detail=f"terminal_status={certificate_status}",
+    ))
+    if not status_passed:
+        errors.append("runtime conformance terminal status was not acceptable")
+
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(
         name="runtime conformance signature",
@@ -129,7 +140,6 @@ def collect_runtime_conformance(
     if not signature_passed:
         errors.append("runtime conformance signature was not verified")
 
-    certificate_status = str(certificate.get("terminal_status", "missing"))
     collection_seed = {
         "gateway_url": gateway_base,
         "collected_at": collected_at,
