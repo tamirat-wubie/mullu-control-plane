@@ -409,6 +409,62 @@ def test_accepted_risk_obligation_requires_explicit_owner_and_future_expiry():
     assert witness.open_obligation_count == 1
 
 
+def test_compensated_certificate_requires_reviewer_before_mesh_review():
+    ledger = _ledger()
+    command = _payment_command(ledger)
+    ledger.record_operational_claim(
+        command.command_id,
+        text="Command was compensated.",
+        verified=True,
+    )
+
+    with pytest.raises(ValueError, match="^compensated terminal closure requires compensation_reviewer_id$"):
+        ledger.certify_terminal_closure(
+            command.command_id,
+            disposition=ClosureDisposition.COMPENSATED,
+            compensation_outcome_id="compensation-1",
+        )
+
+
+def test_compensated_obligation_requires_explicit_owner_and_reviewer():
+    ledger = _ledger()
+    command = _payment_command(ledger)
+    ledger.record_operational_claim(
+        command.command_id,
+        text="Command was compensated.",
+        verified=True,
+    )
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.COMPENSATED,
+        compensation_outcome_id="compensation-1",
+        metadata={"compensation_reviewer_id": "finance-reviewer-1"},
+    )
+    mesh = AuthorityObligationMesh(commands=ledger, clock=ledger._clock)
+
+    with pytest.raises(ValueError, match="^compensated closure requires explicit ownership binding$"):
+        mesh.open_post_closure_obligations(
+            command_id=command.command_id,
+            certificate=certificate,
+        )
+
+    _register_payment_owner(mesh)
+    obligations = mesh.open_post_closure_obligations(
+        command_id=command.command_id,
+        certificate=certificate,
+    )
+    witness = mesh.responsibility_witness()
+
+    assert len(obligations) == 1
+    assert obligations[0].owner_id == "finance-manager-1"
+    assert obligations[0].owner_team == "finance_ops"
+    assert obligations[0].obligation_type == "compensation_review"
+    assert obligations[0].evidence_required == ("compensation_receipt", "compensation_reviewer_attestation")
+    assert obligations[0].terminal_certificate_id == certificate.certificate_id
+    assert witness.open_obligation_count == 1
+    assert witness.requires_review_count == 0
+
+
 def test_satisfy_obligation_requires_evidence_and_active_status():
     ledger = _ledger()
     command = _payment_command(ledger)

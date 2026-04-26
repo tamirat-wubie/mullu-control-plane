@@ -1180,19 +1180,20 @@ class AuthorityObligationMesh:
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         elif certificate.disposition is ClosureDisposition.COMPENSATED:
-            ownership = self._resolve_ownership(
-                tenant_id=command.tenant_id,
-                resource_ref=resource_ref,
-                requester_id=command.actor_id,
-                risk_tier=action.risk_tier if action is not None else "medium",
-            )
+            ownership = self._store.load_ownership(command.tenant_id, resource_ref)
+            if ownership is None:
+                raise ValueError("compensated closure requires explicit ownership binding")
+            if not certificate.compensation_outcome_id:
+                raise ValueError("compensated closure requires compensation_outcome_id")
+            if not str(certificate.metadata.get("compensation_reviewer_id", "")):
+                raise ValueError("compensated closure requires compensation_reviewer_id")
             obligations = (self._open_obligation(
                 command_id=command_id,
                 tenant_id=command.tenant_id,
                 owner=ownership,
                 obligation_type="compensation_review",
                 due_at=self._future_iso(hours=24),
-                evidence_required=("compensation_receipt", "operator_review"),
+                evidence_required=("compensation_receipt", "compensation_reviewer_attestation"),
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         else:

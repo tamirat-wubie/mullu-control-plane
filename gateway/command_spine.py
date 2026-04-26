@@ -2877,6 +2877,9 @@ class CommandLedger:
         elif disposition is ClosureDisposition.COMPENSATED:
             if not compensation_outcome_id:
                 raise ValueError("compensated terminal closure requires compensation outcome")
+            compensation_reviewer_id = str((metadata or {}).get("compensation_reviewer_id", ""))
+            if not compensation_reviewer_id:
+                raise ValueError("compensated terminal closure requires compensation_reviewer_id")
         elif disposition is ClosureDisposition.ACCEPTED_RISK:
             if not accepted_risk_id or not case_id:
                 raise ValueError("accepted-risk terminal closure requires active risk and case")
