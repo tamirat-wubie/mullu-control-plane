@@ -17,6 +17,10 @@ on:
       - 'docs/LEDGER_SPEC.md'
       - '.github/workflows/nightly_tamper_drill.yml'
 
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   tamper-drill:
     name: Verify ledger tamper detection (10 scenarios)
