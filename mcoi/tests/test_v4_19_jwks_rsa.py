@@ -168,6 +168,7 @@ def _config_with_static_keys(public_keys: dict[str, bytes]) -> OIDCConfig:
         issuer="iss", audience="aud",
         public_keys=public_keys,
         allowed_algorithms=frozenset({"RS256", "RS384", "RS512"}),
+        require_tenant_claim=False,
     )
 
 
@@ -309,6 +310,7 @@ def test_mixed_mode_accepts_both_families(rsa_keypair):
         signing_key=b"hmac-secret",
         public_keys={"k1": pub_pem},
         allowed_algorithms=frozenset({"HS256", "RS256"}),
+        require_tenant_claim=False,
     ))
 
     hs_token = auth.create_token(subject="hmac-user", algorithm="HS256")

@@ -33,6 +33,12 @@ def _config(
     key: bytes = b"super-secret-key-for-testing-32b",
     **kwargs,
 ) -> OIDCConfig:
+    # v4.33.0: existing tests pre-date the require_tenant_claim
+    # invariant. They build tokens without tenant_id; default the
+    # helper to relaxed mode so they keep passing. Tests that
+    # exercise the strict v4.33 behavior pass require_tenant_claim=True
+    # explicitly (or use a separate test file).
+    kwargs.setdefault("require_tenant_claim", False)
     return OIDCConfig(issuer=issuer, audience=audience, signing_key=key, **kwargs)
 
 
