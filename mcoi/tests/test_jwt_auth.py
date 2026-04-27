@@ -66,17 +66,17 @@ class TestOIDCConfig:
         with pytest.raises(ValueError, match="unsupported"):
             OIDCConfig(
                 issuer="iss", audience="aud", signing_key=b"key",
-                allowed_algorithms=frozenset({"RS256"}),
+                allowed_algorithms=frozenset({"ES256"}),
             )
 
     def test_unsupported_algorithm_error_is_bounded(self):
         with pytest.raises(ValueError, match="unsupported algorithm") as excinfo:
             OIDCConfig(
                 issuer="iss", audience="aud", signing_key=b"key",
-                allowed_algorithms=frozenset({"RS256"}),
+                allowed_algorithms=frozenset({"ES256"}),
             )
         assert str(excinfo.value) == "unsupported algorithm"
-        assert "RS256" not in str(excinfo.value)
+        assert "ES256" not in str(excinfo.value)
         assert ":" not in str(excinfo.value)
 
     def test_custom_claims(self):
@@ -138,14 +138,14 @@ class TestTokenCreation:
     def test_unsupported_algorithm_raises(self):
         auth = _auth()
         with pytest.raises(ValueError, match="unsupported"):
-            auth.create_token(subject="user1", algorithm="RS256")
+            auth.create_token(subject="user1", algorithm="ES256")
 
     def test_unsupported_token_algorithm_error_is_bounded(self):
         auth = _auth()
         with pytest.raises(ValueError, match="unsupported algorithm") as excinfo:
-            auth.create_token(subject="user1", algorithm="RS256")
+            auth.create_token(subject="user1", algorithm="ES256")
         assert str(excinfo.value) == "unsupported algorithm"
-        assert "RS256" not in str(excinfo.value)
+        assert "ES256" not in str(excinfo.value)
         assert ":" not in str(excinfo.value)
 
 
