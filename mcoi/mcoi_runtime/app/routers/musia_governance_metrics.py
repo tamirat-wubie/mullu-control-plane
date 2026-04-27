@@ -27,6 +27,7 @@ scope so operators can scrape from outside the process.
 """
 from __future__ import annotations
 
+import math
 from collections import deque
 from dataclasses import dataclass, field
 from threading import RLock
@@ -49,6 +50,63 @@ _VALID_VERDICTS = frozenset({VERDICT_ALLOWED, VERDICT_DENIED, VERDICT_EXCEPTION}
 # spot-checks; operators wanting full history scrape the metrics into
 # a TSDB at intervals.
 MAX_RECENT_REJECTIONS = 50
+
+# Latency histogram bucket boundaries in seconds. Picked from measured
+# v4.17 benchmark numbers (5–16μs typical, 41μs p99) plus headroom
+# for pathological cases up to 5ms (a guard doing blocking I/O would
+# fall here). Boundaries are cumulative ("less than or equal to").
+# +Inf is implied by the histogram convention.
+DEFAULT_LATENCY_BUCKETS_SECONDS: tuple[float, ...] = (
+    0.000_001,   # 1μs   — well below any real chain
+    0.000_005,   # 5μs   — typical empty-bridge cost
+    0.000_010,   # 10μs  — typical 1-guard chain
+    0.000_025,   # 25μs  — typical 5-guard chain
+    0.000_050,   # 50μs  — measured p99 ceiling
+    0.000_100,   # 100μs — first sign of slow guard
+    0.000_250,   # 250μs
+    0.000_500,   # 500μs
+    0.001,       # 1ms   — clearly degraded
+    0.002_5,     # 2.5ms
+    0.005,       # 5ms   — pathological (blocking I/O in guard?)
+)
+
+
+@dataclass(frozen=True)
+class LatencyHistogram:
+    """A simple histogram for chain-evaluation duration in seconds.
+
+    v4.21.0+. Buckets are cumulative ("le=" semantics): bucket i counts
+    every observation with duration ≤ ``upper_bounds[i]``. The +Inf
+    bucket is the total count.
+
+    Purely additive — never subtracts. Concurrent recording is safe
+    when the registry holds the lock during ``observe()``; the snapshot
+    is taken under the same lock and is immutable.
+    """
+
+    upper_bounds: tuple[float, ...]
+    bucket_counts: tuple[int, ...]  # cumulative; same length as upper_bounds
+    sum_seconds: float
+    count: int
+
+    def p_estimate(self, p: float) -> float | None:
+        """Estimate a percentile from the cumulative bucket counts.
+
+        Returns the smallest upper bound whose cumulative count exceeds
+        ``p × total``, or None if no observations yet. Coarse — useful
+        only at log-scale precision (p99 of 50μs in this histogram is
+        reported as "≤50μs", not 47.3μs).
+
+        Operators wanting high-precision percentiles should ingest the
+        histogram into Prometheus and use ``histogram_quantile()``.
+        """
+        if self.count == 0:
+            return None
+        target = p * self.count
+        for bound, cum in zip(self.upper_bounds, self.bucket_counts):
+            if cum >= target:
+                return bound
+        return math.inf  # in the +Inf bucket
 
 
 @dataclass(frozen=True)
@@ -85,6 +143,12 @@ class GovernanceMetricsSnapshot:
 
     # Last MAX_RECENT_REJECTIONS rejection events, oldest first.
     recent_rejections: tuple[RejectionEvent, ...]
+
+    # By surface — chain-evaluation latency histogram (v4.21.0+).
+    # Empty dict in v4.20.x snapshots; populated when bridge call sites
+    # pass duration_seconds= to record(). Stays an empty dict (not None)
+    # so consumers can iterate without None-checks.
+    latency_by_surface: dict[str, LatencyHistogram] = field(default_factory=dict)
 
     def total_runs(self) -> int:
         return sum(self.runs_by_surface_verdict.values())
@@ -139,6 +203,15 @@ class GovernanceMetricsSnapshot:
             ],
             "total_runs": self.total_runs(),
             "total_denials": self.total_denials(),
+            "latency_by_surface": {
+                surface: {
+                    "upper_bounds": list(hist.upper_bounds),
+                    "bucket_counts": list(hist.bucket_counts),
+                    "sum_seconds": hist.sum_seconds,
+                    "count": hist.count,
+                }
+                for surface, hist in self.latency_by_surface.items()
+            },
         }
 
 
@@ -259,15 +332,111 @@ def _snapshot_to_prometheus(
         samples=[({}, len(snap.recent_rejections))],
     ))
 
+    # Latency histograms by surface (v4.21.0+).
+    # Prometheus convention: <metric_base>_bucket{le="<upper>"} for
+    # cumulative bucket counts, plus _sum and _count. The +Inf bucket
+    # is required and equals _count.
+    chain_duration_base = f"{prefix}_governance_chain_duration_seconds"
+    if snap.latency_by_surface:
+        families.append(
+            _format_histogram_family(
+                metric_base=chain_duration_base,
+                help_text=(
+                    "Chain evaluation duration in seconds, by surface. "
+                    "Buckets are cumulative ('le=' semantics). The +Inf "
+                    "bucket equals the total count."
+                ),
+                histograms_by_label=[
+                    ({"surface": surface}, snap.latency_by_surface[surface])
+                    for surface in sorted(snap.latency_by_surface.keys())
+                ],
+            )
+        )
+    else:
+        # Empty-state: emit HELP + TYPE so scrapers register the family
+        families.append([
+            f"# HELP {chain_duration_base} Chain evaluation duration in "
+            f"seconds, by surface. Buckets are cumulative.",
+            f"# TYPE {chain_duration_base} histogram",
+        ])
+
     # Join with blank line between families; trailing newline required
     body = "\n\n".join("\n".join(family) for family in families)
     return body + "\n"
 
 
+def _format_histogram_family(
+    *,
+    metric_base: str,
+    help_text: str,
+    histograms_by_label: list[tuple[dict[str, str], "LatencyHistogram"]],
+) -> list[str]:
+    """Format a histogram family in Prometheus text format.
+
+    Each histogram series emits, for one (label_set, histogram) pair:
+        - one ``<base>_bucket{le="<upper>", ...}`` line per bucket
+        - one ``<base>_bucket{le="+Inf", ...}`` line (= count)
+        - one ``<base>_sum{...}`` line
+        - one ``<base>_count{...}`` line
+    """
+    lines = [
+        f"# HELP {metric_base} {help_text}",
+        f"# TYPE {metric_base} histogram",
+    ]
+    for labels, hist in histograms_by_label:
+        # Bucket lines (with le label)
+        for ub, count in zip(hist.upper_bounds, hist.bucket_counts):
+            le_labels = dict(labels)
+            le_labels["le"] = _format_le(ub)
+            label_str = ",".join(
+                f'{k}="{_escape_prometheus_label(v)}"'
+                for k, v in sorted(le_labels.items())
+            )
+            lines.append(f"{metric_base}_bucket{{{label_str}}} {count}")
+        # +Inf bucket — required
+        inf_labels = dict(labels)
+        inf_labels["le"] = "+Inf"
+        label_str = ",".join(
+            f'{k}="{_escape_prometheus_label(v)}"'
+            for k, v in sorted(inf_labels.items())
+        )
+        lines.append(f"{metric_base}_bucket{{{label_str}}} {hist.count}")
+        # _sum and _count
+        if labels:
+            label_str = ",".join(
+                f'{k}="{_escape_prometheus_label(v)}"'
+                for k, v in sorted(labels.items())
+            )
+            lines.append(f"{metric_base}_sum{{{label_str}}} {hist.sum_seconds}")
+            lines.append(f"{metric_base}_count{{{label_str}}} {hist.count}")
+        else:
+            lines.append(f"{metric_base}_sum {hist.sum_seconds}")
+            lines.append(f"{metric_base}_count {hist.count}")
+    return lines
+
+
+def _format_le(value: float) -> str:
+    """Format a bucket upper bound for Prometheus le= labels.
+
+    Whole-number microseconds and milliseconds expressed cleanly;
+    other values use repr-style float so 0.0001 doesn't become 1e-4.
+    """
+    # Use a fixed-precision representation that round-trips cleanly.
+    # 9 sig digits is enough for our 1μs-to-5ms range.
+    s = f"{value:.9f}".rstrip("0")
+    if s.endswith("."):
+        s += "0"
+    return s
+
+
 class GovernanceMetricsRegistry:
     """Thread-safe registry. Singleton-style — one per process."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        latency_buckets_seconds: tuple[float, ...] = DEFAULT_LATENCY_BUCKETS_SECONDS,
+    ) -> None:
         self._lock = RLock()
         self._runs_by_surface_verdict: dict[tuple[str, str], int] = {}
         self._runs_by_surface_tenant: dict[tuple[str, str], int] = {}
@@ -275,6 +444,34 @@ class GovernanceMetricsRegistry:
         self._recent_rejections: deque[RejectionEvent] = deque(
             maxlen=MAX_RECENT_REJECTIONS,
         )
+        # Latency histograms — one per surface (v4.21.0+).
+        # Bucket boundaries are immutable for the registry's lifetime;
+        # operators wanting different boundaries construct a new
+        # registry. _latency_state[surface] = (cumulative_counts_list,
+        # sum_seconds, count). Cumulative count semantics (le=).
+        self._latency_buckets: tuple[float, ...] = latency_buckets_seconds
+        self._latency_state: dict[str, list[Any]] = {}
+
+    def _observe_latency_locked(
+        self, surface: str, duration_seconds: float
+    ) -> None:
+        """Update the per-surface latency histogram. MUST hold _lock."""
+        state = self._latency_state.get(surface)
+        if state is None:
+            # [list of cumulative counts, sum_seconds, count]
+            state = [
+                [0] * len(self._latency_buckets),
+                0.0,
+                0,
+            ]
+            self._latency_state[surface] = state
+        # Cumulative semantics: increment every bucket whose upper
+        # bound ≥ duration. The +Inf bucket is implicit in count.
+        for i, ub in enumerate(self._latency_buckets):
+            if duration_seconds <= ub:
+                state[0][i] += 1
+        state[1] += duration_seconds
+        state[2] += 1
 
     def record(
         self,
@@ -286,6 +483,7 @@ class GovernanceMetricsRegistry:
         reason: str = "",
         exception: bool = False,
         now: float | None = None,
+        duration_seconds: float | None = None,
     ) -> None:
         """Record one chain invocation.
 
@@ -295,6 +493,11 @@ class GovernanceMetricsRegistry:
         - blocking_guard / reason: only consulted on denial. ``"unknown"``
           when the bridge couldn't extract the guard name.
         - now: injectable clock for tests.
+        - duration_seconds: chain-evaluation duration (v4.21.0+). Optional
+          for backward compatibility — when omitted, no histogram update.
+          Bridge call sites (chain_to_validator, gate_domain_run) pass
+          time.monotonic_ns() deltas converted to seconds. Negative
+          values are treated as zero (clock skew defense).
 
         Bad inputs raise ValueError to surface miswiring early; production
         callers should never trip these.
@@ -346,14 +549,30 @@ class GovernanceMetricsRegistry:
                         reason=reason,
                     )
                 )
+            # Latency observation is recorded for every verdict
+            # (allowed, denied, exception). A crashing guard is still
+            # interesting wall-clock data — operators want to see if
+            # certain guards are slow even when they fail.
+            if duration_seconds is not None:
+                d = max(0.0, duration_seconds)
+                self._observe_latency_locked(surface, d)
 
     def snapshot(self) -> GovernanceMetricsSnapshot:
         with self._lock:
+            latency_by_surface: dict[str, LatencyHistogram] = {}
+            for surface, state in self._latency_state.items():
+                latency_by_surface[surface] = LatencyHistogram(
+                    upper_bounds=self._latency_buckets,
+                    bucket_counts=tuple(state[0]),
+                    sum_seconds=state[1],
+                    count=state[2],
+                )
             return GovernanceMetricsSnapshot(
                 runs_by_surface_verdict=dict(self._runs_by_surface_verdict),
                 runs_by_surface_tenant=dict(self._runs_by_surface_tenant),
                 denials_by_guard=dict(self._denials_by_guard),
                 recent_rejections=tuple(self._recent_rejections),
+                latency_by_surface=latency_by_surface,
             )
 
     def reset(self) -> None:
@@ -363,6 +582,7 @@ class GovernanceMetricsRegistry:
             self._runs_by_surface_tenant.clear()
             self._denials_by_guard.clear()
             self._recent_rejections.clear()
+            self._latency_state.clear()
 
 
 REGISTRY = GovernanceMetricsRegistry()
