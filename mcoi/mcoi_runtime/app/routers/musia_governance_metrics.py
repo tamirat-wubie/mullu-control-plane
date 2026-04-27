@@ -95,6 +95,26 @@ class GovernanceMetricsSnapshot:
             if verdict == VERDICT_DENIED
         )
 
+    def to_prometheus_text(self, *, prefix: str = "mullu") -> str:
+        """Emit Prometheus exposition format (v0.0.4) for this snapshot.
+
+        v4.20.0+. Counters use the ``_total`` suffix per Prometheus
+        naming convention. Cardinality bounds:
+
+        - ``runs_by_surface_verdict`` → 2 surfaces × 3 verdicts = 6 series
+        - ``denials_by_guard`` → bounded by chain config (typically 5–15 guards)
+        - ``runs_by_surface_tenant`` → 2 × tenant_count; **operators with
+          large fleets should drop this metric in their scrape config or
+          use Prometheus relabel rules to bound cardinality**
+
+        Returns a string ending in ``\\n``, ready to return as
+        ``Content-Type: text/plain; version=0.0.4; charset=utf-8``.
+
+        Label values are escaped per the Prometheus spec:
+        ``\\`` → ``\\\\``, ``"`` → ``\\"``, newline → ``\\n``.
+        """
+        return _snapshot_to_prometheus(self, prefix=prefix)
+
     def as_dict(self) -> dict[str, Any]:
         """JSON-serializable view. Tuple keys become ``"surface:verdict"`` etc."""
         return {
@@ -120,6 +140,128 @@ class GovernanceMetricsSnapshot:
             "total_runs": self.total_runs(),
             "total_denials": self.total_denials(),
         }
+
+
+def _escape_prometheus_label(value: str) -> str:
+    """Escape a label value per Prometheus exposition format spec."""
+    return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+
+
+def _format_metric_family(
+    *,
+    name: str,
+    help_text: str,
+    metric_type: str,
+    samples: list[tuple[dict[str, str], float]],
+) -> list[str]:
+    """Format one metric family as Prometheus text-format lines.
+
+    Each sample is a (labels, value) tuple. Empty samples list still
+    emits HELP + TYPE so the metric is discoverable as "exists but
+    empty" — useful before the first request lands.
+    """
+    lines = [
+        f"# HELP {name} {help_text}",
+        f"# TYPE {name} {metric_type}",
+    ]
+    for labels, value in samples:
+        if labels:
+            label_pairs = ",".join(
+                f'{k}="{_escape_prometheus_label(v)}"'
+                for k, v in sorted(labels.items())
+            )
+            lines.append(f"{name}{{{label_pairs}}} {value}")
+        else:
+            lines.append(f"{name} {value}")
+    return lines
+
+
+def _snapshot_to_prometheus(
+    snap: "GovernanceMetricsSnapshot",
+    *,
+    prefix: str = "mullu",
+) -> str:
+    """Build the Prometheus text exposition for a snapshot.
+
+    Module-private helper; callers use ``snap.to_prometheus_text()``.
+    Kept separate so both the snapshot's bound method and the HTTP
+    endpoint (which may want to inject a different prefix) share one
+    implementation.
+    """
+    chain_runs = f"{prefix}_governance_chain_runs_total"
+    chain_runs_tenant = f"{prefix}_governance_chain_runs_by_tenant_total"
+    chain_denials_guard = f"{prefix}_governance_chain_denials_by_guard_total"
+    chain_recent_rejections = f"{prefix}_governance_chain_recent_rejections"
+    chain_total_runs = f"{prefix}_governance_chain_total_runs"
+    chain_total_denials = f"{prefix}_governance_chain_total_denials"
+
+    families: list[list[str]] = []
+
+    # By (surface, verdict) — core counters
+    families.append(_format_metric_family(
+        name=chain_runs,
+        help_text="Total chain invocations by surface and verdict.",
+        metric_type="counter",
+        samples=[
+            ({"surface": s, "verdict": v}, n)
+            for (s, v), n in sorted(snap.runs_by_surface_verdict.items())
+        ],
+    ))
+
+    # By (surface, tenant) — high-cardinality; operators may drop
+    families.append(_format_metric_family(
+        name=chain_runs_tenant,
+        help_text=(
+            "Total chain invocations by surface and tenant. "
+            "Cardinality grows with tenant count; consider dropping or "
+            "relabeling at scrape time on large fleets."
+        ),
+        metric_type="counter",
+        samples=[
+            ({"surface": s, "tenant": t}, n)
+            for (s, t), n in sorted(snap.runs_by_surface_tenant.items())
+        ],
+    ))
+
+    # By guard — denial counts
+    families.append(_format_metric_family(
+        name=chain_denials_guard,
+        help_text="Total chain denials by blocking guard name.",
+        metric_type="counter",
+        samples=[
+            ({"guard": g}, n)
+            for g, n in sorted(snap.denials_by_guard.items())
+        ],
+    ))
+
+    # Aggregate gauges
+    families.append(_format_metric_family(
+        name=chain_total_runs,
+        help_text="Aggregate count of all chain invocations across surfaces.",
+        metric_type="gauge",
+        samples=[({}, snap.total_runs())],
+    ))
+    families.append(_format_metric_family(
+        name=chain_total_denials,
+        help_text="Aggregate count of chain denials across surfaces.",
+        metric_type="gauge",
+        samples=[({}, snap.total_denials())],
+    ))
+
+    # Ring-buffer length (gauge — bounded by MAX_RECENT_REJECTIONS)
+    families.append(_format_metric_family(
+        name=chain_recent_rejections,
+        help_text=(
+            "Number of rejection events currently held in the in-memory "
+            "ring buffer (capped at MAX_RECENT_REJECTIONS)."
+        ),
+        metric_type="gauge",
+        samples=[({}, len(snap.recent_rejections))],
+    ))
+
+    # Join with blank line between families; trailing newline required
+    body = "\n\n".join("\n".join(family) for family in families)
+    return body + "\n"
 
 
 class GovernanceMetricsRegistry:
@@ -230,11 +372,16 @@ REGISTRY = GovernanceMetricsRegistry()
 
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import PlainTextResponse
 
 from mcoi_runtime.app.routers.musia_auth import require_admin
 
 
 router = APIRouter(prefix="/musia/governance", tags=["musia-governance"])
+
+
+# Prometheus exposition format content type (v0.0.4)
+_PROMETHEUS_CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8"
 
 
 @router.get("/stats")
@@ -253,3 +400,33 @@ def reset_stats(_: str = Depends(require_admin)) -> None:
     """Reset counters. For ops use only — surfaces a fresh window
     (e.g., before/after a deployment). Admin scope."""
     REGISTRY.reset()
+
+
+@router.get(
+    "/metrics",
+    response_class=PlainTextResponse,
+    responses={
+        200: {
+            "content": {_PROMETHEUS_CONTENT_TYPE: {}},
+            "description": "Prometheus exposition format (v0.0.4).",
+        }
+    },
+)
+def get_prometheus_metrics(
+    _: str = Depends(require_admin),
+) -> PlainTextResponse:
+    """v4.20.0+: Prometheus exposition of governance chain counters.
+
+    Returns the same data as ``/stats`` but in Prometheus text format
+    (v0.0.4) so any compatible scraper (Prometheus, Grafana Agent,
+    Datadog Agent, OpenTelemetry Collector) can ingest natively.
+
+    Admin scope — same as ``/stats``. The endpoint is deliberately at
+    ``/musia/governance/metrics`` (not the customary ``/metrics`` at
+    the app root) so deployments running multiple metric surfaces in
+    one process can keep them separate. Operators wanting a unified
+    ``/metrics`` endpoint can mount a thin aggregator that calls into
+    each surface.
+    """
+    body = REGISTRY.snapshot().to_prometheus_text()
+    return PlainTextResponse(content=body, media_type=_PROMETHEUS_CONTENT_TYPE)
