@@ -150,6 +150,14 @@ class GovernanceMetricsSnapshot:
     # so consumers can iterate without None-checks.
     latency_by_surface: dict[str, LatencyHistogram] = field(default_factory=dict)
 
+    # By (surface, tenant_id, verdict) — three-way breakdown (v4.24.0+).
+    # Used by ``for_tenant()`` to build a per-tenant view that exposes
+    # the caller's verdict counts without leaking cross-tenant
+    # aggregates. Empty dict in v4.21.x and earlier snapshots.
+    runs_by_surface_tenant_verdict: dict[tuple[str, str, str], int] = field(
+        default_factory=dict
+    )
+
     def total_runs(self) -> int:
         return sum(self.runs_by_surface_verdict.values())
 
@@ -157,6 +165,71 @@ class GovernanceMetricsSnapshot:
         return sum(
             v for (_, verdict), v in self.runs_by_surface_verdict.items()
             if verdict == VERDICT_DENIED
+        )
+
+    def for_tenant(self, tenant_id: str) -> "GovernanceMetricsSnapshot":
+        """v4.24.0+: return a redacted snapshot scoped to one tenant.
+
+        The per-tenant view exposes only what the named tenant generated:
+        - ``runs_by_surface_tenant`` filtered to that tenant
+        - ``runs_by_surface_verdict`` reconstructed from the 3-way index
+          (this tenant's verdict breakdown only)
+        - ``denials_by_guard`` reconstructed from the tenant's rejection events
+        - ``recent_rejections`` filtered to that tenant
+        - ``runs_by_surface_tenant_verdict`` filtered to that tenant
+
+        Cross-tenant aggregates are dropped:
+        - ``latency_by_surface`` — platform-wide; dropped to avoid
+          inferring other tenants' load from aggregate counts and
+          summed durations
+
+        Empty tenant_id returns an empty snapshot (no leak via the
+        always-true filter on '').
+        """
+        if not tenant_id:
+            return GovernanceMetricsSnapshot(
+                runs_by_surface_verdict={},
+                runs_by_surface_tenant={},
+                denials_by_guard={},
+                recent_rejections=(),
+                latency_by_surface={},
+                runs_by_surface_tenant_verdict={},
+            )
+        # Filter the 3-way index to this tenant
+        tenant_3way = {
+            (s, t, v): n
+            for (s, t, v), n in self.runs_by_surface_tenant_verdict.items()
+            if t == tenant_id
+        }
+        # Sum tenant_3way by (surface, verdict) for the verdict view
+        tenant_runs_by_verdict: dict[tuple[str, str], int] = {}
+        for (s, _t, v), n in tenant_3way.items():
+            tenant_runs_by_verdict[(s, v)] = (
+                tenant_runs_by_verdict.get((s, v), 0) + n
+            )
+        # Filter per-tenant counts
+        tenant_runs_by_st = {
+            (s, t): n
+            for (s, t), n in self.runs_by_surface_tenant.items()
+            if t == tenant_id
+        }
+        # Filter rejection events
+        tenant_rejections = tuple(
+            ev for ev in self.recent_rejections if ev.tenant_id == tenant_id
+        )
+        # Reconstruct per-tenant denials_by_guard from filtered events
+        tenant_denials: dict[str, int] = {}
+        for ev in tenant_rejections:
+            tenant_denials[ev.blocking_guard] = (
+                tenant_denials.get(ev.blocking_guard, 0) + 1
+            )
+        return GovernanceMetricsSnapshot(
+            runs_by_surface_verdict=tenant_runs_by_verdict,
+            runs_by_surface_tenant=tenant_runs_by_st,
+            denials_by_guard=tenant_denials,
+            recent_rejections=tenant_rejections,
+            latency_by_surface={},
+            runs_by_surface_tenant_verdict=tenant_3way,
         )
 
     def to_prometheus_text(self, *, prefix: str = "mullu") -> str:
@@ -440,6 +513,10 @@ class GovernanceMetricsRegistry:
         self._lock = RLock()
         self._runs_by_surface_verdict: dict[tuple[str, str], int] = {}
         self._runs_by_surface_tenant: dict[tuple[str, str], int] = {}
+        # v4.24.0+: 3-way index used by per-tenant scrape views.
+        # Populated alongside the 2-way indices above; never overrides
+        # them (existing consumers keep working).
+        self._runs_by_surface_tenant_verdict: dict[tuple[str, str, str], int] = {}
         self._denials_by_guard: dict[str, int] = {}
         self._recent_rejections: deque[RejectionEvent] = deque(
             maxlen=MAX_RECENT_REJECTIONS,
@@ -521,6 +598,11 @@ class GovernanceMetricsRegistry:
             self._runs_by_surface_tenant[st_key] = (
                 self._runs_by_surface_tenant.get(st_key, 0) + 1
             )
+            # v4.24.0+: 3-way index for per-tenant scrape views
+            stv_key = (surface, tenant_id, verdict)
+            self._runs_by_surface_tenant_verdict[stv_key] = (
+                self._runs_by_surface_tenant_verdict.get(stv_key, 0) + 1
+            )
             if verdict == VERDICT_DENIED:
                 guard = blocking_guard or "unknown"
                 self._denials_by_guard[guard] = (
@@ -573,6 +655,9 @@ class GovernanceMetricsRegistry:
                 denials_by_guard=dict(self._denials_by_guard),
                 recent_rejections=tuple(self._recent_rejections),
                 latency_by_surface=latency_by_surface,
+                runs_by_surface_tenant_verdict=dict(
+                    self._runs_by_surface_tenant_verdict
+                ),
             )
 
     def reset(self) -> None:
@@ -580,6 +665,7 @@ class GovernanceMetricsRegistry:
         with self._lock:
             self._runs_by_surface_verdict.clear()
             self._runs_by_surface_tenant.clear()
+            self._runs_by_surface_tenant_verdict.clear()
             self._denials_by_guard.clear()
             self._recent_rejections.clear()
             self._latency_state.clear()
@@ -594,7 +680,7 @@ REGISTRY = GovernanceMetricsRegistry()
 from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 
-from mcoi_runtime.app.routers.musia_auth import require_admin
+from mcoi_runtime.app.routers.musia_auth import require_admin, require_read
 
 
 router = APIRouter(prefix="/musia/governance", tags=["musia-governance"])
@@ -649,4 +735,51 @@ def get_prometheus_metrics(
     each surface.
     """
     body = REGISTRY.snapshot().to_prometheus_text()
+    return PlainTextResponse(content=body, media_type=_PROMETHEUS_CONTENT_TYPE)
+
+
+# ---- Per-tenant scoped views (v4.24.0+) ----
+#
+# The /stats and /metrics endpoints above are admin-scoped and expose
+# every tenant's data. Multi-org SaaS deployments need per-org
+# self-service visibility — each customer should see THEIR governance
+# data without leaking neighbors'. The two endpoints below take the
+# caller's authenticated tenant_id as the filter; require_read scope
+# (a customer's normal credential) is enough.
+
+
+@router.get("/stats/tenant")
+def get_stats_tenant(tenant_id: str = Depends(require_read)) -> dict[str, Any]:
+    """Per-tenant view of governance counters.
+
+    v4.24.0+. Returns the same JSON shape as ``/stats`` but filtered to
+    the authenticated tenant's own data. Cross-tenant aggregates
+    (latency_by_surface) are dropped. ``musia.read`` scope.
+    """
+    return REGISTRY.snapshot().for_tenant(tenant_id).as_dict()
+
+
+@router.get(
+    "/metrics/tenant",
+    response_class=PlainTextResponse,
+    responses={
+        200: {
+            "content": {_PROMETHEUS_CONTENT_TYPE: {}},
+            "description": "Prometheus exposition format (v0.0.4), tenant-scoped.",
+        }
+    },
+)
+def get_prometheus_metrics_tenant(
+    tenant_id: str = Depends(require_read),
+) -> PlainTextResponse:
+    """v4.24.0+: Prometheus exposition scoped to the authenticated tenant.
+
+    Returns the same metric families as ``/metrics`` but with all
+    series filtered to the caller's own tenant. Useful for SaaS
+    deployments where each customer scrapes their own slice without
+    seeing platform aggregates or other tenants' counts.
+
+    ``musia.read`` scope (vs. ``/metrics`` which requires ``musia.admin``).
+    """
+    body = REGISTRY.snapshot().for_tenant(tenant_id).to_prometheus_text()
     return PlainTextResponse(content=body, media_type=_PROMETHEUS_CONTENT_TYPE)
