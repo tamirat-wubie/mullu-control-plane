@@ -1,7 +1,11 @@
 """Phase 207D — Execution replay tests."""
 
 import pytest
-from mcoi_runtime.core.execution_replay import ReplayExecutor, ReplayRecorder
+from mcoi_runtime.core.execution_replay import (
+    DEFAULT_MAX_COMPLETED_TRACES,
+    ReplayExecutor,
+    ReplayRecorder,
+)
 
 
 def FIXED_CLOCK():
@@ -105,6 +109,60 @@ class TestReplayRecorder:
         summary = rec.summary()
         assert summary["completed"] == 1
         assert summary["total_frames"] == 1
+
+
+class TestCompletedTraceCap:
+    """The completed-trace ring is bounded — cannot OOM in long-running prod."""
+
+    def test_default_cap_is_set(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        assert rec._completed.maxlen == DEFAULT_MAX_COMPLETED_TRACES
+
+    def test_custom_cap_respected(self):
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=4)
+        assert rec._completed.maxlen == 4
+
+    def test_completed_capped_at_maxlen(self):
+        """Once the cap is hit, oldest traces evict. Regression guard
+        for the unbounded list_traces was prior to the deque conversion."""
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=3)
+        for i in range(7):
+            tid = f"t{i}"
+            rec.start_trace(tid)
+            rec.record_frame(tid, "op", {"i": i}, {"r": i * 2})
+            rec.complete_trace(tid)
+        assert rec.completed_count == 3
+        # The 3 most recent traces survived
+        survivors = [t.trace_id for t in rec._completed]
+        assert survivors == ["t4", "t5", "t6"]
+
+    def test_list_traces_after_cap_eviction(self):
+        """list_traces must still work when the underlying deque has
+        evicted older entries — slicing is now via list() materialization."""
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=2)
+        for i in range(5):
+            tid = f"t{i}"
+            rec.start_trace(tid)
+            rec.record_frame(tid, "op", {}, {})
+            rec.complete_trace(tid)
+        recent = rec.list_traces(limit=10)  # ask for more than survived
+        assert len(recent) == 2
+        assert [t.trace_id for t in recent] == ["t3", "t4"]
+
+    def test_get_trace_after_eviction_returns_none(self):
+        """An evicted trace is no longer findable — caller's contract:
+        once outside the bounded window, the trace is gone. That's the
+        whole point of bounding."""
+        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=1)
+        rec.start_trace("oldest")
+        rec.record_frame("oldest", "x", {}, {})
+        rec.complete_trace("oldest")
+        rec.start_trace("newest")
+        rec.record_frame("newest", "x", {}, {})
+        rec.complete_trace("newest")
+
+        assert rec.get_trace("oldest") is None  # evicted
+        assert rec.get_trace("newest") is not None
 
 
 class TestReplayExecutor:

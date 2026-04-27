@@ -1,0 +1,16 @@
+# Doc/Code Consistency Baseline
+#
+# Pre-existing fabrications acknowledged at v4.1.0 introduction of the
+# anti-fabrication check. Each entry is a literal failure string from
+# scripts/validate_doc_code_consistency.py.
+#
+# Goal: new fabrications fail CI; inherited debt does not block the gate.
+# Each entry should eventually be removed by either:
+#   (a) creating the missing file/script, or
+#   (b) removing the doc reference.
+#
+# Tracked outside any sprint backlog because they predate v4.1.0.
+
+PATH: docs\CORE_STRUCTURE.md references nonexistent module 'tests/test_cross_language_roundtrip.py'
+PATH: docs\GOVERNANCE_GUARD_CHAIN.md references nonexistent module 'scripts/validate_guard_chain_coverage.py'
+PATH: docs\MAF_RECEIPT_COVERAGE.md references nonexistent module 'scripts/validate_receipt_coverage.py'

@@ -137,6 +137,12 @@
       "surface": "trace"
     },
     {
+      "schema_id": "universal-construct",
+      "path": "schemas/universal_construct.schema.json",
+      "urn": "urn:mullusi:schema:universal-construct:1",
+      "surface": "construct"
+    },
+    {
       "schema_id": "verification-result",
       "path": "schemas/verification_result.schema.json",
       "urn": "urn:mullusi:schema:verification-result:1",

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-construct:1",
+  "title": "UniversalConstruct",
+  "description": "Base schema for all 25 MUSIA universal constructs. Tier-keyed.",
+  "type": "object",
+  "required": ["id", "tier", "type", "invariants", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Stable identifier; immutable after creation"
+    },
+    "tier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "1=Foundational, 2=Structural, 3=Coordination, 4=Governance, 5=Cognitive"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "state", "change", "causation", "constraint", "boundary",
+        "pattern", "transformation", "composition", "interaction", "conservation",
+        "coupling", "synchronization", "resonance", "equilibrium", "emergence",
+        "source", "binding", "validation", "evolution", "integrity",
+        "observation", "inference", "decision", "execution", "learning"
+      ]
+    },
+    "mfidel_signature": {
+      "type": "object",
+      "description": "Optional Mfidel atomic encoding. Required for substrate-grounded constructs.",
+      "required": ["coords"],
+      "properties": {
+        "coords": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {"type": "integer", "minimum": 1, "maximum": 34, "description": "row (1-indexed)"},
+              {"type": "integer", "minimum": 1, "maximum": 8,  "description": "col (1-indexed)"}
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "invariants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"},
+      "description": "Immutable invariants this construct must preserve"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Construct-type-specific payload; validated by per-type sub-schema"
+    },
+    "lineage": {
+      "type": "object",
+      "description": "USCL H entry — append-only causal history",
+      "properties": {
+        "parent_ids": {
+          "type": "array",
+          "items": {"type": "string", "format": "uuid"}
+        },
+        "phi_gov_judgment_id": {"type": "string", "format": "uuid"},
+        "cascade_chain": {
+          "type": "array",
+          "items": {"type": "string", "format": "uuid"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
