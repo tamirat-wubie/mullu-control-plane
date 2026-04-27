@@ -38,6 +38,31 @@ class AuditEntry:
     recorded_at: str
 
 
+@dataclass(frozen=True, slots=True)
+class AuditCheckpoint:
+    """Anchor for chain verification across prune boundaries.
+
+    v4.28.0+. Pre-v4.28 the verifier always started from
+    ``sha256(b"genesis")``, which made ``verify_chain()`` permanently
+    return False after the first prune (the in-memory window's first
+    entry's ``previous_hash`` no longer matched genesis — it pointed
+    to the now-pruned predecessor's entry_hash).
+
+    This dataclass records the predecessor's entry_hash at the
+    pruning boundary. The verifier uses it as ``expected_previous_hash``
+    for the first in-memory entry, so post-prune chains still verify.
+
+    ``at_sequence`` is the sequence of the predecessor entry (i.e., the
+    last entry pruned). ``chain_hash`` is that entry's ``entry_hash``.
+    The first surviving entry's ``previous_hash`` must equal
+    ``chain_hash`` for the chain to verify.
+    """
+
+    at_sequence: int
+    chain_hash: str
+    recorded_at: str
+
+
 class AuditStore:
     """Optional persistent backend for audit entries.
 
@@ -45,6 +70,11 @@ class AuditStore:
     store on every record(), making the audit trail consistent across
     replicas. In-memory entries act as a hot cache; the store is the
     source of truth.
+
+    v4.28.0+: ``store_checkpoint`` / ``latest_checkpoint`` extend the
+    store interface with prune-safe verification anchors. Stores that
+    don't implement these (the base class) are degraded gracefully —
+    the in-process anchor still works for single-process integrity.
     """
 
     def append(self, entry: AuditEntry) -> None:
@@ -55,6 +85,17 @@ class AuditStore:
 
     def count(self) -> int:
         return 0
+
+    def store_checkpoint(self, checkpoint: "AuditCheckpoint") -> None:
+        """Persist a checkpoint anchor (v4.28.0+). Optional override."""
+
+    def latest_checkpoint(self) -> "AuditCheckpoint | None":
+        """Return the most recent persisted checkpoint, or None.
+
+        v4.28.0+. Used at AuditTrail bootstrap to restore the anchor
+        across process restarts when the store is durable.
+        """
+        return None
 
 
 class AuditTrail:
@@ -70,6 +111,9 @@ class AuditTrail:
 
     MAX_DETAIL_SIZE = 65_536  # 64KB max for audit detail JSON
 
+    # Sentinel: initial anchor before any entry exists.
+    _GENESIS_HASH: str = sha256(b"genesis").hexdigest()
+
     def __init__(
         self,
         *,
@@ -80,11 +124,25 @@ class AuditTrail:
         self._clock = clock
         self._entries: list[AuditEntry] = []
         self._max_entries = max_entries
-        self._last_hash: str = sha256(b"genesis").hexdigest()
+        self._last_hash: str = self._GENESIS_HASH
         self._sequence: int = 0
         self._pruned_count: int = 0
         self._store = store
         self._lock = threading.Lock()
+        # v4.28.0 (audit F3): anchor for chain verification across
+        # prune boundaries. ``_anchor_hash`` is what the first
+        # in-memory entry's ``previous_hash`` must equal for the
+        # chain to verify. ``_anchor_sequence`` is the sequence of
+        # the entry whose hash is in ``_anchor_hash`` (or 0 for
+        # genesis). Updated on every prune; restored from store
+        # on bootstrap if the store has a checkpoint.
+        self._anchor_hash: str = self._GENESIS_HASH
+        self._anchor_sequence: int = 0
+        if self._store is not None:
+            checkpoint = self._store.latest_checkpoint()
+            if checkpoint is not None:
+                self._anchor_hash = checkpoint.chain_hash
+                self._anchor_sequence = checkpoint.at_sequence
 
     def record(
         self,
@@ -157,11 +215,32 @@ class AuditTrail:
         # Write through to persistent store if available
         if self._store is not None:
             self._store.append(entry)
-        # Prune oldest entries when at capacity (preserves recent history)
+        # Prune oldest entries when at capacity (preserves recent history).
+        # v4.28.0 (audit F3): before pruning, capture the boundary entry's
+        # hash as the verification anchor. Without this, ``verify_chain()``
+        # would permanently return False once the first entry's
+        # predecessor is pruned out of the in-memory window.
         if len(self._entries) > self._max_entries:
             prune_count = len(self._entries) - self._max_entries
+            # The LAST entry being pruned becomes the new anchor —
+            # the entry whose hash equals the next surviving entry's
+            # ``previous_hash``.
+            boundary = self._entries[prune_count - 1]
+            self._anchor_hash = boundary.entry_hash
+            self._anchor_sequence = boundary.sequence
             self._entries = self._entries[prune_count:]
             self._pruned_count += prune_count
+            # Persist the checkpoint so post-restart verification has
+            # the same anchor. No-op when store is None or doesn't
+            # override store_checkpoint.
+            if self._store is not None:
+                self._store.store_checkpoint(
+                    AuditCheckpoint(
+                        at_sequence=self._anchor_sequence,
+                        chain_hash=self._anchor_hash,
+                        recorded_at=now,
+                    )
+                )
         return entry
 
     def query(
@@ -198,7 +277,14 @@ class AuditTrail:
         if not self._entries:
             return True, 0
 
-        expected_prev = sha256(b"genesis").hexdigest()
+        # v4.28.0 (audit F3): start from the verification anchor, not
+        # genesis. ``_anchor_hash`` equals genesis until the first
+        # prune; after that, it equals the ``entry_hash`` of the last
+        # pruned entry. The first surviving entry's ``previous_hash``
+        # must match. Pre-v4.28 this always started from genesis,
+        # which made ``verify_chain()`` permanently return False
+        # after the first prune.
+        expected_prev = self._anchor_hash
         for entry in self._entries:
             if entry.previous_hash != expected_prev:
                 return False, entry.sequence

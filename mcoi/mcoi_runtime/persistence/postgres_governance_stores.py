@@ -20,11 +20,12 @@ from __future__ import annotations
 import json
 import logging as _logging
 import threading
+import time
 from datetime import datetime, timezone
 from typing import Any
 
 from mcoi_runtime.contracts.llm import LLMBudget
-from mcoi_runtime.core.audit_trail import AuditEntry, AuditStore
+from mcoi_runtime.core.audit_trail import AuditCheckpoint, AuditEntry, AuditStore
 from mcoi_runtime.core.rate_limiter import RateLimitStore
 from mcoi_runtime.core.tenant_budget import BudgetStore
 from mcoi_runtime.core.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
@@ -674,10 +675,16 @@ class InMemoryBudgetStore(BudgetStore):
 
 
 class InMemoryAuditStore(AuditStore):
-    """In-memory audit store for testing."""
+    """In-memory audit store for testing.
+
+    v4.28.0+ (audit F3): also persists checkpoints. Single most recent
+    checkpoint is kept (matches the ``AuditTrail._anchor`` semantics —
+    each new prune supersedes the previous anchor).
+    """
 
     def __init__(self) -> None:
         self._entries: list[AuditEntry] = []
+        self._checkpoint: AuditCheckpoint | None = None
 
     def append(self, entry: AuditEntry) -> None:
         self._entries.append(entry)
@@ -693,12 +700,26 @@ class InMemoryAuditStore(AuditStore):
     def count(self) -> int:
         return len(self._entries)
 
+    def store_checkpoint(self, checkpoint: AuditCheckpoint) -> None:
+        self._checkpoint = checkpoint
+
+    def latest_checkpoint(self) -> AuditCheckpoint | None:
+        return self._checkpoint
+
 
 class InMemoryRateLimitStore(RateLimitStore):
-    """In-memory rate limit store for testing."""
+    """In-memory rate limit store for testing.
+
+    v4.29 (audit F11): also owns token-bucket state, exposing an
+    atomic test-and-consume via ``try_consume`` guarded by a
+    ``threading.Lock``. Single-process atomic. Cross-process replicas
+    need the Postgres/Redis backend.
+    """
 
     def __init__(self) -> None:
         self._decisions: dict[str, dict[str, int]] = {}
+        self._buckets: dict[str, tuple[float, float]] = {}  # key -> (tokens, last_refill)
+        self._bucket_lock = threading.Lock()
 
     def record_decision(self, bucket_key: str, allowed: bool) -> None:
         if bucket_key not in self._decisions:
@@ -712,6 +733,39 @@ class InMemoryRateLimitStore(RateLimitStore):
         total_allowed = sum(d["allowed"] for d in self._decisions.values())
         total_denied = sum(d["denied"] for d in self._decisions.values())
         return {"allowed": total_allowed, "denied": total_denied}
+
+    def try_consume(
+        self,
+        bucket_key: str,
+        tokens: int,
+        config: "RateLimitConfig",
+    ) -> tuple[bool, float] | None:
+        # F11: store-owned bucket state with single-process atomicity.
+        # The lock spans refill + check + decrement so concurrent
+        # callers strictly serialize at the bucket — no last-write-wins
+        # window. Cross-process atomicity needs PostgresRateLimitStore.
+        if tokens > config.burst_limit:
+            with self._bucket_lock:
+                current, _ = self._buckets.get(
+                    bucket_key, (float(config.max_tokens), time.monotonic())
+                )
+                return False, current
+        with self._bucket_lock:
+            now = time.monotonic()
+            current, last_refill = self._buckets.get(
+                bucket_key, (float(config.max_tokens), now)
+            )
+            elapsed = now - last_refill
+            current = min(
+                float(config.max_tokens),
+                current + elapsed * config.refill_rate,
+            )
+            if current >= tokens:
+                current -= tokens
+                self._buckets[bucket_key] = (current, now)
+                return True, current
+            self._buckets[bucket_key] = (current, now)
+            return False, current
 
 
 class InMemoryTenantGatingStore(TenantGatingStore):
