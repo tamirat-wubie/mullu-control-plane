@@ -13,6 +13,8 @@ dependents return 409.
 """
 from __future__ import annotations
 
+import base64
+import json
 from typing import Any
 from uuid import UUID
 
@@ -266,11 +268,15 @@ class ConstructListResponse(BaseModel):
     by_type: dict[str, int]
     constructs: list[ConstructPayload]
     tenant_id: str
-    # v4.14.0 pagination (None when not paginated)
+    # v4.14.0 offset pagination (None when not paginated)
     page: int | None = None
     page_size: int | None = None
     total_pages: int | None = None
     has_more: bool | None = None
+    # v4.23.0 cursor pagination (None when not used). next_cursor is
+    # opaque — clients pass it back to the same endpoint to fetch the
+    # next page; format is implementation-private and may change.
+    next_cursor: str | None = None
 
 
 class RunDeleteResponse(BaseModel):
@@ -390,6 +396,97 @@ def _paginate_slice(
     return sliced, total_pages, has_more
 
 
+# ---- Cursor pagination (v4.23.0) ----
+#
+# Offset pagination drifts when items are inserted/deleted between
+# requests: a client iterating page=1, page=2, page=3 may see the same
+# item twice (after an insert near the start) or miss items (after a
+# delete). Cursor pagination is stable: the cursor is an opaque token
+# carrying the boundary item's id, and "next page" means
+# "items strictly after this id, sorted by id." Inserts and deletes
+# anywhere in the list don't corrupt the iteration.
+#
+# Trade-off: items are sorted lexicographically by UUID (not by
+# insertion order). This is fine because:
+#   1. The list endpoint contract doesn't promise insertion order
+#   2. Clients using cursor pagination care about consistency, not order
+#   3. UUIDs are random, so the order is deterministic per item set
+
+
+def _encode_cursor(after_id: str) -> str:
+    """Encode a boundary id as an opaque cursor string."""
+    payload = json.dumps({"after_id": after_id}, separators=(",", ":"))
+    return base64.urlsafe_b64encode(payload.encode()).rstrip(b"=").decode("ascii")
+
+
+def _decode_cursor(cursor: str) -> str:
+    """Decode an opaque cursor. Returns the boundary id.
+
+    Raises HTTPException(400, invalid_cursor) on any decode/parse error.
+    Cursor is meant to be opaque to clients — they always pass back
+    exactly what the server emitted, so corruption indicates client
+    bug or intentional tampering.
+    """
+    try:
+        # Add padding back (urlsafe_b64decode requires correct padding)
+        padded = cursor + "=" * (-len(cursor) % 4)
+        decoded = base64.urlsafe_b64decode(padded.encode())
+        payload = json.loads(decoded)
+        after_id = payload["after_id"]
+        if not isinstance(after_id, str) or not after_id:
+            raise ValueError("empty after_id")
+        return after_id
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid_cursor"},
+        )
+
+
+def _validate_cursor_limit(limit: int | None) -> int | None:
+    """Coerce + validate the cursor-mode ``limit`` param."""
+    if limit is None:
+        return None
+    if limit < 1 or limit > PAGE_SIZE_MAX:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid_limit", "max": PAGE_SIZE_MAX},
+        )
+    return limit
+
+
+def _paginate_cursor(
+    items: list[ConstructBase],
+    cursor: str | None,
+    limit: int,
+) -> tuple[list[ConstructBase], str | None]:
+    """Apply cursor pagination to a list of constructs.
+
+    Items are sorted by UUID lexicographically; the slice is the first
+    ``limit`` items strictly greater than the cursor's boundary id.
+    Returns (page_items, next_cursor) where next_cursor is None when
+    the page is the last one.
+    """
+    sorted_items = sorted(items, key=lambda c: str(c.id))
+    if cursor is not None:
+        after_id = _decode_cursor(cursor)
+        sorted_items = [c for c in sorted_items if str(c.id) > after_id]
+    page = sorted_items[:limit]
+    if len(page) < limit:
+        next_cursor = None  # no more items
+    else:
+        # If exactly limit items returned, next page might exist;
+        # check by looking past the last one. Cheap because we're
+        # already in a sorted list.
+        last_id = str(page[-1].id)
+        next_cursor = (
+            _encode_cursor(last_id)
+            if any(str(c.id) > last_id for c in sorted_items)
+            else None
+        )
+    return page, next_cursor
+
+
 # ---- Reads ----
 
 
@@ -400,16 +497,24 @@ def list_constructs(
     run_id: str | None = None,
     page: int | None = None,
     page_size: int | None = None,
+    cursor: str | None = None,
+    limit: int | None = None,
     tenant_id: str = Depends(require_read),
 ) -> ConstructListResponse:
     """List constructs in a tenant's registry.
 
-    v4.14.0+: optional pagination via ``page`` + ``page_size``. Default
-    behavior (omit both params) returns the full list; v4.13.0 callers
-    see no change. With ``page_size=N``, returns at most N items per page;
-    ``total`` is always the unfiltered count of matches.
+    Three pagination modes (mutually exclusive):
+    1. None of (page/page_size/cursor/limit) → full unfiltered list (v4.13.x default).
+    2. ``page_size=N`` (with optional ``page=K``) → offset pagination (v4.14.0+).
+    3. ``limit=N`` (with optional ``cursor=...``) → cursor pagination (v4.23.0+).
+       Stable under inserts/deletes between requests; sorted by UUID.
+
+    If both offset and cursor params are passed, cursor takes precedence and
+    offset params are ignored. ``total`` is always the unfiltered count of
+    matches across all modes.
     """
     page, page_size = _validate_pagination(page, page_size)
+    limit_validated = _validate_cursor_limit(limit)
     state = STORE.get_or_create(tenant_id)
     if run_id is not None:
         items: list[ConstructBase] = state.constructs_in_run(run_id)
@@ -427,7 +532,21 @@ def list_constructs(
     for c in items:
         by_type[c.type.value] = by_type.get(c.type.value, 0) + 1
 
-    page_items, total_pages, has_more = _paginate_slice(items, page, page_size)
+    # Cursor mode takes precedence when limit is provided. Offset mode
+    # otherwise. Unpaginated when neither.
+    next_cursor: str | None = None
+    if limit_validated is not None or cursor is not None:
+        # Cursor mode. Use the validated limit, or default to PAGE_SIZE_MAX
+        # when only cursor is given (so the client gets something back).
+        effective_limit = limit_validated if limit_validated is not None else PAGE_SIZE_MAX
+        page_items, next_cursor = _paginate_cursor(items, cursor, effective_limit)
+        # Cursor mode disables offset fields in response (already None default)
+        page = None
+        page_size = None
+        total_pages = None
+        has_more = next_cursor is not None
+    else:
+        page_items, total_pages, has_more = _paginate_slice(items, page, page_size)
 
     return ConstructListResponse(
         total=len(items),
@@ -438,6 +557,7 @@ def list_constructs(
         page_size=page_size,
         total_pages=total_pages,
         has_more=has_more,
+        next_cursor=next_cursor,
     )
 
 
