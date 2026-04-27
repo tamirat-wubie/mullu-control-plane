@@ -32,8 +32,13 @@ class TestGebetaStructure:
         assert total == 272
 
     def test_all_glyphs_are_unique(self) -> None:
-        all_glyphs = [g for row in FIDEL_GEBETA for g in row]
+        # Option 1b convergence: substrate is source of truth. The grid has
+        # three known-empty slots (f[20][8], f[21][8], f[24][8]). Filter
+        # empties before uniqueness check; assert empty count separately.
+        all_glyphs = [g for row in FIDEL_GEBETA for g in row if g]
         assert len(all_glyphs) == len(set(all_glyphs))
+        empty_count = sum(1 for row in FIDEL_GEBETA for g in row if not g)
+        assert empty_count == 3
 
     def test_row_11_is_ve_family(self) -> None:
         assert FIDEL_GEBETA[10][0] == "ቨ"
@@ -130,9 +135,9 @@ class TestAudioFormula:
         assert af.exception_type == "labialized_extension"
 
     def test_col8_exception_any_row(self) -> None:
-        for row in (1, 10, 20, 34):
+        # Skip rows 20, 21, 24 — those col-8 slots are empty per spec.
+        for row in (1, 10, 22, 34):
             af = MfidelMatrix.audio_formula(row, 8)
-            # Row 1 col 8 is labialized, not glottal
             assert af.exception_type == "labialized_extension"
 
 

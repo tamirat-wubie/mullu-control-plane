@@ -22,85 +22,44 @@ from mcoi_runtime.contracts.mfidel import (
 )
 
 # ---------------------------------------------------------------------------
-# Ge'ez Fidel Gebeta (34 rows x 8 columns)
+# Ge'ez Fidel Gebeta — Option 1b convergence (v4.1.0).
+#
+# This module is now a derived view over the canonical substrate grid at
+# `mcoi_runtime.substrate.mfidel.grid.MFIDEL_GRID`. It is no longer the
+# source of truth.
+#
+# The substrate grid has three known-empty slots: f[20][8], f[21][8],
+# f[24][8]. They correspond to fidels that do not exist in the canonical
+# Mfidel spec. The vectorizer keeps its 272-dimensional output; the three
+# empty positions are masked to zero.
+#
+# `FIDEL_GEBETA` retains the same shape as before but is now sourced from
+# substrate. Empty slots are represented as the empty string "".
 # ---------------------------------------------------------------------------
 
-FIDEL_GEBETA: tuple[tuple[str, ...], ...] = (
-    # Row 1: Ha
-    ("ሀ", "ሁ", "ሂ", "ሃ", "ሄ", "ህ", "ሆ", "ሇ"),
-    # Row 2: Le
-    ("ለ", "ሉ", "ሊ", "ላ", "ሌ", "ል", "ሎ", "ሏ"),
-    # Row 3: Hha
-    ("ሐ", "ሑ", "ሒ", "ሓ", "ሔ", "ሕ", "ሖ", "ሗ"),
-    # Row 4: Me
-    ("መ", "ሙ", "ሚ", "ማ", "ሜ", "ም", "ሞ", "ሟ"),
-    # Row 5: Sze
-    ("ሠ", "ሡ", "ሢ", "ሣ", "ሤ", "ሥ", "ሦ", "ሧ"),
-    # Row 6: Re
-    ("ረ", "ሩ", "ሪ", "ራ", "ሬ", "ር", "ሮ", "ሯ"),
-    # Row 7: Se
-    ("ሰ", "ሱ", "ሲ", "ሳ", "ሴ", "ስ", "ሶ", "ሷ"),
-    # Row 8: She
-    ("ሸ", "ሹ", "ሺ", "ሻ", "ሼ", "ሽ", "ሾ", "ሿ"),
-    # Row 9: Qe
-    ("ቀ", "ቁ", "ቂ", "ቃ", "ቄ", "ቅ", "ቆ", "ቋ"),
-    # Row 10: Be
-    ("በ", "ቡ", "ቢ", "ባ", "ቤ", "ብ", "ቦ", "ቧ"),
-    # Row 11: Ve
-    ("ቨ", "ቩ", "ቪ", "ቫ", "ቬ", "ቭ", "ቮ", "ቯ"),
-    # Row 12: Te
-    ("ተ", "ቱ", "ቲ", "ታ", "ቴ", "ት", "ቶ", "ቷ"),
-    # Row 13: Che
-    ("ቸ", "ቹ", "ቺ", "ቻ", "ቼ", "ች", "ቾ", "ቿ"),
-    # Row 14: Xa
-    ("ኀ", "ኁ", "ኂ", "ኃ", "ኄ", "ኅ", "ኆ", "ኈ"),
-    # Row 15: Ne
-    ("ነ", "ኑ", "ኒ", "ና", "ኔ", "ን", "ኖ", "ኗ"),
-    # Row 16: Nye
-    ("ኘ", "ኙ", "ኚ", "ኛ", "ኜ", "ኝ", "ኞ", "ኟ"),
-    # Row 17: Vowels
-    ("ኧ", "ኡ", "ኢ", "ኣ", "ኤ", "እ", "ኦ", "አ"),
-    # Row 18: Ke
-    ("ከ", "ኩ", "ኪ", "ካ", "ኬ", "ክ", "ኮ", "ኳ"),
-    # Row 19: Khe
-    ("ኸ", "ኹ", "ኺ", "ኻ", "ኼ", "ኽ", "ኾ", "ዃ"),
-    # Row 20: We
-    ("ወ", "ዉ", "ዊ", "ዋ", "ዌ", "ው", "ዎ", "ዏ"),
-    # Row 21: Ayin
-    ("ዐ", "ዑ", "ዒ", "ዓ", "ዔ", "ዕ", "ዖ", "዗"),
-    # Row 22: Ze
-    ("ዘ", "ዙ", "ዚ", "ዛ", "ዜ", "ዝ", "ዞ", "ዟ"),
-    # Row 23: Zhe
-    ("ዠ", "ዡ", "ዢ", "ዣ", "ዤ", "ዥ", "ዦ", "ዧ"),
-    # Row 24: Ye
-    ("የ", "ዩ", "ዪ", "ያ", "ዬ", "ይ", "ዮ", "ዯ"),
-    # Row 25: De
-    ("ደ", "ዱ", "ዲ", "ዳ", "ዴ", "ድ", "ዶ", "ዷ"),
-    # Row 26: Je
-    ("ጀ", "ጁ", "ጂ", "ጃ", "ጄ", "ጅ", "ጆ", "ጇ"),
-    # Row 27: Ge
-    ("ገ", "ጉ", "ጊ", "ጋ", "ጌ", "ግ", "ጎ", "ጓ"),
-    # Row 28: Tse
-    ("ጠ", "ጡ", "ጢ", "ጣ", "ጤ", "ጥ", "ጦ", "ጧ"),
-    # Row 29: Che (ejective)
-    ("ጨ", "ጩ", "ጪ", "ጫ", "ጬ", "ጭ", "ጮ", "ጯ"),
-    # Row 30: Pe (ejective)
-    ("ጰ", "ጱ", "ጲ", "ጳ", "ጴ", "ጵ", "ጶ", "ጷ"),
-    # Row 31: Tse2
-    ("ጸ", "ጹ", "ጺ", "ጻ", "ጼ", "ጽ", "ጾ", "ጿ"),
-    # Row 32: Tse3
-    ("ፀ", "ፁ", "ፂ", "ፃ", "ፄ", "ፅ", "ፆ", "ፇ"),
-    # Row 33: Fe
-    ("ፈ", "ፉ", "ፊ", "ፋ", "ፌ", "ፍ", "ፎ", "ፏ"),
-    # Row 34: Pe
-    ("ፐ", "ፑ", "ፒ", "ፓ", "ፔ", "ፕ", "ፖ", "ፗ"),
-)
+from mcoi_runtime.substrate.mfidel.grid import MFIDEL_GRID as FIDEL_GEBETA
 
-# Reverse lookup: glyph -> (row, col) -- 1-indexed
+
+class EmptyFidelSlotError(ValueError):
+    """Raised when a lookup targets a position with no atomic glyph."""
+
+
+# Reverse lookup: glyph -> (row, col) -- 1-indexed.
+# Empty-string slots are excluded so that lookups like glyph_to_position("")
+# never falsely succeed.
 _GLYPH_INDEX: dict[str, tuple[int, int]] = {}
 for _r_idx, _row in enumerate(FIDEL_GEBETA):
     for _c_idx, _glyph in enumerate(_row):
-        _GLYPH_INDEX[_glyph] = (_r_idx + 1, _c_idx + 1)
+        if _glyph:
+            _GLYPH_INDEX[_glyph] = (_r_idx + 1, _c_idx + 1)
+
+# The three known-empty positions in the canonical grid. Vectorizer asserts
+# these stay zero — invariant tracked in tests.
+KNOWN_EMPTY_POSITIONS: frozenset[tuple[int, int]] = frozenset({
+    (20, 8),
+    (21, 8),
+    (24, 8),
+})
 
 # Vowel order names for audio formulas
 _VOWEL_ORDERS = ("ge'ez", "ka'ib", "salis", "rabi'", "hamis", "sadis", "sabi'", "diqala")
@@ -132,18 +91,32 @@ class MfidelMatrix:
 
     @staticmethod
     def lookup(row: int, col: int) -> Fidel:
-        """Return the Fidel at the given 1-indexed (row, col) position."""
+        """Return the Fidel at the given 1-indexed (row, col) position.
+
+        Raises EmptyFidelSlotError on the three canonical empty positions
+        (f[20][8], f[21][8], f[24][8]) — fidels that do not exist in spec.
+        """
         if row < 1 or row > 34:
             raise ValueError("row must be between 1 and 34")
         if col < 1 or col > 8:
             raise ValueError("col must be between 1 and 8")
         glyph = FIDEL_GEBETA[row - 1][col - 1]
+        # Soak telemetry — records legacy-matrix path lookup.
+        from mcoi_runtime.substrate.metrics import REGISTRY, LEGACY_MATRIX_PATH
+        REGISTRY.record_lookup(LEGACY_MATRIX_PATH)
+        if not glyph:
+            raise EmptyFidelSlotError(
+                f"f[{row}][{col}] is empty in canonical Mfidel spec; "
+                "no fidel exists at this position"
+            )
         whisper_id = f"fidel-{row:02d}-{col:02d}"
         return Fidel(row=row, col=col, glyph=glyph, whisper_id=whisper_id)
 
     @staticmethod
     def glyph_to_position(glyph: str) -> tuple[int, int] | None:
         """Return (row, col) for a glyph, or None if not found."""
+        from mcoi_runtime.substrate.metrics import REGISTRY, LEGACY_MATRIX_PATH
+        REGISTRY.record_lookup(LEGACY_MATRIX_PATH)
         return _GLYPH_INDEX.get(glyph)
 
     # -- Audio formula -------------------------------------------------------
@@ -206,6 +179,8 @@ class MfidelMatrix:
     def vectorize(text: str) -> MfidelVector:
         """Produce a 272-dimensional normalized bag-of-fidels vector from text."""
         _validate_fidel_text(text)
+        from mcoi_runtime.substrate.metrics import REGISTRY, LEGACY_MATRIX_PATH
+        REGISTRY.record_lookup(LEGACY_MATRIX_PATH)
         weights = [0.0] * _DIMENSION
         for ch in text:
             pos = _GLYPH_INDEX.get(ch)

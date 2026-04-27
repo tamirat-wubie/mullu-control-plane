@@ -73,9 +73,12 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.adapter import router as adapter_router
     from mcoi_runtime.app.routers.agent import router as agent_router
     from mcoi_runtime.app.routers.audit import router as audit_router
+    from mcoi_runtime.app.routers.cognition import router as cognition_router
+    from mcoi_runtime.app.routers.domains import router as domains_router
     from mcoi_runtime.app.routers.compliance import router as compliance_router
     from mcoi_runtime.app.routers.connectors import router as connectors_router
     from mcoi_runtime.app.routers.console import router as console_router
+    from mcoi_runtime.app.routers.constructs import router as constructs_router
     from mcoi_runtime.app.routers.data import router as data_router
     from mcoi_runtime.app.routers.explain import router as explain_router
     from mcoi_runtime.app.routers.federation import router as federation_router
@@ -83,6 +86,9 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.knowledge import router as knowledge_router
     from mcoi_runtime.app.routers.lineage import router as lineage_router
     from mcoi_runtime.app.routers.llm import router as llm_router
+    from mcoi_runtime.app.routers.mfidel import router as mfidel_router
+    from mcoi_runtime.app.routers.musia_governance_metrics import router as musia_governance_metrics_router
+    from mcoi_runtime.app.routers.musia_tenants import router as musia_tenants_router
     from mcoi_runtime.app.routers.multi_agent import router as multi_agent_router
     from mcoi_runtime.app.routers.ops import router as ops_router
     from mcoi_runtime.app.routers.pilot import router as pilot_router
@@ -94,6 +100,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.scheduler import router as scheduler_router
     from mcoi_runtime.app.routers.simulation import router as simulation_router
     from mcoi_runtime.app.routers.tenant import router as tenant_router
+    from mcoi_runtime.app.routers.ucja import router as ucja_router
     from mcoi_runtime.app.routers.workflow import router as workflow_router
 
     app.include_router(health_router)
@@ -121,3 +128,11 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(explain_router)
     app.include_router(multi_agent_router)
     app.include_router(knowledge_router)
+    # MUSIA v4.x routers
+    app.include_router(mfidel_router)
+    app.include_router(constructs_router)
+    app.include_router(cognition_router)
+    app.include_router(ucja_router)
+    app.include_router(musia_tenants_router)
+    app.include_router(musia_governance_metrics_router)
+    app.include_router(domains_router)

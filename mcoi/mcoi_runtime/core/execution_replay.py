@@ -14,10 +14,18 @@ Invariants:
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Callable
 import json
+
+
+# Default cap on the completed-trace ring. Trace bodies can be large
+# (per-frame input/output dicts), so the cap is tighter than e.g. the
+# CorrelationManager's. Operators wanting longer history persist
+# externally.
+DEFAULT_MAX_COMPLETED_TRACES = 1_000
 
 
 def _classify_replay_exception(exc: Exception) -> str:
@@ -55,11 +63,21 @@ class ReplayTrace:
 class ReplayRecorder:
     """Records execution traces for replay."""
 
-    def __init__(self, *, clock: Callable[[], str], max_frames: int = 1000) -> None:
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], str],
+        max_frames: int = 1000,
+        max_completed: int = DEFAULT_MAX_COMPLETED_TRACES,
+    ) -> None:
         self._clock = clock
         self._max_frames = max_frames
         self._traces: dict[str, list[ReplayFrame]] = {}
-        self._completed: list[ReplayTrace] = []
+        # Bounded ring — see DEFAULT_MAX_COMPLETED_TRACES. Old traces
+        # evict in O(1) when the cap is hit; list_traces wraps the
+        # deque in list() before slicing because deque does not
+        # support slice indexing.
+        self._completed: deque[ReplayTrace] = deque(maxlen=max_completed)
         self._frame_counter = 0
 
     def start_trace(self, trace_id: str) -> None:
@@ -134,7 +152,10 @@ class ReplayRecorder:
         return None
 
     def list_traces(self, limit: int = 50) -> list[ReplayTrace]:
-        return self._completed[-limit:]
+        # deque doesn't support slice indexing; materialize then slice.
+        # Fine in practice — the deque is bounded so the temporary list
+        # cannot exceed max_completed in size.
+        return list(self._completed)[-limit:]
 
     @property
     def completed_count(self) -> int:
