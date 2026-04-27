@@ -154,10 +154,13 @@ def _kind_or_400(enum_cls, value: str):
     try:
         return enum_cls(value)
     except ValueError:
-        valid = ", ".join(e.value for e in enum_cls)
         raise HTTPException(
             status_code=400,
-            detail=f"unknown kind {value!r}; valid: {valid}",
+            detail={
+                "error": "unknown_kind",
+                "value": value,
+                "valid": [e.value for e in enum_cls],
+            },
         )
 
 

@@ -262,27 +262,14 @@ class PhiGov:
 
         # Final judgment. The first specific rejection reason is surfaced
         # so callers can attribute denials without parsing rejected_deltas.
-        if rejected and len(rejected) == len(deltas):
+        if rejected:
+            # v4.15 contract: surface the first specific rejection reason
+            # so callers can attribute denials without parsing rejected_deltas.
+            # Counts are derivable: len(rejected_deltas) vs len(deltas).
             primary = rejection_reasons[0] if rejection_reasons else "unknown"
             judgment = Judgment(
                 state=ProofState.FAIL,
-                reason=(
-                    f"all {len(rejected)} deltas rejected; first cause: {primary}"
-                    if len(rejected) > 1
-                    else primary
-                ),
-                cascade_summaries=tuple(cascade_summaries),
-                phi_agent_level_passed=last_phi_level,
-                rejected_deltas=tuple(rejected),
-            )
-        elif rejected:
-            primary = rejection_reasons[0] if rejection_reasons else "unknown"
-            judgment = Judgment(
-                state=ProofState.FAIL,
-                reason=(
-                    f"{len(rejected)} of {len(deltas)} deltas rejected; "
-                    f"first cause: {primary}"
-                ),
+                reason=primary,
                 cascade_summaries=tuple(cascade_summaries),
                 phi_agent_level_passed=last_phi_level,
                 rejected_deltas=tuple(rejected),

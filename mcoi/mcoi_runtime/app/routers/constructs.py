@@ -342,7 +342,7 @@ def _resolve_uuid(s: str | None, name: str) -> UUID | None:
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail=f"{name} is not a valid UUID: {s!r}",
+            detail={"error": "invalid_uuid", "field": name, "value": s},
         )
 
 
@@ -364,7 +364,7 @@ def _validate_pagination(
     if page_size < 1 or page_size > PAGE_SIZE_MAX:
         raise HTTPException(
             status_code=400,
-            detail=f"page_size must be in [1, {PAGE_SIZE_MAX}]",
+            detail={"error": "invalid_page_size", "max": PAGE_SIZE_MAX},
         )
     if page is None:
         page = 1
@@ -452,7 +452,11 @@ def get_construct(
     if c is None:
         raise HTTPException(
             status_code=404,
-            detail=f"construct {cid} not found in tenant {state.tenant_id}",
+            detail={
+                "error": "construct_not_found",
+                "construct_id": str(cid),
+                "tenant_id": state.tenant_id,
+            },
         )
     return _construct_to_payload(c, state.tenant_id)
 
@@ -467,7 +471,11 @@ def get_dependents(
     if cid not in state.graph.constructs:
         raise HTTPException(
             status_code=404,
-            detail=f"construct {cid} not found in tenant {state.tenant_id}",
+            detail={
+                "error": "construct_not_found",
+                "construct_id": str(cid),
+                "tenant_id": state.tenant_id,
+            },
         )
     return [str(i) for i in state.graph.direct_dependents_of(cid)]
 
@@ -499,7 +507,11 @@ def create_change(
         if u not in state.graph.constructs:
             raise HTTPException(
                 status_code=400,
-                detail=f"referenced state {u} not in tenant {state.tenant_id}",
+                detail={
+                    "error": "referenced_state_not_found",
+                    "state_id": str(u),
+                    "tenant_id": state.tenant_id,
+                },
             )
     chg = Change(
         state_before_id=before,
@@ -523,7 +535,11 @@ def create_causation(
         if u not in state.graph.constructs:
             raise HTTPException(
                 status_code=400,
-                detail=f"referenced construct {u} not in tenant {state.tenant_id}",
+                detail={
+                    "error": "referenced_construct_not_found",
+                    "construct_id": str(u),
+                    "tenant_id": state.tenant_id,
+                },
             )
     try:
         c = Causation(
@@ -673,7 +689,11 @@ def delete_construct(
     if cid not in state.graph.constructs:
         raise HTTPException(
             status_code=404,
-            detail=f"construct {cid} not found in tenant {state.tenant_id}",
+            detail={
+                "error": "construct_not_found",
+                "construct_id": str(cid),
+                "tenant_id": state.tenant_id,
+            },
         )
     try:
         state.graph.unregister(cid)

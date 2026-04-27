@@ -74,9 +74,15 @@ def grid_summary() -> GridSummary:
 def get_atom(row: int, col: int) -> FidelResponse:
     """Look up the atomic fidel at f[row][col] (1-indexed)."""
     if not (1 <= row <= GRID_ROWS):
-        raise HTTPException(status_code=400, detail=f"row {row} out of range")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "row_out_of_range", "row": row, "max": GRID_ROWS},
+        )
     if not (1 <= col <= GRID_COLS):
-        raise HTTPException(status_code=400, detail=f"col {col} out of range")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "col_out_of_range", "col": col, "max": GRID_COLS},
+        )
     return _to_response(fidel_at(row, col))
 
 
@@ -84,9 +90,15 @@ def get_atom(row: int, col: int) -> FidelResponse:
 def get_overlay(row: int, col: int) -> OverlayResponse:
     """Return the audio overlay fidel for f[row][col]. None if empty slot."""
     if not (1 <= row <= GRID_ROWS):
-        raise HTTPException(status_code=400, detail=f"row {row} out of range")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "row_out_of_range", "row": row, "max": GRID_ROWS},
+        )
     if not (1 <= col <= GRID_COLS):
-        raise HTTPException(status_code=400, detail=f"col {col} out of range")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "col_out_of_range", "col": col, "max": GRID_COLS},
+        )
     base = fidel_at(row, col)
     overlay = get_overlay_for(base)
     return OverlayResponse(

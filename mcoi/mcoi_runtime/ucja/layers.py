@@ -166,7 +166,7 @@ def l4_decomposition(draft: JobDraft) -> tuple[JobDraft, LayerResult]:
             draft,
             LayerResult(
                 verdict=LayerVerdict.RECLASSIFY,
-                reason=f"L4: {len(tasks)} tasks exceeds practical decomposition limit",
+                reason="L4_decomposition_limit_exceeded",
                 suggestion="group acceptance criteria before requalifying",
             ),
         )

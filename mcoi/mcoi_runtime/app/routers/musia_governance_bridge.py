@@ -110,7 +110,7 @@ def chain_to_validator(
                 tenant_id=ctx.tenant_id,
                 allowed=False,
                 blocking_guard=type(exc).__name__,
-                reason=f"chain_exception:{type(exc).__name__}",
+                reason="chain_exception",
                 exception=True,
             )
             return (False, f"chain_exception:{type(exc).__name__}")
@@ -212,7 +212,7 @@ def gate_domain_run(
             tenant_id=tenant_id,
             allowed=False,
             blocking_guard=type(exc).__name__,
-            reason=f"chain_exception:{type(exc).__name__}",
+            reason="chain_exception",
             exception=True,
         )
         return (False, f"chain_exception:{type(exc).__name__}")

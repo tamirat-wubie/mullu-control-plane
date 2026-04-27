@@ -203,7 +203,7 @@ class CascadeEngine:
                         construct_id=current_id,
                         construct_type=self._type_of(current_id),
                         outcome=CascadeOutcome.REJECTED,
-                        reason=f"depth limit {self._max_depth} exceeded",
+                        reason="depth_limit_exceeded",
                     )
                 )
                 break

@@ -102,7 +102,9 @@ def test_construct_create_change_with_cross_tenant_ref_rejected(client):
         },
     )
     assert r.status_code == 400
-    assert "tenant-b" in r.json()["detail"]
+    detail = r.json()["detail"]
+    assert detail["error"] == "referenced_state_not_found"
+    assert detail["tenant_id"] == "tenant-b"
 
 
 # ---- Φ_agent isolation ----

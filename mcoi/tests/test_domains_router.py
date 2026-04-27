@@ -71,7 +71,9 @@ def test_software_dev_unknown_kind_400(client):
         },
     )
     assert r.status_code == 400
-    assert "miracle" in r.json()["detail"]
+    detail = r.json()["detail"]
+    assert detail["error"] == "unknown_kind"
+    assert detail["value"] == "miracle"
 
 
 def test_software_dev_missing_acceptance_criteria_blocked(client):

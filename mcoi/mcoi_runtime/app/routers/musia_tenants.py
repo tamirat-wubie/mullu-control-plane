@@ -52,7 +52,8 @@ def get_tenant(
     state = STORE.get(tenant_id)
     if state is None:
         raise HTTPException(
-            status_code=404, detail=f"tenant {tenant_id} has no MUSIA state"
+            status_code=404,
+            detail={"error": "tenant_not_found", "tenant_id": tenant_id},
         )
     return TenantSummary(
         tenant_id=tenant_id,
@@ -72,7 +73,8 @@ def reset_tenant(
     """
     if STORE.get(tenant_id) is None:
         raise HTTPException(
-            status_code=404, detail=f"tenant {tenant_id} has no MUSIA state"
+            status_code=404,
+            detail={"error": "tenant_not_found", "tenant_id": tenant_id},
         )
     STORE.reset_tenant(tenant_id)
 
@@ -112,7 +114,8 @@ def snapshot_tenant(
     state = STORE.get(tenant_id)
     if state is None:
         raise HTTPException(
-            status_code=404, detail=f"tenant {tenant_id} has no MUSIA state"
+            status_code=404,
+            detail={"error": "tenant_not_found", "tenant_id": tenant_id},
         )
     path = STORE.snapshot_tenant(tenant_id)
     return SnapshotResult(
@@ -193,7 +196,7 @@ def list_runs(
     if state is None:
         raise HTTPException(
             status_code=404,
-            detail=f"tenant {tenant_id} has no MUSIA state",
+            detail={"error": "tenant_not_found", "tenant_id": tenant_id},
         )
     # Validate pagination params inline (the constructs router has its own
     # helper; duplicating the few lines keeps musia_tenants free of a
@@ -202,7 +205,7 @@ def list_runs(
         if page_size < 1 or page_size > _RUNS_PAGE_SIZE_MAX:
             raise HTTPException(
                 status_code=400,
-                detail=f"page_size must be in [1, {_RUNS_PAGE_SIZE_MAX}]",
+                detail={"error": "invalid_page_size", "max": _RUNS_PAGE_SIZE_MAX},
             )
         if page is None:
             page = 1
@@ -243,7 +246,7 @@ def delete_snapshot(
     if not backend.delete(tenant_id):
         raise HTTPException(
             status_code=404,
-            detail=f"no persisted snapshot for tenant {tenant_id}",
+            detail={"error": "snapshot_not_found", "tenant_id": tenant_id},
         )
 
 
@@ -296,7 +299,7 @@ def get_quota(
     if state is None:
         raise HTTPException(
             status_code=404,
-            detail=f"tenant {tenant_id} has no MUSIA state",
+            detail={"error": "tenant_not_found", "tenant_id": tenant_id},
         )
     return _build_snapshot(tenant_id, state)
 
