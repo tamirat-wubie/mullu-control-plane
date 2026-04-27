@@ -49,6 +49,19 @@ _AUTH_MANAGER: Optional[APIKeyManager] = None
 # rotation, the old authenticator is removed without a flag day.
 _JWT_AUTHENTICATORS: list[JWTAuthenticator] = []
 
+# v4.26.0: explicit dev-mode opt-in flag. When False (default), an
+# unconfigured resolver call raises 503 instead of degrading to dev
+# wildcard. The bootstrap path sets this based on MULLU_ENV; tests
+# call ``configure_musia_dev_mode(True)`` to keep the historical
+# wildcard behavior in unit tests.
+#
+# This is the F16 fix: pre-v4.26 the resolver short-circuited to
+# wildcard whenever ``is_auth_configured()`` returned False, which
+# happened in every default-bootstrap deployment because nobody called
+# ``configure_musia_auth(...)`` from production wiring. Now production
+# fails closed.
+_DEV_MODE_ALLOWED: bool = False
+
 
 # ---- Auth context ----
 
@@ -104,6 +117,24 @@ def configured_jwt_authenticators() -> list[JWTAuthenticator]:
 def is_auth_configured() -> bool:
     """True if any authenticator is configured."""
     return _AUTH_MANAGER is not None or len(_JWT_AUTHENTICATORS) > 0
+
+
+def configure_musia_dev_mode(allowed: bool) -> None:
+    """Allow / disallow the dev-wildcard branch in ``resolve_musia_auth``.
+
+    v4.26.0+. The bootstrap path calls ``configure_musia_dev_mode(True)``
+    only when ``MULLU_ENV == "local_dev"`` and no real authenticator was
+    wired. Tests also call this. In ``pilot``/``production`` it stays
+    False, so a missing ``configure_musia_auth(...)`` produces a 503
+    instead of a wildcard pass-through.
+    """
+    global _DEV_MODE_ALLOWED
+    _DEV_MODE_ALLOWED = bool(allowed)
+
+
+def dev_mode_allowed() -> bool:
+    """Inspect the current dev-mode flag. Test-only."""
+    return _DEV_MODE_ALLOWED
 
 
 # ---- Helpers ----
@@ -178,8 +209,27 @@ def resolve_musia_auth(
     only need the tenant_id should depend on ``resolve_musia_tenant``
     instead.
     """
-    # Dev mode — no authenticators configured
+    # No authenticators configured.
     if not is_auth_configured():
+        # v4.26.0: fail-closed unless dev mode was explicitly allowed.
+        # Pre-v4.26 this branch always activated, which is the F16 bug:
+        # the bootstrap path never called ``configure_musia_auth(...)``,
+        # so every MUSIA endpoint accepted unauthenticated wildcard
+        # requests in production. Now production must opt in to dev
+        # mode (it shouldn't), tests can still call
+        # ``configure_musia_dev_mode(True)``.
+        if not _DEV_MODE_ALLOWED:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": "musia_auth_not_configured",
+                    "remedy": (
+                        "Wire configure_musia_auth(api_key_mgr) and/or "
+                        "configure_musia_jwt(jwt_authenticator) at startup, "
+                        "or set MULLU_ENV=local_dev to enable dev mode."
+                    ),
+                },
+            )
         tid = (x_tenant_id or DEFAULT_TENANT).strip()
         if not tid:
             raise HTTPException(status_code=400, detail="X-Tenant-ID is empty")

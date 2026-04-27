@@ -23,7 +23,11 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers.musia_auth import require_read
+from mcoi_runtime.app.routers.musia_auth import (
+    MusiaAuthContext,
+    require_read,
+    resolve_musia_auth,
+)
 from mcoi_runtime.app.routers.musia_governance_bridge import gate_domain_run
 from mcoi_runtime.substrate.registry_store import STORE
 from mcoi_runtime.domain_adapters import (
@@ -100,6 +104,37 @@ def _gate_or_blocked_outcome(
     )
 
 
+def _resolve_domain_auth(
+    persist_run: bool,
+    auth: MusiaAuthContext,
+) -> str:
+    """v4.26.0 (audit F13 fix): scope check matched to actual side-effect.
+
+    When ``persist_run=False`` the endpoint is read-only (cycle output
+    returned, nothing written). ``musia.read`` is sufficient.
+
+    When ``persist_run=True`` the endpoint calls ``state.merge_run(...)``
+    which writes captured constructs into the tenant's persistent registry.
+    ``musia.write`` is required. Pre-v4.26 the same ``Depends(require_read)``
+    gated both paths — read-scope credential could persist constructs by
+    setting one query parameter. Audit P3 F13.
+
+    Returns the validated tenant_id; raises 403 on insufficient scope.
+    """
+    required = "musia.write" if persist_run else "musia.read"
+    granted = auth.scopes
+    if "*" not in granted and required not in granted:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": f"missing scope: {required}",
+                "subject": auth.subject,
+                "granted_scopes": sorted(granted),
+            },
+        )
+    return auth.tenant_id
+
+
 def _maybe_persist_run(
     tenant_id: str,
     persist_run: bool,
@@ -168,8 +203,9 @@ def _kind_or_400(enum_cls, value: str):
 def process_software_dev(
     payload: SoftwareDevPayload,
     persist_run: bool = False,
-    tenant_id: str = Depends(require_read),
+    auth: MusiaAuthContext = Depends(resolve_musia_auth),
 ) -> DomainOutcome:
+    tenant_id = _resolve_domain_auth(persist_run, auth)
     blocked = _gate_or_blocked_outcome(
         domain="software_dev", tenant_id=tenant_id, summary=payload.summary,
     )
@@ -229,8 +265,9 @@ class BusinessPayload(BaseModel):
 def process_business(
     payload: BusinessPayload,
     persist_run: bool = False,
-    tenant_id: str = Depends(require_read),
+    auth: MusiaAuthContext = Depends(resolve_musia_auth),
 ) -> DomainOutcome:
+    tenant_id = _resolve_domain_auth(persist_run, auth)
     blocked = _gate_or_blocked_outcome(
         domain="business_process", tenant_id=tenant_id, summary=payload.summary,
     )
@@ -296,8 +333,9 @@ class ResearchPayload(BaseModel):
 def process_research(
     payload: ResearchPayload,
     persist_run: bool = False,
-    tenant_id: str = Depends(require_read),
+    auth: MusiaAuthContext = Depends(resolve_musia_auth),
 ) -> DomainOutcome:
+    tenant_id = _resolve_domain_auth(persist_run, auth)
     blocked = _gate_or_blocked_outcome(
         domain="scientific_research", tenant_id=tenant_id, summary=payload.summary,
     )
@@ -366,8 +404,9 @@ class ManufacturingPayload(BaseModel):
 def process_manufacturing(
     payload: ManufacturingPayload,
     persist_run: bool = False,
-    tenant_id: str = Depends(require_read),
+    auth: MusiaAuthContext = Depends(resolve_musia_auth),
 ) -> DomainOutcome:
+    tenant_id = _resolve_domain_auth(persist_run, auth)
     blocked = _gate_or_blocked_outcome(
         domain="manufacturing", tenant_id=tenant_id, summary=payload.summary,
     )
@@ -438,8 +477,9 @@ class HealthcarePayload(BaseModel):
 def process_healthcare(
     payload: HealthcarePayload,
     persist_run: bool = False,
-    tenant_id: str = Depends(require_read),
+    auth: MusiaAuthContext = Depends(resolve_musia_auth),
 ) -> DomainOutcome:
+    tenant_id = _resolve_domain_auth(persist_run, auth)
     blocked = _gate_or_blocked_outcome(
         domain="healthcare", tenant_id=tenant_id, summary=payload.summary,
     )
@@ -510,8 +550,9 @@ class EducationPayload(BaseModel):
 def process_education(
     payload: EducationPayload,
     persist_run: bool = False,
-    tenant_id: str = Depends(require_read),
+    auth: MusiaAuthContext = Depends(resolve_musia_auth),
 ) -> DomainOutcome:
+    tenant_id = _resolve_domain_auth(persist_run, auth)
     blocked = _gate_or_blocked_outcome(
         domain="education", tenant_id=tenant_id, summary=payload.summary,
     )

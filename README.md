@@ -120,7 +120,7 @@ A second governance layer added in v4.x: 25 universal constructs across 5 tiers,
 
 HTTP surface: `/constructs/*`, `/domains/<six>/process`, `/cognition/*`, `/ucja/*`, `/mfidel/*`, `/musia/tenants/*`, `/musia/governance/*`. Chain runs in microseconds (5–16μs typical, 5-guard chain p99 ≤ 41μs — see [`tests/test_v4_17_chain_latency_bench.py`](mcoi/tests/test_v4_17_chain_latency_bench.py)).
 
-Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.18.0.md` at repo root.
+Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.26.0.md` at repo root. v4.26.0 closes audit-found authorization gaps in the MUSIA layer (F13/F14/F16) and adds a route-coverage CI gate.
 
 ### MCP Server
 
@@ -164,7 +164,7 @@ mullu-control-plane/
 │   ├── creative/           # Documents, data analysis, images, translation
 │   └── enterprise/         # RAG, notifications, scheduler
 ├── installer/              # mullusi init interactive setup wizard
-├── maf/                    # MAF Rust crate (transition-receipt protocol; see docs/MAF_RECEIPT_COVERAGE.md)
+├── maf/                    # MAF Rust crate — receipt-shape parity with Python contracts. NOT currently in the request path: Python does not call into Rust today (no PyO3 bindings, maf-cli is a scaffold). See docs/MAF_RECEIPT_COVERAGE.md for the honest baseline of what is and isn't certified.
 ├── schemas/                # 23 canonical JSON schemas (incl. MUSIA universal_construct)
 ├── k8s/                    # Kubernetes manifests (security hardened)
 └── docker-compose.yml      # 3-service deployment (postgres + API + gateway)

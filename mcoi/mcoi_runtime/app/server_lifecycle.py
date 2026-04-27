@@ -52,6 +52,9 @@ def bootstrap_server_lifecycle(
     append_bounded_warning: Callable[..., Any],
     governance_stores: Any,
     primary_store: Any,
+    api_key_mgr: Any = None,
+    jwt_authenticator: Any = None,
+    env: str = "local_dev",
     include_default_routers_fn: Callable[[Any], None] = include_default_routers,
     flush_state_on_shutdown_impl: Callable[..., Any] = _flush_state_on_shutdown_impl,
     restore_state_on_startup_impl: Callable[..., Any] = _restore_state_on_startup_impl,
@@ -94,6 +97,29 @@ def bootstrap_server_lifecycle(
             log_levels=log_levels,
             append_bounded_warning=append_bounded_warning,
         )
+
+    # v4.26.0 (audit P0 fix): wire MUSIA-side auth resolver. Pre-v4.26 the
+    # bootstrap path never called configure_musia_auth(...), so every
+    # MUSIA endpoint (constructs, domains, cognition, ucja, mfidel,
+    # musia/*) accepted unauthenticated wildcard-scope requests in any
+    # default deployment. Now the resolver shares the same APIKeyManager
+    # and JWT authenticator stack as the HTTP-side guard chain.
+    from mcoi_runtime.app.routers.musia_auth import (
+        configure_musia_auth,
+        configure_musia_dev_mode,
+        configure_musia_jwt,
+    )
+    if api_key_mgr is not None:
+        configure_musia_auth(api_key_mgr)
+    if jwt_authenticator is not None:
+        configure_musia_jwt(jwt_authenticator)
+    # Dev wildcard branch is allowed only when env is local_dev/test AND
+    # nothing real was wired. In pilot/production the resolver fails
+    # closed (503 musia_auth_not_configured) instead of degrading.
+    musia_auth_wired = api_key_mgr is not None or jwt_authenticator is not None
+    configure_musia_dev_mode(
+        not musia_auth_wired and env in ("local_dev", "test")
+    )
 
     include_default_routers_fn(app)
     startup_restored = restore_state_on_startup()
