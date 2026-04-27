@@ -20,6 +20,12 @@ from typing import Any
 
 import pytest
 
+# Skip the entire module when ``cryptography`` is not installed.
+# The lazy-import design in jwt_auth.py promises HS-only deployments
+# don't need this extra; this skip keeps that contract honest while
+# letting CI matrices that DO install it exercise the RSA path.
+pytest.importorskip("cryptography")
+
 from mcoi_runtime.core.jwt_auth import (
     JWKSFetcher,
     JWTAuthenticator,
