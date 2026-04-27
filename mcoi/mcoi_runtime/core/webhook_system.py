@@ -65,32 +65,12 @@ class WebhookDelivery:
     created_at: str
 
 
-_PRIVATE_IP_PREFIXES = (
-    "127.", "10.", "0.", "192.168.", "169.254.",
-    "172.16.", "172.17.", "172.18.", "172.19.",
-    "172.20.", "172.21.", "172.22.", "172.23.",
-    "172.24.", "172.25.", "172.26.", "172.27.",
-    "172.28.", "172.29.", "172.30.", "172.31.",
-)
-
-_BLOCKED_HOSTS = frozenset({"localhost", "metadata.google.internal"})
-
-
-def _is_private_url(url: str) -> bool:
-    """Check if a URL points to a private/internal address (SSRF prevention)."""
-    try:
-        from urllib.parse import urlparse
-        parsed = urlparse(url)
-        host = (parsed.hostname or "").lower()
-        if host in _BLOCKED_HOSTS:
-            return True
-        if any(host.startswith(prefix) for prefix in _PRIVATE_IP_PREFIXES):
-            return True
-        if host in ("[::1]", "::1"):
-            return True
-    except Exception:
-        return True  # Fail closed
-    return False
+# v4.29.0 (audit F9): SSRF policy unified with adapters/http_connector via
+# core/ssrf_policy. Pre-v4.29 this module had a much weaker check —
+# no DNS resolution, no IPv6 link-local, missing Azure / Alibaba / DO
+# metadata hostnames. That gap is closed by importing from the shared
+# module.
+from mcoi_runtime.core.ssrf_policy import is_private_url as _is_private_url
 
 
 class WebhookManager:
@@ -139,6 +119,17 @@ class WebhookManager:
             if event not in sub.events:
                 continue
             if tenant_id and sub.tenant_id != tenant_id and sub.tenant_id != "*":
+                continue
+
+            # v4.29.0 (audit F9): re-check SSRF policy at delivery time,
+            # not just at registration. A subscription's hostname could
+            # have flipped to a private IP since registration (DNS
+            # rebinding by an attacker controlling the operator's
+            # subscribed domain). Skip the delivery when this happens —
+            # the subscription stays registered (operators can audit
+            # the failure pattern via delivery_history) but no actual
+            # outbound request fires.
+            if _is_private_url(sub.url):
                 continue
 
             self._delivery_counter += 1

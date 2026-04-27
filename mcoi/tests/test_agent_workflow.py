@@ -39,7 +39,7 @@ def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=No
         webhook_mgr = WebhookManager(clock=FIXED_CLOCK)
         webhook_mgr.subscribe(WebhookSubscription(
             subscription_id="s1", tenant_id="t1",
-            url="http://hook", events=("task.completed", "task.failed"),
+            url="https://example.com/hook", events=("task.completed", "task.failed"),
         ))
 
     audit = AuditTrail(clock=FIXED_CLOCK) if with_audit else None

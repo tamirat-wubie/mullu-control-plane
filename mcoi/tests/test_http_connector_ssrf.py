@@ -157,18 +157,34 @@ class TestRedirectBlocking:
             )
         assert "redirect_blocked" in str(exc_info.value.msg)
 
-    @patch("mcoi_runtime.adapters.http_connector._is_private_host", return_value=False)
-    @patch("mcoi_runtime.adapters.http_connector.urllib.request.OpenerDirector.open")
-    def test_connector_surfaces_redirect_blocked_error(self, mock_open, _mock_priv):
-        """When opener raises redirect_blocked HTTPError, connector returns it."""
-        mock_open.side_effect = urllib.error.HTTPError(
+    def test_connector_surfaces_redirect_blocked_error(self):
+        """When opener raises redirect_blocked HTTPError, connector returns it.
+
+        v4.29.0 (audit F10): the connector now uses ``_resolve_and_check``
+        plus a per-request pinned opener. Mock both layers — SSRF
+        resolution returns ``(False, public_ip)`` so the request flow
+        proceeds, and the pinned opener's ``open`` raises the simulated
+        redirect-blocked error.
+        """
+        fake_opener = MagicMock()
+        fake_opener.open.side_effect = urllib.error.HTTPError(
             "http://evil.com/internal", 302,
             "redirect_blocked:302:http://127.0.0.1/admin",
             {}, None,
         )
-        connector = HttpConnector(clock=CLOCK)
-        desc = _make_connector_descriptor()
-        result = connector.invoke(desc, {"url": "https://legit.example.com/page"})
+        with (
+            patch(
+                "mcoi_runtime.adapters.http_connector._resolve_and_check",
+                return_value=(False, "93.184.216.34"),
+            ),
+            patch(
+                "mcoi_runtime.adapters.http_connector._build_pinned_opener",
+                return_value=fake_opener,
+            ),
+        ):
+            connector = HttpConnector(clock=CLOCK)
+            desc = _make_connector_descriptor()
+            result = connector.invoke(desc, {"url": "https://legit.example.com/page"})
         assert result.status is ConnectorStatus.FAILED
         assert "redirect_blocked" in result.error_code
 
