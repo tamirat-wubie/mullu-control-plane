@@ -105,6 +105,32 @@ class OIDCConfig:
     scope_claim: str = "scope"
     clock_skew_seconds: int = 30
     require_expiry: bool = True
+    # v4.33.0 (audit JWT hardening): claim-presence enforcement.
+    require_subject: bool = True
+    """If True, reject tokens with empty/missing ``sub`` claim. Pre-v4.33
+    such tokens authenticated successfully with empty ``subject``,
+    leaving audit attribution blank. Default True for production
+    correctness; set False for OIDC providers that legitimately omit
+    sub (rare)."""
+
+    require_tenant_claim: bool = True
+    """If True, reject tokens with empty/missing tenant claim (the
+    claim named by ``tenant_claim``). Pre-v4.33 such tokens
+    authenticated; combined with ``X-Tenant-ID`` header handling,
+    an empty-tenant JWT effectively trusted the header. Default True;
+    set False only in deployments that don't use multi-tenancy."""
+
+    require_iat_not_in_future: bool = True
+    """If True, reject tokens whose ``iat`` claim is more than
+    ``clock_skew_seconds`` in the future. Pre-v4.33 ``iat`` was
+    not validated; tokens with bogus future ``iat`` were accepted as
+    long as ``exp > now``. RFC 7519 §4.1.6."""
+
+    require_https_jwks: bool = True
+    """If True (default), ``jwks_url`` must be ``https://``. Set False
+    only for test environments serving JWKS over HTTP. Pre-v4.33
+    accepted any scheme; an operator misconfiguring ``http://``
+    enabled a MITM key-substitution attack on the JWKS path."""
 
     def __post_init__(self) -> None:
         if not self.issuer:
@@ -130,6 +156,19 @@ class OIDCConfig:
             raise ValueError("public_keys and jwks_url are mutually exclusive")
         if self.jwks_cache_ttl_seconds <= 0:
             raise ValueError("jwks_cache_ttl_seconds must be positive")
+        # v4.33.0 (audit JWT hardening): jwks_url must be HTTPS unless
+        # the operator explicitly opts out via ``require_https_jwks=False``.
+        # Pre-v4.33 the fetcher accepted any scheme; an operator
+        # misconfiguring ``http://`` enabled MITM key substitution on
+        # the JWKS path (attacker forges any token).
+        if (
+            self.jwks_url is not None
+            and self.require_https_jwks
+            and not self.jwks_url.lower().startswith("https://")
+        ):
+            raise ValueError(
+                "jwks_url must use HTTPS; set require_https_jwks=False to opt out"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -248,11 +287,27 @@ def _default_jwks_fetcher(url: str) -> dict[str, Any]:
     HTTPS certificate pinning, or a circuit breaker. The default is
     intentionally minimal so tests can swap it out cleanly.
 
+    v4.33.0 (audit JWT hardening): redirects are blocked. Pre-v4.33
+    the fetcher used ``urlopen`` directly, which followed 3xx by
+    default. A compromised JWKS endpoint could redirect to a
+    private-IP / metadata endpoint and slip past upstream SSRF
+    checks.
+
     Returns the decoded JWKS document (dict). Raises on network/parse
     errors so the caller can surface them in error reasons.
     """
-    from urllib.request import urlopen
-    with urlopen(url, timeout=10) as resp:  # nosec B310 - URL is operator-supplied
+    import urllib.request
+    import urllib.error
+
+    class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            raise urllib.error.HTTPError(
+                newurl, code, f"jwks_redirect_blocked:{code}",
+                headers, fp,
+            )
+
+    opener = urllib.request.build_opener(_NoRedirectHandler)
+    with opener.open(url, timeout=10) as resp:  # nosec B310 - URL is operator-supplied
         body = resp.read()
     return json.loads(body)
 
@@ -498,9 +553,38 @@ class JWTAuthenticator:
             if now < nbf - self._config.clock_skew_seconds:
                 return JWTAuthResult(authenticated=False, error="token is not yet valid (nbf)")
 
+        # v4.33.0 (audit JWT hardening): iat (issued-at) sanity.
+        # RFC 7519 §4.1.6. Reject tokens issued in the future
+        # (beyond clock_skew); they're either misclocked or forged.
+        # Pre-v4.33 ``iat`` was not validated; tokens with bogus
+        # ``iat`` passed as long as ``exp > now``.
+        iat = claims.get("iat")
+        if iat is not None and self._config.require_iat_not_in_future:
+            if not isinstance(iat, (int, float)):
+                return JWTAuthResult(authenticated=False, error="iat claim must be numeric")
+            if iat > now + self._config.clock_skew_seconds:
+                return JWTAuthResult(authenticated=False, error="token iat is in the future")
+
         # Step 7: Extract identity claims
         subject = str(claims.get("sub", ""))
         tenant_id = str(claims.get(self._config.tenant_claim, ""))
+
+        # v4.33.0 (audit JWT hardening): require non-empty subject.
+        # Pre-v4.33 tokens with empty ``sub`` authenticated successfully
+        # with empty ``subject``, leaving audit attribution blank.
+        if self._config.require_subject and not subject:
+            return JWTAuthResult(
+                authenticated=False, error="sub claim is empty or missing"
+            )
+
+        # v4.33.0 (audit JWT hardening): require non-empty tenant claim.
+        # Pre-v4.33 tokens with empty tenant claim authenticated; combined
+        # with X-Tenant-ID header handling in middleware, an empty-tenant
+        # JWT effectively trusted the header (defense bypass).
+        if self._config.require_tenant_claim and not tenant_id:
+            return JWTAuthResult(
+                authenticated=False, error="tenant claim is empty or missing"
+            )
 
         # Scopes: support both space-separated string and list
         raw_scopes = claims.get(self._config.scope_claim, "")
