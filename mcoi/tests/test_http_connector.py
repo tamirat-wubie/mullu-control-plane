@@ -231,9 +231,22 @@ class TestHttpConnectorInvoke:
         fake_response.__enter__ = lambda s: s
         fake_response.__exit__ = mock.MagicMock(return_value=False)
 
+        # v4.29.0+ (audit F10): the connector now builds a per-request
+        # pinned opener via _build_pinned_opener(ip). Mock both the
+        # SSRF resolution (returns public IP) and the pinned opener
+        # so the request flows through the fake response without
+        # actually touching the network.
+        fake_opener = mock.MagicMock()
+        fake_opener.open = mock.MagicMock(return_value=fake_response)
         with (
-            mock.patch("mcoi_runtime.adapters.http_connector._is_private_host", return_value=False),
-            mock.patch.object(connector._opener, "open", return_value=fake_response),
+            mock.patch(
+                "mcoi_runtime.adapters.http_connector._resolve_and_check",
+                return_value=(False, "93.184.216.34"),  # example.com public IP
+            ),
+            mock.patch(
+                "mcoi_runtime.adapters.http_connector._build_pinned_opener",
+                return_value=fake_opener,
+            ),
         ):
             result = connector.invoke(_make_descriptor(), {"url": "https://example.com/ok"})
 

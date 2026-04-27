@@ -78,7 +78,7 @@ class TestWebhookEndpoints:
     def test_list_webhooks(self, client):
         client.post("/api/v1/webhooks/subscribe", json={
             "subscription_id": "sub-list", "tenant_id": "t1",
-            "url": "http://x", "events": ["task.completed"],
+            "url": "https://example.com/hook", "events": ["task.completed"],
         })
         resp = client.get("/api/v1/webhooks")
         assert resp.status_code == 200

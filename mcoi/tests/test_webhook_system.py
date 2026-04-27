@@ -18,14 +18,14 @@ class TestWebhookManager:
 
     def test_duplicate_subscribe_raises(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
-        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="http://x", events=("task.completed",))
+        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="https://example.com/hook", events=("task.completed",))
         mgr.subscribe(sub)
         with pytest.raises(ValueError):
             mgr.subscribe(sub)
 
     def test_duplicate_subscribe_error_is_bounded(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
-        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="http://x", events=("task.completed",))
+        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="https://example.com/hook", events=("task.completed",))
         mgr.subscribe(sub)
         with pytest.raises(ValueError, match="subscription already exists") as excinfo:
             mgr.subscribe(sub)
@@ -34,7 +34,7 @@ class TestWebhookManager:
 
     def test_unsubscribe(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
-        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="http://x", events=("task.completed",))
+        sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="https://example.com/hook", events=("task.completed",))
         mgr.subscribe(sub)
         assert mgr.unsubscribe("sub-1") is True
         assert mgr.subscription_count == 0
@@ -43,7 +43,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="t1",
-            url="http://x", events=("task.completed",),
+            url="https://example.com/hook", events=("task.completed",),
         ))
         deliveries = mgr.emit("task.completed", {"task_id": "t1"}, tenant_id="t1")
         assert len(deliveries) == 1
@@ -54,7 +54,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="t1",
-            url="http://x", events=("task.completed",),
+            url="https://example.com/hook", events=("task.completed",),
         ))
         deliveries = mgr.emit("task.failed", {"task_id": "t1"}, tenant_id="t1")
         assert len(deliveries) == 0
@@ -63,7 +63,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="t1",
-            url="http://x", events=("task.completed",),
+            url="https://example.com/hook", events=("task.completed",),
         ))
         deliveries = mgr.emit("task.completed", {"task_id": "t1"}, tenant_id="t2")
         assert len(deliveries) == 0
@@ -72,7 +72,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="*",
-            url="http://x", events=("task.completed",),
+            url="https://example.com/hook", events=("task.completed",),
         ))
         deliveries = mgr.emit("task.completed", {"task_id": "t1"}, tenant_id="any-tenant")
         assert len(deliveries) == 1
@@ -81,7 +81,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="t1",
-            url="http://x", events=("task.completed",), secret="my-secret",
+            url="https://example.com/hook", events=("task.completed",), secret="my-secret",
         ))
         deliveries = mgr.emit("task.completed", {"data": "test"}, tenant_id="t1")
         assert deliveries[0].signature  # Non-empty HMAC
@@ -90,7 +90,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="t1",
-            url="http://x", events=("task.completed",), enabled=False,
+            url="https://example.com/hook", events=("task.completed",), enabled=False,
         ))
         deliveries = mgr.emit("task.completed", {}, tenant_id="t1")
         assert len(deliveries) == 0
@@ -99,7 +99,7 @@ class TestWebhookManager:
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(
             subscription_id="sub-1", tenant_id="t1",
-            url="http://x", events=("task.completed",),
+            url="https://example.com/hook", events=("task.completed",),
         ))
         mgr.emit("task.completed", {}, tenant_id="t1")
         mgr.emit("task.completed", {}, tenant_id="t1")
@@ -108,8 +108,8 @@ class TestWebhookManager:
 
     def test_multiple_subscriptions(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
-        mgr.subscribe(WebhookSubscription(subscription_id="s1", tenant_id="t1", url="http://a", events=("task.completed",)))
-        mgr.subscribe(WebhookSubscription(subscription_id="s2", tenant_id="t1", url="http://b", events=("task.completed",)))
+        mgr.subscribe(WebhookSubscription(subscription_id="s1", tenant_id="t1", url="https://example.com/a", events=("task.completed",)))
+        mgr.subscribe(WebhookSubscription(subscription_id="s2", tenant_id="t1", url="https://example.com/b", events=("task.completed",)))
         deliveries = mgr.emit("task.completed", {}, tenant_id="t1")
         assert len(deliveries) == 2
 

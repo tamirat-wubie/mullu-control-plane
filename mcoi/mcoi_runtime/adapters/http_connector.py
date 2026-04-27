@@ -52,60 +52,15 @@ class HttpConnectorConfig:
             raise ValueError("max_response_bytes must be positive")
 
 
-_BLOCKED_HOSTS = frozenset({
-    "localhost", "127.0.0.1", "0.0.0.0", "::1",
-    "[::1]", "169.254.169.254",  # AWS metadata
-})
-
-_BLOCKED_PREFIXES = (
-    "10.", "172.16.", "172.17.", "172.18.", "172.19.",
-    "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
-    "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
-    "172.30.", "172.31.", "192.168.",
+# v4.29.0 (audit F9): SSRF policy unified into core/ssrf_policy. The
+# shared module adds Azure / Alibaba / DigitalOcean metadata hostnames,
+# IPv6 link-local + ULA prefixes, and the same DNS-resolution
+# fail-closed posture this module already had.
+from mcoi_runtime.core.ssrf_policy import (
+    is_private_host as _is_private_host,
+    is_private_ip as _is_private_ip,
+    resolve_and_check as _resolve_and_check,
 )
-
-
-def _is_private_ip(ip_str: str) -> bool:
-    """Check if an IP address string is private, loopback, link-local, or reserved."""
-    try:
-        addr = ipaddress.ip_address(ip_str)
-    except ValueError:
-        return True  # Fail closed on unparseable addresses
-    return (
-        addr.is_private
-        or addr.is_loopback
-        or addr.is_link_local
-        or addr.is_reserved
-        or addr.is_multicast
-        or addr.is_unspecified
-    )
-
-
-def _is_private_host(host: str) -> bool:
-    """Check if a host resolves to a private/loopback/metadata address.
-
-    Performs DNS resolution to defend against DNS rebinding attacks.
-    """
-    if not host:
-        return True
-    lower = host.lower().strip("[]")
-    if lower in _BLOCKED_HOSTS:
-        return True
-    if any(lower.startswith(p) for p in _BLOCKED_PREFIXES):
-        return True
-
-    # DNS resolution check: resolve hostname and verify all IPs are public
-    try:
-        addr_infos = socket.getaddrinfo(lower, None, proto=socket.IPPROTO_TCP)
-    except (socket.gaierror, OSError):
-        return True  # Fail closed: unresolvable hosts are blocked
-    if not addr_infos:
-        return True
-    for family, _type, _proto, _canonname, sockaddr in addr_infos:
-        ip_str = sockaddr[0]
-        if _is_private_ip(ip_str):
-            return True
-    return False
 
 
 class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -115,6 +70,116 @@ class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
         raise urllib.error.HTTPError(
             newurl, code, f"redirect_blocked:{code}:{newurl}", headers, fp
         )
+
+
+# v4.29.0 (audit F10): DNS-rebinding defense. Pre-v4.29 the SSRF check
+# resolved the hostname once; urllib then resolved it AGAIN on the actual
+# connect — two independent lookups separated by Python work. An attacker-
+# controlled DNS server could return a public IP for the first lookup and
+# a private IP (or 169.254.169.254) for the second. We close the gap with
+# a custom HTTPSConnection that connects to a pre-resolved IP, preserves
+# the original hostname for TLS SNI / Host header, and re-validates the
+# IP at the socket level as defense-in-depth.
+
+
+class _PinnedHTTPSConnection:
+    """Factory for HTTPSConnection-shaped objects that connect to a
+    specific pre-resolved IP rather than re-resolving the hostname.
+
+    Returns a one-shot subclass via ``make(host, **kwargs)``. Used by
+    ``_PinnedHTTPSHandler`` to wire a per-request connection.
+
+    The TLS handshake uses ``server_hostname=host`` so SNI matches the
+    original hostname (cert validation works), but the underlying TCP
+    connect goes to the pinned IP — closing the rebinding window.
+    """
+
+    @staticmethod
+    def make(pinned_ip: str):
+        import http.client
+
+        class _Connection(http.client.HTTPSConnection):
+            def connect(self) -> None:  # type: ignore[override]
+                sock = socket.create_connection(
+                    (pinned_ip, self.port),
+                    self.timeout,
+                    self.source_address,
+                )
+                # Defense-in-depth: even though we resolved this IP
+                # ourselves, re-validate. Cheap, immune to caller bugs.
+                peer_ip = sock.getpeername()[0]
+                if _is_private_ip(peer_ip):
+                    sock.close()
+                    raise OSError(
+                        f"blocked_private_address_at_connect:{peer_ip}"
+                    )
+                if self._tunnel_host:
+                    self.sock = sock
+                    self._tunnel()
+                else:
+                    self.sock = self._context.wrap_socket(
+                        sock, server_hostname=self.host
+                    )
+
+        return _Connection
+
+
+class _PinnedHTTPConnection:
+    """HTTP (non-TLS) variant. Connects to a pre-resolved IP, sets the
+    Host header from the original hostname so vhost routing works."""
+
+    @staticmethod
+    def make(pinned_ip: str):
+        import http.client
+
+        class _Connection(http.client.HTTPConnection):
+            def connect(self) -> None:  # type: ignore[override]
+                sock = socket.create_connection(
+                    (pinned_ip, self.port),
+                    self.timeout,
+                    self.source_address,
+                )
+                peer_ip = sock.getpeername()[0]
+                if _is_private_ip(peer_ip):
+                    sock.close()
+                    raise OSError(
+                        f"blocked_private_address_at_connect:{peer_ip}"
+                    )
+                self.sock = sock
+
+        return _Connection
+
+
+class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    """urllib HTTPSHandler that uses a pre-resolved IP for connect."""
+
+    def __init__(self, pinned_ip: str) -> None:
+        super().__init__()
+        self._connection_cls = _PinnedHTTPSConnection.make(pinned_ip)
+
+    def https_open(self, req):  # type: ignore[override]
+        return self.do_open(self._connection_cls, req)
+
+
+class _PinnedHTTPHandler(urllib.request.HTTPHandler):
+    """urllib HTTPHandler that uses a pre-resolved IP for connect."""
+
+    def __init__(self, pinned_ip: str) -> None:
+        super().__init__()
+        self._connection_cls = _PinnedHTTPConnection.make(pinned_ip)
+
+    def http_open(self, req):  # type: ignore[override]
+        return self.do_open(self._connection_cls, req)
+
+
+def _build_pinned_opener(pinned_ip: str) -> urllib.request.OpenerDirector:
+    """Build a one-shot opener that uses the pinned IP for both
+    HTTP and HTTPS, with redirects blocked."""
+    return urllib.request.build_opener(
+        _PinnedHTTPHandler(pinned_ip),
+        _PinnedHTTPSHandler(pinned_ip),
+        _NoRedirectHandler,
+    )
 
 
 def _normalize_url(url: str) -> str:
@@ -254,9 +319,13 @@ class HttpConnector:
         except (ValueError, TypeError):
             return self._failure(result_id, connector, method, url, request, started_at, "malformed_url")
 
-        # SSRF protection: block private/loopback/metadata addresses (includes DNS resolution)
-        parsed = urlparse(normalized_url)
-        if _is_private_host(parsed.hostname or ""):
+        # SSRF protection: block private/loopback/metadata addresses
+        # (includes DNS resolution + cloud metadata blocklist).
+        # v4.29.0 (audit F10): use ``resolve_and_check`` so we pin the
+        # resolved IP for the upcoming connect — closes the DNS-rebinding
+        # window between the SSRF check and urllib's own DNS lookup.
+        is_private, pinned_ip = _resolve_and_check(normalized_url)
+        if is_private or pinned_ip is None:
             return self._failure(result_id, connector, method, normalized_url, request, started_at,
                                  "blocked_private_address")
 
@@ -273,7 +342,13 @@ class HttpConnector:
                     if key.lower() in (h.lower() for h in self._config.allowed_headers):
                         req.add_header(key, value)
 
-            with self._opener.open(req, timeout=self._config.timeout_seconds) as response:
+            # v4.29.0 (audit F10): per-request opener pinned to the
+            # resolved IP. Connects to ``pinned_ip`` directly while
+            # preserving the original hostname for TLS SNI / Host header.
+            # The default ``self._opener`` (built once at __init__) is
+            # kept around for tests / explicit non-pinned use only.
+            opener = _build_pinned_opener(pinned_ip)
+            with opener.open(req, timeout=self._config.timeout_seconds) as response:
                 # Content-type check
                 content_type = response.headers.get("Content-Type", "")
                 if self._config.allowed_content_types:
