@@ -5,6 +5,10 @@ on:
     - cron: "23 3 * * *"  # 3:23 AM UTC daily
   workflow_dispatch:  # Manual trigger
 
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   infra-certification:
     name: Infrastructure Certification (PostgreSQL + SMTP)

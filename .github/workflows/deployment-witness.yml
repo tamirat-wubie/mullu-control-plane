@@ -16,6 +16,10 @@ on:
           - pilot
           - production
 
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   collect-deployment-witness:
     name: Collect Deployment Witness

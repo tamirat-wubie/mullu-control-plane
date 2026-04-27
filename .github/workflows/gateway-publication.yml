@@ -39,6 +39,10 @@ permissions:
   contents: read
   actions: write
 
+# v4.22.0: opt into Node.js 24 for the deprecated actions/* runtime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   publish-gateway:
     name: Publish Gateway With Witness Gate
