@@ -17,6 +17,20 @@ if str(TEST_ROOT) not in sys.path:
     sys.path.insert(0, str(TEST_ROOT))
 
 
+# v4.26.0 (audit P0): the production resolver now fails closed when no
+# auth is configured. Tests that call ``configure_musia_auth(None)`` to
+# reset state would otherwise hit the fail-closed path. This autouse
+# fixture restores the legacy "tests run in dev mode" default.
+# Individual tests that want to verify the fail-closed behavior can call
+# ``configure_musia_dev_mode(False)`` inside their body.
+@pytest.fixture(autouse=True)
+def _allow_musia_dev_mode_in_tests():
+    from mcoi_runtime.app.routers.musia_auth import configure_musia_dev_mode
+    configure_musia_dev_mode(True)
+    yield
+    configure_musia_dev_mode(True)
+
+
 # ═══ Shared Fixtures ═══
 
 

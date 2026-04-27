@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers.musia_auth import require_read, require_write
 from mcoi_runtime.ucja import (
     LayerVerdict,
     UCJAPipeline,
@@ -117,7 +118,13 @@ def _pipeline_outcome_to_payload(outcome) -> PipelineOutcomePayload:
 
 
 @router.post("/qualify", response_model=PipelineOutcomePayload)
-def qualify(req: QualifyRequest) -> PipelineOutcomePayload:
+def qualify(
+    req: QualifyRequest,
+    # v4.26.0 (audit F14): musia.read required. Pre-v4.26 the endpoint
+    # was unauthenticated — anonymous callers could run L0 pipeline work,
+    # leaking ruleset behavior and consuming arbitrary CPU.
+    _tenant: str = Depends(require_read),
+) -> PipelineOutcomePayload:
     """Run only L0 — the qualification gate.
 
     Use this to check whether a request describes a real causal
@@ -156,7 +163,13 @@ def qualify(req: QualifyRequest) -> PipelineOutcomePayload:
 
 
 @router.post("/define-job", response_model=PipelineOutcomePayload)
-def define_job(req: DefineJobRequest) -> PipelineOutcomePayload:
+def define_job(
+    req: DefineJobRequest,
+    # v4.26.0 (audit F14): musia.write required. The pipeline produces a
+    # JobDraft artifact and runs all 10 layers — heavier than /qualify,
+    # and the artifact is real output. Write scope.
+    _tenant: str = Depends(require_write),
+) -> PipelineOutcomePayload:
     """Run the full UCJA pipeline (L0–L9). Halts on first non-PASS layer.
 
     A complete result has `accepted=true` and `draft.is_complete=true`.

@@ -194,6 +194,11 @@ _lifecycle_bootstrap = bootstrap_server_lifecycle(
     append_bounded_warning=_append_bounded_warning,
     governance_stores=lambda: _gov_stores,
     primary_store=lambda: store,
+    # v4.26.0 (audit P0 fix): wire MUSIA-side auth resolver. See
+    # bootstrap_server_lifecycle docstring + RELEASE_NOTES_v4.26.0.md.
+    api_key_mgr=_operational_bootstrap.api_key_mgr,
+    jwt_authenticator=_jwt_authenticator,
+    env=os.environ.get("MULLU_ENV", "local_dev"),
 )
 _flush_state_on_shutdown = _lifecycle_bootstrap.flush_state_on_shutdown
 _restore_state_on_startup = _lifecycle_bootstrap.restore_state_on_startup
