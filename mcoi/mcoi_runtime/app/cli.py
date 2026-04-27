@@ -424,6 +424,45 @@ def build_parser() -> argparse.ArgumentParser:
     pilot_init_parser.add_argument("--max-calls", type=int, default=1000, help="Pilot budget call limit")
     pilot_init_parser.add_argument("--force", action="store_true", help="Overwrite existing scaffold files")
 
+    # v4.25.0: migrate — DB schema migration ops surface
+    migrate_parser = subparsers.add_parser(
+        "migrate",
+        help="DB schema migration operations (sqlite). Postgres deployments "
+             "apply migrations out-of-band via SQL files.",
+    )
+    migrate_subparsers = migrate_parser.add_subparsers(dest="migrate_command")
+
+    migrate_status_parser = migrate_subparsers.add_parser(
+        "status",
+        help="Show current schema version + pending migrations",
+    )
+    migrate_status_parser.add_argument(
+        "--db", required=True,
+        help="Database URL (sqlite:///path/to/db.sqlite)",
+    )
+
+    migrate_history_parser = migrate_subparsers.add_parser(
+        "history",
+        help="Show applied migration history",
+    )
+    migrate_history_parser.add_argument(
+        "--db", required=True,
+        help="Database URL (sqlite:///path/to/db.sqlite)",
+    )
+
+    migrate_up_parser = migrate_subparsers.add_parser(
+        "up",
+        help="Apply all pending migrations",
+    )
+    migrate_up_parser.add_argument(
+        "--db", required=True,
+        help="Database URL (sqlite:///path/to/db.sqlite)",
+    )
+    migrate_up_parser.add_argument(
+        "--dry-run", action="store_true",
+        help="List pending migrations without applying them",
+    )
+
     verify_ledger_parser = subparsers.add_parser(
         "verify-ledger",
         help="Verify the hash chain of an exported audit ledger (JSONL)",
@@ -708,6 +747,103 @@ def verify_ledger_command(args: argparse.Namespace) -> int:
     return 1
 
 
+def _open_sqlite_for_migrations(db_url: str):
+    """Open a sqlite connection from a sqlite:///<path> URL.
+
+    Returns the connection object (which already implements the
+    DBConnection protocol the migration engine expects:
+    execute / executescript / commit). Raises ValueError on bad URL,
+    OSError on filesystem problems.
+    """
+    import sqlite3
+    if not db_url.startswith("sqlite:///"):
+        raise ValueError(
+            "migrate CLI supports sqlite:///<path> URLs; postgres "
+            "deployments apply migrations out-of-band"
+        )
+    path = db_url[len("sqlite:///"):]
+    return sqlite3.connect(path)
+
+
+def _migrate_engine_for_cli():
+    """Build a MigrationEngine pre-loaded with platform migrations."""
+    from datetime import datetime, timezone
+    from mcoi_runtime.persistence.migrations import (
+        create_platform_migration_engine,
+    )
+    return create_platform_migration_engine(
+        clock=lambda: datetime.now(timezone.utc).isoformat(),
+        dialect="sqlite",
+    )
+
+
+def migrate_command(args: argparse.Namespace) -> int:
+    """v4.25.0: dispatch ``mcoi migrate {status,history,up}`` subcommands."""
+    sub = getattr(args, "migrate_command", None)
+    if sub is None:
+        print("Usage: mcoi migrate {status|history|up} --db sqlite:///path")
+        return 1
+
+    try:
+        conn = _open_sqlite_for_migrations(args.db)
+    except ValueError as exc:
+        print(f"error: {exc}")
+        return 1
+    except OSError:
+        print("error: cannot open database file")
+        return 1
+
+    engine = _migrate_engine_for_cli()
+
+    try:
+        if sub == "status":
+            current = engine.current_version(conn)
+            pending = engine.pending(conn)
+            print(f"current_version: {current}")
+            print(f"registered: {engine.migration_count}")
+            print(f"pending: {len(pending)}")
+            for m in pending:
+                print(f"  v{m.version} {m.name}")
+            return 0
+
+        elif sub == "history":
+            hist = engine.history(conn)
+            if not hist:
+                print("(no migrations applied)")
+                return 0
+            for entry in hist:
+                print(
+                    f"v{entry['version']:>3} "
+                    f"{entry['name']:<40} "
+                    f"applied={entry['applied_at']} "
+                    f"checksum={entry['checksum']}"
+                )
+            return 0
+
+        elif sub == "up":
+            pending = engine.pending(conn)
+            if not pending:
+                print("up to date — no pending migrations")
+                return 0
+            if args.dry_run:
+                print(f"would apply {len(pending)} migration(s):")
+                for m in pending:
+                    print(f"  v{m.version} {m.name}")
+                return 0
+            results = engine.apply_all(conn)
+            applied = [r for r in results if r.success]
+            print(f"applied {len(applied)} migration(s):")
+            for r in applied:
+                print(f"  v{r.version} {r.name}")
+            return 0
+
+        else:
+            print(f"error: unknown migrate subcommand {sub!r}")
+            return 1
+    finally:
+        conn.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -721,6 +857,7 @@ def main(argv: list[str] | None = None) -> int:
         "init": init_command,
         "demo": demo_command,
         "verify-ledger": verify_ledger_command,
+        "migrate": migrate_command,
     }
 
     handler = commands.get(args.command)
