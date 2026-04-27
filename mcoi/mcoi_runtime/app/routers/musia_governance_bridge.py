@@ -23,6 +23,7 @@ a reason → MUSIA's standard 403 with a detail naming the blocking guard.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Callable, Optional
 
 from mcoi_runtime.core.governance_guard import (
@@ -95,9 +96,15 @@ def chain_to_validator(
             "construct_tier": delta.payload.get("tier"),
             "operation": delta.operation,
         }
+        # Time the chain.evaluate() call. v4.21.0+: duration_seconds is
+        # passed to _METRICS.record() so the latency histogram populates
+        # for every verdict (allowed, denied, exception). monotonic_ns
+        # is immune to wall-clock drift.
+        start_ns = time.monotonic_ns()
         try:
             result: GuardChainResult = chain.evaluate(guard_ctx)
         except Exception as exc:
+            duration_s = (time.monotonic_ns() - start_ns) / 1e9
             # Defensive: a guard that raises is treated as denial,
             # logged at WARNING for forensic follow-up.
             _log.warning(
@@ -112,14 +119,17 @@ def chain_to_validator(
                 blocking_guard=type(exc).__name__,
                 reason="chain_exception",
                 exception=True,
+                duration_seconds=duration_s,
             )
             return (False, f"chain_exception:{type(exc).__name__}")
 
+        duration_s = (time.monotonic_ns() - start_ns) / 1e9
         if result.allowed:
             _METRICS.record(
                 surface=SURFACE_WRITE,
                 tenant_id=ctx.tenant_id,
                 allowed=True,
+                duration_seconds=duration_s,
             )
             return (True, "")
         _METRICS.record(
@@ -128,6 +138,7 @@ def chain_to_validator(
             allowed=False,
             blocking_guard=result.blocking_guard,
             reason=result.reason or "",
+            duration_seconds=duration_s,
         )
         return (
             False,
@@ -197,9 +208,12 @@ def gate_domain_run(
         guard_ctx["authenticated_subject"] = actor_identifier
         guard_ctx["authenticated_tenant_id"] = tenant_id
 
+    # v4.21.0+: time the chain.evaluate() call for the latency histogram.
+    start_ns = time.monotonic_ns()
     try:
         result = chain.evaluate(guard_ctx)
     except Exception as exc:
+        duration_s = (time.monotonic_ns() - start_ns) / 1e9
         _log.warning(
             "MUSIA governance bridge: chain raised %s on domain run "
             "(domain=%s, tenant=%s) — denying",
@@ -214,14 +228,17 @@ def gate_domain_run(
             blocking_guard=type(exc).__name__,
             reason="chain_exception",
             exception=True,
+            duration_seconds=duration_s,
         )
         return (False, f"chain_exception:{type(exc).__name__}")
 
+    duration_s = (time.monotonic_ns() - start_ns) / 1e9
     if result.allowed:
         _METRICS.record(
             surface=SURFACE_DOMAIN_RUN,
             tenant_id=tenant_id,
             allowed=True,
+            duration_seconds=duration_s,
         )
         return (True, "")
     _METRICS.record(
@@ -230,6 +247,7 @@ def gate_domain_run(
         allowed=False,
         blocking_guard=result.blocking_guard,
         reason=result.reason or "",
+        duration_seconds=duration_s,
     )
     return (
         False,
