@@ -2,7 +2,7 @@
 
 **Every agent action is auditable, budget-controlled, policy-enforced, and approval-gated.**
 
-Mullu is a governed operational intelligence platform. Users interact via messaging channels (WhatsApp, Telegram, Slack, Discord, Web). The agent executes real-world tasks — email, payments, document generation, data analysis — under deterministic governance: 7-guard chain, hash-chain audit trails, financial spend budgets, and skill boundary enforcement.
+Mullu is a governed operational intelligence platform. Users interact via messaging channels (WhatsApp, Telegram, Slack, Discord, Web). The agent executes real-world tasks — email, payments, document generation, data analysis — under deterministic governance: 8-guard chain, hash-chain audit trails, financial spend budgets, and skill boundary enforcement.
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ Every message flows through the full governance pipeline. No bypass path.
 
 ## Platform Capabilities
 
-### Governance Engine (45,300+ tests)
+### Governance Engine (47,800+ tests)
 
 | Capability | What |
 |---|---|
@@ -104,6 +104,24 @@ Plus: approval routing (LOW/MEDIUM/HIGH risk), session manager with TTL, skill d
 | **Notification System** | Slack/email/webhook alerts on governance events (approval, budget, payment, security) |
 | **Task Scheduler** | Cron-based governed execution with concurrency prevention + failure tracking |
 
+### MUSIA — Universal Symbolic Causal Intelligence (v4.18)
+
+A second governance layer added in v4.x: 25 universal constructs across 5 tiers, the Φ_gov core operator, and the SCCCE cognition cycle. Plugs into the existing 8-Guard Chain via the `Φ_gov ↔ GovernanceGuardChain` bridge so a single chain instance gates writes AND domain runs.
+
+| Capability | What |
+|---|---|
+| **25 Constructs** | 5 tiers (Foundational, Structural, Coordination, Governance, Cognitive); Tier 1 directly POSTable, Tiers 2–5 cycle-derived |
+| **Mfidel Substrate** | 34×8 atomic encoding grid; 269 atoms with 3 known-empty col-8 slots |
+| **Φ_gov + Φ_agent** | Governance core operator with 6-level filter stack (L0 Physical/Logical → L5 Optimization), 4-state ProofState |
+| **6 Domain Adapters** | software_dev, business_process, scientific_research, manufacturing, healthcare, education — uniform UCJA L0–L9 pipeline |
+| **Chain Bridge** | Existing platform `GovernanceGuardChain` plugs into MUSIA's `external_validators` slot (v4.15 writes, v4.16 domain runs) |
+| **Observability** | `/musia/governance/stats` admin endpoint — per-(surface, verdict, tenant, guard) counters + 50-event rejection ring |
+| **Multi-Tenant** | Per-tenant registry + quota + sliding-window rate limit + persistent state + run audit trail; opt-in `max_tenants` cap (v4.18) |
+
+HTTP surface: `/constructs/*`, `/domains/<six>/process`, `/cognition/*`, `/ucja/*`, `/mfidel/*`, `/musia/tenants/*`, `/musia/governance/*`. Chain runs in microseconds (5–16μs typical, 5-guard chain p99 ≤ 41μs — see [`tests/test_v4_17_chain_latency_bench.py`](mcoi/tests/test_v4_17_chain_latency_bench.py)).
+
+Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.18.0.md` at repo root.
+
 ### MCP Server
 
 External agents (Claude Code, Cursor, etc.) connect to Mullu as a governed tool provider:
@@ -118,9 +136,14 @@ External agents (Claude Code, Cursor, etc.) connect to Mullu as a governed tool 
 
 ```
 mullu-control-plane/
-├── mcoi/                   # MCOI Runtime (Python, 45,300+ tests)
+├── mcoi/                   # MCOI Runtime (Python, 47,800+ tests)
 │   ├── mcoi_runtime/
-│   │   ├── app/            # FastAPI server, 19 routers, CLI
+│   │   ├── app/            # FastAPI server, 35 routers (legacy + MUSIA), CLI
+│   │   ├── substrate/      # MUSIA: Mfidel grid + 25-construct framework + Φ_gov
+│   │   ├── cognition/      # MUSIA: 15-step SCCCE cycle (symbol field, tension, convergence)
+│   │   ├── ucja/           # MUSIA: L0–L9 execution pipeline
+│   │   ├── domain_adapters/ # MUSIA: 6 domain adapters (software_dev, business_process, scientific_research, manufacturing, healthcare, education)
+│   │   ├── migration/      # MUSIA: bulk proof v1→v2 migration runner
 │   │   ├── core/           # 380+ engines (governance, LLM, coordination)
 │   │   ├── contracts/      # 160+ frozen dataclass types
 │   │   ├── adapters/       # 10 LLM backends, shell, browser, HTTP
@@ -142,7 +165,7 @@ mullu-control-plane/
 │   └── enterprise/         # RAG, notifications, scheduler
 ├── installer/              # mullusi init interactive setup wizard
 ├── maf/                    # MAF Rust crate (transition-receipt protocol; see docs/MAF_RECEIPT_COVERAGE.md)
-├── schemas/                # 17 canonical JSON schemas
+├── schemas/                # 23 canonical JSON schemas (incl. MUSIA universal_construct)
 ├── k8s/                    # Kubernetes manifests (security hardened)
 └── docker-compose.yml      # 3-service deployment (postgres + API + gateway)
 ```
@@ -251,7 +274,7 @@ alignment, CI gates, governance checks, and known reflection gaps.
 ## Tests
 
 ```bash
-cd mcoi && python -m pytest tests/ -q          # 45,300+ tests
+cd mcoi && python -m pytest tests/ -q          # 47,800+ tests
 cd .. && python -m pytest tests/ -q             # Gateway + financial + creative + enterprise
 ```
 
