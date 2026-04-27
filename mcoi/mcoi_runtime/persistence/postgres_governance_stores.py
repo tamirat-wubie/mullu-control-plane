@@ -291,6 +291,63 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
                 )
                 self._conn.commit()
 
+    def try_record_spend(
+        self,
+        tenant_id: str,
+        cost: float,
+        tokens: int = 0,
+    ) -> LLMBudget | None:
+        """v4.27.0+ (audit F2 fix): atomic budget enforcement.
+
+        Pre-v4.27 the manager called ``record_spend`` (read in-memory
+        snapshot, compute new value, save via UPSERT). The UPSERT
+        wrote ``EXCLUDED.spent = <python-computed-value>`` with no
+        ``WHERE spent + cost <= max_cost`` clause. Two replicas could
+        both read ``spent=$5``, both compute ``$5 + $1 = $6``, both
+        UPSERT ``$6``. Real spend ``$7``, stored ``$6``. The hard limit
+        was, in practice, soft by N (replicas × in-flight requests).
+
+        v4.27 replaces this with a single ``UPDATE … WHERE spent + $1 <=
+        max_cost RETURNING …``. The DB row is the only source of truth;
+        in-memory snapshots are out of the write path. Two replicas can
+        now race a transaction, but at most ``floor((max_cost -
+        current_spent) / cost)`` succeed — every other call sees zero
+        rows returned and treats it as exhaustion.
+        """
+        if self._conn is None:
+            return None
+        with self._lock:
+            with self._conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE governance_budgets "
+                    "SET spent = spent + %s, "
+                    "    calls_made = calls_made + 1, "
+                    "    updated_at = %s "
+                    "WHERE tenant_id = %s "
+                    "  AND spent + %s <= max_cost "
+                    "RETURNING budget_id, tenant_id, max_cost, spent, "
+                    "          max_tokens_per_call, max_calls, calls_made",
+                    (cost, _now_iso(), tenant_id, cost),
+                )
+                row = cur.fetchone()
+                self._conn.commit()
+        if row is None:
+            # Either no row exists, or the WHERE clause rejected
+            # (spent + cost > max_cost). Both are "exhaustion" from the
+            # caller's perspective — the manager pre-flighted the row
+            # via ensure_budget so no-row case shouldn't arise in
+            # practice.
+            return None
+        return LLMBudget(
+            budget_id=row[0],
+            tenant_id=row[1],
+            max_cost=float(row[2]),
+            spent=float(row[3]),
+            max_tokens_per_call=int(row[4]),
+            max_calls=int(row[5]),
+            calls_made=int(row[6]),
+        )
+
     def load_all(self) -> list[LLMBudget]:
         if self._conn is None:
             return []
@@ -563,10 +620,18 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
 
 
 class InMemoryBudgetStore(BudgetStore):
-    """In-memory budget store for testing."""
+    """In-memory budget store for testing.
+
+    v4.27.0+: ``try_record_spend`` provides atomic test-and-update under
+    a store-wide ``threading.Lock``. Concurrent callers from multiple
+    threads cannot race past ``max_cost``. (The lock is single-process;
+    cross-process replicas would need PostgresBudgetStore.)
+    """
 
     def __init__(self) -> None:
+        from threading import Lock
         self._budgets: dict[str, LLMBudget] = {}
+        self._lock = Lock()
 
     def load(self, tenant_id: str) -> LLMBudget | None:
         return self._budgets.get(tenant_id)
@@ -576,6 +641,36 @@ class InMemoryBudgetStore(BudgetStore):
 
     def load_all(self) -> list[LLMBudget]:
         return sorted(self._budgets.values(), key=lambda b: b.tenant_id)
+
+    def try_record_spend(
+        self,
+        tenant_id: str,
+        cost: float,
+        tokens: int = 0,
+    ) -> LLMBudget | None:
+        """Atomic test-and-update under store-wide lock.
+
+        Returns the updated budget on success; None if the spend
+        would exceed max_cost or no budget row exists.
+        """
+        with self._lock:
+            current = self._budgets.get(tenant_id)
+            if current is None:
+                return None
+            new_spent = current.spent + cost
+            if new_spent > current.max_cost:
+                return None
+            updated = LLMBudget(
+                budget_id=current.budget_id,
+                tenant_id=current.tenant_id,
+                max_cost=current.max_cost,
+                spent=new_spent,
+                max_tokens_per_call=current.max_tokens_per_call,
+                max_calls=current.max_calls,
+                calls_made=current.calls_made + 1,
+            )
+            self._budgets[tenant_id] = updated
+            return updated
 
 
 class InMemoryAuditStore(AuditStore):

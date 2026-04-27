@@ -243,10 +243,13 @@ class TestSessionBudgetEnforcement:
         store = InMemoryBudgetStore()
         budget_mgr = TenantBudgetManager(clock=_clock, store=store)
         budget_mgr.ensure_budget("t1")
-        # Exhaust the budget
+        # Exhaust the budget. v4.27.0 enforces the spend boundary strictly
+        # (spent + cost > max_cost rejects); pre-v4.27 the manager allowed
+        # overrun past max_cost on the call where exhaustion crossed.
+        # Using cost=1.0 divides cleanly: 10 spends fill a $10 budget exactly.
         for _ in range(100):
             try:
-                budget_mgr.record_spend("t1", 0.2)
+                budget_mgr.record_spend("t1", 1.0)
             except ValueError:
                 break
 

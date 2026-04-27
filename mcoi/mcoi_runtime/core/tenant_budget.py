@@ -57,6 +57,12 @@ class BudgetStore:
     source of truth.
 
     Implementations: InMemoryBudgetStore (default), PostgresBudgetStore (production).
+
+    v4.27.0+: ``try_record_spend`` is the atomic test-and-update path.
+    Stores that implement it provide hard-budget enforcement under
+    concurrent writes (audit fracture F2). Stores returning None
+    from this method (the base default) signal that the caller should
+    fall back to the legacy read-modify-write path.
     """
 
     def load(self, tenant_id: str) -> LLMBudget | None:
@@ -67,6 +73,32 @@ class BudgetStore:
 
     def load_all(self) -> list[LLMBudget]:
         return []
+
+    def try_record_spend(
+        self,
+        tenant_id: str,
+        cost: float,
+        tokens: int = 0,
+    ) -> LLMBudget | None:
+        """Atomically test-and-update a tenant's budget.
+
+        Contract:
+        - Returns a fresh LLMBudget reflecting the post-update state
+          when the spend is allowed (current_spent + cost <= max_cost).
+        - Returns None when the spend would exceed max_cost OR when
+          the tenant has no budget row yet AND no auto-create policy
+          info is available at the store layer (the manager handles
+          auto-create before calling this).
+        - Concurrent callers race the underlying atomic primitive
+          (Postgres conditional UPDATE; per-tenant lock for in-memory).
+          At most ``floor((max_cost - initial_spent) / cost)`` racers
+          succeed; the rest see None.
+
+        Pre-v4.27 default: return None to signal "this store doesn't
+        implement atomic spend; fall back to legacy path." Required
+        override for production-grade stores.
+        """
+        return None
 
 
 class TenantBudgetManager:
@@ -147,14 +179,54 @@ class TenantBudgetManager:
     def record_spend(self, tenant_id: str, cost: float, tokens: int = 0) -> LLMBudget:
         """Record spending against a tenant's budget.
 
-        Returns the updated budget. Raises if budget is exhausted or cost is invalid.
+        Returns the updated budget. Raises ``ValueError("budget exhausted")``
+        when the spend would exceed ``max_cost``.
+
+        v4.27.0+ (audit F2 fix): when the store implements
+        ``try_record_spend``, that atomic path is used — concurrent
+        callers cannot race past ``max_cost``. When the store returns
+        None (base class or legacy backend), falls back to the legacy
+        read-modify-write path which is NOT atomic under concurrent
+        writes from multiple replicas.
         """
         if cost < 0.0:
             raise ValueError("cost must be non-negative")
-        budget = self.ensure_budget(tenant_id)
-        if budget.exhausted:
-            raise ValueError("budget exhausted")
+        # Pre-flight: ensure a budget exists in-memory + persistent store.
+        # ``ensure_budget`` handles auto-create + policy fallback. Once
+        # the row exists, the atomic UPDATE in the store does the
+        # real test-and-set.
+        self.ensure_budget(tenant_id)
 
+        # v4.27.0: prefer the atomic store-level path.
+        if self._store is not None:
+            updated = self._store.try_record_spend(tenant_id, cost, tokens)
+            if updated is not None:
+                # Atomic path took it. Refresh the in-memory cache to
+                # the authoritative value the store wrote.
+                self._budgets[tenant_id] = updated
+                return updated
+            # Atomic path returned None. Two cases distinguished by
+            # re-loading from the store:
+            #   1. Store doesn't implement atomic path (base class
+            #      default). Fall back to legacy path below.
+            #   2. Store implements atomic path AND rejected the spend
+            #      (would exceed max_cost). Raise budget_exhausted.
+            #
+            # We tell them apart by checking whether the store actually
+            # overrode try_record_spend. The base class returns None
+            # unconditionally; subclasses that override return None
+            # only on rejection.
+            if type(self._store).try_record_spend is not BudgetStore.try_record_spend:
+                # Real implementation; None means rejection.
+                raise ValueError("budget exhausted")
+            # else: fall through to legacy path
+
+        # Legacy path: read-modify-write under in-process state. NOT
+        # atomic across replicas; used only when no atomic store is
+        # configured or the store is the base class.
+        budget = self._budgets[tenant_id]
+        if budget.exhausted or budget.spent + cost > budget.max_cost:
+            raise ValueError("budget exhausted")
         updated = LLMBudget(
             budget_id=budget.budget_id,
             tenant_id=budget.tenant_id,
