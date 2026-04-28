@@ -275,6 +275,40 @@ class TestSerialization:
         parsed = json.loads(json_str)
         assert parsed["decision"] == "allowed"
 
+    def test_serialize_audit_record_includes_metadata_field(self):
+        """The Rust `TransitionAuditRecord` struct has a `metadata`
+        HashMap field with `#[serde(default)]`; the Python contract
+        also has a `metadata` Mapping. Pre-fix, `serialize_proof`
+        omitted it from the JSON output, causing silent cross-language
+        drift: the in-memory contract carried metadata but the
+        wire format dropped it. The field must always be present on
+        the serialized audit_record (possibly as `{}`)."""
+        bridge = ProofBridge(clock=_clock)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
+            decision="allowed",
+        )
+        data = bridge.serialize_proof(proof)
+        audit = data["audit_record"]
+        assert "metadata" in audit, (
+            "audit_record.metadata is missing from serialize_proof output. "
+            "This drops the field that Rust's TransitionAuditRecord "
+            "expects (and serializes by default), breaking cross-language "
+            "JSON parity."
+        )
+        # Fields the Rust serde struct serializes — all must be present
+        # so a Rust deserializer can round-trip the Python output.
+        for field_name in (
+            "audit_id", "machine_id", "entity_id", "from_state",
+            "to_state", "action", "verdict", "actor_id", "reason",
+            "transitioned_at", "metadata",
+        ):
+            assert field_name in audit, (
+                f"audit_record.{field_name} missing from serialize_proof "
+                f"output — breaks parity with Rust TransitionAuditRecord."
+            )
+
 
 # ═══ Bridge State ═══
 
