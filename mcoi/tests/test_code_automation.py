@@ -1043,3 +1043,66 @@ class TestStreamingFileMetrics:
         import hashlib
         assert data.content_hash == hashlib.sha256(content).hexdigest()
         assert data.size_bytes == len(content)
+
+
+# --- Repository descriptor metadata (M6) ---
+
+
+class TestRepositoryDescriptorMetadata:
+    """Surface whether the language_hints list was truncated at the cap."""
+
+    def test_few_extensions_not_truncated(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        desc = adapter.inspect_repository("r-1", "test")
+        assert desc.metadata.get("extensions_truncated") is False
+        assert desc.metadata.get("extension_count") == len(desc.language_hints)
+
+    def test_many_extensions_marked_truncated(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        # 11 distinct extensions trips the 10-item cap
+        for i in range(11):
+            (ws / f"file.ext{i:02}").write_text("x", encoding="utf-8")
+        adapter = _adapter(ws)
+        desc = adapter.inspect_repository("r-1", "test")
+        assert desc.metadata.get("extensions_truncated") is True
+        # Original ext set has the 11 ext{NN} extensions plus md+py from
+        # _setup_workspace; we just need the count to exceed 10.
+        assert desc.metadata.get("extension_count") >= 11
+        assert len(desc.language_hints) == 10
+
+
+# --- Subprocess UTF-8 decoding (M10) ---
+
+
+class TestSubprocessUtf8Decoding:
+    """run_command must decode child output as UTF-8 with errors=replace,
+    independent of platform default encoding (Windows defaults to CP1252).
+    """
+
+    def test_subprocess_run_invoked_with_utf8_encoding(
+        self, tmp_path: Path, monkeypatch,
+    ):
+        ws = _setup_workspace(tmp_path)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        captured: dict[str, object] = {}
+
+        def fake_run(*args, **kwargs):
+            captured["encoding"] = kwargs.get("encoding")
+            captured["errors"] = kwargs.get("errors")
+            captured["text"] = kwargs.get("text")
+            return subprocess.CompletedProcess(args[0], 0, stdout="", stderr="")
+
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run", fake_run,
+        )
+        adapter.run_command("cmd-utf8", ["echo", "ok"])
+
+        assert captured["encoding"] == "utf-8"
+        assert captured["errors"] == "replace"
+        # text=True must NOT be passed (encoding= implies text mode and
+        # passing both is a TypeError on some Python versions).
+        assert captured.get("text") is None

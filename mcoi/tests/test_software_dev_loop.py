@@ -43,6 +43,7 @@ from mcoi_runtime.contracts.software_dev_loop import (
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.software_dev_loop import (
+    SolverOutcome,
     UCJAOutcomeShape,
     governed_software_change,
 )
@@ -556,6 +557,55 @@ class TestModeShortCircuits:
 
 
 # ---- Missing gate runner ----
+
+
+class TestSolverOutcome:
+    """SolverOutcome property is derivable from the certificate disposition."""
+
+    def test_committed_certificate_yields_solved(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        outcome = governed_software_change(
+            _request(),
+            adapter=adapter,
+            plan_generator=lambda req, snap: _basic_plan(),
+            patch_generator=lambda req, snap, plan, attempt, prior: _basic_patch(),
+            gate_runners={SoftwareQualityGate.UNIT_TESTS: _passing_gate(SoftwareQualityGate.UNIT_TESTS)},
+            clock=_clock_factory(),
+            ucja_runner=_accept_ucja,
+        )
+        assert outcome.outcome is SolverOutcome.SOLVED
+        assert outcome.solved is True
+
+    def test_compensated_certificate_yields_solved_with_compensation(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        outcome = governed_software_change(
+            _request(max_self_debug_iterations=0),
+            adapter=adapter,
+            plan_generator=lambda req, snap: _basic_plan(),
+            patch_generator=lambda req, snap, plan, attempt, prior: _basic_patch(),
+            gate_runners={SoftwareQualityGate.UNIT_TESTS: _failing_gate(SoftwareQualityGate.UNIT_TESTS)},
+            clock=_clock_factory(),
+            ucja_runner=_accept_ucja,
+        )
+        assert outcome.outcome is SolverOutcome.SOLVED_WITH_COMPENSATION
+        assert outcome.solved is True
+
+    def test_review_certificate_yields_requires_review_and_solved_false(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        outcome = governed_software_change(
+            _request(),
+            adapter=adapter,
+            plan_generator=lambda req, snap: _basic_plan(),
+            patch_generator=lambda req, snap, plan, attempt, prior: _basic_patch(),
+            gate_runners={SoftwareQualityGate.UNIT_TESTS: _passing_gate(SoftwareQualityGate.UNIT_TESTS)},
+            clock=_clock_factory(),
+            ucja_runner=_reject_ucja,
+        )
+        assert outcome.outcome is SolverOutcome.REQUIRES_REVIEW
+        assert outcome.solved is False
 
 
 class TestMissingGateRunner:
