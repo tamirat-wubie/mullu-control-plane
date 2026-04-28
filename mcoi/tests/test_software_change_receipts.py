@@ -266,3 +266,83 @@ def test_mcp_persists_receipts_when_store_configured(tmp_path: Path) -> None:
     assert [receipt.receipt_id for receipt in replayed] == [
         receipt["receipt_id"] for receipt in body["receipts"]
     ]
+
+
+def test_mcp_receipt_query_tool_hidden_without_store(tmp_path: Path) -> None:
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(tmp_path),
+    )
+    names = [tool.name for tool in server.list_tools()]
+
+    assert "mullu_software_change" in names
+    assert "mullu_software_receipts" not in names
+
+
+def test_mcp_receipt_query_tool_lists_gets_and_replays(tmp_path: Path) -> None:
+    store = SoftwareChangeReceiptStore()
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(tmp_path, receipt_store=store),
+    )
+
+    change_result = server.call_tool("mullu_software_change", {
+        "kind": "bug_fix",
+        "summary": "rename hello",
+        "repository": "repo-receipts",
+        "affected_files": ["main.py"],
+        "quality_gates": ["unit_tests"],
+        "max_self_debug_iterations": 0,
+    })
+    change_body = json.loads(change_result.content)
+    request_id = change_body["evidence"]["request_id"]
+    terminal_receipt_id = change_body["receipts"][-1]["receipt_id"]
+
+    names = [tool.name for tool in server.list_tools()]
+    list_result = server.call_tool("mullu_software_receipts", {
+        "operation": "list",
+        "request_id": request_id,
+        "stage": "terminal_closed",
+        "limit": 5,
+    })
+    get_result = server.call_tool("mullu_software_receipts", {
+        "operation": "get",
+        "receipt_id": terminal_receipt_id,
+    })
+    replay_result = server.call_tool("mullu_software_receipts", {
+        "operation": "replay",
+        "request_id": request_id,
+    })
+
+    list_body = json.loads(list_result.content)
+    get_body = json.loads(get_result.content)
+    replay_body = json.loads(replay_result.content)
+
+    assert "mullu_software_receipts" in names
+    assert not list_result.is_error
+    assert not get_result.is_error
+    assert not replay_result.is_error
+    assert list_body["count"] == 1
+    assert list_body["receipts"][0]["stage"] == "terminal_closed"
+    assert get_body["found"] is True
+    assert get_body["receipts"][0]["receipt_id"] == terminal_receipt_id
+    assert replay_body["terminal_closed"] is True
+    assert replay_body["count"] == len(change_body["receipts"])
+
+
+def test_mcp_receipt_query_rejects_missing_replay_request_id(tmp_path: Path) -> None:
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(
+            tmp_path,
+            receipt_store=SoftwareChangeReceiptStore(),
+        ),
+    )
+
+    result = server.call_tool("mullu_software_receipts", {"operation": "replay"})
+
+    assert result.is_error
+    assert "request_id" in result.content
