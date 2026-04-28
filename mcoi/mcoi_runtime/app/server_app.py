@@ -18,6 +18,9 @@ from typing import Any, Callable
 from fastapi import FastAPI
 
 from mcoi_runtime.app.middleware import GovernanceMiddleware
+from mcoi_runtime.app.musia_receipt_middleware import (
+    install_musia_receipt_middleware,
+)
 from mcoi_runtime.app.server_http import (
     configure_cors_middleware,
     install_global_exception_handler,
@@ -55,6 +58,7 @@ def create_governed_app(
     governance_middleware_cls: type[Any] = GovernanceMiddleware,
     configure_cors_middleware_fn: Callable[..., None] = configure_cors_middleware,
     install_global_exception_handler_fn: Callable[..., None] = install_global_exception_handler,
+    install_musia_receipt_middleware_fn: Callable[..., bool] = install_musia_receipt_middleware,
     warnings_module: Any = warnings,
     lifespan_factory: Callable[..., Callable[[FastAPI], Any]] = build_app_lifespan,
 ) -> FastAPI:
@@ -65,6 +69,8 @@ def create_governed_app(
         description="Governed Symbolic Intelligence Operating System",
         lifespan=lifespan_factory(shutdown_mgr=shutdown_mgr),
     )
+
+    install_musia_receipt_middleware_fn(app=app, proof_bridge=proof_bridge)
 
     app.add_middleware(
         governance_middleware_cls,
