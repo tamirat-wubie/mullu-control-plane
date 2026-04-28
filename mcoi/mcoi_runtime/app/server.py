@@ -36,6 +36,9 @@ from mcoi_runtime.app.server_runtime import (
     calculator_handler as _calculator_handler_impl,
     validate_or_raise as _validate_or_raise_impl,
 )
+from mcoi_runtime.app.software_receipt_observability import (
+    register_software_receipt_observability,
+)
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
@@ -188,6 +191,10 @@ software_receipt_store = (
     else SoftwareChangeReceiptStore()
 )
 deps.set("software_receipt_store", software_receipt_store)
+register_software_receipt_observability(
+    observability=observability,
+    receipt_store=software_receipt_store,
+)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

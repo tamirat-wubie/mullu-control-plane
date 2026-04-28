@@ -78,6 +78,45 @@ def test_memory_store_appends_queries_and_replays_ordered_receipts() -> None:
     assert store.list_receipts(limit=2) == (gate, terminal)
 
 
+def test_store_summary_reports_lifecycle_health() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append_many((
+        _receipt(receipt_id="receipt-admitted"),
+        _receipt(
+            receipt_id="receipt-gate",
+            stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+        ),
+        _terminal(),
+        _receipt(receipt_id="receipt-open", request_id="request-open"),
+    ))
+
+    summary = store.summary()
+
+    assert summary["total_receipts"] == 4
+    assert summary["request_count"] == 2
+    assert summary["terminal_request_count"] == 1
+    assert summary["open_request_count"] == 1
+    assert summary["by_stage"]["request_admitted"] == 2
+    assert summary["by_stage"]["gate_evaluated"] == 1
+    assert summary["by_stage"]["terminal_closed"] == 1
+    assert summary["latest_receipt_id"] == "receipt-open"
+    assert summary["latest_request_id"] == "request-open"
+    assert summary["latest_stage"] == "request_admitted"
+    assert summary["governed"] is True
+
+
+def test_empty_store_summary_is_dashboard_safe() -> None:
+    summary = SoftwareChangeReceiptStore().summary()
+
+    assert summary["total_receipts"] == 0
+    assert summary["request_count"] == 0
+    assert summary["terminal_request_count"] == 0
+    assert summary["open_request_count"] == 0
+    assert summary["latest_receipt_id"] is None
+    assert summary["by_stage"]["terminal_closed"] == 0
+    assert summary["governed"] is True
+
+
 def test_duplicate_matching_receipt_is_idempotent() -> None:
     store = SoftwareChangeReceiptStore()
     receipt = _receipt(receipt_id="receipt-1")
