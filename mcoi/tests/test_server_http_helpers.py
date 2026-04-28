@@ -89,3 +89,4 @@ def test_include_default_routers_mounts_health_and_completion_routes() -> None:
     paths = {route.path for route in app.routes}
     assert "/health" in paths
     assert "/api/v1/complete" in paths
+    assert "/software/receipts" in paths

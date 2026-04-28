@@ -7,6 +7,7 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
+from pathlib import Path
 from typing import Any
 
 from mcoi_runtime.core.safe_arithmetic import evaluate_expression
@@ -21,6 +22,7 @@ from mcoi_runtime.app.server_policy import (
     _validate_cors_origins_for_env,
     _validate_db_backend_for_env,
 )
+from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
@@ -35,6 +37,10 @@ from mcoi_runtime.app.server_runtime import (
     validate_or_raise as _validate_or_raise_impl,
 )
 from mcoi_runtime.core.structured_logging import LogLevel
+from mcoi_runtime.persistence.software_change_receipt_store import (
+    FileSoftwareChangeReceiptStore,
+    SoftwareChangeReceiptStore,
+)
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
@@ -152,8 +158,6 @@ app = create_governed_app(
 # Dependency injection â€” register all subsystems into deps container
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-from mcoi_runtime.app.routers.deps import deps
-
 _dependency_bootstrap = bootstrap_dependency_registry(
     deps_container=deps,
     clock=_clock,
@@ -176,6 +180,14 @@ _dependency_bootstrap = bootstrap_dependency_registry(
     capability_bootstrap=_capability_bootstrap,
 )
 platform = _dependency_bootstrap.platform
+
+_software_receipt_store_path = os.environ.get("MULLU_SOFTWARE_RECEIPT_STORE_PATH")
+software_receipt_store = (
+    FileSoftwareChangeReceiptStore(Path(_software_receipt_store_path))
+    if _software_receipt_store_path
+    else SoftwareChangeReceiptStore()
+)
+deps.set("software_receipt_store", software_receipt_store)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
