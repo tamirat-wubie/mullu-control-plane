@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.core.webhook_system import WebhookSubscription
+from mcoi_runtime.governance.network.webhook import WebhookSubscription
 
 router = APIRouter()
 

@@ -29,7 +29,7 @@ from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine
 from mcoi_runtime.core.config_reload import ConfigManager
 from mcoi_runtime.core.deep_health import DeepHealthChecker
 from mcoi_runtime.core.observability import ObservabilityAggregator
-from mcoi_runtime.core.webhook_system import WebhookManager
+from mcoi_runtime.governance.network.webhook import WebhookManager
 
 
 @dataclass(frozen=True)

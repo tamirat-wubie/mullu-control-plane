@@ -23,7 +23,7 @@ from mcoi_runtime.core.certification_daemon import (
     CertificationConfig,
     CertificationDaemon,
 )
-from mcoi_runtime.core.content_safety import build_default_safety_chain
+from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
 from mcoi_runtime.core.live_path_certification import LivePathCertifier
 from mcoi_runtime.core.pii_scanner import PIIScanner
 from mcoi_runtime.core.proof_bridge import ProofBridge

@@ -175,7 +175,7 @@ def list_plugins():
 @router.get("/api/v1/guards")
 def list_guards():
     """List governance guard chain."""
-    from mcoi_runtime.core.governance_guard import (
+    from mcoi_runtime.governance.guards.chain import (
         GovernanceGuardChain, create_rate_limit_guard,
         create_budget_guard, create_tenant_guard,
     )

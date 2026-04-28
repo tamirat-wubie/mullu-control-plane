@@ -514,7 +514,7 @@ class GovernedSession:
 
         # Lambda_output_safety on response
         if result.succeeded and result.content:
-            from mcoi_runtime.core.content_safety import evaluate_output_safety
+            from mcoi_runtime.governance.guards.content_safety import evaluate_output_safety
 
             output_safety = evaluate_output_safety(
                 result.content,
@@ -957,12 +957,12 @@ class Platform:
                 return False
             raise ValueError("value must be a boolean flag")
 
-        from mcoi_runtime.core.audit_trail import AuditTrail
-        from mcoi_runtime.core.content_safety import build_default_safety_chain
+        from mcoi_runtime.governance.audit.trail import AuditTrail
+        from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
         from mcoi_runtime.core.pii_scanner import PIIScanner
         from mcoi_runtime.core.proof_bridge import ProofBridge
-        from mcoi_runtime.core.tenant_budget import TenantBudgetManager
-        from mcoi_runtime.core.tenant_gating import TenantGatingRegistry
+        from mcoi_runtime.governance.guards.budget import TenantBudgetManager
+        from mcoi_runtime.governance.guards.tenant_gating import TenantGatingRegistry
         from mcoi_runtime.persistence.postgres_governance_stores import create_governance_stores
 
         db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
@@ -983,7 +983,7 @@ class Platform:
         access_runtime = None
         try:
             from mcoi_runtime.core.event_spine import EventSpineEngine
-            from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+            from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
             from mcoi_runtime.core.rbac_defaults import seed_default_permissions
             spine = EventSpineEngine(clock=_clock)
             access_runtime = AccessRuntimeEngine(spine)
@@ -1038,7 +1038,7 @@ class Platform:
         # Optional: Governance decision log
         decision_log = None
         try:
-            from mcoi_runtime.core.governance_decision_log import GovernanceDecisionLog
+            from mcoi_runtime.governance.audit.decision_log import GovernanceDecisionLog
             decision_log = GovernanceDecisionLog(clock=_clock)
         except Exception as exc:
             decision_log = None

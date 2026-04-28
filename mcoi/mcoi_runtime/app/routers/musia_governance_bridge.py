@@ -26,7 +26,7 @@ import logging
 import time
 from typing import Any, Callable, Optional
 
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     GuardChainResult,
 )

@@ -33,8 +33,8 @@ from typing import Optional
 
 from fastapi import Depends, Header, HTTPException
 
-from mcoi_runtime.core.api_key_auth import APIKeyManager
-from mcoi_runtime.core.jwt_auth import JWTAuthenticator
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
+from mcoi_runtime.governance.auth.jwt import JWTAuthenticator
 from mcoi_runtime.substrate.registry_store import DEFAULT_TENANT
 
 

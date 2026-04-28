@@ -25,11 +25,11 @@ from mcoi_runtime.app.shell_policies import (
     PILOT_PROD_DISABLED,
     SANDBOXED,
 )
-from mcoi_runtime.core.audit_trail import AuditTrail
-from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine
-from mcoi_runtime.core.rate_limiter import RateLimitConfig, RateLimiter
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager
-from mcoi_runtime.core.tenant_gating import TenantGatingRegistry
+from mcoi_runtime.governance.audit.trail import AuditTrail
+from mcoi_runtime.governance.metrics import GovernanceMetricsEngine
+from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig, RateLimiter
+from mcoi_runtime.governance.guards.budget import TenantBudgetManager
+from mcoi_runtime.governance.guards.tenant_gating import TenantGatingRegistry
 from mcoi_runtime.persistence.migrations import create_platform_migration_engine
 from mcoi_runtime.persistence.postgres_governance_stores import create_governance_stores
 from mcoi_runtime.persistence.postgres_store import create_store
@@ -176,7 +176,7 @@ def bootstrap_governance_runtime(
         auth_cls = jwt_authenticator_cls
         config_cls = oidc_config_cls
         if auth_cls is None or config_cls is None:
-            from mcoi_runtime.core.jwt_auth import JWTAuthenticator, OIDCConfig
+            from mcoi_runtime.governance.auth.jwt import JWTAuthenticator, OIDCConfig
 
             auth_cls = JWTAuthenticator
             config_cls = OIDCConfig

@@ -20,7 +20,7 @@ from typing import Any, Callable, Mapping
 from mcoi_runtime.app.middleware import build_guard_chain
 from mcoi_runtime.app.server_policy import _env_flag
 from mcoi_runtime.app.server_runtime import build_default_input_validator
-from mcoi_runtime.core.api_key_auth import APIKeyManager
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
 from mcoi_runtime.core.api_migration import ApiMigrationEngine
 from mcoi_runtime.core.api_version import APIVersionManager
 from mcoi_runtime.core.agent_orchestration import AgentOrchestrator
@@ -38,7 +38,7 @@ from mcoi_runtime.core.deploy_readiness import (
     DeployReadinessChecker,
 )
 from mcoi_runtime.core.execution_replay import ReplayRecorder
-from mcoi_runtime.core.governance_guard import create_api_key_guard
+from mcoi_runtime.governance.guards.chain import create_api_key_guard
 from mcoi_runtime.core.grafana_dashboard import build_default_dashboard
 from mcoi_runtime.core.health_aggregator import HealthAggregator
 from mcoi_runtime.core.health_check_agg import HealthCheckAggregator, HealthCheckDef

@@ -261,7 +261,7 @@ class ShellExecutor:
 
         # --- Policy gate: deny before any subprocess activity ---
         if self.policy_engine is not None:
-            from mcoi_runtime.core.shell_policy_engine import ShellPolicyEngine
+            from mcoi_runtime.governance.policy.shell import ShellPolicyEngine
 
             if isinstance(self.policy_engine, ShellPolicyEngine):
                 verdict = self.policy_engine.evaluate(request.argv)

@@ -56,7 +56,7 @@ class HttpConnectorConfig:
 # shared module adds Azure / Alibaba / DigitalOcean metadata hostnames,
 # IPv6 link-local + ULA prefixes, and the same DNS-resolution
 # fail-closed posture this module already had.
-from mcoi_runtime.core.ssrf_policy import (
+from mcoi_runtime.governance.network.ssrf import (
     is_private_host as _is_private_host,
     is_private_ip as _is_private_ip,
     resolve_and_check as _resolve_and_check,

@@ -674,7 +674,7 @@ def verify_ledger_command(args: argparse.Namespace) -> int:
       3 — schema corruption: missing fields, unknown schema version
           (writer bug — investigate writer)
     """
-    from mcoi_runtime.core.audit_trail import verify_chain_from_entries
+    from mcoi_runtime.governance.audit.trail import verify_chain_from_entries
 
     input_path = Path(args.input)
     if not input_path.exists():

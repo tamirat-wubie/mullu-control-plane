@@ -33,7 +33,7 @@ from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceState
 from mcoi_runtime.app.governed_execution import governed_operator_dispatch
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult
-from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.governance.policy.engine import PolicyInput
 from mcoi_runtime.core.template_validator import (
     TemplateValidationError,
     format_template_validation_error,
