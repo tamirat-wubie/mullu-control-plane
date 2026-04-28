@@ -184,19 +184,33 @@ limiter's `_buckets` dict stays empty for store-owned keys. The
 Postgres path was deferred — needs schema migration for `tokens` /
 `last_refill` columns.
 
-### Example 3 — F15 / v4.30: `HashChainStore.try_append`
+### Example 3 — F15 / v4.30 + v4.40: `HashChainStore.try_append`
 
 **Shape**: append-only filesystem chain. Inputs: `content_hash`.
 Returns: `HashChainEntry | None`. Filesystem atomicity via
-`os.open(O_CREAT | O_EXCL | O_WRONLY)` — the OS rejects pre-existing
-destinations at the syscall level. Reference: [RELEASE_NOTES_v4.30.0.md](../RELEASE_NOTES_v4.30.0.md).
+`tempfile.mkstemp` + `os.link` — the temp file is fully populated
+before being made visible at the target path; `os.link` is atomic
+and raises `FileExistsError` on collision (same O_EXCL semantic for
+"already exists"). References:
+[RELEASE_NOTES_v4.30.0.md](../RELEASE_NOTES_v4.30.0.md),
+[RELEASE_NOTES_v4.40.0.md](../RELEASE_NOTES_v4.40.0.md).
 
-**Notable**: the only example so far where the high-level operation
-(`append`) is a **bounded retry loop** on top of `try_append`. If
-two writers compute the same target sequence, the loser sees `None`,
-re-reads `latest()`, and retries with the next sequence. The retry
-loop is observable, bounded (64 attempts), and replaceable —
-callers can use `try_append` directly for strict-fail semantics.
+**Notable** (1): the only example so far where the high-level
+operation (`append`) is a **bounded retry loop** on top of
+`try_append`. If two writers compute the same target sequence, the
+loser sees `None`, re-reads `latest()`, and retries with the next
+sequence. The retry loop is observable, bounded (64 attempts), and
+replaceable — callers can use `try_append` directly for strict-fail
+semantics.
+
+**Notable** (2 — added v4.40): the v4.30 implementation initially
+used `os.open(O_CREAT | O_EXCL | O_WRONLY)` followed by `os.write`.
+That left a window between the syscall that created the empty file
+and the syscall that wrote bytes — concurrent `latest()` readers
+saw a zero-byte file and raised `CorruptedDataError`. v4.40 fixed
+this by writing to a temp file first and then `os.link`-ing it to
+the target. The lesson generalizes: see Section 5's "Don't conflate
+destination existence atomicity with content visibility atomicity."
 
 ### Example 4 — F4 / v4.31: `AuditStore.try_append`
 
@@ -301,6 +315,36 @@ A `read_state()` followed by a separate `write_if_unchanged()` is
 not atomic — TOCTOU is back. The override must collapse the
 test-and-update into one storage primitive (one SQL statement, one
 held lock, one syscall).
+
+### Don't conflate destination-existence atomicity with content-visibility atomicity
+
+A primitive that atomically *creates* the destination but not its
+*content* (e.g., `O_CREAT | O_EXCL` followed by a separate `write`)
+leaves a visibility window: the destination exists but is empty or
+half-written, and a concurrent reader sees the partial state.
+
+Two distinct properties:
+
+- **Destination existence atomicity**: at any instant, the
+  destination either exists or doesn't. Provided by `O_EXCL`,
+  `INSERT` against a `UNIQUE` constraint, `os.link`,
+  `rename`-from-temp.
+- **Content visibility atomicity**: when the destination becomes
+  visible, its full content is visible. Provided by writing into a
+  temp/staging area first and then atomically swapping it to the
+  destination — not by `O_CREAT | O_EXCL` + `write`.
+
+The fix shape: stage the content fully before making the
+destination visible. v4.30 had this bug; v4.40 closed it via
+`tempfile.mkstemp` + `os.link`. The same applies beyond filesystems —
+any backend where create and populate are separate operations
+(legacy `INSERT` of a row with `NULL`/default columns, then
+`UPDATE` to fill them) has the same shape, with the same fix
+(populate fully before insert, or use a single
+`INSERT … RETURNING …` that produces the row complete).
+
+Test for it explicitly: a concurrent reader should never see a
+state that the writer doesn't intend to be visible.
 
 ### Don't widen the override's input contract over time
 
