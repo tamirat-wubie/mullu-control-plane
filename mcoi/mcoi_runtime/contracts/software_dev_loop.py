@@ -23,6 +23,7 @@ from ._base import (
     freeze_value,
     require_datetime_text,
     require_non_empty_text,
+    require_non_empty_tuple,
 )
 from .code import PatchApplicationResult
 
@@ -34,6 +35,57 @@ class AttemptStatus(StrEnum):
     APPLY_FAILED = "apply_failed"            # apply_patch returned non-APPLIED
     GATES_FAILED = "gates_failed"            # patch applied but at least one gate failed
     GATES_PASSED = "gates_passed"            # patch applied and all gates passed
+
+
+class SoftwareChangeReceiptStage(StrEnum):
+    """Governed lifecycle stages for a software change run."""
+
+    REQUEST_ADMITTED = "request_admitted"
+    UCJA_EVALUATED = "ucja_evaluated"
+    SNAPSHOT_CAPTURED = "snapshot_captured"
+    PLAN_VALIDATED = "plan_validated"
+    PLAN_UNAVAILABLE = "plan_unavailable"
+    PATCH_REJECTED = "patch_rejected"
+    PATCH_APPLY_FAILED = "patch_apply_failed"
+    PATCH_APPLIED = "patch_applied"
+    GATE_EVALUATED = "gate_evaluated"
+    ROLLBACK_COMPLETED = "rollback_completed"
+    REVIEW_REQUIRED = "review_required"
+    TERMINAL_CLOSED = "terminal_closed"
+
+
+@dataclass(frozen=True, slots=True)
+class SoftwareChangeReceipt(ContractRecord):
+    """Typed witness for one governed software-change transition.
+
+    The receipt binds cause, target, constraints, evidence, outcome, and
+    timestamp so callers can inspect the causal chain without parsing free
+    text from the terminal certificate.
+    """
+
+    receipt_id: str
+    request_id: str
+    stage: SoftwareChangeReceiptStage
+    cause: str
+    outcome: str
+    target_refs: tuple[str, ...]
+    constraint_refs: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    created_at: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "receipt_id", require_non_empty_text(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
+        if not isinstance(self.stage, SoftwareChangeReceiptStage):
+            raise ValueError("stage must be a SoftwareChangeReceiptStage value")
+        object.__setattr__(self, "cause", require_non_empty_text(self.cause, "cause"))
+        object.__setattr__(self, "outcome", require_non_empty_text(self.outcome, "outcome"))
+        object.__setattr__(self, "target_refs", require_non_empty_tuple(self.target_refs, "target_refs"))
+        object.__setattr__(self, "constraint_refs", require_non_empty_tuple(self.constraint_refs, "constraint_refs"))
+        object.__setattr__(self, "evidence_refs", require_non_empty_tuple(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
 
 @dataclass(frozen=True, slots=True)
