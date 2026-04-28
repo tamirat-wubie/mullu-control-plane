@@ -796,8 +796,10 @@ class LocalCodeAdapter:
         """Run a command in the workspace root. Returns (exit_code, stdout, stderr, duration_ms).
 
         The command is validated against the adapter's CommandPolicy before
-        execution. Subprocess environment is scrubbed (no parent credentials).
-        Timeout and output budget are clamped to the policy maxima.
+        execution. Timeout and output budget are clamped to the policy maxima.
+        Subprocess environment is scrubbed; parent credentials do not leak.
+        Callers needing specific env vars (e.g. VIRTUAL_ENV, PYTHONPATH) must
+        pass them via extra_env.
         """
         ensure_non_empty_text("command_id", command_id)
 
