@@ -93,8 +93,13 @@ class RateLimitStore:
 
     When provided to RateLimiter, denied/allowed counts and bucket
     configurations are persisted for cross-replica observability.
-    Token bucket state remains in-memory (time-based, not shareable),
-    but counter aggregation becomes consistent across replicas.
+
+    Stores MAY also provide an atomic test-and-consume primitive
+    (``try_consume``) that owns bucket state. When overridden, the
+    RateLimiter delegates enforcement to the store — closing the
+    cross-replica race window that the in-memory ``TokenBucket``
+    cannot. Stores that don't override fall through to the in-memory
+    path automatically (detected via MRO).
     """
 
     def record_decision(self, bucket_key: str, allowed: bool) -> None:
@@ -102,6 +107,33 @@ class RateLimitStore:
 
     def get_counters(self) -> dict[str, int]:
         return {"allowed": 0, "denied": 0}
+
+    def try_consume(
+        self,
+        bucket_key: str,
+        tokens: int,
+        config: RateLimitConfig,
+    ) -> tuple[bool, float] | None:
+        """Atomic test-and-consume at the storage layer (audit F11).
+
+        Implementations override this to provide cross-replica atomic
+        enforcement. The base class returns ``None`` to signal "no
+        atomic path; caller should fall through to the in-memory
+        TokenBucket path."
+
+        Returns:
+            ``(True, remaining)`` — allowed; bucket decremented.
+            ``(False, remaining)`` — denied by the store (real denial).
+            ``None`` — store does not implement an atomic path; caller
+                falls back to the legacy in-memory path.
+
+        The disambiguation between "real denial" and "no atomic path"
+        is done by callers via MRO override-detection
+        (``type(store).try_consume is not RateLimitStore.try_consume``),
+        not via a sentinel object — so subclasses signal capability by
+        overriding, nothing more.
+        """
+        return None
 
 
 class RateLimiter:
@@ -201,23 +233,60 @@ class RateLimiter:
         with self._lock:
             tenant_config = self._resolve_config(endpoint)
             tenant_key = self._bucket_key(tenant_id, endpoint)
-            tenant_bucket = self._get_bucket(tenant_key, tenant_config)
 
-        # Tenant-level check (TokenBucket has its own lock)
-        allowed, remaining = tenant_bucket.try_consume(tokens)
+        # Tenant-level check.
+        #
+        # F11: prefer the store's atomic test-and-consume when the
+        # store overrides ``try_consume``. The base class returns
+        # ``None`` and is detected via MRO — same disambiguation
+        # pattern as v4.27 BudgetStore.try_record_spend.
+        # MRO override-detection: a duck-typed store (no inheritance,
+        # no ``try_consume``) falls through to the base default.
+        store_owned = (
+            self._store is not None
+            and getattr(type(self._store), "try_consume", RateLimitStore.try_consume)
+            is not RateLimitStore.try_consume
+        )
+        if store_owned:
+            outcome = self._store.try_consume(tenant_key, tokens, tenant_config)
+            # An overriding store must not return None — that sentinel
+            # is reserved for the base class. Treat None defensively
+            # as "denied" rather than silently falling through.
+            if outcome is None:
+                allowed, remaining = False, 0.0
+            else:
+                allowed, remaining = outcome
+        else:
+            with self._lock:
+                tenant_bucket = self._get_bucket(tenant_key, tenant_config)
+            # TokenBucket has its own lock.
+            allowed, remaining = tenant_bucket.try_consume(tokens)
         denied_by = ""
         if not allowed:
             denied_by = "tenant"
 
         # Identity-level check (only if tenant allowed and identity provided)
+        # v4.34 (audit F11 identity-level): identity-level enforcement
+        # also defers to the store when overridden, mirroring the
+        # tenant-level dispatch above. Same ``store_owned`` flag —
+        # if the store provides an atomic primitive, it provides one
+        # for both levels (the primitive takes a bucket_key, so the
+        # identity bucket key is just a different key).
         identity_remaining: float | None = None
         if allowed and identity_id:
             id_config = self._resolve_identity_config(endpoint)
             if id_config is not None:
-                with self._lock:
-                    id_key = self._identity_bucket_key(tenant_id, identity_id, endpoint)
-                    id_bucket = self._get_bucket(id_key, id_config)
-                id_allowed, identity_remaining = id_bucket.try_consume(tokens)
+                id_key = self._identity_bucket_key(tenant_id, identity_id, endpoint)
+                if store_owned:
+                    outcome = self._store.try_consume(id_key, tokens, id_config)
+                    if outcome is None:
+                        id_allowed, identity_remaining = False, 0.0
+                    else:
+                        id_allowed, identity_remaining = outcome
+                else:
+                    with self._lock:
+                        id_bucket = self._get_bucket(id_key, id_config)
+                    id_allowed, identity_remaining = id_bucket.try_consume(tokens)
                 if not id_allowed:
                     allowed = False
                     denied_by = "identity"
