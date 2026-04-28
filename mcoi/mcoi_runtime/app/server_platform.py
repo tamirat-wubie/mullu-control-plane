@@ -128,10 +128,20 @@ def bootstrap_governance_runtime(
     oidc_config_cls: type[Any] | None = None,
 ) -> GovernanceBootstrap:
     """Create governance stores and the platform services bound to them."""
+    # v4.36.0 (audit F12): connection-pool sizing.
+    # MULLU_DB_POOL_SIZE controls per-store pool cap. Default 1 keeps
+    # the legacy single-connection behavior. Production deployments
+    # should set this to a value tuned to expected concurrent writers
+    # (typical 5-20). Note: total pg connections = 4 stores × pool_size.
+    try:
+        pool_size = max(1, int(runtime_env.get("MULLU_DB_POOL_SIZE", "1")))
+    except (TypeError, ValueError):
+        pool_size = 1
     governance_stores = create_governance_stores_fn(
         backend=db_backend,
         connection_string=runtime_env.get("MULLU_DB_URL", ""),
         field_encryptor=field_encryptor,
+        pool_size=pool_size,
     )
 
     tenant_budget_mgr = tenant_budget_manager_cls(
