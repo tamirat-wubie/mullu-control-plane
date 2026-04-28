@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import sys
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable, Mapping
 
 from gateway.command_spine import CommandEnvelope, CommandLedger, CommandState, canonical_hash
 
@@ -59,7 +59,31 @@ _MCP_TOOL_INTENTS: dict[str, str] = {
     "mullu_balance": "financial.balance_check",
     "mullu_transactions": "financial.transaction_history",
     "mullu_pay": "financial.send_payment",
+    "mullu_software_change": "software_dev.governed_change",
 }
+
+
+@dataclass(frozen=True)
+class SoftwareDevRunnerConfig:
+    """Bundle of dependencies the mullu_software_change tool requires.
+
+    Pass an instance to MulluMCPServer to enable the tool; pass None to
+    omit it. The MCP server itself does not own the workspace, the LLM,
+    or the gate runners — it just routes governed calls to whatever
+    plan/patch/gate machinery the operator has configured.
+
+    adapter, plan_generator, patch_generator, gate_runners, clock are
+    typed as Any here to avoid pulling the whole core/software_dev_loop
+    module into the MCP server's import surface; the loop's Protocols
+    are duck-typed at call time.
+    """
+
+    adapter: Any
+    plan_generator: Any
+    patch_generator: Any
+    gate_runners: Mapping[Any, Any]
+    clock: Callable[[], str]
+    ucja_runner: Any | None = None
 
 
 class MulluMCPServer:
@@ -79,16 +103,29 @@ class MulluMCPServer:
         default_tenant_id: str = "mcp-default",
         default_identity_id: str = "mcp-agent",
         command_ledger: CommandLedger | None = None,
+        software_dev_runner: SoftwareDevRunnerConfig | None = None,
     ) -> None:
         self._platform = platform
         self._default_tenant = default_tenant_id
         self._default_identity = default_identity_id
         self._commands = command_ledger or CommandLedger()
+        self._software_dev_runner = software_dev_runner
         self._call_count = 0
         self._close_failures = 0
 
     def list_tools(self) -> list[MCPTool]:
-        """Return all available MCP tools."""
+        """Return all available MCP tools.
+
+        mullu_software_change is included only when the server was
+        constructed with a SoftwareDevRunnerConfig — operators who
+        haven't wired plan/patch/gate machinery don't see the tool.
+        """
+        tools = self._base_tools()
+        if self._software_dev_runner is not None:
+            tools.append(self._software_change_tool())
+        return tools
+
+    def _base_tools(self) -> list[MCPTool]:
         return [
             MCPTool(
                 name="mullu_llm",
@@ -165,6 +202,87 @@ class MulluMCPServer:
                 },
             ),
         ]
+
+    def _software_change_tool(self) -> MCPTool:
+        return MCPTool(
+            name="mullu_software_change",
+            description=(
+                "Govern an autonomous software change end-to-end: UCJA gate "
+                "→ workspace snapshot → plan → patch → quality gates → "
+                "rollback (if needed) → typed terminal certificate. "
+                "Returns SolverOutcome (solved | solved_with_compensation | "
+                "requires_review) plus the certificate disposition, case_id "
+                "(if any), and a per-attempt evidence trail."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "description": (
+                            "SoftwareWorkKind value: bug_fix, feature, refactor, "
+                            "deploy, review, investigate, test_generation, "
+                            "security_fix, docs, migration, dependency_update, "
+                            "rollback."
+                        ),
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "Human-readable description of the change.",
+                    },
+                    "repository": {
+                        "type": "string",
+                        "description": "Repository identifier.",
+                    },
+                    "target_branch": {"type": "string", "default": "main"},
+                    "affected_files": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Relative paths the request is bounded to. Plans "
+                            "may not target files outside this set."
+                        ),
+                    },
+                    "acceptance_criteria": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "blast_radius": {
+                        "type": "string",
+                        "enum": ["function", "module", "service", "system"],
+                        "default": "module",
+                    },
+                    "reviewer_required": {"type": "boolean", "default": True},
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "plan_only", "dry_run", "patch_only",
+                            "patch_and_test", "patch_test_review",
+                            "commit_candidate",
+                        ],
+                        "default": "patch_test_review",
+                    },
+                    "quality_gates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "unit_tests", "integration_tests", "lint",
+                                "typecheck", "security_scan", "build", "review",
+                            ],
+                        },
+                        "default": ["unit_tests", "lint"],
+                    },
+                    "max_self_debug_iterations": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 3,
+                    },
+                    "tenant_id": {"type": "string"},
+                },
+                "required": ["kind", "summary", "repository"],
+            },
+        )
 
     def call_tool(self, name: str, arguments: dict[str, Any]) -> MCPToolResult:
         """Execute an MCP tool call through the governance pipeline.
@@ -249,6 +367,8 @@ class MulluMCPServer:
                 result = self._tool_transactions(session, arguments)
             elif name == "mullu_pay":
                 result = self._tool_pay(session, arguments)
+            elif name == "mullu_software_change":
+                result = self._tool_software_change(session, arguments)
             else:
                 result = MCPToolResult(content="Unknown tool", is_error=True)
         except Exception as exc:
@@ -430,7 +550,7 @@ class MulluMCPServer:
         return name if name in _MCP_TOOL_INTENTS else "unknown"
 
     def _risk_tier_for_tool(self, name: str) -> str:
-        if name in {"mullu_pay", "mullu_execute"}:
+        if name in {"mullu_pay", "mullu_execute", "mullu_software_change"}:
             return "high"
         return "low"
 
@@ -477,6 +597,151 @@ class MulluMCPServer:
             "governed": True,
             "note": "Connect a financial provider to enable transaction history",
         }))
+
+    def _tool_software_change(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
+        """Run governed_software_change with the configured runner.
+
+        The runner config is bundled at construction time so the MCP layer
+        does not own LLM or workspace state. Failures from the loop itself
+        come back as REQUIRES_REVIEW certificates rather than tool errors;
+        only schema-level rejections (bad kind/mode/gate enum, missing
+        required fields) surface as is_error=True.
+        """
+        config = self._software_dev_runner
+        if config is None:
+            return MCPToolResult(
+                content="Service error: software_dev_runner not configured",
+                is_error=True,
+            )
+
+        # Lazy import — keeps mcp/server.py importable in environments that
+        # don't pull in the loop module's transitive deps.
+        try:
+            from mcoi_runtime.core.software_dev_loop import (
+                governed_software_change,
+            )
+            from mcoi_runtime.domain_adapters.software_dev import (
+                SoftwareQualityGate,
+                SoftwareRequest,
+                SoftwareWorkKind,
+                SoftwareWorkMode,
+            )
+        except ImportError as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error(
+                    "Service error", "software_dev modules unavailable", exc,
+                ),
+                is_error=True,
+            )
+
+        try:
+            kind = SoftwareWorkKind(str(args.get("kind", "")))
+        except ValueError:
+            return MCPToolResult(content="invalid kind", is_error=True)
+
+        summary = str(args.get("summary", "")).strip()
+        repository = str(args.get("repository", "")).strip()
+        if not summary:
+            return MCPToolResult(content="summary is required", is_error=True)
+        if not repository:
+            return MCPToolResult(content="repository is required", is_error=True)
+
+        mode_value = str(args.get("mode") or SoftwareWorkMode.PATCH_TEST_REVIEW.value)
+        try:
+            mode = SoftwareWorkMode(mode_value)
+        except ValueError:
+            return MCPToolResult(content="invalid mode", is_error=True)
+
+        gate_values = args.get("quality_gates") or [
+            SoftwareQualityGate.UNIT_TESTS.value,
+            SoftwareQualityGate.LINT.value,
+        ]
+        if not isinstance(gate_values, list):
+            return MCPToolResult(content="quality_gates must be a list", is_error=True)
+        try:
+            quality_gates = tuple(SoftwareQualityGate(v) for v in gate_values)
+        except ValueError:
+            return MCPToolResult(content="invalid quality_gates entry", is_error=True)
+
+        affected_files = args.get("affected_files") or ()
+        acceptance_criteria = args.get("acceptance_criteria") or ()
+        if not isinstance(affected_files, (list, tuple)):
+            return MCPToolResult(content="affected_files must be a list", is_error=True)
+        if not isinstance(acceptance_criteria, (list, tuple)):
+            return MCPToolResult(
+                content="acceptance_criteria must be a list", is_error=True,
+            )
+
+        try:
+            request = SoftwareRequest(
+                kind=kind,
+                summary=summary,
+                repository=repository,
+                target_branch=str(args.get("target_branch") or "main"),
+                affected_files=tuple(str(p) for p in affected_files),
+                acceptance_criteria=tuple(str(c) for c in acceptance_criteria),
+                blast_radius=str(args.get("blast_radius") or "module"),
+                reviewer_required=bool(args.get("reviewer_required", True)),
+                mode=mode,
+                quality_gates=quality_gates,
+                max_self_debug_iterations=int(args.get("max_self_debug_iterations", 3)),
+            )
+        except (ValueError, TypeError) as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error("Invalid request", "request rejected", exc),
+                is_error=True,
+            )
+
+        try:
+            outcome = governed_software_change(
+                request,
+                adapter=config.adapter,
+                plan_generator=config.plan_generator,
+                patch_generator=config.patch_generator,
+                gate_runners=config.gate_runners,
+                clock=config.clock,
+                ucja_runner=config.ucja_runner,
+            )
+        except Exception as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error(
+                    "Service error", "software change failed", exc,
+                ),
+                is_error=True,
+            )
+
+        return MCPToolResult(
+            content=json.dumps({
+                "outcome": outcome.outcome.value,
+                "solved": outcome.solved,
+                "certificate": {
+                    "certificate_id": outcome.certificate.certificate_id,
+                    "disposition": outcome.certificate.disposition.value,
+                    "case_id": outcome.certificate.case_id,
+                    "compensation_outcome_id": outcome.certificate.compensation_outcome_id,
+                    "evidence_refs": list(outcome.certificate.evidence_refs),
+                },
+                "evidence": {
+                    "request_id": outcome.evidence.request_id,
+                    "ucja_job_id": outcome.evidence.ucja_job_id,
+                    "ucja_accepted": outcome.evidence.ucja_accepted,
+                    "ucja_halted_at_layer": outcome.evidence.ucja_halted_at_layer,
+                    "plan_id": outcome.evidence.plan_id,
+                    "rollback_succeeded": outcome.evidence.rollback_succeeded,
+                    "attempts": [
+                        {
+                            "attempt_index": a.attempt_index,
+                            "patch_id": a.patch_id,
+                            "status": a.status.value,
+                            "rolled_back": a.rolled_back,
+                            "gates_passed": sum(1 for g in a.gate_results if g.passed),
+                            "gates_failed": sum(1 for g in a.gate_results if not g.passed),
+                        }
+                        for a in outcome.evidence.attempts
+                    ],
+                },
+            }, default=str),
+        )
 
     def _tool_pay(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
         amount = args.get("amount", "0")
