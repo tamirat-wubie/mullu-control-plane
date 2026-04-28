@@ -149,11 +149,29 @@ class SoftwareChangeReceiptStore:
             for receipt in requests.values()
             if receipt.stage is SoftwareChangeReceiptStage.TERMINAL_CLOSED
         )
+        open_receipts = tuple(
+            receipt
+            for receipt in requests.values()
+            if receipt.stage is not SoftwareChangeReceiptStage.TERMINAL_CLOSED
+        )
+        review_signals = [
+            {
+                "request_id": receipt.request_id,
+                "latest_receipt_id": receipt.receipt_id,
+                "latest_stage": receipt.stage.value,
+                "latest_outcome": receipt.outcome,
+                "reason": "software_change_receipt_chain_open",
+            }
+            for receipt in open_receipts[:10]
+        ]
         return {
             "total_receipts": len(self._receipts),
             "request_count": len(requests),
             "terminal_request_count": terminal_request_count,
             "open_request_count": len(requests) - terminal_request_count,
+            "requires_operator_review": bool(open_receipts),
+            "review_signal_count": len(open_receipts),
+            "review_signals": review_signals,
             "by_stage": by_stage,
             "latest_receipt_id": latest_receipt.receipt_id if latest_receipt else None,
             "latest_request_id": latest_receipt.request_id if latest_receipt else None,

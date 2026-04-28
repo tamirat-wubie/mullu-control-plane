@@ -62,6 +62,8 @@ def test_registers_dashboard_safe_receipt_summary() -> None:
     assert summary["total_receipts"] == 1
     assert summary["terminal_request_count"] == 1
     assert summary["open_request_count"] == 0
+    assert summary["requires_operator_review"] is False
+    assert summary["review_signals"] == []
     assert summary["latest_stage"] == "terminal_closed"
     assert summary["governed"] is True
 
