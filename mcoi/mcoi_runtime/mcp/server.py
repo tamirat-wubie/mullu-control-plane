@@ -63,27 +63,11 @@ _MCP_TOOL_INTENTS: dict[str, str] = {
 }
 
 
-@dataclass(frozen=True)
-class SoftwareDevRunnerConfig:
-    """Bundle of dependencies the mullu_software_change tool requires.
-
-    Pass an instance to MulluMCPServer to enable the tool; pass None to
-    omit it. The MCP server itself does not own the workspace, the LLM,
-    or the gate runners — it just routes governed calls to whatever
-    plan/patch/gate machinery the operator has configured.
-
-    adapter, plan_generator, patch_generator, gate_runners, clock are
-    typed as Any here to avoid pulling the whole core/software_dev_loop
-    module into the MCP server's import surface; the loop's Protocols
-    are duck-typed at call time.
-    """
-
-    adapter: Any
-    plan_generator: Any
-    patch_generator: Any
-    gate_runners: Mapping[Any, Any]
-    clock: Callable[[], str]
-    ucja_runner: Any | None = None
+# SoftwareDevRunnerConfig now lives in core.software_dev_gates (where the
+# operator-side factory make_default_software_dev_runner builds it). We
+# re-export here so existing `from mcoi_runtime.mcp.server import
+# SoftwareDevRunnerConfig` imports keep working.
+from mcoi_runtime.core.software_dev_gates import SoftwareDevRunnerConfig  # noqa: E402, F401
 
 
 class MulluMCPServer:

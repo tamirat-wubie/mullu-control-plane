@@ -1106,3 +1106,144 @@ class TestSubprocessUtf8Decoding:
         # text=True must NOT be passed (encoding= implies text mode and
         # passing both is a TypeError on some Python versions).
         assert captured.get("text") is None
+
+
+# --- Read/write resolve-then-operate (M3) ---
+
+
+class TestM3ResolveBeforeOperate:
+    """read_file and write_file must resolve the target's real path and
+    verify it's inside the workspace root before any read/write — so a
+    symlink swap between the membership check and the operation lands
+    on the resolved-at-check-time path, not the attacker's swap target.
+    """
+
+    def test_read_file_outside_root_via_symlink_skipped(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "secret.txt"
+        outside.write_text("STOLEN", encoding="utf-8")
+        try:
+            (ws / "leak.txt").symlink_to(outside)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+        adapter = _adapter(ws)
+
+        content = adapter.read_file("leak.txt")
+        assert content is None
+
+    def test_write_file_through_symlink_outside_blocked(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        outside_dir = tmp_path / "other"
+        outside_dir.mkdir()
+        try:
+            (ws / "linked").symlink_to(outside_dir, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+        adapter = _adapter(ws)
+
+        # writing to "linked/escape.txt" should land outside root via the
+        # symlink — and must be blocked
+        ok = adapter.write_file("linked/escape.txt", "should not write")
+        assert ok is False
+        assert not (outside_dir / "escape.txt").exists()
+
+    def test_read_file_in_workspace_symlink_still_works(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        (ws / "src" / "real.py").write_text("ALIASED\n", encoding="utf-8")
+        try:
+            (ws / "alias.py").symlink_to(ws / "src" / "real.py")
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+        adapter = _adapter(ws)
+
+        content = adapter.read_file("alias.py")
+        assert content == "ALIASED\n"
+
+
+# --- Structured truncation flags (M9) ---
+
+
+class TestM9StructuredTruncationFlags:
+    """run_command_with_meta returns explicit truncated flags rather than
+    relying on the in-band marker — so a child process that legitimately
+    writes the marker substring cannot forge a "truncated" signal.
+    """
+
+    def test_no_truncation_flags_clear(self, tmp_path: Path, monkeypatch):
+        ws = _setup_workspace(tmp_path)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            lambda *a, **kw: subprocess.CompletedProcess(a[0], 0, stdout="ok", stderr=""),
+        )
+        meta = adapter.run_command_with_meta("cmd-1", ["echo", "ok"])
+        assert meta.exit_code == 0
+        assert meta.stdout == "ok"
+        assert meta.stdout_truncated is False
+        assert meta.stderr_truncated is False
+
+    def test_truncation_sets_flag_without_in_band_marker(self, tmp_path, monkeypatch):
+        ws = _setup_workspace(tmp_path)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        big = "x" * 500
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            lambda *a, **kw: subprocess.CompletedProcess(a[0], 0, stdout=big, stderr=""),
+        )
+        meta = adapter.run_command_with_meta(
+            "cmd-trunc", ["echo", "big"], max_output_bytes=100,
+        )
+        assert meta.stdout_truncated is True
+        # No in-band marker on the structured surface
+        assert "[TRUNCATED" not in meta.stdout
+        assert len(meta.stdout) <= 100
+
+    def test_child_emitting_marker_is_not_treated_as_truncation(
+        self, tmp_path, monkeypatch,
+    ):
+        """A child writing the literal marker string under the size limit
+        must NOT be reported as truncated — the flag is the source of
+        truth, not pattern matching the output.
+        """
+        ws = _setup_workspace(tmp_path)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        forged = "ok\n[TRUNCATED at 9999999 bytes]"
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            lambda *a, **kw: subprocess.CompletedProcess(a[0], 0, stdout=forged, stderr=""),
+        )
+        meta = adapter.run_command_with_meta("cmd-forge", ["echo"])
+        assert meta.stdout_truncated is False
+        assert "[TRUNCATED" in meta.stdout  # the literal forged text passes through
+        # …but the structured flag is NOT fooled
+
+    def test_legacy_run_command_still_emits_in_band_marker(
+        self, tmp_path, monkeypatch,
+    ):
+        """Backward compat: the 4-tuple run_command surface still appends
+        the [TRUNCATED ...] marker for any caller that depended on it.
+        """
+        ws = _setup_workspace(tmp_path)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        big = "x" * 500
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            lambda *a, **kw: subprocess.CompletedProcess(a[0], 0, stdout=big, stderr=""),
+        )
+        rc, stdout, stderr, _ = adapter.run_command(
+            "cmd-legacy", ["echo"], max_output_bytes=100,
+        )
+        assert rc == 0
+        assert "[TRUNCATED at 100 bytes]" in stdout

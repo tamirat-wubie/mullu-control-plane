@@ -106,6 +106,38 @@ def _truncate_output(text: str | None, max_bytes: int) -> str:
     return truncated + _TRUNCATION_MARKER.format(limit=max_bytes)
 
 
+def _truncate_output_with_flag(text: str | None, max_bytes: int) -> tuple[str, bool]:
+    """Like _truncate_output but returns (text, was_truncated) without an
+    in-band marker. Allows callers to detect truncation unambiguously even
+    when child output happens to contain the marker string.
+    """
+    if text is None:
+        return "", False
+    encoded = text.encode("utf-8", errors="replace")
+    if len(encoded) <= max_bytes:
+        return text, False
+    truncated_text = encoded[:max_bytes].decode("utf-8", errors="replace")
+    return truncated_text, True
+
+
+@dataclass(frozen=True, slots=True)
+class CommandOutput:
+    """Structured run_command result with explicit truncation flags.
+
+    Returned by run_command_with_meta. Distinguishes a child process that
+    legitimately wrote the truncation-marker substring from a real
+    truncation event — the bool flag is the source of truth, not the
+    in-band marker.
+    """
+
+    exit_code: int
+    stdout: str
+    stderr: str
+    duration_ms: int
+    stdout_truncated: bool
+    stderr_truncated: bool
+
+
 def _content_hash(content: str) -> str:
     return sha256(content.encode("utf-8")).hexdigest()
 
@@ -673,25 +705,60 @@ class LocalCodeAdapter:
         )
 
     def read_file(self, relative_path: str) -> str | None:
-        """Read a file from the workspace. Returns None if not found or outside root."""
+        """Read a file from the workspace. Returns None if not found or outside root.
+
+        Tightens the prior TOCTOU window (M3): resolves the target to its
+        real path, verifies that real path is strictly inside the workspace
+        root, then reads the resolved path directly. A symlink swap between
+        resolve and read still hits the resolved-at-check-time real path,
+        not the swapped-in attacker target. A residual race exists between
+        resolve and the kernel's open syscall (microseconds), accepted as a
+        defense-in-depth limit; the primary boundary stays _is_within_root.
+        """
         target = self._root / relative_path
-        if not _is_within_root(self._root, target):
-            return None
-        if not target.is_file():
+        try:
+            resolved = target.resolve(strict=True)
+        except (OSError, ValueError):
             return None
         try:
-            return target.read_text(encoding="utf-8")
+            resolved_root = self._root.resolve(strict=True)
+            if not resolved.is_relative_to(resolved_root):
+                return None
+        except (OSError, ValueError):
+            return None
+        if not resolved.is_file():
+            return None
+        try:
+            return resolved.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             return None
 
     def write_file(self, relative_path: str, content: str) -> bool:
-        """Write a file to the workspace. Returns False if path is outside root."""
+        """Write a file to the workspace. Returns False if path is outside root.
+
+        Tightens the prior TOCTOU window (M3): resolves parent directory
+        chain to ensure the actual write target is inside root before any
+        bytes are written. A symlink swap of an existing target between
+        resolve and open is still possible but lands on the resolved-at-
+        check-time path, not the attacker's swapped target.
+        """
         target = self._root / relative_path
-        if not _is_within_root(self._root, target):
-            return False
         try:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content, encoding="utf-8")
+            resolved_root = self._root.resolve(strict=True)
+        except (OSError, ValueError):
+            return False
+        # Resolve as far as the path exists; nonexistent leaf is fine for
+        # write_file's create-or-overwrite contract.
+        resolved_parent = (target.parent).resolve(strict=False)
+        try:
+            if not resolved_parent.is_relative_to(resolved_root):
+                return False
+        except (OSError, ValueError):
+            return False
+        resolved_target = resolved_parent / target.name
+        try:
+            resolved_target.parent.mkdir(parents=True, exist_ok=True)
+            resolved_target.write_text(content, encoding="utf-8")
             return True
         except OSError:
             return False
@@ -813,6 +880,58 @@ class LocalCodeAdapter:
         timeout_seconds = max(1, min(timeout_seconds, self._command_policy.max_timeout_seconds))
         max_output_bytes = max(1, min(max_output_bytes, self._command_policy.max_output_bytes))
 
+        meta = self.run_command_with_meta(
+            command_id, command,
+            timeout_seconds=timeout_seconds,
+            max_output_bytes=max_output_bytes,
+            extra_env=extra_env,
+        )
+        # Preserve the in-band marker on the legacy 4-tuple surface for
+        # backward compatibility with existing callers.
+        stdout = meta.stdout + (
+            _TRUNCATION_MARKER.format(limit=max_output_bytes)
+            if meta.stdout_truncated else ""
+        )
+        stderr = meta.stderr + (
+            _TRUNCATION_MARKER.format(limit=max_output_bytes)
+            if meta.stderr_truncated else ""
+        )
+        return meta.exit_code, stdout, stderr, meta.duration_ms
+
+    def run_command_with_meta(
+        self,
+        command_id: str,
+        command: list[str],
+        *,
+        timeout_seconds: int = 60,
+        max_output_bytes: int = _DEFAULT_MAX_OUTPUT_BYTES,
+        extra_env: dict[str, str] | None = None,
+    ) -> CommandOutput:
+        """Like run_command but returns a structured CommandOutput with
+        explicit stdout_truncated and stderr_truncated booleans.
+
+        Use this when you need to detect truncation unambiguously — the
+        legacy run_command surface uses an in-band marker which a child
+        process could in theory emit verbatim. The bool flags here come
+        from the byte-length comparison done at truncation time and are
+        not forgeable by child output.
+        """
+        ensure_non_empty_text("command_id", command_id)
+
+        policy_error = _validate_command_policy(command, self._command_policy)
+        if policy_error is not None:
+            return CommandOutput(
+                exit_code=-1,
+                stdout="",
+                stderr=f"blocked command: {policy_error}",
+                duration_ms=0,
+                stdout_truncated=False,
+                stderr_truncated=False,
+            )
+
+        timeout_seconds = max(1, min(timeout_seconds, self._command_policy.max_timeout_seconds))
+        max_output_bytes = max(1, min(max_output_bytes, self._command_policy.max_output_bytes))
+
         start = time.monotonic()
         try:
             result = subprocess.run(
@@ -820,22 +939,43 @@ class LocalCodeAdapter:
                 cwd=str(self._root),
                 env=_scrubbed_env(extra_env),
                 capture_output=True,
-                # Force UTF-8 + errors=replace so that on Windows where the
-                # default console encoding is CP1252, child processes that
-                # write UTF-8 bytes do not get silently mangled. errors=replace
-                # ensures undecodable bytes do not crash the adapter.
                 encoding="utf-8",
                 errors="replace",
                 timeout=timeout_seconds,
-                shell=False,  # Explicit: no shell expansion
+                shell=False,
             )
             duration_ms = int((time.monotonic() - start) * 1000)
-            stdout = _truncate_output(result.stdout, max_output_bytes)
-            stderr = _truncate_output(result.stderr, max_output_bytes)
-            return result.returncode, stdout, stderr, duration_ms
+            stdout, stdout_truncated = _truncate_output_with_flag(
+                result.stdout, max_output_bytes,
+            )
+            stderr, stderr_truncated = _truncate_output_with_flag(
+                result.stderr, max_output_bytes,
+            )
+            return CommandOutput(
+                exit_code=result.returncode,
+                stdout=stdout,
+                stderr=stderr,
+                duration_ms=duration_ms,
+                stdout_truncated=stdout_truncated,
+                stderr_truncated=stderr_truncated,
+            )
         except subprocess.TimeoutExpired:
             duration_ms = int((time.monotonic() - start) * 1000)
-            return -1, "", "timeout", duration_ms
+            return CommandOutput(
+                exit_code=-1,
+                stdout="",
+                stderr="timeout",
+                duration_ms=duration_ms,
+                stdout_truncated=False,
+                stderr_truncated=False,
+            )
         except OSError as exc:
             duration_ms = int((time.monotonic() - start) * 1000)
-            return -1, "", _bounded_code_error("command error", exc), duration_ms
+            return CommandOutput(
+                exit_code=-1,
+                stdout="",
+                stderr=_bounded_code_error("command error", exc),
+                duration_ms=duration_ms,
+                stdout_truncated=False,
+                stderr_truncated=False,
+            )

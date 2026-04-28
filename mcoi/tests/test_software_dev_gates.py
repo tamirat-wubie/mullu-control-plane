@@ -18,7 +18,11 @@ import pytest
 from mcoi_runtime.adapters.code_adapter import CommandPolicy, LocalCodeAdapter
 from mcoi_runtime.contracts.software_dev_loop import QualityGateResult
 from mcoi_runtime.core.code import CodeEngine
-from mcoi_runtime.core.software_dev_gates import make_default_gate_runners
+from mcoi_runtime.core.software_dev_gates import (
+    SoftwareDevRunnerConfig,
+    make_default_gate_runners,
+    make_default_software_dev_runner,
+)
 from mcoi_runtime.domain_adapters.software_dev import (
     SoftwareQualityGate,
     SoftwareRequest,
@@ -245,3 +249,120 @@ class TestDisablingGates:
             engine=engine, lint_command=None,
         )
         assert SoftwareQualityGate.LINT not in runners
+
+
+# ---- Default runner factory ----
+
+
+class TestDefaultSoftwareDevRunnerFactory:
+    """make_default_software_dev_runner bundles adapter + gate runners +
+    UCJA into one SoftwareDevRunnerConfig the operator can pass straight
+    to MulluMCPServer or governed_software_change.
+    """
+
+    def _plan_gen(self, req, snap):
+        from mcoi_runtime.contracts.software_dev_loop import WorkPlan
+        return WorkPlan(
+            plan_id="p", summary="s", steps=("a",), target_files=("x.py",),
+        )
+
+    def _patch_gen(self, req, snap, plan, attempt, prior):
+        from mcoi_runtime.contracts.code import PatchProposal
+        return PatchProposal(
+            patch_id="pp", target_file="x.py", description="d",
+            unified_diff="--- a/x.py\n+++ b/x.py\n@@ -1 +1 @@\n-old\n+new\n",
+        )
+
+    def test_factory_returns_runner_config_with_default_gates(self, tmp_path):
+        adapter = _adapter(tmp_path)
+        config = make_default_software_dev_runner(
+            adapter=adapter,
+            plan_generator=self._plan_gen,
+            patch_generator=self._patch_gen,
+            clock=lambda: T0,
+        )
+        assert isinstance(config, SoftwareDevRunnerConfig)
+        assert SoftwareQualityGate.UNIT_TESTS in config.gate_runners
+        assert SoftwareQualityGate.LINT in config.gate_runners
+        assert SoftwareQualityGate.TYPECHECK in config.gate_runners
+        # Off by default
+        assert SoftwareQualityGate.INTEGRATION_TESTS not in config.gate_runners
+        assert SoftwareQualityGate.BUILD not in config.gate_runners
+
+    def test_factory_threads_ucja_runner(self, tmp_path):
+        adapter = _adapter(tmp_path)
+        sentinel = object()
+        config = make_default_software_dev_runner(
+            adapter=adapter,
+            plan_generator=self._plan_gen,
+            patch_generator=self._patch_gen,
+            clock=lambda: T0,
+            ucja_runner=sentinel,
+        )
+        assert config.ucja_runner is sentinel
+
+    def test_factory_disables_specific_gates_via_none(self, tmp_path):
+        adapter = _adapter(tmp_path)
+        config = make_default_software_dev_runner(
+            adapter=adapter,
+            plan_generator=self._plan_gen,
+            patch_generator=self._patch_gen,
+            clock=lambda: T0,
+            unit_test_command=None,
+            lint_command=None,
+        )
+        assert SoftwareQualityGate.UNIT_TESTS not in config.gate_runners
+        assert SoftwareQualityGate.LINT not in config.gate_runners
+        # Typecheck still on by default
+        assert SoftwareQualityGate.TYPECHECK in config.gate_runners
+
+    def test_runner_can_drive_governed_software_change_directly(self, tmp_path, monkeypatch):
+        """Smoke test: the bundled config plugs straight into the loop."""
+        from mcoi_runtime.core.software_dev_loop import (
+            UCJAOutcomeShape,
+            governed_software_change,
+        )
+        adapter = _adapter(tmp_path)
+        # Set up a real workspace file so the patch can apply
+        (adapter.root / "x.py").write_text("old\n", encoding="utf-8")
+
+        # Stub subprocess so the gate command "succeeds" without a real pytest
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            lambda *a, **kw: subprocess.CompletedProcess(a[0], 0, stdout="1 passed", stderr=""),
+        )
+
+        config = make_default_software_dev_runner(
+            adapter=adapter,
+            plan_generator=self._plan_gen,
+            patch_generator=self._patch_gen,
+            clock=lambda: T0,
+            ucja_runner=lambda payload: UCJAOutcomeShape(
+                accepted=True, rejected=False, job_id="j",
+                halted_at_layer=None, reason="",
+            ),
+            # Disable lint+typecheck so we don't need ruff/mypy installed
+            lint_command=None,
+            typecheck_command=None,
+        )
+
+        from mcoi_runtime.domain_adapters.software_dev import (
+            SoftwareRequest, SoftwareWorkKind,
+        )
+        req = SoftwareRequest(
+            kind=SoftwareWorkKind.BUG_FIX,
+            summary="x", repository="r",
+            affected_files=("x.py",),
+            quality_gates=(SoftwareQualityGate.UNIT_TESTS,),
+            max_self_debug_iterations=0,
+        )
+        outcome = governed_software_change(
+            req,
+            adapter=config.adapter,
+            plan_generator=config.plan_generator,
+            patch_generator=config.patch_generator,
+            gate_runners=config.gate_runners,
+            clock=config.clock,
+            ucja_runner=config.ucja_runner,
+        )
+        assert outcome.solved is True

@@ -12,7 +12,8 @@ get distinct evidence_ids automatically.
 """
 from __future__ import annotations
 
-from typing import Callable
+from dataclasses import dataclass
+from typing import Any, Callable, Mapping
 
 from mcoi_runtime.adapters.code_adapter import LocalCodeAdapter
 from mcoi_runtime.contracts.code import BuildResult, TestResult
@@ -26,6 +27,28 @@ from mcoi_runtime.domain_adapters.software_dev import (
 
 # Public type alias matching software_dev_loop.GateRunner shape.
 GateRunner = Callable[[LocalCodeAdapter, SoftwareRequest, int], QualityGateResult]
+
+
+@dataclass(frozen=True)
+class SoftwareDevRunnerConfig:
+    """Bundle of dependencies governed_software_change needs.
+
+    Construct one per workspace and pass it either directly through the
+    loop's call site or to MulluMCPServer's software_dev_runner kwarg.
+    The MCP layer does not own LLM or workspace state — it routes calls
+    to whatever plan/patch/gate machinery the operator has wired here.
+
+    Lives in core/software_dev_gates because callers may want to
+    invoke the loop without exposing it via MCP at all. The MCP
+    server re-exports this name for backward compatibility.
+    """
+
+    adapter: Any
+    plan_generator: Any
+    patch_generator: Any
+    gate_runners: Mapping[Any, Any]
+    clock: Callable[[], str]
+    ucja_runner: Any | None = None
 
 
 _TAIL_BYTES: int = 1024
@@ -155,6 +178,54 @@ def _wrap_command_runner(
         )
 
     return runner
+
+
+def make_default_software_dev_runner(
+    *,
+    adapter: LocalCodeAdapter,
+    plan_generator: Callable,
+    patch_generator: Callable,
+    clock: Callable[[], str],
+    ucja_runner: Callable | None = None,
+    unit_test_command: tuple[str, ...] | None = ("pytest", "-q"),
+    integration_test_command: tuple[str, ...] | None = None,
+    lint_command: tuple[str, ...] | None = ("ruff", "check", "."),
+    typecheck_command: tuple[str, ...] | None = ("mypy", "."),
+    security_scan_command: tuple[str, ...] | None = None,
+    build_command: tuple[str, ...] | None = None,
+):
+    """Bundle adapter + gate runners into a SoftwareDevRunnerConfig.
+
+    Convenience factory for the most common operator wiring: one workspace,
+    one engine, default gate command set, optionally LLM-backed plan and
+    patch generators. Returns a SoftwareDevRunnerConfig you can pass
+    directly to MulluMCPServer(software_dev_runner=...) or to invoke the
+    loop directly via governed_software_change.
+
+    Pass `ucja_runner=None` to use the live UCJAPipeline; pass an explicit
+    callable for tests or for stubbing during initial integration. Pass
+    `None` for any gate command to omit that gate's runner — the loop
+    will record a missing-runner failure if the request asks for that
+    gate.
+    """
+    engine = CodeEngine(adapter=adapter, clock=clock)
+    gate_runners = make_default_gate_runners(
+        engine=engine,
+        unit_test_command=unit_test_command,
+        integration_test_command=integration_test_command,
+        lint_command=lint_command,
+        typecheck_command=typecheck_command,
+        security_scan_command=security_scan_command,
+        build_command=build_command,
+    )
+    return SoftwareDevRunnerConfig(
+        adapter=adapter,
+        plan_generator=plan_generator,
+        patch_generator=patch_generator,
+        gate_runners=gate_runners,
+        clock=clock,
+        ucja_runner=ucja_runner,
+    )
 
 
 def make_default_gate_runners(
