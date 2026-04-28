@@ -143,3 +143,57 @@ def test_replay_missing_request_returns_bounded_404() -> None:
     assert response.status_code == 404
     assert body["detail"]["error"] == "receipt replay unavailable"
     assert body["detail"]["type"] == "PersistenceError"
+
+
+def test_review_returns_open_request_signals() -> None:
+    store = SoftwareChangeReceiptStore()
+    terminal = _receipt(
+        receipt_id="receipt-terminal",
+        stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
+        created_at=T1,
+    )
+    open_receipt = _receipt(
+        receipt_id="receipt-open",
+        request_id="request-http-open",
+        stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+        created_at=T1,
+    )
+    store.append_many((
+        _receipt(receipt_id="receipt-admitted"),
+        terminal,
+        open_receipt,
+    ))
+    client = _client(store)
+
+    response = client.get("/software/receipts/review", params={"limit": 10})
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["operation"] == "review"
+    assert body["count"] == 1
+    assert body["requires_operator_review"] is True
+    assert body["review_signal_count"] == 1
+    assert body["receipts"][0]["receipt_id"] == "receipt-open"
+    assert body["review_signals"] == [
+        {
+            "request_id": "request-http-open",
+            "latest_receipt_id": "receipt-open",
+            "latest_stage": "gate_evaluated",
+            "latest_outcome": "ok",
+            "reason": "software_change_receipt_chain_open",
+        }
+    ]
+
+
+def test_review_empty_store_has_no_review_required() -> None:
+    client = _client(SoftwareChangeReceiptStore())
+
+    response = client.get("/software/receipts/review")
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["operation"] == "review"
+    assert body["count"] == 0
+    assert body["requires_operator_review"] is False
+    assert body["review_signal_count"] == 0
+    assert body["review_signals"] == []

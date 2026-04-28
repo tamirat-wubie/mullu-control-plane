@@ -133,6 +133,22 @@ class SoftwareChangeReceiptStore:
             raise PersistenceError("request receipt chain is not terminally closed")
         return receipts
 
+    def review_receipts(self, *, limit: int | None = 10) -> tuple[SoftwareChangeReceipt, ...]:
+        """Return latest receipts for non-terminal request chains."""
+        if limit is not None and (not isinstance(limit, int) or limit < 1):
+            raise PersistenceError("limit must be a positive integer")
+        requests: dict[str, SoftwareChangeReceipt] = {}
+        for receipt in self._receipts:
+            requests[receipt.request_id] = receipt
+        open_receipts = tuple(
+            receipt
+            for receipt in requests.values()
+            if receipt.stage is not SoftwareChangeReceiptStage.TERMINAL_CLOSED
+        )
+        if limit is not None:
+            return open_receipts[:limit]
+        return open_receipts
+
     def summary(self) -> dict[str, Any]:
         """Return dashboard-ready receipt lifecycle counts without mutation."""
         by_stage = {

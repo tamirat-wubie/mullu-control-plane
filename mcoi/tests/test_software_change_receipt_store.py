@@ -152,6 +152,27 @@ def test_store_summary_bounds_review_signals() -> None:
     )
 
 
+def test_review_receipts_returns_latest_open_request_receipts() -> None:
+    store = SoftwareChangeReceiptStore()
+    first_open = _receipt(receipt_id="receipt-open-first", request_id="request-1")
+    second_open = _receipt(receipt_id="receipt-open-second", request_id="request-open-second")
+    terminal = _terminal()
+    store.append_many((first_open, terminal, second_open))
+
+    review_receipts = store.review_receipts()
+
+    assert review_receipts == (second_open,)
+    assert store.review_receipts(limit=1) == (second_open,)
+    assert store.review_receipts(limit=None) == (second_open,)
+
+
+def test_review_receipts_rejects_invalid_limit() -> None:
+    store = SoftwareChangeReceiptStore()
+
+    with pytest.raises(PersistenceError):
+        store.review_receipts(limit=0)
+
+
 def test_duplicate_matching_receipt_is_idempotent() -> None:
     store = SoftwareChangeReceiptStore()
     receipt = _receipt(receipt_id="receipt-1")
