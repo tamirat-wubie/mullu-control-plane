@@ -135,9 +135,18 @@ class TestDeniedDecision:
             guard_results=[{"guard_name": "budget", "allowed": False, "reason": "exhausted"}],
             decision="denied",
         )
-        # Note: guard verdicts are still included even though they failed
-        # The bridge doesn't re-check guards, it records the decision
+        # Outer GovernanceProof wrapper preserves all verdicts.
         assert proof.guard_verdicts[0].passed is False
+        # Receipt itself ALSO preserves the failed verdict (this is the
+        # cryptographic record; stripping it would erase the denial reason).
+        receipt = proof.capsule.receipt
+        assert len(receipt.guard_verdicts) == 1
+        assert receipt.guard_verdicts[0].guard_id == "budget"
+        assert receipt.guard_verdicts[0].passed is False
+        assert receipt.guard_verdicts[0].reason == "exhausted"
+        # Verdict on the receipt reflects the guard failure, not just legality.
+        from mcoi_runtime.contracts.state_machine import TransitionVerdict
+        assert receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
 
 
 # ═══ Receipt Verification ═══

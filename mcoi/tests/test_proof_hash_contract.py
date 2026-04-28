@@ -69,3 +69,7 @@ def test_python_receipt_hash_matches_rust():
     assert capsule.receipt.receipt_id == f"rcpt-{EXPECTED_HASH[:16]}"
     assert capsule.audit_record.audit_id == f"audit-{EXPECTED_HASH[:12]}"
     assert capsule.receipt.verdict == TransitionVerdict.ALLOWED
+    # replay_token is sha256(content + ":" + timestamp)[:16] on both sides.
+    # Locking it in addition to receipt_hash catches any drift in the
+    # replay-token derivation that the receipt_hash alone wouldn't surface.
+    assert capsule.receipt.replay_token == "replay-4c4180b2fd61031d"
