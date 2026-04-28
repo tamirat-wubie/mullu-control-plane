@@ -75,6 +75,15 @@ class AuditStore:
     store interface with prune-safe verification anchors. Stores that
     don't implement these (the base class) are degraded gracefully —
     the in-process anchor still works for single-process integrity.
+
+    v4.31.0+ (audit F4): stores MAY also provide an atomic
+    test-and-allocate primitive (``try_append``) that owns sequence
+    allocation and chain-head linkage. When overridden, AuditTrail
+    delegates the sequence + previous_hash + entry_hash computation
+    to the store — closing the cross-worker chain-fork window that
+    the per-process ``_sequence`` counter cannot. Stores that don't
+    override fall through to the in-process path automatically
+    (detected via MRO).
     """
 
     def append(self, entry: AuditEntry) -> None:
@@ -94,6 +103,48 @@ class AuditStore:
 
         v4.28.0+. Used at AuditTrail bootstrap to restore the anchor
         across process restarts when the store is durable.
+        """
+        return None
+
+    def try_append(
+        self,
+        *,
+        action: str,
+        actor_id: str,
+        tenant_id: str,
+        target: str,
+        outcome: str,
+        detail: dict[str, Any],
+        recorded_at: str,
+    ) -> "AuditEntry | None":
+        """Atomic test-and-allocate at the storage layer (audit F4).
+
+        Implementations override this to provide cross-worker atomic
+        sequence allocation and chain-head linkage. The base class
+        returns ``None`` to signal "no atomic path; caller should
+        fall through to the in-process append path."
+
+        On override, the store:
+
+        1. Atomically allocates the next sequence (locks/SERIAL/etc).
+        2. Reads the chain-head ``entry_hash`` for ``previous_hash``.
+        3. Computes ``entry_hash`` via ``_canonical_hash_v1``.
+        4. Persists the entry.
+        5. Returns the constructed ``AuditEntry``.
+
+        Returns:
+            ``AuditEntry`` — the entry the store actually persisted
+                (sequence is store-allocated, not derived from the
+                caller's local counter).
+            ``None`` — store does not implement an atomic path; caller
+                falls back to the in-process per-AuditTrail counter.
+
+        Disambiguation between "real append failure" and "no atomic
+        path" is done by callers via MRO override-detection
+        (``getattr(type(store), "try_append", AuditStore.try_append)
+        is not AuditStore.try_append``), not via a sentinel object.
+        Subclasses signal capability by overriding, nothing more.
+        Real append failures should raise rather than return None.
         """
         return None
 
@@ -169,7 +220,6 @@ class AuditTrail:
         self, *, action: str, actor_id: str, tenant_id: str,
         target: str, outcome: str, detail: dict[str, Any] | None = None,
     ) -> AuditEntry:
-        self._sequence += 1
         now = self._clock()
         detail = detail or {}
 
@@ -178,43 +228,78 @@ class AuditTrail:
         if len(detail_json) > self.MAX_DETAIL_SIZE:
             detail = {"_truncated": True, "_original_size": len(detail_json)}
 
-        # Compute content hash via the canonical v1 helper. The writer
-        # and the external verifier both call _canonical_hash_v1, so
-        # they cannot drift apart — the spec layout is enforced by
-        # construction, not by convention. See LEDGER_SPEC.md.
-        source = {
-            "sequence": self._sequence,
-            "action": action,
-            "actor_id": actor_id,
-            "tenant_id": tenant_id,
-            "target": target,
-            "outcome": outcome,
-            "detail": detail,
-            "previous_hash": self._last_hash,
-            "recorded_at": now,
-        }
-        entry_hash = _canonical_hash_v1(source)
-        entry_id = f"audit-{self._sequence}"
-
-        entry = AuditEntry(
-            entry_id=entry_id,
-            sequence=self._sequence,
-            action=action,
-            actor_id=actor_id,
-            tenant_id=tenant_id,
-            target=target,
-            outcome=outcome,
-            detail=detail,
-            entry_hash=entry_hash,
-            previous_hash=self._last_hash,
-            recorded_at=now,
+        # F4: prefer the store's atomic test-and-allocate when the
+        # store overrides ``try_append``. The base class returns
+        # ``None`` and is detected via MRO — same disambiguation
+        # idiom as v4.27 BudgetStore.try_record_spend, v4.29
+        # RateLimitStore.try_consume, v4.30 HashChainStore.try_append.
+        # The ``getattr`` default covers duck-typed stores.
+        store_owned = (
+            self._store is not None
+            and getattr(type(self._store), "try_append", AuditStore.try_append)
+            is not AuditStore.try_append
         )
+        if store_owned:
+            entry = self._store.try_append(
+                action=action,
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                target=target,
+                outcome=outcome,
+                detail=detail,
+                recorded_at=now,
+            )
+            # An overriding store must not return None — that sentinel
+            # is reserved for the base class. Treat defensively as a
+            # store failure and fall through to the in-process path.
+            if entry is None:
+                store_owned = False
+
+        if not store_owned:
+            self._sequence += 1
+            # Compute content hash via the canonical v1 helper. The
+            # writer and the external verifier both call
+            # _canonical_hash_v1, so they cannot drift apart — the
+            # spec layout is enforced by construction, not by
+            # convention. See LEDGER_SPEC.md.
+            source = {
+                "sequence": self._sequence,
+                "action": action,
+                "actor_id": actor_id,
+                "tenant_id": tenant_id,
+                "target": target,
+                "outcome": outcome,
+                "detail": detail,
+                "previous_hash": self._last_hash,
+                "recorded_at": now,
+            }
+            entry_hash = _canonical_hash_v1(source)
+            entry_id = f"audit-{self._sequence}"
+
+            entry = AuditEntry(
+                entry_id=entry_id,
+                sequence=self._sequence,
+                action=action,
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                target=target,
+                outcome=outcome,
+                detail=detail,
+                entry_hash=entry_hash,
+                previous_hash=self._last_hash,
+                recorded_at=now,
+            )
+            # Write through to persistent store if available
+            if self._store is not None:
+                self._store.append(entry)
+        else:
+            # Store-allocated: sync local cache from the store's
+            # response so prune logic and ``last_hash`` reflect the
+            # canonical state.
+            self._sequence = entry.sequence
 
         self._entries.append(entry)
-        self._last_hash = entry_hash
-        # Write through to persistent store if available
-        if self._store is not None:
-            self._store.append(entry)
+        self._last_hash = entry.entry_hash
         # Prune oldest entries when at capacity (preserves recent history).
         # v4.28.0 (audit F3): before pruning, capture the boundary entry's
         # hash as the verification anchor. Without this, ``verify_chain()``

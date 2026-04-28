@@ -52,6 +52,42 @@ def _atomic_write(path: Path, content: str) -> None:
         raise PersistenceWriteError(_bounded_store_error("hash chain write failed", exc)) from exc
 
 
+def _atomic_write_exclusive(path: Path, content: str) -> bool:
+    """Write content atomically, failing if the destination already exists.
+
+    Uses ``O_CREAT | O_EXCL`` so the OS rejects pre-existing files at the
+    syscall level — closes the F15 TOCTOU between ``HashChainStore.latest``
+    and the write. Returns ``True`` on successful write, ``False`` if the
+    file already exists (collision — caller may retry with a new sequence).
+
+    A partial-write window exists if the process dies mid-``os.write``;
+    the resulting file would fail to deserialize (caught by the existing
+    ``CorruptedDataError`` path in ``_load_entry``). Same recovery
+    semantics as a corrupted entry.
+    """
+    parent = path.parent
+    parent.mkdir(parents=True, exist_ok=True)
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+    try:
+        fd = os.open(str(path), flags, 0o644)
+    except FileExistsError:
+        return False
+    except OSError as exc:
+        raise PersistenceWriteError(_bounded_store_error("hash chain write failed", exc)) from exc
+    try:
+        os.write(fd, content.encode("utf-8"))
+    except OSError as exc:
+        os.close(fd)
+        # Best-effort cleanup of the partially-written file.
+        try:
+            os.unlink(str(path))
+        except OSError:
+            pass
+        raise PersistenceWriteError(_bounded_store_error("hash chain write failed", exc)) from exc
+    os.close(fd)
+    return True
+
+
 def compute_chain_hash(sequence_number: int, content_hash: str, previous_hash: str) -> str:
     """Compute SHA-256 chain hash from sequence number, content hash, and previous hash.
 
@@ -114,11 +150,19 @@ class HashChainStore:
 
         return self._load_entry(files[0])
 
-    def append(self, content_hash: str) -> HashChainEntry:
-        """Append a new entry to the chain and return it.
+    def try_append(self, content_hash: str) -> HashChainEntry | None:
+        """Atomic append primitive (audit F15).
 
-        Reads the latest entry to determine the next sequence number and
-        previous_hash, then computes the chain_hash deterministically.
+        Reads the latest entry, computes the next entry, and writes it
+        with ``O_CREAT | O_EXCL``. Returns the written entry on
+        success, or ``None`` if another writer claimed the same
+        sequence (the OS rejected the destination). Callers either
+        retry (see ``append``) or surface the conflict.
+
+        Single-atomic-attempt by design — separating the primitive
+        from the retry strategy keeps the contract testable: tests
+        can simulate a collision by writing to the entry path
+        directly, then verify ``try_append`` returns ``None``.
         """
         if not isinstance(content_hash, str) or not content_hash.strip():
             raise PersistenceError("content_hash must be a non-empty string")
@@ -145,8 +189,40 @@ class HashChainStore:
         )
 
         content = serialize_record(entry)
-        _atomic_write(self._entry_path(seq), content)
+        if not _atomic_write_exclusive(self._entry_path(seq), content):
+            return None
         return entry
+
+    def append(self, content_hash: str) -> HashChainEntry:
+        """Append a new entry to the chain and return it.
+
+        Calls ``try_append`` in a bounded retry loop — on collision,
+        re-reads ``latest`` and tries again with the next sequence.
+        Closes the F15 TOCTOU: pre-v4.30 two concurrent writers could
+        both arrive at the same sequence and both succeed (the
+        ``os.replace`` in the original write helper overwrote rather
+        than rejected). Now the OS rejects the second write at the
+        ``O_EXCL`` syscall, the loser re-reads, and the chain stays
+        linear.
+        """
+        max_attempts = 64
+        last_exc: Exception | None = None
+        for _attempt in range(max_attempts):
+            try:
+                entry = self.try_append(content_hash)
+            except PersistenceWriteError as exc:
+                # Non-collision write failure (disk full, permissions,
+                # etc.) — surface immediately. Do not retry.
+                raise exc
+            except (CorruptedDataError, PathTraversalError) as exc:
+                last_exc = exc
+                raise
+            if entry is not None:
+                return entry
+            # Collision: another writer claimed this sequence. Loop.
+        raise PersistenceWriteError(
+            f"hash chain append failed after {max_attempts} contention retries"
+        )
 
     def load_all(self) -> tuple[HashChainEntry, ...]:
         """Load all chain entries in sequence order."""

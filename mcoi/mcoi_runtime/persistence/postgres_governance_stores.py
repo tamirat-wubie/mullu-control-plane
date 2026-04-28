@@ -23,10 +23,16 @@ import threading
 import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from hashlib import sha256
 from typing import Any, Iterator
 
 from mcoi_runtime.contracts.llm import LLMBudget
-from mcoi_runtime.core.audit_trail import AuditCheckpoint, AuditEntry, AuditStore
+from mcoi_runtime.core.audit_trail import (
+    AuditCheckpoint,
+    AuditEntry,
+    AuditStore,
+    _canonical_hash_v1,
+)
 from mcoi_runtime.core.rate_limiter import RateLimitStore
 from mcoi_runtime.core.tenant_budget import BudgetStore
 from mcoi_runtime.core.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
@@ -798,14 +804,33 @@ class InMemoryAuditStore(AuditStore):
     v4.28.0+ (audit F3): also persists checkpoints. Single most recent
     checkpoint is kept (matches the ``AuditTrail._anchor`` semantics —
     each new prune supersedes the previous anchor).
+
+    v4.31.0+ (audit F4): owns sequence allocation and chain-head
+    linkage via ``try_append``. ``threading.Lock``-guarded
+    test-and-allocate makes a single store instance safe under
+    concurrent writes from multiple AuditTrail/worker callers within
+    one process. Cross-process replicas need PostgresAuditStore.
     """
 
     def __init__(self) -> None:
         self._entries: list[AuditEntry] = []
         self._checkpoint: AuditCheckpoint | None = None
+        self._sequence: int = 0
+        self._last_hash: str = sha256(b"genesis").hexdigest()
+        self._append_lock = threading.Lock()
 
     def append(self, entry: AuditEntry) -> None:
-        self._entries.append(entry)
+        # Pre-v4.31 callers compute their own sequence/hash. Keep the
+        # lock around the list mutation so concurrent legacy and
+        # try_append paths share consistent storage.
+        with self._append_lock:
+            self._entries.append(entry)
+            # Track chain state if the appended entry is monotonic —
+            # otherwise the legacy caller is responsible for its own
+            # sequencing.
+            if entry.sequence > self._sequence:
+                self._sequence = entry.sequence
+                self._last_hash = entry.entry_hash
 
     def query(self, **kwargs: Any) -> list[AuditEntry]:
         results = self._entries
@@ -820,6 +845,57 @@ class InMemoryAuditStore(AuditStore):
 
     def store_checkpoint(self, checkpoint: AuditCheckpoint) -> None:
         self._checkpoint = checkpoint
+
+    def try_append(
+        self,
+        *,
+        action: str,
+        actor_id: str,
+        tenant_id: str,
+        target: str,
+        outcome: str,
+        detail: dict[str, Any],
+        recorded_at: str,
+    ) -> AuditEntry | None:
+        # F4: store-owned sequence + chain head, lock-guarded so
+        # concurrent AuditTrail callers (multiple workers, threads)
+        # cannot fork the chain. The lock spans allocate-sequence,
+        # read-prev-hash, compute-entry-hash, persist — so two
+        # callers strictly serialize at the store, never both
+        # producing the same sequence with different previous_hash.
+        # Cross-process atomicity needs PostgresAuditStore.
+        with self._append_lock:
+            sequence = self._sequence + 1
+            previous_hash = self._last_hash
+            source = {
+                "sequence": sequence,
+                "action": action,
+                "actor_id": actor_id,
+                "tenant_id": tenant_id,
+                "target": target,
+                "outcome": outcome,
+                "detail": detail,
+                "previous_hash": previous_hash,
+                "recorded_at": recorded_at,
+            }
+            entry_hash = _canonical_hash_v1(source)
+            entry = AuditEntry(
+                entry_id=f"audit-{sequence}",
+                sequence=sequence,
+                action=action,
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                target=target,
+                outcome=outcome,
+                detail=detail,
+                entry_hash=entry_hash,
+                previous_hash=previous_hash,
+                recorded_at=recorded_at,
+            )
+            self._entries.append(entry)
+            self._sequence = sequence
+            self._last_hash = entry_hash
+            return entry
 
     def latest_checkpoint(self) -> AuditCheckpoint | None:
         return self._checkpoint
