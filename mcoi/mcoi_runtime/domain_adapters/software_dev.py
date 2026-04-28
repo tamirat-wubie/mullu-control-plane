@@ -27,11 +27,71 @@ class SoftwareWorkKind(Enum):
     DEPLOY = "deploy"
     REVIEW = "review"
     INVESTIGATE = "investigate"
+    TEST_GENERATION = "test_generation"
+    SECURITY_FIX = "security_fix"
+    DOCS = "docs"
+    MIGRATION = "migration"
+    DEPENDENCY_UPDATE = "dependency_update"
+    ROLLBACK = "rollback"
+
+
+class SoftwareWorkMode(Enum):
+    """How far the autonomy loop is allowed to take an accepted request."""
+
+    PLAN_ONLY = "plan_only"
+    DRY_RUN = "dry_run"
+    PATCH_ONLY = "patch_only"
+    PATCH_AND_TEST = "patch_and_test"
+    PATCH_TEST_REVIEW = "patch_test_review"
+    COMMIT_CANDIDATE = "commit_candidate"
+
+
+class SoftwareQualityGate(Enum):
+    """Named quality gates a software request can require evidence for."""
+
+    UNIT_TESTS = "unit_tests"
+    INTEGRATION_TESTS = "integration_tests"
+    LINT = "lint"
+    TYPECHECK = "typecheck"
+    SECURITY_SCAN = "security_scan"
+    BUILD = "build"
+    REVIEW = "review"
+
+
+@dataclass(frozen=True)
+class SoftwareCommandPolicySpec:
+    """Declarative description of the runtime CommandPolicy a request expects.
+
+    The autonomy loop converts this spec into a runtime CommandPolicy when
+    instantiating the LocalCodeAdapter. Defaults are deliberately empty
+    tuples so that the adapter's own strict defaults apply unless the
+    request widens or narrows them.
+    """
+
+    allowed_executables: tuple[str, ...] = ()
+    denied_executables: tuple[str, ...] = ()
+    denied_git_subcommands: tuple[str, ...] = ()
+    max_timeout_seconds: int = 300
+    max_output_bytes: int = 1_048_576
+    network_allowed: bool = False
+    sandbox_profile: str = "none"
 
 
 @dataclass
 class SoftwareRequest:
-    """Domain-shaped input from a developer."""
+    """Domain-shaped input from a developer.
+
+    Beyond the original kind/summary/repository contract, a request can
+    declare:
+      - mode                       — how far the autonomy loop runs
+      - quality_gates              — which named gates produce evidence
+      - max_self_debug_iterations  — retry budget for plan→patch→test loop
+      - rollback_required          — must the loop be able to undo the change
+      - command_policy             — declarative CommandPolicy for run_command
+      - sandbox_profile            — sandbox name (e.g. "docker_network_none")
+      - evidence_required          — names of evidence artifacts the terminal
+                                     certificate must carry
+    """
 
     kind: SoftwareWorkKind
     summary: str
@@ -41,6 +101,25 @@ class SoftwareRequest:
     acceptance_criteria: tuple[str, ...] = ()
     blast_radius: str = "module"  # function | module | service | system
     reviewer_required: bool = True
+
+    # F6 enrichments — autonomy loop contract
+    mode: SoftwareWorkMode = SoftwareWorkMode.PATCH_TEST_REVIEW
+    quality_gates: tuple[SoftwareQualityGate, ...] = (
+        SoftwareQualityGate.UNIT_TESTS,
+        SoftwareQualityGate.LINT,
+    )
+    max_self_debug_iterations: int = 3
+    rollback_required: bool = True
+    command_policy: SoftwareCommandPolicySpec = field(
+        default_factory=SoftwareCommandPolicySpec
+    )
+    sandbox_profile: str = "none"
+    evidence_required: tuple[str, ...] = (
+        "workspace_snapshot",
+        "patch_result",
+        "test_result",
+        "review_record",
+    )
 
 
 # UniversalRequest and UniversalResult moved to domain_adapters/_types.py
@@ -173,12 +252,18 @@ def translate_from_universal(
 
 def _purpose_from_kind(kind: SoftwareWorkKind, summary: str) -> str:
     verb_map = {
-        SoftwareWorkKind.BUG_FIX:    "eliminate_defect",
-        SoftwareWorkKind.FEATURE:    "introduce_capability",
-        SoftwareWorkKind.REFACTOR:   "preserve_behavior_change_structure",
-        SoftwareWorkKind.DEPLOY:     "transition_to_production_state",
-        SoftwareWorkKind.REVIEW:     "validate_proposed_change",
-        SoftwareWorkKind.INVESTIGATE: "produce_diagnostic_artifact",
+        SoftwareWorkKind.BUG_FIX:           "eliminate_defect",
+        SoftwareWorkKind.FEATURE:           "introduce_capability",
+        SoftwareWorkKind.REFACTOR:          "preserve_behavior_change_structure",
+        SoftwareWorkKind.DEPLOY:            "transition_to_production_state",
+        SoftwareWorkKind.REVIEW:            "validate_proposed_change",
+        SoftwareWorkKind.INVESTIGATE:       "produce_diagnostic_artifact",
+        SoftwareWorkKind.TEST_GENERATION:   "increase_test_coverage",
+        SoftwareWorkKind.SECURITY_FIX:      "remediate_security_finding",
+        SoftwareWorkKind.DOCS:              "update_documentation",
+        SoftwareWorkKind.MIGRATION:         "evolve_data_or_schema_state",
+        SoftwareWorkKind.DEPENDENCY_UPDATE: "advance_dependency_versions",
+        SoftwareWorkKind.ROLLBACK:          "revert_to_prior_known_good_state",
     }
     return f"{verb_map[kind]}: {summary}"
 
@@ -265,7 +350,49 @@ def _request_to_ucja_payload(req: SoftwareRequest) -> dict[str, Any]:
         "acceptance_criteria": list(req.acceptance_criteria),
         "blast_radius": req.blast_radius,
         "causation_mechanism": "developer_action",
+        # F6 enrichments — autonomy loop contract
+        "mode": req.mode.value,
+        "quality_gates": [gate.value for gate in req.quality_gates],
+        "max_self_debug_iterations": req.max_self_debug_iterations,
+        "rollback_required": req.rollback_required,
+        "sandbox_profile": req.sandbox_profile,
+        "command_policy": {
+            "allowed_executables": list(req.command_policy.allowed_executables),
+            "denied_executables": list(req.command_policy.denied_executables),
+            "denied_git_subcommands": list(req.command_policy.denied_git_subcommands),
+            "max_timeout_seconds": req.command_policy.max_timeout_seconds,
+            "max_output_bytes": req.command_policy.max_output_bytes,
+            "network_allowed": req.command_policy.network_allowed,
+            "sandbox_profile": req.command_policy.sandbox_profile,
+        },
+        "evidence_required": list(req.evidence_required),
     }
+
+
+def materialize_runtime_command_policy(spec: SoftwareCommandPolicySpec):
+    """Convert a SoftwareCommandPolicySpec into the runtime CommandPolicy.
+
+    Preserves the adapter's strict defaults whenever the spec has empty
+    allow/deny tuples: empty allowlist means "use the adapter's defaults",
+    not "allow nothing". This keeps spec-less requests safely strict while
+    letting callers narrow or widen explicitly.
+    """
+    from mcoi_runtime.adapters.code_adapter import CommandPolicy
+
+    defaults = CommandPolicy()
+    return CommandPolicy(
+        allowed_executables=(
+            spec.allowed_executables or defaults.allowed_executables
+        ),
+        denied_executables=(
+            spec.denied_executables or defaults.denied_executables
+        ),
+        denied_git_subcommands=(
+            spec.denied_git_subcommands or defaults.denied_git_subcommands
+        ),
+        max_timeout_seconds=spec.max_timeout_seconds,
+        max_output_bytes=spec.max_output_bytes,
+    )
 
 
 def run_with_ucja(

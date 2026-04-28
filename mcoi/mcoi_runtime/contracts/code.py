@@ -17,6 +17,15 @@ from typing import Any, Mapping
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text, require_non_negative_int
 
 
+def _require_process_exit_code(value: int, name: str = "exit_code") -> int:
+    """Permit -1 as a sentinel for timeout/error paths from run_command."""
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{name} must be an integer")
+    if value < -1:
+        raise ValueError(f"{name} must be >= -1")
+    return value
+
+
 class PatchStatus(StrEnum):
     APPLIED = "applied"
     FAILED = "failed"
@@ -157,7 +166,7 @@ class BuildResult(ContractRecord):
         if not isinstance(self.status, BuildStatus):
             raise ValueError("status must be a BuildStatus value")
         object.__setattr__(self, "command", require_non_empty_text(self.command, "command"))
-        object.__setattr__(self, "exit_code", require_non_negative_int(self.exit_code, "exit_code"))
+        object.__setattr__(self, "exit_code", _require_process_exit_code(self.exit_code))
         object.__setattr__(self, "duration_ms", require_non_negative_int(self.duration_ms, "duration_ms"))
 
     @property
@@ -185,7 +194,7 @@ class TestResult(ContractRecord):
         if not isinstance(self.status, TestStatus):
             raise ValueError("status must be a TestStatus value")
         object.__setattr__(self, "command", require_non_empty_text(self.command, "command"))
-        object.__setattr__(self, "exit_code", require_non_negative_int(self.exit_code, "exit_code"))
+        object.__setattr__(self, "exit_code", _require_process_exit_code(self.exit_code))
         object.__setattr__(self, "passed", require_non_negative_int(self.passed, "passed"))
         object.__setattr__(self, "failed", require_non_negative_int(self.failed, "failed"))
         object.__setattr__(self, "errors", require_non_negative_int(self.errors, "errors"))
