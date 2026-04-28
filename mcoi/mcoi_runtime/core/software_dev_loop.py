@@ -21,15 +21,13 @@ Invariants:
 """
 from __future__ import annotations
 
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Callable, Mapping, Protocol
 from uuid import uuid4
 
 from mcoi_runtime.adapters.code_adapter import LocalCodeAdapter
 from mcoi_runtime.contracts.code import (
-    PatchApplicationResult,
     PatchProposal,
     PatchStatus,
     WorkspaceState,
@@ -39,8 +37,11 @@ from mcoi_runtime.contracts.software_dev_loop import (
     AttemptStatus,
     AutonomyEvidence,
     QualityGateResult,
+    SoftwareChangeReceipt,
+    SoftwareChangeReceiptStage,
     WorkPlan,
 )
+from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureCertificate,
     TerminalClosureDisposition,
@@ -146,6 +147,16 @@ class LoopOutcome:
             SolverOutcome.SOLVED,
             SolverOutcome.SOLVED_WITH_COMPENSATION,
         )
+
+    @property
+    def receipts(self) -> tuple[SoftwareChangeReceipt, ...]:
+        """Return ordered lifecycle receipts derived from evidence.
+
+        Receipts are computed from the immutable certificate/evidence pair,
+        so older callers keep the same LoopOutcome contract while newer
+        callers can inspect a typed causal chain for every transition.
+        """
+        return _receipts_from_outcome(self.certificate, self.evidence)
 
 
 def governed_software_change(
@@ -723,6 +734,242 @@ def _evidence(
         started_at=started_at,
         completed_at=completed_at,
     )
+
+
+# ---- Software-change receipts ----
+
+
+def _receipt_id(
+    *,
+    request_id: str,
+    stage: SoftwareChangeReceiptStage,
+    target_refs: tuple[str, ...],
+    evidence_refs: tuple[str, ...],
+    outcome: str,
+) -> str:
+    return stable_identifier(
+        "software-receipt",
+        {
+            "request_id": request_id,
+            "stage": stage.value,
+            "target_refs": target_refs,
+            "evidence_refs": evidence_refs,
+            "outcome": outcome,
+        },
+    )
+
+
+def _software_receipt(
+    *,
+    request_id: str,
+    stage: SoftwareChangeReceiptStage,
+    cause: str,
+    outcome: str,
+    target_refs: tuple[str, ...],
+    constraint_refs: tuple[str, ...],
+    evidence_refs: tuple[str, ...],
+    created_at: str,
+    metadata: Mapping[str, Any] | None = None,
+) -> SoftwareChangeReceipt:
+    return SoftwareChangeReceipt(
+        receipt_id=_receipt_id(
+            request_id=request_id,
+            stage=stage,
+            target_refs=target_refs,
+            evidence_refs=evidence_refs,
+            outcome=outcome,
+        ),
+        request_id=request_id,
+        stage=stage,
+        cause=cause,
+        outcome=outcome,
+        target_refs=target_refs,
+        constraint_refs=constraint_refs,
+        evidence_refs=evidence_refs,
+        created_at=created_at,
+        metadata=metadata or {},
+    )
+
+
+def _receipts_from_outcome(
+    certificate: TerminalClosureCertificate,
+    evidence: AutonomyEvidence,
+) -> tuple[SoftwareChangeReceipt, ...]:
+    receipts: list[SoftwareChangeReceipt] = []
+    request_ref = f"request:{evidence.request_id}"
+    certificate_ref = f"certificate:{certificate.certificate_id}"
+    lifecycle_constraint = "constraint:software_change_lifecycle_v1"
+
+    receipts.append(_software_receipt(
+        request_id=evidence.request_id,
+        stage=SoftwareChangeReceiptStage.REQUEST_ADMITTED,
+        cause="software change request entered governed loop",
+        outcome="accepted_for_governance",
+        target_refs=(request_ref,),
+        constraint_refs=(lifecycle_constraint,),
+        evidence_refs=(f"request:{evidence.request_id}",),
+        created_at=evidence.started_at,
+        metadata={"ucja_job_id": evidence.ucja_job_id},
+    ))
+    receipts.append(_software_receipt(
+        request_id=evidence.request_id,
+        stage=SoftwareChangeReceiptStage.UCJA_EVALUATED,
+        cause="UCJA gate evaluated request ontology and constraints",
+        outcome="accepted" if evidence.ucja_accepted else "rejected",
+        target_refs=(request_ref,),
+        constraint_refs=(lifecycle_constraint, "constraint:ucja_admission"),
+        evidence_refs=(f"ucja:{evidence.ucja_job_id}",),
+        created_at=evidence.started_at,
+        metadata={
+            "halted_at_layer": evidence.ucja_halted_at_layer,
+            "reason": evidence.ucja_reason,
+        },
+    ))
+
+    if evidence.ucja_accepted:
+        receipts.append(_software_receipt(
+            request_id=evidence.request_id,
+            stage=SoftwareChangeReceiptStage.SNAPSHOT_CAPTURED,
+            cause="workspace state captured before mutation",
+            outcome="captured",
+            target_refs=(f"snapshot:{evidence.initial_snapshot_id}",),
+            constraint_refs=(lifecycle_constraint, "constraint:rollback_preimage"),
+            evidence_refs=(f"snapshot:{evidence.initial_snapshot_id}",),
+            created_at=evidence.started_at,
+        ))
+
+    if evidence.plan_id:
+        receipts.append(_software_receipt(
+            request_id=evidence.request_id,
+            stage=SoftwareChangeReceiptStage.PLAN_VALIDATED,
+            cause="plan generated before patch execution",
+            outcome="validated",
+            target_refs=(f"plan:{evidence.plan_id}",),
+            constraint_refs=(lifecycle_constraint, "constraint:plan_before_patch"),
+            evidence_refs=(f"plan:{evidence.plan_id}",),
+            created_at=evidence.started_at,
+        ))
+    else:
+        receipts.append(_software_receipt(
+            request_id=evidence.request_id,
+            stage=SoftwareChangeReceiptStage.PLAN_UNAVAILABLE,
+            cause="loop terminated before a valid plan was available",
+            outcome=certificate.disposition.value,
+            target_refs=(request_ref,),
+            constraint_refs=(lifecycle_constraint, "constraint:plan_before_patch"),
+            evidence_refs=(certificate_ref,),
+            created_at=evidence.completed_at,
+        ))
+
+    for attempt in evidence.attempts:
+        patch_ref = f"patch:{attempt.patch_id}"
+        snapshot_ref = f"snapshot:{attempt.snapshot_id}"
+        if attempt.status is AttemptStatus.PATCH_REJECTED:
+            receipts.append(_software_receipt(
+                request_id=evidence.request_id,
+                stage=SoftwareChangeReceiptStage.PATCH_REJECTED,
+                cause="patch failed pre-apply validation",
+                outcome=attempt.status.value,
+                target_refs=(patch_ref,),
+                constraint_refs=(lifecycle_constraint, "constraint:patch_within_plan"),
+                evidence_refs=(snapshot_ref, patch_ref),
+                created_at=evidence.completed_at,
+                metadata={"attempt_index": attempt.attempt_index, "notes": attempt.notes},
+            ))
+            continue
+        if attempt.status is AttemptStatus.APPLY_FAILED:
+            receipts.append(_software_receipt(
+                request_id=evidence.request_id,
+                stage=SoftwareChangeReceiptStage.PATCH_APPLY_FAILED,
+                cause="patch adapter rejected or failed unified diff application",
+                outcome=attempt.status.value,
+                target_refs=(patch_ref,),
+                constraint_refs=(lifecycle_constraint, "constraint:bounded_patch_apply"),
+                evidence_refs=(snapshot_ref, patch_ref),
+                created_at=evidence.completed_at,
+                metadata={"attempt_index": attempt.attempt_index, "notes": attempt.notes},
+            ))
+            continue
+
+        receipts.append(_software_receipt(
+            request_id=evidence.request_id,
+            stage=SoftwareChangeReceiptStage.PATCH_APPLIED,
+            cause="patch applied inside declared plan boundary",
+            outcome=attempt.status.value,
+            target_refs=(patch_ref,),
+            constraint_refs=(lifecycle_constraint, "constraint:bounded_patch_apply"),
+            evidence_refs=(snapshot_ref, patch_ref),
+            created_at=evidence.completed_at,
+            metadata={
+                "attempt_index": attempt.attempt_index,
+                "rolled_back": attempt.rolled_back,
+            },
+        ))
+        for gate_result in attempt.gate_results:
+            receipts.append(_software_receipt(
+                request_id=evidence.request_id,
+                stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+                cause="quality gate evaluated applied patch",
+                outcome="passed" if gate_result.passed else "failed",
+                target_refs=(f"gate:{gate_result.gate}",),
+                constraint_refs=(lifecycle_constraint, "constraint:verification_gate"),
+                evidence_refs=(f"gate:{gate_result.gate}:{gate_result.evidence_id}",),
+                created_at=evidence.completed_at,
+                metadata={
+                    "attempt_index": attempt.attempt_index,
+                    "exit_code": gate_result.exit_code,
+                    "summary": gate_result.summary,
+                },
+            ))
+
+    if evidence.rollback_evidence_id is not None:
+        receipts.append(_software_receipt(
+            request_id=evidence.request_id,
+            stage=SoftwareChangeReceiptStage.ROLLBACK_COMPLETED,
+            cause="rollback restored captured workspace preimage",
+            outcome="succeeded" if evidence.rollback_succeeded else "failed",
+            target_refs=(f"rollback:{evidence.rollback_evidence_id}",),
+            constraint_refs=(lifecycle_constraint, "constraint:rollback_preimage"),
+            evidence_refs=(evidence.rollback_evidence_id,),
+            created_at=evidence.completed_at,
+        ))
+
+    if (
+        evidence.review_record_id is not None
+        or certificate.disposition is TerminalClosureDisposition.REQUIRES_REVIEW
+    ):
+        review_ref = (
+            f"review:{evidence.review_record_id}"
+            if evidence.review_record_id
+            else f"case:{certificate.case_id or certificate.certificate_id}"
+        )
+        receipts.append(_software_receipt(
+            request_id=evidence.request_id,
+            stage=SoftwareChangeReceiptStage.REVIEW_REQUIRED,
+            cause="human or operator review is required by governance outcome",
+            outcome=certificate.disposition.value,
+            target_refs=(review_ref,),
+            constraint_refs=(lifecycle_constraint, "constraint:review_escalation"),
+            evidence_refs=(certificate_ref,),
+            created_at=evidence.completed_at,
+        ))
+
+    receipts.append(_software_receipt(
+        request_id=evidence.request_id,
+        stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
+        cause="terminal closure certificate issued",
+        outcome=certificate.disposition.value,
+        target_refs=(certificate_ref,),
+        constraint_refs=(lifecycle_constraint, "constraint:terminal_closure"),
+        evidence_refs=tuple(certificate.evidence_refs) or (certificate_ref,),
+        created_at=evidence.completed_at,
+        metadata={
+            "certificate_id": certificate.certificate_id,
+            "case_id": certificate.case_id,
+            "compensation_outcome_id": certificate.compensation_outcome_id,
+        },
+    ))
+    return tuple(receipts)
 
 
 # ---- Certificate factories ----

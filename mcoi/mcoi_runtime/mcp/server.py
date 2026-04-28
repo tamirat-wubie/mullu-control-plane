@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Callable, Mapping
+from typing import Any
 
 from gateway.command_spine import CommandEnvelope, CommandLedger, CommandState, canonical_hash
 
@@ -724,6 +724,10 @@ class MulluMCPServer:
                         for a in outcome.evidence.attempts
                     ],
                 },
+                "receipts": [
+                    receipt.to_json_dict()
+                    for receipt in outcome.receipts
+                ],
             }, default=str),
         )
 
