@@ -813,7 +813,7 @@ class TestPlatformFromEnv:
         # The bootstrap path patches the source module directly; the
         # shim is patched separately below for transparency through
         # the v4.38 re-export layer.
-        from mcoi_runtime.core import governance_decision_log
+        from mcoi_runtime.governance.audit import decision_log as governance_decision_log
         from mcoi_runtime.core import llm_cache
         from mcoi_runtime.core import tenant_usage_tracker
         # v4.39.0 (audit F7 Phase 2): the bootstrap path now imports
@@ -923,7 +923,7 @@ class TestG41RBACFailClosedBoot:
         ``AccessRuntimeEngine`` through the shim
         ``mcoi_runtime.governance.guards.access``. The shim caches the
         re-exported symbols at import time, so swapping
-        ``sys.modules['mcoi_runtime.core.access_runtime']`` alone no
+        ``sys.modules['mcoi_runtime.governance.guards.access']`` alone no
         longer affects what bootstrap sees. We also rebind the symbol
         in the shim's namespace; ``monkeypatch.setattr`` restores it
         on teardown.
@@ -931,13 +931,13 @@ class TestG41RBACFailClosedBoot:
         import sys
         # Ensure the original module is in sys.modules so the restore step
         # has something to restore to (and so future imports get the real one).
-        if sys.modules.get("mcoi_runtime.core.access_runtime") is None:
+        if sys.modules.get("mcoi_runtime.governance.guards.access") is None:
             import mcoi_runtime.governance.guards.access  # noqa: F401
         # monkeypatch.setitem restores the prior value when the test ends.
         broken = self._broken_access_runtime_module()
         monkeypatch.setitem(
             sys.modules,
-            "mcoi_runtime.core.access_runtime",
+            "mcoi_runtime.governance.guards.access",
             broken,
         )
         # Also rebind through the shim path so post-Phase-2 callers see

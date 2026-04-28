@@ -162,7 +162,7 @@ class TestContentSafetyChain:
         # only re-exports public API, so this test must talk to the
         # canonical core module directly. Phase 4 of the F7 reorg
         # consolidates this back to the new path.
-        import mcoi_runtime.core.content_safety as content_safety
+        import mcoi_runtime.governance.guards.content_safety as content_safety
 
         original_normalize = content_safety.unicodedata.normalize
 

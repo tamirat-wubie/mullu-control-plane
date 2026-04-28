@@ -31,7 +31,7 @@ from ..contracts.memory_mesh import (
 from .event_spine import EventSpineEngine
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 from .memory_mesh import MemoryMeshEngine
-from .access_runtime import AccessRuntimeEngine
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 
 
 def _now_iso() -> str:

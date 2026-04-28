@@ -13,7 +13,7 @@ from mcoi_runtime.contracts.learning import LearningAdmissionDecision
 
 from .evidence_merger import EvidenceInput, EvidenceMerger, EvidenceState
 from .planning_boundary import PlanningBoundary, PlanningBoundaryResult, PlanningKnowledge
-from .policy_engine import DecisionT, PolicyDecisionFactory, PolicyEngine, PolicyInput
+from mcoi_runtime.governance.policy.engine import DecisionT, PolicyDecisionFactory, PolicyEngine, PolicyInput
 from .registry_index import RegistryIndex, RegistryIndexSnapshot
 from .registry_store import EntryT, RegistryEntry, RegistryStore
 from .replay_engine import ReplayEngine, ReplayRecord, ReplayValidationResult

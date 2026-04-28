@@ -37,7 +37,7 @@ from ..contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
 from ..contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from ..contracts.llm import LLMProvider, LLMResult
 from .rollback_snapshot import SnapshotManager
-from .tenant_budget import TenantBudgetManager, TenantBudgetPolicy
+from mcoi_runtime.governance.guards.budget import TenantBudgetManager, TenantBudgetPolicy
 from .effect_assurance import EffectAssuranceGate
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 
@@ -519,13 +519,13 @@ def _run_budget_exhaustion(_: Path) -> ReplayScenarioResult:
         return ReplayScenarioResult(
             scenario_id="budget_exhaustion",
             passed=passed,
-            evidence_ref="mcoi_runtime.core.tenant_budget:TenantBudgetManager.record_spend",
+            evidence_ref="mcoi_runtime.governance.guards.budget:TenantBudgetManager.record_spend",
             reason="" if passed else "budget exhaustion error was not bounded",
         )
     return ReplayScenarioResult(
         scenario_id="budget_exhaustion",
         passed=False,
-        evidence_ref="mcoi_runtime.core.tenant_budget:TenantBudgetManager.record_spend",
+        evidence_ref="mcoi_runtime.governance.guards.budget:TenantBudgetManager.record_spend",
         reason="exhausted tenant budget allowed additional spend",
     )
 

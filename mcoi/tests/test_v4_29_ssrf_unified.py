@@ -112,7 +112,7 @@ def test_is_private_host_empty_blocks():
 def test_is_private_host_fail_closed_on_resolve_failure():
     """Unresolvable hostnames are blocked."""
     with mock.patch(
-        "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+        "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
         side_effect=__import__("socket").gaierror("not found"),
     ):
         assert is_private_host("nonexistent-domain-x9z2.invalid") is True
@@ -122,7 +122,7 @@ def test_is_private_host_blocks_when_dns_resolves_to_private():
     """DNS-rebinding first-leg defense: even if hostname looks public,
     DNS that resolves to a private IP is blocked."""
     with mock.patch(
-        "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+        "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
         return_value=[(2, 1, 6, "", ("10.0.0.5", 0))],
     ):
         assert is_private_host("attacker-controlled.example") is True
@@ -131,7 +131,7 @@ def test_is_private_host_blocks_when_dns_resolves_to_private():
 def test_is_private_host_allows_public_dns():
     """Hostname that resolves to a public IP is allowed."""
     with mock.patch(
-        "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+        "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
         return_value=[(2, 1, 6, "", ("8.8.8.8", 0))],
     ):
         assert is_private_host("real-public-host.example") is False
@@ -141,7 +141,7 @@ def test_is_private_host_blocks_when_any_resolved_ip_is_private():
     """Multi-A hostname: if ANY resolved IP is private, block.
     Defense against split-horizon DNS that returns mixed."""
     with mock.patch(
-        "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+        "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
         return_value=[
             (2, 1, 6, "", ("8.8.8.8", 0)),       # public
             (2, 1, 6, "", ("10.0.0.5", 0)),      # PRIVATE
@@ -157,7 +157,7 @@ def test_is_private_host_blocks_when_any_resolved_ip_is_private():
 
 def test_resolve_and_check_returns_public_ip_for_safe_url():
     with mock.patch(
-        "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+        "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
         return_value=[(2, 1, 6, "", ("93.184.216.34", 0))],
     ):
         is_priv, ip = resolve_and_check("https://example.com/path")
@@ -198,7 +198,7 @@ def test_resolve_and_check_blocks_unparseable():
 def test_resolve_and_check_blocks_when_dns_resolves_private():
     """DNS-rebinding first leg: caller's resolved IP is private. Block."""
     with mock.patch(
-        "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+        "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
         return_value=[(2, 1, 6, "", ("10.0.0.5", 0))],
     ):
         is_priv, ip = resolve_and_check("https://attacker.example/api")
@@ -303,7 +303,7 @@ class TestWebhookSSRFAtDelivery:
 
         # Registration: DNS returns public
         with mock.patch(
-            "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+            "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
             return_value=[(2, 1, 6, "", ("93.184.216.34", 0))],
         ):
             mgr.subscribe(WebhookSubscription(
@@ -315,7 +315,7 @@ class TestWebhookSSRFAtDelivery:
 
         # Delivery: same hostname, DNS now returns private (rebinding)
         with mock.patch(
-            "mcoi_runtime.core.ssrf_policy.socket.getaddrinfo",
+            "mcoi_runtime.governance.network.ssrf.socket.getaddrinfo",
             return_value=[(2, 1, 6, "", ("10.0.0.5", 0))],
         ):
             deliveries = mgr.emit("evt", {"data": "x"}, tenant_id="t1")
