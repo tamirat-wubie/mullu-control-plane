@@ -48,7 +48,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Gap | Cause | Required closure |
 |---|---|---|
 | Deployment status not published | `DEPLOYMENT_STATUS.md` declares no public production endpoint evidence yet | Add deployment badges or endpoint health evidence once live environments are governed |
-| Test-count claim not machine-derived | README states test volume as a human-maintained claim | Derive test inventory from CI or a generated manifest |
+| Test-count claim not machine-derived | README states test volume as a human-maintained claim | **Closed (2026-04-28)** — `scripts/generate_test_inventory.py` writes a machine-derived count to `.change_assurance/test_inventory.json`; `python scripts/generate_test_inventory.py --check` fails CI on drift; `mcoi/tests/test_inventory_freshness.py` (10 tests) guards the artifact's shape and self-consistency. Release notes and README should cite the artifact rather than embed numeric literals. |
 | GitHub metadata external to git | GitHub description/topics live outside repository commits | Validate metadata with `scripts/validate_public_repository_surface.py` |
 
 ## Proof Chain
@@ -59,6 +59,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Remote head | `git ls-remote origin refs/heads/main` |
 | Public repository surface | `python scripts/validate_public_repository_surface.py` |
 | Release status | `python scripts/validate_release_status.py --strict` |
+| Test inventory freshness | `python scripts/generate_test_inventory.py --check` |
 | Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 | Change assurance | `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md` |
