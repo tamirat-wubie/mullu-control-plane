@@ -206,14 +206,16 @@ def governed_software_change(
             completed_at=clock(),
             case_id=f"plan-invalid-{request_id}",
         )
-    except (ValueError, TypeError) as exc:
+    except (ValueError, TypeError):
+        # Bounded reason — exception type stays out of the audit-grade
+        # contract field. v4.43.0 (audit governance contract guard).
         return _abort_with_review(
             request_id=request_id,
             ucja_outcome=ucja_outcome,
             initial_snapshot_id=initial_snapshot_id,
             plan_id=plan_id_for_evidence,
             attempts=attempts,
-            reason=f"plan generation error: {type(exc).__name__}",
+            reason="plan generation error",
             layer="plan",
             started_at=started_at,
             completed_at=clock(),
@@ -512,8 +514,12 @@ def _validate_plan_within_blast_radius(plan: WorkPlan, request: SoftwareRequest)
     actual = set(plan.target_files)
     extra = actual - declared
     if extra:
+        # Bounded reason — file names stay out of the audit-grade
+        # contract field. The full set is recoverable from the plan
+        # record in the audit trail. v4.43.0 (audit governance
+        # contract guard).
         raise _LoopAbort(
-            reason=f"plan targets files outside affected_files: {sorted(extra)!r}",
+            reason="plan targets files outside affected_files",
             layer="plan",
         )
 
