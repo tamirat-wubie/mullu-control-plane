@@ -60,6 +60,7 @@ _MCP_TOOL_INTENTS: dict[str, str] = {
     "mullu_transactions": "financial.transaction_history",
     "mullu_pay": "financial.send_payment",
     "mullu_software_change": "software_dev.governed_change",
+    "mullu_software_receipts": "software_dev.receipt_query",
 }
 
 
@@ -107,6 +108,8 @@ class MulluMCPServer:
         tools = self._base_tools()
         if self._software_dev_runner is not None:
             tools.append(self._software_change_tool())
+            if self._software_dev_runner.receipt_store is not None:
+                tools.append(self._software_receipts_tool())
         return tools
 
     def _base_tools(self) -> list[MCPTool]:
@@ -268,6 +271,44 @@ class MulluMCPServer:
             },
         )
 
+    def _software_receipts_tool(self) -> MCPTool:
+        return MCPTool(
+            name="mullu_software_receipts",
+            description=(
+                "Read governed software-change lifecycle receipts from the "
+                "configured receipt store. Supports list, get, and replay "
+                "without mutating the workspace."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "operation": {
+                        "type": "string",
+                        "enum": ["list", "get", "replay"],
+                        "default": "list",
+                    },
+                    "request_id": {
+                        "type": "string",
+                        "description": "Software-change request id for list or replay.",
+                    },
+                    "receipt_id": {
+                        "type": "string",
+                        "description": "Receipt id for get.",
+                    },
+                    "stage": {
+                        "type": "string",
+                        "description": "Optional SoftwareChangeReceiptStage filter for list.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 50,
+                    },
+                    "tenant_id": {"type": "string"},
+                },
+            },
+        )
+
     def call_tool(self, name: str, arguments: dict[str, Any]) -> MCPToolResult:
         """Execute an MCP tool call through the governance pipeline.
 
@@ -353,6 +394,8 @@ class MulluMCPServer:
                 result = self._tool_pay(session, arguments)
             elif name == "mullu_software_change":
                 result = self._tool_software_change(session, arguments)
+            elif name == "mullu_software_receipts":
+                result = self._tool_software_receipts(session, arguments)
             else:
                 result = MCPToolResult(content="Unknown tool", is_error=True)
         except Exception as exc:
@@ -760,6 +803,95 @@ class MulluMCPServer:
             }, default=str),
             is_error=is_persistence_error,
         )
+
+    def _tool_software_receipts(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
+        """Read software-change lifecycle receipts from the configured store."""
+        config = self._software_dev_runner
+        if config is None or config.receipt_store is None:
+            return MCPToolResult(
+                content="Service error: software receipt store not configured",
+                is_error=True,
+            )
+
+        try:
+            from mcoi_runtime.contracts.software_dev_loop import (
+                SoftwareChangeReceiptStage,
+            )
+        except ImportError as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error(
+                    "Service error", "software receipt modules unavailable", exc,
+                ),
+                is_error=True,
+            )
+
+        operation = str(args.get("operation") or "list")
+        if operation not in {"list", "get", "replay"}:
+            return MCPToolResult(content="invalid operation", is_error=True)
+
+        try:
+            if operation == "get":
+                receipt_id = str(args.get("receipt_id") or "").strip()
+                if not receipt_id:
+                    return MCPToolResult(content="receipt_id is required", is_error=True)
+                receipt = config.receipt_store.get(receipt_id)
+                receipts = tuple() if receipt is None else (receipt,)
+                payload = {
+                    "operation": operation,
+                    "found": receipt is not None,
+                    "receipt_id": receipt_id,
+                    "receipts": [item.to_json_dict() for item in receipts],
+                }
+                return MCPToolResult(content=json.dumps(payload, default=str))
+
+            request_id = str(args.get("request_id") or "").strip() or None
+            if operation == "replay":
+                if request_id is None:
+                    return MCPToolResult(content="request_id is required", is_error=True)
+                receipts = config.receipt_store.replay_request(request_id)
+                payload = {
+                    "operation": operation,
+                    "request_id": request_id,
+                    "count": len(receipts),
+                    "terminal_closed": True,
+                    "receipts": [item.to_json_dict() for item in receipts],
+                }
+                return MCPToolResult(content=json.dumps(payload, default=str))
+
+            stage_arg = args.get("stage")
+            stage = None
+            if stage_arg not in (None, ""):
+                stage = SoftwareChangeReceiptStage(str(stage_arg))
+            limit_arg = args.get("limit", 50)
+            try:
+                limit = int(limit_arg)
+            except (TypeError, ValueError):
+                return MCPToolResult(content="limit must be a positive integer", is_error=True)
+            receipts = config.receipt_store.list_receipts(
+                request_id=request_id,
+                stage=stage,
+                limit=limit,
+            )
+            payload = {
+                "operation": operation,
+                "request_id": request_id,
+                "stage": stage.value if stage is not None else None,
+                "count": len(receipts),
+                "receipts": [item.to_json_dict() for item in receipts],
+            }
+            return MCPToolResult(content=json.dumps(payload, default=str))
+        except ValueError as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error("Invalid request", "receipt query rejected", exc),
+                is_error=True,
+            )
+        except Exception as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error(
+                    "Service error", "software receipt query failed", exc,
+                ),
+                is_error=True,
+            )
 
     def _tool_pay(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
         amount = args.get("amount", "0")
