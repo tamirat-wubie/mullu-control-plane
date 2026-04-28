@@ -262,9 +262,25 @@ def create_jwt_guard(
                 reason=result.error or "JWT authentication failed",
             )
         # Bind tenant from JWT claims — prevents header spoofing.
+        # v4.35.0 (audit F6): drop the ``require_auth and`` qualifier on
+        # the mismatch check. Pre-v4.35 the spoof rejection only fired
+        # when ``require_auth=True``; with ``require_auth=False`` a JWT
+        # with tenant=A combined with header X-Tenant-ID=B silently
+        # overwrote ctx[tenant_id] to A — but downstream attribution
+        # could observe the moment-before state. Now: if the request
+        # *explicitly* supplied a tenant via header/query
+        # (``ctx["tenant_id_explicit"]``) and it disagrees with the
+        # authenticated JWT, reject regardless of ``require_auth``.
+        # Implicit defaults (e.g. middleware "system" fallback) are not
+        # treated as explicit, so legitimate dev requests keep passing.
         if result.tenant_id:
             request_tenant = ctx.get("tenant_id", "")
-            if require_auth and request_tenant and request_tenant != result.tenant_id:
+            request_tenant_explicit = bool(ctx.get("tenant_id_explicit", False))
+            if (
+                request_tenant
+                and request_tenant != result.tenant_id
+                and (require_auth or request_tenant_explicit)
+            ):
                 return GuardResult(
                     allowed=False, guard_name="jwt",
                     reason=_bounded_tenant_mismatch_reason(),
@@ -320,10 +336,19 @@ def create_api_key_guard(
                 reason=result.error or "Authentication failed",
             )
         # Bind tenant from authenticated key — prevents header spoofing.
-        # In require_auth mode, reject if request supplies a different tenant.
+        # v4.35.0 (audit F6): same fix as JWT guard — reject mismatch
+        # whenever the request *explicitly* supplied a tenant via
+        # header/query (``ctx["tenant_id_explicit"]``), regardless of
+        # ``require_auth``. Implicit defaults are treated as
+        # "no explicit tenant" so legitimate requests pass.
         if result.tenant_id:
             request_tenant = ctx.get("tenant_id", "")
-            if require_auth and request_tenant and request_tenant != result.tenant_id:
+            request_tenant_explicit = bool(ctx.get("tenant_id_explicit", False))
+            if (
+                request_tenant
+                and request_tenant != result.tenant_id
+                and (require_auth or request_tenant_explicit)
+            ):
                 return GuardResult(
                     allowed=False, guard_name="api_key",
                     reason=_bounded_tenant_mismatch_reason(),

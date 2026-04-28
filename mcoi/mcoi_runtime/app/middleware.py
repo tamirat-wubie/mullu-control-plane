@@ -94,13 +94,32 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         if path in EXEMPT_PATHS or not path.startswith("/api/"):
             return await call_next(request)
 
-        # Build guard context from request
+        # Build guard context from request.
+        #
+        # v4.35.0 (audit F6): track whether tenant_id was *explicitly*
+        # supplied by the caller (header or query) versus filled from a
+        # default. Downstream JWT / API-key guards use this flag to
+        # decide whether a header/JWT mismatch is a spoofing attempt
+        # (explicit) or a benign default (implicit). Pre-v4.35 the
+        # default fallback "system" was indistinguishable from a real
+        # supplied value, so the spoof check was forced behind a
+        # ``require_auth`` qualifier — leaving a defense gap when
+        # require_auth=False.
+        explicit_tenant = False
         tenant_id = request.query_params.get("tenant_id", "")
-        if not tenant_id:
-            tenant_id = request.headers.get("x-tenant-id", "system")
+        if tenant_id:
+            explicit_tenant = True
+        else:
+            header_tenant = request.headers.get("x-tenant-id", "")
+            if header_tenant:
+                tenant_id = header_tenant
+                explicit_tenant = True
+            else:
+                tenant_id = "system"
 
         context: dict[str, Any] = {
             "tenant_id": tenant_id,
+            "tenant_id_explicit": explicit_tenant,
             "endpoint": path,
             "method": request.method,
             "authorization": request.headers.get("authorization", ""),
