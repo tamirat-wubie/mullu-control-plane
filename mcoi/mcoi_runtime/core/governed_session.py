@@ -408,6 +408,17 @@ class GovernedSession:
             detail=detail or {},
         )
 
+    @staticmethod
+    def _passed_guard(name: str) -> dict[str, Any]:
+        """Build a guard_result entry for a guard that ran and passed.
+
+        Used by the public session methods (llm, execute, query) to thread
+        the actual guard list through _certify_proof so the emitted
+        receipt's guard_verdicts field reflects what was actually checked,
+        rather than being silently empty.
+        """
+        return {"guard_name": name, "allowed": True, "reason": "passed"}
+
     def _certify_proof(
         self,
         endpoint: str,
@@ -462,7 +473,19 @@ class GovernedSession:
         if self._llm_bridge is None:
             raise RuntimeError("no LLM bridge configured")
 
-        request_proof = self._certify_proof("session/llm", "allowed")
+        # Thread the guards we just ran into the receipt — emitting an
+        # empty guard_verdicts list would falsely imply no governance ran.
+        request_proof = self._certify_proof(
+            "session/llm", "allowed",
+            guard_results=[
+                self._passed_guard("policy"),
+                self._passed_guard("tenant_gating"),
+                self._passed_guard("rbac"),
+                self._passed_guard("rate_limit"),
+                self._passed_guard("content_safety"),
+                self._passed_guard("budget"),
+            ],
+        )
         cache_policy_context = {
             "policy_version": str(kwargs.get("policy_version", "session-governance:v1")),
             "endpoint": "session/llm",
@@ -584,7 +607,15 @@ class GovernedSession:
         self._check_tenant_gating()
         self._check_rbac("execute", "POST")
         self._check_rate_limit("session/execute")
-        request_proof = self._certify_proof("session/execute", "allowed")
+        request_proof = self._certify_proof(
+            "session/execute", "allowed",
+            guard_results=[
+                self._passed_guard("policy"),
+                self._passed_guard("tenant_gating"),
+                self._passed_guard("rbac"),
+                self._passed_guard("rate_limit"),
+            ],
+        )
 
         result_detail: dict[str, Any] = {
             "action_type": action_type,
@@ -644,7 +675,14 @@ class GovernedSession:
         self._check_policy("query")
         self._check_rbac(resource_type, "GET")
         self._check_rate_limit("session/query")
-        request_proof = self._certify_proof("session/query", "allowed")
+        request_proof = self._certify_proof(
+            "session/query", "allowed",
+            guard_results=[
+                self._passed_guard("policy"),
+                self._passed_guard("rbac"),
+                self._passed_guard("rate_limit"),
+            ],
+        )
 
         self._operations += 1
         self._record_audit(
