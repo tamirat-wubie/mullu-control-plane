@@ -1,7 +1,7 @@
 """Phase 202C — Rate limiter tests."""
 
 import pytest
-from mcoi_runtime.core.rate_limiter import (
+from mcoi_runtime.governance.guards.rate_limit import (
     RateLimiter,
     RateLimitConfig,
     RateLimitResult,

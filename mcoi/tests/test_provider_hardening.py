@@ -18,7 +18,7 @@ from mcoi_runtime.contracts.review import (
     ReviewScopeType,
     ReviewStatus,
 )
-from mcoi_runtime.core.provider_policy import ProviderPolicyEnforcer
+from mcoi_runtime.governance.policy.provider import ProviderPolicyEnforcer
 from mcoi_runtime.core.review import ReviewEngine
 
 

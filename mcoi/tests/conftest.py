@@ -54,14 +54,14 @@ def pii_scanner():
 @pytest.fixture
 def content_safety_chain():
     """Default content safety chain for tests."""
-    from mcoi_runtime.core.content_safety import build_default_safety_chain
+    from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
     return build_default_safety_chain()
 
 
 @pytest.fixture
 def tenant_gating_registry(clock):
     """Tenant gating registry with in-memory store."""
-    from mcoi_runtime.core.tenant_gating import TenantGatingRegistry
+    from mcoi_runtime.governance.guards.tenant_gating import TenantGatingRegistry
     from mcoi_runtime.persistence.postgres_governance_stores import InMemoryTenantGatingStore
     return TenantGatingRegistry(clock=clock, store=InMemoryTenantGatingStore())
 

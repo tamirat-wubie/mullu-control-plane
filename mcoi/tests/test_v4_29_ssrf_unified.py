@@ -25,7 +25,7 @@ from unittest import mock
 
 import pytest
 
-from mcoi_runtime.core.ssrf_policy import (
+from mcoi_runtime.governance.network.ssrf import (
     is_private_host,
     is_private_ip,
     is_private_url,
@@ -258,7 +258,7 @@ class TestWebhookSSRFAtRegistration:
     """v4.29 strengthens the SSRF check at subscribe() time."""
 
     def test_metadata_url_rejected_at_subscribe(self):
-        from mcoi_runtime.core.webhook_system import (
+        from mcoi_runtime.governance.network.webhook import (
             WebhookManager,
             WebhookSubscription,
         )
@@ -272,7 +272,7 @@ class TestWebhookSSRFAtRegistration:
             ))
 
     def test_ipv6_link_local_rejected_at_subscribe(self):
-        from mcoi_runtime.core.webhook_system import (
+        from mcoi_runtime.governance.network.webhook import (
             WebhookManager,
             WebhookSubscription,
         )
@@ -295,7 +295,7 @@ class TestWebhookSSRFAtDelivery:
         to public at registration time, then flips to private at delivery
         time, is silently skipped on emit. The subscription remains
         registered (no delete-on-block) so operators can investigate."""
-        from mcoi_runtime.core.webhook_system import (
+        from mcoi_runtime.governance.network.webhook import (
             WebhookManager,
             WebhookSubscription,
         )

@@ -18,7 +18,7 @@ from mcoi_runtime.app.routers.musia_governance_bridge import (
     configured_chain,
     installed_validator_or_none,
 )
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuard,
     GovernanceGuardChain,
     GuardResult,

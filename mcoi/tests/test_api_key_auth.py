@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from mcoi_runtime.core.api_key_auth import APIKeyManager, APIKey, AuthResult
+from mcoi_runtime.governance.auth.api_key import APIKeyManager, APIKey, AuthResult
 
 
 class TestAPIKeyManager:

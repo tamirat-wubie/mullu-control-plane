@@ -1,13 +1,13 @@
 """Phase 207B — Governance guards tests."""
 
 import pytest
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuard, GovernanceGuardChain, GuardResult,
     create_rate_limit_guard, create_budget_guard, create_tenant_guard, create_api_key_guard,
 )
-from mcoi_runtime.core.api_key_auth import APIKeyManager
-from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
+from mcoi_runtime.governance.guards.rate_limit import RateLimiter, RateLimitConfig
+from mcoi_runtime.governance.guards.budget import TenantBudgetManager
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 
@@ -89,7 +89,7 @@ class TestBuiltInGuards:
 
     def test_budget_guard_denies_exhausted(self):
         mgr = TenantBudgetManager(clock=FIXED_CLOCK)
-        from mcoi_runtime.core.tenant_budget import TenantBudgetPolicy
+        from mcoi_runtime.governance.guards.budget import TenantBudgetPolicy
         mgr.set_policy(TenantBudgetPolicy(tenant_id="t1", max_cost=0.01))
         mgr.ensure_budget("t1")
         mgr.record_spend("t1", 0.01)

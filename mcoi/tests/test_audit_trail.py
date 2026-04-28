@@ -1,7 +1,7 @@
 """Phase 202D — Audit trail tests."""
 
 import pytest
-from mcoi_runtime.core.audit_trail import AuditTrail, AuditEntry
+from mcoi_runtime.governance.audit.trail import AuditTrail, AuditEntry
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 
@@ -127,7 +127,7 @@ class TestAuditSummary:
 # ═══════════════════════════════════════════
 
 from dataclasses import asdict
-from mcoi_runtime.core.audit_trail import (
+from mcoi_runtime.governance.audit.trail import (
     GENESIS_HASH,
     ExternalVerifyResult,
     verify_chain_from_entries,
@@ -258,10 +258,11 @@ class TestExternalVerifier:
 # G3.2 — Sequence-monotonicity (deletion-with-rewrite attack)
 # ═══════════════════════════════════════════
 
-from mcoi_runtime.core.audit_trail import (
-    LEDGER_SCHEMA_VERSION_MAX,
-    _recompute_entry_hash,
-)
+from mcoi_runtime.governance.audit.trail import LEDGER_SCHEMA_VERSION_MAX
+# Private helpers stay on the canonical core path (the shim only
+# re-exports public API). Phase 4 of the F7 reorg moves the
+# implementation here, at which point this can collapse to one import.
+from mcoi_runtime.core.audit_trail import _recompute_entry_hash
 
 
 class TestSequenceMonotonicity:
@@ -473,8 +474,9 @@ class TestSpecDocExists:
 # G3.6 — Writer ↔ Spec drift (no asymmetry)
 # ═══════════════════════════════════════════
 
+from mcoi_runtime.governance.audit.trail import LEDGER_V1_CONTENT_FIELDS
+# Private helpers stay on the canonical core path; see note above.
 from mcoi_runtime.core.audit_trail import (
-    LEDGER_V1_CONTENT_FIELDS,
     _canonical_hash_v1,
     _canonical_content_v1,
 )

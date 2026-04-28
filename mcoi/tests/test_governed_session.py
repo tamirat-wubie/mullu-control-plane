@@ -11,13 +11,13 @@ from mcoi_runtime.core.governed_session import (
     SessionClosureReport,
     _build_session_dispatch_request,
 )
-from mcoi_runtime.core.audit_trail import AuditTrail
-from mcoi_runtime.core.content_safety import build_default_safety_chain
+from mcoi_runtime.governance.audit.trail import AuditTrail
+from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
 from mcoi_runtime.core.pii_scanner import PIIScanner
 from mcoi_runtime.core.proof_bridge import ProofBridge
 from mcoi_runtime.core.llm_cache import LLMResponseCache
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager
-from mcoi_runtime.core.tenant_gating import TenantGatingRegistry, TenantStatus
+from mcoi_runtime.governance.guards.budget import TenantBudgetManager
+from mcoi_runtime.governance.guards.tenant_gating import TenantGatingRegistry, TenantStatus
 from mcoi_runtime.contracts.llm import LLMProvider, LLMResult
 from mcoi_runtime.persistence.postgres_governance_stores import (
     InMemoryBudgetStore,
@@ -521,7 +521,7 @@ class TestSessionPermissions:
 
     def test_has_permission_with_rbac(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
         from mcoi_runtime.contracts.access_runtime import IdentityKind, RoleKind, AuthContextKind
         spine = EventSpineEngine(clock=_clock)
         engine = AccessRuntimeEngine(spine)
@@ -601,7 +601,7 @@ class TestSessionPermissions:
 
     def test_unknown_identity_is_denied_when_rbac_is_present(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 
         engine = AccessRuntimeEngine(EventSpineEngine(clock=_clock))
         p = _platform(access_runtime=engine)
@@ -611,7 +611,7 @@ class TestSessionPermissions:
 
     def test_disabled_identity_is_denied_without_echoing_identity_id(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
         from mcoi_runtime.contracts.access_runtime import IdentityKind
 
         engine = AccessRuntimeEngine(EventSpineEngine(clock=_clock))
@@ -625,7 +625,7 @@ class TestSessionPermissions:
 
     def test_cross_tenant_identity_is_denied(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
         from mcoi_runtime.contracts.access_runtime import IdentityKind
 
         engine = AccessRuntimeEngine(EventSpineEngine(clock=_clock))
@@ -810,6 +810,9 @@ class TestPlatformFromEnv:
         monkeypatch.setenv("MULLU_DB_BACKEND", "memory")
 
         from mcoi_runtime.core import cross_session_memory
+        # The bootstrap path patches the source module directly; the
+        # shim is patched separately below for transparency through
+        # the v4.38 re-export layer.
         from mcoi_runtime.core import governance_decision_log
         from mcoi_runtime.core import llm_cache
         from mcoi_runtime.core import tenant_usage_tracker
@@ -929,7 +932,7 @@ class TestG41RBACFailClosedBoot:
         # Ensure the original module is in sys.modules so the restore step
         # has something to restore to (and so future imports get the real one).
         if sys.modules.get("mcoi_runtime.core.access_runtime") is None:
-            import mcoi_runtime.core.access_runtime  # noqa: F401
+            import mcoi_runtime.governance.guards.access  # noqa: F401
         # monkeypatch.setitem restores the prior value when the test ends.
         broken = self._broken_access_runtime_module()
         monkeypatch.setitem(

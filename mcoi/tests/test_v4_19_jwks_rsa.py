@@ -26,7 +26,7 @@ import pytest
 # letting CI matrices that DO install it exercise the RSA path.
 pytest.importorskip("cryptography")
 
-from mcoi_runtime.core.jwt_auth import (
+from mcoi_runtime.governance.auth.jwt import (
     JWKSFetcher,
     JWTAuthenticator,
     OIDCConfig,

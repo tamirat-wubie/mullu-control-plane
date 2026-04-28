@@ -11,7 +11,7 @@ import subprocess
 import pytest
 
 from mcoi_runtime.contracts.shell_policy import ShellCommandPolicy, ShellPolicyVerdict
-from mcoi_runtime.core.shell_policy_engine import ShellPolicyEngine
+from mcoi_runtime.governance.policy.shell import ShellPolicyEngine
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.contracts.execution import ExecutionOutcome

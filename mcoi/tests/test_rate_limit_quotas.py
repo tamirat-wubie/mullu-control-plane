@@ -5,7 +5,7 @@ from mcoi_runtime.core.rate_limit_quotas import (
     ENTERPRISE_PLAN, FREE_PLAN, PRO_PLAN,
     QuotaManager, QuotaPlan,
 )
-from mcoi_runtime.core.rate_limiter import RateLimitConfig
+from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig
 
 
 class TestPredefinedPlans:

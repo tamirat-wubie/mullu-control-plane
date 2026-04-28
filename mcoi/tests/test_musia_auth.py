@@ -15,7 +15,7 @@ from mcoi_runtime.app.routers.musia_auth import (
     is_auth_configured,
     resolve_musia_tenant,
 )
-from mcoi_runtime.core.api_key_auth import APIKeyManager
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
 
 
 @pytest.fixture

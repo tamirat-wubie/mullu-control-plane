@@ -18,7 +18,7 @@ from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
-from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.governance.policy.engine import PolicyInput
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.persistence.memory_store import MemoryStore

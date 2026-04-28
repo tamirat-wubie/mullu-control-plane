@@ -15,7 +15,7 @@ from mcoi_runtime.app.middleware import (
     GovernanceMiddleware,
     _extract_content_safety_fields,
 )
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GuardResult,
     GovernanceGuard,
     GovernanceGuardChain,

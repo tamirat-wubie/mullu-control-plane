@@ -8,20 +8,21 @@ import json
 import time
 
 import pytest
-from mcoi_runtime.core.jwt_auth import (
+from mcoi_runtime.governance.auth.jwt import (
     JWTAlgorithm,
     JWTAuthenticator,
     JWTAuthResult,
     OIDCConfig,
-    _b64url_decode,
-    _b64url_encode,
 )
-from mcoi_runtime.core.governance_guard import (
+# Private helpers stay on the canonical core path; the shim only
+# re-exports public API. Phase 4 of the F7 reorg consolidates this.
+from mcoi_runtime.core.jwt_auth import _b64url_decode, _b64url_encode
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     create_api_key_guard,
     create_jwt_guard,
 )
-from mcoi_runtime.core.api_key_auth import APIKeyManager
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
 
 
 # ═══ Test Fixtures ═══

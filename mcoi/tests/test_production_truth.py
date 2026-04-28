@@ -11,9 +11,9 @@ from dataclasses import dataclass
 
 import pytest
 
-from mcoi_runtime.core.audit_anchor import AuditAnchorStore
-from mcoi_runtime.core.governance_guard import create_api_key_guard, GuardResult
-from mcoi_runtime.core.api_key_auth import APIKeyManager
+from mcoi_runtime.governance.audit.anchor import AuditAnchorStore
+from mcoi_runtime.governance.guards.chain import create_api_key_guard, GuardResult
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
 
 
 _CLOCK = "2026-03-30T00:00:00+00:00"

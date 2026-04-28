@@ -53,7 +53,7 @@ class TestWorkflowErrorContracts:
 class TestDataErrorContracts:
     def test_create_wildcard_api_key_returns_governed_validation_error(self, client):
         from mcoi_runtime.app.routers.deps import deps
-        from mcoi_runtime.core.api_key_auth import APIKeyManager
+        from mcoi_runtime.governance.auth.api_key import APIKeyManager
 
         original_api_key_mgr = deps.get("api_key_mgr")
         deps.set(

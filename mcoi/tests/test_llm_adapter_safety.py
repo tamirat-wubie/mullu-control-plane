@@ -10,7 +10,7 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.contracts.llm import LLMBudget, LLMInvocationParams, LLMMessage, LLMRole
-from mcoi_runtime.core.content_safety import build_default_safety_chain
+from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
 from mcoi_runtime.core.pii_scanner import PIIScanner
 
 

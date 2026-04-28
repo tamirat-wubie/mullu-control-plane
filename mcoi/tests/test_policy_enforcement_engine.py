@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 
 from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.policy_enforcement import PolicyEnforcementEngine
+from mcoi_runtime.governance.policy.enforcement import PolicyEnforcementEngine
 from mcoi_runtime.contracts.policy_enforcement import (
     SessionStatus,
     SessionKind,

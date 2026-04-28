@@ -148,7 +148,7 @@ class TestTenantGatesList:
 
     def test_list_gates_includes_store_backed_entries(self, client):
         from mcoi_runtime.app.routers.deps import deps
-        from mcoi_runtime.core.tenant_gating import TenantGate, TenantGatingRegistry, TenantStatus
+        from mcoi_runtime.governance.guards.tenant_gating import TenantGate, TenantGatingRegistry, TenantStatus
         from mcoi_runtime.persistence.postgres_governance_stores import InMemoryTenantGatingStore
 
         original_gating = deps.get("tenant_gating")

@@ -17,7 +17,7 @@ from mcoi_runtime.contracts.execution import ExecutionOutcome
 from mcoi_runtime.contracts.shell_policy import ShellCommandPolicy
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
-from mcoi_runtime.core.shell_policy_engine import ShellPolicyEngine
+from mcoi_runtime.governance.policy.shell import ShellPolicyEngine
 
 
 def test_shell_executor_runs_explicit_argv_without_shell_mode() -> None:

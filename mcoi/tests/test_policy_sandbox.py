@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from mcoi_runtime.core.policy_sandbox import (
+from mcoi_runtime.governance.policy.sandbox import (
     PolicySandbox,
     SimulationRequest,
     SimulationScenario,

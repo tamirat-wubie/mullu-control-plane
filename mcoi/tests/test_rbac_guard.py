@@ -5,11 +5,11 @@ Tests: RBAC guard evaluation, identity resolution, permission checking,
 """
 
 import pytest
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     create_rbac_guard,
 )
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import DuplicateRuntimeIdentifierError, RuntimeCoreInvariantError
 from mcoi_runtime.contracts.access_runtime import (
