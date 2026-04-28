@@ -29,7 +29,12 @@ from .pilot_init import PilotInitRequest, initialize_pilot
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
+from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceiptStage
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.persistence.errors import PersistenceError
+from mcoi_runtime.persistence.software_change_receipt_store import (
+    FileSoftwareChangeReceiptStore,
+)
 
 
 _REQUEST_ALLOWED_KEYS = frozenset(
@@ -136,6 +141,17 @@ def _classify_config_validation_error(exc: Exception) -> str:
         if any(message.startswith(prefix) for prefix in _SAFE_CONFIG_ERROR_PREFIXES):
             return message
     return f"invalid config file ({type(exc).__name__})"
+
+
+def _classify_software_receipt_error(exc: Exception) -> str:
+    """Return a bounded software receipt CLI failure message."""
+    if isinstance(exc, PersistenceError):
+        return f"software receipt store rejected request ({type(exc).__name__})"
+    if isinstance(exc, ValueError):
+        return f"invalid software receipt argument ({type(exc).__name__})"
+    if isinstance(exc, OSError):
+        return f"software receipt store access failed ({type(exc).__name__})"
+    return f"software receipt command failed ({type(exc).__name__})"
 
 
 def _load_demo_json_object(raw: bytes) -> dict[str, Any]:
@@ -351,6 +367,122 @@ def pilot_command(args: argparse.Namespace) -> int:
     _fatal("pilot subcommand is required")
 
 
+def _software_receipt_store_path(args: argparse.Namespace) -> Path:
+    """Resolve the explicit software receipt store path for CLI reads."""
+    path_value = getattr(args, "store", None) or os.environ.get("MULLU_SOFTWARE_RECEIPT_STORE_PATH")
+    if not isinstance(path_value, str) or not path_value.strip():
+        raise ValueError("software receipt store path is required")
+    path = Path(path_value)
+    if not path.exists():
+        raise FileNotFoundError("software receipt store file not found")
+    return path
+
+
+def _software_receipt_envelope(
+    *,
+    operation: str,
+    receipts: tuple,
+    request_id: str | None = None,
+    receipt_id: str | None = None,
+    stage: SoftwareChangeReceiptStage | None = None,
+    found: bool | None = None,
+    terminal_closed: bool | None = None,
+) -> dict[str, Any]:
+    """Build the deterministic CLI envelope shared by text and JSON output."""
+    return {
+        "operation": operation,
+        "count": len(receipts),
+        "request_id": request_id,
+        "receipt_id": receipt_id,
+        "stage": stage.value if stage is not None else None,
+        "found": found,
+        "terminal_closed": terminal_closed,
+        "governed": True,
+        "receipts": [receipt.to_json_dict() for receipt in receipts],
+    }
+
+
+def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output: bool) -> None:
+    """Render a software receipt envelope without mutating receipt state."""
+    if json_output:
+        print(json.dumps(envelope, sort_keys=True, indent=2))
+        return
+    print("=== Software Change Receipts ===")
+    print(f"operation: {envelope['operation']}")
+    print(f"count: {envelope['count']}")
+    if envelope.get("request_id") is not None:
+        print(f"request_id: {envelope['request_id']}")
+    if envelope.get("receipt_id") is not None:
+        print(f"receipt_id: {envelope['receipt_id']}")
+    if envelope.get("stage") is not None:
+        print(f"stage: {envelope['stage']}")
+    if envelope.get("found") is not None:
+        print(f"found: {str(envelope['found']).lower()}")
+    if envelope.get("terminal_closed") is not None:
+        print(f"terminal_closed: {str(envelope['terminal_closed']).lower()}")
+    for receipt in envelope["receipts"]:
+        print(
+            "  "
+            f"{receipt['created_at']} "
+            f"{receipt['request_id']} "
+            f"{receipt['stage']} "
+            f"{receipt['receipt_id']} "
+            f"outcome={receipt['outcome']}"
+        )
+
+
+def software_receipts_command(args: argparse.Namespace) -> int:
+    """Read-only operator CLI for software-change lifecycle receipts."""
+    sub = getattr(args, "software_receipts_command", None)
+    if sub is None:
+        print("Usage: mcoi software-receipts {list|get|replay} --store path")
+        return 1
+    try:
+        store = FileSoftwareChangeReceiptStore(_software_receipt_store_path(args))
+        if sub == "list":
+            stage_filter = (
+                SoftwareChangeReceiptStage(args.stage)
+                if getattr(args, "stage", None)
+                else None
+            )
+            receipts = store.list_receipts(
+                request_id=getattr(args, "request_id", None),
+                stage=stage_filter,
+                limit=args.limit,
+            )
+            envelope = _software_receipt_envelope(
+                operation="list",
+                receipts=receipts,
+                request_id=getattr(args, "request_id", None),
+                stage=stage_filter,
+            )
+        elif sub == "get":
+            receipt = store.get(args.receipt_id)
+            receipts = tuple() if receipt is None else (receipt,)
+            envelope = _software_receipt_envelope(
+                operation="get",
+                receipts=receipts,
+                receipt_id=args.receipt_id,
+                found=receipt is not None,
+            )
+        elif sub == "replay":
+            receipts = store.replay_request(args.request_id)
+            envelope = _software_receipt_envelope(
+                operation="replay",
+                receipts=receipts,
+                request_id=args.request_id,
+                terminal_closed=True,
+            )
+        else:
+            print(f"error: unknown software-receipts subcommand {sub!r}")
+            return 1
+    except Exception as exc:
+        print(f"error: {_classify_software_receipt_error(exc)}")
+        return 1
+    _print_software_receipt_envelope(envelope, json_output=args.json)
+    return 0
+
+
 def _load_json_object(*, content: str, kind: str, source_name: str) -> dict:
     """Load a JSON object and fail closed on malformed or non-object input."""
     try:
@@ -423,6 +555,41 @@ def build_parser() -> argparse.ArgumentParser:
     pilot_init_parser.add_argument("--max-cost", type=float, default=100.0, help="Pilot budget cost limit")
     pilot_init_parser.add_argument("--max-calls", type=int, default=1000, help="Pilot budget call limit")
     pilot_init_parser.add_argument("--force", action="store_true", help="Overwrite existing scaffold files")
+
+    receipts_parser = subparsers.add_parser(
+        "software-receipts",
+        help="Inspect software-change lifecycle receipts",
+    )
+    receipts_subparsers = receipts_parser.add_subparsers(dest="software_receipts_command")
+    receipts_common = argparse.ArgumentParser(add_help=False)
+    receipts_common.add_argument(
+        "--store",
+        help="Receipt store JSON path; defaults to MULLU_SOFTWARE_RECEIPT_STORE_PATH",
+    )
+    receipts_common.add_argument("--json", action="store_true", help="Emit JSON envelope")
+
+    receipts_list_parser = receipts_subparsers.add_parser(
+        "list",
+        parents=[receipts_common],
+        help="List stored software-change receipts",
+    )
+    receipts_list_parser.add_argument("--request-id", default=None, help="Filter by request id")
+    receipts_list_parser.add_argument("--stage", default=None, help="Filter by receipt stage")
+    receipts_list_parser.add_argument("--limit", type=int, default=50, help="Maximum receipt count")
+
+    receipts_get_parser = receipts_subparsers.add_parser(
+        "get",
+        parents=[receipts_common],
+        help="Fetch one receipt by id",
+    )
+    receipts_get_parser.add_argument("receipt_id", help="Receipt id")
+
+    receipts_replay_parser = receipts_subparsers.add_parser(
+        "replay",
+        parents=[receipts_common],
+        help="Replay a terminally closed request receipt chain",
+    )
+    receipts_replay_parser.add_argument("request_id", help="Request id")
 
     # v4.25.0: migrate — DB schema migration ops surface
     migrate_parser = subparsers.add_parser(
@@ -733,7 +900,7 @@ def verify_ledger_command(args: argparse.Namespace) -> int:
         print(f"OK  ledger verified — {result.entries_checked} entries, chain intact")
         return 0
 
-    print(f"FAIL ledger verification failed")
+    print("FAIL ledger verification failed")
     print(f"  entries_checked: {result.entries_checked}")
     print(f"  failure_sequence: {result.failure_sequence}")
     print(f"  failure_field: {result.failure_field}")
@@ -858,6 +1025,7 @@ def main(argv: list[str] | None = None) -> int:
         "demo": demo_command,
         "verify-ledger": verify_ledger_command,
         "migrate": migrate_command,
+        "software-receipts": software_receipts_command,
     }
 
     handler = commands.get(args.command)
