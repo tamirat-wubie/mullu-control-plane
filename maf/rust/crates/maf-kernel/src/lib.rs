@@ -480,19 +480,16 @@ impl StateMachineSpec {
     }
 }
 
-/// Compute SHA-256 hex digest (substrate-level, no external dependency).
+/// Compute SHA-256 hex digest of the input string. Matches Python's
+/// `hashlib.sha256(input.encode()).hexdigest()` byte-for-byte: this equality
+/// is the cross-language receipt-hash contract enforced by
+/// `receipt_hash_matches_python_sha256` in this crate's tests and
+/// `tests/test_proof_hash_contract.py` on the Python side.
 fn sha256_hex(input: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    // Deterministic hash for substrate proof — not cryptographic SHA-256,
-    // but sufficient for content-addressed receipts in the type layer.
-    // Production deployments should wire a real SHA-256 via a trait.
-    let mut hasher = DefaultHasher::new();
-    input.hash(&mut hasher);
-    let h1 = hasher.finish();
-    input.len().hash(&mut hasher);
-    let h2 = hasher.finish();
-    format!("{:016x}{:016x}", h1, h2)
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    format!("{:x}", hasher.finalize())
 }
 
 // ---------------------------------------------------------------------------
@@ -2404,6 +2401,38 @@ mod tests {
         });
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedGuardFailed);
+    }
+
+    /// Cross-language contract: the Rust receipt_hash MUST equal the Python
+    /// receipt_hash for the same canonical inputs. Both sides hash the same
+    /// `entity:from:to:action:before:after:causal` content with SHA-256.
+    /// The mirror test lives at `mcoi/tests/test_proof_hash_contract.py`.
+    /// If you change the canonical-content recipe on either side, both tests
+    /// must be updated in lockstep.
+    #[test]
+    fn receipt_hash_matches_python_sha256() {
+        // SHA-256 of "contract-test-entity:idle:running:start:before-h:after-h:genesis"
+        const EXPECTED: &str =
+            "27bf13eff30cd9fd5fc334eff381e9b2349037bd0ef9dc88c2ca15d114a77fe5";
+        let m = example_machine();
+        let capsule = m
+            .certify_transition(&CertifyParams {
+                entity_id: "contract-test-entity",
+                from_state: "idle",
+                to_state: "running",
+                action: "start",
+                before_state_hash: "before-h",
+                after_state_hash: "after-h",
+                guards: &[],
+                actor_id: "actor",
+                reason: "contract test",
+                causal_parent: "genesis",
+                timestamp: "2026-04-27T00:00:00Z",
+            })
+            .unwrap();
+        assert_eq!(capsule.receipt.receipt_hash, EXPECTED);
+        assert_eq!(capsule.receipt.receipt_id, format!("rcpt-{}", &EXPECTED[..16]));
+        assert_eq!(capsule.audit_record.audit_id, format!("audit-{}", &EXPECTED[..12]));
     }
 
     #[test]
