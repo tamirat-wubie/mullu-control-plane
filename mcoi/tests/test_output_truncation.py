@@ -16,7 +16,7 @@ from pathlib import Path
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.adapters.shell_executor import ShellExecutor, _truncate_output
 from mcoi_runtime.adapters.process_model import ProcessModelAdapter, ProcessModelConfig
-from mcoi_runtime.adapters.code_adapter import LocalCodeAdapter
+from mcoi_runtime.adapters.code_adapter import CommandPolicy, LocalCodeAdapter
 from mcoi_runtime.contracts.execution import ExecutionOutcome
 from mcoi_runtime.contracts.model import ModelInvocation, ModelStatus
 
@@ -196,7 +196,11 @@ class TestProcessModelOutputTruncation:
 
 class TestCodeAdapterOutputTruncation:
     def test_run_command_truncates_stdout(self, tmp_path):
-        adapter = LocalCodeAdapter(root_path=str(tmp_path), clock=CLOCK)
+        adapter = LocalCodeAdapter(
+            root_path=str(tmp_path),
+            clock=CLOCK,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
         big_output = "x" * 500
 
         # Monkey-patch subprocess.run for this test
@@ -219,7 +223,11 @@ class TestCodeAdapterOutputTruncation:
         assert len(stdout) < 500
 
     def test_run_command_truncates_stderr(self, tmp_path):
-        adapter = LocalCodeAdapter(root_path=str(tmp_path), clock=CLOCK)
+        adapter = LocalCodeAdapter(
+            root_path=str(tmp_path),
+            clock=CLOCK,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
         big_stderr = "E" * 500
 
         import mcoi_runtime.adapters.code_adapter as ca_mod
@@ -241,7 +249,11 @@ class TestCodeAdapterOutputTruncation:
 
     def test_run_command_default_max_is_1mb(self, tmp_path):
         """Default max_output_bytes is 1 MB — output within that limit is unchanged."""
-        adapter = LocalCodeAdapter(root_path=str(tmp_path), clock=CLOCK)
+        adapter = LocalCodeAdapter(
+            root_path=str(tmp_path),
+            clock=CLOCK,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
 
         import mcoi_runtime.adapters.code_adapter as ca_mod
         original_run = subprocess.run
@@ -259,7 +271,11 @@ class TestCodeAdapterOutputTruncation:
         assert "[TRUNCATED" not in stdout
 
     def test_run_command_oserror_is_bounded(self, tmp_path):
-        adapter = LocalCodeAdapter(root_path=str(tmp_path), clock=CLOCK)
+        adapter = LocalCodeAdapter(
+            root_path=str(tmp_path),
+            clock=CLOCK,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
 
         import mcoi_runtime.adapters.code_adapter as ca_mod
         original_run = subprocess.run

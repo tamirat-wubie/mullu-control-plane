@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+import re
 from typing import Callable
 
 from mcoi_runtime.contracts.code import (
@@ -50,15 +51,14 @@ class CodeEngine:
             test_id, command, timeout_seconds=timeout_seconds,
         )
 
-        if exit_code == -1 and "timeout" in stderr:
-            status = TestStatus.TIMEOUT
+        if exit_code == -1:
+            status = TestStatus.TIMEOUT if stderr == "timeout" else TestStatus.ERROR
         elif exit_code == 0:
             status = TestStatus.ALL_PASSED
         else:
             status = TestStatus.SOME_FAILED
 
-        # Parse basic test counts from output (pytest-style)
-        passed, failed, errors = _parse_test_counts(stdout)
+        passed, failed, errors = _parse_test_counts(stdout + "\n" + stderr)
 
         return TestResult(
             test_id=test_id,
@@ -80,8 +80,8 @@ class CodeEngine:
             build_id, command, timeout_seconds=timeout_seconds,
         )
 
-        if exit_code == -1 and "timeout" in stderr:
-            status = BuildStatus.TIMEOUT
+        if exit_code == -1:
+            status = BuildStatus.TIMEOUT if stderr == "timeout" else BuildStatus.ERROR
         elif exit_code == 0:
             status = BuildStatus.SUCCEEDED
         else:
@@ -160,24 +160,27 @@ class CodeEngine:
         )
 
 
+_TEST_COUNT_RE = re.compile(
+    r"(?P<count>\d+)\s+"
+    r"(?P<label>passed|failed|errors?|skipped|xfailed|xpassed|deselected|warning|warnings)\b",
+    re.IGNORECASE,
+)
+
+
 def _parse_test_counts(output: str) -> tuple[int, int, int]:
-    """Parse basic test counts from pytest-style output."""
+    """Parse pytest-style summary counts: bind each digit to its adjacent label.
+
+    Handles lines such as ``1 failed, 2 passed, 3 errors in 0.31s`` where the
+    label-after-digit binding matters. Multiple summary fragments are summed.
+    """
     passed = failed = errors = 0
-    for line in output.splitlines():
-        lower = line.lower()
-        if "passed" in lower:
-            for word in line.split():
-                if word.isdigit():
-                    passed = int(word)
-                    break
-        if "failed" in lower:
-            for word in line.split():
-                if word.isdigit():
-                    failed = int(word)
-                    break
-        if "error" in lower:
-            for word in line.split():
-                if word.isdigit():
-                    errors = int(word)
-                    break
+    for match in _TEST_COUNT_RE.finditer(output):
+        count = int(match.group("count"))
+        label = match.group("label").lower()
+        if label == "passed":
+            passed += count
+        elif label == "failed":
+            failed += count
+        elif label in {"error", "errors"}:
+            errors += count
     return passed, failed, errors
