@@ -23,7 +23,7 @@ from mcoi_runtime.app.server_deps import (
 from mcoi_runtime.core.data_governance import DataGovernanceEngine
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.governed_session import Platform as GovernedPlatform
-from mcoi_runtime.core.policy_versioning import PolicyVersionRegistry
+from mcoi_runtime.governance.policy.versioning import PolicyVersionRegistry
 
 
 @dataclass(frozen=True)

@@ -22,7 +22,7 @@ class SimulateRequest(BaseModel):
 @router.post("/api/v1/simulate")
 def run_simulation(req: SimulateRequest):
     """Run a policy simulation — shows what would change without modifying state."""
-    from mcoi_runtime.core.policy_sandbox import SimulationRequest, SimulationScenario
+    from mcoi_runtime.governance.policy.sandbox import SimulationRequest, SimulationScenario
     from hashlib import sha256
     deps.metrics.inc("requests_governed")
 

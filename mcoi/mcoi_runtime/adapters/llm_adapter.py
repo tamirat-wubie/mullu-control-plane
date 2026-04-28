@@ -676,7 +676,7 @@ class GovernedLLMAdapter:
         # Lambda_output_safety on output (post-call)
         if result.succeeded and result.content:
             from dataclasses import replace
-            from mcoi_runtime.core.content_safety import evaluate_output_safety
+            from mcoi_runtime.governance.guards.content_safety import evaluate_output_safety
 
             output_safety = evaluate_output_safety(
                 result.content,

@@ -237,12 +237,12 @@ def run_platform_benchmarks() -> LoadTestSuite:
     suite_start = time.monotonic()
 
     # 1. Guard chain evaluation
-    from mcoi_runtime.core.governance_guard import (
+    from mcoi_runtime.governance.guards.chain import (
         GovernanceGuardChain, create_tenant_guard,
         create_rate_limit_guard, create_budget_guard,
     )
-    from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
-    from mcoi_runtime.core.tenant_budget import TenantBudgetManager
+    from mcoi_runtime.governance.guards.rate_limit import RateLimiter, RateLimitConfig
+    from mcoi_runtime.governance.guards.budget import TenantBudgetManager
 
     rl = RateLimiter(default_config=RateLimitConfig(max_tokens=100_000, refill_rate=100_000))
     bm = TenantBudgetManager(clock=lambda: "2026-01-01T00:00:00Z")
@@ -274,7 +274,7 @@ def run_platform_benchmarks() -> LoadTestSuite:
     ))
 
     # 4. Audit trail recording
-    from mcoi_runtime.core.audit_trail import AuditTrail
+    from mcoi_runtime.governance.audit.trail import AuditTrail
     trail = AuditTrail(clock=lambda: "2026-01-01T00:00:00Z", max_entries=100_000)
     results.append(run_benchmark(
         "audit_trail_record",
@@ -287,7 +287,7 @@ def run_platform_benchmarks() -> LoadTestSuite:
     ))
 
     # 5. Content safety evaluation
-    from mcoi_runtime.core.content_safety import build_default_safety_chain
+    from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
     safety = build_default_safety_chain()
     results.append(run_benchmark(
         "content_safety_evaluation",

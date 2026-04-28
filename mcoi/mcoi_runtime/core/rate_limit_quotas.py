@@ -18,7 +18,7 @@ import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from mcoi_runtime.core.rate_limiter import RateLimitConfig
+from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig
 
 
 @dataclass(frozen=True, slots=True)

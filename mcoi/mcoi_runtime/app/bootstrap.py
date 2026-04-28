@@ -29,7 +29,7 @@ from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
 from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.planning_boundary import PlanningBoundary
-from mcoi_runtime.core.policy_engine import PolicyEngine
+from mcoi_runtime.governance.policy.engine import PolicyEngine
 from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryStore
 from mcoi_runtime.core.replay_engine import ReplayEngine

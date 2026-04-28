@@ -27,15 +27,19 @@ from hashlib import sha256
 from typing import Any, Iterator
 
 from mcoi_runtime.contracts.llm import LLMBudget
-from mcoi_runtime.core.audit_trail import (
+from mcoi_runtime.governance.audit.trail import (
     AuditCheckpoint,
     AuditEntry,
     AuditStore,
-    _canonical_hash_v1,
 )
-from mcoi_runtime.core.rate_limiter import RateLimitStore
-from mcoi_runtime.core.tenant_budget import BudgetStore
-from mcoi_runtime.core.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
+# v4.39.0 (audit F7 Phase 2): private helper imported directly from the
+# implementation module. The shim layer in governance/ only re-exports
+# the public API; reaching into private internals stays on the canonical
+# core path. Phase 4 will move the implementation here too.
+from mcoi_runtime.core.audit_trail import _canonical_hash_v1
+from mcoi_runtime.governance.guards.rate_limit import RateLimitStore
+from mcoi_runtime.governance.guards.budget import BudgetStore
+from mcoi_runtime.governance.guards.tenant_gating import TenantGate, TenantGatingStore, TenantStatus
 
 
 # â•â•â• Schema Definitions â•â•â•

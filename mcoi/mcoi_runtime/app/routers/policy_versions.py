@@ -16,8 +16,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.core.policy_engine import PolicyInput
-from mcoi_runtime.core.policy_versioning import (
+from mcoi_runtime.governance.policy.engine import PolicyInput
+from mcoi_runtime.governance.policy.versioning import (
     PolicyArtifact,
     ShadowGovernanceEvaluator,
     VersionedPolicyRule,

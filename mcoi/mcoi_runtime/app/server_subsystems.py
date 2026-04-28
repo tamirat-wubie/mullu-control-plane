@@ -20,8 +20,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
-from mcoi_runtime.core.audit_anchor import AuditAnchorStore
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
+from mcoi_runtime.governance.audit.anchor import AuditAnchorStore
 from mcoi_runtime.core.batch_pipeline import BatchPipeline
 from mcoi_runtime.core.connector_framework import GovernedConnectorFramework
 from mcoi_runtime.core.coordination import CoordinationEngine
@@ -30,7 +30,7 @@ from mcoi_runtime.core.event_bus import EventBus
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.explanation_engine import ExplanationEngine
 from mcoi_runtime.core.knowledge_graph import KnowledgeGraph
-from mcoi_runtime.core.policy_sandbox import PolicySandbox
+from mcoi_runtime.governance.policy.sandbox import PolicySandbox
 from mcoi_runtime.core.rbac_defaults import seed_default_permissions
 from mcoi_runtime.core.runbook_learning import RunbookLearningEngine
 from mcoi_runtime.core.scheduler import GovernedScheduler

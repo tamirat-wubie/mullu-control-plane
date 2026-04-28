@@ -32,7 +32,7 @@ from mcoi_runtime.core.errors import (
     validation_error,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
-from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.governance.policy.engine import PolicyInput
 
 from .bootstrap import build_policy_decision
 from .operator_executors import (

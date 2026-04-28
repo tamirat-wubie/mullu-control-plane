@@ -13,7 +13,7 @@ import json
 from typing import Any, Literal
 
 from mcoi_runtime.app.streaming import StreamingBudgetProtocol
-from mcoi_runtime.core.content_safety import SafetyVerdict, build_default_safety_chain
+from mcoi_runtime.governance.guards.content_safety import SafetyVerdict, build_default_safety_chain
 from mcoi_runtime.core.tool_permission_primitives import (
     ToolCallPermission,
     ToolPermissionRegistry,

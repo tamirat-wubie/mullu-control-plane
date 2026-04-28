@@ -23,8 +23,8 @@ from mcoi_runtime.core.agent_protocol import (
     TaskSpec,
     TaskStatus,
 )
-from mcoi_runtime.core.audit_trail import AuditTrail
-from mcoi_runtime.core.webhook_system import WebhookManager
+from mcoi_runtime.governance.audit.trail import AuditTrail
+from mcoi_runtime.governance.network.webhook import WebhookManager
 
 
 class NoCapableAgentError(ValueError):

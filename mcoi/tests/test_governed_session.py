@@ -813,6 +813,11 @@ class TestPlatformFromEnv:
         from mcoi_runtime.core import governance_decision_log
         from mcoi_runtime.core import llm_cache
         from mcoi_runtime.core import tenant_usage_tracker
+        # v4.39.0 (audit F7 Phase 2): the bootstrap path now imports
+        # GovernanceDecisionLog through the shim
+        # ``mcoi_runtime.governance.audit.decision_log``. Rebind the
+        # symbol there too so the mock propagates.
+        from mcoi_runtime.governance.audit import decision_log as _decision_log_shim
 
         def _raise_optional(*args, **kwargs):
             raise RuntimeError("secret optional bootstrap failure")
@@ -820,6 +825,7 @@ class TestPlatformFromEnv:
         monkeypatch.setattr(llm_cache, "LLMResponseCache", _raise_optional)
         monkeypatch.setattr(tenant_usage_tracker, "TenantUsageTracker", _raise_optional)
         monkeypatch.setattr(governance_decision_log, "GovernanceDecisionLog", _raise_optional)
+        monkeypatch.setattr(_decision_log_shim, "GovernanceDecisionLog", _raise_optional)
         monkeypatch.setattr(cross_session_memory, "CrossSessionMemory", _raise_optional)
 
         p = Platform.from_env()
@@ -908,20 +914,34 @@ class TestG41RBACFailClosedBoot:
 
     def _install_broken_module(self, monkeypatch):
         """Swap the access_runtime module with a broken one for the duration
-        of the test. monkeypatch.setitem auto-restores the dict entry on teardown."""
+        of the test. monkeypatch.setitem auto-restores the dict entry on teardown.
+
+        v4.39.0 (audit F7 Phase 2): the bootstrap path now imports
+        ``AccessRuntimeEngine`` through the shim
+        ``mcoi_runtime.governance.guards.access``. The shim caches the
+        re-exported symbols at import time, so swapping
+        ``sys.modules['mcoi_runtime.core.access_runtime']`` alone no
+        longer affects what bootstrap sees. We also rebind the symbol
+        in the shim's namespace; ``monkeypatch.setattr`` restores it
+        on teardown.
+        """
         import sys
         # Ensure the original module is in sys.modules so the restore step
         # has something to restore to (and so future imports get the real one).
-        original = sys.modules.get("mcoi_runtime.core.access_runtime")
-        if original is None:
-            import mcoi_runtime.core.access_runtime as ar_mod  # noqa: F401
-            original = sys.modules["mcoi_runtime.core.access_runtime"]
+        if sys.modules.get("mcoi_runtime.core.access_runtime") is None:
+            import mcoi_runtime.core.access_runtime  # noqa: F401
         # monkeypatch.setitem restores the prior value when the test ends.
+        broken = self._broken_access_runtime_module()
         monkeypatch.setitem(
             sys.modules,
             "mcoi_runtime.core.access_runtime",
-            self._broken_access_runtime_module(),
+            broken,
         )
+        # Also rebind through the shim path so post-Phase-2 callers see
+        # the broken constructor too. Pre-Phase-2 callers still hit the
+        # sys.modules entry above.
+        import mcoi_runtime.governance.guards.access as _shim
+        monkeypatch.setattr(_shim, "AccessRuntimeEngine", broken.AccessRuntimeEngine)
 
     def test_pilot_refuses_to_boot_when_access_runtime_fails(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "pilot")

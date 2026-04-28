@@ -10,8 +10,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from mcoi_runtime.core.tenant_budget import TenantBudgetPolicy, TenantBudgetReport
-from mcoi_runtime.core.tenant_gating import TenantGatingError, TenantStatus
+from mcoi_runtime.governance.guards.budget import TenantBudgetPolicy, TenantBudgetReport
+from mcoi_runtime.governance.guards.tenant_gating import TenantGatingError, TenantStatus
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()

@@ -22,8 +22,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from mcoi_runtime.core.content_safety import ContentSafetyChain, create_input_safety_guard
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.content_safety import ContentSafetyChain, create_input_safety_guard
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     create_api_key_guard,
     create_budget_guard,
@@ -150,7 +150,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         # Record to governance decision log
         if self._decision_log is not None:
             try:
-                from mcoi_runtime.core.governance_decision_log import GuardDecisionDetail
+                from mcoi_runtime.governance.audit.decision_log import GuardDecisionDetail
                 guards = [
                     GuardDecisionDetail(
                         guard_name=r.guard_name,
@@ -285,7 +285,7 @@ def build_guard_chain(
         chain.add(create_jwt_guard(jwt_authenticator))
     chain.add(create_tenant_guard())
     if tenant_gating_registry is not None:
-        from mcoi_runtime.core.tenant_gating import create_tenant_gating_guard
+        from mcoi_runtime.governance.guards.tenant_gating import create_tenant_gating_guard
         chain.add(create_tenant_gating_guard(tenant_gating_registry))
     if access_runtime is not None:
         chain.add(create_rbac_guard(access_runtime))
