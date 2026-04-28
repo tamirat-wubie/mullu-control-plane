@@ -28,11 +28,11 @@ from mcoi_runtime.contracts.software_dev_loop import (
     WorkPlan,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
-from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.governed_session import Platform
 from mcoi_runtime.core.proof_bridge import ProofBridge
 from mcoi_runtime.core.software_dev_loop import UCJAOutcomeShape
 from mcoi_runtime.domain_adapters.software_dev import SoftwareQualityGate
+from mcoi_runtime.governance.audit.trail import AuditTrail
 from mcoi_runtime.mcp.server import (
     MulluMCPServer,
     SoftwareDevRunnerConfig,
