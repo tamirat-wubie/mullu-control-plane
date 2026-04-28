@@ -31,6 +31,7 @@ class ReviewScopeType(StrEnum):
     PROVIDER_POLICY_CHANGE = "provider_policy_change"
     INCIDENT_CLOSURE = "incident_closure"
     SKILL_PROMOTION = "skill_promotion"
+    SOFTWARE_RECEIPT_CHAIN = "software_receipt_chain"
 
 
 @dataclass(frozen=True, slots=True)
