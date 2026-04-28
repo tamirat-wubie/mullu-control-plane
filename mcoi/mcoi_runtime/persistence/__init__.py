@@ -20,6 +20,10 @@ from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
 from .skill_store import SkillStore
 from .snapshot_store import SnapshotMetadata, SnapshotStore
+from .software_change_receipt_store import (
+    FileSoftwareChangeReceiptStore,
+    SoftwareChangeReceiptStore,
+)
 from .trace_store import TraceStore
 from .workflow_store import WorkflowStore
 from .state_persistence import StatePersistence, StateSnapshot
@@ -42,6 +46,8 @@ __all__ = [
     "SkillStore",
     "SnapshotNotFoundError",
     "SnapshotStore",
+    "FileSoftwareChangeReceiptStore",
+    "SoftwareChangeReceiptStore",
     "StatePersistence",
     "StateSnapshot",
     "TraceNotFoundError",

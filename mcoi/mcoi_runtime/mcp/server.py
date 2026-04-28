@@ -694,6 +694,34 @@ class MulluMCPServer:
                 is_error=True,
             )
 
+        receipts = outcome.receipts
+        receipt_persistence = {
+            "configured": config.receipt_store is not None,
+            "persisted": False,
+            "count": 0,
+            "error": "",
+        }
+        if config.receipt_store is not None:
+            try:
+                persisted = config.receipt_store.append_many(receipts)
+                receipt_persistence.update({
+                    "persisted": True,
+                    "count": len(persisted),
+                })
+            except Exception as exc:
+                receipt_persistence.update({
+                    "persisted": False,
+                    "error": _bounded_mcp_error(
+                        "Receipt persistence failed",
+                        "software receipt store rejected write",
+                        exc,
+                    ),
+                })
+
+        is_persistence_error = (
+            receipt_persistence["configured"]
+            and not receipt_persistence["persisted"]
+        )
         return MCPToolResult(
             content=json.dumps({
                 "outcome": outcome.outcome.value,
@@ -726,9 +754,11 @@ class MulluMCPServer:
                 },
                 "receipts": [
                     receipt.to_json_dict()
-                    for receipt in outcome.receipts
+                    for receipt in receipts
                 ],
+                "receipt_persistence": receipt_persistence,
             }, default=str),
+            is_error=is_persistence_error,
         )
 
     def _tool_pay(self, session: Any, args: dict[str, Any]) -> MCPToolResult:

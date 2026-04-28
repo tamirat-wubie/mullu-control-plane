@@ -34,6 +34,9 @@ from mcoi_runtime.domain_adapters.software_dev import (
     SoftwareWorkKind,
 )
 from mcoi_runtime.mcp.server import MulluMCPServer, SoftwareDevRunnerConfig
+from mcoi_runtime.persistence.software_change_receipt_store import (
+    SoftwareChangeReceiptStore,
+)
 
 
 T0 = "2025-01-15T10:00:00+00:00"
@@ -144,7 +147,11 @@ def _ledger() -> CommandLedger:
     return CommandLedger(clock=_clock, store=InMemoryCommandLedgerStore())
 
 
-def _runner_config(tmp_path: Path) -> SoftwareDevRunnerConfig:
+def _runner_config(
+    tmp_path: Path,
+    *,
+    receipt_store: SoftwareChangeReceiptStore | None = None,
+) -> SoftwareDevRunnerConfig:
     adapter = _adapter(_workspace(tmp_path))
     return SoftwareDevRunnerConfig(
         adapter=adapter,
@@ -153,6 +160,7 @@ def _runner_config(tmp_path: Path) -> SoftwareDevRunnerConfig:
         gate_runners={SoftwareQualityGate.UNIT_TESTS: _passing_gate},
         clock=_clock,
         ucja_runner=_accept_ucja,
+        receipt_store=receipt_store,
     )
 
 
@@ -227,3 +235,34 @@ def test_mcp_payload_surfaces_json_receipts(tmp_path: Path) -> None:
     assert "gate_evaluated" in receipt_stages
     assert receipt_stages[-1] == "terminal_closed"
     assert body["receipts"][-1]["metadata"]["certificate_id"] == body["certificate"]["certificate_id"]
+    assert body["receipt_persistence"]["configured"] is False
+    assert body["receipt_persistence"]["persisted"] is False
+
+
+def test_mcp_persists_receipts_when_store_configured(tmp_path: Path) -> None:
+    store = SoftwareChangeReceiptStore()
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(tmp_path, receipt_store=store),
+    )
+
+    result = server.call_tool("mullu_software_change", {
+        "kind": "bug_fix",
+        "summary": "rename hello",
+        "repository": "repo-receipts",
+        "affected_files": ["main.py"],
+        "quality_gates": ["unit_tests"],
+        "max_self_debug_iterations": 0,
+    })
+    body = json.loads(result.content)
+    request_id = body["evidence"]["request_id"]
+    replayed = store.replay_request(request_id)
+
+    assert not result.is_error
+    assert body["receipt_persistence"]["configured"] is True
+    assert body["receipt_persistence"]["persisted"] is True
+    assert body["receipt_persistence"]["count"] == len(body["receipts"])
+    assert [receipt.receipt_id for receipt in replayed] == [
+        receipt["receipt_id"] for receipt in body["receipts"]
+    ]

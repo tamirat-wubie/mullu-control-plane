@@ -1,0 +1,134 @@
+"""Purpose: verify software-change receipt persistence.
+Governance scope: append/query/replay behavior for lifecycle receipts.
+Dependencies: pytest and software-change receipt store implementations.
+Invariants:
+  - Appends preserve receipt order.
+  - Duplicate matching receipt ids are idempotent.
+  - File-backed stores reload deterministic JSON into typed receipts.
+  - Replay requires a terminal closure receipt.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from mcoi_runtime.contracts.software_dev_loop import (
+    SoftwareChangeReceipt,
+    SoftwareChangeReceiptStage,
+)
+from mcoi_runtime.persistence.errors import CorruptedDataError, PersistenceError
+from mcoi_runtime.persistence.software_change_receipt_store import (
+    FileSoftwareChangeReceiptStore,
+    SoftwareChangeReceiptStore,
+)
+
+
+T0 = "2025-01-15T10:00:00+00:00"
+T1 = "2025-01-15T10:00:05+00:00"
+
+
+def _receipt(
+    *,
+    receipt_id: str,
+    request_id: str = "request-1",
+    stage: SoftwareChangeReceiptStage = SoftwareChangeReceiptStage.REQUEST_ADMITTED,
+    created_at: str = T0,
+) -> SoftwareChangeReceipt:
+    return SoftwareChangeReceipt(
+        receipt_id=receipt_id,
+        request_id=request_id,
+        stage=stage,
+        cause=f"{stage.value} cause",
+        outcome="ok",
+        target_refs=(f"target:{stage.value}",),
+        constraint_refs=("constraint:software_change_lifecycle_v1",),
+        evidence_refs=(f"evidence:{stage.value}",),
+        created_at=created_at,
+        metadata={"stage": stage.value},
+    )
+
+
+def _terminal(receipt_id: str = "receipt-terminal") -> SoftwareChangeReceipt:
+    return _receipt(
+        receipt_id=receipt_id,
+        stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
+        created_at=T1,
+    )
+
+
+def test_memory_store_appends_queries_and_replays_ordered_receipts() -> None:
+    store = SoftwareChangeReceiptStore()
+    admitted = _receipt(receipt_id="receipt-admitted")
+    gate = _receipt(
+        receipt_id="receipt-gate",
+        stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+    )
+    terminal = _terminal()
+
+    appended = store.append_many((admitted, gate, terminal))
+    replayed = store.replay_request("request-1")
+
+    assert appended == (admitted, gate, terminal)
+    assert store.get("receipt-gate") == gate
+    assert store.list_receipts(stage=SoftwareChangeReceiptStage.GATE_EVALUATED) == (gate,)
+    assert replayed == (admitted, gate, terminal)
+    assert store.list_receipts(limit=2) == (gate, terminal)
+
+
+def test_duplicate_matching_receipt_is_idempotent() -> None:
+    store = SoftwareChangeReceiptStore()
+    receipt = _receipt(receipt_id="receipt-1")
+
+    first = store.append(receipt)
+    second = store.append(receipt)
+
+    assert first == receipt
+    assert second == receipt
+    assert store.list_receipts() == (receipt,)
+
+
+def test_duplicate_receipt_id_with_different_payload_fails_closed() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_receipt(receipt_id="receipt-1"))
+
+    with pytest.raises(PersistenceError):
+        store.append(_receipt(
+            receipt_id="receipt-1",
+            stage=SoftwareChangeReceiptStage.PATCH_APPLIED,
+        ))
+
+
+def test_replay_requires_terminal_closure_receipt() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_receipt(receipt_id="receipt-1"))
+
+    with pytest.raises(PersistenceError):
+        store.replay_request("request-1")
+
+    with pytest.raises(PersistenceError):
+        store.replay_request("missing-request")
+
+
+def test_file_store_persists_and_reloads_typed_receipts(tmp_path: Path) -> None:
+    path = tmp_path / "software_receipts.json"
+    store = FileSoftwareChangeReceiptStore(path)
+    admitted = _receipt(receipt_id="receipt-admitted")
+    terminal = _terminal()
+
+    store.append_many((admitted, terminal))
+    reloaded = FileSoftwareChangeReceiptStore(path)
+
+    assert path.exists()
+    assert reloaded.list_receipts() == (admitted, terminal)
+    assert reloaded.replay_request("request-1")[-1].stage is SoftwareChangeReceiptStage.TERMINAL_CLOSED
+
+
+def test_file_store_rejects_malformed_payload(tmp_path: Path) -> None:
+    path = tmp_path / "software_receipts.json"
+    path.write_text(json.dumps({"receipts": [{"receipt_id": "incomplete"}]}), encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError):
+        FileSoftwareChangeReceiptStore(path)
