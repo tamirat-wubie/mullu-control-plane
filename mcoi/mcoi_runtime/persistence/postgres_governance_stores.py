@@ -21,8 +21,9 @@ import json
 import logging as _logging
 import threading
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Iterator
 
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.core.audit_trail import AuditCheckpoint, AuditEntry, AuditStore
@@ -118,21 +119,47 @@ class _PostgresBase:
 
     Provides connection management, migration execution, and safe
     query execution with reconnection on failure.
+
+    v4.36.0 (audit F12): optional ``ThreadedConnectionPool`` for write
+    throughput. Pre-v4.36 every governance store opened a single
+    PostgreSQL connection and serialized every operation behind
+    ``self._lock``. Under N concurrent writers the effective
+    throughput was bounded by 1 connection × 1 cursor at a time.
+
+    When ``pool_size > 1`` the base class allocates a
+    ``psycopg2.pool.ThreadedConnectionPool`` and acquires a connection
+    per operation via ``self._connection()``. The atomic SQL
+    primitives shipped in v4.27 (budget) / v4.29 (rate-limit) /
+    v4.30 (hash chain) / v4.31 (audit append) handle concurrency at
+    the DB level, so the Python-side global lock is no longer needed
+    on the pool path. Single-connection (legacy) deployments keep
+    ``self._lock`` to serialize cursor creation on the shared conn.
     """
 
     _connection_string: str
     _conn: Any
+    _pool: Any
+    _pool_size: int
     _available: bool
     _lock: threading.Lock
+
+    # Class-level defaults so subclasses constructed without _base_init
+    # (e.g. test fixtures that hand-build state) still have the
+    # attributes the v4.36 pool path checks.
+    _pool = None
+    _pool_size = 1
 
     def _base_init(
         self,
         connection_string: str,
         migration_index: int,
         auto_migrate: bool = True,
+        pool_size: int = 1,
     ) -> None:
         self._connection_string = connection_string
         self._conn = None
+        self._pool = None
+        self._pool_size = max(1, int(pool_size))
         self._available = False
         self._lock = threading.Lock()
         self._migration_index = migration_index
@@ -154,16 +181,83 @@ class _PostgresBase:
                     _bounded_store_failure(exc),
                 )
                 self._conn = None
+                if self._pool is not None:
+                    try:
+                        self._pool.closeall()
+                    except Exception:
+                        pass
+                    self._pool = None
 
     def _connect(self) -> None:
+        """Open a connection or pool depending on ``pool_size``.
+
+        v4.36.0 (audit F12): when ``pool_size > 1``, a
+        ``ThreadedConnectionPool`` is created with the requested cap
+        and a single connection is held in ``self._conn`` for back-
+        compat reads (e.g. ``self._conn is None`` checks throughout
+        the store implementations). Each operation acquires its own
+        connection via ``self._connection()``.
+        """
         import psycopg2
-        self._conn = psycopg2.connect(self._connection_string)
-        self._conn.autocommit = False
+        if self._pool_size > 1:
+            from psycopg2.pool import ThreadedConnectionPool
+            self._pool = ThreadedConnectionPool(
+                minconn=1,
+                maxconn=self._pool_size,
+                dsn=self._connection_string,
+            )
+            # Keep a placeholder connection for ``is None`` checks and
+            # for the legacy single-conn migration path. It is NOT used
+            # for runtime ops once the pool is online.
+            self._conn = self._pool.getconn()
+            self._conn.autocommit = False
+            self._pool.putconn(self._conn)
+        else:
+            self._conn = psycopg2.connect(self._connection_string)
+            self._conn.autocommit = False
+
+    @contextmanager
+    def _connection(self) -> Iterator[Any]:
+        """Yield a connection — pooled if configured, single otherwise.
+
+        On the pool path the connection is returned to the pool on
+        context exit (success or exception). On the single-conn path
+        the global ``self._lock`` serializes cursor creation; the
+        connection is yielded as-is.
+        """
+        if self._pool is not None:
+            conn = self._pool.getconn()
+            try:
+                yield conn
+            finally:
+                try:
+                    self._pool.putconn(conn)
+                except Exception as exc:
+                    _log.warning(
+                        "governance store pool putconn failed (%s)",
+                        _bounded_store_failure(exc),
+                    )
+        else:
+            with self._lock:
+                yield self._conn
 
     def _reconnect(self) -> bool:
-        """Attempt to reconnect after a connection failure."""
+        """Attempt to reconnect after a connection failure.
+
+        v4.36.0: on the pool path, closes the existing pool and opens
+        a fresh one. On single-conn, closes and reopens ``self._conn``.
+        """
         try:
-            if self._conn is not None:
+            if self._pool is not None:
+                try:
+                    self._pool.closeall()
+                except Exception as exc:
+                    _log.warning(
+                        "governance store pool closeall failed during reconnect (%s)",
+                        _bounded_store_failure(exc),
+                    )
+                self._pool = None
+            if self._conn is not None and self._pool is None:
                 try:
                     self._conn.close()
                 except Exception as exc:
@@ -179,22 +273,29 @@ class _PostgresBase:
                 _bounded_store_failure(exc),
             )
             self._conn = None
+            self._pool = None
             return False
 
     def _run_migration(self) -> None:
+        # v4.36.0 (audit F12): migrations run on a connection acquired
+        # via the same _connection() helper as runtime ops, so the pool
+        # path is exercised end-to-end and the single-conn path keeps
+        # holding self._lock. Migrations are idempotent + run once at
+        # startup, so this is concurrency-safe regardless.
         if self._conn is None:
             return
-        with self._conn.cursor() as cur:
-            try:
-                cur.execute(GOVERNANCE_MIGRATIONS[self._migration_index])
-                self._conn.commit()
-            except Exception as exc:
-                self._conn.rollback()
-                _log.warning(
-                    "governance migration %d failed (%s)",
-                    self._migration_index,
-                    _bounded_store_failure(exc),
-                )
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                try:
+                    cur.execute(GOVERNANCE_MIGRATIONS[self._migration_index])
+                    conn.commit()
+                except Exception as exc:
+                    conn.rollback()
+                    _log.warning(
+                        "governance migration %d failed (%s)",
+                        self._migration_index,
+                        _bounded_store_failure(exc),
+                    )
 
     def _safe_execute(self, fn: Any) -> Any:
         """Execute a function with automatic reconnection on failure."""
@@ -212,7 +313,20 @@ class _PostgresBase:
             return None
 
     def close(self) -> None:
-        if self._conn is not None:
+        # v4.36.0 (audit F12): close pool first if present, then the
+        # placeholder single connection.
+        if self._pool is not None:
+            try:
+                self._pool.closeall()
+            except Exception as exc:
+                _log.warning(
+                    "governance store pool close failed (%s)",
+                    _bounded_store_failure(exc),
+                )
+            finally:
+                self._pool = None
+                self._conn = None
+        elif self._conn is not None:
             try:
                 self._conn.close()
             except Exception as exc:
@@ -239,14 +353,15 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
         connection_string: str = "postgresql://localhost:5432/mullu",
         *,
         auto_migrate: bool = True,
+        pool_size: int = 1,
     ) -> None:
-        self._base_init(connection_string, migration_index=0, auto_migrate=auto_migrate)
+        self._base_init(connection_string, migration_index=0, auto_migrate=auto_migrate, pool_size=pool_size)
 
     def load(self, tenant_id: str) -> LLMBudget | None:
         if self._conn is None:
             return None
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "SELECT budget_id, tenant_id, max_cost, spent, "
                     "max_tokens_per_call, max_calls, calls_made "
@@ -269,8 +384,8 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
     def save(self, budget: LLMBudget) -> None:
         if self._conn is None:
             return
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO governance_budgets "
                     "(tenant_id, budget_id, max_cost, spent, max_tokens_per_call, "
@@ -290,7 +405,7 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
                         budget.max_calls, budget.calls_made, _now_iso(),
                     ),
                 )
-                self._conn.commit()
+                conn.commit()
 
     def try_record_spend(
         self,
@@ -317,8 +432,8 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
         """
         if self._conn is None:
             return None
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE governance_budgets "
                     "SET spent = spent + %s, "
@@ -331,7 +446,7 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
                     (cost, _now_iso(), tenant_id, cost),
                 )
                 row = cur.fetchone()
-                self._conn.commit()
+                conn.commit()
         if row is None:
             # Either no row exists, or the WHERE clause rejected
             # (spent + cost > max_cost). Both are "exhaustion" from the
@@ -352,8 +467,8 @@ class PostgresBudgetStore(_PostgresBase, BudgetStore):
     def load_all(self) -> list[LLMBudget]:
         if self._conn is None:
             return []
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "SELECT budget_id, tenant_id, max_cost, spent, "
                     "max_tokens_per_call, max_calls, calls_made "
@@ -391,9 +506,10 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
         *,
         auto_migrate: bool = True,
         field_encryptor: Any | None = None,
+        pool_size: int = 1,
     ) -> None:
         self._field_encryptor = field_encryptor
-        self._base_init(connection_string, migration_index=1, auto_migrate=auto_migrate)
+        self._base_init(connection_string, migration_index=1, auto_migrate=auto_migrate, pool_size=pool_size)
 
     def _encrypt_detail(self, detail: dict[str, Any]) -> str:
         """Encrypt detail dict if encryptor is available, else return JSON."""
@@ -425,8 +541,8 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
         if self._conn is None:
             return
         detail_stored = self._encrypt_detail(entry.detail)
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO governance_audit_entries "
                     "(entry_id, sequence, action, actor_id, tenant_id, target, "
@@ -440,7 +556,7 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
                         entry.entry_hash, entry.previous_hash, entry.recorded_at,
                     ),
                 )
-                self._conn.commit()
+                conn.commit()
 
     def query(self, **kwargs: Any) -> list[AuditEntry]:
         if self._conn is None:
@@ -463,8 +579,8 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
         )
         params.append(limit)
 
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(sql, tuple(params))
                 rows = cur.fetchall()
 
@@ -484,8 +600,8 @@ class PostgresAuditStore(_PostgresBase, AuditStore):
     def count(self) -> int:
         if self._conn is None:
             return 0
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM governance_audit_entries")
                 return cur.fetchone()[0]
 
@@ -505,15 +621,16 @@ class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
         connection_string: str = "postgresql://localhost:5432/mullu",
         *,
         auto_migrate: bool = True,
+        pool_size: int = 1,
     ) -> None:
-        self._base_init(connection_string, migration_index=2, auto_migrate=auto_migrate)
+        self._base_init(connection_string, migration_index=2, auto_migrate=auto_migrate, pool_size=pool_size)
 
     def record_decision(self, bucket_key: str, allowed: bool) -> None:
         if self._conn is None:
             return
         col = "allowed_count" if allowed else "denied_count"
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     f"INSERT INTO governance_rate_decisions "
                     f"(bucket_key, allowed_count, denied_count, last_updated) "
@@ -528,13 +645,13 @@ class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
                         _now_iso(),
                     ),
                 )
-                self._conn.commit()
+                conn.commit()
 
     def get_counters(self) -> dict[str, int]:
         if self._conn is None:
             return {"allowed": 0, "denied": 0}
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "SELECT COALESCE(SUM(allowed_count), 0), "
                     "COALESCE(SUM(denied_count), 0) "
@@ -558,14 +675,15 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
         connection_string: str = "postgresql://localhost:5432/mullu",
         *,
         auto_migrate: bool = True,
+        pool_size: int = 1,
     ) -> None:
-        self._base_init(connection_string, migration_index=3, auto_migrate=auto_migrate)
+        self._base_init(connection_string, migration_index=3, auto_migrate=auto_migrate, pool_size=pool_size)
 
     def load(self, tenant_id: str) -> TenantGate | None:
         if self._conn is None:
             return None
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "SELECT tenant_id, status, reason, gated_at "
                     "FROM governance_tenant_gates WHERE tenant_id = %s",
@@ -584,8 +702,8 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
     def save(self, gate: TenantGate) -> None:
         if self._conn is None:
             return
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO governance_tenant_gates "
                     "(tenant_id, status, reason, gated_at) "
@@ -596,13 +714,13 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
                     "gated_at = EXCLUDED.gated_at",
                     (gate.tenant_id, gate.status.value, gate.reason, gate.gated_at),
                 )
-                self._conn.commit()
+                conn.commit()
 
     def load_all(self) -> list[TenantGate]:
         if self._conn is None:
             return []
-        with self._lock:
-            with self._conn.cursor() as cur:
+        with self._connection() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     "SELECT tenant_id, status, reason, gated_at "
                     "FROM governance_tenant_gates ORDER BY tenant_id"
@@ -826,6 +944,7 @@ def create_governance_stores(
     connection_string: str = "",
     *,
     field_encryptor: Any | None = None,
+    pool_size: int = 1,
 ) -> GovernanceStoreBundle:
     """Factory for creating governance stores.
 
@@ -834,6 +953,14 @@ def create_governance_stores(
     Backends:
     - "memory" â†’ In-memory stores (testing/development)
     - "postgresql" â†’ PostgreSQL stores (production)
+
+    v4.36.0 (audit F12): ``pool_size > 1`` enables a
+    ``ThreadedConnectionPool`` per store for write-throughput scaling.
+    Each of the 4 stores gets its own pool with the configured cap;
+    operators sizing should account for ``4 × pool_size`` total
+    connections to PostgreSQL. Default 1 preserves legacy single-conn
+    behavior (one shared connection per store, serialized via
+    ``self._lock``).
 
     When field_encryptor is provided, audit entry detail fields are encrypted at rest.
     """
@@ -847,10 +974,12 @@ def create_governance_stores(
     if backend == "postgresql":
         conn = connection_string or "postgresql://localhost:5432/mullu"
         return GovernanceStoreBundle({
-            "budget": PostgresBudgetStore(conn),
-            "audit": PostgresAuditStore(conn, field_encryptor=field_encryptor),
-            "rate_limit": PostgresRateLimitStore(conn),
-            "tenant_gating": PostgresTenantGatingStore(conn),
+            "budget": PostgresBudgetStore(conn, pool_size=pool_size),
+            "audit": PostgresAuditStore(
+                conn, field_encryptor=field_encryptor, pool_size=pool_size,
+            ),
+            "rate_limit": PostgresRateLimitStore(conn, pool_size=pool_size),
+            "tenant_gating": PostgresTenantGatingStore(conn, pool_size=pool_size),
         })
     raise ValueError("unsupported governance store backend")
 

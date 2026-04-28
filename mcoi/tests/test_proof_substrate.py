@@ -78,23 +78,35 @@ class TestCertifyTransition:
         assert message == "transition denied"
         assert "denied_terminal_state" not in message
 
-    def test_failed_guard_raises(self):
+    def test_failed_guard_emits_denied_receipt(self):
+        """A failed guard does NOT raise. Instead, certify_transition
+        emits a receipt with verdict=DENIED_GUARD_FAILED that contains
+        the full guard list (passing AND failing). The receipt IS the
+        proof of the denial — stripping failed verdicts would erase the
+        audit-trail reason for the rejection."""
         m = _machine()
         guards = (
             GuardVerdict(guard_id="budget", passed=True, reason="ok"),
             GuardVerdict(guard_id="auth", passed=False, reason="unauthorized"),
         )
-        with pytest.raises(ValueError) as exc_info:
-            certify_transition(
-                m, entity_id="e1", from_state="idle", to_state="running",
-                action="start", before_state_hash="h1", after_state_hash="h2",
-                guards=guards, actor_id="actor", reason="start",
-                timestamp="2026-03-27T12:00:00Z",
-            )
-        message = str(exc_info.value)
-        assert message == "guard failed"
-        assert "auth" not in message
-        assert "unauthorized" not in message
+        capsule = certify_transition(
+            m, entity_id="e1", from_state="idle", to_state="running",
+            action="start", before_state_hash="h1", after_state_hash="h2",
+            guards=guards, actor_id="actor", reason="start",
+            timestamp="2026-03-27T12:00:00Z",
+        )
+        # Receipt is emitted, not raised.
+        assert capsule.receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        # Audit record carries the same verdict.
+        assert capsule.audit_record.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        # Full guard list is preserved on the receipt — both passing AND
+        # failing entries, in original order.
+        assert len(capsule.receipt.guard_verdicts) == 2
+        assert capsule.receipt.guard_verdicts[0].guard_id == "budget"
+        assert capsule.receipt.guard_verdicts[0].passed is True
+        assert capsule.receipt.guard_verdicts[1].guard_id == "auth"
+        assert capsule.receipt.guard_verdicts[1].passed is False
+        assert capsule.receipt.guard_verdicts[1].reason == "unauthorized"
 
     def test_receipt_hash_deterministic(self):
         m = _machine()

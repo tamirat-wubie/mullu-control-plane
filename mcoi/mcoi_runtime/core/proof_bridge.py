@@ -181,10 +181,11 @@ class ProofBridge:
         )
 
         # Step 2: evaluating → allowed/denied/error
-        # For denied decisions, guards may have failed — pass only passing guards
-        # to certify_transition (which raises on failed guards). The failing
-        # verdicts are still recorded in the GovernanceProof.guard_verdicts.
-        passing_verdicts = tuple(v for v in verdicts if v.passed)
+        # Pass the full verdict list (including failed guards). When any
+        # guard failed, certify_transition produces a receipt with
+        # verdict=DENIED_GUARD_FAILED rather than raising — the receipt
+        # IS the proof of the denial, and stripping failed verdicts from
+        # it would erase the audit-trail reason for the rejection.
         final_capsule = certify_transition(
             self._machine,
             entity_id=entity_id,
@@ -193,7 +194,7 @@ class ProofBridge:
             action=action,
             before_state_hash=before_hash,
             after_state_hash=after_hash,
-            guards=passing_verdicts,
+            guards=verdicts,
             actor_id=actor_id,
             reason=reason or f"governance decision: {decision}",
             causal_parent=eval_capsule.receipt.receipt_hash,

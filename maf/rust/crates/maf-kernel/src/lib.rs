@@ -408,19 +408,34 @@ impl StateMachineSpec {
     ///
     /// This is the core substrate certification function. Every governed
     /// transition should go through this rather than raw `is_legal()`.
+    ///
+    /// Behavior:
+    ///   * Illegal transition → returns `Err(TransitionVerdict::Denied*)`.
+    ///     No receipt is produced because there is no legal edge to prove.
+    ///   * Legal transition, all guards passing → `Ok(ProofCapsule)` with
+    ///     `verdict = Allowed`.
+    ///   * Legal transition, one or more failed guards → `Ok(ProofCapsule)`
+    ///     with `verdict = DeniedGuardFailed`, including the full guard
+    ///     list (passing AND failing). The receipt IS the proof of the
+    ///     denial; stripping failed guards would erase the audit trail of
+    ///     the rejected decision.
+    ///
+    /// Callers that previously matched on `Err(DeniedGuardFailed)` should
+    /// instead inspect `capsule.receipt.verdict`.
     pub fn certify_transition(
         &self,
         p: &CertifyParams<'_>,
     ) -> Result<ProofCapsule, TransitionVerdict> {
-        // Check legality
-        let verdict = self.is_legal(p.from_state, p.to_state, p.action);
+        // Check legality (always Err for illegal edges; no receipt to emit).
+        let mut verdict = self.is_legal(p.from_state, p.to_state, p.action);
         if verdict != TransitionVerdict::Allowed {
             return Err(verdict);
         }
 
-        // Check all guards passed
+        // Failed guards downgrade verdict to DeniedGuardFailed but the
+        // receipt is still produced with the full guard list.
         if p.guards.iter().any(|g| !g.passed) {
-            return Err(TransitionVerdict::DeniedGuardFailed);
+            verdict = TransitionVerdict::DeniedGuardFailed;
         }
 
         // Build receipt
@@ -2371,8 +2386,13 @@ mod tests {
         assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedTerminalState);
     }
 
+    /// A failed guard does NOT return Err. Instead, certify_transition
+    /// emits Ok(ProofCapsule) with verdict=DeniedGuardFailed that contains
+    /// the full guard list (passing AND failing). The receipt IS the
+    /// proof of the denial — stripping failed verdicts would erase the
+    /// audit-trail reason for the rejection.
     #[test]
-    fn certify_with_failed_guard_returns_error() {
+    fn certify_with_failed_guard_emits_denied_receipt() {
         let m = example_machine();
         let guards = vec![
             GuardVerdict {
@@ -2399,8 +2419,22 @@ mod tests {
             causal_parent: "genesis",
             timestamp: "2026-03-27T12:00:00Z",
         });
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), TransitionVerdict::DeniedGuardFailed);
+        let capsule = result.expect("failed-guard transition emits a receipt, not Err");
+        assert_eq!(
+            capsule.receipt.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        assert_eq!(
+            capsule.audit_record.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        // Full guard list preserved on receipt — both pass and fail entries.
+        assert_eq!(capsule.receipt.guard_verdicts.len(), 2);
+        assert_eq!(capsule.receipt.guard_verdicts[0].guard_id, "budget");
+        assert!(capsule.receipt.guard_verdicts[0].passed);
+        assert_eq!(capsule.receipt.guard_verdicts[1].guard_id, "auth");
+        assert!(!capsule.receipt.guard_verdicts[1].passed);
+        assert_eq!(capsule.receipt.guard_verdicts[1].reason, "unauthorized");
     }
 
     /// Cross-language contract: the Rust receipt_hash MUST equal the Python
@@ -2438,6 +2472,10 @@ mod tests {
             capsule.audit_record.audit_id,
             format!("audit-{}", &EXPECTED[..12])
         );
+        // replay_token is sha256(content + ":" + timestamp)[..16] on both sides.
+        // Locking it in addition to receipt_hash catches any drift in the
+        // replay-token derivation that the receipt_hash alone wouldn't surface.
+        assert_eq!(capsule.receipt.replay_token, "replay-4c4180b2fd61031d");
     }
 
     #[test]
