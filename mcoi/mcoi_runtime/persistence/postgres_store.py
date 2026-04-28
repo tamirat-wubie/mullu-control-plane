@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import json
 import logging as _logging
+import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any, Protocol
+from typing import Any, Iterator, Protocol
 
 
 _log = _logging.getLogger(__name__)
@@ -252,24 +254,45 @@ class PostgresStore:
     """PostgreSQL persistence backend for production deployment.
 
     Features:
-    - Connection pooling (bounded by pool_size)
+    - Connection pooling (bounded by ``pool_size``)
     - Idempotent schema migrations
     - Same API as SQLiteStore + LLM invocation tracking
     - Transactional writes with auto-commit
 
     Requires psycopg2: pip install psycopg2-binary
+
+    v4.37.0 (audit F12 follow-up): pool path is now actually used. Pre-
+    v4.37 the constructor accepted ``pool_size`` but stored a single
+    ``psycopg2.connect`` regardless. ``pool_size > 1`` now allocates a
+    real ``psycopg2.pool.ThreadedConnectionPool`` and acquires a
+    connection per operation via ``self._connection()``.
+
+    The legacy single-conn path also gains thread-safety via
+    ``self._lock``. Pre-v4.37 concurrent callers could race
+    ``self._conn.cursor()`` on the shared connection — undefined
+    behavior under libpq. The lock fixes that for ``pool_size=1``
+    deployments without changing externally observable behavior.
     """
+
+    # Class-level defaults so test fixtures that hand-build instances
+    # (without calling __init__) still have the v4.37 pool attributes.
+    _pool: Any = None
+    _pool_size: int = 1
 
     def __init__(
         self,
         connection_string: str = "postgresql://localhost:5432/mullu",
-        pool_size: int = 5,
+        pool_size: int = 1,
         *,
         auto_migrate: bool = True,
     ) -> None:
         self._connection_string = connection_string
-        self._pool_size = pool_size
+        # v4.37.0: clamp to >= 1 so 0/negative don't invoke
+        # ThreadedConnectionPool(maxconn=0) which raises.
+        self._pool_size = max(1, int(pool_size))
         self._conn: Any = None
+        self._pool: Any = None
+        self._lock = threading.Lock()
         self._psycopg2_available = False
 
         try:
@@ -279,33 +302,96 @@ class PostgresStore:
             pass
 
         if self._psycopg2_available:
-            self._connect()
-            if auto_migrate:
-                self._run_migrations()
+            try:
+                self._connect()
+                if auto_migrate:
+                    self._run_migrations()
+            except Exception as exc:
+                _log.warning(
+                    "postgres store connection failed (%s)",
+                    _bounded_store_failure(exc),
+                )
+                self._conn = None
+                if self._pool is not None:
+                    try:
+                        self._pool.closeall()
+                    except Exception:
+                        pass
+                    self._pool = None
 
     def _connect(self) -> None:
+        """Open a single connection or pool depending on ``pool_size``.
+
+        v4.37.0 (audit F12): mirrors the v4.36 ``_PostgresBase`` pattern
+        from ``postgres_governance_stores.py``. ``pool_size > 1``
+        creates a ``ThreadedConnectionPool``; the placeholder
+        ``self._conn`` keeps the existing ``self._conn is None``
+        availability check semantics.
+        """
         import psycopg2
-        self._conn = psycopg2.connect(self._connection_string)
-        self._conn.autocommit = False
+        if self._pool_size > 1:
+            from psycopg2.pool import ThreadedConnectionPool
+            self._pool = ThreadedConnectionPool(
+                minconn=1,
+                maxconn=self._pool_size,
+                dsn=self._connection_string,
+            )
+            self._conn = self._pool.getconn()
+            self._conn.autocommit = False
+            self._pool.putconn(self._conn)
+        else:
+            self._conn = psycopg2.connect(self._connection_string)
+            self._conn.autocommit = False
+
+    @contextmanager
+    def _connection(self) -> Iterator[Any]:
+        """Yield a connection — pooled if configured, single otherwise.
+
+        Pool path: get/put from ``ThreadedConnectionPool`` per call.
+        Legacy path: acquire ``self._lock`` so concurrent callers
+        don't race ``self._conn.cursor()`` (libpq is not safe under
+        concurrent cursor creation on the same connection).
+        """
+        if self._pool is not None:
+            conn = self._pool.getconn()
+            try:
+                yield conn
+            finally:
+                try:
+                    self._pool.putconn(conn)
+                except Exception as exc:
+                    _log.warning(
+                        "postgres store pool putconn failed (%s)",
+                        _bounded_store_failure(exc),
+                    )
+        else:
+            # Lazy-init for test fixtures that bypass __init__ via
+            # __new__ + manual attribute set.
+            lock = getattr(self, "_lock", None)
+            if lock is None:
+                lock = threading.Lock()
+                self._lock = lock
+            with lock:
+                yield self._conn
 
     def _run_migrations(self) -> None:
         """Run idempotent schema migrations."""
         if self._conn is None:
             return
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             for index, migration_sql in enumerate(MIGRATIONS, start=1):
                 try:
                     cur.execute(migration_sql)
-                    self._conn.commit()
+                    conn.commit()
                 except Exception as exc:
-                    self._conn.rollback()
+                    conn.rollback()
                     raise _bounded_store_migration_error(exc, index) from exc
                     # Migration already applied or table exists — idempotent
 
     def append_ledger(
         self, entry_type: str, actor_id: str, tenant_id: str, content: dict[str, Any], content_hash: str
     ) -> int:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO ledger (entry_type, actor_id, tenant_id, content, content_hash, created_at) "
                 "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
@@ -313,11 +399,11 @@ class PostgresStore:
                  content_hash, datetime.now(timezone.utc).isoformat()),
             )
             row_id = cur.fetchone()[0]
-            self._conn.commit()
+            conn.commit()
         return row_id
 
     def query_ledger(self, tenant_id: str, limit: int = 100) -> list[dict[str, Any]]:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "SELECT id, entry_type, actor_id, content, content_hash, created_at "
                 "FROM ledger WHERE tenant_id = %s ORDER BY id DESC LIMIT %s",
@@ -330,7 +416,7 @@ class PostgresStore:
         ]
 
     def ledger_count(self, tenant_id: str | None = None) -> int:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             if tenant_id:
                 cur.execute("SELECT COUNT(*) FROM ledger WHERE tenant_id = %s", (tenant_id,))
             else:
@@ -341,26 +427,26 @@ class PostgresStore:
     def save_request(
         self, request_id: str, tenant_id: str, method: str, path: str, status_code: int, governed: bool
     ) -> None:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO requests (request_id, tenant_id, method, path, status_code, governed, created_at) "
                 "VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (request_id) DO UPDATE SET status_code = EXCLUDED.status_code",
                 (request_id, tenant_id, method, path, status_code, 1 if governed else 0,
                  datetime.now(timezone.utc).isoformat()),
             )
-            self._conn.commit()
+            conn.commit()
 
     def save_session(self, session_id: str, actor_id: str, tenant_id: str) -> None:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO sessions (session_id, actor_id, tenant_id, active, created_at) "
                 "VALUES (%s, %s, %s, 1, %s) ON CONFLICT (session_id) DO UPDATE SET active = 1",
                 (session_id, actor_id, tenant_id, datetime.now(timezone.utc).isoformat()),
             )
-            self._conn.commit()
+            conn.commit()
 
     def get_session(self, session_id: str) -> dict[str, Any] | None:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "SELECT session_id, actor_id, tenant_id, active, created_at FROM sessions WHERE session_id = %s",
                 (session_id,),
@@ -374,20 +460,20 @@ class PostgresStore:
         }
 
     def deactivate_session(self, session_id: str) -> bool:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute("UPDATE sessions SET active = 0 WHERE session_id = %s", (session_id,))
             affected = cur.rowcount
-            self._conn.commit()
+            conn.commit()
         return affected > 0
 
     def active_session_count(self) -> int:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM sessions WHERE active = 1")
             count = cur.fetchone()[0]
         return count
 
     def request_count(self, tenant_id: str | None = None) -> int:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             if tenant_id:
                 cur.execute("SELECT COUNT(*) FROM requests WHERE tenant_id = %s", (tenant_id,))
             else:
@@ -408,7 +494,7 @@ class PostgresStore:
         tenant_id: str = "",
         content_hash: str = "",
     ) -> int:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO llm_invocations (invocation_id, model_name, provider, input_tokens, output_tokens, "
                 "cost, succeeded, budget_id, tenant_id, content_hash, created_at) "
@@ -418,11 +504,11 @@ class PostgresStore:
                  datetime.now(timezone.utc).isoformat()),
             )
             row_id = cur.fetchone()[0]
-            self._conn.commit()
+            conn.commit()
         return row_id
 
     def query_llm_invocations(self, tenant_id: str = "", limit: int = 100) -> list[dict[str, Any]]:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             if tenant_id:
                 cur.execute(
                     "SELECT id, invocation_id, model_name, provider, input_tokens, output_tokens, "
@@ -449,7 +535,7 @@ class PostgresStore:
         ]
 
     def llm_total_cost(self, tenant_id: str = "") -> float:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             if tenant_id:
                 cur.execute("SELECT COALESCE(SUM(cost), 0) FROM llm_invocations WHERE tenant_id = %s", (tenant_id,))
             else:
@@ -458,7 +544,7 @@ class PostgresStore:
         return float(cost)
 
     def llm_invocation_count(self, tenant_id: str = "") -> int:
-        with self._conn.cursor() as cur:
+        with self._connection() as conn, conn.cursor() as cur:
             if tenant_id:
                 cur.execute("SELECT COUNT(*) FROM llm_invocations WHERE tenant_id = %s", (tenant_id,))
             else:
@@ -467,7 +553,21 @@ class PostgresStore:
         return count
 
     def close(self) -> None:
-        if self._conn is not None:
+        # v4.37.0 (audit F12 follow-up): close pool first if present,
+        # then the placeholder single connection. Mirrors the v4.36
+        # ``_PostgresBase`` close pattern.
+        if self._pool is not None:
+            try:
+                self._pool.closeall()
+            except Exception as exc:
+                _log.warning(
+                    "postgres store pool close failed (%s)",
+                    _bounded_store_failure(exc),
+                )
+            finally:
+                self._pool = None
+                self._conn = None
+        elif self._conn is not None:
             try:
                 self._conn.close()
             except Exception as exc:

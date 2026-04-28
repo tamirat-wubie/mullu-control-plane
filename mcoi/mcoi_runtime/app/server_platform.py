@@ -81,9 +81,21 @@ def bootstrap_primary_store(
     if warning:
         warnings_module.warn(warning, stacklevel=1)
 
+    # v4.37.0 (audit F12 follow-up): MULLU_DB_POOL_SIZE applies to the
+    # primary store too, not just governance stores. Same env var,
+    # same default (1 = legacy single conn).
+    try:
+        pool_size = max(1, int(runtime_env.get("MULLU_DB_POOL_SIZE", "1")))
+    except (TypeError, ValueError):
+        pool_size = 1
+
+    store_kwargs: dict[str, Any] = {}
+    if db_backend == "postgresql":
+        store_kwargs["pool_size"] = pool_size
     store = create_store_fn(
         backend=db_backend,
         connection_string=runtime_env.get("MULLU_DB_URL", ""),
+        **store_kwargs,
     )
 
     migrations_applied: tuple[str, ...] = ()
