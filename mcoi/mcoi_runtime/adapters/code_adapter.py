@@ -549,7 +549,6 @@ def _atomic_write_text(path: Path, content: str) -> None:
             except OSError:
                 pass
 
-
 def _iter_workspace_files(root: Path):
     """Yield each regular file under root that resolves inside root.
 
