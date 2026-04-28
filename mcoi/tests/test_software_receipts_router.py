@@ -13,7 +13,11 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.app.routers.musia_auth import configure_musia_dev_mode
+from mcoi_runtime.app.routers.musia_auth import (
+    configure_musia_auth,
+    configure_musia_dev_mode,
+    configure_musia_jwt,
+)
 from mcoi_runtime.app.routers.software_receipts import router
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
@@ -49,6 +53,8 @@ def _receipt(
 
 
 def _client(store: SoftwareChangeReceiptStore) -> TestClient:
+    configure_musia_auth(None)
+    configure_musia_jwt(None)
     configure_musia_dev_mode(True)
     deps.set("software_receipt_store", store)
     app = FastAPI()
