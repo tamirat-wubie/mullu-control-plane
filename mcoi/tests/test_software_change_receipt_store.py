@@ -96,6 +96,17 @@ def test_store_summary_reports_lifecycle_health() -> None:
     assert summary["request_count"] == 2
     assert summary["terminal_request_count"] == 1
     assert summary["open_request_count"] == 1
+    assert summary["requires_operator_review"] is True
+    assert summary["review_signal_count"] == 1
+    assert summary["review_signals"] == [
+        {
+            "request_id": "request-open",
+            "latest_receipt_id": "receipt-open",
+            "latest_stage": "request_admitted",
+            "latest_outcome": "ok",
+            "reason": "software_change_receipt_chain_open",
+        }
+    ]
     assert summary["by_stage"]["request_admitted"] == 2
     assert summary["by_stage"]["gate_evaluated"] == 1
     assert summary["by_stage"]["terminal_closed"] == 1
@@ -112,9 +123,33 @@ def test_empty_store_summary_is_dashboard_safe() -> None:
     assert summary["request_count"] == 0
     assert summary["terminal_request_count"] == 0
     assert summary["open_request_count"] == 0
+    assert summary["requires_operator_review"] is False
+    assert summary["review_signal_count"] == 0
+    assert summary["review_signals"] == []
     assert summary["latest_receipt_id"] is None
     assert summary["by_stage"]["terminal_closed"] == 0
     assert summary["governed"] is True
+
+
+def test_store_summary_bounds_review_signals() -> None:
+    store = SoftwareChangeReceiptStore()
+    for index in range(12):
+        store.append(_receipt(
+            receipt_id=f"receipt-open-{index}",
+            request_id=f"request-open-{index}",
+        ))
+
+    summary = store.summary()
+
+    assert summary["open_request_count"] == 12
+    assert summary["review_signal_count"] == 12
+    assert len(summary["review_signals"]) == 10
+    assert summary["review_signals"][0]["request_id"] == "request-open-0"
+    assert summary["review_signals"][-1]["request_id"] == "request-open-9"
+    assert all(
+        signal["reason"] == "software_change_receipt_chain_open"
+        for signal in summary["review_signals"]
+    )
 
 
 def test_duplicate_matching_receipt_is_idempotent() -> None:
