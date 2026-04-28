@@ -29,6 +29,10 @@ from mcoi_runtime.contracts.proof import (
     TransitionReceipt,
     certify_transition,
 )
+from mcoi_runtime.contracts.receipt_store import (
+    InMemoryReceiptStore,
+    ReceiptStore,
+)
 from mcoi_runtime.contracts.state_machine import (
     StateMachineSpec,
     TransitionAuditRecord,
@@ -79,17 +83,29 @@ class ProofBridge:
     with guard verdicts, maintaining a causal lineage across decisions.
     """
 
-    MAX_LINEAGE_ENTRIES = 10_000  # Evict oldest lineages beyond this
+    # Retained for backward compatibility — code that read
+    # ``ProofBridge.MAX_LINEAGE_ENTRIES`` continues to see the historical
+    # default. New code should configure capacity via the injected
+    # `ReceiptStore` (e.g. `InMemoryReceiptStore(max_entries=...)`) so a
+    # durable backend can declare its own bound.
+    MAX_LINEAGE_ENTRIES = 10_000
 
     def __init__(
         self,
         *,
         clock: Callable[[], str],
         machine: StateMachineSpec | None = None,
+        store: ReceiptStore | None = None,
     ) -> None:
         self._clock = clock
         self._machine = machine or GOVERNANCE_MACHINE
-        self._lineage: dict[str, CausalLineage] = {}  # entity_id -> lineage
+        # Receipt-lineage state lives behind a ReceiptStore Protocol so a
+        # durable backend (PostgreSQL, ledger-hashed, ...) can plug in
+        # without touching this class. Default preserves the pre-Protocol
+        # in-memory behavior with FIFO eviction at MAX_LINEAGE_ENTRIES.
+        self._store: ReceiptStore = store if store is not None else InMemoryReceiptStore(
+            max_entries=self.MAX_LINEAGE_ENTRIES,
+        )
         self._receipt_count: int = 0
         self._last_receipt_hash: str = "genesis"
         self._lock = threading.Lock()
@@ -217,7 +233,7 @@ class ProofBridge:
 
     def get_lineage(self, entity_id: str) -> CausalLineage | None:
         """Get the causal lineage for an entity."""
-        return self._lineage.get(entity_id)
+        return self._store.get_lineage(entity_id)
 
     def verify_receipt(self, receipt: TransitionReceipt) -> bool:
         """Verify a receipt's hash matches its content."""
@@ -322,7 +338,7 @@ class ProofBridge:
 
     @property
     def lineage_count(self) -> int:
-        return len(self._lineage)
+        return len(self._store)
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -337,30 +353,34 @@ class ProofBridge:
         return hashlib.sha256(content.encode()).hexdigest()
 
     def _update_lineage(self, entity_id: str, receipt: TransitionReceipt, current_state: str) -> None:
-        """Update causal lineage for an entity. Evicts oldest if at capacity."""
-        # Evict oldest lineages if at capacity
-        if len(self._lineage) >= self.MAX_LINEAGE_ENTRIES and entity_id not in self._lineage:
-            oldest_key = next(iter(self._lineage))
-            del self._lineage[oldest_key]
+        """Update causal lineage for an entity. Evicts oldest if at capacity.
 
-        existing = self._lineage.get(entity_id)
+        All lineage state goes through `self._store`. For the default
+        InMemoryReceiptStore, behavior is identical to the pre-Protocol
+        path: FIFO eviction by insertion order at max_entries.
+        """
+        # Evict oldest lineage if at capacity AND this entity is new.
+        if len(self._store) >= self._store.max_entries and not self._store.has_lineage(entity_id):
+            self._store.evict_oldest()
+
+        existing = self._store.get_lineage(entity_id)
         if existing:
             new_chain = existing.receipt_chain + (receipt.receipt_id,)
-            self._lineage[entity_id] = CausalLineage(
+            self._store.record_lineage(entity_id, CausalLineage(
                 lineage_id=existing.lineage_id,
                 entity_id=entity_id,
                 receipt_chain=new_chain,
                 root_receipt_id=existing.root_receipt_id,
                 current_state=current_state,
                 depth=existing.depth + 1,
-            )
+            ))
         else:
             lineage_id = f"lineage-{hashlib.sha256(entity_id.encode()).hexdigest()[:12]}"
-            self._lineage[entity_id] = CausalLineage(
+            self._store.record_lineage(entity_id, CausalLineage(
                 lineage_id=lineage_id,
                 entity_id=entity_id,
                 receipt_chain=(receipt.receipt_id,),
                 root_receipt_id=receipt.receipt_id,
                 current_state=current_state,
                 depth=1,
-            )
+            ))
