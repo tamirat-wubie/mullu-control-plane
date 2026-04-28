@@ -2412,8 +2412,7 @@ mod tests {
     #[test]
     fn receipt_hash_matches_python_sha256() {
         // SHA-256 of "contract-test-entity:idle:running:start:before-h:after-h:genesis"
-        const EXPECTED: &str =
-            "27bf13eff30cd9fd5fc334eff381e9b2349037bd0ef9dc88c2ca15d114a77fe5";
+        const EXPECTED: &str = "27bf13eff30cd9fd5fc334eff381e9b2349037bd0ef9dc88c2ca15d114a77fe5";
         let m = example_machine();
         let capsule = m
             .certify_transition(&CertifyParams {
@@ -2431,8 +2430,14 @@ mod tests {
             })
             .unwrap();
         assert_eq!(capsule.receipt.receipt_hash, EXPECTED);
-        assert_eq!(capsule.receipt.receipt_id, format!("rcpt-{}", &EXPECTED[..16]));
-        assert_eq!(capsule.audit_record.audit_id, format!("audit-{}", &EXPECTED[..12]));
+        assert_eq!(
+            capsule.receipt.receipt_id,
+            format!("rcpt-{}", &EXPECTED[..16])
+        );
+        assert_eq!(
+            capsule.audit_record.audit_id,
+            format!("audit-{}", &EXPECTED[..12])
+        );
     }
 
     #[test]
