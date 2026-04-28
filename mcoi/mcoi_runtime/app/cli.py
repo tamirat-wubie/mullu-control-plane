@@ -387,6 +387,9 @@ def _software_receipt_envelope(
     stage: SoftwareChangeReceiptStage | None = None,
     found: bool | None = None,
     terminal_closed: bool | None = None,
+    requires_operator_review: bool | None = None,
+    review_signal_count: int | None = None,
+    review_signals: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     """Build the deterministic CLI envelope shared by text and JSON output."""
     return {
@@ -397,9 +400,26 @@ def _software_receipt_envelope(
         "stage": stage.value if stage is not None else None,
         "found": found,
         "terminal_closed": terminal_closed,
+        "requires_operator_review": requires_operator_review,
+        "review_signal_count": review_signal_count,
+        "review_signals": review_signals,
         "governed": True,
         "receipts": [receipt.to_json_dict() for receipt in receipts],
     }
+
+
+def _software_receipt_review_signals(receipts: tuple) -> list[dict[str, str]]:
+    """Build bounded operator review signals from latest open-chain receipts."""
+    return [
+        {
+            "request_id": receipt.request_id,
+            "latest_receipt_id": receipt.receipt_id,
+            "latest_stage": receipt.stage.value,
+            "latest_outcome": receipt.outcome,
+            "reason": "software_change_receipt_chain_open",
+        }
+        for receipt in receipts
+    ]
 
 
 def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output: bool) -> None:
@@ -420,6 +440,18 @@ def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output
         print(f"found: {str(envelope['found']).lower()}")
     if envelope.get("terminal_closed") is not None:
         print(f"terminal_closed: {str(envelope['terminal_closed']).lower()}")
+    if envelope.get("requires_operator_review") is not None:
+        print(f"requires_operator_review: {str(envelope['requires_operator_review']).lower()}")
+    if envelope.get("review_signal_count") is not None:
+        print(f"review_signal_count: {envelope['review_signal_count']}")
+    for signal in envelope.get("review_signals") or []:
+        print(
+            "  review "
+            f"{signal['request_id']} "
+            f"{signal['latest_stage']} "
+            f"{signal['latest_receipt_id']} "
+            f"reason={signal['reason']}"
+        )
     for receipt in envelope["receipts"]:
         print(
             "  "
@@ -435,7 +467,7 @@ def software_receipts_command(args: argparse.Namespace) -> int:
     """Read-only operator CLI for software-change lifecycle receipts."""
     sub = getattr(args, "software_receipts_command", None)
     if sub is None:
-        print("Usage: mcoi software-receipts {list|get|replay} --store path")
+        print("Usage: mcoi software-receipts {list|get|replay|review} --store path")
         return 1
     try:
         store = FileSoftwareChangeReceiptStore(_software_receipt_store_path(args))
@@ -472,6 +504,15 @@ def software_receipts_command(args: argparse.Namespace) -> int:
                 receipts=receipts,
                 request_id=args.request_id,
                 terminal_closed=True,
+            )
+        elif sub == "review":
+            receipts = store.review_receipts(limit=args.limit)
+            envelope = _software_receipt_envelope(
+                operation="review",
+                receipts=receipts,
+                requires_operator_review=bool(receipts),
+                review_signal_count=len(receipts),
+                review_signals=_software_receipt_review_signals(receipts),
             )
         else:
             print(f"error: unknown software-receipts subcommand {sub!r}")
@@ -590,6 +631,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Replay a terminally closed request receipt chain",
     )
     receipts_replay_parser.add_argument("request_id", help="Request id")
+
+    receipts_review_parser = receipts_subparsers.add_parser(
+        "review",
+        parents=[receipts_common],
+        help="List software-change receipt chains needing operator review",
+    )
+    receipts_review_parser.add_argument("--limit", type=int, default=10, help="Maximum review signal count")
 
     # v4.25.0: migrate — DB schema migration ops surface
     migrate_parser = subparsers.add_parser(

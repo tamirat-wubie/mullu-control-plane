@@ -139,6 +139,60 @@ def test_cli_replays_terminal_receipt_chain(tmp_path: Path, capsys) -> None:
     ]
 
 
+def test_cli_reviews_open_receipt_chains_json(tmp_path: Path, capsys) -> None:
+    path = _store_path(tmp_path)
+
+    rc = main([
+        "software-receipts",
+        "review",
+        "--store",
+        str(path),
+        "--json",
+    ])
+    body = json.loads(capsys.readouterr().out)
+
+    assert rc == 0
+    assert body["operation"] == "review"
+    assert body["count"] == 1
+    assert body["requires_operator_review"] is True
+    assert body["review_signal_count"] == 1
+    assert body["receipts"][0]["receipt_id"] == "receipt-other"
+    assert body["review_signals"] == [
+        {
+            "request_id": "request-cli-2",
+            "latest_receipt_id": "receipt-other",
+            "latest_stage": "request_admitted",
+            "latest_outcome": "ok",
+            "reason": "software_change_receipt_chain_open",
+        }
+    ]
+
+
+def test_cli_review_text_marks_empty_review_state(tmp_path: Path, capsys) -> None:
+    path = tmp_path / "software_receipts.json"
+    FileSoftwareChangeReceiptStore(path).append(
+        _receipt(
+            receipt_id="receipt-terminal",
+            stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
+            created_at=T1,
+        )
+    )
+
+    rc = main([
+        "software-receipts",
+        "review",
+        "--store",
+        str(path),
+    ])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "operation: review" in out
+    assert "requires_operator_review: false" in out
+    assert "review_signal_count: 0" in out
+    assert "count: 0" in out
+
+
 def test_cli_replay_fails_closed_for_non_terminal_chain(tmp_path: Path, capsys) -> None:
     path = tmp_path / "software_receipts.json"
     FileSoftwareChangeReceiptStore(path).append(
@@ -151,6 +205,25 @@ def test_cli_replay_fails_closed_for_non_terminal_chain(tmp_path: Path, capsys) 
         "request-open",
         "--store",
         str(path),
+    ])
+    out = capsys.readouterr().out
+
+    assert rc == 1
+    assert "error:" in out
+    assert "software receipt store rejected request" in out
+    assert "PersistenceError" in out
+
+
+def test_cli_review_rejects_invalid_limit(tmp_path: Path, capsys) -> None:
+    path = _store_path(tmp_path)
+
+    rc = main([
+        "software-receipts",
+        "review",
+        "--store",
+        str(path),
+        "--limit",
+        "0",
     ])
     out = capsys.readouterr().out
 
