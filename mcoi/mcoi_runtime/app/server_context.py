@@ -12,6 +12,7 @@ Invariants:
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
 
@@ -25,6 +26,69 @@ from mcoi_runtime.app.server_platform import (
     bootstrap_governance_runtime,
     bootstrap_primary_store,
 )
+
+_log = logging.getLogger(__name__)
+
+
+# v4.35.0 (audit F5): env-binding hardening.
+#
+# Pre-v4.35 every site that read MULLU_ENV used
+# ``runtime_env.get("MULLU_ENV", "local_dev")`` directly. An operator
+# deploying without setting the env var silently got the most
+# permissive policies — local_dev shell, looser tenant validation,
+# wildcard CORS, X-Tenant-ID trust. The audit called this out as a
+# fail-open path on env binding.
+#
+# v4.35 routes every read through ``resolve_env``. Behavior:
+#
+# - MULLU_ENV set to a known value: return it (unchanged).
+# - MULLU_ENV unset/empty + MULLU_ENV_REQUIRED=true (or =1/yes/on):
+#   raise ``EnvBindingError``. Production deployments set this flag
+#   in the manifest so a missing MULLU_ENV is a hard boot failure
+#   instead of a silent dev fallback.
+# - MULLU_ENV unset/empty + flag not set: log a CRITICAL warning and
+#   fall through to "local_dev" (preserves existing behavior for
+#   tests and dev workflows).
+# - MULLU_ENV set to an unknown value: log an ERROR, return the value
+#   as-is (downstream code already falls to ``sandboxed`` shell policy
+#   for unknowns).
+KNOWN_ENVS = frozenset({"local_dev", "test", "pilot", "production"})
+
+_TRUTHY = frozenset({"true", "1", "yes", "on"})
+
+
+class EnvBindingError(RuntimeError):
+    """Raised when MULLU_ENV is unset and MULLU_ENV_REQUIRED is set."""
+
+
+def resolve_env(runtime_env: Mapping[str, str]) -> str:
+    """Resolve MULLU_ENV with audit-grade fail-closed semantics.
+
+    See module-level docstring for behavior table.
+    """
+    raw = runtime_env.get("MULLU_ENV", "").strip()
+    required = (
+        runtime_env.get("MULLU_ENV_REQUIRED", "").strip().lower() in _TRUTHY
+    )
+    if not raw:
+        if required:
+            raise EnvBindingError(
+                "MULLU_ENV is not set and MULLU_ENV_REQUIRED=true; "
+                "refusing to fall back to local_dev defaults"
+            )
+        _log.critical(
+            "MULLU_ENV is not set; falling back to 'local_dev'. "
+            "Set MULLU_ENV explicitly (and MULLU_ENV_REQUIRED=true in "
+            "production) to silence this warning."
+        )
+        return "local_dev"
+    if raw not in KNOWN_ENVS:
+        _log.error(
+            "MULLU_ENV=%r is not a known environment %s; downstream "
+            "policies will fall to sandboxed defaults",
+            raw, sorted(KNOWN_ENVS),
+        )
+    return raw
 
 
 @dataclass(frozen=True)
@@ -59,7 +123,7 @@ def bootstrap_server_context(
     bootstrap_governance_runtime_fn: Callable[..., Any] = bootstrap_governance_runtime,
 ) -> ServerContextBootstrap:
     """Build env-derived context for the governed server."""
-    env = runtime_env.get("MULLU_ENV", "local_dev")
+    env = resolve_env(runtime_env)
     surface = production_surface_cls(
         deployment_manifests.get(env, deployment_manifests["local_dev"])
     )

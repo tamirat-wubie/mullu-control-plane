@@ -22,7 +22,7 @@ from mcoi_runtime.app.server_policy import (
     _validate_db_backend_for_env,
 )
 from mcoi_runtime.app.server_app import create_governed_app
-from mcoi_runtime.app.server_context import bootstrap_server_context
+from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -198,7 +198,9 @@ _lifecycle_bootstrap = bootstrap_server_lifecycle(
     # bootstrap_server_lifecycle docstring + RELEASE_NOTES_v4.26.0.md.
     api_key_mgr=_operational_bootstrap.api_key_mgr,
     jwt_authenticator=_jwt_authenticator,
-    env=os.environ.get("MULLU_ENV", "local_dev"),
+    # v4.35.0 (audit F5): unified env resolution with fail-closed
+    # support via MULLU_ENV_REQUIRED. See server_context.resolve_env.
+    env=resolve_env(os.environ),
 )
 _flush_state_on_shutdown = _lifecycle_bootstrap.flush_state_on_shutdown
 _restore_state_on_startup = _lifecycle_bootstrap.restore_state_on_startup
