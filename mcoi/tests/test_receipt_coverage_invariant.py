@@ -52,7 +52,7 @@ from validate_receipt_coverage import compute_buckets  # noqa: E402
 #
 # Whatever path is taken, the baseline ratchets DOWN as routes move out
 # of UNCOVERED. The number can only fall toward zero through code review.
-EXPECTED_UNCOVERED_BASELINE = 32
+EXPECTED_UNCOVERED_BASELINE = 23
 
 
 def test_uncovered_count_matches_baseline():
