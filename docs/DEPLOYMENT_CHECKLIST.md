@@ -1,5 +1,7 @@
 # Mullu Control Plane — Production Deployment Checklist
 
+> **Companion doc:** [`PRODUCTION_DEPLOYMENT.md`](PRODUCTION_DEPLOYMENT.md) — full env-var reference, audit-fracture mapping, capacity sizing, error-code reference. **Read that first** if you're deploying for the first time. This file is the pre-flight tickbox.
+
 ## Pre-Deployment
 
 - [ ] All tests pass (`python -m pytest mcoi/tests/ -q`)
@@ -12,9 +14,15 @@
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `MULLU_ENV` | Environment identifier | `production` |
-| `MULLU_DB_BACKEND` | Persistence backend | `postgres` |
+| `MULLU_ENV_REQUIRED` | Fail-closed if `MULLU_ENV` unset (v4.35+) | `true` |
+| `MULLU_DB_BACKEND` | Persistence backend | `postgresql` |
 | `MULLU_DB_URL` | Database connection string | `postgresql://...` |
+| `MULLU_DB_POOL_SIZE` | Per-store connection pool cap (v4.36+) | `10` |
 | `MULLU_ALLOW_UNKNOWN_TENANTS` | Reject unknown tenants | `false` |
+| `MULLU_ENCRYPTION_KEY` | Audit-detail at-rest encryption | base64 32-byte |
+| `MULLU_CORS_ORIGINS` | Comma-separated allowlist (no `*`) | `https://app.example.com` |
+| `MULLU_JWT_SECRET` | HMAC signing key | base64 |
+| `MULLU_JWT_ISSUER` / `MULLU_JWT_AUDIENCE` | OIDC validation | `https://auth.example.com` / `mullu-api` |
 
 ## Environment Variables (LLM — at least one required)
 
@@ -58,7 +66,8 @@
 
 - [ ] PostgreSQL 14+ with WAL mode
 - [ ] Schema migrations applied (`governance_budgets`, `governance_audit_entries`, `governance_rate_decisions`, `governance_tenant_gates`)
-- [ ] Connection pooling configured
+- [ ] Connection pool sized: `MULLU_DB_POOL_SIZE` set (recommended 5–10)
+- [ ] PG `max_connections` ≥ `replicas × 5 × MULLU_DB_POOL_SIZE` + headroom
 - [ ] Backup schedule in place
 
 ## Kubernetes (if applicable)
