@@ -6,11 +6,30 @@ build/test execution, workspace root containment, and code review.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
 import pytest
 from unittest.mock import patch
+
+
+def _symlinks_supported(tmp_path: Path) -> bool:
+    """Check if the platform/process can create symlinks (Windows often can't)."""
+    try:
+        target = tmp_path / "_symlink_probe_target"
+        target.write_text("probe", encoding="utf-8")
+        link = tmp_path / "_symlink_probe_link"
+        os.symlink(target, link)
+    except (OSError, NotImplementedError):
+        return False
+    finally:
+        for p in (tmp_path / "_symlink_probe_link", tmp_path / "_symlink_probe_target"):
+            try:
+                p.unlink()
+            except OSError:
+                pass
+    return True
 
 from mcoi_runtime.contracts.code import (
     BuildResult,
@@ -187,6 +206,52 @@ class TestLocalCodeAdapter:
         with pytest.raises(ValueError, match="^workspace root is not a directory$") as exc_info:
             LocalCodeAdapter(root_path=str(missing_root), clock=lambda: T0)
         assert str(missing_root) not in str(exc_info.value)
+
+    def test_list_files_skips_symlink_to_outside_file(self, tmp_path: Path):
+        if not _symlinks_supported(tmp_path):
+            pytest.skip("symlinks not supported in this environment")
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "outside_secret.txt"
+        outside.write_text("STOLEN-SECRET", encoding="utf-8")
+        link = ws / "leaked_link.txt"
+        os.symlink(outside, link)
+
+        adapter = _adapter(ws)
+        state = adapter.list_files("r-1")
+
+        relative_paths = {f.relative_path for f in state.files}
+        assert "leaked_link.txt" not in relative_paths
+        for f in state.files:
+            content = adapter.read_file(f.relative_path) or ""
+            assert "STOLEN-SECRET" not in content
+
+    def test_list_files_skips_symlink_to_outside_directory(self, tmp_path: Path):
+        if not _symlinks_supported(tmp_path):
+            pytest.skip("symlinks not supported in this environment")
+        ws = _setup_workspace(tmp_path)
+        outside_dir = tmp_path / "outside_dir"
+        outside_dir.mkdir()
+        (outside_dir / "secret.py").write_text("# STOLEN-DIR-SECRET\n", encoding="utf-8")
+        os.symlink(outside_dir, ws / "linked_dir")
+
+        adapter = _adapter(ws)
+        state = adapter.list_files("r-1")
+
+        for f in state.files:
+            assert "STOLEN-DIR-SECRET" not in (adapter.read_file(f.relative_path) or "")
+
+    def test_inspect_repository_does_not_pick_up_outside_extensions(self, tmp_path: Path):
+        if not _symlinks_supported(tmp_path):
+            pytest.skip("symlinks not supported in this environment")
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "evil.unique-ext-xyz"
+        outside.write_text("alien", encoding="utf-8")
+        os.symlink(outside, ws / "alien_link.unique-ext-xyz")
+
+        adapter = _adapter(ws)
+        desc = adapter.inspect_repository("r-1", "test-repo")
+
+        assert "unique-ext-xyz" not in desc.language_hints
 
 
 # --- Patch application ---

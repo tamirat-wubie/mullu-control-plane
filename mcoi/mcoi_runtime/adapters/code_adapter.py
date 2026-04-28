@@ -111,6 +111,34 @@ def _bounded_code_error(summary: str, exc: Exception) -> str:
     return f"{summary} ({type(exc).__name__})"
 
 
+def _iter_workspace_files(root: Path):
+    """Yield each regular file under root that resolves inside root.
+
+    Defends against symlinks pointing outside the workspace: an entry is
+    skipped unless its resolved real path is strictly within the resolved
+    workspace root. Broken symlinks (resolve(strict=True) raises) are also
+    skipped. Yielded paths are the original tree positions, so callers can
+    still call .relative_to(root) on them.
+    """
+    try:
+        resolved_root = root.resolve(strict=True)
+    except (OSError, ValueError):
+        return
+    for path in sorted(root.rglob("*")):
+        try:
+            resolved = path.resolve(strict=True)
+        except (OSError, ValueError):
+            continue
+        try:
+            if not resolved.is_relative_to(resolved_root):
+                continue
+        except (OSError, ValueError):
+            continue
+        if not resolved.is_file():
+            continue
+        yield path
+
+
 class LocalCodeAdapter:
     """Bounded local code workspace adapter.
 
@@ -134,8 +162,8 @@ class LocalCodeAdapter:
         ensure_non_empty_text("repo_id", repo_id)
         # Detect language hints from file extensions
         extensions: set[str] = set()
-        for f in self._root.rglob("*"):
-            if f.is_file() and f.suffix:
+        for f in _iter_workspace_files(self._root):
+            if f.suffix:
                 extensions.add(f.suffix.lstrip("."))
         hints = sorted(extensions)[:10]  # Cap at 10
 
@@ -151,9 +179,7 @@ class LocalCodeAdapter:
         files: list[SourceFile] = []
         total_bytes = 0
 
-        for path in sorted(self._root.rglob("*")):
-            if not path.is_file():
-                continue
+        for path in _iter_workspace_files(self._root):
             if extensions and path.suffix.lstrip(".") not in extensions:
                 continue
             try:
