@@ -99,6 +99,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.sandbox import router as sandbox_router
     from mcoi_runtime.app.routers.scheduler import router as scheduler_router
     from mcoi_runtime.app.routers.simulation import router as simulation_router
+    from mcoi_runtime.app.routers.software_receipts import router as software_receipts_router
     from mcoi_runtime.app.routers.tenant import router as tenant_router
     from mcoi_runtime.app.routers.ucja import router as ucja_router
     from mcoi_runtime.app.routers.workflow import router as workflow_router
@@ -136,3 +137,4 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(musia_tenants_router)
     app.include_router(musia_governance_metrics_router)
     app.include_router(domains_router)
+    app.include_router(software_receipts_router)
