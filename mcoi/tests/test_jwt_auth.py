@@ -16,7 +16,7 @@ from mcoi_runtime.governance.auth.jwt import (
 )
 # Private helpers stay on the canonical core path; the shim only
 # re-exports public API. Phase 4 of the F7 reorg consolidates this.
-from mcoi_runtime.core.jwt_auth import _b64url_decode, _b64url_encode
+from mcoi_runtime.governance.auth.jwt import _b64url_decode, _b64url_encode
 from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     create_api_key_guard,

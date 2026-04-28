@@ -268,6 +268,12 @@ class ProofBridge:
                 "actor_id": audit.actor_id,
                 "reason": audit.reason,
                 "transitioned_at": audit.transitioned_at,
+                # Mirrors Rust `TransitionAuditRecord.metadata` (HashMap
+                # with `#[serde(default)]`). Pre-fix this field was
+                # omitted, causing silent cross-language drift: the
+                # Python contract carried metadata but the JSON wire
+                # format dropped it. Always emitted, possibly as `{}`.
+                "metadata": dict(audit.metadata),
             },
             "lineage_depth": proof.capsule.lineage_depth,
             "decision": proof.decision,

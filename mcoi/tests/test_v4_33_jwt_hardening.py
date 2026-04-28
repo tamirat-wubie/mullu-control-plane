@@ -31,7 +31,7 @@ import pytest
 from mcoi_runtime.governance.auth.jwt import JWTAuthenticator, OIDCConfig
 # Private helper stays on the canonical core path; shim only
 # re-exports public API.
-from mcoi_runtime.core.jwt_auth import _default_jwks_fetcher
+from mcoi_runtime.governance.auth.jwt import _default_jwks_fetcher
 
 
 # ============================================================

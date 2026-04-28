@@ -9,7 +9,7 @@ Invariants:
   - Analysis is AST-based (no execution side effects).
   - Cycle detection uses DFS with back-edge detection.
   - Results are deterministic for the same source tree.
-  - Module names are dot-qualified (e.g., "mcoi_runtime.core.jwt_auth").
+  - Module names are dot-qualified (e.g., "mcoi_runtime.governance.auth.jwt").
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from typing import Any
 class ImportEdge:
     """A directed import dependency: source imports target."""
 
-    source: str  # e.g., "mcoi_runtime.core.jwt_auth"
+    source: str  # e.g., "mcoi_runtime.governance.auth.jwt"
     target: str  # e.g., "mcoi_runtime.contracts.llm"
     is_type_checking: bool = False  # Inside TYPE_CHECKING block
     line_number: int = 0

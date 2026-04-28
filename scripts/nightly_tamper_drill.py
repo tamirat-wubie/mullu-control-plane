@@ -46,12 +46,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 MCOI_PATH = REPO_ROOT / "mcoi"
 sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.core.audit_trail import (  # noqa: E402
+from mcoi_runtime.governance.audit.trail import (  # noqa: E402
     AuditTrail,
     LEDGER_SCHEMA_VERSION_MAX,
     _canonical_hash_v1,
 )
-from mcoi_runtime.core.audit_export import AuditExporter  # noqa: E402
+from mcoi_runtime.governance.audit.export import AuditExporter  # noqa: E402
 
 
 def _clock() -> str:

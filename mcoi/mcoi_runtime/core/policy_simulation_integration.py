@@ -30,7 +30,7 @@ from ..contracts.memory_mesh import (
 from .event_spine import EventSpineEngine
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 from .memory_mesh import MemoryMeshEngine
-from .policy_simulation import PolicySimulationEngine
+from mcoi_runtime.governance.policy.simulation import PolicySimulationEngine
 
 
 def _now_iso() -> str:

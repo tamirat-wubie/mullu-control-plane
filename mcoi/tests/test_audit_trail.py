@@ -262,7 +262,7 @@ from mcoi_runtime.governance.audit.trail import LEDGER_SCHEMA_VERSION_MAX
 # Private helpers stay on the canonical core path (the shim only
 # re-exports public API). Phase 4 of the F7 reorg moves the
 # implementation here, at which point this can collapse to one import.
-from mcoi_runtime.core.audit_trail import _recompute_entry_hash
+from mcoi_runtime.governance.audit.trail import _recompute_entry_hash
 
 
 class TestSequenceMonotonicity:
@@ -476,7 +476,7 @@ class TestSpecDocExists:
 
 from mcoi_runtime.governance.audit.trail import LEDGER_V1_CONTENT_FIELDS
 # Private helpers stay on the canonical core path; see note above.
-from mcoi_runtime.core.audit_trail import (
+from mcoi_runtime.governance.audit.trail import (
     _canonical_hash_v1,
     _canonical_content_v1,
 )

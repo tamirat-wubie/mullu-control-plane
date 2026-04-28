@@ -35,7 +35,7 @@
       "evidence_files": [
         "docs/03_trace_and_replay.md",
         "docs/37_terminal_closure_certificate.md",
-        "mcoi/mcoi_runtime/core/audit_trail.py"
+        "mcoi/mcoi_runtime/governance/audit/trail.py"
       ],
       "mappings": [
         {
@@ -96,7 +96,7 @@
       "capability": "Policy versioning, rollback, diff, and shadow evaluation",
       "evidence_files": [
         "docs/04_policy_and_verification.md",
-        "mcoi/mcoi_runtime/core/policy_versioning.py",
+        "mcoi/mcoi_runtime/governance/policy/versioning.py",
         "mcoi/mcoi_runtime/app/routers/policy_versions.py"
       ],
       "mappings": [
@@ -158,7 +158,7 @@
       "capability": "Input and output safety guard-chain stages",
       "evidence_files": [
         "docs/44_lambda_safety_guard_chain.md",
-        "mcoi/mcoi_runtime/core/content_safety.py",
+        "mcoi/mcoi_runtime/governance/guards/content_safety.py",
         "mcoi/tests/test_content_safety.py"
       ],
       "mappings": [
