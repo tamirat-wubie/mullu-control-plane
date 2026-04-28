@@ -6,6 +6,7 @@ build/test execution, workspace root containment, and code review.
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -385,3 +386,117 @@ class TestCodeGoldenScenarios:
         assert review.verdict is ReviewVerdict.CHANGES_REQUESTED
         assert review.reviewer_id == "senior-dev"
         assert len(review.comments) == 2
+
+
+# --- run_command env scrub ---
+
+
+class TestRunCommandEnvScrub:
+    """Verify run_command scrubs the parent process environment.
+
+    Parent credentials (AWS_*, GITHUB_TOKEN, ANTHROPIC_API_KEY) and runtime
+    modifiers (LD_PRELOAD, PYTHONPATH) must not leak into child processes
+    spawned for code automation.
+    """
+
+    def _capture_child_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+        *,
+        extra_env: dict[str, str] | None = None,
+    ) -> dict[str, str]:
+        adapter = _adapter(_setup_workspace(tmp_path))
+        captured: dict[str, dict[str, str]] = {}
+
+        def fake_run(*args, **kwargs):
+            captured["env"] = dict(kwargs.get("env") or {})
+            return subprocess.CompletedProcess(args[0], 0, stdout="", stderr="")
+
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            fake_run,
+        )
+        kwargs: dict[str, object] = {}
+        if extra_env is not None:
+            kwargs["extra_env"] = extra_env
+        adapter.run_command("cmd-env", ["echo", "ok"], **kwargs)
+        return captured["env"]
+
+    def test_aws_credentials_do_not_leak(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "AKIA-fake-id")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "fake-secret")
+        env = self._capture_child_env(monkeypatch, tmp_path)
+        assert "AWS_ACCESS_KEY_ID" not in env
+        assert "AWS_SECRET_ACCESS_KEY" not in env
+
+    def test_github_token_does_not_leak(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        monkeypatch.setenv("GITHUB_TOKEN", "ghp_fake")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake")
+        env = self._capture_child_env(monkeypatch, tmp_path)
+        assert "GITHUB_TOKEN" not in env
+        assert "ANTHROPIC_API_KEY" not in env
+
+    def test_runtime_modifiers_do_not_leak(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        monkeypatch.setenv("LD_PRELOAD", "/tmp/evil.so")
+        monkeypatch.setenv("PYTHONPATH", "/tmp/evil")
+        env = self._capture_child_env(monkeypatch, tmp_path)
+        assert "LD_PRELOAD" not in env
+        assert "PYTHONPATH" not in env
+
+    def test_path_is_preserved(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        env = self._capture_child_env(monkeypatch, tmp_path)
+        assert "PATH" in env
+
+    def test_locale_baseline_is_set(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        env = self._capture_child_env(monkeypatch, tmp_path)
+        assert env.get("PYTHONIOENCODING") == "utf-8"
+        assert env.get("LC_ALL") == "C.UTF-8"
+        assert env.get("LANG") == "C.UTF-8"
+
+    def test_extra_env_passes_through(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        env = self._capture_child_env(
+            monkeypatch, tmp_path,
+            extra_env={"VIRTUAL_ENV": "/path/to/venv", "MY_FLAG": "1"},
+        )
+        assert env["VIRTUAL_ENV"] == "/path/to/venv"
+        assert env["MY_FLAG"] == "1"
+
+    def test_extra_env_cannot_override_credentials_via_parent(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        """extra_env is the only path for non-allowlisted vars; parent env is ignored."""
+        monkeypatch.setenv("SECRET_TOKEN", "leaked-from-parent")
+        env = self._capture_child_env(monkeypatch, tmp_path)
+        assert "SECRET_TOKEN" not in env
+
+    def test_extra_env_rejects_malformed_entries(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+    ):
+        env = self._capture_child_env(
+            monkeypatch, tmp_path,
+            extra_env={
+                "GOOD": "value",
+                "": "empty-key-rejected",
+                "BAD=KEY": "equals-in-key-rejected",
+                "NUL\x00KEY": "nul-in-key-rejected",
+                "NUL_VALUE": "value\x00with-nul",
+            },
+        )
+        assert env["GOOD"] == "value"
+        assert "" not in env
+        assert "BAD=KEY" not in env
+        assert "NUL\x00KEY" not in env
+        assert "NUL_VALUE" not in env

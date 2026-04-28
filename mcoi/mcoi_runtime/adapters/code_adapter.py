@@ -6,11 +6,16 @@ Invariants:
   - No shell expansion. No glob. No variable substitution.
   - Malformed patches fail closed.
   - Build/test commands run with explicit timeout.
-  - No git push, no network, no package publication.
+  - Subprocess environment is scrubbed: parent credentials and runtime
+    modifiers do not leak. Only platform infrastructure (PATH, locale, OS
+    keys) and caller-opted-in extra_env values are passed through.
+  - Network egress is NOT enforced at this layer — callers requiring a
+    no-network guarantee must run via a sandbox (e.g. Docker --network=none).
 """
 
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from hashlib import sha256
@@ -43,6 +48,47 @@ def _is_within_root(root: Path, target: Path) -> bool:
 
 _DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
 _TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
+
+
+_LOCALE_BASELINE: dict[str, str] = {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONUTF8": "1",
+}
+
+_PLATFORM_PASSTHROUGH_KEYS: tuple[str, ...] = (
+    ("PATH", "SYSTEMROOT", "COMSPEC", "PATHEXT", "TEMP", "TMP", "WINDIR")
+    if os.name == "nt"
+    else ("PATH", "HOME", "TMPDIR")
+)
+
+
+def _scrubbed_env(extra_env: dict[str, str] | None = None) -> dict[str, str]:
+    """Build a minimal environment for child processes.
+
+    The parent process may carry credentials (AWS_*, GITHUB_TOKEN,
+    ANTHROPIC_API_KEY, SSH_AUTH_SOCK) and runtime modifiers (LD_PRELOAD,
+    PYTHONPATH) that must not leak into untrusted code-automation commands.
+    This returns a fresh environment containing only platform infrastructure
+    plus caller-opted-in keys.
+    """
+    env: dict[str, str] = dict(_LOCALE_BASELINE)
+    parent = os.environ
+    for key in _PLATFORM_PASSTHROUGH_KEYS:
+        value = parent.get(key)
+        if value is not None:
+            env[key] = value
+    if extra_env:
+        for key, value in extra_env.items():
+            if not isinstance(key, str) or not key:
+                continue
+            if "=" in key or "\x00" in key:
+                continue
+            if not isinstance(value, str) or "\x00" in value:
+                continue
+            env[key] = value
+    return env
 
 
 def _truncate_output(text: str | None, max_bytes: int) -> str:
@@ -246,11 +292,15 @@ class LocalCodeAdapter:
         *,
         timeout_seconds: int = 60,
         max_output_bytes: int = _DEFAULT_MAX_OUTPUT_BYTES,
+        extra_env: dict[str, str] | None = None,
     ) -> tuple[int, str, str, int]:
         """Run a command in the workspace root. Returns (exit_code, stdout, stderr, duration_ms).
 
         Uses list form (no shell expansion). Timeout enforced.
         Output is truncated to max_output_bytes (default 1 MB).
+        Subprocess environment is scrubbed; parent credentials do not leak.
+        Callers needing specific env vars (e.g. VIRTUAL_ENV, PYTHONPATH) must
+        pass them via extra_env.
         """
         ensure_non_empty_text("command_id", command_id)
         start = time.monotonic()
@@ -258,6 +308,7 @@ class LocalCodeAdapter:
             result = subprocess.run(
                 command,
                 cwd=str(self._root),
+                env=_scrubbed_env(extra_env),
                 capture_output=True,
                 text=True,
                 timeout=timeout_seconds,
