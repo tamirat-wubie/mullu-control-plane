@@ -49,6 +49,7 @@ class SoftwareDevRunnerConfig:
     gate_runners: Mapping[Any, Any]
     clock: Callable[[], str]
     ucja_runner: Any | None = None
+    receipt_store: Any | None = None
 
 
 _TAIL_BYTES: int = 1024
@@ -225,6 +226,7 @@ def make_default_software_dev_runner(
         gate_runners=gate_runners,
         clock=clock,
         ucja_runner=ucja_runner,
+        receipt_store=None,
     )
 
 
