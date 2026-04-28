@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, Callable, Mapping, Protocol
 from uuid import uuid4
 
@@ -93,15 +94,58 @@ class _LoopAbort(Exception):
         self.layer = layer
 
 
+# ---- Solver outcome ----
+
+
+class SolverOutcome(StrEnum):
+    """Loop-level typed disposition.
+
+    Mirrors TerminalClosureDisposition but with verbs that read as a
+    solver answer (did the work get done?). Always derivable from the
+    certificate; surfaced separately so callers don't have to parse the
+    certificate to decide whether to retry, escalate, or move on.
+    """
+
+    SOLVED = "solved"
+    SOLVED_WITH_COMPENSATION = "solved_with_compensation"
+    REQUIRES_REVIEW = "requires_review"
+
+
+def _outcome_from_disposition(
+    disposition: TerminalClosureDisposition,
+) -> SolverOutcome:
+    if disposition is TerminalClosureDisposition.COMMITTED:
+        return SolverOutcome.SOLVED
+    if disposition is TerminalClosureDisposition.COMPENSATED:
+        return SolverOutcome.SOLVED_WITH_COMPENSATION
+    return SolverOutcome.REQUIRES_REVIEW
+
+
 # ---- Public function ----
 
 
 @dataclass
 class LoopOutcome:
-    """The two artifacts the orchestrator produces: certificate + evidence trail."""
+    """The artifacts the orchestrator produces.
+
+    `outcome` is the typed solver answer; `certificate` is the typed
+    governance record (TerminalClosureCertificate); `evidence` is the
+    full structured trail of every step.
+    """
 
     certificate: TerminalClosureCertificate
     evidence: AutonomyEvidence
+
+    @property
+    def outcome(self) -> SolverOutcome:
+        return _outcome_from_disposition(self.certificate.disposition)
+
+    @property
+    def solved(self) -> bool:
+        return self.outcome in (
+            SolverOutcome.SOLVED,
+            SolverOutcome.SOLVED_WITH_COMPENSATION,
+        )
 
 
 def governed_software_change(

@@ -618,18 +618,23 @@ class LocalCodeAdapter:
     def inspect_repository(self, repo_id: str, name: str) -> RepositoryDescriptor:
         """Create a repository descriptor from the workspace."""
         ensure_non_empty_text("repo_id", repo_id)
-        # Detect language hints from file extensions
         extensions: set[str] = set()
         for f in _iter_workspace_files(self._root):
             if f.suffix:
                 extensions.add(f.suffix.lstrip("."))
-        hints = sorted(extensions)[:10]  # Cap at 10
+        sorted_extensions = sorted(extensions)
+        hints = sorted_extensions[:10]
+        truncated = len(sorted_extensions) > 10
 
         return RepositoryDescriptor(
             repo_id=repo_id,
             name=name,
             root_path=str(self._root),
             language_hints=tuple(hints),
+            metadata={
+                "extension_count": len(sorted_extensions),
+                "extensions_truncated": truncated,
+            },
         )
 
     def list_files(self, repo_id: str, extensions: tuple[str, ...] = ()) -> WorkspaceState:
@@ -815,7 +820,12 @@ class LocalCodeAdapter:
                 cwd=str(self._root),
                 env=_scrubbed_env(extra_env),
                 capture_output=True,
-                text=True,
+                # Force UTF-8 + errors=replace so that on Windows where the
+                # default console encoding is CP1252, child processes that
+                # write UTF-8 bytes do not get silently mangled. errors=replace
+                # ensures undecodable bytes do not crash the adapter.
+                encoding="utf-8",
+                errors="replace",
                 timeout=timeout_seconds,
                 shell=False,  # Explicit: no shell expansion
             )
