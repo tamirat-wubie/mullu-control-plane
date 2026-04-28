@@ -133,6 +133,34 @@ class SoftwareChangeReceiptStore:
             raise PersistenceError("request receipt chain is not terminally closed")
         return receipts
 
+    def summary(self) -> dict[str, Any]:
+        """Return dashboard-ready receipt lifecycle counts without mutation."""
+        by_stage = {
+            stage.value: 0
+            for stage in SoftwareChangeReceiptStage
+        }
+        latest_receipt = self._receipts[-1] if self._receipts else None
+        requests: dict[str, SoftwareChangeReceipt] = {}
+        for receipt in self._receipts:
+            by_stage[receipt.stage.value] += 1
+            requests[receipt.request_id] = receipt
+        terminal_request_count = sum(
+            1
+            for receipt in requests.values()
+            if receipt.stage is SoftwareChangeReceiptStage.TERMINAL_CLOSED
+        )
+        return {
+            "total_receipts": len(self._receipts),
+            "request_count": len(requests),
+            "terminal_request_count": terminal_request_count,
+            "open_request_count": len(requests) - terminal_request_count,
+            "by_stage": by_stage,
+            "latest_receipt_id": latest_receipt.receipt_id if latest_receipt else None,
+            "latest_request_id": latest_receipt.request_id if latest_receipt else None,
+            "latest_stage": latest_receipt.stage.value if latest_receipt else None,
+            "governed": True,
+        }
+
 
 class FileSoftwareChangeReceiptStore(SoftwareChangeReceiptStore):
     """JSON-file backed receipt store.
