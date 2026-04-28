@@ -42,6 +42,9 @@ class SoftwareReceiptEnvelope(BaseModel):
     stage: str | None = None
     found: bool | None = None
     terminal_closed: bool | None = None
+    requires_operator_review: bool | None = None
+    review_signal_count: int | None = None
+    review_signals: list[dict[str, Any]] | None = None
     governed: bool = True
 
 
@@ -66,6 +69,19 @@ def _serialize_receipts(
     receipts: tuple[SoftwareChangeReceipt, ...],
 ) -> list[dict[str, Any]]:
     return [receipt.to_json_dict() for receipt in receipts]
+
+
+def _review_signals(receipts: tuple[SoftwareChangeReceipt, ...]) -> list[dict[str, str]]:
+    return [
+        {
+            "request_id": receipt.request_id,
+            "latest_receipt_id": receipt.receipt_id,
+            "latest_stage": receipt.stage.value,
+            "latest_outcome": receipt.outcome,
+            "reason": "software_change_receipt_chain_open",
+        }
+        for receipt in receipts
+    ]
 
 
 @router.get("", response_model=SoftwareReceiptEnvelope)
@@ -125,6 +141,30 @@ def replay_software_receipts(
         count=len(receipts),
         receipts=_serialize_receipts(receipts),
         terminal_closed=True,
+    )
+
+
+@router.get("/review", response_model=SoftwareReceiptEnvelope)
+def review_software_receipts(
+    limit: int = Query(default=10, ge=1),
+    tenant_id: str = Depends(require_read),
+) -> SoftwareReceiptEnvelope:
+    """List latest receipt for each request chain needing operator review."""
+    try:
+        receipts = _receipt_store().review_receipts(limit=limit)
+    except PersistenceError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("receipt review query rejected", exc),
+        ) from exc
+    return SoftwareReceiptEnvelope(
+        operation="review",
+        tenant_id=tenant_id,
+        count=len(receipts),
+        receipts=_serialize_receipts(receipts),
+        requires_operator_review=bool(receipts),
+        review_signal_count=len(receipts),
+        review_signals=_review_signals(receipts),
     )
 
 
