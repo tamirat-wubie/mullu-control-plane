@@ -229,6 +229,41 @@ class ProofBridge:
         expected = hashlib.sha256(content.encode()).hexdigest()
         return expected == receipt.receipt_hash
 
+    @staticmethod
+    def verify_replay_token(receipt: TransitionReceipt) -> bool:
+        """Verify the receipt's replay_token reconstructs from its content
+        and the issued_at timestamp recorded on the receipt itself.
+
+        The replay_token is the deterministic-execution anchor described in
+        docs/MAF_RECEIPT_COVERAGE.md as
+            "Deterministic token for re-execution validation."
+        Construction (matches Rust `maf-kernel::sha256_hex(...)` and
+        Python `certify_transition`):
+            content      = entity:from:to:action:before:after:causal
+            replay_token = "replay-" + sha256(content + ":" + issued_at)[:16]
+
+        A consumer holding a receipt can call this to confirm the token
+        was not fabricated and was generated against the timestamp the
+        receipt itself records. Returns True iff the reconstructed token
+        equals receipt.replay_token. The function is static so it can be
+        called without a ProofBridge instance — verification is pure.
+
+        This closes the "replay_token generated but never verified" gap
+        from the audit. It does not by itself prove a re-execution
+        produced the same outputs; that would require a replay system
+        to compare its own derived token against this receipt's token.
+        What it DOES prove: the token is consistent with its own
+        content fields.
+        """
+        content = (
+            f"{receipt.entity_id}:{receipt.from_state}:{receipt.to_state}:"
+            f"{receipt.action}:{receipt.before_state_hash}:{receipt.after_state_hash}:"
+            f"{receipt.causal_parent}"
+        )
+        formatted = f"{content}:{receipt.issued_at}"
+        expected = f"replay-{hashlib.sha256(formatted.encode()).hexdigest()[:16]}"
+        return expected == receipt.replay_token
+
     def serialize_proof(self, proof: GovernanceProof) -> dict[str, Any]:
         """Serialize a governance proof to JSON-compatible dict.
 
