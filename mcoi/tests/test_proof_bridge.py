@@ -162,6 +162,62 @@ class TestReceiptVerification:
         )
         assert bridge.verify_receipt(proof.capsule.receipt)
 
+    def test_verify_replay_token_returns_true_for_genuine_receipt(self):
+        """A receipt produced by the bridge MUST verify against its own
+        replay_token. Closes the "replay_token generated but never
+        verified" finding."""
+        bridge = ProofBridge(clock=_clock)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
+            decision="allowed",
+        )
+        assert ProofBridge.verify_replay_token(proof.capsule.receipt)
+
+    def test_verify_replay_token_detects_tampered_token(self):
+        """If a receipt's replay_token is replaced with a different
+        valid-looking token, the verifier MUST reject it."""
+        from dataclasses import replace
+        bridge = ProofBridge(clock=_clock)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
+            decision="allowed",
+        )
+        original = proof.capsule.receipt
+        tampered = replace(original, replay_token="replay-0000000000000000")
+        assert ProofBridge.verify_replay_token(original) is True
+        assert ProofBridge.verify_replay_token(tampered) is False
+
+    def test_verify_replay_token_detects_tampered_timestamp(self):
+        """The token is anchored to issued_at — substituting a different
+        timestamp on the receipt MUST make the token fail to verify."""
+        from dataclasses import replace
+        bridge = ProofBridge(clock=_clock)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
+            decision="allowed",
+        )
+        original = proof.capsule.receipt
+        # Substitute a different timestamp; the original replay_token was
+        # computed against the original issued_at, so verification fails.
+        tampered = replace(original, issued_at="2099-12-31T23:59:59Z")
+        assert ProofBridge.verify_replay_token(tampered) is False
+
+    def test_verify_replay_token_is_pure_static_method(self):
+        """The verifier must be callable without instantiating a bridge —
+        a downstream consumer who has only the receipt should be able
+        to verify it without the platform's full state."""
+        bridge = ProofBridge(clock=_clock)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1", endpoint="/api/test",
+            guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
+            decision="allowed",
+        )
+        # Called via class, not instance.
+        assert ProofBridge.verify_replay_token(proof.capsule.receipt) is True
+
     def test_receipt_hash_deterministic(self):
         bridge1 = ProofBridge(clock=_clock)
         bridge2 = ProofBridge(clock=_clock)
