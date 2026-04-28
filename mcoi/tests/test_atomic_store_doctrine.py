@@ -30,13 +30,13 @@ from dataclasses import dataclass
 import pytest
 
 from mcoi_runtime.contracts.llm import LLMBudget
-from mcoi_runtime.core.audit_trail import AuditEntry, AuditStore, AuditTrail
-from mcoi_runtime.core.rate_limiter import (
+from mcoi_runtime.governance.audit.trail import AuditEntry, AuditStore, AuditTrail
+from mcoi_runtime.governance.guards.rate_limit import (
     RateLimitConfig,
     RateLimitStore,
     RateLimiter,
 )
-from mcoi_runtime.core.tenant_budget import (
+from mcoi_runtime.governance.guards.budget import (
     BudgetStore,
     TenantBudgetManager,
     TenantBudgetPolicy,

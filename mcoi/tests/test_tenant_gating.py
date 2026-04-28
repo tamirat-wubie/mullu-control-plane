@@ -8,7 +8,7 @@ import threading
 import time
 
 import pytest
-from mcoi_runtime.core.tenant_gating import (
+from mcoi_runtime.governance.guards.tenant_gating import (
     InvalidTenantStatusTransitionError,
     TenantGate,
     TenantAlreadyRegisteredError,
@@ -18,7 +18,7 @@ from mcoi_runtime.core.tenant_gating import (
     TenantStatus,
     create_tenant_gating_guard,
 )
-from mcoi_runtime.core.governance_guard import GovernanceGuardChain
+from mcoi_runtime.governance.guards.chain import GovernanceGuardChain
 from mcoi_runtime.persistence.postgres_governance_stores import (
     InMemoryTenantGatingStore,
     PostgresTenantGatingStore,

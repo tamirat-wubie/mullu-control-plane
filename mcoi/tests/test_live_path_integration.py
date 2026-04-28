@@ -18,9 +18,9 @@ from datetime import datetime, timezone
 
 from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 from mcoi_runtime.contracts.llm import LLMBudget, LLMProvider
-from mcoi_runtime.core.audit_trail import AuditTrail
+from mcoi_runtime.governance.audit.trail import AuditTrail
 from mcoi_runtime.core.cost_analytics import CostAnalyticsEngine
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager, TenantBudgetPolicy
+from mcoi_runtime.governance.guards.budget import TenantBudgetManager, TenantBudgetPolicy
 
 
 FIXED_CLOCK = lambda: "2026-03-27T12:00:00Z"

@@ -19,7 +19,7 @@ class TestResetBudgetWriteThrough:
         return "2026-01-01T00:00:00Z"
 
     def test_reset_budget_persists_to_store(self):
-        from mcoi_runtime.core.tenant_budget import TenantBudgetManager
+        from mcoi_runtime.governance.guards.budget import TenantBudgetManager
         from mcoi_runtime.persistence.postgres_governance_stores import InMemoryBudgetStore
         store = InMemoryBudgetStore()
         mgr = TenantBudgetManager(clock=self._clock, store=store)
@@ -33,7 +33,7 @@ class TestResetBudgetWriteThrough:
         assert stored.calls_made == 0
 
     def test_reset_budget_multiple_times(self):
-        from mcoi_runtime.core.tenant_budget import TenantBudgetManager
+        from mcoi_runtime.governance.guards.budget import TenantBudgetManager
         from mcoi_runtime.persistence.postgres_governance_stores import InMemoryBudgetStore
         store = InMemoryBudgetStore()
         mgr = TenantBudgetManager(clock=self._clock, store=store)
@@ -80,7 +80,7 @@ class TestAuditDetailSizeLimit:
         return "2026-01-01T00:00:00Z"
 
     def test_normal_detail_passes(self):
-        from mcoi_runtime.core.audit_trail import AuditTrail
+        from mcoi_runtime.governance.audit.trail import AuditTrail
         trail = AuditTrail(clock=self._clock)
         entry = trail.record(
             action="test", actor_id="user", tenant_id="t1",
@@ -90,7 +90,7 @@ class TestAuditDetailSizeLimit:
         assert entry.detail == {"key": "value"}
 
     def test_oversized_detail_truncated(self):
-        from mcoi_runtime.core.audit_trail import AuditTrail
+        from mcoi_runtime.governance.audit.trail import AuditTrail
         trail = AuditTrail(clock=self._clock)
         huge_detail = {"data": "x" * 100_000}
         entry = trail.record(
@@ -102,7 +102,7 @@ class TestAuditDetailSizeLimit:
         assert "_original_size" in entry.detail
 
     def test_detail_at_limit_passes(self):
-        from mcoi_runtime.core.audit_trail import AuditTrail
+        from mcoi_runtime.governance.audit.trail import AuditTrail
         trail = AuditTrail(clock=self._clock)
         # Create detail just under limit
         small_detail = {"k": "v" * 100}
@@ -119,7 +119,7 @@ class TestAuditDetailSizeLimit:
 
 class TestContentSafetyChainCaching:
     def test_default_chain_is_cached(self):
-        from mcoi_runtime.core.content_safety import build_default_safety_chain
+        from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
         chain1 = build_default_safety_chain()
         chain2 = build_default_safety_chain()
         assert chain1 is chain2  # Same object (singleton)
@@ -130,11 +130,11 @@ class TestContentSafetyChainCaching:
 
 class TestGuardContextTypedDict:
     def test_guard_context_importable(self):
-        from mcoi_runtime.core.governance_guard import GuardContext
+        from mcoi_runtime.governance.guards.chain import GuardContext
         assert GuardContext is not None
 
     def test_guard_context_fields(self):
-        from mcoi_runtime.core.governance_guard import GuardContext
+        from mcoi_runtime.governance.guards.chain import GuardContext
         # TypedDict should have these keys defined
         annotations = GuardContext.__annotations__
         assert "tenant_id" in annotations
@@ -150,7 +150,7 @@ class TestGuardContextTypedDict:
 class TestProofBridgeInMiddleware:
     def test_middleware_accepts_proof_bridge(self):
         from mcoi_runtime.app.middleware import GovernanceMiddleware, build_guard_chain
-        from mcoi_runtime.core.governance_guard import GovernanceGuardChain
+        from mcoi_runtime.governance.guards.chain import GovernanceGuardChain
         from mcoi_runtime.core.proof_bridge import ProofBridge
         bridge = ProofBridge(clock=lambda: "2026-01-01T00:00:00Z")
         # Should not crash on construction

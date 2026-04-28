@@ -12,7 +12,7 @@ from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningA
 from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceMerger, EvidenceState, EvidenceStateCategory
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningBoundary, PlanningKnowledge
-from mcoi_runtime.core.policy_engine import PolicyEngine, PolicyInput, PolicyReason
+from mcoi_runtime.governance.policy.engine import PolicyEngine, PolicyInput, PolicyReason
 from mcoi_runtime.core.registry_index import RegistryIndex
 from mcoi_runtime.core.registry_store import RegistryEntry, RegistryLifecycle, RegistryStore
 from mcoi_runtime.core.replay_engine import (

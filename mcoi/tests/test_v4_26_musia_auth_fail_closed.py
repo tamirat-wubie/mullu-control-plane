@@ -126,7 +126,7 @@ def test_real_auth_configured_overrides_dev_mode_check():
     """If a real authenticator IS configured, fail-closed is moot —
     the resolver runs the auth path. Verifies that fail-closed is
     only consulted on the no-auth-configured branch."""
-    from mcoi_runtime.core.api_key_auth import APIKeyManager
+    from mcoi_runtime.governance.auth.api_key import APIKeyManager
     mgr = APIKeyManager(clock=lambda: "2026-01-01T00:00:00Z")
     configure_musia_auth(mgr)
     configure_musia_dev_mode(False)  # would be a problem... if it mattered

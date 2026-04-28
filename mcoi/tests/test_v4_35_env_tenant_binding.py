@@ -30,13 +30,13 @@ from mcoi_runtime.app.server_context import (
     KNOWN_ENVS,
     resolve_env,
 )
-from mcoi_runtime.core.api_key_auth import APIKeyManager
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
     create_api_key_guard,
     create_jwt_guard,
 )
-from mcoi_runtime.core.jwt_auth import JWTAuthenticator, OIDCConfig
+from mcoi_runtime.governance.auth.jwt import JWTAuthenticator, OIDCConfig
 
 
 # ============================================================
@@ -237,7 +237,7 @@ class TestMiddlewareTenantExplicit:
             pytest.skip("fastapi not installed")
 
         from mcoi_runtime.app.middleware import GovernanceMiddleware
-        from mcoi_runtime.core.governance_guard import (
+        from mcoi_runtime.governance.guards.chain import (
             GovernanceGuard, GovernanceGuardChain, GuardResult,
         )
 

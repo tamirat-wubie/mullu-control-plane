@@ -6,7 +6,7 @@ apply as the outer gate.
 """
 
 import pytest
-from mcoi_runtime.core.rate_limiter import (
+from mcoi_runtime.governance.guards.rate_limit import (
     RateLimiter,
     RateLimitConfig,
     RateLimitResult,
@@ -152,7 +152,7 @@ class TestIdentityRateLimiting:
 
 class TestRateLimitGuardWithIdentity:
     def test_guard_passes_identity_from_context(self):
-        from mcoi_runtime.core.governance_guard import create_rate_limit_guard
+        from mcoi_runtime.governance.guards.chain import create_rate_limit_guard
         limiter = RateLimiter(
             default_config=RateLimitConfig(max_tokens=100, refill_rate=0.001),
             identity_config=RateLimitConfig(max_tokens=1, refill_rate=0.001),
@@ -171,7 +171,7 @@ class TestRateLimitGuardWithIdentity:
         assert r2.allowed is False
 
     def test_guard_uses_api_key_id_as_fallback(self):
-        from mcoi_runtime.core.governance_guard import create_rate_limit_guard
+        from mcoi_runtime.governance.guards.chain import create_rate_limit_guard
         limiter = RateLimiter(
             default_config=RateLimitConfig(max_tokens=100, refill_rate=0.001),
             identity_config=RateLimitConfig(max_tokens=1, refill_rate=0.001),
@@ -188,7 +188,7 @@ class TestRateLimitGuardWithIdentity:
         assert r2.allowed is False
 
     def test_guard_no_identity_uses_tenant_only(self):
-        from mcoi_runtime.core.governance_guard import create_rate_limit_guard
+        from mcoi_runtime.governance.guards.chain import create_rate_limit_guard
         limiter = RateLimiter(
             default_config=RateLimitConfig(max_tokens=2, refill_rate=0.001),
             identity_config=RateLimitConfig(max_tokens=1, refill_rate=0.001),

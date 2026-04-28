@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLedgerStore
 from mcoi_runtime.mcp.server import MulluMCPServer
 from mcoi_runtime.core.governed_session import Platform
-from mcoi_runtime.core.audit_trail import AuditTrail
+from mcoi_runtime.governance.audit.trail import AuditTrail
 from mcoi_runtime.core.proof_bridge import ProofBridge
 
 

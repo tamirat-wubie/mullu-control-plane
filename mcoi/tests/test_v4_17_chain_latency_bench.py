@@ -29,7 +29,7 @@ from mcoi_runtime.app.routers.musia_governance_metrics import (
     REGISTRY as METRICS,
 )
 from mcoi_runtime.core.governance_bench import benchmark
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuard,
     GovernanceGuardChain,
     GuardResult,

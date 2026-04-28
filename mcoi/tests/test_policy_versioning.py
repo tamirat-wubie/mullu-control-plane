@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from mcoi_runtime.core.policy_engine import PolicyInput
-from mcoi_runtime.core.policy_versioning import (
+from mcoi_runtime.governance.policy.engine import PolicyInput
+from mcoi_runtime.governance.policy.versioning import (
     PolicyArtifact,
     PolicyVersionRegistry,
     ShadowGovernanceEvaluator,

@@ -1,7 +1,7 @@
 """Governance Decision Log Tests — Queryable decision recording."""
 
 import pytest
-from mcoi_runtime.core.governance_decision_log import (
+from mcoi_runtime.governance.audit.decision_log import (
     GovernanceDecision,
     GovernanceDecisionLog,
     GuardDecisionDetail,

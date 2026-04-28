@@ -36,7 +36,7 @@ from mcoi_runtime.app.routers.musia_governance_metrics import (
     VERDICT_DENIED,
     router as metrics_router,
 )
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuard,
     GovernanceGuardChain,
     GuardResult,

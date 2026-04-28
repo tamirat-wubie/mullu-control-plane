@@ -1,8 +1,9 @@
 """v4.16.0 — chain gating extends from /constructs/* writes to /domains/*/process runs.
 
 The v4.15.0 bridge gated only construct-write paths. v4.16.0 wires the
-same chain into the six /domains/* endpoints so a deployment can apply
-policy uniformly across writes AND domain runs.
+same chain into every /domains/* endpoint (originally six; expanded to
+fifteen as of v4.8.x) so a deployment can apply policy uniformly across
+writes AND domain runs.
 
 When the chain is detached (default), domain runs behave exactly as in
 v4.15.x. When attached, the chain runs *before* the cycle. A rejection
@@ -25,7 +26,7 @@ from mcoi_runtime.app.routers.musia_governance_bridge import (
     configure_musia_governance_chain,
     gate_domain_run,
 )
-from mcoi_runtime.core.governance_guard import (
+from mcoi_runtime.governance.guards.chain import (
     GovernanceGuard,
     GovernanceGuardChain,
     GuardResult,

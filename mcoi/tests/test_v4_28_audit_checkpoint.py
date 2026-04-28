@@ -25,7 +25,7 @@ from hashlib import sha256
 
 import pytest
 
-from mcoi_runtime.core.audit_trail import (
+from mcoi_runtime.governance.audit.trail import (
     AuditCheckpoint,
     AuditEntry,
     AuditStore,

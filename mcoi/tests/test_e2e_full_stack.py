@@ -65,7 +65,7 @@ class TestE2ESessionLifecycle:
             session.llm("third")
 
     def test_content_safety_blocks_injection(self):
-        from mcoi_runtime.core.content_safety import build_default_safety_chain
+        from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
         bridge = StubLLMBridge()
         session = self._platform(
             llm_bridge=bridge, content_safety_chain=build_default_safety_chain(),
@@ -88,7 +88,7 @@ class TestE2ESessionLifecycle:
         assert "john@example.com" not in result.content
 
     def test_audit_trail_records_all(self):
-        from mcoi_runtime.core.audit_trail import AuditTrail
+        from mcoi_runtime.governance.audit.trail import AuditTrail
         trail = AuditTrail(clock=lambda: "2026-04-07T12:00:00Z")
         bridge = StubLLMBridge()
         session = self._platform(llm_bridge=bridge, audit_trail=trail).connect(
@@ -173,8 +173,8 @@ class TestE2EGateway:
 class TestE2EFullStack:
     def test_all_subsystems_active(self):
         from mcoi_runtime.core.governed_session import Platform, SessionPolicy
-        from mcoi_runtime.core.audit_trail import AuditTrail
-        from mcoi_runtime.core.content_safety import build_default_safety_chain
+        from mcoi_runtime.governance.audit.trail import AuditTrail
+        from mcoi_runtime.governance.guards.content_safety import build_default_safety_chain
         from mcoi_runtime.core.pii_scanner import PIIScanner
         from mcoi_runtime.core.proof_bridge import ProofBridge
         from mcoi_runtime.core.llm_cache import LLMResponseCache

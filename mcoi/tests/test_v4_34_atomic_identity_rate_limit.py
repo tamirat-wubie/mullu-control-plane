@@ -25,7 +25,7 @@ import threading
 
 import pytest
 
-from mcoi_runtime.core.rate_limiter import (
+from mcoi_runtime.governance.guards.rate_limit import (
     RateLimitConfig,
     RateLimitStore,
     RateLimiter,

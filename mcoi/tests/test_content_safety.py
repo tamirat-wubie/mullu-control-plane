@@ -4,7 +4,7 @@ Tests: Prompt injection detection, content filtering, filter chain behavior,
     guard integration, custom patterns, edge cases.
 """
 
-from mcoi_runtime.core.content_safety import (
+from mcoi_runtime.governance.guards.content_safety import (
     ContentSafetyChain,
     ContentSafetyFilter,
     PROMPT_INJECTION_PATTERNS,
@@ -18,7 +18,7 @@ from mcoi_runtime.core.content_safety import (
     evaluate_output_safety,
     normalize_content,
 )
-from mcoi_runtime.core.governance_guard import GovernanceGuardChain
+from mcoi_runtime.governance.guards.chain import GovernanceGuardChain
 
 
 # ═══ SafetyPattern / Filter Basics ═══
@@ -157,6 +157,11 @@ class TestContentSafetyChain:
         assert result.is_safe
 
     def test_normalize_content_preserves_ethiopic_runs(self, monkeypatch):
+        # Reaches into the implementation's ``unicodedata`` import +
+        # private ``_is_ethiopic_char`` helper. The v4.38 shim layer
+        # only re-exports public API, so this test must talk to the
+        # canonical core module directly. Phase 4 of the F7 reorg
+        # consolidates this back to the new path.
         import mcoi_runtime.core.content_safety as content_safety
 
         original_normalize = content_safety.unicodedata.normalize

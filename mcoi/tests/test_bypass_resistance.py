@@ -7,7 +7,7 @@ Unicode homoglyphs, zero-width characters, base64 encoding, whitespace variants.
 import base64
 
 import pytest
-from mcoi_runtime.core.content_safety import (
+from mcoi_runtime.governance.guards.content_safety import (
     ContentSafetyChain,
     ContentSafetyFilter,
     SafetyVerdict,

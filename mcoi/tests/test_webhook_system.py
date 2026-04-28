@@ -1,7 +1,7 @@
 """Phase 203B — Webhook system tests."""
 
 import pytest
-from mcoi_runtime.core.webhook_system import WebhookManager, WebhookSubscription
+from mcoi_runtime.governance.network.webhook import WebhookManager, WebhookSubscription
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 

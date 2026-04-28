@@ -1,7 +1,7 @@
 """Phase 202B — Governance metrics engine tests."""
 
 import pytest
-from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine, MetricSnapshot
+from mcoi_runtime.governance.metrics import GovernanceMetricsEngine, MetricSnapshot
 
 FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
 

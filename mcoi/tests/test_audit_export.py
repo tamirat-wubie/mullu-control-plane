@@ -5,8 +5,8 @@ import io
 import json
 
 import pytest
-from mcoi_runtime.core.audit_trail import AuditTrail
-from mcoi_runtime.core.audit_export import (
+from mcoi_runtime.governance.audit.trail import AuditTrail
+from mcoi_runtime.governance.audit.export import (
     AuditExporter,
     AuditExportResult,
     ExportMetadata,

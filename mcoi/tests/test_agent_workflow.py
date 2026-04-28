@@ -5,8 +5,8 @@ from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine, WorkflowResult
 from mcoi_runtime.core.agent_protocol import (
     AgentCapability, AgentDescriptor, AgentRegistry, TaskManager,
 )
-from mcoi_runtime.core.audit_trail import AuditTrail
-from mcoi_runtime.core.webhook_system import WebhookManager, WebhookSubscription
+from mcoi_runtime.governance.audit.trail import AuditTrail
+from mcoi_runtime.governance.network.webhook import WebhookManager, WebhookSubscription
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.contracts.llm import LLMBudget

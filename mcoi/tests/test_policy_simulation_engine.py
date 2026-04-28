@@ -20,7 +20,7 @@ from __future__ import annotations
 import pytest
 
 from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.policy_simulation import PolicySimulationEngine
+from mcoi_runtime.governance.policy.simulation import PolicySimulationEngine
 from mcoi_runtime.contracts.policy_simulation import (
     AdoptionReadiness,
     AdoptionRecommendation,

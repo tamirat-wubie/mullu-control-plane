@@ -33,7 +33,7 @@ import threading
 import pytest
 
 from mcoi_runtime.contracts.llm import LLMBudget
-from mcoi_runtime.core.tenant_budget import (
+from mcoi_runtime.governance.guards.budget import (
     BudgetStore,
     TenantBudgetManager,
     TenantBudgetPolicy,

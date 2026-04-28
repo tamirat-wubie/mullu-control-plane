@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 from mcoi_runtime.app.policy_packs import PolicyPackRegistry
-from mcoi_runtime.core.policy_engine import PolicyEngine, PolicyInput, PolicyReason
+from mcoi_runtime.governance.policy.engine import PolicyEngine, PolicyInput, PolicyReason
 
 
 @dataclass(frozen=True, slots=True)

@@ -21,10 +21,10 @@ from mcoi_runtime.persistence.migrations import (
 )
 from mcoi_runtime.persistence.state_persistence import StatePersistence
 from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
-from mcoi_runtime.core.audit_trail import AuditTrail
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager, TenantBudgetPolicy
+from mcoi_runtime.governance.audit.trail import AuditTrail
+from mcoi_runtime.governance.guards.budget import TenantBudgetManager, TenantBudgetPolicy
 from mcoi_runtime.core.cost_analytics import CostAnalyticsEngine
-from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
+from mcoi_runtime.governance.guards.rate_limit import RateLimiter, RateLimitConfig
 from mcoi_runtime.core.event_bus import EventBus
 
 

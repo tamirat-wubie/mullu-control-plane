@@ -1,7 +1,7 @@
 """Phase 201A — Multi-tenant budget isolation tests."""
 
 import pytest
-from mcoi_runtime.core.tenant_budget import (
+from mcoi_runtime.governance.guards.budget import (
     TenantBudgetManager,
     TenantBudgetPolicy,
     TenantBudgetReport,

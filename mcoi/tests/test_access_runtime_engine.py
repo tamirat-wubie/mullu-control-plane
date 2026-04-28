@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 
 from mcoi_runtime.core.event_spine import EventSpineEngine
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.contracts.access_runtime import (
     IdentityKind,

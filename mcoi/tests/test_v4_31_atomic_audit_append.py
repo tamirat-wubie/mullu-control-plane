@@ -36,13 +36,15 @@ import threading
 
 import pytest
 
-from mcoi_runtime.core.audit_trail import (
+from mcoi_runtime.governance.audit.trail import (
     AuditEntry,
     AuditStore,
     AuditTrail,
-    _canonical_hash_v1,
     verify_chain_from_entries,
 )
+# Private helper stays on the canonical core path; shim only
+# re-exports public API.
+from mcoi_runtime.core.audit_trail import _canonical_hash_v1
 from mcoi_runtime.persistence.postgres_governance_stores import (
     InMemoryAuditStore,
 )

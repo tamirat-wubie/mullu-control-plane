@@ -22,8 +22,8 @@ from mcoi_runtime.app.routers.musia_auth import (
     configured_jwt_authenticators,
 )
 from mcoi_runtime.app.routers.musia_tenants import router as musia_tenants_router
-from mcoi_runtime.core.api_key_auth import APIKeyManager
-from mcoi_runtime.core.jwt_auth import JWTAuthenticator, OIDCConfig
+from mcoi_runtime.governance.auth.api_key import APIKeyManager
+from mcoi_runtime.governance.auth.jwt import JWTAuthenticator, OIDCConfig
 from mcoi_runtime.substrate.registry_store import (
     STORE,
     TenantQuota,

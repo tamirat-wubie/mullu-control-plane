@@ -3,7 +3,7 @@
 import time
 
 import pytest
-from mcoi_runtime.core.api_key_auth import APIKey, APIKeyManager, AuthResult
+from mcoi_runtime.governance.auth.api_key import APIKey, APIKeyManager, AuthResult
 
 
 # ── Key rotation ───────────────────────────────────────────────
