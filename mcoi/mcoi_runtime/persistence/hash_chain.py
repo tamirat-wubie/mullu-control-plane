@@ -55,37 +55,57 @@ def _atomic_write(path: Path, content: str) -> None:
 def _atomic_write_exclusive(path: Path, content: str) -> bool:
     """Write content atomically, failing if the destination already exists.
 
-    Uses ``O_CREAT | O_EXCL`` so the OS rejects pre-existing files at the
-    syscall level — closes the F15 TOCTOU between ``HashChainStore.latest``
-    and the write. Returns ``True`` on successful write, ``False`` if the
-    file already exists (collision — caller may retry with a new sequence).
+    The destination either doesn't exist or has the full serialized
+    content. Concurrent ``HashChainStore.latest`` readers never see a
+    half-written entry. Returns ``True`` on successful write, ``False``
+    if the file already exists (collision — caller may retry with a
+    new sequence).
 
-    A partial-write window exists if the process dies mid-``os.write``;
-    the resulting file would fail to deserialize (caught by the existing
-    ``CorruptedDataError`` path in ``_load_entry``). Same recovery
-    semantics as a corrupted entry.
+    Implementation (v4.40.0 — closes empty-file race observed in the
+    50-thread test on slow CI runners):
+
+      1. Write content to a temp file in the same directory.
+      2. ``os.link`` the temp file to the target path. ``link`` is
+         atomic and raises ``FileExistsError`` if the target exists,
+         giving us O_EXCL semantics with the content already on disk.
+      3. Unlink the temp file. The target keeps the content via its
+         own inode reference.
+
+    Pre-v4.40 used ``O_CREAT | O_EXCL`` then ``os.write``. That left a
+    visibility window between the syscall that created the (empty)
+    file and the syscall that wrote bytes. A concurrent ``latest()``
+    that ran in that window would see an empty entry, fail JSON
+    parsing, and raise ``CorruptedDataError`` — surfacing as a flake
+    in tests where 50 threads append simultaneously.
     """
     parent = path.parent
     parent.mkdir(parents=True, exist_ok=True)
-    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+
+    fd, tmp_path = tempfile.mkstemp(dir=str(parent), suffix=".tmp")
     try:
-        fd = os.open(str(path), flags, 0o644)
-    except FileExistsError:
-        return False
-    except OSError as exc:
-        raise PersistenceWriteError(_bounded_store_error("hash chain write failed", exc)) from exc
-    try:
-        os.write(fd, content.encode("utf-8"))
-    except OSError as exc:
-        os.close(fd)
-        # Best-effort cleanup of the partially-written file.
         try:
-            os.unlink(str(path))
+            os.write(fd, content.encode("utf-8"))
+        finally:
+            os.close(fd)
+        # Atomic link: target either doesn't exist (link succeeds) or
+        # already exists (FileExistsError → collision).
+        try:
+            os.link(tmp_path, str(path))
+        except FileExistsError:
+            return False
+        return True
+    except OSError as exc:
+        raise PersistenceWriteError(
+            _bounded_store_error("hash chain write failed", exc)
+        ) from exc
+    finally:
+        # Always remove the temp file. After a successful link the
+        # target inherits the inode; after FileExistsError it's
+        # garbage. Best-effort cleanup either way.
+        try:
+            os.unlink(tmp_path)
         except OSError:
             pass
-        raise PersistenceWriteError(_bounded_store_error("hash chain write failed", exc)) from exc
-    os.close(fd)
-    return True
 
 
 def compute_chain_hash(sequence_number: int, content_hash: str, previous_hash: str) -> str:
