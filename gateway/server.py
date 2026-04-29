@@ -981,11 +981,18 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         return audit
 
     @app.get("/capability-plans/read-model")
-    def capability_plans_read_model(request: Request, recovery_action: str = ""):
+    def capability_plans_read_model(
+        request: Request,
+        recovery_action: str = "",
+        recovery_attempt_status: str = "",
+    ):
         _require_authority_operator(request)
         return {
             "enabled": True,
-            **plan_ledger.read_model(recovery_action=recovery_action),
+            **plan_ledger.read_model(
+                recovery_action=recovery_action,
+                recovery_attempt_status=recovery_attempt_status,
+            ),
         }
 
     @app.get("/capability-plans/{plan_id}/closure")

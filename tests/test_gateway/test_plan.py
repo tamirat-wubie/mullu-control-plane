@@ -366,7 +366,7 @@ def test_json_plan_ledger_store_survives_recreation(tmp_path) -> None:
 def test_plan_ledger_records_recovery_attempts_in_read_model() -> None:
     ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
 
-    attempt = ledger.record_recovery_attempt(
+    blocked_attempt = ledger.record_recovery_attempt(
         plan_id="plan-1",
         recovery_action="wait_for_approval",
         status="blocked",
@@ -374,17 +374,36 @@ def test_plan_ledger_records_recovery_attempts_in_read_model() -> None:
         witness_id="plan-witness-1",
         detail={"command_id": "cmd-1"},
     )
+    succeeded_attempt = ledger.record_recovery_attempt(
+        plan_id="plan-1",
+        recovery_action="wait_for_approval",
+        status="succeeded",
+        reason="plan_recovered",
+        witness_id="plan-witness-1",
+        terminal_certificate_id="plan-cert-1",
+        detail={"command_id": "cmd-1"},
+    )
     read_model = ledger.read_model()
+    filtered = ledger.read_model(recovery_attempt_status="blocked")
 
-    assert attempt.attempt_id.startswith("plan-recovery-attempt-")
-    assert attempt.plan_id == "plan-1"
-    assert attempt.recovery_action == "wait_for_approval"
-    assert attempt.status == "blocked"
-    assert attempt.detail["command_id"] == "cmd-1"
-    assert ledger.recovery_attempts_for("plan-1") == (attempt,)
-    assert read_model["recovery_attempt_count"] == 1
-    assert read_model["recovery_attempt_status_counts"] == {"blocked": 1}
-    assert read_model["recovery_attempts"][0]["attempt_id"] == attempt.attempt_id
+    assert blocked_attempt.attempt_id.startswith("plan-recovery-attempt-")
+    assert blocked_attempt.plan_id == "plan-1"
+    assert blocked_attempt.recovery_action == "wait_for_approval"
+    assert blocked_attempt.status == "blocked"
+    assert blocked_attempt.detail["command_id"] == "cmd-1"
+    assert ledger.recovery_attempts_for("plan-1") == (blocked_attempt, succeeded_attempt)
+    assert read_model["recovery_attempt_count"] == 2
+    assert read_model["recovery_attempt_status_counts"] == {"blocked": 1, "succeeded": 1}
+    assert read_model["recovery_attempt_status_filter"] == ""
+    assert [attempt["attempt_id"] for attempt in read_model["recovery_attempts"]] == [
+        blocked_attempt.attempt_id,
+        succeeded_attempt.attempt_id,
+    ]
+    assert filtered["recovery_attempt_count"] == 2
+    assert filtered["recovery_attempt_status_filter"] == "blocked"
+    assert filtered["recovery_attempt_status_counts"] == {"blocked": 1, "succeeded": 1}
+    assert len(filtered["recovery_attempts"]) == 1
+    assert filtered["recovery_attempts"][0]["attempt_id"] == blocked_attempt.attempt_id
 
 
 def test_json_plan_ledger_store_survives_recovery_attempt_recreation(tmp_path) -> None:

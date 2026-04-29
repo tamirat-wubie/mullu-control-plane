@@ -774,6 +774,7 @@ class TestWebChatWebhook:
         repeat_recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
         second_recover_resp = client.post("/capability-plans/missing-plan/recover")
         read_model_resp = client.get("/capability-plans/read-model")
+        rejected_read_model_resp = client.get("/capability-plans/read-model?recovery_attempt_status=rejected")
         closure_resp = client.get(f"/capability-plans/{plan_id}/closure")
 
         assert blocked_resp.status_code == 200
@@ -794,6 +795,14 @@ class TestWebChatWebhook:
             "rejected": 2,
             "succeeded": 1,
         }
+        assert read_model_resp.json()["recovery_attempt_status_filter"] == ""
+        assert rejected_read_model_resp.status_code == 200
+        assert rejected_read_model_resp.json()["recovery_attempt_count"] == 3
+        assert rejected_read_model_resp.json()["recovery_attempt_status_filter"] == "rejected"
+        assert [attempt["status"] for attempt in rejected_read_model_resp.json()["recovery_attempts"]] == [
+            "rejected",
+            "rejected",
+        ]
         assert closure_resp.status_code == 200
         assert closure_resp.json()["recovery_attempt_count"] == 2
         assert [attempt["status"] for attempt in closure_resp.json()["plan_recovery_attempts"]] == [

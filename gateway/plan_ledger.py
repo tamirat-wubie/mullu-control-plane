@@ -438,18 +438,31 @@ class CapabilityPlanLedger:
         """Return recovery-attempt witness records for one plan id."""
         return self._store.list_recovery_attempts(plan_id)
 
-    def read_model(self, *, recovery_action: str = "") -> dict[str, Any]:
+    def read_model(
+        self,
+        *,
+        recovery_action: str = "",
+        recovery_attempt_status: str = "",
+    ) -> dict[str, Any]:
         """Return an operator read model for plan closure."""
         certificates = self._store.list_certificates()
         witnesses = self._store.list_witnesses()
         recovery_attempts = self._store.list_recovery_attempts()
+        filtered_recovery_attempts = recovery_attempts
         failed_witnesses = tuple(witness for witness in witnesses if not witness.succeeded)
         requested_recovery_action = recovery_action.strip()
+        requested_attempt_status = recovery_attempt_status.strip()
         if requested_recovery_action:
             failed_witnesses = tuple(
                 witness
                 for witness in failed_witnesses
                 if _witness_recovery_action(witness) == requested_recovery_action
+            )
+        if requested_attempt_status:
+            filtered_recovery_attempts = tuple(
+                attempt
+                for attempt in recovery_attempts
+                if attempt.status == requested_attempt_status
             )
         return {
             "plan_certificate_count": len(certificates),
@@ -459,9 +472,10 @@ class CapabilityPlanLedger:
             "recovery_action_filter": requested_recovery_action,
             "recovery_attempt_count": len(recovery_attempts),
             "recovery_attempt_status_counts": _recovery_attempt_status_counts(recovery_attempts),
+            "recovery_attempt_status_filter": requested_attempt_status,
             "certificates": [asdict(certificate) for certificate in certificates],
             "failed_plan_witnesses": [asdict(witness) for witness in failed_witnesses],
-            "recovery_attempts": [asdict(attempt) for attempt in recovery_attempts],
+            "recovery_attempts": [asdict(attempt) for attempt in filtered_recovery_attempts],
             "store": self._store.status(),
         }
 
