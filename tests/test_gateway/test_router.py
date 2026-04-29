@@ -485,8 +485,61 @@ class TestMessageRouting:
         assert [result["succeeded"] for result in recovered.metadata["step_results"]] == [True, True]
         assert len(knowledge_calls) == 1
         assert router._plan_ledger.certificate_for(blocked.metadata["plan_id"]) is not None
+        attempts = router._plan_ledger.recovery_attempts_for(blocked.metadata["plan_id"])
+        assert len(attempts) == 1
+        assert attempts[0].status == "succeeded"
+        assert attempts[0].reason == "plan_recovered"
+        assert attempts[0].witness_id == blocked.metadata["plan_failure_witness_id"]
+        assert attempts[0].terminal_certificate_id == recovered.metadata["plan_terminal_certificate_id"]
         with pytest.raises(ValueError, match="plan already has terminal certificate"):
             router.recover_waiting_plan(blocked.metadata["plan_id"])
+        attempts = router._plan_ledger.recovery_attempts_for(blocked.metadata["plan_id"])
+        assert len(attempts) == 2
+        assert attempts[1].status == "rejected"
+        assert attempts[1].reason == "plan_already_certified"
+
+    def test_recover_waiting_plan_before_step_approval_records_blocked_attempt(self):
+        dispatcher = SkillDispatcher()
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="fallback"),
+            skill_dispatcher=dispatcher,
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        blocked = router.handle_message(GatewayMessage(
+            message_id="msg-plan-recover-blocked-1",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs and schedule review",
+        ))
+
+        with pytest.raises(ValueError, match="approval-wait command has not reached terminal closure"):
+            router.recover_waiting_plan(blocked.metadata["plan_id"])
+        attempts = router._plan_ledger.recovery_attempts_for(blocked.metadata["plan_id"])
+        read_model = router._plan_ledger.read_model()
+
+        assert attempts[0].status == "blocked"
+        assert attempts[0].reason == "approval_wait_command_not_terminal"
+        assert attempts[0].witness_id == blocked.metadata["plan_failure_witness_id"]
+        assert attempts[0].detail["command_id"] == blocked.metadata["step_results"][1]["command_id"]
+        assert read_model["recovery_attempt_count"] == 1
+        assert read_model["recovery_attempt_status_counts"] == {"blocked": 1}
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())

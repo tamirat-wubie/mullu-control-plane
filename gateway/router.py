@@ -483,25 +483,73 @@ class GatewayRouter:
 
     def recover_waiting_plan(self, plan_id: str) -> GatewayResponse:
         """Resume a plan that was blocked waiting for step approval."""
-        if self._plan_ledger.certificate_for(plan_id) is not None:
+        existing_certificate = self._plan_ledger.certificate_for(plan_id)
+        if existing_certificate is not None:
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="wait_for_approval",
+                status="rejected",
+                reason="plan_already_certified",
+                terminal_certificate_id=existing_certificate.certificate_id,
+            )
             raise ValueError("plan already has terminal certificate")
         witness = self._latest_failed_plan_witness(plan_id)
         if witness is None:
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="unknown",
+                status="rejected",
+                reason="failed_plan_witness_not_found",
+            )
             raise KeyError(f"unknown failed plan_id: {plan_id}")
         recovery_decision = witness.detail.get("recovery_decision", {})
         if not isinstance(recovery_decision, dict) or recovery_decision.get("recovery_action") != "wait_for_approval":
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action=str(recovery_decision.get("recovery_action", "unknown"))
+                if isinstance(recovery_decision, dict)
+                else "unknown",
+                status="rejected",
+                reason="plan_not_waiting_for_approval",
+                witness_id=witness.witness_id,
+            )
             raise ValueError("plan is not waiting for approval")
         plan = _plan_from_witness(witness)
         step_results = _step_results_from_witness(witness)
         failed_step_id = str(recovery_decision.get("failed_step_id", ""))
         failed_result = next((result for result in step_results if result.step_id == failed_step_id), None)
         if failed_result is None or not failed_result.command_id:
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="wait_for_approval",
+                status="rejected",
+                reason="approval_wait_missing_failed_command_id",
+                witness_id=witness.witness_id,
+                detail={"failed_step_id": failed_step_id},
+            )
             raise ValueError("approval-wait witness does not include a failed command id")
         certificate = self._commands.terminal_certificate_for(failed_result.command_id)
         if certificate is None:
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="wait_for_approval",
+                status="blocked",
+                reason="approval_wait_command_not_terminal",
+                witness_id=witness.witness_id,
+                detail={"command_id": failed_result.command_id},
+            )
             raise ValueError("approval-wait command has not reached terminal closure")
         command = self._commands.get(failed_result.command_id)
         if command is None:
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="wait_for_approval",
+                status="rejected",
+                reason="approval_wait_command_missing",
+                witness_id=witness.witness_id,
+                terminal_certificate_id=certificate.certificate_id,
+                detail={"command_id": failed_result.command_id},
+            )
             raise ValueError("approval-wait command is missing from command ledger")
         recovered_failed_result = CapabilityPlanStepResult(
             step_id=failed_result.step_id,
@@ -530,7 +578,27 @@ class GatewayRouter:
             tenant_id=plan.tenant_id,
             identity_id=plan.identity_id,
         )
-        return self._execute_plan(plan=plan, message=message, mapping=mapping, initial_results=initial_results)
+        response = self._execute_plan(plan=plan, message=message, mapping=mapping, initial_results=initial_results)
+        if response.metadata.get("plan_terminal_certificate_id"):
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="wait_for_approval",
+                status="succeeded",
+                reason="plan_recovered",
+                witness_id=witness.witness_id,
+                terminal_certificate_id=str(response.metadata["plan_terminal_certificate_id"]),
+                detail={"command_id": failed_result.command_id},
+            )
+        else:
+            self._record_plan_recovery_attempt(
+                plan_id=plan_id,
+                recovery_action="wait_for_approval",
+                status="blocked",
+                reason=str(response.metadata.get("plan_error", "plan_recovery_incomplete")),
+                witness_id=witness.witness_id,
+                detail={"command_id": failed_result.command_id},
+            )
+        return response
 
     def _latest_failed_plan_witness(self, plan_id: str) -> CapabilityPlanWitnessRecord | None:
         witnesses = self._plan_ledger.witnesses_for(plan_id)
@@ -538,6 +606,27 @@ class GatewayRouter:
             if not witness.succeeded:
                 return witness
         return None
+
+    def _record_plan_recovery_attempt(
+        self,
+        *,
+        plan_id: str,
+        recovery_action: str,
+        status: str,
+        reason: str,
+        witness_id: str = "",
+        terminal_certificate_id: str = "",
+        detail: dict[str, Any] | None = None,
+    ) -> None:
+        self._plan_ledger.record_recovery_attempt(
+            plan_id=plan_id,
+            recovery_action=recovery_action,
+            status=status,
+            reason=reason,
+            witness_id=witness_id,
+            terminal_certificate_id=terminal_certificate_id,
+            detail=detail,
+        )
 
     def _approval_chain_pending_response(
         self,
@@ -886,17 +975,24 @@ class GatewayRouter:
                 risk_tier=result.risk_tier.value,
             )
             if result.status == ApprovalStatus.APPROVED:
+                command = self._commands.get(result.command_id)
                 if chain is not None and chain.status not in {
                     ApprovalChainStatus.SATISFIED,
                     ApprovalChainStatus.NOT_REQUIRED,
                 }:
-                    return self._approval_chain_pending_response(
-                        request_id,
-                        result,
-                        chain,
-                        recipient_id=result.identity_id,
+                    single_non_self_resolver = (
+                        command is not None
+                        and chain.required_approver_count <= 1
+                        and result.resolved_by
+                        and result.resolved_by != command.actor_id
                     )
-                command = self._commands.get(result.command_id)
+                    if not single_non_self_resolver:
+                        return self._approval_chain_pending_response(
+                            request_id,
+                            result,
+                            chain,
+                            recipient_id=result.identity_id,
+                        )
                 if command is not None:
                     if self._defer_approved_execution:
                         return self._approval_queued_response(
