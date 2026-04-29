@@ -1,9 +1,10 @@
 """Purpose: verify operator CLI access to software-change receipts.
-Governance scope: read-only local receipt list/get/replay commands.
+Governance scope: local receipt list/get/replay and review decision commands.
 Dependencies: CLI entrypoint and file-backed software receipt store.
 Invariants:
-  - CLI reads receipt files without mutating them.
+  - CLI reads receipt files without mutating receipt records.
   - List/get/replay emit bounded deterministic envelopes.
+  - Review decisions are attributed and bounded to software receipt chains.
   - Replay fails closed when the receipt chain is not terminal.
 """
 
@@ -191,6 +192,94 @@ def test_cli_review_text_marks_empty_review_state(tmp_path: Path, capsys) -> Non
     assert "requires_operator_review: false" in out
     assert "review_signal_count: 0" in out
     assert "count: 0" in out
+
+
+def test_cli_lists_canonical_review_requests_json(tmp_path: Path, capsys) -> None:
+    path = _store_path(tmp_path)
+
+    rc = main([
+        "software-receipts",
+        "review-requests",
+        "--store",
+        str(path),
+        "--json",
+    ])
+    body = json.loads(capsys.readouterr().out)
+
+    assert rc == 0
+    assert body["operation"] == "review_requests"
+    assert body["review_request_count"] == 1
+    assert body["pending_review_count"] == 1
+    assert body["requires_operator_review"] is True
+    assert body["review_requests"][0]["request_id"] == "software-receipt-review:request-cli-2"
+    assert body["review_requests"][0]["scope"]["scope_type"] == "software_receipt_chain"
+
+
+def test_cli_decides_canonical_review_request_text(tmp_path: Path, capsys) -> None:
+    path = _store_path(tmp_path)
+
+    rc = main([
+        "software-receipts",
+        "decide",
+        "software-receipt-review:request-cli-2",
+        "--store",
+        str(path),
+        "--reviewer-id",
+        "operator-cli",
+        "--approve",
+        "--comment",
+        "closure accepted",
+    ])
+    out = capsys.readouterr().out
+
+    assert rc == 0
+    assert "operation: review_decision" in out
+    assert "request_id: software-receipt-review:request-cli-2" in out
+    assert "pending_review_count: 0" in out
+    assert "gate_allowed: true" in out
+    assert "decision software-receipt-review:request-cli-2 approved reviewer=operator-cli" in out
+
+
+def test_cli_decision_rejects_missing_review_request(tmp_path: Path, capsys) -> None:
+    path = _store_path(tmp_path)
+
+    rc = main([
+        "software-receipts",
+        "decide",
+        "missing-review",
+        "--store",
+        str(path),
+        "--reviewer-id",
+        "operator-cli",
+        "--reject",
+    ])
+    out = capsys.readouterr().out
+
+    assert rc == 1
+    assert "error:" in out
+    assert "invalid software receipt argument" in out
+    assert "ValueError" in out
+
+
+def test_cli_decision_requires_reviewer_identity(tmp_path: Path, capsys) -> None:
+    path = _store_path(tmp_path)
+
+    rc = main([
+        "software-receipts",
+        "decide",
+        "software-receipt-review:request-cli-2",
+        "--store",
+        str(path),
+        "--reviewer-id",
+        "",
+        "--approve",
+    ])
+    out = capsys.readouterr().out
+
+    assert rc == 1
+    assert "error:" in out
+    assert "invalid software receipt argument" in out
+    assert "ValueError" in out
 
 
 def test_cli_replay_fails_closed_for_non_terminal_chain(tmp_path: Path, capsys) -> None:
