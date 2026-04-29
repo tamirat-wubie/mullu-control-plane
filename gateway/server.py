@@ -611,6 +611,54 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             **page_meta,
         }
 
+    @app.get("/authority/policies")
+    def authority_policies(
+        request: Request,
+        tenant_id: str = "",
+        policy_id: str = "",
+        capability: str = "",
+        risk_tier: str = "",
+        required_role: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        approval_policies = authority_mesh_store.list_approval_policies()
+        escalation_policies = authority_mesh_store.list_escalation_policies()
+        if tenant_id:
+            approval_policies = tuple(policy for policy in approval_policies if policy.tenant_id == tenant_id)
+            escalation_policies = tuple(policy for policy in escalation_policies if policy.tenant_id == tenant_id)
+        if policy_id:
+            approval_policies = tuple(policy for policy in approval_policies if policy.policy_id == policy_id)
+            escalation_policies = tuple(policy for policy in escalation_policies if policy.policy_id == policy_id)
+        if capability:
+            approval_policies = tuple(policy for policy in approval_policies if policy.capability == capability)
+            escalation_policies = ()
+        if risk_tier:
+            approval_policies = tuple(policy for policy in approval_policies if policy.risk_tier == risk_tier)
+            escalation_policies = ()
+        if required_role:
+            approval_policies = tuple(policy for policy in approval_policies if required_role in policy.required_roles)
+            escalation_policies = ()
+        approval_page, approval_meta = _read_model_page(
+            approval_policies,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        escalation_page, escalation_meta = _read_model_page(
+            escalation_policies,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        return {
+            "approval_policies": [asdict(policy) for policy in approval_page],
+            "escalation_policies": [asdict(policy) for policy in escalation_page],
+            "approval_count": len(approval_page),
+            "escalation_count": len(escalation_page),
+            "approval_page": approval_meta,
+            "escalation_page": escalation_meta,
+        }
+
     @app.get("/authority/approval-chains")
     def authority_approval_chains(
         request: Request,
