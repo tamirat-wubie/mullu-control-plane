@@ -88,6 +88,7 @@ def import_mcp_tool_as_capability(
     capability_id = mcp_capability_id(tool.server_id, tool.name)
     expected_effects = _expected_effects(tool)
     risk_tier = _risk_tier_for_effects(expected_effects, tool.annotations)
+    mutates_world = not _is_read_only_effect_set(expected_effects)
     return CapabilityRegistryEntry(
         capability_id=capability_id,
         domain="mcp",
@@ -97,7 +98,7 @@ def import_mcp_tool_as_capability(
         effect_model=CapabilityEffectModel(
             expected_effects=expected_effects,
             forbidden_effects=_forbidden_effects(expected_effects),
-            reconciliation_required=True,
+            reconciliation_required=mutates_world,
         ),
         evidence_model=CapabilityEvidenceModel(
             required_evidence=(
@@ -121,7 +122,7 @@ def import_mcp_tool_as_capability(
         ),
         recovery_plan=CapabilityRecoveryPlan(
             rollback_capability="",
-            compensation_capability="",
+            compensation_capability="mcp.operator_review_compensation" if mutates_world else "",
             review_required_on_failure=True,
         ),
         cost_model=CapabilityCostModel(
@@ -189,6 +190,10 @@ def _expected_effects(tool: MCPToolDescriptor) -> tuple[str, ...]:
     if bool(tool.annotations.get("read_only", False)):
         return ("external_context_read",)
     return ("external_tool_invoked",)
+
+
+def _is_read_only_effect_set(expected_effects: tuple[str, ...]) -> bool:
+    return all(effect in {"external_context_read", "tool_metadata_read"} for effect in expected_effects)
 
 
 def _forbidden_effects(expected_effects: tuple[str, ...]) -> tuple[str, ...]:

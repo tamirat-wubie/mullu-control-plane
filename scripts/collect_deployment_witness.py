@@ -192,6 +192,7 @@ def collect_deployment_witness(
         and conformance_status in ACCEPTED_CONFORMANCE_STATUSES
         and bool(conformance_payload.get("gateway_witness_valid"))
         and bool(conformance_payload.get("runtime_witness_valid"))
+        and bool(conformance_payload.get("authority_responsibility_debt_clear"))
         and conformance_fresh
     )
     if expected_environment:
@@ -203,6 +204,7 @@ def collect_deployment_witness(
             detail=(
                 f"status={conformance_endpoint_status} terminal_status={conformance_status} "
                 f"environment={conformance_environment} fresh={conformance_fresh} "
+                f"responsibility_debt_clear={bool(conformance_payload.get('authority_responsibility_debt_clear'))} "
                 f"missing={list(missing_conformance_fields)}"
             ),
         )

@@ -198,19 +198,48 @@ def test_collect_runtime_conformance_records_authority_read_model_failures(monke
         step for step in collection.steps
         if step.name == "authority policy read model"
     )
+    responsibility_step = next(
+        step for step in collection.steps
+        if step.name == "authority responsibility cockpit read model"
+    )
 
     assert approval_step.passed is False
     assert obligation_step.passed is False
     assert ownership_step.passed is False
     assert policy_step.passed is False
+    assert responsibility_step.passed is False
     assert "status=404" in approval_step.detail
     assert "status=404" in obligation_step.detail
     assert "status=404" in ownership_step.detail
     assert "status=404" in policy_step.detail
+    assert "status=404" in responsibility_step.detail
     assert "authority overdue approval chain read model was not available" in collection.errors
     assert "authority overdue obligation read model was not available" in collection.errors
     assert "authority ownership read model was not available" in collection.errors
     assert "authority policy read model was not available" in collection.errors
+    assert "authority responsibility cockpit read model was not available" in collection.errors
+
+
+def test_collect_runtime_conformance_records_malformed_responsibility_read_model(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(secret=secret)
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        _urlopen_for_certificate(certificate, responsibility_payload={"authority_witness": {}}),
+    )
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    responsibility_step = next(
+        step for step in collection.steps
+        if step.name == "authority responsibility cockpit read model"
+    )
+
+    assert responsibility_step.passed is False
+    assert "debt_clear=missing" in responsibility_step.detail
+    assert "authority responsibility cockpit read model was not available" in collection.errors
 
 
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
@@ -254,6 +283,7 @@ def _urlopen_for_certificate(
     certificate: dict[str, Any],
     *,
     authority_status: int = 200,
+    responsibility_payload: dict[str, Any] | None = None,
 ) -> Any:
     def fake_urlopen(request, timeout):
         url = request.full_url if hasattr(request, "full_url") else str(request)
@@ -282,6 +312,25 @@ def _urlopen_for_certificate(
                     "escalation_policies": [],
                     "approval_count": 0,
                     "escalation_count": 0,
+                } if authority_status == 200 else {},
+            )
+        if "/authority/responsibility?limit=1" in url:
+            return StubHttpResponse(
+                status=authority_status,
+                payload=responsibility_payload if responsibility_payload is not None else {
+                    "responsibility_debt_clear": True,
+                    "authority_witness": {},
+                    "ownership_count": 0,
+                    "approval_policy_count": 0,
+                    "escalation_policy_count": 0,
+                    "pending_approval_chain_count": 0,
+                    "unresolved_obligation_count": 0,
+                    "escalation_event_count": 0,
+                    "priority_approval_chains": [],
+                    "priority_obligations": [],
+                    "priority_escalation_events": [],
+                    "limit": 1,
+                    "evidence_refs": ["authority:witness"],
                 } if authority_status == 200 else {},
             )
         return StubHttpResponse(status=404, payload={})

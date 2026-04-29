@@ -349,6 +349,7 @@
       "notes": "Authority and obligation surfaces expose unresolved responsibility state.",
       "representative_paths": [
         "/authority/witness",
+        "/authority/responsibility",
         "/authority/obligations",
         "/authority/escalations"
       ],

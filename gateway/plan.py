@@ -15,9 +15,9 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
-from gateway.command_spine import canonical_hash, capability_passport_for
+from gateway.command_spine import CapabilityPassport, canonical_hash, capability_passport_for
 from gateway.intent_resolver import CapabilityIntentResolver
 
 
@@ -52,8 +52,14 @@ class CapabilityPlan:
 class CapabilityPlanBuilder:
     """Build capability plans from direct or decomposed user goals."""
 
-    def __init__(self, *, resolver: CapabilityIntentResolver | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        resolver: CapabilityIntentResolver | None = None,
+        capability_passport_loader: Callable[[str], CapabilityPassport] | None = None,
+    ) -> None:
         self._resolver = resolver or CapabilityIntentResolver()
+        self._capability_passport_loader = capability_passport_loader or capability_passport_for
 
     def build(
         self,
@@ -76,9 +82,9 @@ class CapabilityPlanBuilder:
                 ),
             )
 
-        validated_steps = _validate_steps(proposed_steps)
-        risk_tier = _max_risk(validated_steps)
-        evidence_required = _union_evidence(validated_steps)
+        validated_steps = _validate_steps_with_loader(proposed_steps, self._capability_passport_loader)
+        risk_tier = _max_risk(validated_steps, self._capability_passport_loader)
+        evidence_required = _union_evidence(validated_steps, self._capability_passport_loader)
         plan_id = _stable_plan_id(
             tenant_id=tenant_id,
             identity_id=identity_id,
@@ -161,6 +167,13 @@ def one_step_plan(
 
 
 def _validate_steps(steps: tuple[CapabilityPlanStep, ...]) -> tuple[CapabilityPlanStep, ...]:
+    return _validate_steps_with_loader(steps, capability_passport_for)
+
+
+def _validate_steps_with_loader(
+    steps: tuple[CapabilityPlanStep, ...],
+    capability_passport_loader: Callable[[str], CapabilityPassport],
+) -> tuple[CapabilityPlanStep, ...]:
     if not steps:
         raise ValueError("capability plan requires at least one step")
     declared: set[str] = set()
@@ -169,7 +182,7 @@ def _validate_steps(steps: tuple[CapabilityPlanStep, ...]) -> tuple[CapabilityPl
             raise ValueError("capability plan step_id is required")
         if step.step_id in declared:
             raise ValueError(f"duplicate capability plan step_id: {step.step_id}")
-        capability_passport_for(step.capability_id)
+        capability_passport_loader(step.capability_id)
         missing_dependencies = [dep for dep in step.depends_on if dep not in declared]
         if missing_dependencies:
             raise ValueError(f"step {step.step_id} has unknown dependency: {missing_dependencies[0]}")
@@ -177,19 +190,25 @@ def _validate_steps(steps: tuple[CapabilityPlanStep, ...]) -> tuple[CapabilityPl
     return steps
 
 
-def _max_risk(steps: tuple[CapabilityPlanStep, ...]) -> str:
+def _max_risk(
+    steps: tuple[CapabilityPlanStep, ...],
+    capability_passport_loader: Callable[[str], CapabilityPassport] = capability_passport_for,
+) -> str:
     risk = "low"
     for step in steps:
-        passport = capability_passport_for(step.capability_id)
+        passport = capability_passport_loader(step.capability_id)
         if _RISK_ORDER.get(passport.risk_tier, 1) > _RISK_ORDER.get(risk, 0):
             risk = passport.risk_tier
     return risk
 
 
-def _union_evidence(steps: tuple[CapabilityPlanStep, ...]) -> tuple[str, ...]:
+def _union_evidence(
+    steps: tuple[CapabilityPlanStep, ...],
+    capability_passport_loader: Callable[[str], CapabilityPassport] = capability_passport_for,
+) -> tuple[str, ...]:
     evidence: list[str] = []
     for step in steps:
-        passport = capability_passport_for(step.capability_id)
+        passport = capability_passport_loader(step.capability_id)
         for item in passport.evidence_required:
             if item not in evidence:
                 evidence.append(item)

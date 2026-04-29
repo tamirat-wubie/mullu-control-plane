@@ -2343,6 +2343,16 @@ class CommandLedger:
                 break
         return audits
 
+    def capability_passport_for_intent(self, intent_name: str) -> CapabilityPassport:
+        """Return the native passport, or a fabric passport for dynamic capabilities."""
+        try:
+            return capability_passport_for(intent_name)
+        except ValueError:
+            if self._capability_admission_gate is None:
+                raise
+        entry = self._capability_admission_gate.capability_for_intent(intent_name)
+        return capability_passport_from_registry_entry(entry)
+
     def bind_effect_prediction(
         self,
         command_id: str,
@@ -2552,7 +2562,7 @@ class CommandLedger:
             raise KeyError(f"missing governed action for command_id: {command_id}")
         if prediction is None or not action.predicted_effect_hash:
             raise ValueError("effect prediction is required before observation")
-        passport = capability_passport_for(action.capability)
+        passport = self.capability_passport_for_intent(action.capability)
         output_hash = canonical_hash(output)
         observation = observe_effects(prediction, output_hash=output_hash, output=output)
         observation_hash = canonical_hash(asdict(observation))

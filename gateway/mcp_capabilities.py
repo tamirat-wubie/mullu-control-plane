@@ -62,6 +62,9 @@ class GovernedMCPCapabilityHandler:
         return {
             "response": "MCP capability executed." if result.succeeded else "MCP capability execution failed.",
             "receipt_status": result.receipt.status,
+            "mcp_server_id": result.receipt.server_id,
+            "mcp_tool_name": result.receipt.tool_name,
+            "tool_call_receipt": result.receipt.receipt_id,
             "mcp_succeeded": result.succeeded,
             "mcp_output": result.output,
             "mcp_error": result.error,
