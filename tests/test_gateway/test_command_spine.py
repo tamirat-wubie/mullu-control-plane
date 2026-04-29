@@ -27,6 +27,7 @@ from gateway.command_spine import (  # noqa: E402
     build_command_ledger_from_env,
     capability_passport_for,
     compile_typed_intent,
+    redact_payload,
 )
 
 
@@ -87,6 +88,37 @@ def test_command_ledger_persists_command_and_events_through_store():
     assert events[0].next_state == CommandState.RECEIVED
     assert events[1].previous_state == CommandState.RECEIVED
     assert events[1].next_state == CommandState.ALLOWED
+
+
+def test_redact_payload_masks_free_text_and_secret_fields_without_breaking_skill_params():
+    payload = {
+        "body": "Email owner@example.com, call +1 202-555-0199, ssn 123-45-6789, card 4111 1111 1111 1111.",
+        "metadata": {
+            "api_key": "sk-live-secret",
+            "notes": ["backup@example.com"],
+        },
+        "skill_intent": {
+            "skill": "communication",
+            "action": "send_email",
+            "params": {
+                "recipient": "owner@example.com",
+                "body": "Send the report to owner@example.com",
+                "api_key": "never-store-this",
+            },
+        },
+    }
+
+    redacted = redact_payload(payload)
+
+    assert redacted["body"] == (
+        "Email [REDACTED:EMAIL], call [REDACTED:PHONE], ssn [REDACTED:SSN], "
+        "card [REDACTED:PAYMENT_CARD]."
+    )
+    assert redacted["metadata"]["api_key"] == "[REDACTED:SECRET]"
+    assert redacted["metadata"]["notes"] == ["[REDACTED:EMAIL]"]
+    assert redacted["skill_intent"]["params"]["recipient"] == "owner@example.com"
+    assert redacted["skill_intent"]["params"]["body"] == "Send the report to owner@example.com"
+    assert redacted["skill_intent"]["params"]["api_key"] == "[REDACTED:SECRET]"
 
 
 def test_build_command_ledger_from_env_uses_memory_backend(monkeypatch):

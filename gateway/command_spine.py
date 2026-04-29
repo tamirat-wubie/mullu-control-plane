@@ -18,6 +18,7 @@ import hashlib
 import hmac
 import json
 import logging
+import re
 import threading
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -1170,13 +1171,96 @@ def _anchor_signature(anchor: CommandAnchor, *, signing_secret: str) -> str:
     ).hexdigest()
 
 
-def redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    """Return the gateway-safe command payload.
+_EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
+_SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
+_PAYMENT_CARD_RE = re.compile(r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)")
+_PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{8,}\d)(?!\w)")
+_SECRET_FIELD_NAMES = {
+    "access_token",
+    "api_key",
+    "apikey",
+    "auth_token",
+    "authorization",
+    "credential",
+    "password",
+    "passwd",
+    "private_key",
+    "refresh_token",
+    "secret",
+    "token",
+}
 
-    The gateway does not own the full PII scanner. This placeholder preserves
-    structure and leaves semantic redaction to the governed session layer.
-    """
-    return dict(payload)
+
+def redact_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Return the gateway-safe command payload with bounded deterministic redaction."""
+    return {
+        str(key): _redact_payload_value(value, path=(str(key),), field_name=str(key))
+        for key, value in payload.items()
+    }
+
+
+def _redact_payload_value(
+    value: Any,
+    *,
+    path: tuple[str, ...],
+    field_name: str = "",
+    preserve_text: bool = False,
+) -> Any:
+    if _is_secret_field(field_name):
+        return "[REDACTED:SECRET]" if value not in (None, "") else value
+    preserve_child_text = preserve_text or _is_execution_params_path(path)
+    if isinstance(value, dict):
+        return {
+            str(key): _redact_payload_value(
+                child,
+                path=path + (str(key),),
+                field_name=str(key),
+                preserve_text=preserve_child_text,
+            )
+            for key, child in value.items()
+        }
+    if isinstance(value, list):
+        return [
+            _redact_payload_value(
+                child,
+                path=path + ("[]",),
+                field_name=field_name,
+                preserve_text=preserve_child_text,
+            )
+            for child in value
+        ]
+    if isinstance(value, tuple):
+        return tuple(
+            _redact_payload_value(
+                child,
+                path=path + ("[]",),
+                field_name=field_name,
+                preserve_text=preserve_child_text,
+            )
+            for child in value
+        )
+    if isinstance(value, str):
+        if preserve_text:
+            return value
+        return _redact_pii_text(value)
+    return value
+
+
+def _redact_pii_text(value: str) -> str:
+    redacted = _EMAIL_RE.sub("[REDACTED:EMAIL]", value)
+    redacted = _SSN_RE.sub("[REDACTED:SSN]", redacted)
+    redacted = _PAYMENT_CARD_RE.sub("[REDACTED:PAYMENT_CARD]", redacted)
+    redacted = _PHONE_RE.sub("[REDACTED:PHONE]", redacted)
+    return redacted
+
+
+def _is_secret_field(field_name: str) -> bool:
+    normalized = field_name.strip().lower().replace("-", "_")
+    return normalized in _SECRET_FIELD_NAMES
+
+
+def _is_execution_params_path(path: tuple[str, ...]) -> bool:
+    return len(path) >= 2 and path[-2:] == ("skill_intent", "params")
 
 
 _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
