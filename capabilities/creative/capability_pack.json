@@ -1,0 +1,142 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "creative.document_generate",
+      "domain": "creative",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/creative/document_generate.input.schema.json",
+      "output_schema_ref": "schemas/creative/document_generate.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["document_artifact_generated"],
+        "forbidden_effects": ["payment_created", "external_email_sent", "file_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["document_id", "content_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "creative_document"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "creative.document_generate_correction",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "creative-ops",
+        "failure_due_seconds": 3600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Generate document",
+        "risk_tier": "medium"
+      },
+      "extensions": {}
+    },
+    {
+      "capability_id": "creative.data_analyze",
+      "domain": "creative",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/creative/data_analyze.input.schema.json",
+      "output_schema_ref": "schemas/creative/data_analyze.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["data_analysis_generated"],
+        "forbidden_effects": ["payment_created", "external_email_sent", "file_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["row_count", "column_count"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "creative_data"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "creative.data_analysis_correction",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "creative-ops",
+        "failure_due_seconds": 3600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Analyze data",
+        "risk_tier": "low"
+      },
+      "extensions": {}
+    },
+    {
+      "capability_id": "creative.translate",
+      "domain": "creative",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/creative/translate.input.schema.json",
+      "output_schema_ref": "schemas/creative/translate.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["translation_prompt_prepared"],
+        "forbidden_effects": ["payment_created", "external_email_sent", "file_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["translation_prompt", "target_lang"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "creative_translation"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "creative.translation_correction",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "creative-ops",
+        "failure_due_seconds": 3600,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Translate text",
+        "risk_tier": "low"
+      },
+      "extensions": {}
+    }
+  ]
+}
