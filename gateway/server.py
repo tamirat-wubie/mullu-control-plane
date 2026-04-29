@@ -33,7 +33,7 @@ from gateway.capability_isolation import build_isolated_capability_executor_from
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
 from gateway.event_log import WebhookEventLog
-from gateway.plan_ledger import CapabilityPlanLedger
+from gateway.plan_ledger import build_capability_plan_ledger_from_env
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
 from gateway.skill_dispatch import build_skill_dispatcher_from_platform
@@ -173,7 +173,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         clock=_clock,
         store=authority_mesh_store,
     )
-    plan_ledger = CapabilityPlanLedger(clock=_clock)
+    plan_ledger = build_capability_plan_ledger_from_env(clock=_clock)
     skill_dispatcher = build_skill_dispatcher_from_platform(platform)
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     router = GatewayRouter(

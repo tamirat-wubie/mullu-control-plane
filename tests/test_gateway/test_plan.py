@@ -26,7 +26,11 @@ from gateway.plan_executor import (
     CapabilityPlanExecutor,
     CapabilityPlanStepResult,
 )
-from gateway.plan_ledger import CapabilityPlanLedger
+from gateway.plan_ledger import (
+    CapabilityPlanLedger,
+    JsonFileCapabilityPlanLedgerStore,
+    build_capability_plan_ledger_from_env,
+)
 
 
 def test_one_step_plan_projects_risk_and_evidence() -> None:
@@ -316,6 +320,63 @@ def test_plan_ledger_certifies_successful_multi_step_execution() -> None:
     assert witnesses[0].detail["cause"] == "plan_terminal_certificate_issued"
 
 
+def test_json_plan_ledger_store_survives_recreation(tmp_path) -> None:
+    plan = one_step_plan(
+        capability_id="enterprise.knowledge_search",
+        params={"query": "policy"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search policy",
+    )
+
+    def execute_step(step: CapabilityPlanStep, completed):
+        return CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=True,
+            command_id="cmd-1",
+            terminal_certificate_id="terminal-1",
+            output={"total_chunks_searched": 1},
+        )
+
+    execution = CapabilityPlanExecutor(execute_step).execute(plan)
+    path = tmp_path / "plan-ledger.json"
+    first_ledger = CapabilityPlanLedger(
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+        store=JsonFileCapabilityPlanLedgerStore(path),
+    )
+
+    certificate = first_ledger.certify(plan=plan, execution=execution)
+    second_ledger = CapabilityPlanLedger(
+        clock=lambda: "2026-04-29T12:00:01+00:00",
+        store=JsonFileCapabilityPlanLedgerStore(path),
+    )
+    reloaded = second_ledger.certificate_for(plan.plan_id)
+    witnesses = second_ledger.witnesses_for(plan.plan_id)
+    read_model = second_ledger.read_model()
+
+    assert reloaded == certificate
+    assert witnesses[0].certificate_id == certificate.certificate_id
+    assert witnesses[0].detail["cause"] == "plan_terminal_certificate_issued"
+    assert read_model["plan_certificate_count"] == 1
+    assert read_model["plan_witness_count"] == 1
+    assert read_model["store"]["backend"] == "json_file"
+
+
+def test_plan_ledger_env_builder_uses_json_path(monkeypatch, tmp_path) -> None:
+    path = tmp_path / "plan-ledger-env.json"
+    monkeypatch.setenv("MULLU_PLAN_LEDGER_BACKEND", "json_file")
+    monkeypatch.setenv("MULLU_PLAN_LEDGER_PATH", str(path))
+
+    ledger = build_capability_plan_ledger_from_env(clock=lambda: "2026-04-29T12:00:00+00:00")
+    read_model = ledger.read_model()
+
+    assert path.exists()
+    assert read_model["store"]["backend"] == "json_file"
+    assert read_model["store"]["path"] == str(path)
+    assert read_model["plan_certificate_count"] == 0
+
+
 def test_plan_ledger_rejects_unsuccessful_execution() -> None:
     plan = one_step_plan(
         capability_id="creative.data_analyze",
@@ -370,11 +431,89 @@ def test_plan_ledger_records_failure_witness_without_certificate() -> None:
     assert witness.certificate_id == ""
     assert witness.detail["cause"] == "plan_execution_failed"
     assert witness.detail["error"] == "reconciliation_failed"
+    assert witness.detail["recovery_decision"]["recovery_action"] == "retry_or_review"
+    assert witness.detail["recovery_decision"]["retry_allowed"] is True
+    assert witness.detail["recovery_decision"]["review_required"] is True
     assert ledger.certificate_for(plan.plan_id) is None
     assert ledger.witnesses_for(plan.plan_id) == (witness,)
     assert read_model["plan_certificate_count"] == 0
     assert read_model["plan_witness_count"] == 1
     assert read_model["failed_plan_witness_count"] == 1
+    assert read_model["recovery_action_counts"] == {"retry_or_review": 1}
+
+
+def test_plan_ledger_classifies_approval_wait_recovery() -> None:
+    plan = one_step_plan(
+        capability_id="enterprise.task_schedule",
+        params={"title": "Review report"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="schedule review",
+    )
+    execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=False,
+            command_id="cmd-1",
+            error="approval_required:apr-1",
+        )
+    ).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    witness = ledger.record_failure(plan=plan, execution=execution)
+    decision = witness.detail["recovery_decision"]
+
+    assert decision["recovery_action"] == "wait_for_approval"
+    assert decision["approval_required"] is True
+    assert decision["retry_allowed"] is True
+    assert decision["review_required"] is False
+    assert decision["failed_capability_id"] == "enterprise.task_schedule"
+
+
+def test_plan_ledger_classifies_compensation_after_mutating_step() -> None:
+    plan = CapabilityPlan(
+        plan_id="plan-mutating-failure",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="notify then search",
+        steps=(
+            CapabilityPlanStep(
+                step_id="step-1",
+                capability_id="enterprise.notification_send",
+                params={"body": "notify"},
+            ),
+            CapabilityPlanStep(
+                step_id="step-2",
+                capability_id="enterprise.knowledge_search",
+                params={"query": "policy"},
+                depends_on=("step-1",),
+            ),
+        ),
+        risk_tier="medium",
+        approval_required=True,
+        evidence_required=("receipt_status", "total_chunks_searched"),
+    )
+    execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=step.step_id == "step-1",
+            command_id=f"cmd-{step.step_id}",
+            terminal_certificate_id=f"terminal-{step.step_id}" if step.step_id == "step-1" else "",
+            error="" if step.step_id == "step-1" else "search_failed",
+        )
+    ).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    witness = ledger.record_failure(plan=plan, execution=execution)
+    decision = witness.detail["recovery_decision"]
+
+    assert decision["recovery_action"] == "compensate_or_review"
+    assert decision["compensation_required"] is True
+    assert decision["review_required"] is True
+    assert decision["retry_allowed"] is False
+    assert decision["completed_mutating_capabilities"] == ("enterprise.notification_send",)
 
 
 def test_plan_ledger_rejects_missing_step_command_id() -> None:
