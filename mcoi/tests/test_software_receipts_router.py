@@ -241,6 +241,73 @@ def test_review_sync_materializes_open_receipt_reviews() -> None:
     assert second_body["pending_review_count"] == 1
 
 
+def test_review_requests_list_and_decision_resolve_pending_request() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_receipt(
+        receipt_id="receipt-open",
+        request_id="request-http-open",
+        stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+        created_at=T1,
+    ))
+    client = _client(store)
+    sync_body = client.post("/software/receipts/review/sync").json()
+    request_id = sync_body["review_requests"][0]["request_id"]
+
+    pending_response = client.get("/software/receipts/review/requests")
+    decision_response = client.post(
+        f"/software/receipts/review/requests/{request_id}/decision",
+        json={
+            "reviewer_id": "operator-http",
+            "approved": True,
+            "comment": "closure evidence accepted",
+        },
+    )
+    final_pending = client.get("/software/receipts/review/requests")
+    pending_body = pending_response.json()
+    decision_body = decision_response.json()
+
+    assert pending_response.status_code == 200
+    assert pending_body["operation"] == "review_requests"
+    assert pending_body["review_request_count"] == 1
+    assert pending_body["review_requests"][0]["request_id"] == request_id
+    assert decision_response.status_code == 200
+    assert decision_body["operation"] == "review_decision"
+    assert decision_body["review_decision"]["request_id"] == request_id
+    assert decision_body["review_decision"]["reviewer_id"] == "operator-http"
+    assert decision_body["review_decision"]["status"] == "approved"
+    assert decision_body["gate_allowed"] is True
+    assert decision_body["pending_review_count"] == 0
+    assert final_pending.json()["review_request_count"] == 0
+
+
+def test_review_decision_missing_request_returns_bounded_404() -> None:
+    client = _client(SoftwareChangeReceiptStore())
+
+    response = client.post(
+        "/software/receipts/review/requests/missing-review/decision",
+        json={"reviewer_id": "operator-http", "approved": False},
+    )
+    body = response.json()
+
+    assert response.status_code == 404
+    assert body["detail"]["error"] == "software receipt review decision unavailable"
+    assert body["detail"]["type"] == "ValueError"
+
+
+def test_review_decision_requires_reviewer_identity() -> None:
+    client = _client(SoftwareChangeReceiptStore())
+
+    response = client.post(
+        "/software/receipts/review/requests/missing-review/decision",
+        json={"reviewer_id": "", "approved": False},
+    )
+    body = response.json()
+
+    assert response.status_code == 422
+    assert body["detail"][0]["loc"] == ["body", "reviewer_id"]
+    assert body["detail"][0]["type"] == "string_too_short"
+
+
 def test_review_sync_requires_registered_review_queue() -> None:
     configure_musia_auth(None)
     configure_musia_jwt(None)
