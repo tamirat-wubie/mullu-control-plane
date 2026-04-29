@@ -13,12 +13,12 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.musia_auth import require_read, require_write
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
-from mcoi_runtime.contracts.review import ReviewRequest
+from mcoi_runtime.contracts.review import ReviewDecision, ReviewRequest
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
     SoftwareChangeReceiptStage,
@@ -51,7 +51,18 @@ class SoftwareReceiptEnvelope(BaseModel):
     review_request_count: int | None = None
     review_requests: list[dict[str, Any]] | None = None
     pending_review_count: int | None = None
+    review_decision: dict[str, Any] | None = None
+    gate_allowed: bool | None = None
+    gate_reason: str | None = None
     governed: bool = True
+
+
+class SoftwareReceiptReviewDecisionBody(BaseModel):
+    """HTTP request body for deciding a software receipt review."""
+
+    reviewer_id: str = Field(..., min_length=1)
+    approved: bool
+    comment: str | None = None
 
 
 def _bounded_http_error(summary: str, exc: Exception) -> dict[str, str]:
@@ -97,6 +108,10 @@ def _serialize_review_requests(
     requests: tuple[ReviewRequest, ...],
 ) -> list[dict[str, Any]]:
     return [request.to_json_dict() for request in requests]
+
+
+def _serialize_review_decision(decision: ReviewDecision) -> dict[str, Any]:
+    return decision.to_json_dict()
 
 
 def _review_signals(receipts: tuple[SoftwareChangeReceipt, ...]) -> list[dict[str, str]]:
@@ -196,6 +211,62 @@ def sync_software_receipt_reviews(
         review_requests=_serialize_review_requests(submitted),
         pending_review_count=len(pending),
         requires_operator_review=bool(pending),
+    )
+
+
+@router.get("/review/requests", response_model=SoftwareReceiptEnvelope)
+def list_software_receipt_review_requests(
+    tenant_id: str = Depends(require_read),
+) -> SoftwareReceiptEnvelope:
+    """List pending canonical review requests for software receipt chains."""
+    queue = _review_queue()
+    pending = queue.pending()
+    return SoftwareReceiptEnvelope(
+        operation="review_requests",
+        tenant_id=tenant_id,
+        count=len(pending),
+        receipts=[],
+        review_request_count=len(pending),
+        review_requests=_serialize_review_requests(pending),
+        pending_review_count=len(pending),
+        requires_operator_review=bool(pending),
+    )
+
+
+@router.post("/review/requests/{request_id}/decision", response_model=SoftwareReceiptEnvelope)
+def decide_software_receipt_review_request(
+    request_id: str,
+    body: SoftwareReceiptReviewDecisionBody,
+    tenant_id: str = Depends(require_write),
+) -> SoftwareReceiptEnvelope:
+    """Approve or reject a software receipt review request."""
+    queue = _review_queue()
+    try:
+        decision = queue.decide(
+            request_id=request_id,
+            reviewer_id=body.reviewer_id,
+            approved=body.approved,
+            comment=body.comment,
+        )
+        gate_allowed = decision.is_approved
+        gate_reason = "review approved" if decision.is_approved else "review not approved"
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=_bounded_http_error("software receipt review decision unavailable", exc),
+        ) from exc
+    pending = queue.pending()
+    return SoftwareReceiptEnvelope(
+        operation="review_decision",
+        tenant_id=tenant_id,
+        request_id=request_id,
+        count=1,
+        receipts=[],
+        review_decision=_serialize_review_decision(decision),
+        pending_review_count=len(pending),
+        requires_operator_review=bool(pending),
+        gate_allowed=gate_allowed,
+        gate_reason=gate_reason,
     )
 
 

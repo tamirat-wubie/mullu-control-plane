@@ -158,6 +158,39 @@ def test_summary_reports_pending_software_receipt_reviews() -> None:
     assert summary["governed"] is True
 
 
+def test_decide_records_attributed_review_decision() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_receipt(receipt_id="receipt-open", request_id="request-open"))
+    queue = _queue(store)
+    request = queue.sync()[0]
+
+    decision = queue.decide(
+        request_id=request.request_id,
+        reviewer_id="operator-1",
+        approved=True,
+        comment="terminal closure accepted",
+    )
+    pending = queue.pending()
+
+    assert decision.request_id == "software-receipt-review:request-open"
+    assert decision.reviewer_id == "operator-1"
+    assert decision.is_approved is True
+    assert decision.comment == "terminal closure accepted"
+    assert pending == ()
+
+
+def test_decide_rejects_non_software_receipt_review_request() -> None:
+    store = SoftwareChangeReceiptStore()
+    queue = _queue(store)
+
+    with pytest.raises(ValueError):
+        queue.decide(
+            request_id="missing-review",
+            reviewer_id="operator-1",
+            approved=False,
+        )
+
+
 def test_invalid_wiring_fails_explicitly() -> None:
     with pytest.raises(TypeError):
         SoftwareReceiptReviewQueue(

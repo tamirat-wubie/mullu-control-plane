@@ -1,17 +1,23 @@
 """Purpose: convert open software receipt chains into canonical review requests.
-Governance scope: read-only receipt inspection and ReviewEngine submission only.
+Governance scope: receipt inspection and software receipt review lifecycle only.
 Dependencies: review engine, review contracts, and software receipt persistence.
 Invariants:
   - Receipt state is never mutated by review queue synchronization.
   - One open software request chain maps to one stable review request id.
   - Review metadata binds latest receipt, stage, constraints, and evidence.
+  - Decisions are limited to requests produced by this queue.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from mcoi_runtime.contracts.review import ReviewRequest, ReviewScope, ReviewScopeType
+from mcoi_runtime.contracts.review import (
+    ReviewDecision,
+    ReviewRequest,
+    ReviewScope,
+    ReviewScopeType,
+)
 from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceipt
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.persistence.software_change_receipt_store import (
@@ -69,6 +75,27 @@ class SoftwareReceiptReviewQueue:
             request
             for request in self._review_engine.list_pending()
             if request.metadata.get("source") == SOFTWARE_RECEIPT_REVIEW_SOURCE
+        )
+
+    def decide(
+        self,
+        *,
+        request_id: str,
+        reviewer_id: str,
+        approved: bool,
+        comment: str | None = None,
+    ) -> ReviewDecision:
+        """Record a decision for a software receipt review request."""
+        request = self._review_engine.get_request(request_id)
+        if request is None:
+            raise ValueError("software receipt review request unavailable")
+        if request.metadata.get("source") != SOFTWARE_RECEIPT_REVIEW_SOURCE:
+            raise ValueError("review request is not software receipt scoped")
+        return self._review_engine.decide(
+            request_id=request_id,
+            reviewer_id=reviewer_id,
+            approved=approved,
+            comment=comment,
         )
 
     def summary(self) -> dict[str, Any]:
