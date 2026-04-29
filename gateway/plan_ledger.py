@@ -294,6 +294,7 @@ class CapabilityPlanLedger:
         detail = {
             "cause": "plan_execution_failed",
             "error": execution.error or "execution_failed",
+            "plan_snapshot": _plan_snapshot(plan),
             "step_results": [asdict(result) for result in execution.step_results],
         }
         recovery_decision = _recovery_decision_for_failure(plan=plan, execution=execution)
@@ -321,20 +322,30 @@ class CapabilityPlanLedger:
         """Return the terminal certificate for one plan id, if present."""
         return self._store.load_certificate(plan_id)
 
-    def witnesses_for(self, plan_id: str) -> tuple[CapabilityPlanWitnessRecord, ...]:
+    def witnesses_for(self, plan_id: str = "") -> tuple[CapabilityPlanWitnessRecord, ...]:
         """Return append-only witness records for one plan id."""
         return self._store.list_witnesses(plan_id)
 
-    def read_model(self) -> dict[str, Any]:
+    def read_model(self, *, recovery_action: str = "") -> dict[str, Any]:
         """Return an operator read model for plan closure."""
         certificates = self._store.list_certificates()
         witnesses = self._store.list_witnesses()
+        failed_witnesses = tuple(witness for witness in witnesses if not witness.succeeded)
+        requested_recovery_action = recovery_action.strip()
+        if requested_recovery_action:
+            failed_witnesses = tuple(
+                witness
+                for witness in failed_witnesses
+                if _witness_recovery_action(witness) == requested_recovery_action
+            )
         return {
             "plan_certificate_count": len(certificates),
             "plan_witness_count": len(witnesses),
             "failed_plan_witness_count": sum(1 for witness in witnesses if not witness.succeeded),
             "recovery_action_counts": _recovery_action_counts(witnesses),
+            "recovery_action_filter": requested_recovery_action,
             "certificates": [asdict(certificate) for certificate in certificates],
+            "failed_plan_witnesses": [asdict(witness) for witness in failed_witnesses],
             "store": self._store.status(),
         }
 
@@ -385,6 +396,28 @@ def _certificate_from_mapping(raw: dict[str, Any]) -> CapabilityPlanTerminalCert
         issued_at=str(raw["issued_at"]),
         metadata=metadata,
     )
+
+
+def _plan_snapshot(plan: CapabilityPlan) -> dict[str, Any]:
+    return {
+        "plan_id": plan.plan_id,
+        "tenant_id": plan.tenant_id,
+        "identity_id": plan.identity_id,
+        "goal": plan.goal,
+        "risk_tier": plan.risk_tier,
+        "approval_required": plan.approval_required,
+        "evidence_required": tuple(plan.evidence_required),
+        "metadata": dict(plan.metadata),
+        "steps": [
+            {
+                "step_id": step.step_id,
+                "capability_id": step.capability_id,
+                "params": dict(step.params),
+                "depends_on": tuple(step.depends_on),
+            }
+            for step in plan.steps
+        ],
+    }
 
 
 def _witness_from_mapping(raw: dict[str, Any]) -> CapabilityPlanWitnessRecord:
@@ -490,6 +523,13 @@ def _recovery_action_counts(witnesses: tuple[CapabilityPlanWitnessRecord, ...]) 
         if action:
             counts[action] = counts.get(action, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _witness_recovery_action(witness: CapabilityPlanWitnessRecord) -> str:
+    decision = witness.detail.get("recovery_decision")
+    if not isinstance(decision, dict):
+        return ""
+    return str(decision.get("recovery_action", "")).strip()
 
 
 def _witness_for_certificate(

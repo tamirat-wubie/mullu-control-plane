@@ -18,6 +18,7 @@
     "streaming_budget_canary_passed",
     "lineage_query_canary_passed",
     "authority_obligation_canary_passed",
+    "authority_directory_sync_receipt_valid",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
     "known_limitations_aligned",
@@ -71,6 +72,9 @@
       "type": "boolean"
     },
     "authority_obligation_canary_passed": {
+      "type": "boolean"
+    },
+    "authority_directory_sync_receipt_valid": {
       "type": "boolean"
     },
     "capsule_registry_certified": {

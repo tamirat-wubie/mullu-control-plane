@@ -9,6 +9,8 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any
 
+import pytest
+
 # Add gateway to path
 _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
@@ -431,6 +433,60 @@ class TestMessageRouting:
         assert response.metadata["step_results"][1]["succeeded"] is False
         assert response.metadata["step_results"][1]["error"].startswith("approval_required:")
         assert router._plan_ledger.read_model()["failed_plan_witness_count"] == 1
+
+    def test_recover_waiting_plan_after_step_approval(self):
+        dispatcher = SkillDispatcher()
+        knowledge_calls: list[str] = []
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": len(knowledge_calls) + 1,
+                "receipt_status": "searched",
+            } if not knowledge_calls.append("called") else {},
+        ))
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.task_schedule",
+            lambda context, params: {
+                "response": "Task scheduled: task-1",
+                "task_id": "task-1",
+                "receipt_status": "scheduled",
+            },
+        ))
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="schedule approved"),
+            skill_dispatcher=dispatcher,
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        blocked = router.handle_message(GatewayMessage(
+            message_id="msg-plan-recover-1",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs and schedule review",
+        ))
+        request_id = blocked.metadata["plan_error"].split("approval_required:", 1)[1]
+        approved = router.handle_approval_callback(request_id, approved=True, resolved_by="operator-1")
+        recovered = router.recover_waiting_plan(blocked.metadata["plan_id"])
+
+        assert blocked.body == "This plan could not be completed under governance."
+        assert approved is not None
+        assert approved.metadata["terminal_certificate_id"]
+        assert recovered.body == "Plan completed under governed capability closure."
+        assert recovered.metadata["plan_terminal_certificate_id"].startswith("plan-cert-")
+        assert [result["succeeded"] for result in recovered.metadata["step_results"]] == [True, True]
+        assert len(knowledge_calls) == 1
+        assert router._plan_ledger.certificate_for(blocked.metadata["plan_id"]) is not None
+        with pytest.raises(ValueError, match="plan already has terminal certificate"):
+            router.recover_waiting_plan(blocked.metadata["plan_id"])
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())

@@ -34,7 +34,7 @@ from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 from gateway.intent_resolver import CapabilityIntentResolver
 from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanStep
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult
-from gateway.plan_ledger import CapabilityPlanLedger
+from gateway.plan_ledger import CapabilityPlanLedger, CapabilityPlanWitnessRecord
 from gateway.tenant_identity import InMemoryTenantIdentityStore, TenantIdentityStore, TenantMapping
 
 
@@ -334,6 +334,7 @@ class GatewayRouter:
                 "closure_disposition": closure.disposition.value if closure.disposition else None,
                 "response_allowed": closure.response_allowed,
                 "success_claim_allowed": closure.success_claim_allowed,
+                "terminal_certificate_id": certificate.certificate_id if certificate else "",
             },
         )
         self._commands.transition(
@@ -358,6 +359,7 @@ class GatewayRouter:
         plan: CapabilityPlan,
         message: GatewayMessage,
         mapping: TenantMapping,
+        initial_results: tuple[CapabilityPlanStepResult, ...] = (),
     ) -> GatewayResponse:
         """Execute a multi-step plan as governed child commands."""
 
@@ -443,7 +445,7 @@ class GatewayRouter:
                 error="" if certificate else "missing_terminal_certificate",
             )
 
-        execution = CapabilityPlanExecutor(execute_step).execute(plan)
+        execution = CapabilityPlanExecutor(execute_step).execute(plan, initial_results=initial_results)
         if not execution.succeeded:
             self._record_error("plan_execution_failed")
             failure_witness = self._plan_ledger.record_failure(plan=plan, execution=execution)
@@ -478,6 +480,64 @@ class GatewayRouter:
                 "evidence_hash": execution.evidence_hash,
             },
         )
+
+    def recover_waiting_plan(self, plan_id: str) -> GatewayResponse:
+        """Resume a plan that was blocked waiting for step approval."""
+        if self._plan_ledger.certificate_for(plan_id) is not None:
+            raise ValueError("plan already has terminal certificate")
+        witness = self._latest_failed_plan_witness(plan_id)
+        if witness is None:
+            raise KeyError(f"unknown failed plan_id: {plan_id}")
+        recovery_decision = witness.detail.get("recovery_decision", {})
+        if not isinstance(recovery_decision, dict) or recovery_decision.get("recovery_action") != "wait_for_approval":
+            raise ValueError("plan is not waiting for approval")
+        plan = _plan_from_witness(witness)
+        step_results = _step_results_from_witness(witness)
+        failed_step_id = str(recovery_decision.get("failed_step_id", ""))
+        failed_result = next((result for result in step_results if result.step_id == failed_step_id), None)
+        if failed_result is None or not failed_result.command_id:
+            raise ValueError("approval-wait witness does not include a failed command id")
+        certificate = self._commands.terminal_certificate_for(failed_result.command_id)
+        if certificate is None:
+            raise ValueError("approval-wait command has not reached terminal closure")
+        command = self._commands.get(failed_result.command_id)
+        if command is None:
+            raise ValueError("approval-wait command is missing from command ledger")
+        recovered_failed_result = CapabilityPlanStepResult(
+            step_id=failed_result.step_id,
+            capability_id=failed_result.capability_id,
+            succeeded=True,
+            command_id=failed_result.command_id,
+            terminal_certificate_id=certificate.certificate_id,
+            output={"recovered_from_approval": True},
+        )
+        initial_results = tuple(
+            recovered_failed_result if result.step_id == failed_step_id else result
+            for result in step_results
+        )
+        message = GatewayMessage(
+            message_id=f"recover:{plan_id}:{witness.witness_id}",
+            channel=command.source,
+            sender_id=str(command.redacted_payload.get("sender_id", command.actor_id)),
+            body=plan.goal,
+            conversation_id=command.conversation_id,
+            attachments=tuple(command.redacted_payload.get("attachments", ())),
+            metadata={"recovered_plan_id": plan_id, "recovery_witness_id": witness.witness_id},
+        )
+        mapping = TenantMapping(
+            channel=command.source,
+            sender_id=str(command.redacted_payload.get("sender_id", command.actor_id)),
+            tenant_id=plan.tenant_id,
+            identity_id=plan.identity_id,
+        )
+        return self._execute_plan(plan=plan, message=message, mapping=mapping, initial_results=initial_results)
+
+    def _latest_failed_plan_witness(self, plan_id: str) -> CapabilityPlanWitnessRecord | None:
+        witnesses = self._plan_ledger.witnesses_for(plan_id)
+        for witness in reversed(witnesses):
+            if not witness.succeeded:
+                return witness
+        return None
 
     def _approval_chain_pending_response(
         self,
@@ -1035,3 +1095,53 @@ class GatewayRouter:
             **witness_payload,
             "signature": f"hmac-sha256:{signature}",
         }
+
+
+def _plan_from_witness(witness: CapabilityPlanWitnessRecord) -> CapabilityPlan:
+    snapshot = witness.detail.get("plan_snapshot")
+    if not isinstance(snapshot, dict):
+        raise ValueError("plan witness does not include a plan snapshot")
+    raw_steps = snapshot.get("steps", ())
+    if not isinstance(raw_steps, list):
+        raise ValueError("plan witness snapshot steps must be a list")
+    steps: list[CapabilityPlanStep] = []
+    for raw_step in raw_steps:
+        if not isinstance(raw_step, dict):
+            raise ValueError("plan witness snapshot step must be an object")
+        steps.append(CapabilityPlanStep(
+            step_id=str(raw_step["step_id"]),
+            capability_id=str(raw_step["capability_id"]),
+            params=dict(raw_step.get("params", {})),
+            depends_on=tuple(str(item) for item in raw_step.get("depends_on", ())),
+        ))
+    return CapabilityPlan(
+        plan_id=str(snapshot["plan_id"]),
+        tenant_id=str(snapshot["tenant_id"]),
+        identity_id=str(snapshot["identity_id"]),
+        goal=str(snapshot["goal"]),
+        steps=tuple(steps),
+        risk_tier=str(snapshot["risk_tier"]),
+        approval_required=bool(snapshot["approval_required"]),
+        evidence_required=tuple(str(item) for item in snapshot.get("evidence_required", ())),
+        metadata=dict(snapshot.get("metadata", {})),
+    )
+
+
+def _step_results_from_witness(witness: CapabilityPlanWitnessRecord) -> tuple[CapabilityPlanStepResult, ...]:
+    raw_results = witness.detail.get("step_results", ())
+    if not isinstance(raw_results, list):
+        raise ValueError("plan witness step_results must be a list")
+    results: list[CapabilityPlanStepResult] = []
+    for raw_result in raw_results:
+        if not isinstance(raw_result, dict):
+            raise ValueError("plan witness step_result must be an object")
+        results.append(CapabilityPlanStepResult(
+            step_id=str(raw_result["step_id"]),
+            capability_id=str(raw_result["capability_id"]),
+            succeeded=bool(raw_result["succeeded"]),
+            command_id=str(raw_result.get("command_id", "")),
+            terminal_certificate_id=str(raw_result.get("terminal_certificate_id", "")),
+            output=dict(raw_result.get("output", {})),
+            error=str(raw_result.get("error", "")),
+        ))
+    return tuple(results)

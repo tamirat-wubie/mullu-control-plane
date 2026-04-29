@@ -308,6 +308,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "capability_admission_canary_passed",
                 "dangerous_capability_isolation_canary_passed",
                 "lineage_query_canary_passed",
+                "authority_directory_sync_receipt_valid",
             ],
         ),
         _surface(

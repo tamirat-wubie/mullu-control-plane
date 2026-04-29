@@ -981,11 +981,11 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         return audit
 
     @app.get("/capability-plans/read-model")
-    def capability_plans_read_model(request: Request):
+    def capability_plans_read_model(request: Request, recovery_action: str = ""):
         _require_authority_operator(request)
         return {
             "enabled": True,
-            **plan_ledger.read_model(),
+            **plan_ledger.read_model(recovery_action=recovery_action),
         }
 
     @app.get("/capability-plans/{plan_id}/closure")
@@ -1000,6 +1000,23 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             "plan_terminal_certificate": asdict(certificate),
             "plan_witnesses": [asdict(witness) for witness in witnesses],
             "witness_count": len(witnesses),
+        }
+
+    @app.post("/capability-plans/{plan_id}/recover")
+    def recover_capability_plan(plan_id: str, request: Request):
+        _require_authority_operator(request)
+        try:
+            response = router.recover_waiting_plan(plan_id)
+        except KeyError as exc:
+            raise HTTPException(404, detail="failed plan witness not found") from exc
+        except ValueError as exc:
+            raise HTTPException(409, detail=str(exc)) from exc
+        return {
+            "status": "recovered" if response.metadata.get("plan_terminal_certificate_id") else "not_recovered",
+            "response": asdict(response),
+            "plan_id": plan_id,
+            "plan_terminal_certificate_id": response.metadata.get("plan_terminal_certificate_id"),
+            "plan_error": response.metadata.get("plan_error", ""),
         }
 
     @app.get("/anchors/latest")

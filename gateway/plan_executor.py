@@ -55,11 +55,22 @@ class CapabilityPlanExecutor:
     def __init__(self, execute_step: GovernedStepExecutor) -> None:
         self._execute_step = execute_step
 
-    def execute(self, plan: CapabilityPlan) -> CapabilityPlanExecutionResult:
+    def execute(
+        self,
+        plan: CapabilityPlan,
+        *,
+        initial_results: tuple[CapabilityPlanStepResult, ...] = (),
+    ) -> CapabilityPlanExecutionResult:
         """Execute every step in dependency order."""
-        completed: dict[str, CapabilityPlanStepResult] = {}
-        step_results: list[CapabilityPlanStepResult] = []
+        completed: dict[str, CapabilityPlanStepResult] = {
+            result.step_id: result
+            for result in initial_results
+            if result.succeeded
+        }
+        step_results: list[CapabilityPlanStepResult] = list(initial_results)
         for step in plan.steps:
+            if step.step_id in completed:
+                continue
             missing = [dep for dep in step.depends_on if dep not in completed or not completed[dep].succeeded]
             if missing:
                 result = CapabilityPlanStepResult(

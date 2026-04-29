@@ -47,6 +47,7 @@ REQUIRED_CONFORMANCE_FIELDS = (
     "expires_at",
     "gateway_witness_valid",
     "runtime_witness_valid",
+    "authority_directory_sync_receipt_valid",
     "terminal_status",
     "open_conformance_gaps",
     "evidence_refs",
