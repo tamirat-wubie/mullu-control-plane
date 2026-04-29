@@ -30,7 +30,8 @@ from gateway.memory_constitution import (
     InMemoryGovernedMemoryStore,
     governed_memory_cell_from_mapping,
 )
-from gateway.skill_dispatch import SkillDispatcher, SkillIntent, detect_intent
+from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
+from gateway.intent_resolver import CapabilityIntentResolver
 from gateway.tenant_identity import InMemoryTenantIdentityStore, TenantIdentityStore, TenantMapping
 
 
@@ -88,7 +89,8 @@ class GatewayRouter:
         platform: Any,  # Platform instance from governed_session.py
         clock: Callable[[], str] | None = None,
         approval_router: ApprovalRouter | None = None,
-        skill_dispatcher: SkillDispatcher | None = None,
+        skill_dispatcher: CapabilityDispatcher | None = None,
+        intent_resolver: CapabilityIntentResolver | None = None,
         deduplicator: MessageDeduplicator | None = None,
         command_ledger: CommandLedger | None = None,
         tenant_identity_store: TenantIdentityStore | None = None,
@@ -101,7 +103,8 @@ class GatewayRouter:
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._approval = approval_router or ApprovalRouter(clock=self._clock)
-        self._skills = skill_dispatcher or SkillDispatcher()
+        self._skills = skill_dispatcher or CapabilityDispatcher()
+        self._intent_resolver = intent_resolver or CapabilityIntentResolver()
         self._dedup = deduplicator or MessageDeduplicator()
         self._commands = command_ledger or CommandLedger(clock=self._clock)
         self._tenant_identities = tenant_identity_store or InMemoryTenantIdentityStore(clock=self._clock)
@@ -225,13 +228,13 @@ class GatewayRouter:
             },
         )
 
-    def _intent_name(self, intent: SkillIntent | None) -> str:
+    def _intent_name(self, intent: CapabilityIntent | None) -> str:
         """Return the canonical command intent string."""
         if intent is None:
             return "llm_completion"
-        return f"{intent.skill}.{intent.action}"
+        return intent.capability_id
 
-    def _command_payload(self, message: GatewayMessage, intent: SkillIntent | None) -> dict[str, Any]:
+    def _command_payload(self, message: GatewayMessage, intent: CapabilityIntent | None) -> dict[str, Any]:
         """Build the canonical payload preserved across approval wait/resume."""
         payload: dict[str, Any] = {
             "message_id": message.message_id,
@@ -244,8 +247,10 @@ class GatewayRouter:
         }
         if intent is not None:
             payload["skill_intent"] = {
-                "skill": intent.skill,
+                "skill": intent.domain,
+                "domain": intent.domain,
                 "action": intent.action,
+                "capability_id": intent.capability_id,
                 "params": dict(intent.params),
             }
         return payload
@@ -254,7 +259,7 @@ class GatewayRouter:
         self,
         message: GatewayMessage,
         mapping: TenantMapping,
-        intent: SkillIntent | None,
+        intent: CapabilityIntent | None,
     ) -> CommandEnvelope:
         """Create and tenant-bind the command for a non-approval message."""
         idempotency_key = canonical_hash({
@@ -280,17 +285,17 @@ class GatewayRouter:
             raise RuntimeError("governed action binding lost command")
         return governed
 
-    def _skill_intent_from_command(self, command: CommandEnvelope) -> SkillIntent | None:
+    def _skill_intent_from_command(self, command: CommandEnvelope) -> CapabilityIntent | None:
         """Rebuild the stored skill intent without reclassifying message text."""
         raw = command.redacted_payload.get("skill_intent")
         if not isinstance(raw, dict):
             return None
-        skill = raw.get("skill")
+        skill = raw.get("domain") or raw.get("skill")
         action = raw.get("action")
         params = raw.get("params", {})
         if not isinstance(skill, str) or not isinstance(action, str) or not isinstance(params, dict):
             return None
-        return SkillIntent(skill, action, dict(params))
+        return CapabilityIntent(skill, action, dict(params))
 
     def _record_error(self, reason_code: str = "gateway_runtime_error") -> None:
         """Record a kernel-visible gateway error."""
@@ -546,7 +551,7 @@ class GatewayRouter:
             self._dedup.record(message.channel, message.sender_id, message.message_id, response)
             return response
 
-        intent = detect_intent(message.body)
+        intent = self._intent_resolver.resolve(message.body)
         try:
             command = self._create_command(message, mapping, intent)
         except ValueError as exc:
