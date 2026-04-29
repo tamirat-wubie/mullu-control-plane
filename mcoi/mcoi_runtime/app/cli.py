@@ -14,9 +14,11 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
+from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from .bootstrap import bootstrap_runtime
 from .config import AppConfig
 from .console import (
@@ -31,6 +33,7 @@ from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
 from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceiptStage
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.persistence.errors import PersistenceError
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
@@ -390,6 +393,12 @@ def _software_receipt_envelope(
     requires_operator_review: bool | None = None,
     review_signal_count: int | None = None,
     review_signals: list[dict[str, str]] | None = None,
+    review_request_count: int | None = None,
+    review_requests: list[dict[str, Any]] | None = None,
+    pending_review_count: int | None = None,
+    review_decision: dict[str, Any] | None = None,
+    gate_allowed: bool | None = None,
+    gate_reason: str | None = None,
 ) -> dict[str, Any]:
     """Build the deterministic CLI envelope shared by text and JSON output."""
     return {
@@ -403,6 +412,12 @@ def _software_receipt_envelope(
         "requires_operator_review": requires_operator_review,
         "review_signal_count": review_signal_count,
         "review_signals": review_signals,
+        "review_request_count": review_request_count,
+        "review_requests": review_requests,
+        "pending_review_count": pending_review_count,
+        "review_decision": review_decision,
+        "gate_allowed": gate_allowed,
+        "gate_reason": gate_reason,
         "governed": True,
         "receipts": [receipt.to_json_dict() for receipt in receipts],
     }
@@ -420,6 +435,12 @@ def _software_receipt_review_signals(receipts: tuple) -> list[dict[str, str]]:
         }
         for receipt in receipts
     ]
+
+
+def _software_receipt_review_queue(store: FileSoftwareChangeReceiptStore) -> SoftwareReceiptReviewQueue:
+    """Build an ephemeral review queue for local CLI review decisions."""
+    review_engine = ReviewEngine(clock=lambda: datetime.now(timezone.utc).isoformat())
+    return SoftwareReceiptReviewQueue(review_engine=review_engine, receipt_store=store)
 
 
 def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output: bool) -> None:
@@ -444,6 +465,14 @@ def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output
         print(f"requires_operator_review: {str(envelope['requires_operator_review']).lower()}")
     if envelope.get("review_signal_count") is not None:
         print(f"review_signal_count: {envelope['review_signal_count']}")
+    if envelope.get("review_request_count") is not None:
+        print(f"review_request_count: {envelope['review_request_count']}")
+    if envelope.get("pending_review_count") is not None:
+        print(f"pending_review_count: {envelope['pending_review_count']}")
+    if envelope.get("gate_allowed") is not None:
+        print(f"gate_allowed: {str(envelope['gate_allowed']).lower()}")
+    if envelope.get("gate_reason") is not None:
+        print(f"gate_reason: {envelope['gate_reason']}")
     for signal in envelope.get("review_signals") or []:
         print(
             "  review "
@@ -451,6 +480,21 @@ def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output
             f"{signal['latest_stage']} "
             f"{signal['latest_receipt_id']} "
             f"reason={signal['reason']}"
+        )
+    for request in envelope.get("review_requests") or []:
+        print(
+            "  request "
+            f"{request['request_id']} "
+            f"{request['scope']['target_id']} "
+            f"reason={request['reason']}"
+        )
+    if envelope.get("review_decision") is not None:
+        decision = envelope["review_decision"]
+        print(
+            "  decision "
+            f"{decision['request_id']} "
+            f"{decision['status']} "
+            f"reviewer={decision['reviewer_id']}"
         )
     for receipt in envelope["receipts"]:
         print(
@@ -464,10 +508,10 @@ def _print_software_receipt_envelope(envelope: Mapping[str, Any], *, json_output
 
 
 def software_receipts_command(args: argparse.Namespace) -> int:
-    """Read-only operator CLI for software-change lifecycle receipts."""
+    """Operator CLI for software-change lifecycle receipts and review decisions."""
     sub = getattr(args, "software_receipts_command", None)
     if sub is None:
-        print("Usage: mcoi software-receipts {list|get|replay|review} --store path")
+        print("Usage: mcoi software-receipts {list|get|replay|review|review-requests|decide} --store path")
         return 1
     try:
         store = FileSoftwareChangeReceiptStore(_software_receipt_store_path(args))
@@ -513,6 +557,38 @@ def software_receipts_command(args: argparse.Namespace) -> int:
                 requires_operator_review=bool(receipts),
                 review_signal_count=len(receipts),
                 review_signals=_software_receipt_review_signals(receipts),
+            )
+        elif sub == "review-requests":
+            queue = _software_receipt_review_queue(store)
+            queue.sync(limit=args.limit)
+            pending = queue.pending()
+            envelope = _software_receipt_envelope(
+                operation="review_requests",
+                receipts=tuple(),
+                requires_operator_review=bool(pending),
+                review_request_count=len(pending),
+                review_requests=[request.to_json_dict() for request in pending],
+                pending_review_count=len(pending),
+            )
+        elif sub == "decide":
+            queue = _software_receipt_review_queue(store)
+            queue.sync(limit=None)
+            decision = queue.decide(
+                request_id=args.request_id,
+                reviewer_id=args.reviewer_id,
+                approved=args.approved,
+                comment=args.comment,
+            )
+            pending = queue.pending()
+            envelope = _software_receipt_envelope(
+                operation="review_decision",
+                receipts=tuple(),
+                request_id=args.request_id,
+                requires_operator_review=bool(pending),
+                review_decision=decision.to_json_dict(),
+                pending_review_count=len(pending),
+                gate_allowed=decision.is_approved,
+                gate_reason="review approved" if decision.is_approved else "review not approved",
             )
         else:
             print(f"error: unknown software-receipts subcommand {sub!r}")
@@ -638,6 +714,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="List software-change receipt chains needing operator review",
     )
     receipts_review_parser.add_argument("--limit", type=int, default=10, help="Maximum review signal count")
+
+    receipts_review_requests_parser = receipts_subparsers.add_parser(
+        "review-requests",
+        parents=[receipts_common],
+        help="List canonical software receipt review requests",
+    )
+    receipts_review_requests_parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Maximum review request count",
+    )
+
+    receipts_decide_parser = receipts_subparsers.add_parser(
+        "decide",
+        parents=[receipts_common],
+        help="Approve or reject a software receipt review request",
+    )
+    receipts_decide_parser.add_argument("request_id", help="Review request id")
+    receipts_decide_parser.add_argument("--reviewer-id", required=True, help="Reviewer identity")
+    decision_group = receipts_decide_parser.add_mutually_exclusive_group(required=True)
+    decision_group.add_argument("--approve", dest="approved", action="store_true", help="Approve the review")
+    decision_group.add_argument("--reject", dest="approved", action="store_false", help="Reject the review")
+    receipts_decide_parser.add_argument("--comment", default=None, help="Optional review comment")
 
     # v4.25.0: migrate — DB schema migration ops surface
     migrate_parser = subparsers.add_parser(
