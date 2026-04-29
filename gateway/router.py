@@ -385,14 +385,17 @@ class GatewayRouter:
             try:
                 command = self._create_command(step_message, mapping, intent)
             except ValueError as exc:
-                if not str(exc).startswith("capability fabric admission rejected:"):
-                    raise
-                self._record_error("plan_step_capability_admission_rejected")
+                reason_code = (
+                    "plan_step_capability_admission_rejected"
+                    if str(exc).startswith("capability fabric admission rejected:")
+                    else "plan_step_command_binding_rejected"
+                )
+                self._record_error(reason_code)
                 return CapabilityPlanStepResult(
                     step_id=step.step_id,
                     capability_id=step.capability_id,
                     succeeded=False,
-                    error=str(exc),
+                    error=reason_code,
                 )
             self._commands.transition(command.command_id, CommandState.POLICY_EVALUATED)
             approval = self._approval.request_approval(
