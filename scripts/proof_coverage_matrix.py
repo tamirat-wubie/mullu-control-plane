@@ -342,9 +342,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/mcp/capability_bridge.py",
                 "gateway/mcp_capability_fabric.py",
                 "gateway/mcp_capabilities.py",
+                "scripts/validate_mcp_capability_manifest.py",
+                "examples/mcp_capability_manifest.json",
+                "docs/55_mcp_capability_manifest.md",
                 "tests/test_gateway/test_mcp_capability_fabric.py",
+                "tests/test_validate_mcp_capability_manifest.py",
             ],
-            "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, and authority-obligation ownership records.",
+            "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests.",
         ),
         _surface(
             "governed_session",
@@ -401,6 +405,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "bind_mcp_capabilities_to_authority_obligation_records",
+            "surfaces": ["tool_invocation", "authority_obligation_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_validated_mcp_capability_manifest_contract",
             "surfaces": ["tool_invocation", "authority_obligation_mesh"],
             "status": "closed",
         },

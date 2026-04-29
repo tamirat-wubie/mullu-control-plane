@@ -22,6 +22,7 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
 from mcoi_runtime.mcp import (
     GovernedMCPExecutionContext,
     GovernedMCPExecutor,
+    InMemoryMCPExecutionAuditStore,
     MCPToolCallResult,
     MCPToolDescriptor,
     import_mcp_tool_as_capability,
@@ -278,3 +279,58 @@ def test_governed_mcp_executor_audit_records_are_bounded_newest_first() -> None:
     assert len(audits) == 1
     assert audits[0].command_id == "cmd-2"
     assert executor.audit_records(command_id="missing") == ()
+
+
+def test_governed_mcp_executor_persists_audits_through_store() -> None:
+    store = InMemoryMCPExecutionAuditStore()
+    executor = GovernedMCPExecutor(
+        StubMCPClient(MCPToolCallResult(content={"ok": True})),
+        audit_store=store,
+    )
+
+    executor.execute(
+        capability=_certified(),
+        context=_context(command_id="cmd-store-1"),
+        params={"title": "Persist audit"},
+    )
+
+    stored = store.list(command_id="cmd-store-1", status="succeeded")
+    assert len(stored) == 1
+    assert stored[0].audit_id.startswith("mcp-execution-audit-")
+    assert stored[0].receipt_id.startswith("mcp-execution-receipt-")
+    assert executor.audit_records(command_id="cmd-store-1") == stored
+
+
+def test_governed_mcp_executor_exports_execution_evidence_bundle() -> None:
+    executor = GovernedMCPExecutor(
+        StubMCPClient(MCPToolCallResult(content={"issue_id": "ISSUE-2"})),
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+    )
+    result = executor.execute(
+        capability=_certified(),
+        context=_context(command_id="cmd-bundle-1"),
+        params={"title": "Bundle proof"},
+    )
+
+    bundle = executor.export_evidence_bundle(command_id="cmd-bundle-1")
+
+    assert bundle.bundle_id.startswith("mcp-evidence-bundle-")
+    assert bundle.bundle_hash
+    assert bundle.command_id == "cmd-bundle-1"
+    assert bundle.capability_id == "mcp.github_enterprise_create_issue"
+    assert bundle.status == "succeeded"
+    assert bundle.receipt_id == result.receipt.receipt_id
+    assert bundle.input_hash == result.receipt.input_hash
+    assert bundle.output_hash == result.receipt.output_hash
+    assert bundle.evidence_refs == result.receipt.evidence_refs
+    assert bundle.exported_at == "2026-04-29T12:00:00+00:00"
+
+
+def test_governed_mcp_executor_rejects_missing_evidence_bundle_command() -> None:
+    executor = GovernedMCPExecutor(StubMCPClient(MCPToolCallResult(content={})))
+
+    with pytest.raises(KeyError, match="MCP execution audit not found"):
+        executor.export_evidence_bundle(command_id="missing-command")
+
+    with pytest.raises(ValueError, match="command_id is required"):
+        executor.export_evidence_bundle(command_id="")

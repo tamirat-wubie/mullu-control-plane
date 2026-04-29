@@ -552,8 +552,11 @@ def test_mcp_operator_read_model_endpoint_reports_runtime_state() -> None:
         content='{"body":"/run mcp.docs_search_docs {\\"query\\": \\"policy\\"}","user_id":"web-user"}',
         headers={"X-Session-Token": "mcp-read-model-token"},
     )
+    command_id = message_resp.json()["metadata"]["command_id"]
     read_model_resp = http.get("/mcp/operator/read-model?audit_limit=1")
     filtered_resp = http.get("/mcp/operator/read-model?capability_id=mcp.docs_search_docs&audit_status=succeeded")
+    evidence_bundle_resp = http.get(f"/mcp/operator/evidence-bundles/{command_id}")
+    missing_bundle_resp = http.get("/mcp/operator/evidence-bundles/missing-command")
 
     assert message_resp.status_code == 200
     assert message_resp.json()["metadata"]["mcp_succeeded"] is True
@@ -565,3 +568,10 @@ def test_mcp_operator_read_model_endpoint_reports_runtime_state() -> None:
     assert read_model_resp.json()["execution_audits"][0]["status"] == "succeeded"
     assert filtered_resp.json()["capability_filter"] == "mcp.docs_search_docs"
     assert filtered_resp.json()["execution_audit_status_filter"] == "succeeded"
+    assert evidence_bundle_resp.status_code == 200
+    assert evidence_bundle_resp.json()["bundle_id"].startswith("mcp-evidence-bundle-")
+    assert evidence_bundle_resp.json()["command_id"] == command_id
+    assert evidence_bundle_resp.json()["capability_id"] == "mcp.docs_search_docs"
+    assert evidence_bundle_resp.json()["status"] == "succeeded"
+    assert evidence_bundle_resp.json()["evidence_refs"]
+    assert missing_bundle_resp.status_code == 404

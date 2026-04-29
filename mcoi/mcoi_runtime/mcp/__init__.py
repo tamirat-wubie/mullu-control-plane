@@ -15,18 +15,24 @@ from .capability_bridge import (
 from .governed_executor import (
     GovernedMCPExecutionContext,
     GovernedMCPExecutionAudit,
+    GovernedMCPExecutionEvidenceBundle,
     GovernedMCPExecutionReceipt,
     GovernedMCPExecutionResult,
     GovernedMCPExecutor,
+    InMemoryMCPExecutionAuditStore,
+    MCPExecutionAuditStore,
     MCPToolCallResult,
 )
 
 __all__ = [
     "GovernedMCPExecutionContext",
     "GovernedMCPExecutionAudit",
+    "GovernedMCPExecutionEvidenceBundle",
     "GovernedMCPExecutionReceipt",
     "GovernedMCPExecutionResult",
     "GovernedMCPExecutor",
+    "InMemoryMCPExecutionAuditStore",
+    "MCPExecutionAuditStore",
     "MCPToolDescriptor",
     "MCPToolExport",
     "MCPToolCallResult",

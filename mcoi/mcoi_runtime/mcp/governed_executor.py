@@ -113,6 +113,24 @@ class GovernedMCPExecutionAudit:
     evidence_refs: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class GovernedMCPExecutionEvidenceBundle:
+    """Operator-exportable proof bundle for one MCP execution audit."""
+
+    bundle_id: str
+    bundle_hash: str
+    audit_id: str
+    capability_id: str
+    command_id: str
+    status: str
+    reason: str
+    receipt_id: str
+    input_hash: str
+    output_hash: str
+    evidence_refs: tuple[str, ...]
+    exported_at: str
+
+
 class MCPToolClient(Protocol):
     """Client adapter used to invoke an external MCP server."""
 
@@ -127,6 +145,51 @@ class MCPToolClient(Protocol):
         ...
 
 
+class MCPExecutionAuditStore(Protocol):
+    """Append-only storage contract for MCP execution audit records."""
+
+    def append(self, audit: GovernedMCPExecutionAudit) -> None:
+        """Persist one execution audit record."""
+        ...
+
+    def list(
+        self,
+        *,
+        command_id: str = "",
+        status: str = "",
+        limit: int = 100,
+    ) -> tuple[GovernedMCPExecutionAudit, ...]:
+        """Return bounded audit records, newest records first."""
+        ...
+
+
+class InMemoryMCPExecutionAuditStore:
+    """Process-local MCP audit store used by tests and local gateway runs."""
+
+    def __init__(self) -> None:
+        self._audits: list[GovernedMCPExecutionAudit] = []
+
+    def append(self, audit: GovernedMCPExecutionAudit) -> None:
+        """Persist one execution audit record."""
+        self._audits.append(audit)
+
+    def list(
+        self,
+        *,
+        command_id: str = "",
+        status: str = "",
+        limit: int = 100,
+    ) -> tuple[GovernedMCPExecutionAudit, ...]:
+        """Return bounded audit records, newest records first."""
+        bounded_limit = max(1, min(int(limit), 1000))
+        records = tuple(reversed(self._audits))
+        if command_id:
+            records = tuple(record for record in records if record.command_id == command_id)
+        if status:
+            records = tuple(record for record in records if record.status == status)
+        return records[:bounded_limit]
+
+
 class GovernedMCPExecutor:
     """Execute certified MCP capabilities behind governance witnesses."""
 
@@ -136,13 +199,14 @@ class GovernedMCPExecutor:
         *,
         worker_id: str = "governed-mcp-executor",
         clock: Callable[[], str] | None = None,
+        audit_store: MCPExecutionAuditStore | None = None,
     ) -> None:
         if not worker_id.strip():
             raise ValueError("worker_id is required")
         self._client = client
         self._worker_id = worker_id
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
-        self._audits: list[GovernedMCPExecutionAudit] = []
+        self._audit_store = audit_store or InMemoryMCPExecutionAuditStore()
 
     def execute(
         self,
@@ -236,13 +300,45 @@ class GovernedMCPExecutor:
         limit: int = 100,
     ) -> tuple[GovernedMCPExecutionAudit, ...]:
         """Return bounded MCP execution audits, newest records first."""
-        bounded_limit = max(1, min(int(limit), 1000))
-        records = tuple(reversed(self._audits))
-        if command_id:
-            records = tuple(record for record in records if record.command_id == command_id)
-        if status:
-            records = tuple(record for record in records if record.status == status)
-        return records[:bounded_limit]
+        return self._audit_store.list(command_id=command_id, status=status, limit=limit)
+
+    def export_evidence_bundle(self, *, command_id: str) -> GovernedMCPExecutionEvidenceBundle:
+        """Export a deterministic operator proof bundle for the newest command audit."""
+        if not command_id.strip():
+            raise ValueError("command_id is required")
+        audits = self.audit_records(command_id=command_id, limit=1)
+        if not audits:
+            raise KeyError("MCP execution audit not found")
+        audit = audits[0]
+        exported_at = self._clock()
+        bundle_payload = {
+            "audit_id": audit.audit_id,
+            "capability_id": audit.capability_id,
+            "command_id": audit.command_id,
+            "status": audit.status,
+            "reason": audit.reason,
+            "receipt_id": audit.receipt_id,
+            "input_hash": audit.input_hash,
+            "output_hash": audit.output_hash,
+            "evidence_refs": audit.evidence_refs,
+            "exported_at": exported_at,
+            "bundle_type": "mcp_execution_evidence_bundle_v1",
+        }
+        bundle_hash = canonical_hash(bundle_payload)
+        return GovernedMCPExecutionEvidenceBundle(
+            bundle_id=f"mcp-evidence-bundle-{bundle_hash[:16]}",
+            bundle_hash=bundle_hash,
+            audit_id=audit.audit_id,
+            capability_id=audit.capability_id,
+            command_id=audit.command_id,
+            status=audit.status,
+            reason=audit.reason,
+            receipt_id=audit.receipt_id,
+            input_hash=audit.input_hash,
+            output_hash=audit.output_hash,
+            evidence_refs=audit.evidence_refs,
+            exported_at=exported_at,
+        )
 
     def _record_audit(
         self,
@@ -280,7 +376,7 @@ class GovernedMCPExecutor:
             output_hash=output_hash,
             evidence_refs=evidence_refs,
         )
-        self._audits.append(audit)
+        self._audit_store.append(audit)
         return audit
 
 

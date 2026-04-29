@@ -1099,6 +1099,19 @@ def create_gateway_app(
             audit_offset=audit_offset,
         )
 
+    @app.get("/mcp/operator/evidence-bundles/{command_id}")
+    def mcp_operator_evidence_bundle(command_id: str, request: Request):
+        _require_authority_operator(request)
+        if mcp_executor is None or not hasattr(mcp_executor, "export_evidence_bundle"):
+            raise HTTPException(404, detail="MCP executor evidence export is not available")
+        try:
+            bundle = mcp_executor.export_evidence_bundle(command_id=command_id)
+        except KeyError as exc:
+            raise HTTPException(404, detail="MCP execution evidence bundle not found") from exc
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return asdict(bundle)
+
     @app.get("/capability-plans/read-model")
     def capability_plans_read_model(
         request: Request,

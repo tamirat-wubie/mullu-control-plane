@@ -25,7 +25,7 @@ document is the operator-readable witness.
 | `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state. |
 | `runtime_conformance_attestation` | `/runtime/conformance` | read-model | read-model | conformance certificate | hash-chain | witnessed | Runtime conformance binds witness, closure, fabric, isolation, lineage, authority, proof-matrix, and document-drift checks into one signed attestation. |
 | `replay_determinism` | `/api/v1/replay/{trace_id}/determinism` | yes | yes | replay report hash | hash-chain | witnessed | Replay determinism route emits governed reports over completed traces with bounded operation specs. |
-| `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation and MCP capability import bind action proof ids, capability policy receipts, and authority-obligation ownership records. |
+| `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests. |
 | `governed_session` | `GovernedSession.llm`, `GovernedSession.execute`, `GovernedSession.query` | yes | yes | request envelopes | hash-chain | witnessed | Session entry points return request-envelope proofs and retain action proof lineage. |
 | `health_docs_exempt` | `/health`, `/docs`, `/openapi.json`, `/redoc` | read-model | read-model | liveness/doc routes | read-model | witnessed | Operational liveness and documentation surfaces are outside the proof-critical path. |
 | `lineage_query_api` | `/api/v1/lineage/resolve`, `/api/v1/lineage/{trace_id}`, `/api/v1/lineage/output/{output_id}`, `/api/v1/lineage/command/{command_id}` | read-model | read-model | replay trace projection | read-model | witnessed | URI semantics, routes, response schema, bounded output/command index scans, and unresolved-node behavior are implemented. |
@@ -48,13 +48,15 @@ Gateway runtime witness invariants:
 Resolved closure actions:
 
 1. `bind_tool_arguments_to_capability_policy_receipts`
-2. `normalize_gateway_request_receipt_envelopes`
-3. `bound_authority_read_models_to_paginated_windows`
-4. `implement_lineage_query_routes_and_schema`
-5. `connect_pilot_scaffold_to_hosted_provisioning_endpoint`
-6. `publish_hosted_demo_sandbox_read_models`
-7. `publish_federated_control_plane_read_model`
-8. `publish_runtime_conformance_attestation`
+2. `bind_mcp_capabilities_to_authority_obligation_records`
+3. `publish_validated_mcp_capability_manifest_contract`
+4. `normalize_gateway_request_receipt_envelopes`
+5. `bound_authority_read_models_to_paginated_windows`
+6. `implement_lineage_query_routes_and_schema`
+7. `connect_pilot_scaffold_to_hosted_provisioning_endpoint`
+8. `publish_hosted_demo_sandbox_read_models`
+9. `publish_federated_control_plane_read_model`
+10. `publish_runtime_conformance_attestation`
 
 Open closure actions:
 
@@ -62,6 +64,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, runtime conformance attestation mapping, streaming budget protocol witness, tool policy receipt mapping, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
+  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, runtime conformance attestation mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
   Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`

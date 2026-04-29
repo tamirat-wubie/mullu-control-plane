@@ -17,6 +17,14 @@
       ]
     },
     {
+      "action_id": "publish_validated_mcp_capability_manifest_contract",
+      "status": "closed",
+      "surfaces": [
+        "tool_invocation",
+        "authority_obligation_mesh"
+      ]
+    },
+    {
       "action_id": "normalize_gateway_request_receipt_envelopes",
       "status": "closed",
       "surfaces": [
@@ -453,9 +461,13 @@
         "mcoi/mcoi_runtime/mcp/capability_bridge.py",
         "gateway/mcp_capability_fabric.py",
         "gateway/mcp_capabilities.py",
-        "tests/test_gateway/test_mcp_capability_fabric.py"
+        "scripts/validate_mcp_capability_manifest.py",
+        "examples/mcp_capability_manifest.json",
+        "docs/55_mcp_capability_manifest.md",
+        "tests/test_gateway/test_mcp_capability_fabric.py",
+        "tests/test_validate_mcp_capability_manifest.py"
       ],
-      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, and authority-obligation ownership records.",
+      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests.",
       "representative_paths": [
         "/api/v1/tools/invoke",
         "/api/v1/workflow/tools"
