@@ -1247,3 +1247,186 @@ class TestM9StructuredTruncationFlags:
         )
         assert rc == 0
         assert "[TRUNCATED at 100 bytes]" in stdout
+
+
+# --- Adversarial / boundary-condition tests ---
+
+
+class TestAdversarialBoundary:
+    """Adversarial sweep: workspace identity, size-cap edges, malformed
+    paths, and integration paths the audit flagged but weren't covered.
+    """
+
+    def test_workspace_root_passed_as_symlink_resolves_to_real_dir(
+        self, tmp_path: Path,
+    ):
+        """If the operator hands us a symlink-to-real-directory as the
+        workspace root, the adapter must resolve it at construction.
+        Otherwise list_files / read_file would compare resolved targets
+        against an unresolved root and reject everything.
+        """
+        real = tmp_path / "real_workspace"
+        real.mkdir()
+        (real / "file.py").write_text("ok\n", encoding="utf-8")
+        link = tmp_path / "link_workspace"
+        try:
+            link.symlink_to(real, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+
+        adapter = LocalCodeAdapter(
+            root_path=str(link), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        # Both list and read should see the contents through the resolved root
+        state = adapter.list_files("r-1")
+        assert any(f.relative_path == "file.py" for f in state.files)
+        assert adapter.read_file("file.py") == "ok\n"
+
+    def test_size_cap_boundary_at_exactly_max(self, tmp_path: Path):
+        """A file of EXACTLY max_file_bytes must be included, not skipped
+        — a strict less-than-or-equal check. Off-by-one would silently
+        drop files at the boundary.
+        """
+        ws = tmp_path / "ws"
+        ws.mkdir()
+        (ws / "exact.txt").write_bytes(b"x" * 256)
+        (ws / "over.txt").write_bytes(b"x" * 257)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0, max_file_bytes=256,
+        )
+        state = adapter.list_files("r-1")
+        rels = {f.relative_path for f in state.files}
+        assert "exact.txt" in rels
+        assert "over.txt" not in rels
+
+    def test_relative_path_dot_dot_blocked_from_read(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "secret.txt"
+        outside.write_text("STOLEN", encoding="utf-8")
+        adapter = _adapter(ws)
+        # Plain ../ traversal: regardless of M3 resolve order, must
+        # land outside resolved_root and be rejected
+        assert adapter.read_file("../secret.txt") is None
+
+    def test_relative_path_dot_dot_blocked_from_write(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        assert adapter.write_file("../escape.txt", "x") is False
+        assert not (tmp_path / "escape.txt").exists()
+
+    def test_absolute_relative_path_blocked_from_read(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        # An absolute path inside relative_path should not escape; on
+        # Path semantics, root / "/etc/passwd" yields "/etc/passwd"
+        # which won't be inside the workspace root after resolve.
+        assert adapter.read_file("/etc/passwd") is None
+        # Windows-style absolute path
+        assert adapter.read_file("C:\\Windows\\System32\\drivers\\etc\\hosts") is None
+
+    def test_run_command_with_meta_blocks_via_policy(self, tmp_path: Path):
+        """Policy enforcement applies on the structured surface too —
+        not just the legacy 4-tuple.
+        """
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        meta = adapter.run_command_with_meta("cmd-bad", ["bash", "-c", "ls"])
+        assert meta.exit_code == -1
+        assert "blocked command" in meta.stderr
+        assert meta.stdout_truncated is False
+
+    def test_run_command_with_meta_clamps_timeout(
+        self, tmp_path: Path, monkeypatch,
+    ):
+        ws = _setup_workspace(tmp_path)
+        policy = CommandPolicy(
+            allowed_executables=("python",),
+            denied_executables=(),
+            denied_git_subcommands=(),
+            max_timeout_seconds=5,
+        )
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0, command_policy=policy,
+        )
+        captured: dict[str, object] = {}
+
+        def fake_run(*args, **kwargs):
+            captured["timeout"] = kwargs.get("timeout")
+            return subprocess.CompletedProcess(args[0], 0, stdout="", stderr="")
+
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run", fake_run,
+        )
+        adapter.run_command_with_meta("cmd", ["python", "x.py"], timeout_seconds=999)
+        assert captured["timeout"] == 5
+
+    def test_test_result_built_from_real_timeout_does_not_violate_contract(
+        self, tmp_path: Path, monkeypatch,
+    ):
+        """Integration: when run_tests hits a timeout, the resulting
+        TestResult must be constructible (exit_code = -1, status = TIMEOUT).
+        This was the F3 audit concern — that the contract rejected -1.
+        """
+        from mcoi_runtime.contracts.code import TestStatus
+        from mcoi_runtime.core.code import CodeEngine
+
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        engine = CodeEngine(adapter=adapter, clock=lambda: T0)
+
+        def raise_timeout(*args, **kwargs):
+            raise subprocess.TimeoutExpired(cmd=args[0], timeout=1)
+
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run", raise_timeout,
+        )
+
+        result = engine.run_tests(["pytest", "-q"], timeout_seconds=1)
+
+        assert result.status is TestStatus.TIMEOUT
+        assert result.exit_code == -1
+        # Contract requires non-empty test_id and command
+        assert result.test_id
+        assert result.command
+        # No exception was raised — the F3 contract change held.
+
+    def test_build_result_built_from_real_error_does_not_violate_contract(
+        self, tmp_path: Path, monkeypatch,
+    ):
+        """Same as above for run_build / BuildResult."""
+        from mcoi_runtime.contracts.code import BuildStatus
+        from mcoi_runtime.core.code import CodeEngine
+
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        engine = CodeEngine(adapter=adapter, clock=lambda: T0)
+
+        def raise_oserror(*args, **kwargs):
+            raise OSError("boom")
+
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run", raise_oserror,
+        )
+
+        result = engine.run_build(["make"], timeout_seconds=10)
+
+        assert result.status is BuildStatus.ERROR
+        assert result.exit_code == -1
+
+    def test_zero_byte_file_reported_with_zero_size(self, tmp_path: Path):
+        """A truly empty file must be listed with size_bytes=0 and
+        line_count=0 — not skipped (it's not unreadable, just empty).
+        """
+        ws = tmp_path / "ws"
+        ws.mkdir()
+        (ws / "empty.txt").write_bytes(b"")
+        adapter = LocalCodeAdapter(
+            root_path=str(ws), clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+        state = adapter.list_files("r-1")
+        empty = next((f for f in state.files if f.relative_path == "empty.txt"), None)
+        assert empty is not None, "empty file must be listed, not skipped"
+        assert empty.size_bytes == 0
+        assert empty.line_count == 0
