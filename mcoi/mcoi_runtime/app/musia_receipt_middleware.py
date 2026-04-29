@@ -21,6 +21,7 @@ under one of the certified prefixes is certified):
     /constructs/*   → certified
     /domains/*      → certified
     /musia/*        → certified
+    /software/receipts/* → certified
     /ucja/*         → certified
 
 Outcome mapping (HTTP status → governance outcome) mirrors
@@ -71,6 +72,7 @@ _CERTIFIED_PREFIXES: tuple[str, ...] = (
     "/constructs/",
     "/domains/",
     "/musia/",
+    "/software/receipts/",
     "/ucja/",
 )
 
@@ -88,9 +90,12 @@ def _surface_from_path(path: str) -> str:
     /domains/finance/process             → "domains"
     /musia/tenants/{tenant_id}/snapshot  → "musia"
     /musia/governance/stats/reset        → "musia"
+    /software/receipts/review/sync       → "software_receipts"
     /ucja/define-job                     → "ucja"
     Anything else                        → "other"
     """
+    if path.startswith("/software/receipts/"):
+        return "software_receipts"
     for prefix in _CERTIFIED_PREFIXES:
         if path.startswith(prefix):
             # Strip leading "/" and trailing "/", take first segment
