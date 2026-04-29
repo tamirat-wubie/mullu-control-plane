@@ -26,7 +26,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.server import create_gateway_app  # noqa: E402
-from gateway.conformance import issue_conformance_certificate  # noqa: E402
+from gateway.conformance import _known_limitations_aligned, issue_conformance_certificate  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -144,6 +144,37 @@ def test_runtime_conformance_degrades_when_responsibility_debt_is_present(tmp_pa
     assert "overdue_obligation_count=1" in debt_check["detail"]
     assert "authority_responsibility_debt_present" in payload["open_conformance_gaps"]
     assert payload["terminal_status"] == "degraded"
+
+
+def test_known_limitations_alignment_rejects_stale_directory_adapter_claim(tmp_path) -> None:
+    gateway_dir = tmp_path / "gateway"
+    scripts_dir = tmp_path / "scripts"
+    gateway_dir.mkdir()
+    scripts_dir.mkdir()
+    (gateway_dir / "server.py").write_text(
+        '"/authority/approval-chains" "/authority/obligations" "/authority/escalations"',
+        encoding="utf-8",
+    )
+    for script_name in (
+        "scim_authority_directory_adapter.py",
+        "ldap_authority_directory_adapter.py",
+        "saml_groups_authority_directory_adapter.py",
+        "workspace_groups_authority_directory_adapter.py",
+    ):
+        (scripts_dir / script_name).write_text("# adapter present\n", encoding="utf-8")
+    limitations_path = tmp_path / "KNOWN_LIMITATIONS_v0.1.md"
+    limitations_path.write_text("External directory adapters are not yet implemented.\n", encoding="utf-8")
+
+    stale = _known_limitations_aligned(tmp_path)
+    limitations_path.write_text(
+        "External directory sync adapters are implemented; scheduling UI is not yet implemented.\n",
+        encoding="utf-8",
+    )
+    aligned = _known_limitations_aligned(tmp_path)
+
+    assert stale is False
+    assert aligned is True
+    assert (scripts_dir / "ldap_authority_directory_adapter.py").exists()
 
 
 def _signature_valid(payload: dict, secret: str) -> bool:

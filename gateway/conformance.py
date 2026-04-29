@@ -522,7 +522,33 @@ def _known_limitations_aligned(repo_root: Path) -> bool:
         "escalation" in limitations
         and ("not yet implemented" in limitations or "not implemented" in limitations)
     )
-    return not (authority_surfaces and (stale_claim or escalation_stale_claim))
+    directory_adapter_stale_claim = (
+        (
+            "external directory adapters" in limitations
+            or (
+                "scim" in limitations
+                and "ldap" in limitations
+                and "saml" in limitations
+                and "workspace-directory" in limitations
+            )
+        )
+        and ("not yet implemented" in limitations or "not implemented" in limitations)
+    )
+    return not (
+        (authority_surfaces and (stale_claim or escalation_stale_claim))
+        or (_directory_adapter_scripts_present(repo_root) and directory_adapter_stale_claim)
+    )
+
+
+def _directory_adapter_scripts_present(repo_root: Path) -> bool:
+    """Return whether merged authority directory adapters are present."""
+    adapter_paths = (
+        "scripts/scim_authority_directory_adapter.py",
+        "scripts/ldap_authority_directory_adapter.py",
+        "scripts/saml_groups_authority_directory_adapter.py",
+        "scripts/workspace_groups_authority_directory_adapter.py",
+    )
+    return all((repo_root / adapter_path).exists() for adapter_path in adapter_paths)
 
 
 def _security_model_aligned(repo_root: Path) -> bool:
