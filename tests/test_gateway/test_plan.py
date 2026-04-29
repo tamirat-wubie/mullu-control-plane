@@ -26,6 +26,7 @@ from gateway.plan_executor import (
     CapabilityPlanExecutor,
     CapabilityPlanStepResult,
 )
+from gateway.plan_ledger import CapabilityPlanLedger
 
 
 def test_one_step_plan_projects_risk_and_evidence() -> None:
@@ -268,3 +269,135 @@ def test_plan_executor_succeeds_with_step_terminal_certificate() -> None:
     assert result.error == ""
     assert result.terminal_certificate_ids == ("cert-1",)
     assert result.evidence_hash
+
+
+def test_plan_ledger_certifies_successful_multi_step_execution() -> None:
+    plan = CapabilityPlanBuilder().build(
+        message="Analyze data csv and write a report and notify the team and schedule review",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+    assert plan is not None
+
+    def execute_step(step: CapabilityPlanStep, completed):
+        return CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=True,
+            command_id=f"cmd-{step.step_id}",
+            terminal_certificate_id=f"terminal-{step.step_id}",
+            output={"completed_dependencies": tuple(completed)},
+        )
+
+    execution = CapabilityPlanExecutor(execute_step).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    certificate = ledger.certify(plan=plan, execution=execution)
+    read_model = ledger.read_model()
+    witnesses = ledger.witnesses_for(plan.plan_id)
+
+    assert execution.succeeded is True
+    assert certificate.certificate_id.startswith("plan-cert-")
+    assert certificate.disposition == "committed"
+    assert certificate.step_count == 4
+    assert certificate.step_command_ids == ("cmd-step-1", "cmd-step-2", "cmd-step-3", "cmd-step-4")
+    assert certificate.step_terminal_certificate_ids == (
+        "terminal-step-1",
+        "terminal-step-2",
+        "terminal-step-3",
+        "terminal-step-4",
+    )
+    assert certificate.evidence_hash == execution.evidence_hash
+    assert certificate.metadata["risk_tier"] == "medium"
+    assert ledger.certificate_for(plan.plan_id) == certificate
+    assert read_model["plan_certificate_count"] == 1
+    assert read_model["plan_witness_count"] == 1
+    assert witnesses[0].certificate_id == certificate.certificate_id
+    assert witnesses[0].detail["cause"] == "plan_terminal_certificate_issued"
+
+
+def test_plan_ledger_rejects_unsuccessful_execution() -> None:
+    plan = one_step_plan(
+        capability_id="creative.data_analyze",
+        params={"csv": "a,b\n1,2\n"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="analyze",
+    )
+    execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=False,
+            command_id="cmd-1",
+            error="reconciliation_failed",
+        )
+    ).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    with pytest.raises(ValueError, match="plan execution is not certifiable"):
+        ledger.certify(plan=plan, execution=execution)
+
+    assert execution.succeeded is False
+    assert ledger.certificate_for(plan.plan_id) is None
+    assert ledger.witnesses_for(plan.plan_id) == ()
+
+
+def test_plan_ledger_records_failure_witness_without_certificate() -> None:
+    plan = one_step_plan(
+        capability_id="creative.data_analyze",
+        params={"csv": "a,b\n1,2\n"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="analyze",
+    )
+    execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=False,
+            command_id="cmd-1",
+            error="reconciliation_failed",
+        )
+    ).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    witness = ledger.record_failure(plan=plan, execution=execution)
+    read_model = ledger.read_model()
+
+    assert witness.witness_id.startswith("plan-witness-")
+    assert witness.succeeded is False
+    assert witness.certificate_id == ""
+    assert witness.detail["cause"] == "plan_execution_failed"
+    assert witness.detail["error"] == "reconciliation_failed"
+    assert ledger.certificate_for(plan.plan_id) is None
+    assert ledger.witnesses_for(plan.plan_id) == (witness,)
+    assert read_model["plan_certificate_count"] == 0
+    assert read_model["plan_witness_count"] == 1
+    assert read_model["failed_plan_witness_count"] == 1
+
+
+def test_plan_ledger_rejects_missing_step_command_id() -> None:
+    plan = one_step_plan(
+        capability_id="enterprise.notification_send",
+        params={"body": "notify"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="notify",
+    )
+    execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=True,
+            terminal_certificate_id="terminal-1",
+        )
+    ).execute(plan)
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    with pytest.raises(ValueError, match="missing command id"):
+        ledger.certify(plan=plan, execution=execution)
+
+    assert execution.succeeded is True
+    assert execution.terminal_certificate_ids == ("terminal-1",)
+    assert ledger.read_model()["plan_certificate_count"] == 0

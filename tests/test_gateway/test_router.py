@@ -24,7 +24,7 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
 from gateway.capability_isolation import CapabilityExecutionReceipt  # noqa: E402
 from gateway.command_spine import CommandLedger, CommandState, GovernedAction, InMemoryCommandLedgerStore  # noqa: E402
 from gateway.router import GatewayMessage, GatewayRouter, TenantMapping  # noqa: E402
-from gateway.skill_dispatch import SkillDispatcher  # noqa: E402
+from gateway.skill_dispatch import FunctionCapabilityHandler, SkillDispatcher  # noqa: E402
 
 
 class StubPlatform:
@@ -345,6 +345,92 @@ class TestMessageRouting:
         assert any(event.next_state == CommandState.MEMORY_PROMOTED for event in command_events)
         assert any(event.next_state == CommandState.LEARNING_DECIDED for event in command_events)
         assert command_events[-1].next_state == CommandState.RESPONDED
+
+    def test_multi_step_plan_executes_child_commands_and_certifies_plan(self):
+        dispatcher = SkillDispatcher()
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="fallback"),
+            skill_dispatcher=dispatcher,
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-plan-1",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs and search knowledge policy",
+        ))
+
+        step_results = response.metadata["step_results"]
+        assert response.body == "Plan completed under governed capability closure."
+        assert response.metadata["plan_id"].startswith("plan-")
+        assert response.metadata["plan_terminal_certificate_id"].startswith("plan-cert-")
+        assert response.metadata["plan_terminal_certificate"]["step_count"] == 2
+        assert [result["capability_id"] for result in step_results] == [
+            "enterprise.knowledge_search",
+            "enterprise.knowledge_search",
+        ]
+        assert all(result["succeeded"] for result in step_results)
+        assert all(result["command_id"] for result in step_results)
+        assert all(result["terminal_certificate_id"] for result in step_results)
+        assert router.summary()["command_ledger"]["terminal_certificates"] == 2
+
+    def test_multi_step_plan_records_failure_witness_when_step_needs_approval(self):
+        dispatcher = SkillDispatcher()
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="fallback"),
+            skill_dispatcher=dispatcher,
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-plan-failure-1",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs and schedule review",
+        ))
+
+        assert response.body == "This plan could not be completed under governance."
+        assert response.metadata["error"] == "plan_execution_failed"
+        assert response.metadata["plan_error"].startswith("approval_required:")
+        assert response.metadata["plan_failure_witness_id"].startswith("plan-witness-")
+        assert response.metadata["plan_failure_witness"]["detail"]["cause"] == "plan_execution_failed"
+        assert response.metadata["step_results"][0]["succeeded"] is True
+        assert response.metadata["step_results"][1]["succeeded"] is False
+        assert response.metadata["step_results"][1]["error"].startswith("approval_required:")
+        assert router._plan_ledger.read_model()["failed_plan_witness_count"] == 1
 
     def test_unknown_tenant_returns_error(self):
         router = GatewayRouter(platform=StubPlatform())

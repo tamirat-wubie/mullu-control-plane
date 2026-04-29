@@ -33,6 +33,7 @@ from gateway.capability_isolation import build_isolated_capability_executor_from
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
 from gateway.event_log import WebhookEventLog
+from gateway.plan_ledger import CapabilityPlanLedger
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
 from gateway.skill_dispatch import build_skill_dispatcher_from_platform
@@ -172,6 +173,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         clock=_clock,
         store=authority_mesh_store,
     )
+    plan_ledger = CapabilityPlanLedger(clock=_clock)
     skill_dispatcher = build_skill_dispatcher_from_platform(platform)
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     router = GatewayRouter(
@@ -179,6 +181,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         command_ledger=command_ledger,
         tenant_identity_store=tenant_identity_store,
         authority_obligation_mesh=authority_obligation_mesh,
+        plan_ledger=plan_ledger,
         skill_dispatcher=skill_dispatcher,
         defer_approved_execution=defer_approved_execution,
         environment=gateway_env,
@@ -977,6 +980,28 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             raise HTTPException(404, detail="command capability admission audit not found")
         return audit
 
+    @app.get("/capability-plans/read-model")
+    def capability_plans_read_model(request: Request):
+        _require_authority_operator(request)
+        return {
+            "enabled": True,
+            **plan_ledger.read_model(),
+        }
+
+    @app.get("/capability-plans/{plan_id}/closure")
+    def capability_plan_closure(plan_id: str, request: Request):
+        _require_authority_operator(request)
+        certificate = plan_ledger.certificate_for(plan_id)
+        if certificate is None:
+            raise HTTPException(404, detail="plan terminal certificate not found")
+        witnesses = plan_ledger.witnesses_for(plan_id)
+        return {
+            "plan_id": plan_id,
+            "plan_terminal_certificate": asdict(certificate),
+            "plan_witnesses": [asdict(witness) for witness in witnesses],
+            "witness_count": len(witnesses),
+        }
+
     @app.get("/anchors/latest")
     def latest_anchor():
         anchors = command_ledger.list_anchors(limit=1)
@@ -1004,6 +1029,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.capability_admission_gate = capability_admission_gate
+    app.state.plan_ledger = plan_ledger
     app.state.verifier = verifier
 
     return app
