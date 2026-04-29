@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
 
@@ -32,6 +32,9 @@ from gateway.memory_constitution import (
 )
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 from gateway.intent_resolver import CapabilityIntentResolver
+from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanStep
+from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult
+from gateway.plan_ledger import CapabilityPlanLedger
 from gateway.tenant_identity import InMemoryTenantIdentityStore, TenantIdentityStore, TenantMapping
 
 
@@ -96,6 +99,7 @@ class GatewayRouter:
         tenant_identity_store: TenantIdentityStore | None = None,
         memory_store: GovernedMemoryStore | None = None,
         authority_obligation_mesh: AuthorityObligationMesh | None = None,
+        plan_ledger: CapabilityPlanLedger | None = None,
         defer_approved_execution: bool = False,
         environment: str = "local_dev",
         isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
@@ -109,6 +113,8 @@ class GatewayRouter:
         self._commands = command_ledger or CommandLedger(clock=self._clock)
         self._tenant_identities = tenant_identity_store or InMemoryTenantIdentityStore(clock=self._clock)
         self._memory = memory_store or InMemoryGovernedMemoryStore(clock=self._clock)
+        self._plan_builder = CapabilityPlanBuilder(resolver=self._intent_resolver)
+        self._plan_ledger = plan_ledger or CapabilityPlanLedger(clock=self._clock)
         self._authority_obligation_mesh = authority_obligation_mesh or AuthorityObligationMesh(
             commands=self._commands,
             clock=self._clock,
@@ -255,6 +261,11 @@ class GatewayRouter:
             }
         return payload
 
+    def _intent_from_step(self, step: CapabilityPlanStep) -> CapabilityIntent:
+        """Convert a validated plan step into a command intent."""
+        domain, action = step.capability_id.split(".", 1)
+        return CapabilityIntent(domain=domain, action=action, params=dict(step.params))
+
     def _create_command(
         self,
         message: GatewayMessage,
@@ -340,6 +351,133 @@ class GatewayRouter:
             },
         )
         return response
+
+    def _execute_plan(
+        self,
+        *,
+        plan: CapabilityPlan,
+        message: GatewayMessage,
+        mapping: TenantMapping,
+    ) -> GatewayResponse:
+        """Execute a multi-step plan as governed child commands."""
+
+        def execute_step(
+            step: CapabilityPlanStep,
+            completed: dict[str, CapabilityPlanStepResult],
+        ) -> CapabilityPlanStepResult:
+            step_message = GatewayMessage(
+                message_id=f"{message.message_id}:{plan.plan_id}:{step.step_id}",
+                channel=message.channel,
+                sender_id=message.sender_id,
+                body=str(step.params.get("brief") or step.params.get("query") or step.params.get("body") or message.body),
+                conversation_id=message.conversation_id,
+                attachments=message.attachments,
+                metadata={
+                    **message.metadata,
+                    "plan_id": plan.plan_id,
+                    "plan_step_id": step.step_id,
+                    "depends_on": step.depends_on,
+                    "completed_steps": tuple(completed),
+                },
+                received_at=message.received_at,
+            )
+            intent = self._intent_from_step(step)
+            try:
+                command = self._create_command(step_message, mapping, intent)
+            except ValueError as exc:
+                reason_code = (
+                    "plan_step_capability_admission_rejected"
+                    if str(exc).startswith("capability fabric admission rejected:")
+                    else "plan_step_command_binding_rejected"
+                )
+                self._record_error(reason_code)
+                return CapabilityPlanStepResult(
+                    step_id=step.step_id,
+                    capability_id=step.capability_id,
+                    succeeded=False,
+                    error=reason_code,
+                )
+            self._commands.transition(command.command_id, CommandState.POLICY_EVALUATED)
+            approval = self._approval.request_approval(
+                tenant_id=mapping.tenant_id,
+                identity_id=mapping.identity_id,
+                channel=message.channel,
+                action_description=command.intent,
+                body=step_message.body,
+                command_id=command.command_id,
+                payload_hash=command.payload_hash,
+                policy_version=command.policy_version,
+            )
+            if approval.status == ApprovalStatus.PENDING:
+                self._commands.transition(
+                    command.command_id,
+                    CommandState.PENDING_APPROVAL,
+                    approval_id=approval.request_id,
+                    risk_tier=approval.risk_tier.value,
+                )
+                return CapabilityPlanStepResult(
+                    step_id=step.step_id,
+                    capability_id=step.capability_id,
+                    succeeded=False,
+                    command_id=command.command_id,
+                    error=f"approval_required:{approval.request_id}",
+                )
+            self._commands.transition(
+                command.command_id,
+                CommandState.ALLOWED,
+                approval_id=approval.request_id,
+                risk_tier=approval.risk_tier.value,
+            )
+            response = self._execute_command(command, recipient_id=message.sender_id)
+            certificate = self._commands.terminal_certificate_for(command.command_id)
+            return CapabilityPlanStepResult(
+                step_id=step.step_id,
+                capability_id=step.capability_id,
+                succeeded=bool(certificate and response.metadata.get("response_allowed", True)),
+                command_id=command.command_id,
+                terminal_certificate_id=certificate.certificate_id if certificate else "",
+                output={
+                    "response_body": response.body,
+                    "metadata": response.metadata,
+                },
+                error="" if certificate else "missing_terminal_certificate",
+            )
+
+        execution = CapabilityPlanExecutor(execute_step).execute(plan)
+        if not execution.succeeded:
+            self._record_error("plan_execution_failed")
+            failure_witness = self._plan_ledger.record_failure(plan=plan, execution=execution)
+            return GatewayResponse(
+                message_id=self._gen_id("plan-resp", message.message_id),
+                channel=message.channel,
+                recipient_id=message.sender_id,
+                body="This plan could not be completed under governance.",
+                governed=True,
+                metadata={
+                    "error": "plan_execution_failed",
+                    "plan_id": plan.plan_id,
+                    "plan_error": execution.error,
+                    "plan_failure_witness": asdict(failure_witness),
+                    "plan_failure_witness_id": failure_witness.witness_id,
+                    "step_results": [asdict(result) for result in execution.step_results],
+                    "evidence_hash": execution.evidence_hash,
+                },
+            )
+        certificate = self._plan_ledger.certify(plan=plan, execution=execution)
+        return GatewayResponse(
+            message_id=self._gen_id("plan-resp", message.message_id),
+            channel=message.channel,
+            recipient_id=message.sender_id,
+            body="Plan completed under governed capability closure.",
+            governed=True,
+            metadata={
+                "plan_id": plan.plan_id,
+                "plan_terminal_certificate": asdict(certificate),
+                "plan_terminal_certificate_id": certificate.certificate_id,
+                "step_results": [asdict(result) for result in execution.step_results],
+                "evidence_hash": execution.evidence_hash,
+            },
+        )
 
     def _approval_chain_pending_response(
         self,
@@ -547,6 +685,17 @@ class GatewayRouter:
         if approval_command is not None:
             request_id, approved = approval_command
             response = self._handle_approval_message(message, mapping, request_id, approved)
+            response = self._send_response(response)
+            self._dedup.record(message.channel, message.sender_id, message.message_id, response)
+            return response
+
+        plan = self._plan_builder.build(
+            message=message.body,
+            tenant_id=mapping.tenant_id,
+            identity_id=mapping.identity_id,
+        )
+        if plan is not None and len(plan.steps) > 1:
+            response = self._execute_plan(plan=plan, message=message, mapping=mapping)
             response = self._send_response(response)
             self._dedup.record(message.channel, message.sender_id, message.message_id, response)
             return response

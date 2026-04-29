@@ -29,6 +29,7 @@ from gateway.command_spine import CommandState  # noqa: E402
 from gateway.capability_fabric import build_capability_admission_gate_from_env  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
+from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
 )
@@ -643,6 +644,53 @@ class TestWebChatWebhook:
 
 
 # ═══ Approval Callback ═══
+
+
+    def test_capability_plan_read_model_reports_terminal_certificate(self):
+        app = create_gateway_app(platform=StubPlatform(response="unused fallback"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="web-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        app.state.router._skills.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        client = TestClient(app)
+
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({
+                "body": "search knowledge docs and search knowledge policy",
+                "user_id": "web-user",
+            }),
+            headers={"X-Session-Token": "plan-read-model-token"},
+        )
+        plan_id = msg_resp.json()["metadata"]["plan_id"]
+        read_model_resp = client.get("/capability-plans/read-model")
+        closure_resp = client.get(f"/capability-plans/{plan_id}/closure")
+        missing_resp = client.get("/capability-plans/missing-plan/closure")
+
+        assert msg_resp.status_code == 200
+        assert msg_resp.json()["metadata"]["plan_terminal_certificate_id"].startswith("plan-cert-")
+        assert read_model_resp.status_code == 200
+        assert read_model_resp.json()["enabled"] is True
+        assert read_model_resp.json()["plan_certificate_count"] == 1
+        assert read_model_resp.json()["plan_witness_count"] == 1
+        assert closure_resp.status_code == 200
+        assert closure_resp.json()["plan_id"] == plan_id
+        assert closure_resp.json()["plan_terminal_certificate"]["plan_id"] == plan_id
+        assert closure_resp.json()["plan_terminal_certificate"]["step_count"] == 2
+        assert closure_resp.json()["witness_count"] == 1
+        assert closure_resp.json()["plan_witnesses"][0]["detail"]["cause"] == "plan_terminal_certificate_issued"
+        assert missing_resp.status_code == 404
+        assert missing_resp.json()["detail"] == "plan terminal certificate not found"
 
 
 class TestApprovalWebhook:
