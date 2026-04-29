@@ -693,11 +693,15 @@ class TestWebChatWebhook:
         assert read_model_resp.json()["enabled"] is True
         assert read_model_resp.json()["plan_certificate_count"] == 1
         assert read_model_resp.json()["plan_witness_count"] == 1
+        assert read_model_resp.json()["recovery_attempt_count"] == 0
+        assert read_model_resp.json()["recovery_attempt_status_counts"] == {}
         assert closure_resp.status_code == 200
         assert closure_resp.json()["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["step_count"] == 2
         assert closure_resp.json()["witness_count"] == 1
+        assert closure_resp.json()["recovery_attempt_count"] == 0
+        assert closure_resp.json()["plan_recovery_attempts"] == []
         assert closure_resp.json()["plan_witnesses"][0]["detail"]["cause"] == "plan_terminal_certificate_issued"
         assert missing_resp.status_code == 404
         assert missing_resp.json()["detail"] == "plan terminal certificate not found"
@@ -729,6 +733,8 @@ class TestWebChatWebhook:
         assert filtered_resp.status_code == 200
         assert filtered_resp.json()["recovery_action_filter"] == "wait_for_approval"
         assert filtered_resp.json()["recovery_action_counts"] == {"wait_for_approval": 1}
+        assert filtered_resp.json()["recovery_attempt_count"] == 0
+        assert filtered_resp.json()["recovery_attempt_status_counts"] == {}
         assert filtered_resp.json()["failed_plan_witnesses"][0]["witness_id"] == witness.witness_id
         assert filtered_resp.json()["failed_plan_witnesses"][0]["detail"]["recovery_decision"]["approval_required"]
         assert empty_resp.status_code == 200
@@ -767,6 +773,8 @@ class TestWebChatWebhook:
         recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
         repeat_recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
         second_recover_resp = client.post("/capability-plans/missing-plan/recover")
+        read_model_resp = client.get("/capability-plans/read-model")
+        closure_resp = client.get(f"/capability-plans/{plan_id}/closure")
 
         assert blocked_resp.status_code == 200
         assert blocked_resp.json()["metadata"]["error"] == "plan_execution_failed"
@@ -780,6 +788,20 @@ class TestWebChatWebhook:
         assert repeat_recover_resp.json()["detail"] == "plan already has terminal certificate"
         assert second_recover_resp.status_code == 404
         assert second_recover_resp.json()["detail"] == "failed plan witness not found"
+        assert read_model_resp.status_code == 200
+        assert read_model_resp.json()["recovery_attempt_count"] == 3
+        assert read_model_resp.json()["recovery_attempt_status_counts"] == {
+            "rejected": 2,
+            "succeeded": 1,
+        }
+        assert closure_resp.status_code == 200
+        assert closure_resp.json()["recovery_attempt_count"] == 2
+        assert [attempt["status"] for attempt in closure_resp.json()["plan_recovery_attempts"]] == [
+            "succeeded",
+            "rejected",
+        ]
+        assert closure_resp.json()["plan_recovery_attempts"][0]["reason"] == "plan_recovered"
+        assert closure_resp.json()["plan_recovery_attempts"][1]["reason"] == "plan_already_certified"
 
 
 class TestApprovalWebhook:

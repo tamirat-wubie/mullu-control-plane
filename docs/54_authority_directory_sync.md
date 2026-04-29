@@ -124,6 +124,33 @@ and marks the receipt as persisted:
 python scripts/sync_authority_directory.py authority-directory.yaml --apply
 ```
 
+## SCIM Export Adapter
+
+`scripts/scim_authority_directory_adapter.py` implements the first external
+source wrapper. It accepts a bounded SCIM JSON export plus a separate authority
+mapping JSON file and emits the normalized directory JSON consumed by the static
+sync adapter.
+
+SCIM user and group records are identity evidence only. They do not become
+owners, approvers, approval policies, or escalation routes unless the mapping
+file explicitly declares those authority relationships.
+
+```bash
+python scripts/scim_authority_directory_adapter.py \
+  --tenant-id tenant-1 \
+  --scim-export scim-export.json \
+  --mapping authority-mapping.json \
+  --output .change_assurance/authority_directory_from_scim.json
+```
+
+The resulting JSON can then be reviewed, dry-run, replayed, or applied through:
+
+```bash
+python scripts/sync_authority_directory.py \
+  .change_assurance/authority_directory_from_scim.json \
+  --batch-output .change_assurance/authority_directory_batch.json
+```
+
 ## Prohibitions
 
 1. No implicit team creation from free-form labels.
@@ -137,12 +164,14 @@ python scripts/sync_authority_directory.py authority-directory.yaml --apply
 ## Runtime Status
 
 The repository exposes the authority configuration read models, binds them into
-runtime conformance, and includes a static JSON / bounded-YAML adapter that
-emits normalized batches and receipts. Live SCIM, LDAP, SAML-group, GitHub-team,
-and workspace-directory adapters remain a future implementation layer.
+runtime conformance, includes a static JSON / bounded-YAML adapter that emits
+normalized batches and receipts, and includes a SCIM-export wrapper that emits
+the same normalized contract. Live SCIM API polling, LDAP, SAML-group,
+GitHub-team, and workspace-directory adapters remain a future implementation
+layer.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, read-model verification required
-  Open issues: external source adapters not implemented
-  Next action: wire live external directory adapters through the static adapter contract
+  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, SCIM identity evidence separated from authority mappings, read-model verification required
+  Open issues: live SCIM API polling, LDAP, SAML-group, GitHub-team, and workspace-directory adapters not implemented
+  Next action: wire live SCIM API polling through the SCIM export adapter contract

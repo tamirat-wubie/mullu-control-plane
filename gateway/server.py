@@ -995,11 +995,14 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         if certificate is None:
             raise HTTPException(404, detail="plan terminal certificate not found")
         witnesses = plan_ledger.witnesses_for(plan_id)
+        recovery_attempts = plan_ledger.recovery_attempts_for(plan_id)
         return {
             "plan_id": plan_id,
             "plan_terminal_certificate": asdict(certificate),
             "plan_witnesses": [asdict(witness) for witness in witnesses],
+            "plan_recovery_attempts": [asdict(attempt) for attempt in recovery_attempts],
             "witness_count": len(witnesses),
+            "recovery_attempt_count": len(recovery_attempts),
         }
 
     @app.post("/capability-plans/{plan_id}/recover")
