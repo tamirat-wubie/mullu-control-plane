@@ -5,6 +5,7 @@ Invariants:
   - Open receipt chains produce stable review requests.
   - Closed receipt chains do not produce review requests.
   - Synchronization is idempotent and does not mutate receipt state.
+  - Review decisions append terminal receipt witnesses and close review signals.
 """
 
 from __future__ import annotations
@@ -171,12 +172,44 @@ def test_decide_records_attributed_review_decision() -> None:
         comment="terminal closure accepted",
     )
     pending = queue.pending()
+    replay = store.replay_request("request-open")
+    terminal_receipt = replay[-1]
 
     assert decision.request_id == "software-receipt-review:request-open"
     assert decision.reviewer_id == "operator-1"
     assert decision.is_approved is True
     assert decision.comment == "terminal closure accepted"
     assert pending == ()
+    assert store.review_receipts() == ()
+    assert terminal_receipt.stage is SoftwareChangeReceiptStage.TERMINAL_CLOSED
+    assert terminal_receipt.outcome == "review_approved"
+    assert terminal_receipt.metadata["review_decision_id"] == decision.decision_id
+    assert terminal_receipt.metadata["gate_allowed"] is True
+    assert f"review_decision:{decision.decision_id}" in terminal_receipt.evidence_refs
+
+
+def test_decide_rejects_already_resolved_software_receipt_review() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_receipt(receipt_id="receipt-open", request_id="request-open"))
+    queue = _queue(store)
+    request = queue.sync()[0]
+    queue.decide(
+        request_id=request.request_id,
+        reviewer_id="operator-1",
+        approved=False,
+        comment="closure evidence rejected",
+    )
+
+    with pytest.raises(ValueError, match="^software receipt review request already resolved$"):
+        queue.decide(
+            request_id=request.request_id,
+            reviewer_id="operator-2",
+            approved=True,
+        )
+
+    replay = store.replay_request("request-open")
+    assert replay[-1].outcome == "review_rejected"
+    assert replay[-1].metadata["gate_allowed"] is False
 
 
 def test_decide_rejects_non_software_receipt_review_request() -> None:

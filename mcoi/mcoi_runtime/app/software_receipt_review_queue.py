@@ -6,6 +6,7 @@ Invariants:
   - One open software request chain maps to one stable review request id.
   - Review metadata binds latest receipt, stage, constraints, and evidence.
   - Decisions are limited to requests produced by this queue.
+  - Resolved decisions append a terminal receipt witness to close the chain.
 """
 
 from __future__ import annotations
@@ -18,7 +19,10 @@ from mcoi_runtime.contracts.review import (
     ReviewScope,
     ReviewScopeType,
 )
-from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceipt
+from mcoi_runtime.contracts.software_dev_loop import (
+    SoftwareChangeReceipt,
+    SoftwareChangeReceiptStage,
+)
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.persistence.software_change_receipt_store import (
     SoftwareChangeReceiptStore,
@@ -91,12 +95,16 @@ class SoftwareReceiptReviewQueue:
             raise ValueError("software receipt review request unavailable")
         if request.metadata.get("source") != SOFTWARE_RECEIPT_REVIEW_SOURCE:
             raise ValueError("review request is not software receipt scoped")
-        return self._review_engine.decide(
+        if self._review_engine.is_review_resolved(request_id):
+            raise ValueError("software receipt review request already resolved")
+        decision = self._review_engine.decide(
             request_id=request_id,
             reviewer_id=reviewer_id,
             approved=approved,
             comment=comment,
         )
+        self._receipt_store.append(self._terminal_receipt_from_decision(request, decision))
+        return decision
 
     def summary(self) -> dict[str, Any]:
         """Return a dashboard-safe summary of pending software receipt reviews."""
@@ -133,5 +141,43 @@ class SoftwareReceiptReviewQueue:
                 "target_refs": receipt.target_refs,
                 "constraint_refs": receipt.constraint_refs,
                 "evidence_refs": receipt.evidence_refs,
+            },
+        )
+
+    def _terminal_receipt_from_decision(
+        self,
+        request: ReviewRequest,
+        decision: ReviewDecision,
+    ) -> SoftwareChangeReceipt:
+        target_request_id = request.scope.target_id
+        metadata = dict(request.metadata)
+        evidence_refs = tuple(str(ref) for ref in metadata.get("evidence_refs", ()) if str(ref))
+        latest_receipt_id = str(metadata.get("latest_receipt_id", ""))
+        decision_ref = f"review_decision:{decision.decision_id}"
+        request_ref = f"review_request:{request.request_id}"
+        terminal_evidence = tuple(
+            ref for ref in (*evidence_refs, latest_receipt_id, request_ref, decision_ref)
+            if ref
+        )
+        outcome = f"review_{decision.status.value}"
+        return SoftwareChangeReceipt(
+            receipt_id=f"software-receipt-terminal:{target_request_id}:{decision.decision_id}",
+            request_id=target_request_id,
+            stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
+            cause=f"software receipt review {decision.status.value}",
+            outcome=outcome,
+            target_refs=tuple(metadata.get("target_refs", (f"software_request:{target_request_id}",))),
+            constraint_refs=tuple(metadata.get("constraint_refs", ("constraint:software_change_lifecycle_v1",))),
+            evidence_refs=terminal_evidence,
+            created_at=decision.decided_at,
+            metadata={
+                "source": SOFTWARE_RECEIPT_REVIEW_SOURCE,
+                "review_request_id": request.request_id,
+                "review_decision_id": decision.decision_id,
+                "review_status": decision.status.value,
+                "reviewer_id": decision.reviewer_id,
+                "gate_allowed": decision.is_approved,
+                "latest_receipt_id": latest_receipt_id,
+                "comment": decision.comment,
             },
         )
