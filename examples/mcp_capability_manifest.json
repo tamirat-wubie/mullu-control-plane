@@ -1,0 +1,37 @@
+{
+  "tenant_id": "tenant-1",
+  "primary_owner_id": "owner-1",
+  "fallback_owner_id": "owner-2",
+  "escalation_team": "platform-ops",
+  "certified_by": "operator-1",
+  "certification_evidence_ref": "evidence:mcp-docs-search",
+  "owner_team": "knowledge-ops",
+  "timeout_seconds": 600,
+  "capsule_id": "mcp.imported_tools.docs.v0",
+  "tools": [
+    {
+      "server_id": "Docs",
+      "name": "Search Docs",
+      "description": "Search internal documents.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "annotations": {
+        "read_only": true
+      },
+      "required_roles": [
+        "knowledge_operator"
+      ],
+      "owner_team": "knowledge-ops",
+      "max_estimated_cost": 0.02
+    }
+  ]
+}
