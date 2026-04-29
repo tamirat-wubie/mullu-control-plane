@@ -223,7 +223,7 @@ def _export_input_schema(entry: CapabilityRegistryEntry) -> dict[str, Any]:
         "properties": {
             "params": {
                 "type": "object",
-                "description": f"Parameters validated by {entry.input_schema_ref}",
+                "description": "Parameters validated by the governed capability input schema.",
             },
         },
         "required": ["params"],
