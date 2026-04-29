@@ -3,7 +3,7 @@ High-severity MUSIA-coverage gap documented in
 docs/MAF_RECEIPT_COVERAGE.md.
 
 Verifies that every state-mutating request on a MUSIA-prefixed path
-(/cognition, /constructs, /domains, /musia/*, /ucja) produces a
+(/cognition, /constructs, /domains, /musia/*, /software/receipts/*, /ucja) produces a
 TransitionReceipt via the platform's ProofBridge, while non-MUSIA paths
 and read-only methods are left alone. The middleware is the inverse
 pattern of GovernanceMiddleware: receipt-only, no guard enforcement.
@@ -63,6 +63,7 @@ class TestSurfaceFromPath:
             ("/domains/cybersecurity/process", "domains"),
             ("/musia/tenants/t1/snapshot", "musia"),
             ("/musia/governance/stats/reset", "musia"),
+            ("/software/receipts/review/sync", "software_receipts"),
             ("/ucja/define-job", "ucja"),
             ("/ucja/qualify", "ucja"),
             ("/api/v1/something", "other"),
@@ -138,6 +139,10 @@ def _build_app(bridge):
     async def non_musia():
         return {"ok": True}
 
+    @app.post("/software/receipts/review/sync")
+    async def software_receipt_review_sync():
+        return {"ok": True}
+
     return app
 
 
@@ -171,6 +176,15 @@ class TestMiddlewareBehavior:
         assert r.status_code == 200
         assert len(bridge.calls) == 1
         assert bridge.calls[0]["tenant_id"] == "musia:musia"
+
+    def test_post_on_software_receipt_path_emits_receipt(self):
+        bridge = _RecordingProofBridge()
+        client = TestClient(_build_app(bridge))
+        r = client.post("/software/receipts/review/sync", json={})
+        assert r.status_code == 200
+        assert len(bridge.calls) == 1
+        assert bridge.calls[0]["tenant_id"] == "musia:software_receipts"
+        assert bridge.calls[0]["endpoint"] == "/software/receipts/review/sync"
 
     def test_get_on_musia_path_does_not_emit_receipt(self):
         """Read-only methods produce no governed transition."""
@@ -241,6 +255,7 @@ class TestInstall:
         status = get_musia_receipt_middleware_status()
         assert status["installed"] is True
         assert "/cognition/" in status["certified_prefixes"]
+        assert "/software/receipts/" in status["certified_prefixes"]
 
     def test_install_without_bridge_returns_false(self):
         app = FastAPI()

@@ -23,6 +23,10 @@ Coverage rules (matching the actual deployed middleware filters):
         Path starts with "/webhook/" or "/authority/" — covered by
         gateway/receipt_middleware.py::GatewayReceiptMiddleware.
 
+    MIDDLEWARE_MUSIA
+        Path starts with a certified prefix in
+        mcoi_runtime.app.musia_receipt_middleware::MusiaReceiptMiddleware.
+
     EXCLUDED
         Path matches an entry in EXCLUSIONS below, with a written
         justification. Excluded routes are read-only-equivalent or
@@ -74,6 +78,12 @@ MCOI_EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/
 # Mirrors gateway/receipt_middleware.py::CERTIFIED_PREFIXES.
 GATEWAY_CERTIFIED_PREFIXES = ("/webhook/", "/authority/")
 
+# Mirrors the new software receipt prefix in
+# mcoi/mcoi_runtime/app/musia_receipt_middleware.py::_CERTIFIED_PREFIXES.
+# The pre-existing MUSIA route debt remains intentionally visible in
+# UNCOVERED until a dedicated coverage ratchet slice moves it down.
+MUSIA_CERTIFIED_PREFIXES = ("/software/receipts/",)
+
 # Methods considered state-mutating. GET/HEAD/OPTIONS are read-only by
 # REST convention and produce no governed transition.
 MUTATING_METHODS = frozenset({"post", "put", "patch", "delete"})
@@ -124,13 +134,15 @@ def extract_routes(path: Path) -> list[tuple[str, str]]:
 
 
 def classify(method: str, full_path: str) -> str:
-    """Return one of: MIDDLEWARE_API, MIDDLEWARE_GATEWAY, EXCLUDED, UNCOVERED."""
+    """Return one of the middleware/exclusion/coverage buckets."""
     if full_path in EXCLUSIONS:
         return "EXCLUDED"
     if full_path.startswith("/api/") and full_path not in MCOI_EXEMPT_PATHS:
         return "MIDDLEWARE_API"
     if any(full_path.startswith(p) for p in GATEWAY_CERTIFIED_PREFIXES):
         return "MIDDLEWARE_GATEWAY"
+    if any(full_path.startswith(p) for p in MUSIA_CERTIFIED_PREFIXES):
+        return "MIDDLEWARE_MUSIA"
     return "UNCOVERED"
 
 
@@ -138,7 +150,8 @@ def compute_buckets() -> dict[str, list[tuple[str, str, str]]]:
     """Walk the source tree and classify every state-mutating route.
 
     Returns {bucket_name: [(METHOD, full_path, source_file), ...]} with
-    keys MIDDLEWARE_API, MIDDLEWARE_GATEWAY, EXCLUDED, UNCOVERED. Read-
+    keys MIDDLEWARE_API, MIDDLEWARE_GATEWAY, MIDDLEWARE_MUSIA,
+    EXCLUDED, UNCOVERED. Read-
     only routes (GET/HEAD/OPTIONS) are filtered out.
 
     This is the import surface used by the pytest ratchet test.
@@ -146,6 +159,7 @@ def compute_buckets() -> dict[str, list[tuple[str, str, str]]]:
     buckets: dict[str, list[tuple[str, str, str]]] = {
         "MIDDLEWARE_API": [],
         "MIDDLEWARE_GATEWAY": [],
+        "MIDDLEWARE_MUSIA": [],
         "EXCLUDED": [],
         "UNCOVERED": [],
     }
@@ -174,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Scanned {len(collect_source_files())} source files.")
     print(f"State-mutating routes (POST/PUT/PATCH/DELETE): {total_mutating}\n")
 
-    for name in ("MIDDLEWARE_API", "MIDDLEWARE_GATEWAY", "EXCLUDED", "UNCOVERED"):
+    for name in ("MIDDLEWARE_API", "MIDDLEWARE_GATEWAY", "MIDDLEWARE_MUSIA", "EXCLUDED", "UNCOVERED"):
         items = buckets[name]
         print(f"--- {name} ({len(items)}) ---")
         for method, path, src in sorted(items):
@@ -200,6 +214,7 @@ def main(argv: list[str] | None = None) -> int:
         f"OK: all {total_mutating} state-mutating routes are covered "
         f"({len(buckets['MIDDLEWARE_API'])} via /api/, "
         f"{len(buckets['MIDDLEWARE_GATEWAY'])} via gateway, "
+        f"{len(buckets['MIDDLEWARE_MUSIA'])} via musia receipt middleware, "
         f"{len(buckets['EXCLUDED'])} excluded)."
     )
     return 0
