@@ -146,6 +146,30 @@ def test_collect_runtime_conformance_rejects_invalid_embedded_witness(monkeypatc
     assert "runtime conformance embedded witness validity failed" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_unclear_responsibility_debt(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        authority_responsibility_debt_clear=False,
+        authority_overdue_obligation_count=1,
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    debt_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance authority responsibility debt"
+    )
+
+    assert debt_step.passed is False
+    assert "overdue_obligation_count=1" in debt_step.detail
+    assert "runtime conformance authority responsibility debt was not clear" in collection.errors
+
+
 def test_collect_runtime_conformance_records_authority_read_model_failures(monkeypatch) -> None:
     secret = "conformance-secret"
     certificate = _signed_certificate(secret=secret)
@@ -272,6 +296,8 @@ def _signed_certificate(
     terminal_status: str = "conformant_with_gaps",
     gateway_witness_valid: bool = True,
     runtime_witness_valid: bool = True,
+    authority_responsibility_debt_clear: bool = True,
+    authority_overdue_obligation_count: int = 0,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
@@ -287,6 +313,13 @@ def _signed_certificate(
         "streaming_budget_canary_passed": True,
         "lineage_query_canary_passed": True,
         "authority_obligation_canary_passed": True,
+        "authority_responsibility_debt_clear": authority_responsibility_debt_clear,
+        "authority_pending_approval_chain_count": 0,
+        "authority_overdue_approval_chain_count": 0,
+        "authority_open_obligation_count": authority_overdue_obligation_count,
+        "authority_overdue_obligation_count": authority_overdue_obligation_count,
+        "authority_escalated_obligation_count": 0,
+        "authority_unowned_high_risk_capability_count": 0,
         "authority_directory_sync_receipt_valid": True,
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,

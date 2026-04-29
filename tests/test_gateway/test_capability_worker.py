@@ -77,6 +77,8 @@ def _request_body() -> bytes:
         "intent": intent,
         "tenant_id": "tenant-1",
         "identity_id": "identity-1",
+        "command_id": "",
+        "conversation_id": "",
         "boundary": {
             "capability_id": boundary.capability_id,
             "execution_plane": boundary.execution_plane,
@@ -88,11 +90,14 @@ def _request_body() -> bytes:
             "service_account": boundary.service_account,
             "evidence_required": boundary.evidence_required,
         },
+        "metadata": {},
     })
     payload = {
         "request_id": "capability-request-test",
         "tenant_id": "tenant-1",
         "identity_id": "identity-1",
+        "command_id": "",
+        "conversation_id": "",
         "intent": intent,
         "boundary": {
             "capability_id": boundary.capability_id,
@@ -106,6 +111,7 @@ def _request_body() -> bytes:
             "evidence_required": list(boundary.evidence_required),
         },
         "input_hash": input_hash,
+        "metadata": {},
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 

@@ -33,6 +33,17 @@ from gateway.capability_isolation import (  # noqa: E402
     sign_capability_payload,
 )
 from gateway.command_spine import canonical_hash, capability_passport_for  # noqa: E402
+from gateway.mcp_capabilities import register_mcp_capabilities  # noqa: E402
+from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
+    CapabilityCertificationStatus,
+    CapabilityRegistryEntry,
+)
+from mcoi_runtime.mcp import (  # noqa: E402
+    GovernedMCPExecutor,
+    MCPToolCallResult,
+    MCPToolDescriptor,
+    import_mcp_tool_as_capability,
+)
 from skills.financial.providers.base import AccountInfo, StubFinancialProvider  # noqa: E402
 
 
@@ -164,6 +175,24 @@ class ExactCapabilityRegistry:
         return ["agent-1"] if capability_id in self.admitted else []
 
 
+class StubMCPClient:
+    """MCP client fixture for dispatcher integration tests."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    def call_tool(self, *, server_id: str, tool_name: str, arguments: dict[str, Any]) -> MCPToolCallResult:
+        self.calls.append({
+            "server_id": server_id,
+            "tool_name": tool_name,
+            "arguments": dict(arguments),
+        })
+        return MCPToolCallResult(
+            content={"issue_id": "ISSUE-1"},
+            metadata={"provider_request_id": "provider-1"},
+        )
+
+
 def _seeded_provider() -> StubFinancialProvider:
     provider = StubFinancialProvider()
     provider.seed_account(
@@ -177,6 +206,38 @@ def _seeded_provider() -> StubFinancialProvider:
         ),
     )
     return provider
+
+
+def _certified_mcp_capability() -> CapabilityRegistryEntry:
+    candidate = import_mcp_tool_as_capability(
+        MCPToolDescriptor(
+            server_id="GitHub Enterprise",
+            name="Create Issue",
+            description="Create a repository issue.",
+            input_schema={
+                "type": "object",
+                "properties": {"title": {"type": "string"}},
+                "required": ["title"],
+            },
+        )
+    )
+    return CapabilityRegistryEntry(
+        capability_id=candidate.capability_id,
+        domain=candidate.domain,
+        version=candidate.version,
+        input_schema_ref=candidate.input_schema_ref,
+        output_schema_ref=candidate.output_schema_ref,
+        effect_model=candidate.effect_model,
+        evidence_model=candidate.evidence_model,
+        authority_policy=candidate.authority_policy,
+        isolation_profile=candidate.isolation_profile,
+        recovery_plan=candidate.recovery_plan,
+        cost_model=candidate.cost_model,
+        obligation_model=candidate.obligation_model,
+        certification_status=CapabilityCertificationStatus.CERTIFIED,
+        metadata=candidate.metadata,
+        extensions=candidate.extensions,
+    )
 
 
 def test_dispatcher_uses_direct_platform_financial_provider() -> None:
@@ -323,6 +384,72 @@ def test_dispatcher_executes_registered_enterprise_capability() -> None:
     assert result["capability_id"] == "enterprise.task_schedule"
     assert result["receipt_status"] == "scheduled"
     assert result["task_id"].startswith("task-")
+
+
+def test_dispatcher_executes_registered_governed_mcp_capability() -> None:
+    dispatcher = SkillDispatcher()
+    client = StubMCPClient()
+    executor = GovernedMCPExecutor(client, clock=lambda: "2026-04-29T12:00:00+00:00")
+    capability = _certified_mcp_capability()
+
+    registered = register_mcp_capabilities(
+        dispatcher,
+        capabilities=(capability,),
+        executor=executor,
+    )
+    result = dispatcher.dispatch(
+        SkillIntent("mcp", "github_enterprise_create_issue", {"title": "Fix bridge"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        command_id="cmd-1",
+        metadata={
+            "approval_id": "approval-1",
+            "budget_reservation_id": "budget-1",
+            "isolation_boundary_id": "isolation-1",
+        },
+    )
+
+    assert registered == ("mcp.github_enterprise_create_issue",)
+    assert result is not None
+    assert result["capability_id"] == "mcp.github_enterprise_create_issue"
+    assert result["receipt_status"] == "succeeded"
+    assert result["mcp_succeeded"] is True
+    assert result["mcp_output"] == {"issue_id": "ISSUE-1"}
+    assert result["mcp_execution_receipt"]["command_id"] == "cmd-1"
+    assert result["mcp_execution_receipt"]["approval_id"] == "approval-1"
+    assert result["mcp_execution_receipt"]["budget_reservation_id"] == "budget-1"
+    assert result["mcp_execution_receipt"]["isolation_boundary_id"] == "isolation-1"
+    assert result["input_hash"]
+    assert result["output_hash"]
+    assert result["evidence_refs"]
+    assert executor.audit_records(status="succeeded")[0].command_id == "cmd-1"
+    assert client.calls == [{
+        "server_id": "GitHub Enterprise",
+        "tool_name": "Create Issue",
+        "arguments": {"title": "Fix bridge"},
+    }]
+
+
+def test_dispatcher_rejects_governed_mcp_capability_without_witness_metadata() -> None:
+    dispatcher = SkillDispatcher()
+    client = StubMCPClient()
+    executor = GovernedMCPExecutor(client)
+    register_mcp_capabilities(
+        dispatcher,
+        capabilities=(_certified_mcp_capability(),),
+        executor=executor,
+    )
+
+    with pytest.raises(ValueError, match="approval_id is required for governed MCP execution"):
+        dispatcher.dispatch(
+            SkillIntent("mcp", "github_enterprise_create_issue", {"title": "Fix bridge"}),
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+            command_id="cmd-1",
+        )
+
+    assert client.calls == []
+    assert executor.audit_records() == ()
 
 
 def test_capability_isolation_marks_payment_as_isolated() -> None:

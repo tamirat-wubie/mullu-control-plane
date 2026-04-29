@@ -17,11 +17,18 @@ Invariants:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
 from typing import Any
+
+from scripts.authority_directory_mapping import approval_policies as _normalize_approval_policies
+from scripts.authority_directory_mapping import escalation_policies as _normalize_escalation_policies
+from scripts.authority_directory_mapping import file_hash as _source_file_hash
+from scripts.authority_directory_mapping import load_json_mapping as _load_source_mapping
+from scripts.authority_directory_mapping import ownership_bindings as _normalize_ownership_bindings
+from scripts.authority_directory_mapping import role_assignments as _normalize_role_assignments
+from scripts.authority_directory_mapping import stable_hash as _source_stable_hash
 
 
 def convert_workspace_groups_authority_directory(
@@ -35,13 +42,13 @@ def convert_workspace_groups_authority_directory(
     tenant = tenant_id.strip()
     if not tenant:
         raise ValueError("tenant_id is required")
-    workspace_payload = _load_json_mapping(workspace_export_path, label="workspace_export")
-    mapping = _load_json_mapping(mapping_path, label="authority_mapping")
-    workspace_hash = _file_hash(workspace_export_path)
-    mapping_hash = _file_hash(mapping_path)
+    workspace_payload = _load_source_mapping(workspace_export_path, label="workspace_export")
+    mapping = _load_source_mapping(mapping_path, label="authority_mapping")
+    workspace_hash = _source_file_hash(workspace_export_path)
+    mapping_hash = _source_file_hash(mapping_path)
     domain = str(workspace_payload.get("domain", "workspace")).strip() or "workspace"
     source = source_ref.strip() or f"workspace://{domain}/groups/export"
-    source_hash = f"sha256:{_stable_hash({'workspace_hash': workspace_hash, 'mapping_hash': mapping_hash})}"
+    source_hash = f"sha256:{_source_stable_hash({'workspace_hash': workspace_hash, 'mapping_hash': mapping_hash})}"
 
     users = _workspace_users(workspace_payload.get("users", ()))
     groups = _workspace_groups(workspace_payload.get("groups", ()))
@@ -49,10 +56,26 @@ def convert_workspace_groups_authority_directory(
     groups_by_email = {str(group["email"]): group for group in groups}
     rejected: list[dict[str, str]] = []
 
-    role_assignments = tuple(_role_assignments(mapping.get("role_assignments", ()), groups_by_email, rejected))
-    ownership_bindings = tuple(_ownership_bindings(mapping.get("ownership_bindings", ()), groups_by_email, users_by_email, rejected))
-    approval_policies = tuple(_approval_policies(mapping.get("approval_policies", ()), rejected))
-    escalation_policies = tuple(_escalation_policies(mapping.get("escalation_policies", ()), groups_by_email, users_by_email, rejected))
+    role_assignments = tuple(_normalize_role_assignments(
+        mapping.get("role_assignments", ()),
+        groups_by_email,
+        group_fields=("group_email", "group"),
+        group_identity_field="email",
+        rejected=rejected,
+    ))
+    ownership_bindings = tuple(_normalize_ownership_bindings(
+        mapping.get("ownership_bindings", ()),
+        groups_by_email,
+        users_by_email,
+        rejected=rejected,
+    ))
+    approval_policies = tuple(_normalize_approval_policies(mapping.get("approval_policies", ()), rejected=rejected))
+    escalation_policies = tuple(_normalize_escalation_policies(
+        mapping.get("escalation_policies", ()),
+        groups_by_email,
+        users_by_email,
+        rejected=rejected,
+    ))
 
     return {
         "tenant_id": tenant,
@@ -89,131 +112,6 @@ def write_workspace_groups_authority_directory(payload: dict[str, Any], output_p
     return output_path
 
 
-def _role_assignments(
-    raw_records: Any,
-    groups_by_email: dict[str, dict[str, Any]],
-    rejected: list[dict[str, str]],
-) -> list[dict[str, Any]]:
-    accepted: list[dict[str, Any]] = []
-    for index, record in enumerate(_list_or_reject(raw_records, "role_assignment", rejected)):
-        if not isinstance(record, dict):
-            rejected.append({"record_type": "role_assignment", "index": str(index), "reason": "record_must_be_mapping"})
-            continue
-        group_email = str(record.get("group_email", record.get("group", ""))).strip()
-        role = str(record.get("role", "")).strip()
-        group = groups_by_email.get(group_email)
-        if not group_email or not role:
-            rejected.append({"record_type": "role_assignment", "index": str(index), "reason": "missing_group_or_role"})
-            continue
-        if group is None:
-            rejected.append({"record_type": "role_assignment", "index": str(index), "reason": "group_not_found"})
-            continue
-        accepted.append({"group": group_email, "group_id": str(group["email"]), "role": role})
-    return accepted
-
-
-def _ownership_bindings(
-    raw_records: Any,
-    groups_by_email: dict[str, dict[str, Any]],
-    users_by_email: dict[str, dict[str, Any]],
-    rejected: list[dict[str, str]],
-) -> list[dict[str, Any]]:
-    accepted: list[dict[str, Any]] = []
-    for index, record in enumerate(_list_or_reject(raw_records, "ownership_binding", rejected)):
-        if not isinstance(record, dict):
-            rejected.append({"record_type": "ownership_binding", "index": str(index), "reason": "record_must_be_mapping"})
-            continue
-        owner_team = str(record.get("owner_team", "")).strip()
-        escalation_team = str(record.get("escalation_team", "")).strip()
-        primary_owner_id = str(record.get("primary_owner_id", "")).strip()
-        fallback_owner_id = str(record.get("fallback_owner_id", "")).strip()
-        missing = tuple(
-            field
-            for field, value in (
-                ("resource_ref", record.get("resource_ref", "")),
-                ("owner_team", owner_team),
-                ("primary_owner_id", primary_owner_id),
-                ("fallback_owner_id", fallback_owner_id),
-                ("escalation_team", escalation_team),
-            )
-            if not str(value).strip()
-        )
-        if missing:
-            rejected.append({"record_type": "ownership_binding", "index": str(index), "reason": f"missing_fields:{','.join(missing)}"})
-            continue
-        if owner_team not in groups_by_email or escalation_team not in groups_by_email:
-            rejected.append({"record_type": "ownership_binding", "index": str(index), "reason": "team_not_found"})
-            continue
-        if primary_owner_id not in users_by_email or fallback_owner_id not in users_by_email:
-            rejected.append({"record_type": "ownership_binding", "index": str(index), "reason": "owner_not_found"})
-            continue
-        accepted.append({
-            "resource_ref": str(record["resource_ref"]),
-            "owner_team": owner_team,
-            "primary_owner_id": primary_owner_id,
-            "fallback_owner_id": fallback_owner_id,
-            "escalation_team": escalation_team,
-        })
-    return accepted
-
-
-def _approval_policies(raw_records: Any, rejected: list[dict[str, str]]) -> list[dict[str, Any]]:
-    accepted: list[dict[str, Any]] = []
-    required = (
-        "policy_id",
-        "capability",
-        "risk_tier",
-        "required_roles",
-        "required_approver_count",
-        "separation_of_duty",
-        "timeout_seconds",
-        "escalation_policy_id",
-    )
-    for index, record in enumerate(_list_or_reject(raw_records, "approval_policy", rejected)):
-        if not isinstance(record, dict):
-            rejected.append({"record_type": "approval_policy", "index": str(index), "reason": "record_must_be_mapping"})
-            continue
-        missing = tuple(field for field in required if field not in record or record[field] in ("", ()))
-        if missing:
-            rejected.append({"record_type": "approval_policy", "index": str(index), "reason": f"missing_fields:{','.join(missing)}"})
-            continue
-        accepted.append(dict(record))
-    return accepted
-
-
-def _escalation_policies(
-    raw_records: Any,
-    groups_by_email: dict[str, dict[str, Any]],
-    users_by_email: dict[str, dict[str, Any]],
-    rejected: list[dict[str, str]],
-) -> list[dict[str, Any]]:
-    accepted: list[dict[str, Any]] = []
-    required = (
-        "policy_id",
-        "notify_after_seconds",
-        "escalate_after_seconds",
-        "incident_after_seconds",
-        "fallback_owner_id",
-        "escalation_team",
-    )
-    for index, record in enumerate(_list_or_reject(raw_records, "escalation_policy", rejected)):
-        if not isinstance(record, dict):
-            rejected.append({"record_type": "escalation_policy", "index": str(index), "reason": "record_must_be_mapping"})
-            continue
-        missing = tuple(field for field in required if field not in record or record[field] in ("", ()))
-        if missing:
-            rejected.append({"record_type": "escalation_policy", "index": str(index), "reason": f"missing_fields:{','.join(missing)}"})
-            continue
-        if str(record["fallback_owner_id"]) not in users_by_email:
-            rejected.append({"record_type": "escalation_policy", "index": str(index), "reason": "fallback_owner_not_found"})
-            continue
-        if str(record["escalation_team"]) not in groups_by_email:
-            rejected.append({"record_type": "escalation_policy", "index": str(index), "reason": "escalation_team_not_found"})
-            continue
-        accepted.append(dict(record))
-    return accepted
-
-
 def _workspace_users(raw_records: Any) -> tuple[dict[str, Any], ...]:
     if not isinstance(raw_records, list):
         raise ValueError("workspace users must be a list")
@@ -241,34 +139,6 @@ def _workspace_groups(raw_records: Any) -> tuple[dict[str, Any], ...]:
         groups.append(dict(record))
     return tuple(groups)
 
-
-def _list_or_reject(raw_records: Any, record_type: str, rejected: list[dict[str, str]]) -> tuple[Any, ...]:
-    if raw_records in (None, ""):
-        return ()
-    if not isinstance(raw_records, (list, tuple)):
-        rejected.append({"record_type": record_type, "reason": "records_must_be_list"})
-        return ()
-    return tuple(raw_records)
-
-
-def _load_json_mapping(path: Path, *, label: str) -> dict[str, Any]:
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"{label} must be JSON") from exc
-    if not isinstance(payload, dict):
-        raise ValueError(f"{label} root must be mapping")
-    return payload
-
-
-def _file_hash(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _stable_hash(payload: dict[str, Any]) -> str:
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
-    ).hexdigest()
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

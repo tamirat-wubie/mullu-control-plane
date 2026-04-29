@@ -152,7 +152,17 @@ class RestrictedPaymentExecutor:
     def __init__(self) -> None:
         self.calls = 0
 
-    def execute(self, *, intent, tenant_id, identity_id, boundary):
+    def execute(
+        self,
+        *,
+        intent,
+        tenant_id,
+        identity_id,
+        boundary,
+        command_id="",
+        conversation_id="",
+        metadata=None,
+    ):
         self.calls += 1
         result = {
             "response": "Payment processed: tx-restricted-1",
@@ -166,6 +176,9 @@ class RestrictedPaymentExecutor:
             "ledger_hash": "ledger-restricted-proof",
             "recipient_hash": "recipient-restricted-proof",
             "recipient_ref": "dest:pending",
+            "command_id": command_id,
+            "conversation_id": conversation_id,
+            "witness_metadata": dict(metadata or {}),
         }
         receipt = CapabilityExecutionReceipt(
             receipt_id="capability-receipt-restricted",
@@ -347,6 +360,47 @@ class TestMessageRouting:
         assert any(event.next_state == CommandState.MEMORY_PROMOTED for event in command_events)
         assert any(event.next_state == CommandState.LEARNING_DECIDED for event in command_events)
         assert command_events[-1].next_state == CommandState.RESPONDED
+
+    def test_capability_dispatch_receives_command_witness_metadata(self):
+        dispatcher = SkillDispatcher()
+        captured_contexts: list[Any] = []
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: captured_contexts.append(context) or {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="fallback"),
+            skill_dispatcher=dispatcher,
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-witness-1",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs",
+            conversation_id="conversation-1",
+        ))
+
+        assert response.body == "Knowledge searched."
+        assert captured_contexts[0].command_id == response.metadata["command_id"]
+        assert captured_contexts[0].conversation_id == "conversation-1"
+        assert captured_contexts[0].metadata["approval_id"]
+        assert captured_contexts[0].metadata["budget_reservation_id"].startswith("budget-reservation-")
+        assert captured_contexts[0].metadata["isolation_boundary_id"].startswith("isolation-boundary-")
+        assert captured_contexts[0].metadata["isolation_boundary"]["execution_plane"] == "gateway_process"
 
     def test_multi_step_plan_executes_child_commands_and_certifies_plan(self):
         dispatcher = SkillDispatcher()
@@ -1187,6 +1241,10 @@ class TestChannelAdapterIntegration:
         assert committed.metadata["transaction_id"] == "tx-restricted-1"
         assert committed.metadata["capability_execution_receipt"]["worker_id"] == "restricted-worker-1"
         assert committed.metadata["capability_execution_boundary"]["execution_plane"] == "isolated_worker"
+        assert committed.metadata["witness_metadata"]["approval_id"] == pending.metadata["request_id"]
+        assert committed.metadata["witness_metadata"]["budget_reservation_id"].startswith("budget-reservation-")
+        assert committed.metadata["witness_metadata"]["isolation_boundary_id"].startswith("isolation-boundary-")
+        assert committed.metadata["witness_metadata"]["isolation_boundary"]["execution_plane"] == "isolated_worker"
         assert committed.metadata["closure_disposition"] == "committed"
         assert restricted_executor.calls == 1
 

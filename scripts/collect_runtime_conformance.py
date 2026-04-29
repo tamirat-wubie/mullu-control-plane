@@ -36,6 +36,13 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "expires_at",
     "gateway_witness_valid",
     "runtime_witness_valid",
+    "authority_responsibility_debt_clear",
+    "authority_pending_approval_chain_count",
+    "authority_overdue_approval_chain_count",
+    "authority_open_obligation_count",
+    "authority_overdue_obligation_count",
+    "authority_escalated_obligation_count",
+    "authority_unowned_high_risk_capability_count",
     "authority_directory_sync_receipt_valid",
     "terminal_status",
     "open_conformance_gaps",
@@ -154,6 +161,22 @@ def collect_runtime_conformance(
     ))
     if not witness_validity_passed:
         errors.append("runtime conformance embedded witness validity failed")
+
+    responsibility_debt_passed = bool(certificate.get("authority_responsibility_debt_clear"))
+    steps.append(CollectionStep(
+        name="runtime conformance authority responsibility debt",
+        passed=responsibility_debt_passed,
+        detail=(
+            f"clear={responsibility_debt_passed} "
+            f"overdue_approval_chain_count={certificate.get('authority_overdue_approval_chain_count', 'missing')} "
+            f"overdue_obligation_count={certificate.get('authority_overdue_obligation_count', 'missing')} "
+            f"escalated_obligation_count={certificate.get('authority_escalated_obligation_count', 'missing')} "
+            "unowned_high_risk_capability_count="
+            f"{certificate.get('authority_unowned_high_risk_capability_count', 'missing')}"
+        ),
+    ))
+    if not responsibility_debt_passed:
+        errors.append("runtime conformance authority responsibility debt was not clear")
 
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(

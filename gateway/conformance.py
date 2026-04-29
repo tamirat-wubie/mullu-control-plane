@@ -66,6 +66,13 @@ class RuntimeConformanceCertificate:
     streaming_budget_canary_passed: bool
     lineage_query_canary_passed: bool
     authority_obligation_canary_passed: bool
+    authority_responsibility_debt_clear: bool
+    authority_pending_approval_chain_count: int
+    authority_overdue_approval_chain_count: int
+    authority_open_obligation_count: int
+    authority_overdue_obligation_count: int
+    authority_escalated_obligation_count: int
+    authority_unowned_high_risk_capability_count: int
     authority_directory_sync_receipt_valid: bool
     capsule_registry_certified: bool
     proof_coverage_matrix_current: bool
@@ -196,12 +203,29 @@ def issue_conformance_certificate(
         "lineage URI parser accepts command, trace, and output references",
     ))
 
-    authority_obligation_canary_passed = _authority_obligation_canary(authority_obligation_mesh)
+    authority_witness = asdict(authority_obligation_mesh.responsibility_witness())
+    authority_obligation_canary_passed = _authority_obligation_canary(authority_witness)
     checks.append(_check(
         "authority_obligation_canary",
         authority_obligation_canary_passed,
         "authority:witness",
         "authority witness exposes approval, obligation, escalation, and risk debt counts",
+    ))
+    authority_responsibility_debt_clear = _authority_responsibility_debt_clear(authority_witness)
+    checks.append(_check(
+        "authority_responsibility_debt_clear",
+        authority_responsibility_debt_clear,
+        "authority:witness:responsibility_debt",
+        (
+            "overdue_approval_chain_count="
+            f"{authority_witness.get('overdue_approval_chain_count', 'missing')} "
+            "overdue_obligation_count="
+            f"{authority_witness.get('overdue_obligation_count', 'missing')} "
+            "escalated_obligation_count="
+            f"{authority_witness.get('escalated_obligation_count', 'missing')} "
+            "unowned_high_risk_capability_count="
+            f"{authority_witness.get('unowned_high_risk_capability_count', 'missing')}"
+        ),
     ))
 
     authority_directory_sync_receipt_valid = _authority_directory_sync_receipt_valid(repository_root)
@@ -246,6 +270,7 @@ def issue_conformance_certificate(
             streaming_budget_canary_passed,
             lineage_query_canary_passed,
             authority_obligation_canary_passed,
+            authority_responsibility_debt_clear,
         ),
     )
     unsigned = RuntimeConformanceCertificate(
@@ -262,6 +287,13 @@ def issue_conformance_certificate(
         streaming_budget_canary_passed=streaming_budget_canary_passed,
         lineage_query_canary_passed=lineage_query_canary_passed,
         authority_obligation_canary_passed=authority_obligation_canary_passed,
+        authority_responsibility_debt_clear=authority_responsibility_debt_clear,
+        authority_pending_approval_chain_count=_int_count(authority_witness, "pending_approval_chain_count"),
+        authority_overdue_approval_chain_count=_int_count(authority_witness, "overdue_approval_chain_count"),
+        authority_open_obligation_count=_int_count(authority_witness, "open_obligation_count"),
+        authority_overdue_obligation_count=_int_count(authority_witness, "overdue_obligation_count"),
+        authority_escalated_obligation_count=_int_count(authority_witness, "escalated_obligation_count"),
+        authority_unowned_high_risk_capability_count=_int_count(authority_witness, "unowned_high_risk_capability_count"),
         authority_directory_sync_receipt_valid=authority_directory_sync_receipt_valid,
         capsule_registry_certified=capsule_registry_certified,
         proof_coverage_matrix_current=proof_coverage_matrix_current,
@@ -375,10 +407,10 @@ def _lineage_query_canary() -> bool:
     return {ref.ref.ref_type for ref in refs} == {"command", "trace", "output"}
 
 
-def _authority_obligation_canary(authority_obligation_mesh: Any) -> bool:
-    witness = asdict(authority_obligation_mesh.responsibility_witness())
+def _authority_obligation_canary(witness: dict[str, Any]) -> bool:
     required = {
         "pending_approval_chain_count",
+        "overdue_approval_chain_count",
         "open_obligation_count",
         "overdue_obligation_count",
         "escalated_obligation_count",
@@ -387,6 +419,26 @@ def _authority_obligation_canary(authority_obligation_mesh: Any) -> bool:
         "requires_review_count",
     }
     return required <= set(witness)
+
+
+def _authority_responsibility_debt_clear(witness: dict[str, Any]) -> bool:
+    required = (
+        "overdue_approval_chain_count",
+        "expired_approval_chain_count",
+        "overdue_obligation_count",
+        "escalated_obligation_count",
+        "unowned_high_risk_capability_count",
+    )
+    if any(field not in witness for field in required):
+        return False
+    return all(_int_count(witness, field) == 0 for field in required)
+
+
+def _int_count(payload: dict[str, Any], field: str) -> int:
+    try:
+        return int(payload.get(field, 0))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _authority_directory_sync_receipt_valid(repo_root: Path) -> bool:
@@ -496,6 +548,7 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
         "streaming_budget_canary": "streaming_budget_contract_not_witnessed",
         "lineage_query_canary": "lineage_query_contract_not_witnessed",
         "authority_obligation_canary": "authority_obligation_witness_not_live",
+        "authority_responsibility_debt_clear": "authority_responsibility_debt_present",
         "authority_directory_sync_receipt": "authority_directory_sync_receipt_not_witnessed",
         "proof_coverage_matrix_current": "proof_coverage_matrix_not_current",
         "known_limitations_aligned": "known_limitations_documentation_drift",

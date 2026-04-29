@@ -18,6 +18,13 @@
     "streaming_budget_canary_passed",
     "lineage_query_canary_passed",
     "authority_obligation_canary_passed",
+    "authority_responsibility_debt_clear",
+    "authority_pending_approval_chain_count",
+    "authority_overdue_approval_chain_count",
+    "authority_open_obligation_count",
+    "authority_overdue_obligation_count",
+    "authority_escalated_obligation_count",
+    "authority_unowned_high_risk_capability_count",
     "authority_directory_sync_receipt_valid",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
@@ -73,6 +80,33 @@
     },
     "authority_obligation_canary_passed": {
       "type": "boolean"
+    },
+    "authority_responsibility_debt_clear": {
+      "type": "boolean"
+    },
+    "authority_pending_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_overdue_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_open_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_overdue_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_escalated_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_unowned_high_risk_capability_count": {
+      "type": "integer",
+      "minimum": 0
     },
     "authority_directory_sync_receipt_valid": {
       "type": "boolean"

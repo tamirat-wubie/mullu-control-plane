@@ -118,7 +118,11 @@ def test_governed_mcp_executor_calls_client_and_returns_receipt() -> None:
         content={"issue_id": "ISSUE-1"},
         metadata={"provider_request_id": "provider-1"},
     ))
-    executor = GovernedMCPExecutor(client, worker_id="mcp-worker-1")
+    executor = GovernedMCPExecutor(
+        client,
+        worker_id="mcp-worker-1",
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+    )
 
     result = executor.execute(
         capability=_certified(),
@@ -141,6 +145,17 @@ def test_governed_mcp_executor_calls_client_and_returns_receipt() -> None:
     assert result.receipt.output_hash
     assert result.receipt.status == "succeeded"
     assert result.metadata["terminal_certificate_required"] is True
+    audits = executor.audit_records()
+    assert len(audits) == 1
+    assert audits[0].audit_id.startswith("mcp-execution-audit-")
+    assert audits[0].status == "succeeded"
+    assert audits[0].reason == "mcp_tool_call_succeeded"
+    assert audits[0].receipt_id == result.receipt.receipt_id
+    assert audits[0].input_hash == result.receipt.input_hash
+    assert audits[0].output_hash == result.receipt.output_hash
+    assert audits[0].evidence_refs == result.receipt.evidence_refs
+    assert executor.audit_records(command_id="cmd-1") == audits
+    assert executor.audit_records(status="succeeded") == audits
     assert client.calls == [{
         "server_id": "GitHub Enterprise",
         "tool_name": "Create Issue",
@@ -167,6 +182,12 @@ def test_governed_mcp_executor_records_failed_tool_call_receipt() -> None:
     assert result.receipt.status == "failed"
     assert result.receipt.output_hash
     assert result.metadata["mcp_call_metadata"] == {"provider_request_id": "provider-2"}
+    audits = executor.audit_records(status="failed")
+    assert len(audits) == 1
+    assert audits[0].status == "failed"
+    assert audits[0].reason == "mcp_tool_call_failed"
+    assert audits[0].receipt_id == result.receipt.receipt_id
+    assert executor.audit_records(status="succeeded") == ()
     assert client.calls[0]["arguments"] == {"title": "Unsafe title"}
 
 
@@ -186,6 +207,10 @@ def test_governed_mcp_executor_wraps_client_exception_in_failed_receipt() -> Non
     assert result.receipt.status == "failed"
     assert result.receipt.output_hash
     assert result.metadata["mcp_call_metadata"] == {}
+    audits = executor.audit_records()
+    assert audits[0].status == "failed"
+    assert audits[0].reason == "mcp_tool_call_failed"
+    assert audits[0].receipt_id == result.receipt.receipt_id
     assert "secret-token" not in result.error
     assert client.calls == 1
 
@@ -200,6 +225,11 @@ def test_governed_mcp_executor_rejects_uncertified_capability() -> None:
             params={"title": "Blocked"},
         )
 
+    audits = executor.audit_records(status="rejected")
+    assert len(audits) == 1
+    assert audits[0].capability_id == "mcp.github_enterprise_create_issue"
+    assert audits[0].command_id == "cmd-1"
+    assert audits[0].reason == "MCP capability execution requires certified capability"
     assert executor is not None
     assert _candidate_capability().certification_status is CapabilityCertificationStatus.CANDIDATE
 
@@ -228,3 +258,23 @@ def test_governed_mcp_execution_context_requires_governance_witnesses() -> None:
 
     with pytest.raises(ValueError, match="isolation_boundary_id is required"):
         _context(isolation_boundary_id="")
+
+
+def test_governed_mcp_executor_audit_records_are_bounded_newest_first() -> None:
+    executor = GovernedMCPExecutor(StubMCPClient(MCPToolCallResult(content={})))
+
+    executor.execute(
+        capability=_certified(),
+        context=_context(command_id="cmd-1"),
+        params={"title": "First"},
+    )
+    executor.execute(
+        capability=_certified(),
+        context=_context(command_id="cmd-2"),
+        params={"title": "Second"},
+    )
+    audits = executor.audit_records(limit=1)
+
+    assert len(audits) == 1
+    assert audits[0].command_id == "cmd-2"
+    assert executor.audit_records(command_id="missing") == ()

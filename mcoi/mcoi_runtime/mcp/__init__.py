@@ -14,6 +14,7 @@ from .capability_bridge import (
 )
 from .governed_executor import (
     GovernedMCPExecutionContext,
+    GovernedMCPExecutionAudit,
     GovernedMCPExecutionReceipt,
     GovernedMCPExecutionResult,
     GovernedMCPExecutor,
@@ -22,6 +23,7 @@ from .governed_executor import (
 
 __all__ = [
     "GovernedMCPExecutionContext",
+    "GovernedMCPExecutionAudit",
     "GovernedMCPExecutionReceipt",
     "GovernedMCPExecutionResult",
     "GovernedMCPExecutor",

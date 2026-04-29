@@ -60,6 +60,9 @@ def test_runtime_conformance_endpoint_returns_signed_gap_certificate(monkeypatch
     assert payload["certificate_id"].startswith("conf-")
     assert payload["gateway_witness_valid"] is True
     assert payload["runtime_witness_valid"] is True
+    assert payload["authority_responsibility_debt_clear"] is True
+    assert payload["authority_overdue_obligation_count"] == 0
+    assert payload["authority_unowned_high_risk_capability_count"] == 0
     assert payload["terminal_status"] == "degraded"
     assert "command_closure_canary_missing_terminal_success" in payload["open_conformance_gaps"]
     assert "capability_fabric_admission_not_live" in payload["open_conformance_gaps"]
@@ -127,6 +130,22 @@ def test_runtime_conformance_accepts_valid_authority_directory_sync_receipt(tmp_
     assert "authority_directory_sync_receipt_not_witnessed" not in payload["open_conformance_gaps"]
 
 
+def test_runtime_conformance_degrades_when_responsibility_debt_is_present(tmp_path) -> None:
+    certificate = _issue_test_conformance(
+        repo_root=tmp_path,
+        authority_obligation_mesh=StubAuthorityObligationMesh(overdue_obligation_count=1),
+    )
+    payload = certificate.to_json_dict()
+    debt_check = next(check for check in payload["checks"] if check["check_id"] == "authority_responsibility_debt_clear")
+
+    assert payload["authority_responsibility_debt_clear"] is False
+    assert payload["authority_overdue_obligation_count"] == 1
+    assert debt_check["passed"] is False
+    assert "overdue_obligation_count=1" in debt_check["detail"]
+    assert "authority_responsibility_debt_present" in payload["open_conformance_gaps"]
+    assert payload["terminal_status"] == "degraded"
+
+
 def _signature_valid(payload: dict, secret: str) -> bool:
     signature = payload["signature"].removeprefix("hmac-sha256:")
     unsigned = dict(payload)
@@ -174,6 +193,9 @@ class StubCommandLedger:
 class StubAuthorityObligationMesh:
     """Authority responsibility witness fixture."""
 
+    def __init__(self, *, overdue_obligation_count: int = 0) -> None:
+        self._overdue_obligation_count = overdue_obligation_count
+
     def responsibility_witness(self):
         from gateway.authority_obligation_mesh import ResponsibilityWitness
 
@@ -181,8 +203,8 @@ class StubAuthorityObligationMesh:
             pending_approval_chain_count=0,
             overdue_approval_chain_count=0,
             expired_approval_chain_count=0,
-            open_obligation_count=0,
-            overdue_obligation_count=0,
+            open_obligation_count=self._overdue_obligation_count,
+            overdue_obligation_count=self._overdue_obligation_count,
             escalated_obligation_count=0,
             active_accepted_risk_count=0,
             active_compensation_review_count=0,
@@ -208,11 +230,11 @@ def _stable_hash(payload: dict) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
-def _issue_test_conformance(*, repo_root: Path):
+def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None):
     return issue_conformance_certificate(
         router=StubRouter(),
         command_ledger=StubCommandLedger(),
-        authority_obligation_mesh=StubAuthorityObligationMesh(),
+        authority_obligation_mesh=authority_obligation_mesh or StubAuthorityObligationMesh(),
         capability_admission_gate=StubCapabilityAdmissionGate(),
         environment="test",
         signing_secret="conformance-secret",
