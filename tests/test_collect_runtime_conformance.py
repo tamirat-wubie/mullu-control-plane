@@ -287,6 +287,7 @@ def _signed_certificate(
         "streaming_budget_canary_passed": True,
         "lineage_query_canary_passed": True,
         "authority_obligation_canary_passed": True,
+        "authority_directory_sync_receipt_valid": True,
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "known_limitations_aligned": False,

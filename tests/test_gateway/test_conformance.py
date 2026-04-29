@@ -26,6 +26,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.server import create_gateway_app  # noqa: E402
+from gateway.conformance import issue_conformance_certificate  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -81,6 +82,51 @@ def test_runtime_conformance_certificate_matches_schema(monkeypatch) -> None:
     assert all(check["evidence_ref"] for check in payload["checks"])
 
 
+def test_runtime_conformance_reports_missing_authority_directory_sync_receipt(tmp_path) -> None:
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    receipt_check = next(check for check in payload["checks"] if check["check_id"] == "authority_directory_sync_receipt")
+
+    assert payload["authority_directory_sync_receipt_valid"] is False
+    assert receipt_check["passed"] is False
+    assert "authority_directory_sync_receipt_not_witnessed" in payload["open_conformance_gaps"]
+
+
+def test_runtime_conformance_accepts_valid_authority_directory_sync_receipt(tmp_path) -> None:
+    (tmp_path / ".change_assurance").mkdir()
+    (tmp_path / ".change_assurance" / "authority_directory_sync.json").write_text(
+        json.dumps({
+            "receipt_id": "authority-directory-sync-0123456789abcdef",
+            "tenant_id": "tenant-1",
+            "batch_id": "directory-batch-0123456789abcdef",
+            "source_system": "static_yaml",
+            "source_ref": "file://authority-directory.yaml",
+            "source_hash": "sha256:" + "0" * 64,
+            "applied_ownership_count": 1,
+            "applied_approval_policy_count": 1,
+            "applied_escalation_policy_count": 1,
+            "rejected_record_count": 0,
+            "apply_mode": "apply",
+            "persisted": True,
+            "rejected_records": [],
+            "evidence_refs": [
+                "authority:ownership_read_model",
+                "authority:policy_read_model",
+                "runtime_conformance:authority_configuration",
+            ],
+        }),
+        encoding="utf-8",
+    )
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    receipt_check = next(check for check in payload["checks"] if check["check_id"] == "authority_directory_sync_receipt")
+
+    assert payload["authority_directory_sync_receipt_valid"] is True
+    assert receipt_check["passed"] is True
+    assert "authority_directory_sync_receipt_not_witnessed" not in payload["open_conformance_gaps"]
+
+
 def _signature_valid(payload: dict, secret: str) -> bool:
     signature = payload["signature"].removeprefix("hmac-sha256:")
     unsigned = dict(payload)
@@ -89,3 +135,90 @@ def _signature_valid(payload: dict, secret: str) -> bool:
     digest = hashlib.sha256(canonical).hexdigest()
     expected = hmac.new(secret.encode("utf-8"), digest.encode("utf-8"), hashlib.sha256).hexdigest()
     return hmac.compare_digest(signature, expected)
+
+
+class StubRouter:
+    """Runtime witness fixture for direct conformance issuance."""
+
+    def runtime_witness(self, **kwargs):
+        unsigned = {
+            "witness_id": "wit-0123456789abcdef",
+            "environment": kwargs["environment"],
+            "runtime_status": "live",
+            "gateway_status": "live",
+            "latest_command_event_hash": "hash-1",
+            "latest_anchor_id": "anchor-1",
+            "latest_terminal_certificate_id": "terminal-1",
+            "signed_at": "2026-04-29T12:00:00+00:00",
+            "signature_key_id": kwargs["signature_key_id"],
+        }
+        signature = hmac.new(
+            kwargs["signing_secret"].encode("utf-8"),
+            _stable_hash(unsigned).encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        return {**unsigned, "signature": f"hmac-sha256:{signature}"}
+
+
+class StubCommandLedger:
+    """Closure summary fixture for direct conformance issuance."""
+
+    def summary(self):
+        return {
+            "terminal_certificates": 1,
+            "closure_memory_entries": 1,
+            "closure_learning_decisions": 1,
+        }
+
+
+class StubAuthorityObligationMesh:
+    """Authority responsibility witness fixture."""
+
+    def responsibility_witness(self):
+        from gateway.authority_obligation_mesh import ResponsibilityWitness
+
+        return ResponsibilityWitness(
+            pending_approval_chain_count=0,
+            overdue_approval_chain_count=0,
+            expired_approval_chain_count=0,
+            open_obligation_count=0,
+            overdue_obligation_count=0,
+            escalated_obligation_count=0,
+            active_accepted_risk_count=0,
+            active_compensation_review_count=0,
+            requires_review_count=0,
+            unowned_high_risk_capability_count=0,
+        )
+
+
+class StubCapabilityAdmissionGate:
+    """Capability fabric read-model fixture."""
+
+    def read_model(self):
+        return {
+            "require_certified": True,
+            "capsule_count": 1,
+            "capability_count": 1,
+            "artifact_count": 1,
+        }
+
+
+def _stable_hash(payload: dict) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _issue_test_conformance(*, repo_root: Path):
+    return issue_conformance_certificate(
+        router=StubRouter(),
+        command_ledger=StubCommandLedger(),
+        authority_obligation_mesh=StubAuthorityObligationMesh(),
+        capability_admission_gate=StubCapabilityAdmissionGate(),
+        environment="test",
+        signing_secret="conformance-secret",
+        signature_key_id="runtime-conformance-test",
+        runtime_witness_key_id="runtime-witness-test",
+        runtime_witness_secret="witness-secret",
+        repo_root=repo_root,
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+    )

@@ -363,6 +363,78 @@ def test_json_plan_ledger_store_survives_recreation(tmp_path) -> None:
     assert read_model["store"]["backend"] == "json_file"
 
 
+def test_plan_ledger_records_recovery_attempts_in_read_model() -> None:
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    blocked_attempt = ledger.record_recovery_attempt(
+        plan_id="plan-1",
+        recovery_action="wait_for_approval",
+        status="blocked",
+        reason="approval_wait_command_not_terminal",
+        witness_id="plan-witness-1",
+        detail={"command_id": "cmd-1"},
+    )
+    succeeded_attempt = ledger.record_recovery_attempt(
+        plan_id="plan-1",
+        recovery_action="wait_for_approval",
+        status="succeeded",
+        reason="plan_recovered",
+        witness_id="plan-witness-1",
+        terminal_certificate_id="plan-cert-1",
+        detail={"command_id": "cmd-1"},
+    )
+    read_model = ledger.read_model()
+    filtered = ledger.read_model(recovery_attempt_status="blocked")
+
+    assert blocked_attempt.attempt_id.startswith("plan-recovery-attempt-")
+    assert blocked_attempt.plan_id == "plan-1"
+    assert blocked_attempt.recovery_action == "wait_for_approval"
+    assert blocked_attempt.status == "blocked"
+    assert blocked_attempt.detail["command_id"] == "cmd-1"
+    assert ledger.recovery_attempts_for("plan-1") == (blocked_attempt, succeeded_attempt)
+    assert read_model["recovery_attempt_count"] == 2
+    assert read_model["recovery_attempt_status_counts"] == {"blocked": 1, "succeeded": 1}
+    assert read_model["recovery_attempt_status_filter"] == ""
+    assert [attempt["attempt_id"] for attempt in read_model["recovery_attempts"]] == [
+        blocked_attempt.attempt_id,
+        succeeded_attempt.attempt_id,
+    ]
+    assert filtered["recovery_attempt_count"] == 2
+    assert filtered["recovery_attempt_status_filter"] == "blocked"
+    assert filtered["recovery_attempt_status_counts"] == {"blocked": 1, "succeeded": 1}
+    assert len(filtered["recovery_attempts"]) == 1
+    assert filtered["recovery_attempts"][0]["attempt_id"] == blocked_attempt.attempt_id
+
+
+def test_json_plan_ledger_store_survives_recovery_attempt_recreation(tmp_path) -> None:
+    path = tmp_path / "plan-ledger-recovery-attempts.json"
+    first_ledger = CapabilityPlanLedger(
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+        store=JsonFileCapabilityPlanLedgerStore(path),
+    )
+
+    attempt = first_ledger.record_recovery_attempt(
+        plan_id="plan-1",
+        recovery_action="wait_for_approval",
+        status="succeeded",
+        reason="plan_recovered",
+        witness_id="plan-witness-1",
+        terminal_certificate_id="plan-cert-1",
+    )
+    second_ledger = CapabilityPlanLedger(
+        clock=lambda: "2026-04-29T12:00:01+00:00",
+        store=JsonFileCapabilityPlanLedgerStore(path),
+    )
+    attempts = second_ledger.recovery_attempts_for("plan-1")
+    read_model = second_ledger.read_model()
+
+    assert attempts == (attempt,)
+    assert attempts[0].terminal_certificate_id == "plan-cert-1"
+    assert read_model["recovery_attempt_count"] == 1
+    assert read_model["recovery_attempt_status_counts"] == {"succeeded": 1}
+    assert read_model["store"]["recovery_attempts"] == 1
+
+
 def test_plan_ledger_env_builder_uses_json_path(monkeypatch, tmp_path) -> None:
     path = tmp_path / "plan-ledger-env.json"
     monkeypatch.setenv("MULLU_PLAN_LEDGER_BACKEND", "json_file")
@@ -440,6 +512,59 @@ def test_plan_ledger_records_failure_witness_without_certificate() -> None:
     assert read_model["plan_witness_count"] == 1
     assert read_model["failed_plan_witness_count"] == 1
     assert read_model["recovery_action_counts"] == {"retry_or_review": 1}
+    assert read_model["failed_plan_witnesses"][0]["witness_id"] == witness.witness_id
+
+
+def test_plan_ledger_read_model_filters_failed_witnesses_by_recovery_action() -> None:
+    retry_plan = one_step_plan(
+        capability_id="creative.data_analyze",
+        params={"csv": "a,b\n1,2\n"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="analyze",
+    )
+    approval_plan = one_step_plan(
+        capability_id="enterprise.task_schedule",
+        params={"title": "Review report"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="schedule review",
+    )
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+    retry_execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=False,
+            command_id="cmd-retry",
+            error="analysis_failed",
+        )
+    ).execute(retry_plan)
+    approval_execution = CapabilityPlanExecutor(
+        lambda step, completed: CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=False,
+            command_id="cmd-approval",
+            error="approval_required:apr-1",
+        )
+    ).execute(approval_plan)
+
+    retry_witness = ledger.record_failure(plan=retry_plan, execution=retry_execution)
+    approval_witness = ledger.record_failure(plan=approval_plan, execution=approval_execution)
+    filtered = ledger.read_model(recovery_action="wait_for_approval")
+    unfiltered = ledger.read_model()
+
+    assert unfiltered["failed_plan_witness_count"] == 2
+    assert unfiltered["recovery_action_counts"] == {
+        "retry_or_review": 1,
+        "wait_for_approval": 1,
+    }
+    assert filtered["recovery_action_filter"] == "wait_for_approval"
+    assert filtered["failed_plan_witness_count"] == 2
+    assert len(filtered["failed_plan_witnesses"]) == 1
+    assert filtered["failed_plan_witnesses"][0]["witness_id"] == approval_witness.witness_id
+    assert filtered["failed_plan_witnesses"][0]["witness_id"] != retry_witness.witness_id
 
 
 def test_plan_ledger_classifies_approval_wait_recovery() -> None:

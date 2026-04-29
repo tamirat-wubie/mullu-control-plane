@@ -204,6 +204,15 @@ Unresolved verification gaps can be held open only through bounded accepted-risk
 records with owner, approver, case, expiry, review obligation, and evidence.
 See `docs/34_accepted_risk_closure.md`.
 
+### Authority-Obligation Mesh
+
+Gateway authority is responsibility-certified before and after closure:
+commands bind ownership, approval chains, separation of duty, review
+obligations, expiry, escalation, and runtime witness counts. Operator read
+models expose ownership, policy, approval-chain, obligation, and escalation
+state with bounded filters. External directory sync is specified in
+`docs/54_authority_directory_sync.md`.
+
 ### Compensation Assurance
 
 Rollback and compensation actions are treated as evidence-bearing recoveries:

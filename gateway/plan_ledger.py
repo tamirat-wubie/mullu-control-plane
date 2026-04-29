@@ -73,6 +73,21 @@ class CapabilityPlanRecoveryDecision:
     completed_mutating_capabilities: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True, slots=True)
+class CapabilityPlanRecoveryAttempt:
+    """Append-only witness for one plan recovery attempt."""
+
+    attempt_id: str
+    plan_id: str
+    recovery_action: str
+    status: str
+    reason: str
+    attempted_at: str
+    witness_id: str = ""
+    terminal_certificate_id: str = ""
+    detail: dict[str, Any] = field(default_factory=dict)
+
+
 class CapabilityPlanLedgerStore:
     """Persistence contract for plan certificates and witness records."""
 
@@ -96,6 +111,14 @@ class CapabilityPlanLedgerStore:
         """Return witness records, optionally filtered by plan id."""
         return ()
 
+    def append_recovery_attempt(self, attempt: CapabilityPlanRecoveryAttempt) -> None:
+        """Append one recovery-attempt witness."""
+        raise NotImplementedError
+
+    def list_recovery_attempts(self, plan_id: str = "") -> tuple[CapabilityPlanRecoveryAttempt, ...]:
+        """Return recovery attempts, optionally filtered by plan id."""
+        return ()
+
     def status(self) -> dict[str, Any]:
         """Return storage health details."""
         return {"backend": "unknown", "available": False}
@@ -107,6 +130,7 @@ class InMemoryCapabilityPlanLedgerStore(CapabilityPlanLedgerStore):
     def __init__(self) -> None:
         self._certificates: dict[str, CapabilityPlanTerminalCertificate] = {}
         self._witnesses: list[CapabilityPlanWitnessRecord] = []
+        self._recovery_attempts: list[CapabilityPlanRecoveryAttempt] = []
 
     def save_certificate(self, certificate: CapabilityPlanTerminalCertificate) -> None:
         self._certificates[certificate.plan_id] = certificate
@@ -125,12 +149,21 @@ class InMemoryCapabilityPlanLedgerStore(CapabilityPlanLedgerStore):
             return tuple(self._witnesses)
         return tuple(witness for witness in self._witnesses if witness.plan_id == plan_id)
 
+    def append_recovery_attempt(self, attempt: CapabilityPlanRecoveryAttempt) -> None:
+        self._recovery_attempts.append(attempt)
+
+    def list_recovery_attempts(self, plan_id: str = "") -> tuple[CapabilityPlanRecoveryAttempt, ...]:
+        if not plan_id:
+            return tuple(self._recovery_attempts)
+        return tuple(attempt for attempt in self._recovery_attempts if attempt.plan_id == plan_id)
+
     def status(self) -> dict[str, Any]:
         return {
             "backend": "memory",
             "available": True,
             "certificates": len(self._certificates),
             "witnesses": len(self._witnesses),
+            "recovery_attempts": len(self._recovery_attempts),
         }
 
 
@@ -142,7 +175,7 @@ class JsonFileCapabilityPlanLedgerStore(CapabilityPlanLedgerStore):
         self._lock = threading.Lock()
         self._path.parent.mkdir(parents=True, exist_ok=True)
         if not self._path.exists():
-            self._write_payload({"certificates": {}, "witnesses": []})
+            self._write_payload({"certificates": {}, "witnesses": [], "recovery_attempts": []})
 
     def save_certificate(self, certificate: CapabilityPlanTerminalCertificate) -> None:
         with self._lock:
@@ -199,16 +232,41 @@ class JsonFileCapabilityPlanLedgerStore(CapabilityPlanLedgerStore):
             return witnesses
         return tuple(witness for witness in witnesses if witness.plan_id == plan_id)
 
+    def append_recovery_attempt(self, attempt: CapabilityPlanRecoveryAttempt) -> None:
+        with self._lock:
+            payload = self._read_payload()
+            attempts = payload.setdefault("recovery_attempts", [])
+            if not isinstance(attempts, list):
+                raise ValueError("plan ledger recovery_attempts root must be an array")
+            attempts.append(asdict(attempt))
+            self._write_payload(payload)
+
+    def list_recovery_attempts(self, plan_id: str = "") -> tuple[CapabilityPlanRecoveryAttempt, ...]:
+        payload = self._read_payload()
+        raw_attempts = payload.get("recovery_attempts", [])
+        if not isinstance(raw_attempts, list):
+            raise ValueError("plan ledger recovery_attempts root must be an array")
+        attempts = tuple(
+            _recovery_attempt_from_mapping(raw_attempt)
+            for raw_attempt in raw_attempts
+            if isinstance(raw_attempt, dict)
+        )
+        if not plan_id:
+            return attempts
+        return tuple(attempt for attempt in attempts if attempt.plan_id == plan_id)
+
     def status(self) -> dict[str, Any]:
         payload = self._read_payload()
         certificates = payload.get("certificates", {})
         witnesses = payload.get("witnesses", [])
+        recovery_attempts = payload.get("recovery_attempts", [])
         return {
             "backend": "json_file",
             "available": True,
             "path": str(self._path),
             "certificates": len(certificates) if isinstance(certificates, dict) else 0,
             "witnesses": len(witnesses) if isinstance(witnesses, list) else 0,
+            "recovery_attempts": len(recovery_attempts) if isinstance(recovery_attempts, list) else 0,
         }
 
     def _read_payload(self) -> dict[str, Any]:
@@ -294,6 +352,7 @@ class CapabilityPlanLedger:
         detail = {
             "cause": "plan_execution_failed",
             "error": execution.error or "execution_failed",
+            "plan_snapshot": _plan_snapshot(plan),
             "step_results": [asdict(result) for result in execution.step_results],
         }
         recovery_decision = _recovery_decision_for_failure(plan=plan, execution=execution)
@@ -321,20 +380,102 @@ class CapabilityPlanLedger:
         """Return the terminal certificate for one plan id, if present."""
         return self._store.load_certificate(plan_id)
 
-    def witnesses_for(self, plan_id: str) -> tuple[CapabilityPlanWitnessRecord, ...]:
+    def witnesses_for(self, plan_id: str = "") -> tuple[CapabilityPlanWitnessRecord, ...]:
         """Return append-only witness records for one plan id."""
         return self._store.list_witnesses(plan_id)
 
-    def read_model(self) -> dict[str, Any]:
+    def record_recovery_attempt(
+        self,
+        *,
+        plan_id: str,
+        recovery_action: str,
+        status: str,
+        reason: str,
+        witness_id: str = "",
+        terminal_certificate_id: str = "",
+        detail: dict[str, Any] | None = None,
+    ) -> CapabilityPlanRecoveryAttempt:
+        """Record an append-only recovery attempt witness."""
+        normalized_plan_id = plan_id.strip()
+        normalized_action = recovery_action.strip()
+        normalized_status = status.strip()
+        normalized_reason = reason.strip()
+        if not normalized_plan_id:
+            raise ValueError("recovery attempt plan_id is required")
+        if not normalized_action:
+            raise ValueError("recovery attempt recovery_action is required")
+        if not normalized_status:
+            raise ValueError("recovery attempt status is required")
+        if not normalized_reason:
+            raise ValueError("recovery attempt reason is required")
+        attempted_at = self._clock()
+        attempt_detail = dict(detail or {})
+        attempt_payload = {
+            "plan_id": normalized_plan_id,
+            "recovery_action": normalized_action,
+            "status": normalized_status,
+            "reason": normalized_reason,
+            "witness_id": witness_id,
+            "terminal_certificate_id": terminal_certificate_id,
+            "attempted_at": attempted_at,
+            "detail": attempt_detail,
+        }
+        attempt = CapabilityPlanRecoveryAttempt(
+            attempt_id=f"plan-recovery-attempt-{canonical_hash(attempt_payload)[:16]}",
+            plan_id=normalized_plan_id,
+            recovery_action=normalized_action,
+            status=normalized_status,
+            reason=normalized_reason,
+            attempted_at=attempted_at,
+            witness_id=witness_id,
+            terminal_certificate_id=terminal_certificate_id,
+            detail=attempt_detail,
+        )
+        self._store.append_recovery_attempt(attempt)
+        return attempt
+
+    def recovery_attempts_for(self, plan_id: str = "") -> tuple[CapabilityPlanRecoveryAttempt, ...]:
+        """Return recovery-attempt witness records for one plan id."""
+        return self._store.list_recovery_attempts(plan_id)
+
+    def read_model(
+        self,
+        *,
+        recovery_action: str = "",
+        recovery_attempt_status: str = "",
+    ) -> dict[str, Any]:
         """Return an operator read model for plan closure."""
         certificates = self._store.list_certificates()
         witnesses = self._store.list_witnesses()
+        recovery_attempts = self._store.list_recovery_attempts()
+        filtered_recovery_attempts = recovery_attempts
+        failed_witnesses = tuple(witness for witness in witnesses if not witness.succeeded)
+        requested_recovery_action = recovery_action.strip()
+        requested_attempt_status = recovery_attempt_status.strip()
+        if requested_recovery_action:
+            failed_witnesses = tuple(
+                witness
+                for witness in failed_witnesses
+                if _witness_recovery_action(witness) == requested_recovery_action
+            )
+        if requested_attempt_status:
+            filtered_recovery_attempts = tuple(
+                attempt
+                for attempt in recovery_attempts
+                if attempt.status == requested_attempt_status
+            )
         return {
             "plan_certificate_count": len(certificates),
             "plan_witness_count": len(witnesses),
             "failed_plan_witness_count": sum(1 for witness in witnesses if not witness.succeeded),
             "recovery_action_counts": _recovery_action_counts(witnesses),
+            "recovery_action_filter": requested_recovery_action,
+            "recovery_attempt_count": len(recovery_attempts),
+            "recovery_attempt_status_counts": _recovery_attempt_status_counts(recovery_attempts),
+            "recovery_attempt_status_filter": requested_attempt_status,
             "certificates": [asdict(certificate) for certificate in certificates],
+            "failed_plan_witnesses": [asdict(witness) for witness in failed_witnesses],
+            "recovery_attempts": [asdict(attempt) for attempt in filtered_recovery_attempts],
             "store": self._store.status(),
         }
 
@@ -387,6 +528,28 @@ def _certificate_from_mapping(raw: dict[str, Any]) -> CapabilityPlanTerminalCert
     )
 
 
+def _plan_snapshot(plan: CapabilityPlan) -> dict[str, Any]:
+    return {
+        "plan_id": plan.plan_id,
+        "tenant_id": plan.tenant_id,
+        "identity_id": plan.identity_id,
+        "goal": plan.goal,
+        "risk_tier": plan.risk_tier,
+        "approval_required": plan.approval_required,
+        "evidence_required": tuple(plan.evidence_required),
+        "metadata": dict(plan.metadata),
+        "steps": [
+            {
+                "step_id": step.step_id,
+                "capability_id": step.capability_id,
+                "params": dict(step.params),
+                "depends_on": tuple(step.depends_on),
+            }
+            for step in plan.steps
+        ],
+    }
+
+
 def _witness_from_mapping(raw: dict[str, Any]) -> CapabilityPlanWitnessRecord:
     return CapabilityPlanWitnessRecord(
         witness_id=str(raw["witness_id"]),
@@ -395,6 +558,20 @@ def _witness_from_mapping(raw: dict[str, Any]) -> CapabilityPlanWitnessRecord:
         succeeded=bool(raw["succeeded"]),
         evidence_hash=str(raw["evidence_hash"]),
         witnessed_at=str(raw["witnessed_at"]),
+        detail=dict(raw.get("detail", {})),
+    )
+
+
+def _recovery_attempt_from_mapping(raw: dict[str, Any]) -> CapabilityPlanRecoveryAttempt:
+    return CapabilityPlanRecoveryAttempt(
+        attempt_id=str(raw["attempt_id"]),
+        plan_id=str(raw["plan_id"]),
+        recovery_action=str(raw["recovery_action"]),
+        status=str(raw["status"]),
+        reason=str(raw["reason"]),
+        attempted_at=str(raw["attempted_at"]),
+        witness_id=str(raw.get("witness_id", "")),
+        terminal_certificate_id=str(raw.get("terminal_certificate_id", "")),
         detail=dict(raw.get("detail", {})),
     )
 
@@ -490,6 +667,22 @@ def _recovery_action_counts(witnesses: tuple[CapabilityPlanWitnessRecord, ...]) 
         if action:
             counts[action] = counts.get(action, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _recovery_attempt_status_counts(attempts: tuple[CapabilityPlanRecoveryAttempt, ...]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for attempt in attempts:
+        status = attempt.status.strip()
+        if status:
+            counts[status] = counts.get(status, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _witness_recovery_action(witness: CapabilityPlanWitnessRecord) -> str:
+    decision = witness.detail.get("recovery_decision")
+    if not isinstance(decision, dict):
+        return ""
+    return str(decision.get("recovery_action", "")).strip()
 
 
 def _witness_for_certificate(

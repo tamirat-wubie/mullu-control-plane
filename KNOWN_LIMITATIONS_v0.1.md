@@ -59,6 +59,14 @@ runtime does not yet behave as intended by the architecture specification.
   is governed: expired leases are rejected, policy pack drift triggers review, and
   retry counts are tracked to prevent zombie workflows.
 
+## Authority And Obligations
+
+- Gateway authority includes ownership, approval-chain, obligation, escalation,
+  ownership read-model, and policy read-model surfaces.
+- External directory sync is specified in `docs/54_authority_directory_sync.md`.
+  Live SCIM, LDAP, SAML-group, and workspace-directory adapters are not yet
+  implemented.
+
 ## Replay
 
 - **Verdict reports show first failing class only.** When a replay produces multiple
@@ -76,6 +84,7 @@ implementation in this release:
   agents can connect via the agent adapter protocol.
 - **Web UI:** Operator console provides structured JSON dashboard views (home,
   runs, audit, checkpoints, providers, scheduler) but no browser-based frontend.
-- **RBAC / human governance:** API key auth with scopes, JWT auth, and
-  per-session RBAC checks exist. Team ownership, approval chains, and
-  escalation rights are not yet implemented.
+- **RBAC / human governance:** API key auth with scopes, JWT auth, per-session
+  RBAC checks, gateway authority resolution, and authority-obligation read
+  models exist. Full organization-management UI and external directory adapters
+  are not yet implemented.

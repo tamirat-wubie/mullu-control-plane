@@ -66,6 +66,7 @@ class RuntimeConformanceCertificate:
     streaming_budget_canary_passed: bool
     lineage_query_canary_passed: bool
     authority_obligation_canary_passed: bool
+    authority_directory_sync_receipt_valid: bool
     capsule_registry_certified: bool
     proof_coverage_matrix_current: bool
     known_limitations_aligned: bool
@@ -203,6 +204,14 @@ def issue_conformance_certificate(
         "authority witness exposes approval, obligation, escalation, and risk debt counts",
     ))
 
+    authority_directory_sync_receipt_valid = _authority_directory_sync_receipt_valid(repository_root)
+    checks.append(_check(
+        "authority_directory_sync_receipt",
+        authority_directory_sync_receipt_valid,
+        "authority_directory_sync:.change_assurance/authority_directory_sync.json",
+        "latest authority directory sync receipt is present and structurally valid",
+    ))
+
     proof_coverage_matrix_current = _proof_coverage_matrix_current(repository_root)
     known_limitations_aligned = _known_limitations_aligned(repository_root)
     security_model_aligned = _security_model_aligned(repository_root)
@@ -253,6 +262,7 @@ def issue_conformance_certificate(
         streaming_budget_canary_passed=streaming_budget_canary_passed,
         lineage_query_canary_passed=lineage_query_canary_passed,
         authority_obligation_canary_passed=authority_obligation_canary_passed,
+        authority_directory_sync_receipt_valid=authority_directory_sync_receipt_valid,
         capsule_registry_certified=capsule_registry_certified,
         proof_coverage_matrix_current=proof_coverage_matrix_current,
         known_limitations_aligned=known_limitations_aligned,
@@ -379,6 +389,55 @@ def _authority_obligation_canary(authority_obligation_mesh: Any) -> bool:
     return required <= set(witness)
 
 
+def _authority_directory_sync_receipt_valid(repo_root: Path) -> bool:
+    receipt_path = repo_root / ".change_assurance" / "authority_directory_sync.json"
+    if not receipt_path.exists():
+        return False
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    required = {
+        "receipt_id",
+        "tenant_id",
+        "batch_id",
+        "source_ref",
+        "source_hash",
+        "applied_ownership_count",
+        "applied_approval_policy_count",
+        "applied_escalation_policy_count",
+        "rejected_record_count",
+        "apply_mode",
+        "persisted",
+        "evidence_refs",
+    }
+    if not required <= set(receipt):
+        return False
+    if not str(receipt.get("receipt_id", "")).startswith("authority-directory-sync-"):
+        return False
+    if not str(receipt.get("batch_id", "")).startswith("directory-batch-"):
+        return False
+    if not str(receipt.get("source_hash", "")).startswith("sha256:"):
+        return False
+    if receipt.get("apply_mode") not in {"dry_run", "apply"}:
+        return False
+    if receipt.get("apply_mode") == "apply" and receipt.get("persisted") is not True:
+        return False
+    if not all(isinstance(receipt.get(field), int) for field in (
+        "applied_ownership_count",
+        "applied_approval_policy_count",
+        "applied_escalation_policy_count",
+        "rejected_record_count",
+    )):
+        return False
+    evidence_refs = set(receipt.get("evidence_refs", ()))
+    return {
+        "authority:ownership_read_model",
+        "authority:policy_read_model",
+        "runtime_conformance:authority_configuration",
+    } <= evidence_refs
+
+
 def _proof_coverage_matrix_current(repo_root: Path) -> bool:
     try:
         from scripts.proof_coverage_matrix import CANONICAL_OUTPUT, proof_coverage_matrix
@@ -437,6 +496,7 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
         "streaming_budget_canary": "streaming_budget_contract_not_witnessed",
         "lineage_query_canary": "lineage_query_contract_not_witnessed",
         "authority_obligation_canary": "authority_obligation_witness_not_live",
+        "authority_directory_sync_receipt": "authority_directory_sync_receipt_not_witnessed",
         "proof_coverage_matrix_current": "proof_coverage_matrix_not_current",
         "known_limitations_aligned": "known_limitations_documentation_drift",
         "security_model_aligned": "security_model_documentation_drift",

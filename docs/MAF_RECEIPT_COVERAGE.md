@@ -21,7 +21,7 @@ exactly what's claimed, what's verified, and what's NOT.
 
 | Claim | Status |
 |-------|--------|
-| "Every governance decision produces a transition receipt." | **Verified** for the HTTP entry surface. 100% of `/api/v1/*` endpoints certified via `GovernanceMiddleware`. 100% of gateway `POST /webhook/*` and `POST /authority/*` certified via `GatewayReceiptMiddleware` (closed in commit shipping G10.1). |
+| "Every governance decision produces a transition receipt." | **Verified** for the HTTP entry surface. 100% of `/api/v1/*` endpoints certified via `GovernanceMiddleware`. 100% of gateway `POST /webhook/*`, `POST /authority/*`, and `POST /capability-plans/*` recovery endpoints certified via `GatewayReceiptMiddleware` (closed in commit shipping G10.1 and extended for plan recovery). |
 | "Transition receipts are deterministically hashed." | **Verified** — both Rust and Python implementations hash receipt content with SHA-256 in a fixed canonical order. Cross-language equality is locked by `maf-kernel::receipt_hash_matches_python_sha256` and `mcoi/tests/test_proof_hash_contract.py`, which both assert against the same hardcoded SHA-256 constant. |
 | "The Rust MAF substrate certifies the Python control plane." | **NOT a claim today.** Python does not call into Rust. Both sides implement the same protocol independently. Receipts emitted by Python are not (currently) cross-verified by Rust. |
 | "Receipts are persisted." | **NOT a claim today.** `ProofBridge._lineage` is an in-memory dict. Service restart loses the lineage. Receipts shipped to clients in HTTP responses are not retained server-side. |
@@ -127,9 +127,9 @@ consumers that need per-action proof.
 
 ### Gateway entry-point coverage (G10.1 — closed)
 
-Gateway webhook and authority endpoints are now certified by
+Gateway webhook, authority, and capability-plan recovery endpoints are now certified by
 `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py`. Every
-POST to a `/webhook/*` or `/authority/*` path produces a receipt
+POST to a `/webhook/*`, `/authority/*`, or `/capability-plans/*` path produces a receipt
 regardless of which handler runs:
 
 | Endpoint | Receipt status |
@@ -143,6 +143,7 @@ regardless of which handler runs:
 | `POST /authority/approval-chains/expire-overdue` | Certified (G10.1). |
 | `POST /authority/obligations/{id}/satisfy` | Certified (G10.1). |
 | `POST /authority/obligations/escalate-overdue` | Certified (G10.1). |
+| `POST /capability-plans/{plan_id}/recover` | Certified (plan recovery extension). |
 
 The middleware certifies the **boundary decision** (was this request
 admitted, denied, or did the handler error?), not the business

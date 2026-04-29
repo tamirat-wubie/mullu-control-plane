@@ -59,6 +59,7 @@ _log = logging.getLogger(__name__)
 _CERTIFIED_PREFIXES: tuple[str, ...] = (
     "/webhook/",
     "/authority/",
+    "/capability-plans/",
 )
 
 
@@ -77,6 +78,8 @@ def _channel_from_path(path: str) -> str:
         return head or "webhook"
     if path.startswith("/authority/"):
         return "authority"
+    if path.startswith("/capability-plans/"):
+        return "capability-plans"
     return "other"
 
 
@@ -97,7 +100,7 @@ def _outcome_from_status(status_code: int) -> tuple[str, str]:
 class GatewayReceiptMiddleware(BaseHTTPMiddleware):
     """Emits a TransitionReceipt for each gateway entry-point invocation.
 
-    Wraps the FastAPI app so every webhook/authority POST produces a
+    Wraps the FastAPI app so every webhook/authority/capability-plan POST produces a
     receipt regardless of which endpoint handler runs. This is the
     inverse pattern of GovernanceMiddleware: that one runs BEFORE the
     handler to gate it; this one runs AFTER to record the outcome.

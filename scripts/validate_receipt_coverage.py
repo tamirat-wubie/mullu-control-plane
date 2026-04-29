@@ -76,7 +76,7 @@ GATEWAY_FILES = [
 MCOI_EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/redoc"})
 
 # Mirrors gateway/receipt_middleware.py::CERTIFIED_PREFIXES.
-GATEWAY_CERTIFIED_PREFIXES = ("/webhook/", "/authority/")
+GATEWAY_CERTIFIED_PREFIXES = ("/webhook/", "/authority/", "/capability-plans/")
 
 # Mirrors the new software receipt prefix in
 # mcoi/mcoi_runtime/app/musia_receipt_middleware.py::_CERTIFIED_PREFIXES.

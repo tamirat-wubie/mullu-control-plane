@@ -16,10 +16,10 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
+from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
-from gateway.receipt_middleware import (
+from gateway.receipt_middleware import (  # noqa: E402
     GatewayReceiptMiddleware,
     _channel_from_path,
     _outcome_from_status,
@@ -64,6 +64,7 @@ class TestChannelFromPath:
             ("/authority/approval-chains/expire-overdue", "authority"),
             ("/authority/obligations/abc/satisfy", "authority"),
             ("/authority/obligations/escalate-overdue", "authority"),
+            ("/capability-plans/plan-1/recover", "capability-plans"),
             ("/random/path", "other"),
             ("/webhook/", "webhook"),
             ("/", "other"),
@@ -148,6 +149,10 @@ def _make_app(proof_bridge):
     async def escalate():
         raise RuntimeError("simulated handler crash")
 
+    @app.post("/capability-plans/{plan_id}/recover")
+    async def recover_plan(plan_id: str):
+        return {"recovered": plan_id}
+
     @app.get("/health")
     async def health():
         return {"status": "ok"}
@@ -213,6 +218,7 @@ class TestMiddlewareCertifies:
             "/authority/approval-chains/expire-overdue",
             "/authority/obligations/xyz/satisfy",
             "/authority/obligations/escalate-overdue",
+            "/capability-plans/plan-1/recover",
         ]
         for p in certified_paths:
             client.post(p, json={})

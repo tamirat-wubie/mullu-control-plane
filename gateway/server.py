@@ -981,11 +981,18 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         return audit
 
     @app.get("/capability-plans/read-model")
-    def capability_plans_read_model(request: Request):
+    def capability_plans_read_model(
+        request: Request,
+        recovery_action: str = "",
+        recovery_attempt_status: str = "",
+    ):
         _require_authority_operator(request)
         return {
             "enabled": True,
-            **plan_ledger.read_model(),
+            **plan_ledger.read_model(
+                recovery_action=recovery_action,
+                recovery_attempt_status=recovery_attempt_status,
+            ),
         }
 
     @app.get("/capability-plans/{plan_id}/closure")
@@ -995,11 +1002,31 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         if certificate is None:
             raise HTTPException(404, detail="plan terminal certificate not found")
         witnesses = plan_ledger.witnesses_for(plan_id)
+        recovery_attempts = plan_ledger.recovery_attempts_for(plan_id)
         return {
             "plan_id": plan_id,
             "plan_terminal_certificate": asdict(certificate),
             "plan_witnesses": [asdict(witness) for witness in witnesses],
+            "plan_recovery_attempts": [asdict(attempt) for attempt in recovery_attempts],
             "witness_count": len(witnesses),
+            "recovery_attempt_count": len(recovery_attempts),
+        }
+
+    @app.post("/capability-plans/{plan_id}/recover")
+    def recover_capability_plan(plan_id: str, request: Request):
+        _require_authority_operator(request)
+        try:
+            response = router.recover_waiting_plan(plan_id)
+        except KeyError as exc:
+            raise HTTPException(404, detail="failed plan witness not found") from exc
+        except ValueError as exc:
+            raise HTTPException(409, detail=str(exc)) from exc
+        return {
+            "status": "recovered" if response.metadata.get("plan_terminal_certificate_id") else "not_recovered",
+            "response": asdict(response),
+            "plan_id": plan_id,
+            "plan_terminal_certificate_id": response.metadata.get("plan_terminal_certificate_id"),
+            "plan_error": response.metadata.get("plan_error", ""),
         }
 
     @app.get("/anchors/latest")

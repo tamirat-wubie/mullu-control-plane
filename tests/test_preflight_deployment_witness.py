@@ -269,6 +269,7 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "expires_at": "2099-04-25T00:30:00+00:00",
             "gateway_witness_valid": True,
             "runtime_witness_valid": True,
+            "authority_directory_sync_receipt_valid": True,
             "terminal_status": "conformant_with_gaps",
             "open_conformance_gaps": ["known_limitations_documentation_drift"],
             "evidence_refs": ["gateway_witness:test"],

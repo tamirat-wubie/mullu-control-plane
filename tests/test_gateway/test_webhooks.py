@@ -27,6 +27,8 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
 )
 from gateway.command_spine import CommandState  # noqa: E402
 from gateway.capability_fabric import build_capability_admission_gate_from_env  # noqa: E402
+from gateway.plan import one_step_plan  # noqa: E402
+from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
 from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
@@ -662,6 +664,14 @@ class TestWebChatWebhook:
                 "receipt_status": "searched",
             },
         ))
+        app.state.router._skills.register(FunctionCapabilityHandler(
+            "enterprise.task_schedule",
+            lambda context, params: {
+                "response": "Task scheduled: task-1",
+                "task_id": "task-1",
+                "receipt_status": "scheduled",
+            },
+        ))
         client = TestClient(app)
 
         msg_resp = client.post(
@@ -683,14 +693,124 @@ class TestWebChatWebhook:
         assert read_model_resp.json()["enabled"] is True
         assert read_model_resp.json()["plan_certificate_count"] == 1
         assert read_model_resp.json()["plan_witness_count"] == 1
+        assert read_model_resp.json()["recovery_attempt_count"] == 0
+        assert read_model_resp.json()["recovery_attempt_status_counts"] == {}
         assert closure_resp.status_code == 200
         assert closure_resp.json()["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["step_count"] == 2
         assert closure_resp.json()["witness_count"] == 1
+        assert closure_resp.json()["recovery_attempt_count"] == 0
+        assert closure_resp.json()["plan_recovery_attempts"] == []
         assert closure_resp.json()["plan_witnesses"][0]["detail"]["cause"] == "plan_terminal_certificate_issued"
         assert missing_resp.status_code == 404
         assert missing_resp.json()["detail"] == "plan terminal certificate not found"
+
+    def test_capability_plan_read_model_filters_recovery_action(self):
+        app = create_gateway_app(platform=StubPlatform(response="unused fallback"))
+        client = TestClient(app)
+        plan = one_step_plan(
+            capability_id="enterprise.task_schedule",
+            params={"title": "Review report"},
+            tenant_id="t1",
+            identity_id="u1",
+            goal="schedule review",
+        )
+        execution = CapabilityPlanExecutor(
+            lambda step, completed: CapabilityPlanStepResult(
+                step_id=step.step_id,
+                capability_id=step.capability_id,
+                succeeded=False,
+                command_id="cmd-approval",
+                error="approval_required:apr-1",
+            )
+        ).execute(plan)
+        witness = app.state.plan_ledger.record_failure(plan=plan, execution=execution)
+
+        filtered_resp = client.get("/capability-plans/read-model?recovery_action=wait_for_approval")
+        empty_resp = client.get("/capability-plans/read-model?recovery_action=compensate_or_review")
+
+        assert filtered_resp.status_code == 200
+        assert filtered_resp.json()["recovery_action_filter"] == "wait_for_approval"
+        assert filtered_resp.json()["recovery_action_counts"] == {"wait_for_approval": 1}
+        assert filtered_resp.json()["recovery_attempt_count"] == 0
+        assert filtered_resp.json()["recovery_attempt_status_counts"] == {}
+        assert filtered_resp.json()["failed_plan_witnesses"][0]["witness_id"] == witness.witness_id
+        assert filtered_resp.json()["failed_plan_witnesses"][0]["detail"]["recovery_decision"]["approval_required"]
+        assert empty_resp.status_code == 200
+        assert empty_resp.json()["recovery_action_filter"] == "compensate_or_review"
+        assert empty_resp.json()["failed_plan_witnesses"] == []
+
+    def test_capability_plan_recover_endpoint_resumes_after_approval(self):
+        app = create_gateway_app(platform=StubPlatform(response="schedule approved"))
+        app.state.router.register_tenant_mapping(TenantMapping(
+            channel="web", sender_id="web-user",
+            tenant_id="t1", identity_id="u1",
+        ))
+        app.state.router._skills.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        client = TestClient(app)
+
+        blocked_resp = client.post(
+            "/webhook/web",
+            content=json.dumps({
+                "body": "search knowledge docs and schedule review",
+                "user_id": "web-user",
+            }),
+            headers={"X-Session-Token": "plan-recover-token"},
+        )
+        plan_id = blocked_resp.json()["metadata"]["plan_id"]
+        request_id = blocked_resp.json()["metadata"]["plan_error"].split("approval_required:", 1)[1]
+        approval_resp = app.state.router.handle_approval_callback(request_id, approved=True, resolved_by="operator-1")
+        recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
+        repeat_recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
+        second_recover_resp = client.post("/capability-plans/missing-plan/recover")
+        read_model_resp = client.get("/capability-plans/read-model")
+        rejected_read_model_resp = client.get("/capability-plans/read-model?recovery_attempt_status=rejected")
+        closure_resp = client.get(f"/capability-plans/{plan_id}/closure")
+
+        assert blocked_resp.status_code == 200
+        assert blocked_resp.json()["metadata"]["error"] == "plan_execution_failed"
+        assert approval_resp is not None
+        assert approval_resp.metadata["terminal_certificate_id"]
+        assert recover_resp.status_code == 200
+        assert recover_resp.json()["status"] == "recovered"
+        assert recover_resp.json()["plan_id"] == plan_id
+        assert recover_resp.json()["plan_terminal_certificate_id"].startswith("plan-cert-")
+        assert repeat_recover_resp.status_code == 409
+        assert repeat_recover_resp.json()["detail"] == "plan already has terminal certificate"
+        assert second_recover_resp.status_code == 404
+        assert second_recover_resp.json()["detail"] == "failed plan witness not found"
+        assert read_model_resp.status_code == 200
+        assert read_model_resp.json()["recovery_attempt_count"] == 3
+        assert read_model_resp.json()["recovery_attempt_status_counts"] == {
+            "rejected": 2,
+            "succeeded": 1,
+        }
+        assert read_model_resp.json()["recovery_attempt_status_filter"] == ""
+        assert rejected_read_model_resp.status_code == 200
+        assert rejected_read_model_resp.json()["recovery_attempt_count"] == 3
+        assert rejected_read_model_resp.json()["recovery_attempt_status_filter"] == "rejected"
+        assert [attempt["status"] for attempt in rejected_read_model_resp.json()["recovery_attempts"]] == [
+            "rejected",
+            "rejected",
+        ]
+        assert closure_resp.status_code == 200
+        assert closure_resp.json()["recovery_attempt_count"] == 2
+        assert [attempt["status"] for attempt in closure_resp.json()["plan_recovery_attempts"]] == [
+            "succeeded",
+            "rejected",
+        ]
+        assert closure_resp.json()["plan_recovery_attempts"][0]["reason"] == "plan_recovered"
+        assert closure_resp.json()["plan_recovery_attempts"][1]["reason"] == "plan_already_certified"
 
 
 class TestApprovalWebhook:
