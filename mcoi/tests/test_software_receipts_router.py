@@ -1,8 +1,9 @@
-"""Purpose: verify HTTP software receipt query/replay routes.
-Governance scope: read-only MUSIA-gated receipt inspection.
-Dependencies: FastAPI test client and software receipt persistence store.
+"""Purpose: verify HTTP software receipt query/replay/review-sync routes.
+Governance scope: MUSIA-gated receipt inspection and review request materialization.
+Dependencies: FastAPI test client, software receipt persistence store, review queue.
 Invariants:
-  - Routes require musia.read through dev/auth dependency flow.
+  - Query routes require musia.read through dev/auth dependency flow.
+  - Review sync requires musia.write through dev/auth dependency flow.
   - List/get/replay return typed receipt envelopes.
   - Replay fails closed when the request chain is missing or not terminal.
 """
@@ -19,6 +20,8 @@ from mcoi_runtime.app.routers.musia_auth import (
     configure_musia_jwt,
 )
 from mcoi_runtime.app.routers.software_receipts import router
+from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
     SoftwareChangeReceiptStage,
@@ -57,6 +60,13 @@ def _client(store: SoftwareChangeReceiptStore) -> TestClient:
     configure_musia_jwt(None)
     configure_musia_dev_mode(True)
     deps.set("software_receipt_store", store)
+    deps.set(
+        "software_receipt_review_queue",
+        SoftwareReceiptReviewQueue(
+            review_engine=ReviewEngine(clock=lambda: T1),
+            receipt_store=store,
+        ),
+    )
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -197,3 +207,51 @@ def test_review_empty_store_has_no_review_required() -> None:
     assert body["requires_operator_review"] is False
     assert body["review_signal_count"] == 0
     assert body["review_signals"] == []
+
+
+def test_review_sync_materializes_open_receipt_reviews() -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_receipt(
+        receipt_id="receipt-open",
+        request_id="request-http-open",
+        stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+        created_at=T1,
+    ))
+    client = _client(store)
+
+    first = client.post("/software/receipts/review/sync", params={"limit": 10})
+    second = client.post("/software/receipts/review/sync", params={"limit": 10})
+    first_body = first.json()
+    second_body = second.json()
+
+    assert first.status_code == 200
+    assert first_body["operation"] == "review_sync"
+    assert first_body["count"] == 1
+    assert first_body["review_request_count"] == 1
+    assert first_body["pending_review_count"] == 1
+    assert first_body["requires_operator_review"] is True
+    assert first_body["review_requests"][0]["request_id"] == (
+        "software-receipt-review:request-http-open"
+    )
+    assert first_body["review_requests"][0]["scope"]["scope_type"] == "software_receipt_chain"
+    assert first_body["review_requests"][0]["metadata"]["latest_receipt_id"] == "receipt-open"
+    assert second.status_code == 200
+    assert second_body["count"] == 0
+    assert second_body["review_request_count"] == 0
+    assert second_body["pending_review_count"] == 1
+
+
+def test_review_sync_requires_registered_review_queue() -> None:
+    configure_musia_auth(None)
+    configure_musia_jwt(None)
+    configure_musia_dev_mode(True)
+    deps.set("software_receipt_review_queue", None)
+    app = FastAPI()
+    app.include_router(router)
+    client = TestClient(app)
+
+    response = client.post("/software/receipts/review/sync")
+    body = response.json()
+
+    assert response.status_code == 503
+    assert body["detail"]["error"] == "software_receipt_review_queue_unavailable"

@@ -1,8 +1,9 @@
-"""Purpose: read-only HTTP access to software-change lifecycle receipts.
-Governance scope: MUSIA read-gated receipt list/get/replay operations.
-Dependencies: FastAPI, MUSIA auth dependencies, software receipt store.
+"""Purpose: HTTP access to software-change lifecycle receipts and review sync.
+Governance scope: MUSIA-gated receipt list/get/replay and review request materialization.
+Dependencies: FastAPI, MUSIA auth dependencies, software receipt store, review queue.
 Invariants:
-  - All routes require musia.read.
+  - Receipt query routes require musia.read.
+  - Review synchronization requires musia.write.
   - Routes never mutate workspace or receipt store state.
   - Replay requires a terminally closed receipt chain.
   - Store errors are bounded at the HTTP boundary.
@@ -15,7 +16,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.app.routers.musia_auth import require_read
+from mcoi_runtime.app.routers.musia_auth import require_read, require_write
+from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from mcoi_runtime.contracts.review import ReviewRequest
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
     SoftwareChangeReceiptStage,
@@ -45,6 +48,9 @@ class SoftwareReceiptEnvelope(BaseModel):
     requires_operator_review: bool | None = None
     review_signal_count: int | None = None
     review_signals: list[dict[str, Any]] | None = None
+    review_request_count: int | None = None
+    review_requests: list[dict[str, Any]] | None = None
+    pending_review_count: int | None = None
     governed: bool = True
 
 
@@ -65,10 +71,32 @@ def _receipt_store() -> SoftwareChangeReceiptStore:
     return store
 
 
+def _review_queue() -> SoftwareReceiptReviewQueue:
+    try:
+        queue = deps.get("software_receipt_review_queue")
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "software_receipt_review_queue_unavailable"},
+        ) from exc
+    if not isinstance(queue, SoftwareReceiptReviewQueue):
+        raise HTTPException(
+            status_code=503,
+            detail={"error": "software_receipt_review_queue_invalid"},
+        )
+    return queue
+
+
 def _serialize_receipts(
     receipts: tuple[SoftwareChangeReceipt, ...],
 ) -> list[dict[str, Any]]:
     return [receipt.to_json_dict() for receipt in receipts]
+
+
+def _serialize_review_requests(
+    requests: tuple[ReviewRequest, ...],
+) -> list[dict[str, Any]]:
+    return [request.to_json_dict() for request in requests]
 
 
 def _review_signals(receipts: tuple[SoftwareChangeReceipt, ...]) -> list[dict[str, str]]:
@@ -141,6 +169,33 @@ def replay_software_receipts(
         count=len(receipts),
         receipts=_serialize_receipts(receipts),
         terminal_closed=True,
+    )
+
+
+@router.post("/review/sync", response_model=SoftwareReceiptEnvelope)
+def sync_software_receipt_reviews(
+    limit: int = Query(default=10, ge=1),
+    tenant_id: str = Depends(require_write),
+) -> SoftwareReceiptEnvelope:
+    """Materialize open receipt-chain signals as canonical review requests."""
+    try:
+        queue = _review_queue()
+        submitted = queue.sync(limit=limit)
+        pending = queue.pending()
+    except PersistenceError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("receipt review sync rejected", exc),
+        ) from exc
+    return SoftwareReceiptEnvelope(
+        operation="review_sync",
+        tenant_id=tenant_id,
+        count=len(submitted),
+        receipts=[],
+        review_request_count=len(submitted),
+        review_requests=_serialize_review_requests(submitted),
+        pending_review_count=len(pending),
+        requires_operator_review=bool(pending),
     )
 
 

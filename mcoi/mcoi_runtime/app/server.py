@@ -39,6 +39,8 @@ from mcoi_runtime.app.server_runtime import (
 from mcoi_runtime.app.software_receipt_observability import (
     register_software_receipt_observability,
 )
+from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
@@ -190,7 +192,14 @@ software_receipt_store = (
     if _software_receipt_store_path
     else SoftwareChangeReceiptStore()
 )
+review_engine = ReviewEngine(clock=_clock)
+software_receipt_review_queue = SoftwareReceiptReviewQueue(
+    review_engine=review_engine,
+    receipt_store=software_receipt_store,
+)
 deps.set("software_receipt_store", software_receipt_store)
+deps.set("review_engine", review_engine)
+deps.set("software_receipt_review_queue", software_receipt_review_queue)
 register_software_receipt_observability(
     observability=observability,
     receipt_store=software_receipt_store,
