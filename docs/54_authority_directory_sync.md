@@ -222,6 +222,32 @@ python scripts/sync_authority_directory.py \
   --batch-output .change_assurance/authority_directory_batch.json
 ```
 
+## SAML Groups Export Adapter
+
+`scripts/saml_groups_authority_directory_adapter.py` accepts a bounded SAML
+subjects/groups export plus the same style of explicit authority mapping JSON
+and emits the normalized directory JSON consumed by the static sync adapter.
+
+SAML subjects and groups are identity evidence only. They do not become owners,
+approvers, approval policies, or escalation routes unless the mapping file
+explicitly declares those authority relationships.
+
+```bash
+python scripts/saml_groups_authority_directory_adapter.py \
+  --tenant-id tenant-1 \
+  --saml-export saml-groups-export.json \
+  --mapping authority-mapping.json \
+  --output .change_assurance/authority_directory_from_saml_groups.json
+```
+
+The resulting JSON follows the same dry-run, replay, and apply path:
+
+```bash
+python scripts/sync_authority_directory.py \
+  .change_assurance/authority_directory_from_saml_groups.json \
+  --batch-output .change_assurance/authority_directory_batch.json
+```
+
 ## Prohibitions
 
 1. No implicit team creation from free-form labels.
@@ -239,10 +265,11 @@ runtime conformance, includes a static JSON / bounded-YAML adapter that emits
 normalized batches and receipts, includes a live SCIM export collector, and
 includes live GitHub teams export collection. SCIM-export and GitHub-teams-export
 wrappers emit the same normalized contract, as does the workspace-groups export
-wrapper. LDAP and SAML-group adapters remain a future implementation layer.
+wrapper and SAML-groups export wrapper. LDAP remains a future implementation
+layer.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, workspace group evidence separated from authority mappings, read-model verification required
-  Open issues: LDAP and SAML-group adapters not implemented
-  Next action: add LDAP or SAML-group wrapper through the same normalized contract
+  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, workspace group evidence separated from authority mappings, SAML group evidence separated from authority mappings, read-model verification required
+  Open issues: LDAP adapter not implemented
+  Next action: add LDAP wrapper through the same normalized contract
