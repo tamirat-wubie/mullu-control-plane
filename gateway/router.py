@@ -32,6 +32,7 @@ from gateway.memory_constitution import (
 )
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 from gateway.intent_resolver import CapabilityIntentResolver
+from gateway.mcp_capability_fabric import MCPAuthorityRecords, install_mcp_authority_records
 from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanStep
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult
 from gateway.plan_ledger import CapabilityPlanLedger, CapabilityPlanWitnessRecord
@@ -103,6 +104,7 @@ class GatewayRouter:
         defer_approved_execution: bool = False,
         environment: str = "local_dev",
         isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
+        mcp_authority_records: MCPAuthorityRecords | None = None,
     ) -> None:
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
@@ -122,6 +124,8 @@ class GatewayRouter:
             commands=self._commands,
             clock=self._clock,
         )
+        if mcp_authority_records is not None:
+            install_mcp_authority_records(self._authority_obligation_mesh, mcp_authority_records)
         self._defer_approved_execution = defer_approved_execution
         self._closure_kernel = CausalClosureKernel(
             commands=self._commands,

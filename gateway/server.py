@@ -33,6 +33,9 @@ from gateway.capability_isolation import build_isolated_capability_executor_from
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
 from gateway.event_log import WebhookEventLog
+from gateway.mcp_capabilities import register_mcp_capabilities
+from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
+from gateway.mcp_operator_read_model import build_mcp_operator_read_model
 from gateway.plan_ledger import build_capability_plan_ledger_from_env
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
@@ -45,7 +48,14 @@ from gateway.tenant_identity import build_tenant_identity_store_from_env
 _log = logging.getLogger(__name__)
 
 
-def create_gateway_app(platform: Any = None) -> FastAPI:
+def create_gateway_app(
+    platform: Any = None,
+    *,
+    capability_admission_gate_override: Any | None = None,
+    mcp_capability_entries: tuple[Any, ...] = (),
+    mcp_executor: Any | None = None,
+    mcp_authority_records: MCPAuthorityRecords | None = None,
+) -> FastAPI:
     """Create the gateway FastAPI app.
 
     If platform is None, attempts to import from MCOI server.
@@ -161,7 +171,20 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
 
     event_log = WebhookEventLog(clock=_clock)
     verifier = WebhookVerifier()
-    capability_admission_gate = build_capability_admission_gate_from_env(clock=_clock)
+    capability_admission_gate = (
+        capability_admission_gate_override
+        if capability_admission_gate_override is not None
+        else build_capability_admission_gate_from_env(clock=_clock)
+    )
+    mcp_gateway_import = build_mcp_gateway_import_from_env(clock=_clock)
+    if mcp_gateway_import is not None:
+        if capability_admission_gate is not None:
+            raise ValueError("MCP capability manifest cannot be combined with configured capability admission")
+        if mcp_capability_entries or mcp_authority_records is not None:
+            raise ValueError("MCP capability manifest cannot be combined with explicit MCP overrides")
+        capability_admission_gate = mcp_gateway_import.admission_gate
+        mcp_capability_entries = mcp_gateway_import.entries
+        mcp_authority_records = mcp_gateway_import.authority_records
     command_ledger = build_command_ledger_from_env(
         clock=_clock,
         capability_admission_gate=capability_admission_gate,
@@ -175,6 +198,12 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     )
     plan_ledger = build_capability_plan_ledger_from_env(clock=_clock)
     skill_dispatcher = build_skill_dispatcher_from_platform(platform)
+    if mcp_capability_entries and mcp_executor is not None:
+        register_mcp_capabilities(
+            skill_dispatcher,
+            capabilities=mcp_capability_entries,
+            executor=mcp_executor,
+        )
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     router = GatewayRouter(
         platform=platform,
@@ -186,6 +215,7 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         defer_approved_execution=defer_approved_execution,
         environment=gateway_env,
         isolated_capability_executor=isolated_capability_executor,
+        mcp_authority_records=mcp_authority_records,
     )
     session_mgr = SessionManager()
 
@@ -1050,6 +1080,25 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             raise HTTPException(404, detail="command capability admission audit not found")
         return audit
 
+    @app.get("/mcp/operator/read-model")
+    def mcp_operator_read_model(
+        request: Request,
+        capability_id: str = "",
+        audit_status: str = "",
+        audit_limit: int = 100,
+        audit_offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        return build_mcp_operator_read_model(
+            capability_admission_gate=capability_admission_gate,
+            authority_mesh_store=authority_mesh_store,
+            mcp_executor=mcp_executor,
+            capability_id=capability_id,
+            audit_status=audit_status,
+            audit_limit=audit_limit,
+            audit_offset=audit_offset,
+        )
+
     @app.get("/capability-plans/read-model")
     def capability_plans_read_model(
         request: Request,
@@ -1134,6 +1183,10 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.capability_admission_gate = capability_admission_gate
+    app.state.mcp_capability_entries = mcp_capability_entries
+    app.state.mcp_executor = mcp_executor
+    app.state.mcp_authority_records = mcp_authority_records
+    app.state.mcp_gateway_import = mcp_gateway_import
     app.state.plan_ledger = plan_ledger
     app.state.verifier = verifier
 

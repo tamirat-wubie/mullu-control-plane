@@ -1,23 +1,33 @@
 """Gateway MCP Capability Fabric - governed MCP admission helpers.
 
 Purpose: Convert externally described MCP tools into explicitly certified
-    gateway capability fabric entries and install them into command admission.
+    gateway capability fabric entries, authority records, and command admission.
 Governance scope: MCP import certification, MCP domain capsule construction,
-    and command admission gate creation.
-Dependencies: gateway capability fabric loader and MCP capability bridge.
+    authority-obligation binding, and command admission gate creation.
+Dependencies: gateway capability fabric loader, authority-obligation mesh, and
+    MCP capability bridge.
 Invariants:
   - MCP tools are not executable until a certified registry entry is produced.
   - Installed MCP capabilities are admitted through the same gate as native domains.
+  - Certified MCP capabilities can emit ownership, approval, and escalation records.
   - The MCP domain capsule references only the supplied capability entries.
   - Certification provenance is recorded in capability metadata.
 """
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass
-from typing import Callable
+from pathlib import Path
+from typing import Any, Callable
 
-from gateway.authority_obligation_mesh import ApprovalPolicy, EscalationPolicy, TeamOwnership
+from gateway.authority_obligation_mesh import (
+    ApprovalPolicy,
+    AuthorityObligationMesh,
+    EscalationPolicy,
+    TeamOwnership,
+)
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
@@ -37,6 +47,16 @@ class MCPAuthorityRecords:
     ownership: tuple[TeamOwnership, ...]
     approval_policies: tuple[ApprovalPolicy, ...]
     escalation_policies: tuple[EscalationPolicy, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MCPGatewayImport:
+    """Gateway-ready MCP import bundle with admission and authority records."""
+
+    entries: tuple[CapabilityRegistryEntry, ...]
+    admission_gate: CommandCapabilityAdmissionGate
+    authority_records: MCPAuthorityRecords
+    manifest_ref: str
 
 
 def certify_mcp_capability_entry(
@@ -151,6 +171,62 @@ def import_certified_mcp_tools_as_admission_gate(
     )
 
 
+def build_mcp_gateway_import_from_env(*, clock: Callable[[], str]) -> MCPGatewayImport | None:
+    """Build an optional MCP gateway import bundle from environment configuration."""
+    manifest_path = os.environ.get("MULLU_MCP_CAPABILITY_MANIFEST_PATH", "").strip()
+    if not manifest_path:
+        return None
+    return build_mcp_gateway_import_from_manifest(Path(manifest_path), clock=clock)
+
+
+def build_mcp_gateway_import_from_manifest(
+    manifest_path: Path,
+    *,
+    clock: Callable[[], str],
+) -> MCPGatewayImport:
+    """Build certified MCP admission and authority records from one JSON manifest."""
+    manifest = _load_manifest(manifest_path)
+    tools = _manifest_tools(manifest)
+    if not tools:
+        raise ValueError("MCP manifest requires at least one tool")
+    certified_by = _required_manifest_string(manifest, "certified_by")
+    certification_evidence_ref = _required_manifest_string(manifest, "certification_evidence_ref")
+    default_owner_team = str(manifest.get("owner_team", "integrations")).strip() or "integrations"
+    entries = tuple(
+        certify_mcp_capability_entry(
+            import_mcp_tool_as_capability(
+                _tool_descriptor_from_manifest(raw_tool),
+                owner_team=str(raw_tool.get("owner_team", default_owner_team)).strip() or default_owner_team,
+                required_roles=_manifest_string_tuple(raw_tool.get("required_roles", ("operator",))),
+                max_estimated_cost=_manifest_float(raw_tool.get("max_estimated_cost", 0.05)),
+            ),
+            certified_by=certified_by,
+            certification_evidence_ref=certification_evidence_ref,
+        )
+        for raw_tool in tools
+    )
+    authority_records = build_mcp_authority_records(
+        entries,
+        tenant_id=_required_manifest_string(manifest, "tenant_id"),
+        primary_owner_id=_required_manifest_string(manifest, "primary_owner_id"),
+        fallback_owner_id=_required_manifest_string(manifest, "fallback_owner_id"),
+        escalation_team=_required_manifest_string(manifest, "escalation_team"),
+        timeout_seconds=_manifest_int(manifest.get("timeout_seconds", 300)),
+    )
+    admission_gate = build_mcp_capability_admission_gate(
+        entries=entries,
+        clock=clock,
+        capsule_id=str(manifest.get("capsule_id", "mcp.imported_tools.v0")).strip() or "mcp.imported_tools.v0",
+        owner_team=default_owner_team,
+    )
+    return MCPGatewayImport(
+        entries=entries,
+        admission_gate=admission_gate,
+        authority_records=authority_records,
+        manifest_ref=manifest_path.resolve().as_uri(),
+    )
+
+
 def build_mcp_authority_records(
     entries: tuple[CapabilityRegistryEntry, ...],
     *,
@@ -161,6 +237,8 @@ def build_mcp_authority_records(
     timeout_seconds: int = 300,
 ) -> MCPAuthorityRecords:
     """Derive authority-obligation records for certified MCP capabilities."""
+    if not entries:
+        raise ValueError("at least one MCP capability entry is required")
     tenant = tenant_id.strip()
     primary_owner = primary_owner_id.strip()
     fallback_owner = fallback_owner_id.strip()
@@ -223,6 +301,22 @@ def build_mcp_authority_records(
     )
 
 
+def install_mcp_authority_records(
+    mesh: AuthorityObligationMesh,
+    records: MCPAuthorityRecords,
+) -> MCPAuthorityRecords:
+    """Install MCP authority records into an authority-obligation mesh."""
+    if not isinstance(records, MCPAuthorityRecords):
+        raise ValueError("records must be MCPAuthorityRecords")
+    for ownership in records.ownership:
+        mesh.register_ownership(ownership)
+    for policy in records.approval_policies:
+        mesh.register_approval_policy(policy)
+    for policy in records.escalation_policies:
+        mesh.register_escalation_policy(policy)
+    return records
+
+
 def _validate_certified_mcp_entry(entry: CapabilityRegistryEntry) -> None:
     if entry.domain != "mcp":
         raise ValueError("only mcp capability entries can be bound to MCP authority records")
@@ -246,3 +340,80 @@ def _mcp_policy_id(capability_id: str, risk_tier: str) -> str:
 def _mcp_escalation_policy_id(tenant_id: str) -> str:
     normalized = tenant_id.replace(".", "-").replace("_", "-")
     return f"mcp-escalation-{normalized}"
+
+
+def _load_manifest(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ValueError("MCP manifest could not be read") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError("MCP manifest must be JSON") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("MCP manifest root must be an object")
+    return payload
+
+
+def _manifest_tools(manifest: dict[str, Any]) -> tuple[dict[str, Any], ...]:
+    raw_tools = manifest.get("tools")
+    if not isinstance(raw_tools, list):
+        raise ValueError("MCP manifest requires tools list")
+    tools: list[dict[str, Any]] = []
+    for raw_tool in raw_tools:
+        if not isinstance(raw_tool, dict):
+            raise ValueError("MCP manifest tool entry must be an object")
+        tools.append(raw_tool)
+    return tuple(tools)
+
+
+def _tool_descriptor_from_manifest(raw_tool: dict[str, Any]) -> MCPToolDescriptor:
+    input_schema = raw_tool.get("input_schema")
+    if not isinstance(input_schema, dict):
+        raise ValueError("MCP manifest tool input_schema must be an object")
+    annotations = raw_tool.get("annotations", {})
+    if not isinstance(annotations, dict):
+        raise ValueError("MCP manifest tool annotations must be an object")
+    return MCPToolDescriptor(
+        server_id=_required_manifest_string(raw_tool, "server_id"),
+        name=_required_manifest_string(raw_tool, "name"),
+        description=_required_manifest_string(raw_tool, "description"),
+        input_schema=input_schema,
+        annotations=annotations,
+    )
+
+
+def _required_manifest_string(payload: dict[str, Any], field: str) -> str:
+    value = str(payload.get(field, "")).strip()
+    if not value:
+        raise ValueError("MCP manifest requires a configured string field")
+    return value
+
+
+def _manifest_string_tuple(value: Any) -> tuple[str, ...]:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return (stripped,) if stripped else ()
+    if isinstance(value, (list, tuple)):
+        result = tuple(str(item).strip() for item in value if str(item).strip())
+        return result or ("operator",)
+    return ("operator",)
+
+
+def _manifest_int(value: Any) -> int:
+    try:
+        result = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("MCP manifest timeout_seconds must be an integer") from exc
+    if result <= 0:
+        raise ValueError("MCP manifest timeout_seconds must be positive")
+    return result
+
+
+def _manifest_float(value: Any) -> float:
+    try:
+        result = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("MCP manifest max_estimated_cost must be numeric") from exc
+    if result < 0:
+        raise ValueError("MCP manifest max_estimated_cost must be non-negative")
+    return result

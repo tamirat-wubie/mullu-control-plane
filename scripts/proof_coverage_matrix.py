@@ -339,8 +339,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/data.py",
                 "mcoi/mcoi_runtime/app/routers/workflow.py",
                 "mcoi/mcoi_runtime/core/tool_use.py",
+                "mcoi/mcoi_runtime/mcp/capability_bridge.py",
+                "gateway/mcp_capability_fabric.py",
+                "gateway/mcp_capabilities.py",
+                "tests/test_gateway/test_mcp_capability_fabric.py",
             ],
-            "Tool invocation routes bind action proof ids to capability policy receipts over argument hashes.",
+            "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, and authority-obligation ownership records.",
         ),
         _surface(
             "governed_session",
@@ -393,6 +397,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "bind_tool_arguments_to_capability_policy_receipts",
             "surfaces": ["tool_invocation", "gateway_capability_fabric"],
+            "status": "closed",
+        },
+        {
+            "action_id": "bind_mcp_capabilities_to_authority_obligation_records",
+            "surfaces": ["tool_invocation", "authority_obligation_mesh"],
             "status": "closed",
         },
         {
