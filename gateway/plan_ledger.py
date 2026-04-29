@@ -442,7 +442,11 @@ class CapabilityPlanLedger:
         self,
         *,
         recovery_action: str = "",
+        failed_witness_limit: int | None = None,
+        failed_witness_offset: int = 0,
         recovery_attempt_status: str = "",
+        recovery_attempt_limit: int | None = None,
+        recovery_attempt_offset: int = 0,
     ) -> dict[str, Any]:
         """Return an operator read model for plan closure."""
         certificates = self._store.list_certificates()
@@ -458,24 +462,36 @@ class CapabilityPlanLedger:
                 for witness in failed_witnesses
                 if _witness_recovery_action(witness) == requested_recovery_action
             )
+        paged_failed_witnesses, failed_witness_page = _read_model_page(
+            failed_witnesses,
+            limit=failed_witness_limit,
+            offset=failed_witness_offset,
+        )
         if requested_attempt_status:
             filtered_recovery_attempts = tuple(
                 attempt
                 for attempt in recovery_attempts
                 if attempt.status == requested_attempt_status
             )
+        paged_recovery_attempts, recovery_attempt_page = _read_model_page(
+            filtered_recovery_attempts,
+            limit=recovery_attempt_limit,
+            offset=recovery_attempt_offset,
+        )
         return {
             "plan_certificate_count": len(certificates),
             "plan_witness_count": len(witnesses),
             "failed_plan_witness_count": sum(1 for witness in witnesses if not witness.succeeded),
             "recovery_action_counts": _recovery_action_counts(witnesses),
             "recovery_action_filter": requested_recovery_action,
+            "failed_plan_witness_page": failed_witness_page,
             "recovery_attempt_count": len(recovery_attempts),
             "recovery_attempt_status_counts": _recovery_attempt_status_counts(recovery_attempts),
             "recovery_attempt_status_filter": requested_attempt_status,
+            "recovery_attempt_page": recovery_attempt_page,
             "certificates": [asdict(certificate) for certificate in certificates],
-            "failed_plan_witnesses": [asdict(witness) for witness in failed_witnesses],
-            "recovery_attempts": [asdict(attempt) for attempt in filtered_recovery_attempts],
+            "failed_plan_witnesses": [asdict(witness) for witness in paged_failed_witnesses],
+            "recovery_attempts": [asdict(attempt) for attempt in paged_recovery_attempts],
             "store": self._store.status(),
         }
 
@@ -676,6 +692,28 @@ def _recovery_attempt_status_counts(attempts: tuple[CapabilityPlanRecoveryAttemp
         if status:
             counts[status] = counts.get(status, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _read_model_page(
+    items: tuple[Any, ...],
+    *,
+    limit: int | None,
+    offset: int,
+) -> tuple[tuple[Any, ...], dict[str, Any]]:
+    normalized_offset = max(0, int(offset))
+    total = len(items)
+    if limit is None:
+        normalized_limit = total
+    else:
+        normalized_limit = max(1, int(limit))
+    page = items[normalized_offset:normalized_offset + normalized_limit]
+    next_offset = normalized_offset + len(page)
+    return page, {
+        "total": total,
+        "limit": normalized_limit,
+        "offset": normalized_offset,
+        "next_offset": next_offset if next_offset < total else None,
+    }
 
 
 def _witness_recovery_action(witness: CapabilityPlanWitnessRecord) -> str:

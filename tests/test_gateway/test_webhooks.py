@@ -726,19 +726,62 @@ class TestWebChatWebhook:
             )
         ).execute(plan)
         witness = app.state.plan_ledger.record_failure(plan=plan, execution=execution)
+        retry_plan = one_step_plan(
+            capability_id="creative.data_analyze",
+            params={"csv": "a,b\n1,2\n"},
+            tenant_id="t1",
+            identity_id="u1",
+            goal="analyze",
+        )
+        retry_execution = CapabilityPlanExecutor(
+            lambda step, completed: CapabilityPlanStepResult(
+                step_id=step.step_id,
+                capability_id=step.capability_id,
+                succeeded=False,
+                command_id="cmd-retry",
+                error="analysis_failed",
+            )
+        ).execute(retry_plan)
+        retry_witness = app.state.plan_ledger.record_failure(plan=retry_plan, execution=retry_execution)
 
         filtered_resp = client.get("/capability-plans/read-model?recovery_action=wait_for_approval")
+        paged_resp = client.get("/capability-plans/read-model?failed_witness_limit=1&failed_witness_offset=1")
         empty_resp = client.get("/capability-plans/read-model?recovery_action=compensate_or_review")
 
         assert filtered_resp.status_code == 200
         assert filtered_resp.json()["recovery_action_filter"] == "wait_for_approval"
-        assert filtered_resp.json()["recovery_action_counts"] == {"wait_for_approval": 1}
+        assert filtered_resp.json()["failed_plan_witness_count"] == 2
+        assert filtered_resp.json()["recovery_action_counts"] == {
+            "retry_or_review": 1,
+            "wait_for_approval": 1,
+        }
+        assert filtered_resp.json()["failed_plan_witness_page"] == {
+            "total": 1,
+            "limit": 100,
+            "offset": 0,
+            "next_offset": None,
+        }
         assert filtered_resp.json()["recovery_attempt_count"] == 0
         assert filtered_resp.json()["recovery_attempt_status_counts"] == {}
         assert filtered_resp.json()["failed_plan_witnesses"][0]["witness_id"] == witness.witness_id
         assert filtered_resp.json()["failed_plan_witnesses"][0]["detail"]["recovery_decision"]["approval_required"]
+        assert paged_resp.status_code == 200
+        assert paged_resp.json()["failed_plan_witness_page"] == {
+            "total": 2,
+            "limit": 1,
+            "offset": 1,
+            "next_offset": None,
+        }
+        assert len(paged_resp.json()["failed_plan_witnesses"]) == 1
+        assert paged_resp.json()["failed_plan_witnesses"][0]["witness_id"] == retry_witness.witness_id
         assert empty_resp.status_code == 200
         assert empty_resp.json()["recovery_action_filter"] == "compensate_or_review"
+        assert empty_resp.json()["failed_plan_witness_page"] == {
+            "total": 0,
+            "limit": 100,
+            "offset": 0,
+            "next_offset": None,
+        }
         assert empty_resp.json()["failed_plan_witnesses"] == []
 
     def test_capability_plan_recover_endpoint_resumes_after_approval(self):
@@ -775,6 +818,9 @@ class TestWebChatWebhook:
         second_recover_resp = client.post("/capability-plans/missing-plan/recover")
         read_model_resp = client.get("/capability-plans/read-model")
         rejected_read_model_resp = client.get("/capability-plans/read-model?recovery_attempt_status=rejected")
+        paged_read_model_resp = client.get(
+            "/capability-plans/read-model?recovery_attempt_limit=1&recovery_attempt_offset=1"
+        )
         closure_resp = client.get(f"/capability-plans/{plan_id}/closure")
 
         assert blocked_resp.status_code == 200
@@ -803,6 +849,15 @@ class TestWebChatWebhook:
             "rejected",
             "rejected",
         ]
+        assert paged_read_model_resp.status_code == 200
+        assert paged_read_model_resp.json()["recovery_attempt_count"] == 3
+        assert paged_read_model_resp.json()["recovery_attempt_page"] == {
+            "total": 3,
+            "limit": 1,
+            "offset": 1,
+            "next_offset": 2,
+        }
+        assert len(paged_read_model_resp.json()["recovery_attempts"]) == 1
         assert closure_resp.status_code == 200
         assert closure_resp.json()["recovery_attempt_count"] == 2
         assert [attempt["status"] for attempt in closure_resp.json()["plan_recovery_attempts"]] == [

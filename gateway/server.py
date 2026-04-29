@@ -984,14 +984,22 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
     def capability_plans_read_model(
         request: Request,
         recovery_action: str = "",
+        failed_witness_limit: int = 100,
+        failed_witness_offset: int = 0,
         recovery_attempt_status: str = "",
+        recovery_attempt_limit: int = 100,
+        recovery_attempt_offset: int = 0,
     ):
         _require_authority_operator(request)
         return {
             "enabled": True,
             **plan_ledger.read_model(
                 recovery_action=recovery_action,
+                failed_witness_limit=_bounded_read_model_limit(failed_witness_limit),
+                failed_witness_offset=_bounded_read_model_offset(failed_witness_offset),
                 recovery_attempt_status=recovery_attempt_status,
+                recovery_attempt_limit=_bounded_read_model_limit(recovery_attempt_limit),
+                recovery_attempt_offset=_bounded_read_model_offset(recovery_attempt_offset),
             ),
         }
 
