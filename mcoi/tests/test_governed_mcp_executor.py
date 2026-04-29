@@ -1,0 +1,230 @@
+"""Purpose: validate governed MCP capability execution wrapper.
+Governance scope: certification gates, approval/budget/isolation witnesses,
+MCP client invocation, and execution receipts.
+Dependencies: mcoi_runtime.mcp capability bridge and governed executor.
+Invariants:
+  - MCP tools execute only as certified Mullu capabilities.
+  - Execution context must carry command, approval, budget, and isolation witnesses.
+  - Every MCP call returns deterministic input/output receipt hashes.
+"""
+
+from __future__ import annotations
+
+from dataclasses import replace
+from typing import Any, Mapping
+
+import pytest
+
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityCertificationStatus,
+    CapabilityRegistryEntry,
+)
+from mcoi_runtime.mcp import (
+    GovernedMCPExecutionContext,
+    GovernedMCPExecutor,
+    MCPToolCallResult,
+    MCPToolDescriptor,
+    import_mcp_tool_as_capability,
+)
+
+
+class StubMCPClient:
+    def __init__(self, result: MCPToolCallResult) -> None:
+        self.result = result
+        self.calls: list[dict[str, Any]] = []
+
+    def call_tool(
+        self,
+        *,
+        server_id: str,
+        tool_name: str,
+        arguments: Mapping[str, Any],
+    ) -> MCPToolCallResult:
+        self.calls.append({
+            "server_id": server_id,
+            "tool_name": tool_name,
+            "arguments": dict(arguments),
+        })
+        return self.result
+
+
+class ExplodingMCPClient:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def call_tool(
+        self,
+        *,
+        server_id: str,
+        tool_name: str,
+        arguments: Mapping[str, Any],
+    ) -> MCPToolCallResult:
+        self.calls += 1
+        raise RuntimeError("provider leaked secret-token")
+
+
+def _candidate_capability() -> CapabilityRegistryEntry:
+    return import_mcp_tool_as_capability(
+        MCPToolDescriptor(
+            server_id="GitHub Enterprise",
+            name="Create Issue",
+            description="Create an issue.",
+            input_schema={
+                "type": "object",
+                "properties": {"title": {"type": "string"}},
+                "required": ["title"],
+            },
+            annotations={"expected_effects": ["external_tool_invoked"]},
+        )
+    )
+
+
+def _certified(entry: CapabilityRegistryEntry | None = None) -> CapabilityRegistryEntry:
+    candidate = entry or _candidate_capability()
+    return CapabilityRegistryEntry(
+        capability_id=candidate.capability_id,
+        domain=candidate.domain,
+        version=candidate.version,
+        input_schema_ref=candidate.input_schema_ref,
+        output_schema_ref=candidate.output_schema_ref,
+        effect_model=candidate.effect_model,
+        evidence_model=candidate.evidence_model,
+        authority_policy=candidate.authority_policy,
+        isolation_profile=candidate.isolation_profile,
+        recovery_plan=candidate.recovery_plan,
+        cost_model=candidate.cost_model,
+        obligation_model=candidate.obligation_model,
+        certification_status=CapabilityCertificationStatus.CERTIFIED,
+        metadata=candidate.metadata,
+        extensions=candidate.extensions,
+    )
+
+
+def _context(**overrides) -> GovernedMCPExecutionContext:
+    payload = {
+        "tenant_id": "tenant-1",
+        "identity_id": "identity-1",
+        "command_id": "cmd-1",
+        "approval_id": "approval-1",
+        "budget_reservation_id": "budget-1",
+        "isolation_boundary_id": "isolation-1",
+    }
+    payload.update(overrides)
+    return GovernedMCPExecutionContext(**payload)
+
+
+def test_governed_mcp_executor_calls_client_and_returns_receipt() -> None:
+    client = StubMCPClient(MCPToolCallResult(
+        content={"issue_id": "ISSUE-1"},
+        metadata={"provider_request_id": "provider-1"},
+    ))
+    executor = GovernedMCPExecutor(client, worker_id="mcp-worker-1")
+
+    result = executor.execute(
+        capability=_certified(),
+        context=_context(),
+        params={"title": "Fix governed bridge"},
+    )
+
+    assert result.succeeded is True
+    assert result.error == ""
+    assert result.output == {"issue_id": "ISSUE-1"}
+    assert result.receipt.receipt_id.startswith("mcp-execution-receipt-")
+    assert result.receipt.capability_id == "mcp.github_enterprise_create_issue"
+    assert result.receipt.server_id == "GitHub Enterprise"
+    assert result.receipt.tool_name == "Create Issue"
+    assert result.receipt.command_id == "cmd-1"
+    assert result.receipt.approval_id == "approval-1"
+    assert result.receipt.budget_reservation_id == "budget-1"
+    assert result.receipt.isolation_boundary_id == "isolation-1"
+    assert result.receipt.input_hash
+    assert result.receipt.output_hash
+    assert result.receipt.status == "succeeded"
+    assert result.metadata["terminal_certificate_required"] is True
+    assert client.calls == [{
+        "server_id": "GitHub Enterprise",
+        "tool_name": "Create Issue",
+        "arguments": {"title": "Fix governed bridge"},
+    }]
+
+
+def test_governed_mcp_executor_records_failed_tool_call_receipt() -> None:
+    client = StubMCPClient(MCPToolCallResult(
+        content="provider rejected request",
+        is_error=True,
+        metadata={"provider_request_id": "provider-2"},
+    ))
+    executor = GovernedMCPExecutor(client)
+
+    result = executor.execute(
+        capability=_certified(),
+        context=_context(),
+        params={"title": "Unsafe title"},
+    )
+
+    assert result.succeeded is False
+    assert result.error == "mcp_tool_call_failed"
+    assert result.receipt.status == "failed"
+    assert result.receipt.output_hash
+    assert result.metadata["mcp_call_metadata"] == {"provider_request_id": "provider-2"}
+    assert client.calls[0]["arguments"] == {"title": "Unsafe title"}
+
+
+def test_governed_mcp_executor_wraps_client_exception_in_failed_receipt() -> None:
+    client = ExplodingMCPClient()
+    executor = GovernedMCPExecutor(client)
+
+    result = executor.execute(
+        capability=_certified(),
+        context=_context(),
+        params={"title": "Transport failure"},
+    )
+
+    assert result.succeeded is False
+    assert result.error == "mcp_tool_call_failed"
+    assert result.output == {"error": "mcp_tool_call_exception"}
+    assert result.receipt.status == "failed"
+    assert result.receipt.output_hash
+    assert result.metadata["mcp_call_metadata"] == {}
+    assert "secret-token" not in result.error
+    assert client.calls == 1
+
+
+def test_governed_mcp_executor_rejects_uncertified_capability() -> None:
+    executor = GovernedMCPExecutor(StubMCPClient(MCPToolCallResult(content={})))
+
+    with pytest.raises(ValueError, match="requires certified capability"):
+        executor.execute(
+            capability=_candidate_capability(),
+            context=_context(),
+            params={"title": "Blocked"},
+        )
+
+    assert executor is not None
+    assert _candidate_capability().certification_status is CapabilityCertificationStatus.CANDIDATE
+
+
+def test_governed_mcp_executor_rejects_non_mcp_capability() -> None:
+    capability = replace(_certified(), domain="enterprise")
+    executor = GovernedMCPExecutor(StubMCPClient(MCPToolCallResult(content={})))
+
+    with pytest.raises(ValueError, match="requires mcp domain"):
+        executor.execute(
+            capability=capability,
+            context=_context(),
+            params={"title": "Blocked"},
+        )
+
+    assert capability.domain == "enterprise"
+    assert capability.certification_status is CapabilityCertificationStatus.CERTIFIED
+
+
+def test_governed_mcp_execution_context_requires_governance_witnesses() -> None:
+    with pytest.raises(ValueError, match="approval_id is required"):
+        _context(approval_id="")
+
+    with pytest.raises(ValueError, match="budget_reservation_id is required"):
+        _context(budget_reservation_id="")
+
+    with pytest.raises(ValueError, match="isolation_boundary_id is required"):
+        _context(isolation_boundary_id="")
