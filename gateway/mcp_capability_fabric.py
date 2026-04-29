@@ -14,8 +14,10 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Callable
 
+from gateway.authority_obligation_mesh import ApprovalPolicy, EscalationPolicy, TeamOwnership
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
@@ -26,6 +28,15 @@ from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmi
 from mcoi_runtime.mcp.capability_bridge import MCPToolDescriptor, import_mcp_tool_as_capability
 
 from gateway.capability_fabric import build_capability_admission_gate
+
+
+@dataclass(frozen=True, slots=True)
+class MCPAuthorityRecords:
+    """Authority-obligation records required to activate certified MCP capabilities."""
+
+    ownership: tuple[TeamOwnership, ...]
+    approval_policies: tuple[ApprovalPolicy, ...]
+    escalation_policies: tuple[EscalationPolicy, ...]
 
 
 def certify_mcp_capability_entry(
@@ -138,3 +149,100 @@ def import_certified_mcp_tools_as_admission_gate(
         clock=clock,
         owner_team=owner_team,
     )
+
+
+def build_mcp_authority_records(
+    entries: tuple[CapabilityRegistryEntry, ...],
+    *,
+    tenant_id: str,
+    primary_owner_id: str,
+    fallback_owner_id: str,
+    escalation_team: str,
+    timeout_seconds: int = 300,
+) -> MCPAuthorityRecords:
+    """Derive authority-obligation records for certified MCP capabilities."""
+    tenant = tenant_id.strip()
+    primary_owner = primary_owner_id.strip()
+    fallback_owner = fallback_owner_id.strip()
+    escalation = escalation_team.strip()
+    if not tenant:
+        raise ValueError("tenant_id is required")
+    if not primary_owner:
+        raise ValueError("primary_owner_id is required")
+    if not fallback_owner:
+        raise ValueError("fallback_owner_id is required")
+    if not escalation:
+        raise ValueError("escalation_team is required")
+    if timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive")
+
+    ownership: list[TeamOwnership] = []
+    approval_policies: list[ApprovalPolicy] = []
+    for entry in entries:
+        _validate_certified_mcp_entry(entry)
+        owner_team = entry.obligation_model.owner_team.strip()
+        if not owner_team:
+            raise ValueError("MCP capability owner_team is required")
+        risk_tier = str(entry.metadata.get("risk_tier", "medium")).strip().lower()
+        if risk_tier not in {"low", "medium", "high"}:
+            raise ValueError("MCP capability risk_tier must be low, medium, or high")
+        required_approver_count = _required_approver_count(entry, risk_tier)
+        ownership.append(TeamOwnership(
+            tenant_id=tenant,
+            resource_ref=entry.capability_id,
+            owner_team=owner_team,
+            primary_owner_id=primary_owner,
+            fallback_owner_id=fallback_owner,
+            escalation_team=escalation,
+        ))
+        approval_policies.append(ApprovalPolicy(
+            policy_id=_mcp_policy_id(entry.capability_id, risk_tier),
+            tenant_id=tenant,
+            capability=entry.capability_id,
+            risk_tier=risk_tier,
+            required_roles=entry.authority_policy.required_roles,
+            required_approver_count=required_approver_count,
+            separation_of_duty=entry.authority_policy.separation_of_duty,
+            timeout_seconds=timeout_seconds,
+            escalation_policy_id=_mcp_escalation_policy_id(tenant),
+        ))
+
+    escalation_policy = EscalationPolicy(
+        policy_id=_mcp_escalation_policy_id(tenant),
+        tenant_id=tenant,
+        notify_after_seconds=timeout_seconds,
+        escalate_after_seconds=timeout_seconds * 2,
+        incident_after_seconds=timeout_seconds * 8,
+        fallback_owner_id=fallback_owner,
+        escalation_team=escalation,
+    )
+    return MCPAuthorityRecords(
+        ownership=tuple(ownership),
+        approval_policies=tuple(approval_policies),
+        escalation_policies=(escalation_policy,),
+    )
+
+
+def _validate_certified_mcp_entry(entry: CapabilityRegistryEntry) -> None:
+    if entry.domain != "mcp":
+        raise ValueError("only mcp capability entries can be bound to MCP authority records")
+    if entry.certification_status is not CapabilityCertificationStatus.CERTIFIED:
+        raise ValueError("MCP authority records require certified capabilities")
+
+
+def _required_approver_count(entry: CapabilityRegistryEntry, risk_tier: str) -> int:
+    if entry.authority_policy.approval_chain:
+        return len(entry.authority_policy.approval_chain)
+    if risk_tier == "low":
+        return 0
+    return 2 if risk_tier == "high" and entry.authority_policy.separation_of_duty else 1
+
+
+def _mcp_policy_id(capability_id: str, risk_tier: str) -> str:
+    normalized = capability_id.replace(".", "-").replace("_", "-")
+    return f"mcp-approval-{normalized}-{risk_tier}"
+
+
+def _mcp_escalation_policy_id(tenant_id: str) -> str:
+    normalized = tenant_id.replace(".", "-").replace("_", "-")
+    return f"mcp-escalation-{normalized}"

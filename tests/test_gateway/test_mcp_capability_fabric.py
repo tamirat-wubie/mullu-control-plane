@@ -21,6 +21,7 @@ from gateway.command_spine import CommandLedger  # noqa: E402
 from gateway.mcp_capabilities import register_mcp_capabilities  # noqa: E402
 from gateway.mcp_capability_fabric import (  # noqa: E402
     build_mcp_capability_admission_gate,
+    build_mcp_authority_records,
     build_mcp_domain_capsule,
     certify_mcp_capability_entry,
     import_certified_mcp_tools_as_admission_gate,
@@ -127,6 +128,54 @@ def test_import_certified_mcp_tools_builds_gateway_admission_gate() -> None:
     assert decision.domain == "mcp"
     assert decision.owner_team == "knowledge-ops"
     assert "tool_call_receipt" in decision.evidence_required
+
+
+def test_build_mcp_authority_records_binds_certified_capabilities_to_mesh() -> None:
+    candidate = import_mcp_tool_as_capability(
+        _read_only_tool(),
+        owner_team="knowledge-ops",
+        required_roles=("knowledge_operator",),
+    )
+    certified = certify_mcp_capability_entry(
+        candidate,
+        certified_by="operator-1",
+        certification_evidence_ref="evidence:mcp-docs-search",
+    )
+
+    records = build_mcp_authority_records(
+        (certified,),
+        tenant_id="tenant-1",
+        primary_owner_id="owner-1",
+        fallback_owner_id="owner-2",
+        escalation_team="platform-ops",
+        timeout_seconds=600,
+    )
+
+    assert records.ownership[0].tenant_id == "tenant-1"
+    assert records.ownership[0].resource_ref == "mcp.docs_search_docs"
+    assert records.ownership[0].owner_team == "knowledge-ops"
+    assert records.approval_policies[0].capability == "mcp.docs_search_docs"
+    assert records.approval_policies[0].risk_tier == "low"
+    assert records.approval_policies[0].required_approver_count == 0
+    assert records.approval_policies[0].required_roles == ("knowledge_operator",)
+    assert records.escalation_policies[0].policy_id == "mcp-escalation-tenant-1"
+    assert records.escalation_policies[0].fallback_owner_id == "owner-2"
+
+
+def test_build_mcp_authority_records_requires_certified_entries() -> None:
+    candidate = import_mcp_tool_as_capability(_read_only_tool())
+
+    with pytest.raises(ValueError, match="require certified capabilities"):
+        build_mcp_authority_records(
+            (candidate,),
+            tenant_id="tenant-1",
+            primary_owner_id="owner-1",
+            fallback_owner_id="owner-2",
+            escalation_team="platform-ops",
+        )
+
+    assert candidate.certification_status.value == "candidate"
+    assert candidate.domain == "mcp"
 
 
 def test_router_executes_certified_mcp_capability_through_fabric_admission() -> None:
