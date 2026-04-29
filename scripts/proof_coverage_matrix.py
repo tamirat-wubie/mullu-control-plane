@@ -127,7 +127,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/llm.py",
-                "mcoi/mcoi_runtime/core/tenant_budget.py",
+                "mcoi/mcoi_runtime/governance/guards/budget.py",
             ],
             "Budget and cost surfaces expose bounded read models over governed spend state.",
         ),
@@ -157,7 +157,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             [
                 "mcoi/mcoi_runtime/app/routers/policy_versions.py",
-                "mcoi/mcoi_runtime/core/policy_versioning.py",
+                "mcoi/mcoi_runtime/governance/policy/versioning.py",
                 "mcoi/tests/test_policy_version_endpoints.py",
                 "mcoi/tests/test_policy_versioning.py",
             ],
