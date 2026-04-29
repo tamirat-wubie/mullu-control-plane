@@ -26,8 +26,12 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
     TeamOwnership,
 )
 from gateway.command_spine import CommandState  # noqa: E402
+from gateway.capability_fabric import build_capability_admission_gate_from_env  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from gateway.router import TenantMapping  # noqa: E402
+from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
+    CommandCapabilityAdmissionStatus,
+)
 
 
 class StubPlatform:
@@ -539,6 +543,26 @@ class TestWebChatWebhook:
         assert app.state.capability_admission_gate is not None
         assert resp.status_code == 200
         assert resp.json()["body"] == "Pack governed response"
+
+    def test_fabric_admission_uses_checked_in_default_packs(self, monkeypatch):
+        monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+        monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_USE_DEFAULT_PACKS", "true")
+
+        gate = build_capability_admission_gate_from_env(clock=lambda: "2026-04-29T00:00:00Z")
+        assert gate is not None
+        read_model = gate.read_model()
+        accepted = gate.admit(command_id="cmd-default-creative", intent_name="creative.document_generate")
+        rejected = gate.admit(command_id="cmd-default-missing", intent_name="creative.missing")
+
+        assert read_model["capsule_count"] == 2
+        assert read_model["capability_count"] == 6
+        assert accepted.status is CommandCapabilityAdmissionStatus.ACCEPTED
+        assert accepted.capability_id == "creative.document_generate"
+        assert accepted.domain == "creative"
+        assert "document_id" in accepted.evidence_required
+        assert rejected.status is CommandCapabilityAdmissionStatus.REJECTED
+        assert rejected.capability_id == ""
+        assert "no installed capability" in rejected.reason
 
     def test_command_capability_admission_read_model_reports_accepted_witness(self, monkeypatch, tmp_path):
         _configure_fabric_env(
