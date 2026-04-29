@@ -9,8 +9,8 @@ Dependencies: governed capability fabric contracts, compiler, registry, and
     command admission core.
 Invariants:
   - Fabric admission is disabled unless explicitly enabled.
-  - Enabled fabric admission requires at least one capsule JSON source and at
-    least one capability JSON source.
+  - Enabled fabric admission requires explicit JSON sources or checked-in
+    default packs requested through configuration.
   - Installed capabilities are resolved from explicit capsule references.
   - Failed compilation or installation fails gateway startup instead of running
     with a partial capability fabric.
@@ -32,6 +32,17 @@ from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_DEFAULT_CAPSULE_PATHS = (
+    _REPO_ROOT / "capsules" / "creative.json",
+    _REPO_ROOT / "capsules" / "enterprise.json",
+)
+_DEFAULT_CAPABILITY_PACK_PATHS = (
+    _REPO_ROOT / "capabilities" / "creative" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "enterprise" / "capability_pack.json",
+)
+
+
 def build_capability_admission_gate_from_env(
     *,
     clock: Callable[[], str],
@@ -44,7 +55,11 @@ def build_capability_admission_gate_from_env(
     capsule_pack_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPSULE_PACK_PATH", "").strip()
     capability_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPABILITY_PATH", "").strip()
     capability_pack_path = os.environ.get("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", "").strip()
-    if not (capsule_path or capsule_pack_path) or not (capability_path or capability_pack_path):
+    use_default_packs = _truthy(os.environ.get("MULLU_CAPABILITY_FABRIC_USE_DEFAULT_PACKS", ""))
+    if (
+        not use_default_packs
+        and (not (capsule_path or capsule_pack_path) or not (capability_path or capability_pack_path))
+    ):
         raise ValueError("fabric admission requires capsule JSON source and capability JSON source")
 
     require_certified = not _falsey(os.environ.get("MULLU_CAPABILITY_FABRIC_REQUIRE_CERTIFIED", "true"))
@@ -53,18 +68,63 @@ def build_capability_admission_gate_from_env(
         capability_path=capability_path,
         capability_pack_path=capability_pack_path,
     )
+    if use_default_packs:
+        capsules = (*capsules, *load_default_domain_capsules())
+        loaded_capabilities = (*loaded_capabilities, *load_default_capability_entries())
 
+    return build_capability_admission_gate(
+        capsules=capsules,
+        capabilities=loaded_capabilities,
+        require_certified=require_certified,
+        clock=clock,
+    )
+
+
+def load_default_domain_capsules() -> tuple[DomainCapsule, ...]:
+    """Load checked-in domain capsules for the built-in general domains."""
+    return tuple(DomainCapsule.from_mapping(_load_object(path)) for path in _DEFAULT_CAPSULE_PATHS)
+
+
+def load_default_capability_entries() -> tuple[CapabilityRegistryEntry, ...]:
+    """Load checked-in capability entries for the built-in general domains."""
+    entries: list[CapabilityRegistryEntry] = []
+    for path in _DEFAULT_CAPABILITY_PACK_PATHS:
+        entries.extend(_load_capability_pack(path))
+    return tuple(entries)
+
+
+def build_default_capability_admission_gate(
+    *,
+    clock: Callable[[], str],
+    require_certified: bool = True,
+) -> CommandCapabilityAdmissionGate:
+    """Build a capability admission gate from checked-in general-domain packs."""
+    return build_capability_admission_gate(
+        capsules=load_default_domain_capsules(),
+        capabilities=load_default_capability_entries(),
+        require_certified=require_certified,
+        clock=clock,
+    )
+
+
+def build_capability_admission_gate(
+    *,
+    capsules: tuple[DomainCapsule, ...],
+    capabilities: tuple[CapabilityRegistryEntry, ...],
+    require_certified: bool,
+    clock: Callable[[], str],
+) -> CommandCapabilityAdmissionGate:
+    """Install capsules and capabilities into a command admission gate."""
     compiler = DomainCapsuleCompiler(clock=clock)
     registry = GovernedCapabilityRegistry(clock=clock, require_certified=require_certified)
     for capsule in capsules:
-        capabilities = _capabilities_referenced_by_capsule(capsule, loaded_capabilities)
-        compilation = compiler.compile(capsule, capabilities)
+        referenced_capabilities = _capabilities_referenced_by_capsule(capsule, capabilities)
+        compilation = compiler.compile(capsule, referenced_capabilities)
         if not compilation.succeeded:
             raise ValueError(f"fabric capsule compilation failed for {capsule.capsule_id}: {list(compilation.errors)}")
-        installation = registry.install(compilation, capabilities)
+        installation = registry.install(compilation, referenced_capabilities)
         if installation.errors:
             raise ValueError(f"fabric capsule installation failed for {capsule.capsule_id}: {list(installation.errors)}")
-
     return CommandCapabilityAdmissionGate(registry=registry, clock=clock)
 
 
