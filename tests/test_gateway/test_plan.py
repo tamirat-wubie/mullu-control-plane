@@ -385,6 +385,7 @@ def test_plan_ledger_records_recovery_attempts_in_read_model() -> None:
     )
     read_model = ledger.read_model()
     filtered = ledger.read_model(recovery_attempt_status="blocked")
+    paged = ledger.read_model(recovery_attempt_limit=1, recovery_attempt_offset=1)
 
     assert blocked_attempt.attempt_id.startswith("plan-recovery-attempt-")
     assert blocked_attempt.plan_id == "plan-1"
@@ -404,6 +405,15 @@ def test_plan_ledger_records_recovery_attempts_in_read_model() -> None:
     assert filtered["recovery_attempt_status_counts"] == {"blocked": 1, "succeeded": 1}
     assert len(filtered["recovery_attempts"]) == 1
     assert filtered["recovery_attempts"][0]["attempt_id"] == blocked_attempt.attempt_id
+    assert paged["recovery_attempt_count"] == 2
+    assert paged["recovery_attempt_page"] == {
+        "total": 2,
+        "limit": 1,
+        "offset": 1,
+        "next_offset": None,
+    }
+    assert len(paged["recovery_attempts"]) == 1
+    assert paged["recovery_attempts"][0]["attempt_id"] == succeeded_attempt.attempt_id
 
 
 def test_json_plan_ledger_store_survives_recovery_attempt_recreation(tmp_path) -> None:
@@ -553,18 +563,40 @@ def test_plan_ledger_read_model_filters_failed_witnesses_by_recovery_action() ->
     retry_witness = ledger.record_failure(plan=retry_plan, execution=retry_execution)
     approval_witness = ledger.record_failure(plan=approval_plan, execution=approval_execution)
     filtered = ledger.read_model(recovery_action="wait_for_approval")
+    paged = ledger.read_model(failed_witness_limit=1, failed_witness_offset=1)
     unfiltered = ledger.read_model()
 
     assert unfiltered["failed_plan_witness_count"] == 2
+    assert unfiltered["failed_plan_witness_page"] == {
+        "total": 2,
+        "limit": 2,
+        "offset": 0,
+        "next_offset": None,
+    }
     assert unfiltered["recovery_action_counts"] == {
         "retry_or_review": 1,
         "wait_for_approval": 1,
     }
     assert filtered["recovery_action_filter"] == "wait_for_approval"
     assert filtered["failed_plan_witness_count"] == 2
+    assert filtered["failed_plan_witness_page"] == {
+        "total": 1,
+        "limit": 1,
+        "offset": 0,
+        "next_offset": None,
+    }
     assert len(filtered["failed_plan_witnesses"]) == 1
     assert filtered["failed_plan_witnesses"][0]["witness_id"] == approval_witness.witness_id
     assert filtered["failed_plan_witnesses"][0]["witness_id"] != retry_witness.witness_id
+    assert paged["failed_plan_witness_count"] == 2
+    assert paged["failed_plan_witness_page"] == {
+        "total": 2,
+        "limit": 1,
+        "offset": 1,
+        "next_offset": None,
+    }
+    assert len(paged["failed_plan_witnesses"]) == 1
+    assert paged["failed_plan_witnesses"][0]["witness_id"] == approval_witness.witness_id
 
 
 def test_plan_ledger_classifies_approval_wait_recovery() -> None:

@@ -126,19 +126,27 @@ python scripts/sync_authority_directory.py authority-directory.yaml --apply
 
 ## SCIM Export Adapter
 
-`scripts/scim_authority_directory_adapter.py` implements the first external
-source wrapper. It accepts a bounded SCIM JSON export plus a separate authority
-mapping JSON file and emits the normalized directory JSON consumed by the static
-sync adapter.
+`scripts/collect_scim_directory_export.py` collects live SCIM `/Users` and
+`/Groups` resources into a local export JSON. `scripts/scim_authority_directory_adapter.py`
+then accepts that bounded SCIM JSON export plus a separate authority mapping
+JSON file and emits the normalized directory JSON consumed by the static sync
+adapter.
 
 SCIM user and group records are identity evidence only. They do not become
 owners, approvers, approval policies, or escalation routes unless the mapping
 file explicitly declares those authority relationships.
 
 ```bash
+python scripts/collect_scim_directory_export.py \
+  --base-url https://directory.example.com/scim/v2 \
+  --bearer-token "$MULLU_SCIM_BEARER_TOKEN" \
+  --output .change_assurance/scim_directory_export.json
+```
+
+```bash
 python scripts/scim_authority_directory_adapter.py \
   --tenant-id tenant-1 \
-  --scim-export scim-export.json \
+  --scim-export .change_assurance/scim_directory_export.json \
   --mapping authority-mapping.json \
   --output .change_assurance/authority_directory_from_scim.json
 ```
@@ -148,6 +156,42 @@ The resulting JSON can then be reviewed, dry-run, replayed, or applied through:
 ```bash
 python scripts/sync_authority_directory.py \
   .change_assurance/authority_directory_from_scim.json \
+  --batch-output .change_assurance/authority_directory_batch.json
+```
+
+## GitHub Teams Export Adapter
+
+`scripts/collect_github_teams_export.py` collects live GitHub organization
+members, teams, and team memberships into a local export JSON.
+`scripts/github_teams_authority_directory_adapter.py` accepts that bounded
+GitHub organization teams export plus the same style of explicit authority
+mapping JSON and emits the normalized directory JSON consumed by the static sync
+adapter.
+
+GitHub members and team slugs are identity evidence only. They do not become
+owners, approvers, approval policies, or escalation routes unless the mapping
+file explicitly declares those authority relationships.
+
+```bash
+python scripts/collect_github_teams_export.py \
+  --organization mullusi \
+  --token "$MULLU_GITHUB_TOKEN" \
+  --output .change_assurance/github_teams_export.json
+```
+
+```bash
+python scripts/github_teams_authority_directory_adapter.py \
+  --tenant-id tenant-1 \
+  --github-export .change_assurance/github_teams_export.json \
+  --mapping authority-mapping.json \
+  --output .change_assurance/authority_directory_from_github_teams.json
+```
+
+The resulting JSON follows the same dry-run, replay, and apply path:
+
+```bash
+python scripts/sync_authority_directory.py \
+  .change_assurance/authority_directory_from_github_teams.json \
   --batch-output .change_assurance/authority_directory_batch.json
 ```
 
@@ -165,13 +209,13 @@ python scripts/sync_authority_directory.py \
 
 The repository exposes the authority configuration read models, binds them into
 runtime conformance, includes a static JSON / bounded-YAML adapter that emits
-normalized batches and receipts, and includes a SCIM-export wrapper that emits
-the same normalized contract. Live SCIM API polling, LDAP, SAML-group,
-GitHub-team, and workspace-directory adapters remain a future implementation
-layer.
+normalized batches and receipts, includes a live SCIM export collector, and
+includes live GitHub teams export collection. SCIM-export and GitHub-teams-export
+wrappers emit the same normalized contract. LDAP, SAML-group, and
+workspace-directory adapters remain a future implementation layer.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, SCIM identity evidence separated from authority mappings, read-model verification required
-  Open issues: live SCIM API polling, LDAP, SAML-group, GitHub-team, and workspace-directory adapters not implemented
-  Next action: wire live SCIM API polling through the SCIM export adapter contract
+  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, read-model verification required
+  Open issues: LDAP, SAML-group, and workspace-directory adapters not implemented
+  Next action: add another source wrapper through the same normalized contract
