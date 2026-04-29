@@ -5,6 +5,7 @@ Invariants:
   - Query routes require musia.read through dev/auth dependency flow.
   - Review sync requires musia.write through dev/auth dependency flow.
   - List/get/replay return typed receipt envelopes.
+  - Review decisions close receipt chains with terminal receipt witnesses.
   - Replay fails closed when the request chain is missing or not terminal.
 """
 
@@ -263,8 +264,11 @@ def test_review_requests_list_and_decision_resolve_pending_request() -> None:
         },
     )
     final_pending = client.get("/software/receipts/review/requests")
+    final_review = client.get("/software/receipts/review")
+    replay = client.get("/software/receipts/replay/request-http-open")
     pending_body = pending_response.json()
     decision_body = decision_response.json()
+    replay_body = replay.json()
 
     assert pending_response.status_code == 200
     assert pending_body["operation"] == "review_requests"
@@ -278,6 +282,13 @@ def test_review_requests_list_and_decision_resolve_pending_request() -> None:
     assert decision_body["gate_allowed"] is True
     assert decision_body["pending_review_count"] == 0
     assert final_pending.json()["review_request_count"] == 0
+    assert final_review.json()["requires_operator_review"] is False
+    assert replay.status_code == 200
+    assert replay_body["terminal_closed"] is True
+    assert replay_body["receipts"][-1]["stage"] == "terminal_closed"
+    assert replay_body["receipts"][-1]["metadata"]["review_decision_id"] == (
+        decision_body["review_decision"]["decision_id"]
+    )
 
 
 def test_review_decision_missing_request_returns_bounded_404() -> None:

@@ -4,7 +4,7 @@ Dependencies: FastAPI, MUSIA auth dependencies, software receipt store, review q
 Invariants:
   - Receipt query routes require musia.read.
   - Review synchronization requires musia.write.
-  - Routes never mutate workspace or receipt store state.
+  - Review decisions append terminal receipt witnesses without mutating workspace state.
   - Replay requires a terminally closed receipt chain.
   - Store errors are bounded at the HTTP boundary.
 """
