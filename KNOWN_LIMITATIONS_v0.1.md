@@ -63,9 +63,11 @@ runtime does not yet behave as intended by the architecture specification.
 
 - Gateway authority includes ownership, approval-chain, obligation, escalation,
   ownership read-model, and policy read-model surfaces.
-- External directory sync is specified in `docs/54_authority_directory_sync.md`.
-  Live SCIM, LDAP, SAML-group, and workspace-directory adapters are not yet
-  implemented.
+- External directory sync is specified in `docs/54_authority_directory_sync.md`
+  and implemented for SCIM export, LDAP export, SAML group export, GitHub Teams,
+  Google Workspace groups, and static workspace group sources through normalized
+  batch adapters and sync receipt tooling. Remaining production work is
+  credentialed scheduling/webhook ingestion and organization-management UI.
 
 ## Replay
 
@@ -86,5 +88,5 @@ implementation in this release:
   runs, audit, checkpoints, providers, scheduler) but no browser-based frontend.
 - **RBAC / human governance:** API key auth with scopes, JWT auth, per-session
   RBAC checks, gateway authority resolution, and authority-obligation read
-  models exist. Full organization-management UI and external directory adapters
-  are not yet implemented.
+  models exist. Full organization-management UI and credentialed directory
+  scheduling UI are not yet implemented.
