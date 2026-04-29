@@ -120,6 +120,7 @@ class CapabilityDispatcher:
         *,
         command_id: str = "",
         conversation_id: str = "",
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         """Dispatch a typed intent or return None for no registered handler."""
         capability_id = intent.capability_id
@@ -147,6 +148,7 @@ class CapabilityDispatcher:
             identity_id=identity_id,
             command_id=command_id,
             conversation_id=conversation_id,
+            metadata=dict(metadata or {}),
         )
         result = handler.execute(context, dict(intent.params))
         return {

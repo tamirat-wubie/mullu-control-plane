@@ -80,6 +80,9 @@ def create_capability_worker_app(
             tenant_id=execution_request.tenant_id,
             identity_id=execution_request.identity_id,
             boundary=execution_request.boundary,
+            command_id=execution_request.command_id,
+            conversation_id=execution_request.conversation_id,
+            metadata=execution_request.metadata,
         )
         transport_result = _transport_result(result)
         status = "succeeded" if isinstance(transport_result, dict) else "failed"

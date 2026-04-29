@@ -12,7 +12,8 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Mapping, Protocol
+from datetime import datetime, timezone
+from typing import Any, Callable, Mapping, Protocol
 
 from gateway.command_spine import canonical_hash
 from mcoi_runtime.contracts._base import thaw_value_json
@@ -96,6 +97,22 @@ class GovernedMCPExecutionResult:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True, slots=True)
+class GovernedMCPExecutionAudit:
+    """Append-only operator audit record for MCP execution attempts."""
+
+    audit_id: str
+    capability_id: str
+    command_id: str
+    status: str
+    reason: str
+    audited_at: str
+    receipt_id: str = ""
+    input_hash: str = ""
+    output_hash: str = ""
+    evidence_refs: tuple[str, ...] = ()
+
+
 class MCPToolClient(Protocol):
     """Client adapter used to invoke an external MCP server."""
 
@@ -113,11 +130,19 @@ class MCPToolClient(Protocol):
 class GovernedMCPExecutor:
     """Execute certified MCP capabilities behind governance witnesses."""
 
-    def __init__(self, client: MCPToolClient, *, worker_id: str = "governed-mcp-executor") -> None:
+    def __init__(
+        self,
+        client: MCPToolClient,
+        *,
+        worker_id: str = "governed-mcp-executor",
+        clock: Callable[[], str] | None = None,
+    ) -> None:
         if not worker_id.strip():
             raise ValueError("worker_id is required")
         self._client = client
         self._worker_id = worker_id
+        self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
+        self._audits: list[GovernedMCPExecutionAudit] = []
 
     def execute(
         self,
@@ -129,7 +154,16 @@ class GovernedMCPExecutor:
         """Execute one certified imported MCP capability."""
         if not isinstance(params, Mapping):
             raise ValueError("params must be an object")
-        mcp_descriptor = _mcp_descriptor_for_execution(capability)
+        try:
+            mcp_descriptor = _mcp_descriptor_for_execution(capability)
+        except ValueError as exc:
+            self._record_audit(
+                capability_id=capability.capability_id,
+                command_id=context.command_id,
+                status="rejected",
+                reason=str(exc),
+            )
+            raise
         server_id = str(mcp_descriptor["server_id"])
         tool_name = str(mcp_descriptor["tool_name"])
         arguments = dict(thaw_value_json(params))
@@ -172,6 +206,16 @@ class GovernedMCPExecutor:
             status=status,
             worker_id=self._worker_id,
         )
+        self._record_audit(
+            capability_id=capability.capability_id,
+            command_id=context.command_id,
+            status=status,
+            reason="mcp_tool_call_failed" if is_error else "mcp_tool_call_succeeded",
+            receipt_id=receipt.receipt_id,
+            input_hash=input_hash,
+            output_hash=output_hash,
+            evidence_refs=receipt.evidence_refs,
+        )
         return GovernedMCPExecutionResult(
             succeeded=not is_error,
             output=content,
@@ -183,6 +227,61 @@ class GovernedMCPExecutor:
                 "terminal_certificate_required": context.terminal_certificate_required,
             },
         )
+
+    def audit_records(
+        self,
+        *,
+        command_id: str = "",
+        status: str = "",
+        limit: int = 100,
+    ) -> tuple[GovernedMCPExecutionAudit, ...]:
+        """Return bounded MCP execution audits, newest records first."""
+        bounded_limit = max(1, min(int(limit), 1000))
+        records = tuple(reversed(self._audits))
+        if command_id:
+            records = tuple(record for record in records if record.command_id == command_id)
+        if status:
+            records = tuple(record for record in records if record.status == status)
+        return records[:bounded_limit]
+
+    def _record_audit(
+        self,
+        *,
+        capability_id: str,
+        command_id: str,
+        status: str,
+        reason: str,
+        receipt_id: str = "",
+        input_hash: str = "",
+        output_hash: str = "",
+        evidence_refs: tuple[str, ...] = (),
+    ) -> GovernedMCPExecutionAudit:
+        audited_at = self._clock()
+        payload = {
+            "capability_id": capability_id,
+            "command_id": command_id,
+            "status": status,
+            "reason": reason,
+            "receipt_id": receipt_id,
+            "input_hash": input_hash,
+            "output_hash": output_hash,
+            "evidence_refs": evidence_refs,
+            "audited_at": audited_at,
+        }
+        audit = GovernedMCPExecutionAudit(
+            audit_id=f"mcp-execution-audit-{canonical_hash(payload)[:16]}",
+            capability_id=capability_id,
+            command_id=command_id,
+            status=status,
+            reason=reason,
+            audited_at=audited_at,
+            receipt_id=receipt_id,
+            input_hash=input_hash,
+            output_hash=output_hash,
+            evidence_refs=evidence_refs,
+        )
+        self._audits.append(audit)
+        return audit
 
 
 def _mcp_descriptor_for_execution(entry: CapabilityRegistryEntry) -> Mapping[str, Any]:

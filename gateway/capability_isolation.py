@@ -18,7 +18,7 @@ import json
 import os
 import urllib.error
 import urllib.request
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol
 
 from gateway.command_spine import CapabilityPassport, canonical_hash
@@ -64,6 +64,9 @@ class CapabilityExecutionRequest:
     intent: dict[str, Any]
     boundary: CapabilityExecutionBoundary
     input_hash: str
+    command_id: str = ""
+    conversation_id: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +90,9 @@ class IsolatedCapabilityExecutor(Protocol):
         tenant_id: str,
         identity_id: str,
         boundary: CapabilityExecutionBoundary,
+        command_id: str = "",
+        conversation_id: str = "",
+        metadata: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any] | None, CapabilityExecutionReceipt]: ...
 
 
@@ -154,15 +160,29 @@ class LocalCapabilityExecutionWorker:
         tenant_id: str,
         identity_id: str,
         boundary: CapabilityExecutionBoundary,
+        command_id: str = "",
+        conversation_id: str = "",
+        metadata: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any] | None, CapabilityExecutionReceipt]:
         """Execute through the local worker and return an execution receipt."""
+        dispatch_metadata = dict(metadata or {})
         input_hash = canonical_hash({
             "intent": {"skill": intent.skill, "action": intent.action, "params": dict(intent.params)},
             "tenant_id": tenant_id,
             "identity_id": identity_id,
+            "command_id": command_id,
+            "conversation_id": conversation_id,
             "boundary": asdict(boundary),
+            "metadata": dispatch_metadata,
         })
-        result = self._dispatcher.dispatch(intent, tenant_id, identity_id)
+        result = self._dispatcher.dispatch(
+            intent,
+            tenant_id,
+            identity_id,
+            command_id=command_id,
+            conversation_id=conversation_id,
+            metadata=dispatch_metadata,
+        )
         output_hash = canonical_hash(result or {})
         receipt_hash = canonical_hash({
             "capability_id": boundary.capability_id,
@@ -252,6 +272,9 @@ class RemoteCapabilityExecutionExecutor:
         tenant_id: str,
         identity_id: str,
         boundary: CapabilityExecutionBoundary,
+        command_id: str = "",
+        conversation_id: str = "",
+        metadata: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any] | None, CapabilityExecutionReceipt]:
         """Submit execution to a restricted worker and validate its receipt."""
         request = _build_execution_request(
@@ -259,6 +282,9 @@ class RemoteCapabilityExecutionExecutor:
             tenant_id=tenant_id,
             identity_id=identity_id,
             boundary=boundary,
+            command_id=command_id,
+            conversation_id=conversation_id,
+            metadata=metadata,
         )
         response = self._transport.submit(request)
         _validate_worker_response(request, response)
@@ -294,6 +320,9 @@ def build_capability_execution_request(
     tenant_id: str,
     identity_id: str,
     boundary: CapabilityExecutionBoundary,
+    command_id: str = "",
+    conversation_id: str = "",
+    metadata: dict[str, Any] | None = None,
 ) -> CapabilityExecutionRequest:
     """Build a signed-transport-ready capability execution request."""
     return _build_execution_request(
@@ -301,6 +330,9 @@ def build_capability_execution_request(
         tenant_id=tenant_id,
         identity_id=identity_id,
         boundary=boundary,
+        command_id=command_id,
+        conversation_id=conversation_id,
+        metadata=metadata,
     )
 
 
@@ -310,20 +342,30 @@ def _build_execution_request(
     tenant_id: str,
     identity_id: str,
     boundary: CapabilityExecutionBoundary,
+    command_id: str = "",
+    conversation_id: str = "",
+    metadata: dict[str, Any] | None = None,
 ) -> CapabilityExecutionRequest:
     intent_payload = {"skill": intent.skill, "action": intent.action, "params": dict(intent.params)}
+    request_metadata = dict(metadata or {})
     input_hash = canonical_hash({
         "intent": intent_payload,
         "tenant_id": tenant_id,
         "identity_id": identity_id,
+        "command_id": command_id,
+        "conversation_id": conversation_id,
         "boundary": asdict(boundary),
+        "metadata": request_metadata,
     })
     request_hash = canonical_hash({
         "tenant_id": tenant_id,
         "identity_id": identity_id,
+        "command_id": command_id,
+        "conversation_id": conversation_id,
         "intent": intent_payload,
         "boundary": asdict(boundary),
         "input_hash": input_hash,
+        "metadata": request_metadata,
     })
     return CapabilityExecutionRequest(
         request_id=f"capability-request-{request_hash[:16]}",
@@ -332,6 +374,9 @@ def _build_execution_request(
         intent=intent_payload,
         boundary=boundary,
         input_hash=input_hash,
+        command_id=command_id,
+        conversation_id=conversation_id,
+        metadata=request_metadata,
     )
 
 
@@ -340,9 +385,12 @@ def _request_payload(request: CapabilityExecutionRequest) -> dict[str, Any]:
         "request_id": request.request_id,
         "tenant_id": request.tenant_id,
         "identity_id": request.identity_id,
+        "command_id": request.command_id,
+        "conversation_id": request.conversation_id,
         "intent": dict(request.intent),
         "boundary": asdict(request.boundary),
         "input_hash": request.input_hash,
+        "metadata": dict(request.metadata),
     }
 
 
@@ -373,6 +421,9 @@ def capability_execution_request_from_mapping(raw: dict[str, Any]) -> Capability
             intent=dict(intent),
             boundary=parsed_boundary,
             input_hash=str(raw["input_hash"]),
+            command_id=str(raw.get("command_id", "")),
+            conversation_id=str(raw.get("conversation_id", "")),
+            metadata=dict(raw.get("metadata", {})),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise RuntimeError("capability request is malformed") from exc
@@ -380,7 +431,10 @@ def capability_execution_request_from_mapping(raw: dict[str, Any]) -> Capability
         "intent": request.intent,
         "tenant_id": request.tenant_id,
         "identity_id": request.identity_id,
+        "command_id": request.command_id,
+        "conversation_id": request.conversation_id,
         "boundary": asdict(request.boundary),
+        "metadata": dict(request.metadata),
     })
     if request.input_hash != expected:
         raise RuntimeError("capability request input hash mismatch")

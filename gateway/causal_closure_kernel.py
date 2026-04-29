@@ -20,6 +20,7 @@ from enum import StrEnum
 from typing import Any, Callable
 
 from gateway.capability_isolation import (
+    CapabilityExecutionBoundary,
     CapabilityIsolationPolicy,
     IsolatedCapabilityExecutor,
     LocalCapabilityExecutionWorker,
@@ -29,7 +30,9 @@ from gateway.command_spine import (
     CommandEnvelope,
     CommandLedger,
     CommandState,
+    GovernedAction,
     capability_passport_for,
+    canonical_hash,
 )
 from gateway.proof_carrying_adapter import ProofCarryingCapabilityAdapter
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
@@ -198,11 +201,19 @@ class CausalClosureKernel:
         passport = capability_passport_for(command.intent)
         boundary = self._isolation_policy.boundary_for(passport)
         if not boundary.isolation_required:
+            dispatch_metadata = self._capability_dispatch_metadata(command, action, boundary)
             receipt_execution = self._proof_adapter.execute(
                 command=command,
                 governed_action=action,
                 capability_passport=passport,
-                executor=lambda: self._skills.dispatch(skill_intent, command.tenant_id, command.actor_id),
+                executor=lambda: self._skills.dispatch(
+                    skill_intent,
+                    command.tenant_id,
+                    command.actor_id,
+                    command_id=command.command_id,
+                    conversation_id=command.conversation_id,
+                    metadata=dispatch_metadata,
+                ),
             )
             return receipt_execution.result
         if self._isolated_executor is None:
@@ -214,6 +225,7 @@ class CausalClosureKernel:
                 "receipt_status": "isolation_worker_required",
                 "capability_execution_boundary": asdict(boundary),
             }
+        dispatch_metadata = self._capability_dispatch_metadata(command, action, boundary)
         receipt_execution = self._proof_adapter.execute(
             command=command,
             governed_action=action,
@@ -223,6 +235,9 @@ class CausalClosureKernel:
                 tenant_id=command.tenant_id,
                 identity_id=command.actor_id,
                 boundary=boundary,
+                command_id=command.command_id,
+                conversation_id=command.conversation_id,
+                metadata=dispatch_metadata,
             )[0],
         )
         self._commands.transition(
@@ -237,6 +252,50 @@ class CausalClosureKernel:
             },
         )
         return receipt_execution.result
+
+    def _capability_dispatch_metadata(
+        self,
+        command: CommandEnvelope,
+        action: GovernedAction,
+        boundary: CapabilityExecutionBoundary,
+    ) -> dict[str, Any]:
+        """Build command-side witness metadata for a capability handler."""
+        events = self._commands.events_for(command.command_id)
+        approval_event = next((event for event in reversed(events) if event.approval_id), None)
+        budget_event = next(
+            (event for event in reversed(events) if event.next_state is CommandState.BUDGET_RESERVED),
+            None,
+        )
+        approval_id = action.approval_id or (approval_event.approval_id if approval_event is not None else "")
+        if not approval_id:
+            approval_id = "approval-not-required-" + canonical_hash({
+                "command_id": command.command_id,
+                "capability_id": action.capability,
+                "risk_tier": action.risk_tier,
+                "policy_version": command.policy_version,
+            })[:16]
+        budget_reservation_id = "budget-reservation-" + canonical_hash({
+            "command_id": command.command_id,
+            "capability_id": action.capability,
+            "budget_decision": budget_event.budget_decision if budget_event is not None else "implicit",
+            "budget_event_hash": budget_event.event_hash if budget_event is not None else "",
+        })[:16]
+        boundary_hash = canonical_hash(asdict(boundary))
+        return {
+            "command_id": command.command_id,
+            "conversation_id": command.conversation_id,
+            "trace_id": command.trace_id,
+            "capability_id": action.capability,
+            "risk_tier": action.risk_tier,
+            "approval_id": approval_id,
+            "approval_required": action.risk_tier in {"medium", "high"},
+            "approval_witness_event_hash": approval_event.event_hash if approval_event is not None else "",
+            "budget_reservation_id": budget_reservation_id,
+            "budget_witness_event_hash": budget_event.event_hash if budget_event is not None else "",
+            "isolation_boundary_id": f"isolation-boundary-{boundary_hash[:16]}",
+            "isolation_boundary_hash": boundary_hash,
+            "isolation_boundary": asdict(boundary),
+        }
 
     def _preflight(self, command: CommandEnvelope) -> CausalClosureResult | None:
         governed_action = self._commands.governed_action_for(command.command_id)
