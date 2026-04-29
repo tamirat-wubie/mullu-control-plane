@@ -580,6 +580,37 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
         _require_authority_operator(request)
         return asdict(authority_obligation_mesh.responsibility_witness())
 
+    @app.get("/authority/ownership")
+    def authority_ownership(
+        request: Request,
+        tenant_id: str = "",
+        resource_ref: str = "",
+        owner_team: str = "",
+        primary_owner_id: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        ownership = authority_mesh_store.list_ownership()
+        if tenant_id:
+            ownership = tuple(item for item in ownership if item.tenant_id == tenant_id)
+        if resource_ref:
+            ownership = tuple(item for item in ownership if item.resource_ref == resource_ref)
+        if owner_team:
+            ownership = tuple(item for item in ownership if item.owner_team == owner_team)
+        if primary_owner_id:
+            ownership = tuple(item for item in ownership if item.primary_owner_id == primary_owner_id)
+        page, page_meta = _read_model_page(
+            ownership,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        return {
+            "ownership": [asdict(item) for item in page],
+            "count": len(page),
+            **page_meta,
+        }
+
     @app.get("/authority/approval-chains")
     def authority_approval_chains(
         request: Request,

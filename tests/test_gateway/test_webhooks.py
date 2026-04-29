@@ -21,6 +21,7 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
     ApprovalChainStatus,
     Obligation,
     ObligationStatus,
+    TeamOwnership,
 )
 from gateway.command_spine import CommandState  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
@@ -891,6 +892,44 @@ class TestGatewayStatus:
 
         assert denied.status_code == 403
         assert denied.json()["detail"] == "Authority operator access not authorized"
+
+    def test_authority_ownership_read_model_filters_owner_records(self, gateway_app, client):
+        gateway_app.state.authority_mesh_store.save_ownership(TeamOwnership(
+            tenant_id="t1",
+            resource_ref="financial.send_payment",
+            owner_team="finance_ops",
+            primary_owner_id="finance-manager-1",
+            fallback_owner_id="tenant-owner-1",
+            escalation_team="executive_ops",
+        ))
+        gateway_app.state.authority_mesh_store.save_ownership(TeamOwnership(
+            tenant_id="t1",
+            resource_ref="deploy.production",
+            owner_team="platform_security",
+            primary_owner_id="security-admin-1",
+            fallback_owner_id="engineering-lead-1",
+            escalation_team="engineering_ops",
+        ))
+
+        list_resp = client.get("/authority/ownership?tenant_id=t1&limit=1")
+        team_resp = client.get("/authority/ownership?owner_team=finance_ops")
+        resource_resp = client.get("/authority/ownership?resource_ref=deploy.production")
+        owner_resp = client.get("/authority/ownership?primary_owner_id=security-admin-1")
+        missing_resp = client.get("/authority/ownership?owner_team=missing-team")
+
+        assert list_resp.status_code == 200
+        assert list_resp.json()["count"] == 1
+        assert list_resp.json()["total"] == 2
+        assert list_resp.json()["next_offset"] == 1
+        assert team_resp.status_code == 200
+        assert team_resp.json()["count"] == 1
+        assert team_resp.json()["ownership"][0]["owner_team"] == "finance_ops"
+        assert resource_resp.status_code == 200
+        assert resource_resp.json()["ownership"][0]["resource_ref"] == "deploy.production"
+        assert owner_resp.status_code == 200
+        assert owner_resp.json()["ownership"][0]["primary_owner_id"] == "security-admin-1"
+        assert missing_resp.status_code == 200
+        assert missing_resp.json()["count"] == 0
 
     def test_authority_approval_chain_read_model(self, gateway_app, client):
         msg_resp = client.post(
