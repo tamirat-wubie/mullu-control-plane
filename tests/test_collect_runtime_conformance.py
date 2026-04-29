@@ -166,13 +166,27 @@ def test_collect_runtime_conformance_records_authority_read_model_failures(monke
         step for step in collection.steps
         if step.name == "authority overdue obligation read model"
     )
+    ownership_step = next(
+        step for step in collection.steps
+        if step.name == "authority ownership read model"
+    )
+    policy_step = next(
+        step for step in collection.steps
+        if step.name == "authority policy read model"
+    )
 
     assert approval_step.passed is False
     assert obligation_step.passed is False
+    assert ownership_step.passed is False
+    assert policy_step.passed is False
     assert "status=404" in approval_step.detail
     assert "status=404" in obligation_step.detail
+    assert "status=404" in ownership_step.detail
+    assert "status=404" in policy_step.detail
     assert "authority overdue approval chain read model was not available" in collection.errors
     assert "authority overdue obligation read model was not available" in collection.errors
+    assert "authority ownership read model was not available" in collection.errors
+    assert "authority policy read model was not available" in collection.errors
 
 
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
@@ -230,6 +244,21 @@ def _urlopen_for_certificate(
             return StubHttpResponse(
                 status=authority_status,
                 payload={"obligations": [], "count": 0} if authority_status == 200 else {},
+            )
+        if "/authority/ownership?limit=1" in url:
+            return StubHttpResponse(
+                status=authority_status,
+                payload={"ownership": [], "count": 0} if authority_status == 200 else {},
+            )
+        if "/authority/policies?limit=1" in url:
+            return StubHttpResponse(
+                status=authority_status,
+                payload={
+                    "approval_policies": [],
+                    "escalation_policies": [],
+                    "approval_count": 0,
+                    "escalation_count": 0,
+                } if authority_status == 200 else {},
             )
         return StubHttpResponse(status=404, payload={})
 

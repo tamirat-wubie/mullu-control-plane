@@ -19,6 +19,8 @@ from fastapi.testclient import TestClient  # noqa: E402
 from gateway.authority_obligation_mesh import (  # noqa: E402
     ApprovalChain,
     ApprovalChainStatus,
+    ApprovalPolicy,
+    EscalationPolicy,
     Obligation,
     ObligationStatus,
     TeamOwnership,
@@ -930,6 +932,63 @@ class TestGatewayStatus:
         assert owner_resp.json()["ownership"][0]["primary_owner_id"] == "security-admin-1"
         assert missing_resp.status_code == 200
         assert missing_resp.json()["count"] == 0
+
+    def test_authority_policy_read_model_filters_approval_and_escalation_policies(self, gateway_app, client):
+        gateway_app.state.authority_mesh_store.save_approval_policy(ApprovalPolicy(
+            policy_id="payment-high-risk-policy",
+            tenant_id="t1",
+            capability="financial.send_payment",
+            risk_tier="high",
+            required_roles=("financial_admin",),
+            required_approver_count=2,
+            separation_of_duty=True,
+            timeout_seconds=300,
+            escalation_policy_id="finance-escalation",
+        ))
+        gateway_app.state.authority_mesh_store.save_approval_policy(ApprovalPolicy(
+            policy_id="deploy-high-risk-policy",
+            tenant_id="t1",
+            capability="deploy.production",
+            risk_tier="high",
+            required_roles=("security_admin",),
+            required_approver_count=2,
+            separation_of_duty=True,
+            timeout_seconds=600,
+            escalation_policy_id="platform-escalation",
+        ))
+        gateway_app.state.authority_mesh_store.save_escalation_policy(EscalationPolicy(
+            policy_id="finance-escalation",
+            tenant_id="t1",
+            notify_after_seconds=300,
+            escalate_after_seconds=900,
+            incident_after_seconds=3600,
+            fallback_owner_id="tenant-owner-1",
+            escalation_team="executive_ops",
+        ))
+
+        list_resp = client.get("/authority/policies?tenant_id=t1&limit=1")
+        capability_resp = client.get("/authority/policies?capability=financial.send_payment")
+        role_resp = client.get("/authority/policies?required_role=security_admin")
+        escalation_resp = client.get("/authority/policies?policy_id=finance-escalation")
+        missing_resp = client.get("/authority/policies?required_role=missing-role")
+
+        assert list_resp.status_code == 200
+        assert list_resp.json()["approval_count"] == 1
+        assert list_resp.json()["approval_page"]["total"] == 2
+        assert list_resp.json()["approval_page"]["next_offset"] == 1
+        assert list_resp.json()["escalation_count"] == 1
+        assert capability_resp.status_code == 200
+        assert capability_resp.json()["approval_count"] == 1
+        assert capability_resp.json()["approval_policies"][0]["capability"] == "financial.send_payment"
+        assert role_resp.status_code == 200
+        assert role_resp.json()["approval_policies"][0]["required_roles"] == ["security_admin"]
+        assert escalation_resp.status_code == 200
+        assert escalation_resp.json()["approval_count"] == 0
+        assert escalation_resp.json()["escalation_count"] == 1
+        assert escalation_resp.json()["escalation_policies"][0]["escalation_team"] == "executive_ops"
+        assert missing_resp.status_code == 200
+        assert missing_resp.json()["approval_count"] == 0
+        assert missing_resp.json()["escalation_count"] == 0
 
     def test_authority_approval_chain_read_model(self, gateway_app, client):
         msg_resp = client.post(

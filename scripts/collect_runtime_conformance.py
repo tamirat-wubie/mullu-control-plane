@@ -203,6 +203,46 @@ def collect_runtime_conformance(
     if not obligation_filter_passed:
         errors.append("authority overdue obligation read model was not available")
 
+    ownership_status, ownership_payload = _get_json(
+        f"{gateway_base}/authority/ownership?limit=1",
+        headers=authority_headers,
+    )
+    ownership_passed = (
+        ownership_status == 200
+        and isinstance(ownership_payload.get("ownership"), list)
+        and isinstance(ownership_payload.get("count"), int)
+    )
+    steps.append(CollectionStep(
+        name="authority ownership read model",
+        passed=ownership_passed,
+        detail=f"status={ownership_status} count={ownership_payload.get('count', 'missing')}",
+    ))
+    if not ownership_passed:
+        errors.append("authority ownership read model was not available")
+
+    policy_status, policy_payload = _get_json(
+        f"{gateway_base}/authority/policies?limit=1",
+        headers=authority_headers,
+    )
+    policy_passed = (
+        policy_status == 200
+        and isinstance(policy_payload.get("approval_policies"), list)
+        and isinstance(policy_payload.get("escalation_policies"), list)
+        and isinstance(policy_payload.get("approval_count"), int)
+        and isinstance(policy_payload.get("escalation_count"), int)
+    )
+    steps.append(CollectionStep(
+        name="authority policy read model",
+        passed=policy_passed,
+        detail=(
+            f"status={policy_status} "
+            f"approval_count={policy_payload.get('approval_count', 'missing')} "
+            f"escalation_count={policy_payload.get('escalation_count', 'missing')}"
+        ),
+    ))
+    if not policy_passed:
+        errors.append("authority policy read model was not available")
+
     collection_seed = {
         "gateway_url": gateway_base,
         "collected_at": collected_at,
