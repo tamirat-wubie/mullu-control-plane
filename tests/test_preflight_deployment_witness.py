@@ -203,6 +203,23 @@ def test_preflight_deployment_witness_rejects_expired_conformance_certificate() 
     assert "fresh=False" in conformance_step.detail
 
 
+def test_preflight_deployment_witness_rejects_responsibility_debt() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_responsibility_debt_getter,
+    )
+    conformance_step = next(step for step in report.steps if step.name == "runtime conformance endpoint")
+
+    assert report.ready is False
+    assert conformance_step.passed is False
+    assert "responsibility_debt_clear=False" in conformance_step.detail
+
+
 def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     runner = FakeRunner()
 
@@ -290,6 +307,13 @@ def _expired_conformance_getter(url: str) -> tuple[int, dict[str, Any]]:
     status, payload = _healthy_getter(url)
     if url.endswith("/runtime/conformance"):
         return status, {**payload, "expires_at": "2026-04-25T00:30:00+00:00"}
+    return status, payload
+
+
+def _responsibility_debt_getter(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _healthy_getter(url)
+    if url.endswith("/runtime/conformance"):
+        return status, {**payload, "authority_responsibility_debt_clear": False}
     return status, payload
 
 

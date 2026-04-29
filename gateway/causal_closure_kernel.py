@@ -198,7 +198,7 @@ class CausalClosureKernel:
         action = self._commands.governed_action_for(command.command_id)
         if action is None:
             raise RuntimeError("missing governed action")
-        passport = capability_passport_for(command.intent)
+        passport = self._commands.capability_passport_for_intent(command.intent)
         boundary = self._isolation_policy.boundary_for(passport)
         if not boundary.isolation_required:
             dispatch_metadata = self._capability_dispatch_metadata(command, action, boundary)

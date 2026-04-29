@@ -863,6 +863,76 @@ def create_gateway_app(platform: Any = None) -> FastAPI:
             **page_meta,
         }
 
+    @app.get("/authority/responsibility")
+    def authority_responsibility(
+        request: Request,
+        tenant_id: str = "",
+        limit: int = 25,
+    ):
+        _require_authority_operator(request)
+        bounded_limit = _bounded_read_model_limit(limit, maximum=100)
+        witness = asdict(authority_obligation_mesh.responsibility_witness())
+        chains = authority_mesh_store.list_approval_chains()
+        obligations = authority_mesh_store.list_obligations()
+        escalation_events = authority_mesh_store.list_escalation_events()
+        ownership = authority_mesh_store.list_ownership()
+        approval_policies = authority_mesh_store.list_approval_policies()
+        escalation_policies = authority_mesh_store.list_escalation_policies()
+        if tenant_id:
+            chains = tuple(chain for chain in chains if chain.tenant_id == tenant_id)
+            obligations = tuple(obligation for obligation in obligations if obligation.tenant_id == tenant_id)
+            escalation_events = tuple(event for event in escalation_events if event.get("tenant_id") == tenant_id)
+            ownership = tuple(item for item in ownership if item.tenant_id == tenant_id)
+            approval_policies = tuple(policy for policy in approval_policies if policy.tenant_id == tenant_id)
+            escalation_policies = tuple(policy for policy in escalation_policies if policy.tenant_id == tenant_id)
+        pending_chains = tuple(
+            chain for chain in chains
+            if chain.status.value == "pending"
+        )
+        unresolved_obligations = tuple(
+            obligation for obligation in obligations
+            if obligation.status.value in {"open", "escalated"}
+        )
+        priority_chains = tuple(sorted(
+            pending_chains,
+            key=lambda chain: (_due_sort_key(chain.due_at), chain.chain_id),
+        ))[:bounded_limit]
+        priority_obligations = tuple(sorted(
+            unresolved_obligations,
+            key=lambda obligation: (_due_sort_key(obligation.due_at), obligation.obligation_id),
+        ))[:bounded_limit]
+        priority_escalations = tuple(reversed(escalation_events))[:bounded_limit]
+        debt_clear = (
+            int(witness.get("overdue_approval_chain_count", 0)) == 0
+            and int(witness.get("expired_approval_chain_count", 0)) == 0
+            and int(witness.get("overdue_obligation_count", 0)) == 0
+            and int(witness.get("escalated_obligation_count", 0)) == 0
+            and int(witness.get("unowned_high_risk_capability_count", 0)) == 0
+        )
+        return {
+            "tenant_id": tenant_id,
+            "responsibility_debt_clear": debt_clear,
+            "authority_witness": witness,
+            "ownership_count": len(ownership),
+            "approval_policy_count": len(approval_policies),
+            "escalation_policy_count": len(escalation_policies),
+            "pending_approval_chain_count": len(pending_chains),
+            "unresolved_obligation_count": len(unresolved_obligations),
+            "escalation_event_count": len(escalation_events),
+            "priority_approval_chains": [asdict(chain) for chain in priority_chains],
+            "priority_obligations": [asdict(obligation) for obligation in priority_obligations],
+            "priority_escalation_events": list(priority_escalations),
+            "limit": bounded_limit,
+            "evidence_refs": [
+                "authority:witness",
+                "authority:approval_chains_read_model",
+                "authority:obligations_read_model",
+                "authority:escalations_read_model",
+                "authority:ownership_read_model",
+                "authority:policy_read_model",
+            ],
+        }
+
     @app.get("/authority/operator-audit")
     def authority_operator_audit(
         request: Request,
@@ -1147,6 +1217,7 @@ def _authority_operator_console_html(
   <h1>Mullu Authority Operator Console</h1>
   <p>Organizational responsibility witness for approval chains, obligations, and escalation debt.</p>
   <nav>
+    <a href="/authority/responsibility">responsibility json</a>
     <a href="/authority/witness">witness json</a>
     <a href="/authority/approval-chains">approval chains json</a>
     <a href="/authority/obligations">obligations json</a>
@@ -1279,6 +1350,19 @@ def _read_model_page(items: tuple[Any, ...], *, limit: int, offset: int) -> tupl
         "offset": offset,
         "next_offset": next_offset if next_offset < total else None,
     }
+
+
+def _due_sort_key(timestamp: str) -> str:
+    """Return a stable sortable timestamp key for responsibility read models."""
+    from datetime import datetime, timezone
+
+    try:
+        parsed = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+    except ValueError:
+        parsed = datetime.max.replace(tzinfo=timezone.utc)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.isoformat()
 
 
 # Default app instance

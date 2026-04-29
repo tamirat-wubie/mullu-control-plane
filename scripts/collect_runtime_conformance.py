@@ -267,6 +267,31 @@ def collect_runtime_conformance(
     if not policy_passed:
         errors.append("authority policy read model was not available")
 
+    responsibility_status, responsibility_payload = _get_json(
+        f"{gateway_base}/authority/responsibility?limit=1",
+        headers=authority_headers,
+    )
+    responsibility_passed = (
+        responsibility_status == 200
+        and isinstance(responsibility_payload.get("responsibility_debt_clear"), bool)
+        and isinstance(responsibility_payload.get("authority_witness"), dict)
+        and isinstance(responsibility_payload.get("priority_approval_chains"), list)
+        and isinstance(responsibility_payload.get("priority_obligations"), list)
+        and isinstance(responsibility_payload.get("priority_escalation_events"), list)
+        and isinstance(responsibility_payload.get("evidence_refs"), list)
+    )
+    steps.append(CollectionStep(
+        name="authority responsibility cockpit read model",
+        passed=responsibility_passed,
+        detail=(
+            f"status={responsibility_status} "
+            f"debt_clear={responsibility_payload.get('responsibility_debt_clear', 'missing')} "
+            f"unresolved_obligation_count={responsibility_payload.get('unresolved_obligation_count', 'missing')}"
+        ),
+    ))
+    if not responsibility_passed:
+        errors.append("authority responsibility cockpit read model was not available")
+
     collection_seed = {
         "gateway_url": gateway_base,
         "collected_at": collected_at,

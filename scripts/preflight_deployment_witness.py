@@ -348,6 +348,7 @@ def _check_runtime_conformance_endpoint(
         and terminal_status in {"conformant", "conformant_with_gaps"}
         and bool(payload.get("gateway_witness_valid"))
         and bool(payload.get("runtime_witness_valid"))
+        and bool(payload.get("authority_responsibility_debt_clear"))
         and runtime_environment == expected_environment
         and fresh
     )
@@ -356,7 +357,9 @@ def _check_runtime_conformance_endpoint(
         passed,
         (
             f"status={status} terminal_status={terminal_status} "
-            f"environment={runtime_environment} fresh={fresh} missing={missing_fields}"
+            f"environment={runtime_environment} fresh={fresh} "
+            f"responsibility_debt_clear={bool(payload.get('authority_responsibility_debt_clear'))} "
+            f"missing={missing_fields}"
         ),
     )
 

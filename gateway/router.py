@@ -113,7 +113,10 @@ class GatewayRouter:
         self._commands = command_ledger or CommandLedger(clock=self._clock)
         self._tenant_identities = tenant_identity_store or InMemoryTenantIdentityStore(clock=self._clock)
         self._memory = memory_store or InMemoryGovernedMemoryStore(clock=self._clock)
-        self._plan_builder = CapabilityPlanBuilder(resolver=self._intent_resolver)
+        self._plan_builder = CapabilityPlanBuilder(
+            resolver=self._intent_resolver,
+            capability_passport_loader=self._commands.capability_passport_for_intent,
+        )
         self._plan_ledger = plan_ledger or CapabilityPlanLedger(clock=self._clock)
         self._authority_obligation_mesh = authority_obligation_mesh or AuthorityObligationMesh(
             commands=self._commands,

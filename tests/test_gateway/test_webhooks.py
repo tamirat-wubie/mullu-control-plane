@@ -1417,6 +1417,7 @@ class TestGatewayStatus:
         )
         command_resp = client.get(f"/commands/{obligation.command_id}/authority")
         escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}&limit=1")
+        responsibility_resp = client.get("/authority/responsibility?tenant_id=t1&limit=2")
         satisfied_resp = client.get("/authority/obligations?tenant_id=t1&status=satisfied")
         witness_resp = client.get("/authority/witness")
         console_resp = client.get("/authority/operator")
@@ -1464,10 +1465,21 @@ class TestGatewayStatus:
         assert escalations_resp.json()["count"] == 1
         assert escalations_resp.json()["total"] == 2
         assert escalations_resp.json()["next_offset"] == 1
+        assert responsibility_resp.status_code == 200
+        responsibility_payload = responsibility_resp.json()
+        assert responsibility_payload["tenant_id"] == "t1"
+        assert responsibility_payload["responsibility_debt_clear"] is False
+        assert responsibility_payload["unresolved_obligation_count"] == 2
+        assert responsibility_payload["escalation_event_count"] == 2
+        assert responsibility_payload["priority_obligations"][0]["obligation_id"] == second_obligation.obligation_id
+        assert responsibility_payload["priority_obligations"][1]["obligation_id"] == compensation_obligation.obligation_id
+        assert responsibility_payload["priority_escalation_events"][0]["event_id"] == "obl-escalation-test-read-model-second"
+        assert "authority:obligations_read_model" in responsibility_payload["evidence_refs"]
         assert satisfied_resp.json()["count"] == 1
         assert witness_resp.json()["requires_review_count"] == 0
         assert console_resp.status_code == 200
         assert obligation.obligation_id in console_resp.text
+        assert "/authority/responsibility" in console_resp.text
         assert "case_review" in console_resp.text
 
     def test_authority_obligation_satisfaction_rejects_missing_obligation(self, client):

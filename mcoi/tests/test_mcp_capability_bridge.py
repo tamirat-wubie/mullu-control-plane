@@ -77,8 +77,10 @@ def test_import_mcp_tool_creates_candidate_capability_contract() -> None:
     assert entry.authority_policy.required_roles == ("developer",)
     assert entry.evidence_model.terminal_certificate_required is True
     assert "tool_call_receipt" in entry.evidence_model.required_evidence
+    assert entry.effect_model.reconciliation_required is True
     assert entry.isolation_profile.execution_plane == "external_mcp_server"
     assert entry.recovery_plan.review_required_on_failure is True
+    assert entry.recovery_plan.compensation_capability == "mcp.operator_review_compensation"
     assert entry.obligation_model.owner_team == "devops"
     assert entry.metadata["source"] == "mcp.import_tool"
     assert entry.extensions["mcp"]["tool_name"] == "Create Issue"
@@ -103,7 +105,9 @@ def test_import_mcp_tool_classifies_read_only_and_high_risk_effects() -> None:
 
     assert read_only.metadata["risk_tier"] == "low"
     assert read_only.effect_model.expected_effects == ("external_context_read",)
+    assert read_only.effect_model.reconciliation_required is False
     assert read_only.authority_policy.separation_of_duty is False
+    assert read_only.recovery_plan.compensation_capability == ""
     assert high_risk.metadata["risk_tier"] == "high"
     assert high_risk.effect_model.expected_effects == ("external_email_sent",)
     assert high_risk.authority_policy.separation_of_duty is True

@@ -137,6 +137,42 @@ def test_collect_deployment_witness_rejects_expired_conformance_certificate(monk
     assert "fresh=False" in conformance_step.detail
 
 
+def test_collect_deployment_witness_rejects_responsibility_debt(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        authority_responsibility_debt_clear=False,
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.conformance_signature_status == "verified"
+    assert conformance_step.passed is False
+    assert "responsibility_debt_clear=False" in conformance_step.detail
+    assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
+
+
 def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     witness_payload = _signed_runtime_witness(secret="runtime-secret")
     conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
@@ -229,6 +265,7 @@ def _signed_conformance_certificate(
     *,
     secret: str,
     expires_at: str = "2026-04-25T00:30:00+00:00",
+    authority_responsibility_debt_clear: bool = True,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
@@ -244,7 +281,7 @@ def _signed_conformance_certificate(
         "streaming_budget_canary_passed": True,
         "lineage_query_canary_passed": True,
         "authority_obligation_canary_passed": True,
-        "authority_responsibility_debt_clear": True,
+        "authority_responsibility_debt_clear": authority_responsibility_debt_clear,
         "authority_pending_approval_chain_count": 0,
         "authority_overdue_approval_chain_count": 0,
         "authority_open_obligation_count": 0,
