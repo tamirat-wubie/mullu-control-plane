@@ -1,0 +1,24 @@
+{
+  "capsule_id": "creative.productivity.v0",
+  "domain": "creative",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/creative/productivity.json"],
+  "capability_refs": [
+    "creative.document_generate",
+    "creative.data_analyze",
+    "creative.translate"
+  ],
+  "policy_refs": ["policies/creative/productivity.policy.json"],
+  "evidence_rules": ["evidence/creative/productivity.evidence.json"],
+  "approval_rules": ["approval/creative/productivity.approval.json"],
+  "recovery_rules": ["recovery/creative/productivity.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/creative/productivity"],
+  "read_model_refs": ["read_models/creative/productivity.json"],
+  "operator_view_refs": ["operator_views/creative/productivity.json"],
+  "owner_team": "creative-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified productivity capabilities for document, data, and translation workflows"
+  },
+  "extensions": {}
+}

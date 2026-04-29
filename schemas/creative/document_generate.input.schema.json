@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/creative/document_generate.input.schema.json",
+  "type": "object",
+  "required": ["brief"],
+  "properties": {
+    "brief": {"type": "string", "minLength": 1},
+    "title": {"type": "string"},
+    "format": {"type": "string"}
+  },
+  "additionalProperties": true
+}
