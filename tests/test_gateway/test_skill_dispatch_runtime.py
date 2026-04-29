@@ -16,6 +16,7 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from gateway.intent_resolver import CapabilityIntentResolver  # noqa: E402
 from gateway.skill_dispatch import SkillDispatcher, SkillIntent, build_skill_dispatcher_from_platform  # noqa: E402
 from gateway.capability_isolation import (  # noqa: E402
     CapabilityExecutionBoundary,
@@ -151,6 +152,18 @@ class PlatformWithCapabilityRuntime:
         self.capability_runtime = CapabilityRuntime(provider)
 
 
+class ExactCapabilityRegistry:
+    """Registry stub that records exact capability lookup keys."""
+
+    def __init__(self, admitted: set[str]) -> None:
+        self.admitted = admitted
+        self.lookups: list[tuple[str, str]] = []
+
+    def find_agents_with_capability(self, capability_id: str, tenant_id: str) -> list[str]:
+        self.lookups.append((capability_id, tenant_id))
+        return ["agent-1"] if capability_id in self.admitted else []
+
+
 def _seeded_provider() -> StubFinancialProvider:
     provider = StubFinancialProvider()
     provider.seed_account(
@@ -248,6 +261,68 @@ def test_refund_dispatcher_requires_transaction_id() -> None:
     assert result is not None
     assert result["skill"] == "refund"
     assert result["receipt_status"] == "missing_transaction_id"
+
+
+def test_dispatcher_admits_exact_capability_id_not_domain() -> None:
+    registry = ExactCapabilityRegistry({"financial.balance_check"})
+    dispatcher = build_skill_dispatcher_from_platform(
+        PlatformWithFinancialProvider(_seeded_provider()),
+    )
+    dispatcher._capability_registry = registry
+
+    result = dispatcher.dispatch(
+        SkillIntent("financial", "balance_check", {}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert registry.lookups == [("financial.balance_check", "tenant-1")]
+    assert result["capability_id"] == "financial.balance_check"
+
+
+def test_dispatcher_blocks_unadmitted_exact_capability() -> None:
+    registry = ExactCapabilityRegistry({"financial.balance_check"})
+    dispatcher = SkillDispatcher(
+        payment_executor=ApprovingPaymentExecutor(),
+        capability_registry=registry,
+    )
+
+    result = dispatcher.dispatch(
+        SkillIntent("financial", "send_payment", {"amount": "50"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert registry.lookups == [("financial.send_payment", "tenant-1")]
+    assert result["routed"] is False
+    assert result["capability_id"] == "financial.send_payment"
+
+
+def test_intent_resolver_supports_explicit_non_financial_capability() -> None:
+    resolver = CapabilityIntentResolver()
+
+    intent = resolver.resolve('/run enterprise.task_schedule {"title": "Review report"}')
+
+    assert intent is not None
+    assert intent.capability_id == "enterprise.task_schedule"
+    assert intent.params["title"] == "Review report"
+
+
+def test_dispatcher_executes_registered_enterprise_capability() -> None:
+    dispatcher = build_skill_dispatcher_from_platform(None)
+
+    result = dispatcher.dispatch(
+        SkillIntent("enterprise", "task_schedule", {"title": "Review generated report"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "enterprise.task_schedule"
+    assert result["receipt_status"] == "scheduled"
+    assert result["task_id"].startswith("task-")
 
 
 def test_capability_isolation_marks_payment_as_isolated() -> None:

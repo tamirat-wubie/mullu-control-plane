@@ -4,7 +4,7 @@ Purpose: Owns command execution truth after gateway ingress and before
     response delivery.
 Governance scope: gateway command closure, response evidence, terminal
     certification, closure memory, and learning admission.
-Dependencies: gateway command spine, governed platform session, skill
+Dependencies: gateway command spine, governed platform session, capability
     dispatcher.
 Invariants:
   - No success response is returned without terminal closure certification.
@@ -32,7 +32,7 @@ from gateway.command_spine import (
     capability_passport_for,
 )
 from gateway.proof_carrying_adapter import ProofCarryingCapabilityAdapter
-from gateway.skill_dispatch import SkillDispatcher, SkillIntent
+from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 
 
 class ClosureResponseKind(StrEnum):
@@ -67,8 +67,8 @@ class CausalClosureKernel:
         *,
         commands: CommandLedger,
         platform: Any,
-        skills: SkillDispatcher,
-        skill_intent_loader: Callable[[CommandEnvelope], SkillIntent | None],
+        skills: CapabilityDispatcher,
+        skill_intent_loader: Callable[[CommandEnvelope], CapabilityIntent | None],
         error_recorder: Callable[[], None],
         clock: Callable[[], str] | None = None,
         isolation_policy: CapabilityIsolationPolicy | None = None,
@@ -190,7 +190,7 @@ class CausalClosureKernel:
             {"command_id": command.command_id},
         )
 
-    def _dispatch_skill(self, command: CommandEnvelope, skill_intent: SkillIntent) -> dict[str, Any] | None:
+    def _dispatch_skill(self, command: CommandEnvelope, skill_intent: CapabilityIntent) -> dict[str, Any] | None:
         """Dispatch skill intent through the governed execution boundary."""
         action = self._commands.governed_action_for(command.command_id)
         if action is None:
