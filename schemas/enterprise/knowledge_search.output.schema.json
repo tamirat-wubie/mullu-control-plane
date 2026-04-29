@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/enterprise/knowledge_search.output.schema.json",
+  "type": "object",
+  "required": ["total_chunks_searched", "receipt_status"],
+  "properties": {
+    "total_chunks_searched": {"type": "integer", "minimum": 0},
+    "chunks": {"type": "array", "items": {"type": "string"}},
+    "scores": {"type": "array", "items": {"type": "number"}},
+    "receipt_status": {"const": "searched"}
+  },
+  "additionalProperties": true
+}
