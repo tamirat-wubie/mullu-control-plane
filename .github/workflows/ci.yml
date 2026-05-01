@@ -116,6 +116,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: Validate deployment publication closure
+        run: python scripts/validate_deployment_publication_closure.py
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
         env:
@@ -226,6 +229,9 @@ jobs:
 
       - name: Public repository surface check
         run: python scripts/validate_public_repository_surface.py --local-only
+
+      - name: Deployment publication closure check
+        run: python scripts/validate_deployment_publication_closure.py
 
       - name: Gateway deployment environment check
         run: python scripts/validate_gateway_deployment_env.py --strict

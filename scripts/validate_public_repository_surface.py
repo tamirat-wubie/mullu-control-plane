@@ -95,6 +95,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/validate_gateway_publication_receipt.py --receipt .change_assurance/gateway_publication_receipt.json --require-ready --require-dispatched --require-success",
     "python scripts/dispatch_gateway_publication.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --dispatch-witness",
     "python scripts/dispatch_deployment_witness.py",
+    "python scripts/validate_deployment_publication_closure.py",
     "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
     ".change_assurance/deployment_witness_orchestration.json",
     "python scripts/validate_deployment_orchestration_receipt.py --receipt \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\" --require-mcp-operator-checklist --require-preflight --expected-environment pilot",

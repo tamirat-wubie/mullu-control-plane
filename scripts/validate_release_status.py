@@ -74,6 +74,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python -m pytest tests/test_gateway tests/test_pilot_proof_slice.py -q",
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/validate_gateway_deployment_env.py --strict",
+    "python scripts/validate_deployment_publication_closure.py",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
@@ -127,6 +128,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         ".change_assurance/deployment_witness_orchestration.json",
         "python scripts/validate_deployment_orchestration_receipt.py --receipt \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\" --require-mcp-operator-checklist --require-preflight --expected-environment pilot",
         "python scripts/gateway_runtime_smoke.py",
+        "python scripts/validate_deployment_publication_closure.py",
         "python scripts/validate_public_repository_surface.py",
     ),
 }
