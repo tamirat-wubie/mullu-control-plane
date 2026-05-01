@@ -9,7 +9,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 
 # Deployment Status Witness
 
-**Last audited:** 2026-04-24
+**Last audited:** 2026-05-01
 **Deployment witness state:** `not-published`
 **Public production health endpoint:** `not-declared`
 **Gateway health endpoint:** `/health`
@@ -50,6 +50,15 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Capability plan evidence bundles | `/capability-plans/{plan_id}/closure` exposes terminal plan certificates, evidence bundles, witnesses, and recovery attempts; `/runtime/conformance` gates on `capability_plan_bundle_canary_passed` | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
+
+## GitHub Runtime Input State
+
+| Input surface | Observed state |
+|---|---|
+| Runtime witness secret | GitHub Actions secret name `MULLU_RUNTIME_WITNESS_SECRET` is present; secret value is not printed |
+| Runtime conformance secret | GitHub Actions secret name `MULLU_RUNTIME_CONFORMANCE_SECRET` is present; secret value is not printed |
+| Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not currently set |
+| Deployment witness workflow runs | No `deployment-witness.yml` workflow runs are currently recorded |
 
 ## Closure Requirements
 
