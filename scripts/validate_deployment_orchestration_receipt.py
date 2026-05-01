@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -38,6 +39,7 @@ DEFAULT_VALIDATION_OUTPUT = (
 ORCHESTRATION_RECEIPT_SCHEMA_PATH = (
     REPO_ROOT / "schemas" / "deployment_orchestration_receipt.schema.json"
 )
+RECEIPT_ID_PATTERN = re.compile(r"^deployment-witness-orchestration-[0-9a-f]{16}$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -229,10 +231,7 @@ def _check_required_fields(payload: dict[str, Any]) -> OrchestrationReceiptValid
 
 def _check_receipt_id(payload: dict[str, Any]) -> OrchestrationReceiptValidationStep:
     receipt_id = str(payload.get("receipt_id", ""))
-    passed = (
-        receipt_id.startswith("deployment-witness-orchestration-")
-        and len(receipt_id) > 32
-    )
+    passed = RECEIPT_ID_PATTERN.fullmatch(receipt_id) is not None
     return OrchestrationReceiptValidationStep(
         "receipt id",
         passed,

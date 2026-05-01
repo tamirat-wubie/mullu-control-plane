@@ -281,12 +281,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_mcp_capability_manifest.py",
                 "scripts/validate_mcp_operator_checklist.py",
                 "scripts/validate_deployment_orchestration_receipt.py",
+                "schemas/deployment_orchestration_receipt.schema.json",
+                "schemas/mullu_governance_protocol.manifest.json",
                 "tests/test_orchestrate_deployment_witness.py",
                 "tests/test_validate_deployment_orchestration_receipt.py",
+                "tests/test_validate_protocol_manifest.py",
                 "tests/test_preflight_deployment_witness.py",
                 "tests/test_collect_deployment_witness.py",
             ],
-            "Runtime witness surfaces publish bounded operational and responsibility debt state; orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, and post-run receipt validation before deployment witness readiness.",
+            "Runtime witness surfaces publish bounded operational and responsibility debt state; orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
             [
                 "latest_command_event_hash",
                 "latest_terminal_certificate_id",
@@ -494,6 +497,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_capability_plan_evidence_bundles",
             "surfaces": ["capability_plan_evidence_bundle", "runtime_conformance_attestation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_deployment_orchestration_receipt_contract",
+            "surfaces": ["gateway_runtime_witness"],
             "status": "closed",
         },
     ]

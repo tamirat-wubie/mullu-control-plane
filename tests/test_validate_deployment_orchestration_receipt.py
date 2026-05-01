@@ -133,6 +133,53 @@ def test_orchestration_receipt_rejects_schema_contract_violation(tmp_path: Path)
     assert "unexpected property" in schema_step.detail
 
 
+def test_orchestration_receipt_schema_rejects_invalid_receipt_id_pattern(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(receipt_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["receipt_id"] = "deployment-witness-orchestration-not-hex"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+    schema_step = _step(validation, "schema contract")
+    receipt_id_step = _step(validation, "receipt id")
+
+    assert validation.valid is False
+    assert schema_step.passed is False
+    assert receipt_id_step.passed is False
+    assert "$.receipt_id" in schema_step.detail
+    assert "pattern" in schema_step.detail
+
+
+def test_orchestration_receipt_schema_rejects_missing_evidence_prefix(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(receipt_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["evidence_refs"] = [
+        "ingress_render:.change_assurance/rendered-ingress.yaml",
+        f"deployment_target:{DEFAULT_REPOSITORY}",
+        "preflight:ready:true",
+        "mcp_operator_checklist:valid:true",
+        "mcp_operator_checklist:reviewed:true",
+    ]
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+    schema_step = _step(validation, "schema contract")
+    evidence_step = _step(validation, "evidence refs")
+
+    assert validation.valid is False
+    assert schema_step.passed is False
+    assert evidence_step.passed is False
+    assert "$.evidence_refs" in schema_step.detail
+    assert "contains" in schema_step.detail
+    assert "dispatch:" in evidence_step.detail
+
+
 def test_orchestration_receipt_schema_accepts_canonical_fixture(tmp_path: Path) -> None:
     receipt_path = tmp_path / "orchestration.json"
     _write_receipt(receipt_path)

@@ -13,7 +13,6 @@ Invariants:
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -24,6 +23,7 @@ from scripts.orchestrate_deployment_witness import (
     main,
     orchestrate_deployment_witness,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -412,13 +412,14 @@ def test_orchestration_receipt_schema_matches_cli_output(
         ]
     )
     payload = json.loads(receipt_path.read_text(encoding="utf-8"))
-    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    schema = _load_schema(schema_path)
+    schema_errors = _validate_schema_instance(schema, payload)
 
     required_fields = set(schema["required"])
     assert exit_code == 0
+    assert schema_errors == []
     assert set(payload) == required_fields
     assert set(schema["properties"]) == required_fields
-    assert re.fullmatch(schema["properties"]["receipt_id"]["pattern"], payload["receipt_id"])
     assert payload["expected_environment"] in schema["properties"]["expected_environment"]["enum"]
     assert isinstance(payload["ingress_applied"], bool)
     assert isinstance(payload["preflight_required"], bool)

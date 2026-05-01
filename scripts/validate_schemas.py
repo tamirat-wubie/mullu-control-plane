@@ -297,7 +297,25 @@ def _validate_datetime_text(value: str, path: str) -> list[str]:
 
 
 def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
-    if not schema:
+    if not isinstance(schema, dict) or not schema:
+        return []
+
+    if "allOf" in schema:
+        errors: list[str] = []
+        base_schema = {
+            keyword: value for keyword, value in schema.items() if keyword != "allOf"
+        }
+        errors.extend(_validate_schema_instance(base_schema, instance, path))
+        for branch in schema["allOf"]:
+            errors.extend(_validate_schema_instance(branch, instance, path))
+        return errors
+
+    if "if" in schema:
+        condition_errors = _validate_schema_instance(schema["if"], instance, path)
+        if not condition_errors and "then" in schema:
+            return _validate_schema_instance(schema["then"], instance, path)
+        if condition_errors and "else" in schema:
+            return _validate_schema_instance(schema["else"], instance, path)
         return []
 
     if "anyOf" in schema:
@@ -314,11 +332,27 @@ def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str =
         return []
 
     errors: list[str] = []
+    if "const" in schema and instance != schema["const"]:
+        errors.append(f"{path}: expected const {schema['const']!r}")
+
     schema_type = schema.get("type")
 
-    if schema_type == "object":
+    if schema_type is None and "contains" in schema:
+        errors.extend(_validate_array_contains(schema, instance, path))
+        return errors
+
+    if schema_type == "object" or (
+        schema_type is None
+        and (
+            "properties" in schema
+            or "required" in schema
+            or "additionalProperties" in schema
+        )
+    ):
         if not isinstance(instance, dict):
-            return [f"{path}: expected object"]
+            if schema_type == "object":
+                errors.append(f"{path}: expected object")
+            return errors
         properties = schema.get("properties", {})
         required = set(schema.get("required", []))
         missing = required - set(instance.keys())
@@ -329,64 +363,103 @@ def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str =
         for key, value in instance.items():
             if key in properties:
                 errors.extend(_validate_schema_instance(properties[key], value, f"{path}.{key}"))
-            elif additional is False:
+            elif schema_type == "object" and additional is False:
                 errors.append(f"{path}: unexpected property '{key}'")
-            elif isinstance(additional, dict):
+            elif schema_type == "object" and isinstance(additional, dict):
                 errors.extend(_validate_schema_instance(additional, value, f"{path}.{key}"))
         return errors
 
     if schema_type == "array":
         if not isinstance(instance, list):
-            return [f"{path}: expected array"]
+            errors.append(f"{path}: expected array")
+            return errors
         min_items = schema.get("minItems")
         if isinstance(min_items, int) and len(instance) < min_items:
             errors.append(f"{path}: expected at least {min_items} item(s)")
+        max_items = schema.get("maxItems")
+        if isinstance(max_items, int) and len(instance) > max_items:
+            errors.append(f"{path}: expected at most {max_items} item(s)")
         item_schema = schema.get("items", {})
-        for index, item in enumerate(instance):
-            errors.extend(_validate_schema_instance(item_schema, item, f"{path}[{index}]"))
+        if isinstance(item_schema, list):
+            for index, item in enumerate(instance[: len(item_schema)]):
+                errors.extend(
+                    _validate_schema_instance(item_schema[index], item, f"{path}[{index}]")
+                )
+        else:
+            for index, item in enumerate(instance):
+                errors.extend(_validate_schema_instance(item_schema, item, f"{path}[{index}]"))
+        errors.extend(_validate_array_contains(schema, instance, path))
         return errors
 
     if schema_type == "string":
         if not isinstance(instance, str):
-            return [f"{path}: expected string"]
+            errors.append(f"{path}: expected string")
+            return errors
         min_length = schema.get("minLength")
         if isinstance(min_length, int) and len(instance) < min_length:
             errors.append(f"{path}: expected minimum length {min_length}")
         if "enum" in schema and instance not in schema["enum"]:
             errors.append(f"{path}: expected one of {sorted(schema['enum'])}")
+        pattern = schema.get("pattern")
+        if isinstance(pattern, str) and re.search(pattern, instance) is None:
+            errors.append(f"{path}: string does not match pattern {pattern!r}")
         if schema.get("format") == "date-time":
             errors.extend(_validate_datetime_text(instance, path))
         return errors
 
     if schema_type == "integer":
         if not isinstance(instance, int) or isinstance(instance, bool):
-            return [f"{path}: expected integer"]
+            errors.append(f"{path}: expected integer")
+            return errors
         minimum = schema.get("minimum")
         if minimum is not None and instance < minimum:
             errors.append(f"{path}: expected integer >= {minimum}")
+        maximum = schema.get("maximum")
+        if maximum is not None and instance > maximum:
+            errors.append(f"{path}: expected integer <= {maximum}")
         return errors
 
     if schema_type == "number":
         if not isinstance(instance, (int, float)) or isinstance(instance, bool):
-            return [f"{path}: expected number"]
+            errors.append(f"{path}: expected number")
+            return errors
         minimum = schema.get("minimum")
         if minimum is not None and instance < minimum:
             errors.append(f"{path}: expected number >= {minimum}")
+        maximum = schema.get("maximum")
+        if maximum is not None and instance > maximum:
+            errors.append(f"{path}: expected number <= {maximum}")
         return errors
 
     if schema_type == "boolean":
         if not isinstance(instance, bool):
-            return [f"{path}: expected boolean"]
+            errors.append(f"{path}: expected boolean")
         return errors
 
     if schema_type == "null":
         if instance is not None:
-            return [f"{path}: expected null"]
+            errors.append(f"{path}: expected null")
         return errors
 
     if "enum" in schema and instance not in schema["enum"]:
         errors.append(f"{path}: expected one of {sorted(schema['enum'])}")
     return errors
+
+
+def _validate_array_contains(
+    schema: dict[str, Any],
+    instance: Any,
+    path: str,
+) -> list[str]:
+    contains_schema = schema.get("contains")
+    if contains_schema is None:
+        return []
+    if not isinstance(instance, list):
+        return [f"{path}: expected array for contains"]
+    for index, item in enumerate(instance):
+        if not _validate_schema_instance(contains_schema, item, f"{path}[{index}]"):
+            return []
+    return [f"{path}: no item matched contains schema"]
 
 
 def _check_fixture_schema_coverage(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
