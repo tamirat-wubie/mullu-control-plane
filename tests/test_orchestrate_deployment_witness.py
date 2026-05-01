@@ -131,7 +131,10 @@ def test_orchestrate_deployment_witness_renders_and_provisions(tmp_path: Path) -
     assert orchestration.receipt.preflight_required is False
     assert orchestration.receipt.preflight_ready is None
     assert orchestration.receipt.dispatch_requested is False
+    assert orchestration.receipt.mcp_operator_checklist_required is False
+    assert orchestration.receipt.mcp_operator_checklist_valid is None
     assert "dispatch:skipped" in orchestration.receipt.evidence_refs
+    assert "mcp_operator_checklist:skipped" in orchestration.receipt.evidence_refs
     assert len(variable_commands) == 2
     assert not any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
@@ -220,6 +223,43 @@ def test_orchestrate_deployment_witness_accepts_mounted_runtime_secret(tmp_path:
     assert orchestration.dispatch is not None
     assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_orchestrate_deployment_witness_requires_valid_mcp_operator_checklist(tmp_path: Path) -> None:
+    runner = FakeRunner()
+
+    orchestration = orchestrate_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        rendered_ingress_output=tmp_path / "ingress.yaml",
+        require_mcp_operator_checklist=True,
+        runner=runner,
+    )
+
+    assert orchestration.receipt.mcp_operator_checklist_required is True
+    assert orchestration.receipt.mcp_operator_checklist_valid is True
+    assert orchestration.receipt.mcp_operator_checklist_path == "examples\\mcp_operator_handoff_checklist.json"
+    assert "mcp_operator_checklist:valid:true" in orchestration.receipt.evidence_refs
+    assert len([command for command in runner.commands if command[:3] == ["gh", "variable", "set"]]) == 2
+
+
+def test_orchestrate_deployment_witness_blocks_invalid_mcp_operator_checklist(tmp_path: Path) -> None:
+    runner = FakeRunner()
+    checklist_path = tmp_path / "invalid_mcp_operator_checklist.json"
+    checklist_path.write_text(json.dumps({"schema_version": 1}), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="MCP operator checklist validation failed"):
+        orchestrate_deployment_witness(
+            gateway_host="gateway.mullusi.com",
+            expected_environment="pilot",
+            rendered_ingress_output=tmp_path / "ingress.yaml",
+            require_mcp_operator_checklist=True,
+            mcp_operator_checklist_path=checklist_path,
+            runner=runner,
+        )
+
+    assert runner.commands == []
+    assert not (tmp_path / "ingress.yaml").exists()
 
 
 def test_orchestrate_deployment_witness_blocks_dispatch_when_preflight_fails(tmp_path: Path) -> None:
@@ -339,6 +379,8 @@ def test_cli_uses_orchestration_receipt_output_environment(
     assert payload["preflight_required"] is False
     assert payload["preflight_ready"] is None
     assert payload["dispatch_requested"] is False
+    assert payload["mcp_operator_checklist_required"] is False
+    assert payload["mcp_operator_checklist_valid"] is None
     assert str(receipt_path) in captured.out
 
 

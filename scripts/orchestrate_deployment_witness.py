@@ -60,6 +60,10 @@ from scripts.render_gateway_ingress import (
     RenderedGatewayIngress,
     render_gateway_ingress,
 )
+from scripts.validate_mcp_operator_checklist import (
+    DEFAULT_CHECKLIST as DEFAULT_MCP_OPERATOR_CHECKLIST,
+    validate_mcp_operator_checklist,
+)
 
 DEFAULT_ORCHESTRATION_OUTPUT = Path(".change_assurance") / "deployment_witness_orchestration.json"
 
@@ -105,6 +109,9 @@ class DeploymentWitnessOrchestrationReceipt:
     dispatch_requested: bool
     dispatch_run_id: int | None
     dispatch_conclusion: str
+    mcp_operator_checklist_required: bool
+    mcp_operator_checklist_valid: bool | None
+    mcp_operator_checklist_path: str
     evidence_refs: tuple[str, ...]
 
     def to_json_dict(self) -> dict[str, Any]:
@@ -122,6 +129,8 @@ def orchestrate_deployment_witness(
     apply_ingress: bool = False,
     dispatch: bool = False,
     require_preflight: bool = False,
+    require_mcp_operator_checklist: bool = False,
+    mcp_operator_checklist_path: Path = DEFAULT_MCP_OPERATOR_CHECKLIST,
     preflight_output: Path = DEFAULT_PREFLIGHT_OUTPUT,
     preflight_probe_endpoints: bool = True,
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
@@ -140,6 +149,15 @@ def orchestrate_deployment_witness(
 ) -> DeploymentWitnessOrchestration:
     """Render ingress, bind target variables, and optionally dispatch evidence."""
     command_runner = runner or subprocess.run
+    checklist_valid: bool | None = None
+    if require_mcp_operator_checklist:
+        checklist_validation = validate_mcp_operator_checklist(mcp_operator_checklist_path)
+        checklist_valid = checklist_validation.valid
+        if not checklist_validation.valid:
+            raise RuntimeError(
+                "MCP operator checklist validation failed: "
+                + "; ".join(checklist_validation.errors)
+            )
     ingress = render_gateway_ingress(
         gateway_host=gateway_host,
         output_path=rendered_ingress_output,
@@ -216,6 +234,9 @@ def orchestrate_deployment_witness(
             dispatch=dispatch_result,
             preflight_required=require_preflight,
             dispatch_requested=dispatch,
+            mcp_operator_checklist_required=require_mcp_operator_checklist,
+            mcp_operator_checklist_valid=checklist_valid,
+            mcp_operator_checklist_path=mcp_operator_checklist_path,
         ),
     )
 
@@ -250,6 +271,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--apply-ingress", action="store_true")
     parser.add_argument("--dispatch", action="store_true")
     parser.add_argument("--require-preflight", action="store_true")
+    parser.add_argument("--require-mcp-operator-checklist", action="store_true")
+    parser.add_argument("--mcp-operator-checklist", default=str(DEFAULT_MCP_OPERATOR_CHECKLIST))
     parser.add_argument("--preflight-output", default=str(DEFAULT_PREFLIGHT_OUTPUT))
     parser.add_argument(
         "--orchestration-output",
@@ -285,6 +308,8 @@ def main(argv: list[str] | None = None) -> int:
             apply_ingress=args.apply_ingress,
             dispatch=args.dispatch,
             require_preflight=args.require_preflight,
+            require_mcp_operator_checklist=args.require_mcp_operator_checklist,
+            mcp_operator_checklist_path=Path(args.mcp_operator_checklist),
             preflight_output=Path(args.preflight_output),
             preflight_probe_endpoints=not args.skip_preflight_endpoint_probes,
             workflow_file=args.workflow_file,
@@ -315,6 +340,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"gateway_url: {orchestration.target.gateway_url}")
     print(f"expected_environment: {orchestration.target.expected_environment}")
     print(f"orchestration_receipt: {orchestration.receipt.receipt_id}")
+    print(
+        "mcp_operator_checklist_required: "
+        f"{str(orchestration.receipt.mcp_operator_checklist_required).lower()}"
+    )
+    print(
+        "mcp_operator_checklist_valid: "
+        f"{orchestration.receipt.mcp_operator_checklist_valid}"
+    )
     if args.orchestration_output:
         receipt_path = write_orchestration_receipt(orchestration.receipt, Path(args.orchestration_output))
         print(f"orchestration_receipt_path: {receipt_path}")
@@ -339,6 +372,9 @@ def _orchestration_receipt(
     dispatch: DispatchResult | None,
     preflight_required: bool,
     dispatch_requested: bool,
+    mcp_operator_checklist_required: bool,
+    mcp_operator_checklist_valid: bool | None,
+    mcp_operator_checklist_path: Path,
 ) -> DeploymentWitnessOrchestrationReceipt:
     evidence_refs = [
         f"ingress_render:{ingress.output_path}",
@@ -350,6 +386,11 @@ def _orchestration_receipt(
             else "preflight:not_run"
         ),
         "dispatch:requested" if dispatch_requested else "dispatch:skipped",
+        (
+            f"mcp_operator_checklist:valid:{str(mcp_operator_checklist_valid).lower()}"
+            if mcp_operator_checklist_required
+            else "mcp_operator_checklist:skipped"
+        ),
     ]
     if dispatch is not None:
         evidence_refs.append(f"deployment_witness_run:{dispatch.run_id}")
@@ -366,6 +407,9 @@ def _orchestration_receipt(
         "dispatch_requested": dispatch_requested,
         "dispatch_run_id": dispatch.run_id if dispatch is not None else None,
         "dispatch_conclusion": dispatch.conclusion if dispatch is not None else "",
+        "mcp_operator_checklist_required": mcp_operator_checklist_required,
+        "mcp_operator_checklist_valid": mcp_operator_checklist_valid,
+        "mcp_operator_checklist_path": str(mcp_operator_checklist_path),
         "evidence_refs": tuple(evidence_refs),
     }
     return DeploymentWitnessOrchestrationReceipt(
