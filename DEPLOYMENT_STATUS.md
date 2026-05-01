@@ -40,7 +40,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Gateway publication receipt validator | `scripts/validate_gateway_publication_receipt.py` validates receipt structure, readiness consistency, policy gates, and writes a validation report | Reflected |
 | Gateway publication dispatcher | `scripts/dispatch_gateway_publication.py` verifies publication workflow prerequisites, dispatches `.github/workflows/gateway-publication.yml`, and downloads the witness artifact | Reflected |
 | Deployment witness dispatcher | `scripts/dispatch_deployment_witness.py` verifies runtime witness and conformance secrets, dispatches the workflow, and downloads the artifact | Reflected |
-| Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, optional preflight gating, and optional dispatch | Reflected |
+| Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, MCP operator checklist validation, optional preflight gating, optional dispatch, and orchestration receipt output | Reflected |
 | Deployment witness preflight | `scripts/preflight_deployment_witness.py` verifies DNS, GitHub variables, secret presence, workflow state, and endpoint contracts before dispatch | Reflected |
 | MCP capability manifest validation | `scripts/validate_mcp_capability_manifest.py` validates certified MCP capability import, ownership, approval policy, and escalation policy records before startup | Reflected |
 | MCP operator handoff checklist | `examples/mcp_operator_handoff_checklist.json` and `scripts/validate_mcp_operator_checklist.py` define release handoff gates for manifest validation, read-model inspection, execution evidence bundles, conformance collection, deployment preflight, and orchestration receipt closure | Reflected |
@@ -83,7 +83,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway publication receipt validation | `python scripts/validate_gateway_publication_receipt.py --receipt .change_assurance/gateway_publication_receipt.json --require-ready --require-dispatched --require-success` |
 | Gateway publication dispatch | `python scripts/dispatch_gateway_publication.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --dispatch-witness` |
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py` |
-| Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --dispatch --orchestration-output "$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"` |
+| Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output "$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"` |
 | Deployment witness orchestration receipt | `.change_assurance/deployment_witness_orchestration.json` |
 | Deployment witness preflight | `python scripts/preflight_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot` |
 | MCP operator handoff checklist | `python scripts/validate_mcp_operator_checklist.py --checklist examples/mcp_operator_handoff_checklist.json --json` |

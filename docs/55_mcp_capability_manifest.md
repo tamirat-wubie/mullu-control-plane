@@ -209,6 +209,7 @@ The orchestration receipt must include `mcp_operator_checklist_required=true`,
 python scripts\orchestrate_deployment_witness.py `
   --gateway-host "$env:MULLU_GATEWAY_HOST" `
   --expected-environment pilot `
+  --require-mcp-operator-checklist `
   --require-preflight `
   --orchestration-output "$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"
 ```
