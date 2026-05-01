@@ -188,6 +188,25 @@ The preflight must include a passing `mcp capability manifest` step and a passin
 `runtime conformance endpoint` step. If the configured manifest is invalid, both
 preflight readiness and deployment witness publication remain blocked.
 
+6. Persist the deployment orchestration receipt.
+
+```powershell
+python scripts\orchestrate_deployment_witness.py `
+  --gateway-host "$env:MULLU_GATEWAY_HOST" `
+  --expected-environment pilot `
+  --require-preflight `
+  --orchestration-output "$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"
+```
+
+Required receipt evidence:
+
+| Field | Expected |
+| --- | --- |
+| `receipt_id` | Starts with `deployment-witness-orchestration-` |
+| `preflight_required` | `true` |
+| `preflight_ready` | `true` |
+| `evidence_refs` | Non-empty |
+
 ## Failure Handling
 
 | Failure | Cause | Required action |
@@ -201,6 +220,6 @@ preflight readiness and deployment witness publication remain blocked.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, deployment preflight gate, machine-readable handoff checklist]
+  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, deployment preflight gate, machine-readable handoff checklist, deployment orchestration receipt]
   Open issues: none
   Next action: publish an environment-specific manifest and collect signed conformance evidence

@@ -231,6 +231,8 @@ python -m gateway.server
 4. Collect `/runtime/conformance` and verify `mcp_capability_manifest_valid: true`.
 5. Verify `/runtime/conformance` also reports `capability_plan_bundle_canary_passed: true`.
 6. Run deployment preflight with the manifest path before witness dispatch.
+7. Persist the deployment orchestration receipt at
+   `$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT`.
 
 If the manifest is invalid, gateway deployment readiness remains blocked until
 the manifest produces certified capabilities, ownership records, approval

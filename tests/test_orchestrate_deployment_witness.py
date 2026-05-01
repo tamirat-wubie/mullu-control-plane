@@ -309,6 +309,39 @@ def test_cli_writes_orchestration_receipt(monkeypatch, tmp_path: Path, capsys) -
     assert "orchestration_receipt_path" in captured.out
 
 
+def test_cli_uses_orchestration_receipt_output_environment(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
+    monkeypatch.setattr(
+        "scripts.orchestrate_deployment_witness.subprocess.run",
+        FakeRunner(),
+    )
+    receipt_path = tmp_path / "env-orchestration.json"
+    monkeypatch.setenv("MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT", str(receipt_path))
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--rendered-ingress-output",
+            str(tmp_path / "ingress.yaml"),
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert payload["receipt_id"].startswith("deployment-witness-orchestration-")
+    assert payload["preflight_required"] is False
+    assert payload["preflight_ready"] is None
+    assert payload["dispatch_requested"] is False
+    assert str(receipt_path) in captured.out
+
+
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:
     stdout = payload if isinstance(payload, str) else json.dumps(payload)
     return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
