@@ -166,6 +166,7 @@ Required signed certificate evidence:
 | `mcp_capability_manifest_configured` | `true` |
 | `mcp_capability_manifest_valid` | `true` |
 | `mcp_capability_manifest_capability_count` | Same count as validator output |
+| `capability_plan_bundle_canary_passed` | `true` |
 | `open_conformance_gaps` | Must not include `mcp_capability_manifest_invalid` |
 
 5. Run deployment witness preflight before dispatch.
@@ -190,9 +191,10 @@ preflight readiness and deployment witness publication remain blocked.
 | `mcp_capability_manifest_invalid` | Runtime conformance rejected the configured manifest | Fix manifest, restart gateway, collect conformance again |
 | `mcp_manifest_valid=false` in deployment witness | Signed conformance says the manifest is invalid | Do not dispatch deployment witness until conformance is clean |
 | `mcp_manifest_configured=false` in read model | Gateway was not started with `MULLU_MCP_CAPABILITY_MANIFEST_PATH` | Set the environment variable and restart |
+| `capability_plan_bundle_canary_passed=false` | Runtime conformance cannot export a plan evidence bundle | Keep deployment blocked until `/capability-plans/{plan_id}/closure` returns `plan_evidence_bundle` |
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, deployment preflight gate]
+  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, deployment preflight gate]
   Open issues: none
   Next action: publish an environment-specific manifest and collect signed conformance evidence
