@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:effect-assurance:1",
+  "title": "Effect Assurance Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "effect_plan",
+    "observed_effects",
+    "reconciliation"
+  ],
+  "properties": {
+    "effect_plan": {
+      "$ref": "#/$defs/effect_plan"
+    },
+    "observed_effects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observed_effect"
+      }
+    },
+    "reconciliation": {
+      "$ref": "#/$defs/effect_reconciliation"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "expected_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_id",
+        "name",
+        "target_ref",
+        "required",
+        "verification_method"
+      ],
+      "properties": {
+        "effect_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "verification_method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_value": {}
+      }
+    },
+    "effect_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_plan_id",
+        "command_id",
+        "tenant_id",
+        "capability_id",
+        "expected_effects",
+        "forbidden_effects",
+        "graph_node_refs",
+        "graph_edge_refs",
+        "created_at"
+      ],
+      "properties": {
+        "effect_plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_effects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/expected_effect"
+          }
+        },
+        "forbidden_effects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_plan_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "compensation_plan_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "graph_node_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "graph_edge_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "observed_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effect_id",
+        "name",
+        "source",
+        "evidence_ref",
+        "observed_at"
+      ],
+      "properties": {
+        "effect_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_value": {},
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "effect_reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reconciliation_id",
+        "command_id",
+        "effect_plan_id",
+        "status",
+        "matched_effects",
+        "missing_effects",
+        "unexpected_effects",
+        "decided_at"
+      ],
+      "properties": {
+        "reconciliation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect_plan_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "match",
+            "partial_match",
+            "mismatch",
+            "unknown"
+          ]
+        },
+        "matched_effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "missing_effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "unexpected_effects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "verification_result_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "case_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

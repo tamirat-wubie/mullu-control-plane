@@ -65,6 +65,12 @@
       "surface": "domain"
     },
     {
+      "schema_id": "effect-assurance",
+      "path": "schemas/effect_assurance.schema.json",
+      "urn": "urn:mullusi:schema:effect-assurance:1",
+      "surface": "effect_assurance"
+    },
+    {
       "schema_id": "environment-fingerprint",
       "path": "schemas/environment_fingerprint.schema.json",
       "urn": "urn:mullusi:schema:environment-fingerprint:1",
