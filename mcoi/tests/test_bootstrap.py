@@ -20,7 +20,9 @@ from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
+from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
 from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
@@ -38,6 +40,9 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.executors["shell_command"].__class__ is ShellExecutor
     assert runtime.observers["filesystem"].__class__ is FilesystemObserver
     assert runtime.observers["process"].__class__ is ProcessObserver
+    assert runtime.team_registry.__class__ is WorkerRegistry
+    assert runtime.team_engine.__class__ is TeamEngine
+    assert runtime.team_queue_store is None
     assert runtime.workforce_engine.__class__ is WorkforceRuntimeEngine
     assert runtime.workforce_store is None
 
@@ -153,6 +158,56 @@ def test_bootstrap_runtime_restores_memory_only_when_explicit(tmp_path: Path) ->
 def test_bootstrap_runtime_rejects_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="memory_store"):
         bootstrap_runtime(restore_memory=True)
+
+
+def test_bootstrap_runtime_does_not_restore_team_queue_implicitly(tmp_path: Path) -> None:
+    team_queue_store = TeamQueueStore(tmp_path / "team-queue")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    source_runtime.team_engine.capture_queue_state(
+        "team-a",
+        queued=5,
+        assigned=3,
+        waiting=2,
+    )
+    before = team_queue_store.save_queue_states(source_runtime.team_engine)
+
+    runtime = bootstrap_runtime(team_queue_store=team_queue_store)
+
+    after = team_queue_store.save_queue_states(source_runtime.team_engine)
+    assert runtime.team_queue_store is team_queue_store
+    assert runtime.team_engine.queue_state_count == 0
+    assert before == after
+
+
+def test_bootstrap_runtime_restores_team_queue_only_when_explicit(tmp_path: Path) -> None:
+    team_queue_store = TeamQueueStore(tmp_path / "team-queue")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    source_runtime.team_engine.capture_queue_state(
+        "team-a",
+        queued=5,
+        assigned=3,
+        waiting=2,
+    )
+    team_queue_store.save_queue_states(source_runtime.team_engine)
+
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        team_queue_store=team_queue_store,
+        restore_team_queue=True,
+    )
+
+    state = runtime.team_engine.get_queue_state("team-a")
+    assert runtime.team_queue_store is team_queue_store
+    assert runtime.team_engine.queue_state_count == 1
+    assert state is not None
+    assert state.queued_jobs == 5
+    assert state.assigned_jobs == 3
+    assert state.waiting_jobs == 2
+
+
+def test_bootstrap_runtime_rejects_team_queue_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="team_queue_store"):
+        bootstrap_runtime(restore_team_queue=True)
 
 
 def test_bootstrap_runtime_does_not_restore_workforce_implicitly(tmp_path: Path) -> None:

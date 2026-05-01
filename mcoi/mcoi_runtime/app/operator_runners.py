@@ -6,6 +6,8 @@ Invariants: entry flows stay deterministic, fail closed, and preserve policy and
 
 from __future__ import annotations
 
+import json
+from hashlib import sha256
 from typing import TYPE_CHECKING
 
 from mcoi_runtime.contracts.autonomy import ActionClass, AutonomyDecisionStatus
@@ -45,6 +47,8 @@ from .operator_models import (
     GoalRunReport,
     SkillRequest,
     SkillRunReport,
+    TeamQueueReconcileReport,
+    TeamQueueReconcileRequest,
     WorkforceReconcileReport,
     WorkforceReconcileRequest,
     WorkflowResumeRequest,
@@ -880,7 +884,227 @@ def reconcile_workforce(
     )
 
 
+def _queue_state_hash(states: tuple[object, ...]) -> str:
+    payload = [
+        state.to_json_dict() if hasattr(state, "to_json_dict") else state
+        for state in states
+    ]
+    return sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
+def reconcile_team_queues(
+    loop: OperatorLoop,
+    request: TeamQueueReconcileRequest,
+) -> TeamQueueReconcileReport:
+    """Assess or restore persisted team queue-state witnesses through the governed path."""
+    started_at = loop.runtime.clock()
+    action_class = (
+        ActionClass.EXECUTE_WRITE
+        if request.restore_from_store
+        else ActionClass.ANALYZE
+    )
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        action_class,
+        action_description=(
+            "team_queue_restore"
+            if request.restore_from_store
+            else "team_queue_assessment"
+        ),
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return TeamQueueReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=None,
+            policy_status=None,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            queue_state_count=0,
+            team_ids=(),
+            total_queued_jobs=0,
+            total_assigned_jobs=0,
+            total_waiting_jobs=0,
+            total_overloaded_workers=0,
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        "blocked team queue reconciliation: "
+                        f"{autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.APPROVAL_REQUIRED,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id="team_queue_reconcile",
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=request.restore_from_store,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return TeamQueueReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            queue_state_count=0,
+            team_ids=(),
+            total_queued_jobs=0,
+            total_assigned_jobs=0,
+            total_waiting_jobs=0,
+            total_overloaded_workers=0,
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=(
+                        "policy gate returned "
+                        f"{policy_decision.status.value} for team queue reconciliation"
+                    ),
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if request.restore_from_store:
+        store = loop.runtime.team_queue_store
+        if store is None:
+            return TeamQueueReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                queue_state_count=0,
+                team_ids=(),
+                total_queued_jobs=0,
+                total_assigned_jobs=0,
+                total_waiting_jobs=0,
+                total_overloaded_workers=0,
+                errors=(
+                    execution_error(
+                        error_code="team_queue_store_not_configured",
+                        message="team queue restore requires a configured team queue store",
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+        try:
+            store.restore_queue_states(loop.runtime.team_engine)
+        except (PersistenceError, RuntimeCoreInvariantError) as exc:
+            return TeamQueueReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                queue_state_count=0,
+                team_ids=(),
+                total_queued_jobs=0,
+                total_assigned_jobs=0,
+                total_waiting_jobs=0,
+                total_overloaded_workers=0,
+                errors=(
+                    execution_error(
+                        error_code="team_queue_restore_failed",
+                        message=str(exc),
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    states = loop.runtime.team_engine.list_queue_states()
+    if request.team_ids:
+        requested_team_ids = set(request.team_ids)
+        states = tuple(state for state in states if state.team_id in requested_team_ids)
+        missing_team_ids = tuple(
+            team_id for team_id in request.team_ids if team_id not in {state.team_id for state in states}
+        )
+        if missing_team_ids:
+            return TeamQueueReconcileReport(
+                request_id=request.request_id,
+                restored=request.restore_from_store,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                queue_state_count=0,
+                team_ids=(),
+                total_queued_jobs=0,
+                total_assigned_jobs=0,
+                total_waiting_jobs=0,
+                total_overloaded_workers=0,
+                errors=(
+                    validation_error(
+                        error_code="team_queue_state_missing",
+                        message=(
+                            "requested team queue state not found: "
+                            + ", ".join(missing_team_ids)
+                        ),
+                        source_plane=SourcePlane.COORDINATION,
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    selected_team_ids = tuple(state.team_id for state in states)
+    return TeamQueueReconcileReport(
+        request_id=request.request_id,
+        restored=request.restore_from_store,
+        policy_decision_id=policy_decision.decision_id,
+        policy_status=policy_decision.status.value,
+        autonomy_mode=loop.runtime.autonomy.mode.value,
+        autonomy_decision=autonomy_decision.status.value,
+        queue_state_count=len(states),
+        team_ids=selected_team_ids,
+        total_queued_jobs=sum(state.queued_jobs for state in states),
+        total_assigned_jobs=sum(state.assigned_jobs for state in states),
+        total_waiting_jobs=sum(state.waiting_jobs for state in states),
+        total_overloaded_workers=sum(state.overloaded_workers for state in states),
+        state_hash=_queue_state_hash(states),
+        started_at=started_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
 __all__ = [
+    "reconcile_team_queues",
     "reconcile_workforce",
     "resume_workflow",
     "run_goal",
