@@ -19,7 +19,7 @@ def test_validate_mcp_operator_checklist_accepts_example() -> None:
 
     assert result.valid is True
     assert result.checklist_id == "mcp-operator-handoff-v1"
-    assert result.step_count == 6
+    assert result.step_count == 7
     assert result.errors == ()
 
 
@@ -48,7 +48,7 @@ def test_validate_mcp_operator_checklist_cli_outputs_json(capsys) -> None:
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["checklist_id"] == "mcp-operator-handoff-v1"
-    assert payload["step_count"] == 6
+    assert payload["step_count"] == 7
     assert payload["errors"] == []
 
 
@@ -79,7 +79,7 @@ def test_validate_mcp_operator_checklist_rejects_missing_step_evidence(tmp_path:
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 6
+    assert result.step_count == 7
     assert any("collect_runtime_conformance required_evidence missing" in error for error in result.errors)
     assert any("capability_plan_bundle_canary_passed=true" in error for error in result.errors)
 
@@ -95,7 +95,7 @@ def test_validate_mcp_operator_checklist_rejects_command_token_drift(tmp_path: P
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 6
+    assert result.step_count == 7
     assert any("inspect_mcp_execution_evidence_bundle command missing token" in error for error in result.errors)
     assert any("/mcp/operator/evidence-bundles/" in error for error in result.errors)
 
@@ -109,6 +109,6 @@ def test_validate_mcp_operator_checklist_rejects_duplicate_step_id(tmp_path: Pat
     result = validate_mcp_operator_checklist(checklist_path)
 
     assert result.valid is False
-    assert result.step_count == 7
+    assert result.step_count == 8
     assert any("duplicate required_commands step_id validate_manifest" in error for error in result.errors)
     assert checklist_path.name == "mcp_operator_handoff_checklist.json"

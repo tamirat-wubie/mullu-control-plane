@@ -225,6 +225,19 @@ Required receipt evidence:
 | `preflight_ready` | `true` |
 | `evidence_refs` | Non-empty |
 
+8. Validate the orchestration receipt after the run.
+
+```powershell
+python scripts\validate_deployment_orchestration_receipt.py `
+  --receipt "$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT" `
+  --require-mcp-operator-checklist `
+  --require-preflight `
+  --expected-environment pilot
+```
+
+The validation report must return `valid=true` before the handoff can be treated
+as closed.
+
 ## Failure Handling
 
 | Failure | Cause | Required action |

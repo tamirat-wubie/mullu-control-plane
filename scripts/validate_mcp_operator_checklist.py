@@ -37,6 +37,7 @@ REQUIRED_STEP_IDS = frozenset({
     "collect_runtime_conformance",
     "run_deployment_preflight",
     "write_orchestration_receipt",
+    "validate_orchestration_receipt",
 })
 REQUIRED_READ_MODEL_FIELDS = frozenset({
     "mcp_manifest_configured",
@@ -93,6 +94,12 @@ REQUIRED_STEP_EVIDENCE = {
         "preflight_ready=true",
         "evidence_refs non-empty",
     }),
+    "validate_orchestration_receipt": frozenset({
+        "valid=true",
+        "mcp_operator_checklist_required=true",
+        "mcp_operator_checklist_valid=true",
+        "preflight_ready=true",
+    }),
 }
 REQUIRED_STEP_COMMAND_TOKENS = {
     "validate_manifest": ("validate_mcp_capability_manifest.py", "--json"),
@@ -104,6 +111,11 @@ REQUIRED_STEP_COMMAND_TOKENS = {
         "orchestrate_deployment_witness.py",
         "--require-mcp-operator-checklist",
         "--orchestration-output",
+    ),
+    "validate_orchestration_receipt": (
+        "validate_deployment_orchestration_receipt.py",
+        "--require-mcp-operator-checklist",
+        "--require-preflight",
     ),
 }
 

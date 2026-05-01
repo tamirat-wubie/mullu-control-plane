@@ -117,6 +117,26 @@ jobs:
           fi
           python scripts/orchestrate_deployment_witness.py "${args[@]}"
 
+      - name: Validate deployment orchestration receipt
+        run: |
+          args=(
+            --receipt .change_assurance/deployment_witness_orchestration.json
+            --output .change_assurance/deployment_witness_orchestration_validation.json
+            --require-preflight
+            --require-mcp-operator-checklist
+            --expected-environment "${{ inputs.expected_environment }}"
+          )
+          if [ "${{ inputs.dispatch_witness }}" = "true" ]; then
+            args+=(--require-dispatch)
+          fi
+          if [ -n "${{ inputs.gateway_host }}" ]; then
+            args+=(--expected-gateway-host "${{ inputs.gateway_host }}")
+          fi
+          if [ -n "${{ inputs.gateway_url }}" ]; then
+            args+=(--expected-gateway-url "${{ inputs.gateway_url }}")
+          fi
+          python scripts/validate_deployment_orchestration_receipt.py "${args[@]}"
+
       - name: Upload gateway publication witness
         if: always()
         uses: actions/upload-artifact@v4
@@ -125,6 +145,7 @@ jobs:
           path: |
             .change_assurance/deployment_witness_preflight.json
             .change_assurance/deployment_witness_orchestration.json
+            .change_assurance/deployment_witness_orchestration_validation.json
             .change_assurance/mullu-gateway-ingress.rendered.yaml
             .change_assurance/deployment-witness-artifact/**
           if-no-files-found: ignore

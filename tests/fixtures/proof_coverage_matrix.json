@@ -398,11 +398,13 @@
         "scripts/collect_deployment_witness.py",
         "scripts/validate_mcp_capability_manifest.py",
         "scripts/validate_mcp_operator_checklist.py",
+        "scripts/validate_deployment_orchestration_receipt.py",
         "tests/test_orchestrate_deployment_witness.py",
+        "tests/test_validate_deployment_orchestration_receipt.py",
         "tests/test_preflight_deployment_witness.py",
         "tests/test_collect_deployment_witness.py"
       ],
-      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; orchestration receipts bind ingress render, MCP checklist validation, preflight, and dispatch evidence before deployment witness readiness.",
+      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, and post-run receipt validation before deployment witness readiness.",
       "representative_paths": [
         "/gateway/witness",
         "/runtime/witness",
