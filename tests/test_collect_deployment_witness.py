@@ -173,6 +173,80 @@ def test_collect_deployment_witness_rejects_responsibility_debt(monkeypatch) -> 
     assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
 
 
+def test_collect_deployment_witness_rejects_invalid_mcp_manifest(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        mcp_capability_manifest_configured=True,
+        mcp_capability_manifest_valid=False,
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.conformance_signature_status == "verified"
+    assert conformance_step.passed is False
+    assert "mcp_manifest_configured=True" in conformance_step.detail
+    assert "mcp_manifest_valid=False" in conformance_step.detail
+    assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
+
+
+def test_collect_deployment_witness_rejects_missing_plan_bundle_witness(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        capability_plan_bundle_canary_passed=False,
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.conformance_signature_status == "verified"
+    assert conformance_step.passed is False
+    assert "plan_bundle_passed=False" in conformance_step.detail
+    assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
+
+
 def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     witness_payload = _signed_runtime_witness(secret="runtime-secret")
     conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
@@ -266,6 +340,10 @@ def _signed_conformance_certificate(
     secret: str,
     expires_at: str = "2026-04-25T00:30:00+00:00",
     authority_responsibility_debt_clear: bool = True,
+    mcp_capability_manifest_configured: bool = True,
+    mcp_capability_manifest_valid: bool = True,
+    capability_plan_bundle_canary_passed: bool = True,
+    capability_plan_bundle_count: int = 0,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
@@ -282,6 +360,13 @@ def _signed_conformance_certificate(
         "lineage_query_canary_passed": True,
         "authority_obligation_canary_passed": True,
         "authority_responsibility_debt_clear": authority_responsibility_debt_clear,
+        "mcp_capability_manifest_configured": mcp_capability_manifest_configured,
+        "mcp_capability_manifest_valid": mcp_capability_manifest_valid,
+        "mcp_capability_manifest_capability_count": (
+            1 if mcp_capability_manifest_configured else 0
+        ),
+        "capability_plan_bundle_canary_passed": capability_plan_bundle_canary_passed,
+        "capability_plan_bundle_count": capability_plan_bundle_count,
         "authority_pending_approval_chain_count": 0,
         "authority_overdue_approval_chain_count": 0,
         "authority_open_obligation_count": 0,

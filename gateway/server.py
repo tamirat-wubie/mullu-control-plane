@@ -600,6 +600,7 @@ def create_gateway_app(
             command_ledger=command_ledger,
             authority_obligation_mesh=authority_obligation_mesh,
             capability_admission_gate=capability_admission_gate,
+            plan_ledger=plan_ledger,
             environment=gateway_env,
             signing_secret=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", "local-runtime-conformance-secret"),
             signature_key_id=os.environ.get("MULLU_RUNTIME_CONFORMANCE_KEY_ID", "runtime-conformance-local"),
@@ -1093,6 +1094,7 @@ def create_gateway_app(
             capability_admission_gate=capability_admission_gate,
             authority_mesh_store=authority_mesh_store,
             mcp_executor=mcp_executor,
+            mcp_gateway_import=mcp_gateway_import,
             capability_id=capability_id,
             audit_status=audit_status,
             audit_limit=audit_limit,
@@ -1146,6 +1148,7 @@ def create_gateway_app(
         return {
             "plan_id": plan_id,
             "plan_terminal_certificate": asdict(certificate),
+            "plan_evidence_bundle": asdict(plan_ledger.export_evidence_bundle(plan_id=plan_id)),
             "plan_witnesses": [asdict(witness) for witness in witnesses],
             "plan_recovery_attempts": [asdict(attempt) for attempt in recovery_attempts],
             "witness_count": len(witnesses),

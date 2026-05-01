@@ -88,6 +88,25 @@ class CapabilityPlanRecoveryAttempt:
     detail: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True, slots=True)
+class CapabilityPlanEvidenceBundle:
+    """Operator-exportable proof bundle for one completed capability plan."""
+
+    bundle_id: str
+    bundle_hash: str
+    plan_id: str
+    certificate_id: str
+    disposition: str
+    step_count: int
+    step_command_ids: tuple[str, ...]
+    step_terminal_certificate_ids: tuple[str, ...]
+    plan_evidence_hash: str
+    witness_ids: tuple[str, ...]
+    recovery_attempt_ids: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    exported_at: str
+
+
 class CapabilityPlanLedgerStore:
     """Persistence contract for plan certificates and witness records."""
 
@@ -438,6 +457,55 @@ class CapabilityPlanLedger:
         """Return recovery-attempt witness records for one plan id."""
         return self._store.list_recovery_attempts(plan_id)
 
+    def export_evidence_bundle(self, *, plan_id: str) -> CapabilityPlanEvidenceBundle:
+        """Export a deterministic operator proof bundle for a certified plan."""
+        normalized_plan_id = plan_id.strip()
+        if not normalized_plan_id:
+            raise ValueError("plan_id is required")
+        certificate = self.certificate_for(normalized_plan_id)
+        if certificate is None:
+            raise KeyError("plan terminal certificate not found")
+        witnesses = self.witnesses_for(normalized_plan_id)
+        recovery_attempts = self.recovery_attempts_for(normalized_plan_id)
+        exported_at = self._clock()
+        evidence_refs = _plan_bundle_evidence_refs(
+            certificate=certificate,
+            witnesses=witnesses,
+            recovery_attempts=recovery_attempts,
+        )
+        witness_ids = tuple(witness.witness_id for witness in witnesses)
+        recovery_attempt_ids = tuple(attempt.attempt_id for attempt in recovery_attempts)
+        bundle_payload = {
+            "plan_id": certificate.plan_id,
+            "certificate_id": certificate.certificate_id,
+            "disposition": certificate.disposition,
+            "step_count": certificate.step_count,
+            "step_command_ids": certificate.step_command_ids,
+            "step_terminal_certificate_ids": certificate.step_terminal_certificate_ids,
+            "plan_evidence_hash": certificate.evidence_hash,
+            "witness_ids": witness_ids,
+            "recovery_attempt_ids": recovery_attempt_ids,
+            "evidence_refs": evidence_refs,
+            "exported_at": exported_at,
+            "bundle_type": "capability_plan_evidence_bundle_v1",
+        }
+        bundle_hash = canonical_hash(bundle_payload)
+        return CapabilityPlanEvidenceBundle(
+            bundle_id=f"plan-evidence-bundle-{bundle_hash[:16]}",
+            bundle_hash=bundle_hash,
+            plan_id=certificate.plan_id,
+            certificate_id=certificate.certificate_id,
+            disposition=certificate.disposition,
+            step_count=certificate.step_count,
+            step_command_ids=certificate.step_command_ids,
+            step_terminal_certificate_ids=certificate.step_terminal_certificate_ids,
+            plan_evidence_hash=certificate.evidence_hash,
+            witness_ids=witness_ids,
+            recovery_attempt_ids=recovery_attempt_ids,
+            evidence_refs=evidence_refs,
+            exported_at=exported_at,
+        )
+
     def read_model(
         self,
         *,
@@ -751,6 +819,30 @@ def _witness_for_certificate(
         witnessed_at=witnessed_at,
         detail=detail,
     )
+
+
+def _plan_bundle_evidence_refs(
+    *,
+    certificate: CapabilityPlanTerminalCertificate,
+    witnesses: tuple[CapabilityPlanWitnessRecord, ...],
+    recovery_attempts: tuple[CapabilityPlanRecoveryAttempt, ...],
+) -> tuple[str, ...]:
+    refs: list[str] = [
+        f"plan_terminal_certificate:{certificate.certificate_id}",
+        f"plan_evidence_hash:{certificate.evidence_hash}",
+    ]
+    refs.extend(f"step_command:{command_id}" for command_id in certificate.step_command_ids)
+    refs.extend(
+        f"step_terminal_certificate:{certificate_id}"
+        for certificate_id in certificate.step_terminal_certificate_ids
+    )
+    refs.extend(f"plan_witness:{witness.witness_id}" for witness in witnesses)
+    refs.extend(f"plan_recovery_attempt:{attempt.attempt_id}" for attempt in recovery_attempts)
+    deduped: list[str] = []
+    for ref in refs:
+        if ref not in deduped:
+            deduped.append(ref)
+    return tuple(deduped)
 
 
 def build_capability_plan_ledger_from_env(

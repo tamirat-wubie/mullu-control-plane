@@ -55,6 +55,11 @@ REQUIRED_CONFORMANCE_FIELDS = (
     "authority_escalated_obligation_count",
     "authority_unowned_high_risk_capability_count",
     "authority_directory_sync_receipt_valid",
+    "mcp_capability_manifest_configured",
+    "mcp_capability_manifest_valid",
+    "mcp_capability_manifest_capability_count",
+    "capability_plan_bundle_canary_passed",
+    "capability_plan_bundle_count",
     "terminal_status",
     "open_conformance_gaps",
     "evidence_refs",
@@ -186,6 +191,10 @@ def collect_deployment_witness(
         expires_at=str(conformance_payload.get("expires_at", "")),
         observed_at=collected_at,
     )
+    mcp_manifest_configured = bool(conformance_payload.get("mcp_capability_manifest_configured"))
+    mcp_manifest_valid = bool(conformance_payload.get("mcp_capability_manifest_valid"))
+    mcp_manifest_passed = (not mcp_manifest_configured) or mcp_manifest_valid
+    plan_bundle_passed = bool(conformance_payload.get("capability_plan_bundle_canary_passed"))
     conformance_passed = (
         conformance_endpoint_status == 200
         and not missing_conformance_fields
@@ -193,6 +202,8 @@ def collect_deployment_witness(
         and bool(conformance_payload.get("gateway_witness_valid"))
         and bool(conformance_payload.get("runtime_witness_valid"))
         and bool(conformance_payload.get("authority_responsibility_debt_clear"))
+        and mcp_manifest_passed
+        and plan_bundle_passed
         and conformance_fresh
     )
     if expected_environment:
@@ -205,6 +216,9 @@ def collect_deployment_witness(
                 f"status={conformance_endpoint_status} terminal_status={conformance_status} "
                 f"environment={conformance_environment} fresh={conformance_fresh} "
                 f"responsibility_debt_clear={bool(conformance_payload.get('authority_responsibility_debt_clear'))} "
+                f"mcp_manifest_configured={mcp_manifest_configured} "
+                f"mcp_manifest_valid={mcp_manifest_valid} "
+                f"plan_bundle_passed={plan_bundle_passed} "
                 f"missing={list(missing_conformance_fields)}"
             ),
         )

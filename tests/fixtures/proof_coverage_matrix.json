@@ -413,11 +413,12 @@
         "gateway/server.py",
         "gateway/conformance.py",
         "scripts/collect_runtime_conformance.py",
+        "scripts/validate_mcp_capability_manifest.py",
         "schemas/runtime_conformance_certificate.schema.json",
         "tests/test_gateway/test_conformance.py",
         "tests/test_collect_runtime_conformance.py"
       ],
-      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, proof-matrix, and document-drift checks into one signed attestation.",
+      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix, and document-drift checks into one signed attestation.",
       "representative_paths": [
         "/runtime/conformance"
       ],
@@ -462,6 +463,7 @@
         "mcoi/mcoi_runtime/app/routers/workflow.py",
         "mcoi/mcoi_runtime/core/tool_use.py",
         "mcoi/mcoi_runtime/mcp/capability_bridge.py",
+        "gateway/mcp_operator_read_model.py",
         "gateway/mcp_capability_fabric.py",
         "gateway/mcp_capabilities.py",
         "scripts/validate_mcp_capability_manifest.py",

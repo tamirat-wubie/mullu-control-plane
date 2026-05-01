@@ -363,6 +363,10 @@ def _check_runtime_conformance_endpoint(
     terminal_status = str(payload.get("terminal_status", ""))
     runtime_environment = str(payload.get("environment", ""))
     fresh = _certificate_fresh(str(payload.get("expires_at", "")))
+    mcp_manifest_configured = bool(payload.get("mcp_capability_manifest_configured"))
+    mcp_manifest_valid = bool(payload.get("mcp_capability_manifest_valid"))
+    mcp_manifest_passed = (not mcp_manifest_configured) or mcp_manifest_valid
+    plan_bundle_passed = bool(payload.get("capability_plan_bundle_canary_passed"))
     passed = (
         status == 200
         and not missing_fields
@@ -370,6 +374,8 @@ def _check_runtime_conformance_endpoint(
         and bool(payload.get("gateway_witness_valid"))
         and bool(payload.get("runtime_witness_valid"))
         and bool(payload.get("authority_responsibility_debt_clear"))
+        and mcp_manifest_passed
+        and plan_bundle_passed
         and runtime_environment == expected_environment
         and fresh
     )
@@ -380,6 +386,9 @@ def _check_runtime_conformance_endpoint(
             f"status={status} terminal_status={terminal_status} "
             f"environment={runtime_environment} fresh={fresh} "
             f"responsibility_debt_clear={bool(payload.get('authority_responsibility_debt_clear'))} "
+            f"mcp_manifest_configured={mcp_manifest_configured} "
+            f"mcp_manifest_valid={mcp_manifest_valid} "
+            f"plan_bundle_passed={plan_bundle_passed} "
             f"missing={missing_fields}"
         ),
     )

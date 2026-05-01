@@ -297,6 +297,7 @@ def test_plan_ledger_certifies_successful_multi_step_execution() -> None:
     ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
 
     certificate = ledger.certify(plan=plan, execution=execution)
+    bundle = ledger.export_evidence_bundle(plan_id=plan.plan_id)
     read_model = ledger.read_model()
     witnesses = ledger.witnesses_for(plan.plan_id)
 
@@ -313,11 +314,33 @@ def test_plan_ledger_certifies_successful_multi_step_execution() -> None:
     )
     assert certificate.evidence_hash == execution.evidence_hash
     assert certificate.metadata["risk_tier"] == "medium"
+    assert bundle.bundle_id.startswith("plan-evidence-bundle-")
+    assert bundle.plan_id == plan.plan_id
+    assert bundle.certificate_id == certificate.certificate_id
+    assert bundle.step_command_ids == certificate.step_command_ids
+    assert bundle.step_terminal_certificate_ids == certificate.step_terminal_certificate_ids
+    assert bundle.plan_evidence_hash == execution.evidence_hash
+    assert bundle.witness_ids == (witnesses[0].witness_id,)
+    assert f"plan_terminal_certificate:{certificate.certificate_id}" in bundle.evidence_refs
+    assert "step_command:cmd-step-1" in bundle.evidence_refs
+    assert "step_terminal_certificate:terminal-step-1" in bundle.evidence_refs
     assert ledger.certificate_for(plan.plan_id) == certificate
     assert read_model["plan_certificate_count"] == 1
     assert read_model["plan_witness_count"] == 1
     assert witnesses[0].certificate_id == certificate.certificate_id
     assert witnesses[0].detail["cause"] == "plan_terminal_certificate_issued"
+
+
+def test_plan_ledger_rejects_missing_evidence_bundle() -> None:
+    ledger = CapabilityPlanLedger(clock=lambda: "2026-04-29T12:00:00+00:00")
+
+    with pytest.raises(KeyError, match="plan terminal certificate not found"):
+        ledger.export_evidence_bundle(plan_id="missing-plan")
+
+    with pytest.raises(ValueError, match="plan_id is required"):
+        ledger.export_evidence_bundle(plan_id="")
+
+    assert ledger.witnesses_for() == ()
 
 
 def test_json_plan_ledger_store_survives_recreation(tmp_path) -> None:

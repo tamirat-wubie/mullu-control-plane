@@ -24,6 +24,7 @@ def build_mcp_operator_read_model(
     capability_admission_gate: Any | None = None,
     authority_mesh_store: Any | None = None,
     mcp_executor: Any | None = None,
+    mcp_gateway_import: Any | None = None,
     capability_id: str = "",
     audit_status: str = "",
     audit_limit: int = 100,
@@ -40,6 +41,7 @@ def build_mcp_operator_read_model(
         capability_filter=capability_filter,
         status_filter=audit_status.strip(),
     )
+    manifest = _mcp_manifest_summary(mcp_gateway_import)
     audit_page, audit_page_meta = _page(
         audits,
         limit=_bounded_limit(audit_limit),
@@ -48,6 +50,10 @@ def build_mcp_operator_read_model(
     return {
         "enabled": capability_admission_gate is not None,
         "executor_enabled": mcp_executor is not None,
+        "mcp_manifest_configured": manifest["configured"],
+        "mcp_manifest_valid": manifest["valid"],
+        "mcp_manifest_ref": manifest["manifest_ref"],
+        "mcp_manifest_capability_count": manifest["capability_count"],
         "capabilities": capabilities,
         "capability_count": len(capabilities),
         "ownership": ownership,
@@ -61,6 +67,23 @@ def build_mcp_operator_read_model(
         "execution_audit_status_filter": audit_status.strip(),
         "execution_audit_page": audit_page_meta,
         "capability_filter": capability_filter,
+    }
+
+
+def _mcp_manifest_summary(mcp_gateway_import: Any | None) -> dict[str, Any]:
+    if mcp_gateway_import is None:
+        return {
+            "configured": False,
+            "valid": True,
+            "manifest_ref": "",
+            "capability_count": 0,
+        }
+    entries = tuple(getattr(mcp_gateway_import, "entries", ()))
+    return {
+        "configured": True,
+        "valid": True,
+        "manifest_ref": str(getattr(mcp_gateway_import, "manifest_ref", "")),
+        "capability_count": len(entries),
     }
 
 
