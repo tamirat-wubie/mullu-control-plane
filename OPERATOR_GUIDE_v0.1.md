@@ -203,6 +203,38 @@ Providers transition between three states:
 Unhealthy providers appear in the run summary. Use `mcoi status` to check the
 current provider state before executing requests.
 
+## Gateway MCP Capability Imports
+
+Gateway MCP tools are activated through a governed manifest, not by ad-hoc
+runtime registration. The operator procedure is documented in
+[`docs/55_mcp_capability_manifest.md`](docs/55_mcp_capability_manifest.md).
+
+Minimum sequence:
+
+1. Validate the manifest:
+
+```powershell
+python scripts\validate_mcp_capability_manifest.py --manifest examples\mcp_capability_manifest.json --json
+```
+
+2. Start the gateway with the same manifest:
+
+```powershell
+$env:MULLU_MCP_CAPABILITY_MANIFEST_PATH = "examples\mcp_capability_manifest.json"
+python -m gateway.server
+```
+
+3. Inspect `/mcp/operator/read-model` for `mcp_manifest_valid: true`.
+4. Collect `/runtime/conformance` and verify `mcp_capability_manifest_valid: true`.
+5. Verify `/runtime/conformance` also reports `capability_plan_bundle_canary_passed: true`.
+6. Run deployment preflight with the manifest path before witness dispatch.
+
+If the manifest is invalid, gateway deployment readiness remains blocked until
+the manifest produces certified capabilities, ownership records, approval
+policies, and an escalation policy. If capability plan evidence bundle export
+is not wired, deployment readiness remains blocked until `/capability-plans/{plan_id}/closure`
+can return the terminal certificate and `plan_evidence_bundle`.
+
 ## Limitations
 
 This is an internal alpha with significant limitations. See

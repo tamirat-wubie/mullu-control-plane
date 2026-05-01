@@ -156,6 +156,25 @@ def test_lineage_query_api_is_witnessed_read_model() -> None:
     assert closure_actions["implement_lineage_query_routes_and_schema"]["status"] == "closed"
 
 
+def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    plan_surface = surfaces["capability_plan_evidence_bundle"]
+    conformance_surface = surfaces["runtime_conformance_attestation"]
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+
+    assert plan_surface["coverage_state"] == "witnessed"
+    assert plan_surface["request_proof"] == "request_proof"
+    assert plan_surface["action_proof"] == "action_proof"
+    assert "/capability-plans/{plan_id}/closure" in plan_surface["representative_paths"]
+    assert "gateway/plan_ledger.py" in plan_surface["evidence_files"]
+    assert "tests/test_gateway/test_plan.py" in plan_surface["evidence_files"]
+    assert "plan_evidence_bundle" in plan_surface["runtime_witnesses"]
+    assert "capability_plan_bundle_canary_passed" in conformance_surface["runtime_witnesses"]
+    assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
+    assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
+
+
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()

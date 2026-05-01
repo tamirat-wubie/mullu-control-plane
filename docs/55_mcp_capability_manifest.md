@@ -104,8 +104,95 @@ If the manifest is present, startup installs:
 The manifest path cannot be combined with explicit MCP overrides or a separately
 configured capability admission gate.
 
+## Operator Procedure
+
+Use this sequence when an environment imports MCP tools through a manifest.
+
+1. Validate the manifest before startup.
+
+```powershell
+python scripts\validate_mcp_capability_manifest.py --manifest examples\mcp_capability_manifest.json --json
+```
+
+Required evidence:
+
+| Field | Expected |
+| --- | --- |
+| `valid` | `true` |
+| `capability_count` | Greater than `0` |
+| `ownership_count` | Equal to `capability_count` |
+| `approval_policy_count` | Equal to `capability_count` |
+| `escalation_policy_count` | Greater than `0` |
+
+2. Start the gateway with the same manifest path.
+
+```powershell
+$env:MULLU_MCP_CAPABILITY_MANIFEST_PATH = "examples\mcp_capability_manifest.json"
+python -m gateway.server
+```
+
+3. Inspect the operator read model.
+
+```powershell
+curl -H "X-Mullu-Authority-Secret: $env:MULLU_AUTHORITY_OPERATOR_SECRET" `
+  "http://localhost:8001/mcp/operator/read-model?audit_limit=25"
+```
+
+Required read-model evidence:
+
+| Field | Expected |
+| --- | --- |
+| `mcp_manifest_configured` | `true` |
+| `mcp_manifest_valid` | `true` |
+| `mcp_manifest_ref` | File URI for the configured manifest |
+| `mcp_manifest_capability_count` | Same count as validator output |
+| `ownership_count` | At least the imported MCP capability count |
+| `approval_policy_count` | At least the imported MCP capability count |
+
+4. Check runtime conformance.
+
+```powershell
+python scripts\collect_runtime_conformance.py `
+  --gateway-url "$env:MULLU_GATEWAY_URL" `
+  --conformance-secret "$env:MULLU_RUNTIME_CONFORMANCE_SECRET" `
+  --authority-operator-secret "$env:MULLU_AUTHORITY_OPERATOR_SECRET" `
+  --expected-environment pilot
+```
+
+Required signed certificate evidence:
+
+| Field | Expected |
+| --- | --- |
+| `mcp_capability_manifest_configured` | `true` |
+| `mcp_capability_manifest_valid` | `true` |
+| `mcp_capability_manifest_capability_count` | Same count as validator output |
+| `open_conformance_gaps` | Must not include `mcp_capability_manifest_invalid` |
+
+5. Run deployment witness preflight before dispatch.
+
+```powershell
+python scripts\preflight_deployment_witness.py `
+  --gateway-host "$env:MULLU_GATEWAY_HOST" `
+  --expected-environment pilot `
+  --mcp-capability-manifest examples\mcp_capability_manifest.json
+```
+
+The preflight must include a passing `mcp capability manifest` step and a passing
+`runtime conformance endpoint` step. If the configured manifest is invalid, both
+preflight readiness and deployment witness publication remain blocked.
+
+## Failure Handling
+
+| Failure | Cause | Required action |
+| --- | --- | --- |
+| `MCP manifest requires at least one tool` | Empty `tools` list | Add at least one tool declaration |
+| `MCP manifest requires a configured string field` | Missing tenant, owner, escalation, certification, or tool string | Fill the required field and re-run validation |
+| `mcp_capability_manifest_invalid` | Runtime conformance rejected the configured manifest | Fix manifest, restart gateway, collect conformance again |
+| `mcp_manifest_valid=false` in deployment witness | Signed conformance says the manifest is invalid | Do not dispatch deployment witness until conformance is clean |
+| `mcp_manifest_configured=false` in read model | Gateway was not started with `MULLU_MCP_CAPABILITY_MANIFEST_PATH` | Set the environment variable and restart |
+
 STATUS:
   Completeness: 100%
-  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding]
+  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, deployment preflight gate]
   Open issues: none
-  Next action: validate and publish an environment-specific manifest
+  Next action: publish an environment-specific manifest and collect signed conformance evidence

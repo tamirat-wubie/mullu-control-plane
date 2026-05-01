@@ -314,6 +314,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "lineage_query_canary_passed",
                 "authority_responsibility_debt_clear",
                 "authority_directory_sync_receipt_valid",
+                "capability_plan_bundle_canary_passed",
+            ],
+        ),
+        _surface(
+            "capability_plan_evidence_bundle",
+            [
+                "/capability-plans/read-model",
+                "/capability-plans/{plan_id}/closure",
+                "/capability-plans/{plan_id}/recover",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/server.py",
+                "gateway/plan.py",
+                "gateway/plan_executor.py",
+                "gateway/plan_ledger.py",
+                "tests/test_gateway/test_plan.py",
+                "tests/test_gateway/test_webhooks.py",
+            ],
+            "Capability plan surfaces expose plan terminal certificates, plan evidence bundles, failure witnesses, and recovery-attempt audit records.",
+            [
+                "plan_terminal_certificate",
+                "plan_evidence_bundle",
+                "plan_witnesses",
+                "plan_recovery_attempts",
             ],
         ),
         _surface(
@@ -451,6 +479,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_runtime_conformance_attestation",
             "surfaces": ["runtime_conformance_attestation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_capability_plan_evidence_bundles",
+            "surfaces": ["capability_plan_evidence_bundle", "runtime_conformance_attestation"],
             "status": "closed",
         },
     ]
