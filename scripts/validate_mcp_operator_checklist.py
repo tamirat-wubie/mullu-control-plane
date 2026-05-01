@@ -27,29 +27,78 @@ REQUIRED_ENVIRONMENT_VARIABLES = frozenset({
     "MULLU_GATEWAY_HOST",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "MULLU_AUTHORITY_OPERATOR_SECRET",
+    "MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT",
 })
 REQUIRED_STEP_IDS = frozenset({
     "validate_manifest",
     "inspect_operator_read_model",
+    "inspect_mcp_execution_evidence_bundle",
     "collect_runtime_conformance",
     "run_deployment_preflight",
+    "write_orchestration_receipt",
 })
 REQUIRED_READ_MODEL_FIELDS = frozenset({
     "mcp_manifest_configured",
     "mcp_manifest_valid",
     "mcp_manifest_ref",
     "mcp_manifest_capability_count",
+    "executor_enabled",
+    "execution_audit_count",
+    "execution_audits",
 })
 REQUIRED_CONFORMANCE_FIELDS = frozenset({
     "mcp_capability_manifest_configured",
     "mcp_capability_manifest_valid",
     "mcp_capability_manifest_capability_count",
+    "capability_plan_bundle_canary_passed",
+    "capability_plan_bundle_count",
     "open_conformance_gaps",
+    "terminal_status",
+    "signature",
 })
 REQUIRED_BLOCKING_GAPS = frozenset({
     "mcp_capability_manifest_invalid",
     "authority_responsibility_debt_present",
+    "capability_fabric_admission_not_live",
+    "capability_plan_evidence_bundle_not_witnessed",
 })
+REQUIRED_STEP_EVIDENCE = {
+    "validate_manifest": frozenset({
+        "valid=true",
+        "capability_count>0",
+    }),
+    "inspect_operator_read_model": frozenset({
+        "executor_enabled=true",
+        "execution_audit_count>=0",
+    }),
+    "inspect_mcp_execution_evidence_bundle": frozenset({
+        "bundle_id startswith mcp-evidence-bundle-",
+        "evidence_refs non-empty",
+    }),
+    "collect_runtime_conformance": frozenset({
+        "mcp_capability_manifest_configured=true",
+        "mcp_capability_manifest_valid=true",
+        "capability_plan_bundle_canary_passed=true",
+    }),
+    "run_deployment_preflight": frozenset({
+        "runtime conformance endpoint step passed",
+        "plan_bundle_passed=True",
+        "ready=true",
+    }),
+    "write_orchestration_receipt": frozenset({
+        "receipt_id startswith deployment-witness-orchestration-",
+        "preflight_ready=true",
+        "evidence_refs non-empty",
+    }),
+}
+REQUIRED_STEP_COMMAND_TOKENS = {
+    "validate_manifest": ("validate_mcp_capability_manifest.py", "--json"),
+    "inspect_operator_read_model": ("/mcp/operator/read-model", "X-Mullu-Authority-Secret"),
+    "inspect_mcp_execution_evidence_bundle": ("/mcp/operator/evidence-bundles/", "X-Mullu-Authority-Secret"),
+    "collect_runtime_conformance": ("collect_runtime_conformance.py", "--authority-operator-secret"),
+    "run_deployment_preflight": ("preflight_deployment_witness.py", "--mcp-capability-manifest"),
+    "write_orchestration_receipt": ("orchestrate_deployment_witness.py", "--orchestration-output"),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,12 +192,23 @@ def _validate_steps(steps: Any, errors: list[str]) -> None:
             errors.append("required_commands entries must be objects")
             continue
         step_id = str(step.get("step_id", ""))
+        if step_id in step_ids:
+            errors.append(f"duplicate required_commands step_id {step_id}")
         step_ids.add(step_id)
-        if not str(step.get("command", "")).strip():
+        command = str(step.get("command", "")).strip()
+        if not command:
             errors.append(f"{step_id or 'unnamed'} command is required")
+        for token in REQUIRED_STEP_COMMAND_TOKENS.get(step_id, ()):
+            if token not in command:
+                errors.append(f"{step_id or 'unnamed'} command missing token {token}")
         evidence = step.get("required_evidence", [])
         if not isinstance(evidence, list) or not evidence:
             errors.append(f"{step_id or 'unnamed'} required_evidence must be a non-empty list")
+            continue
+        evidence_set = {str(item) for item in evidence}
+        missing_evidence = sorted(REQUIRED_STEP_EVIDENCE.get(step_id, frozenset()) - evidence_set)
+        if missing_evidence:
+            errors.append(f"{step_id or 'unnamed'} required_evidence missing {missing_evidence}")
     missing_steps = sorted(REQUIRED_STEP_IDS - step_ids)
     if missing_steps:
         errors.append(f"required_commands missing steps {missing_steps}")

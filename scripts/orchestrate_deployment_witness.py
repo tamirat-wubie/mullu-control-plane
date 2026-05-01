@@ -13,6 +13,8 @@ Invariants:
   - Gateway URL is derived from the validated host unless explicitly provided.
   - Live cluster apply and workflow dispatch are explicit operator choices.
   - Dispatch can be gated by a fresh preflight report.
+  - Successful orchestration emits a deterministic receipt id and can persist
+    the receipt for release evidence.
   - Mounted runtime and conformance secrets can witness presence without
     listing secrets.
   - Runtime witness and conformance secrets are never written to stdout.
@@ -249,7 +251,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dispatch", action="store_true")
     parser.add_argument("--require-preflight", action="store_true")
     parser.add_argument("--preflight-output", default=str(DEFAULT_PREFLIGHT_OUTPUT))
-    parser.add_argument("--orchestration-output", default="")
+    parser.add_argument(
+        "--orchestration-output",
+        default=os.environ.get(
+            "MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT",
+            str(DEFAULT_ORCHESTRATION_OUTPUT),
+        ),
+    )
     parser.add_argument("--skip-preflight-endpoint-probes", action="store_true")
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
