@@ -22,6 +22,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | --- | --- |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
+| `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `execution_result.schema.json` | Canonical execution outcome |
@@ -31,6 +32,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
+| `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `lineage_query.schema.json` | Canonical lineage query response document |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |

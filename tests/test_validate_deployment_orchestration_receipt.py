@@ -17,10 +17,12 @@ from pathlib import Path
 
 from scripts.provision_deployment_target import DEFAULT_REPOSITORY
 from scripts.validate_deployment_orchestration_receipt import (
+    ORCHESTRATION_RECEIPT_SCHEMA_PATH,
     main,
     validate_deployment_orchestration_receipt,
     write_orchestration_receipt_validation_report,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 def test_valid_orchestration_receipt_satisfies_handoff_policy(tmp_path: Path) -> None:
@@ -113,6 +115,36 @@ def test_orchestration_receipt_rejects_missing_nullable_contract_field(tmp_path:
     assert required_step.passed is False
     assert "dispatch_run_id" in required_step.detail
     assert "missing=" in required_step.detail
+
+
+def test_orchestration_receipt_rejects_schema_contract_violation(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(receipt_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["unexpected_authority_gap"] = "unowned"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+    schema_step = _step(validation, "schema contract")
+
+    assert validation.valid is False
+    assert schema_step.passed is False
+    assert "unexpected_authority_gap" in schema_step.detail
+    assert "unexpected property" in schema_step.detail
+
+
+def test_orchestration_receipt_schema_accepts_canonical_fixture(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(receipt_path)
+    schema = _load_schema(ORCHESTRATION_RECEIPT_SCHEMA_PATH)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    errors = _validate_schema_instance(schema, payload)
+
+    assert errors == []
+    assert schema["title"] == "Deployment Orchestration Receipt"
+    assert "mcp_operator_checklist_valid" in schema["required"]
+    assert schema["properties"]["evidence_refs"]["minItems"] == 5
 
 
 def test_cli_writes_validation_report_and_returns_nonzero(tmp_path: Path, capsys) -> None:

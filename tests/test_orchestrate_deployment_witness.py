@@ -13,6 +13,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,9 @@ from scripts.orchestrate_deployment_witness import (
     main,
     orchestrate_deployment_witness,
 )
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 class FakeRunner:
@@ -382,6 +386,52 @@ def test_cli_uses_orchestration_receipt_output_environment(
     assert payload["mcp_operator_checklist_required"] is False
     assert payload["mcp_operator_checklist_valid"] is None
     assert str(receipt_path) in captured.out
+
+
+def test_orchestration_receipt_schema_matches_cli_output(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        "scripts.orchestrate_deployment_witness.subprocess.run",
+        FakeRunner(),
+    )
+    receipt_path = tmp_path / "schema-orchestration.json"
+    schema_path = REPO_ROOT / "schemas" / "deployment_orchestration_receipt.schema.json"
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--rendered-ingress-output",
+            str(tmp_path / "ingress.yaml"),
+            "--orchestration-output",
+            str(receipt_path),
+        ]
+    )
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    required_fields = set(schema["required"])
+    assert exit_code == 0
+    assert set(payload) == required_fields
+    assert set(schema["properties"]) == required_fields
+    assert re.fullmatch(schema["properties"]["receipt_id"]["pattern"], payload["receipt_id"])
+    assert payload["expected_environment"] in schema["properties"]["expected_environment"]["enum"]
+    assert isinstance(payload["ingress_applied"], bool)
+    assert isinstance(payload["preflight_required"], bool)
+    assert isinstance(payload["dispatch_requested"], bool)
+    assert isinstance(payload["mcp_operator_checklist_required"], bool)
+    assert payload["preflight_ready"] is None or isinstance(payload["preflight_ready"], bool)
+    assert payload["dispatch_run_id"] is None or isinstance(payload["dispatch_run_id"], int)
+    assert payload["mcp_operator_checklist_valid"] is None or isinstance(
+        payload["mcp_operator_checklist_valid"],
+        bool,
+    )
+    assert len(payload["evidence_refs"]) >= schema["properties"]["evidence_refs"]["minItems"]
+    assert all(isinstance(item, str) and item for item in payload["evidence_refs"])
 
 
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:

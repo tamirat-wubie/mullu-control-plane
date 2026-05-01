@@ -53,6 +53,12 @@
       "surface": "communication"
     },
     {
+      "schema_id": "deployment-orchestration-receipt",
+      "path": "schemas/deployment_orchestration_receipt.schema.json",
+      "urn": "urn:mullusi:schema:deployment-orchestration-receipt:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",
