@@ -73,6 +73,14 @@
       "surfaces": [
         "runtime_conformance_attestation"
       ]
+    },
+    {
+      "action_id": "publish_capability_plan_evidence_bundles",
+      "status": "closed",
+      "surfaces": [
+        "capability_plan_evidence_bundle",
+        "runtime_conformance_attestation"
+      ]
     }
   ],
   "coverage_levels": [
@@ -89,7 +97,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 13,
+      "action_proof": 14,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -97,7 +105,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 16,
+      "audit_chain": 17,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -105,16 +113,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 19
+      "witnessed": 20
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
-      "request_proof": 13
+      "request_proof": 14
     },
-    "surface_count": 20
+    "surface_count": 21
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -431,9 +439,37 @@
         "dangerous_capability_isolation_canary_passed",
         "lineage_query_canary_passed",
         "authority_responsibility_debt_clear",
-        "authority_directory_sync_receipt_valid"
+        "authority_directory_sync_receipt_valid",
+        "capability_plan_bundle_canary_passed"
       ],
       "surface_id": "runtime_conformance_attestation"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/plan.py",
+        "gateway/plan_executor.py",
+        "gateway/plan_ledger.py",
+        "tests/test_gateway/test_plan.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Capability plan surfaces expose plan terminal certificates, plan evidence bundles, failure witnesses, and recovery-attempt audit records.",
+      "representative_paths": [
+        "/capability-plans/read-model",
+        "/capability-plans/{plan_id}/closure",
+        "/capability-plans/{plan_id}/recover"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "plan_terminal_certificate",
+        "plan_evidence_bundle",
+        "plan_witnesses",
+        "plan_recovery_attempts"
+      ],
+      "surface_id": "capability_plan_evidence_bundle"
     },
     {
       "action_proof": "action_proof",
