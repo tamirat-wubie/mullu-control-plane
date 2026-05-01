@@ -13,6 +13,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 from scripts.collect_deployment_witness import (
@@ -20,6 +21,11 @@ from scripts.collect_deployment_witness import (
     main,
     write_deployment_witness,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
 
 
 class StubHttpResponse:
@@ -277,6 +283,7 @@ def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     assert loaded["witness_id"] == witness.witness_id
     assert loaded["latest_conformance_certificate_id"] == "conf-0123456789abcdef"
     assert loaded["steps"][0]["name"] == "gateway health"
+    assert _validate_schema_instance(_load_schema(DEPLOYMENT_WITNESS_SCHEMA_PATH), loaded) == []
 
 
 def test_cli_writes_not_published_witness_without_secret(tmp_path, monkeypatch, capsys) -> None:
@@ -304,6 +311,7 @@ def test_cli_writes_not_published_witness_without_secret(tmp_path, monkeypatch, 
     assert loaded["deployment_claim"] == "not-published"
     assert loaded["signature_status"] == "skipped:no_witness_secret"
     assert loaded["conformance_signature_status"] == "skipped:no_conformance_secret"
+    assert _validate_schema_instance(_load_schema(DEPLOYMENT_WITNESS_SCHEMA_PATH), loaded) == []
 
 
 def _signed_runtime_witness(*, secret: str) -> dict[str, Any]:
