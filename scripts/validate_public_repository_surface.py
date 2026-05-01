@@ -110,6 +110,7 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "python scripts/collect_deployment_witness.py",
+    '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"',
     ".change_assurance/deployment_witness.json",
     "actions/upload-artifact@v4",
 )
