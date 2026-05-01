@@ -200,7 +200,10 @@ class JsonlMCPExecutionAuditStore:
         path_text = str(path).strip()
         if not path_text:
             raise ValueError("MCP execution audit store path is required")
-        self._path = Path(path_text)
+        resolved_path = Path(path_text)
+        if resolved_path.exists() and resolved_path.is_dir():
+            raise ValueError("MCP execution audit store path must be a file path")
+        self._path = resolved_path
 
     @property
     def path(self) -> Path:

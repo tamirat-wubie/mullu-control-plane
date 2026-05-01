@@ -413,3 +413,16 @@ def test_build_mcp_execution_audit_store_from_env_selects_durable_store(tmp_path
     assert durable.path == audit_path
     assert isinstance(volatile, InMemoryMCPExecutionAuditStore)
     assert volatile.list() == ()
+
+
+def test_jsonl_mcp_execution_audit_store_rejects_non_file_paths(tmp_path) -> None:
+    with pytest.raises(ValueError, match="path is required"):
+        JsonlMCPExecutionAuditStore("")
+    with pytest.raises(ValueError, match="path is required"):
+        JsonlMCPExecutionAuditStore("   ")
+    with pytest.raises(ValueError, match="must be a file path"):
+        JsonlMCPExecutionAuditStore(tmp_path)
+
+    assert tmp_path.exists()
+    assert tmp_path.is_dir()
+    assert not (tmp_path / "execution_audits.jsonl").exists()
