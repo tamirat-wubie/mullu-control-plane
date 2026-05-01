@@ -50,6 +50,7 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
 
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "deployment-witness.yml"
+GATEWAY_PUBLICATION_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "gateway-publication.yml"
 
 REQUIRED_CI_LITERALS: tuple[str, ...] = (
     'branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]',
@@ -119,6 +120,10 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
         "python scripts/collect_deployment_witness.py --gateway-url \"$MULLU_GATEWAY_URL\" --witness-secret \"$MULLU_RUNTIME_WITNESS_SECRET\" --conformance-secret \"$MULLU_RUNTIME_CONFORMANCE_SECRET\" --output .change_assurance/deployment_witness.json",
         ".github/workflows/deployment-witness.yml",
+        ".github/workflows/gateway-publication.yml",
+        "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
+        ".change_assurance/deployment_witness_orchestration.json",
+        "python scripts/validate_deployment_orchestration_receipt.py --receipt \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\" --require-mcp-operator-checklist --require-preflight --expected-environment pilot",
         "python scripts/gateway_runtime_smoke.py",
         "python scripts/validate_public_repository_surface.py",
     ),
@@ -132,6 +137,26 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
     "python scripts/collect_deployment_witness.py",
     ".change_assurance/deployment_witness.json",
+    "actions/upload-artifact@v4",
+)
+
+GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
+    "Gateway Publication Orchestration",
+    "workflow_dispatch",
+    "gateway_host",
+    "apply_ingress",
+    "dispatch_witness",
+    "MULLU_RUNTIME_WITNESS_SECRET",
+    "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_KUBECONFIG_B64",
+    "python scripts/orchestrate_deployment_witness.py",
+    "--require-preflight",
+    "--require-mcp-operator-checklist",
+    "--orchestration-output .change_assurance/deployment_witness_orchestration.json",
+    "python scripts/validate_deployment_orchestration_receipt.py",
+    ".change_assurance/deployment_witness_orchestration_validation.json",
+    "--accept-runtime-secret-env",
+    "--accept-conformance-secret-env",
     "actions/upload-artifact@v4",
 )
 
@@ -249,6 +274,19 @@ def validate_deployment_witness_workflow_text(content: str) -> list[str]:
     if missing_literals:
         errors.append(
             f"deployment witness workflow missing required literals: {list(missing_literals)}"
+        )
+    return errors
+
+
+def validate_gateway_publication_workflow_text(content: str) -> list[str]:
+    """Validate the gateway publication workflow preserves handoff evidence."""
+    errors: list[str] = []
+    missing_literals = tuple(
+        literal for literal in GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS if literal not in content
+    )
+    if missing_literals:
+        errors.append(
+            f"gateway publication workflow missing required literals: {list(missing_literals)}"
         )
     return errors
 
@@ -443,6 +481,11 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     else:
         workflow_content = DEPLOYMENT_WITNESS_WORKFLOW_PATH.read_text(encoding="utf-8")
         errors.extend(validate_deployment_witness_workflow_text(workflow_content))
+    if not GATEWAY_PUBLICATION_WORKFLOW_PATH.exists():
+        errors.append("missing required workflow: .github/workflows/gateway-publication.yml")
+    else:
+        workflow_content = GATEWAY_PUBLICATION_WORKFLOW_PATH.read_text(encoding="utf-8")
+        errors.extend(validate_gateway_publication_workflow_text(workflow_content))
 
     status_document_path = REPO_ROOT / "STATUS.md"
     if status_document_path.exists():

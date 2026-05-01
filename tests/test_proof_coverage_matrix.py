@@ -80,13 +80,18 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     runtime_surface = surfaces["gateway_runtime_witness"]
 
     assert runtime_surface["coverage_state"] == "witnessed"
     assert "scripts/orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
     assert ".github/workflows/gateway-publication.yml" in runtime_surface["evidence_files"]
+    assert "schemas/deployment_orchestration_receipt.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/mullu_governance_protocol.manifest.json" in runtime_surface["evidence_files"]
     assert "tests/test_orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
+    assert "tests/test_validate_protocol_manifest.py" in runtime_surface["evidence_files"]
     assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
+    assert closure_actions["publish_deployment_orchestration_receipt_contract"]["status"] == "closed"
 
 
 def test_governed_session_request_envelope_is_covered() -> None:
@@ -213,3 +218,6 @@ def test_operator_document_mentions_every_surface() -> None:
     doc = (REPO_ROOT / "docs" / "40_proof_coverage_matrix.md").read_text(encoding="utf-8")
 
     assert all(f"`{surface['surface_id']}`" in doc for surface in matrix["surfaces"])
+    assert all(f"`{action['action_id']}`" in doc for action in matrix["closure_actions"])
+    assert "schema contract validation" in doc
+    assert "deployment orchestration receipt schema contract" in doc

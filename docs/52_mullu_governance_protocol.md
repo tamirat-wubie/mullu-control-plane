@@ -25,6 +25,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 4. Additive changes must use existing compatibility hatches such as `metadata` or `extensions` where available.
 5. Breaking field meaning changes require a coordinated major protocol version.
 6. External implementations may implement the schema and URI surface, but Mullusi remains the reference runtime.
+7. Deployment handoff receipts are public contracts when they cross operator, CI, or release-promotion boundaries.
 
 ## Verification
 
@@ -37,11 +38,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 22 schemas
+protocol manifest ok: 24 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes

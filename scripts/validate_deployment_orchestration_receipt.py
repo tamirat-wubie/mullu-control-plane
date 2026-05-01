@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -26,11 +27,19 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.orchestrate_deployment_witness import DEFAULT_ORCHESTRATION_OUTPUT  # noqa: E402
-from scripts.provision_deployment_target import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS  # noqa: E402
+from scripts.provision_deployment_target import (  # noqa: E402
+    DEFAULT_REPOSITORY,
+    VALID_ENVIRONMENTS,
+)
+from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 DEFAULT_VALIDATION_OUTPUT = (
     Path(".change_assurance") / "deployment_witness_orchestration_validation.json"
 )
+ORCHESTRATION_RECEIPT_SCHEMA_PATH = (
+    REPO_ROOT / "schemas" / "deployment_orchestration_receipt.schema.json"
+)
+RECEIPT_ID_PATTERN = re.compile(r"^deployment-witness-orchestration-[0-9a-f]{16}$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +82,7 @@ def validate_deployment_orchestration_receipt(
     """Validate one deployment orchestration receipt and optional policy gates."""
     payload = _read_receipt_payload(receipt_path)
     steps = [
+        _check_schema_contract(payload),
         _check_required_fields(payload),
         _check_receipt_id(payload),
         _check_evidence_refs(payload),
@@ -83,14 +93,26 @@ def validate_deployment_orchestration_receipt(
         ),
         _check_dispatch_policy(payload, require_dispatch=require_dispatch),
         _check_success_policy(payload, require_success=require_success),
-        _check_expected_value(payload=payload, field_name="repository", expected_value=expected_repository),
-        _check_expected_value(payload=payload, field_name="gateway_host", expected_value=expected_gateway_host),
+        _check_expected_value(
+            payload=payload,
+            field_name="repository",
+            expected_value=expected_repository,
+        ),
+        _check_expected_value(
+            payload=payload,
+            field_name="gateway_host",
+            expected_value=expected_gateway_host,
+        ),
         _check_expected_value(
             payload=payload,
             field_name="gateway_url",
             expected_value=expected_gateway_url.rstrip("/") if expected_gateway_url else "",
         ),
-        _check_expected_value(payload=payload, field_name="expected_environment", expected_value=expected_environment),
+        _check_expected_value(
+            payload=payload,
+            field_name="expected_environment",
+            expected_value=expected_environment,
+        ),
     ]
     return DeploymentOrchestrationReceiptValidation(
         receipt_path=str(receipt_path),
@@ -117,7 +139,9 @@ def _read_receipt_payload(receipt_path: Path) -> dict[str, Any]:
     try:
         raw_text = receipt_path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise RuntimeError(f"failed to read deployment orchestration receipt {receipt_path}") from exc
+        raise RuntimeError(
+            f"failed to read deployment orchestration receipt {receipt_path}"
+        ) from exc
     try:
         parsed = json.loads(raw_text)
     except json.JSONDecodeError as exc:
@@ -125,6 +149,23 @@ def _read_receipt_payload(receipt_path: Path) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise RuntimeError("deployment orchestration receipt was not a JSON object")
     return parsed
+
+
+def _check_schema_contract(payload: dict[str, Any]) -> OrchestrationReceiptValidationStep:
+    try:
+        schema = _load_schema(ORCHESTRATION_RECEIPT_SCHEMA_PATH)
+    except OSError as exc:
+        return OrchestrationReceiptValidationStep(
+            "schema contract",
+            False,
+            f"schema-read-failed:{exc}",
+        )
+    errors = _validate_schema_instance(schema, payload)
+    return OrchestrationReceiptValidationStep(
+        "schema contract",
+        not errors,
+        "valid" if not errors else f"errors={errors}",
+    )
 
 
 def _check_required_fields(payload: dict[str, Any]) -> OrchestrationReceiptValidationStep:
@@ -190,8 +231,12 @@ def _check_required_fields(payload: dict[str, Any]) -> OrchestrationReceiptValid
 
 def _check_receipt_id(payload: dict[str, Any]) -> OrchestrationReceiptValidationStep:
     receipt_id = str(payload.get("receipt_id", ""))
-    passed = receipt_id.startswith("deployment-witness-orchestration-") and len(receipt_id) > 32
-    return OrchestrationReceiptValidationStep("receipt id", passed, f"receipt_id={receipt_id}")
+    passed = RECEIPT_ID_PATTERN.fullmatch(receipt_id) is not None
+    return OrchestrationReceiptValidationStep(
+        "receipt id",
+        passed,
+        f"receipt_id={receipt_id}",
+    )
 
 
 def _check_evidence_refs(payload: dict[str, Any]) -> OrchestrationReceiptValidationStep:
@@ -223,12 +268,22 @@ def _check_preflight_policy(
     require_preflight: bool,
 ) -> OrchestrationReceiptValidationStep:
     if not require_preflight:
-        return OrchestrationReceiptValidationStep("require preflight", True, "not-required")
-    passed = payload.get("preflight_required") is True and payload.get("preflight_ready") is True
+        return OrchestrationReceiptValidationStep(
+            "require preflight",
+            True,
+            "not-required",
+        )
+    passed = (
+        payload.get("preflight_required") is True
+        and payload.get("preflight_ready") is True
+    )
     return OrchestrationReceiptValidationStep(
         "require preflight",
         passed,
-        f"preflight_required={payload.get('preflight_required')} preflight_ready={payload.get('preflight_ready')}",
+        (
+            f"preflight_required={payload.get('preflight_required')} "
+            f"preflight_ready={payload.get('preflight_ready')}"
+        ),
     )
 
 
@@ -238,7 +293,11 @@ def _check_mcp_checklist_policy(
     require_mcp_operator_checklist: bool,
 ) -> OrchestrationReceiptValidationStep:
     if not require_mcp_operator_checklist:
-        return OrchestrationReceiptValidationStep("require mcp operator checklist", True, "not-required")
+        return OrchestrationReceiptValidationStep(
+            "require mcp operator checklist",
+            True,
+            "not-required",
+        )
     passed = (
         payload.get("mcp_operator_checklist_required") is True
         and payload.get("mcp_operator_checklist_valid") is True
@@ -259,12 +318,22 @@ def _check_dispatch_policy(
     require_dispatch: bool,
 ) -> OrchestrationReceiptValidationStep:
     if not require_dispatch:
-        return OrchestrationReceiptValidationStep("require dispatch", True, "not-required")
-    passed = payload.get("dispatch_requested") is True and isinstance(payload.get("dispatch_run_id"), int)
+        return OrchestrationReceiptValidationStep(
+            "require dispatch",
+            True,
+            "not-required",
+        )
+    passed = (
+        payload.get("dispatch_requested") is True
+        and isinstance(payload.get("dispatch_run_id"), int)
+    )
     return OrchestrationReceiptValidationStep(
         "require dispatch",
         passed,
-        f"dispatch_requested={payload.get('dispatch_requested')} dispatch_run_id={payload.get('dispatch_run_id')}",
+        (
+            f"dispatch_requested={payload.get('dispatch_requested')} "
+            f"dispatch_run_id={payload.get('dispatch_run_id')}"
+        ),
     )
 
 
@@ -274,12 +343,22 @@ def _check_success_policy(
     require_success: bool,
 ) -> OrchestrationReceiptValidationStep:
     if not require_success:
-        return OrchestrationReceiptValidationStep("require success", True, "not-required")
-    passed = payload.get("dispatch_requested") is True and payload.get("dispatch_conclusion") == "success"
+        return OrchestrationReceiptValidationStep(
+            "require success",
+            True,
+            "not-required",
+        )
+    passed = (
+        payload.get("dispatch_requested") is True
+        and payload.get("dispatch_conclusion") == "success"
+    )
     return OrchestrationReceiptValidationStep(
         "require success",
         passed,
-        f"dispatch_requested={payload.get('dispatch_requested')} conclusion={payload.get('dispatch_conclusion')}",
+        (
+            f"dispatch_requested={payload.get('dispatch_requested')} "
+            f"conclusion={payload.get('dispatch_conclusion')}"
+        ),
     )
 
 
@@ -290,7 +369,11 @@ def _check_expected_value(
     expected_value: str,
 ) -> OrchestrationReceiptValidationStep:
     if not expected_value:
-        return OrchestrationReceiptValidationStep(f"expected {field_name}", True, "not-required")
+        return OrchestrationReceiptValidationStep(
+            f"expected {field_name}",
+            True,
+            "not-required",
+        )
     actual_value = str(payload.get(field_name, ""))
     return OrchestrationReceiptValidationStep(
         f"expected {field_name}",
@@ -301,7 +384,9 @@ def _check_expected_value(
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse deployment orchestration receipt validation CLI arguments."""
-    parser = argparse.ArgumentParser(description="Validate a deployment orchestration receipt.")
+    parser = argparse.ArgumentParser(
+        description="Validate a deployment orchestration receipt."
+    )
     parser.add_argument("--receipt", default=str(DEFAULT_ORCHESTRATION_OUTPUT))
     parser.add_argument("--output", default=str(DEFAULT_VALIDATION_OUTPUT))
     parser.add_argument("--require-preflight", action="store_true")
@@ -311,7 +396,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--expected-repository", default=DEFAULT_REPOSITORY)
     parser.add_argument("--expected-gateway-host", default="")
     parser.add_argument("--expected-gateway-url", default="")
-    parser.add_argument("--expected-environment", choices=("", *VALID_ENVIRONMENTS), default="")
+    parser.add_argument(
+        "--expected-environment",
+        choices=("", *VALID_ENVIRONMENTS),
+        default="",
+    )
     return parser.parse_args(argv)
 
 
@@ -334,13 +423,20 @@ def main(argv: list[str] | None = None) -> int:
         print(f"deployment orchestration receipt validation failed: {exc}")
         return 1
 
-    output_path = write_orchestration_receipt_validation_report(validation, Path(args.output))
+    output_path = write_orchestration_receipt_validation_report(
+        validation,
+        Path(args.output),
+    )
     print(f"validation_report: {output_path}")
     print(f"receipt: {validation.receipt_path}")
     print(f"receipt_id: {validation.receipt_id}")
     print(f"valid: {str(validation.valid).lower()}")
     for step in validation.steps:
-        print(f"step: {step.name} passed={str(step.passed).lower()} detail={step.detail}")
+        print(
+            f"step: {step.name} "
+            f"passed={str(step.passed).lower()} "
+            f"detail={step.detail}"
+        )
     return 0 if validation.valid else 1
 
 
