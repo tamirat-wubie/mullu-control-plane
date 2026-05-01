@@ -77,6 +77,18 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
 
 
+def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    runtime_surface = surfaces["gateway_runtime_witness"]
+
+    assert runtime_surface["coverage_state"] == "witnessed"
+    assert "scripts/orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
+    assert ".github/workflows/gateway-publication.yml" in runtime_surface["evidence_files"]
+    assert "tests/test_orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
+    assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
+
+
 def test_governed_session_request_envelope_is_covered() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

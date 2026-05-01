@@ -392,13 +392,17 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "gateway/server.py",
+        ".github/workflows/gateway-publication.yml",
+        "scripts/orchestrate_deployment_witness.py",
         "scripts/preflight_deployment_witness.py",
         "scripts/collect_deployment_witness.py",
         "scripts/validate_mcp_capability_manifest.py",
+        "scripts/validate_mcp_operator_checklist.py",
+        "tests/test_orchestrate_deployment_witness.py",
         "tests/test_preflight_deployment_witness.py",
         "tests/test_collect_deployment_witness.py"
       ],
-      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; preflight validates configured MCP manifests before deployment witness readiness.",
+      "notes": "Runtime witness surfaces publish bounded operational and responsibility debt state; orchestration receipts bind ingress render, MCP checklist validation, preflight, and dispatch evidence before deployment witness readiness.",
       "representative_paths": [
         "/gateway/witness",
         "/runtime/witness",
@@ -409,7 +413,8 @@
         "latest_command_event_hash",
         "latest_terminal_certificate_id",
         "open_obligation_count",
-        "overdue_obligation_count"
+        "overdue_obligation_count",
+        "deployment_witness_orchestration_receipt"
       ],
       "surface_id": "gateway_runtime_witness"
     },
@@ -503,12 +508,15 @@
         "gateway/mcp_capability_fabric.py",
         "gateway/mcp_capabilities.py",
         "scripts/validate_mcp_capability_manifest.py",
+        "scripts/validate_mcp_operator_checklist.py",
         "examples/mcp_capability_manifest.json",
+        "examples/mcp_operator_handoff_checklist.json",
         "docs/55_mcp_capability_manifest.md",
         "tests/test_gateway/test_mcp_capability_fabric.py",
-        "tests/test_validate_mcp_capability_manifest.py"
+        "tests/test_validate_mcp_capability_manifest.py",
+        "tests/test_validate_mcp_operator_checklist.py"
       ],
-      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests.",
+      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
       "representative_paths": [
         "/api/v1/tools/invoke",
         "/api/v1/workflow/tools"

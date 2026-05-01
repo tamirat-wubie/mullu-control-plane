@@ -208,12 +208,15 @@ current provider state before executing requests.
 Gateway MCP tools are activated through a governed manifest, not by ad-hoc
 runtime registration. The operator procedure is documented in
 [`docs/55_mcp_capability_manifest.md`](docs/55_mcp_capability_manifest.md).
+The machine-readable handoff checklist is
+`examples/mcp_operator_handoff_checklist.json`.
 
 Minimum sequence:
 
-1. Validate the manifest:
+1. Validate the checklist and manifest:
 
 ```powershell
+python scripts\validate_mcp_operator_checklist.py --checklist examples\mcp_operator_handoff_checklist.json --json
 python scripts\validate_mcp_capability_manifest.py --manifest examples\mcp_capability_manifest.json --json
 ```
 
@@ -228,6 +231,8 @@ python -m gateway.server
 4. Collect `/runtime/conformance` and verify `mcp_capability_manifest_valid: true`.
 5. Verify `/runtime/conformance` also reports `capability_plan_bundle_canary_passed: true`.
 6. Run deployment preflight with the manifest path before witness dispatch.
+7. Persist the deployment orchestration receipt at
+   `$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT`.
 
 If the manifest is invalid, gateway deployment readiness remains blocked until
 the manifest produces certified capabilities, ownership records, approval

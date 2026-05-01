@@ -97,9 +97,11 @@ jobs:
             --gateway-host "${{ inputs.gateway_host }}"
             --expected-environment "${{ inputs.expected_environment }}"
             --require-preflight
+            --require-mcp-operator-checklist
             --accept-runtime-secret-env
             --accept-conformance-secret-env
             --preflight-output .change_assurance/deployment_witness_preflight.json
+            --orchestration-output .change_assurance/deployment_witness_orchestration.json
           )
           if [ -n "${{ inputs.gateway_url }}" ]; then
             args+=(--gateway-url "${{ inputs.gateway_url }}")
@@ -122,6 +124,7 @@ jobs:
           name: gateway-publication-witness
           path: |
             .change_assurance/deployment_witness_preflight.json
+            .change_assurance/deployment_witness_orchestration.json
             .change_assurance/mullu-gateway-ingress.rendered.yaml
             .change_assurance/deployment-witness-artifact/**
           if-no-files-found: ignore
