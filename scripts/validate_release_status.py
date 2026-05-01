@@ -74,7 +74,9 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     ),
     "coordination_persistence_limitation": (
         "Coordination persistence is partial and explicit",
-        "live queue-item orchestration does not auto-save or auto-restore",
+        "workforce assignment request",
+        "workforce assignment decision records",
+        "live coordination still does not auto-save or auto-restore",
         "workflow resume remains caller-driven",
     ),
     "memory_persistence_limitation": (
@@ -232,18 +234,25 @@ def validate_release_limitation_coverage(
 ) -> list[str]:
     """Validate that accepted release limitations are anchored in supporting docs."""
     errors: list[str] = []
+    def normalize_whitespace(text: str) -> str:
+        return " ".join(text.split())
+
     limitation_sources = {
-        "registry_backend_limitation": known_limitations_text,
-        "coordination_persistence_limitation": known_limitations_text,
-        "memory_persistence_limitation": known_limitations_text,
-        "http_connector_limitation": known_limitations_text,
-        "auth_limitation": security_model_text,
-        "encryption_limitation": security_model_text,
+        "registry_backend_limitation": normalize_whitespace(known_limitations_text),
+        "coordination_persistence_limitation": normalize_whitespace(known_limitations_text),
+        "memory_persistence_limitation": normalize_whitespace(known_limitations_text),
+        "http_connector_limitation": normalize_whitespace(known_limitations_text),
+        "auth_limitation": normalize_whitespace(security_model_text),
+        "encryption_limitation": normalize_whitespace(security_model_text),
     }
 
     for limitation_id, required_literals in ACCEPTED_LIMITATION_EXPECTATIONS.items():
         source = limitation_sources[limitation_id]
-        missing_literals = tuple(literal for literal in required_literals if literal not in source)
+        missing_literals = tuple(
+            literal
+            for literal in required_literals
+            if normalize_whitespace(literal) not in source
+        )
         if missing_literals:
             errors.append(
                 f"{limitation_id}: missing supporting literals {list(missing_literals)}"

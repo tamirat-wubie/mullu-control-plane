@@ -50,12 +50,14 @@ runtime does not yet behave as intended by the architecture specification.
 ## Coordination
 
 - **Coordination persistence is partial and explicit.** Delegation, handoff,
-  worker registry, and worker load-state records can be saved and restored
-  through explicit persistence stores, workflow execution records persist at
-  start and after each stage transition, and aggregate team queue-state
-  witnesses can be restored explicitly, but live queue-item orchestration does not auto-save or auto-restore.
-  Restarting the runtime still loses in-flight coordination context outside
-  explicitly persisted records, and workflow resume remains caller-driven.
+  worker registry, worker load-state, workforce assignment request, and
+  workforce assignment decision records can be saved and restored through
+  explicit persistence stores, workflow execution records persist at start
+  and after each stage transition, and aggregate team queue-state witnesses
+  can be restored explicitly, but live coordination still does not auto-save
+  or auto-restore. Restarting the runtime still loses in-flight coordination
+  context outside explicitly persisted records, and workflow resume remains
+  caller-driven.
 
 ## Replay
 

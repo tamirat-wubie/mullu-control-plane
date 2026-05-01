@@ -23,6 +23,7 @@ from .snapshot_store import SnapshotMetadata, SnapshotStore
 from .team_registry_store import TeamRegistryState, TeamRegistryStore
 from .team_queue_store import TeamQueueStore
 from .trace_store import TraceStore
+from .workforce_store import WorkforceRuntimeState, WorkforceStore
 from .workflow_store import WorkflowStore
 from ._serialization import deserialize_record, serialize_record
 
@@ -48,6 +49,8 @@ __all__ = [
     "TeamQueueStore",
     "TraceNotFoundError",
     "TraceStore",
+    "WorkforceRuntimeState",
+    "WorkforceStore",
     "WorkflowStore",
     "deserialize_record",
     "serialize_record",

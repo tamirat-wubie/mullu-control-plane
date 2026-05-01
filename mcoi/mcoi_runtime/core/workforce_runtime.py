@@ -187,6 +187,19 @@ class WorkforceRuntimeEngine:
             and w.current_assignments < w.max_assignments
         )
 
+    def list_workers(self) -> tuple[WorkerRecord, ...]:
+        """Return deterministic worker records for persistence or inspection."""
+        return tuple(sorted(self._workers.values(), key=lambda worker: worker.worker_id))
+
+    def restore_worker(self, worker: WorkerRecord) -> WorkerRecord:
+        """Restore a persisted worker record without emitting a new event."""
+        if not isinstance(worker, WorkerRecord):
+            raise RuntimeCoreInvariantError("worker must be a WorkerRecord")
+        if worker.worker_id in self._workers:
+            raise RuntimeCoreInvariantError(f"worker already registered: {worker.worker_id}")
+        self._workers[worker.worker_id] = worker
+        return worker
+
     # ------------------------------------------------------------------
     # Role capacity
     # ------------------------------------------------------------------
@@ -313,6 +326,26 @@ class WorkforceRuntimeEngine:
     def requests_for_tenant(self, tenant_id: str) -> tuple[AssignmentRequest, ...]:
         return tuple(r for r in self._requests.values() if r.tenant_id == tenant_id)
 
+    def list_requests(self) -> tuple[AssignmentRequest, ...]:
+        """Return deterministic assignment requests for persistence or inspection."""
+        return tuple(
+            sorted(
+                self._requests.values(),
+                key=lambda request: request.request_id,
+            )
+        )
+
+    def restore_request(self, request: AssignmentRequest) -> AssignmentRequest:
+        """Restore a persisted assignment request without emitting a new event."""
+        if not isinstance(request, AssignmentRequest):
+            raise RuntimeCoreInvariantError("request must be an AssignmentRequest")
+        if request.request_id in self._requests:
+            raise RuntimeCoreInvariantError(
+                f"assignment request already exists: {request.request_id}"
+            )
+        self._requests[request.request_id] = request
+        return request
+
     # ------------------------------------------------------------------
     # Assignment decisions
     # ------------------------------------------------------------------
@@ -404,6 +437,35 @@ class WorkforceRuntimeEngine:
 
     def decisions_for_worker(self, worker_id: str) -> tuple[AssignmentDecision, ...]:
         return tuple(d for d in self._decisions.values() if d.worker_id == worker_id)
+
+    def list_decisions(self) -> tuple[AssignmentDecision, ...]:
+        """Return deterministic assignment decisions for persistence or inspection."""
+        return tuple(
+            sorted(
+                self._decisions.values(),
+                key=lambda decision: decision.decision_id,
+            )
+        )
+
+    def restore_decision(self, decision: AssignmentDecision) -> AssignmentDecision:
+        """Restore a persisted assignment decision without replaying assignment effects."""
+        if not isinstance(decision, AssignmentDecision):
+            raise RuntimeCoreInvariantError("decision must be an AssignmentDecision")
+        if decision.decision_id in self._decisions:
+            raise RuntimeCoreInvariantError(
+                f"assignment decision already exists: {decision.decision_id}"
+            )
+        if decision.request_id not in self._requests:
+            raise RuntimeCoreInvariantError(
+                f"unknown assignment request: {decision.request_id}"
+            )
+        if (
+            decision.disposition is AssignmentDisposition.ASSIGNED
+            and decision.worker_id not in self._workers
+        ):
+            raise RuntimeCoreInvariantError(f"unknown worker: {decision.worker_id}")
+        self._decisions[decision.decision_id] = decision
+        return decision
 
     # ------------------------------------------------------------------
     # Coverage gaps
