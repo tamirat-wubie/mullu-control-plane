@@ -296,31 +296,37 @@ def _validate_datetime_text(value: str, path: str) -> list[str]:
     return []
 
 
-def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
+def _validate_schema_instance(
+    schema: dict[str, Any],
+    instance: Any,
+    path: str = "$",
+    root_schema: dict[str, Any] | None = None,
+) -> list[str]:
     if not isinstance(schema, dict) or not schema:
         return []
+    root = schema if root_schema is None else root_schema
 
     if "allOf" in schema:
         errors: list[str] = []
         base_schema = {
             keyword: value for keyword, value in schema.items() if keyword != "allOf"
         }
-        errors.extend(_validate_schema_instance(base_schema, instance, path))
+        errors.extend(_validate_schema_instance(base_schema, instance, path, root))
         for branch in schema["allOf"]:
-            errors.extend(_validate_schema_instance(branch, instance, path))
+            errors.extend(_validate_schema_instance(branch, instance, path, root))
         return errors
 
     if "if" in schema:
-        condition_errors = _validate_schema_instance(schema["if"], instance, path)
+        condition_errors = _validate_schema_instance(schema["if"], instance, path, root)
         if not condition_errors and "then" in schema:
-            return _validate_schema_instance(schema["then"], instance, path)
+            return _validate_schema_instance(schema["then"], instance, path, root)
         if condition_errors and "else" in schema:
-            return _validate_schema_instance(schema["else"], instance, path)
+            return _validate_schema_instance(schema["else"], instance, path, root)
         return []
 
     if "anyOf" in schema:
         branch_errors = [
-            _validate_schema_instance(branch, instance, path)
+            _validate_schema_instance(branch, instance, path, root)
             for branch in schema["anyOf"]
         ]
         if any(not errors for errors in branch_errors):
@@ -329,16 +335,30 @@ def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str =
         return [f"{path}: no anyOf branch matched"] + flattened
 
     if "$ref" in schema:
-        return []
+        try:
+            referenced_schema = _resolve_local_schema_ref(root, str(schema["$ref"]))
+        except ValueError as exc:
+            return [f"{path}: unresolved schema ref {schema['$ref']!r}: {exc}"]
+        return _validate_schema_instance(referenced_schema, instance, path, root)
 
     errors: list[str] = []
     if "const" in schema and instance != schema["const"]:
         errors.append(f"{path}: expected const {schema['const']!r}")
 
     schema_type = schema.get("type")
+    if isinstance(schema_type, list):
+        branch_errors = []
+        for item_type in schema_type:
+            branch_schema = dict(schema)
+            branch_schema["type"] = item_type
+            branch_errors.append(_validate_schema_instance(branch_schema, instance, path, root))
+        if any(not item_errors for item_errors in branch_errors):
+            return []
+        flattened = [error for item_errors in branch_errors for error in item_errors]
+        return [f"{path}: no type branch matched {schema_type}"] + flattened
 
     if schema_type is None and "contains" in schema:
-        errors.extend(_validate_array_contains(schema, instance, path))
+        errors.extend(_validate_array_contains(schema, instance, path, root))
         return errors
 
     if schema_type == "object" or (
@@ -362,11 +382,11 @@ def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str =
         additional = schema.get("additionalProperties", True)
         for key, value in instance.items():
             if key in properties:
-                errors.extend(_validate_schema_instance(properties[key], value, f"{path}.{key}"))
+                errors.extend(_validate_schema_instance(properties[key], value, f"{path}.{key}", root))
             elif schema_type == "object" and additional is False:
                 errors.append(f"{path}: unexpected property '{key}'")
             elif schema_type == "object" and isinstance(additional, dict):
-                errors.extend(_validate_schema_instance(additional, value, f"{path}.{key}"))
+                errors.extend(_validate_schema_instance(additional, value, f"{path}.{key}", root))
         return errors
 
     if schema_type == "array":
@@ -383,12 +403,12 @@ def _validate_schema_instance(schema: dict[str, Any], instance: Any, path: str =
         if isinstance(item_schema, list):
             for index, item in enumerate(instance[: len(item_schema)]):
                 errors.extend(
-                    _validate_schema_instance(item_schema[index], item, f"{path}[{index}]")
+                    _validate_schema_instance(item_schema[index], item, f"{path}[{index}]", root)
                 )
         else:
             for index, item in enumerate(instance):
-                errors.extend(_validate_schema_instance(item_schema, item, f"{path}[{index}]"))
-        errors.extend(_validate_array_contains(schema, instance, path))
+                errors.extend(_validate_schema_instance(item_schema, item, f"{path}[{index}]", root))
+        errors.extend(_validate_array_contains(schema, instance, path, root))
         return errors
 
     if schema_type == "string":
@@ -450,6 +470,7 @@ def _validate_array_contains(
     schema: dict[str, Any],
     instance: Any,
     path: str,
+    root_schema: dict[str, Any] | None = None,
 ) -> list[str]:
     contains_schema = schema.get("contains")
     if contains_schema is None:
@@ -457,9 +478,28 @@ def _validate_array_contains(
     if not isinstance(instance, list):
         return [f"{path}: expected array for contains"]
     for index, item in enumerate(instance):
-        if not _validate_schema_instance(contains_schema, item, f"{path}[{index}]"):
+        if not _validate_schema_instance(
+            contains_schema,
+            item,
+            f"{path}[{index}]",
+            root_schema or schema,
+        ):
             return []
     return [f"{path}: no item matched contains schema"]
+
+
+def _resolve_local_schema_ref(root_schema: dict[str, Any], ref: str) -> dict[str, Any]:
+    if not ref.startswith("#/"):
+        raise ValueError("only local JSON Pointer refs are supported")
+    current: Any = root_schema
+    for raw_part in ref[2:].split("/"):
+        part = raw_part.replace("~1", "/").replace("~0", "~")
+        if not isinstance(current, dict) or part not in current:
+            raise ValueError(f"missing pointer segment {part!r}")
+        current = current[part]
+    if not isinstance(current, dict):
+        raise ValueError("referenced value is not a schema object")
+    return current
 
 
 def _check_fixture_schema_coverage(schema: dict[str, Any], instance: Any, path: str = "$") -> list[str]:
