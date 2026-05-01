@@ -19,12 +19,14 @@ from scripts.validate_release_status import (
     PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS,
     REQUIRED_CI_LITERALS,
     REPO_ROOT,
+    STATUS_DOCUMENT_REQUIRED_LITERALS,
     WORKFLOW_DIR,
     validate_ci_workflow_text,
     validate_deployment_witness_workflow_text,
     validate_gateway_publication_workflow_text,
     validate_protocol_manifest_surface,
     validate_public_surface_document_texts,
+    validate_status_document_text,
     validate_workflow_hygiene,
 )
 
@@ -69,6 +71,18 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
         "validate_deployment_orchestration_receipt.py" in literal
         for literal in deployment_literals
     )
+
+
+def test_status_document_reflects_deployment_runtime_input_gap() -> None:
+    content = (REPO_ROOT / "STATUS.md").read_text(encoding="utf-8")
+
+    errors = validate_status_document_text(content)
+
+    assert errors == []
+    assert "Deployment runtime input witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "Refresh deployment runtime input witness (#466)" in content
+    assert "MULLU_GATEWAY_URL" in content
+    assert "deployment_claim: published" in content
 
 
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:
