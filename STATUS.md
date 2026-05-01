@@ -9,13 +9,13 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 
 # Repository Status Witness
 
-**Last audited:** 2026-04-24
+**Last audited:** 2026-05-01
 **Repository:** `tamirat-wubie/mullu-control-plane`
 **Default branch:** `main`
 **Audited runtime baseline:** `2fdcd37046e0be096ac4c52c357257e4f65c0c0a`
 **Audited runtime baseline subject:** `fix(persistence): witness governance store close failures (#305)`
-**Status witness publication head:** `3cb270bc4cb1fe9e0c38cb3ced8f2cfca9ac1024`
-**Status witness publication subject:** `docs: add repository status witness (#306)`
+**Status witness publication head:** `1cb9e159a3c1fe0d11d99ef2ba8f19dc5584e30e`
+**Status witness publication subject:** `Refresh deployment runtime input witness (#466)`
 
 ## Reflection Summary
 
@@ -26,6 +26,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | CI witness | `.github/workflows/ci.yml` contains Python, Rust, schema, artifact, release-status, and change-assurance gates | Reflected |
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
 | Gateway closure witness | CI runs `python -m pytest tests/test_gateway -q` and `python scripts/validate_gateway_deployment_env.py --strict` | Reflected |
+| Deployment runtime input witness | `DEPLOYMENT_STATUS.md` records witness/conformance secret-name presence, absent deployment target variables, and absent `deployment-witness.yml` workflow runs | Reflected |
 | Operational witness | Runtime deployment, live health, and production readiness are not exposed on the repository landing page | Not reflected |
 
 ## Required Public Anchors
@@ -47,8 +48,8 @@ The GitHub page is sufficient only when these anchors are present and current:
 
 | Gap | Cause | Required closure |
 |---|---|---|
-| Deployment status not published | `DEPLOYMENT_STATUS.md` declares no public production endpoint evidence yet | Add deployment badges or endpoint health evidence once live environments are governed |
-| Test-count claim not machine-derived | README states test volume as a human-maintained claim | **Closed (2026-04-28)** — `scripts/generate_test_inventory.py` writes a machine-derived count to `.change_assurance/test_inventory.json`; `python scripts/generate_test_inventory.py --check` fails CI on drift; `mcoi/tests/test_inventory_freshness.py` (10 tests) guards the artifact's shape and self-consistency. Release notes and README should cite the artifact rather than embed numeric literals. |
+| Deployment status not published | `DEPLOYMENT_STATUS.md` declares no public production endpoint evidence yet; repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not set | Set deployment target variables, publish `/health`, `/gateway/witness`, and `/runtime/conformance`, then collect a signed `deployment_claim: published` witness |
+| Test-count claim not machine-derived | README states test volume as a human-maintained claim | **Closed (2026-04-28)** - `scripts/generate_test_inventory.py` writes a machine-derived count to `.change_assurance/test_inventory.json`; `python scripts/generate_test_inventory.py --check` fails CI on drift; `mcoi/tests/test_inventory_freshness.py` (10 tests) guards the artifact's shape and self-consistency. Release notes and README should cite the artifact rather than embed numeric literals. |
 | GitHub metadata external to git | GitHub description/topics live outside repository commits | Validate metadata with `scripts/validate_public_repository_surface.py` |
 
 ## Proof Chain

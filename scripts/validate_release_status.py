@@ -97,6 +97,10 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/gateway_runtime_smoke.py",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
+    "Deployment runtime input witness",
+    "Refresh deployment runtime input witness (#466)",
+    "MULLU_GATEWAY_URL",
+    "deployment_claim: published",
 )
 
 RELEASE_NOTES_REQUIRED_LITERALS: tuple[str, ...] = (
