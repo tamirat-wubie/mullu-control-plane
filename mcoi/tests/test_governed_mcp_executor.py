@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from typing import Any, Mapping
 
@@ -23,8 +24,10 @@ from mcoi_runtime.mcp import (
     GovernedMCPExecutionContext,
     GovernedMCPExecutor,
     InMemoryMCPExecutionAuditStore,
+    JsonlMCPExecutionAuditStore,
     MCPToolCallResult,
     MCPToolDescriptor,
+    build_mcp_execution_audit_store_from_env,
     import_mcp_tool_as_capability,
 )
 
@@ -334,3 +337,92 @@ def test_governed_mcp_executor_rejects_missing_evidence_bundle_command() -> None
 
     with pytest.raises(ValueError, match="command_id is required"):
         executor.export_evidence_bundle(command_id="")
+
+
+def test_jsonl_mcp_execution_audit_store_round_trips_records(tmp_path) -> None:
+    audit_path = tmp_path / "mcp" / "execution_audits.jsonl"
+    store = JsonlMCPExecutionAuditStore(audit_path)
+    executor = GovernedMCPExecutor(
+        StubMCPClient(MCPToolCallResult(content={"ok": True})),
+        audit_store=store,
+        clock=lambda: "2026-04-29T12:00:00+00:00",
+    )
+
+    first = executor.execute(
+        capability=_certified(),
+        context=_context(command_id="cmd-jsonl-1"),
+        params={"title": "First durable audit"},
+    )
+    second = executor.execute(
+        capability=_certified(),
+        context=_context(command_id="cmd-jsonl-2"),
+        params={"title": "Second durable audit"},
+    )
+    reopened_store = JsonlMCPExecutionAuditStore(audit_path)
+
+    records = reopened_store.list(limit=2)
+    filtered = reopened_store.list(command_id="cmd-jsonl-1", status="succeeded")
+
+    assert audit_path.exists()
+    assert len(audit_path.read_text(encoding="utf-8").splitlines()) == 2
+    assert len(records) == 2
+    assert records[0].command_id == "cmd-jsonl-2"
+    assert records[0].receipt_id == second.receipt.receipt_id
+    assert records[1].command_id == "cmd-jsonl-1"
+    assert len(filtered) == 1
+    assert filtered[0].receipt_id == first.receipt.receipt_id
+    assert filtered[0].evidence_refs == first.receipt.evidence_refs
+
+
+def test_jsonl_mcp_execution_audit_store_rejects_malformed_record(tmp_path) -> None:
+    audit_path = tmp_path / "bad_audits.jsonl"
+    audit_path.write_text(
+        json.dumps({
+            "audit_id": "audit-1",
+            "capability_id": "mcp.docs_search_docs",
+            "command_id": "cmd-1",
+            "status": "succeeded",
+            "reason": "mcp_tool_call_succeeded",
+            "audited_at": "2026-04-29T12:00:00+00:00",
+            "evidence_refs": [17],
+        }),
+        encoding="utf-8",
+    )
+    store = JsonlMCPExecutionAuditStore(audit_path)
+
+    with pytest.raises(ValueError, match="invalid MCP execution audit JSONL record"):
+        store.list()
+
+    assert audit_path.exists()
+    assert "mcp.docs_search_docs" in audit_path.read_text(encoding="utf-8")
+    assert store.path == audit_path
+
+
+def test_build_mcp_execution_audit_store_from_env_selects_durable_store(tmp_path) -> None:
+    audit_path = tmp_path / "env_audits.jsonl"
+
+    durable = build_mcp_execution_audit_store_from_env({
+        "MULLU_MCP_EXECUTION_AUDIT_LOG_PATH": str(audit_path),
+    })
+    volatile = build_mcp_execution_audit_store_from_env({})
+
+    with pytest.raises(ValueError, match="MCP execution audit store path is required"):
+        JsonlMCPExecutionAuditStore(" ")
+
+    assert isinstance(durable, JsonlMCPExecutionAuditStore)
+    assert durable.path == audit_path
+    assert isinstance(volatile, InMemoryMCPExecutionAuditStore)
+    assert volatile.list() == ()
+
+
+def test_jsonl_mcp_execution_audit_store_rejects_non_file_paths(tmp_path) -> None:
+    with pytest.raises(ValueError, match="path is required"):
+        JsonlMCPExecutionAuditStore("")
+    with pytest.raises(ValueError, match="path is required"):
+        JsonlMCPExecutionAuditStore("   ")
+    with pytest.raises(ValueError, match="must be a file path"):
+        JsonlMCPExecutionAuditStore(tmp_path)
+
+    assert tmp_path.exists()
+    assert tmp_path.is_dir()
+    assert not (tmp_path / "execution_audits.jsonl").exists()

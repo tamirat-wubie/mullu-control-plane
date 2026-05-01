@@ -20,8 +20,10 @@ from .governed_executor import (
     GovernedMCPExecutionResult,
     GovernedMCPExecutor,
     InMemoryMCPExecutionAuditStore,
+    JsonlMCPExecutionAuditStore,
     MCPExecutionAuditStore,
     MCPToolCallResult,
+    build_mcp_execution_audit_store_from_env,
 )
 
 __all__ = [
@@ -32,10 +34,12 @@ __all__ = [
     "GovernedMCPExecutionResult",
     "GovernedMCPExecutor",
     "InMemoryMCPExecutionAuditStore",
+    "JsonlMCPExecutionAuditStore",
     "MCPExecutionAuditStore",
     "MCPToolDescriptor",
     "MCPToolExport",
     "MCPToolCallResult",
+    "build_mcp_execution_audit_store_from_env",
     "export_capability_as_mcp_tool",
     "import_mcp_tool_as_capability",
     "mcp_capability_id",

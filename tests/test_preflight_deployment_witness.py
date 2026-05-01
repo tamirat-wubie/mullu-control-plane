@@ -169,6 +169,49 @@ def test_preflight_deployment_witness_accepts_mounted_runtime_secret() -> None:
     assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
 
 
+def test_preflight_deployment_witness_accepts_valid_mcp_manifest() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        mcp_capability_manifest_path=str(Path("examples") / "mcp_capability_manifest.json"),
+        probe_endpoints=False,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+    )
+
+    manifest_step = next(step for step in report.steps if step.name == "mcp capability manifest")
+    assert report.ready is True
+    assert manifest_step.passed is True
+    assert "valid=True" in manifest_step.detail
+    assert "capabilities=1" in manifest_step.detail
+    assert "approval_policies=1" in manifest_step.detail
+    assert len(report.steps) == 6
+
+
+def test_preflight_deployment_witness_rejects_invalid_mcp_manifest(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "invalid_mcp_manifest.json"
+    manifest_path.write_text(json.dumps({"tools": []}), encoding="utf-8")
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        mcp_capability_manifest_path=str(manifest_path),
+        probe_endpoints=False,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+    )
+
+    manifest_step = next(step for step in report.steps if step.name == "mcp capability manifest")
+    assert report.ready is False
+    assert manifest_step.passed is False
+    assert "valid=False" in manifest_step.detail
+    assert "MCP manifest requires at least one tool" in manifest_step.detail
+    assert manifest_step.detail.endswith("]")
+
+
 def test_preflight_deployment_witness_reports_missing_conformance_secret() -> None:
     runner = FakeRunner(conformance_secret_present=False)
 

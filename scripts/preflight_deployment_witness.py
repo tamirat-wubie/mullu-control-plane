@@ -22,6 +22,7 @@ import json
 import os
 import socket
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,8 +30,12 @@ from typing import Any, Callable, Protocol
 import urllib.error
 import urllib.request
 
-from scripts.collect_deployment_witness import REQUIRED_CONFORMANCE_FIELDS, REQUIRED_WITNESS_FIELDS
-from scripts.dispatch_deployment_witness import (
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.collect_deployment_witness import REQUIRED_CONFORMANCE_FIELDS, REQUIRED_WITNESS_FIELDS  # noqa: E402
+from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE,
     DEFAULT_GATEWAY_URL_VARIABLE,
@@ -40,7 +45,8 @@ from scripts.dispatch_deployment_witness import (
     DEFAULT_WORKFLOW_NAME,
     VALID_ENVIRONMENTS,
 )
-from scripts.render_gateway_ingress import PLACEHOLDER_HOST
+from scripts.render_gateway_ingress import PLACEHOLDER_HOST  # noqa: E402
+from scripts.validate_mcp_capability_manifest import validate_mcp_capability_manifest  # noqa: E402
 
 DEFAULT_OUTPUT = Path(".change_assurance") / "deployment_witness_preflight.json"
 
@@ -102,6 +108,7 @@ def preflight_deployment_witness(
     conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
+    mcp_capability_manifest_path: str = "",
     probe_endpoints: bool = True,
     runner: CommandRunner | None = None,
     resolver: Resolver | None = None,
@@ -144,6 +151,8 @@ def preflight_deployment_witness(
             runner=command_runner,
         ),
     ]
+    if mcp_capability_manifest_path.strip():
+        steps.append(_check_mcp_capability_manifest(Path(mcp_capability_manifest_path)))
     if probe_endpoints:
         steps.extend(
             (
@@ -290,6 +299,18 @@ def _check_workflow(
                 f"state={state}",
             )
     return PreflightStep("deployment witness workflow", False, "missing")
+
+
+def _check_mcp_capability_manifest(manifest_path: Path) -> PreflightStep:
+    result = validate_mcp_capability_manifest(manifest_path)
+    detail = (
+        f"valid={result.ok} capabilities={len(result.capability_ids)} "
+        f"ownership={len(result.ownership_resource_refs)} "
+        f"approval_policies={len(result.approval_policy_ids)} "
+        f"escalation_policies={len(result.escalation_policy_ids)} "
+        f"errors={list(result.errors)}"
+    )
+    return PreflightStep("mcp capability manifest", result.ok, detail)
 
 
 def _check_health_endpoint(*, gateway_url: str, json_getter: JsonGetter) -> PreflightStep:
@@ -451,6 +472,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
+    parser.add_argument(
+        "--mcp-capability-manifest",
+        default=os.environ.get("MULLU_MCP_CAPABILITY_MANIFEST_PATH", ""),
+    )
     parser.add_argument("--skip-endpoint-probes", action="store_true")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     return parser.parse_args(argv)
@@ -477,6 +502,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.accept_conformance_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET"))
             ),
+            mcp_capability_manifest_path=args.mcp_capability_manifest,
             probe_endpoints=not args.skip_endpoint_probes,
         )
     except RuntimeError as exc:

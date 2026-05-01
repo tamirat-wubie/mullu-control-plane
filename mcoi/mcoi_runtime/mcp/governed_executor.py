@@ -11,8 +11,11 @@ Invariants:
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol
 
 from gateway.command_spine import canonical_hash
@@ -188,6 +191,73 @@ class InMemoryMCPExecutionAuditStore:
         if status:
             records = tuple(record for record in records if record.status == status)
         return records[:bounded_limit]
+
+
+class JsonlMCPExecutionAuditStore:
+    """Append-only JSONL MCP audit store for durable operator replay."""
+
+    def __init__(self, path: str | Path) -> None:
+        path_text = str(path).strip()
+        if not path_text:
+            raise ValueError("MCP execution audit store path is required")
+        resolved_path = Path(path_text)
+        if resolved_path.exists() and resolved_path.is_dir():
+            raise ValueError("MCP execution audit store path must be a file path")
+        self._path = resolved_path
+
+    @property
+    def path(self) -> Path:
+        """Return the JSONL store path."""
+        return self._path
+
+    def append(self, audit: GovernedMCPExecutionAudit) -> None:
+        """Persist one execution audit record as a canonical JSONL line."""
+        self._path.parent.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(asdict(audit), sort_keys=True, separators=(",", ":"))
+        with self._path.open("a", encoding="utf-8") as handle:
+            handle.write(f"{line}\n")
+
+    def list(
+        self,
+        *,
+        command_id: str = "",
+        status: str = "",
+        limit: int = 100,
+    ) -> tuple[GovernedMCPExecutionAudit, ...]:
+        """Return bounded audit records from disk, newest records first."""
+        bounded_limit = max(1, min(int(limit), 1000))
+        if not self._path.exists():
+            return ()
+        records: list[GovernedMCPExecutionAudit] = []
+        with self._path.open("r", encoding="utf-8") as handle:
+            for line_number, line in enumerate(handle, start=1):
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    parsed = json.loads(stripped)
+                    records.append(_audit_from_mapping(parsed))
+                except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise ValueError(
+                        f"invalid MCP execution audit JSONL record at {self._path}:{line_number}"
+                    ) from exc
+        newest_first = tuple(reversed(records))
+        if command_id:
+            newest_first = tuple(record for record in newest_first if record.command_id == command_id)
+        if status:
+            newest_first = tuple(record for record in newest_first if record.status == status)
+        return newest_first[:bounded_limit]
+
+
+def build_mcp_execution_audit_store_from_env(
+    env: Mapping[str, str] | None = None,
+) -> MCPExecutionAuditStore:
+    """Build the MCP audit store declared by environment configuration."""
+    source = env if env is not None else os.environ
+    path = str(source.get("MULLU_MCP_EXECUTION_AUDIT_LOG_PATH", "")).strip()
+    if path:
+        return JsonlMCPExecutionAuditStore(path)
+    return InMemoryMCPExecutionAuditStore()
 
 
 class GovernedMCPExecutor:
@@ -395,6 +465,42 @@ def _mcp_descriptor_for_execution(entry: CapabilityRegistryEntry) -> Mapping[str
     if not server_id or not tool_name:
         raise ValueError("MCP capability extension must include server_id and tool_name")
     return mcp_extension
+
+
+def _audit_from_mapping(payload: Any) -> GovernedMCPExecutionAudit:
+    if not isinstance(payload, Mapping):
+        raise ValueError("MCP execution audit record must be an object")
+    evidence_refs = payload.get("evidence_refs", ())
+    if not isinstance(evidence_refs, (list, tuple)):
+        raise ValueError("MCP execution audit evidence_refs must be a list")
+    if any(not isinstance(item, str) for item in evidence_refs):
+        raise ValueError("MCP execution audit evidence_refs must contain strings")
+    return GovernedMCPExecutionAudit(
+        audit_id=_required_audit_text(payload, "audit_id"),
+        capability_id=_required_audit_text(payload, "capability_id"),
+        command_id=_required_audit_text(payload, "command_id"),
+        status=_required_audit_text(payload, "status"),
+        reason=_required_audit_text(payload, "reason"),
+        audited_at=_required_audit_text(payload, "audited_at"),
+        receipt_id=_optional_audit_text(payload, "receipt_id"),
+        input_hash=_optional_audit_text(payload, "input_hash"),
+        output_hash=_optional_audit_text(payload, "output_hash"),
+        evidence_refs=tuple(evidence_refs),
+    )
+
+
+def _required_audit_text(payload: Mapping[str, Any], field_name: str) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"MCP execution audit {field_name} is required")
+    return value
+
+
+def _optional_audit_text(payload: Mapping[str, Any], field_name: str) -> str:
+    value = payload.get(field_name, "")
+    if not isinstance(value, str):
+        raise ValueError(f"MCP execution audit {field_name} must be a string")
+    return value
 
 
 def _receipt(

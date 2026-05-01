@@ -74,6 +74,18 @@ For machine-readable evidence:
 python scripts\validate_mcp_capability_manifest.py --manifest examples\mcp_capability_manifest.json --json
 ```
 
+Deployment witness preflight also validates the same manifest when
+`MULLU_MCP_CAPABILITY_MANIFEST_PATH` is set, or when the path is supplied
+directly:
+
+```powershell
+python scripts\preflight_deployment_witness.py --gateway-host gateway.mullusi.com --mcp-capability-manifest examples\mcp_capability_manifest.json --skip-endpoint-probes
+```
+
+The preflight report includes an `mcp capability manifest` step. Deployment
+readiness fails if the manifest cannot produce certified capabilities,
+ownership records, approval policies, and an escalation policy.
+
 ## Startup
 
 ```powershell

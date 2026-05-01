@@ -274,10 +274,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             [
                 "gateway/server.py",
+                "scripts/preflight_deployment_witness.py",
                 "scripts/collect_deployment_witness.py",
+                "scripts/validate_mcp_capability_manifest.py",
+                "tests/test_preflight_deployment_witness.py",
                 "tests/test_collect_deployment_witness.py",
             ],
-            "Runtime witness surfaces publish bounded operational and responsibility debt state.",
+            "Runtime witness surfaces publish bounded operational and responsibility debt state; preflight validates configured MCP manifests before deployment witness readiness.",
             [
                 "latest_command_event_hash",
                 "latest_terminal_certificate_id",

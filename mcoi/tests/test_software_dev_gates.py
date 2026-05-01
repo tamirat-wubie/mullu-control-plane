@@ -13,8 +13,6 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 from mcoi_runtime.adapters.code_adapter import CommandPolicy, LocalCodeAdapter
 from mcoi_runtime.contracts.software_dev_loop import QualityGateResult
 from mcoi_runtime.core.code import CodeEngine
@@ -292,14 +290,20 @@ class TestDefaultSoftwareDevRunnerFactory:
     def test_factory_threads_ucja_runner(self, tmp_path):
         adapter = _adapter(tmp_path)
         sentinel = object()
+        receipt_store = object()
+        receipt_review_queue = object()
         config = make_default_software_dev_runner(
             adapter=adapter,
             plan_generator=self._plan_gen,
             patch_generator=self._patch_gen,
             clock=lambda: T0,
             ucja_runner=sentinel,
+            receipt_store=receipt_store,
+            receipt_review_queue=receipt_review_queue,
         )
         assert config.ucja_runner is sentinel
+        assert config.receipt_store is receipt_store
+        assert config.receipt_review_queue is receipt_review_queue
 
     def test_factory_disables_specific_gates_via_none(self, tmp_path):
         adapter = _adapter(tmp_path)

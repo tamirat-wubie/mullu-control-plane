@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from gateway.command_spine import CommandLedger, InMemoryCommandLedgerStore
+from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from mcoi_runtime.adapters.code_adapter import CommandPolicy, LocalCodeAdapter
 from mcoi_runtime.contracts.code import PatchProposal
 from mcoi_runtime.contracts.software_dev_loop import (
@@ -28,6 +29,7 @@ from mcoi_runtime.core.software_dev_loop import (
     UCJAOutcomeShape,
     governed_software_change,
 )
+from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.domain_adapters.software_dev import (
     SoftwareQualityGate,
     SoftwareRequest,
@@ -151,6 +153,7 @@ def _runner_config(
     tmp_path: Path,
     *,
     receipt_store: SoftwareChangeReceiptStore | None = None,
+    receipt_review_queue: SoftwareReceiptReviewQueue | None = None,
 ) -> SoftwareDevRunnerConfig:
     adapter = _adapter(_workspace(tmp_path))
     return SoftwareDevRunnerConfig(
@@ -161,6 +164,21 @@ def _runner_config(
         clock=_clock,
         ucja_runner=_accept_ucja,
         receipt_store=receipt_store,
+        receipt_review_queue=receipt_review_queue,
+    )
+
+
+def _open_receipt() -> SoftwareChangeReceipt:
+    return SoftwareChangeReceipt(
+        receipt_id="receipt-open-mcp-review",
+        request_id="request-open-mcp-review",
+        stage=SoftwareChangeReceiptStage.REVIEW_REQUIRED,
+        cause="software change requires operator review",
+        outcome="requires_review",
+        target_refs=("case:request-open-mcp-review",),
+        constraint_refs=("constraint:software_change_lifecycle_v1",),
+        evidence_refs=("certificate:request-open-mcp-review",),
+        created_at=T0,
     )
 
 
@@ -346,3 +364,82 @@ def test_mcp_receipt_query_rejects_missing_replay_request_id(tmp_path: Path) -> 
 
     assert result.is_error
     assert "request_id" in result.content
+
+
+def test_mcp_receipt_query_materializes_and_decides_review_requests(tmp_path: Path) -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_open_receipt())
+    review_queue = SoftwareReceiptReviewQueue(
+        review_engine=ReviewEngine(clock=_clock),
+        receipt_store=store,
+    )
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(
+            tmp_path,
+            receipt_store=store,
+            receipt_review_queue=review_queue,
+        ),
+    )
+
+    review_result = server.call_tool("mullu_software_receipts", {
+        "operation": "review",
+        "limit": 10,
+    })
+    sync_result = server.call_tool("mullu_software_receipts", {
+        "operation": "review_sync",
+        "limit": 10,
+    })
+    request_id = json.loads(sync_result.content)["review_requests"][0]["request_id"]
+    pending_result = server.call_tool("mullu_software_receipts", {
+        "operation": "review_requests",
+    })
+    decision_result = server.call_tool("mullu_software_receipts", {
+        "operation": "review_decide",
+        "request_id": request_id,
+        "reviewer_id": "operator-mcp",
+        "approved": True,
+        "comment": "approved through MCP",
+    })
+    replay_result = server.call_tool("mullu_software_receipts", {
+        "operation": "replay",
+        "request_id": "request-open-mcp-review",
+    })
+
+    review_body = json.loads(review_result.content)
+    sync_body = json.loads(sync_result.content)
+    pending_body = json.loads(pending_result.content)
+    decision_body = json.loads(decision_result.content)
+    replay_body = json.loads(replay_result.content)
+
+    assert not review_result.is_error
+    assert not sync_result.is_error
+    assert not pending_result.is_error
+    assert not decision_result.is_error
+    assert review_body["requires_operator_review"] is True
+    assert review_body["review_signals"][0]["latest_receipt_id"] == "receipt-open-mcp-review"
+    assert sync_body["review_request_count"] == 1
+    assert pending_body["pending_review_count"] == 1
+    assert decision_body["gate_allowed"] is True
+    assert decision_body["review_decision"]["reviewer_id"] == "operator-mcp"
+    assert replay_body["terminal_closed"] is True
+    assert replay_body["receipts"][-1]["metadata"]["review_decision_id"] == (
+        decision_body["review_decision"]["decision_id"]
+    )
+
+
+def test_mcp_receipt_review_sync_requires_review_queue(tmp_path: Path) -> None:
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(
+            tmp_path,
+            receipt_store=SoftwareChangeReceiptStore(),
+        ),
+    )
+
+    result = server.call_tool("mullu_software_receipts", {"operation": "review_sync"})
+
+    assert result.is_error
+    assert "review queue not configured" in result.content

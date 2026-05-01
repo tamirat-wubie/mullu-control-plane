@@ -276,15 +276,18 @@ class MulluMCPServer:
             name="mullu_software_receipts",
             description=(
                 "Read governed software-change lifecycle receipts from the "
-                "configured receipt store. Supports list, get, and replay "
-                "without mutating the workspace."
+                "configured receipt store. Supports list, get, replay, and "
+                "review queue operations without mutating the workspace."
             ),
             input_schema={
                 "type": "object",
                 "properties": {
                     "operation": {
                         "type": "string",
-                        "enum": ["list", "get", "replay"],
+                        "enum": [
+                            "list", "get", "replay", "review",
+                            "review_sync", "review_requests", "review_decide",
+                        ],
                         "default": "list",
                     },
                     "request_id": {
@@ -303,6 +306,18 @@ class MulluMCPServer:
                         "type": "integer",
                         "minimum": 1,
                         "default": 50,
+                    },
+                    "reviewer_id": {
+                        "type": "string",
+                        "description": "Reviewer id for review_decide.",
+                    },
+                    "approved": {
+                        "type": "boolean",
+                        "description": "Approval decision for review_decide.",
+                    },
+                    "comment": {
+                        "type": "string",
+                        "description": "Optional bounded review comment.",
                     },
                     "tenant_id": {"type": "string"},
                 },
@@ -826,7 +841,10 @@ class MulluMCPServer:
             )
 
         operation = str(args.get("operation") or "list")
-        if operation not in {"list", "get", "replay"}:
+        if operation not in {
+            "list", "get", "replay", "review", "review_sync",
+            "review_requests", "review_decide",
+        }:
             return MCPToolResult(content="invalid operation", is_error=True)
 
         try:
@@ -845,6 +863,14 @@ class MulluMCPServer:
                 return MCPToolResult(content=json.dumps(payload, default=str))
 
             request_id = str(args.get("request_id") or "").strip() or None
+            limit_arg = args.get("limit", 50)
+            try:
+                limit = int(limit_arg)
+            except (TypeError, ValueError):
+                return MCPToolResult(content="limit must be a positive integer", is_error=True)
+            if limit < 1:
+                return MCPToolResult(content="limit must be a positive integer", is_error=True)
+
             if operation == "replay":
                 if request_id is None:
                     return MCPToolResult(content="request_id is required", is_error=True)
@@ -858,15 +884,94 @@ class MulluMCPServer:
                 }
                 return MCPToolResult(content=json.dumps(payload, default=str))
 
+            if operation == "review":
+                receipts = config.receipt_store.review_receipts(limit=limit)
+                payload = {
+                    "operation": operation,
+                    "count": len(receipts),
+                    "receipts": [item.to_json_dict() for item in receipts],
+                    "requires_operator_review": bool(receipts),
+                    "review_signal_count": len(receipts),
+                    "review_signals": [
+                        {
+                            "request_id": item.request_id,
+                            "latest_receipt_id": item.receipt_id,
+                            "latest_stage": item.stage.value,
+                            "latest_outcome": item.outcome,
+                            "reason": "software_change_receipt_chain_open",
+                        }
+                        for item in receipts
+                    ],
+                }
+                return MCPToolResult(content=json.dumps(payload, default=str))
+
+            if operation in {"review_sync", "review_requests", "review_decide"}:
+                queue = config.receipt_review_queue
+                if queue is None:
+                    return MCPToolResult(
+                        content="Service error: software receipt review queue not configured",
+                        is_error=True,
+                    )
+                if operation == "review_sync":
+                    submitted = queue.sync(limit=limit)
+                    pending = queue.pending()
+                    payload = {
+                        "operation": operation,
+                        "count": len(submitted),
+                        "receipts": [],
+                        "review_request_count": len(submitted),
+                        "review_requests": [item.to_json_dict() for item in submitted],
+                        "pending_review_count": len(pending),
+                        "requires_operator_review": bool(pending),
+                    }
+                    return MCPToolResult(content=json.dumps(payload, default=str))
+                if operation == "review_requests":
+                    pending = queue.pending()
+                    payload = {
+                        "operation": operation,
+                        "count": len(pending),
+                        "receipts": [],
+                        "review_request_count": len(pending),
+                        "review_requests": [item.to_json_dict() for item in pending],
+                        "pending_review_count": len(pending),
+                        "requires_operator_review": bool(pending),
+                    }
+                    return MCPToolResult(content=json.dumps(payload, default=str))
+
+                if request_id is None:
+                    return MCPToolResult(content="request_id is required", is_error=True)
+                reviewer_id = str(args.get("reviewer_id") or "").strip()
+                if not reviewer_id:
+                    return MCPToolResult(content="reviewer_id is required", is_error=True)
+                approved = args.get("approved")
+                if not isinstance(approved, bool):
+                    return MCPToolResult(content="approved must be boolean", is_error=True)
+                decision = queue.decide(
+                    request_id=request_id,
+                    reviewer_id=reviewer_id,
+                    approved=approved,
+                    comment=args.get("comment"),
+                )
+                pending = queue.pending()
+                payload = {
+                    "operation": operation,
+                    "request_id": request_id,
+                    "count": 1,
+                    "receipts": [],
+                    "review_decision": decision.to_json_dict(),
+                    "pending_review_count": len(pending),
+                    "requires_operator_review": bool(pending),
+                    "gate_allowed": decision.is_approved,
+                    "gate_reason": (
+                        "review approved" if decision.is_approved else "review not approved"
+                    ),
+                }
+                return MCPToolResult(content=json.dumps(payload, default=str))
+
             stage_arg = args.get("stage")
             stage = None
             if stage_arg not in (None, ""):
                 stage = SoftwareChangeReceiptStage(str(stage_arg))
-            limit_arg = args.get("limit", 50)
-            try:
-                limit = int(limit_arg)
-            except (TypeError, ValueError):
-                return MCPToolResult(content="limit must be a positive integer", is_error=True)
             receipts = config.receipt_store.list_receipts(
                 request_id=request_id,
                 stage=stage,
