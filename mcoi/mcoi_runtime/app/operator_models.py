@@ -131,6 +131,28 @@ class WorkflowResumeRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class WorkforceReconcileRequest:
+    """Request to assess or restore persisted workforce assignment state."""
+
+    request_id: str
+    subject_id: str
+    tenant_id: str
+    restore_from_store: bool = False
+    detect_gaps: bool = True
+    detect_violations: bool = True
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id", "tenant_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        for field_name in ("restore_from_store", "detect_gaps", "detect_violations"):
+            value = getattr(self, field_name)
+            if not isinstance(value, bool):
+                raise RuntimeCoreInvariantError(f"{field_name} must be a bool")
+
+
+@dataclass(frozen=True, slots=True)
 class SkillRunReport:
     """Report from a skill execution through the operator loop."""
 
@@ -170,6 +192,32 @@ class GoalRunReport:
     plan_id: str | None
     completed_sub_goals: tuple[str, ...] = ()
     failed_sub_goals: tuple[str, ...] = ()
+    errors: tuple[StructuredError, ...] = ()
+    started_at: str = ""
+    completed_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class WorkforceReconcileReport:
+    """Report from governed workforce reconciliation or restore assessment."""
+
+    request_id: str
+    tenant_id: str
+    restored: bool
+    assessment_id: str | None
+    policy_decision_id: str | None
+    policy_status: str | None
+    autonomy_mode: str
+    autonomy_decision: str
+    worker_count: int
+    active_worker_count: int
+    request_count: int
+    decision_count: int
+    gap_count: int
+    violation_count: int
+    new_gap_ids: tuple[str, ...] = ()
+    new_violation_ids: tuple[str, ...] = ()
+    state_hash: str = ""
     errors: tuple[StructuredError, ...] = ()
     started_at: str = ""
     completed_at: str = ""
@@ -227,6 +275,8 @@ __all__ = [
     "OperatorRunReport",
     "SkillRequest",
     "SkillRunReport",
+    "WorkforceReconcileReport",
+    "WorkforceReconcileRequest",
     "WorkflowResumeRequest",
     "WorkflowRunReport",
 ]

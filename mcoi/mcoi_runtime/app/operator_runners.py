@@ -32,7 +32,7 @@ from mcoi_runtime.core.errors import (
     policy_error,
     validation_error,
 )
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.policy_engine import PolicyInput
 
 from .bootstrap import build_policy_decision
@@ -45,6 +45,8 @@ from .operator_models import (
     GoalRunReport,
     SkillRequest,
     SkillRunReport,
+    WorkforceReconcileReport,
+    WorkforceReconcileRequest,
     WorkflowResumeRequest,
     WorkflowRunReport,
 )
@@ -659,4 +661,229 @@ def run_goal(
     )
 
 
-__all__ = ["resume_workflow", "run_goal", "run_skill", "run_workflow"]
+def reconcile_workforce(
+    loop: OperatorLoop,
+    request: WorkforceReconcileRequest,
+) -> WorkforceReconcileReport:
+    """Assess or restore explicit workforce runtime state through the governed path."""
+    started_at = loop.runtime.clock()
+    has_write_effects = (
+        request.restore_from_store or request.detect_gaps or request.detect_violations
+    )
+    action_class = (
+        ActionClass.EXECUTE_WRITE if has_write_effects else ActionClass.ANALYZE
+    )
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        action_class,
+        action_description=(
+            f"workforce_reconcile:{request.tenant_id}"
+            if has_write_effects
+            else f"workforce_assess:{request.tenant_id}"
+        ),
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return WorkforceReconcileReport(
+            request_id=request.request_id,
+            tenant_id=request.tenant_id,
+            restored=False,
+            assessment_id=None,
+            policy_decision_id=None,
+            policy_status=None,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            worker_count=0,
+            active_worker_count=0,
+            request_count=0,
+            decision_count=0,
+            gap_count=0,
+            violation_count=0,
+            state_hash="",
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        "blocked workforce reconciliation: "
+                        f"{autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.APPROVAL_REQUIRED,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id=f"workforce_reconcile:{request.tenant_id}",
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=has_write_effects,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return WorkforceReconcileReport(
+            request_id=request.request_id,
+            tenant_id=request.tenant_id,
+            restored=False,
+            assessment_id=None,
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            worker_count=0,
+            active_worker_count=0,
+            request_count=0,
+            decision_count=0,
+            gap_count=0,
+            violation_count=0,
+            state_hash="",
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=(
+                        "policy gate returned "
+                        f"{policy_decision.status.value} for workforce reconciliation"
+                    ),
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    workforce_engine = loop.runtime.workforce_engine
+    restored = False
+    if request.restore_from_store:
+        store = loop.runtime.workforce_store
+        if store is None:
+            return WorkforceReconcileReport(
+                request_id=request.request_id,
+                tenant_id=request.tenant_id,
+                restored=False,
+                assessment_id=None,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                worker_count=0,
+                active_worker_count=0,
+                request_count=0,
+                decision_count=0,
+                gap_count=0,
+                violation_count=0,
+                state_hash="",
+                errors=(
+                    execution_error(
+                        error_code="workforce_store_not_configured",
+                        message="workforce restore requires a configured workforce store",
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+        try:
+            store.restore_state(workforce_engine)
+        except (PersistenceError, RuntimeCoreInvariantError) as exc:
+            return WorkforceReconcileReport(
+                request_id=request.request_id,
+                tenant_id=request.tenant_id,
+                restored=False,
+                assessment_id=None,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                worker_count=0,
+                active_worker_count=0,
+                request_count=0,
+                decision_count=0,
+                gap_count=0,
+                violation_count=0,
+                state_hash="",
+                errors=(
+                    execution_error(
+                        error_code="workforce_restore_failed",
+                        message=str(exc),
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+        restored = True
+
+    new_gap_ids: tuple[str, ...] = ()
+    if request.detect_gaps:
+        new_gap_ids = tuple(
+            sorted(
+                gap.gap_id
+                for gap in workforce_engine.detect_coverage_gaps(request.tenant_id)
+            )
+        )
+
+    new_violation_ids: tuple[str, ...] = ()
+    if request.detect_violations:
+        new_violation_ids = tuple(
+            sorted(
+                violation.violation_id
+                for violation in workforce_engine.detect_workforce_violations(
+                    request.tenant_id
+                )
+            )
+        )
+
+    assessment_id = stable_identifier(
+        "workforce-assessment",
+        {
+            "request_id": request.request_id,
+            "tenant_id": request.tenant_id,
+        },
+    )
+    assessment = workforce_engine.workforce_assessment(assessment_id, request.tenant_id)
+
+    return WorkforceReconcileReport(
+        request_id=request.request_id,
+        tenant_id=request.tenant_id,
+        restored=restored,
+        assessment_id=assessment.assessment_id,
+        policy_decision_id=policy_decision.decision_id,
+        policy_status=policy_decision.status.value,
+        autonomy_mode=loop.runtime.autonomy.mode.value,
+        autonomy_decision=autonomy_decision.status.value,
+        worker_count=assessment.total_workers,
+        active_worker_count=assessment.active_workers,
+        request_count=assessment.total_requests,
+        decision_count=assessment.total_decisions,
+        gap_count=assessment.total_gaps,
+        violation_count=assessment.total_violations,
+        new_gap_ids=new_gap_ids,
+        new_violation_ids=new_violation_ids,
+        state_hash=workforce_engine.state_hash(),
+        started_at=started_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
+__all__ = [
+    "reconcile_workforce",
+    "resume_workflow",
+    "run_goal",
+    "run_skill",
+    "run_workflow",
+]

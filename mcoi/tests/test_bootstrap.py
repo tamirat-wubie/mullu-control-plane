@@ -16,11 +16,14 @@ from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
+from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.core.policy_engine import PolicyInput
 from mcoi_runtime.core.verification_engine import VerificationEngine
 from mcoi_runtime.persistence.memory_store import MemoryStore
+from mcoi_runtime.persistence.workforce_store import WorkforceStore
+from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
 
 
 def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> None:
@@ -35,6 +38,8 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.executors["shell_command"].__class__ is ShellExecutor
     assert runtime.observers["filesystem"].__class__ is FilesystemObserver
     assert runtime.observers["process"].__class__ is ProcessObserver
+    assert runtime.workforce_engine.__class__ is WorkforceRuntimeEngine
+    assert runtime.workforce_store is None
 
 
 def test_bootstrap_runtime_respects_explicit_adapter_overrides() -> None:
@@ -148,3 +153,80 @@ def test_bootstrap_runtime_restores_memory_only_when_explicit(tmp_path: Path) ->
 def test_bootstrap_runtime_rejects_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="memory_store"):
         bootstrap_runtime(restore_memory=True)
+
+
+def test_bootstrap_runtime_does_not_restore_workforce_implicitly(tmp_path: Path) -> None:
+    workforce_store = WorkforceStore(tmp_path / "workforce")
+    source_engine = WorkforceRuntimeEngine(
+        EventSpineEngine(clock=lambda: "2026-03-18T12:00:00+00:00")
+    )
+    source_engine.register_worker(
+        worker_id="worker-1",
+        tenant_id="tenant-1",
+        role_ref="ops",
+        team_ref="team-1",
+        display_name="Worker One",
+    )
+    source_engine.request_assignment(
+        request_id="request-1",
+        tenant_id="tenant-1",
+        scope_ref_id="scope-1",
+        role_ref="ops",
+    )
+    source_engine.decide_assignment(
+        decision_id="decision-1",
+        request_id="request-1",
+        worker_id="worker-1",
+    )
+    before = workforce_store.save_state(source_engine)
+
+    runtime = bootstrap_runtime(workforce_store=workforce_store)
+
+    after = workforce_store.save_state(source_engine)
+    assert runtime.workforce_store is workforce_store
+    assert runtime.workforce_engine.worker_count == 0
+    assert runtime.workforce_engine.request_count == 0
+    assert runtime.workforce_engine.decision_count == 0
+    assert before == after
+
+
+def test_bootstrap_runtime_restores_workforce_only_when_explicit(tmp_path: Path) -> None:
+    workforce_store = WorkforceStore(tmp_path / "workforce")
+    source_engine = WorkforceRuntimeEngine(
+        EventSpineEngine(clock=lambda: "2026-03-18T12:00:00+00:00")
+    )
+    source_engine.register_worker(
+        worker_id="worker-1",
+        tenant_id="tenant-1",
+        role_ref="ops",
+        team_ref="team-1",
+        display_name="Worker One",
+    )
+    source_engine.request_assignment(
+        request_id="request-1",
+        tenant_id="tenant-1",
+        scope_ref_id="scope-1",
+        role_ref="ops",
+    )
+    source_engine.decide_assignment(
+        decision_id="decision-1",
+        request_id="request-1",
+        worker_id="worker-1",
+    )
+    workforce_store.save_state(source_engine)
+
+    runtime = bootstrap_runtime(
+        workforce_store=workforce_store,
+        restore_workforce=True,
+    )
+
+    assert runtime.workforce_store is workforce_store
+    assert runtime.workforce_engine.worker_count == 1
+    assert runtime.workforce_engine.request_count == 1
+    assert runtime.workforce_engine.decision_count == 1
+    assert runtime.workforce_engine.get_worker("worker-1").current_assignments == 1
+
+
+def test_bootstrap_runtime_rejects_workforce_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="workforce_store"):
+        bootstrap_runtime(restore_workforce=True)
