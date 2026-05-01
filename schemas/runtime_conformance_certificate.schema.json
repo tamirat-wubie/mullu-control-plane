@@ -29,6 +29,8 @@
     "mcp_capability_manifest_configured",
     "mcp_capability_manifest_valid",
     "mcp_capability_manifest_capability_count",
+    "capability_plan_bundle_canary_passed",
+    "capability_plan_bundle_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
     "known_limitations_aligned",
@@ -121,6 +123,13 @@
       "type": "boolean"
     },
     "mcp_capability_manifest_capability_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "capability_plan_bundle_canary_passed": {
+      "type": "boolean"
+    },
+    "capability_plan_bundle_count": {
       "type": "integer",
       "minimum": 0
     },

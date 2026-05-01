@@ -281,6 +281,23 @@ def test_preflight_deployment_witness_rejects_invalid_runtime_mcp_manifest() -> 
     assert "mcp_manifest_valid=False" in conformance_step.detail
 
 
+def test_preflight_deployment_witness_rejects_missing_plan_bundle_witness() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_missing_plan_bundle_conformance_getter,
+    )
+    conformance_step = next(step for step in report.steps if step.name == "runtime conformance endpoint")
+
+    assert report.ready is False
+    assert conformance_step.passed is False
+    assert "plan_bundle_passed=False" in conformance_step.detail
+
+
 def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     runner = FakeRunner()
 
@@ -358,6 +375,8 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "mcp_capability_manifest_configured": False,
             "mcp_capability_manifest_valid": True,
             "mcp_capability_manifest_capability_count": 0,
+            "capability_plan_bundle_canary_passed": True,
+            "capability_plan_bundle_count": 0,
             "terminal_status": "conformant_with_gaps",
             "open_conformance_gaps": ["known_limitations_documentation_drift"],
             "evidence_refs": ["gateway_witness:test"],
@@ -390,6 +409,13 @@ def _invalid_mcp_manifest_conformance_getter(url: str) -> tuple[int, dict[str, A
             "mcp_capability_manifest_valid": False,
             "mcp_capability_manifest_capability_count": 1,
         }
+    return status, payload
+
+
+def _missing_plan_bundle_conformance_getter(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _healthy_getter(url)
+    if url.endswith("/runtime/conformance"):
+        return status, {**payload, "capability_plan_bundle_canary_passed": False}
     return status, payload
 
 

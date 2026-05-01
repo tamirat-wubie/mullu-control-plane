@@ -344,6 +344,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/workflow.py",
                 "mcoi/mcoi_runtime/core/tool_use.py",
                 "mcoi/mcoi_runtime/mcp/capability_bridge.py",
+                "gateway/mcp_operator_read_model.py",
                 "gateway/mcp_capability_fabric.py",
                 "gateway/mcp_capabilities.py",
                 "scripts/validate_mcp_capability_manifest.py",

@@ -47,6 +47,8 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "mcp_capability_manifest_configured",
     "mcp_capability_manifest_valid",
     "mcp_capability_manifest_capability_count",
+    "capability_plan_bundle_canary_passed",
+    "capability_plan_bundle_count",
     "terminal_status",
     "open_conformance_gaps",
     "evidence_refs",
@@ -195,6 +197,18 @@ def collect_runtime_conformance(
     ))
     if not mcp_manifest_passed:
         errors.append("runtime conformance MCP capability manifest was not valid")
+
+    plan_bundle_passed = bool(certificate.get("capability_plan_bundle_canary_passed"))
+    steps.append(CollectionStep(
+        name="runtime conformance capability plan evidence bundle",
+        passed=plan_bundle_passed,
+        detail=(
+            f"passed={plan_bundle_passed} "
+            f"bundle_count={certificate.get('capability_plan_bundle_count', 'missing')}"
+        ),
+    ))
+    if not plan_bundle_passed:
+        errors.append("runtime conformance capability plan evidence bundle was not witnessed")
 
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(

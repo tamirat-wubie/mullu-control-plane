@@ -190,6 +190,40 @@ def test_runtime_conformance_witnesses_valid_mcp_manifest(tmp_path, monkeypatch)
     assert "mcp_capability_manifest_invalid" not in payload["open_conformance_gaps"]
 
 
+def test_runtime_conformance_witnesses_capability_plan_bundle(tmp_path) -> None:
+    certificate = _issue_test_conformance(repo_root=tmp_path, plan_ledger=StubPlanLedger())
+    payload = certificate.to_json_dict()
+    bundle_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "capability_plan_evidence_bundle"
+    )
+
+    assert payload["capability_plan_bundle_canary_passed"] is True
+    assert payload["capability_plan_bundle_count"] == 1
+    assert bundle_check["passed"] is True
+    assert "certificate_count=1" in bundle_check["detail"]
+    assert "capability_plan_evidence_bundle_not_witnessed" not in payload["open_conformance_gaps"]
+
+
+def test_runtime_conformance_degrades_when_plan_bundle_export_is_unavailable(tmp_path) -> None:
+    certificate = _issue_test_conformance(
+        repo_root=tmp_path,
+        plan_ledger=StubPlanLedger(bundle_ready=False),
+    )
+    payload = certificate.to_json_dict()
+    bundle_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "capability_plan_evidence_bundle"
+    )
+
+    assert payload["capability_plan_bundle_canary_passed"] is False
+    assert payload["capability_plan_bundle_count"] == 1
+    assert bundle_check["passed"] is False
+    assert "invalid_bundle_plan_id=plan-1" in bundle_check["detail"]
+    assert "capability_plan_evidence_bundle_not_witnessed" in payload["open_conformance_gaps"]
+    assert payload["terminal_status"] == "degraded"
+
+
 def test_known_limitations_alignment_rejects_stale_directory_adapter_claim(tmp_path) -> None:
     gateway_dir = tmp_path / "gateway"
     scripts_dir = tmp_path / "scripts"
@@ -300,12 +334,43 @@ class StubCapabilityAdmissionGate:
         }
 
 
+class StubPlanLedger:
+    """Capability plan ledger fixture for evidence bundle canary checks."""
+
+    def __init__(self, *, bundle_ready: bool = True) -> None:
+        self._bundle_ready = bundle_ready
+
+    def read_model(self):
+        return {"certificates": [{"plan_id": "plan-1"}]}
+
+    def export_evidence_bundle(self, *, plan_id: str):
+        if not self._bundle_ready:
+            return {
+                "bundle_id": "invalid",
+                "bundle_hash": "hash",
+                "plan_id": plan_id,
+                "certificate_id": "cert-1",
+                "step_command_ids": (),
+                "step_terminal_certificate_ids": (),
+                "evidence_refs": (),
+            }
+        return {
+            "bundle_id": "plan-evidence-bundle-0123456789abcdef",
+            "bundle_hash": "hash",
+            "plan_id": plan_id,
+            "certificate_id": "cert-1",
+            "step_command_ids": ("cmd-1",),
+            "step_terminal_certificate_ids": ("terminal-1",),
+            "evidence_refs": ("plan_terminal_certificate:cert-1",),
+        }
+
+
 def _stable_hash(payload: dict) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()
 
 
-def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None):
+def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None, plan_ledger=None):
     return issue_conformance_certificate(
         router=StubRouter(),
         command_ledger=StubCommandLedger(),
@@ -316,6 +381,7 @@ def _issue_test_conformance(*, repo_root: Path, authority_obligation_mesh=None):
         signature_key_id="runtime-conformance-test",
         runtime_witness_key_id="runtime-witness-test",
         runtime_witness_secret="witness-secret",
+        plan_ledger=plan_ledger,
         repo_root=repo_root,
         clock=lambda: "2026-04-29T12:00:00+00:00",
     )

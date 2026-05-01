@@ -272,6 +272,22 @@ def test_build_mcp_gateway_import_from_manifest_builds_admission_and_authority(t
     assert decision.owner_team == "knowledge-ops"
 
 
+def test_mcp_operator_read_model_reports_manifest_summary(tmp_path: Path) -> None:
+    manifest_path = _write_mcp_manifest(tmp_path)
+    imported = build_mcp_gateway_import_from_manifest(manifest_path, clock=_clock)
+
+    read_model = build_mcp_operator_read_model(
+        capability_admission_gate=imported.admission_gate,
+        mcp_gateway_import=imported,
+    )
+
+    assert read_model["mcp_manifest_configured"] is True
+    assert read_model["mcp_manifest_valid"] is True
+    assert read_model["mcp_manifest_ref"] == manifest_path.resolve().as_uri()
+    assert read_model["mcp_manifest_capability_count"] == 1
+    assert read_model["capability_count"] == 1
+
+
 def test_build_mcp_gateway_import_rejects_invalid_manifest_without_reflection(tmp_path: Path) -> None:
     missing_string_path = tmp_path / "missing_string_manifest.json"
     missing_string_path.write_text(
@@ -507,6 +523,9 @@ def test_mcp_operator_read_model_projects_capability_authority_and_audits() -> N
 
     assert read_model["enabled"] is True
     assert read_model["executor_enabled"] is True
+    assert read_model["mcp_manifest_configured"] is False
+    assert read_model["mcp_manifest_valid"] is True
+    assert read_model["mcp_manifest_capability_count"] == 0
     assert read_model["capability_count"] == 1
     assert read_model["capabilities"][0]["capability_id"] == "mcp.docs_search_docs"
     assert read_model["ownership"][0]["owner_team"] == "knowledge-ops"
@@ -561,6 +580,9 @@ def test_mcp_operator_read_model_endpoint_reports_runtime_state() -> None:
     assert message_resp.status_code == 200
     assert message_resp.json()["metadata"]["mcp_succeeded"] is True
     assert read_model_resp.status_code == 200
+    assert read_model_resp.json()["mcp_manifest_configured"] is False
+    assert read_model_resp.json()["mcp_manifest_valid"] is True
+    assert read_model_resp.json()["mcp_manifest_capability_count"] == 0
     assert read_model_resp.json()["capability_count"] == 1
     assert read_model_resp.json()["ownership_count"] == 1
     assert read_model_resp.json()["approval_policy_count"] == 1
