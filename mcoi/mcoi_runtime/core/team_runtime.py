@@ -173,11 +173,16 @@ class TeamEngine:
     def __init__(self, *, registry: WorkerRegistry, clock: Callable[[], str]) -> None:
         self._registry = registry
         self._clock = clock
+        self._handoffs: dict[str, HandoffRecord] = {}
 
     @property
     def registry(self) -> WorkerRegistry:
         """Public accessor for the worker registry."""
         return self._registry
+
+    @property
+    def handoff_count(self) -> int:
+        return len(self._handoffs)
 
     # --- Assignment ---
 
@@ -248,7 +253,7 @@ class TeamEngine:
             "to": to_worker_id,
             "at": now,
         })
-        return HandoffRecord(
+        record = HandoffRecord(
             handoff_id=handoff_id,
             job_id=job_id,
             from_worker_id=from_worker_id,
@@ -257,6 +262,40 @@ class TeamEngine:
             thread_id=thread_id,
             handoff_at=now,
         )
+        self._handoffs[record.handoff_id] = record
+        return record
+
+    def get_handoff(self, handoff_id: str) -> HandoffRecord | None:
+        """Return a persisted handoff record by ID."""
+        return self._handoffs.get(handoff_id)
+
+    def list_handoffs(self) -> tuple[HandoffRecord, ...]:
+        """Return deterministic handoff history for persistence or inspection."""
+        return tuple(
+            sorted(
+                self._handoffs.values(),
+                key=lambda record: (record.handoff_at, record.handoff_id),
+            )
+        )
+
+    def restore_handoff(self, handoff: HandoffRecord) -> HandoffRecord:
+        """Restore a persisted handoff record without generating a new handoff."""
+        if not isinstance(handoff, HandoffRecord):
+            raise RuntimeCoreInvariantError("handoff must be a HandoffRecord")
+        if handoff.handoff_id in self._handoffs:
+            raise RuntimeCoreInvariantError(
+                f"handoff already restored: {handoff.handoff_id}"
+            )
+        if self._registry.get_worker(handoff.from_worker_id) is None:
+            raise RuntimeCoreInvariantError(
+                f"worker not found: {handoff.from_worker_id}"
+            )
+        if self._registry.get_worker(handoff.to_worker_id) is None:
+            raise RuntimeCoreInvariantError(
+                f"worker not found: {handoff.to_worker_id}"
+            )
+        self._handoffs[handoff.handoff_id] = handoff
+        return handoff
 
     # --- Workload observation ---
 

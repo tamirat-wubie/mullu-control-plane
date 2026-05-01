@@ -49,9 +49,10 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Coordination
 
-- **Coordination state is in-memory only.** Active workflow coordination, delegation,
-  and handoff context are not persisted. Restarting the runtime loses in-flight
-  coordination state and requires operator restart from a governed entry point.
+- **Coordination persistence is partial and explicit.** Delegation and handoff
+  records can be saved and restored through the coordination store, but live
+  workflow coordination, worker registry state, and queue/load state do not auto-save or auto-restore. Restarting the runtime still loses in-flight
+  coordination context outside explicitly persisted records.
 
 ## Replay
 

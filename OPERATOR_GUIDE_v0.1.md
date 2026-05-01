@@ -211,6 +211,9 @@ points for operators:
 
 - Working/episodic memory persistence is available, but only when you wire a
   local memory store and request restore explicitly.
+- Coordination persistence is partial: delegation and handoff records can be
+  persisted explicitly, but live queue/load and workflow coordination state are
+  still restart-volatile.
 - Policy packs are enforced during evaluation through the runtime policy gate.
 - No web UI -- CLI only.
 - No background scheduling -- temporal contracts exist but no daemon monitors them.

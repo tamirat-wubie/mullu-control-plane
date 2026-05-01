@@ -401,6 +401,40 @@ class AccessRuntimeEngine:
             if d.to_identity_id == identity_id and d.status == DelegationStatus.ACTIVE
         )
 
+    def list_delegations(
+        self,
+        *,
+        status: DelegationStatus | None = None,
+    ) -> tuple[DelegationRecord, ...]:
+        """Return deterministic delegation records for persistence or inspection."""
+        delegations = tuple(
+            sorted(self._delegations.values(), key=lambda record: record.delegation_id)
+        )
+        if status is None:
+            return delegations
+        return tuple(record for record in delegations if record.status is status)
+
+    def restore_delegation(self, delegation: DelegationRecord) -> DelegationRecord:
+        """Restore a persisted delegation without emitting live mutation events."""
+        if not isinstance(delegation, DelegationRecord):
+            raise RuntimeCoreInvariantError("delegation must be a DelegationRecord")
+        if delegation.delegation_id in self._delegations:
+            raise RuntimeCoreInvariantError(
+                f"Duplicate delegation_id: {delegation.delegation_id}"
+            )
+        if delegation.from_identity_id not in self._identities:
+            raise RuntimeCoreInvariantError(
+                f"Unknown from_identity_id: {delegation.from_identity_id}"
+            )
+        if delegation.to_identity_id not in self._identities:
+            raise RuntimeCoreInvariantError(
+                f"Unknown to_identity_id: {delegation.to_identity_id}"
+            )
+        if delegation.role_id not in self._roles:
+            raise RuntimeCoreInvariantError(f"Unknown role_id: {delegation.role_id}")
+        self._delegations[delegation.delegation_id] = delegation
+        return delegation
+
     # ------------------------------------------------------------------
     # Permission evaluation
     # ------------------------------------------------------------------

@@ -61,7 +61,7 @@
 ## Known Accepted Limitations
 
 - [ ] Registry backend uses dynamic make_dataclass for opaque restoration
-- [ ] Coordination engine is in-memory only (no persistence)
+- [ ] Coordination persistence is partial and explicit
 - [ ] Working/episodic memory persistence is explicit and opt-in
 - [ ] HTTP connector uses urllib (no per-read timeout enforcement)
 - [ ] No authentication/authorization system
