@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:deployment-witness:1",
+  "title": "Deployment Witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "collected_at",
+    "gateway_url",
+    "deployment_claim",
+    "health_status",
+    "runtime_witness_status",
+    "signature_status",
+    "conformance_status",
+    "conformance_signature_status",
+    "latest_conformance_certificate_id",
+    "latest_terminal_certificate_id",
+    "latest_command_event_hash",
+    "runtime_witness_id",
+    "runtime_environment",
+    "runtime_signature_key_id",
+    "steps",
+    "errors"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "pattern": "^deployment-witness-[0-9a-f]{16}$"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "gateway_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deployment_claim": {
+      "type": "string",
+      "enum": [
+        "published",
+        "not-published"
+      ]
+    },
+    "health_status": {
+      "type": "string"
+    },
+    "runtime_witness_status": {
+      "type": "string"
+    },
+    "signature_status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conformance_status": {
+      "type": "string"
+    },
+    "conformance_signature_status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "latest_conformance_certificate_id": {
+      "type": "string"
+    },
+    "latest_terminal_certificate_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "latest_command_event_hash": {
+      "type": "string"
+    },
+    "runtime_witness_id": {
+      "type": "string"
+    },
+    "runtime_environment": {
+      "type": "string"
+    },
+    "runtime_signature_key_id": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/probe_step"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "probe_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "passed",
+        "detail"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
