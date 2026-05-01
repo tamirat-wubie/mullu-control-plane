@@ -50,6 +50,7 @@ class SoftwareDevRunnerConfig:
     clock: Callable[[], str]
     ucja_runner: Any | None = None
     receipt_store: Any | None = None
+    receipt_review_queue: Any | None = None
 
 
 _TAIL_BYTES: int = 1024
@@ -188,6 +189,8 @@ def make_default_software_dev_runner(
     patch_generator: Callable,
     clock: Callable[[], str],
     ucja_runner: Callable | None = None,
+    receipt_store: Any | None = None,
+    receipt_review_queue: Any | None = None,
     unit_test_command: tuple[str, ...] | None = ("pytest", "-q"),
     integration_test_command: tuple[str, ...] | None = None,
     lint_command: tuple[str, ...] | None = ("ruff", "check", "."),
@@ -226,7 +229,8 @@ def make_default_software_dev_runner(
         gate_runners=gate_runners,
         clock=clock,
         ucja_runner=ucja_runner,
-        receipt_store=None,
+        receipt_store=receipt_store,
+        receipt_review_queue=receipt_review_queue,
     )
 
 
