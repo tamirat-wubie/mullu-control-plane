@@ -51,6 +51,21 @@ class _InternalCapacity:
         return min(self.current_load, self.max_concurrent)
 
 
+@dataclass(frozen=True, slots=True)
+class WorkerLoadState:
+    """Explicit persisted worker load witness used for deterministic restore."""
+
+    worker_id: str
+    current_load: int
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "worker_id", ensure_non_empty_text("worker_id", self.worker_id))
+        if not isinstance(self.current_load, int):
+            raise RuntimeCoreInvariantError("current_load must be an integer")
+        if self.current_load < 0:
+            raise RuntimeCoreInvariantError("current_load must be non-negative")
+
+
 class WorkerRegistry:
     """In-memory registry for workers, roles, and assignment policies.
 
@@ -89,6 +104,10 @@ class WorkerRegistry:
         """Return worker profile or None if not found."""
         return self._workers.get(worker_id)
 
+    def list_workers(self) -> tuple[WorkerProfile, ...]:
+        """Return deterministic worker profiles for persistence or inspection."""
+        return tuple(sorted(self._workers.values(), key=lambda worker: worker.worker_id))
+
     # --- Role ---
 
     def register_role(self, descriptor: RoleDescriptor) -> RoleDescriptor:
@@ -107,6 +126,10 @@ class WorkerRegistry:
     def list_role_ids(self) -> tuple[str, ...]:
         """Return all registered role IDs."""
         return tuple(self._roles)
+
+    def list_roles(self) -> tuple[RoleDescriptor, ...]:
+        """Return deterministic role descriptors for persistence or inspection."""
+        return tuple(sorted(self._roles.values(), key=lambda role: role.role_id))
 
     def get_workers_for_role(self, role_id: str) -> tuple[WorkerProfile, ...]:
         """Return all workers whose roles include the given role."""
@@ -129,6 +152,12 @@ class WorkerRegistry:
     def get_policy(self, policy_id: str) -> AssignmentPolicy | None:
         """Return assignment policy or None if not found."""
         return self._policies.get(policy_id)
+
+    def list_policies(self) -> tuple[AssignmentPolicy, ...]:
+        """Return deterministic assignment policies for persistence or inspection."""
+        return tuple(
+            sorted(self._policies.values(), key=lambda policy: policy.policy_id)
+        )
 
     # --- Capacity ---
 
@@ -162,6 +191,37 @@ class WorkerRegistry:
     def list_all_capacities(self) -> dict[str, _InternalCapacity]:
         """Return all internal capacity trackers (worker_id -> capacity)."""
         return dict(self._capacities)
+
+    def list_load_states(self) -> tuple[WorkerLoadState, ...]:
+        """Return deterministic worker load state records for persistence."""
+        return tuple(
+            WorkerLoadState(worker_id=worker_id, current_load=capacity.current_load)
+            for worker_id, capacity in sorted(self._capacities.items())
+        )
+
+    def restore_worker(self, profile: WorkerProfile) -> WorkerProfile:
+        """Restore a persisted worker profile."""
+        if not isinstance(profile, WorkerProfile):
+            raise RuntimeCoreInvariantError("profile must be a WorkerProfile")
+        return self.register_worker(profile)
+
+    def restore_role(self, descriptor: RoleDescriptor) -> RoleDescriptor:
+        """Restore a persisted role descriptor."""
+        if not isinstance(descriptor, RoleDescriptor):
+            raise RuntimeCoreInvariantError("descriptor must be a RoleDescriptor")
+        return self.register_role(descriptor)
+
+    def restore_policy(self, policy: AssignmentPolicy) -> AssignmentPolicy:
+        """Restore a persisted assignment policy."""
+        if not isinstance(policy, AssignmentPolicy):
+            raise RuntimeCoreInvariantError("policy must be an AssignmentPolicy")
+        return self.register_policy(policy)
+
+    def restore_load_state(self, load_state: WorkerLoadState) -> WorkerCapacity:
+        """Restore persisted load state for an already-registered worker."""
+        if not isinstance(load_state, WorkerLoadState):
+            raise RuntimeCoreInvariantError("load_state must be a WorkerLoadState")
+        return self.update_capacity(load_state.worker_id, load_state.current_load)
 
 
 class TeamEngine:

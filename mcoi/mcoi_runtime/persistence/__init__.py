@@ -20,6 +20,7 @@ from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
 from .skill_store import SkillStore
 from .snapshot_store import SnapshotMetadata, SnapshotStore
+from .team_registry_store import TeamRegistryState, TeamRegistryStore
 from .trace_store import TraceStore
 from .workflow_store import WorkflowStore
 from ._serialization import deserialize_record, serialize_record
@@ -41,6 +42,8 @@ __all__ = [
     "SkillStore",
     "SnapshotNotFoundError",
     "SnapshotStore",
+    "TeamRegistryState",
+    "TeamRegistryStore",
     "TraceNotFoundError",
     "TraceStore",
     "WorkflowStore",

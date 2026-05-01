@@ -49,10 +49,10 @@ runtime does not yet behave as intended by the architecture specification.
 
 ## Coordination
 
-- **Coordination persistence is partial and explicit.** Delegation and handoff
-  records can be saved and restored through the coordination store, but live
-  workflow coordination, worker registry state, and queue/load state do not auto-save or auto-restore. Restarting the runtime still loses in-flight
-  coordination context outside explicitly persisted records.
+- **Coordination persistence is partial and explicit.** Delegation, handoff,
+  worker registry, and worker load-state records can be saved and restored
+  through explicit persistence stores, but live workflow coordination and queue state do not auto-save or auto-restore. Restarting the runtime still loses
+  in-flight coordination context outside explicitly persisted records.
 
 ## Replay
 
