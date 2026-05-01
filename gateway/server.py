@@ -1146,6 +1146,7 @@ def create_gateway_app(
         return {
             "plan_id": plan_id,
             "plan_terminal_certificate": asdict(certificate),
+            "plan_evidence_bundle": asdict(plan_ledger.export_evidence_bundle(plan_id=plan_id)),
             "plan_witnesses": [asdict(witness) for witness in witnesses],
             "plan_recovery_attempts": [asdict(attempt) for attempt in recovery_attempts],
             "witness_count": len(witnesses),

@@ -26,6 +26,9 @@
     "authority_escalated_obligation_count",
     "authority_unowned_high_risk_capability_count",
     "authority_directory_sync_receipt_valid",
+    "mcp_capability_manifest_configured",
+    "mcp_capability_manifest_valid",
+    "mcp_capability_manifest_capability_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
     "known_limitations_aligned",
@@ -110,6 +113,16 @@
     },
     "authority_directory_sync_receipt_valid": {
       "type": "boolean"
+    },
+    "mcp_capability_manifest_configured": {
+      "type": "boolean"
+    },
+    "mcp_capability_manifest_valid": {
+      "type": "boolean"
+    },
+    "mcp_capability_manifest_capability_count": {
+      "type": "integer",
+      "minimum": 0
     },
     "capsule_registry_certified": {
       "type": "boolean"

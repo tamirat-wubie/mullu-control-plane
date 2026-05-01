@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from mcoi_runtime.core.lineage_query import parse_lineage_uri
+from scripts.validate_mcp_capability_manifest import validate_mcp_capability_manifest
 
 
 class ConformanceStatus(StrEnum):
@@ -74,6 +75,9 @@ class RuntimeConformanceCertificate:
     authority_escalated_obligation_count: int
     authority_unowned_high_risk_capability_count: int
     authority_directory_sync_receipt_valid: bool
+    mcp_capability_manifest_configured: bool
+    mcp_capability_manifest_valid: bool
+    mcp_capability_manifest_capability_count: int
     capsule_registry_certified: bool
     proof_coverage_matrix_current: bool
     known_limitations_aligned: bool
@@ -236,6 +240,19 @@ def issue_conformance_certificate(
         "latest authority directory sync receipt is present and structurally valid",
     ))
 
+    (
+        mcp_manifest_configured,
+        mcp_manifest_valid,
+        mcp_manifest_capability_count,
+        mcp_manifest_detail,
+    ) = _mcp_capability_manifest_validation()
+    checks.append(_check(
+        "mcp_capability_manifest",
+        mcp_manifest_valid,
+        "mcp_capability_manifest:env:MULLU_MCP_CAPABILITY_MANIFEST_PATH",
+        mcp_manifest_detail,
+    ))
+
     proof_coverage_matrix_current = _proof_coverage_matrix_current(repository_root)
     known_limitations_aligned = _known_limitations_aligned(repository_root)
     security_model_aligned = _security_model_aligned(repository_root)
@@ -271,6 +288,7 @@ def issue_conformance_certificate(
             lineage_query_canary_passed,
             authority_obligation_canary_passed,
             authority_responsibility_debt_clear,
+            mcp_manifest_valid,
         ),
     )
     unsigned = RuntimeConformanceCertificate(
@@ -295,6 +313,9 @@ def issue_conformance_certificate(
         authority_escalated_obligation_count=_int_count(authority_witness, "escalated_obligation_count"),
         authority_unowned_high_risk_capability_count=_int_count(authority_witness, "unowned_high_risk_capability_count"),
         authority_directory_sync_receipt_valid=authority_directory_sync_receipt_valid,
+        mcp_capability_manifest_configured=mcp_manifest_configured,
+        mcp_capability_manifest_valid=mcp_manifest_valid,
+        mcp_capability_manifest_capability_count=mcp_manifest_capability_count,
         capsule_registry_certified=capsule_registry_certified,
         proof_coverage_matrix_current=proof_coverage_matrix_current,
         known_limitations_aligned=known_limitations_aligned,
@@ -490,6 +511,22 @@ def _authority_directory_sync_receipt_valid(repo_root: Path) -> bool:
     } <= evidence_refs
 
 
+def _mcp_capability_manifest_validation() -> tuple[bool, bool, int, str]:
+    manifest_path = os.environ.get("MULLU_MCP_CAPABILITY_MANIFEST_PATH", "").strip()
+    if not manifest_path:
+        return False, True, 0, "not_configured"
+    result = validate_mcp_capability_manifest(Path(manifest_path))
+    detail = (
+        f"configured=True valid={result.ok} "
+        f"capability_count={len(result.capability_ids)} "
+        f"ownership_count={len(result.ownership_resource_refs)} "
+        f"approval_policy_count={len(result.approval_policy_ids)} "
+        f"escalation_policy_count={len(result.escalation_policy_ids)} "
+        f"errors={list(result.errors)}"
+    )
+    return True, result.ok, len(result.capability_ids), detail
+
+
 def _proof_coverage_matrix_current(repo_root: Path) -> bool:
     try:
         from scripts.proof_coverage_matrix import CANONICAL_OUTPUT, proof_coverage_matrix
@@ -576,6 +613,7 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
         "authority_obligation_canary": "authority_obligation_witness_not_live",
         "authority_responsibility_debt_clear": "authority_responsibility_debt_present",
         "authority_directory_sync_receipt": "authority_directory_sync_receipt_not_witnessed",
+        "mcp_capability_manifest": "mcp_capability_manifest_invalid",
         "proof_coverage_matrix_current": "proof_coverage_matrix_not_current",
         "known_limitations_aligned": "known_limitations_documentation_drift",
         "security_model_aligned": "security_model_documentation_drift",

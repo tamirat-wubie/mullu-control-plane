@@ -699,6 +699,15 @@ class TestWebChatWebhook:
         assert closure_resp.json()["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["step_count"] == 2
+        assert closure_resp.json()["plan_evidence_bundle"]["bundle_id"].startswith("plan-evidence-bundle-")
+        assert closure_resp.json()["plan_evidence_bundle"]["plan_id"] == plan_id
+        assert (
+            closure_resp.json()["plan_evidence_bundle"]["certificate_id"]
+            == closure_resp.json()["plan_terminal_certificate"]["certificate_id"]
+        )
+        assert len(closure_resp.json()["plan_evidence_bundle"]["step_command_ids"]) == 2
+        assert len(closure_resp.json()["plan_evidence_bundle"]["step_terminal_certificate_ids"]) == 2
+        assert closure_resp.json()["plan_evidence_bundle"]["evidence_refs"]
         assert closure_resp.json()["witness_count"] == 1
         assert closure_resp.json()["recovery_attempt_count"] == 0
         assert closure_resp.json()["plan_recovery_attempts"] == []
