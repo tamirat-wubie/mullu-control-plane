@@ -208,12 +208,15 @@ current provider state before executing requests.
 Gateway MCP tools are activated through a governed manifest, not by ad-hoc
 runtime registration. The operator procedure is documented in
 [`docs/55_mcp_capability_manifest.md`](docs/55_mcp_capability_manifest.md).
+The machine-readable handoff checklist is
+`examples/mcp_operator_handoff_checklist.json`.
 
 Minimum sequence:
 
-1. Validate the manifest:
+1. Validate the checklist and manifest:
 
 ```powershell
+python scripts\validate_mcp_operator_checklist.py --checklist examples\mcp_operator_handoff_checklist.json --json
 python scripts\validate_mcp_capability_manifest.py --manifest examples\mcp_capability_manifest.json --json
 ```
 

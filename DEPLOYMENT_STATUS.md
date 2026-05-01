@@ -43,6 +43,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Deployment witness orchestrator | `scripts/orchestrate_deployment_witness.py` composes ingress render, target variable provisioning, optional preflight gating, and optional dispatch | Reflected |
 | Deployment witness preflight | `scripts/preflight_deployment_witness.py` verifies DNS, GitHub variables, secret presence, workflow state, and endpoint contracts before dispatch | Reflected |
 | MCP capability manifest validation | `scripts/validate_mcp_capability_manifest.py` validates certified MCP capability import, ownership, approval policy, and escalation policy records before startup | Reflected |
+| MCP operator handoff checklist | `examples/mcp_operator_handoff_checklist.json` and `scripts/validate_mcp_operator_checklist.py` define release handoff gates for manifest validation, read-model inspection, conformance collection, and deployment preflight | Reflected |
 | MCP manifest runtime conformance | `/runtime/conformance` signs `mcp_capability_manifest_configured`, `mcp_capability_manifest_valid`, and `mcp_capability_manifest_capability_count` into deployment evidence | Reflected |
 | MCP operator read model | `/mcp/operator/read-model` exposes MCP manifest state alongside capability, ownership, policy, escalation, and execution audit state | Reflected |
 | Capability plan evidence bundles | `/capability-plans/{plan_id}/closure` exposes terminal plan certificates, evidence bundles, witnesses, and recovery attempts; `/runtime/conformance` gates on `capability_plan_bundle_canary_passed` | Reflected |
@@ -84,6 +85,7 @@ Before this witness can claim public deployment health, the repository must name
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py` |
 | Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --dispatch` |
 | Deployment witness preflight | `python scripts/preflight_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot` |
+| MCP operator handoff checklist | `python scripts/validate_mcp_operator_checklist.py --checklist examples/mcp_operator_handoff_checklist.json --json` |
 | MCP capability manifest validation | `python scripts/validate_mcp_capability_manifest.py --manifest examples/mcp_capability_manifest.json --json` |
 | MCP-aware deployment preflight | `python scripts/preflight_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --mcp-capability-manifest "$MULLU_MCP_CAPABILITY_MANIFEST_PATH"` |
 | MCP operator read model | `curl -H "X-Mullu-Authority-Secret: $MULLU_AUTHORITY_OPERATOR_SECRET" "$MULLU_GATEWAY_URL/mcp/operator/read-model?audit_limit=25"` |

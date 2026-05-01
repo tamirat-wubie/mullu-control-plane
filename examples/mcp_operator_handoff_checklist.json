@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "checklist_id": "mcp-operator-handoff-v1",
+  "title": "MCP Operator Handoff Checklist",
+  "status": "ready_for_handoff",
+  "required_environment_variables": [
+    "MULLU_MCP_CAPABILITY_MANIFEST_PATH",
+    "MULLU_GATEWAY_URL",
+    "MULLU_GATEWAY_HOST",
+    "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_AUTHORITY_OPERATOR_SECRET",
+    "MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"
+  ],
+  "required_commands": [
+    {
+      "step_id": "validate_manifest",
+      "command": "python scripts\\validate_mcp_capability_manifest.py --manifest examples\\mcp_capability_manifest.json --json",
+      "required_evidence": [
+        "valid=true",
+        "capability_count>0",
+        "ownership_count=capability_count",
+        "approval_policy_count=capability_count",
+        "escalation_policy_count>0"
+      ]
+    },
+    {
+      "step_id": "inspect_operator_read_model",
+      "command": "curl -H \"X-Mullu-Authority-Secret: $MULLU_AUTHORITY_OPERATOR_SECRET\" \"$MULLU_GATEWAY_URL/mcp/operator/read-model?audit_limit=25\"",
+      "required_evidence": [
+        "executor_enabled=true",
+        "capability_count=manifest.capability_count",
+        "ownership_count=capability_count",
+        "approval_policy_count=capability_count",
+        "execution_audit_count>=0"
+      ]
+    },
+    {
+      "step_id": "inspect_mcp_execution_evidence_bundle",
+      "command": "curl -H \"X-Mullu-Authority-Secret: $MULLU_AUTHORITY_OPERATOR_SECRET\" \"$MULLU_GATEWAY_URL/mcp/operator/evidence-bundles/$MCP_TEST_COMMAND_ID\"",
+      "required_evidence": [
+        "bundle_id startswith mcp-evidence-bundle-",
+        "command_id=$MCP_TEST_COMMAND_ID",
+        "capability_id startswith mcp.",
+        "evidence_refs non-empty"
+      ]
+    },
+    {
+      "step_id": "collect_runtime_conformance",
+      "command": "python scripts\\collect_runtime_conformance.py --gateway-url \"$MULLU_GATEWAY_URL\" --conformance-secret \"$MULLU_RUNTIME_CONFORMANCE_SECRET\" --authority-operator-secret \"$MULLU_AUTHORITY_OPERATOR_SECRET\" --expected-environment pilot",
+      "required_evidence": [
+        "mcp_capability_manifest_configured=true",
+        "mcp_capability_manifest_valid=true",
+        "capability_plan_bundle_canary_passed=true",
+        "mcp_capability_manifest_invalid not in open_conformance_gaps"
+      ]
+    },
+    {
+      "step_id": "run_deployment_preflight",
+      "command": "python scripts\\preflight_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --mcp-capability-manifest \"$MULLU_MCP_CAPABILITY_MANIFEST_PATH\"",
+      "required_evidence": [
+        "mcp capability manifest step passed",
+        "runtime conformance endpoint step passed",
+        "plan_bundle_passed=True",
+        "ready=true"
+      ]
+    },
+    {
+      "step_id": "write_orchestration_receipt",
+      "command": "python scripts\\orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --require-preflight --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
+      "required_evidence": [
+        "receipt_id startswith deployment-witness-orchestration-",
+        "preflight_required=true",
+        "preflight_ready=true",
+        "evidence_refs non-empty"
+      ]
+    }
+  ],
+  "required_read_model_fields": [
+    "mcp_manifest_configured",
+    "mcp_manifest_valid",
+    "mcp_manifest_ref",
+    "mcp_manifest_capability_count",
+    "capability_count",
+    "ownership_count",
+    "approval_policy_count",
+    "escalation_policy_count",
+    "executor_enabled",
+    "execution_audit_count",
+    "execution_audits"
+  ],
+  "required_conformance_fields": [
+    "mcp_capability_manifest_configured",
+    "mcp_capability_manifest_valid",
+    "mcp_capability_manifest_capability_count",
+    "capability_plan_bundle_canary_passed",
+    "capability_plan_bundle_count",
+    "open_conformance_gaps",
+    "terminal_status",
+    "signature"
+  ],
+  "blocking_gap_ids": [
+    "mcp_capability_manifest_invalid",
+    "authority_responsibility_debt_present",
+    "capability_fabric_admission_not_live",
+    "capability_plan_evidence_bundle_not_witnessed"
+  ]
+}

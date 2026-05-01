@@ -503,12 +503,15 @@
         "gateway/mcp_capability_fabric.py",
         "gateway/mcp_capabilities.py",
         "scripts/validate_mcp_capability_manifest.py",
+        "scripts/validate_mcp_operator_checklist.py",
         "examples/mcp_capability_manifest.json",
+        "examples/mcp_operator_handoff_checklist.json",
         "docs/55_mcp_capability_manifest.md",
         "tests/test_gateway/test_mcp_capability_fabric.py",
-        "tests/test_validate_mcp_capability_manifest.py"
+        "tests/test_validate_mcp_capability_manifest.py",
+        "tests/test_validate_mcp_operator_checklist.py"
       ],
-      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests.",
+      "notes": "Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, validated operator manifests, and machine-readable handoff checklists.",
       "representative_paths": [
         "/api/v1/tools/invoke",
         "/api/v1/workflow/tools"

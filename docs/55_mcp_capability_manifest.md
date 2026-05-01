@@ -107,6 +107,12 @@ configured capability admission gate.
 ## Operator Procedure
 
 Use this sequence when an environment imports MCP tools through a manifest.
+The machine-readable handoff checklist is
+`examples/mcp_operator_handoff_checklist.json`; validate it with:
+
+```powershell
+python scripts\validate_mcp_operator_checklist.py --checklist examples\mcp_operator_handoff_checklist.json --json
+```
 
 1. Validate the manifest before startup.
 
@@ -195,6 +201,6 @@ preflight readiness and deployment witness publication remain blocked.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, deployment preflight gate]
+  Invariants verified: [certified import, ownership binding, approval policy, escalation policy, startup binding, operator read model, runtime conformance witness, capability plan evidence bundle canary, deployment preflight gate, machine-readable handoff checklist]
   Open issues: none
   Next action: publish an environment-specific manifest and collect signed conformance evidence

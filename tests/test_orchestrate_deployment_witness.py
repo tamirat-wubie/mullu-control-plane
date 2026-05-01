@@ -125,6 +125,13 @@ def test_orchestrate_deployment_witness_renders_and_provisions(tmp_path: Path) -
     assert orchestration.target.expected_environment == "pilot"
     assert orchestration.preflight is None
     assert orchestration.dispatch is None
+    assert orchestration.receipt.receipt_id.startswith("deployment-witness-orchestration-")
+    assert orchestration.receipt.gateway_host == "gateway.mullusi.com"
+    assert orchestration.receipt.gateway_url == "https://gateway.mullusi.com"
+    assert orchestration.receipt.preflight_required is False
+    assert orchestration.receipt.preflight_ready is None
+    assert orchestration.receipt.dispatch_requested is False
+    assert "dispatch:skipped" in orchestration.receipt.evidence_refs
     assert len(variable_commands) == 2
     assert not any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
@@ -152,6 +159,10 @@ def test_orchestrate_deployment_witness_can_apply_and_dispatch(tmp_path: Path) -
     assert orchestration.dispatch is not None
     assert orchestration.dispatch.run_id == 5678
     assert orchestration.dispatch.conclusion == "success"
+    assert orchestration.receipt.dispatch_requested is True
+    assert orchestration.receipt.dispatch_run_id == 5678
+    assert orchestration.receipt.dispatch_conclusion == "success"
+    assert "deployment_witness_run:5678" in orchestration.receipt.evidence_refs
     assert any(command[:3] == ["kubectl", "apply", "-f"] for command in runner.commands)
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
     assert any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
@@ -177,6 +188,9 @@ def test_orchestrate_deployment_witness_can_gate_dispatch_with_preflight(tmp_pat
     assert orchestration.preflight is not None
     assert orchestration.preflight.ready is True
     assert orchestration.dispatch is not None
+    assert orchestration.receipt.preflight_required is True
+    assert orchestration.receipt.preflight_ready is True
+    assert "preflight:ready:true" in orchestration.receipt.evidence_refs
     assert orchestration.dispatch.conclusion == "success"
     assert (tmp_path / "preflight.json").exists()
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
@@ -261,6 +275,38 @@ def test_cli_reports_invalid_host(monkeypatch, tmp_path: Path, capsys) -> None:
     assert exit_code == 1
     assert "deployment witness orchestration failed" in captured.out
     assert "must not include URL scheme" in captured.out
+
+
+def test_cli_writes_orchestration_receipt(monkeypatch, tmp_path: Path, capsys) -> None:
+    monkeypatch.setattr(
+        "scripts.orchestrate_deployment_witness.subprocess.run",
+        FakeRunner(),
+    )
+    receipt_path = tmp_path / "orchestration.json"
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--rendered-ingress-output",
+            str(tmp_path / "ingress.yaml"),
+            "--orchestration-output",
+            str(receipt_path),
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert receipt_path.exists()
+    assert payload["receipt_id"].startswith("deployment-witness-orchestration-")
+    assert payload["gateway_host"] == "gateway.mullusi.com"
+    assert payload["gateway_url"] == "https://gateway.mullusi.com"
+    assert payload["dispatch_requested"] is False
+    assert "dispatch:skipped" in payload["evidence_refs"]
+    assert "orchestration_receipt_path" in captured.out
 
 
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:

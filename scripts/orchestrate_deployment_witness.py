@@ -21,11 +21,13 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 from scripts.dispatch_deployment_witness import (
     DEFAULT_ARTIFACT_NAME,
@@ -57,6 +59,8 @@ from scripts.render_gateway_ingress import (
     render_gateway_ingress,
 )
 
+DEFAULT_ORCHESTRATION_OUTPUT = Path(".change_assurance") / "deployment_witness_orchestration.json"
+
 
 class CommandRunner(Protocol):
     """Subprocess-compatible command execution contract."""
@@ -80,6 +84,30 @@ class DeploymentWitnessOrchestration:
     target: DeploymentTarget
     preflight: DeploymentWitnessPreflight | None
     dispatch: DispatchResult | None
+    receipt: "DeploymentWitnessOrchestrationReceipt"
+
+
+@dataclass(frozen=True, slots=True)
+class DeploymentWitnessOrchestrationReceipt:
+    """Deterministic proof receipt for one deployment witness orchestration."""
+
+    receipt_id: str
+    gateway_host: str
+    gateway_url: str
+    expected_environment: str
+    repository: str
+    rendered_ingress_output: str
+    ingress_applied: bool
+    preflight_required: bool
+    preflight_ready: bool | None
+    dispatch_requested: bool
+    dispatch_run_id: int | None
+    dispatch_conclusion: str
+    evidence_refs: tuple[str, ...]
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable orchestration receipt."""
+        return asdict(self)
 
 
 def orchestrate_deployment_witness(
@@ -179,7 +207,28 @@ def orchestrate_deployment_witness(
         target=target,
         preflight=preflight_report,
         dispatch=dispatch_result,
+        receipt=_orchestration_receipt(
+            ingress=ingress,
+            target=target,
+            preflight=preflight_report,
+            dispatch=dispatch_result,
+            preflight_required=require_preflight,
+            dispatch_requested=dispatch,
+        ),
     )
+
+
+def write_orchestration_receipt(
+    receipt: DeploymentWitnessOrchestrationReceipt,
+    output_path: Path,
+) -> Path:
+    """Write one deployment witness orchestration receipt."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(receipt.to_json_dict(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -200,6 +249,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dispatch", action="store_true")
     parser.add_argument("--require-preflight", action="store_true")
     parser.add_argument("--preflight-output", default=str(DEFAULT_PREFLIGHT_OUTPUT))
+    parser.add_argument("--orchestration-output", default="")
     parser.add_argument("--skip-preflight-endpoint-probes", action="store_true")
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
@@ -256,6 +306,10 @@ def main(argv: list[str] | None = None) -> int:
     print(f"repository: {orchestration.target.repository}")
     print(f"gateway_url: {orchestration.target.gateway_url}")
     print(f"expected_environment: {orchestration.target.expected_environment}")
+    print(f"orchestration_receipt: {orchestration.receipt.receipt_id}")
+    if args.orchestration_output:
+        receipt_path = write_orchestration_receipt(orchestration.receipt, Path(args.orchestration_output))
+        print(f"orchestration_receipt_path: {receipt_path}")
     if orchestration.preflight is not None:
         print(f"preflight_ready: {str(orchestration.preflight.ready).lower()}")
     if orchestration.dispatch is None:
@@ -267,6 +321,54 @@ def main(argv: list[str] | None = None) -> int:
     print(f"conclusion: {orchestration.dispatch.conclusion}")
     print(f"artifact_dir: {orchestration.dispatch.artifact_dir}")
     return 0 if orchestration.dispatch.conclusion == "success" else 1
+
+
+def _orchestration_receipt(
+    *,
+    ingress: RenderedGatewayIngress,
+    target: DeploymentTarget,
+    preflight: DeploymentWitnessPreflight | None,
+    dispatch: DispatchResult | None,
+    preflight_required: bool,
+    dispatch_requested: bool,
+) -> DeploymentWitnessOrchestrationReceipt:
+    evidence_refs = [
+        f"ingress_render:{ingress.output_path}",
+        f"deployment_target:{target.repository}",
+        "preflight:required" if preflight_required else "preflight:skipped",
+        (
+            f"preflight:ready:{str(preflight.ready).lower()}"
+            if preflight is not None
+            else "preflight:not_run"
+        ),
+        "dispatch:requested" if dispatch_requested else "dispatch:skipped",
+    ]
+    if dispatch is not None:
+        evidence_refs.append(f"deployment_witness_run:{dispatch.run_id}")
+        evidence_refs.append(f"deployment_witness_artifact:{dispatch.artifact_dir}")
+    payload = {
+        "gateway_host": ingress.host,
+        "gateway_url": target.gateway_url,
+        "expected_environment": target.expected_environment,
+        "repository": target.repository,
+        "rendered_ingress_output": str(ingress.output_path),
+        "ingress_applied": ingress.applied,
+        "preflight_required": preflight_required,
+        "preflight_ready": preflight.ready if preflight is not None else None,
+        "dispatch_requested": dispatch_requested,
+        "dispatch_run_id": dispatch.run_id if dispatch is not None else None,
+        "dispatch_conclusion": dispatch.conclusion if dispatch is not None else "",
+        "evidence_refs": tuple(evidence_refs),
+    }
+    return DeploymentWitnessOrchestrationReceipt(
+        receipt_id=f"deployment-witness-orchestration-{_stable_hash(payload)[:16]}",
+        **payload,
+    )
+
+
+def _stable_hash(payload: dict[str, Any]) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
 
 
 if __name__ == "__main__":
