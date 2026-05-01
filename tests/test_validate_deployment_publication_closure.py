@@ -15,6 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.validate_deployment_publication_closure import (
+    main,
     validate_publication_closure,
 )
 
@@ -120,6 +121,29 @@ def test_published_status_rejects_unverified_witness() -> None:
     assert "witness step failed" in errors[1]
 
 
+def test_cli_accepts_current_not_published_status_without_witness(tmp_path, capsys) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_status.write_text(
+        _deployment_status("not-published", "not-declared"),
+        encoding="utf-8",
+    )
+    witness_path = tmp_path / "deployment_witness.json"
+
+    exit_code = main(
+        [
+            "--deployment-status",
+            str(deployment_status),
+            "--witness",
+            str(witness_path),
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "DEPLOYMENT PUBLICATION CLOSURE OK" in captured.out
+    assert not witness_path.exists()
+
+
 def _deployment_status(state: str, public_health_endpoint: str) -> str:
     return "\n".join(
         (
@@ -153,4 +177,5 @@ def _published_witness() -> dict[str, object]:
             {"name": "gateway runtime witness", "passed": True, "detail": "ok"},
             {"name": "runtime conformance signature", "passed": True, "detail": "ok"},
         ],
+        "errors": [],
     }

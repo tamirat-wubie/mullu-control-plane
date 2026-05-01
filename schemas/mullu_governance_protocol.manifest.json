@@ -59,6 +59,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-witness",
+      "path": "schemas/deployment_witness.schema.json",
+      "urn": "urn:mullusi:schema:deployment-witness:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",

@@ -23,6 +23,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
+| `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
 | `policy_decision.schema.json` | Canonical policy gate outcome |

@@ -27,6 +27,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 6. External implementations may implement the schema and URI surface, but Mullusi remains the reference runtime.
 7. Deployment handoff receipts are public contracts when they cross operator, CI, or release-promotion boundaries.
 8. Effect assurance records are public contracts when they certify planned, observed, and reconciled reality changes.
+9. Deployment witness artifacts are public contracts when they support published gateway health claims.
 
 ## Verification
 
@@ -39,11 +40,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 25 schemas
+protocol manifest ok: 26 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, effect assurance record contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes

@@ -17,13 +17,19 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
+
 DEFAULT_DEPLOYMENT_STATUS_PATH = REPO_ROOT / "DEPLOYMENT_STATUS.md"
 DEFAULT_WITNESS_PATH = REPO_ROOT / ".change_assurance" / "deployment_witness.json"
+DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
 DEPLOYMENT_STATE_PATTERN = re.compile(
     r"^\*\*Deployment witness state:\*\*\s+`([^`]+)`$",
     re.MULTILINE,
@@ -118,6 +124,17 @@ def load_witness_payload(witness_path: Path) -> tuple[dict[str, Any] | None, lis
     if not isinstance(parsed, dict):
         return None, [f"{witness_path}: witness JSON root must be an object"]
     return parsed, []
+
+
+def _validate_witness_schema(
+    witness_payload: dict[str, Any],
+    witness_path: Path,
+) -> list[str]:
+    schema = _load_schema(DEPLOYMENT_WITNESS_SCHEMA_PATH)
+    return [
+        f"{witness_path}: schema contract: {error}"
+        for error in _validate_schema_instance(schema, witness_payload)
+    ]
 
 
 def _validate_published_witness(
@@ -242,6 +259,8 @@ def main(argv: list[str] | None = None) -> int:
     witness_payload, witness_errors = load_witness_payload(witness_path)
     errors.extend(witness_errors)
     if deployment_status_text:
+        if witness_payload is not None:
+            errors.extend(_validate_witness_schema(witness_payload, witness_path))
         errors.extend(
             validate_publication_closure(
                 deployment_status_text=deployment_status_text,
