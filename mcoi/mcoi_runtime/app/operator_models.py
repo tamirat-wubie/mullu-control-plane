@@ -113,6 +113,24 @@ class SkillRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class WorkflowResumeRequest:
+    """Request to resume a persisted workflow execution explicitly."""
+
+    request_id: str
+    subject_id: str
+    goal_id: str
+    workflow_id: str
+    execution_id: str
+    input_context: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id", "goal_id", "workflow_id", "execution_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True, slots=True)
 class SkillRunReport:
     """Report from a skill execution through the operator loop."""
 
@@ -209,5 +227,6 @@ __all__ = [
     "OperatorRunReport",
     "SkillRequest",
     "SkillRunReport",
+    "WorkflowResumeRequest",
     "WorkflowRunReport",
 ]

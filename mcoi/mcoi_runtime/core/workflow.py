@@ -323,6 +323,36 @@ class WorkflowEngine:
             completed_at=self._clock(),
         )
 
+    def resume_workflow(
+        self,
+        descriptor: WorkflowDescriptor,
+        record: WorkflowExecutionRecord,
+    ) -> WorkflowExecutionRecord:
+        """Resume a persisted running or suspended workflow record explicitly."""
+        if descriptor.workflow_id != record.workflow_id:
+            raise RuntimeCoreInvariantError(
+                "workflow descriptor does not match execution record"
+            )
+        if record.status is WorkflowStatus.COMPLETED:
+            raise RuntimeCoreInvariantError("cannot resume a completed workflow")
+        if record.status is WorkflowStatus.FAILED:
+            raise RuntimeCoreInvariantError("cannot resume a failed workflow")
+        if record.status not in (WorkflowStatus.RUNNING, WorkflowStatus.SUSPENDED):
+            raise RuntimeCoreInvariantError(
+                f"cannot resume workflow in status {record.status.value}"
+            )
+        if record.status is WorkflowStatus.RUNNING:
+            return record
+
+        return WorkflowExecutionRecord(
+            workflow_id=record.workflow_id,
+            execution_id=record.execution_id,
+            status=WorkflowStatus.RUNNING,
+            stage_results=record.stage_results,
+            started_at=record.started_at,
+            completed_at=None,
+        )
+
     def _topological_sort(self, descriptor: WorkflowDescriptor) -> list:
         """Sort stages by predecessor order (Kahn's algorithm). Deterministic via sorted queues."""
         stage_map = {s.stage_id: s for s in descriptor.stages}

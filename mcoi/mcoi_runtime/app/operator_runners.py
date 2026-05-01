@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.workflow import (
     WorkflowStatus,
     StageStatus,
 )
+from mcoi_runtime.persistence.errors import PersistenceError
 from mcoi_runtime.core.errors import (
     Recoverability,
     SourcePlane,
@@ -40,7 +41,13 @@ from .operator_executors import (
     _GovernedStepExecutor,
     _WorkflowStageExecutor,
 )
-from .operator_models import GoalRunReport, SkillRequest, SkillRunReport, WorkflowRunReport
+from .operator_models import (
+    GoalRunReport,
+    SkillRequest,
+    SkillRunReport,
+    WorkflowResumeRequest,
+    WorkflowRunReport,
+)
 
 if TYPE_CHECKING:
     from .operator_loop import OperatorLoop
@@ -302,12 +309,144 @@ def run_workflow(
     if loop.runtime.workflow_store is not None:
         loop.runtime.workflow_store.save_descriptor(workflow_descriptor)
     record = workflow_engine.start_workflow(workflow_descriptor, context=workflow_context)
+    record = _advance_workflow_record(
+        loop=loop,
+        request=request,
+        workflow_descriptor=workflow_descriptor,
+        record=record,
+        workflow_context=workflow_context,
+    )
+
+    errors = _workflow_errors(record)
+
+    return WorkflowRunReport(
+        workflow_id=workflow_descriptor.workflow_id,
+        execution_id=record.execution_id,
+        status=record.status,
+        stage_summaries=record.stage_results,
+        errors=tuple(errors),
+        started_at=record.started_at,
+        completed_at=record.completed_at or loop.runtime.clock(),
+    )
+
+
+def resume_workflow(
+    loop: OperatorLoop,
+    request: WorkflowResumeRequest,
+) -> WorkflowRunReport:
+    """Resume a persisted workflow execution explicitly through the operator facade."""
+    started_at = loop.runtime.clock()
+    store = loop.runtime.workflow_store
+    if store is None:
+        return WorkflowRunReport(
+            workflow_id=request.workflow_id,
+            execution_id=request.execution_id,
+            status=WorkflowStatus.FAILED,
+            stage_summaries=(),
+            errors=(
+                execution_error(
+                    error_code="workflow_store_not_configured",
+                    message="workflow resume requires a configured workflow store",
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    try:
+        workflow_descriptor = store.load_descriptor(request.workflow_id)
+        persisted_record = store.load_execution_record(request.execution_id)
+    except PersistenceError as exc:
+        return WorkflowRunReport(
+            workflow_id=request.workflow_id,
+            execution_id=request.execution_id,
+            status=WorkflowStatus.FAILED,
+            stage_summaries=(),
+            errors=(
+                execution_error(
+                    error_code="workflow_resume_load_failed",
+                    message=str(exc),
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if persisted_record.workflow_id != request.workflow_id:
+        return WorkflowRunReport(
+            workflow_id=request.workflow_id,
+            execution_id=request.execution_id,
+            status=WorkflowStatus.FAILED,
+            stage_summaries=(),
+            errors=(
+                validation_error(
+                    error_code="workflow_resume_mismatch",
+                    message="workflow execution record does not match requested workflow_id",
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    try:
+        resumed_record = loop.runtime.workflow_engine.resume_workflow(
+            workflow_descriptor,
+            persisted_record,
+        )
+    except RuntimeCoreInvariantError as exc:
+        return WorkflowRunReport(
+            workflow_id=request.workflow_id,
+            execution_id=request.execution_id,
+            status=WorkflowStatus.FAILED,
+            stage_summaries=persisted_record.stage_results,
+            errors=(
+                validation_error(
+                    error_code="workflow_resume_invalid_state",
+                    message=str(exc),
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=persisted_record.started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    workflow_context = dict(request.input_context) if request.input_context else None
+    record = _advance_workflow_record(
+        loop=loop,
+        request=request,
+        workflow_descriptor=workflow_descriptor,
+        record=resumed_record,
+        workflow_context=workflow_context,
+    )
+    errors = _workflow_errors(record)
+
+    return WorkflowRunReport(
+        workflow_id=request.workflow_id,
+        execution_id=record.execution_id,
+        status=record.status,
+        stage_summaries=record.stage_results,
+        errors=tuple(errors),
+        started_at=record.started_at,
+        completed_at=record.completed_at or loop.runtime.clock(),
+    )
+
+
+def _advance_workflow_record(
+    *,
+    loop: OperatorLoop,
+    request: SkillRequest | WorkflowResumeRequest,
+    workflow_descriptor: WorkflowDescriptor,
+    record: WorkflowExecutionRecord,
+    workflow_context: dict[str, object] | None,
+) -> WorkflowExecutionRecord:
+    """Advance a workflow record through all remaining eligible stages."""
     if loop.runtime.workflow_store is not None:
         loop.runtime.workflow_store.save_execution_record(record)
     stage_executor = _WorkflowStageExecutor(loop=loop, request=request)
 
     while record.status is WorkflowStatus.RUNNING:
-        new_record = workflow_engine.execute_next_stage(
+        new_record = loop.runtime.workflow_engine.execute_next_stage(
             workflow_descriptor,
             record,
             stage_executor,
@@ -328,7 +467,10 @@ def run_workflow(
         record = new_record
         if loop.runtime.workflow_store is not None:
             loop.runtime.workflow_store.save_execution_record(record)
+    return record
 
+
+def _workflow_errors(record: WorkflowExecutionRecord) -> list[StructuredError]:
     errors: list[StructuredError] = []
     if record.status is WorkflowStatus.FAILED:
         stage_has_error = False
@@ -343,16 +485,7 @@ def run_workflow(
                     message="workflow execution made no progress - stages are blocked",
                 )
             )
-
-    return WorkflowRunReport(
-        workflow_id=workflow_descriptor.workflow_id,
-        execution_id=record.execution_id,
-        status=record.status,
-        stage_summaries=record.stage_results,
-        errors=tuple(errors),
-        started_at=record.started_at,
-        completed_at=record.completed_at or loop.runtime.clock(),
-    )
+    return errors
 
 
 def run_goal(
@@ -526,4 +659,4 @@ def run_goal(
     )
 
 
-__all__ = ["run_goal", "run_skill", "run_workflow"]
+__all__ = ["resume_workflow", "run_goal", "run_skill", "run_workflow"]

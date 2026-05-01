@@ -45,9 +45,10 @@ from .operator_models import (
     OperatorRunReport,
     SkillRequest,
     SkillRunReport,
+    WorkflowResumeRequest,
     WorkflowRunReport,
 )
-from .operator_runners import run_goal, run_skill, run_workflow
+from .operator_runners import resume_workflow, run_goal, run_skill, run_workflow
 
 
 @dataclass(slots=True)
@@ -325,6 +326,12 @@ class OperatorLoop:
     ) -> WorkflowRunReport:
         return run_workflow(self, request, workflow_descriptor)
 
+    def resume_workflow(
+        self,
+        request: WorkflowResumeRequest,
+    ) -> WorkflowRunReport:
+        return resume_workflow(self, request)
+
     def run_goal(
         self,
         request: SkillRequest,
@@ -503,5 +510,6 @@ __all__ = [
     "OperatorRunReport",
     "SkillRequest",
     "SkillRunReport",
+    "WorkflowResumeRequest",
     "WorkflowRunReport",
 ]
