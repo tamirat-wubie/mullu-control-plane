@@ -105,6 +105,9 @@ jobs:
       - name: Validate schemas
         run: python scripts/validate_schemas.py
 
+      - name: Validate protocol manifest
+        run: python scripts/validate_protocol_manifest.py
+
       - name: Validate shipped artifacts
         run: python scripts/validate_artifacts.py
 
@@ -211,6 +214,9 @@ jobs:
 
       - name: Contract-schema parity check
         run: python scripts/validate_schemas.py --strict
+
+      - name: Protocol manifest check
+        run: python scripts/validate_protocol_manifest.py
 
       - name: Artifact validation check
         run: python scripts/validate_artifacts.py --strict
