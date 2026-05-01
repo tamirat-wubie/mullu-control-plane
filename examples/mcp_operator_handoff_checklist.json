@@ -75,6 +75,16 @@
         "preflight_ready=true",
         "evidence_refs non-empty"
       ]
+    },
+    {
+      "step_id": "validate_orchestration_receipt",
+      "command": "python scripts\\validate_deployment_orchestration_receipt.py --receipt \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\" --require-mcp-operator-checklist --require-preflight --expected-environment pilot",
+      "required_evidence": [
+        "valid=true",
+        "mcp_operator_checklist_required=true",
+        "mcp_operator_checklist_valid=true",
+        "preflight_ready=true"
+      ]
     }
   ],
   "required_read_model_fields": [
