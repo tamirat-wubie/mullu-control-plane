@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from scripts.validate_public_repository_surface import (
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
+    DEPLOYMENT_WITNESS_WORKFLOW_PATH,
+    DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
     REPO_ROOT,
@@ -51,6 +53,22 @@ def test_gateway_publication_workflow_requires_receipt_validator() -> None:
     assert "python scripts/validate_deployment_orchestration_receipt.py" in content
     assert ".change_assurance/deployment_witness_orchestration_validation.json" in content
     assert "actions/upload-artifact@v4" in content
+
+
+def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> None:
+    workflow_path = REPO_ROOT / DEPLOYMENT_WITNESS_WORKFLOW_PATH
+    content = workflow_path.read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name=DEPLOYMENT_WITNESS_WORKFLOW_PATH,
+        content=content,
+        required_literals=DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
+    assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
+    assert ".change_assurance/deployment_witness.json" in content
 
 
 def test_required_document_text_reports_missing_orchestration_literal() -> None:

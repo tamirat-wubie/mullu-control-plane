@@ -14,12 +14,14 @@ from __future__ import annotations
 
 from scripts.validate_release_status import (
     CI_WORKFLOW_PATH,
+    DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
     PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS,
     REQUIRED_CI_LITERALS,
     REPO_ROOT,
     WORKFLOW_DIR,
     validate_ci_workflow_text,
+    validate_deployment_witness_workflow_text,
     validate_gateway_publication_workflow_text,
     validate_protocol_manifest_surface,
     validate_public_surface_document_texts,
@@ -36,6 +38,17 @@ def test_gateway_publication_workflow_carries_receipt_validation_gate() -> None:
     assert "python scripts/validate_deployment_orchestration_receipt.py" in content
     assert "--require-mcp-operator-checklist" in content
     assert ".change_assurance/deployment_witness_orchestration_validation.json" in content
+
+
+def test_deployment_witness_workflow_carries_conformance_secret_handoff() -> None:
+    content = DEPLOYMENT_WITNESS_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    errors = validate_deployment_witness_workflow_text(content)
+
+    assert errors == []
+    assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
+    assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
+    assert "python scripts/collect_deployment_witness.py" in content
 
 
 def test_release_public_surface_requires_orchestration_receipt_anchors() -> None:
@@ -65,6 +78,26 @@ def test_gateway_publication_workflow_reports_missing_receipt_validator() -> Non
     assert "validate_deployment_orchestration_receipt.py" in errors[0]
     assert "deployment_witness_orchestration_validation.json" in errors[0]
     assert "--require-mcp-operator-checklist" in errors[0]
+
+
+def test_deployment_witness_workflow_reports_missing_conformance_secret_handoff() -> None:
+    content = (
+        "Deployment Witness Collection\n"
+        "workflow_dispatch\n"
+        "gateway_url\n"
+        "MULLU_RUNTIME_WITNESS_SECRET\n"
+        "MULLU_RUNTIME_CONFORMANCE_SECRET\n"
+        "python scripts/collect_deployment_witness.py\n"
+        ".change_assurance/deployment_witness.json\n"
+        "actions/upload-artifact@v4\n"
+    )
+
+    errors = validate_deployment_witness_workflow_text(content)
+
+    assert len(errors) == 1
+    assert "--conformance-secret" in errors[0]
+    assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in errors[0]
+    assert "Deployment Witness Collection" not in errors[0]
 
 
 def test_release_gate_validates_public_protocol_manifest() -> None:
