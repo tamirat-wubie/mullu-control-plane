@@ -51,6 +51,7 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "deployment-witness.yml"
 GATEWAY_PUBLICATION_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "gateway-publication.yml"
+WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 REQUIRED_CI_LITERALS: tuple[str, ...] = (
     'branches: [main, "codex/*", "phase-*", "maf/*", "mcoi/*", "infra/*"]',
@@ -159,6 +160,16 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "--accept-runtime-secret-env",
     "--accept-conformance-secret-env",
     "actions/upload-artifact@v4",
+)
+
+PLACEHOLDER_WORKFLOW_FILENAMES: tuple[str, ...] = (
+    "scaffold.yml",
+    "validation-placeholder.yml",
+)
+PLACEHOLDER_WORKFLOW_LITERALS: tuple[str, ...] = (
+    "Validation placeholder for Milestone 0",
+    "Mullu Platform scaffold workflow",
+    "Placeholder step",
 )
 
 ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
@@ -289,6 +300,25 @@ def validate_gateway_publication_workflow_text(content: str) -> list[str]:
         errors.append(
             f"gateway publication workflow missing required literals: {list(missing_literals)}"
         )
+    return errors
+
+
+def validate_workflow_hygiene(workflow_texts: dict[str, str]) -> list[str]:
+    """Reject stale placeholder workflows from the public repository surface."""
+    errors: list[str] = []
+    for workflow_name, content in sorted(workflow_texts.items()):
+        path_name = Path(workflow_name).name
+        if path_name in PLACEHOLDER_WORKFLOW_FILENAMES:
+            errors.append(f"{workflow_name}: placeholder workflow must be removed")
+        if "jobs:\n  placeholder:" in content:
+            errors.append(f"{workflow_name}: placeholder job must be removed")
+        missing_hygiene = tuple(
+            literal for literal in PLACEHOLDER_WORKFLOW_LITERALS if literal in content
+        )
+        if missing_hygiene:
+            errors.append(
+                f"{workflow_name}: placeholder workflow literals remain: {list(missing_hygiene)}"
+            )
     return errors
 
 
@@ -496,6 +526,11 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     else:
         workflow_content = GATEWAY_PUBLICATION_WORKFLOW_PATH.read_text(encoding="utf-8")
         errors.extend(validate_gateway_publication_workflow_text(workflow_content))
+    workflow_texts = {
+        path.relative_to(REPO_ROOT).as_posix(): path.read_text(encoding="utf-8")
+        for path in sorted(WORKFLOW_DIR.glob("*.y*ml"))
+    }
+    errors.extend(validate_workflow_hygiene(workflow_texts))
 
     status_document_path = REPO_ROOT / "STATUS.md"
     if status_document_path.exists():
