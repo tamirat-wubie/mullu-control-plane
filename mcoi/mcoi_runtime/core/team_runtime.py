@@ -234,6 +234,7 @@ class TeamEngine:
         self._registry = registry
         self._clock = clock
         self._handoffs: dict[str, HandoffRecord] = {}
+        self._queue_states: dict[str, TeamQueueState] = {}
 
     @property
     def registry(self) -> WorkerRegistry:
@@ -243,6 +244,10 @@ class TeamEngine:
     @property
     def handoff_count(self) -> int:
         return len(self._handoffs)
+
+    @property
+    def queue_state_count(self) -> int:
+        return len(self._queue_states)
 
     # --- Assignment ---
 
@@ -403,7 +408,7 @@ class TeamEngine:
         ensure_non_empty_text("team_id", team_id)
         now = self._clock()
         overloaded_count = len(self.find_overloaded_workers())
-        return TeamQueueState(
+        state = TeamQueueState(
             team_id=team_id,
             queued_jobs=queued,
             assigned_jobs=assigned,
@@ -411,6 +416,30 @@ class TeamEngine:
             overloaded_workers=overloaded_count,
             captured_at=now,
         )
+        self._queue_states[team_id] = state
+        return state
+
+    def get_queue_state(self, team_id: str) -> TeamQueueState | None:
+        """Return the latest captured queue state for a team."""
+        return self._queue_states.get(team_id)
+
+    def list_queue_states(self) -> tuple[TeamQueueState, ...]:
+        """Return deterministic queue-state witnesses for persistence or inspection."""
+        return tuple(
+            self._queue_states[team_id]
+            for team_id in sorted(self._queue_states)
+        )
+
+    def restore_queue_state(self, state: TeamQueueState) -> TeamQueueState:
+        """Restore a persisted queue-state witness without recomputation."""
+        if not isinstance(state, TeamQueueState):
+            raise RuntimeCoreInvariantError("state must be a TeamQueueState")
+        if state.team_id in self._queue_states:
+            raise RuntimeCoreInvariantError(
+                f"queue state already restored: {state.team_id}"
+            )
+        self._queue_states[state.team_id] = state
+        return state
 
     # --- Overload and availability detection ---
 

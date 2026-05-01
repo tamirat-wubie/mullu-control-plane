@@ -474,6 +474,37 @@ class TestQueueStateCapture:
         with pytest.raises(RuntimeCoreInvariantError, match="team_id"):
             engine.capture_queue_state("", queued=0, assigned=0, waiting=0)
 
+    def test_capture_queue_state_is_retained_for_team(self):
+        reg = WorkerRegistry(clock=_fixed_clock())
+        engine = TeamEngine(registry=reg, clock=_fixed_clock())
+        state = engine.capture_queue_state("team-alpha", queued=5, assigned=3, waiting=2)
+
+        assert engine.queue_state_count == 1
+        assert engine.get_queue_state("team-alpha") == state
+        assert engine.list_queue_states() == (state,)
+
+    def test_capture_queue_state_replaces_previous_team_snapshot(self):
+        clock = _make_clock([_T0, _T1])
+        reg = WorkerRegistry(clock=clock)
+        engine = TeamEngine(registry=reg, clock=clock)
+        first = engine.capture_queue_state("team-alpha", queued=5, assigned=3, waiting=2)
+        second = engine.capture_queue_state("team-alpha", queued=1, assigned=1, waiting=0)
+
+        assert first.team_id == second.team_id
+        assert first.captured_at == _T0
+        assert second.captured_at == _T1
+        assert engine.queue_state_count == 1
+        assert engine.get_queue_state("team-alpha") == second
+
+    def test_restore_queue_state_rejects_duplicate_team(self):
+        reg = WorkerRegistry(clock=_fixed_clock())
+        engine = TeamEngine(registry=reg, clock=_fixed_clock())
+        state = engine.capture_queue_state("team-alpha", queued=5, assigned=3, waiting=2)
+
+        assert engine.queue_state_count == 1
+        with pytest.raises(RuntimeCoreInvariantError, match="queue state already restored"):
+            engine.restore_queue_state(state)
+
 
 # ============================================================
 # TeamEngine — Overloaded worker detection
