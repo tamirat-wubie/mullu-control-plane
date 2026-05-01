@@ -14,10 +14,11 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from hashlib import sha256
 from typing import Any, Callable
 import json
+from threading import RLock
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +53,7 @@ class AuditTrail:
         self._last_hash: str = sha256(b"genesis").hexdigest()
         self._sequence: int = 0
         self._pruned_count: int = 0
+        self._lock = RLock()
 
     def record(
         self,
@@ -64,48 +66,49 @@ class AuditTrail:
         detail: dict[str, Any] | None = None,
     ) -> AuditEntry:
         """Record an audit entry linked to the hash chain."""
-        self._sequence += 1
-        now = self._clock()
-        detail = detail or {}
+        with self._lock:
+            self._sequence += 1
+            now = self._clock()
+            detail = detail or {}
 
-        # Compute content hash
-        content = {
-            "sequence": self._sequence,
-            "action": action,
-            "actor_id": actor_id,
-            "tenant_id": tenant_id,
-            "target": target,
-            "outcome": outcome,
-            "detail": detail,
-            "previous_hash": self._last_hash,
-            "recorded_at": now,
-        }
-        content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
-        entry_hash = sha256(content_bytes).hexdigest()
-        entry_id = f"audit-{self._sequence}"
+            # Compute content hash
+            content = {
+                "sequence": self._sequence,
+                "action": action,
+                "actor_id": actor_id,
+                "tenant_id": tenant_id,
+                "target": target,
+                "outcome": outcome,
+                "detail": detail,
+                "previous_hash": self._last_hash,
+                "recorded_at": now,
+            }
+            content_bytes = json.dumps(content, sort_keys=True, default=str).encode()
+            entry_hash = sha256(content_bytes).hexdigest()
+            entry_id = f"audit-{self._sequence}"
 
-        entry = AuditEntry(
-            entry_id=entry_id,
-            sequence=self._sequence,
-            action=action,
-            actor_id=actor_id,
-            tenant_id=tenant_id,
-            target=target,
-            outcome=outcome,
-            detail=detail,
-            entry_hash=entry_hash,
-            previous_hash=self._last_hash,
-            recorded_at=now,
-        )
+            entry = AuditEntry(
+                entry_id=entry_id,
+                sequence=self._sequence,
+                action=action,
+                actor_id=actor_id,
+                tenant_id=tenant_id,
+                target=target,
+                outcome=outcome,
+                detail=detail,
+                entry_hash=entry_hash,
+                previous_hash=self._last_hash,
+                recorded_at=now,
+            )
 
-        self._entries.append(entry)
-        self._last_hash = entry_hash
-        # Prune oldest entries when at capacity (preserves recent history)
-        if len(self._entries) > self._max_entries:
-            prune_count = len(self._entries) - self._max_entries
-            self._entries = self._entries[prune_count:]
-            self._pruned_count += prune_count
-        return entry
+            self._entries.append(entry)
+            self._last_hash = entry_hash
+            # Prune oldest entries when at capacity (preserves recent history)
+            if len(self._entries) > self._max_entries:
+                prune_count = len(self._entries) - self._max_entries
+                self._entries = self._entries[prune_count:]
+                self._pruned_count += prune_count
+            return entry
 
     def query(
         self,
@@ -117,7 +120,8 @@ class AuditTrail:
         limit: int = 50,
     ) -> list[AuditEntry]:
         """Query audit entries with optional filters."""
-        results = self._entries
+        with self._lock:
+            results = list(self._entries)
         if tenant_id is not None:
             results = [e for e in results if e.tenant_id == tenant_id]
         if action is not None:
@@ -133,38 +137,47 @@ class AuditTrail:
 
         Returns (valid, entries_checked).
         """
-        if not self._entries:
+        with self._lock:
+            entries = tuple(self._entries)
+
+        if not entries:
             return True, 0
 
         expected_prev = sha256(b"genesis").hexdigest()
-        for entry in self._entries:
+        for entry in entries:
             if entry.previous_hash != expected_prev:
                 return False, entry.sequence
             expected_prev = entry.entry_hash
-        return True, len(self._entries)
+        return True, len(entries)
 
     @property
     def entry_count(self) -> int:
-        return len(self._entries)
+        with self._lock:
+            return len(self._entries)
 
     @property
     def last_hash(self) -> str:
-        return self._last_hash
+        with self._lock:
+            return self._last_hash
 
     def summary(self) -> dict[str, Any]:
         """Audit trail summary for health endpoint."""
+        with self._lock:
+            entries = tuple(self._entries)
+            last_hash = self._last_hash
+
         action_counts: dict[str, int] = {}
         outcome_counts: dict[str, int] = {}
-        for entry in self._entries:
+        for entry in entries:
             action_counts[entry.action] = action_counts.get(entry.action, 0) + 1
             outcome_counts[entry.outcome] = outcome_counts.get(entry.outcome, 0) + 1
 
         valid, checked = self.verify_chain()
         return {
-            "entry_count": self.entry_count,
+            "entry_count": len(entries),
             "chain_valid": valid,
             "chain_verified": checked,
-            "last_hash": self._last_hash[:16],
+            "last_hash": last_hash[:16],
             "actions": action_counts,
             "outcomes": outcome_counts,
         }
