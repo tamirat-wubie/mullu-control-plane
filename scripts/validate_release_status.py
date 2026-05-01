@@ -30,7 +30,7 @@ if str(MCOI_PATH) not in sys.path:
 
 from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
 from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
-from scripts import validate_artifacts, validate_schemas  # noqa: E402
+from scripts import validate_artifacts, validate_protocol_manifest, validate_schemas  # noqa: E402
 
 
 REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
@@ -60,6 +60,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "cargo fmt -- --check",
     "cargo clippy -- -D warnings",
     "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_artifacts.py",
     "python scripts/validate_schemas.py --strict",
     "python scripts/validate_artifacts.py --strict",
@@ -289,6 +290,15 @@ def validate_gateway_publication_workflow_text(content: str) -> list[str]:
             f"gateway publication workflow missing required literals: {list(missing_literals)}"
         )
     return errors
+
+
+def validate_protocol_manifest_surface() -> list[str]:
+    """Validate the public protocol index as a release gate."""
+    manifest = validate_protocol_manifest.load_manifest()
+    return [
+        f"protocol manifest: {error}"
+        for error in validate_protocol_manifest.validate_protocol_manifest(manifest)
+    ]
 
 
 def _extract_metadata_field(content: str, label: str) -> str | None:
@@ -537,6 +547,7 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     errors.extend(validate_schemas.check_rust_contract_parity(strict=strict))
     errors.extend(validate_schemas.validate_canonical_fixtures(strict=strict))
     errors.extend(validate_schemas.check_python_fixture_round_trip())
+    errors.extend(validate_protocol_manifest_surface())
     errors.extend(validate_artifacts.validate_example_artifacts(strict=strict))
 
     if strict:
