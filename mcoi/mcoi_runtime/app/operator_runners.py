@@ -299,7 +299,11 @@ def run_workflow(
         )
 
     workflow_context = dict(request.input_context) if request.input_context else None
+    if loop.runtime.workflow_store is not None:
+        loop.runtime.workflow_store.save_descriptor(workflow_descriptor)
     record = workflow_engine.start_workflow(workflow_descriptor, context=workflow_context)
+    if loop.runtime.workflow_store is not None:
+        loop.runtime.workflow_store.save_execution_record(record)
     stage_executor = _WorkflowStageExecutor(loop=loop, request=request)
 
     while record.status is WorkflowStatus.RUNNING:
@@ -318,11 +322,12 @@ def run_workflow(
                 started_at=record.started_at,
                 completed_at=loop.runtime.clock(),
             )
+            if loop.runtime.workflow_store is not None:
+                loop.runtime.workflow_store.save_execution_record(record)
             break
         record = new_record
-
-    if loop.runtime.workflow_store is not None:
-        loop.runtime.workflow_store.save_execution_record(record)
+        if loop.runtime.workflow_store is not None:
+            loop.runtime.workflow_store.save_execution_record(record)
 
     errors: list[StructuredError] = []
     if record.status is WorkflowStatus.FAILED:

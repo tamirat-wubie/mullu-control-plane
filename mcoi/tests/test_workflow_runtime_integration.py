@@ -13,6 +13,7 @@ import pytest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import render_workflow_summary
+from mcoi_runtime.app.operator_executors import _WorkflowStageExecutor
 from mcoi_runtime.app.operator_loop import OperatorLoop, SkillRequest, WorkflowRunReport
 from mcoi_runtime.app.view_models import WorkflowSummaryView
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
@@ -232,11 +233,88 @@ class TestWorkflowRuntimeGoldenScenarios:
         assert report.status is WorkflowStatus.COMPLETED
         assert report.execution_id != ""
 
-        # Verify the record was persisted
+        # Verify the descriptor and final record were persisted.
+        loaded_descriptor = store.load_descriptor("wf-persist")
         loaded = store.load_execution_record(report.execution_id)
+        assert loaded_descriptor.workflow_id == "wf-persist"
+        assert loaded_descriptor.name == "skill-test"
         assert loaded.workflow_id == "wf-persist"
         assert loaded.status is WorkflowStatus.COMPLETED
         assert len(loaded.stage_results) == 2
+
+    def test_workflow_persistence_saves_intermediate_execution_states(self, tmp_path: Path):
+        """Workflow store captures start, intermediate, and final execution states."""
+        loop, store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-stage-1", name="shell_command")
+        _register_skill(loop, "sk-stage-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-stage-persist",
+            first_skill_id="sk-stage-1",
+            second_skill_id="sk-stage-2",
+        )
+        request = _make_request(
+            "req-stage-persist",
+            "goal-stage-persist",
+            input_context=_workflow_input_context("wf-stage-persist"),
+        )
+
+        saved_records: list[tuple[str, int]] = []
+        original_save = store.save_execution_record
+
+        def capture_save(record):
+            saved_records.append((record.status.value, len(record.stage_results)))
+            original_save(record)
+
+        store.save_execution_record = capture_save
+        report = loop.run_workflow(request, wf)
+
+        assert report.status is WorkflowStatus.COMPLETED
+        assert saved_records[0] == ("running", 0)
+        assert saved_records[1] == ("running", 1)
+        assert saved_records[-1] == ("completed", 2)
+        assert len(saved_records) == 3
+
+    def test_loaded_running_record_can_resume_to_completion(self, tmp_path: Path):
+        """A persisted running workflow record can be loaded and resumed explicitly."""
+        loop, store = _make_loop_with_store(tmp_path)
+        _register_skill(loop, "sk-resume-1", name="shell_command")
+        _register_skill(loop, "sk-resume-2", name="shell_command")
+        wf = _make_skill_workflow(
+            "wf-resume",
+            first_skill_id="sk-resume-1",
+            second_skill_id="sk-resume-2",
+        )
+        request = _make_request(
+            "req-resume",
+            "goal-resume",
+            input_context=_workflow_input_context("wf-resume"),
+        )
+        workflow_context = dict(request.input_context)
+        stage_executor = _WorkflowStageExecutor(loop=loop, request=request)
+
+        initial = loop.runtime.workflow_engine.start_workflow(wf, context=workflow_context)
+        running = loop.runtime.workflow_engine.execute_next_stage(
+            wf,
+            initial,
+            stage_executor,
+            context=workflow_context,
+        )
+        store.save_descriptor(wf)
+        store.save_execution_record(running)
+
+        loaded = store.load_execution_record(running.execution_id)
+        resumed = loop.runtime.workflow_engine.execute_next_stage(
+            wf,
+            loaded,
+            stage_executor,
+            context=workflow_context,
+        )
+
+        assert running.status is WorkflowStatus.RUNNING
+        assert len(running.stage_results) == 1
+        assert loaded == running
+        assert resumed.status is WorkflowStatus.COMPLETED
+        assert len(resumed.stage_results) == 2
 
 
 class TestWorkflowGovernanceChecks:

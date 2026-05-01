@@ -74,7 +74,8 @@ ACCEPTED_LIMITATION_EXPECTATIONS: dict[str, tuple[str, ...]] = {
     ),
     "coordination_persistence_limitation": (
         "Coordination persistence is partial and explicit",
-        "workflow coordination and queue state do not auto-save or auto-restore",
+        "live queue state does not auto-save or auto-restore",
+        "workflow resume remains caller-driven",
     ),
     "memory_persistence_limitation": (
         "Working and episodic memory persistence is explicit and opt-in",
