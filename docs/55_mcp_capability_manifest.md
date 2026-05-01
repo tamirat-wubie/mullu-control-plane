@@ -188,7 +188,22 @@ The preflight must include a passing `mcp capability manifest` step and a passin
 `runtime conformance endpoint` step. If the configured manifest is invalid, both
 preflight readiness and deployment witness publication remain blocked.
 
-6. Persist the deployment orchestration receipt.
+6. Require the MCP handoff checklist during orchestration.
+
+```powershell
+python scripts\orchestrate_deployment_witness.py `
+  --gateway-host "$env:MULLU_GATEWAY_HOST" `
+  --expected-environment pilot `
+  --require-mcp-operator-checklist `
+  --require-preflight `
+  --orchestration-output "$env:MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"
+```
+
+The orchestration receipt must include `mcp_operator_checklist_required=true`,
+`mcp_operator_checklist_valid=true`, and the
+`mcp_operator_checklist:valid:true` evidence reference.
+
+7. Persist the deployment orchestration receipt.
 
 ```powershell
 python scripts\orchestrate_deployment_witness.py `
@@ -203,6 +218,8 @@ Required receipt evidence:
 | Field | Expected |
 | --- | --- |
 | `receipt_id` | Starts with `deployment-witness-orchestration-` |
+| `mcp_operator_checklist_required` | `true` when the checklist gate is required |
+| `mcp_operator_checklist_valid` | `true` when the checklist artifact passed validation |
 | `preflight_required` | `true` |
 | `preflight_ready` | `true` |
 | `evidence_refs` | Non-empty |

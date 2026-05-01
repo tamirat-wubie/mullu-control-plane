@@ -66,9 +66,11 @@
     },
     {
       "step_id": "write_orchestration_receipt",
-      "command": "python scripts\\orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --require-preflight --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
+      "command": "python scripts\\orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --require-mcp-operator-checklist --require-preflight --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
       "required_evidence": [
         "receipt_id startswith deployment-witness-orchestration-",
+        "mcp_operator_checklist_required=true",
+        "mcp_operator_checklist_valid=true",
         "preflight_required=true",
         "preflight_ready=true",
         "evidence_refs non-empty"

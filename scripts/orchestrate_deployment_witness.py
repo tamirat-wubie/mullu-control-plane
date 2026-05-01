@@ -27,11 +27,16 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from scripts.dispatch_deployment_witness import (
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_ARTIFACT_NAME,
     DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DOWNLOAD_DIR,
@@ -41,13 +46,13 @@ from scripts.dispatch_deployment_witness import (
     DispatchResult,
     dispatch_deployment_witness,
 )
-from scripts.provision_deployment_target import (
+from scripts.provision_deployment_target import (  # noqa: E402
     DEFAULT_REPOSITORY,
     VALID_ENVIRONMENTS,
     DeploymentTarget,
     provision_deployment_target,
 )
-from scripts.preflight_deployment_witness import (
+from scripts.preflight_deployment_witness import (  # noqa: E402
     DEFAULT_OUTPUT as DEFAULT_PREFLIGHT_OUTPUT,
     DeploymentWitnessPreflight,
     JsonGetter,
@@ -55,12 +60,12 @@ from scripts.preflight_deployment_witness import (
     preflight_deployment_witness,
     write_preflight_report,
 )
-from scripts.render_gateway_ingress import (
+from scripts.render_gateway_ingress import (  # noqa: E402
     DEFAULT_OUTPUT,
     RenderedGatewayIngress,
     render_gateway_ingress,
 )
-from scripts.validate_mcp_operator_checklist import (
+from scripts.validate_mcp_operator_checklist import (  # noqa: E402
     DEFAULT_CHECKLIST as DEFAULT_MCP_OPERATOR_CHECKLIST,
     validate_mcp_operator_checklist,
 )

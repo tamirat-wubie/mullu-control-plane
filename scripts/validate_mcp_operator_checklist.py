@@ -2,14 +2,15 @@
 """Validate the MCP operator handoff checklist artifact.
 
 Purpose: keep MCP deployment handoff evidence machine-readable and ensure the
-operator procedure names manifest validation, read-model inspection, runtime
-conformance, and deployment preflight gates.
+operator procedure names manifest validation, read-model inspection, execution
+evidence, runtime conformance, deployment preflight, and orchestration receipts.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: examples/mcp_operator_handoff_checklist.json.
 Invariants:
   - The checklist has a stable schema version and checklist id.
   - Every required gate has a command and required evidence list.
-  - Runtime read-model and conformance fields include MCP manifest validity.
+  - Runtime read-model and conformance fields include MCP manifest, audit, and
+    capability plan evidence readiness.
 """
 
 from __future__ import annotations
@@ -87,6 +88,8 @@ REQUIRED_STEP_EVIDENCE = {
     }),
     "write_orchestration_receipt": frozenset({
         "receipt_id startswith deployment-witness-orchestration-",
+        "mcp_operator_checklist_required=true",
+        "mcp_operator_checklist_valid=true",
         "preflight_ready=true",
         "evidence_refs non-empty",
     }),
@@ -97,7 +100,11 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     "inspect_mcp_execution_evidence_bundle": ("/mcp/operator/evidence-bundles/", "X-Mullu-Authority-Secret"),
     "collect_runtime_conformance": ("collect_runtime_conformance.py", "--authority-operator-secret"),
     "run_deployment_preflight": ("preflight_deployment_witness.py", "--mcp-capability-manifest"),
-    "write_orchestration_receipt": ("orchestrate_deployment_witness.py", "--orchestration-output"),
+    "write_orchestration_receipt": (
+        "orchestrate_deployment_witness.py",
+        "--require-mcp-operator-checklist",
+        "--orchestration-output",
+    ),
 }
 
 

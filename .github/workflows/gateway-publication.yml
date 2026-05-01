@@ -97,6 +97,7 @@ jobs:
             --gateway-host "${{ inputs.gateway_host }}"
             --expected-environment "${{ inputs.expected_environment }}"
             --require-preflight
+            --require-mcp-operator-checklist
             --accept-runtime-secret-env
             --accept-conformance-secret-env
             --preflight-output .change_assurance/deployment_witness_preflight.json

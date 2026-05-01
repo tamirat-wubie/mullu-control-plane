@@ -98,3 +98,17 @@ def test_validate_mcp_operator_checklist_rejects_command_token_drift(tmp_path: P
     assert result.step_count == 6
     assert any("inspect_mcp_execution_evidence_bundle command missing token" in error for error in result.errors)
     assert any("/mcp/operator/evidence-bundles/" in error for error in result.errors)
+
+
+def test_validate_mcp_operator_checklist_rejects_duplicate_step_id(tmp_path: Path) -> None:
+    checklist_path = tmp_path / "mcp_operator_handoff_checklist.json"
+    payload = json.loads(Path("examples/mcp_operator_handoff_checklist.json").read_text(encoding="utf-8"))
+    payload["required_commands"].append(dict(payload["required_commands"][0]))
+    checklist_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_mcp_operator_checklist(checklist_path)
+
+    assert result.valid is False
+    assert result.step_count == 7
+    assert any("duplicate required_commands step_id validate_manifest" in error for error in result.errors)
+    assert checklist_path.name == "mcp_operator_handoff_checklist.json"
