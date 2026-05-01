@@ -263,6 +263,24 @@ def test_preflight_deployment_witness_rejects_responsibility_debt() -> None:
     assert "responsibility_debt_clear=False" in conformance_step.detail
 
 
+def test_preflight_deployment_witness_rejects_invalid_runtime_mcp_manifest() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_invalid_mcp_manifest_conformance_getter,
+    )
+    conformance_step = next(step for step in report.steps if step.name == "runtime conformance endpoint")
+
+    assert report.ready is False
+    assert conformance_step.passed is False
+    assert "mcp_manifest_configured=True" in conformance_step.detail
+    assert "mcp_manifest_valid=False" in conformance_step.detail
+
+
 def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     runner = FakeRunner()
 
@@ -337,6 +355,9 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "authority_escalated_obligation_count": 0,
             "authority_unowned_high_risk_capability_count": 0,
             "authority_directory_sync_receipt_valid": True,
+            "mcp_capability_manifest_configured": False,
+            "mcp_capability_manifest_valid": True,
+            "mcp_capability_manifest_capability_count": 0,
             "terminal_status": "conformant_with_gaps",
             "open_conformance_gaps": ["known_limitations_documentation_drift"],
             "evidence_refs": ["gateway_witness:test"],
@@ -357,6 +378,18 @@ def _responsibility_debt_getter(url: str) -> tuple[int, dict[str, Any]]:
     status, payload = _healthy_getter(url)
     if url.endswith("/runtime/conformance"):
         return status, {**payload, "authority_responsibility_debt_clear": False}
+    return status, payload
+
+
+def _invalid_mcp_manifest_conformance_getter(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _healthy_getter(url)
+    if url.endswith("/runtime/conformance"):
+        return status, {
+            **payload,
+            "mcp_capability_manifest_configured": True,
+            "mcp_capability_manifest_valid": False,
+            "mcp_capability_manifest_capability_count": 1,
+        }
     return status, payload
 
 

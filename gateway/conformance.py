@@ -78,6 +78,8 @@ class RuntimeConformanceCertificate:
     mcp_capability_manifest_configured: bool
     mcp_capability_manifest_valid: bool
     mcp_capability_manifest_capability_count: int
+    capability_plan_bundle_canary_passed: bool
+    capability_plan_bundle_count: int
     capsule_registry_certified: bool
     proof_coverage_matrix_current: bool
     known_limitations_aligned: bool
@@ -108,6 +110,7 @@ def issue_conformance_certificate(
     signature_key_id: str,
     runtime_witness_key_id: str,
     runtime_witness_secret: str,
+    plan_ledger: Any | None = None,
     repo_root: Path | None = None,
     clock: Callable[[], str] | None = None,
 ) -> RuntimeConformanceCertificate:
@@ -253,6 +256,18 @@ def issue_conformance_certificate(
         mcp_manifest_detail,
     ))
 
+    (
+        capability_plan_bundle_canary_passed,
+        capability_plan_bundle_count,
+        capability_plan_bundle_detail,
+    ) = _capability_plan_bundle_canary(plan_ledger)
+    checks.append(_check(
+        "capability_plan_evidence_bundle",
+        capability_plan_bundle_canary_passed,
+        "capability_plans:evidence_bundle_export",
+        capability_plan_bundle_detail,
+    ))
+
     proof_coverage_matrix_current = _proof_coverage_matrix_current(repository_root)
     known_limitations_aligned = _known_limitations_aligned(repository_root)
     security_model_aligned = _security_model_aligned(repository_root)
@@ -289,6 +304,7 @@ def issue_conformance_certificate(
             authority_obligation_canary_passed,
             authority_responsibility_debt_clear,
             mcp_manifest_valid,
+            capability_plan_bundle_canary_passed,
         ),
     )
     unsigned = RuntimeConformanceCertificate(
@@ -316,6 +332,8 @@ def issue_conformance_certificate(
         mcp_capability_manifest_configured=mcp_manifest_configured,
         mcp_capability_manifest_valid=mcp_manifest_valid,
         mcp_capability_manifest_capability_count=mcp_manifest_capability_count,
+        capability_plan_bundle_canary_passed=capability_plan_bundle_canary_passed,
+        capability_plan_bundle_count=capability_plan_bundle_count,
         capsule_registry_certified=capsule_registry_certified,
         proof_coverage_matrix_current=proof_coverage_matrix_current,
         known_limitations_aligned=known_limitations_aligned,
@@ -527,6 +545,58 @@ def _mcp_capability_manifest_validation() -> tuple[bool, bool, int, str]:
     return True, result.ok, len(result.capability_ids), detail
 
 
+def _capability_plan_bundle_canary(plan_ledger: Any | None) -> tuple[bool, int, str]:
+    if plan_ledger is None:
+        return True, 0, "plan_ledger_present=False bundle_export_ready=True certificate_count=0"
+    if not hasattr(plan_ledger, "read_model") or not hasattr(plan_ledger, "export_evidence_bundle"):
+        return False, 0, "plan_ledger_present=True bundle_export_ready=False"
+    try:
+        read_model = plan_ledger.read_model()
+    except Exception as exc:
+        return False, 0, f"plan_ledger_present=True read_model_error={type(exc).__name__}"
+    certificates = read_model.get("certificates", ())
+    if not isinstance(certificates, (list, tuple)):
+        return False, 0, "plan_ledger_present=True certificates_read_model_invalid"
+    for certificate in certificates:
+        if not isinstance(certificate, dict):
+            return False, len(certificates), "plan_ledger_present=True certificate_entry_invalid"
+        plan_id = str(certificate.get("plan_id", "")).strip()
+        if not plan_id:
+            return False, len(certificates), "plan_ledger_present=True certificate_plan_id_missing"
+        try:
+            bundle = plan_ledger.export_evidence_bundle(plan_id=plan_id)
+        except Exception as exc:
+            return False, len(certificates), f"plan_ledger_present=True bundle_export_error={type(exc).__name__}"
+        if not _plan_bundle_valid(bundle, plan_id=plan_id):
+            return False, len(certificates), f"plan_ledger_present=True invalid_bundle_plan_id={plan_id}"
+    return True, len(certificates), (
+        "plan_ledger_present=True "
+        f"bundle_export_ready=True certificate_count={len(certificates)}"
+    )
+
+
+def _plan_bundle_valid(bundle: Any, *, plan_id: str) -> bool:
+    required = (
+        "bundle_id",
+        "bundle_hash",
+        "plan_id",
+        "certificate_id",
+        "step_command_ids",
+        "step_terminal_certificate_ids",
+        "evidence_refs",
+    )
+    payload = asdict(bundle) if hasattr(bundle, "__dataclass_fields__") else bundle
+    if not isinstance(payload, dict):
+        return False
+    if any(not str(payload.get(field, "")).strip() for field in required[:4]):
+        return False
+    if payload.get("plan_id") != plan_id:
+        return False
+    if not str(payload.get("bundle_id", "")).startswith("plan-evidence-bundle-"):
+        return False
+    return all(isinstance(payload.get(field), (list, tuple)) for field in required[4:])
+
+
 def _proof_coverage_matrix_current(repo_root: Path) -> bool:
     try:
         from scripts.proof_coverage_matrix import CANONICAL_OUTPUT, proof_coverage_matrix
@@ -614,6 +684,7 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
         "authority_responsibility_debt_clear": "authority_responsibility_debt_present",
         "authority_directory_sync_receipt": "authority_directory_sync_receipt_not_witnessed",
         "mcp_capability_manifest": "mcp_capability_manifest_invalid",
+        "capability_plan_evidence_bundle": "capability_plan_evidence_bundle_not_witnessed",
         "proof_coverage_matrix_current": "proof_coverage_matrix_not_current",
         "known_limitations_aligned": "known_limitations_documentation_drift",
         "security_model_aligned": "security_model_documentation_drift",

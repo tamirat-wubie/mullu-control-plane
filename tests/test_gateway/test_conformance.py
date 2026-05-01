@@ -61,6 +61,11 @@ def test_runtime_conformance_endpoint_returns_signed_gap_certificate(monkeypatch
     assert payload["gateway_witness_valid"] is True
     assert payload["runtime_witness_valid"] is True
     assert payload["authority_responsibility_debt_clear"] is True
+    assert payload["mcp_capability_manifest_configured"] is False
+    assert payload["mcp_capability_manifest_valid"] is True
+    assert payload["mcp_capability_manifest_capability_count"] == 0
+    assert payload["capability_plan_bundle_canary_passed"] is True
+    assert payload["capability_plan_bundle_count"] == 0
     assert payload["authority_overdue_obligation_count"] == 0
     assert payload["authority_unowned_high_risk_capability_count"] == 0
     assert payload["terminal_status"] == "degraded"
@@ -144,6 +149,45 @@ def test_runtime_conformance_degrades_when_responsibility_debt_is_present(tmp_pa
     assert "overdue_obligation_count=1" in debt_check["detail"]
     assert "authority_responsibility_debt_present" in payload["open_conformance_gaps"]
     assert payload["terminal_status"] == "degraded"
+
+
+def test_runtime_conformance_degrades_when_mcp_manifest_is_invalid(tmp_path, monkeypatch) -> None:
+    manifest_path = tmp_path / "invalid_mcp_manifest.json"
+    manifest_path.write_text(json.dumps({"tools": []}), encoding="utf-8")
+    monkeypatch.setenv("MULLU_MCP_CAPABILITY_MANIFEST_PATH", str(manifest_path))
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    manifest_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "mcp_capability_manifest"
+    )
+
+    assert payload["mcp_capability_manifest_configured"] is True
+    assert payload["mcp_capability_manifest_valid"] is False
+    assert payload["mcp_capability_manifest_capability_count"] == 0
+    assert manifest_check["passed"] is False
+    assert "MCP manifest requires at least one tool" in manifest_check["detail"]
+    assert "mcp_capability_manifest_invalid" in payload["open_conformance_gaps"]
+    assert payload["terminal_status"] == "degraded"
+
+
+def test_runtime_conformance_witnesses_valid_mcp_manifest(tmp_path, monkeypatch) -> None:
+    manifest_path = _ROOT / "examples" / "mcp_capability_manifest.json"
+    monkeypatch.setenv("MULLU_MCP_CAPABILITY_MANIFEST_PATH", str(manifest_path))
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    manifest_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "mcp_capability_manifest"
+    )
+
+    assert payload["mcp_capability_manifest_configured"] is True
+    assert payload["mcp_capability_manifest_valid"] is True
+    assert payload["mcp_capability_manifest_capability_count"] == 1
+    assert manifest_check["passed"] is True
+    assert "mcp_capability_manifest_invalid" not in payload["open_conformance_gaps"]
 
 
 def test_known_limitations_alignment_rejects_stale_directory_adapter_claim(tmp_path) -> None:

@@ -340,6 +340,8 @@ def test_plan_ledger_rejects_missing_evidence_bundle() -> None:
     with pytest.raises(ValueError, match="plan_id is required"):
         ledger.export_evidence_bundle(plan_id="")
 
+    assert ledger.witnesses_for() == ()
+
 
 def test_json_plan_ledger_store_survives_recreation(tmp_path) -> None:
     plan = one_step_plan(

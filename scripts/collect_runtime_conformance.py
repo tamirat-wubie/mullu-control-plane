@@ -44,6 +44,9 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "authority_escalated_obligation_count",
     "authority_unowned_high_risk_capability_count",
     "authority_directory_sync_receipt_valid",
+    "mcp_capability_manifest_configured",
+    "mcp_capability_manifest_valid",
+    "mcp_capability_manifest_capability_count",
     "terminal_status",
     "open_conformance_gaps",
     "evidence_refs",
@@ -177,6 +180,21 @@ def collect_runtime_conformance(
     ))
     if not responsibility_debt_passed:
         errors.append("runtime conformance authority responsibility debt was not clear")
+
+    mcp_manifest_configured = bool(certificate.get("mcp_capability_manifest_configured"))
+    mcp_manifest_valid = bool(certificate.get("mcp_capability_manifest_valid"))
+    mcp_manifest_passed = (not mcp_manifest_configured) or mcp_manifest_valid
+    steps.append(CollectionStep(
+        name="runtime conformance mcp capability manifest",
+        passed=mcp_manifest_passed,
+        detail=(
+            f"configured={mcp_manifest_configured} "
+            f"valid={mcp_manifest_valid} "
+            f"capability_count={certificate.get('mcp_capability_manifest_capability_count', 'missing')}"
+        ),
+    ))
+    if not mcp_manifest_passed:
+        errors.append("runtime conformance MCP capability manifest was not valid")
 
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(

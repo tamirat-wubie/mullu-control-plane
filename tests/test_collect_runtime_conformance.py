@@ -170,6 +170,31 @@ def test_collect_runtime_conformance_rejects_unclear_responsibility_debt(monkeyp
     assert "runtime conformance authority responsibility debt was not clear" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_invalid_mcp_manifest(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        mcp_capability_manifest_configured=True,
+        mcp_capability_manifest_valid=False,
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    manifest_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance mcp capability manifest"
+    )
+
+    assert manifest_step.passed is False
+    assert "configured=True" in manifest_step.detail
+    assert "valid=False" in manifest_step.detail
+    assert "runtime conformance MCP capability manifest was not valid" in collection.errors
+
+
 def test_collect_runtime_conformance_records_authority_read_model_failures(monkeypatch) -> None:
     secret = "conformance-secret"
     certificate = _signed_certificate(secret=secret)
@@ -347,6 +372,8 @@ def _signed_certificate(
     runtime_witness_valid: bool = True,
     authority_responsibility_debt_clear: bool = True,
     authority_overdue_obligation_count: int = 0,
+    mcp_capability_manifest_configured: bool = False,
+    mcp_capability_manifest_valid: bool = True,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
@@ -370,6 +397,9 @@ def _signed_certificate(
         "authority_escalated_obligation_count": 0,
         "authority_unowned_high_risk_capability_count": 0,
         "authority_directory_sync_receipt_valid": True,
+        "mcp_capability_manifest_configured": mcp_capability_manifest_configured,
+        "mcp_capability_manifest_valid": mcp_capability_manifest_valid,
+        "mcp_capability_manifest_capability_count": 1 if mcp_capability_manifest_configured else 0,
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "known_limitations_aligned": False,
