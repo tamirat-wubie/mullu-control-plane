@@ -102,6 +102,11 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/preflight_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot",
     "python scripts/gateway_runtime_smoke.py",
     "python scripts/validate_public_repository_surface.py",
+    "## GitHub Runtime Input State",
+    "GitHub Actions secret name `MULLU_RUNTIME_WITNESS_SECRET` is present; secret value is not printed",
+    "GitHub Actions secret name `MULLU_RUNTIME_CONFORMANCE_SECRET` is present; secret value is not printed",
+    "GitHub repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not currently set",
+    "No `deployment-witness.yml` workflow runs are currently recorded",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "Deployment Witness Collection",

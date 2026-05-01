@@ -62,7 +62,9 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
 
     assert errors == []
     assert ".github/workflows/gateway-publication.yml" in deployment_literals
+    assert "## GitHub Runtime Input State" in deployment_literals
     assert any("orchestrate_deployment_witness.py" in literal for literal in deployment_literals)
+    assert any("MULLU_GATEWAY_URL" in literal for literal in deployment_literals)
     assert any(
         "validate_deployment_orchestration_receipt.py" in literal
         for literal in deployment_literals

@@ -37,6 +37,10 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "validate_deployment_orchestration_receipt.py" in content
     assert "--require-mcp-operator-checklist" in content
     assert ".change_assurance/deployment_witness_orchestration.json" in content
+    assert "## GitHub Runtime Input State" in content
+    assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
+    assert "MULLU_GATEWAY_URL" in content
+    assert "No `deployment-witness.yml` workflow runs are currently recorded" in content
 
 
 def test_gateway_publication_workflow_requires_receipt_validator() -> None:
