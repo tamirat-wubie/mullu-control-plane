@@ -84,6 +84,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway publication receipt validation | `python scripts/validate_gateway_publication_receipt.py --receipt .change_assurance/gateway_publication_receipt.json --require-ready --require-dispatched --require-success` |
 | Gateway publication dispatch | `python scripts/dispatch_gateway_publication.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --dispatch-witness` |
 | Deployment witness workflow dispatch | `python scripts/dispatch_deployment_witness.py` |
+| Deployment publication closure | `python scripts/validate_deployment_publication_closure.py` |
 | Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output "$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"` |
 | Deployment witness orchestration receipt | `.change_assurance/deployment_witness_orchestration.json` |
 | Deployment witness preflight | `python scripts/preflight_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot` |
