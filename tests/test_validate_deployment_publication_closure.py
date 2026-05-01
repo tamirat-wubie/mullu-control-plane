@@ -85,6 +85,22 @@ def test_published_status_accepts_verified_witness() -> None:
     assert _published_witness()["signature_status"] == "verified"
 
 
+def test_published_status_rejects_health_endpoint_witness_mismatch() -> None:
+    errors = validate_publication_closure(
+        deployment_status_text=_deployment_status(
+            "published",
+            "https://other-gateway.example/health",
+        ),
+        witness_payload=_published_witness(),
+        witness_path=Path(".change_assurance/deployment_witness.json"),
+    )
+
+    assert len(errors) == 1
+    assert "public production health endpoint does not match" in errors[0]
+    assert "https://other-gateway.example/health" in errors[0]
+    assert "https://gateway.example/health" in errors[0]
+
+
 def test_published_status_rejects_unverified_witness() -> None:
     witness = _published_witness()
     witness["signature_status"] = "failed:mismatch"

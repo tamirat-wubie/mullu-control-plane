@@ -97,6 +97,13 @@ def validate_publication_closure(
         return errors
 
     errors.extend(_validate_published_witness(witness_payload, witness_path))
+    errors.extend(
+        _validate_public_health_matches_witness(
+            public_health_endpoint=public_health_endpoint,
+            witness_payload=witness_payload,
+            witness_path=witness_path,
+        )
+    )
     return errors
 
 
@@ -167,6 +174,25 @@ def _validate_published_witness(
             step_name = step.get("name", f"steps[{index}]")
             errors.append(f"{witness_path}: witness step failed: {step_name}")
     return errors
+
+
+def _validate_public_health_matches_witness(
+    *,
+    public_health_endpoint: str,
+    witness_payload: dict[str, Any],
+    witness_path: Path,
+) -> list[str]:
+    gateway_url = str(witness_payload.get("gateway_url", "")).rstrip("/")
+    if not gateway_url:
+        return []
+    expected_health_endpoint = f"{gateway_url}/health"
+    if public_health_endpoint != expected_health_endpoint:
+        return [
+            "public production health endpoint does not match witness gateway URL: "
+            f"{public_health_endpoint!r} != {expected_health_endpoint!r} "
+            f"from {witness_path}"
+        ]
+    return []
 
 
 def _extract_required_field(
