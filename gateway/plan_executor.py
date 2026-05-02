@@ -7,6 +7,8 @@ Governance scope: dependency ordering, step result capture, failure stop, and
 Dependencies: gateway capability plan contracts.
 Invariants:
   - A step cannot execute before all dependencies have succeeded.
+  - Resume checkpoints must match declared plan steps and dependency order.
+  - Resume checkpoints require terminal certificates before skipping work.
   - Execution halts on the first failed step.
   - Plan success requires every step to produce a terminal certificate id.
   - Step outputs are recorded by step id for reconciliation and follow-on use.
@@ -62,10 +64,12 @@ class CapabilityPlanExecutor:
         initial_results: tuple[CapabilityPlanStepResult, ...] = (),
     ) -> CapabilityPlanExecutionResult:
         """Execute every step in dependency order."""
+        checkpoint_error = _validate_initial_results(plan, initial_results)
+        if checkpoint_error:
+            return _plan_result(plan.plan_id, tuple(initial_results), error=checkpoint_error)
         completed: dict[str, CapabilityPlanStepResult] = {
             result.step_id: result
             for result in initial_results
-            if result.succeeded
         }
         step_results: list[CapabilityPlanStepResult] = list(initial_results)
         for step in plan.steps:
@@ -135,3 +139,32 @@ def _plan_result(
         evidence_hash=evidence_hash,
         error=error,
     )
+
+
+def _validate_initial_results(
+    plan: CapabilityPlan,
+    initial_results: tuple[CapabilityPlanStepResult, ...],
+) -> str:
+    if not initial_results:
+        return ""
+    steps_by_id = {step.step_id: step for step in plan.steps}
+    completed: set[str] = set()
+    seen: set[str] = set()
+    for result in initial_results:
+        step = steps_by_id.get(result.step_id)
+        if step is None:
+            return f"checkpoint_unknown_step:{result.step_id}"
+        if result.step_id in seen:
+            return f"checkpoint_duplicate_step:{result.step_id}"
+        seen.add(result.step_id)
+        if result.capability_id != step.capability_id:
+            return f"checkpoint_capability_mismatch:{result.step_id}"
+        if not result.succeeded:
+            return f"checkpoint_not_successful:{result.step_id}"
+        if not result.terminal_certificate_id:
+            return f"checkpoint_missing_terminal_certificate:{result.step_id}"
+        missing = [dep for dep in step.depends_on if dep not in completed]
+        if missing:
+            return f"checkpoint_dependency_not_satisfied:{result.step_id}:{missing[0]}"
+        completed.add(result.step_id)
+    return ""

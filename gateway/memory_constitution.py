@@ -2,12 +2,15 @@
 
 Purpose: Stores explicit memory facts with source, owner, scope, sensitivity,
     expiry, allowed use, forbidden use, confidence, and mutation history.
-Governance scope: gateway-local memory admission and lookup only.
+Governance scope: gateway-local memory admission, automatic closure memory
+    admission, and scoped lookup only.
 Dependencies: standard-library dataclasses, hashing, datetime parsing.
 Invariants:
   - No source means weak memory.
   - No owner means unusable memory.
   - No expiry and sensitivity means unsafe memory.
+  - Automatic memory writes require verified closure evidence.
+  - Automatic memory writes target episodic memory only.
   - Memory lookup is scoped by tenant, owner, and allowed use.
 """
 
@@ -56,6 +59,26 @@ class MemoryAdmission:
     cell_hash: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class ClosureMemoryCandidate:
+    """Closure-derived fact proposed for automatic episodic memory admission."""
+
+    tenant_id: str
+    owner_id: str
+    fact: str
+    closure_id: str
+    terminal_certificate_id: str
+    verification_status: str
+    evidence_refs: tuple[str, ...]
+    accepted_risk_id: str = ""
+    sensitivity: str = "low"
+    expires_at: str = "never"
+    confidence: float = 1.0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+
+
 class GovernedMemoryStore:
     """Persistence contract for governed memory cells."""
 
@@ -81,6 +104,10 @@ class GovernedMemoryStore:
     def status(self) -> dict[str, Any]:
         """Return memory store health."""
         return {"backend": "unknown"}
+
+    def admit_closure(self, candidate: ClosureMemoryCandidate) -> MemoryAdmission:
+        """Validate and persist one closure-derived episodic memory cell."""
+        raise NotImplementedError
 
 
 class InMemoryGovernedMemoryStore(GovernedMemoryStore):
@@ -167,6 +194,13 @@ class InMemoryGovernedMemoryStore(GovernedMemoryStore):
             "available": True,
         }
 
+    def admit_closure(self, candidate: ClosureMemoryCandidate) -> MemoryAdmission:
+        """Validate and persist one closure-derived episodic memory cell."""
+        cell_or_denial = closure_candidate_to_memory_cell(candidate, now=self._clock())
+        if isinstance(cell_or_denial, MemoryAdmission):
+            return cell_or_denial
+        return self.admit(cell_or_denial)
+
 
 def validate_memory_cell(cell: GovernedMemoryCell, *, now: str) -> MemoryAdmission:
     """Validate constitutional memory requirements."""
@@ -195,6 +229,56 @@ def validate_memory_cell(cell: GovernedMemoryCell, *, now: str) -> MemoryAdmissi
     if not cell.last_verified_at:
         return MemoryAdmission(False, "last_verified_required")
     return MemoryAdmission(True, "admissible")
+
+
+def closure_candidate_to_memory_cell(
+    candidate: ClosureMemoryCandidate,
+    *,
+    now: str,
+) -> GovernedMemoryCell | MemoryAdmission:
+    """Convert a verified closure candidate into an episodic memory cell."""
+    if not candidate.tenant_id:
+        return MemoryAdmission(False, "tenant_required")
+    if not candidate.owner_id:
+        return MemoryAdmission(False, "owner_required")
+    if not candidate.fact:
+        return MemoryAdmission(False, "fact_required")
+    if not candidate.closure_id:
+        return MemoryAdmission(False, "closure_id_required")
+    if not candidate.terminal_certificate_id:
+        return MemoryAdmission(False, "terminal_certificate_required")
+    if not candidate.evidence_refs:
+        return MemoryAdmission(False, "evidence_required")
+    if candidate.verification_status == "passed":
+        trust_marker = "verified_closure"
+    elif candidate.verification_status == "accepted_risk":
+        if not candidate.accepted_risk_id:
+            return MemoryAdmission(False, "accepted_risk_required")
+        trust_marker = "accepted_risk_closure"
+    else:
+        return MemoryAdmission(False, "verification_not_admissible")
+    source = f"closure:{candidate.closure_id}"
+    return GovernedMemoryCell(
+        memory_id="",
+        tenant_id=candidate.tenant_id,
+        owner_id=candidate.owner_id,
+        scope="episodic_closure",
+        fact=candidate.fact,
+        source=source,
+        confidence=candidate.confidence,
+        sensitivity=candidate.sensitivity,
+        expires_at=candidate.expires_at,
+        allowed_use=("continuity", "audit", "closure_recall"),
+        forbidden_use=("semantic_generalization", "procedural_promotion", "external_sharing"),
+        last_verified_at=now,
+        mutation_history=(
+            "created:auto_closure_memory",
+            f"terminal_certificate:{candidate.terminal_certificate_id}",
+            f"verification:{candidate.verification_status}",
+            trust_marker,
+            *tuple(f"evidence:{ref}" for ref in candidate.evidence_refs),
+        ),
+    )
 
 
 def governed_memory_cell_from_mapping(

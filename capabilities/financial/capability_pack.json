@@ -1,0 +1,276 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "financial.balance_check",
+      "domain": "financial",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/financial/balance_check.input.schema.json",
+      "output_schema_ref": "schemas/financial/balance_check.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["account_balance_read"],
+        "forbidden_effects": ["payment_created", "refund_created", "account_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["receipt_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["finance_viewer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "financial_read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "finance-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Check balance",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["financial_provider.balance_read"]
+        }
+      }
+    },
+    {
+      "capability_id": "financial.transaction_history",
+      "domain": "financial",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/financial/transaction_history.input.schema.json",
+      "output_schema_ref": "schemas/financial/transaction_history.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["transaction_history_read"],
+        "forbidden_effects": ["payment_created", "refund_created", "account_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["receipt_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["finance_viewer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "financial_read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "finance-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Read transaction history",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["financial_provider.transaction_history"]
+        }
+      }
+    },
+    {
+      "capability_id": "financial.spending_insights",
+      "domain": "financial",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/financial/spending_insights.input.schema.json",
+      "output_schema_ref": "schemas/financial/spending_insights.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["spending_insight_generated"],
+        "forbidden_effects": ["payment_created", "refund_created", "account_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["receipt_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["finance_viewer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "financial_read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "finance-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Generate spending insights",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["financial_provider.spending_insights"]
+        }
+      }
+    },
+    {
+      "capability_id": "financial.send_payment",
+      "domain": "financial",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/financial/send_payment.input.schema.json",
+      "output_schema_ref": "schemas/financial/send_payment.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["payment_request_created", "payment_settlement_recorded"],
+        "forbidden_effects": ["payment_without_approval", "payment_without_idempotency_key", "payment_without_named_recipient"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["tx_id", "ledger_hash", "payment_state"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["finance_operator"],
+        "approval_chain": ["finance_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "capability_worker",
+        "network_allowlist": ["api.stripe.com"],
+        "secret_scope": "financial_effect"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "financial.refund",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "financial_effect",
+        "max_estimated_cost": 25.0
+      },
+      "obligation_model": {
+        "owner_team": "finance-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Send governed payment",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_tools": ["payment_executor.initiate_payment"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "financial.refund",
+      "domain": "financial",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/financial/refund.input.schema.json",
+      "output_schema_ref": "schemas/financial/refund.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["refund_request_created", "refund_settlement_recorded"],
+        "forbidden_effects": ["refund_without_case", "refund_without_approval", "payment_created"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["refund_id", "ledger_hash", "payment_state"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["finance_operator"],
+        "approval_chain": ["finance_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "capability_worker",
+        "network_allowlist": ["api.stripe.com"],
+        "secret_scope": "financial_effect"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "financial_effect",
+        "max_estimated_cost": 25.0
+      },
+      "obligation_model": {
+        "owner_team": "finance-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Refund governed payment",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_tools": ["payment_executor.refund"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

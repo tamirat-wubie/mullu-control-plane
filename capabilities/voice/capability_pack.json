@@ -1,0 +1,334 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "voice.speech_to_text",
+      "domain": "voice",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/voice/speech_to_text.input.schema.json",
+      "output_schema_ref": "schemas/voice/speech_to_text.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["voice_transcript_generated"],
+        "forbidden_effects": ["audio_stored", "tool_executed", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["transcript_hash", "redaction_hash", "transcript_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["voice_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "voice_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Create transcript from voice input",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["voice_operator"],
+          "allowed_tools": ["voice_worker.speech_to_text"]
+        }
+      }
+    },
+    {
+      "capability_id": "voice.text_to_speech",
+      "domain": "voice",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/voice/text_to_speech.input.schema.json",
+      "output_schema_ref": "schemas/voice/text_to_speech.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["voice_synthesis_reference_generated"],
+        "forbidden_effects": ["audio_stored", "tool_executed", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["text_hash", "audio_ref", "synthesis_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["voice_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "voice_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Create voice synthesis reference",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["voice_operator"],
+          "allowed_tools": ["voice_worker.text_to_speech"]
+        }
+      }
+    },
+    {
+      "capability_id": "voice.intent_classification",
+      "domain": "voice",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/voice/intent_classification.input.schema.json",
+      "output_schema_ref": "schemas/voice/intent_classification.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["voice_intent_created"],
+        "forbidden_effects": ["tool_executed", "payment_created", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["transcript_hash", "intent_summary_hash", "confirmation_requirement"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["voice_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "voice_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Classify voice transcript intent",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["voice_operator"],
+          "allowed_tools": ["voice_worker.intent_classification"]
+        }
+      }
+    },
+    {
+      "capability_id": "voice.intent_confirm",
+      "domain": "voice",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/voice/intent_confirm.input.schema.json",
+      "output_schema_ref": "schemas/voice/intent_confirm.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["voice_intent_confirmation_recorded"],
+        "forbidden_effects": ["tool_executed", "payment_created", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["transcript_hash", "intent_summary_hash", "confirmation_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["voice_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "voice_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Confirm classified voice intent",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["voice_operator"],
+          "allowed_tools": ["voice_worker.intent_confirm"]
+        }
+      }
+    },
+    {
+      "capability_id": "voice.meeting_summarize",
+      "domain": "voice",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/voice/meeting_summarize.input.schema.json",
+      "output_schema_ref": "schemas/voice/meeting_summarize.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["voice_meeting_summary_created"],
+        "forbidden_effects": ["tool_executed", "external_message_sent", "calendar_invite_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["transcript_hash", "meeting_summary_hash", "redaction_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["voice_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "voice_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Summarize meeting transcript",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["voice_operator"],
+          "allowed_tools": ["voice_worker.meeting_summarize"]
+        }
+      }
+    },
+    {
+      "capability_id": "voice.action_items_extract",
+      "domain": "voice",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/voice/action_items_extract.input.schema.json",
+      "output_schema_ref": "schemas/voice/action_items_extract.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["voice_action_items_created"],
+        "forbidden_effects": ["tool_executed", "external_message_sent", "task_created"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["transcript_hash", "action_items_hash", "redaction_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["voice_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "voice_worker",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Extract action items from meeting transcript",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["voice_operator"],
+          "allowed_tools": ["voice_worker.action_items_extract"]
+        }
+      }
+    }
+  ]
+}

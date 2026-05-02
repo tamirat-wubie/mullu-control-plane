@@ -119,6 +119,20 @@ jobs:
       - name: Validate deployment publication closure
         run: python scripts/validate_deployment_publication_closure.py
 
+      - name: Validate general-agent promotion closure plan
+        run: |
+          python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
+          python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json
+          python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json
+          python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json
+          python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
+          python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json
+          python scripts/plan_general_agent_promotion_closure.py --output .change_assurance/general_agent_promotion_closure_plan.json
+          python scripts/validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance/general_agent_promotion_closure_plan_schema_validation.json --strict
+          python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict
+          MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json
+          python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --json
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
         env:
@@ -232,6 +246,20 @@ jobs:
 
       - name: Deployment publication closure check
         run: python scripts/validate_deployment_publication_closure.py
+
+      - name: General-agent promotion closure plan check
+        run: |
+          python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
+          python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json
+          python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json
+          python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json
+          python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
+          python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json
+          python scripts/plan_general_agent_promotion_closure.py --output .change_assurance/general_agent_promotion_closure_plan.json
+          python scripts/validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance/general_agent_promotion_closure_plan_schema_validation.json --strict
+          python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict
+          MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json
+          python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --json
 
       - name: Gateway deployment environment check
         run: python scripts/validate_gateway_deployment_env.py --strict

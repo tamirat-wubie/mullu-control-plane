@@ -1,0 +1,625 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "email.read",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/email_read.input.schema.json",
+      "output_schema_ref": "schemas/communication/email_read.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["email_message_read"],
+        "forbidden_effects": ["external_message_sent", "mailbox_modified", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "response_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["gmail.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:mail.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Read email message",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.email_read"],
+          "allowed_networks": ["gmail.googleapis.com", "graph.microsoft.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "email.search",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/email_search.input.schema.json",
+      "output_schema_ref": "schemas/communication/email_search.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["email_search_results_read"],
+        "forbidden_effects": ["external_message_sent", "mailbox_modified", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "response_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["gmail.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:mail.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Search email messages",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.email_search"],
+          "allowed_networks": ["gmail.googleapis.com", "graph.microsoft.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "email.draft",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/email_draft.input.schema.json",
+      "output_schema_ref": "schemas/communication/email_draft.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["email_draft_created"],
+        "forbidden_effects": ["external_message_sent", "credential_scope_exceeded", "recipient_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "recipient_hashes", "draft_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["gmail.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:mail.compose"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Create email draft",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.email_draft"],
+          "allowed_networks": ["gmail.googleapis.com", "graph.microsoft.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "email.send.with_approval",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/email_send.input.schema.json",
+      "output_schema_ref": "schemas/communication/email_send.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["external_email_sent"],
+        "forbidden_effects": ["message_sent_without_approval", "credential_scope_exceeded", "recipient_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "recipient_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["gmail.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:mail.send"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Send email with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.email_send"],
+          "allowed_networks": ["gmail.googleapis.com", "graph.microsoft.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "email.classify",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/email_classify.input.schema.json",
+      "output_schema_ref": "schemas/communication/email_classify.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["email_classification_created"],
+        "forbidden_effects": ["external_message_sent", "mailbox_modified", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "classification_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["gmail.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:mail.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Classify email content",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.email_classify"],
+          "allowed_networks": ["gmail.googleapis.com", "graph.microsoft.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "email.reply_suggest",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/email_reply_suggest.input.schema.json",
+      "output_schema_ref": "schemas/communication/email_reply_suggest.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["email_reply_suggestion_created"],
+        "forbidden_effects": ["external_message_sent", "mailbox_modified", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "message_digest", "suggestion_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["gmail.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:mail.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Suggest email reply",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.email_reply_suggest"],
+          "allowed_networks": ["gmail.googleapis.com", "graph.microsoft.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "calendar.read",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/calendar_read.input.schema.json",
+      "output_schema_ref": "schemas/communication/calendar_read.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["calendar_event_read"],
+        "forbidden_effects": ["calendar_event_modified", "external_invite_sent", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "response_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["www.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:calendar.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Read calendar event",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.calendar_read"],
+          "allowed_networks": ["www.googleapis.com", "graph.microsoft.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "calendar.conflict_check",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/calendar_conflict_check.input.schema.json",
+      "output_schema_ref": "schemas/communication/calendar_conflict_check.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["calendar_conflict_report_created"],
+        "forbidden_effects": ["calendar_event_modified", "external_invite_sent", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "conflict_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["www.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:calendar.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Check calendar conflicts",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.calendar_conflict_check"],
+          "allowed_networks": ["www.googleapis.com", "graph.microsoft.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "calendar.schedule",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/calendar_schedule.input.schema.json",
+      "output_schema_ref": "schemas/communication/calendar_schedule.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["calendar_event_created"],
+        "forbidden_effects": ["calendar_event_created_without_approval", "external_invite_sent_without_approval", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "attendee_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["www.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:calendar.write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "calendar.reschedule",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Schedule calendar event with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.calendar_schedule"],
+          "allowed_networks": ["www.googleapis.com", "graph.microsoft.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "calendar.reschedule",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/calendar_reschedule.input.schema.json",
+      "output_schema_ref": "schemas/communication/calendar_reschedule.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["calendar_event_modified"],
+        "forbidden_effects": ["calendar_event_modified_without_approval", "external_invite_sent_without_approval", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "event_id", "approval_id", "before_after_event_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["www.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:calendar.write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "calendar.reschedule",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Reschedule calendar event with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.calendar_reschedule"],
+          "allowed_networks": ["www.googleapis.com", "graph.microsoft.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "calendar.invite",
+      "domain": "communication",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/communication/calendar_invite.input.schema.json",
+      "output_schema_ref": "schemas/communication/calendar_invite.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["calendar_invite_sent"],
+        "forbidden_effects": ["external_invite_sent_without_approval", "credential_scope_exceeded", "attendee_unapproved"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "attendee_hashes", "approval_id", "provider_receipt"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["communication_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "email_calendar_worker",
+        "network_allowlist": ["www.googleapis.com", "graph.microsoft.com"],
+        "secret_scope": "oauth:calendar.write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "calendar.reschedule",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Send calendar invite with approval",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["communication_operator"],
+          "allowed_tools": ["email_calendar_worker.calendar_invite"],
+          "allowed_networks": ["www.googleapis.com", "graph.microsoft.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

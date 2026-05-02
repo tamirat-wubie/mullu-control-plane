@@ -46,6 +46,7 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
     "PILOT_WORKFLOWS_v0.1.md",
     "PILOT_CHECKLIST_v0.1.md",
     "PILOT_OPERATIONS_GUIDE_v0.1.md",
+    "docs/59_general_agent_promotion_handoff_packet.md",
 )
 
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
@@ -75,6 +76,15 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/validate_deployment_publication_closure.py",
+    "python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json",
+    "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json",
+    "python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json",
+    "python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json",
+    "python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json",
+    "python scripts/plan_general_agent_promotion_closure.py --output .change_assurance/general_agent_promotion_closure_plan.json",
+    "python scripts/validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance/general_agent_promotion_closure_plan_schema_validation.json --strict",
+    "python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict",
+    "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
@@ -101,6 +111,11 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "Refresh deployment runtime input witness (#466)",
     "MULLU_GATEWAY_URL",
     "deployment_claim: published",
+    "docs/59_general_agent_promotion_handoff_packet.md",
+    "examples/general_agent_promotion_handoff_packet.json",
+    "validate_general_agent_promotion_handoff_packet.py",
+    "validate_general_agent_promotion_operator_checklist.py",
+    "preflight_general_agent_promotion_handoff.py",
 )
 
 RELEASE_NOTES_REQUIRED_LITERALS: tuple[str, ...] = (
@@ -131,6 +146,16 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "python scripts/orchestrate_deployment_witness.py --gateway-host \"$MULLU_GATEWAY_HOST\" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\"",
         ".change_assurance/deployment_witness_orchestration.json",
         "python scripts/validate_deployment_orchestration_receipt.py --receipt \"$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT\" --require-mcp-operator-checklist --require-preflight --expected-environment pilot",
+        "python scripts/plan_capability_adapter_closure.py --json",
+        "python scripts/plan_deployment_publication_closure.py --json",
+        "python scripts/plan_general_agent_promotion_closure.py --json",
+        "python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict",
+        "python scripts/validate_general_agent_promotion_closure_plan.py --strict",
+        "python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json",
+        "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json",
+        "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
+        "docs/59_general_agent_promotion_handoff_packet.md",
+        "examples/general_agent_promotion_handoff_packet.json",
         "python scripts/gateway_runtime_smoke.py",
         "python scripts/validate_deployment_publication_closure.py",
         "python scripts/validate_public_repository_surface.py",

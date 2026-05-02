@@ -12,6 +12,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.memory_constitution import (  # noqa: E402
+    ClosureMemoryCandidate,
     GovernedMemoryCell,
     InMemoryGovernedMemoryStore,
 )
@@ -95,6 +96,94 @@ def test_governed_memory_store_filters_forbidden_and_expired_cells():
 
     assert [cell.memory_id for cell in allowed] == ["usable"]
     assert forbidden == []
+    assert store.count() == 1
+
+
+def test_governed_memory_store_admits_verified_closure_memory():
+    store = InMemoryGovernedMemoryStore(clock=lambda: "2026-04-24T12:00:00+00:00")
+
+    admission = store.admit_closure(
+        ClosureMemoryCandidate(
+            tenant_id="tenant-1",
+            owner_id="identity-1",
+            fact="Command cmd-1 generated a verified deployment receipt.",
+            closure_id="closure-1",
+            terminal_certificate_id="terminal-1",
+            verification_status="passed",
+            evidence_refs=("receipt:deployment-1", "audit:cmd-1"),
+        )
+    )
+    cells = store.query(
+        tenant_id="tenant-1",
+        owner_id="identity-1",
+        allowed_use="continuity",
+        scope="episodic_closure",
+    )
+    semantic_cells = store.query(
+        tenant_id="tenant-1",
+        owner_id="identity-1",
+        allowed_use="semantic_generalization",
+        scope="episodic_closure",
+    )
+
+    assert admission.accepted is True
+    assert admission.memory_id.startswith("mem-")
+    assert len(cells) == 1
+    assert cells[0].source == "closure:closure-1"
+    assert "terminal_certificate:terminal-1" in cells[0].mutation_history
+    assert semantic_cells == []
+
+
+def test_governed_memory_store_rejects_unverified_closure_memory():
+    store = InMemoryGovernedMemoryStore(clock=lambda: "2026-04-24T12:00:00+00:00")
+
+    admission = store.admit_closure(
+        ClosureMemoryCandidate(
+            tenant_id="tenant-1",
+            owner_id="identity-1",
+            fact="Unverified action should not become memory.",
+            closure_id="closure-2",
+            terminal_certificate_id="terminal-2",
+            verification_status="failed",
+            evidence_refs=("receipt:failed",),
+        )
+    )
+
+    assert admission.accepted is False
+    assert admission.reason == "verification_not_admissible"
+    assert store.count() == 0
+
+
+def test_governed_memory_store_requires_accepted_risk_witness():
+    store = InMemoryGovernedMemoryStore(clock=lambda: "2026-04-24T12:00:00+00:00")
+
+    denied = store.admit_closure(
+        ClosureMemoryCandidate(
+            tenant_id="tenant-1",
+            owner_id="identity-1",
+            fact="Accepted risk without witness should not become memory.",
+            closure_id="closure-3",
+            terminal_certificate_id="terminal-3",
+            verification_status="accepted_risk",
+            evidence_refs=("receipt:risk",),
+        )
+    )
+    admitted = store.admit_closure(
+        ClosureMemoryCandidate(
+            tenant_id="tenant-1",
+            owner_id="identity-1",
+            fact="Accepted risk closure recorded with explicit witness.",
+            closure_id="closure-4",
+            terminal_certificate_id="terminal-4",
+            verification_status="accepted_risk",
+            evidence_refs=("receipt:risk-accepted",),
+            accepted_risk_id="risk-1",
+        )
+    )
+
+    assert denied.accepted is False
+    assert denied.reason == "accepted_risk_required"
+    assert admitted.accepted is True
     assert store.count() == 1
 
 

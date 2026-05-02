@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "packet_id": "general-agent-promotion-handoff-v1",
+  "title": "General-Agent Promotion Handoff Packet",
+  "status": "blocked_until_live_evidence",
+  "readiness_level": "pilot-governed-core",
+  "capability_capsules": 10,
+  "governed_capabilities": 52,
+  "aggregate_closure_actions": 14,
+  "approval_required_actions": 4,
+  "production_promotion": "blocked",
+  "entry_points": {
+    "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
+    "machine_checklist": "examples/general_agent_promotion_operator_checklist.json",
+    "machine_handoff_packet": "examples/general_agent_promotion_handoff_packet.json",
+    "checklist_validator": "scripts/validate_general_agent_promotion_operator_checklist.py",
+    "handoff_packet_validator": "scripts/validate_general_agent_promotion_handoff_packet.py",
+    "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
+    "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
+    "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json",
+    "drift_validation_report": ".change_assurance/general_agent_promotion_closure_plan_validation.json",
+    "readiness_report": ".change_assurance/general_agent_promotion_readiness.json",
+    "preflight_report": ".change_assurance/general_agent_promotion_handoff_preflight.json"
+  },
+  "open_blockers": [
+    "adapter_evidence_not_closed",
+    "browser_adapter_not_closed",
+    "document_adapter_not_closed",
+    "voice_adapter_not_closed",
+    "email_calendar_adapter_not_closed",
+    "deployment_witness_not_published",
+    "production_health_not_declared"
+  ],
+  "approval_required_blockers": [
+    "voice_dependency_missing:OPENAI_API_KEY",
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "deployment_witness_not_published",
+    "production_health_not_declared"
+  ],
+  "required_validation_reports": [
+    "general_agent_promotion_operator_checklist valid=true",
+    "general_agent_promotion_closure_plan_schema_validation ok=true",
+    "general_agent_promotion_closure_plan_validation ok=true"
+  ],
+  "operator_sequence": [
+    "validate_operator_checklist",
+    "regenerate_adapter_evidence",
+    "write_promotion_readiness",
+    "write_source_closure_plans",
+    "write_aggregate_closure_plan",
+    "validate_aggregate_closure_plan_schema",
+    "validate_aggregate_closure_plan_drift",
+    "complete_dependency_and_credential_actions",
+    "produce_live_adapter_receipts",
+    "publish_deployment_witness",
+    "declare_public_health_after_witness",
+    "run_terminal_promotion_validation"
+  ],
+  "terminal_proof_command": "python scripts/validate_general_agent_promotion.py --strict --output .change_assurance/general_agent_promotion_readiness.json",
+  "invariants": [
+    "production_promotion remains blocked until live adapter evidence closes",
+    "credential actions require governed approval",
+    "DEPLOYMENT_STATUS.md is not mutated before published witness and health evidence",
+    "terminal proof command must fail until blockers close"
+  ]
+}

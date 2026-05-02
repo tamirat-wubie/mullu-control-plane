@@ -11,15 +11,18 @@ from __future__ import annotations
 
 import copy
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
 from scripts.validate_schemas import _validate_schema_instance
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapsuleAdmissionStatus,
+    CapsuleCompilationResult,
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
     CapsuleCompilationStatus,
+    CapsuleCompilerArtifact,
     CommandCapabilityAdmissionStatus,
     DomainCapsule,
     DomainCapsuleCertificationStatus,
@@ -347,6 +350,110 @@ def test_governed_capability_registry_rejects_manifest_mismatch() -> None:
     assert installation.capability_ids == ()
     assert installation.artifact_ids
     assert "install request capability ids do not match compilation manifest" in installation.errors
+
+
+def test_governed_capability_registry_rejects_artifact_source_capsule_mismatch() -> None:
+    compiler = DomainCapsuleCompiler(clock=_clock)
+    registry = GovernedCapabilityRegistry(clock=_clock, require_certified=False)
+    entry = _registry_entry()
+    result = compiler.compile(_capsule(), [entry])
+    malformed_artifacts = (
+        replace(result.artifacts[0], source_capsule_id="capsule/forged"),
+        *result.artifacts[1:],
+    )
+    malformed = CapsuleCompilationResult(
+        compilation_id=result.compilation_id,
+        capsule_id=result.capsule_id,
+        status=result.status,
+        artifacts=malformed_artifacts,
+        warnings=result.warnings,
+        errors=result.errors,
+        compiled_at=result.compiled_at,
+    )
+
+    installation = registry.install(malformed, (entry,))
+
+    assert installation.status is CapsuleAdmissionStatus.REJECTED
+    assert registry.capability_count == 0
+    assert registry.artifact_count == 0
+    assert any("artifact source capsule mismatch" in error for error in installation.errors)
+
+
+def test_governed_capability_registry_rejects_manifest_domain_mismatch() -> None:
+    compiler = DomainCapsuleCompiler(clock=_clock)
+    registry = GovernedCapabilityRegistry(clock=_clock, require_certified=False)
+    entry = _registry_entry()
+    result = compiler.compile(_capsule(), [entry])
+    manifest = result.artifacts[0]
+    payload = dict(manifest.payload)
+    registry_entries = [dict(payload["registry_entries"][0])]
+    registry_entries[0]["domain"] = "forged_ops"
+    payload["registry_entries"] = registry_entries
+    malformed_artifacts = (
+        CapsuleCompilerArtifact(
+            artifact_id=manifest.artifact_id,
+            artifact_type=manifest.artifact_type,
+            source_capsule_id=manifest.source_capsule_id,
+            payload=payload,
+        ),
+        *result.artifacts[1:],
+    )
+    malformed = CapsuleCompilationResult(
+        compilation_id=result.compilation_id,
+        capsule_id=result.capsule_id,
+        status=result.status,
+        artifacts=malformed_artifacts,
+        warnings=result.warnings,
+        errors=result.errors,
+        compiled_at=result.compiled_at,
+    )
+
+    installation = registry.install(malformed, (entry,))
+
+    assert installation.status is CapsuleAdmissionStatus.REJECTED
+    assert registry.capability_count == 0
+    assert any("capability registry manifest domain mismatch" in error for error in installation.errors)
+
+
+def test_governed_capability_registry_rejects_owner_team_mismatch() -> None:
+    compiler = DomainCapsuleCompiler(clock=_clock)
+    registry = GovernedCapabilityRegistry(clock=_clock, require_certified=False)
+    entry = _registry_entry()
+    result = compiler.compile(_capsule(), [entry])
+    obligation_index = next(
+        index
+        for index, artifact in enumerate(result.artifacts)
+        if artifact.artifact_type == "obligation_template_manifest"
+    )
+    obligation = result.artifacts[obligation_index]
+    payload = dict(obligation.payload)
+    payload["owner_team"] = "forged_owner"
+    malformed_artifacts = tuple(
+        CapsuleCompilerArtifact(
+            artifact_id=artifact.artifact_id,
+            artifact_type=artifact.artifact_type,
+            source_capsule_id=artifact.source_capsule_id,
+            payload=payload,
+        )
+        if index == obligation_index
+        else artifact
+        for index, artifact in enumerate(result.artifacts)
+    )
+    malformed = CapsuleCompilationResult(
+        compilation_id=result.compilation_id,
+        capsule_id=result.capsule_id,
+        status=result.status,
+        artifacts=malformed_artifacts,
+        warnings=result.warnings,
+        errors=result.errors,
+        compiled_at=result.compiled_at,
+    )
+
+    installation = registry.install(malformed, (entry,))
+
+    assert installation.status is CapsuleAdmissionStatus.REJECTED
+    assert registry.capability_count == 0
+    assert "capability owner team mismatch: crm.update_customer_address has customer_ops, expected forged_owner" in installation.errors
 
 
 def test_governed_capability_registry_unknown_queries_fail_explicitly() -> None:

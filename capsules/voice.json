@@ -1,0 +1,27 @@
+{
+  "capsule_id": "voice.transcript_intent_ops.v0",
+  "domain": "voice",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/voice/transcript_intent_ops.json"],
+  "capability_refs": [
+    "voice.speech_to_text",
+    "voice.text_to_speech",
+    "voice.intent_classification",
+    "voice.intent_confirm",
+    "voice.meeting_summarize",
+    "voice.action_items_extract"
+  ],
+  "policy_refs": ["policies/voice/transcript_intent_ops.policy.json"],
+  "evidence_rules": ["evidence/voice/transcript_intent_ops.evidence.json"],
+  "approval_rules": ["approval/voice/transcript_intent_ops.approval.json"],
+  "recovery_rules": ["recovery/voice/transcript_intent_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/voice/transcript_intent_ops"],
+  "read_model_refs": ["read_models/voice/transcript_intent_ops.json"],
+  "operator_view_refs": ["operator_views/voice/transcript_intent_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified voice worker declarations for transcript-only intent creation, redaction, and receipt-bound synthesis references"
+  },
+  "extensions": {}
+}

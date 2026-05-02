@@ -3,6 +3,8 @@ version: "3.9"
 networks:
   mullu-net:
     driver: bridge
+  browser-worker-net:
+    driver: bridge
 
 services:
   # PostgreSQL production database
@@ -83,7 +85,7 @@ services:
           memory: 1G
           cpus: "1.0"
 
-  # Mullu Gateway — channel webhook server
+  # Mullu Gateway - channel webhook server
   gateway:
     build: .
     restart: unless-stopped
@@ -101,6 +103,14 @@ services:
       MULLU_RUNTIME_WITNESS_SECRET: "${MULLU_RUNTIME_WITNESS_SECRET:-}"
       MULLU_CAPABILITY_WORKER_URL: "http://capability-worker:8010/capability/execute"
       MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:-}"
+      MULLU_BROWSER_WORKER_URL: "${MULLU_BROWSER_WORKER_URL:-}"
+      MULLU_BROWSER_WORKER_SECRET: "${MULLU_BROWSER_WORKER_SECRET:-}"
+      MULLU_DOCUMENT_WORKER_URL: "${MULLU_DOCUMENT_WORKER_URL:-}"
+      MULLU_DOCUMENT_WORKER_SECRET: "${MULLU_DOCUMENT_WORKER_SECRET:-}"
+      MULLU_VOICE_WORKER_URL: "${MULLU_VOICE_WORKER_URL:-}"
+      MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_URL: "${MULLU_EMAIL_CALENDAR_WORKER_URL:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:-}"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
       # Channel credentials (set in .env):
@@ -162,6 +172,102 @@ services:
           memory: 512M
           cpus: "0.5"
 
+  # Mullu Browser Worker - restricted Playwright browser execution plane
+  browser-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.browser_worker:app", "--host", "0.0.0.0", "--port", "8020"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_BROWSER_WORKER_SECRET: "${MULLU_BROWSER_WORKER_SECRET:?Set MULLU_BROWSER_WORKER_SECRET in .env}"
+      PLAYWRIGHT_BROWSERS_PATH: "/ms-playwright"
+    networks:
+      - browser-worker-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8020/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # Mullu Document Worker - restricted PDF/Office parsing and generation plane
+  document-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.document_worker:app", "--host", "0.0.0.0", "--port", "8030"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_DOCUMENT_WORKER_SECRET: "${MULLU_DOCUMENT_WORKER_SECRET:?Set MULLU_DOCUMENT_WORKER_SECRET in .env}"
+      MULLU_DOCUMENT_WORKER_ADAPTER: "production"
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8030/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Voice Worker - restricted speech-to-text and text-to-speech plane
+  voice-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.voice_worker:app", "--host", "0.0.0.0", "--port", "8040"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:?Set MULLU_VOICE_WORKER_SECRET in .env}"
+      MULLU_VOICE_WORKER_ADAPTER: "openai"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:?Set OPENAI_API_KEY in .env for voice worker}"
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8040/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Mullu Email/Calendar Worker - restricted communication connector plane
+  email-calendar-worker:
+    profiles: ["adapter-workers"]
+    build: .
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "gateway.email_calendar_worker:app", "--host", "0.0.0.0", "--port", "8050"]
+    environment:
+      MULLU_ENV: pilot
+      MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:?Set MULLU_EMAIL_CALENDAR_WORKER_SECRET in .env}"
+      MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: "production"
+      GMAIL_ACCESS_TOKEN: "${GMAIL_ACCESS_TOKEN:-}"
+      GOOGLE_CALENDAR_ACCESS_TOKEN: "${GOOGLE_CALENDAR_ACCESS_TOKEN:-}"
+      MICROSOFT_GRAPH_ACCESS_TOKEN: "${MICROSOFT_GRAPH_ACCESS_TOKEN:-}"
+    networks:
+      - mullu-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8050/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
   # Mullu Gateway Worker - command-spine continuation worker
   gateway-worker:
     build: .
@@ -184,6 +290,14 @@ services:
       MULLU_RUNTIME_WITNESS_SECRET: "${MULLU_RUNTIME_WITNESS_SECRET:-}"
       MULLU_CAPABILITY_WORKER_URL: "http://capability-worker:8010/capability/execute"
       MULLU_CAPABILITY_WORKER_SECRET: "${MULLU_CAPABILITY_WORKER_SECRET:-}"
+      MULLU_BROWSER_WORKER_URL: "${MULLU_BROWSER_WORKER_URL:-}"
+      MULLU_BROWSER_WORKER_SECRET: "${MULLU_BROWSER_WORKER_SECRET:-}"
+      MULLU_DOCUMENT_WORKER_URL: "${MULLU_DOCUMENT_WORKER_URL:-}"
+      MULLU_DOCUMENT_WORKER_SECRET: "${MULLU_DOCUMENT_WORKER_SECRET:-}"
+      MULLU_VOICE_WORKER_URL: "${MULLU_VOICE_WORKER_URL:-}"
+      MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_URL: "${MULLU_EMAIL_CALENDAR_WORKER_URL:-}"
+      MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:-}"
       MULLU_LLM_BACKEND: stub
       MULLU_PII_SCAN: "true"
       # Channel credentials are needed only if worker sends final responses through adapters:

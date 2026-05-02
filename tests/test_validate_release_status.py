@@ -71,6 +71,16 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
         "validate_deployment_orchestration_receipt.py" in literal
         for literal in deployment_literals
     )
+    assert any("plan_capability_adapter_closure.py" in literal for literal in deployment_literals)
+    assert any("plan_deployment_publication_closure.py" in literal for literal in deployment_literals)
+    assert any("plan_general_agent_promotion_closure.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_closure_plan_schema.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_closure_plan.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_handoff_packet.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_operator_checklist.py" in literal for literal in deployment_literals)
+    assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in deployment_literals)
+    assert any("docs/59_general_agent_promotion_handoff_packet.md" in literal for literal in deployment_literals)
+    assert any("examples/general_agent_promotion_handoff_packet.json" in literal for literal in deployment_literals)
 
 
 def test_status_document_reflects_deployment_runtime_input_gap() -> None:
@@ -83,6 +93,11 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
     assert "deployment_claim: published" in content
+    assert "docs/59_general_agent_promotion_handoff_packet.md" in content
+    assert "examples/general_agent_promotion_handoff_packet.json" in content
+    assert "validate_general_agent_promotion_handoff_packet.py" in content
+    assert "validate_general_agent_promotion_operator_checklist.py" in content
+    assert "preflight_general_agent_promotion_handoff.py" in content
 
 
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:
@@ -132,8 +147,44 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "python scripts/validate_protocol_manifest.py" in REQUIRED_CI_LITERALS
+    assert any(
+        "validate_general_agent_promotion_closure_plan.py" in literal
+        for literal in REQUIRED_CI_LITERALS
+    )
+    assert any(
+        "validate_general_agent_promotion_operator_checklist.py" in literal
+        for literal in REQUIRED_CI_LITERALS
+    )
     assert content.count("python scripts/validate_protocol_manifest.py") == 2
     assert "Validate protocol manifest" in content
+
+
+def test_ci_workflow_runs_promotion_closure_schema_gate() -> None:
+    content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    errors = validate_ci_workflow_text(content)
+
+    assert errors == []
+    assert any("validate_general_agent_promotion_closure_plan_schema.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert content.count("validate_general_agent_promotion_closure_plan_schema.py") == 2
+    assert "general_agent_promotion_closure_plan_schema_validation.json" in content
+
+
+def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
+    content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    errors = validate_ci_workflow_text(content)
+
+    assert errors == []
+    assert any("validate_general_agent_promotion_handoff_packet.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert content.count("validate_general_agent_promotion_handoff_packet.py") == 2
+    assert content.count("preflight_general_agent_promotion_handoff.py") == 4
+    assert content.count("preflight_general_agent_promotion_handoff.py --output") == 2
+    assert content.count("--strict --json") == 2
+    assert "examples/general_agent_promotion_handoff_packet.json" in content
+    assert "general_agent_promotion_handoff_preflight.json" in content
+    assert "Validate general-agent promotion closure plan" in content
 
 
 def test_release_gate_rejects_placeholder_workflows() -> None:

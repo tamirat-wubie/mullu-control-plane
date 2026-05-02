@@ -65,6 +65,15 @@ class CommandCapabilityAdmissionStatus(StrEnum):
     REJECTED = "rejected"
 
 
+class GovernedCapabilityRiskLevel(StrEnum):
+    """Bounded risk level exposed on tenant-facing capability records."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
 @dataclass(frozen=True, slots=True)
 class CapabilityEffectModel(ContractRecord):
     expected_effects: tuple[str, ...]
@@ -280,6 +289,113 @@ class CapabilityRegistryEntry(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class GovernedCapabilityRecord(ContractRecord):
+    """Tenant-facing capability boundary; raw tools never appear on this surface."""
+
+    capability_id: str
+    tenant_id: str
+    risk_level: GovernedCapabilityRiskLevel
+    read_only: bool
+    world_mutating: bool
+    requires_approval: bool
+    requires_sandbox: bool
+    max_cost: float
+    allowed_roles: tuple[str, ...]
+    allowed_tools: tuple[str, ...]
+    allowed_networks: tuple[str, ...]
+    allowed_paths: tuple[str, ...]
+    forbidden_effects: tuple[str, ...]
+    verification_required: bool
+    receipt_required: bool
+    rollback_or_compensation_required: bool
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "capability_id", require_non_empty_text(self.capability_id, "capability_id"))
+        object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
+        if not isinstance(self.risk_level, GovernedCapabilityRiskLevel):
+            raise ValueError("risk_level must be a GovernedCapabilityRiskLevel value")
+        for field_name in (
+            "read_only",
+            "world_mutating",
+            "requires_approval",
+            "requires_sandbox",
+            "verification_required",
+            "receipt_required",
+            "rollback_or_compensation_required",
+        ):
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be a boolean")
+        object.__setattr__(self, "max_cost", require_non_negative_float(self.max_cost, "max_cost"))
+        for field_name in (
+            "allowed_roles",
+            "allowed_tools",
+            "allowed_networks",
+            "allowed_paths",
+            "forbidden_effects",
+        ):
+            object.__setattr__(self, field_name, freeze_value(list(getattr(self, field_name))))
+            for index, value in enumerate(getattr(self, field_name)):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+
+    @classmethod
+    def from_registry_entry(
+        cls,
+        entry: CapabilityRegistryEntry,
+        *,
+        tenant_id: str = "tenant:*",
+    ) -> "GovernedCapabilityRecord":
+        """Project an internal registry entry to the governed record contract."""
+        governed = entry.extensions.get("governed_record", {})
+        if not isinstance(governed, Mapping):
+            governed = {}
+        risk_text = str(governed.get("risk_level") or entry.metadata.get("risk_tier") or "medium")
+        if risk_text == "max":
+            risk_text = "critical"
+        risk_level = GovernedCapabilityRiskLevel(risk_text)
+        execution_plane = entry.isolation_profile.execution_plane
+        read_only = bool(governed.get("read_only", _infer_read_only(entry)))
+        world_mutating = bool(governed.get("world_mutating", not read_only))
+        requires_approval = bool(
+            governed.get(
+                "requires_approval",
+                risk_level in {GovernedCapabilityRiskLevel.HIGH, GovernedCapabilityRiskLevel.CRITICAL}
+                or bool(entry.authority_policy.approval_chain),
+            )
+        )
+        requires_sandbox = bool(
+            governed.get(
+                "requires_sandbox",
+                execution_plane in {"capability_worker", "sandbox_runner", "browser_worker", "document_worker"},
+            )
+        )
+        rollback_or_compensation_required = bool(
+            governed.get(
+                "rollback_or_compensation_required",
+                world_mutating
+                and bool(entry.recovery_plan.rollback_capability or entry.recovery_plan.compensation_capability),
+            )
+        )
+        return cls(
+            capability_id=entry.capability_id,
+            tenant_id=str(governed.get("tenant_id") or tenant_id),
+            risk_level=risk_level,
+            read_only=read_only,
+            world_mutating=world_mutating,
+            requires_approval=requires_approval,
+            requires_sandbox=requires_sandbox,
+            max_cost=float(governed.get("max_cost", entry.cost_model.max_estimated_cost)),
+            allowed_roles=tuple(governed.get("allowed_roles", entry.authority_policy.required_roles)),
+            allowed_tools=tuple(governed.get("allowed_tools", ())),
+            allowed_networks=tuple(governed.get("allowed_networks", entry.isolation_profile.network_allowlist)),
+            allowed_paths=tuple(governed.get("allowed_paths", ())),
+            forbidden_effects=entry.effect_model.forbidden_effects,
+            verification_required=bool(governed.get("verification_required", entry.effect_model.reconciliation_required)),
+            receipt_required=bool(governed.get("receipt_required", entry.evidence_model.terminal_certificate_required)),
+            rollback_or_compensation_required=rollback_or_compensation_required,
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class DomainCapsule(ContractRecord):
     capsule_id: str
     domain: str
@@ -457,3 +573,12 @@ class CommandCapabilityAdmissionDecision(ContractRecord):
             require_non_empty_text(evidence, f"evidence_required[{index}]")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         object.__setattr__(self, "decided_at", require_datetime_text(self.decided_at, "decided_at"))
+
+
+def _infer_read_only(entry: CapabilityRegistryEntry) -> bool:
+    """Infer read-only posture only for explicitly read/search/analysis effects."""
+    effect_names = tuple(effect.lower() for effect in entry.effect_model.expected_effects)
+    return all(
+        any(marker in effect for marker in ("read", "search", "analysis", "insight", "history", "balance"))
+        for effect in effect_names
+    )

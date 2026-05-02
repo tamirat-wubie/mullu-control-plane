@@ -22,9 +22,14 @@ from gateway.capability_dispatch import (
     SkillIntent,
     build_capability_dispatcher_from_platform,
     build_skill_dispatcher_from_platform,
+    register_browser_capabilities,
     register_creative_capabilities,
+    register_computer_capabilities,
+    register_document_capabilities,
+    register_email_calendar_capabilities,
     register_enterprise_capabilities,
     register_financial_capabilities,
+    register_voice_capabilities,
 )
 from gateway.intent_resolver import (
     CapabilityIntentResolver,
@@ -47,7 +52,12 @@ __all__ = [
     "build_capability_dispatcher_from_platform",
     "build_skill_dispatcher_from_platform",
     "detect_intent",
+    "register_browser_capabilities",
     "register_creative_capabilities",
+    "register_computer_capabilities",
+    "register_document_capabilities",
+    "register_email_calendar_capabilities",
     "register_enterprise_capabilities",
     "register_financial_capabilities",
+    "register_voice_capabilities",
 ]

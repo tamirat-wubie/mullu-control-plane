@@ -39,6 +39,22 @@ class CapabilityExecutionBoundary:
     service_account: str
     evidence_required: tuple[str, ...]
 
+    def __post_init__(self) -> None:
+        _require_non_empty_text(self.capability_id, "capability_id")
+        _require_non_empty_text(self.execution_plane, "execution_plane")
+        if not isinstance(self.isolation_required, bool):
+            raise ValueError("isolation_required must be a boolean")
+        object.__setattr__(self, "network_policy", tuple(self.network_policy))
+        object.__setattr__(self, "filesystem_policy", _require_non_empty_text(self.filesystem_policy, "filesystem_policy"))
+        if self.max_runtime_seconds <= 0:
+            raise ValueError("max_runtime_seconds must be > 0")
+        if self.max_memory_mb <= 0:
+            raise ValueError("max_memory_mb must be > 0")
+        _require_non_empty_text(self.service_account, "service_account")
+        object.__setattr__(self, "evidence_required", tuple(self.evidence_required))
+        for index, evidence in enumerate(self.evidence_required):
+            _require_non_empty_text(evidence, f"evidence_required[{index}]")
+
 
 @dataclass(frozen=True, slots=True)
 class CapabilityExecutionReceipt:
@@ -52,6 +68,21 @@ class CapabilityExecutionReceipt:
     input_hash: str
     output_hash: str
     evidence_refs: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _require_non_empty_text(self.receipt_id, "receipt_id")
+        _require_non_empty_text(self.capability_id, "capability_id")
+        _require_non_empty_text(self.execution_plane, "execution_plane")
+        if not isinstance(self.isolation_required, bool):
+            raise ValueError("isolation_required must be a boolean")
+        _require_non_empty_text(self.worker_id, "worker_id")
+        _require_non_empty_text(self.input_hash, "input_hash")
+        _require_non_empty_text(self.output_hash, "output_hash")
+        object.__setattr__(self, "evidence_refs", tuple(self.evidence_refs))
+        if not self.evidence_refs:
+            raise ValueError("evidence_refs must contain at least one item")
+        for index, evidence_ref in enumerate(self.evidence_refs):
+            _require_non_empty_text(evidence_ref, f"evidence_refs[{index}]")
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +99,21 @@ class CapabilityExecutionRequest:
     conversation_id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        _require_non_empty_text(self.request_id, "request_id")
+        _require_non_empty_text(self.tenant_id, "tenant_id")
+        _require_non_empty_text(self.identity_id, "identity_id")
+        if not isinstance(self.boundary, CapabilityExecutionBoundary):
+            raise ValueError("boundary must be a CapabilityExecutionBoundary")
+        if not isinstance(self.intent, dict):
+            raise ValueError("intent must be an object")
+        skill = _require_non_empty_text(str(self.intent.get("skill", "")), "intent.skill")
+        action = _require_non_empty_text(str(self.intent.get("action", "")), "intent.action")
+        if self.boundary.capability_id != f"{skill}.{action}":
+            raise ValueError("capability boundary does not match intent")
+        _require_non_empty_text(self.input_hash, "input_hash")
+        object.__setattr__(self, "metadata", dict(self.metadata))
+
 
 @dataclass(frozen=True, slots=True)
 class CapabilityExecutionResponse:
@@ -78,6 +124,14 @@ class CapabilityExecutionResponse:
     result: dict[str, Any] | None
     receipt: CapabilityExecutionReceipt
     error: str = ""
+
+    def __post_init__(self) -> None:
+        _require_non_empty_text(self.request_id, "request_id")
+        _require_non_empty_text(self.status, "status")
+        if self.result is not None and not isinstance(self.result, dict):
+            raise ValueError("result must be an object")
+        if not isinstance(self.receipt, CapabilityExecutionReceipt):
+            raise ValueError("receipt must be a CapabilityExecutionReceipt")
 
 
 class IsolatedCapabilityExecutor(Protocol):
@@ -165,6 +219,7 @@ class LocalCapabilityExecutionWorker:
         metadata: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any] | None, CapabilityExecutionReceipt]:
         """Execute through the local worker and return an execution receipt."""
+        _validate_boundary_matches_intent(boundary, intent)
         dispatch_metadata = dict(metadata or {})
         input_hash = canonical_hash({
             "intent": {"skill": intent.skill, "action": intent.action, "params": dict(intent.params)},
@@ -501,6 +556,18 @@ def _validate_worker_response(
     expected_output_hash = canonical_hash(response.result or {})
     if receipt.output_hash != expected_output_hash:
         raise RuntimeError("capability worker receipt output mismatch")
+
+
+def _validate_boundary_matches_intent(boundary: CapabilityExecutionBoundary, intent: SkillIntent) -> None:
+    expected_capability_id = f"{intent.skill}.{intent.action}"
+    if boundary.capability_id != expected_capability_id:
+        raise RuntimeError("capability boundary does not match intent")
+
+
+def _require_non_empty_text(value: str, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
 
 
 def _sign_payload(body: bytes, signing_secret: str) -> str:

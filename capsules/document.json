@@ -1,0 +1,28 @@
+{
+  "capsule_id": "document.deterministic_ops.v0",
+  "domain": "document",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/document/deterministic_ops.json"],
+  "capability_refs": [
+    "document.extract_text",
+    "document.extract_tables",
+    "document.summarize",
+    "document.generate_docx",
+    "document.generate_pdf",
+    "spreadsheet.analyze",
+    "spreadsheet.generate"
+  ],
+  "policy_refs": ["policies/document/deterministic_ops.policy.json"],
+  "evidence_rules": ["evidence/document/deterministic_ops.evidence.json"],
+  "approval_rules": ["approval/document/deterministic_ops.approval.json"],
+  "recovery_rules": ["recovery/document/deterministic_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/document/deterministic_ops"],
+  "read_model_refs": ["read_models/document/deterministic_ops.json"],
+  "operator_view_refs": ["operator_views/document/deterministic_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified document and spreadsheet worker declarations for deterministic extraction, summary, and artifact generation receipts"
+  },
+  "extensions": {}
+}

@@ -17,7 +17,12 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.intent_resolver import CapabilityIntentResolver  # noqa: E402
-from gateway.skill_dispatch import SkillDispatcher, SkillIntent, build_skill_dispatcher_from_platform  # noqa: E402
+from gateway.skill_dispatch import (  # noqa: E402
+    SkillDispatcher,
+    SkillIntent,
+    build_skill_dispatcher_from_platform,
+    register_computer_capabilities,
+)
 from gateway.capability_isolation import (  # noqa: E402
     CapabilityExecutionBoundary,
     CapabilityExecutionRequest,
@@ -95,6 +100,18 @@ class ApprovingPaymentExecutor:
             currency="USD",
             provider_tx_id="refund-123",
             metadata={"ledger_hash": "refund-ledger-proof-123"},
+        )
+
+
+class FailingRefundExecutor:
+    def refund(self, tx_id, *, reason="", actor_id="", api_key=""):
+        return PaymentResult(
+            success=False,
+            tx_id=tx_id,
+            state="refund_failed",
+            amount="50",
+            currency="USD",
+            error="provider rejected refund",
         )
 
 
@@ -191,6 +208,64 @@ class StubMCPClient:
             content={"issue_id": "ISSUE-1"},
             metadata={"provider_request_id": "provider-1"},
         )
+
+
+class StubSandboxRunner:
+    """Sandbox runner fixture that records governed command requests."""
+
+    def __init__(self) -> None:
+        self.requests: list[Any] = []
+
+    def execute(self, request):
+        from gateway.sandbox_runner import SandboxExecutionReceipt, SandboxCommandResult
+
+        self.requests.append(request)
+        receipt = SandboxExecutionReceipt(
+            receipt_id="sandbox-receipt-test",
+            request_id=request.request_id,
+            tenant_id=request.tenant_id,
+            capability_id=request.capability_id,
+            sandbox_id="docker-rootless",
+            image="mullu-agent-runner:latest",
+            command_hash="command-hash",
+            docker_args_hash="docker-args-hash",
+            stdout_hash="stdout-hash",
+            stderr_hash="stderr-hash",
+            returncode=0,
+            network_disabled=True,
+            read_only_rootfs=True,
+            workspace_mount="/workspace",
+            forbidden_effects_observed=False,
+            verification_status="passed",
+            evidence_refs=("sandbox_execution:test",),
+        )
+        return SandboxCommandResult(status="succeeded", stdout="ok", stderr="", receipt=receipt)
+
+
+class StubCodeAdapter:
+    """Workspace adapter fixture for computer capability dispatch."""
+
+    def list_files(self, repo_id, extensions=()):
+        file_item = type(
+            "File",
+            (),
+            {
+                "relative_path": "src/app.py",
+                "content_hash": "content-hash",
+                "size_bytes": 10,
+                "line_count": 1,
+            },
+        )()
+        return type(
+            "Workspace",
+            (),
+            {
+                "root_path": "/workspace",
+                "files": (file_item,),
+                "total_files": 1,
+                "total_bytes": 10,
+            },
+        )()
 
 
 def _seeded_provider() -> StubFinancialProvider:
@@ -324,6 +399,22 @@ def test_refund_dispatcher_requires_transaction_id() -> None:
     assert result["receipt_status"] == "missing_transaction_id"
 
 
+def test_refund_dispatcher_returns_failed_receipt_without_success_fields() -> None:
+    dispatcher = SkillDispatcher(payment_executor=FailingRefundExecutor())
+
+    result = dispatcher.dispatch(
+        SkillIntent("financial", "refund", {"transaction_id": "tx-123"}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert result["skill"] == "refund"
+    assert result["receipt_status"] == "failed"
+    assert result["transaction_id"] == "tx-123"
+    assert "refund_id" not in result
+
+
 def test_dispatcher_admits_exact_capability_id_not_domain() -> None:
     registry = ExactCapabilityRegistry({"financial.balance_check"})
     dispatcher = build_skill_dispatcher_from_platform(
@@ -384,6 +475,62 @@ def test_dispatcher_executes_registered_enterprise_capability() -> None:
     assert result["capability_id"] == "enterprise.task_schedule"
     assert result["receipt_status"] == "scheduled"
     assert result["task_id"].startswith("task-")
+
+
+def test_computer_command_run_uses_sandbox_runner() -> None:
+    sandbox_runner = StubSandboxRunner()
+    dispatcher = SkillDispatcher()
+    register_computer_capabilities(dispatcher, sandbox_runner=sandbox_runner)
+
+    result = dispatcher.dispatch(
+        SkillIntent("computer", "command.run", {"argv": ["python", "--version"]}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        command_id="cmd-computer-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "computer.command.run"
+    assert result["receipt_status"] == "succeeded"
+    assert result["sandbox_receipt_id"] == "sandbox-receipt-test"
+    assert result["verification_status"] == "passed"
+    assert result["sandbox_execution_receipt"]["network_disabled"] is True
+    assert result["sandbox_execution_receipt"]["workspace_mount"] == "/workspace"
+    assert sandbox_runner.requests[0].capability_id == "computer.command.run"
+    assert sandbox_runner.requests[0].argv == ("python", "--version")
+
+
+def test_computer_command_run_fails_closed_without_sandbox_runner() -> None:
+    dispatcher = SkillDispatcher()
+    register_computer_capabilities(dispatcher)
+
+    result = dispatcher.dispatch(
+        SkillIntent("computer", "command.run", {"argv": ["python", "--version"]}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "computer.command.run"
+    assert result["receipt_status"] == "sandbox_unavailable"
+
+
+def test_computer_filesystem_observe_uses_workspace_adapter() -> None:
+    dispatcher = SkillDispatcher()
+    register_computer_capabilities(dispatcher, code_adapter=StubCodeAdapter())
+
+    result = dispatcher.dispatch(
+        SkillIntent("computer", "filesystem.observe", {}),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    assert result is not None
+    assert result["capability_id"] == "computer.filesystem.observe"
+    assert result["receipt_status"] == "observed"
+    assert result["file_count"] == 1
+    assert result["workspace_root_hash"]
+    assert result["files"][0]["relative_path"] == "src/app.py"
 
 
 def test_dispatcher_executes_registered_governed_mcp_capability() -> None:

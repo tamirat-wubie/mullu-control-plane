@@ -240,6 +240,55 @@ policies, and an escalation policy. If capability plan evidence bundle export
 is not wired, deployment readiness remains blocked until `/capability-plans/{plan_id}/closure`
 can return the terminal certificate and `plan_evidence_bundle`.
 
+## General-Agent Promotion Handoff
+
+General-agent production promotion is executed from a governed handoff packet,
+not from ad-hoc shell steps. Start with
+[`docs/59_general_agent_promotion_handoff_packet.md`](docs/59_general_agent_promotion_handoff_packet.md).
+
+Minimum sequence:
+
+1. Validate the machine-readable handoff packet:
+
+```powershell
+python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
+```
+
+2. Validate the machine-readable checklist:
+
+```powershell
+python scripts\validate_general_agent_promotion_operator_checklist.py --checklist examples\general_agent_promotion_operator_checklist.json --json
+```
+
+3. Follow the operator runbook:
+
+```text
+docs/58_general_agent_promotion_operator_runbook.md
+```
+
+4. Validate the aggregate closure plan before approval or execution:
+
+```powershell
+python scripts\validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance\general_agent_promotion_closure_plan_schema_validation.json --strict
+python scripts\validate_general_agent_promotion_closure_plan.py --output .change_assurance\general_agent_promotion_closure_plan_validation.json --strict
+```
+
+5. Run the handoff preflight without printing secret values:
+
+```powershell
+python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --json
+```
+
+6. Keep promotion blocked until the final strict validator passes:
+
+```powershell
+python scripts\validate_general_agent_promotion.py --strict --output .change_assurance\general_agent_promotion_readiness.json
+```
+
+The current handoff remains `pilot-governed-core` until live adapter receipts,
+governed credential approvals, deployment witness publication, and public health
+evidence are all closed.
+
 ## Limitations
 
 This is an internal alpha with significant limitations. See

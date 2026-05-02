@@ -11,6 +11,7 @@ Invariants:
   - Pilot/production require durable command and tenant identity stores.
   - Pilot/production require command anchor and runtime witness secrets.
   - Pilot/production require restricted capability worker URL and secret.
+  - Optional adapter worker URLs and secrets must be configured as pairs.
 """
 
 from __future__ import annotations
@@ -45,11 +46,13 @@ def validate_gateway_deployment_env(env: Mapping[str, str]) -> GatewayDeployment
     errors: list[str] = []
     warnings: list[str] = []
 
+    _require_worker_pair(env, "MULLU_BROWSER_WORKER_URL", "MULLU_BROWSER_WORKER_SECRET", errors)
+    _require_worker_pair(env, "MULLU_DOCUMENT_WORKER_URL", "MULLU_DOCUMENT_WORKER_SECRET", errors)
+    _require_worker_pair(env, "MULLU_VOICE_WORKER_URL", "MULLU_VOICE_WORKER_SECRET", errors)
+    _require_worker_pair(env, "MULLU_EMAIL_CALENDAR_WORKER_URL", "MULLU_EMAIL_CALENDAR_WORKER_SECRET", errors)
+
     if profile not in STRICT_PROFILES:
-        if not env.get("MULLU_CAPABILITY_WORKER_URL") and env.get("MULLU_CAPABILITY_WORKER_SECRET"):
-            errors.append("MULLU_CAPABILITY_WORKER_URL is required when worker secret is set")
-        if env.get("MULLU_CAPABILITY_WORKER_URL") and not env.get("MULLU_CAPABILITY_WORKER_SECRET"):
-            errors.append("MULLU_CAPABILITY_WORKER_SECRET is required when worker URL is set")
+        _require_worker_pair(env, "MULLU_CAPABILITY_WORKER_URL", "MULLU_CAPABILITY_WORKER_SECRET", errors)
         return GatewayDeploymentCheck(profile=profile, errors=tuple(errors), warnings=tuple(warnings))
 
     _require_truthy(env, "MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", errors)
@@ -64,6 +67,14 @@ def validate_gateway_deployment_env(env: Mapping[str, str]) -> GatewayDeployment
 
     if env.get("MULLU_CAPABILITY_WORKER_URL", "").startswith("http://"):
         warnings.append("MULLU_CAPABILITY_WORKER_URL should use https outside a private cluster")
+    for adapter_url_name in (
+        "MULLU_BROWSER_WORKER_URL",
+        "MULLU_DOCUMENT_WORKER_URL",
+        "MULLU_VOICE_WORKER_URL",
+        "MULLU_EMAIL_CALENDAR_WORKER_URL",
+    ):
+        if env.get(adapter_url_name, "").startswith("http://"):
+            warnings.append(f"{adapter_url_name} should use https outside a private cluster")
     if env.get("MULLU_COMMAND_LEDGER_BACKEND") == "memory":
         errors.append("MULLU_COMMAND_LEDGER_BACKEND must not be memory in pilot/production")
     if env.get("MULLU_TENANT_IDENTITY_BACKEND") == "memory":
@@ -94,6 +105,15 @@ def main(argv: list[str] | None = None) -> int:
 def _require_present(env: Mapping[str, str], name: str, errors: list[str]) -> None:
     if not env.get(name, "").strip():
         errors.append(f"{name} is required")
+
+
+def _require_worker_pair(env: Mapping[str, str], url_name: str, secret_name: str, errors: list[str]) -> None:
+    has_url = bool(env.get(url_name, "").strip())
+    has_secret = bool(env.get(secret_name, "").strip())
+    if not has_url and has_secret:
+        errors.append(f"{url_name} is required when worker secret is set")
+    if has_url and not has_secret:
+        errors.append(f"{secret_name} is required when worker URL is set")
 
 
 def _require_truthy(env: Mapping[str, str], name: str, errors: list[str]) -> None:

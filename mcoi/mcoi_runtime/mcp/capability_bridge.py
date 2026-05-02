@@ -89,6 +89,7 @@ def import_mcp_tool_as_capability(
     expected_effects = _expected_effects(tool)
     risk_tier = _risk_tier_for_effects(expected_effects, tool.annotations)
     mutates_world = not _is_read_only_effect_set(expected_effects)
+    network_allowlist = _annotation_string_tuple(tool.annotations.get("network_allowlist", ()))
     return CapabilityRegistryEntry(
         capability_id=capability_id,
         domain="mcp",
@@ -117,7 +118,7 @@ def import_mcp_tool_as_capability(
         ),
         isolation_profile=CapabilityIsolationProfile(
             execution_plane="external_mcp_server",
-            network_allowlist=_annotation_string_tuple(tool.annotations.get("network_allowlist", ())),
+            network_allowlist=network_allowlist,
             secret_scope=f"mcp:{_slug(tool.server_id)}",
         ),
         recovery_plan=CapabilityRecoveryPlan(
@@ -142,6 +143,16 @@ def import_mcp_tool_as_capability(
             "source": "mcp.import_tool",
         },
         extensions={
+            "governed_record": {
+                "read_only": not mutates_world,
+                "world_mutating": mutates_world,
+                "requires_approval": mutates_world or risk_tier == "high",
+                "requires_sandbox": True,
+                "allowed_roles": list(required_roles),
+                "allowed_tools": ["governed_mcp_executor.execute"],
+                "allowed_networks": list(network_allowlist),
+                "rollback_or_compensation_required": mutates_world,
+            },
             "mcp": {
                 "server_id": tool.server_id,
                 "tool_name": tool.name,
