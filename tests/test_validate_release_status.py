@@ -179,7 +179,7 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert any("validate_general_agent_promotion_handoff_packet.py" in literal for literal in REQUIRED_CI_LITERALS)
     assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in REQUIRED_CI_LITERALS)
     assert content.count("validate_general_agent_promotion_handoff_packet.py") == 2
-    assert content.count("preflight_general_agent_promotion_handoff.py") == 4
+    assert content.count("preflight_general_agent_promotion_handoff.py") == 2
     assert content.count("preflight_general_agent_promotion_handoff.py --output") == 2
     assert content.count("--strict --json") == 2
     assert "examples/general_agent_promotion_handoff_packet.json" in content
