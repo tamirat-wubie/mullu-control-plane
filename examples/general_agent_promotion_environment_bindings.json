@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "contract_id": "general-agent-promotion-environment-bindings-v1",
+  "status": "blocked_until_operator_binding",
+  "secret_serialization": "forbidden",
+  "bindings": [
+    {
+      "name": "MULLU_BROWSER_SANDBOX_EVIDENCE",
+      "purpose": "Path or reference to browser sandbox evidence required before browser live receipt production.",
+      "binding_kind": "artifact_path",
+      "risk": "medium",
+      "approval_required": false,
+      "may_serialize_value": false,
+      "required_for": [
+        "browser_live_receipt",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    },
+    {
+      "name": "MULLU_VOICE_PROBE_AUDIO",
+      "purpose": "Path or reference to an approved voice probe sample used for voice live receipt production.",
+      "binding_kind": "audio_path",
+      "risk": "high",
+      "approval_required": true,
+      "may_serialize_value": false,
+      "required_for": [
+        "voice_live_receipt",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    },
+    {
+      "name": "MULLU_GATEWAY_URL",
+      "purpose": "Public gateway URL candidate used for deployment publication and health witness checks.",
+      "binding_kind": "url",
+      "risk": "high",
+      "approval_required": false,
+      "may_serialize_value": false,
+      "required_for": [
+        "deployment_witness_publication",
+        "public_health_declaration",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    },
+    {
+      "name": "MULLU_RUNTIME_WITNESS_SECRET",
+      "purpose": "Governed runtime witness secret used to authorize deployment witness collection.",
+      "binding_kind": "secret",
+      "risk": "critical",
+      "approval_required": true,
+      "may_serialize_value": false,
+      "required_for": [
+        "deployment_witness_publication",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    },
+    {
+      "name": "MULLU_RUNTIME_CONFORMANCE_SECRET",
+      "purpose": "Governed conformance secret used to verify runtime deployment witness integrity.",
+      "binding_kind": "secret",
+      "risk": "critical",
+      "approval_required": true,
+      "may_serialize_value": false,
+      "required_for": [
+        "deployment_witness_publication",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    },
+    {
+      "name": "MULLU_AUTHORITY_OPERATOR_SECRET",
+      "purpose": "Governed operator authority secret required for approval-bound promotion actions.",
+      "binding_kind": "secret",
+      "risk": "critical",
+      "approval_required": true,
+      "may_serialize_value": false,
+      "required_for": [
+        "approval_bound_promotion_action",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    }
+  ]
+}

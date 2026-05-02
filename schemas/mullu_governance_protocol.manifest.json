@@ -89,6 +89,18 @@
       "surface": "promotion"
     },
     {
+      "schema_id": "general-agent-promotion-environment-bindings",
+      "path": "schemas/general_agent_promotion_environment_bindings.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-environment-bindings:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-environment-binding-receipt",
+      "path": "schemas/general_agent_promotion_environment_binding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-environment-binding-receipt:1",
+      "surface": "promotion"
+    },
+    {
       "schema_id": "general-agent-promotion-handoff-packet",
       "path": "schemas/general_agent_promotion_handoff_packet.schema.json",
       "urn": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",
@@ -159,6 +171,12 @@
       "path": "schemas/streaming_budget_enforcement.schema.json",
       "urn": "urn:mullusi:schema:streaming-budget-enforcement:1",
       "surface": "budget"
+    },
+    {
+      "schema_id": "terminal-closure-certificate",
+      "path": "schemas/terminal_closure_certificate.schema.json",
+      "urn": "urn:mullusi:schema:terminal-closure-certificate:1",
+      "surface": "closure"
     },
     {
       "schema_id": "trace-entry",

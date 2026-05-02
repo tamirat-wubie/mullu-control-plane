@@ -29,14 +29,18 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Human execution procedure | `docs/58_general_agent_promotion_operator_runbook.md` |
 | Machine-readable checklist | `examples/general_agent_promotion_operator_checklist.json` |
 | Machine-readable handoff packet | `examples/general_agent_promotion_handoff_packet.json` |
+| Environment binding contract | `examples/general_agent_promotion_environment_bindings.json` |
 | Checklist validator | `scripts/validate_general_agent_promotion_operator_checklist.py` |
 | Handoff packet validator | `scripts/validate_general_agent_promotion_handoff_packet.py` |
+| Environment binding validator | `scripts/validate_general_agent_promotion_environment_bindings.py` |
+| Environment binding receipt emitter | `scripts/emit_general_agent_promotion_environment_binding_receipt.py` |
 | Handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` |
 | Aggregate closure plan | `.change_assurance/general_agent_promotion_closure_plan.json` |
 | Schema validation report | `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json` |
 | Drift validation report | `.change_assurance/general_agent_promotion_closure_plan_validation.json` |
 | Readiness report | `.change_assurance/general_agent_promotion_readiness.json` |
 | Preflight report | `.change_assurance/general_agent_promotion_handoff_preflight.json` |
+| Environment binding receipt | `.change_assurance/general_agent_promotion_environment_binding_receipt.json` |
 
 ## Open Blockers
 

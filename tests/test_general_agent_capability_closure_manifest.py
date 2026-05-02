@@ -40,6 +40,7 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
     assert "schemas/general_agent_promotion_closure_plan.schema.json" in manifest_text
     assert "scripts/validate_general_agent_promotion_closure_plan_schema.py" in manifest_text
     assert "scripts/validate_general_agent_promotion_closure_plan.py" in manifest_text
+    assert "scripts/emit_general_agent_promotion_environment_binding_receipt.py" in manifest_text
     assert "scripts/preflight_general_agent_promotion_handoff.py" in manifest_text
 
 
@@ -62,5 +63,6 @@ def test_manifest_preserves_open_blocker_traceability() -> None:
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_closure_plan_validation.json" in manifest_text
+    assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_handoff_preflight.json" in manifest_text
     assert "STATUS:" in manifest_text

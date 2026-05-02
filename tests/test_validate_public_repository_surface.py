@@ -47,9 +47,13 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "python scripts/validate_general_agent_promotion_closure_plan.py --strict" in content
     assert "python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json" in content
     assert "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json" in content
+    assert "python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json" in content
+    assert "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json" in content
     assert "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json" in content
     assert "docs/59_general_agent_promotion_handoff_packet.md" in content
     assert "examples/general_agent_promotion_handoff_packet.json" in content
+    assert "examples/general_agent_promotion_environment_bindings.json" in content
+    assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in content
     assert "No `deployment-witness.yml` workflow runs are currently recorded" in content
 
 

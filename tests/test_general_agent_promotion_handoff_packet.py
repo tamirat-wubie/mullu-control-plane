@@ -26,11 +26,14 @@ def test_handoff_packet_links_operator_artifacts() -> None:
     assert "docs/58_general_agent_promotion_operator_runbook.md" in packet_text
     assert "examples/general_agent_promotion_operator_checklist.json" in packet_text
     assert "examples/general_agent_promotion_handoff_packet.json" in packet_text
+    assert "examples/general_agent_promotion_environment_bindings.json" in packet_text
     assert "scripts/validate_general_agent_promotion_handoff_packet.py" in packet_text
+    assert "scripts/emit_general_agent_promotion_environment_binding_receipt.py" in packet_text
     assert "scripts/preflight_general_agent_promotion_handoff.py" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan_validation.json" in packet_text
+    assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in packet_text
     assert ".change_assurance/general_agent_promotion_handoff_preflight.json" in packet_text
 
 

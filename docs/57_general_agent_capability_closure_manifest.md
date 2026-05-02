@@ -57,6 +57,9 @@ This is not a public-production claim. It is a governed-core readiness claim wit
 | Promotion handoff packet | Built as single operator entry point | `docs/59_general_agent_promotion_handoff_packet.md` |
 | Promotion machine handoff packet | Built as schema-backed handoff artifact | `examples/general_agent_promotion_handoff_packet.json` |
 | Promotion handoff packet validation | Built as packet schema and blocker gate | `scripts/validate_general_agent_promotion_handoff_packet.py` |
+| Promotion environment binding contract | Built as no-secret binding ontology | `examples/general_agent_promotion_environment_bindings.json` |
+| Promotion environment binding validation | Built as contract/checklist drift gate | `scripts/validate_general_agent_promotion_environment_bindings.py` |
+| Promotion environment binding receipt | Built as redacted binding presence witness | `scripts/emit_general_agent_promotion_environment_binding_receipt.py` |
 | Promotion handoff preflight | Built as local execution readiness check | `scripts/preflight_general_agent_promotion_handoff.py` |
 
 ## Open Production Blockers
@@ -131,9 +134,11 @@ The aggregate promotion-closure validation path is:
 The handoff preflight path is:
 
 1. Validate the operator checklist and schema-backed handoff packet.
-2. Verify required environment bindings by variable name without serializing secret values.
-3. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
-4. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
+2. Validate the environment binding contract against the checklist.
+3. Emit `.change_assurance/general_agent_promotion_environment_binding_receipt.json` with names and presence only.
+4. Verify required environment bindings by variable name without serializing secret values.
+5. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
+6. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
 
 ## Verification
 
@@ -149,6 +154,8 @@ Latest local verification covered:
 | Promotion operator runbook tests | passed |
 | Promotion operator checklist tests | passed |
 | Promotion handoff packet tests | passed |
+| Promotion environment binding tests | passed |
+| Promotion environment binding receipt tests | passed |
 | Promotion handoff preflight tests | passed |
 | Promotion handoff packet validator tests | passed |
 | Promotion readiness tests | passed |

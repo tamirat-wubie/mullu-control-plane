@@ -62,6 +62,8 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | General-agent promotion closure plan validator | `scripts/validate_general_agent_promotion_closure_plan.py` verifies aggregate promotion actions match source adapter and deployment plans before use | Reflected |
 | General-agent promotion handoff packet | `docs/59_general_agent_promotion_handoff_packet.md` is the single operator entry point for the checklist, runbook, closure plans, validation reports, blockers, and terminal proof command | Reflected |
 | General-agent promotion machine handoff packet | `examples/general_agent_promotion_handoff_packet.json` is the schema-backed machine-readable handoff packet for operator execution | Reflected |
+| General-agent promotion environment bindings | `examples/general_agent_promotion_environment_bindings.json` and `scripts/validate_general_agent_promotion_environment_bindings.py` define the presence-only operator environment binding contract without serializing secret values | Reflected |
+| General-agent promotion environment binding receipt | `scripts/emit_general_agent_promotion_environment_binding_receipt.py` writes `.change_assurance/general_agent_promotion_environment_binding_receipt.json` with binding presence and no serialized secret values | Reflected |
 | General-agent promotion handoff packet validator | `scripts/validate_general_agent_promotion_handoff_packet.py` validates the machine handoff packet, blockers, entry points, and terminal proof command | Reflected |
 | General-agent promotion handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` verifies packet, checklist, closure reports, readiness report, and environment binding presence without printing secret values | Reflected |
 | Deployment capability capsule | `capsules/deployment.json` and `capabilities/deployment/capability_pack.json` govern `deployment.witness.collect` and `deployment.witness.publish.with_approval` | Reflected |
@@ -132,6 +134,8 @@ Before this witness can claim public deployment health, the repository must name
 | General-agent promotion closure plan schema validation | `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict` |
 | General-agent promotion closure plan validation | `python scripts/validate_general_agent_promotion_closure_plan.py --strict` |
 | General-agent promotion operator checklist validation | `python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json` |
+| General-agent promotion environment binding validation | `python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json` |
+| General-agent promotion environment binding receipt | `python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json` |
 | General-agent promotion handoff packet | `docs/59_general_agent_promotion_handoff_packet.md` |
 | General-agent promotion machine handoff packet validation | `python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json` |
 | General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |

@@ -34,7 +34,7 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
 
     assert report.ready is False
     assert "required environment bindings" in report.blockers
-    assert report.step_count == 6
+    assert report.step_count == 7
     assert "MULLU_GATEWAY_URL" in report.missing_environment_variables
     assert report.readiness_level == "pilot-governed-core"
     assert report.production_ready is False
@@ -58,6 +58,7 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     assert {step.name for step in report.steps} == {
         "operator checklist validation",
         "handoff packet validation",
+        "environment binding contract validation",
         "required environment bindings",
         "closure plan schema validation",
         "closure plan drift validation",
