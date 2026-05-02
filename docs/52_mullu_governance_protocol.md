@@ -28,6 +28,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 7. Deployment handoff receipts are public contracts when they cross operator, CI, or release-promotion boundaries.
 8. Effect assurance records are public contracts when they certify planned, observed, and reconciled reality changes.
 9. Deployment witness artifacts are public contracts when they support published gateway health claims.
+10. General-agent promotion closure plans are public contracts when they coordinate operator approval and production-promotion work.
+11. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
 
 ## Verification
 
@@ -40,11 +42,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 26 schemas
+protocol manifest ok: 28 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, promotion closure plan contract, promotion handoff packet contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes
