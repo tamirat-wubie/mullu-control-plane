@@ -18,6 +18,9 @@ certified until one closure certificate names the final path.
 | `TerminalClosureCertificate` | Final certificate for one command closure |
 | `TerminalClosureDisposition` | Closed-state classification |
 | `TerminalClosureCertifier` | Runtime that validates and issues certificates |
+| `schemas/terminal_closure_certificate.schema.json` | Public wire contract for terminal closure certificates |
+| `examples/terminal_closure_certificate.json` | Canonical committed certificate example |
+| `scripts/validate_terminal_closure_certificate.py` | Schema and disposition validator for certificate artifacts |
 
 ## Dispositions
 
@@ -65,3 +68,11 @@ EffectReconciliation unresolved
 
 The certificate is a capstone, not a bypass. It only certifies paths that lower
 layers have already proven.
+
+## Validation
+
+```bash
+python scripts/validate_terminal_closure_certificate.py --certificate examples/terminal_closure_certificate.json --json
+```
+
+Expected result: `valid=true`.

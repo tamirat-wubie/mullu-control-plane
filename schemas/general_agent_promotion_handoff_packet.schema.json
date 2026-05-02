@@ -81,12 +81,14 @@
         "checklist_validator",
         "handoff_packet_validator",
         "environment_binding_validator",
+        "environment_binding_receipt_emitter",
         "handoff_preflight",
         "aggregate_closure_plan",
         "schema_validation_report",
         "drift_validation_report",
         "readiness_report",
-        "preflight_report"
+        "preflight_report",
+        "environment_binding_receipt"
       ],
       "properties": {
         "human_runbook": {
@@ -117,6 +119,10 @@
           "type": "string",
           "minLength": 1
         },
+        "environment_binding_receipt_emitter": {
+          "type": "string",
+          "minLength": 1
+        },
         "handoff_preflight": {
           "type": "string",
           "minLength": 1
@@ -138,6 +144,10 @@
           "minLength": 1
         },
         "preflight_report": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_binding_receipt": {
           "type": "string",
           "minLength": 1
         }

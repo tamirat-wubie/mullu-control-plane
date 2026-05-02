@@ -60,6 +60,17 @@ def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     assert binding_entry["surface"] == "promotion"
 
 
+def test_protocol_manifest_indexes_promotion_environment_binding_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["general-agent-promotion-environment-binding-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/general_agent_promotion_environment_binding_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-environment-binding-receipt:1"
+    assert receipt_entry["surface"] == "promotion"
+
+
 def test_protocol_manifest_indexes_promotion_handoff_packet() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -143,6 +154,22 @@ def test_protocol_manifest_rejects_missing_promotion_environment_bindings_entry(
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "general_agent_promotion_environment_bindings.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_environment_binding_receipt_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-environment-binding-receipt"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_environment_binding_receipt.schema.json" in errors[0]
     assert "schemas/" in errors[0]
 
 

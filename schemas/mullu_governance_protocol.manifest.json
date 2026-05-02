@@ -95,6 +95,12 @@
       "surface": "promotion"
     },
     {
+      "schema_id": "general-agent-promotion-environment-binding-receipt",
+      "path": "schemas/general_agent_promotion_environment_binding_receipt.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-environment-binding-receipt:1",
+      "surface": "promotion"
+    },
+    {
       "schema_id": "general-agent-promotion-handoff-packet",
       "path": "schemas/general_agent_promotion_handoff_packet.schema.json",
       "urn": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",

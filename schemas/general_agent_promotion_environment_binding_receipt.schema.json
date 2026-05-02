@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-environment-binding-receipt:1",
+  "title": "General Agent Promotion Environment Binding Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "checked_at",
+    "contract_id",
+    "secret_serialization",
+    "ready",
+    "binding_count",
+    "missing_bindings",
+    "bindings"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "receipt_id": {
+      "type": "string",
+      "const": "general-agent-promotion-environment-binding-receipt-v1"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "contract_id": {
+      "type": "string",
+      "const": "general-agent-promotion-environment-bindings-v1"
+    },
+    "secret_serialization": {
+      "type": "string",
+      "const": "forbidden"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "binding_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "missing_bindings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "present",
+          "binding_kind",
+          "risk",
+          "approval_required",
+          "receipt_projection",
+          "value_serialized"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "present": {
+            "type": "boolean"
+          },
+          "binding_kind": {
+            "type": "string",
+            "enum": [
+              "artifact_path",
+              "audio_path",
+              "url",
+              "secret"
+            ]
+          },
+          "risk": {
+            "type": "string",
+            "enum": [
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "approval_required": {
+            "type": "boolean"
+          },
+          "receipt_projection": {
+            "type": "string",
+            "const": "name_and_presence_only"
+          },
+          "value_serialized": {
+            "type": "boolean",
+            "const": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -59,12 +59,14 @@ REQUIRED_ENTRY_POINTS = {
     "checklist_validator": "scripts/validate_general_agent_promotion_operator_checklist.py",
     "handoff_packet_validator": "scripts/validate_general_agent_promotion_handoff_packet.py",
     "environment_binding_validator": "scripts/validate_general_agent_promotion_environment_bindings.py",
+    "environment_binding_receipt_emitter": "scripts/emit_general_agent_promotion_environment_binding_receipt.py",
     "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
     "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
     "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json",
     "drift_validation_report": ".change_assurance/general_agent_promotion_closure_plan_validation.json",
     "readiness_report": ".change_assurance/general_agent_promotion_readiness.json",
     "preflight_report": ".change_assurance/general_agent_promotion_handoff_preflight.json",
+    "environment_binding_receipt": ".change_assurance/general_agent_promotion_environment_binding_receipt.json",
 }
 REQUIRED_VALIDATION_REPORTS = frozenset(
     {

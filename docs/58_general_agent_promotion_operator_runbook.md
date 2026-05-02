@@ -54,6 +54,7 @@ Secrets must be bound through the governed worker or deployment secret store. Do
 python scripts\validate_general_agent_promotion_operator_checklist.py --checklist examples\general_agent_promotion_operator_checklist.json --json
 python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
 python scripts\validate_general_agent_promotion_environment_bindings.py --contract examples\general_agent_promotion_environment_bindings.json --json
+python scripts\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\general_agent_promotion_environment_binding_receipt.json --json
 ```
 
 1. Generate the non-production evidence and plans:
@@ -68,7 +69,7 @@ python scripts\validate_general_agent_promotion_closure_plan_schema.py --output 
 python scripts\validate_general_agent_promotion_closure_plan.py --output .change_assurance\general_agent_promotion_closure_plan_validation.json --strict
 ```
 
-2. Run handoff preflight. The preflight records only environment variable names and presence status; it must not print secret values.
+2. Run handoff preflight. The binding receipt and preflight record only environment variable names and presence status; they must not print secret values.
 
 ```powershell
 python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --strict --json

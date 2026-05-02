@@ -28,6 +28,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
 | `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
+| `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `execution_result.schema.json` | Canonical execution outcome |

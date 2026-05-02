@@ -31,7 +31,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 10. General-agent promotion closure plans are public contracts when they coordinate operator approval and production-promotion work.
 11. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
 12. General-agent promotion environment bindings are public contracts when they define the presence-only inputs required for operator handoff preflight.
-13. Terminal closure certificates are public contracts when they certify final command disposition.
+13. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
+14. Terminal closure certificates are public contracts when they certify final command disposition.
 
 ## Verification
 
@@ -44,11 +45,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 30 schemas
+protocol manifest ok: 31 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, promotion closure plan contract, promotion environment binding contract, promotion handoff packet contract, terminal closure certificate contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, terminal closure certificate contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes
