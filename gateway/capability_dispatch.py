@@ -194,6 +194,27 @@ def register_financial_capabilities(
         ))
 
 
+def register_computer_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    code_adapter: Any | None = None,
+    sandbox_runner: Any | None = None,
+) -> None:
+    """Register workspace-bound computer handlers."""
+    dispatcher.register(FunctionCapabilityHandler(
+        "computer.filesystem.observe",
+        lambda context, params: _filesystem_observe(code_adapter, context, params),
+    ))
+    dispatcher.register(FunctionCapabilityHandler(
+        "computer.code.patch",
+        lambda context, params: _code_patch(code_adapter, context, params),
+    ))
+    dispatcher.register(FunctionCapabilityHandler(
+        "computer.command.run",
+        lambda context, params: _command_run(sandbox_runner, context, params),
+    ))
+
+
 def register_creative_capabilities(dispatcher: CapabilityDispatcher) -> None:
     """Register deterministic creative handlers."""
     dispatcher.register(FunctionCapabilityHandler("creative.document_generate", _document_generate))
@@ -221,6 +242,338 @@ def register_enterprise_capabilities(
         "enterprise.task_schedule",
         lambda context, params: _task_schedule(task_scheduler, context, params),
     ))
+
+
+def register_browser_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    browser_worker_client: Any | None = None,
+) -> None:
+    """Register browser handlers that dispatch only through a signed worker."""
+    for capability_id in (
+        "browser.open",
+        "browser.screenshot",
+        "browser.extract_text",
+        "browser.click",
+        "browser.type",
+        "browser.submit",
+    ):
+        dispatcher.register(FunctionCapabilityHandler(
+            capability_id,
+            lambda context, params, capability_id=capability_id: _adapter_worker_dispatch(
+                plane="browser",
+                capability_id=capability_id,
+                worker_client=browser_worker_client,
+                context=context,
+                params=params,
+                payload_builder=_browser_payload,
+            ),
+        ))
+
+
+def register_document_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    document_worker_client: Any | None = None,
+) -> None:
+    """Register document/data handlers that dispatch only through a signed worker."""
+    for capability_id in (
+        "document.extract_text",
+        "document.extract_tables",
+        "document.summarize",
+        "document.generate_docx",
+        "document.generate_pdf",
+        "spreadsheet.analyze",
+        "spreadsheet.generate",
+    ):
+        dispatcher.register(FunctionCapabilityHandler(
+            capability_id,
+            lambda context, params, capability_id=capability_id: _adapter_worker_dispatch(
+                plane="document",
+                capability_id=capability_id,
+                worker_client=document_worker_client,
+                context=context,
+                params=params,
+                payload_builder=_document_payload,
+            ),
+        ))
+
+
+def register_voice_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    voice_worker_client: Any | None = None,
+) -> None:
+    """Register voice handlers that create text intent through a signed worker."""
+    for capability_id in (
+        "voice.speech_to_text",
+        "voice.text_to_speech",
+        "voice.intent_classification",
+        "voice.intent_confirm",
+        "voice.meeting_summarize",
+        "voice.action_items_extract",
+    ):
+        dispatcher.register(FunctionCapabilityHandler(
+            capability_id,
+            lambda context, params, capability_id=capability_id: _adapter_worker_dispatch(
+                plane="voice",
+                capability_id=capability_id,
+                worker_client=voice_worker_client,
+                context=context,
+                params=params,
+                payload_builder=_voice_payload,
+            ),
+        ))
+
+
+def register_email_calendar_capabilities(
+    dispatcher: CapabilityDispatcher,
+    *,
+    email_calendar_worker_client: Any | None = None,
+) -> None:
+    """Register email and calendar handlers through a signed communication worker."""
+    for capability_id in (
+        "email.read",
+        "email.search",
+        "email.draft",
+        "email.send.with_approval",
+        "email.classify",
+        "email.reply_suggest",
+        "calendar.read",
+        "calendar.conflict_check",
+        "calendar.schedule",
+        "calendar.reschedule",
+        "calendar.invite",
+    ):
+        dispatcher.register(FunctionCapabilityHandler(
+            capability_id,
+            lambda context, params, capability_id=capability_id: _adapter_worker_dispatch(
+                plane="email/calendar",
+                capability_id=capability_id,
+                worker_client=email_calendar_worker_client,
+                context=context,
+                params=params,
+                payload_builder=_email_calendar_payload,
+            ),
+        ))
+
+
+def _adapter_worker_dispatch(
+    *,
+    plane: str,
+    capability_id: str,
+    worker_client: Any | None,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+    payload_builder: Callable[[str, CapabilityExecutionContext, dict[str, Any]], dict[str, Any]],
+) -> dict[str, Any]:
+    if worker_client is None or not callable(getattr(worker_client, "execute", None)):
+        return {
+            "response": f"{plane.capitalize()} worker is not available.",
+            "worker_plane": plane,
+            "worker_status": "unavailable",
+            "receipt_status": "worker_unavailable",
+        }
+    try:
+        payload = payload_builder(capability_id, context, params)
+        response = worker_client.execute(payload)
+        return _adapter_worker_result(plane=plane, response=response)
+    except (RuntimeError, ValueError) as exc:
+        return {
+            "response": f"{plane.capitalize()} worker dispatch failed.",
+            "worker_plane": plane,
+            "worker_status": "failed",
+            "worker_error": str(exc),
+            "receipt_status": "worker_dispatch_failed",
+        }
+
+
+def _adapter_worker_result(*, plane: str, response: Any) -> dict[str, Any]:
+    status = str(getattr(response, "status", ""))
+    result = getattr(response, "result", {})
+    receipt = getattr(response, "receipt", {})
+    error = str(getattr(response, "error", ""))
+    if isinstance(response, dict):
+        status = str(response.get("status", status))
+        result = response.get("result", result)
+        receipt = response.get("receipt", receipt)
+        error = str(response.get("error", error))
+    if not isinstance(result, dict):
+        result = {}
+    if not isinstance(receipt, dict):
+        receipt = {}
+    return {
+        "response": f"{plane.capitalize()} action {status or 'completed'}.",
+        "worker_plane": plane,
+        "worker_status": status,
+        "worker_result": dict(result),
+        "worker_receipt": dict(receipt),
+        "worker_error": error,
+        "verification_status": str(receipt.get("verification_status", "")),
+        "evidence_refs": list(receipt.get("evidence_refs", ())),
+        "receipt_status": status or "unknown",
+    }
+
+
+def _browser_payload(
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    url = str(params.get("url") or params.get("target_url") or "").strip()
+    selector = str(params.get("selector") or "").strip()
+    text = str(params.get("text") or "").strip()
+    if capability_id in {"browser.open", "browser.screenshot", "browser.extract_text"} and not url:
+        raise ValueError("browser action requires url")
+    if capability_id in {"browser.click", "browser.type", "browser.submit"} and not selector:
+        raise ValueError("browser action requires selector")
+    if capability_id == "browser.type" and not text:
+        raise ValueError("browser type action requires text")
+    metadata = _merged_worker_metadata(context, params)
+    if url and "url_before" not in metadata:
+        metadata["url_before"] = url
+    return {
+        "request_id": _request_id_for("browser", capability_id, context, params),
+        "tenant_id": context.tenant_id,
+        "capability_id": capability_id,
+        "action": capability_id,
+        "url": url,
+        "selector": selector,
+        "text": text,
+        "approval_id": str(params.get("approval_id") or context.metadata.get("approval_id") or ""),
+        "metadata": metadata,
+    }
+
+
+def _document_payload(
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    rows = params.get("rows", ())
+    if rows is None:
+        rows = ()
+    if not isinstance(rows, list | tuple):
+        raise ValueError("document rows must be an array")
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("document rows entries must be objects")
+    return {
+        "request_id": _request_id_for("document", capability_id, context, params),
+        "tenant_id": context.tenant_id,
+        "capability_id": capability_id,
+        "action": capability_id,
+        "filename": str(params.get("filename") or ""),
+        "content_base64": str(params.get("content_base64") or ""),
+        "text": str(params.get("text") or params.get("body") or ""),
+        "rows": [dict(row) for row in rows],
+        "title": str(params.get("title") or ""),
+        "metadata": _merged_worker_metadata(context, params),
+    }
+
+
+def _voice_payload(
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    session_id = str(
+        params.get("session_id")
+        or context.conversation_id
+        or f"voice-session-{_hash_text(context.tenant_id + context.identity_id)[:16]}"
+    )
+    return {
+        "request_id": _request_id_for("voice", capability_id, context, params),
+        "tenant_id": context.tenant_id,
+        "capability_id": capability_id,
+        "action": capability_id,
+        "session_id": session_id,
+        "audio_base64": str(params.get("audio_base64") or ""),
+        "transcript_text": str(params.get("transcript_text") or params.get("transcript") or ""),
+        "response_text": str(params.get("response_text") or params.get("text") or ""),
+        "approval_id": str(params.get("approval_id") or context.metadata.get("approval_id") or ""),
+        "metadata": _merged_worker_metadata(context, params),
+    }
+
+
+def _email_calendar_payload(
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    recipients = params.get("recipients", ())
+    attendees = params.get("attendees", ())
+    if recipients is None:
+        recipients = ()
+    if attendees is None:
+        attendees = ()
+    if isinstance(recipients, str):
+        recipients = (recipients,)
+    if isinstance(attendees, str):
+        attendees = (attendees,)
+    if not isinstance(recipients, list | tuple):
+        raise ValueError("email/calendar recipients must be an array")
+    if not isinstance(attendees, list | tuple):
+        raise ValueError("email/calendar attendees must be an array")
+    return {
+        "request_id": _request_id_for("email-calendar", capability_id, context, params),
+        "tenant_id": context.tenant_id,
+        "capability_id": capability_id,
+        "action": capability_id,
+        "connector_id": str(params.get("connector_id") or _default_connector_id_for(capability_id)),
+        "subject": str(params.get("subject") or ""),
+        "body": str(params.get("body") or params.get("message") or ""),
+        "query": str(params.get("query") or ""),
+        "event_id": str(params.get("event_id") or ""),
+        "start_time": str(params.get("start_time") or params.get("start") or ""),
+        "end_time": str(params.get("end_time") or params.get("end") or ""),
+        "recipients": [str(item) for item in recipients],
+        "attendees": [str(item) for item in attendees],
+        "approval_id": str(params.get("approval_id") or context.metadata.get("approval_id") or ""),
+        "metadata": _merged_worker_metadata(context, params),
+    }
+
+
+def _default_connector_id_for(capability_id: str) -> str:
+    if capability_id.startswith("calendar."):
+        return "google_calendar"
+    return "gmail"
+
+
+def _merged_worker_metadata(
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    metadata = dict(context.metadata)
+    param_metadata = params.get("metadata", {})
+    if isinstance(param_metadata, dict):
+        metadata.update(param_metadata)
+    metadata.setdefault("identity_id", context.identity_id)
+    if context.command_id:
+        metadata.setdefault("command_id", context.command_id)
+    if context.conversation_id:
+        metadata.setdefault("conversation_id", context.conversation_id)
+    return metadata
+
+
+def _request_id_for(
+    plane: str,
+    capability_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> str:
+    explicit = str(params.get("request_id") or "").strip()
+    if explicit:
+        return explicit
+    material = ":".join((
+        plane,
+        capability_id,
+        context.tenant_id,
+        context.identity_id,
+        context.command_id,
+        context.conversation_id,
+    ))
+    return f"{plane}-request-{_hash_text(material)[:16]}"
 
 
 def _balance_check(financial_provider: Any, context: CapabilityExecutionContext) -> dict[str, Any]:
@@ -354,6 +707,115 @@ def _refund(
         "response": f"Refund failed: {result.error}",
         "transaction_id": transaction_id,
         "receipt_status": "failed",
+    }
+
+
+def _filesystem_observe(
+    code_adapter: Any | None,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    if code_adapter is None:
+        return {"response": "Workspace observation is not available.", "receipt_status": "executor_unavailable"}
+    repo_id = str(params.get("repo_id") or "workspace")
+    extensions = tuple(params.get("extensions", ()))
+    workspace = code_adapter.list_files(repo_id, extensions=extensions)
+    root_hash = _hash_text(str(getattr(workspace, "root_path", "")))
+    files = [
+        {
+            "relative_path": getattr(item, "relative_path", ""),
+            "content_hash": getattr(item, "content_hash", ""),
+            "size_bytes": getattr(item, "size_bytes", 0),
+            "line_count": getattr(item, "line_count", 0),
+        }
+        for item in getattr(workspace, "files", ())
+    ]
+    return {
+        "response": f"Observed {getattr(workspace, 'total_files', 0)} workspace file(s).",
+        "workspace_root_hash": root_hash,
+        "file_count": getattr(workspace, "total_files", 0),
+        "total_bytes": getattr(workspace, "total_bytes", 0),
+        "files": files,
+        "receipt_status": "observed",
+    }
+
+
+def _code_patch(
+    code_adapter: Any | None,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    if code_adapter is None:
+        return {"response": "Workspace patching is not available.", "receipt_status": "executor_unavailable"}
+    target_file = str(params.get("target_file") or "").strip()
+    unified_diff = str(params.get("unified_diff") or "").strip()
+    if not target_file or not unified_diff:
+        return {"response": "Code patch requires target_file and unified_diff.", "receipt_status": "invalid"}
+    patch_id = str(params.get("patch_id") or f"patch-{_hash_text(target_file + unified_diff)[:16]}")
+    result = code_adapter.apply_patch(patch_id, target_file, unified_diff)
+    status = getattr(result, "status", "")
+    status_value = getattr(status, "value", str(status))
+    error_message = getattr(result, "error_message", "")
+    return {
+        "response": f"Patch {status_value}: {target_file}",
+        "patch_id": getattr(result, "patch_id", patch_id),
+        "patch_status": status_value,
+        "target_file": getattr(result, "target_file", target_file),
+        "error_message": error_message,
+        "receipt_status": "patched" if status_value == "applied" else "failed",
+    }
+
+
+def _command_run(
+    sandbox_runner: Any | None,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    if sandbox_runner is None:
+        return {"response": "Sandbox runner is not available.", "receipt_status": "sandbox_unavailable"}
+    command = params.get("argv") or params.get("command")
+    if not isinstance(command, (list, tuple)) or not command:
+        return {"response": "Sandbox command requires argv.", "receipt_status": "invalid"}
+    from gateway.sandbox_runner import SandboxCommandRequest
+
+    request = SandboxCommandRequest(
+        request_id=str(params.get("request_id") or f"sandbox-request-{_hash_text(context.command_id or context.tenant_id)[:16]}"),
+        tenant_id=context.tenant_id,
+        capability_id="computer.command.run",
+        argv=tuple(str(item) for item in command),
+        cwd=str(params.get("cwd") or "/workspace"),
+        environment=dict(params.get("environment", {})),
+    )
+    result = sandbox_runner.execute(request)
+    receipt = result.receipt
+    receipt_payload = {
+        "receipt_id": receipt.receipt_id,
+        "request_id": receipt.request_id,
+        "tenant_id": receipt.tenant_id,
+        "capability_id": receipt.capability_id,
+        "sandbox_id": receipt.sandbox_id,
+        "image": receipt.image,
+        "command_hash": receipt.command_hash,
+        "docker_args_hash": receipt.docker_args_hash,
+        "stdout_hash": receipt.stdout_hash,
+        "stderr_hash": receipt.stderr_hash,
+        "returncode": receipt.returncode,
+        "network_disabled": receipt.network_disabled,
+        "read_only_rootfs": receipt.read_only_rootfs,
+        "workspace_mount": receipt.workspace_mount,
+        "forbidden_effects_observed": receipt.forbidden_effects_observed,
+        "verification_status": receipt.verification_status,
+        "evidence_refs": list(receipt.evidence_refs),
+    }
+    return {
+        "response": f"Sandbox command {result.status}.",
+        "sandbox_status": result.status,
+        "sandbox_stdout": result.stdout,
+        "sandbox_stderr": result.stderr,
+        "sandbox_receipt_id": receipt.receipt_id,
+        "verification_status": receipt.verification_status,
+        "sandbox_execution_receipt": receipt_payload,
+        "receipt_status": result.status,
     }
 
 
@@ -530,10 +992,59 @@ def _nested_platform_attribute(platform: Any, container_names: tuple[str, ...], 
     return None
 
 
+def _adapter_worker_clients_for_platform(platform: Any | None) -> tuple[Any | None, Any | None, Any | None, Any | None]:
+    """Resolve adapter worker clients from platform state or environment."""
+    if platform is not None:
+        bundle = _first_platform_attribute(platform, ("adapter_worker_clients", "_adapter_worker_clients"))
+        if bundle is not None:
+            return (
+                getattr(bundle, "browser", None),
+                getattr(bundle, "document", None),
+                getattr(bundle, "voice", None),
+                getattr(bundle, "email_calendar", None),
+            )
+        browser_client = _first_platform_attribute(platform, ("browser_worker_client", "_browser_worker_client")) or _nested_platform_attribute(
+            platform,
+            ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
+            ("browser_worker_client", "_browser_worker_client"),
+        )
+        document_client = _first_platform_attribute(platform, ("document_worker_client", "_document_worker_client")) or _nested_platform_attribute(
+            platform,
+            ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
+            ("document_worker_client", "_document_worker_client"),
+        )
+        voice_client = _first_platform_attribute(platform, ("voice_worker_client", "_voice_worker_client")) or _nested_platform_attribute(
+            platform,
+            ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
+            ("voice_worker_client", "_voice_worker_client"),
+        )
+        email_calendar_client = _first_platform_attribute(
+            platform,
+            ("email_calendar_worker_client", "_email_calendar_worker_client"),
+        ) or _nested_platform_attribute(
+            platform,
+            ("capability_runtime", "_capability_runtime", "adapter_runtime", "_adapter_runtime"),
+            ("email_calendar_worker_client", "_email_calendar_worker_client"),
+        )
+        if any(client is not None for client in (browser_client, document_client, voice_client, email_calendar_client)):
+            return browser_client, document_client, voice_client, email_calendar_client
+
+    from gateway.adapter_worker_clients import build_adapter_worker_clients_from_env
+
+    clients = build_adapter_worker_clients_from_env()
+    return clients.browser, clients.document, clients.voice, clients.email_calendar
+
+
 def build_capability_dispatcher_from_platform(platform: Any | None) -> CapabilityDispatcher:
     """Build a dispatcher from platform-backed providers and default handlers."""
     if platform is None:
         dispatcher = CapabilityDispatcher()
+        browser_client, document_client, voice_client, email_calendar_client = _adapter_worker_clients_for_platform(None)
+        register_computer_capabilities(dispatcher)
+        register_browser_capabilities(dispatcher, browser_worker_client=browser_client)
+        register_document_capabilities(dispatcher, document_worker_client=document_client)
+        register_voice_capabilities(dispatcher, voice_worker_client=voice_client)
+        register_email_calendar_capabilities(dispatcher, email_calendar_worker_client=email_calendar_client)
         register_creative_capabilities(dispatcher)
         register_enterprise_capabilities(dispatcher)
         return dispatcher
@@ -590,6 +1101,16 @@ def build_capability_dispatcher_from_platform(platform: Any | None) -> Capabilit
         financial_provider=financial_provider,
         payment_executor=payment_executor,
     )
+    register_computer_capabilities(
+        dispatcher,
+        code_adapter=_first_platform_attribute(platform, ("code_adapter", "_code_adapter", "workspace_adapter", "_workspace_adapter")),
+        sandbox_runner=_first_platform_attribute(platform, ("sandbox_runner", "_sandbox_runner")),
+    )
+    browser_client, document_client, voice_client, email_calendar_client = _adapter_worker_clients_for_platform(platform)
+    register_browser_capabilities(dispatcher, browser_worker_client=browser_client)
+    register_document_capabilities(dispatcher, document_worker_client=document_client)
+    register_voice_capabilities(dispatcher, voice_worker_client=voice_client)
+    register_email_calendar_capabilities(dispatcher, email_calendar_worker_client=email_calendar_client)
     register_creative_capabilities(dispatcher)
     register_enterprise_capabilities(
         dispatcher,

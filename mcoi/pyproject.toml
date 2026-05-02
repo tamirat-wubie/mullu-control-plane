@@ -17,7 +17,34 @@ mcoi-migrate-proofs = "mcoi_runtime.migration.runner:main"
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "fastapi>=0.115", "httpx>=0.27", "uvicorn>=0.34", "cryptography>=41.0"]
 persistence = ["psycopg2-binary>=2.9"]
 encryption = ["cryptography>=41.0"]
-all = ["psycopg2-binary>=2.9", "cryptography>=41.0"]
+gateway = ["fastapi>=0.115", "uvicorn>=0.34", "httpx>=0.27"]
+browser-worker = ["playwright>=1.51"]
+document-worker = ["pypdf>=5.0", "python-docx>=1.1", "openpyxl>=3.1", "python-pptx>=1.0"]
+voice-worker = ["openai>=1.0"]
+worker = [
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+    "httpx>=0.27",
+    "playwright>=1.51",
+    "pypdf>=5.0",
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=1.0",
+    "openai>=1.0",
+]
+all = [
+    "psycopg2-binary>=2.9",
+    "cryptography>=41.0",
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+    "httpx>=0.27",
+    "playwright>=1.51",
+    "pypdf>=5.0",
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=1.0",
+    "openai>=1.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

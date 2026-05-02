@@ -1,0 +1,32 @@
+{
+  "capsule_id": "communication.email_calendar.v0",
+  "domain": "communication",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/communication/email_calendar.json"],
+  "capability_refs": [
+    "email.read",
+    "email.search",
+    "email.draft",
+    "email.send.with_approval",
+    "email.classify",
+    "email.reply_suggest",
+    "calendar.read",
+    "calendar.conflict_check",
+    "calendar.schedule",
+    "calendar.reschedule",
+    "calendar.invite"
+  ],
+  "policy_refs": ["policies/communication/email_calendar.policy.json"],
+  "evidence_rules": ["evidence/communication/email_calendar.evidence.json"],
+  "approval_rules": ["approval/communication/email_calendar.approval.json"],
+  "recovery_rules": ["recovery/communication/email_calendar.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/communication/email_calendar"],
+  "read_model_refs": ["read_models/communication/email_calendar.json"],
+  "operator_view_refs": ["operator_views/communication/email_calendar.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified email and calendar communication capabilities routed through the bounded email/calendar worker"
+  },
+  "extensions": {}
+}

@@ -285,6 +285,8 @@ def test_mcp_operator_read_model_reports_manifest_summary(tmp_path: Path) -> Non
     assert read_model["mcp_manifest_valid"] is True
     assert read_model["mcp_manifest_ref"] == manifest_path.resolve().as_uri()
     assert read_model["mcp_manifest_capability_count"] == 1
+    assert read_model["capability_surface"] == "governed_capability_records"
+    assert read_model["raw_tool_surface_exposed"] is False
     assert read_model["capability_count"] == 1
 
 
@@ -526,8 +528,16 @@ def test_mcp_operator_read_model_projects_capability_authority_and_audits() -> N
     assert read_model["mcp_manifest_configured"] is False
     assert read_model["mcp_manifest_valid"] is True
     assert read_model["mcp_manifest_capability_count"] == 0
+    assert read_model["capability_surface"] == "governed_capability_records"
+    assert read_model["raw_tool_surface_exposed"] is False
     assert read_model["capability_count"] == 1
     assert read_model["capabilities"][0]["capability_id"] == "mcp.docs_search_docs"
+    assert read_model["capabilities"][0]["domain"] == "mcp"
+    assert read_model["capabilities"][0]["allowed_tools"] == ["governed_mcp_executor.execute"]
+    assert read_model["capabilities"][0]["allowed_roles"] == ["operator"]
+    assert read_model["capabilities"][0]["requires_sandbox"] is True
+    assert "extensions" not in read_model["capabilities"][0]
+    assert "input_schema_ref" not in read_model["capabilities"][0]
     assert read_model["ownership"][0]["owner_team"] == "knowledge-ops"
     assert read_model["approval_policies"][0]["capability"] == "mcp.docs_search_docs"
     assert read_model["execution_audit_count"] == 1
@@ -583,7 +593,11 @@ def test_mcp_operator_read_model_endpoint_reports_runtime_state() -> None:
     assert read_model_resp.json()["mcp_manifest_configured"] is False
     assert read_model_resp.json()["mcp_manifest_valid"] is True
     assert read_model_resp.json()["mcp_manifest_capability_count"] == 0
+    assert read_model_resp.json()["capability_surface"] == "governed_capability_records"
+    assert read_model_resp.json()["raw_tool_surface_exposed"] is False
     assert read_model_resp.json()["capability_count"] == 1
+    assert "extensions" not in read_model_resp.json()["capabilities"][0]
+    assert read_model_resp.json()["capabilities"][0]["allowed_tools"] == ["governed_mcp_executor.execute"]
     assert read_model_resp.json()["ownership_count"] == 1
     assert read_model_resp.json()["approval_policy_count"] == 1
     assert read_model_resp.json()["execution_audit_count"] == 1

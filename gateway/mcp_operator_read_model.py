@@ -9,6 +9,7 @@ Dependencies: command capability admission gate, authority mesh store, and
 Invariants:
   - Read model is observational and side-effect free.
   - Only MCP-domain capability and authority records are included.
+  - Capability visibility uses governed records, not raw MCP tool descriptors.
   - Audit pagination is bounded and deterministic.
   - Missing optional runtime components produce explicit disabled sections.
 """
@@ -54,6 +55,8 @@ def build_mcp_operator_read_model(
         "mcp_manifest_valid": manifest["valid"],
         "mcp_manifest_ref": manifest["manifest_ref"],
         "mcp_manifest_capability_count": manifest["capability_count"],
+        "capability_surface": "governed_capability_records",
+        "raw_tool_surface_exposed": False,
         "capabilities": capabilities,
         "capability_count": len(capabilities),
         "ownership": ownership,
@@ -91,14 +94,17 @@ def _mcp_capabilities(capability_admission_gate: Any | None, *, capability_filte
     if capability_admission_gate is None:
         return []
     read_model = capability_admission_gate.read_model()
-    raw_capabilities = read_model.get("capabilities", ())
+    raw_capabilities = read_model.get("governed_capability_records", ())
     capabilities: list[dict[str, Any]] = []
     for item in raw_capabilities:
-        if not isinstance(item, dict) or item.get("domain") != "mcp":
+        if not isinstance(item, dict):
             continue
-        if capability_filter and item.get("capability_id") != capability_filter:
+        capability_id = str(item.get("capability_id", ""))
+        if not capability_id.startswith("mcp."):
             continue
-        capabilities.append(dict(item))
+        if capability_filter and capability_id != capability_filter:
+            continue
+        capabilities.append({"domain": "mcp", **dict(item)})
     return capabilities
 
 

@@ -1,0 +1,355 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "connector.google_drive.read",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/google_drive_read.input.schema.json",
+      "output_schema_ref": "schemas/connector/google_drive_read.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["google_drive_resource_read"],
+        "forbidden_effects": ["external_file_modified", "external_message_sent", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "resource_digest", "scope_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["www.googleapis.com"],
+        "secret_scope": "oauth:google_drive.readonly"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Read Google Drive resource",
+        "risk_tier": "low",
+        "connector_provider": "google_drive",
+        "credential_boundary": "oauth_scope_allowlist"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.google_drive_read"],
+          "allowed_networks": ["www.googleapis.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "connector.google_drive.write.with_approval",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/google_drive_write.input.schema.json",
+      "output_schema_ref": "schemas/connector/google_drive_write.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["google_drive_resource_modified"],
+        "forbidden_effects": ["external_message_sent", "credential_scope_exceeded", "cross_tenant_write"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "before_after_resource_hash", "approval_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["www.googleapis.com"],
+        "secret_scope": "oauth:google_drive.file"
+      },
+      "recovery_plan": {
+        "rollback_capability": "connector.google_drive.write.with_approval",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Write Google Drive resource with approval",
+        "risk_tier": "high",
+        "connector_provider": "google_drive",
+        "credential_boundary": "oauth_scope_allowlist"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.google_drive_write"],
+          "allowed_networks": ["www.googleapis.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "connector.github.read",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/github_read.input.schema.json",
+      "output_schema_ref": "schemas/connector/github_read.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["github_resource_read"],
+        "forbidden_effects": ["repository_modified", "external_message_sent", "credential_scope_exceeded"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "resource_digest", "scope_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["api.github.com"],
+        "secret_scope": "oauth:github.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Read GitHub resource",
+        "risk_tier": "low",
+        "connector_provider": "github",
+        "credential_boundary": "oauth_scope_allowlist"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.github_read"],
+          "allowed_networks": ["api.github.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "connector.github.write.with_approval",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/github_write.input.schema.json",
+      "output_schema_ref": "schemas/connector/github_write.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["github_resource_modified"],
+        "forbidden_effects": ["credential_scope_exceeded", "cross_tenant_write", "unreviewed_repository_write"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "before_after_resource_hash", "approval_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["api.github.com"],
+        "secret_scope": "oauth:github.write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "connector.github.write.with_approval",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.03
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Write GitHub resource with approval",
+        "risk_tier": "high",
+        "connector_provider": "github",
+        "credential_boundary": "oauth_scope_allowlist"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.github_write"],
+          "allowed_networks": ["api.github.com"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "connector.postgres.query",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/postgres_query.input.schema.json",
+      "output_schema_ref": "schemas/connector/postgres_query.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["postgres_rows_read"],
+        "forbidden_effects": ["database_row_modified", "credential_scope_exceeded", "cross_tenant_read"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "query_hash", "result_digest"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["postgres.internal"],
+        "secret_scope": "service_account:postgres.readonly"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_read",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Run read-only Postgres query",
+        "risk_tier": "medium",
+        "connector_provider": "postgres",
+        "credential_boundary": "service_account_scope_allowlist"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.postgres_query"],
+          "allowed_networks": ["postgres.internal"]
+        }
+      }
+    },
+    {
+      "capability_id": "connector.postgres.write.with_approval",
+      "domain": "connector",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/connector/postgres_write.input.schema.json",
+      "output_schema_ref": "schemas/connector/postgres_write.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["postgres_rows_modified"],
+        "forbidden_effects": ["credential_scope_exceeded", "cross_tenant_write", "unlogged_database_write"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["connector_id", "before_after_row_hash", "approval_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["connector_operator"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "connector_worker",
+        "network_allowlist": ["postgres.internal"],
+        "secret_scope": "service_account:postgres.write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "connector.postgres.write.with_approval",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "connector_write",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Write Postgres rows with approval",
+        "risk_tier": "high",
+        "connector_provider": "postgres",
+        "credential_boundary": "service_account_scope_allowlist"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["connector_operator"],
+          "allowed_tools": ["connector_worker.postgres_write"],
+          "allowed_networks": ["postgres.internal"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

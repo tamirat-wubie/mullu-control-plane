@@ -36,6 +36,10 @@ from gateway.event_log import WebhookEventLog
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.mcp_operator_read_model import build_mcp_operator_read_model
+from gateway.operator_capability_console import (
+    build_operator_capability_read_model,
+    render_operator_capability_console,
+)
 from gateway.plan_ledger import build_capability_plan_ledger_from_env
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
@@ -1072,6 +1076,49 @@ def create_gateway_app(
             "admission_audits": audits,
             "count": len(audits),
         }
+
+    @app.get("/operator/capabilities/read-model")
+    def operator_capabilities_read_model(
+        request: Request,
+        domain: str = "",
+        risk_level: str = "",
+        admission_status: str = "",
+        audit_limit: int = 100,
+        audit_offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        return build_operator_capability_read_model(
+            capability_admission_gate=capability_admission_gate,
+            command_ledger=command_ledger,
+            plan_ledger=plan_ledger,
+            domain=domain,
+            risk_level=risk_level,
+            admission_status=admission_status,
+            audit_limit=audit_limit,
+            audit_offset=audit_offset,
+        )
+
+    @app.get("/operator/capabilities", response_class=HTMLResponse)
+    def operator_capabilities_console(
+        request: Request,
+        domain: str = "",
+        risk_level: str = "",
+        admission_status: str = "",
+        audit_limit: int = 100,
+        audit_offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        read_model = build_operator_capability_read_model(
+            capability_admission_gate=capability_admission_gate,
+            command_ledger=command_ledger,
+            plan_ledger=plan_ledger,
+            domain=domain,
+            risk_level=risk_level,
+            admission_status=admission_status,
+            audit_limit=audit_limit,
+            audit_offset=audit_offset,
+        )
+        return HTMLResponse(render_operator_capability_console(read_model))
 
     @app.get("/commands/{command_id}/capability-admission")
     def command_capability_admission(command_id: str, request: Request):

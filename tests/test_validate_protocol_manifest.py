@@ -38,6 +38,28 @@ def test_protocol_manifest_indexes_effect_assurance_record() -> None:
     assert effect_entry["surface"] == "effect_assurance"
 
 
+def test_protocol_manifest_indexes_promotion_closure_plan() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    plan_entry = entries["general-agent-promotion-closure-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert plan_entry["path"] == "schemas/general_agent_promotion_closure_plan.schema.json"
+    assert plan_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-closure-plan:1"
+    assert plan_entry["surface"] == "promotion"
+
+
+def test_protocol_manifest_indexes_promotion_handoff_packet() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    packet_entry = entries["general-agent-promotion-handoff-packet"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert packet_entry["path"] == "schemas/general_agent_promotion_handoff_packet.schema.json"
+    assert packet_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-handoff-packet:1"
+    assert packet_entry["surface"] == "promotion"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [
@@ -67,4 +89,36 @@ def test_protocol_manifest_rejects_missing_effect_assurance_entry() -> None:
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "effect_assurance.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_closure_plan_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-closure-plan"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_closure_plan.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_handoff_packet_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-handoff-packet"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_handoff_packet.schema.json" in errors[0]
     assert "schemas/" in errors[0]

@@ -34,12 +34,28 @@ from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityReg
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_CAPSULE_PATHS = (
+    _REPO_ROOT / "capsules" / "browser.json",
+    _REPO_ROOT / "capsules" / "communication.json",
+    _REPO_ROOT / "capsules" / "connector.json",
     _REPO_ROOT / "capsules" / "creative.json",
+    _REPO_ROOT / "capsules" / "deployment.json",
+    _REPO_ROOT / "capsules" / "document.json",
     _REPO_ROOT / "capsules" / "enterprise.json",
+    _REPO_ROOT / "capsules" / "financial.json",
+    _REPO_ROOT / "capsules" / "computer.json",
+    _REPO_ROOT / "capsules" / "voice.json",
 )
 _DEFAULT_CAPABILITY_PACK_PATHS = (
+    _REPO_ROOT / "capabilities" / "browser" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "communication" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "connector" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "creative" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "deployment" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "document" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "enterprise" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "financial" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "computer" / "capability_pack.json",
+    _REPO_ROOT / "capabilities" / "voice" / "capability_pack.json",
 )
 
 

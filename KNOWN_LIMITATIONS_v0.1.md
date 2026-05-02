@@ -28,9 +28,26 @@ runtime does not yet behave as intended by the architecture specification.
 - **No real SMTP testing in CI:** SMTP connector logic is unit-tested with mocks.
   Sending actual email requires a live SMTP server (e.g. containerized MailHog),
   which is not part of the CI environment.
-- **No browser adapter:** No Selenium, Playwright, or CDP integration.
-- **No document adapter:** No PDF, Office, or structured-document manipulation.
-- **No voice adapter:** No speech-to-text or text-to-speech integration.
+- **Governed capability fabric is present, but live production evidence remains
+  the promotion boundary:** Browser, document, voice, email/calendar, connector,
+  sandboxed computer, operator capability UI, multi-agent delegation, and
+  deployment-witness publication entries are now represented as governed
+  capability families. Production claims still require live receipts,
+  dependency probes, signed worker responses, and deployment witness evidence.
+- **Browser adapter not production-closed:** A restricted Playwright adapter
+  exists, but browser runtime dependencies, browser binaries, sandboxed worker
+  packaging, and live evidence are not yet published.
+- **Document adapter not production-closed:** Optional PDF/Office parser
+  implementations exist, but production dependency bundling and live parser
+  evidence are not yet published.
+- **Voice adapter not production-closed:** An OpenAI-compatible voice adapter
+  exists, but provider credentials, live STT/TTS checks, and deployment evidence
+  are not yet published.
+- **Email/calendar adapter not production-closed:** A signed email/calendar worker
+  contract and bounded Gmail, Google Calendar, and Microsoft Graph HTTP adapter
+  exist for draft/send/read/schedule policy enforcement, but provider credentials,
+  live read-only connector receipts, and deployment receipts are not yet
+  published.
 
 ## Provider Identity
 
@@ -58,6 +75,11 @@ runtime does not yet behave as intended by the architecture specification.
   configure a coordination store and request checkpoint/restore explicitly. Restore
   is governed: expired leases are rejected, policy pack drift triggers review, and
   retry counts are tracked to prevent zombie workflows.
+- **Specialist delegation is bounded, not a networked runtime.** The gateway now
+  supports controlled specialist-worker delegation with role allowlists,
+  capability checks, budget ceilings, timeouts, leases, and receipts. This is not
+  a distributed multi-process agent runtime; external agents still require the
+  agent adapter protocol or a separate worker deployment.
 
 ## Authority And Obligations
 
@@ -81,11 +103,14 @@ runtime does not yet behave as intended by the architecture specification.
 The following features are described in architecture documents but have no runtime
 implementation in this release:
 
-- **Multi-agent live runtime:** Coordination plane defines delegation and handoff
-  contracts, but no multi-process or networked agent execution exists. External
-  agents can connect via the agent adapter protocol.
-- **Web UI:** Operator console provides structured JSON dashboard views (home,
-  runs, audit, checkpoints, providers, scheduler) but no browser-based frontend.
+- **Networked multi-agent runtime:** Coordination plane defines delegation and
+  handoff contracts, and the gateway has bounded specialist leases, but no
+  multi-process or networked agent execution fabric exists. External agents can
+  connect via the agent adapter protocol.
+- **Full operator web UI:** Operator console provides structured JSON dashboard
+  views and a minimal browser-based capability read model. Full approval queues,
+  audit/proof exploration, organization management, and credentialed directory
+  scheduling UI are not yet implemented.
 - **RBAC / human governance:** API key auth with scopes, JWT auth, per-session
   RBAC checks, gateway authority resolution, and authority-obligation read
   models exist. Full organization-management UI and credentialed directory

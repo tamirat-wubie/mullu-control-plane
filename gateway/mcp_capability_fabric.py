@@ -100,16 +100,26 @@ def build_mcp_domain_capsule(
     entries: tuple[CapabilityRegistryEntry, ...],
     *,
     capsule_id: str = "mcp.imported_tools.v0",
-    owner_team: str = "integrations",
+    owner_team: str = "",
 ) -> DomainCapsule:
     """Build the MCP domain capsule for supplied certified capability entries."""
     if not entries:
         raise ValueError("at least one MCP capability entry is required")
+    entry_owner_teams = {
+        entry.obligation_model.owner_team
+        for entry in entries
+    }
+    if not owner_team:
+        if len(entry_owner_teams) != 1:
+            raise ValueError("MCP domain capsule requires one owner_team for mixed-owner entries")
+        owner_team = next(iter(entry_owner_teams))
     for entry in entries:
         if entry.domain != "mcp":
             raise ValueError("MCP domain capsule can only reference mcp capabilities")
         if entry.certification_status is not CapabilityCertificationStatus.CERTIFIED:
             raise ValueError("MCP domain capsule requires certified capabilities")
+        if entry.obligation_model.owner_team != owner_team:
+            raise ValueError("MCP domain capsule owner_team must match capability owner teams")
     capability_refs = tuple(entry.capability_id for entry in entries)
     return DomainCapsule(
         capsule_id=capsule_id,
@@ -135,7 +145,7 @@ def build_mcp_capability_admission_gate(
     entries: tuple[CapabilityRegistryEntry, ...],
     clock: Callable[[], str],
     capsule_id: str = "mcp.imported_tools.v0",
-    owner_team: str = "integrations",
+    owner_team: str = "",
 ) -> CommandCapabilityAdmissionGate:
     """Build a command admission gate for certified MCP capability entries."""
     capsule = build_mcp_domain_capsule(entries, capsule_id=capsule_id, owner_team=owner_team)

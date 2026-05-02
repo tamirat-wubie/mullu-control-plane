@@ -116,6 +116,24 @@ def _request_body() -> bytes:
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
+def _body_from_payload(payload: dict[str, Any]) -> bytes:
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _rehash_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    payload = dict(payload)
+    payload["input_hash"] = canonical_hash({
+        "intent": payload["intent"],
+        "tenant_id": payload["tenant_id"],
+        "identity_id": payload["identity_id"],
+        "command_id": payload["command_id"],
+        "conversation_id": payload["conversation_id"],
+        "boundary": payload["boundary"],
+        "metadata": payload["metadata"],
+    })
+    return payload
+
+
 def test_capability_worker_executes_signed_payment_request() -> None:
     secret = "worker-secret"
     app = create_capability_worker_app(
@@ -188,6 +206,51 @@ def test_capability_worker_rejects_tampered_input_hash() -> None:
 
     assert response.status_code == 422
     assert "input hash mismatch" in response.json()["detail"]
+
+
+def test_capability_worker_rejects_intent_boundary_mismatch() -> None:
+    secret = "worker-secret"
+    payload = json.loads(_request_body().decode("utf-8"))
+    payload["intent"] = {"skill": "financial", "action": "refund", "params": {"transaction_id": "tx-1"}}
+    body = _body_from_payload(_rehash_payload(payload))
+    app = create_capability_worker_app(
+        dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+        signing_secret=secret,
+        worker_id="restricted-worker-test",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/capability/execute",
+        content=body,
+        headers={"X-Mullu-Capability-Signature": sign_capability_payload(body, secret)},
+    )
+
+    assert response.status_code == 422
+    assert "capability request is malformed" in response.json()["detail"]
+
+
+def test_capability_worker_rejects_non_isolated_boundary() -> None:
+    secret = "worker-secret"
+    payload = json.loads(_request_body().decode("utf-8"))
+    payload["boundary"]["isolation_required"] = False
+    payload["boundary"]["execution_plane"] = "gateway_process"
+    body = _body_from_payload(_rehash_payload(payload))
+    app = create_capability_worker_app(
+        dispatcher=SkillDispatcher(payment_executor=SettlingPaymentExecutor()),
+        signing_secret=secret,
+        worker_id="restricted-worker-test",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/capability/execute",
+        content=body,
+        headers={"X-Mullu-Capability-Signature": sign_capability_payload(body, secret)},
+    )
+
+    assert response.status_code == 422
+    assert "restricted worker requires an isolated capability boundary" in response.json()["detail"]
 
 
 def test_default_capability_worker_smoke_stub_is_local_only(monkeypatch) -> None:

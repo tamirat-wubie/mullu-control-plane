@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",
+  "title": "General Agent Promotion Handoff Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "title",
+    "status",
+    "readiness_level",
+    "capability_capsules",
+    "governed_capabilities",
+    "aggregate_closure_actions",
+    "approval_required_actions",
+    "production_promotion",
+    "entry_points",
+    "open_blockers",
+    "approval_required_blockers",
+    "required_validation_reports",
+    "operator_sequence",
+    "terminal_proof_command",
+    "invariants"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "packet_id": {
+      "type": "string",
+      "const": "general-agent-promotion-handoff-v1"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "blocked_until_live_evidence",
+        "ready_for_final_validation"
+      ]
+    },
+    "readiness_level": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability_capsules": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "governed_capabilities": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "aggregate_closure_actions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "approval_required_actions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "production_promotion": {
+      "type": "string",
+      "enum": [
+        "blocked",
+        "ready"
+      ]
+    },
+    "entry_points": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "human_runbook",
+        "machine_checklist",
+        "machine_handoff_packet",
+        "checklist_validator",
+        "handoff_packet_validator",
+        "handoff_preflight",
+        "aggregate_closure_plan",
+        "schema_validation_report",
+        "drift_validation_report",
+        "readiness_report",
+        "preflight_report"
+      ],
+      "properties": {
+        "human_runbook": {
+          "type": "string",
+          "minLength": 1
+        },
+        "machine_checklist": {
+          "type": "string",
+          "minLength": 1
+        },
+        "machine_handoff_packet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checklist_validator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "handoff_packet_validator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "handoff_preflight": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregate_closure_plan": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_validation_report": {
+          "type": "string",
+          "minLength": 1
+        },
+        "drift_validation_report": {
+          "type": "string",
+          "minLength": 1
+        },
+        "readiness_report": {
+          "type": "string",
+          "minLength": 1
+        },
+        "preflight_report": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "open_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "approval_required_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required_validation_reports": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "operator_sequence": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "terminal_proof_command": {
+      "type": "string",
+      "minLength": 1
+    },
+    "invariants": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

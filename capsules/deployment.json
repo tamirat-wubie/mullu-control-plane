@@ -1,0 +1,23 @@
+{
+  "capsule_id": "deployment.witness_publication.v0",
+  "domain": "deployment",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/deployment/witness_publication.json"],
+  "capability_refs": [
+    "deployment.witness.collect",
+    "deployment.witness.publish.with_approval"
+  ],
+  "policy_refs": ["policies/deployment/witness_publication.policy.json"],
+  "evidence_rules": ["evidence/deployment/witness_publication.evidence.json"],
+  "approval_rules": ["approval/deployment/witness_publication.approval.json"],
+  "recovery_rules": ["recovery/deployment/witness_publication.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/deployment/witness_publication"],
+  "read_model_refs": ["read_models/deployment/witness_publication.json"],
+  "operator_view_refs": ["operator_views/deployment/witness_publication.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified deployment witness publication capabilities for signed health, runtime witness, conformance, and public claim evidence"
+  },
+  "extensions": {}
+}

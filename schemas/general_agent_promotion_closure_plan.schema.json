@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-closure-plan:1",
+  "title": "General Agent Promotion Closure Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "readiness_level",
+    "source_ready",
+    "total_action_count",
+    "approval_required_action_count",
+    "source_plans",
+    "blockers",
+    "actions"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-closure-plan-[0-9a-f]{16}$"
+    },
+    "readiness_level": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_ready": {
+      "type": "boolean"
+    },
+    "total_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "approval_required_action_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_plans": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/closure_action"
+      }
+    }
+  },
+  "$defs": {
+    "closure_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "blocker",
+        "approval_required",
+        "source_plan_type"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adapter_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "source_plan_type": {
+          "type": "string",
+          "enum": [
+            "adapter",
+            "deployment"
+          ]
+        }
+      }
+    }
+  }
+}

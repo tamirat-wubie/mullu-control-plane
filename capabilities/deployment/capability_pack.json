@@ -1,0 +1,126 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "deployment.witness.collect",
+      "domain": "deployment",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/deployment/witness_collect.input.schema.json",
+      "output_schema_ref": "schemas/deployment/witness_collect.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["deployment_witness_collected"],
+        "forbidden_effects": ["deployment_state_published", "repository_status_modified", "public_health_claim_created"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "gateway_health_status",
+          "runtime_witness_signature_status",
+          "runtime_conformance_signature_status",
+          "deployment_witness_json"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["deployment_operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "deployment_witness_collector",
+        "network_allowlist": ["mullusi.com", "api.mullusi.com", "dashboard.mullusi.com", "sandbox.mullusi.com"],
+        "secret_scope": "runtime_witness:read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "deployment_probe",
+        "max_estimated_cost": 0.01
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Collect signed deployment witness",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["deployment_operator"],
+          "allowed_tools": ["deployment_witness.collect"],
+          "allowed_networks": ["mullusi.com", "api.mullusi.com", "dashboard.mullusi.com", "sandbox.mullusi.com"]
+        }
+      }
+    },
+    {
+      "capability_id": "deployment.witness.publish.with_approval",
+      "domain": "deployment",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/deployment/witness_publish.input.schema.json",
+      "output_schema_ref": "schemas/deployment/witness_publish.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["deployment_state_published", "public_health_claim_created"],
+        "forbidden_effects": ["unverified_health_claim_created", "unsigned_witness_published", "secret_value_exposed"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "published_deployment_witness",
+          "public_health_endpoint",
+          "runtime_conformance_certificate",
+          "operator_approval_id"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["deployment_operator"],
+        "approval_chain": ["platform_owner"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "deployment_publication_orchestrator",
+        "network_allowlist": ["github.com", "api.github.com", "mullusi.com", "api.mullusi.com", "dashboard.mullusi.com", "sandbox.mullusi.com"],
+        "secret_scope": "deployment_publication:write"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "deployment.witness.collect",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "deployment_publish",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Publish deployment witness claim",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["deployment_operator"],
+          "allowed_tools": ["deployment_witness.publish"],
+          "allowed_networks": ["github.com", "api.github.com", "mullusi.com", "api.mullusi.com", "dashboard.mullusi.com", "sandbox.mullusi.com"]
+        }
+      }
+    }
+  ]
+}

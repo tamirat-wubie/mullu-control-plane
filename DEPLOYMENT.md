@@ -346,6 +346,60 @@ export MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB=1
 Do not enable `MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB` in `pilot` or
 `production`.
 
+### Adapter Worker Packaging
+
+Browser, document, voice, and email/calendar execution are packaged as
+restricted worker services behind the `adapter-workers` compose profile. They
+are not part of the default pilot startup path and must not be treated as
+ambient gateway authority.
+
+```bash
+docker compose --profile adapter-workers up -d \
+  browser-worker document-worker voice-worker email-calendar-worker
+```
+
+Required worker secrets:
+
+```bash
+MULLU_BROWSER_WORKER_URL=http://browser-worker:8020/browser/execute
+MULLU_BROWSER_WORKER_SECRET=...
+MULLU_DOCUMENT_WORKER_URL=http://document-worker:8030/document/execute
+MULLU_DOCUMENT_WORKER_SECRET=...
+MULLU_VOICE_WORKER_URL=http://voice-worker:8040/voice/execute
+MULLU_VOICE_WORKER_SECRET=...
+MULLU_EMAIL_CALENDAR_WORKER_URL=http://email-calendar-worker:8050/email-calendar/execute
+MULLU_EMAIL_CALENDAR_WORKER_SECRET=...
+MULLU_EMAIL_CALENDAR_WORKER_ADAPTER=production
+GMAIL_ACCESS_TOKEN=...                 # optional Gmail connector credential
+GOOGLE_CALENDAR_ACCESS_TOKEN=...       # optional Google Calendar connector credential
+MICROSOFT_GRAPH_ACCESS_TOKEN=...       # optional Microsoft Graph connector credential
+OPENAI_API_KEY=...
+```
+
+The gateway and `gateway.worker` build signed adapter clients only when both
+the URL and matching secret for a worker are configured. A URL without its
+secret fails closed during dispatcher construction. Leaving both unset keeps the
+default pilot stack alive while those capabilities return `worker_unavailable`
+receipts instead of executing raw tools in the gateway process.
+
+The image installs worker dependencies through the `mcoi[all]` extra by
+default. Set `MULLU_INSTALL_WORKER_DEPS=false` at build time only for API or
+gateway images that intentionally exclude browser and document worker
+dependencies. Playwright Chromium is installed only when both
+`MULLU_INSTALL_WORKER_DEPS=true` and `MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true`.
+The email/calendar worker starts in production adapter mode with whatever
+connector credentials are supplied; missing credentials fail closed per request
+and still produce signed failure receipts.
+
+The worker services expose:
+
+| Worker | Port | Entry point |
+|---|---:|---|
+| Browser | `8020` | `gateway.browser_worker:app` |
+| Document | `8030` | `gateway.document_worker:app` |
+| Voice | `8040` | `gateway.voice_worker:app` |
+| Email/calendar | `8050` | `gateway.email_calendar_worker:app` |
+
 ### Production Checklist
 
 1. Set `MULLU_ENV=production`
@@ -369,6 +423,14 @@ Do not enable `MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB` in `pilot` or
 19. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
 20. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
 21. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
+22. Set `MULLU_BROWSER_WORKER_URL`, `MULLU_BROWSER_WORKER_SECRET`, `MULLU_DOCUMENT_WORKER_URL`, `MULLU_DOCUMENT_WORKER_SECRET`, `MULLU_VOICE_WORKER_URL`, `MULLU_VOICE_WORKER_SECRET`, `MULLU_EMAIL_CALENDAR_WORKER_URL`, and `MULLU_EMAIL_CALENDAR_WORKER_SECRET` on gateway and gateway worker before enabling adapter-backed capabilities
+23. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO"` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
+24. Run `python scripts/collect_capability_adapter_evidence.py --strict` after browser, document, voice, and email/calendar live receipts are available
+25. If adapter evidence is not closed, run `python scripts/plan_capability_adapter_closure.py --json` and resolve every generated dependency, credential, and live-receipt action before promotion
+26. Run `python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json` to write the current promotion-readiness artifact
+27. If deployment witness or public health blockers remain, run `python scripts/plan_deployment_publication_closure.py --json`
+28. Run `python scripts/plan_general_agent_promotion_closure.py --json`, `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict`, and `python scripts/validate_general_agent_promotion_closure_plan.py --strict` before executing promotion closure actions
+29. Run `python scripts/validate_general_agent_promotion.py --strict` before claiming production general-agent readiness
 
 ## Startup Behavior
 

@@ -83,6 +83,18 @@
       "surface": "environment"
     },
     {
+      "schema_id": "general-agent-promotion-closure-plan",
+      "path": "schemas/general_agent_promotion_closure_plan.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-closure-plan:1",
+      "surface": "promotion"
+    },
+    {
+      "schema_id": "general-agent-promotion-handoff-packet",
+      "path": "schemas/general_agent_promotion_handoff_packet.schema.json",
+      "urn": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",
+      "surface": "promotion"
+    },
+    {
       "schema_id": "execution-result",
       "path": "schemas/execution_result.schema.json",
       "urn": "urn:mullusi:schema:execution-result:1",

@@ -275,6 +275,164 @@ def test_plan_executor_succeeds_with_step_terminal_certificate() -> None:
     assert result.evidence_hash
 
 
+def test_plan_executor_resumes_from_certified_checkpoint() -> None:
+    plan = CapabilityPlan(
+        plan_id="plan-resume",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search then notify",
+        steps=(
+            CapabilityPlanStep(
+                step_id="step-1",
+                capability_id="enterprise.knowledge_search",
+                params={"query": "policy"},
+            ),
+            CapabilityPlanStep(
+                step_id="step-2",
+                capability_id="enterprise.notification_send",
+                params={"body": "notify"},
+                depends_on=("step-1",),
+            ),
+        ),
+        risk_tier="medium",
+        approval_required=True,
+        evidence_required=("total_chunks_searched", "receipt_status"),
+    )
+    calls: list[str] = []
+
+    def execute_step(step: CapabilityPlanStep, completed):
+        calls.append(step.step_id)
+        return CapabilityPlanStepResult(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            succeeded=True,
+            command_id="cmd-step-2",
+            terminal_certificate_id="terminal-step-2",
+            output={"completed_dependencies": tuple(completed)},
+        )
+
+    result = CapabilityPlanExecutor(execute_step).execute(
+        plan,
+        initial_results=(
+            CapabilityPlanStepResult(
+                step_id="step-1",
+                capability_id="enterprise.knowledge_search",
+                succeeded=True,
+                command_id="cmd-step-1",
+                terminal_certificate_id="terminal-step-1",
+                output={"total_chunks_searched": 1},
+            ),
+        ),
+    )
+
+    assert calls == ["step-2"]
+    assert result.succeeded is True
+    assert result.terminal_certificate_ids == ("terminal-step-1", "terminal-step-2")
+    assert result.step_results[1].output["completed_dependencies"] == ("step-1",)
+
+
+def test_plan_executor_rejects_checkpoint_missing_terminal_certificate() -> None:
+    plan = one_step_plan(
+        capability_id="enterprise.knowledge_search",
+        params={"query": "policy"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search policy",
+    )
+    executed = False
+
+    def execute_step(step: CapabilityPlanStep, completed):
+        nonlocal executed
+        executed = True
+        return CapabilityPlanStepResult(step.step_id, step.capability_id, True)
+
+    result = CapabilityPlanExecutor(execute_step).execute(
+        plan,
+        initial_results=(
+            CapabilityPlanStepResult(
+                step_id="step-1",
+                capability_id="enterprise.knowledge_search",
+                succeeded=True,
+                command_id="cmd-step-1",
+            ),
+        ),
+    )
+
+    assert result.succeeded is False
+    assert result.error == "checkpoint_missing_terminal_certificate:step-1"
+    assert executed is False
+    assert result.terminal_certificate_ids == ()
+
+
+def test_plan_executor_rejects_checkpoint_out_of_dependency_order() -> None:
+    plan = CapabilityPlan(
+        plan_id="plan-resume-order",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search then notify",
+        steps=(
+            CapabilityPlanStep(
+                step_id="step-1",
+                capability_id="enterprise.knowledge_search",
+                params={"query": "policy"},
+            ),
+            CapabilityPlanStep(
+                step_id="step-2",
+                capability_id="enterprise.notification_send",
+                params={"body": "notify"},
+                depends_on=("step-1",),
+            ),
+        ),
+        risk_tier="medium",
+        approval_required=True,
+        evidence_required=("total_chunks_searched", "receipt_status"),
+    )
+
+    result = CapabilityPlanExecutor(lambda step, completed: CapabilityPlanStepResult(step.step_id, step.capability_id, True)).execute(
+        plan,
+        initial_results=(
+            CapabilityPlanStepResult(
+                step_id="step-2",
+                capability_id="enterprise.notification_send",
+                succeeded=True,
+                command_id="cmd-step-2",
+                terminal_certificate_id="terminal-step-2",
+            ),
+        ),
+    )
+
+    assert result.succeeded is False
+    assert result.error == "checkpoint_dependency_not_satisfied:step-2:step-1"
+    assert result.step_results[0].step_id == "step-2"
+
+
+def test_plan_executor_rejects_checkpoint_capability_mismatch() -> None:
+    plan = one_step_plan(
+        capability_id="enterprise.knowledge_search",
+        params={"query": "policy"},
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        goal="search policy",
+    )
+
+    result = CapabilityPlanExecutor(lambda step, completed: CapabilityPlanStepResult(step.step_id, step.capability_id, True)).execute(
+        plan,
+        initial_results=(
+            CapabilityPlanStepResult(
+                step_id="step-1",
+                capability_id="enterprise.notification_send",
+                succeeded=True,
+                command_id="cmd-step-1",
+                terminal_certificate_id="terminal-step-1",
+            ),
+        ),
+    )
+
+    assert result.succeeded is False
+    assert result.error == "checkpoint_capability_mismatch:step-1"
+    assert result.terminal_certificate_ids == ("terminal-step-1",)
+
+
 def test_plan_ledger_certifies_successful_multi_step_execution() -> None:
     plan = CapabilityPlanBuilder().build(
         message="Analyze data csv and write a report and notify the team and schedule review",

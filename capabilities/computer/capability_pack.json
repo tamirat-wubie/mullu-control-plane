@@ -1,0 +1,174 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "computer.filesystem.observe",
+      "domain": "computer",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/computer/filesystem_observe.input.schema.json",
+      "output_schema_ref": "schemas/computer/filesystem_observe.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["workspace_files_read"],
+        "forbidden_effects": ["file_written", "host_root_read", "credential_file_read"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["workspace_root_hash", "file_count"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Observe workspace files",
+        "risk_tier": "low"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["code_adapter.list_files"],
+          "allowed_paths": ["/workspace"]
+        }
+      }
+    },
+    {
+      "capability_id": "computer.code.patch",
+      "domain": "computer",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/computer/code_patch.input.schema.json",
+      "output_schema_ref": "schemas/computer/code_patch.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["workspace_file_patched"],
+        "forbidden_effects": ["path_outside_workspace_written", "credential_file_read", "host_root_modified"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["patch_id", "patch_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "sandbox_runner",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "computer.code.patch",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Patch workspace code",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": false,
+          "requires_sandbox": true,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["code_adapter.apply_patch"],
+          "allowed_paths": ["/workspace"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "computer.command.run",
+      "domain": "computer",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/computer/command_run.input.schema.json",
+      "output_schema_ref": "schemas/computer/command_run.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["sandbox_command_executed"],
+        "forbidden_effects": ["host_shell_executed", "unrestricted_network", "docker_socket_mounted"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["sandbox_receipt_id", "verification_status"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "sandbox_runner",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "compute",
+        "max_estimated_cost": 0.25
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Run sandboxed command",
+        "risk_tier": "high"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["sandbox_runner.execute"],
+          "allowed_paths": ["/workspace"],
+          "rollback_or_compensation_required": true
+        }
+      }
+    }
+  ]
+}

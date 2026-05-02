@@ -66,7 +66,9 @@ or incomplete:
 ### RBAC and Identity (Partial)
 
 API key auth with scopes, JWT auth, and per-session RBAC checks are implemented.
-Team ownership, approval chains, and escalation rights are not yet available.
+Gateway authority now includes team ownership, approval chains, obligations, and
+escalation read models for governed gateway actions. Full organization-management
+UI and credentialed directory scheduling remain incomplete.
 Any process that can invoke the CLI or import the runtime module still has full
 local access to all operations. Shared or production environments should front
 the runtime with authenticated gateways and least-privilege OS controls.
@@ -90,11 +92,14 @@ storage guarantees.
 
 ### Shell Executor Permissions
 
-The shell executor adapter invokes `subprocess.run` and inherits the OS-level
+Legacy shell executor paths invoke `subprocess.run` and inherit the OS-level
 permissions of the Python process. There is no sandboxing, chroot, or capability
-restriction beyond what the operating system provides. A malicious or misconfigured
-template with `action_type: shell_command` can execute arbitrary commands with the
-runtime's privileges.
+restriction beyond what the operating system provides on those legacy paths. The
+gateway capability plane distinguishes those paths from isolated worker execution:
+dangerous computer capabilities are represented through sandboxed worker records
+and fail closed without an isolated worker. A malicious or misconfigured legacy
+template with `action_type: shell_command` can still execute arbitrary commands
+with the runtime's privileges if the caller exposes that legacy adapter.
 
 ## Recommendations for Internal Use
 

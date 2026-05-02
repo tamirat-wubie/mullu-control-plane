@@ -83,6 +83,13 @@ def test_import_mcp_tool_creates_candidate_capability_contract() -> None:
     assert entry.recovery_plan.compensation_capability == "mcp.operator_review_compensation"
     assert entry.obligation_model.owner_team == "devops"
     assert entry.metadata["source"] == "mcp.import_tool"
+    assert entry.extensions["governed_record"]["read_only"] is False
+    assert entry.extensions["governed_record"]["world_mutating"] is True
+    assert entry.extensions["governed_record"]["requires_approval"] is True
+    assert entry.extensions["governed_record"]["requires_sandbox"] is True
+    assert entry.extensions["governed_record"]["allowed_roles"] == ("developer",)
+    assert entry.extensions["governed_record"]["allowed_tools"] == ("governed_mcp_executor.execute",)
+    assert entry.extensions["governed_record"]["rollback_or_compensation_required"] is True
     assert entry.extensions["mcp"]["tool_name"] == "Create Issue"
 
 
@@ -108,10 +115,15 @@ def test_import_mcp_tool_classifies_read_only_and_high_risk_effects() -> None:
     assert read_only.effect_model.reconciliation_required is False
     assert read_only.authority_policy.separation_of_duty is False
     assert read_only.recovery_plan.compensation_capability == ""
+    assert read_only.extensions["governed_record"]["read_only"] is True
+    assert read_only.extensions["governed_record"]["requires_approval"] is False
+    assert read_only.extensions["governed_record"]["requires_sandbox"] is True
     assert high_risk.metadata["risk_tier"] == "high"
     assert high_risk.effect_model.expected_effects == ("external_email_sent",)
     assert high_risk.authority_policy.separation_of_duty is True
     assert high_risk.isolation_profile.network_allowlist == ("mail.example.com",)
+    assert high_risk.extensions["governed_record"]["allowed_networks"] == ("mail.example.com",)
+    assert high_risk.extensions["governed_record"]["requires_approval"] is True
 
 
 def test_export_rejects_uncertified_capability() -> None:

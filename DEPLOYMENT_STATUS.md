@@ -48,6 +48,24 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | MCP manifest runtime conformance | `/runtime/conformance` signs `mcp_capability_manifest_configured`, `mcp_capability_manifest_valid`, and `mcp_capability_manifest_capability_count` into deployment evidence | Reflected |
 | MCP operator read model | `/mcp/operator/read-model` exposes MCP manifest state alongside capability, ownership, policy, escalation, and execution audit state | Reflected |
 | Capability plan evidence bundles | `/capability-plans/{plan_id}/closure` exposes terminal plan certificates, evidence bundles, witnesses, and recovery attempts; `/runtime/conformance` gates on `capability_plan_bundle_canary_passed` | Reflected |
+| Adapter worker dependency packaging | `mcoi/pyproject.toml`, `Dockerfile`, and `docker-compose.yml` package browser, document, voice, and email/calendar worker dependencies behind optional dependency groups and the `adapter-workers` compose profile | Reflected |
+| Adapter worker signed dispatch clients | `gateway/adapter_worker_clients.py` and `gateway/capability_dispatch.py` route browser, document, voice, and email/calendar capabilities through signed worker requests with response-signature and receipt validation | Reflected |
+| Communication capability capsule | `capsules/communication.json` and `capabilities/communication/capability_pack.json` expose governed `email.*` and `calendar.*` records for signed email/calendar worker dispatch | Reflected |
+| Email/calendar connector adapter | `gateway/email_calendar_connector_adapters.py` binds Gmail, Google Calendar, and Microsoft Graph HTTP operations to the signed email/calendar worker while failing closed without connector credentials or approval evidence | Reflected |
+| Capability adapter live receipt producer | `scripts/produce_capability_adapter_live_receipts.py` writes browser, document, voice, and email/calendar live receipt artifacts while failing closed when sandbox evidence, parser dependencies, provider credentials, live audio input, or communication worker proof are missing | Reflected |
+| Capability adapter evidence collector | `scripts/collect_capability_adapter_evidence.py` writes `.change_assurance/capability_adapter_evidence.json` from browser, document, voice, and email/calendar dependency checks plus live adapter receipts | Reflected |
+| Capability adapter closure planner | `scripts/plan_capability_adapter_closure.py` converts adapter evidence blockers into dependency, credential, and live-receipt actions without claiming closure | Reflected |
+| Deployment publication closure planner | `scripts/plan_deployment_publication_closure.py` converts deployment witness and public-health blockers into approval-bound publication actions without mutating status | Reflected |
+| General-agent promotion closure planner | `scripts/plan_general_agent_promotion_closure.py` aggregates adapter and deployment closure plans into one operator-facing promotion plan | Reflected |
+| General-agent promotion closure plan schema | `schemas/general_agent_promotion_closure_plan.schema.json` defines the public operator-facing promotion closure plan contract | Reflected |
+| General-agent promotion closure plan schema validator | `scripts/validate_general_agent_promotion_closure_plan_schema.py` validates aggregate closure plan shape and semantic action counts before approval or execution | Reflected |
+| General-agent promotion closure plan validator | `scripts/validate_general_agent_promotion_closure_plan.py` verifies aggregate promotion actions match source adapter and deployment plans before use | Reflected |
+| General-agent promotion handoff packet | `docs/59_general_agent_promotion_handoff_packet.md` is the single operator entry point for the checklist, runbook, closure plans, validation reports, blockers, and terminal proof command | Reflected |
+| General-agent promotion machine handoff packet | `examples/general_agent_promotion_handoff_packet.json` is the schema-backed machine-readable handoff packet for operator execution | Reflected |
+| General-agent promotion handoff packet validator | `scripts/validate_general_agent_promotion_handoff_packet.py` validates the machine handoff packet, blockers, entry points, and terminal proof command | Reflected |
+| General-agent promotion handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` verifies packet, checklist, closure reports, readiness report, and environment binding presence without printing secret values | Reflected |
+| Deployment capability capsule | `capsules/deployment.json` and `capabilities/deployment/capability_pack.json` govern `deployment.witness.collect` and `deployment.witness.publish.with_approval` | Reflected |
+| General-agent promotion validator | `scripts/validate_general_agent_promotion.py --strict` blocks production general-agent claims until governed capability records, real browser/document/voice adapters, sandbox runner evidence, MCP import governance, deployment witness publication, and public health evidence all pass | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
@@ -105,4 +123,17 @@ Before this witness can claim public deployment health, the repository must name
 | Deployment orchestration receipt validation | `python scripts/validate_deployment_orchestration_receipt.py --receipt "$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT" --require-mcp-operator-checklist --require-preflight --expected-environment pilot` |
 | Capability plan closure bundle | `curl -H "X-Mullu-Authority-Secret: $MULLU_AUTHORITY_OPERATOR_SECRET" "$MULLU_GATEWAY_URL/capability-plans/{plan_id}/closure"` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
+| Adapter worker signed dispatch test | `python -m pytest tests/test_gateway/test_adapter_worker_clients.py tests/test_gateway/test_adapter_worker_dispatch.py` |
+| Capability adapter live receipt production | `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO"` |
+| Capability adapter evidence collection | `python scripts/collect_capability_adapter_evidence.py --strict` |
+| Capability adapter closure planning | `python scripts/plan_capability_adapter_closure.py --json` |
+| Deployment publication closure planning | `python scripts/plan_deployment_publication_closure.py --json` |
+| General-agent promotion closure planning | `python scripts/plan_general_agent_promotion_closure.py --json` |
+| General-agent promotion closure plan schema validation | `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict` |
+| General-agent promotion closure plan validation | `python scripts/validate_general_agent_promotion_closure_plan.py --strict` |
+| General-agent promotion operator checklist validation | `python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json` |
+| General-agent promotion handoff packet | `docs/59_general_agent_promotion_handoff_packet.md` |
+| General-agent promotion machine handoff packet validation | `python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json` |
+| General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |
+| General-agent promotion validation | `python scripts/validate_general_agent_promotion.py --strict` |
 
