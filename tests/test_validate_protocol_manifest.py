@@ -49,6 +49,17 @@ def test_protocol_manifest_indexes_promotion_closure_plan() -> None:
     assert plan_entry["surface"] == "promotion"
 
 
+def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries["general-agent-promotion-environment-bindings"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == "schemas/general_agent_promotion_environment_bindings.schema.json"
+    assert binding_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-environment-bindings:1"
+    assert binding_entry["surface"] == "promotion"
+
+
 def test_protocol_manifest_indexes_promotion_handoff_packet() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -58,6 +69,17 @@ def test_protocol_manifest_indexes_promotion_handoff_packet() -> None:
     assert packet_entry["path"] == "schemas/general_agent_promotion_handoff_packet.schema.json"
     assert packet_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-handoff-packet:1"
     assert packet_entry["surface"] == "promotion"
+
+
+def test_protocol_manifest_indexes_terminal_closure_certificate() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    closure_entry = entries["terminal-closure-certificate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert closure_entry["path"] == "schemas/terminal_closure_certificate.schema.json"
+    assert closure_entry["urn"] == "urn:mullusi:schema:terminal-closure-certificate:1"
+    assert closure_entry["surface"] == "closure"
 
 
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
@@ -108,6 +130,22 @@ def test_protocol_manifest_rejects_missing_promotion_closure_plan_entry() -> Non
     assert "schemas/" in errors[0]
 
 
+def test_protocol_manifest_rejects_missing_promotion_environment_bindings_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-environment-bindings"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_environment_bindings.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
 def test_protocol_manifest_rejects_missing_promotion_handoff_packet_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [
@@ -121,4 +159,20 @@ def test_protocol_manifest_rejects_missing_promotion_handoff_packet_entry() -> N
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "general_agent_promotion_handoff_packet.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_terminal_closure_certificate_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "terminal-closure-certificate"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "terminal_closure_certificate.schema.json" in errors[0]
     assert "schemas/" in errors[0]

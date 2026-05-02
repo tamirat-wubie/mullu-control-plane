@@ -24,7 +24,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 28
+    assert len(manifest["schemas"]) == 30
 
 
 def test_protocol_manifest_defines_open_and_closed_surfaces() -> None:

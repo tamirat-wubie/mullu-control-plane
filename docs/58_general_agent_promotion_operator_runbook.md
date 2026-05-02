@@ -53,6 +53,7 @@ Secrets must be bound through the governed worker or deployment secret store. Do
 ```powershell
 python scripts\validate_general_agent_promotion_operator_checklist.py --checklist examples\general_agent_promotion_operator_checklist.json --json
 python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
+python scripts\validate_general_agent_promotion_environment_bindings.py --contract examples\general_agent_promotion_environment_bindings.json --json
 ```
 
 1. Generate the non-production evidence and plans:

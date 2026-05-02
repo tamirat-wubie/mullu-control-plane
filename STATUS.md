@@ -27,7 +27,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
 | Gateway closure witness | CI runs `python -m pytest tests/test_gateway -q` and `python scripts/validate_gateway_deployment_env.py --strict` | Reflected |
 | Deployment runtime input witness | `DEPLOYMENT_STATUS.md` records witness/conformance secret-name presence, absent deployment target variables, and absent `deployment-witness.yml` workflow runs | Reflected |
-| General-agent promotion handoff witness | `docs/59_general_agent_promotion_handoff_packet.md`, `examples/general_agent_promotion_handoff_packet.json`, `scripts/validate_general_agent_promotion_handoff_packet.py`, `scripts/validate_general_agent_promotion_operator_checklist.py`, and `scripts/preflight_general_agent_promotion_handoff.py` bind the operator checklist, closure plans, validation reports, environment binding preflight, and terminal proof command | Reflected |
+| General-agent promotion handoff witness | `docs/59_general_agent_promotion_handoff_packet.md`, `examples/general_agent_promotion_handoff_packet.json`, `examples/general_agent_promotion_environment_bindings.json`, `scripts/validate_general_agent_promotion_handoff_packet.py`, `scripts/validate_general_agent_promotion_operator_checklist.py`, `scripts/validate_general_agent_promotion_environment_bindings.py`, and `scripts/preflight_general_agent_promotion_handoff.py` bind the operator checklist, closure plans, validation reports, environment binding preflight, and terminal proof command | Reflected |
 | Operational witness | Runtime deployment, live health, and production readiness are not exposed on the repository landing page | Not reflected |
 
 ## Required Public Anchors
@@ -66,6 +66,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 | General-agent promotion operator checklist | `python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json` |
+| General-agent promotion environment bindings | `python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json` |
 | General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |
 | Change assurance | `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md` |
 

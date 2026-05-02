@@ -26,11 +26,15 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
+| `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
+| `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
+| `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
 | `replay_record.schema.json` | Canonical replay and audit capture |
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
+| `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |

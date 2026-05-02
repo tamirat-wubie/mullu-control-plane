@@ -1,0 +1,26 @@
+{
+  "certificate_id": "terminal-closure-example-1",
+  "command_id": "command-example-1",
+  "execution_id": "execution-example-1",
+  "disposition": "committed",
+  "verification_result_id": "verification-example-1",
+  "effect_reconciliation_id": "reconciliation-example-1",
+  "evidence_refs": [
+    "proof://verification/verification-example-1",
+    "proof://effect-reconciliation/reconciliation-example-1"
+  ],
+  "closed_at": "2026-05-02T12:00:00Z",
+  "response_closure_ref": "proof://response/response-example-1",
+  "memory_entry_id": null,
+  "compensation_outcome_id": null,
+  "accepted_risk_id": null,
+  "case_id": null,
+  "graph_refs": [
+    "command:command-example-1",
+    "execution:execution-example-1"
+  ],
+  "metadata": {
+    "source": "public-schema-example",
+    "terminal_proof": true
+  }
+}

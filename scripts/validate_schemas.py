@@ -342,6 +342,11 @@ def _validate_schema_instance(
         return _validate_schema_instance(referenced_schema, instance, path, root)
 
     errors: list[str] = []
+    if "not" in schema:
+        branch_errors = _validate_schema_instance(schema["not"], instance, path, root)
+        if not branch_errors:
+            errors.append(f"{path}: matched forbidden schema")
+
     if "const" in schema and instance != schema["const"]:
         errors.append(f"{path}: expected const {schema['const']!r}")
 

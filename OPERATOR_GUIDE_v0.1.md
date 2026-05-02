@@ -252,6 +252,7 @@ Minimum sequence:
 
 ```powershell
 python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
+python scripts\validate_general_agent_promotion_environment_bindings.py --contract examples\general_agent_promotion_environment_bindings.json --json
 ```
 
 2. Validate the machine-readable checklist:

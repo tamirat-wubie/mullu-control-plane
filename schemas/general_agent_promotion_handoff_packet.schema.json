@@ -77,8 +77,10 @@
         "human_runbook",
         "machine_checklist",
         "machine_handoff_packet",
+        "environment_binding_contract",
         "checklist_validator",
         "handoff_packet_validator",
+        "environment_binding_validator",
         "handoff_preflight",
         "aggregate_closure_plan",
         "schema_validation_report",
@@ -99,11 +101,19 @@
           "type": "string",
           "minLength": 1
         },
+        "environment_binding_contract": {
+          "type": "string",
+          "minLength": 1
+        },
         "checklist_validator": {
           "type": "string",
           "minLength": 1
         },
         "handoff_packet_validator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_binding_validator": {
           "type": "string",
           "minLength": 1
         },

@@ -123,6 +123,7 @@ jobs:
         run: |
           python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
           python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json
+          python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json
           python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json
           python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json
           python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
@@ -250,6 +251,7 @@ jobs:
         run: |
           python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
           python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json
+          python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json
           python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json
           python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json
           python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json

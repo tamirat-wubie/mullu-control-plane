@@ -5,7 +5,8 @@ Purpose: verify local operator handoff prerequisites before live adapter or
 deployment execution begins.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: general-agent promotion checklist, handoff packet, closure plan
-schema validation, aggregate drift validation, and promotion readiness artifacts.
+schema validation, aggregate drift validation, promotion readiness artifacts, and
+environment binding contract.
 Invariants:
   - Secret values are never printed or serialized.
   - Preflight does not execute live adapter receipts or deployment publication.
@@ -29,6 +30,10 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validate_general_agent_promotion_handoff_packet import (  # noqa: E402
     DEFAULT_PACKET,
     validate_general_agent_promotion_handoff_packet,
+)
+from scripts.validate_general_agent_promotion_environment_bindings import (  # noqa: E402
+    DEFAULT_CONTRACT as DEFAULT_ENVIRONMENT_BINDINGS,
+    validate_general_agent_promotion_environment_bindings,
 )
 from scripts.validate_general_agent_promotion_operator_checklist import (  # noqa: E402
     DEFAULT_CHECKLIST,
@@ -93,6 +98,7 @@ def preflight_general_agent_promotion_handoff(
     *,
     checklist_path: Path = DEFAULT_CHECKLIST,
     packet_path: Path = DEFAULT_PACKET,
+    environment_bindings_path: Path = DEFAULT_ENVIRONMENT_BINDINGS,
     schema_validation_path: Path = DEFAULT_SCHEMA_VALIDATION,
     drift_validation_path: Path = DEFAULT_DRIFT_VALIDATION,
     readiness_path: Path = DEFAULT_READINESS,
@@ -102,6 +108,10 @@ def preflight_general_agent_promotion_handoff(
     resolved_env_reader = env_reader or os.environ.get
     checklist_result = validate_general_agent_promotion_operator_checklist(checklist_path)
     packet_result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+    binding_result = validate_general_agent_promotion_environment_bindings(
+        contract_path=environment_bindings_path,
+        checklist_path=checklist_path,
+    )
     environment_step, missing_environment_variables = _required_environment_step(checklist_path, resolved_env_reader)
     readiness_step, readiness_level, production_ready = _readiness_report_step(readiness_path)
     steps = [
@@ -114,6 +124,11 @@ def preflight_general_agent_promotion_handoff(
             name="handoff packet validation",
             passed=packet_result.valid,
             detail=_validation_detail(packet_result.errors),
+        ),
+        HandoffPreflightStep(
+            name="environment binding contract validation",
+            passed=binding_result.valid,
+            detail=_validation_detail(binding_result.errors),
         ),
         environment_step,
         _closure_schema_report_step(schema_validation_path),
@@ -282,6 +297,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Preflight general-agent promotion handoff readiness.")
     parser.add_argument("--checklist", default=str(DEFAULT_CHECKLIST))
     parser.add_argument("--packet", default=str(DEFAULT_PACKET))
+    parser.add_argument("--environment-bindings", default=str(DEFAULT_ENVIRONMENT_BINDINGS))
     parser.add_argument("--schema-validation", default=str(DEFAULT_SCHEMA_VALIDATION))
     parser.add_argument("--drift-validation", default=str(DEFAULT_DRIFT_VALIDATION))
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
@@ -297,6 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     report = preflight_general_agent_promotion_handoff(
         checklist_path=Path(args.checklist),
         packet_path=Path(args.packet),
+        environment_bindings_path=Path(args.environment_bindings),
         schema_validation_path=Path(args.schema_validation),
         drift_validation_path=Path(args.drift_validation),
         readiness_path=Path(args.readiness),

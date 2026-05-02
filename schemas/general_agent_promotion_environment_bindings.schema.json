@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-environment-bindings:1",
+  "title": "General Agent Promotion Environment Bindings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "status",
+    "secret_serialization",
+    "bindings"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "contract_id": {
+      "type": "string",
+      "const": "general-agent-promotion-environment-bindings-v1"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "blocked_until_operator_binding",
+        "ready_for_operator_preflight"
+      ]
+    },
+    "secret_serialization": {
+      "type": "string",
+      "const": "forbidden"
+    },
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "purpose",
+          "binding_kind",
+          "risk",
+          "approval_required",
+          "may_serialize_value",
+          "required_for",
+          "receipt_projection"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "binding_kind": {
+            "type": "string",
+            "enum": [
+              "artifact_path",
+              "audio_path",
+              "url",
+              "secret"
+            ]
+          },
+          "risk": {
+            "type": "string",
+            "enum": [
+              "medium",
+              "high",
+              "critical"
+            ]
+          },
+          "approval_required": {
+            "type": "boolean"
+          },
+          "may_serialize_value": {
+            "type": "boolean",
+            "const": false
+          },
+          "required_for": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "receipt_projection": {
+            "type": "string",
+            "enum": [
+              "name_and_presence_only"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
