@@ -51,7 +51,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
 
     assert expected_blockers <= set(packet_text.split())
     assert "document_adapter_not_closed" not in packet_text
-    assert "Aggregate closure actions | 7" in packet_text
+    assert "Aggregate closure actions | 13" in packet_text
     assert "Approval-required actions | 4" in packet_text
     assert "validate_general_agent_promotion.py --strict" in packet_text
     assert "STATUS:" in packet_text
