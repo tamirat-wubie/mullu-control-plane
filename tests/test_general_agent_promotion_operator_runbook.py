@@ -43,6 +43,7 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
     assert "Do not update `DEPLOYMENT_STATUS.md`" in runbook_text
     assert "deployment_claim=published" in runbook_text
     assert "<gateway_url>/health" in runbook_text
+    assert "produce_browser_sandbox_evidence.py" in runbook_text
     assert "validate_general_agent_promotion.py --strict" in runbook_text
     assert "validate_general_agent_promotion_closure_plan_schema.py" in runbook_text
     assert "STATUS:" in runbook_text

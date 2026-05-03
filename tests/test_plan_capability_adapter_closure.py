@@ -42,7 +42,8 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
     assert "produce_capability_adapter_live_receipts.py --target browser" in actions_by_blocker[
         "browser_live_evidence_missing"
     ].command
-    assert "sandbox_receipt_json_path" in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    assert "produce_browser_sandbox_evidence.py" in actions_by_blocker["browser_live_evidence_missing"].command
+    assert "browser_sandbox_evidence.json" in actions_by_blocker["browser_live_evidence_missing"].evidence_required
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].approval_required is True
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].risk_level == "high"
 

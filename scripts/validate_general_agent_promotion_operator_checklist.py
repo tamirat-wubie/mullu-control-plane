@@ -69,7 +69,12 @@ REQUIRED_STEP_COMMAND_TOKENS = {
         "--require-ready",
         "--json",
     ),
-    "produce_live_adapter_receipts": ("produce_capability_adapter_live_receipts.py", "--strict"),
+    "produce_live_adapter_receipts": (
+        "produce_browser_sandbox_evidence.py",
+        "produce_capability_adapter_live_receipts.py",
+        "--browser-sandbox-evidence",
+        "--strict",
+    ),
     "publish_deployment_witness": ("publish_gateway_publication.py", "--dispatch-witness"),
     "validate_publication_and_promotion": (
         "validate_deployment_publication_closure.py",
@@ -90,6 +95,7 @@ REQUIRED_STEP_EVIDENCE = {
         "value_serialized=false for all bindings",
     }),
     "produce_live_adapter_receipts": frozenset({
+        "browser_sandbox_evidence.json verification_status=passed",
         "browser_live_receipt.json status=passed",
         "voice_live_receipt.json status=passed",
     }),

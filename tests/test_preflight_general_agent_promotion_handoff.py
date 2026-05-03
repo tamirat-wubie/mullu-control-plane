@@ -10,6 +10,7 @@ from scripts.emit_general_agent_promotion_environment_binding_receipt import (
     write_environment_binding_receipt,
 )
 from scripts.preflight_general_agent_promotion_handoff import (
+    EXPECTED_ACTION_COUNT,
     main,
     preflight_general_agent_promotion_handoff,
     write_handoff_preflight_report,
@@ -122,8 +123,8 @@ def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": 14,
-                "observed_action_count": 6,
+                "expected_action_count": EXPECTED_ACTION_COUNT,
+                "observed_action_count": EXPECTED_ACTION_COUNT - 1,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }
@@ -152,7 +153,7 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "action_count": 14,
+                "action_count": EXPECTED_ACTION_COUNT,
                 "approval_required_action_count": 4,
                 "source_plan_types": ["adapter", "deployment"],
             }
@@ -163,8 +164,8 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": 14,
-                "observed_action_count": 14,
+                "expected_action_count": EXPECTED_ACTION_COUNT,
+                "observed_action_count": EXPECTED_ACTION_COUNT,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }

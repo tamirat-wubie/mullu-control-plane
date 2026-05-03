@@ -93,6 +93,7 @@ production_health_not_declared
 6. Produce live adapter receipts:
 
 ```powershell
+python scripts\produce_browser_sandbox_evidence.py --output "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --strict
 python scripts\produce_capability_adapter_live_receipts.py --target browser --browser-sandbox-evidence "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --strict
 python scripts\produce_capability_adapter_live_receipts.py --target document --strict
 python scripts\produce_capability_adapter_live_receipts.py --target voice --voice-audio-path "$env:MULLU_VOICE_PROBE_AUDIO" --strict
