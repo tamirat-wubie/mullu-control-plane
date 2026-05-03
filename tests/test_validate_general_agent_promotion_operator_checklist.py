@@ -19,7 +19,7 @@ def test_validate_promotion_operator_checklist_accepts_example() -> None:
 
     assert result.valid is True
     assert result.checklist_id == "general-agent-promotion-operator-v1"
-    assert result.step_count == 7
+    assert result.step_count == 8
     assert result.errors == ()
 
 
@@ -60,5 +60,5 @@ def test_validate_promotion_operator_checklist_cli_outputs_json(capsys) -> None:
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["checklist_id"] == "general-agent-promotion-operator-v1"
-    assert payload["step_count"] == 7
+    assert payload["step_count"] == 8
     assert payload["errors"] == []

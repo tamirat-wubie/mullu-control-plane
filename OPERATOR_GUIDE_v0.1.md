@@ -254,6 +254,7 @@ Minimum sequence:
 python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
 python scripts\validate_general_agent_promotion_environment_bindings.py --contract examples\general_agent_promotion_environment_bindings.json --json
 python scripts\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\general_agent_promotion_environment_binding_receipt.json --json
+python scripts\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\general_agent_promotion_environment_binding_receipt.json --require-ready --json
 ```
 
 2. Validate the machine-readable checklist:
@@ -279,6 +280,7 @@ python scripts\validate_general_agent_promotion_closure_plan.py --output .change
 
 ```powershell
 python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --json
+python scripts\validate_general_agent_promotion_handoff_preflight.py --report .change_assurance\general_agent_promotion_handoff_preflight.json --require-ready --json
 ```
 
 6. Keep promotion blocked until the final strict validator passes:

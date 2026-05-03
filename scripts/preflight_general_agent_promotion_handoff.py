@@ -35,6 +35,10 @@ from scripts.validate_general_agent_promotion_environment_bindings import (  # n
     DEFAULT_CONTRACT as DEFAULT_ENVIRONMENT_BINDINGS,
     validate_general_agent_promotion_environment_bindings,
 )
+from scripts.validate_general_agent_promotion_environment_binding_receipt import (  # noqa: E402
+    DEFAULT_RECEIPT as DEFAULT_ENVIRONMENT_BINDING_RECEIPT,
+    validate_general_agent_promotion_environment_binding_receipt,
+)
 from scripts.validate_general_agent_promotion_operator_checklist import (  # noqa: E402
     DEFAULT_CHECKLIST,
     validate_general_agent_promotion_operator_checklist,
@@ -99,6 +103,7 @@ def preflight_general_agent_promotion_handoff(
     checklist_path: Path = DEFAULT_CHECKLIST,
     packet_path: Path = DEFAULT_PACKET,
     environment_bindings_path: Path = DEFAULT_ENVIRONMENT_BINDINGS,
+    environment_binding_receipt_path: Path = DEFAULT_ENVIRONMENT_BINDING_RECEIPT,
     schema_validation_path: Path = DEFAULT_SCHEMA_VALIDATION,
     drift_validation_path: Path = DEFAULT_DRIFT_VALIDATION,
     readiness_path: Path = DEFAULT_READINESS,
@@ -111,6 +116,11 @@ def preflight_general_agent_promotion_handoff(
     binding_result = validate_general_agent_promotion_environment_bindings(
         contract_path=environment_bindings_path,
         checklist_path=checklist_path,
+    )
+    binding_receipt_result = validate_general_agent_promotion_environment_binding_receipt(
+        receipt_path=environment_binding_receipt_path,
+        contract_path=environment_bindings_path,
+        require_ready=True,
     )
     environment_step, missing_environment_variables = _required_environment_step(checklist_path, resolved_env_reader)
     readiness_step, readiness_level, production_ready = _readiness_report_step(readiness_path)
@@ -129,6 +139,11 @@ def preflight_general_agent_promotion_handoff(
             name="environment binding contract validation",
             passed=binding_result.valid,
             detail=_validation_detail(binding_result.errors),
+        ),
+        HandoffPreflightStep(
+            name="environment binding receipt validation",
+            passed=binding_receipt_result.valid,
+            detail=_validation_detail(binding_receipt_result.errors),
         ),
         environment_step,
         _closure_schema_report_step(schema_validation_path),
@@ -298,6 +313,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--checklist", default=str(DEFAULT_CHECKLIST))
     parser.add_argument("--packet", default=str(DEFAULT_PACKET))
     parser.add_argument("--environment-bindings", default=str(DEFAULT_ENVIRONMENT_BINDINGS))
+    parser.add_argument("--environment-binding-receipt", default=str(DEFAULT_ENVIRONMENT_BINDING_RECEIPT))
     parser.add_argument("--schema-validation", default=str(DEFAULT_SCHEMA_VALIDATION))
     parser.add_argument("--drift-validation", default=str(DEFAULT_DRIFT_VALIDATION))
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
@@ -314,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
         checklist_path=Path(args.checklist),
         packet_path=Path(args.packet),
         environment_bindings_path=Path(args.environment_bindings),
+        environment_binding_receipt_path=Path(args.environment_binding_receipt),
         schema_validation_path=Path(args.schema_validation),
         drift_validation_path=Path(args.drift_validation),
         readiness_path=Path(args.readiness),

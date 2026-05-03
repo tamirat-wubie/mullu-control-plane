@@ -33,6 +33,7 @@ REQUIRED_STEP_IDS = frozenset({
     "write_promotion_readiness",
     "write_source_closure_plans",
     "validate_aggregate_closure_plan",
+    "validate_environment_binding_receipt",
     "produce_live_adapter_receipts",
     "publish_deployment_witness",
     "validate_publication_and_promotion",
@@ -46,7 +47,6 @@ REQUIRED_APPROVAL_BLOCKERS = frozenset({
 REQUIRED_BLOCKING_GAPS = frozenset({
     "adapter_evidence_not_closed",
     "browser_adapter_not_closed",
-    "document_adapter_not_closed",
     "voice_adapter_not_closed",
     "email_calendar_adapter_not_closed",
     "deployment_witness_not_published",
@@ -62,6 +62,13 @@ REQUIRED_STEP_COMMAND_TOKENS = {
         "validate_general_agent_promotion_closure_plan.py",
         "--strict",
     ),
+    "validate_environment_binding_receipt": (
+        "emit_general_agent_promotion_environment_binding_receipt.py",
+        "validate_general_agent_promotion_environment_binding_receipt.py",
+        "general_agent_promotion_environment_binding_receipt.json",
+        "--require-ready",
+        "--json",
+    ),
     "produce_live_adapter_receipts": ("produce_capability_adapter_live_receipts.py", "--strict"),
     "publish_deployment_witness": ("publish_gateway_publication.py", "--dispatch-witness"),
     "validate_publication_and_promotion": (
@@ -75,6 +82,12 @@ REQUIRED_STEP_EVIDENCE = {
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "approval_required_action_count=4",
+    }),
+    "validate_environment_binding_receipt": frozenset({
+        "general_agent_promotion_environment_binding_receipt.json exists",
+        "receipt valid=true",
+        "secret_serialization=forbidden",
+        "value_serialized=false for all bindings",
     }),
     "produce_live_adapter_receipts": frozenset({
         "browser_live_receipt.json status=passed",

@@ -39,7 +39,7 @@ def test_current_repo_blocks_full_general_agent_claim() -> None:
     assert readiness.capability_count >= 30
     assert readiness.capsule_count >= 7
     assert "browser_adapter_not_closed" in readiness.blockers
-    assert "document_adapter_not_closed" in readiness.blockers
+    assert "document_adapter_not_closed" not in readiness.blockers
     assert "voice_adapter_not_closed" in readiness.blockers
     assert "email_calendar_adapter_not_closed" in readiness.blockers
     assert "adapter_evidence_not_closed" in readiness.blockers

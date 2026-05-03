@@ -18,7 +18,7 @@
       "required_evidence": [
         "capability_adapter_evidence.json exists",
         "browser adapter blockers explicit",
-        "document adapter blockers explicit",
+        "document adapter closed evidence explicit",
         "voice adapter blockers explicit",
         "email/calendar adapter blockers explicit"
       ]
@@ -52,6 +52,16 @@
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "approval_required_action_count=4",
         "source_plan_type includes adapter and deployment"
+      ]
+    },
+    {
+      "step_id": "validate_environment_binding_receipt",
+      "command": "python scripts\\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\\general_agent_promotion_environment_binding_receipt.json --json && python scripts\\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\\general_agent_promotion_environment_binding_receipt.json --require-ready --json",
+      "required_evidence": [
+        "general_agent_promotion_environment_binding_receipt.json exists",
+        "receipt valid=true",
+        "secret_serialization=forbidden",
+        "value_serialized=false for all bindings"
       ]
     },
     {
@@ -94,7 +104,6 @@
   "blocking_gap_ids": [
     "adapter_evidence_not_closed",
     "browser_adapter_not_closed",
-    "document_adapter_not_closed",
     "voice_adapter_not_closed",
     "email_calendar_adapter_not_closed",
     "deployment_witness_not_published",

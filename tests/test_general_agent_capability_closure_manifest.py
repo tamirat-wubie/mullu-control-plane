@@ -41,6 +41,7 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
     assert "scripts/validate_general_agent_promotion_closure_plan_schema.py" in manifest_text
     assert "scripts/validate_general_agent_promotion_closure_plan.py" in manifest_text
     assert "scripts/emit_general_agent_promotion_environment_binding_receipt.py" in manifest_text
+    assert "scripts/validate_general_agent_promotion_environment_binding_receipt.py" in manifest_text
     assert "scripts/preflight_general_agent_promotion_handoff.py" in manifest_text
 
 
@@ -49,7 +50,6 @@ def test_manifest_preserves_open_blocker_traceability() -> None:
     expected_blockers = {
         "adapter_evidence_not_closed",
         "browser_adapter_not_closed",
-        "document_adapter_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
         "deployment_witness_not_published",
@@ -58,6 +58,7 @@ def test_manifest_preserves_open_blocker_traceability() -> None:
 
     assert "Open Production Blockers" in manifest_text
     assert expected_blockers <= set(manifest_text.split())
+    assert "document_adapter_not_closed" not in manifest_text
     assert ".change_assurance/capability_adapter_closure_plan.json" in manifest_text
     assert ".change_assurance/deployment_publication_closure_plan.json" in manifest_text
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in manifest_text

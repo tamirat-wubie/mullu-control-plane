@@ -28,7 +28,7 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 14 |
+| Total closure actions | 13 |
 | Approval-required actions | 4 |
 | Source plan types | `adapter`, `deployment` |
 | Current readiness level | `pilot-governed-core` |
@@ -37,8 +37,8 @@ The current expected aggregate plan contains:
 
 | Boundary | Required input |
 | --- | --- |
-| Browser worker | Playwright package, browser runtime, sandbox receipt reference |
-| Document worker | `pypdf`, `docx`, `openpyxl`, `pptx` parser imports |
+| Browser worker | Playwright package, browser runtime, sandbox receipt JSON path |
+| Document worker | Parser imports and live parser receipt already closed; external effects remain approval-gated |
 | Voice worker | OpenAI provider client, governed `OPENAI_API_KEY`, approved audio sample |
 | Email/calendar worker | One scoped connector token and read-only probe target |
 | Deployment publication | `MULLU_GATEWAY_URL`, runtime witness secret, conformance secret, operator approval |
@@ -55,6 +55,7 @@ python scripts\validate_general_agent_promotion_operator_checklist.py --checklis
 python scripts\validate_general_agent_promotion_handoff_packet.py --packet examples\general_agent_promotion_handoff_packet.json --json
 python scripts\validate_general_agent_promotion_environment_bindings.py --contract examples\general_agent_promotion_environment_bindings.json --json
 python scripts\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\general_agent_promotion_environment_binding_receipt.json --json
+python scripts\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\general_agent_promotion_environment_binding_receipt.json --require-ready --json
 ```
 
 1. Generate the non-production evidence and plans:
@@ -73,6 +74,7 @@ python scripts\validate_general_agent_promotion_closure_plan.py --output .change
 
 ```powershell
 python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --strict --json
+python scripts\validate_general_agent_promotion_handoff_preflight.py --report .change_assurance\general_agent_promotion_handoff_preflight.json --require-ready --json
 ```
 
 3. Inspect `.change_assurance/general_agent_promotion_closure_plan.json`.

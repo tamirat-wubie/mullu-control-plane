@@ -17,6 +17,7 @@ from scripts.validate_release_status import (
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
     PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS,
+    RELEASE_CHECKLIST_REQUIRED_LITERALS,
     REQUIRED_CI_LITERALS,
     REPO_ROOT,
     STATUS_DOCUMENT_REQUIRED_LITERALS,
@@ -26,6 +27,7 @@ from scripts.validate_release_status import (
     validate_gateway_publication_workflow_text,
     validate_protocol_manifest_surface,
     validate_public_surface_document_texts,
+    validate_release_checklist_text,
     validate_status_document_text,
     validate_workflow_hygiene,
 )
@@ -60,9 +62,12 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     }
 
     errors = validate_public_surface_document_texts(document_texts)
+    github_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS["GITHUB_SURFACE.md"]
     deployment_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS["DEPLOYMENT_STATUS.md"]
 
     assert errors == []
+    assert "docs/52_mullu_governance_protocol.md" in github_literals
+    assert "python scripts/validate_protocol_manifest.py" in github_literals
     assert ".github/workflows/gateway-publication.yml" in deployment_literals
     assert "## GitHub Runtime Input State" in deployment_literals
     assert any("orchestrate_deployment_witness.py" in literal for literal in deployment_literals)
@@ -80,7 +85,9 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert any("validate_general_agent_promotion_operator_checklist.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_environment_bindings.py" in literal for literal in deployment_literals)
     assert any("emit_general_agent_promotion_environment_binding_receipt.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_environment_binding_receipt.py" in literal for literal in deployment_literals)
     assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_handoff_preflight.py" in literal for literal in deployment_literals)
     assert any("docs/59_general_agent_promotion_handoff_packet.md" in literal for literal in deployment_literals)
     assert any("examples/general_agent_promotion_handoff_packet.json" in literal for literal in deployment_literals)
     assert any("examples/general_agent_promotion_environment_bindings.json" in literal for literal in deployment_literals)
@@ -94,6 +101,9 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
 
     assert errors == []
     assert "Deployment runtime input witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "Protocol witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "docs/52_mullu_governance_protocol.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "python scripts/validate_protocol_manifest.py" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
     assert "deployment_claim: published" in content
@@ -105,7 +115,12 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "validate_general_agent_promotion_operator_checklist.py" in content
     assert "validate_general_agent_promotion_environment_bindings.py" in content
     assert "emit_general_agent_promotion_environment_binding_receipt.py" in content
+    assert "validate_general_agent_promotion_environment_binding_receipt.py" in content
     assert "preflight_general_agent_promotion_handoff.py" in content
+    assert "validate_general_agent_promotion_handoff_preflight.py" in content
+    assert "Protocol witness" in content
+    assert "31-schema public contract index" in content
+    assert "python scripts/validate_protocol_manifest.py" in content
 
 
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:
@@ -148,6 +163,28 @@ def test_release_gate_validates_public_protocol_manifest() -> None:
     assert (REPO_ROOT / "scripts" / "validate_protocol_manifest.py").exists()
 
 
+def test_release_checklist_requires_protocol_manifest_gate() -> None:
+    content = (REPO_ROOT / "RELEASE_CHECKLIST_v0.1.md").read_text(encoding="utf-8")
+
+    errors = validate_release_checklist_text(content)
+
+    assert errors == []
+    assert "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`" in content
+    assert "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
+    assert "Release status derives from `scripts/validate_release_status.py --strict`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
+
+
+def test_release_checklist_reports_missing_protocol_manifest_gate() -> None:
+    content = "Release Checklist\nShared schemas validate with `scripts/validate_schemas.py --strict`\n"
+
+    errors = validate_release_checklist_text(content)
+
+    assert len(errors) == 1
+    assert "Public protocol manifest validates" in errors[0]
+    assert "scripts/validate_protocol_manifest.py" in errors[0]
+    assert "Release Checklist" not in errors[0]
+
+
 def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
 
@@ -169,6 +206,10 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     )
     assert any(
         "emit_general_agent_promotion_environment_binding_receipt.py" in literal
+        for literal in REQUIRED_CI_LITERALS
+    )
+    assert any(
+        "validate_general_agent_promotion_environment_binding_receipt.py" in literal
         for literal in REQUIRED_CI_LITERALS
     )
     assert content.count("python scripts/validate_protocol_manifest.py") == 2
@@ -194,11 +235,15 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert errors == []
     assert any("validate_general_agent_promotion_handoff_packet.py" in literal for literal in REQUIRED_CI_LITERALS)
     assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert any("validate_general_agent_promotion_handoff_preflight.py" in literal for literal in REQUIRED_CI_LITERALS)
     assert content.count("validate_general_agent_promotion_handoff_packet.py") == 2
     assert content.count("validate_general_agent_promotion_environment_bindings.py") == 2
     assert content.count("emit_general_agent_promotion_environment_binding_receipt.py") == 2
+    assert content.count("validate_general_agent_promotion_environment_binding_receipt.py") == 2
     assert content.count("preflight_general_agent_promotion_handoff.py") == 2
     assert content.count("preflight_general_agent_promotion_handoff.py --output") == 2
+    assert content.count("validate_general_agent_promotion_handoff_preflight.py") == 2
+    assert content.count("validate_general_agent_promotion_handoff_preflight.py --report") == 2
     assert content.count("--strict --json") == 2
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content

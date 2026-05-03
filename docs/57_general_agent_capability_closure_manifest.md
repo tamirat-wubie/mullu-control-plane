@@ -59,7 +59,7 @@ This is not a public-production claim. It is a governed-core readiness claim wit
 | Promotion handoff packet validation | Built as packet schema and blocker gate | `scripts/validate_general_agent_promotion_handoff_packet.py` |
 | Promotion environment binding contract | Built as no-secret binding ontology | `examples/general_agent_promotion_environment_bindings.json` |
 | Promotion environment binding validation | Built as contract/checklist drift gate | `scripts/validate_general_agent_promotion_environment_bindings.py` |
-| Promotion environment binding receipt | Built as redacted binding presence witness | `scripts/emit_general_agent_promotion_environment_binding_receipt.py` |
+| Promotion environment binding receipt | Built and validated as redacted binding presence witness | `scripts/emit_general_agent_promotion_environment_binding_receipt.py`, `scripts/validate_general_agent_promotion_environment_binding_receipt.py` |
 | Promotion handoff preflight | Built as local execution readiness check | `scripts/preflight_general_agent_promotion_handoff.py` |
 
 ## Open Production Blockers
@@ -69,14 +69,13 @@ The readiness validator still reports these blockers:
 ```text
 adapter_evidence_not_closed
 browser_adapter_not_closed
-document_adapter_not_closed
 voice_adapter_not_closed
 email_calendar_adapter_not_closed
 deployment_witness_not_published
 production_health_not_declared
 ```
 
-These blockers mean the governed contracts exist, but live adapter evidence, public deployment witness publication, and declared production health are not yet closed.
+These blockers mean the governed contracts exist, but browser, voice, email/calendar, public deployment witness publication, and declared production health are not yet closed. Document parser adapter evidence is closed; external document send, sign, and submit effects remain approval-gated.
 
 ## Algorithm
 
@@ -136,9 +135,10 @@ The handoff preflight path is:
 1. Validate the operator checklist and schema-backed handoff packet.
 2. Validate the environment binding contract against the checklist.
 3. Emit `.change_assurance/general_agent_promotion_environment_binding_receipt.json` with names and presence only.
-4. Verify required environment bindings by variable name without serializing secret values.
-5. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
-6. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
+4. Validate `.change_assurance/general_agent_promotion_environment_binding_receipt.json` against the contract before preflight.
+5. Verify required environment bindings by variable name without serializing secret values.
+6. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
+7. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
 
 ## Verification
 

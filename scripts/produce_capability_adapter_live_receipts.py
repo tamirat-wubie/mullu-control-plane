@@ -120,9 +120,8 @@ def produce_browser_live_receipt(
 ) -> LiveReceiptWrite:
     """Produce one browser live receipt."""
     checked_at = (clock or _validation_clock)()
-    blockers: list[str] = []
-    if not sandbox_evidence_ref.strip():
-        blockers.append("browser_sandbox_evidence_missing")
+    sandbox_evidence = _validate_browser_sandbox_evidence(sandbox_evidence_ref)
+    blockers: list[str] = list(sandbox_evidence["blockers"])
     try:
         from gateway.browser_worker import BrowserActionRequest
 
@@ -145,8 +144,10 @@ def produce_browser_live_receipt(
             "status": status,
             "verification_status": "passed" if status == "passed" else "failed",
             "checked_at": checked_at,
-            "sandboxed_worker": bool(sandbox_evidence_ref.strip()),
+            "sandboxed_worker": sandbox_evidence["passed"],
             "sandbox_evidence_ref": sandbox_evidence_ref,
+            "sandbox_evidence_status": sandbox_evidence["status"],
+            "sandbox_evidence_detail": sandbox_evidence["detail"],
             "url_before": response.receipt.url_before,
             "url_after": response.receipt.url_after,
             "screenshot_before_ref": response.receipt.screenshot_before_ref,
@@ -162,6 +163,14 @@ def produce_browser_live_receipt(
             checked_at=checked_at,
             blockers=blockers,
             error=str(exc),
+        )
+        payload.update(
+            {
+                "sandboxed_worker": sandbox_evidence["passed"],
+                "sandbox_evidence_ref": sandbox_evidence_ref,
+                "sandbox_evidence_status": sandbox_evidence["status"],
+                "sandbox_evidence_detail": sandbox_evidence["detail"],
+            }
         )
     _write_json(output_path, payload)
     return LiveReceiptWrite(
@@ -419,6 +428,76 @@ def _default_browser_executor() -> BrowserExecutor:
         return execute_browser_request(request, adapter=adapter, policy=policy)
 
     return execute
+
+
+def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, Any]:
+    ref = sandbox_evidence_ref.strip()
+    if not ref:
+        return {
+            "passed": False,
+            "status": "failed",
+            "detail": "missing sandbox evidence reference",
+            "blockers": ("browser_sandbox_evidence_missing",),
+        }
+
+    evidence_path = Path(ref)
+    if not evidence_path.is_absolute():
+        evidence_path = REPO_ROOT / evidence_path
+    if not evidence_path.exists():
+        return {
+            "passed": False,
+            "status": "failed",
+            "detail": f"sandbox evidence file not found: {ref}",
+            "blockers": ("browser_sandbox_evidence_unverified",),
+        }
+
+    try:
+        payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "passed": False,
+            "status": "failed",
+            "detail": f"sandbox evidence unreadable: {type(exc).__name__}",
+            "blockers": ("browser_sandbox_evidence_unverified",),
+        }
+    if not isinstance(payload, dict):
+        return {
+            "passed": False,
+            "status": "failed",
+            "detail": "sandbox evidence root must be an object",
+            "blockers": ("browser_sandbox_evidence_unverified",),
+        }
+
+    receipt = payload.get("receipt") if isinstance(payload.get("receipt"), dict) else payload
+    errors: list[str] = []
+    if not str(receipt.get("receipt_id", "")).strip():
+        errors.append("receipt_id_missing")
+    if not str(receipt.get("sandbox_id", "")).strip():
+        errors.append("sandbox_id_missing")
+    if receipt.get("verification_status") != "passed":
+        errors.append("verification_status_not_passed")
+    if receipt.get("network_disabled") is not True:
+        errors.append("network_disabled_not_true")
+    if receipt.get("read_only_rootfs") is not True:
+        errors.append("read_only_rootfs_not_true")
+    if receipt.get("workspace_mount") != "/workspace":
+        errors.append("workspace_mount_not_workspace")
+    if receipt.get("forbidden_effects_observed") is not False:
+        errors.append("forbidden_effects_observed_not_false")
+
+    if errors:
+        return {
+            "passed": False,
+            "status": "failed",
+            "detail": ",".join(errors),
+            "blockers": ("browser_sandbox_evidence_invalid",),
+        }
+    return {
+        "passed": True,
+        "status": "passed",
+        "detail": f"sandbox receipt verified: {receipt['receipt_id']}",
+        "blockers": (),
+    }
 
 
 def _default_voice_executor() -> VoiceExecutor:
