@@ -88,6 +88,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance/general_agent_promotion_closure_plan_schema_validation.json --strict",
     "python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict",
     "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
+    "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 
@@ -128,6 +129,7 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "emit_general_agent_promotion_environment_binding_receipt.py",
     "validate_general_agent_promotion_environment_binding_receipt.py",
     "preflight_general_agent_promotion_handoff.py",
+    "validate_general_agent_promotion_handoff_preflight.py",
 )
 
 RELEASE_NOTES_REQUIRED_LITERALS: tuple[str, ...] = (
@@ -180,6 +182,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json",
         "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json",
         "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
+        "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json",
         "docs/59_general_agent_promotion_handoff_packet.md",
         "examples/general_agent_promotion_handoff_packet.json",
         "examples/general_agent_promotion_environment_bindings.json",

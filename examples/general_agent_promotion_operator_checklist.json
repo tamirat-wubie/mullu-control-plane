@@ -37,7 +37,7 @@
       "step_id": "write_source_closure_plans",
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
-        "capability_adapter_closure_plan.json action_count=11",
+        "capability_adapter_closure_plan.json action_count=12",
         "deployment_publication_closure_plan.json action_count=2",
         "credential actions approval_required=true",
         "deployment actions approval_required=true"
@@ -47,7 +47,7 @@
       "step_id": "validate_aggregate_closure_plan",
       "command": "python scripts\\plan_general_agent_promotion_closure.py --output .change_assurance\\general_agent_promotion_closure_plan.json && python scripts\\validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance\\general_agent_promotion_closure_plan_schema_validation.json --strict && python scripts\\validate_general_agent_promotion_closure_plan.py --output .change_assurance\\general_agent_promotion_closure_plan_validation.json --strict",
       "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=13",
+        "general_agent_promotion_closure_plan.json total_action_count=14",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "approval_required_action_count=4",

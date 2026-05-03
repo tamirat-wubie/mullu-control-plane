@@ -74,6 +74,7 @@ python scripts\validate_general_agent_promotion_closure_plan.py --output .change
 
 ```powershell
 python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --strict --json
+python scripts\validate_general_agent_promotion_handoff_preflight.py --report .change_assurance\general_agent_promotion_handoff_preflight.json --require-ready --json
 ```
 
 3. Inspect `.change_assurance/general_agent_promotion_closure_plan.json`.

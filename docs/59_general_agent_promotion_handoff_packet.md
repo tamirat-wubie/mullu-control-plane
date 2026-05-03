@@ -36,6 +36,7 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Environment binding receipt emitter | `scripts/emit_general_agent_promotion_environment_binding_receipt.py` |
 | Environment binding receipt validator | `scripts/validate_general_agent_promotion_environment_binding_receipt.py` |
 | Handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` |
+| Handoff preflight validator | `scripts/validate_general_agent_promotion_handoff_preflight.py` |
 | Aggregate closure plan | `.change_assurance/general_agent_promotion_closure_plan.json` |
 | Schema validation report | `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json` |
 | Drift validation report | `.change_assurance/general_agent_promotion_closure_plan_validation.json` |

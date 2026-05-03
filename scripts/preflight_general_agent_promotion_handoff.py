@@ -48,7 +48,7 @@ DEFAULT_SCHEMA_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_pro
 DEFAULT_DRIFT_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan_validation.json"
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
-EXPECTED_ACTION_COUNT = 13
+EXPECTED_ACTION_COUNT = 14
 EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 4
 EXPECTED_CAPABILITY_COUNT = 52
 EXPECTED_CAPSULE_COUNT = 10
@@ -205,10 +205,10 @@ def _closure_schema_report_step(path: Path) -> HandoffPreflightStep:
         and tuple(payload.get("source_plan_types", ())) == EXPECTED_SOURCE_PLAN_TYPES
     )
     detail = (
-        "ok=true action_count=13 approval_required_action_count=4 source_plan_types=['adapter', 'deployment']"
+        "ok=true action_count=14 approval_required_action_count=4 source_plan_types=['adapter', 'deployment']"
         if passed
         else (
-            "expected ok=true action_count=13 approval_required_action_count=4 "
+            "expected ok=true action_count=14 approval_required_action_count=4 "
             f"source_plan_types=['adapter', 'deployment']; observed={_public_report_projection(payload)}"
         )
     )
@@ -227,7 +227,7 @@ def _closure_drift_report_step(path: Path) -> HandoffPreflightStep:
         and payload.get("observed_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
     )
     detail = (
-        "ok=true expected_action_count=13 observed_action_count=13 expected_approval_required_count=4 observed_approval_required_count=4"
+        "ok=true expected_action_count=14 observed_action_count=14 expected_approval_required_count=4 observed_approval_required_count=4"
         if passed
         else (
             "expected ok=true matching action and approval-required counts; "

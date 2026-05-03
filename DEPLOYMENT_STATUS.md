@@ -140,5 +140,6 @@ Before this witness can claim public deployment health, the repository must name
 | General-agent promotion handoff packet | `docs/59_general_agent_promotion_handoff_packet.md` |
 | General-agent promotion machine handoff packet validation | `python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json` |
 | General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |
+| General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |
 | General-agent promotion validation | `python scripts/validate_general_agent_promotion.py --strict` |
 

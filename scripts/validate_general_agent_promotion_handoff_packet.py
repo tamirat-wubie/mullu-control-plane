@@ -61,6 +61,7 @@ REQUIRED_ENTRY_POINTS = {
     "environment_binding_receipt_emitter": "scripts/emit_general_agent_promotion_environment_binding_receipt.py",
     "environment_binding_receipt_validator": "scripts/validate_general_agent_promotion_environment_binding_receipt.py",
     "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
+    "handoff_preflight_validator": "scripts/validate_general_agent_promotion_handoff_preflight.py",
     "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
     "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json",
     "drift_validation_report": ".change_assurance/general_agent_promotion_closure_plan_validation.json",
@@ -141,7 +142,7 @@ def _validate_scalar_fields(packet: dict[str, Any], errors: list[str]) -> None:
         "readiness_level": "pilot-governed-core",
         "capability_capsules": 10,
         "governed_capabilities": 52,
-        "aggregate_closure_actions": 13,
+        "aggregate_closure_actions": 14,
         "approval_required_actions": 4,
         "production_promotion": "blocked",
     }

@@ -122,7 +122,7 @@ def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": 13,
+                "expected_action_count": 14,
                 "observed_action_count": 6,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
@@ -152,7 +152,7 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "action_count": 13,
+                "action_count": 14,
                 "approval_required_action_count": 4,
                 "source_plan_types": ["adapter", "deployment"],
             }
@@ -163,8 +163,8 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": 13,
-                "observed_action_count": 13,
+                "expected_action_count": 14,
+                "observed_action_count": 14,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }

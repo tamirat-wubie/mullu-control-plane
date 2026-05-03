@@ -118,6 +118,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json",
     "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json",
     "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
+    "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json",
     "docs/59_general_agent_promotion_handoff_packet.md",
     "examples/general_agent_promotion_handoff_packet.json",
     "examples/general_agent_promotion_environment_bindings.json",
