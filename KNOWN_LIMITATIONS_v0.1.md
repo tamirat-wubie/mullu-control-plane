@@ -53,11 +53,11 @@ runtime does not yet behave as intended by the architecture specification.
   worker registry, worker load-state, workforce assignment request, and
   workforce assignment decision records can be saved and restored through
   explicit persistence stores, workflow execution records persist at start
-  and after each stage transition, and aggregate team queue-state witnesses
-  can be restored explicitly, but live coordination still does not auto-save
-  or auto-restore. Restarting the runtime still loses in-flight coordination
-  context outside explicitly persisted records, and workflow resume remains
-  caller-driven.
+  and after each stage transition, aggregate team queue-state witnesses and
+  work queue entry carriers can be restored explicitly, but live coordination
+  still does not auto-save or auto-restore. Restarting the runtime still
+  loses in-flight coordination context outside explicitly persisted records,
+  and workflow resume remains caller-driven.
 
 ## Replay
 

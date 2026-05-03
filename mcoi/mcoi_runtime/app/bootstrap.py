@@ -4,7 +4,7 @@ Dependencies: execution-slice adapters, runtime-core boundaries, and local app c
 Invariants:
   - bootstrap constructs deterministic wiring only.
   - bootstrap never executes commands or observes the live machine.
-  - persisted memory, workforce, and team queue restore are explicit and read-only during bootstrap.
+  - persisted memory, workforce, and queue restore are explicit and read-only during bootstrap.
 """
 
 from __future__ import annotations
@@ -35,6 +35,7 @@ from mcoi_runtime.core.runtime_kernel import RuntimeKernel
 from mcoi_runtime.contracts.autonomy import AutonomyMode
 from mcoi_runtime.core.autonomy import AutonomyEngine
 from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
+from mcoi_runtime.core.jobs import WorkQueue
 from mcoi_runtime.core.skills import SkillExecutor, SkillRegistry, SkillSelector
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.provider_registry import ProviderRegistry
@@ -46,6 +47,7 @@ from mcoi_runtime.core.world_state import WorldStateEngine
 from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
+from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
@@ -78,6 +80,8 @@ class BootstrappedRuntime:
     workflow_engine: WorkflowEngine
     goal_store: GoalStore | None
     workflow_store: WorkflowStore | None
+    work_queue: WorkQueue
+    work_queue_store: WorkQueueStore | None
     team_registry: WorkerRegistry
     team_engine: TeamEngine
     team_queue_store: TeamQueueStore | None
@@ -124,10 +128,12 @@ def bootstrap_runtime(
     observers: Mapping[str, ObserverAdapter[object]] | None = None,
     goal_store: GoalStore | None = None,
     workflow_store: WorkflowStore | None = None,
+    work_queue_store: WorkQueueStore | None = None,
     team_queue_store: TeamQueueStore | None = None,
     workforce_store: WorkforceStore | None = None,
     memory_store: MemoryStore | None = None,
     restore_memory: bool = False,
+    restore_work_queue: bool = False,
     restore_team_queue: bool = False,
     restore_workforce: bool = False,
 ) -> BootstrappedRuntime:
@@ -136,6 +142,8 @@ def bootstrap_runtime(
 
     if restore_memory and memory_store is None:
         raise RuntimeCoreInvariantError("restore_memory requires a memory_store")
+    if restore_work_queue and work_queue_store is None:
+        raise RuntimeCoreInvariantError("restore_work_queue requires a work_queue_store")
     if restore_team_queue and team_queue_store is None:
         raise RuntimeCoreInvariantError("restore_team_queue requires a team_queue_store")
     if restore_workforce and workforce_store is None:
@@ -198,6 +206,7 @@ def bootstrap_runtime(
     autonomy = AutonomyEngine(mode=AutonomyMode(app_config.autonomy_mode))
     goal_reasoning_engine = GoalReasoningEngine(clock=runtime_clock)
     workflow_engine_inst = WorkflowEngine(clock=runtime_clock)
+    work_queue = WorkQueue(clock=runtime_clock)
     team_registry = WorkerRegistry(clock=runtime_clock)
     team_engine = TeamEngine(registry=team_registry, clock=runtime_clock)
     event_spine = EventSpineEngine(clock=runtime_clock)
@@ -208,6 +217,9 @@ def bootstrap_runtime(
     else:
         working_memory = WorkingMemory()
         episodic_memory = EpisodicMemory()
+
+    if restore_work_queue and work_queue_store is not None:
+        work_queue_store.restore_state(work_queue)
 
     if restore_team_queue and team_queue_store is not None:
         team_queue_store.restore_queue_states(team_engine)
@@ -239,6 +251,8 @@ def bootstrap_runtime(
         workflow_engine=workflow_engine_inst,
         goal_store=goal_store,
         workflow_store=workflow_store,
+        work_queue=work_queue,
+        work_queue_store=work_queue_store,
         team_registry=team_registry,
         team_engine=team_engine,
         team_queue_store=team_queue_store,

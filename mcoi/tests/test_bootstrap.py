@@ -15,6 +15,7 @@ from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
+from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -22,8 +23,9 @@ from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, Wo
 from mcoi_runtime.core.policy_engine import PolicyInput
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
-from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
+from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
+from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
 from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
 
@@ -40,6 +42,8 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.executors["shell_command"].__class__ is ShellExecutor
     assert runtime.observers["filesystem"].__class__ is FilesystemObserver
     assert runtime.observers["process"].__class__ is ProcessObserver
+    assert runtime.work_queue.peek() is None
+    assert runtime.work_queue_store is None
     assert runtime.team_registry.__class__ is WorkerRegistry
     assert runtime.team_engine.__class__ is TeamEngine
     assert runtime.team_queue_store is None
@@ -208,6 +212,60 @@ def test_bootstrap_runtime_restores_team_queue_only_when_explicit(tmp_path: Path
 def test_bootstrap_runtime_rejects_team_queue_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="team_queue_store"):
         bootstrap_runtime(restore_team_queue=True)
+
+
+def test_bootstrap_runtime_does_not_restore_work_queue_implicitly(tmp_path: Path) -> None:
+    work_queue_store = WorkQueueStore(tmp_path / "work-queue")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    source_runtime.work_queue.enqueue(
+        JobDescriptor(
+            job_id="job-1",
+            name="Job One",
+            description="Queue item one",
+            priority=JobPriority.HIGH,
+            created_at="2026-03-18T12:00:00+00:00",
+        )
+    )
+    before = work_queue_store.save_state(source_runtime.work_queue)
+
+    runtime = bootstrap_runtime(work_queue_store=work_queue_store)
+
+    after = work_queue_store.save_state(source_runtime.work_queue)
+    assert runtime.work_queue_store is work_queue_store
+    assert runtime.work_queue.list_entries() == ()
+    assert before == after
+
+
+def test_bootstrap_runtime_restores_work_queue_only_when_explicit(tmp_path: Path) -> None:
+    work_queue_store = WorkQueueStore(tmp_path / "work-queue")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    source_runtime.work_queue.enqueue(
+        JobDescriptor(
+            job_id="job-1",
+            name="Job One",
+            description="Queue item one",
+            priority=JobPriority.HIGH,
+            created_at="2026-03-18T12:00:00+00:00",
+        )
+    )
+    work_queue_store.save_state(source_runtime.work_queue)
+
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        work_queue_store=work_queue_store,
+        restore_work_queue=True,
+    )
+
+    restored = runtime.work_queue.peek()
+    assert runtime.work_queue_store is work_queue_store
+    assert restored is not None
+    assert restored.job_id == "job-1"
+    assert restored.priority is JobPriority.HIGH
+
+
+def test_bootstrap_runtime_rejects_work_queue_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="work_queue_store"):
+        bootstrap_runtime(restore_work_queue=True)
 
 
 def test_bootstrap_runtime_does_not_restore_workforce_implicitly(tmp_path: Path) -> None:

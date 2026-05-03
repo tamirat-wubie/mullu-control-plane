@@ -49,6 +49,8 @@ from .operator_models import (
     SkillRunReport,
     TeamQueueReconcileReport,
     TeamQueueReconcileRequest,
+    WorkQueueReconcileReport,
+    WorkQueueReconcileRequest,
     WorkforceReconcileReport,
     WorkforceReconcileRequest,
     WorkflowResumeRequest,
@@ -1103,7 +1105,214 @@ def reconcile_team_queues(
     )
 
 
+def reconcile_work_queue(
+    loop: OperatorLoop,
+    request: WorkQueueReconcileRequest,
+) -> WorkQueueReconcileReport:
+    """Assess or restore persisted work-queue entry carriers through the governed path."""
+    started_at = loop.runtime.clock()
+    action_class = (
+        ActionClass.EXECUTE_WRITE
+        if request.restore_from_store
+        else ActionClass.ANALYZE
+    )
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        action_class,
+        action_description=(
+            "work_queue_restore"
+            if request.restore_from_store
+            else "work_queue_assessment"
+        ),
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return WorkQueueReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=None,
+            policy_status=None,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            entry_count=0,
+            entry_ids=(),
+            next_entry_id=None,
+            assigned_person_entry_count=0,
+            assigned_team_entry_count=0,
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        "blocked work queue reconciliation: "
+                        f"{autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.APPROVAL_REQUIRED,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id="work_queue_reconcile",
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=request.restore_from_store,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return WorkQueueReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            entry_count=0,
+            entry_ids=(),
+            next_entry_id=None,
+            assigned_person_entry_count=0,
+            assigned_team_entry_count=0,
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=(
+                        "policy gate returned "
+                        f"{policy_decision.status.value} for work queue reconciliation"
+                    ),
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if request.restore_from_store:
+        store = loop.runtime.work_queue_store
+        if store is None:
+            return WorkQueueReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                entry_count=0,
+                entry_ids=(),
+                next_entry_id=None,
+                assigned_person_entry_count=0,
+                assigned_team_entry_count=0,
+                errors=(
+                    execution_error(
+                        error_code="work_queue_store_not_configured",
+                        message="work queue restore requires a configured work queue store",
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+        try:
+            store.restore_state(loop.runtime.work_queue)
+        except (PersistenceError, RuntimeCoreInvariantError) as exc:
+            return WorkQueueReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                entry_count=0,
+                entry_ids=(),
+                next_entry_id=None,
+                assigned_person_entry_count=0,
+                assigned_team_entry_count=0,
+                errors=(
+                    execution_error(
+                        error_code="work_queue_restore_failed",
+                        message=str(exc),
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    entries = loop.runtime.work_queue.list_entries()
+    if request.entry_ids:
+        requested_entry_ids = set(request.entry_ids)
+        entries = tuple(entry for entry in entries if entry.entry_id in requested_entry_ids)
+        available_entry_ids = {entry.entry_id for entry in entries}
+        missing_entry_ids = tuple(
+            entry_id for entry_id in request.entry_ids if entry_id not in available_entry_ids
+        )
+        if missing_entry_ids:
+            return WorkQueueReconcileReport(
+                request_id=request.request_id,
+                restored=request.restore_from_store,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                entry_count=0,
+                entry_ids=(),
+                next_entry_id=None,
+                assigned_person_entry_count=0,
+                assigned_team_entry_count=0,
+                errors=(
+                    validation_error(
+                        error_code="work_queue_entry_missing",
+                        message=(
+                            "requested work queue entry not found: "
+                            + ", ".join(missing_entry_ids)
+                        ),
+                        source_plane=SourcePlane.COORDINATION,
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    entry_ids = tuple(entry.entry_id for entry in entries)
+    return WorkQueueReconcileReport(
+        request_id=request.request_id,
+        restored=request.restore_from_store,
+        policy_decision_id=policy_decision.decision_id,
+        policy_status=policy_decision.status.value,
+        autonomy_mode=loop.runtime.autonomy.mode.value,
+        autonomy_decision=autonomy_decision.status.value,
+        entry_count=len(entries),
+        entry_ids=entry_ids,
+        next_entry_id=(entries[0].entry_id if entries else None),
+        assigned_person_entry_count=sum(
+            1 for entry in entries if entry.assigned_to_person_id is not None
+        ),
+        assigned_team_entry_count=sum(
+            1 for entry in entries if entry.assigned_to_team_id is not None
+        ),
+        state_hash=_queue_state_hash(entries),
+        started_at=started_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
 __all__ = [
+    "reconcile_work_queue",
     "reconcile_team_queues",
     "reconcile_workforce",
     "resume_workflow",

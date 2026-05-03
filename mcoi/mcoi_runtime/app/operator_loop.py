@@ -47,12 +47,15 @@ from .operator_models import (
     SkillRunReport,
     TeamQueueReconcileReport,
     TeamQueueReconcileRequest,
+    WorkQueueReconcileReport,
+    WorkQueueReconcileRequest,
     WorkforceReconcileReport,
     WorkforceReconcileRequest,
     WorkflowResumeRequest,
     WorkflowRunReport,
 )
 from .operator_runners import (
+    reconcile_work_queue,
     reconcile_team_queues,
     reconcile_workforce,
     resume_workflow,
@@ -362,6 +365,12 @@ class OperatorLoop:
     ) -> TeamQueueReconcileReport:
         return reconcile_team_queues(self, request)
 
+    def reconcile_work_queue(
+        self,
+        request: WorkQueueReconcileRequest,
+    ) -> WorkQueueReconcileReport:
+        return reconcile_work_queue(self, request)
+
     def _runtime_state_fields(self) -> dict[str, object]:
         """Capture current world-state, meta-reasoning, and provider state for reports."""
         world_state = self.runtime.world_state
@@ -535,6 +544,8 @@ __all__ = [
     "SkillRunReport",
     "TeamQueueReconcileReport",
     "TeamQueueReconcileRequest",
+    "WorkQueueReconcileReport",
+    "WorkQueueReconcileRequest",
     "WorkforceReconcileReport",
     "WorkforceReconcileRequest",
     "WorkflowResumeRequest",

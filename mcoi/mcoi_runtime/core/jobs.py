@@ -109,6 +109,16 @@ class WorkQueue:
         self._order.append(entry_id)
         return entry
 
+    def restore_entry(self, entry: WorkQueueEntry) -> WorkQueueEntry:
+        """Restore an exact persisted queue entry without generating new identifiers."""
+        if not isinstance(entry, WorkQueueEntry):
+            raise RuntimeCoreInvariantError("entry must be a WorkQueueEntry instance")
+        if entry.entry_id in self._entries:
+            raise RuntimeCoreInvariantError(f"duplicate queue entry: {entry.entry_id}")
+        self._entries[entry.entry_id] = entry
+        self._order.append(entry.entry_id)
+        return entry
+
     def _sort_key(self, entry_id: str) -> tuple[int, int]:
         entry = self._entries[entry_id]
         rank = JOB_PRIORITY_RANK.get(entry.priority, 99)
@@ -130,6 +140,10 @@ class WorkQueue:
             return None
         best_id = min(self._entries, key=self._sort_key)
         return self._entries[best_id]
+
+    def get(self, entry_id: str) -> WorkQueueEntry | None:
+        """Return a queue entry by identifier without mutating queue state."""
+        return self._entries.get(entry_id)
 
     def list_entries(self) -> tuple[WorkQueueEntry, ...]:
         """Return all entries sorted by priority then enqueue order."""

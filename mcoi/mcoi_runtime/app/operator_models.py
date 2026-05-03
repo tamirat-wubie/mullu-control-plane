@@ -178,6 +178,31 @@ class TeamQueueReconcileRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class WorkQueueReconcileRequest:
+    """Request to assess or restore persisted work-queue entry carriers."""
+
+    request_id: str
+    subject_id: str
+    entry_ids: tuple[str, ...] = ()
+    restore_from_store: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        if not isinstance(self.entry_ids, tuple):
+            raise RuntimeCoreInvariantError("entry_ids must be a tuple")
+        for index, value in enumerate(self.entry_ids):
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(
+                    f"entry_ids[{index}] must be a non-empty string"
+                )
+        if not isinstance(self.restore_from_store, bool):
+            raise RuntimeCoreInvariantError("restore_from_store must be a bool")
+
+
+@dataclass(frozen=True, slots=True)
 class SkillRunReport:
     """Report from a skill execution through the operator loop."""
 
@@ -271,6 +296,27 @@ class TeamQueueReconcileReport:
 
 
 @dataclass(frozen=True, slots=True)
+class WorkQueueReconcileReport:
+    """Report from governed work-queue entry reconciliation or witness restore."""
+
+    request_id: str
+    restored: bool
+    policy_decision_id: str | None
+    policy_status: str | None
+    autonomy_mode: str
+    autonomy_decision: str
+    entry_count: int
+    entry_ids: tuple[str, ...]
+    next_entry_id: str | None
+    assigned_person_entry_count: int
+    assigned_team_entry_count: int
+    state_hash: str = ""
+    errors: tuple[StructuredError, ...] = ()
+    started_at: str = ""
+    completed_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ObservationReport:
     observer_route: str
     status: ObservationStatus
@@ -324,6 +370,8 @@ __all__ = [
     "SkillRunReport",
     "TeamQueueReconcileReport",
     "TeamQueueReconcileRequest",
+    "WorkQueueReconcileReport",
+    "WorkQueueReconcileRequest",
     "WorkforceReconcileReport",
     "WorkforceReconcileRequest",
     "WorkflowResumeRequest",
