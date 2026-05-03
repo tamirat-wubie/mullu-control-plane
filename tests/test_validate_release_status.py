@@ -17,6 +17,7 @@ from scripts.validate_release_status import (
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
     PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS,
+    RELEASE_CHECKLIST_REQUIRED_LITERALS,
     REQUIRED_CI_LITERALS,
     REPO_ROOT,
     STATUS_DOCUMENT_REQUIRED_LITERALS,
@@ -26,6 +27,7 @@ from scripts.validate_release_status import (
     validate_gateway_publication_workflow_text,
     validate_protocol_manifest_surface,
     validate_public_surface_document_texts,
+    validate_release_checklist_text,
     validate_status_document_text,
     validate_workflow_hygiene,
 )
@@ -157,6 +159,28 @@ def test_release_gate_validates_public_protocol_manifest() -> None:
     assert (REPO_ROOT / "schemas" / "mullu_governance_protocol.manifest.json").exists()
     assert (REPO_ROOT / "schemas" / "deployment_orchestration_receipt.schema.json").exists()
     assert (REPO_ROOT / "scripts" / "validate_protocol_manifest.py").exists()
+
+
+def test_release_checklist_requires_protocol_manifest_gate() -> None:
+    content = (REPO_ROOT / "RELEASE_CHECKLIST_v0.1.md").read_text(encoding="utf-8")
+
+    errors = validate_release_checklist_text(content)
+
+    assert errors == []
+    assert "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`" in content
+    assert "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
+    assert "Release status derives from `scripts/validate_release_status.py --strict`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
+
+
+def test_release_checklist_reports_missing_protocol_manifest_gate() -> None:
+    content = "Release Checklist\nShared schemas validate with `scripts/validate_schemas.py --strict`\n"
+
+    errors = validate_release_checklist_text(content)
+
+    assert len(errors) == 1
+    assert "Public protocol manifest validates" in errors[0]
+    assert "scripts/validate_protocol_manifest.py" in errors[0]
+    assert "Release Checklist" not in errors[0]
 
 
 def test_ci_workflow_runs_protocol_manifest_gate() -> None:

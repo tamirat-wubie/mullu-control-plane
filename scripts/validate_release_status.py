@@ -137,6 +137,15 @@ RELEASE_NOTES_REQUIRED_LITERALS: tuple[str, ...] = (
     "sha256:86a63fb36fe94ff44d44a8124625367aa1ead6b99a698a4ebd1b61c6024e5710",
 )
 
+RELEASE_CHECKLIST_REQUIRED_LITERALS: tuple[str, ...] = (
+    "Release Checklist",
+    "Shared schemas validate with `scripts/validate_schemas.py --strict`",
+    "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`",
+    "Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`",
+    "Release status derives from `scripts/validate_release_status.py --strict`",
+    "CI workflow retains the full gated release command set in `.github/workflows/ci.yml`",
+)
+
 PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     "GITHUB_SURFACE.md": (
         "GitHub Surface Witness",
@@ -515,6 +524,19 @@ def validate_release_notes_text(content: str) -> list[str]:
     ]
 
 
+def validate_release_checklist_text(content: str) -> list[str]:
+    """Validate release checklist carries required governed release gates."""
+    missing_literals = tuple(
+        literal for literal in RELEASE_CHECKLIST_REQUIRED_LITERALS if literal not in content
+    )
+    if not missing_literals:
+        return []
+    return [
+        "RELEASE_CHECKLIST_v0.1.md missing required release gates: "
+        f"{list(missing_literals)}"
+    ]
+
+
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for pattern in SOURCE_HYGIENE_GLOBS:
@@ -615,6 +637,13 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
             validate_release_limitation_coverage(
                 known_limitations_text=metadata_texts["KNOWN_LIMITATIONS_v0.1.md"],
                 security_model_text=metadata_texts["SECURITY_MODEL_v0.1.md"],
+            )
+        )
+    release_checklist_path = REPO_ROOT / "RELEASE_CHECKLIST_v0.1.md"
+    if release_checklist_path.exists():
+        errors.extend(
+            validate_release_checklist_text(
+                release_checklist_path.read_text(encoding="utf-8")
             )
         )
 
