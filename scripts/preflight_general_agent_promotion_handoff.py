@@ -204,14 +204,12 @@ def _closure_schema_report_step(path: Path) -> HandoffPreflightStep:
         and payload.get("approval_required_action_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
         and tuple(payload.get("source_plan_types", ())) == EXPECTED_SOURCE_PLAN_TYPES
     )
-    detail = (
-        "ok=true action_count=14 approval_required_action_count=4 source_plan_types=['adapter', 'deployment']"
-        if passed
-        else (
-            "expected ok=true action_count=14 approval_required_action_count=4 "
-            f"source_plan_types=['adapter', 'deployment']; observed={_public_report_projection(payload)}"
-        )
+    expected_detail = (
+        f"ok=true action_count={EXPECTED_ACTION_COUNT} "
+        f"approval_required_action_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT} "
+        "source_plan_types=['adapter', 'deployment']"
     )
+    detail = expected_detail if passed else f"expected {expected_detail}; observed={_public_report_projection(payload)}"
     return HandoffPreflightStep(name="closure plan schema validation", passed=passed, detail=detail)
 
 
@@ -226,13 +224,16 @@ def _closure_drift_report_step(path: Path) -> HandoffPreflightStep:
         and payload.get("expected_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
         and payload.get("observed_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
     )
+    expected_detail = (
+        f"ok=true expected_action_count={EXPECTED_ACTION_COUNT} "
+        f"observed_action_count={EXPECTED_ACTION_COUNT} "
+        f"expected_approval_required_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT} "
+        f"observed_approval_required_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT}"
+    )
     detail = (
-        "ok=true expected_action_count=14 observed_action_count=14 expected_approval_required_count=4 observed_approval_required_count=4"
+        expected_detail
         if passed
-        else (
-            "expected ok=true matching action and approval-required counts; "
-            f"observed={_public_report_projection(payload)}"
-        )
+        else f"expected ok=true matching action and approval-required counts; observed={_public_report_projection(payload)}"
     )
     return HandoffPreflightStep(name="closure plan drift validation", passed=passed, detail=detail)
 

@@ -14,6 +14,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -52,6 +53,7 @@ from scripts.produce_capability_adapter_live_receipts import (  # noqa: E402
     produce_email_calendar_live_receipt,
     produce_voice_live_receipt,
 )
+from scripts.produce_browser_sandbox_evidence import produce_browser_sandbox_evidence  # noqa: E402
 
 
 def test_browser_live_receipt_passes_with_sandbox_evidence_and_worker_response(tmp_path: Path) -> None:
@@ -316,18 +318,14 @@ def _email_calendar_executor():
 
 def _write_browser_sandbox_evidence(tmp_path: Path) -> Path:
     evidence_path = tmp_path / "browser-sandbox-evidence.json"
-    evidence_path.write_text(
-        json.dumps(
-            {
-                "receipt_id": "sandbox-receipt-browser-live",
-                "sandbox_id": "browser-worker-sandbox",
-                "verification_status": "passed",
-                "network_disabled": True,
-                "read_only_rootfs": True,
-                "workspace_mount": "/workspace",
-                "forbidden_effects_observed": False,
-            }
-        ),
-        encoding="utf-8",
+    produce_browser_sandbox_evidence(
+        output_path=evidence_path,
+        workspace_root=tmp_path,
+        runner=_sandbox_success_runner,
+        platform_system=lambda: "Linux",
     )
     return evidence_path
+
+
+def _sandbox_success_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+    return subprocess.CompletedProcess(args[0], 0, stdout="Python 3.13", stderr="")

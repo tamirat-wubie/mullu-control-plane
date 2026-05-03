@@ -474,6 +474,9 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         errors.append("receipt_id_missing")
     if not str(receipt.get("sandbox_id", "")).strip():
         errors.append("sandbox_id_missing")
+    capability_id = str(receipt.get("capability_id", "")).strip()
+    if not capability_id.startswith("browser."):
+        errors.append("capability_id_not_browser")
     if receipt.get("verification_status") != "passed":
         errors.append("verification_status_not_passed")
     if receipt.get("network_disabled") is not True:

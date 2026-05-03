@@ -32,7 +32,7 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert ".change_assurance\\general_agent_promotion_closure_plan.json" in runbook_text
     assert ".change_assurance\\general_agent_promotion_closure_plan_schema_validation.json" in runbook_text
     assert ".change_assurance\\general_agent_promotion_closure_plan_validation.json" in runbook_text
-    assert "Total closure actions | 13" in runbook_text
+    assert "Total closure actions | 14" in runbook_text
     assert "Approval-required actions | 4" in runbook_text
     assert "adapter`, `deployment" in runbook_text
 
@@ -43,6 +43,7 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
     assert "Do not update `DEPLOYMENT_STATUS.md`" in runbook_text
     assert "deployment_claim=published" in runbook_text
     assert "<gateway_url>/health" in runbook_text
+    assert "produce_browser_sandbox_evidence.py" in runbook_text
     assert "validate_general_agent_promotion.py --strict" in runbook_text
     assert "validate_general_agent_promotion_closure_plan_schema.py" in runbook_text
     assert "STATUS:" in runbook_text

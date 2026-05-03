@@ -129,8 +129,13 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
         return _receipt_action(
             adapter_id,
             blocker,
-            "python scripts/produce_capability_adapter_live_receipts.py --target browser --browser-sandbox-evidence <sandbox_receipt_json_path> --strict",
-            ("browser_live_receipt.json", "sandbox_receipt_json_path"),
+            (
+                "python scripts/produce_browser_sandbox_evidence.py "
+                "--output .change_assurance/browser_sandbox_evidence.json --strict && "
+                "python scripts/produce_capability_adapter_live_receipts.py --target browser "
+                "--browser-sandbox-evidence .change_assurance/browser_sandbox_evidence.json --strict"
+            ),
+            ("browser_sandbox_evidence.json", "browser_live_receipt.json"),
         )
     if blocker.startswith("document_dependency_missing:"):
         module_name = blocker.split(":", 1)[1]
