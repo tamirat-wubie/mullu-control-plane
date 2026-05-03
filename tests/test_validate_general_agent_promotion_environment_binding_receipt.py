@@ -1,4 +1,4 @@
-﻿"""Tests for redacted environment binding receipt validation."""
+"""Tests for redacted environment binding receipt validation."""
 
 from __future__ import annotations
 

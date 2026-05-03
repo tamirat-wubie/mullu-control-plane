@@ -66,6 +66,7 @@ REQUIRED_STEP_COMMAND_TOKENS = {
         "emit_general_agent_promotion_environment_binding_receipt.py",
         "validate_general_agent_promotion_environment_binding_receipt.py",
         "general_agent_promotion_environment_binding_receipt.json",
+        "--require-ready",
         "--json",
     ),
     "produce_live_adapter_receipts": ("produce_capability_adapter_live_receipts.py", "--strict"),

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Validate a redacted general-agent promotion environment binding receipt.
 
 Purpose: reject stale, malformed, or value-leaking environment binding receipts
