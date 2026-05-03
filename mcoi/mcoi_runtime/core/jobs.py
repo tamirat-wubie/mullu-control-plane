@@ -243,6 +243,50 @@ class JobEngine:
         self._states[job_id] = state
         return descriptor, state
 
+    def restore_job(
+        self,
+        descriptor: JobDescriptor,
+        state: JobState,
+    ) -> tuple[JobDescriptor, JobState]:
+        """Restore an exact persisted job descriptor and state without replay."""
+        if not isinstance(descriptor, JobDescriptor):
+            raise RuntimeCoreInvariantError("descriptor must be a JobDescriptor instance")
+        if not isinstance(state, JobState):
+            raise RuntimeCoreInvariantError("state must be a JobState instance")
+        if descriptor.job_id != state.job_id:
+            raise RuntimeCoreInvariantError("descriptor and state job_id must match")
+        if descriptor.job_id in self._jobs or descriptor.job_id in self._states:
+            raise RuntimeCoreInvariantError(f"job already restored: {descriptor.job_id}")
+        if state.goal_id is not None and descriptor.goal_id is not None and state.goal_id != descriptor.goal_id:
+            raise RuntimeCoreInvariantError("descriptor and state goal_id must match when both are present")
+        if (
+            state.workflow_id is not None
+            and descriptor.workflow_id is not None
+            and state.workflow_id != descriptor.workflow_id
+        ):
+            raise RuntimeCoreInvariantError(
+                "descriptor and state workflow_id must match when both are present"
+            )
+        self._jobs[descriptor.job_id] = descriptor
+        self._states[state.job_id] = state
+        return descriptor, state
+
+    def get_job_descriptor(self, job_id: str) -> JobDescriptor | None:
+        """Return a job descriptor by identifier without mutating engine state."""
+        return self._jobs.get(job_id)
+
+    def get_job_state(self, job_id: str) -> JobState | None:
+        """Return a job state by identifier without mutating engine state."""
+        return self._states.get(job_id)
+
+    def list_job_descriptors(self) -> tuple[JobDescriptor, ...]:
+        """Return all job descriptors in deterministic identifier order."""
+        return tuple(self._jobs[job_id] for job_id in sorted(self._jobs))
+
+    def list_job_states(self) -> tuple[JobState, ...]:
+        """Return all job states in deterministic identifier order."""
+        return tuple(self._states[job_id] for job_id in sorted(self._states))
+
     # --- State helpers ---
 
     def _get_state(self, job_id: str) -> JobState:

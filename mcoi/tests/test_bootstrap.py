@@ -15,14 +15,16 @@ from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
-from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
+from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobStatus
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.memory import EpisodicMemory, MemoryEntry, MemoryTier, WorkingMemory
 from mcoi_runtime.core.policy_engine import PolicyInput
+from mcoi_runtime.core.jobs import JobEngine
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
+from mcoi_runtime.persistence.job_store import JobStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
@@ -42,6 +44,8 @@ def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> No
     assert runtime.executors["shell_command"].__class__ is ShellExecutor
     assert runtime.observers["filesystem"].__class__ is FilesystemObserver
     assert runtime.observers["process"].__class__ is ProcessObserver
+    assert runtime.job_engine.__class__ is JobEngine
+    assert runtime.job_store is None
     assert runtime.work_queue.peek() is None
     assert runtime.work_queue_store is None
     assert runtime.team_registry.__class__ is WorkerRegistry
@@ -162,6 +166,57 @@ def test_bootstrap_runtime_restores_memory_only_when_explicit(tmp_path: Path) ->
 def test_bootstrap_runtime_rejects_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="memory_store"):
         bootstrap_runtime(restore_memory=True)
+
+
+def test_bootstrap_runtime_does_not_restore_jobs_implicitly(tmp_path: Path) -> None:
+    job_store = JobStore(tmp_path / "jobs")
+    source_engine = JobEngine(clock=iter(("2026-03-18T12:00:00+00:00",) * 6).__next__)
+    descriptor, _state = source_engine.create_job(
+        "Job One",
+        "Persisted job",
+        JobPriority.HIGH,
+    )
+    source_engine.start_job(descriptor.job_id)
+    before = job_store.save_state(source_engine)
+
+    runtime = bootstrap_runtime(job_store=job_store)
+
+    after = job_store.save_state(source_engine)
+    assert runtime.job_store is job_store
+    assert runtime.job_engine.list_job_descriptors() == ()
+    assert runtime.job_engine.list_job_states() == ()
+    assert before == after
+
+
+def test_bootstrap_runtime_restores_jobs_only_when_explicit(tmp_path: Path) -> None:
+    job_store = JobStore(tmp_path / "jobs")
+    source_engine = JobEngine(clock=iter(("2026-03-18T12:00:00+00:00",) * 6).__next__)
+    descriptor, _state = source_engine.create_job(
+        "Job One",
+        "Persisted job",
+        JobPriority.HIGH,
+    )
+    source_engine.start_job(descriptor.job_id)
+    job_store.save_state(source_engine)
+
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        job_store=job_store,
+        restore_jobs=True,
+    )
+
+    restored_descriptor = runtime.job_engine.get_job_descriptor(descriptor.job_id)
+    restored_state = runtime.job_engine.get_job_state(descriptor.job_id)
+    assert runtime.job_store is job_store
+    assert restored_descriptor is not None
+    assert restored_descriptor.priority is JobPriority.HIGH
+    assert restored_state is not None
+    assert restored_state.status is JobStatus.IN_PROGRESS
+
+
+def test_bootstrap_runtime_rejects_job_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="job_store"):
+        bootstrap_runtime(restore_jobs=True)
 
 
 def test_bootstrap_runtime_does_not_restore_team_queue_implicitly(tmp_path: Path) -> None:
