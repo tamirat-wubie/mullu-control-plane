@@ -228,6 +228,37 @@ class JobReconcileRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class CoordinationRecoveryRequest:
+    """Request to inspect or restore persisted coordination runtime carriers."""
+
+    request_id: str
+    subject_id: str
+    restore_jobs: bool = False
+    restore_work_queue: bool = False
+    restore_team_queue: bool = False
+    restore_workforce: bool = False
+    inspect_workflow_store: bool = False
+    require_cross_store_consistency: bool = True
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        for field_name in (
+            "restore_jobs",
+            "restore_work_queue",
+            "restore_team_queue",
+            "restore_workforce",
+            "inspect_workflow_store",
+            "require_cross_store_consistency",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, bool):
+                raise RuntimeCoreInvariantError(f"{field_name} must be a bool")
+
+
+@dataclass(frozen=True, slots=True)
 class SkillRunReport:
     """Report from a skill execution through the operator loop."""
 
@@ -363,6 +394,32 @@ class JobReconcileReport:
 
 
 @dataclass(frozen=True, slots=True)
+class CoordinationRecoveryReport:
+    """Report from governed persisted coordination recovery or inspection."""
+
+    request_id: str
+    restored_components: tuple[str, ...]
+    inspected_components: tuple[str, ...]
+    policy_decision_id: str | None
+    policy_status: str | None
+    autonomy_mode: str
+    autonomy_decision: str
+    job_count: int
+    work_queue_entry_count: int
+    team_queue_state_count: int
+    workforce_worker_count: int
+    workforce_request_count: int
+    workforce_decision_count: int
+    workflow_descriptor_count: int
+    workflow_execution_count: int
+    cross_store_checks_passed: bool
+    state_hash: str = ""
+    errors: tuple[StructuredError, ...] = ()
+    started_at: str = ""
+    completed_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ObservationReport:
     observer_route: str
     status: ObservationStatus
@@ -406,6 +463,8 @@ class OperatorRunReport:
 
 
 __all__ = [
+    "CoordinationRecoveryReport",
+    "CoordinationRecoveryRequest",
     "GoalRunReport",
     "JobReconcileReport",
     "JobReconcileRequest",

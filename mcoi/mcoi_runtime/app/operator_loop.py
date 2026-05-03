@@ -38,6 +38,8 @@ from mcoi_runtime.core.template_validator import TemplateValidationError
 
 from .bootstrap import BootstrappedRuntime, build_policy_decision
 from .operator_models import (
+    CoordinationRecoveryReport,
+    CoordinationRecoveryRequest,
     GoalRunReport,
     JobReconcileReport,
     JobReconcileRequest,
@@ -57,6 +59,7 @@ from .operator_models import (
     WorkflowRunReport,
 )
 from .operator_runners import (
+    recover_coordination_state,
     reconcile_jobs,
     reconcile_work_queue,
     reconcile_team_queues,
@@ -356,6 +359,12 @@ class OperatorLoop:
     ) -> GoalRunReport:
         return run_goal(self, request, goal_descriptor)
 
+    def recover_coordination_state(
+        self,
+        request: CoordinationRecoveryRequest,
+    ) -> CoordinationRecoveryReport:
+        return recover_coordination_state(self, request)
+
     def reconcile_workforce(
         self,
         request: WorkforceReconcileRequest,
@@ -543,6 +552,8 @@ class OperatorLoop:
 
 
 __all__ = [
+    "CoordinationRecoveryReport",
+    "CoordinationRecoveryRequest",
     "GoalRunReport",
     "JobReconcileReport",
     "JobReconcileRequest",

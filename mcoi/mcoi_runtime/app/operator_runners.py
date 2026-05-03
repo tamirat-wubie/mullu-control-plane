@@ -45,6 +45,8 @@ from .operator_executors import (
     _WorkflowStageExecutor,
 )
 from .operator_models import (
+    CoordinationRecoveryReport,
+    CoordinationRecoveryRequest,
     GoalRunReport,
     JobReconcileReport,
     JobReconcileRequest,
@@ -922,6 +924,466 @@ def _job_runtime_hash(
     ).hexdigest()
 
 
+def _coordination_payload_hash(payload: object) -> str:
+    return sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
+def _workflow_inventory_payload(
+    descriptors: tuple[object, ...],
+    executions: tuple[object, ...],
+) -> dict[str, object]:
+    return {
+        "descriptors": [
+            descriptor.to_json_dict() if hasattr(descriptor, "to_json_dict") else descriptor
+            for descriptor in descriptors
+        ],
+        "executions": [
+            execution.to_json_dict() if hasattr(execution, "to_json_dict") else execution
+            for execution in executions
+        ],
+    }
+
+
+def _load_workflow_inventory(loop: OperatorLoop) -> tuple[tuple[object, ...], tuple[object, ...]]:
+    store = loop.runtime.workflow_store
+    if store is None:
+        raise PersistenceError("workflow store not configured")
+    descriptors = tuple(
+        store.load_descriptor(workflow_id)
+        for workflow_id in store.list_descriptors()
+    )
+    executions = tuple(
+        store.load_execution_record(execution_id)
+        for execution_id in store.list_executions()
+    )
+    descriptor_ids = {descriptor.workflow_id for descriptor in descriptors}
+    missing_workflow_ids = tuple(
+        sorted(
+            {
+                execution.workflow_id
+                for execution in executions
+                if execution.workflow_id not in descriptor_ids
+            }
+        )
+    )
+    if missing_workflow_ids:
+        raise RuntimeCoreInvariantError(
+            "workflow execution record references missing workflow descriptor: "
+            + ", ".join(missing_workflow_ids)
+        )
+    return descriptors, executions
+
+
+def _coordination_consistency_errors(
+    *,
+    loop: OperatorLoop,
+    job_descriptors: tuple[object, ...] | None,
+    work_queue_entries: tuple[object, ...] | None,
+    workflow_descriptors: tuple[object, ...] | None,
+) -> tuple[StructuredError, ...]:
+    errors: list[StructuredError] = []
+
+    if work_queue_entries is not None:
+        available_job_ids = (
+            {descriptor.job_id for descriptor in job_descriptors}
+            if job_descriptors is not None
+            else {
+                descriptor.job_id
+                for descriptor in loop.runtime.job_engine.list_job_descriptors()
+            }
+        )
+        missing_job_ids = tuple(
+            sorted(
+                {
+                    entry.job_id
+                    for entry in work_queue_entries
+                    if entry.job_id not in available_job_ids
+                }
+            )
+        )
+        if missing_job_ids:
+            errors.append(
+                validation_error(
+                    error_code="recovery_missing_job_for_queue_entry",
+                    message=(
+                        "work queue entries reference missing job descriptors: "
+                        + ", ".join(missing_job_ids)
+                    ),
+                    source_plane=SourcePlane.COORDINATION,
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                )
+            )
+
+    if workflow_descriptors is not None and job_descriptors is not None:
+        available_workflow_ids = {descriptor.workflow_id for descriptor in workflow_descriptors}
+        missing_workflow_ids = tuple(
+            sorted(
+                {
+                    descriptor.workflow_id
+                    for descriptor in job_descriptors
+                    if descriptor.workflow_id is not None
+                    and descriptor.workflow_id not in available_workflow_ids
+                }
+            )
+        )
+        if missing_workflow_ids:
+            errors.append(
+                validation_error(
+                    error_code="recovery_missing_workflow_for_job",
+                    message=(
+                        "job descriptors reference missing workflow descriptors: "
+                        + ", ".join(missing_workflow_ids)
+                    ),
+                    source_plane=SourcePlane.COORDINATION,
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                )
+            )
+
+    return tuple(errors)
+
+
+def recover_coordination_state(
+    loop: OperatorLoop,
+    request: CoordinationRecoveryRequest,
+) -> CoordinationRecoveryReport:
+    """Inspect or restore persisted coordination carriers through one governed path."""
+    started_at = loop.runtime.clock()
+    has_write_effects = any(
+        (
+            request.restore_jobs,
+            request.restore_work_queue,
+            request.restore_team_queue,
+            request.restore_workforce,
+        )
+    )
+    action_class = ActionClass.EXECUTE_WRITE if has_write_effects else ActionClass.ANALYZE
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        action_class,
+        action_description=(
+            "coordination_recovery_restore"
+            if has_write_effects
+            else "coordination_recovery_inspect"
+        ),
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return CoordinationRecoveryReport(
+            request_id=request.request_id,
+            restored_components=(),
+            inspected_components=(),
+            policy_decision_id=None,
+            policy_status=None,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0,
+            work_queue_entry_count=0,
+            team_queue_state_count=0,
+            workforce_worker_count=0,
+            workforce_request_count=0,
+            workforce_decision_count=0,
+            workflow_descriptor_count=0,
+            workflow_execution_count=0,
+            cross_store_checks_passed=False,
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        "blocked coordination recovery: "
+                        f"{autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.APPROVAL_REQUIRED,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id="coordination_recovery",
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=has_write_effects,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return CoordinationRecoveryReport(
+            request_id=request.request_id,
+            restored_components=(),
+            inspected_components=(),
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0,
+            work_queue_entry_count=0,
+            team_queue_state_count=0,
+            workforce_worker_count=0,
+            workforce_request_count=0,
+            workforce_decision_count=0,
+            workflow_descriptor_count=0,
+            workflow_execution_count=0,
+            cross_store_checks_passed=False,
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=(
+                        "policy gate returned "
+                        f"{policy_decision.status.value} for coordination recovery"
+                    ),
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    inspected_components: list[str] = []
+    restored_components: list[str] = []
+    job_state = None
+    work_queue_state = None
+    team_queue_states = None
+    workforce_state = None
+    workflow_descriptors: tuple[object, ...] | None = None
+    workflow_executions: tuple[object, ...] | None = None
+
+    try:
+        if request.restore_jobs:
+            if loop.runtime.job_store is None:
+                raise PersistenceError("job store not configured")
+            job_state = loop.runtime.job_store.load_state()
+            inspected_components.append("jobs")
+        if request.restore_work_queue:
+            if loop.runtime.work_queue_store is None:
+                raise PersistenceError("work queue store not configured")
+            work_queue_state = loop.runtime.work_queue_store.load_state()
+            inspected_components.append("work_queue")
+        if request.restore_team_queue:
+            if loop.runtime.team_queue_store is None:
+                raise PersistenceError("team queue store not configured")
+            team_queue_states = loop.runtime.team_queue_store.load_queue_states()
+            inspected_components.append("team_queue")
+        if request.restore_workforce:
+            if loop.runtime.workforce_store is None:
+                raise PersistenceError("workforce store not configured")
+            workforce_state = loop.runtime.workforce_store.load_state()
+            inspected_components.append("workforce")
+        if request.inspect_workflow_store:
+            workflow_descriptors, workflow_executions = _load_workflow_inventory(loop)
+            inspected_components.append("workflow_store")
+    except PersistenceError as exc:
+        return CoordinationRecoveryReport(
+            request_id=request.request_id,
+            restored_components=(),
+            inspected_components=tuple(inspected_components),
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0 if job_state is None else len(job_state.descriptors),
+            work_queue_entry_count=0 if work_queue_state is None else len(work_queue_state.entries),
+            team_queue_state_count=0 if team_queue_states is None else len(team_queue_states),
+            workforce_worker_count=0 if workforce_state is None else len(workforce_state.workers),
+            workforce_request_count=0 if workforce_state is None else len(workforce_state.requests),
+            workforce_decision_count=0 if workforce_state is None else len(workforce_state.decisions),
+            workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
+            workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
+            cross_store_checks_passed=False,
+            errors=(
+                execution_error(
+                    error_code="coordination_store_not_available",
+                    message=str(exc),
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+    except RuntimeCoreInvariantError as exc:
+        return CoordinationRecoveryReport(
+            request_id=request.request_id,
+            restored_components=(),
+            inspected_components=tuple(inspected_components),
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0 if job_state is None else len(job_state.descriptors),
+            work_queue_entry_count=0 if work_queue_state is None else len(work_queue_state.entries),
+            team_queue_state_count=0 if team_queue_states is None else len(team_queue_states),
+            workforce_worker_count=0 if workforce_state is None else len(workforce_state.workers),
+            workforce_request_count=0 if workforce_state is None else len(workforce_state.requests),
+            workforce_decision_count=0 if workforce_state is None else len(workforce_state.decisions),
+            workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
+            workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
+            cross_store_checks_passed=False,
+            errors=(
+                validation_error(
+                    error_code="workflow_store_invalid",
+                    message=str(exc),
+                    source_plane=SourcePlane.COORDINATION,
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    consistency_errors = ()
+    if request.require_cross_store_consistency:
+        consistency_errors = _coordination_consistency_errors(
+            loop=loop,
+            job_descriptors=(None if job_state is None else job_state.descriptors),
+            work_queue_entries=(None if work_queue_state is None else work_queue_state.entries),
+            workflow_descriptors=workflow_descriptors,
+        )
+        if consistency_errors:
+            return CoordinationRecoveryReport(
+                request_id=request.request_id,
+                restored_components=(),
+                inspected_components=tuple(inspected_components),
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                job_count=0 if job_state is None else len(job_state.descriptors),
+                work_queue_entry_count=0 if work_queue_state is None else len(work_queue_state.entries),
+                team_queue_state_count=0 if team_queue_states is None else len(team_queue_states),
+                workforce_worker_count=0 if workforce_state is None else len(workforce_state.workers),
+                workforce_request_count=0 if workforce_state is None else len(workforce_state.requests),
+                workforce_decision_count=0 if workforce_state is None else len(workforce_state.decisions),
+                workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
+                workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
+                cross_store_checks_passed=False,
+                errors=consistency_errors,
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    try:
+        if request.restore_jobs:
+            loop.runtime.job_store.restore_state(loop.runtime.job_engine)
+            restored_components.append("jobs")
+        if request.restore_work_queue:
+            loop.runtime.work_queue_store.restore_state(loop.runtime.work_queue)
+            restored_components.append("work_queue")
+        if request.restore_team_queue:
+            loop.runtime.team_queue_store.restore_queue_states(loop.runtime.team_engine)
+            restored_components.append("team_queue")
+        if request.restore_workforce:
+            loop.runtime.workforce_store.restore_state(loop.runtime.workforce_engine)
+            restored_components.append("workforce")
+    except (PersistenceError, RuntimeCoreInvariantError) as exc:
+        return CoordinationRecoveryReport(
+            request_id=request.request_id,
+            restored_components=tuple(restored_components),
+            inspected_components=tuple(inspected_components),
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0 if job_state is None else len(job_state.descriptors),
+            work_queue_entry_count=0 if work_queue_state is None else len(work_queue_state.entries),
+            team_queue_state_count=0 if team_queue_states is None else len(team_queue_states),
+            workforce_worker_count=0 if workforce_state is None else len(workforce_state.workers),
+            workforce_request_count=0 if workforce_state is None else len(workforce_state.requests),
+            workforce_decision_count=0 if workforce_state is None else len(workforce_state.decisions),
+            workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
+            workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
+            cross_store_checks_passed=request.require_cross_store_consistency,
+            errors=(
+                execution_error(
+                    error_code="coordination_restore_failed",
+                    message=str(exc),
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    state_hash = _coordination_payload_hash(
+        {
+            "jobs": (
+                None
+                if job_state is None
+                else {
+                    "descriptors": [
+                        descriptor.to_json_dict() for descriptor in job_state.descriptors
+                    ],
+                    "states": [
+                        state.to_json_dict() for state in job_state.states
+                    ],
+                }
+            ),
+            "work_queue": (
+                None
+                if work_queue_state is None
+                else [entry.to_json_dict() for entry in work_queue_state.entries]
+            ),
+            "team_queue": (
+                None
+                if team_queue_states is None
+                else [state.to_json_dict() for state in team_queue_states]
+            ),
+            "workforce": (
+                None
+                if workforce_state is None
+                else {
+                    "workers": [worker.to_json_dict() for worker in workforce_state.workers],
+                    "requests": [request_item.to_json_dict() for request_item in workforce_state.requests],
+                    "decisions": [decision.to_json_dict() for decision in workforce_state.decisions],
+                }
+            ),
+            "workflow_store": (
+                None
+                if workflow_descriptors is None or workflow_executions is None
+                else _workflow_inventory_payload(workflow_descriptors, workflow_executions)
+            ),
+        }
+    )
+
+    return CoordinationRecoveryReport(
+        request_id=request.request_id,
+        restored_components=tuple(restored_components),
+        inspected_components=tuple(inspected_components),
+        policy_decision_id=policy_decision.decision_id,
+        policy_status=policy_decision.status.value,
+        autonomy_mode=loop.runtime.autonomy.mode.value,
+        autonomy_decision=autonomy_decision.status.value,
+        job_count=0 if job_state is None else len(job_state.descriptors),
+        work_queue_entry_count=0 if work_queue_state is None else len(work_queue_state.entries),
+        team_queue_state_count=0 if team_queue_states is None else len(team_queue_states),
+        workforce_worker_count=0 if workforce_state is None else len(workforce_state.workers),
+        workforce_request_count=0 if workforce_state is None else len(workforce_state.requests),
+        workforce_decision_count=0 if workforce_state is None else len(workforce_state.decisions),
+        workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
+        workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
+        cross_store_checks_passed=request.require_cross_store_consistency,
+        state_hash=state_hash,
+        started_at=started_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
 def reconcile_team_queues(
     loop: OperatorLoop,
     request: TeamQueueReconcileRequest,
@@ -1550,6 +2012,7 @@ def reconcile_jobs(
 
 
 __all__ = [
+    "recover_coordination_state",
     "reconcile_jobs",
     "reconcile_work_queue",
     "reconcile_team_queues",
