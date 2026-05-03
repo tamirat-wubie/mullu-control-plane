@@ -37,9 +37,11 @@ runtime does not yet behave as intended by the architecture specification.
 - **Browser adapter not production-closed:** A restricted Playwright adapter
   exists, but browser runtime dependencies, browser binaries, sandboxed worker
   packaging, and live evidence are not yet published.
-- **Document adapter not production-closed:** Optional PDF/Office parser
-  implementations exist, but production dependency bundling and live parser
-  evidence are not yet published.
+- **Document parser adapter evidence closed for parser-first scope:** Optional
+  PDF/Office parser implementations, dependency probes, and live parser receipt
+  evidence are represented through the adapter evidence collector. External
+  document send, sign, and submit effects remain approval-gated and require
+  separate effect receipts before any production claim.
 - **Voice adapter not production-closed:** An OpenAI-compatible voice adapter
   exists, but provider credentials, live STT/TTS checks, and deployment evidence
   are not yet published.

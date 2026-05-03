@@ -19,7 +19,11 @@ from scripts.validate_public_repository_surface import (
     DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
+    GITHUB_SURFACE_REQUIRED_LITERALS,
+    GOVERNANCE_PROTOCOL_DOC_PATH,
+    GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
     REPO_ROOT,
+    STATUS_REQUIRED_LITERALS,
     validate_required_document_text,
 )
 
@@ -49,12 +53,43 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json" in content
     assert "python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json" in content
     assert "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json" in content
+    assert "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json" in content
     assert "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json" in content
     assert "docs/59_general_agent_promotion_handoff_packet.md" in content
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
     assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in content
     assert "No `deployment-witness.yml` workflow runs are currently recorded" in content
+
+
+def test_status_witness_requires_protocol_manifest_anchor() -> None:
+    content = (REPO_ROOT / "STATUS.md").read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name="STATUS.md",
+        content=content,
+        required_literals=STATUS_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "Protocol witness" in content
+    assert "docs/52_mullu_governance_protocol.md" in content
+    assert "python scripts/validate_protocol_manifest.py" in content
+
+
+def test_github_surface_requires_protocol_document_anchor() -> None:
+    content = (REPO_ROOT / "GITHUB_SURFACE.md").read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name="GITHUB_SURFACE.md",
+        content=content,
+        required_literals=GITHUB_SURFACE_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "docs/52_mullu_governance_protocol.md" in content
+    assert "python scripts/validate_protocol_manifest.py" in content
+    assert "Public protocol schema index" in content
 
 
 def test_gateway_publication_workflow_requires_receipt_validator() -> None:
@@ -87,6 +122,22 @@ def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> No
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
     assert '--conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET"' in content
     assert ".change_assurance/deployment_witness.json" in content
+
+
+def test_governance_protocol_doc_is_public_surface_anchor() -> None:
+    content = (REPO_ROOT / GOVERNANCE_PROTOCOL_DOC_PATH).read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name=GOVERNANCE_PROTOCOL_DOC_PATH,
+        content=content,
+        required_literals=GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "protocol manifest ok: 31 schemas" in content
+    assert "Deployment handoff receipts are public contracts" in content
+    assert "Terminal closure certificates are public contracts" in content
+    assert "python scripts\\validate_protocol_manifest.py" in content
 
 
 def test_required_document_text_reports_missing_orchestration_literal() -> None:

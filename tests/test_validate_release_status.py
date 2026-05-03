@@ -80,6 +80,7 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert any("validate_general_agent_promotion_operator_checklist.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_environment_bindings.py" in literal for literal in deployment_literals)
     assert any("emit_general_agent_promotion_environment_binding_receipt.py" in literal for literal in deployment_literals)
+    assert any("validate_general_agent_promotion_environment_binding_receipt.py" in literal for literal in deployment_literals)
     assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in deployment_literals)
     assert any("docs/59_general_agent_promotion_handoff_packet.md" in literal for literal in deployment_literals)
     assert any("examples/general_agent_promotion_handoff_packet.json" in literal for literal in deployment_literals)
@@ -105,6 +106,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "validate_general_agent_promotion_operator_checklist.py" in content
     assert "validate_general_agent_promotion_environment_bindings.py" in content
     assert "emit_general_agent_promotion_environment_binding_receipt.py" in content
+    assert "validate_general_agent_promotion_environment_binding_receipt.py" in content
     assert "preflight_general_agent_promotion_handoff.py" in content
 
 
@@ -171,6 +173,10 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
         "emit_general_agent_promotion_environment_binding_receipt.py" in literal
         for literal in REQUIRED_CI_LITERALS
     )
+    assert any(
+        "validate_general_agent_promotion_environment_binding_receipt.py" in literal
+        for literal in REQUIRED_CI_LITERALS
+    )
     assert content.count("python scripts/validate_protocol_manifest.py") == 2
     assert "Validate protocol manifest" in content
 
@@ -197,6 +203,7 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert content.count("validate_general_agent_promotion_handoff_packet.py") == 2
     assert content.count("validate_general_agent_promotion_environment_bindings.py") == 2
     assert content.count("emit_general_agent_promotion_environment_binding_receipt.py") == 2
+    assert content.count("validate_general_agent_promotion_environment_binding_receipt.py") == 2
     assert content.count("preflight_general_agent_promotion_handoff.py") == 2
     assert content.count("preflight_general_agent_promotion_handoff.py --output") == 2
     assert content.count("--strict --json") == 2

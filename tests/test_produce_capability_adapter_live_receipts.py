@@ -56,10 +56,11 @@ from scripts.produce_capability_adapter_live_receipts import (  # noqa: E402
 
 def test_browser_live_receipt_passes_with_sandbox_evidence_and_worker_response(tmp_path: Path) -> None:
     output_path = tmp_path / "browser_live_receipt.json"
+    sandbox_evidence = _write_browser_sandbox_evidence(tmp_path)
 
     result = produce_browser_live_receipt(
         output_path=output_path,
-        sandbox_evidence_ref="sandbox:browser-worker-live",
+        sandbox_evidence_ref=str(sandbox_evidence),
         executor=_browser_executor(),
     )
     payload = json.loads(output_path.read_text(encoding="utf-8"))
@@ -68,6 +69,7 @@ def test_browser_live_receipt_passes_with_sandbox_evidence_and_worker_response(t
     assert payload["status"] == "passed"
     assert payload["adapter_id"] == "browser.playwright"
     assert payload["sandboxed_worker"] is True
+    assert payload["sandbox_evidence_status"] == "passed"
     assert payload["worker_receipt"]["verification_status"] == "passed"
     assert payload["network_requests"] == ["https://docs.mullusi.com/reference"]
 
@@ -87,6 +89,23 @@ def test_browser_live_receipt_fails_without_sandbox_evidence(tmp_path: Path) -> 
     assert payload["sandboxed_worker"] is False
     assert "browser_sandbox_evidence_missing" in payload["blockers"]
     assert "browser_sandbox_evidence_missing" in result.blockers
+
+
+def test_browser_live_receipt_rejects_opaque_sandbox_evidence(tmp_path: Path) -> None:
+    output_path = tmp_path / "browser_live_receipt.json"
+
+    result = produce_browser_live_receipt(
+        output_path=output_path,
+        sandbox_evidence_ref="sandbox:browser-worker-live",
+        executor=_browser_executor(),
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert result.passed is False
+    assert payload["status"] == "failed"
+    assert payload["sandboxed_worker"] is False
+    assert payload["sandbox_evidence_status"] == "failed"
+    assert "browser_sandbox_evidence_unverified" in payload["blockers"]
 
 
 def test_document_live_receipt_passes_with_required_parser_probe(tmp_path: Path) -> None:
@@ -174,10 +193,11 @@ def test_generated_receipts_satisfy_adapter_evidence_collector(tmp_path: Path) -
     voice_path = tmp_path / "voice.json"
     email_calendar_path = tmp_path / "email-calendar.json"
     audio_path = tmp_path / "voice.wav"
+    sandbox_evidence = _write_browser_sandbox_evidence(tmp_path)
     audio_path.write_bytes(b"audio-bytes")
     produce_browser_live_receipt(
         output_path=browser_path,
-        sandbox_evidence_ref="sandbox:browser-worker-live",
+        sandbox_evidence_ref=str(sandbox_evidence),
         executor=_browser_executor(),
     )
     produce_document_live_receipt(
@@ -292,3 +312,22 @@ def _email_calendar_executor():
         return execute_email_calendar_request(request, adapter=adapter, policy=policy)
 
     return execute
+
+
+def _write_browser_sandbox_evidence(tmp_path: Path) -> Path:
+    evidence_path = tmp_path / "browser-sandbox-evidence.json"
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "sandbox-receipt-browser-live",
+                "sandbox_id": "browser-worker-sandbox",
+                "verification_status": "passed",
+                "network_disabled": True,
+                "read_only_rootfs": True,
+                "workspace_mount": "/workspace",
+                "forbidden_effects_observed": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return evidence_path

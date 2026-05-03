@@ -36,7 +36,6 @@ REQUIRED_OPEN_BLOCKERS = frozenset(
     {
         "adapter_evidence_not_closed",
         "browser_adapter_not_closed",
-        "document_adapter_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
         "deployment_witness_not_published",
@@ -60,6 +59,7 @@ REQUIRED_ENTRY_POINTS = {
     "handoff_packet_validator": "scripts/validate_general_agent_promotion_handoff_packet.py",
     "environment_binding_validator": "scripts/validate_general_agent_promotion_environment_bindings.py",
     "environment_binding_receipt_emitter": "scripts/emit_general_agent_promotion_environment_binding_receipt.py",
+    "environment_binding_receipt_validator": "scripts/validate_general_agent_promotion_environment_binding_receipt.py",
     "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
     "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
     "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json",
@@ -84,6 +84,7 @@ REQUIRED_SEQUENCE_ITEMS = frozenset(
         "write_aggregate_closure_plan",
         "validate_aggregate_closure_plan_schema",
         "validate_aggregate_closure_plan_drift",
+        "validate_environment_binding_receipt",
         "complete_dependency_and_credential_actions",
         "produce_live_adapter_receipts",
         "publish_deployment_witness",
@@ -140,7 +141,7 @@ def _validate_scalar_fields(packet: dict[str, Any], errors: list[str]) -> None:
         "readiness_level": "pilot-governed-core",
         "capability_capsules": 10,
         "governed_capabilities": 52,
-        "aggregate_closure_actions": 14,
+        "aggregate_closure_actions": 13,
         "approval_required_actions": 4,
         "production_promotion": "blocked",
     }

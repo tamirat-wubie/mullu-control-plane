@@ -16,7 +16,7 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 10 |
 | Governed capabilities | 52 |
-| Aggregate closure actions | 14 |
+| Aggregate closure actions | 13 |
 | Approval-required actions | 4 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
@@ -34,6 +34,7 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Handoff packet validator | `scripts/validate_general_agent_promotion_handoff_packet.py` |
 | Environment binding validator | `scripts/validate_general_agent_promotion_environment_bindings.py` |
 | Environment binding receipt emitter | `scripts/emit_general_agent_promotion_environment_binding_receipt.py` |
+| Environment binding receipt validator | `scripts/validate_general_agent_promotion_environment_binding_receipt.py` |
 | Handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` |
 | Aggregate closure plan | `.change_assurance/general_agent_promotion_closure_plan.json` |
 | Schema validation report | `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json` |
@@ -47,7 +48,6 @@ This packet is the operator entry point for the remaining promotion work. It bin
 ```text
 adapter_evidence_not_closed
 browser_adapter_not_closed
-document_adapter_not_closed
 voice_adapter_not_closed
 email_calendar_adapter_not_closed
 deployment_witness_not_published
@@ -71,11 +71,12 @@ production_health_not_declared
 4. Regenerate adapter, deployment, and aggregate closure plans.
 5. Validate aggregate closure plan schema.
 6. Validate aggregate closure plan drift.
-7. Complete dependency and credential actions with approval where required.
-8. Produce live adapter receipts.
-9. Publish deployment witness with approval.
-10. Update `DEPLOYMENT_STATUS.md` only after published witness and matching health probe evidence exist.
-11. Run final strict promotion validation.
+7. Emit and validate the redacted environment binding receipt.
+8. Complete dependency and credential actions with approval where required.
+9. Produce live adapter receipts.
+10. Publish deployment witness with approval.
+11. Update `DEPLOYMENT_STATUS.md` only after published witness and matching health probe evidence exist.
+12. Run final strict promotion validation.
 
 ## Terminal Proof Command
 

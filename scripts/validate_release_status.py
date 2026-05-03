@@ -80,6 +80,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json",
     "python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json",
     "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json",
+    "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json",
     "python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json",
     "python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json",
     "python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json",
@@ -121,6 +122,7 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "validate_general_agent_promotion_operator_checklist.py",
     "validate_general_agent_promotion_environment_bindings.py",
     "emit_general_agent_promotion_environment_binding_receipt.py",
+    "validate_general_agent_promotion_environment_binding_receipt.py",
     "preflight_general_agent_promotion_handoff.py",
 )
 
@@ -161,6 +163,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json",
         "python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json",
         "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json",
+        "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json",
         "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
         "docs/59_general_agent_promotion_handoff_packet.md",
         "examples/general_agent_promotion_handoff_packet.json",

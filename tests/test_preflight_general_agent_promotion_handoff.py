@@ -5,6 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from scripts.emit_general_agent_promotion_environment_binding_receipt import (
+    emit_general_agent_promotion_environment_binding_receipt,
+    write_environment_binding_receipt,
+)
 from scripts.preflight_general_agent_promotion_handoff import (
     main,
     preflight_general_agent_promotion_handoff,
@@ -24,8 +28,10 @@ REQUIRED_ENV = {
 
 def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -> None:
     schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
 
     report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
         schema_validation_path=schema_validation,
         drift_validation_path=drift_validation,
         readiness_path=readiness,
@@ -34,7 +40,7 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
 
     assert report.ready is False
     assert "required environment bindings" in report.blockers
-    assert report.step_count == 7
+    assert report.step_count == 8
     assert "MULLU_GATEWAY_URL" in report.missing_environment_variables
     assert report.readiness_level == "pilot-governed-core"
     assert report.production_ready is False
@@ -43,8 +49,10 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
 
 def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
 
     report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
         schema_validation_path=schema_validation,
         drift_validation_path=drift_validation,
         readiness_path=readiness,
@@ -59,6 +67,7 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
         "operator checklist validation",
         "handoff packet validation",
         "environment binding contract validation",
+        "environment binding receipt validation",
         "required environment bindings",
         "closure plan schema validation",
         "closure plan drift validation",
@@ -68,8 +77,10 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
 
 def test_handoff_preflight_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
     schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
     output_path = tmp_path / "preflight.json"
     report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
         schema_validation_path=schema_validation,
         drift_validation_path=drift_validation,
         readiness_path=readiness,
@@ -85,6 +96,8 @@ def test_handoff_preflight_writer_and_cli_honor_strict(tmp_path: Path, capsys) -
             str(drift_validation),
             "--readiness",
             str(readiness),
+            "--environment-binding-receipt",
+            str(environment_binding_receipt),
             "--output",
             str(output_path),
             "--strict",
@@ -104,12 +117,13 @@ def test_handoff_preflight_writer_and_cli_honor_strict(tmp_path: Path, capsys) -
 
 def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
     schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
     drift_validation.write_text(
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": 14,
-                "observed_action_count": 13,
+                "expected_action_count": 13,
+                "observed_action_count": 6,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }
@@ -118,6 +132,7 @@ def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
     )
 
     report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
         schema_validation_path=schema_validation,
         drift_validation_path=drift_validation,
         readiness_path=readiness,
@@ -137,7 +152,7 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "action_count": 14,
+                "action_count": 13,
                 "approval_required_action_count": 4,
                 "source_plan_types": ["adapter", "deployment"],
             }
@@ -148,8 +163,8 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": 14,
-                "observed_action_count": 14,
+                "expected_action_count": 13,
+                "observed_action_count": 13,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }
@@ -168,3 +183,14 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         encoding="utf-8",
     )
     return schema_validation, drift_validation, readiness
+
+
+def _write_valid_environment_binding_receipt(tmp_path: Path) -> Path:
+    receipt_path = tmp_path / "environment-binding-receipt.json"
+    receipt, errors = emit_general_agent_promotion_environment_binding_receipt(
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+
+    assert errors == ()
+    assert receipt.ready is True
+    return write_environment_binding_receipt(receipt, receipt_path)

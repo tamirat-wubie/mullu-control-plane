@@ -29,6 +29,7 @@ def test_handoff_packet_links_operator_artifacts() -> None:
     assert "examples/general_agent_promotion_environment_bindings.json" in packet_text
     assert "scripts/validate_general_agent_promotion_handoff_packet.py" in packet_text
     assert "scripts/emit_general_agent_promotion_environment_binding_receipt.py" in packet_text
+    assert "scripts/validate_general_agent_promotion_environment_binding_receipt.py" in packet_text
     assert "scripts/preflight_general_agent_promotion_handoff.py" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json" in packet_text
@@ -42,7 +43,6 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     expected_blockers = {
         "adapter_evidence_not_closed",
         "browser_adapter_not_closed",
-        "document_adapter_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
         "deployment_witness_not_published",
@@ -50,7 +50,8 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     }
 
     assert expected_blockers <= set(packet_text.split())
-    assert "Aggregate closure actions | 14" in packet_text
+    assert "document_adapter_not_closed" not in packet_text
+    assert "Aggregate closure actions | 13" in packet_text
     assert "Approval-required actions | 4" in packet_text
     assert "validate_general_agent_promotion.py --strict" in packet_text
     assert "STATUS:" in packet_text

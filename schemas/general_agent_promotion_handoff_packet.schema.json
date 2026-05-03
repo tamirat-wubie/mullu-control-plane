@@ -82,6 +82,7 @@
         "handoff_packet_validator",
         "environment_binding_validator",
         "environment_binding_receipt_emitter",
+        "environment_binding_receipt_validator",
         "handoff_preflight",
         "aggregate_closure_plan",
         "schema_validation_report",
@@ -120,6 +121,10 @@
           "minLength": 1
         },
         "environment_binding_receipt_emitter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_binding_receipt_validator": {
           "type": "string",
           "minLength": 1
         },

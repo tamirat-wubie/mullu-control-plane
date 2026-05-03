@@ -53,14 +53,18 @@ REQUIRED_PUBLIC_DOCUMENTS = (
     "STATUS.md",
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
+    "docs/52_mullu_governance_protocol.md",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = ".github/workflows/deployment-witness.yml"
 GATEWAY_PUBLICATION_WORKFLOW_PATH = ".github/workflows/gateway-publication.yml"
+GOVERNANCE_PROTOCOL_DOC_PATH = "docs/52_mullu_governance_protocol.md"
 GITHUB_SURFACE_REQUIRED_LITERALS = (
     "GitHub Surface Witness",
     EXPECTED_DESCRIPTION,
     EXPECTED_LATEST_RELEASE,
     "symbolic-intelligence",
+    "docs/52_mullu_governance_protocol.md",
+    "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_public_repository_surface.py",
 )
 STATUS_REQUIRED_LITERALS = (
@@ -72,6 +76,8 @@ STATUS_REQUIRED_LITERALS = (
     "Known Reflection Gaps",
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
+    "docs/52_mullu_governance_protocol.md",
+    "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_public_repository_surface.py",
 )
 DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
@@ -110,6 +116,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json",
     "python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json",
     "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json",
+    "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json",
     "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
     "docs/59_general_agent_promotion_handoff_packet.md",
     "examples/general_agent_promotion_handoff_packet.json",
@@ -121,6 +128,16 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "GitHub Actions secret name `MULLU_RUNTIME_CONFORMANCE_SECRET` is present; secret value is not printed",
     "GitHub repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not currently set",
     "No `deployment-witness.yml` workflow runs are currently recorded",
+)
+GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
+    "Mullu Governance Protocol",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/validate_protocol_manifest.py",
+    "python scripts\\validate_protocol_manifest.py",
+    "protocol manifest ok: 31 schemas",
+    "Deployment handoff receipts are public contracts",
+    "General-agent promotion handoff packets are public contracts",
+    "Terminal closure certificates are public contracts",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "Deployment Witness Collection",
@@ -273,6 +290,16 @@ def validate_local_public_documents() -> list[str]:
                 document_name="DEPLOYMENT_STATUS.md",
                 content=deployment_status_path.read_text(encoding="utf-8"),
                 required_literals=DEPLOYMENT_STATUS_REQUIRED_LITERALS,
+            )
+        )
+
+    governance_protocol_path = REPO_ROOT / GOVERNANCE_PROTOCOL_DOC_PATH
+    if governance_protocol_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name=GOVERNANCE_PROTOCOL_DOC_PATH,
+                content=governance_protocol_path.read_text(encoding="utf-8"),
+                required_literals=GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
             )
         )
 
