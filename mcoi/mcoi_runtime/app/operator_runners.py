@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from mcoi_runtime.contracts.autonomy import ActionClass, AutonomyDecisionStatus
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalExecutionState, GoalStatus, SubGoal
+from mcoi_runtime.contracts.job import JobStatus
 from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.contracts.skill import (
     SkillDescriptor,
@@ -45,6 +46,8 @@ from .operator_executors import (
 )
 from .operator_models import (
     GoalRunReport,
+    JobReconcileReport,
+    JobReconcileRequest,
     SkillRequest,
     SkillRunReport,
     TeamQueueReconcileReport,
@@ -898,6 +901,27 @@ def _queue_state_hash(states: tuple[object, ...]) -> str:
     ).hexdigest()
 
 
+def _job_runtime_hash(
+    descriptors: tuple[object, ...],
+    states: tuple[object, ...],
+) -> str:
+    payload = {
+        "descriptors": [
+            descriptor.to_json_dict() if hasattr(descriptor, "to_json_dict") else descriptor
+            for descriptor in descriptors
+        ],
+        "states": [
+            state.to_json_dict() if hasattr(state, "to_json_dict") else state
+            for state in states
+        ],
+    }
+    return sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
 def reconcile_team_queues(
     loop: OperatorLoop,
     request: TeamQueueReconcileRequest,
@@ -1311,7 +1335,222 @@ def reconcile_work_queue(
     )
 
 
+def reconcile_jobs(
+    loop: OperatorLoop,
+    request: JobReconcileRequest,
+) -> JobReconcileReport:
+    """Assess or restore persisted job runtime carriers through the governed path."""
+    started_at = loop.runtime.clock()
+    action_class = (
+        ActionClass.EXECUTE_WRITE
+        if request.restore_from_store
+        else ActionClass.ANALYZE
+    )
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        action_class,
+        action_description=(
+            "job_runtime_restore"
+            if request.restore_from_store
+            else "job_runtime_assessment"
+        ),
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return JobReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=None,
+            policy_status=None,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0,
+            job_ids=(),
+            active_job_count=0,
+            completed_job_count=0,
+            failed_job_count=0,
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        "blocked job reconciliation: "
+                        f"{autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.APPROVAL_REQUIRED,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id="job_reconcile",
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=request.restore_from_store,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return JobReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            job_count=0,
+            job_ids=(),
+            active_job_count=0,
+            completed_job_count=0,
+            failed_job_count=0,
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=(
+                        "policy gate returned "
+                        f"{policy_decision.status.value} for job reconciliation"
+                    ),
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if request.restore_from_store:
+        store = loop.runtime.job_store
+        if store is None:
+            return JobReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                job_count=0,
+                job_ids=(),
+                active_job_count=0,
+                completed_job_count=0,
+                failed_job_count=0,
+                errors=(
+                    execution_error(
+                        error_code="job_store_not_configured",
+                        message="job restore requires a configured job store",
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+        try:
+            store.restore_state(loop.runtime.job_engine)
+        except (PersistenceError, RuntimeCoreInvariantError) as exc:
+            return JobReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                job_count=0,
+                job_ids=(),
+                active_job_count=0,
+                completed_job_count=0,
+                failed_job_count=0,
+                errors=(
+                    execution_error(
+                        error_code="job_restore_failed",
+                        message=str(exc),
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    descriptors = loop.runtime.job_engine.list_job_descriptors()
+    states = loop.runtime.job_engine.list_job_states()
+    if request.job_ids:
+        requested_job_ids = set(request.job_ids)
+        descriptors = tuple(
+            descriptor for descriptor in descriptors if descriptor.job_id in requested_job_ids
+        )
+        states = tuple(
+            state for state in states if state.job_id in requested_job_ids
+        )
+        available_job_ids = {descriptor.job_id for descriptor in descriptors}
+        missing_job_ids = tuple(
+            job_id for job_id in request.job_ids if job_id not in available_job_ids
+        )
+        if missing_job_ids:
+            return JobReconcileReport(
+                request_id=request.request_id,
+                restored=request.restore_from_store,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                job_count=0,
+                job_ids=(),
+                active_job_count=0,
+                completed_job_count=0,
+                failed_job_count=0,
+                errors=(
+                    validation_error(
+                        error_code="job_runtime_missing",
+                        message=(
+                            "requested job runtime witness not found: "
+                            + ", ".join(missing_job_ids)
+                        ),
+                        source_plane=SourcePlane.COORDINATION,
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    terminal_statuses = {
+        JobStatus.COMPLETED,
+        JobStatus.FAILED,
+        JobStatus.CANCELLED,
+        JobStatus.ARCHIVED,
+    }
+    selected_job_ids = tuple(descriptor.job_id for descriptor in descriptors)
+    return JobReconcileReport(
+        request_id=request.request_id,
+        restored=request.restore_from_store,
+        policy_decision_id=policy_decision.decision_id,
+        policy_status=policy_decision.status.value,
+        autonomy_mode=loop.runtime.autonomy.mode.value,
+        autonomy_decision=autonomy_decision.status.value,
+        job_count=len(descriptors),
+        job_ids=selected_job_ids,
+        active_job_count=sum(1 for state in states if state.status not in terminal_statuses),
+        completed_job_count=sum(1 for state in states if state.status is JobStatus.COMPLETED),
+        failed_job_count=sum(1 for state in states if state.status is JobStatus.FAILED),
+        state_hash=_job_runtime_hash(descriptors, states),
+        started_at=started_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
 __all__ = [
+    "reconcile_jobs",
     "reconcile_work_queue",
     "reconcile_team_queues",
     "reconcile_workforce",

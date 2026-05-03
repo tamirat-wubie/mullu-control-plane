@@ -203,6 +203,31 @@ class WorkQueueReconcileRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class JobReconcileRequest:
+    """Request to assess or restore persisted job descriptors and states."""
+
+    request_id: str
+    subject_id: str
+    job_ids: tuple[str, ...] = ()
+    restore_from_store: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        if not isinstance(self.job_ids, tuple):
+            raise RuntimeCoreInvariantError("job_ids must be a tuple")
+        for index, value in enumerate(self.job_ids):
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(
+                    f"job_ids[{index}] must be a non-empty string"
+                )
+        if not isinstance(self.restore_from_store, bool):
+            raise RuntimeCoreInvariantError("restore_from_store must be a bool")
+
+
+@dataclass(frozen=True, slots=True)
 class SkillRunReport:
     """Report from a skill execution through the operator loop."""
 
@@ -317,6 +342,27 @@ class WorkQueueReconcileReport:
 
 
 @dataclass(frozen=True, slots=True)
+class JobReconcileReport:
+    """Report from governed job-runtime reconciliation or witness restore."""
+
+    request_id: str
+    restored: bool
+    policy_decision_id: str | None
+    policy_status: str | None
+    autonomy_mode: str
+    autonomy_decision: str
+    job_count: int
+    job_ids: tuple[str, ...]
+    active_job_count: int
+    completed_job_count: int
+    failed_job_count: int
+    state_hash: str = ""
+    errors: tuple[StructuredError, ...] = ()
+    started_at: str = ""
+    completed_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ObservationReport:
     observer_route: str
     status: ObservationStatus
@@ -361,6 +407,8 @@ class OperatorRunReport:
 
 __all__ = [
     "GoalRunReport",
+    "JobReconcileReport",
+    "JobReconcileRequest",
     "ObservationDirective",
     "ObservationReport",
     "ObservationRequestT",
