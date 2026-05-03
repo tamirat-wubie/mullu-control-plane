@@ -60,9 +60,12 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     }
 
     errors = validate_public_surface_document_texts(document_texts)
+    github_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS["GITHUB_SURFACE.md"]
     deployment_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS["DEPLOYMENT_STATUS.md"]
 
     assert errors == []
+    assert "docs/52_mullu_governance_protocol.md" in github_literals
+    assert "python scripts/validate_protocol_manifest.py" in github_literals
     assert ".github/workflows/gateway-publication.yml" in deployment_literals
     assert "## GitHub Runtime Input State" in deployment_literals
     assert any("orchestrate_deployment_witness.py" in literal for literal in deployment_literals)
@@ -95,6 +98,9 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
 
     assert errors == []
     assert "Deployment runtime input witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "Protocol witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "docs/52_mullu_governance_protocol.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "python scripts/validate_protocol_manifest.py" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
     assert "deployment_claim: published" in content
@@ -108,6 +114,9 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "emit_general_agent_promotion_environment_binding_receipt.py" in content
     assert "validate_general_agent_promotion_environment_binding_receipt.py" in content
     assert "preflight_general_agent_promotion_handoff.py" in content
+    assert "Protocol witness" in content
+    assert "31-schema public contract index" in content
+    assert "python scripts/validate_protocol_manifest.py" in content
 
 
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:
