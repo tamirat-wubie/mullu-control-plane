@@ -142,7 +142,7 @@ def _validate_scalar_fields(packet: dict[str, Any], errors: list[str]) -> None:
         "readiness_level": "pilot-governed-core",
         "capability_capsules": 10,
         "governed_capabilities": 52,
-        "aggregate_closure_actions": 13,
+        "aggregate_closure_actions": 14,
         "approval_required_actions": 4,
         "production_promotion": "blocked",
     }
