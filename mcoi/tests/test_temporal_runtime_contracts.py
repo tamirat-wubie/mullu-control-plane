@@ -12,12 +12,16 @@ from mcoi_runtime.contracts.temporal_runtime import (
     IntervalDisposition,
     PersistenceRecord,
     PersistenceStatus,
+    TemporalActionDecision,
+    TemporalActionRequest,
     TemporalAssessment,
+    TemporalClockSample,
     TemporalClosureReport,
     TemporalConstraint,
     TemporalDecision,
     TemporalEvent,
     TemporalInterval,
+    TemporalPolicyVerdict,
     TemporalRelation,
     TemporalRiskLevel,
     TemporalSequence,
@@ -48,6 +52,11 @@ class TestEnums:
 
     def test_temporal_risk_level_values(self) -> None:
         assert len(TemporalRiskLevel) == 4
+
+    def test_temporal_policy_verdict_values(self) -> None:
+        assert len(TemporalPolicyVerdict) == 4
+        assert TemporalPolicyVerdict.ALLOW.value == "allow"
+        assert TemporalPolicyVerdict.ESCALATE.value == "escalate"
 
 
 class TestTemporalEvent:
@@ -114,6 +123,55 @@ class TestPersistenceRecord:
             valid_from=NOW, valid_until=NOW, created_at=NOW,
         )
         assert pr.status == PersistenceStatus.CEASED
+
+
+class TestTemporalKernelContracts:
+    def test_clock_sample_preserves_runtime_resolution(self) -> None:
+        sample = TemporalClockSample(
+            sample_id="sample-1",
+            tenant_id="t-1",
+            utc_now="2026-05-04T13:10:00+00:00",
+            user_timezone="America/New_York",
+            local_user_time="2026-05-04T09:10:00-04:00",
+            original_text="tomorrow morning",
+            resolved_at="2026-05-04T13:10:00+00:00",
+            monotonic_ns=12,
+        )
+        assert sample.utc_now == "2026-05-04T13:10:00+00:00"
+        assert sample.user_timezone == "America/New_York"
+        assert sample.monotonic_ns == 12
+
+    def test_action_request_accepts_governed_windows(self) -> None:
+        request = TemporalActionRequest(
+            action_id="act-1",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="payment",
+            risk=TemporalRiskLevel.HIGH,
+            requested_at="2026-05-04T13:00:00+00:00",
+            execute_at="2026-05-04T14:00:00+00:00",
+            expires_at="2026-05-04T15:00:00+00:00",
+            approval_expires_at="2026-05-04T15:00:00+00:00",
+            evidence_fresh_until="2026-05-04T14:30:00+00:00",
+            max_attempts=3,
+            attempt_count=1,
+        )
+        assert request.risk == TemporalRiskLevel.HIGH
+        assert request.execute_at == "2026-05-04T14:00:00+00:00"
+        assert request.max_attempts == 3
+
+    def test_action_decision_records_bounded_verdict(self) -> None:
+        decision = TemporalActionDecision(
+            decision_id="td-1",
+            tenant_id="t-1",
+            action_ref="act-1",
+            verdict=TemporalPolicyVerdict.DEFER,
+            reason="scheduled_for_future",
+            decided_at=NOW,
+        )
+        assert decision.verdict == TemporalPolicyVerdict.DEFER
+        assert decision.reason == "scheduled_for_future"
+        assert decision.action_ref == "act-1"
 
 
 class TestTemporalSequence:
