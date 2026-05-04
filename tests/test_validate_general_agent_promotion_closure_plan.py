@@ -64,6 +64,25 @@ def test_validate_promotion_closure_plan_rejects_missing_source_action(tmp_path:
     assert any("missing source actions" in error for error in validation.errors)
 
 
+def test_validate_promotion_closure_plan_rejects_proof_field_drift(tmp_path: Path) -> None:
+    paths = _write_matching_artifacts(tmp_path)
+    promotion = json.loads(paths["promotion"].read_text(encoding="utf-8"))
+    del promotion["actions"][0]["receipt_validator"]
+    paths["promotion"].write_text(json.dumps(promotion), encoding="utf-8")
+
+    validation = validate_general_agent_promotion_closure_plan(
+        promotion_plan_path=paths["promotion"],
+        readiness_path=paths["readiness"],
+        adapter_plan_path=paths["adapter"],
+        deployment_plan_path=paths["deployment"],
+    )
+
+    assert validation.ok is False
+    assert validation.expected_action_count == 3
+    assert validation.observed_action_count == 3
+    assert any("proof field drift" in error for error in validation.errors)
+
+
 def test_validate_promotion_closure_plan_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
     paths = _write_matching_artifacts(tmp_path)
     validation_output = tmp_path / "validation.json"
@@ -124,6 +143,8 @@ def _write_matching_artifacts(tmp_path: Path) -> dict[str, Path]:
                     {
                         "action_id": "voice-secret",
                         "blocker": "voice_dependency_missing:OPENAI_API_KEY",
+                        "verification_command": "python scripts/collect_capability_adapter_evidence.py",
+                        "receipt_validator": "adapter_evidence.voice.openai.dependency.OPENAI_API_KEY",
                         "approval_required": True,
                     },
                 ],
@@ -163,6 +184,8 @@ def _write_matching_artifacts(tmp_path: Path) -> dict[str, Path]:
                         "source_plan_type": "adapter",
                         "action_id": "voice-secret",
                         "blocker": "voice_dependency_missing:OPENAI_API_KEY",
+                        "verification_command": "python scripts/collect_capability_adapter_evidence.py",
+                        "receipt_validator": "adapter_evidence.voice.openai.dependency.OPENAI_API_KEY",
                         "approval_required": True,
                     },
                     {

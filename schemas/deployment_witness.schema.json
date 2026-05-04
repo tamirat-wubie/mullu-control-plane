@@ -23,6 +23,13 @@
     "runtime_witness_id",
     "runtime_environment",
     "runtime_signature_key_id",
+    "authority_responsibility_debt_clear",
+    "authority_pending_approval_chain_count",
+    "authority_overdue_approval_chain_count",
+    "authority_open_obligation_count",
+    "authority_overdue_obligation_count",
+    "authority_escalated_obligation_count",
+    "authority_unowned_high_risk_capability_count",
     "steps",
     "errors"
   ],
@@ -100,6 +107,33 @@
     },
     "runtime_signature_key_id": {
       "type": "string"
+    },
+    "authority_responsibility_debt_clear": {
+      "type": "boolean"
+    },
+    "authority_pending_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_overdue_approval_chain_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_open_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_overdue_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_escalated_obligation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authority_unowned_high_risk_capability_count": {
+      "type": "integer",
+      "minimum": 0
     },
     "steps": {
       "type": "array",

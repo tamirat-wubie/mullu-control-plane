@@ -178,6 +178,25 @@ def test_published_status_rejects_unverified_witness() -> None:
     assert "witness step failed" in errors[1]
 
 
+def test_published_status_rejects_authority_responsibility_debt() -> None:
+    witness = _published_witness()
+    witness["authority_responsibility_debt_clear"] = False
+    witness["authority_overdue_obligation_count"] = 1
+
+    errors = validate_publication_closure(
+        deployment_status_text=_deployment_status(
+            "published",
+            "https://gateway.example/health",
+        ),
+        witness_payload=witness,
+        witness_path=Path(".change_assurance/deployment_witness.json"),
+    )
+
+    assert len(errors) == 2
+    assert "authority responsibility debt must be clear" in errors[0]
+    assert "authority_overdue_obligation_count 1 != 0" in errors[1]
+
+
 def test_cli_accepts_current_not_published_status_without_witness(tmp_path, capsys) -> None:
     deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
     deployment_status.write_text(
@@ -234,6 +253,13 @@ def _published_witness() -> dict[str, object]:
         "runtime_witness_id": "runtime-witness-001",
         "runtime_environment": "pilot",
         "runtime_signature_key_id": "runtime-key-001",
+        "authority_responsibility_debt_clear": True,
+        "authority_pending_approval_chain_count": 0,
+        "authority_overdue_approval_chain_count": 0,
+        "authority_open_obligation_count": 0,
+        "authority_overdue_obligation_count": 0,
+        "authority_escalated_obligation_count": 0,
+        "authority_unowned_high_risk_capability_count": 0,
         "steps": [
             {"name": "gateway health", "passed": True, "detail": "ok"},
             {"name": "gateway runtime witness", "passed": True, "detail": "ok"},

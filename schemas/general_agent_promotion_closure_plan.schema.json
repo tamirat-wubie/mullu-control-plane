@@ -87,6 +87,14 @@
           "type": "string",
           "minLength": 1
         },
+        "verification_command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_validator": {
+          "type": "string",
+          "minLength": 1
+        },
         "evidence_required": {
           "type": "array",
           "items": {

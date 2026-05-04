@@ -101,6 +101,13 @@ class DeploymentWitness:
     runtime_witness_id: str
     runtime_environment: str
     runtime_signature_key_id: str
+    authority_responsibility_debt_clear: bool
+    authority_pending_approval_chain_count: int
+    authority_overdue_approval_chain_count: int
+    authority_open_obligation_count: int
+    authority_overdue_obligation_count: int
+    authority_escalated_obligation_count: int
+    authority_unowned_high_risk_capability_count: int
     steps: tuple[ProbeStep, ...]
     errors: tuple[str, ...] = field(default_factory=tuple)
 
@@ -288,6 +295,33 @@ def collect_deployment_witness(
         runtime_witness_id=str(runtime_payload.get("witness_id", "")),
         runtime_environment=runtime_environment,
         runtime_signature_key_id=str(runtime_payload.get("signature_key_id", "")),
+        authority_responsibility_debt_clear=bool(
+            conformance_payload.get("authority_responsibility_debt_clear")
+        ),
+        authority_pending_approval_chain_count=_int_count(
+            conformance_payload,
+            "authority_pending_approval_chain_count",
+        ),
+        authority_overdue_approval_chain_count=_int_count(
+            conformance_payload,
+            "authority_overdue_approval_chain_count",
+        ),
+        authority_open_obligation_count=_int_count(
+            conformance_payload,
+            "authority_open_obligation_count",
+        ),
+        authority_overdue_obligation_count=_int_count(
+            conformance_payload,
+            "authority_overdue_obligation_count",
+        ),
+        authority_escalated_obligation_count=_int_count(
+            conformance_payload,
+            "authority_escalated_obligation_count",
+        ),
+        authority_unowned_high_risk_capability_count=_int_count(
+            conformance_payload,
+            "authority_unowned_high_risk_capability_count",
+        ),
         steps=tuple(steps),
         errors=tuple(errors),
     )
@@ -398,6 +432,11 @@ def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:
 def _stable_hash(payload: dict[str, Any]) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()
+
+
+def _int_count(payload: dict[str, Any], field_name: str) -> int:
+    value = payload.get(field_name, 0)
+    return value if isinstance(value, int) else 0
 
 
 def _utc_now() -> str:

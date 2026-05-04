@@ -82,6 +82,25 @@ def test_promotion_closure_plan_schema_rejects_count_drift(tmp_path: Path) -> No
     assert "approval_required_action_count does not match actions" in validation.errors
 
 
+def test_promotion_closure_plan_schema_rejects_adapter_without_proof_contract(
+    tmp_path: Path,
+) -> None:
+    plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
+    payload = _valid_plan()
+    del payload["actions"][0]["verification_command"]
+    del payload["actions"][0]["receipt_validator"]
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_general_agent_promotion_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert "adapter action 0 missing verification_command" in validation.errors
+    assert "adapter action 0 missing receipt_validator" in validation.errors
+
+
 def test_promotion_closure_plan_schema_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
     plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
     output_path = tmp_path / "schema_validation.json"
@@ -137,6 +156,8 @@ def _valid_plan() -> dict[str, object]:
                 "adapter_id": "voice.openai",
                 "blocker": "voice_dependency_missing:OPENAI_API_KEY",
                 "command": "Bind governed voice secret.",
+                "verification_command": "python scripts/collect_capability_adapter_evidence.py",
+                "receipt_validator": "adapter_evidence.voice.openai.dependency.OPENAI_API_KEY",
                 "evidence_required": ["secret_presence_attestation"],
                 "risk_level": "high",
                 "approval_required": True,

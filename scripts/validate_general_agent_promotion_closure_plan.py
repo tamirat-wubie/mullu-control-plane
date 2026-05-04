@@ -8,6 +8,7 @@ Dependencies: .change_assurance/general_agent_promotion_closure_plan.json,
 adapter closure plan, deployment publication closure plan, and promotion readiness.
 Invariants:
   - Every source action appears exactly once in the aggregate plan.
+  - Adapter closure actions preserve verification commands and receipt validators.
   - Approval counts are derived from action payloads, not trusted blindly.
   - Source readiness and readiness level match the readiness artifact.
 """
@@ -85,6 +86,16 @@ def validate_general_agent_promotion_closure_plan(
         observed_actions=observed_actions,
         errors=errors,
     )
+    _validate_adapter_action_proof_contract(
+        expected_actions=expected_actions,
+        observed_actions=observed_actions,
+        errors=errors,
+    )
+    _validate_action_proof_fields(
+        expected_actions=expected_actions,
+        observed_actions=observed_actions,
+        errors=errors,
+    )
     return _validation_result(
         promotion_plan_path=promotion_plan_path,
         errors=errors,
@@ -149,6 +160,55 @@ def _validate_action_identity(
         errors.append(f"aggregate plan has unexpected actions: {list(unexpected)}")
     if duplicate_observed:
         errors.append(f"aggregate plan has duplicate actions: {list(duplicate_observed)}")
+
+
+def _validate_adapter_action_proof_contract(
+    *,
+    expected_actions: tuple[dict[str, Any], ...],
+    observed_actions: tuple[dict[str, Any], ...],
+    errors: list[str],
+) -> None:
+    observed_by_key = {_action_key(action): action for action in observed_actions}
+    for expected in expected_actions:
+        if expected.get("source_plan_type") != "adapter":
+            continue
+        key = _action_key(expected)
+        observed = observed_by_key.get(key)
+        for field_name in ("verification_command", "receipt_validator"):
+            expected_value = str(expected.get(field_name, "")).strip()
+            if not expected_value:
+                errors.append(f"adapter proof field drift: source action {key} missing {field_name}")
+                continue
+            if observed is None:
+                continue
+            observed_value = str(observed.get(field_name, "")).strip()
+            if not observed_value:
+                errors.append(f"adapter proof field drift: aggregate action {key} missing {field_name}")
+            elif observed_value != expected_value:
+                errors.append(f"adapter proof field drift: aggregate action {key} changed {field_name}")
+
+
+def _validate_action_proof_fields(
+    *,
+    expected_actions: tuple[dict[str, Any], ...],
+    observed_actions: tuple[dict[str, Any], ...],
+    errors: list[str],
+) -> None:
+    observed_by_key = {_action_key(action): action for action in observed_actions}
+    for expected_action in expected_actions:
+        key = _action_key(expected_action)
+        observed_action = observed_by_key.get(key)
+        if observed_action is None:
+            continue
+        for field_name in ("verification_command", "receipt_validator"):
+            expected_value = expected_action.get(field_name)
+            if expected_value is None:
+                continue
+            if observed_action.get(field_name) != expected_value:
+                errors.append(
+                    "aggregate plan proof field drift: "
+                    f"action={list(key)} field={field_name}"
+                )
 
 
 def _source_actions(
