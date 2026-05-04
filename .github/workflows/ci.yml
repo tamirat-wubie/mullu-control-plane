@@ -125,6 +125,7 @@ jobs:
       - name: Validate deployment publication closure
         run: |
           mkdir -p .change_assurance
+          test -f schemas/deployment_publication_closure_validation.schema.json
           python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
 
       - name: Upload deployment publication closure validation
