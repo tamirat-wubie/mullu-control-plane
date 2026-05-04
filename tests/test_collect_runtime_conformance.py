@@ -6,6 +6,7 @@ structured persistence.
 Dependencies: scripts.collect_runtime_conformance.
 Invariants:
   - A complete signed certificate can be collected and verified.
+  - Signed certificates with schema violations are rejected.
   - Missing conformance secrets keep signature status explicit.
   - Expired certificates are rejected even when signature verification passes.
   - Degraded or non-conformant terminal status is rejected.
@@ -60,6 +61,27 @@ def test_collect_runtime_conformance_verifies_signed_certificate(monkeypatch) ->
     assert collection.certificate_status == "conformant_with_gaps"
     assert collection.signature_status == "verified"
     assert all(step.passed for step in collection.steps)
+
+
+def test_collect_runtime_conformance_rejects_schema_invalid_certificate(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        overrides={"evidence_refs": "gateway_witness:test"},
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    schema_step = next(step for step in collection.steps if step.name == "runtime conformance certificate schema")
+
+    assert collection.signature_status == "verified"
+    assert schema_step.passed is False
+    assert schema_step.detail == "schema_error_count=1"
+    assert "runtime conformance certificate schema validation failed" in collection.errors
 
 
 def test_collect_runtime_conformance_records_missing_secret(monkeypatch) -> None:
