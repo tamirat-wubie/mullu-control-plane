@@ -34,6 +34,9 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
     assert "10 capsules" in manifest_text
     assert "52 capabilities" in manifest_text
     assert "deployment.witness.publish.with_approval" in manifest_text
+    assert "Runtime Reflex Engine" in manifest_text
+    assert "/runtime/self/witness" in manifest_text
+    assert "scripts/proof_coverage_matrix.py" in manifest_text
     assert "scripts/plan_capability_adapter_closure.py" in manifest_text
     assert "scripts/plan_deployment_publication_closure.py" in manifest_text
     assert "scripts/plan_general_agent_promotion_closure.py" in manifest_text
