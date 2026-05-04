@@ -29,6 +29,10 @@ from typing import Any, Callable
 
 from mcoi_runtime.core.lineage_query import parse_lineage_uri
 from scripts.validate_mcp_capability_manifest import validate_mcp_capability_manifest
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
+
+
+RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA = "runtime_conformance_certificate.schema.json"
 
 
 class ConformanceStatus(StrEnum):
@@ -95,6 +99,8 @@ class RuntimeConformanceCertificate:
         """Return a JSON-serializable certificate payload."""
         payload = asdict(self)
         payload["terminal_status"] = self.terminal_status.value
+        payload["open_conformance_gaps"] = list(self.open_conformance_gaps)
+        payload["evidence_refs"] = list(self.evidence_refs)
         payload["checks"] = [asdict(check) for check in self.checks]
         return payload
 
@@ -345,7 +351,7 @@ def issue_conformance_certificate(
         signature_key_id=signature_key_id,
     )
     certificate_id = f"conf-{_stable_hash(unsigned.to_json_dict())[:16]}"
-    return _sign_certificate(
+    signed = _sign_certificate(
         RuntimeConformanceCertificate(
             **{
                 **unsigned.to_json_dict(),
@@ -358,6 +364,16 @@ def issue_conformance_certificate(
         ),
         signing_secret=signing_secret,
     )
+    schema_errors = _validate_runtime_conformance_certificate_schema(
+        signed,
+        repo_root=repository_root,
+    )
+    if schema_errors:
+        raise RuntimeError(
+            "runtime conformance certificate schema validation failed: "
+            f"{len(schema_errors)} schema error(s)"
+        )
+    return signed
 
 
 def _check(check_id: str, passed: bool, evidence_ref: str, detail: str) -> ConformanceCheck:
@@ -753,6 +769,25 @@ def _sign_certificate(
             "signature": f"hmac-sha256:{signature}",
         }
     )
+
+
+def _validate_runtime_conformance_certificate_schema(
+    certificate: RuntimeConformanceCertificate,
+    *,
+    repo_root: Path,
+) -> tuple[str, ...]:
+    """Validate the signed certificate against the public schema before publication."""
+    schema_path = _runtime_conformance_certificate_schema_path(repo_root)
+    schema = _load_schema(schema_path)
+    return tuple(_validate_schema_instance(schema, certificate.to_json_dict()))
+
+
+def _runtime_conformance_certificate_schema_path(repo_root: Path) -> Path:
+    """Return the active runtime conformance certificate schema path."""
+    candidate = repo_root / "schemas" / RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA
+    if candidate.exists():
+        return candidate
+    return Path(__file__).resolve().parent.parent / "schemas" / RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:
