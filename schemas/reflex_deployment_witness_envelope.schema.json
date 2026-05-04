@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:reflex-deployment-witness-envelope:1",
+  "title": "Reflex Deployment Witness Envelope",
+  "type": "object",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/validatorEnvelope"
+    },
+    {
+      "$ref": "#/$defs/reflexDeploymentWitness"
+    }
+  ],
+  "$defs": {
+    "validatorEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness",
+        "validator",
+        "format"
+      ],
+      "properties": {
+        "witness": {
+          "$ref": "#/$defs/reflexDeploymentWitness"
+        },
+        "validator": {
+          "type": "string",
+          "const": "scripts/validate_reflex_deployment_witness.py"
+        },
+        "format": {
+          "type": "string",
+          "const": "reflex_deployment_witness_validator_envelope_v1"
+        }
+      }
+    },
+    "reflexDeploymentWitness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_id",
+        "candidate_id",
+        "certificate_id",
+        "promotion_decision_id",
+        "target_environment",
+        "canary_status",
+        "health_refs",
+        "rollback_plan_ref",
+        "signed_at",
+        "signature_key_id",
+        "signature",
+        "production_mutation_applied"
+      ],
+      "properties": {
+        "witness_id": {
+          "type": "string",
+          "pattern": "^reflex-deployment-witness-[0-9a-f]{16}$"
+        },
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "certificate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "promotion_decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canary_status": {
+          "type": "string",
+          "enum": [
+            "planned"
+          ]
+        },
+        "health_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidenceRef"
+          }
+        },
+        "rollback_plan_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "signature_key_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "signature": {
+          "type": "string",
+          "pattern": "^hmac-sha256:[0-9a-f]{64}$"
+        },
+        "production_mutation_applied": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "ref_id",
+        "evidence_hash"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_hash": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

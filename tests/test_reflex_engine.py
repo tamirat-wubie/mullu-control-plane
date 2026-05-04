@@ -10,6 +10,8 @@ Invariants:
 """
 
 from types import MappingProxyType
+import hmac
+from hashlib import sha256
 
 import pytest
 
@@ -37,7 +39,9 @@ from mcoi_runtime.core.reflex import (
     generate_eval_cases,
     propose_upgrade,
     rank_capability_gaps,
+    reflex_deployment_witness_seed,
     run_reflex_replay,
+    verify_reflex_deployment_witness,
 )
 
 
@@ -196,6 +200,59 @@ def test_certificate_or_sandbox_failure_rejects_candidate_before_promotion() -> 
     assert "sandbox" in sandbox_decision.reason
     assert certificate_decision.disposition is ReflexPromotionDisposition.REJECTED
     assert "certificate" in certificate_decision.reason
+
+
+def test_reflex_deployment_witness_verifier_accepts_signed_witness() -> None:
+    secret = "witness-secret"
+    witness = {
+        "witness_id": "",
+        "candidate_id": "candidate:diag-001",
+        "certificate_id": "cert-001",
+        "promotion_decision_id": "decision:candidate:diag-001",
+        "target_environment": "canary",
+        "canary_status": "planned",
+        "health_refs": [_evidence().to_json_dict()],
+        "rollback_plan_ref": "rollback:provider_routing",
+        "signed_at": DT,
+        "signature_key_id": "reflex-deployment-witness-local",
+        "signature": "",
+        "production_mutation_applied": False,
+    }
+    seed = reflex_deployment_witness_seed(witness)
+    witness["witness_id"] = f"reflex-deployment-witness-{sha256(seed.encode()).hexdigest()[:16]}"
+    witness["signature"] = "hmac-sha256:" + hmac.new(
+        secret.encode("utf-8"),
+        seed.encode("utf-8"),
+        sha256,
+    ).hexdigest()
+
+    assert verify_reflex_deployment_witness(witness, signing_secret=secret) is True
+    assert reflex_deployment_witness_seed(witness) == seed
+    assert witness["production_mutation_applied"] is False
+
+
+def test_reflex_deployment_witness_verifier_rejects_tampering() -> None:
+    secret = "witness-secret"
+    witness = {
+        "witness_id": "reflex-deployment-witness-bad",
+        "candidate_id": "candidate:diag-001",
+        "certificate_id": "cert-001",
+        "promotion_decision_id": "decision:candidate:diag-001",
+        "target_environment": "production",
+        "canary_status": "planned",
+        "health_refs": [_evidence().to_json_dict()],
+        "rollback_plan_ref": "rollback:provider_routing",
+        "signed_at": DT,
+        "signature_key_id": "reflex-deployment-witness-local",
+        "signature": "hmac-sha256:bad",
+        "production_mutation_applied": False,
+    }
+    mutated = dict(witness, production_mutation_applied=True)
+
+    assert verify_reflex_deployment_witness(witness, signing_secret=secret) is False
+    assert verify_reflex_deployment_witness(mutated, signing_secret=secret) is False
+    assert verify_reflex_deployment_witness(witness, signing_secret="") is False
+    assert verify_reflex_deployment_witness({}, signing_secret=secret) is False
 
 
 def test_capability_maturity_ranking_prefers_largest_verified_gap() -> None:

@@ -355,6 +355,27 @@ def test_cli_refuses_readiness_report_repository_mismatch(
     assert "tamirat-wubie/other" in captured.out
 
 
+def test_cli_refuses_missing_readiness_report_without_path_leak(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    report_path = tmp_path / "secret-readiness-path.json"
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(["--readiness-report", str(report_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert runner.commands == []
+    assert "failed to read readiness report" in captured.out
+    assert "secret-readiness-path" not in captured.out
+
+
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:
     stdout = payload if isinstance(payload, str) else json.dumps(payload)
     return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")

@@ -11,9 +11,14 @@ Invariants:
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from gateway.server import create_gateway_app
+from mcoi_runtime.governance.audit.decision_log import GovernanceDecisionLog
+from scripts.validate_reflex_deployment_witness import validate_reflex_deployment_witness
 
 
 DT = "2026-05-04T12:00:00+00:00"
@@ -40,6 +45,13 @@ class StubPlatform:
 
     def connect(self, *, identity_id: str, tenant_id: str):
         return StubSession()
+
+
+class StubBackedPlatform(StubPlatform):
+    """Governed platform fixture with a Reflex-compatible decision log."""
+
+    def __init__(self) -> None:
+        self._decision_log = GovernanceDecisionLog(clock=lambda: DT)
 
 
 class StubSession:
@@ -258,6 +270,56 @@ def test_reflex_apply_canary_requires_backed_witness_log_in_production(monkeypat
     assert response.json()["detail"] == "Persistent Reflex deployment witness log required"
 
 
+def test_reflex_apply_canary_uses_backed_witness_log_in_production(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_ENV", "production")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_AUTHORITY_MESH", "false")
+    monkeypatch.setenv("MULLU_AUTHORITY_OPERATOR_SECRET", "operator-secret")
+    monkeypatch.setenv("MULLU_DEPLOYMENT_AUTHORITY_SECRET", "deployment-secret")
+    monkeypatch.setenv("MULLU_REFLEX_PREMIUM_MODEL_LOW_RISK_REQUESTS", "4")
+    monkeypatch.delenv("MULLU_ALLOW_EPHEMERAL_REFLEX_WITNESS_LOG", raising=False)
+    platform = StubBackedPlatform()
+    app = create_gateway_app(platform=platform)
+    client = TestClient(app)
+    headers = {
+        "X-Mullu-Authority-Secret": "operator-secret",
+        "X-Mullu-Deployment-Secret": "deployment-secret",
+    }
+    candidate = next(
+        item
+        for item in client.post("/runtime/self/propose-upgrade", headers=headers).json()["candidates"]
+        if item["change_surface"] == "provider_routing"
+    )
+    evaluation = client.post("/runtime/self/evaluate", headers=headers).json()
+    sandbox_bundle = next(
+        bundle
+        for bundle in evaluation["sandbox_bundles"]
+        if bundle["candidate_id"] == candidate["candidate_id"]
+    )
+
+    promote = client.post(
+        "/runtime/self/promote",
+        headers=headers,
+        json={
+            "candidate_id": candidate["candidate_id"],
+            "sandbox_bundle": sandbox_bundle,
+            "certificate": _certificate_payload(),
+            "apply_canary": True,
+        },
+    )
+    query = client.get("/runtime/self/deployment-witnesses", headers=headers)
+    witness = client.get("/runtime/self/witness", headers=headers).json()
+
+    assert promote.status_code == 200
+    assert promote.json()["deployment_witness_persisted"] is True
+    assert query.status_code == 200
+    assert query.json()["record_count"] == 1
+    assert query.json()["all_replay_passed"] is True
+    assert witness["deployment_witness_log_backed"] is True
+    assert witness["ephemeral_deployment_witness_log_allowed"] is False
+    assert platform._decision_log.query(endpoint="/runtime/self/promote", allowed=True, limit=1)
+
+
 def test_reflex_deployment_witness_query_is_operator_read_model() -> None:
     app = create_gateway_app(platform=StubPlatform())
     client = TestClient(app)
@@ -326,6 +388,55 @@ def test_reflex_deployment_witness_query_returns_replay_status(monkeypatch) -> N
     assert payload["records"][0]["replay_passed"] is True
     assert payload["records"][0]["witness"]["witness_id"] == promote["deployment_witness"]["witness_id"]
     assert payload["records"][0]["witness"]["production_mutation_applied"] is False
+    assert payload["records"][0]["validator_envelope"]["witness"] == payload["records"][0]["witness"]
+    assert payload["export_format"] == "reflex_deployment_witness_validator_envelope_v1"
+
+
+def test_reflex_deployment_witness_query_exports_validator_envelope(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("MULLU_REFLEX_PREMIUM_MODEL_LOW_RISK_REQUESTS", "4")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+    candidate = next(
+        item
+        for item in client.post("/runtime/self/propose-upgrade").json()["candidates"]
+        if item["change_surface"] == "provider_routing"
+    )
+    evaluation = client.post("/runtime/self/evaluate").json()
+    sandbox_bundle = next(
+        bundle
+        for bundle in evaluation["sandbox_bundles"]
+        if bundle["candidate_id"] == candidate["candidate_id"]
+    )
+    client.post(
+        "/runtime/self/promote",
+        json={
+            "candidate_id": candidate["candidate_id"],
+            "sandbox_bundle": sandbox_bundle,
+            "certificate": _certificate_payload(),
+            "apply_canary": True,
+        },
+    )
+    payload = client.get("/runtime/self/deployment-witnesses?limit=1").json()
+    envelope_path = tmp_path / "reflex-deployment-witness-envelope.json"
+    envelope_path.write_text(
+        json.dumps(payload["records"][0]["validator_envelope"]),
+        encoding="utf-8",
+    )
+
+    validation = validate_reflex_deployment_witness(
+        envelope_path,
+        signing_secret="local-reflex-deployment-witness-secret",
+        expected_environment="canary",
+        expected_candidate_id=candidate["candidate_id"],
+    )
+
+    assert payload["validator"] == "scripts/validate_reflex_deployment_witness.py"
+    assert validation.valid is True
+    assert validation.witness_id == payload["records"][0]["witness"]["witness_id"]
+    assert validation.blockers == ()
 
 
 def test_reflex_witness_is_signed_and_binds_pipeline_counts() -> None:

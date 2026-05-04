@@ -64,9 +64,9 @@ def run_probe(
         started = time.monotonic()
         try:
             passed, detail = fn()
-        except Exception as exc:
+        except Exception:
             passed = False
-            detail = f"{type(exc).__name__}: {exc}"
+            detail = "unhandled_probe_error"
         results.append(
             SmokeProbeResult(
                 step=name,

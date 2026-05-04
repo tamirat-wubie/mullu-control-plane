@@ -626,8 +626,8 @@ def _load_receipt(path: Path) -> tuple[dict[str, Any], str]:
         return {}, "receipt missing"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        return {}, f"receipt JSON parse failed: {exc.msg}"
+    except json.JSONDecodeError:
+        return {}, "receipt JSON parse failed"
     if not isinstance(payload, dict):
         return {}, "receipt JSON root must be an object"
     return payload, ""

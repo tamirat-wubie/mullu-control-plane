@@ -45,6 +45,28 @@ class FakeRunner:
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
 
+class FailingRunner(FakeRunner):
+    """Runner that fails with untrusted CLI text."""
+
+    def __call__(
+        self,
+        command: list[str],
+        *,
+        input: str | None,
+        check: bool,
+        capture_output: bool,
+        text: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        self.commands.append(command)
+        self.inputs.append(input)
+        raise subprocess.CalledProcessError(
+            returncode=7,
+            cmd=command,
+            output="stdout-secret-token",
+            stderr="stderr-secret-token",
+        )
+
+
 def test_provision_runtime_witness_secret_sets_github_secret_from_stdin() -> None:
     runner = FakeRunner()
     secret_value = "x" * 40
@@ -148,4 +170,22 @@ def test_cli_output_redacts_supplied_secret(monkeypatch, capsys) -> None:
     assert "secret_fingerprint:" in captured.out
     assert "github_secret_set: true" in captured.out
     assert secret_value not in captured.out
+    assert runner.inputs == [secret_value]
+
+
+def test_provision_runtime_witness_secret_command_failure_is_bounded() -> None:
+    runner = FailingRunner()
+    secret_value = "s" * 40
+
+    with pytest.raises(RuntimeError) as exc_info:
+        provision_runtime_witness_secret(
+            supplied_secret=secret_value,
+            runner=runner,
+        )
+
+    message = str(exc_info.value)
+    assert message == "failed to set GitHub secret MULLU_RUNTIME_WITNESS_SECRET: exit_code=7"
+    assert "stdout-secret-token" not in message
+    assert "stderr-secret-token" not in message
+    assert secret_value not in message
     assert runner.inputs == [secret_value]

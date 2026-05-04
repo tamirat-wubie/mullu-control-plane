@@ -152,11 +152,11 @@ def _read_receipt_payload(receipt_path: Path) -> dict[str, Any]:
 def _check_schema_contract(payload: dict[str, Any]) -> OrchestrationReceiptValidationStep:
     try:
         schema = _load_schema(ORCHESTRATION_RECEIPT_SCHEMA_PATH)
-    except OSError as exc:
+    except OSError:
         return OrchestrationReceiptValidationStep(
             "schema contract",
             False,
-            f"schema-read-failed:{exc}",
+            "schema-read-failed",
         )
     errors = _validate_schema_instance(schema, payload)
     return OrchestrationReceiptValidationStep(

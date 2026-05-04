@@ -412,7 +412,7 @@ def _readiness_json_object(readiness_report_path: Path) -> dict[str, Any]:
     try:
         raw_text = readiness_report_path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise RuntimeError(f"failed to read readiness report {readiness_report_path}") from exc
+        raise RuntimeError("failed to read readiness report") from exc
     parsed = _loads_json(raw_text, "gateway publication readiness report")
     if not isinstance(parsed, dict):
         raise RuntimeError("gateway publication readiness report was not a JSON object")

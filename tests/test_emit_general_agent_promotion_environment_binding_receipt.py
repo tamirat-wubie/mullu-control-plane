@@ -85,3 +85,30 @@ def test_environment_binding_receipt_writer_and_cli_strict(
     assert payload["ready"] is False
     assert stdout_payload["ready"] is False
     assert "MULLU_AUTHORITY_OPERATOR_SECRET" in payload["missing_bindings"]
+
+
+def test_environment_binding_receipt_missing_contract_error_is_bounded(tmp_path: Path) -> None:
+    contract_path = tmp_path / "secret-contract-path.json"
+
+    receipt, errors = emit_general_agent_promotion_environment_binding_receipt(
+        contract_path=contract_path,
+    )
+    serialized_errors = json.dumps(errors, sort_keys=True)
+
+    assert receipt.ready is False
+    assert "environment binding contract could not be read" in errors
+    assert "secret-contract-path" not in serialized_errors
+
+
+def test_environment_binding_receipt_contract_json_error_is_bounded(tmp_path: Path) -> None:
+    contract_path = tmp_path / "environment-bindings.json"
+    contract_path.write_text('{"contract_id": "secret-json-token"', encoding="utf-8")
+
+    receipt, errors = emit_general_agent_promotion_environment_binding_receipt(
+        contract_path=contract_path,
+    )
+    serialized_errors = json.dumps(errors, sort_keys=True)
+
+    assert receipt.ready is False
+    assert "environment binding contract must be JSON" in errors
+    assert "secret-json-token" not in serialized_errors

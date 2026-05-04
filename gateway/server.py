@@ -41,6 +41,7 @@ from mcoi_runtime.core.reflex import (
     diagnose_anomaly,
     generate_eval_cases,
     propose_upgrade,
+    verify_reflex_deployment_witness,
 )
 
 from gateway.channels.discord import DiscordAdapter
@@ -919,42 +920,12 @@ def create_gateway_app(
         return records
 
     def _replay_reflex_deployment_witness(witness: dict[str, Any]) -> bool:
-        try:
-            witness_core = {
-                "candidate_id": witness["candidate_id"],
-                "certificate_id": witness["certificate_id"],
-                "promotion_decision_id": witness["promotion_decision_id"],
-                "target_environment": witness["target_environment"],
-                "canary_status": witness["canary_status"],
-                "rollback_plan_ref": witness["rollback_plan_ref"],
-                "signed_at": witness["signed_at"],
-                "signature_key_id": witness["signature_key_id"],
-                "production_mutation_applied": witness["production_mutation_applied"],
-            }
-            witness_id_seed = json.dumps(
-                {
-                    **witness_core,
-                    "health_refs": witness["health_refs"],
-                },
-                sort_keys=True,
-            )
-            expected_signature = hmac.new(
-                os.environ.get(
-                    "MULLU_REFLEX_DEPLOYMENT_WITNESS_SECRET",
-                    "local-reflex-deployment-witness-secret",
-                ).encode("utf-8"),
-                witness_id_seed.encode("utf-8"),
-                sha256,
-            ).hexdigest()
-            expected_witness_id = (
-                f"reflex-deployment-witness-{sha256(witness_id_seed.encode()).hexdigest()[:16]}"
-            )
-        except (KeyError, TypeError, ValueError):
-            return False
-        return (
-            witness.get("witness_id") == expected_witness_id
-            and witness.get("signature") == f"hmac-sha256:{expected_signature}"
-            and witness.get("production_mutation_applied") is False
+        return verify_reflex_deployment_witness(
+            witness,
+            signing_secret=os.environ.get(
+                "MULLU_REFLEX_DEPLOYMENT_WITNESS_SECRET",
+                "local-reflex-deployment-witness-secret",
+            ),
         )
 
     def _bounded_query_limit(request: Request, *, default: int = 50, maximum: int = 500) -> int:
@@ -964,6 +935,13 @@ def create_gateway_app(
         except ValueError:
             requested_limit = default
         return max(1, min(requested_limit, maximum))
+
+    def _reflex_witness_validator_envelope(witness: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "witness": witness,
+            "validator": "scripts/validate_reflex_deployment_witness.py",
+            "format": "reflex_deployment_witness_validator_envelope_v1",
+        }
 
     @app.get("/runtime/self/health")
     def runtime_self_health(request: Request):
@@ -1117,6 +1095,7 @@ def create_gateway_app(
             {
                 "witness": witness,
                 "replay_passed": _replay_reflex_deployment_witness(witness),
+                "validator_envelope": _reflex_witness_validator_envelope(witness),
             }
             for witness in records
         ]
@@ -1124,6 +1103,8 @@ def create_gateway_app(
             "records": replayed_records,
             "record_count": len(replayed_records),
             "limit": limit,
+            "export_format": "reflex_deployment_witness_validator_envelope_v1",
+            "validator": "scripts/validate_reflex_deployment_witness.py",
             "all_replay_passed": all(record["replay_passed"] for record in replayed_records),
             "mutation_applied": False,
         }
