@@ -478,15 +478,26 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
     }
     missing_adapters = tuple(sorted(required_adapter_ids - adapter_ids))
     blockers = tuple(str(blocker) for blocker in payload.get("blockers", ()))
-    passed = payload.get("ready") is True and not blockers and not missing_adapters
+    browser_sandbox_refs = _browser_sandbox_evidence_refs(adapters)
+    browser_sandbox_closed = bool(browser_sandbox_refs)
+    passed = (
+        payload.get("ready") is True
+        and not blockers
+        and not missing_adapters
+        and browser_sandbox_closed
+    )
     detail = (
-        "capability adapter evidence closes browser, document, voice, and communication worker adapters"
+        (
+            "capability adapter evidence closes browser, document, voice, and communication "
+            f"worker adapters with browser sandbox refs={list(browser_sandbox_refs)}"
+        )
         if passed
         else _join_detail(
             "capability adapter evidence is not closed",
             (
                 f"ready={payload.get('ready')!r}",
                 f"missing_adapters={list(missing_adapters)}",
+                f"browser_sandbox_refs={list(browser_sandbox_refs)}",
                 f"blockers={list(blockers)[:5]}",
             ),
         )
@@ -498,6 +509,20 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
         evidence_refs=(str(adapter_evidence_path),),
         blocker_id="" if passed else "adapter_evidence_not_closed",
     )
+
+
+def _browser_sandbox_evidence_refs(adapters: Any) -> tuple[str, ...]:
+    """Return browser sandbox evidence ids from the adapter evidence report."""
+    if not isinstance(adapters, list):
+        return ()
+    for adapter in adapters:
+        if not isinstance(adapter, dict) or adapter.get("adapter_id") != "browser.playwright":
+            continue
+        refs = tuple(str(ref) for ref in adapter.get("evidence_refs", ()) if isinstance(ref, str))
+        has_evidence_id = any(ref.startswith("browser-sandbox-evidence-") for ref in refs)
+        has_receipt_id = any(ref.startswith("sandbox-receipt-") for ref in refs)
+        return refs if has_evidence_id and has_receipt_id else ()
+    return ()
 
 
 def _check_browser_adapter_closure(
