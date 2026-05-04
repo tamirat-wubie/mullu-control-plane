@@ -331,6 +331,129 @@ def test_collect_deployment_witness_rejects_missing_plan_bundle_witness(monkeypa
     assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
 
 
+def test_collect_deployment_witness_reports_health_body_by_digest_only(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(
+                status=200,
+                payload={"status": "healthy", "internal_secret": "health-secret"},
+            )
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    health_step = next(step for step in witness.steps if step.name == "gateway health")
+    serialized_witness = json.dumps(witness.to_json_dict(), sort_keys=True)
+
+    assert witness.deployment_claim == "published"
+    assert witness.health_response_digest.startswith("sha256:")
+    assert "response_digest=sha256:" in health_step.detail
+    assert "health-secret" not in serialized_witness
+    assert "internal_secret" not in serialized_witness
+
+
+def test_collect_deployment_witness_omits_raw_conformance_evidence(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        overrides={
+            "evidence_refs": ["proof://private-conformance-evidence"],
+            "checks": [
+                {
+                    "check_id": "private_check",
+                    "passed": True,
+                    "evidence_ref": "proof://private-check-evidence",
+                    "detail": "private-check-detail",
+                }
+            ],
+        },
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    serialized_witness = json.dumps(witness.to_json_dict(), sort_keys=True)
+
+    assert witness.deployment_claim == "published"
+    assert witness.latest_conformance_certificate_id == "conf-0123456789abcdef"
+    assert "private-conformance-evidence" not in serialized_witness
+    assert "private-check-evidence" not in serialized_witness
+    assert "private-check-detail" not in serialized_witness
+
+
+def test_collect_deployment_witness_signature_mismatch_details_are_bounded(monkeypatch) -> None:
+    witness_payload = _signed_runtime_witness(secret="runtime-payload-secret")
+    conformance_payload = _signed_conformance_certificate(secret="conformance-payload-secret")
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret="runtime-collector-secret",
+        conformance_secret="conformance-collector-secret",
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    runtime_signature_step = next(step for step in witness.steps if step.name == "runtime witness signature")
+    conformance_signature_step = next(
+        step for step in witness.steps
+        if step.name == "runtime conformance signature"
+    )
+    serialized_witness = json.dumps(witness.to_json_dict(), sort_keys=True)
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.signature_status == "failed:mismatch"
+    assert witness.conformance_signature_status == "failed:mismatch"
+    assert runtime_signature_step.detail == "failed:mismatch"
+    assert conformance_signature_step.detail == "failed:mismatch"
+    assert "runtime-payload-secret" not in serialized_witness
+    assert "runtime-collector-secret" not in serialized_witness
+    assert "conformance-payload-secret" not in serialized_witness
+    assert "conformance-collector-secret" not in serialized_witness
+
+
 def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     witness_payload = _signed_runtime_witness(secret="runtime-secret")
     conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
