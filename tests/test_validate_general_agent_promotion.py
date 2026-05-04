@@ -105,14 +105,22 @@ def test_deployment_publication_checks_accept_published_witness(tmp_path: Path) 
     )
     deployment_witness.write_text(json.dumps(_published_witness()), encoding="utf-8")
 
-    witness_check, health_check = evaluate_deployment_publication(
+    checks = evaluate_deployment_publication(
         deployment_status_path=deployment_status,
         deployment_witness_path=deployment_witness,
     )
+    witness_check = checks[0]
+    runtime_debt_check = checks[1]
+    authority_debt_check = checks[2]
+    health_check = checks[-1]
 
     assert witness_check.passed is True
     assert witness_check.blocker_id == ""
     assert "published" in witness_check.detail
+    assert runtime_debt_check.passed is True
+    assert runtime_debt_check.blocker_id == ""
+    assert authority_debt_check.passed is True
+    assert authority_debt_check.blocker_id == ""
     assert health_check.passed is True
     assert health_check.blocker_id == ""
     assert "https://gateway.example/health" in health_check.detail
@@ -132,16 +140,42 @@ def test_deployment_publication_health_requires_validated_witness(tmp_path: Path
     )
     deployment_witness.write_text(json.dumps(witness), encoding="utf-8")
 
-    witness_check, health_check = evaluate_deployment_publication(
+    checks = evaluate_deployment_publication(
         deployment_status_path=deployment_status,
         deployment_witness_path=deployment_witness,
     )
+    witness_check = checks[0]
+    health_check = checks[-1]
 
     assert witness_check.passed is False
     assert "deployment_witness_not_published" == witness_check.blocker_id
     assert health_check.passed is False
     assert health_check.blocker_id == "production_health_not_declared"
     assert "witness_published=False" in health_check.detail
+
+
+def test_deployment_publication_reports_responsibility_debt_blockers(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_witness = tmp_path / "deployment_witness.json"
+    witness = _published_witness()
+    witness["runtime_responsibility_debt_clear"] = False
+    witness["authority_responsibility_debt_clear"] = False
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+    deployment_witness.write_text(json.dumps(witness), encoding="utf-8")
+
+    checks = evaluate_deployment_publication(
+        deployment_status_path=deployment_status,
+        deployment_witness_path=deployment_witness,
+    )
+    blockers = {check.blocker_id for check in checks if check.blocker_id}
+
+    assert "deployment_runtime_responsibility_debt_present" in blockers
+    assert "deployment_authority_responsibility_debt_present" in blockers
+    assert "deployment_witness_not_published" in blockers
+    assert "production_health_not_declared" in blockers
 
 
 def test_cli_strict_json_blocks_current_repo(tmp_path: Path, capsys) -> None:

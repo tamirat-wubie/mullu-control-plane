@@ -75,6 +75,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | General-agent promotion environment binding receipt | `python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json` |
 | General-agent promotion environment binding receipt validation | `python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json` |
 | Browser sandbox evidence production | `python scripts/produce_browser_sandbox_evidence.py --output "$MULLU_BROWSER_SANDBOX_EVIDENCE" --strict` |
+| Sandbox execution receipt validation | `python scripts/validate_sandbox_execution_receipt.py --receipt "$MULLU_BROWSER_SANDBOX_EVIDENCE" --capability-prefix browser. --require-no-workspace-changes --json` |
 | Browser sandbox evidence validation | `python scripts/validate_browser_sandbox_evidence.py --evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --json` |
 | General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |
 | General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |

@@ -7,18 +7,13 @@ Tests: Governance decision certification, receipt verification, causal
 import json
 from unittest.mock import patch
 
-import pytest
 import mcoi_runtime.core.proof_bridge as proof_bridge_module
 from mcoi_runtime.core.proof_bridge import (
     GOVERNANCE_MACHINE,
-    GovernanceProof,
     ProofBridge,
 )
 from mcoi_runtime.contracts.proof import (
-    CausalLineage,
-    GuardVerdict,
     ProofCapsule,
-    TransitionReceipt,
 )
 from mcoi_runtime.contracts.state_machine import TransitionVerdict
 
@@ -148,6 +143,27 @@ class TestDeniedDecision:
         from mcoi_runtime.contracts.state_machine import TransitionVerdict
         assert receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
 
+    def test_guard_detail_preserved_in_receipt(self):
+        bridge = ProofBridge(clock=_clock)
+        proof = bridge.certify_governance_decision(
+            tenant_id="t1",
+            endpoint="/api/v1/payment",
+            guard_results=[
+                {
+                    "guard_name": "temporal",
+                    "allowed": False,
+                    "reason": "approval_expired",
+                    "detail": {"decision_id": "dec-1", "verdict": "deny"},
+                },
+            ],
+            decision="denied",
+            reason="approval_expired",
+        )
+        receipt_verdict = proof.capsule.receipt.guard_verdicts[0]
+        assert proof.guard_verdicts[0].detail["decision_id"] == "dec-1"
+        assert receipt_verdict.detail["verdict"] == "deny"
+        assert receipt_verdict.guard_id == "temporal"
+
 
 # ═══ Receipt Verification ═══
 
@@ -240,7 +256,7 @@ class TestReceiptVerification:
 class TestCausalLineage:
     def test_lineage_created(self):
         bridge = ProofBridge(clock=_clock)
-        proof = bridge.certify_governance_decision(
+        bridge.certify_governance_decision(
             tenant_id="t1", endpoint="/api/test",
             guard_results=[{"guard_name": "g1", "allowed": True, "reason": ""}],
             decision="allowed",

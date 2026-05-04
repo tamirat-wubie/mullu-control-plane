@@ -97,6 +97,7 @@ production_health_not_declared
 
 ```powershell
 python scripts\produce_browser_sandbox_evidence.py --output "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --strict
+python scripts\validate_sandbox_execution_receipt.py --receipt "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --capability-prefix browser. --require-no-workspace-changes --json
 python scripts\validate_browser_sandbox_evidence.py --evidence "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --json
 python scripts\produce_capability_adapter_live_receipts.py --target browser --browser-sandbox-evidence "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --strict
 python scripts\produce_capability_adapter_live_receipts.py --target document --strict
@@ -111,6 +112,7 @@ python scripts\collect_capability_adapter_evidence.py --strict --output .change_
 ```
 
 The browser adapter evidence is not closed unless `.change_assurance\capability_adapter_evidence.json` preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser live receipt.
+The generic sandbox receipt gate must also report `valid=true`; it proves the nested worker receipt still has no network, read-only rootfs, `/workspace` mount, no forbidden effects, and no workspace mutation.
 
 8. Publish deployment witness only after approval:
 

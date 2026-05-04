@@ -16,6 +16,25 @@ from fastapi.testclient import TestClient
 from gateway.server import create_gateway_app
 
 
+DT = "2026-05-04T12:00:00+00:00"
+
+
+def _certificate_payload() -> dict[str, object]:
+    return {
+        "certificate_id": "cert-001",
+        "change_id": "chg-001",
+        "schema_checks_passed": True,
+        "tests_passed": True,
+        "replay_passed": True,
+        "invariant_checks_passed": True,
+        "migration_safe": True,
+        "rollback_plan_present": True,
+        "approval_id": None,
+        "evidence_refs": ["change_command.json", "release_certificate.json"],
+        "certified_at": DT,
+    }
+
+
 class StubPlatform:
     """Minimal governed platform fixture for gateway app construction."""
 
@@ -123,6 +142,78 @@ def test_reflex_promote_without_evidence_requires_human_approval() -> None:
     assert payload["disposition"] == "human_approval_required"
     assert payload["requires_human_approval"] is True
     assert payload["mutation_applied"] is False
+
+
+def test_reflex_promote_accepts_sandbox_bundle_and_certificate_handoff() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+    candidate = client.post("/runtime/self/propose-upgrade").json()["candidates"][0]
+    evaluation = client.post("/runtime/self/evaluate").json()
+    sandbox_bundle = next(
+        bundle
+        for bundle in evaluation["sandbox_bundles"]
+        if bundle["candidate_id"] == candidate["candidate_id"]
+    )
+
+    response = client.post(
+        "/runtime/self/promote",
+        json={
+            "candidate_id": candidate["candidate_id"],
+            "sandbox_bundle": sandbox_bundle,
+            "certificate": _certificate_payload(),
+        },
+    )
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["candidate_id"] == candidate["candidate_id"]
+    assert payload["mutation_applied"] is False
+    assert payload["deployment_witness_required"] is True
+    assert payload["promotion_decision"]["candidate_id"] == candidate["candidate_id"]
+    assert payload["disposition"] == payload["promotion_decision"]["disposition"]
+    assert "attach_sandbox_bundle" in payload["canary_steps"]
+
+
+def test_reflex_auto_canary_persists_signed_deployment_witness_when_authorized(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("MULLU_REFLEX_PREMIUM_MODEL_LOW_RISK_REQUESTS", "4")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+    candidates = client.post("/runtime/self/propose-upgrade").json()["candidates"]
+    candidate = next(
+        item
+        for item in candidates
+        if item["change_surface"] == "provider_routing"
+    )
+    evaluation = client.post("/runtime/self/evaluate").json()
+    sandbox_bundle = next(
+        bundle
+        for bundle in evaluation["sandbox_bundles"]
+        if bundle["candidate_id"] == candidate["candidate_id"]
+    )
+
+    response = client.post(
+        "/runtime/self/promote",
+        json={
+            "candidate_id": candidate["candidate_id"],
+            "sandbox_bundle": sandbox_bundle,
+            "certificate": _certificate_payload(),
+            "apply_canary": True,
+            "target_environment": "canary",
+        },
+    )
+    payload = response.json()
+    witness = client.get("/runtime/self/witness").json()
+
+    assert response.status_code == 200
+    assert payload["disposition"] == "auto_canary_allowed"
+    assert payload["requires_human_approval"] is False
+    assert payload["deployment_witness_persisted"] is True
+    assert payload["deployment_witness"]["signature"].startswith("hmac-sha256:")
+    assert payload["deployment_witness"]["production_mutation_applied"] is False
+    assert witness["deployment_witness_count"] == 1
+    assert witness["latest_deployment_witness_id"] == payload["deployment_witness"]["witness_id"]
 
 
 def test_reflex_witness_is_signed_and_binds_pipeline_counts() -> None:

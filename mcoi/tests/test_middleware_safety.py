@@ -175,6 +175,115 @@ def test_middleware_invalid_temporal_action_fails_closed_with_temporal_guard() -
     assert body["error"] == "invalid temporal action"
 
 
+def test_middleware_expired_temporal_action_blocks_endpoint_execution() -> None:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+
+    calls: list[str] = []
+    chain = GovernanceGuardChain()
+    temporal_runtime = TemporalRuntimeEngine(
+        EventSpineEngine(),
+        clock=lambda: "2026-05-04T15:01:00+00:00",
+    )
+    chain.add(create_temporal_guard(temporal_runtime))
+
+    app = FastAPI()
+
+    @app.post("/api/v1/payment")
+    def payment() -> dict[str, bool]:
+        calls.append("executed")
+        return {"executed": True}
+
+    app.add_middleware(GovernanceMiddleware, guard_chain=chain)
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/v1/payment",
+        json={
+            "temporal_action": {
+                "action_id": "pay-1",
+                "tenant_id": "tenant-a",
+                "actor_id": "user-a",
+                "action_type": "payment",
+                "risk": "high",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+                "approval_expires_at": "2026-05-04T15:00:00+00:00",
+            },
+        },
+    )
+
+    assert resp.status_code == 403
+    assert resp.json()["guard"] == "temporal"
+    assert resp.json()["error"] == "approval_expired"
+    assert calls == []
+
+
+def test_middleware_temporal_detail_reaches_decision_log_and_proof() -> None:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+
+    class CapturingDecisionLog:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+
+        def record(self, **kwargs: object) -> None:
+            self.calls.append(kwargs)
+
+    class CapturingProofBridge:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+
+        def certify_governance_decision(self, **kwargs: object) -> None:
+            self.calls.append(kwargs)
+
+    decision_log = CapturingDecisionLog()
+    proof_bridge = CapturingProofBridge()
+    chain = GovernanceGuardChain()
+    temporal_runtime = TemporalRuntimeEngine(
+        EventSpineEngine(),
+        clock=lambda: "2026-05-04T15:01:00+00:00",
+    )
+    chain.add(create_temporal_guard(temporal_runtime))
+
+    app = FastAPI()
+
+    @app.post("/api/v1/payment")
+    def payment() -> dict[str, bool]:
+        return {"executed": True}
+
+    app.add_middleware(
+        GovernanceMiddleware,
+        guard_chain=chain,
+        decision_log=decision_log,
+        proof_bridge=proof_bridge,
+    )
+    client = TestClient(app)
+
+    resp = client.post(
+        "/api/v1/payment",
+        json={
+            "temporal_action": {
+                "action_id": "pay-1",
+                "tenant_id": "tenant-a",
+                "actor_id": "user-a",
+                "action_type": "payment",
+                "risk": "high",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+                "approval_expires_at": "2026-05-04T15:00:00+00:00",
+            },
+        },
+    )
+
+    assert resp.status_code == 403
+    logged_guard = decision_log.calls[0]["guards"][0]  # type: ignore[index]
+    proof_guard = proof_bridge.calls[0]["guard_results"][0]  # type: ignore[index]
+    assert logged_guard.guard_name == "temporal"
+    assert logged_guard.detail["verdict"] == "deny"
+    assert logged_guard.detail["decision_id"].startswith("dec-temp-action")
+    assert proof_guard["detail"]["verdict"] == "deny"
+    assert proof_guard["detail"]["decision_id"] == logged_guard.detail["decision_id"]
+
+
 def test_middleware_witnesses_proof_bridge_failures() -> None:
     chain = GovernanceGuardChain()
     metric_calls: list[tuple[str, int]] = []

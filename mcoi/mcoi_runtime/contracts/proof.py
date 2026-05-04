@@ -37,11 +37,13 @@ class GuardVerdict(ContractRecord):
     guard_id: str
     passed: bool
     reason: str
+    detail: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "guard_id", require_non_empty_text(self.guard_id, "guard_id"))
         if not isinstance(self.passed, bool):
             raise ValueError("passed must be a boolean")
+        object.__setattr__(self, "detail", freeze_value(dict(self.detail)))
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 # Governance Guard Chain Specification — v1
 
 **Status:** Honest baseline. This spec documents what the chain actually enforces today, including which guards are conditional on bootstrap and configuration.
-**Companion documents:** `docs/LEDGER_SPEC.md`, `docs/MAF_RECEIPT_COVERAGE.md`
+**Companion documents:** `docs/LEDGER_SPEC.md`, `docs/MAF_RECEIPT_COVERAGE.md`,
+`docs/TEMPORAL_ACTION_CONTRACT.md`
 **Schema version:** `1`
 
 ## Purpose

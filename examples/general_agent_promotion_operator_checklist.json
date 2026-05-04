@@ -78,9 +78,10 @@
       "step_id": "validate_environment_binding_receipt"
     },
     {
-      "command": "python scripts\\produce_browser_sandbox_evidence.py --output \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --strict && python scripts\\validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json && python scripts\\produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --voice-audio-path \"$MULLU_VOICE_PROBE_AUDIO\"",
+      "command": "python scripts\\produce_browser_sandbox_evidence.py --output \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --strict && python scripts\\validate_sandbox_execution_receipt.py --receipt \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --capability-prefix browser. --require-no-workspace-changes --json && python scripts\\validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json && python scripts\\produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --voice-audio-path \"$MULLU_VOICE_PROBE_AUDIO\"",
       "required_evidence": [
         "browser_sandbox_evidence.json verification_status=passed",
+        "sandbox execution receipt validation valid=true",
         "browser_sandbox_evidence validation valid=true",
         "browser_live_receipt.json status=passed",
         "document_live_receipt.json status=passed",
