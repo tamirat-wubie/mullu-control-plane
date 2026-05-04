@@ -137,6 +137,7 @@ def bootstrap_operational_services(
     tenant_gating: Any,
     access_runtime: Any,
     content_safety_chain: Any,
+    temporal_runtime: Any | None = None,
     build_guard_chain_fn: Callable[..., Any] = build_guard_chain,
     create_api_key_guard_fn: Callable[..., Any] = create_api_key_guard,
     build_default_dashboard_fn: Callable[[], Any] = build_default_dashboard,
@@ -199,6 +200,7 @@ def bootstrap_operational_services(
         tenant_gating_registry=tenant_gating,
         access_runtime=access_runtime,
         content_safety_chain=content_safety_chain,
+        temporal_runtime=temporal_runtime,
     )
 
     replay_recorder = ReplayRecorder(clock=clock)

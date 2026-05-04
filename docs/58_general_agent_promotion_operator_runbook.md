@@ -42,7 +42,7 @@ The current expected aggregate plan contains:
 | Document worker | Parser imports and live parser receipt already closed; external effects remain approval-gated |
 | Voice worker | OpenAI provider client, governed `OPENAI_API_KEY`, approved audio sample |
 | Email/calendar worker | One scoped connector token and read-only probe target |
-| Deployment publication | `MULLU_GATEWAY_URL`, runtime witness secret, conformance secret, operator approval |
+| Deployment publication | `MULLU_GATEWAY_URL`, runtime witness secret, conformance secret, runtime responsibility debt clear, authority responsibility debt clear, operator approval |
 | Public health declaration | Published deployment witness and HTTPS health probe receipt |
 
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
@@ -120,7 +120,7 @@ python scripts\validate_gateway_publication_receipt.py --receipt .change_assuran
 python scripts\validate_deployment_publication_closure.py
 ```
 
-9. Update `DEPLOYMENT_STATUS.md` only when `.change_assurance/deployment_witness.json` has `deployment_claim=published` and the public health endpoint equals `<gateway_url>/health`.
+9. Update `DEPLOYMENT_STATUS.md` only when `.change_assurance/deployment_witness.json` has `deployment_claim=published`, `runtime_responsibility_debt_clear=true`, `authority_responsibility_debt_clear=true`, and the public health endpoint equals `<gateway_url>/health`.
 
 10. Run final promotion validation:
 
@@ -138,6 +138,7 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 | Credential action lacks approval | Do not bind the secret and keep promotion blocked |
 | Live receipt fails | Preserve the failed receipt and blocker |
 | Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md` |
+| Runtime or authority responsibility debt is not clear | Do not publish deployment witness and inspect `/authority/responsibility` |
 | Health endpoint mismatch | Do not claim public production health |
 
 STATUS:

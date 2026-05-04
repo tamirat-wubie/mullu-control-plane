@@ -59,5 +59,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     assert "Approval-required actions | 4" in packet_text
     assert "browser-sandbox-evidence-*" in packet_text
     assert "sandbox-receipt-*" in packet_text
+    assert "runtime and authority responsibility debt are clear" in packet_text
+    assert "debt-clear witness fields" in packet_text
     assert "validate_general_agent_promotion.py --strict" in packet_text
     assert "STATUS:" in packet_text

@@ -2,8 +2,8 @@
 
 Modules:
   - ``chain`` — :class:`GovernanceGuardChain` and the standard
-    guard factories (api_key, jwt, tenant, rbac, rate_limit,
-    budget, tenant_gating)
+    guard factories (api_key, jwt, tenant, rbac, temporal,
+    rate_limit, budget, tenant_gating)
   - ``rate_limit`` — token-bucket rate limiter (atomic SQL)
   - ``budget`` — per-tenant cost/call budget (atomic SQL)
   - ``tenant_gating`` — per-tenant active/suspended/disabled

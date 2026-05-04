@@ -103,6 +103,8 @@ def test_gateway_runtime_witness_covers_publication_responsibility_debt() -> Non
     assert "schemas/deployment_witness.schema.json" in runtime_surface["evidence_files"]
     assert "scripts/validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
+    assert "responsibility_debt_clear" in witnesses
+    assert "runtime_responsibility_debt_clear" in witnesses
     assert "authority_responsibility_debt_clear" in witnesses
     assert "authority_overdue_approval_chain_count" in witnesses
     assert "authority_overdue_obligation_count" in witnesses

@@ -74,6 +74,9 @@ def test_reflex_diagnose_evaluate_and_propose_are_non_mutating() -> None:
     assert evaluate.status_code == 200
     assert evaluate.json()["side_effects"] == "none"
     assert evaluate.json()["eval_count"] >= 1
+    assert evaluate.json()["sandbox_bundle_count"] >= 1
+    assert evaluate.json()["sandbox_bundles"][0]["mutation_applied"] is False
+    assert "sandbox_result" in evaluate.json()["sandbox_bundles"][0]
     assert propose.status_code == 200
     assert propose.json()["mutation_applied"] is False
     assert propose.json()["candidate_count"] >= 1
@@ -82,14 +85,27 @@ def test_reflex_diagnose_evaluate_and_propose_are_non_mutating() -> None:
 def test_reflex_certify_returns_handoff_not_self_certificate() -> None:
     app = create_gateway_app(platform=StubPlatform())
     client = TestClient(app)
+    candidate_id = client.post("/runtime/self/propose-upgrade").json()["candidates"][0]["candidate_id"]
 
-    response = client.post("/runtime/self/certify", json={"candidate_id": "ref-upg-1"})
+    response = client.post(
+        "/runtime/self/certify",
+        json={
+            "candidate_id": candidate_id,
+            "base_ref": "main",
+            "head_ref": "codex/reflex",
+            "base_commit": "a" * 40,
+            "head_commit": "b" * 40,
+        },
+    )
     payload = response.json()
 
     assert response.status_code == 200
     assert payload["status"] == "certification_required"
     assert payload["mutation_applied"] is False
+    assert payload["change_command"]["metadata"]["reflex_candidate_id"] == candidate_id
+    assert payload["change_command"]["requires_approval"] is True
     assert "scripts/certify_change.py" in payload["required_command"]
+    assert "codex/reflex" in payload["required_command"]
     assert "release_certificate.json" in payload["required_artifacts"]
 
 

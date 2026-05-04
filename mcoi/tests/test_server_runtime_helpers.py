@@ -34,6 +34,7 @@ def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() 
     captured: dict[str, object] = {}
     observability = object()
     access_runtime = object()
+    temporal_runtime = object()
     guard_chain = object()
     shutdown_mgr = object()
     state_persistence = object()
@@ -46,6 +47,7 @@ def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() 
     subsystem_bootstrap = SimpleNamespace(
         event_bus=object(),
         access_runtime=access_runtime,
+        temporal_runtime=temporal_runtime,
     )
     operational_bootstrap = SimpleNamespace(
         guard_chain=guard_chain,
@@ -104,6 +106,7 @@ def test_bootstrap_server_runtime_stack_preserves_order_and_exported_bindings() 
     )
     assert captured["operational_kwargs"]["event_bus"] is subsystem_bootstrap.event_bus
     assert captured["operational_kwargs"]["access_runtime"] is access_runtime
+    assert captured["operational_kwargs"]["temporal_runtime"] is temporal_runtime
     assert captured["capability_kwargs"]["observability"] is observability
     assert bootstrap.observability is observability
     assert bootstrap.access_runtime is access_runtime

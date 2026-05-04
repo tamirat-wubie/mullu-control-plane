@@ -46,6 +46,9 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
 
     assert "Do not update `DEPLOYMENT_STATUS.md`" in runbook_text
     assert "deployment_claim=published" in runbook_text
+    assert "runtime_responsibility_debt_clear=true" in runbook_text
+    assert "authority_responsibility_debt_clear=true" in runbook_text
+    assert "inspect `/authority/responsibility`" in runbook_text
     assert "<gateway_url>/health" in runbook_text
     assert "produce_browser_sandbox_evidence.py" in runbook_text
     assert "validate_browser_sandbox_evidence.py" in runbook_text

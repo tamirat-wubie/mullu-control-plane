@@ -26,7 +26,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Local gateway runtime witness | `DEPLOYMENT.md` documents `/gateway/witness` and `/runtime/witness` | Reflected |
 | Restricted capability worker | `DEPLOYMENT.md`, `docker-compose.yml`, and `k8s/mullu-api.yaml` declare `gateway.capability_worker:app` | Reflected |
 | Local pilot proof slice | `scripts/pilot_proof_slice.py` emits `.change_assurance/pilot_proof_slice_witness.json` through gateway closure | Reflected |
-| Live deployment witness collector | `scripts/collect_deployment_witness.py` writes `.change_assurance/deployment_witness.json` from `/health`, `/gateway/witness`, and `/runtime/conformance` | Reflected |
+| Live deployment witness collector | `scripts/collect_deployment_witness.py` writes `.change_assurance/deployment_witness.json` from `/health`, `/gateway/witness`, and `/runtime/conformance`; publication requires both runtime and authority responsibility debt to be clear | Reflected |
 | Runtime witness secret provisioner | `scripts/provision_runtime_witness_secret.py` binds `MULLU_RUNTIME_WITNESS_SECRET` into GitHub Actions without printing the secret | Reflected |
 | Deployment target provisioner | `scripts/provision_deployment_target.py` binds `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` into GitHub repository variables | Reflected |
 | Gateway ingress manifest | `k8s/mullu-gateway-ingress.yaml` publishes `/health` and `/gateway/witness` through the `mullu-gateway` service after host replacement | Reflected |
@@ -56,7 +56,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Capability adapter evidence collector | `scripts/collect_capability_adapter_evidence.py` writes `.change_assurance/capability_adapter_evidence.json` from browser, document, voice, and email/calendar dependency checks plus live adapter receipts | Reflected |
 | Capability adapter closure planner | `scripts/plan_capability_adapter_closure.py` converts adapter evidence blockers into dependency, credential, and live-receipt actions without claiming closure | Reflected |
 | Capability adapter closure plan schema validator | `scripts/validate_capability_adapter_closure_plan_schema.py` validates adapter closure plan shape, action counts, proof contracts, and blocker coverage before aggregate promotion planning | Reflected |
-| Deployment publication closure planner | `scripts/plan_deployment_publication_closure.py` converts deployment witness and public-health blockers into approval-bound publication actions without mutating status | Reflected |
+| Deployment publication closure planner | `scripts/plan_deployment_publication_closure.py` converts deployment witness, responsibility-debt, and public-health blockers into approval-bound publication actions without mutating status | Reflected |
 | General-agent promotion closure planner | `scripts/plan_general_agent_promotion_closure.py` aggregates adapter and deployment closure plans into one operator-facing promotion plan | Reflected |
 | General-agent promotion closure plan schema | `schemas/general_agent_promotion_closure_plan.schema.json` defines the public operator-facing promotion closure plan contract | Reflected |
 | General-agent promotion closure plan schema validator | `scripts/validate_general_agent_promotion_closure_plan_schema.py` validates aggregate closure plan shape and semantic action counts before approval or execution | Reflected |
@@ -93,6 +93,8 @@ Before this witness can claim public deployment health, the repository must name
 5. Operator or automation identity that produced the health witness.
 6. Failure handling path for stale or unavailable health evidence.
 7. Capability worker endpoint and last successful signed worker-response check.
+8. Runtime witness evidence with `responsibility_debt_clear=true`.
+9. Deployment witness evidence with `runtime_responsibility_debt_clear=true` and `authority_responsibility_debt_clear=true`.
 
 ## Proof Chain
 

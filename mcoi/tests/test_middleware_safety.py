@@ -14,11 +14,16 @@ except ImportError:  # pragma: no cover - environment-dependent
 from mcoi_runtime.app.middleware import (
     GovernanceMiddleware,
     _extract_content_safety_fields,
+    _extract_temporal_action_field,
 )
+from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
+from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.governance.guards.chain import (
     GuardResult,
     GovernanceGuard,
     GovernanceGuardChain,
+    create_temporal_guard,
 )
 
 
@@ -88,6 +93,86 @@ def test_extract_content_safety_fields_only_keeps_strings() -> None:
     )
 
     assert extracted == {"prompt": "safe"}
+
+
+def test_extract_temporal_action_field_builds_contract() -> None:
+    extracted = _extract_temporal_action_field(
+        b"""{
+            "temporal_action": {
+                "action_id": "act-1",
+                "tenant_id": "t1",
+                "actor_id": "user-1",
+                "action_type": "payment",
+                "risk": "high",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+                "approval_expires_at": "2026-05-04T15:00:00+00:00"
+            }
+        }"""
+    )
+
+    action = extracted["temporal_action"]
+    assert isinstance(action, TemporalActionRequest)
+    assert action.risk == TemporalRiskLevel.HIGH
+    assert action.action_type == "payment"
+
+
+def test_extract_temporal_action_field_preserves_invalid_for_fail_closed_guard() -> None:
+    extracted = _extract_temporal_action_field(
+        b'{"temporal_action":{"action_id":"act-1","unexpected":"field"}}'
+    )
+
+    assert extracted["temporal_action"] == {"action_id": "act-1", "unexpected": "field"}
+
+
+def test_middleware_threads_temporal_action_to_guard_context() -> None:
+    chain = GovernanceGuardChain()
+
+    def verify_context(context: dict[str, object]) -> GuardResult:
+        action = context.get("temporal_action")
+        assert isinstance(action, TemporalActionRequest)
+        assert action.action_id == "act-1"
+        assert action.risk == TemporalRiskLevel.LOW
+        return GuardResult(allowed=True, guard_name="verify")
+
+    chain.add(GovernanceGuard("verify", verify_context))
+    client = _client_with_chain(chain)
+
+    resp = client.post(
+        "/api/v1/echo",
+        json={
+            "temporal_action": {
+                "action_id": "act-1",
+                "tenant_id": "t1",
+                "actor_id": "user-1",
+                "action_type": "reminder",
+                "risk": "low",
+                "requested_at": "2026-05-04T13:00:00+00:00",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+
+
+def test_middleware_invalid_temporal_action_fails_closed_with_temporal_guard() -> None:
+    chain = GovernanceGuardChain()
+    temporal_runtime = TemporalRuntimeEngine(
+        EventSpineEngine(),
+        clock=lambda: "2026-05-04T13:00:00+00:00",
+    )
+    chain.add(create_temporal_guard(temporal_runtime))
+    client = _client_with_chain(chain)
+
+    resp = client.post(
+        "/api/v1/echo",
+        json={"temporal_action": {"action_id": "act-1", "unexpected": "field"}},
+    )
+
+    assert resp.status_code == 403
+    body = resp.json()
+    assert body["guard"] == "temporal"
+    assert body["error"] == "invalid temporal action"
 
 
 def test_middleware_witnesses_proof_bridge_failures() -> None:

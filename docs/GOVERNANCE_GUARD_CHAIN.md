@@ -6,13 +6,15 @@
 
 ## Purpose
 
-The README claims a "7-Guard Chain" enforcing API key → JWT → tenant →
-gating → RBAC → content safety → rate limit → budget. That's eight
-guards, and the actual count varies by configuration.
+The README historically claimed a "7-Guard Chain" enforcing API key →
+JWT → tenant → gating → RBAC → content safety → rate limit → budget.
+That was eight guard slots, and the governed HTTP chain now also
+includes temporal policy before rate limit and budget. The actual count
+still varies by configuration because JWT is conditional.
 
 This document is the canonical specification of:
 
-1. The eight guards that compose the chain.
+1. The nine guard slots that compose the HTTP chain.
 2. The order in which they evaluate.
 3. The failure semantics of each guard.
 4. Which guards are mandatory and which become no-ops when their
@@ -33,7 +35,7 @@ verified, and what's NOT claimed today.
 | "Failed guards return a deny verdict." | **Verified** — every guard's failure path has been audited and returns `GuardResult(allowed=False, ...)`. |
 | "Exceptions inside guards are treated as deny." | **Verified** — `GovernanceGuard.check()` (`governance_guard.py:90-98`) catches exceptions and returns deny. |
 | "The chain short-circuits on first failure." | **Verified** — `governance_guard.py:150-156`. No subsequent guard runs after the first deny. |
-| "All eight guards run in pilot/production." | **NOT yet a claim today.** RBAC (via `access_runtime`) silently becomes a no-op if its bootstrap raises. **This PR closes the highest-severity case.** |
+| "All nine guard slots run in pilot/production." | **Conditionally true.** API key, tenant, tenant gating, RBAC, content safety, temporal policy, rate limit, and budget are wired by default; JWT is present when a JWT authenticator is configured. |
 | "The HTTP and session chains enforce the same guards in the same order." | **NOT a claim today.** They overlap but differ — see "Two chains" below. |
 | "API authentication is required in pilot/production." | **Verified** — `MULLU_API_AUTH_REQUIRED` defaults to True when `MULLU_ENV ∈ {pilot, production}` (`server_services.py:348-350`). |
 | "RBAC denial is fail-closed even if the RBAC engine errors." | **Verified** for the runtime path — `governance_guard.py:394-407` catches and returns deny. |
@@ -41,7 +43,7 @@ verified, and what's NOT claimed today.
 
 ## Guard inventory
 
-Eight guards. Mandatory means "always added to the chain". Optional
+Nine guard slots. Mandatory means "always added to the chain". Optional
 means "added only if its underlying engine is non-None". Optional
 guards become silent no-ops when their engine is None — this is the
 class of silent bypass G4.1 closes for the RBAC engine.
@@ -113,23 +115,34 @@ class of silent bypass G4.1 closes for the RBAC engine.
 | Engine | `ContentSafetyChain` (built from `build_default_safety_chain()`) |
 | Bypass conditions | Empty content (zero bytes) is skipped — guards only inspect non-empty payloads. This is by design. |
 
-### 7. Rate Limit (`rate_limit`)
+### 7. Temporal Policy (`temporal`)
+
+| Field | Value |
+|-------|-------|
+| Implementation | `chain.py` (`create_temporal_guard`) |
+| Chain insertion | `middleware.py` (conditional: if `temporal_runtime is not None`) |
+| Mandatory? | **Effectively mandatory** in the governed server stack — `bootstrap_subsystems()` creates `TemporalRuntimeEngine` and `bootstrap_operational_services()` wires it into `build_guard_chain()` |
+| Failure semantics | Deny/defer/escalate verdicts from `TemporalRuntimeEngine.decide_temporal_action()` block admission; invalid temporal action contracts deny fail-closed |
+| Engine | `TemporalRuntimeEngine` |
+| Bypass conditions | If `temporal_action` is absent, the guard is a no-op. If `temporal_runtime is None`, the guard is skipped; the default server stack wires it. |
+
+### 8. Rate Limit (`rate_limit`)
 
 | Field | Value |
 |-------|-------|
 | Implementation | `governance_guard.py:167-188` |
-| Chain insertion | `middleware.py:275` (always added) |
+| Chain insertion | `middleware.py` (always added after temporal policy) |
 | Mandatory? | **Mandatory** |
 | Failure semantics | Deny if `rate_limiter.check()` returns `allowed=False` (token bucket exhausted) |
 | Engine | `RateLimiter` (dual-gate: tenant + identity) |
 | Bypass conditions | None at the chain level. A misconfigured RateLimiter with infinite limits would let everything through, but this is a misconfiguration not a bypass. |
 
-### 8. Budget (`budget`)
+### 9. Budget (`budget`)
 
 | Field | Value |
 |-------|-------|
 | Implementation | `governance_guard.py:191-218` |
-| Chain insertion | `middleware.py:276` (always added) |
+| Chain insertion | `middleware.py` (always added after rate limit) |
 | Mandatory? | **Mandatory** |
 | Failure semantics | Deny on budget exhaustion or tenant disabled |
 | Engine | `TenantBudgetManager` |
@@ -152,8 +165,9 @@ understated in the README.
 4. Tenant Gating      (effectively mandatory)
 5. RBAC               (mandatory in pilot/prod after G4.1)
 6. Content Safety     (effectively mandatory)
-7. Rate Limit         (mandatory)
-8. Budget             (mandatory)
+7. Temporal Policy    (effectively mandatory)
+8. Rate Limit         (mandatory)
+9. Budget             (mandatory)
 ```
 
 ### Session-level chain (`GovernedSession.{llm,execute,query}`)
@@ -222,7 +236,7 @@ guard) but these are documented per-guard, not chain-wide.
 
 ## What this spec does NOT claim
 
-### 1. Guards beyond the eight are not covered
+### 1. Guards beyond the nine HTTP guard slots are not covered
 
 `Session policy`, `output content safety`, `PII redaction`, and
 `closed-session check` are real enforcement mechanisms but are not
@@ -257,7 +271,7 @@ of scope for the chain).
 | Gap | Severity | Resolution path | Status |
 |-----|----------|-----------------|--------|
 | RBAC silently bypassed when `access_runtime` bootstrap fails in pilot/production | **High** | Refuse to boot in pilot/production if `access_runtime is None` | **Closed (G4.1, this PR)** |
-| README claims "7-Guard Chain" but the chain is 8 guards | Low | README correction | **Closed (G4.0, this PR)** |
+| README claims "7-Guard Chain" but the HTTP chain has nine guard slots when JWT is configured | Low | README/spec correction | **Closed (G4.0/G4.2)** |
 | HTTP and session chains have different orders and different guard sets, which is documented here but not enforced by tests | Medium | Add a test that asserts the canonical order of each chain by name; fail if a future refactor reorders them | Open |
 | Output content safety and PII redaction are not in the "chain" abstraction even though they enforce real policy | Low | Spec v2 — extend chain to a generalized notion of "policy checkpoint" covering pre-dispatch, dispatch, and post-dispatch | Open |
 | No CI check enumerates `/api/v1/*` routes and asserts each flows through `GovernanceMiddleware` | Medium | Mirror the gap from MAF_RECEIPT_COVERAGE.md — `scripts/validate_guard_chain_coverage.py` | Open |

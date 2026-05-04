@@ -14,10 +14,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
-from mcoi_runtime.contracts.change_assurance import ChangeCertificate
+from mcoi_runtime.contracts.change_assurance import (
+    ChangeCertificate,
+    ChangeCommand,
+    ChangeRisk,
+    EvolutionChangeType,
+)
 from mcoi_runtime.contracts.reflex import (
     CapabilityMaturityScore,
     ReflexAnomaly,
+    ReflexCertificationHandoff,
     ReflexDiagnosis,
     ReflexEvalCase,
     ReflexEvalClass,
@@ -25,7 +31,9 @@ from mcoi_runtime.contracts.reflex import (
     ReflexFailureClass,
     ReflexPromotionDecision,
     ReflexPromotionDisposition,
+    ReflexReplayResult,
     ReflexRisk,
+    ReflexSandboxBundle,
     ReflexSandboxResult,
     ReflexUpgradeCandidate,
     RuntimeHealthSnapshot,
@@ -269,6 +277,12 @@ _PROTECTED_SURFACES = frozenset(
     }
 )
 
+_REGISTERED_REFLEX_REPLAYS = frozenset(
+    replay_id
+    for replay_ids in _REPLAYS_BY_SURFACE.values()
+    for replay_id in replay_ids
+)
+
 
 def detect_anomalies(snapshot: RuntimeHealthSnapshot) -> tuple[ReflexAnomaly, ...]:
     """Detect configured metric threshold violations in a runtime snapshot."""
@@ -433,11 +447,192 @@ def rank_capability_gaps(
     )
 
 
+def run_reflex_replay(
+    candidate: ReflexUpgradeCandidate,
+    replay_id: str,
+) -> ReflexReplayResult:
+    """Run one deterministic, side-effect-free reflex replay check."""
+    replay_name = replay_id.strip()
+    if replay_name not in _REGISTERED_REFLEX_REPLAYS:
+        return ReflexReplayResult(
+            replay_id=replay_name or "undefined_replay",
+            passed=False,
+            evidence_ref=ReflexEvidenceRef(
+                kind="reflex_replay",
+                ref_id=f"reflex:replay:{replay_name or 'undefined'}",
+            ),
+            detail="replay is not registered for reflex sandbox execution",
+        )
+    if replay_name not in candidate.required_replays:
+        return ReflexReplayResult(
+            replay_id=replay_name,
+            passed=False,
+            evidence_ref=ReflexEvidenceRef(
+                kind="reflex_replay",
+                ref_id=f"reflex:replay:{replay_name}",
+            ),
+            detail="replay was not declared by candidate",
+        )
+    return ReflexReplayResult(
+        replay_id=replay_name,
+        passed=True,
+        evidence_ref=ReflexEvidenceRef(
+            kind="reflex_replay",
+            ref_id=f"reflex:replay:{candidate.candidate_id}:{replay_name}",
+        ),
+        detail="deterministic reflex replay check passed without live side effects",
+    )
+
+
+def build_sandbox_bundle(
+    candidate: ReflexUpgradeCandidate,
+    eval_cases: Iterable[ReflexEvalCase],
+) -> ReflexSandboxBundle:
+    """Build a deterministic sandbox result bundle for a reflex candidate."""
+    eval_tuple = tuple(eval_cases)
+    eval_ids = tuple(eval_case.eval_id for eval_case in eval_tuple)
+    failed_checks = list(_sandbox_eval_failures(candidate, eval_tuple))
+    replay_results = tuple(run_reflex_replay(candidate, replay_id) for replay_id in candidate.required_replays)
+    failed_checks.extend(
+        f"replay_failed:{result.replay_id}:{result.detail}"
+        for result in replay_results
+        if not result.passed
+    )
+    report_refs = tuple(result.evidence_ref for result in replay_results) + tuple(
+        eval_case.evidence_refs[0] for eval_case in eval_tuple if eval_case.evidence_refs
+    )
+    sandbox_result = ReflexSandboxResult(
+        candidate_id=candidate.candidate_id,
+        passed=not failed_checks,
+        failed_checks=tuple(failed_checks),
+        report_refs=report_refs,
+    )
+    return ReflexSandboxBundle(
+        bundle_id=f"sandbox:{candidate.candidate_id}",
+        candidate_id=candidate.candidate_id,
+        eval_ids=eval_ids,
+        replay_results=replay_results,
+        sandbox_result=sandbox_result,
+        mutation_applied=False,
+    )
+
+
+def build_reflex_change_command(
+    candidate: ReflexUpgradeCandidate,
+    *,
+    author_id: str,
+    branch: str,
+    base_commit: str,
+    head_commit: str,
+    created_at: str,
+) -> ChangeCommand:
+    """Convert a reflex candidate into a governed evolution ChangeCommand."""
+    change_type = _change_type_for_surface(candidate.change_surface)
+    change_risk = _change_risk_for_candidate(candidate)
+    affected_invariants = _invariants_for_surface(candidate.change_surface)
+    metadata = {
+        "reflex_candidate_id": candidate.candidate_id,
+        "reflex_diagnosis_id": candidate.diagnosis_id,
+        "reflex_change_surface": candidate.change_surface,
+        "rollback_plan_ref": candidate.rollback_plan_ref,
+    }
+    return ChangeCommand(
+        change_id=f"change:{candidate.candidate_id}",
+        author_id=author_id,
+        branch=branch,
+        base_commit=base_commit,
+        head_commit=head_commit,
+        change_type=change_type,
+        risk=change_risk,
+        affected_files=candidate.affected_files,
+        affected_contracts=_contracts_for_candidate(candidate),
+        affected_capabilities=_capabilities_for_candidate(candidate),
+        affected_invariants=affected_invariants,
+        required_replays=candidate.required_replays,
+        requires_approval=change_risk in {ChangeRisk.HIGH, ChangeRisk.CRITICAL}
+        or _is_protected_surface(candidate.change_surface),
+        rollback_required=change_risk in {ChangeRisk.HIGH, ChangeRisk.CRITICAL}
+        or _is_protected_surface(candidate.change_surface),
+        created_at=created_at,
+        metadata=metadata,
+    )
+
+
+def build_certification_handoff(
+    candidate: ReflexUpgradeCandidate,
+    *,
+    author_id: str,
+    branch: str,
+    base_commit: str,
+    head_commit: str,
+    created_at: str,
+    base_ref: str = "HEAD^",
+    head_ref: str = "HEAD",
+) -> ReflexCertificationHandoff:
+    """Build a non-mutating certification handoff for an upgrade candidate."""
+    change_command = build_reflex_change_command(
+        candidate,
+        author_id=author_id,
+        branch=branch,
+        base_commit=base_commit,
+        head_commit=head_commit,
+        created_at=created_at,
+    )
+    command_args = (
+        "python",
+        "scripts/certify_change.py",
+        "--base",
+        base_ref,
+        "--head",
+        head_ref,
+        "--strict",
+        "--rollback-plan-ref",
+        candidate.rollback_plan_ref,
+    )
+    if change_command.requires_approval:
+        command_args = (*command_args, "--approval-id", "reflex-governance")
+    return ReflexCertificationHandoff(
+        candidate_id=candidate.candidate_id,
+        change_command=change_command,
+        command_args=command_args,
+        required_artifacts=(
+            "change_command.json",
+            "blast_radius.json",
+            "invariant_report.json",
+            "replay_report.json",
+            "release_certificate.json",
+        ),
+        mutation_applied=False,
+    )
+
+
 def _numeric_metric(metrics: Mapping[str, object], metric_name: str) -> float:
     value = metrics.get(metric_name, 0.0)
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return 0.0
     return float(value)
+
+
+def _sandbox_eval_failures(
+    candidate: ReflexUpgradeCandidate,
+    eval_cases: tuple[ReflexEvalCase, ...],
+) -> tuple[str, ...]:
+    failures: list[str] = []
+    eval_ids = {eval_case.eval_id for eval_case in eval_cases}
+    missing_eval_ids = tuple(eval_id for eval_id in candidate.eval_ids if eval_id not in eval_ids)
+    failures.extend(f"missing_eval:{eval_id}" for eval_id in missing_eval_ids)
+    if not candidate.required_replays:
+        failures.append("missing_required_replay")
+    if not candidate.rollback_plan_ref:
+        failures.append("missing_rollback_plan_ref")
+    for eval_case in eval_cases:
+        if not eval_case.assertions:
+            failures.append(f"eval_missing_assertions:{eval_case.eval_id}")
+        if not eval_case.evidence_refs:
+            failures.append(f"eval_missing_evidence:{eval_case.eval_id}")
+        if eval_case.eval_id not in candidate.eval_ids:
+            failures.append(f"unexpected_eval:{eval_case.eval_id}")
+    return tuple(failures)
 
 
 def _hypothesis_for_failure(failure_class: ReflexFailureClass, surface: str) -> str:
@@ -526,6 +721,61 @@ def _certificate_passed(certificate: ChangeCertificate) -> bool:
         and certificate.rollback_plan_present
         and bool(certificate.evidence_refs)
     )
+
+
+def _change_type_for_surface(surface: str) -> EvolutionChangeType:
+    if surface in {"approval", "rbac"}:
+        return EvolutionChangeType.AUTHORITY
+    if surface in {"policy", "proof", "verification", "content_safety", "memory_admission"}:
+        return EvolutionChangeType.POLICY
+    if surface == "deployment_witness":
+        return EvolutionChangeType.DEPLOYMENT
+    if surface == "provider_routing":
+        return EvolutionChangeType.CONFIGURATION
+    if surface in {"tenant_isolation", "tool_schema"}:
+        return EvolutionChangeType.SCHEMA
+    return EvolutionChangeType.CODE
+
+
+def _change_risk_for_candidate(candidate: ReflexUpgradeCandidate) -> ChangeRisk:
+    if _is_protected_surface(candidate.change_surface):
+        return ChangeRisk.CRITICAL
+    return {
+        ReflexRisk.LOW: ChangeRisk.LOW,
+        ReflexRisk.MEDIUM: ChangeRisk.MEDIUM,
+        ReflexRisk.HIGH: ChangeRisk.HIGH,
+        ReflexRisk.CRITICAL: ChangeRisk.CRITICAL,
+    }[candidate.risk]
+
+
+def _invariants_for_surface(surface: str) -> tuple[str, ...]:
+    invariants = [
+        "no_reflex_candidate_enters_runtime_without_change_certificate",
+        "no_reflex_candidate_self_certifies_generated_evidence",
+    ]
+    if _is_protected_surface(surface):
+        invariants.append("no_protected_reflex_surface_without_human_approval")
+    if surface in {"proof", "verification"}:
+        invariants.append("no_audit_proof_verification_or_command_spine_change_without_critical_risk")
+    if surface in {"approval", "rbac"}:
+        invariants.append("no_approval_rule_change_without_second_approval")
+    return tuple(invariants)
+
+
+def _contracts_for_candidate(candidate: ReflexUpgradeCandidate) -> tuple[str, ...]:
+    return tuple(
+        affected_file
+        for affected_file in candidate.affected_files
+        if "/contracts/" in affected_file or affected_file.endswith(".schema.json")
+    )
+
+
+def _capabilities_for_candidate(candidate: ReflexUpgradeCandidate) -> tuple[str, ...]:
+    if candidate.change_surface == "provider_routing":
+        return ("provider_routing",)
+    if candidate.change_surface == "retrieval":
+        return ("retrieval",)
+    return ()
 
 
 def _require_evidence_refs(

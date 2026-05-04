@@ -104,6 +104,7 @@ def bootstrap_server_runtime_stack(
         tenant_gating=tenant_gating,
         access_runtime=subsystem_bootstrap.access_runtime,
         content_safety_chain=content_safety_chain,
+        temporal_runtime=subsystem_bootstrap.temporal_runtime,
     )
 
     capability_bootstrap = bootstrap_capability_services_fn(

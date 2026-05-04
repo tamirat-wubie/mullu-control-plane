@@ -163,7 +163,7 @@ If you're contributing a new `governance/<subpkg>/<name>.py`:
 | Concern | Sub-package |
 |---|---|
 | Authentication (token validation, key verification) | `auth/` |
-| Per-request policy enforcement (rate limit, budget, gating, RBAC, content safety) | `guards/` |
+| Per-request policy enforcement (rate limit, budget, gating, RBAC, content safety, temporal policy) | `guards/` |
 | Persistent audit record + verification | `audit/` |
 | Network egress (SSRF, webhook delivery) | `network/` |
 | Policy definition / enforcement engines | `policy/` |

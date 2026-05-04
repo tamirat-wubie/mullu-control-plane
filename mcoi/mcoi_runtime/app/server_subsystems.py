@@ -34,6 +34,7 @@ from mcoi_runtime.governance.policy.sandbox import PolicySandbox
 from mcoi_runtime.core.rbac_defaults import seed_default_permissions
 from mcoi_runtime.core.runbook_learning import RunbookLearningEngine
 from mcoi_runtime.core.scheduler import GovernedScheduler
+from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.persistence import CoordinationStore
 
 
@@ -53,6 +54,7 @@ class SubsystemBootstrap:
     audit_anchor: Any
     knowledge_graph: Any
     data_governance: Any
+    temporal_runtime: Any
     event_bus: Any
     batch_pipeline: Any
 
@@ -78,6 +80,7 @@ def bootstrap_subsystems(
     audit_anchor_store_cls: type[Any] = AuditAnchorStore,
     knowledge_graph_cls: type[Any] = KnowledgeGraph,
     data_governance_engine_cls: type[Any] = DataGovernanceEngine,
+    temporal_runtime_engine_cls: type[Any] = TemporalRuntimeEngine,
     event_bus_cls: type[Any] = EventBus,
     batch_pipeline_cls: type[Any] = BatchPipeline,
     tempdir_getter: Callable[[], str] = tempfile.gettempdir,
@@ -164,6 +167,18 @@ def bootstrap_subsystems(
         },
     )
 
+    temporal_runtime = temporal_runtime_engine_cls(EventSpineEngine(clock=clock), clock=clock)
+    observability.register_source(
+        "temporal_runtime",
+        lambda: {
+            "events": temporal_runtime.event_count,
+            "intervals": temporal_runtime.interval_count,
+            "constraints": temporal_runtime.constraint_count,
+            "action_decisions": temporal_runtime.action_decision_count,
+            "violations": temporal_runtime.violation_count,
+        },
+    )
+
     event_bus = event_bus_cls(clock=clock)
     observability.register_source("event_bus", lambda: event_bus.summary())
     deep_health.register(
@@ -194,6 +209,7 @@ def bootstrap_subsystems(
         audit_anchor=audit_anchor,
         knowledge_graph=knowledge_graph,
         data_governance=data_governance,
+        temporal_runtime=temporal_runtime,
         event_bus=event_bus,
         batch_pipeline=batch_pipeline,
     )

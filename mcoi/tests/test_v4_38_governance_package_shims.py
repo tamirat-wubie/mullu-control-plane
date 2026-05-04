@@ -24,8 +24,6 @@ from __future__ import annotations
 
 import importlib
 
-import pytest
-
 
 # (new_path, expected_public_symbols) — each entry covers one of the
 # 21 governance modules. After Phase 4 these are the canonical paths.
@@ -45,7 +43,7 @@ GOVERNANCE_MODULES: list[tuple[str, tuple[str, ...]]] = [
          "GuardContext", "GuardResult", "create_api_key_guard",
          "create_budget_guard", "create_jwt_guard",
          "create_rate_limit_guard", "create_rbac_guard",
-         "create_tenant_guard"),
+         "create_temporal_guard", "create_tenant_guard"),
     ),
     (
         "mcoi_runtime.governance.guards.rate_limit",

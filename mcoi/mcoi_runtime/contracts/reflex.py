@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
+from .change_assurance import ChangeCommand
 from ._base import (
     ContractRecord,
     freeze_value,
@@ -278,6 +279,50 @@ class ReflexSandboxResult(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class ReflexReplayResult(ContractRecord):
+    replay_id: str = ""
+    passed: bool = False
+    evidence_ref: ReflexEvidenceRef | None = None
+    detail: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "replay_id", require_non_empty_text(self.replay_id, "replay_id"))
+        if not isinstance(self.passed, bool):
+            raise ValueError("passed must be a boolean")
+        if not isinstance(self.evidence_ref, ReflexEvidenceRef):
+            raise ValueError("evidence_ref must be a ReflexEvidenceRef")
+        object.__setattr__(self, "detail", require_non_empty_text(self.detail, "detail"))
+
+
+@dataclass(frozen=True, slots=True)
+class ReflexSandboxBundle(ContractRecord):
+    bundle_id: str = ""
+    candidate_id: str = ""
+    eval_ids: tuple[str, ...] = ()
+    replay_results: tuple[ReflexReplayResult, ...] = ()
+    sandbox_result: ReflexSandboxResult | None = None
+    mutation_applied: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "bundle_id", require_non_empty_text(self.bundle_id, "bundle_id"))
+        object.__setattr__(
+            self,
+            "candidate_id",
+            require_non_empty_text(self.candidate_id, "candidate_id"),
+        )
+        object.__setattr__(self, "eval_ids", freeze_value(list(self.eval_ids)))
+        object.__setattr__(self, "replay_results", freeze_value(list(self.replay_results)))
+        if not isinstance(self.sandbox_result, ReflexSandboxResult):
+            raise ValueError("sandbox_result must be a ReflexSandboxResult")
+        if self.sandbox_result.candidate_id != self.candidate_id:
+            raise ValueError("sandbox_result candidate_id must match bundle candidate_id")
+        if not isinstance(self.mutation_applied, bool):
+            raise ValueError("mutation_applied must be a boolean")
+        if self.mutation_applied:
+            raise ValueError("reflex sandbox bundle cannot apply mutation")
+
+
+@dataclass(frozen=True, slots=True)
 class ReflexPromotionDecision(ContractRecord):
     decision_id: str = ""
     candidate_id: str = ""
@@ -304,6 +349,30 @@ class ReflexPromotionDecision(ContractRecord):
             raise ValueError("requires_human_approval must be a boolean")
         if not isinstance(self.protected_surface, bool):
             raise ValueError("protected_surface must be a boolean")
+
+
+@dataclass(frozen=True, slots=True)
+class ReflexCertificationHandoff(ContractRecord):
+    candidate_id: str = ""
+    change_command: ChangeCommand | None = None
+    command_args: tuple[str, ...] = ()
+    required_artifacts: tuple[str, ...] = ()
+    mutation_applied: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "candidate_id",
+            require_non_empty_text(self.candidate_id, "candidate_id"),
+        )
+        if not isinstance(self.change_command, ChangeCommand):
+            raise ValueError("change_command must be a ChangeCommand")
+        object.__setattr__(self, "command_args", freeze_value(list(self.command_args)))
+        object.__setattr__(self, "required_artifacts", freeze_value(list(self.required_artifacts)))
+        if not isinstance(self.mutation_applied, bool):
+            raise ValueError("mutation_applied must be a boolean")
+        if self.mutation_applied:
+            raise ValueError("reflex certification handoff cannot apply mutation")
 
 
 @dataclass(frozen=True, slots=True)
