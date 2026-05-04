@@ -28,17 +28,19 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 5. Breaking field meaning changes require a coordinated major protocol version.
 6. External implementations may implement the schema and URI surface, but Mullusi remains the reference runtime.
 7. Deployment handoff receipts are public contracts when they cross operator, CI, or release-promotion boundaries.
-8. Effect assurance records are public contracts when they certify planned, observed, and reconciled reality changes.
-9. Deployment witness artifacts are public contracts when they support published gateway health claims.
-10. Capability adapter closure plans are public contracts when they translate adapter blockers into operator actions, verification commands, and receipt validators.
-11. General-agent promotion closure plans are public contracts when they coordinate operator approval and production-promotion work.
-12. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
-13. General-agent promotion environment bindings are public contracts when they define the presence-only inputs required for operator handoff preflight.
-14. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
-15. Governed runtime promotion validators are public contracts when they provide domain-neutral terminal commands over compatibility-bound promotion evidence.
-16. Terminal closure certificates are public contracts when they certify final command disposition.
-17. Reflex deployment witness envelopes are public contracts when they export replayable promotion evidence for offline validation.
-18. Reflex deployment witness validator receipts are public contracts when they certify CI replay evidence without exposing raw JUnit paths.
+8. Deployment orchestration receipt validation reports are public contracts when they certify orchestration handoff evidence for CI and operator promotion.
+9. Gateway publication readiness reports are public contracts when they gate deployment publication from repository variables, secret names, workflow state, DNS, and the next operator command.
+10. Effect assurance records are public contracts when they certify planned, observed, and reconciled reality changes.
+11. Deployment witness artifacts are public contracts when they support published gateway health claims.
+12. Capability adapter closure plans are public contracts when they translate adapter blockers into operator actions, verification commands, and receipt validators.
+13. General-agent promotion closure plans are public contracts when they coordinate operator approval and production-promotion work.
+14. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
+15. General-agent promotion environment bindings are public contracts when they define the presence-only inputs required for operator handoff preflight.
+16. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
+17. Governed runtime promotion validators are public contracts when they provide domain-neutral terminal commands over compatibility-bound promotion evidence.
+18. Terminal closure certificates are public contracts when they certify final command disposition.
+19. Reflex deployment witness envelopes are public contracts when they export replayable promotion evidence for offline validation.
+20. Reflex deployment witness validator receipts are public contracts when they certify CI replay evidence without exposing raw JUnit paths.
 
 ## Verification
 
@@ -51,11 +53,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 34 schemas
+protocol manifest ok: 36 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract, reflex validator receipt contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment orchestration validation contract, gateway publication readiness contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract, reflex validator receipt contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes

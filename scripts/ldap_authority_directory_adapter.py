@@ -173,7 +173,17 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "source_unavailable"
-    return str(exc) or "invalid_ldap_authority_directory"
+    message = str(exc)
+    if message in {
+        "ldap_export must be JSON",
+        "ldap_mapping must be JSON",
+        "ldap_export root must be mapping",
+        "ldap_mapping root must be mapping",
+        "LDAP groups must be a list",
+        "LDAP users must be a list",
+    }:
+        return message
+    return "invalid_ldap_authority_directory"
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@ from scripts.validate_protocol_manifest import (
 def test_protocol_manifest_is_valid() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    orchestration_validation_entry = entries["deployment-orchestration-receipt-validation"]
+    gateway_readiness_entry = entries["gateway-publication-readiness"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
     receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
     errors = validate_protocol_manifest(manifest)
@@ -27,7 +29,13 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 34
+    assert len(manifest["schemas"]) == 36
+    assert orchestration_validation_entry["path"] == "schemas/deployment_orchestration_receipt_validation.schema.json"
+    assert orchestration_validation_entry["urn"] == "urn:mullusi:schema:deployment-orchestration-receipt-validation:1"
+    assert orchestration_validation_entry["surface"] == "deployment"
+    assert gateway_readiness_entry["path"] == "schemas/gateway_publication_readiness.schema.json"
+    assert gateway_readiness_entry["urn"] == "urn:mullusi:schema:gateway-publication-readiness:1"
+    assert gateway_readiness_entry["surface"] == "deployment"
     assert reflex_entry["path"] == "schemas/reflex_deployment_witness_envelope.schema.json"
     assert reflex_entry["urn"] == "urn:mullusi:schema:reflex-deployment-witness-envelope:1"
     assert reflex_entry["surface"] == "deployment"

@@ -387,7 +387,16 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "source_unavailable"
-    return str(exc) or "invalid_static_directory"
+    message = str(exc)
+    if message in {
+        "unsupported static directory YAML line",
+        "static directory file must be JSON or YAML",
+        "static directory JSON root must be mapping",
+        "static directory YAML root must be mapping",
+        "static directory source must be a mapping",
+    }:
+        return message
+    return "invalid_static_directory"
 
 
 if __name__ == "__main__":

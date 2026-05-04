@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 
 from scripts.workspace_groups_authority_directory_adapter import (
+    _bounded_error_reason,
     convert_workspace_groups_authority_directory,
     main,
     write_workspace_groups_authority_directory,
@@ -105,6 +106,14 @@ def test_workspace_groups_authority_directory_adapter_reports_bounded_errors(tmp
     assert "Workspace groups authority directory failed: workspace groups must be a list" in captured.err
     assert captured.out == ""
     assert not output.exists()
+
+
+def test_workspace_groups_authority_directory_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-workspace-authority-token"))
+
+    assert reason == "invalid_workspace_groups_authority_directory"
+    assert "secret-workspace-authority-token" not in reason
+    assert reason != "secret-workspace-authority-token"
 
 
 def _workspace_payload() -> dict:

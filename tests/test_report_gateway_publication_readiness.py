@@ -23,6 +23,7 @@ from scripts.report_gateway_publication_readiness import (
     report_gateway_publication_readiness,
     write_gateway_publication_readiness,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 class FakeRunner:
@@ -135,6 +136,29 @@ def test_report_derives_host_from_repository_variables_and_writes_command(
     assert payload["ready"] is True
     assert payload["steps"][0]["name"] == "repository variables"
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_readiness_report_matches_public_schema(tmp_path: Path) -> None:
+    runner = FakeRunner()
+    report = report_gateway_publication_readiness(
+        expected_environment="",
+        dispatch_witness=True,
+        runner=runner,
+        resolver=_resolve_ok,
+    )
+    output_path = write_gateway_publication_readiness(
+        report,
+        tmp_path / "gateway_publication_readiness.json",
+    )
+    schema = _load_schema(Path("schemas/gateway_publication_readiness.schema.json"))
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    errors = _validate_schema_instance(schema, payload)
+
+    assert errors == []
+    assert payload["ready"] is True
+    assert payload["next_command"].startswith("python scripts/dispatch_gateway_publication.py")
+    assert any(step["name"] == "dns resolution" for step in payload["steps"])
 
 
 def test_report_requires_kubeconfig_secret_only_when_applying_ingress() -> None:

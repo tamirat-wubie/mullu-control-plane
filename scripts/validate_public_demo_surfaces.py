@@ -153,11 +153,11 @@ def validate_http_demo_routes() -> DemoSurfaceCheck:
         from fastapi.testclient import TestClient
         from mcoi_runtime.app.routers.deps import deps
         from mcoi_runtime.app.server import app
-    except Exception as exc:
+    except Exception:
         return DemoSurfaceCheck(
             "http_demo_routes",
             False,
-            errors=(f"http_import_failed:{type(exc).__name__}",),
+            errors=("http_import_failed",),
         )
 
     trace_id = "public-demo-validator-trace"

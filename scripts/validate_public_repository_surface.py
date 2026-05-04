@@ -58,6 +58,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
 )
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = ".github/workflows/deployment-witness.yml"
 GATEWAY_PUBLICATION_WORKFLOW_PATH = ".github/workflows/gateway-publication.yml"
+CI_WORKFLOW_PATH = ".github/workflows/ci.yml"
 GOVERNANCE_PROTOCOL_DOC_PATH = "docs/52_mullu_governance_protocol.md"
 GITHUB_SURFACE_REQUIRED_LITERALS = (
     "GitHub Surface Witness",
@@ -146,9 +147,11 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "schemas/mullu_governance_protocol.manifest.json",
     "scripts/validate_protocol_manifest.py",
     "python scripts\\validate_protocol_manifest.py",
-    "protocol manifest ok: 34 schemas",
+    "protocol manifest ok: 36 schemas",
     "Capability adapter closure plans are public contracts",
     "Deployment handoff receipts are public contracts",
+    "Deployment orchestration receipt validation reports are public contracts",
+    "Gateway publication readiness reports are public contracts",
     "General-agent promotion handoff packets are public contracts",
     "Governed runtime promotion",
     "Terminal closure certificates are public contracts",
@@ -197,6 +200,15 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
     "--accept-runtime-secret-env",
     "--accept-conformance-secret-env",
     "actions/upload-artifact@v4",
+)
+CI_WORKFLOW_REQUIRED_LITERALS = (
+    "Validate Reflex deployment witness replay",
+    "schemas/reflex_deployment_witness_validator_receipt.schema.json",
+    "python -m pytest tests/test_validate_reflex_deployment_witness.py -q --junitxml=.change_assurance/reflex_deployment_witness_validator_junit.xml",
+    "python scripts/emit_reflex_deployment_witness_validator_receipt.py --junit .change_assurance/reflex_deployment_witness_validator_junit.xml --output .change_assurance/reflex_deployment_witness_validator_receipt.json --json",
+    "reflex-deployment-witness-validator-receipt",
+    ".change_assurance/reflex_deployment_witness_validator_junit.xml",
+    ".change_assurance/reflex_deployment_witness_validator_receipt.json",
 )
 
 
@@ -362,6 +374,18 @@ def validate_local_public_documents() -> list[str]:
                 document_name=GATEWAY_PUBLICATION_WORKFLOW_PATH,
                 content=publication_workflow_path.read_text(encoding="utf-8"),
                 required_literals=GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
+            )
+        )
+
+    ci_workflow_path = REPO_ROOT / CI_WORKFLOW_PATH
+    if not ci_workflow_path.exists():
+        errors.append(f"missing required CI workflow: {CI_WORKFLOW_PATH}")
+    else:
+        errors.extend(
+            validate_required_document_text(
+                document_name=CI_WORKFLOW_PATH,
+                content=ci_workflow_path.read_text(encoding="utf-8"),
+                required_literals=CI_WORKFLOW_REQUIRED_LITERALS,
             )
         )
 

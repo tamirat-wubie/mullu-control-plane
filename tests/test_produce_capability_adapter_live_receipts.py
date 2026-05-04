@@ -133,6 +133,27 @@ def test_browser_live_receipt_rejects_opaque_sandbox_evidence(tmp_path: Path) ->
     assert "browser_sandbox_evidence_unverified" in payload["blockers"]
 
 
+def test_browser_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> None:
+    output_path = tmp_path / "browser_live_receipt.json"
+    sandbox_evidence = _write_browser_sandbox_evidence(tmp_path)
+
+    def _raise_secret(_request):
+        raise RuntimeError("secret-browser-probe-token")
+
+    result = produce_browser_live_receipt(
+        output_path=output_path,
+        sandbox_evidence_ref=str(sandbox_evidence),
+        executor=_raise_secret,
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["error"] == "browser_probe_exception"
+    assert "browser_probe_exception" in payload["blockers"]
+    assert "secret-browser-probe-token" not in serialized
+
+
 def test_document_live_receipt_passes_with_required_parser_probe(tmp_path: Path) -> None:
     output_path = tmp_path / "document_live_receipt.json"
 
@@ -174,6 +195,22 @@ def test_document_live_receipt_blocks_missing_parser_family(tmp_path: Path) -> N
     assert "document_parser_missing:production-xlsx" in payload["blockers"]
 
 
+def test_document_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> None:
+    output_path = tmp_path / "document_live_receipt.json"
+
+    result = produce_document_live_receipt(
+        output_path=output_path,
+        parser_probe=lambda: (_ for _ in ()).throw(RuntimeError("secret-document-probe-token")),
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["error"] == "document_probe_exception"
+    assert "document_probe_exception" in payload["blockers"]
+    assert "secret-document-probe-token" not in serialized
+
+
 def test_voice_live_receipt_passes_with_audio_and_worker_responses(tmp_path: Path) -> None:
     output_path = tmp_path / "voice_live_receipt.json"
     audio_path = tmp_path / "voice.wav"
@@ -195,6 +232,28 @@ def test_voice_live_receipt_passes_with_audio_and_worker_responses(tmp_path: Pat
     assert payload["synthesis_receipt"]["verification_status"] == "passed"
 
 
+def test_voice_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> None:
+    output_path = tmp_path / "voice_live_receipt.json"
+    audio_path = tmp_path / "voice.wav"
+    audio_path.write_bytes(b"audio-bytes")
+
+    def _raise_secret(_request):
+        raise RuntimeError("secret-voice-probe-token")
+
+    result = produce_voice_live_receipt(
+        output_path=output_path,
+        audio_path=audio_path,
+        executor=_raise_secret,
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["error"] == "voice_probe_exception"
+    assert "voice_probe_exception" in payload["blockers"]
+    assert "secret-voice-probe-token" not in serialized
+
+
 def test_email_calendar_live_receipt_passes_with_read_only_worker_response(tmp_path: Path) -> None:
     output_path = tmp_path / "email_calendar_live_receipt.json"
 
@@ -210,6 +269,25 @@ def test_email_calendar_live_receipt_passes_with_read_only_worker_response(tmp_p
     assert payload["external_write"] is False
     assert payload["worker_receipt"]["verification_status"] == "passed"
     assert payload["worker_receipt"]["capability_id"] == "email.search"
+
+
+def test_email_calendar_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> None:
+    output_path = tmp_path / "email_calendar_live_receipt.json"
+
+    def _raise_secret(_request):
+        raise RuntimeError("secret-email-calendar-probe-token")
+
+    result = produce_email_calendar_live_receipt(
+        output_path=output_path,
+        executor=_raise_secret,
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["error"] == "email_calendar_probe_exception"
+    assert "email_calendar_probe_exception" in payload["blockers"]
+    assert "secret-email-calendar-probe-token" not in serialized
 
 
 def test_generated_receipts_satisfy_adapter_evidence_collector(tmp_path: Path) -> None:

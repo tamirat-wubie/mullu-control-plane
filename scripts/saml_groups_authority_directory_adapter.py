@@ -173,7 +173,17 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "source_unavailable"
-    return str(exc) or "invalid_saml_groups_authority_directory"
+    message = str(exc)
+    if message in {
+        "saml_groups_export must be JSON",
+        "saml_groups_mapping must be JSON",
+        "saml_groups_export root must be mapping",
+        "saml_groups_mapping root must be mapping",
+        "SAML groups must be a list",
+        "SAML users must be a list",
+    }:
+        return message
+    return "invalid_saml_groups_authority_directory"
 
 
 if __name__ == "__main__":

@@ -65,6 +65,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-orchestration-receipt-validation",
+      "path": "schemas/deployment_orchestration_receipt_validation.schema.json",
+      "urn": "urn:mullusi:schema:deployment-orchestration-receipt-validation:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "deployment-witness",
       "path": "schemas/deployment_witness.schema.json",
       "urn": "urn:mullusi:schema:deployment-witness:1",
@@ -111,6 +117,12 @@
       "path": "schemas/general_agent_promotion_handoff_packet.schema.json",
       "urn": "urn:mullusi:schema:general-agent-promotion-handoff-packet:1",
       "surface": "promotion"
+    },
+    {
+      "schema_id": "gateway-publication-readiness",
+      "path": "schemas/gateway_publication_readiness.schema.json",
+      "urn": "urn:mullusi:schema:gateway-publication-readiness:1",
+      "surface": "deployment"
     },
     {
       "schema_id": "execution-result",

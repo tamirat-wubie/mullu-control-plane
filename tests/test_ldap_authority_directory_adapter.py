@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 
 from scripts.ldap_authority_directory_adapter import (
+    _bounded_error_reason,
     convert_ldap_authority_directory,
     main,
     write_ldap_authority_directory,
@@ -105,6 +106,14 @@ def test_ldap_authority_directory_adapter_reports_bounded_errors(tmp_path, capsy
     assert "LDAP authority directory failed: LDAP groups must be a list" in captured.err
     assert captured.out == ""
     assert not output.exists()
+
+
+def test_ldap_authority_directory_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-ldap-authority-token"))
+
+    assert reason == "invalid_ldap_authority_directory"
+    assert "secret-ldap-authority-token" not in reason
+    assert reason != "secret-ldap-authority-token"
 
 
 def _ldap_payload() -> dict:

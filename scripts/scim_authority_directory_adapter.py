@@ -167,7 +167,17 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "source_unavailable"
-    return str(exc) or "invalid_scim_authority_directory"
+    message = str(exc)
+    if message in {
+        "scim_export must be JSON",
+        "scim_mapping must be JSON",
+        "scim_export root must be mapping",
+        "scim_mapping root must be mapping",
+        "SCIM groups must be a list",
+        "SCIM users must be a list",
+    }:
+        return message
+    return "invalid_scim_authority_directory"
 
 
 if __name__ == "__main__":

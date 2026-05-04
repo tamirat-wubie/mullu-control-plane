@@ -245,7 +245,19 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "output_unavailable"
-    return str(exc) or "invalid_github_teams_export"
+    message = str(exc)
+    if message.startswith("GitHub endpoint returned HTTP "):
+        return message
+    if message in {
+        "GitHub endpoint unavailable",
+        "GitHub endpoint returned invalid JSON",
+    }:
+        return message
+    if message.startswith("GitHub team member at index ") and message.endswith(" requires login"):
+        return message
+    if message.startswith("GitHub member at index ") and message.endswith(" requires login"):
+        return message
+    return "invalid_github_teams_export"
 
 
 if __name__ == "__main__":

@@ -115,9 +115,9 @@ def validate_deployment_orchestration_receipt(
         ),
     ]
     return DeploymentOrchestrationReceiptValidation(
-        receipt_path=str(receipt_path),
+        receipt_path=_bounded_receipt_path(receipt_path),
         valid=all(step.passed for step in steps),
-        receipt_id=str(payload.get("receipt_id", "")),
+        receipt_id=_bounded_receipt_id(payload),
         steps=tuple(steps),
     )
 
@@ -162,7 +162,7 @@ def _check_schema_contract(payload: dict[str, Any]) -> OrchestrationReceiptValid
     return OrchestrationReceiptValidationStep(
         "schema contract",
         not errors,
-        "valid" if not errors else f"errors={errors}",
+        "valid" if not errors else f"schema-errors={len(errors)}",
     )
 
 
@@ -233,7 +233,7 @@ def _check_receipt_id(payload: dict[str, Any]) -> OrchestrationReceiptValidation
     return OrchestrationReceiptValidationStep(
         "receipt id",
         passed,
-        f"receipt_id={receipt_id}",
+        "valid" if passed else _receipt_id_state(payload.get("receipt_id")),
     )
 
 
@@ -279,8 +279,8 @@ def _check_preflight_policy(
         "require preflight",
         passed,
         (
-            f"preflight_required={payload.get('preflight_required')} "
-            f"preflight_ready={payload.get('preflight_ready')}"
+            f"required={_bool_state(payload.get('preflight_required'))} "
+            f"ready={_bool_state(payload.get('preflight_ready'))}"
         ),
     )
 
@@ -304,8 +304,9 @@ def _check_mcp_checklist_policy(
         "require mcp operator checklist",
         passed,
         (
-            f"required={payload.get('mcp_operator_checklist_required')} "
-            f"valid={payload.get('mcp_operator_checklist_valid')}"
+            "required="
+            f"{_bool_state(payload.get('mcp_operator_checklist_required'))} "
+            f"valid={_bool_state(payload.get('mcp_operator_checklist_valid'))}"
         ),
     )
 
@@ -329,8 +330,8 @@ def _check_dispatch_policy(
         "require dispatch",
         passed,
         (
-            f"dispatch_requested={payload.get('dispatch_requested')} "
-            f"dispatch_run_id={payload.get('dispatch_run_id')}"
+            f"requested={_bool_state(payload.get('dispatch_requested'))} "
+            f"run_id={_dispatch_run_state(payload.get('dispatch_run_id'))}"
         ),
     )
 
@@ -354,8 +355,9 @@ def _check_success_policy(
         "require success",
         passed,
         (
-            f"dispatch_requested={payload.get('dispatch_requested')} "
-            f"conclusion={payload.get('dispatch_conclusion')}"
+            f"requested={_bool_state(payload.get('dispatch_requested'))} "
+            "conclusion="
+            f"{_dispatch_conclusion_state(payload.get('dispatch_conclusion'))}"
         ),
     )
 
@@ -378,6 +380,56 @@ def _check_expected_value(
         actual_value == expected_value,
         "matched" if actual_value == expected_value else "mismatched",
     )
+
+
+def _bounded_receipt_path(receipt_path: Path) -> str:
+    """Return a public-safe receipt path label for validation reports."""
+    if receipt_path == DEFAULT_ORCHESTRATION_OUTPUT:
+        return DEFAULT_ORCHESTRATION_OUTPUT.as_posix()
+    return "provided_receipt"
+
+
+def _bounded_receipt_id(payload: dict[str, Any]) -> str:
+    receipt_id = payload.get("receipt_id")
+    if RECEIPT_ID_PATTERN.fullmatch(str(receipt_id)) is not None:
+        return str(receipt_id)
+    return _receipt_id_state(receipt_id)
+
+
+def _receipt_id_state(receipt_id: Any) -> str:
+    if receipt_id is None or receipt_id == "":
+        return "missing"
+    return "invalid"
+
+
+def _bool_state(value: Any) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if value is None:
+        return "none"
+    return "invalid"
+
+
+def _dispatch_run_state(value: Any) -> str:
+    if isinstance(value, bool):
+        return "invalid"
+    if isinstance(value, int):
+        return "present"
+    if value is None:
+        return "missing"
+    return "invalid"
+
+
+def _dispatch_conclusion_state(value: Any) -> str:
+    if value == "success":
+        return "success"
+    if value in ("", None):
+        return "missing"
+    if isinstance(value, str):
+        return "not-success"
+    return "invalid"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

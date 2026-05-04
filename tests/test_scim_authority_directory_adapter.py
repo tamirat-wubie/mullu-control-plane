@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 
 from scripts.scim_authority_directory_adapter import (
+    _bounded_error_reason,
     convert_scim_authority_directory,
     main,
     write_scim_authority_directory,
@@ -104,6 +105,14 @@ def test_scim_authority_directory_adapter_reports_bounded_errors(tmp_path, capsy
     assert "SCIM authority directory failed: scim_export must be JSON" in captured.err
     assert captured.out == ""
     assert not output.exists()
+
+
+def test_scim_authority_directory_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-scim-authority-token"))
+
+    assert reason == "invalid_scim_authority_directory"
+    assert "secret-scim-authority-token" not in reason
+    assert reason != "secret-scim-authority-token"
 
 
 def _scim_payload() -> dict:

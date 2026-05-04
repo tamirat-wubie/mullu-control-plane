@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gateway-publication-readiness:1",
+  "title": "Gateway Publication Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repository",
+    "gateway_host",
+    "gateway_host_source",
+    "gateway_url",
+    "gateway_url_source",
+    "expected_environment",
+    "expected_environment_source",
+    "apply_ingress",
+    "dispatch_witness",
+    "skip_preflight_endpoint_probes",
+    "ready",
+    "next_command",
+    "steps"
+  ],
+  "properties": {
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateway_host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateway_host_source": {
+      "type": "string",
+      "enum": [
+        "explicit-host",
+        "explicit-url",
+        "repository-variable"
+      ]
+    },
+    "gateway_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateway_url_source": {
+      "type": "string",
+      "enum": [
+        "explicit-url",
+        "repository-variable",
+        "derived-from-host"
+      ]
+    },
+    "expected_environment": {
+      "type": "string",
+      "enum": [
+        "pilot",
+        "production"
+      ]
+    },
+    "expected_environment_source": {
+      "type": "string",
+      "enum": [
+        "explicit-environment",
+        "repository-variable",
+        "default"
+      ]
+    },
+    "apply_ingress": {
+      "type": "boolean"
+    },
+    "dispatch_witness": {
+      "type": "boolean"
+    },
+    "skip_preflight_endpoint_probes": {
+      "type": "boolean"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "next_command": {
+      "type": "string",
+      "pattern": "^python scripts/dispatch_gateway_publication\\.py "
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "passed",
+          "detail"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "repository variables"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "runtime witness secret"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "kubeconfig secret"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "gateway publication workflow"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "dns resolution"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

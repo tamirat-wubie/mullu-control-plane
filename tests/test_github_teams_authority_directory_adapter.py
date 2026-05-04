@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 
 from scripts.github_teams_authority_directory_adapter import (
+    _bounded_error_reason,
     convert_github_teams_authority_directory,
     main,
     write_github_teams_authority_directory,
@@ -105,6 +106,14 @@ def test_github_teams_authority_directory_adapter_reports_bounded_errors(tmp_pat
     assert "GitHub teams authority directory failed: GitHub teams must be a list" in captured.err
     assert captured.out == ""
     assert not output.exists()
+
+
+def test_github_teams_authority_directory_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-github-authority-token"))
+
+    assert reason == "invalid_github_teams_authority_directory"
+    assert "secret-github-authority-token" not in reason
+    assert reason != "secret-github-authority-token"
 
 
 def _github_payload() -> dict:

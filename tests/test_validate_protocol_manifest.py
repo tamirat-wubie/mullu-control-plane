@@ -27,6 +27,17 @@ def test_protocol_manifest_indexes_deployment_orchestration_receipt() -> None:
     assert receipt_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    validation_entry = entries["deployment-orchestration-receipt-validation"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert validation_entry["path"] == "schemas/deployment_orchestration_receipt_validation.schema.json"
+    assert validation_entry["urn"] == "urn:mullusi:schema:deployment-orchestration-receipt-validation:1"
+    assert validation_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_indexes_effect_assurance_record() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -91,6 +102,17 @@ def test_protocol_manifest_indexes_promotion_handoff_packet() -> None:
     assert packet_entry["path"] == "schemas/general_agent_promotion_handoff_packet.schema.json"
     assert packet_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-handoff-packet:1"
     assert packet_entry["surface"] == "promotion"
+
+
+def test_protocol_manifest_indexes_gateway_publication_readiness() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    readiness_entry = entries["gateway-publication-readiness"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert readiness_entry["path"] == "schemas/gateway_publication_readiness.schema.json"
+    assert readiness_entry["urn"] == "urn:mullusi:schema:gateway-publication-readiness:1"
+    assert readiness_entry["surface"] == "deployment"
 
 
 def test_protocol_manifest_indexes_terminal_closure_certificate() -> None:
