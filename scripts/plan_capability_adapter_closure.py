@@ -136,12 +136,19 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
             (
                 "python scripts/produce_browser_sandbox_evidence.py "
                 "--output .change_assurance/browser_sandbox_evidence.json --strict && "
+                "python scripts/validate_sandbox_execution_receipt.py "
+                "--receipt .change_assurance/browser_sandbox_evidence.json "
+                "--capability-prefix browser. --require-no-workspace-changes --json && "
+                "python scripts/validate_browser_sandbox_evidence.py "
+                "--evidence .change_assurance/browser_sandbox_evidence.json --json && "
                 "python scripts/produce_capability_adapter_live_receipts.py --target browser "
                 "--browser-sandbox-evidence .change_assurance/browser_sandbox_evidence.json --strict"
             ),
             (
                 "linux_rootless_docker_runner_attestation",
                 "browser_sandbox_evidence.json",
+                "sandbox_execution_receipt_validation",
+                "browser_sandbox_evidence_validation",
                 "browser_live_receipt.json",
             ),
         )

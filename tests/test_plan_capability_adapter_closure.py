@@ -45,11 +45,22 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
         "browser_live_evidence_missing"
     ].command
     assert "produce_browser_sandbox_evidence.py" in actions_by_blocker["browser_live_evidence_missing"].command
+    assert "validate_sandbox_execution_receipt.py" in actions_by_blocker["browser_live_evidence_missing"].command
+    assert "--capability-prefix browser." in actions_by_blocker["browser_live_evidence_missing"].command
+    assert "validate_browser_sandbox_evidence.py" in actions_by_blocker["browser_live_evidence_missing"].command
     assert (
         "linux_rootless_docker_runner_attestation"
         in actions_by_blocker["browser_live_evidence_missing"].evidence_required
     )
     assert "browser_sandbox_evidence.json" in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    assert (
+        "sandbox_execution_receipt_validation"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
+    assert (
+        "browser_sandbox_evidence_validation"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
     assert (
         actions_by_blocker["browser_live_evidence_missing"].verification_command
         == "python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json"
