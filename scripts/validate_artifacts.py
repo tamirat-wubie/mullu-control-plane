@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shipped artifact validation for MCOI example, pilot, and governed docs.
+"""Governed artifact validation for MCOI examples, pilot assets, and MAF runtime fixtures.
 
 Validates:
   1. Shipped config artifacts deserialize through AppConfig without silent key drift.
@@ -7,8 +7,9 @@ Validates:
   3. Request templates validate without executing adapters or mutating runtime state.
   4. Request action routes are admitted by their paired config artifact or by default config.
   5. Auxiliary pilot JSON artifacts remain inventory-bounded and contract-validated.
-  6. Operator and pilot markdown references stay aligned with governed artifact inventory.
-  7. Release and pilot operational documents stay aligned with live profiles, packs, and witnesses.
+  6. MAF runtime fixtures remain inventory-bounded and structurally governed.
+  7. Operator and pilot markdown references stay aligned with governed artifact inventory.
+  8. Release and pilot operational documents stay aligned with live profiles, packs, and witnesses.
 
 Usage:
   python scripts/validate_artifacts.py
@@ -21,6 +22,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -29,6 +31,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 MCOI_PATH = REPO_ROOT / "mcoi"
 MCOI_EXAMPLES_DIR = MCOI_PATH / "examples"
 PILOT_EXAMPLES_DIR = REPO_ROOT / "examples" / "pilots"
+MAF_RUNTIME_FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fixtures" / "maf_runtime"
 
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
@@ -44,11 +47,12 @@ from mcoi_runtime.core.template_validator import TemplateValidationError, Templa
 
 @dataclass(frozen=True, slots=True)
 class ExampleArtifactInventory:
-    """Deterministic inventory of shipped JSON artifacts."""
+    """Deterministic inventory of governed JSON artifacts."""
 
     config_paths: tuple[Path, ...]
     request_paths: tuple[Path, ...]
     auxiliary_paths: tuple[Path, ...]
+    maf_runtime_fixture_paths: tuple[Path, ...]
     pilot_directories: tuple[Path, ...]
 
 
@@ -63,6 +67,7 @@ class OperationalDocumentExpectation:
 
 
 AuxiliaryArtifactValidator = Callable[[Path], list[str]]
+MAFRuntimeFixtureValidator = Callable[[Path], list[str]]
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -89,6 +94,17 @@ def _load_json_object(path: Path, *, kind: str) -> dict[str, Any]:
     return payload
 
 
+def _validate_iso8601_text(value: Any, *, field_name: str, path: Path) -> list[str]:
+    if not isinstance(value, str) or not value.strip():
+        return [f"{_relative_path(path)}: field '{field_name}' must be a non-empty ISO 8601 string"]
+    normalized = value.replace("Z", "+00:00")
+    try:
+        datetime.fromisoformat(normalized)
+    except ValueError:
+        return [f"{_relative_path(path)}: field '{field_name}' must be a valid ISO 8601 string"]
+    return []
+
+
 def _require_non_empty_text(value: Any, *, field_name: str, path: Path) -> list[str]:
     if isinstance(value, str) and value.strip():
         return []
@@ -99,6 +115,48 @@ def _require_positive_int(value: Any, *, field_name: str, path: Path) -> list[st
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         return [f"{_relative_path(path)}: field '{field_name}' must be a positive integer"]
     return []
+
+
+def _require_non_negative_int(value: Any, *, field_name: str, path: Path) -> list[str]:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return [f"{_relative_path(path)}: field '{field_name}' must be a non-negative integer"]
+    return []
+
+
+def _require_number_in_range(
+    value: Any,
+    *,
+    field_name: str,
+    path: Path,
+    minimum: float,
+    maximum: float,
+) -> list[str]:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return [f"{_relative_path(path)}: field '{field_name}' must be a numeric value"]
+    if value < minimum or value > maximum:
+        return [
+            f"{_relative_path(path)}: field '{field_name}' must be between {minimum} and {maximum}"
+        ]
+    return []
+
+
+def _validate_exact_object_fields(
+    payload: dict[str, Any],
+    *,
+    path: Path,
+    expected_fields: tuple[str, ...],
+    kind: str,
+) -> list[str]:
+    errors: list[str] = []
+    unknown_fields = sorted(set(payload) - set(expected_fields))
+    missing_fields = tuple(field for field in expected_fields if field not in payload)
+    if unknown_fields:
+        errors.append(
+            f"{_relative_path(path)}: unexpected {kind} fields: {', '.join(unknown_fields)}"
+        )
+    if missing_fields:
+        errors.append(f"{_relative_path(path)}: missing {kind} fields: {', '.join(missing_fields)}")
+    return errors
 
 
 def _validate_document_to_action_input(path: Path) -> list[str]:
@@ -156,6 +214,352 @@ def _validate_document_to_action_input(path: Path) -> list[str]:
 
 AUXILIARY_PILOT_VALIDATORS: dict[str, AuxiliaryArtifactValidator] = {
     "examples/pilots/document_to_action/input_document.json": _validate_document_to_action_input,
+}
+
+
+def _validate_event_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "event_id",
+            "event_type",
+            "source",
+            "correlation_id",
+            "payload",
+            "emitted_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(_require_non_empty_text(payload["event_id"], field_name="event_id", path=path))
+    errors.extend(_require_non_empty_text(payload["event_type"], field_name="event_type", path=path))
+    errors.extend(_require_non_empty_text(payload["source"], field_name="source", path=path))
+    errors.extend(
+        _require_non_empty_text(payload["correlation_id"], field_name="correlation_id", path=path)
+    )
+    errors.extend(_validate_iso8601_text(payload["emitted_at"], field_name="emitted_at", path=path))
+    if not isinstance(payload["payload"], dict) or not payload["payload"]:
+        errors.append(f"{_relative_path(path)}: field 'payload' must be a non-empty object")
+    return errors
+
+
+def _validate_supervisor_tick_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "tick_id",
+            "tick_number",
+            "phase_sequence",
+            "events_polled",
+            "obligations_evaluated",
+            "deadlines_checked",
+            "reactions_fired",
+            "decisions",
+            "outcome",
+            "errors",
+            "started_at",
+            "completed_at",
+            "duration_ms",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(_require_non_empty_text(payload["tick_id"], field_name="tick_id", path=path))
+    errors.extend(_require_non_negative_int(payload["tick_number"], field_name="tick_number", path=path))
+    for field_name in (
+        "events_polled",
+        "obligations_evaluated",
+        "deadlines_checked",
+        "reactions_fired",
+        "duration_ms",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("started_at", "completed_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_empty_text(payload["outcome"], field_name="outcome", path=path))
+
+    phase_sequence = payload["phase_sequence"]
+    if not isinstance(phase_sequence, list) or not phase_sequence:
+        errors.append(f"{_relative_path(path)}: field 'phase_sequence' must be a non-empty array")
+    else:
+        for index, phase in enumerate(phase_sequence):
+            if not isinstance(phase, str) or not phase.strip():
+                errors.append(
+                    f"{_relative_path(path)}: phase_sequence[{index}] must be a non-empty string"
+                )
+
+    decision_fields = (
+        "decision_id",
+        "action_type",
+        "target_id",
+        "reason",
+        "governance_approved",
+        "decided_at",
+        "metadata",
+    )
+    decisions = payload["decisions"]
+    if not isinstance(decisions, list):
+        errors.append(f"{_relative_path(path)}: field 'decisions' must be an array")
+    else:
+        for index, decision in enumerate(decisions):
+            if not isinstance(decision, dict):
+                errors.append(f"{_relative_path(path)}: decisions[{index}] must be an object")
+                continue
+            nested_errors = _validate_exact_object_fields(
+                decision,
+                path=path,
+                expected_fields=decision_fields,
+                kind=f"decision[{index}]",
+            )
+            if nested_errors:
+                errors.extend(nested_errors)
+                continue
+            for field_name in ("decision_id", "action_type", "target_id", "reason"):
+                errors.extend(
+                    _require_non_empty_text(
+                        decision[field_name],
+                        field_name=f"decisions[{index}].{field_name}",
+                        path=path,
+                    )
+                )
+            if not isinstance(decision["governance_approved"], bool):
+                errors.append(
+                    f"{_relative_path(path)}: field 'decisions[{index}].governance_approved' must be boolean"
+                )
+            errors.extend(
+                _validate_iso8601_text(
+                    decision["decided_at"],
+                    field_name=f"decisions[{index}].decided_at",
+                    path=path,
+                )
+            )
+            if not isinstance(decision["metadata"], dict):
+                errors.append(
+                    f"{_relative_path(path)}: field 'decisions[{index}].metadata' must be an object"
+                )
+
+    error_values = payload["errors"]
+    if not isinstance(error_values, list):
+        errors.append(f"{_relative_path(path)}: field 'errors' must be an array")
+    else:
+        for index, error_value in enumerate(error_values):
+            if not isinstance(error_value, str) or not error_value.strip():
+                errors.append(f"{_relative_path(path)}: errors[{index}] must be a non-empty string")
+
+    return errors
+
+
+def _validate_simulation_comparison_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "comparison_id",
+            "request_id",
+            "ranked_option_ids",
+            "scores",
+            "top_risk_level",
+            "review_burden",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(
+        _require_non_empty_text(payload["comparison_id"], field_name="comparison_id", path=path)
+    )
+    errors.extend(_require_non_empty_text(payload["request_id"], field_name="request_id", path=path))
+    errors.extend(
+        _require_non_empty_text(payload["top_risk_level"], field_name="top_risk_level", path=path)
+    )
+    errors.extend(
+        _require_number_in_range(
+            payload["review_burden"],
+            field_name="review_burden",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+
+    ranked_option_ids = payload["ranked_option_ids"]
+    if not isinstance(ranked_option_ids, list) or not ranked_option_ids:
+        errors.append(f"{_relative_path(path)}: field 'ranked_option_ids' must be a non-empty array")
+    else:
+        for index, option_id in enumerate(ranked_option_ids):
+            if not isinstance(option_id, str) or not option_id.strip():
+                errors.append(
+                    f"{_relative_path(path)}: ranked_option_ids[{index}] must be a non-empty string"
+                )
+        if len(set(ranked_option_ids)) != len(ranked_option_ids):
+            errors.append(f"{_relative_path(path)}: ranked_option_ids must not contain duplicates")
+
+    scores = payload["scores"]
+    if not isinstance(scores, dict) or not scores:
+        errors.append(f"{_relative_path(path)}: field 'scores' must be a non-empty object")
+    else:
+        for option_id, score in scores.items():
+            if not isinstance(option_id, str) or not option_id.strip():
+                errors.append(f"{_relative_path(path)}: scores keys must be non-empty strings")
+                break
+            if isinstance(score, bool) or not isinstance(score, (int, float)):
+                errors.append(
+                    f"{_relative_path(path)}: score for option '{option_id}' must be numeric"
+                )
+        if isinstance(ranked_option_ids, list) and ranked_option_ids:
+            if set(scores.keys()) != set(ranked_option_ids):
+                errors.append(
+                    f"{_relative_path(path)}: scores keys must match ranked_option_ids exactly"
+                )
+
+    return errors
+
+
+def _validate_job_descriptor_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "job_id",
+            "name",
+            "description",
+            "priority",
+            "created_at",
+            "goal_id",
+            "workflow_id",
+            "deadline",
+            "sla_target_minutes",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    for field_name in (
+        "job_id",
+        "name",
+        "description",
+        "priority",
+        "goal_id",
+        "workflow_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("created_at", "deadline"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_positive_int(
+            payload["sla_target_minutes"],
+            field_name="sla_target_minutes",
+            path=path,
+        )
+    )
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+
+    return errors
+
+
+def _validate_goal_plan_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("plan_id", "goal_id", "sub_goals", "created_at", "version"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(_require_non_empty_text(payload["plan_id"], field_name="plan_id", path=path))
+    errors.extend(_require_non_empty_text(payload["goal_id"], field_name="goal_id", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_require_positive_int(payload["version"], field_name="version", path=path))
+
+    sub_goals = payload["sub_goals"]
+    if not isinstance(sub_goals, list) or not sub_goals:
+        errors.append(f"{_relative_path(path)}: field 'sub_goals' must be a non-empty array")
+        return errors
+
+    sub_goal_fields = (
+        "sub_goal_id",
+        "goal_id",
+        "description",
+        "status",
+        "skill_id",
+        "workflow_id",
+        "predecessors",
+    )
+    sub_goal_ids: list[str] = []
+    predecessor_pairs: list[tuple[str, list[str]]] = []
+    for index, sub_goal in enumerate(sub_goals):
+        if not isinstance(sub_goal, dict):
+            errors.append(f"{_relative_path(path)}: sub_goals[{index}] must be an object")
+            continue
+        nested_errors = _validate_exact_object_fields(
+            sub_goal,
+            path=path,
+            expected_fields=sub_goal_fields,
+            kind=f"sub_goal[{index}]",
+        )
+        if nested_errors:
+            errors.extend(nested_errors)
+            continue
+        for field_name in ("sub_goal_id", "goal_id", "description", "status", "skill_id", "workflow_id"):
+            errors.extend(
+                _require_non_empty_text(
+                    sub_goal[field_name],
+                    field_name=f"sub_goals[{index}].{field_name}",
+                    path=path,
+                )
+            )
+        predecessors = sub_goal["predecessors"]
+        if not isinstance(predecessors, list):
+            errors.append(f"{_relative_path(path)}: sub_goals[{index}].predecessors must be an array")
+        else:
+            for predecessor_index, predecessor in enumerate(predecessors):
+                if not isinstance(predecessor, str) or not predecessor.strip():
+                    errors.append(
+                        f"{_relative_path(path)}: sub_goals[{index}].predecessors[{predecessor_index}] must be a non-empty string"
+                    )
+        sub_goal_id = sub_goal["sub_goal_id"]
+        sub_goal_ids.append(sub_goal_id)
+        predecessor_pairs.append((sub_goal_id, list(predecessors) if isinstance(predecessors, list) else []))
+
+    known_ids = set(sub_goal_ids)
+    if len(known_ids) != len(sub_goal_ids):
+        errors.append(f"{_relative_path(path)}: sub_goals must have unique sub_goal_id values")
+    for sub_goal_id, predecessors in predecessor_pairs:
+        for predecessor in predecessors:
+            if predecessor not in known_ids:
+                errors.append(
+                    f"{_relative_path(path)}: sub_goal '{sub_goal_id}' references unknown predecessor '{predecessor}'"
+                )
+            elif predecessor == sub_goal_id:
+                errors.append(
+                    f"{_relative_path(path)}: sub_goal '{sub_goal_id}' must not list itself as a predecessor"
+                )
+
+    return errors
+
+
+MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
+    "event_record.json": _validate_event_record_fixture,
+    "supervisor_tick.json": _validate_supervisor_tick_fixture,
+    "simulation_comparison.json": _validate_simulation_comparison_fixture,
+    "job_descriptor.json": _validate_job_descriptor_fixture,
+    "goal_plan.json": _validate_goal_plan_fixture,
 }
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
@@ -250,7 +654,7 @@ _DOC_ARTIFACT_PATTERN = re.compile(
 
 
 def discover_example_inventory() -> ExampleArtifactInventory:
-    """Discover the governed shipped example inventory."""
+    """Discover the governed artifact inventory."""
     pilot_directories = (
         _sort_paths([path for path in PILOT_EXAMPLES_DIR.iterdir() if path.is_dir()])
         if PILOT_EXAMPLES_DIR.exists()
@@ -272,10 +676,16 @@ def discover_example_inventory() -> ExampleArtifactInventory:
             if path.name not in {"config.json", "request.json"}
         ]
     )
+    maf_runtime_fixture_paths = (
+        _sort_paths(list(MAF_RUNTIME_FIXTURE_DIR.glob("*.json")))
+        if MAF_RUNTIME_FIXTURE_DIR.exists()
+        else ()
+    )
     return ExampleArtifactInventory(
         config_paths=config_paths,
         request_paths=request_paths,
         auxiliary_paths=auxiliary_paths,
+        maf_runtime_fixture_paths=maf_runtime_fixture_paths,
         pilot_directories=pilot_directories,
     )
 
@@ -338,6 +748,42 @@ def validate_auxiliary_artifact(path: Path, *, artifact_key: str | None = None) 
     if validator is None:
         return [f"{_relative_path(path)}: no auxiliary validator registered"]
     return validator(path)
+
+
+def validate_maf_runtime_fixture(path: Path, *, fixture_name: str | None = None) -> list[str]:
+    """Validate one governed MAF runtime fixture witness."""
+    validator_key = fixture_name or path.name
+    validator = MAF_RUNTIME_FIXTURE_VALIDATORS.get(validator_key)
+    if validator is None:
+        return [f"{_relative_path(path)}: no MAF runtime fixture validator registered"]
+    return validator(path)
+
+
+def validate_maf_runtime_fixtures(*, strict: bool = False) -> list[str]:
+    """Validate governed MAF runtime fixture inventory and witness shape."""
+    errors: list[str] = []
+    inventory = discover_example_inventory()
+    actual_paths = inventory.maf_runtime_fixture_paths
+    actual_names = {path.name for path in actual_paths}
+    expected_names = set(MAF_RUNTIME_FIXTURE_VALIDATORS)
+
+    if not MAF_RUNTIME_FIXTURE_DIR.exists():
+        return [f"MAF runtime fixture directory not found: {_relative_path(MAF_RUNTIME_FIXTURE_DIR)}"]
+
+    missing_fixtures = sorted(expected_names - actual_names)
+    if missing_fixtures:
+        errors.append(f"missing governed MAF runtime fixtures: {missing_fixtures}")
+    if strict:
+        unexpected_fixtures = sorted(actual_names - expected_names)
+        if unexpected_fixtures:
+            errors.append(f"unexpected MAF runtime fixtures: {unexpected_fixtures}")
+    if strict and not actual_paths:
+        errors.append("no governed MAF runtime fixtures discovered")
+
+    for fixture_path in actual_paths:
+        errors.extend(validate_maf_runtime_fixture(fixture_path))
+
+    return errors
 
 
 def validate_document_artifact_reference_text(
@@ -484,6 +930,8 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
         errors.append("no shipped config artifacts discovered")
     if strict and not inventory.request_paths:
         errors.append("no shipped request artifacts discovered")
+    if strict and not inventory.maf_runtime_fixture_paths:
+        errors.append("no governed MAF runtime fixtures discovered")
     if strict:
         expected_auxiliary = set(AUXILIARY_PILOT_VALIDATORS)
         actual_auxiliary = {_relative_path(path) for path in inventory.auxiliary_paths}
@@ -509,6 +957,7 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
     for auxiliary_path in inventory.auxiliary_paths:
         errors.extend(validate_auxiliary_artifact(auxiliary_path))
 
+    errors.extend(validate_maf_runtime_fixtures(strict=strict))
     errors.extend(validate_documented_artifact_references(strict=strict))
     errors.extend(validate_operational_documents(strict=strict))
 
@@ -523,6 +972,7 @@ def main() -> None:
     print(f"  config artifacts:  {len(inventory.config_paths)}")
     print(f"  request artifacts: {len(inventory.request_paths)}")
     print(f"  auxiliary files:   {len(inventory.auxiliary_paths)}")
+    print(f"  MAF fixtures:      {len(inventory.maf_runtime_fixture_paths)}")
     print(f"  pilot directories: {len(inventory.pilot_directories)}")
 
     print("\n=== Artifact Validation ===")

@@ -22,11 +22,13 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     config_names = {path.name for path in inventory.config_paths}
     request_names = {path.name for path in inventory.request_paths}
     auxiliary_names = {path.name for path in inventory.auxiliary_paths}
+    maf_runtime_fixture_names = {path.name for path in inventory.maf_runtime_fixture_paths}
     pilot_names = {path.name for path in inventory.pilot_directories}
 
     assert "config-local-dev.json" in config_names
     assert "request-echo.json" in request_names
     assert "input_document.json" in auxiliary_names
+    assert "event_record.json" in maf_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -38,6 +40,14 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
+    assert len(inventory.maf_runtime_fixture_paths) >= 5
+
+
+def test_validate_maf_runtime_fixtures_strictly() -> None:
+    errors = validate_artifacts.validate_maf_runtime_fixtures(strict=True)
+
+    assert errors == []
+    assert len(errors) == 0
 
 
 def test_validate_documented_artifact_references_strictly() -> None:
@@ -232,3 +242,26 @@ def test_validate_auxiliary_pilot_document_rejects_non_positive_retention_days(t
     assert len(errors) == 1
     assert "retention_days" in errors[0]
     assert "positive integer" in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_score_rank_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "simulation_comparison.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "comparison_id": "simcmp-drift",
+                "request_id": "simreq-drift",
+                "ranked_option_ids": ["opt-safe"],
+                "scores": {"opt-fast": 0.9},
+                "top_risk_level": "low",
+                "review_burden": 0.25,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "scores keys must match ranked_option_ids exactly" in errors[0]
+    assert fixture_path.name in errors[0]

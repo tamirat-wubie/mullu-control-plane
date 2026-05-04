@@ -27,6 +27,10 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
     assert "pilot-prod" in summary.builtin_profiles
     assert "default-safe" in summary.policy_packs
     assert "mcoi/examples/request-echo.json" in summary.request_artifacts
+    assert (
+        "integration/contracts_compat/fixtures/maf_runtime/event_record.json"
+        in summary.maf_runtime_fixtures
+    )
 
 
 def test_validate_release_status_strictly() -> None:
@@ -36,6 +40,7 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.release_documents) >= 8
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
+    assert len(summary.maf_runtime_fixtures) >= 5
     assert summary.ci_workflow_present is True
     assert summary.release_version == "0.3.0 (v3.10.2)"
     assert summary.release_date == "2026-03-27"
