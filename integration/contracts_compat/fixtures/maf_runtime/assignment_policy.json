@@ -1,0 +1,7 @@
+{
+  "policy_id": "assign-42",
+  "role_id": "role-reviewer",
+  "strategy": "least_loaded",
+  "fallback_team_id": "team-escalation",
+  "escalation_chain_id": "esc-release-1"
+}

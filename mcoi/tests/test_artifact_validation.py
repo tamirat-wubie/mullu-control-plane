@@ -32,6 +32,12 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "obligation_record.json" in maf_runtime_fixture_names
     assert "service_function_template.json" in maf_runtime_fixture_names
     assert "role_descriptor.json" in maf_runtime_fixture_names
+    assert "function_policy_binding.json" in maf_runtime_fixture_names
+    assert "function_sla_profile.json" in maf_runtime_fixture_names
+    assert "function_queue_profile.json" in maf_runtime_fixture_names
+    assert "assignment_policy.json" in maf_runtime_fixture_names
+    assert "worker_capacity.json" in maf_runtime_fixture_names
+    assert "team_queue_state.json" in maf_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -43,7 +49,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 8
+    assert len(inventory.maf_runtime_fixture_paths) >= 14
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -267,4 +273,26 @@ def test_validate_maf_runtime_fixture_rejects_score_rank_drift(tmp_path: Path) -
 
     assert len(errors) == 1
     assert "scores keys must match ranked_option_ids exactly" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_worker_capacity_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "worker_capacity.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "worker_id": "worker-drift",
+                "max_concurrent": 5,
+                "current_load": 2,
+                "available_slots": 4,
+                "updated_at": "2025-01-01T00:20:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "available_slots must equal max_concurrent - current_load" in errors[0]
     assert fixture_path.name in errors[0]

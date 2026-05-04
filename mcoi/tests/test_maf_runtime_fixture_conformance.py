@@ -18,7 +18,14 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from mcoi_runtime.contracts.event import EventRecord, EventSource, EventType
-from mcoi_runtime.contracts.function import FunctionType, ServiceFunctionTemplate
+from mcoi_runtime.contracts.function import (
+    CommunicationStyle,
+    FunctionPolicyBinding,
+    FunctionQueueProfile,
+    FunctionSlaProfile,
+    FunctionType,
+    ServiceFunctionTemplate,
+)
 from mcoi_runtime.contracts.goal import GoalPlan, GoalPriority, GoalDescriptor, SubGoal, SubGoalStatus
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
 from mcoi_runtime.contracts.obligation import (
@@ -28,7 +35,7 @@ from mcoi_runtime.contracts.obligation import (
     ObligationState,
     ObligationTrigger,
 )
-from mcoi_runtime.contracts.roles import RoleDescriptor
+from mcoi_runtime.contracts.roles import AssignmentPolicy, AssignmentStrategy, RoleDescriptor, TeamQueueState, WorkerCapacity
 from mcoi_runtime.contracts.simulation import RiskLevel, SimulationComparison
 from mcoi_runtime.contracts.supervisor import (
     LivelockStrategy,
@@ -173,6 +180,68 @@ def _build_role_descriptor(payload: dict) -> RoleDescriptor:
     )
 
 
+def _build_function_policy_binding(payload: dict) -> FunctionPolicyBinding:
+    return FunctionPolicyBinding(
+        binding_id=payload["binding_id"],
+        function_id=payload["function_id"],
+        policy_pack_id=payload["policy_pack_id"],
+        autonomy_mode=payload["autonomy_mode"],
+        review_required=payload["review_required"],
+        deployment_profile_id=payload["deployment_profile_id"],
+    )
+
+
+def _build_function_sla_profile(payload: dict) -> FunctionSlaProfile:
+    return FunctionSlaProfile(
+        function_id=payload["function_id"],
+        target_completion_minutes=payload["target_completion_minutes"],
+        approval_latency_minutes=payload["approval_latency_minutes"],
+        escalation_threshold_minutes=payload["escalation_threshold_minutes"],
+    )
+
+
+def _build_function_queue_profile(payload: dict) -> FunctionQueueProfile:
+    return FunctionQueueProfile(
+        function_id=payload["function_id"],
+        team_id=payload["team_id"],
+        default_role_id=payload["default_role_id"],
+        communication_style=CommunicationStyle(payload["communication_style"]),
+        max_concurrent_jobs=payload["max_concurrent_jobs"],
+        escalation_chain_id=payload["escalation_chain_id"],
+    )
+
+
+def _build_assignment_policy(payload: dict) -> AssignmentPolicy:
+    return AssignmentPolicy(
+        policy_id=payload["policy_id"],
+        role_id=payload["role_id"],
+        strategy=AssignmentStrategy(payload["strategy"]),
+        fallback_team_id=payload["fallback_team_id"],
+        escalation_chain_id=payload["escalation_chain_id"],
+    )
+
+
+def _build_worker_capacity(payload: dict) -> WorkerCapacity:
+    return WorkerCapacity(
+        worker_id=payload["worker_id"],
+        max_concurrent=payload["max_concurrent"],
+        current_load=payload["current_load"],
+        available_slots=payload["available_slots"],
+        updated_at=payload["updated_at"],
+    )
+
+
+def _build_team_queue_state(payload: dict) -> TeamQueueState:
+    return TeamQueueState(
+        team_id=payload["team_id"],
+        queued_jobs=payload["queued_jobs"],
+        assigned_jobs=payload["assigned_jobs"],
+        waiting_jobs=payload["waiting_jobs"],
+        overloaded_workers=payload["overloaded_workers"],
+        captured_at=payload["captured_at"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -184,6 +253,12 @@ def _build_role_descriptor(payload: dict) -> RoleDescriptor:
         ("obligation_record.json", _build_obligation_record),
         ("service_function_template.json", _build_service_function_template),
         ("role_descriptor.json", _build_role_descriptor),
+        ("function_policy_binding.json", _build_function_policy_binding),
+        ("function_sla_profile.json", _build_function_sla_profile),
+        ("function_queue_profile.json", _build_function_queue_profile),
+        ("assignment_policy.json", _build_assignment_policy),
+        ("worker_capacity.json", _build_worker_capacity),
+        ("team_queue_state.json", _build_team_queue_state),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(

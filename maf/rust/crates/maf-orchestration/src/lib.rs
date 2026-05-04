@@ -898,6 +898,33 @@ mod tests {
         assert_fixture_round_trip::<function::ServiceFunctionTemplate>(fixture_json);
     }
 
+    #[test]
+    fn canonical_function_policy_binding_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_policy_binding.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionPolicyBinding>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_sla_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_sla_profile.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionSlaProfile>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_function_queue_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/function_queue_profile.json"
+        ));
+        assert_fixture_round_trip::<function::FunctionQueueProfile>(fixture_json);
+    }
+
     // --- Roles ---
 
     #[test]
@@ -964,6 +991,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_assignment_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/assignment_policy.json"
+        ));
+        assert_fixture_round_trip::<roles::AssignmentPolicy>(fixture_json);
+    }
+
+    #[test]
     fn worker_capacity_round_trips() {
         let wc = roles::WorkerCapacity {
             worker_id: "w-1".into(),
@@ -975,6 +1011,15 @@ mod tests {
         let json = serde_json::to_string(&wc).unwrap();
         let back: roles::WorkerCapacity = serde_json::from_str(&json).unwrap();
         assert_eq!(wc, back);
+    }
+
+    #[test]
+    fn canonical_worker_capacity_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/worker_capacity.json"
+        ));
+        assert_fixture_round_trip::<roles::WorkerCapacity>(fixture_json);
     }
 
     #[test]
@@ -990,6 +1035,15 @@ mod tests {
         let json = serde_json::to_string(&tqs).unwrap();
         let back: roles::TeamQueueState = serde_json::from_str(&json).unwrap();
         assert_eq!(tqs, back);
+    }
+
+    #[test]
+    fn canonical_team_queue_state_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/team_queue_state.json"
+        ));
+        assert_fixture_round_trip::<roles::TeamQueueState>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

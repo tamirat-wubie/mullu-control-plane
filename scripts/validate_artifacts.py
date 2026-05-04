@@ -721,8 +721,212 @@ def _validate_role_descriptor_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_function_policy_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "binding_id",
+            "function_id",
+            "policy_pack_id",
+            "autonomy_mode",
+            "review_required",
+            "deployment_profile_id",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "binding_id",
+        "function_id",
+        "policy_pack_id",
+        "autonomy_mode",
+        "deployment_profile_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["review_required"], bool):
+        errors.append(f"{_relative_path(path)}: field 'review_required' must be boolean")
+    return errors
+
+
+def _validate_function_sla_profile_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "function_id",
+            "target_completion_minutes",
+            "approval_latency_minutes",
+            "escalation_threshold_minutes",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["function_id"], field_name="function_id", path=path))
+    for field_name in (
+        "target_completion_minutes",
+        "approval_latency_minutes",
+        "escalation_threshold_minutes",
+    ):
+        errors.extend(_require_positive_int(payload[field_name], field_name=field_name, path=path))
+    if (
+        isinstance(payload["target_completion_minutes"], int)
+        and isinstance(payload["escalation_threshold_minutes"], int)
+        and not isinstance(payload["target_completion_minutes"], bool)
+        and not isinstance(payload["escalation_threshold_minutes"], bool)
+        and payload["escalation_threshold_minutes"] > payload["target_completion_minutes"]
+    ):
+        errors.append(
+            f"{_relative_path(path)}: escalation_threshold_minutes must not exceed target_completion_minutes"
+        )
+    return errors
+
+
+def _validate_function_queue_profile_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "function_id",
+            "team_id",
+            "default_role_id",
+            "communication_style",
+            "max_concurrent_jobs",
+            "escalation_chain_id",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "function_id",
+        "team_id",
+        "default_role_id",
+        "communication_style",
+        "escalation_chain_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_positive_int(
+            payload["max_concurrent_jobs"],
+            field_name="max_concurrent_jobs",
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_assignment_policy_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "policy_id",
+            "role_id",
+            "strategy",
+            "fallback_team_id",
+            "escalation_chain_id",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "policy_id",
+        "role_id",
+        "strategy",
+        "fallback_team_id",
+        "escalation_chain_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_worker_capacity_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "worker_id",
+            "max_concurrent",
+            "current_load",
+            "available_slots",
+            "updated_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["worker_id"], field_name="worker_id", path=path))
+    errors.extend(_require_positive_int(payload["max_concurrent"], field_name="max_concurrent", path=path))
+    errors.extend(
+        _require_non_negative_int(
+            payload["available_slots"],
+            field_name="available_slots",
+            path=path,
+        )
+    )
+    errors.extend(_require_non_negative_int(payload["current_load"], field_name="current_load", path=path))
+    errors.extend(_validate_iso8601_text(payload["updated_at"], field_name="updated_at", path=path))
+    if (
+        isinstance(payload["max_concurrent"], int)
+        and isinstance(payload["current_load"], int)
+        and isinstance(payload["available_slots"], int)
+        and not isinstance(payload["max_concurrent"], bool)
+        and not isinstance(payload["current_load"], bool)
+        and not isinstance(payload["available_slots"], bool)
+    ):
+        if payload["current_load"] > payload["max_concurrent"]:
+            errors.append(f"{_relative_path(path)}: current_load cannot exceed max_concurrent")
+        if payload["available_slots"] != payload["max_concurrent"] - payload["current_load"]:
+            errors.append(
+                f"{_relative_path(path)}: available_slots must equal max_concurrent - current_load"
+            )
+    return errors
+
+
+def _validate_team_queue_state_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "team_id",
+            "queued_jobs",
+            "assigned_jobs",
+            "waiting_jobs",
+            "overloaded_workers",
+            "captured_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["team_id"], field_name="team_id", path=path))
+    for field_name in (
+        "queued_jobs",
+        "assigned_jobs",
+        "waiting_jobs",
+        "overloaded_workers",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
+    "assignment_policy.json": _validate_assignment_policy_fixture,
     "event_record.json": _validate_event_record_fixture,
+    "function_policy_binding.json": _validate_function_policy_binding_fixture,
+    "function_queue_profile.json": _validate_function_queue_profile_fixture,
+    "function_sla_profile.json": _validate_function_sla_profile_fixture,
     "job_descriptor.json": _validate_job_descriptor_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
     "obligation_record.json": _validate_obligation_record_fixture,
@@ -730,6 +934,8 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "service_function_template.json": _validate_service_function_template_fixture,
     "simulation_comparison.json": _validate_simulation_comparison_fixture,
     "supervisor_tick.json": _validate_supervisor_tick_fixture,
+    "team_queue_state.json": _validate_team_queue_state_fixture,
+    "worker_capacity.json": _validate_worker_capacity_fixture,
 }
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
