@@ -63,6 +63,9 @@ REQUIRED_ENTRY_POINTS = {
     "environment_binding_receipt_validator": "scripts/validate_general_agent_promotion_environment_binding_receipt.py",
     "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
     "handoff_preflight_validator": "scripts/validate_general_agent_promotion_handoff_preflight.py",
+    "adapter_closure_plan": ".change_assurance/capability_adapter_closure_plan.json",
+    "adapter_schema_validation_report": ".change_assurance/capability_adapter_closure_plan_schema_validation.json",
+    "adapter_schema_validator": "scripts/validate_capability_adapter_closure_plan_schema.py",
     "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
     "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json",
     "drift_validation_report": ".change_assurance/general_agent_promotion_closure_plan_validation.json",
@@ -73,6 +76,7 @@ REQUIRED_ENTRY_POINTS = {
 REQUIRED_VALIDATION_REPORTS = frozenset(
     {
         "general_agent_promotion_operator_checklist valid=true",
+        "capability_adapter_closure_plan_schema_validation ok=true",
         "general_agent_promotion_closure_plan_schema_validation ok=true",
         "general_agent_promotion_closure_plan_validation ok=true",
     }
@@ -83,6 +87,7 @@ REQUIRED_SEQUENCE_ITEMS = frozenset(
         "regenerate_adapter_evidence",
         "write_promotion_readiness",
         "write_source_closure_plans",
+        "validate_adapter_closure_plan_schema",
         "write_aggregate_closure_plan",
         "validate_aggregate_closure_plan_schema",
         "validate_aggregate_closure_plan_drift",

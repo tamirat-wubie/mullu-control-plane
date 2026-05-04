@@ -139,8 +139,9 @@ The handoff preflight path is:
 3. Emit `.change_assurance/general_agent_promotion_environment_binding_receipt.json` with names and presence only.
 4. Validate `.change_assurance/general_agent_promotion_environment_binding_receipt.json` against the contract before preflight.
 5. Verify required environment bindings by variable name without serializing secret values.
-6. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
-7. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
+6. Verify adapter source-plan schema validation before aggregate promotion validation.
+7. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
+8. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
 
 ## Verification
 

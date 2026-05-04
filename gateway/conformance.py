@@ -456,6 +456,7 @@ def _authority_obligation_canary(witness: dict[str, Any]) -> bool:
         "active_accepted_risk_count",
         "active_compensation_review_count",
         "requires_review_count",
+        "responsibility_debt_clear",
     }
     return required <= set(witness)
 
@@ -467,10 +468,18 @@ def _authority_responsibility_debt_clear(witness: dict[str, Any]) -> bool:
         "overdue_obligation_count",
         "escalated_obligation_count",
         "unowned_high_risk_capability_count",
+        "responsibility_debt_clear",
     )
     if any(field not in witness for field in required):
         return False
-    return all(_int_count(witness, field) == 0 for field in required)
+    return (
+        witness.get("responsibility_debt_clear") is True
+        and _int_count(witness, "overdue_approval_chain_count") == 0
+        and _int_count(witness, "expired_approval_chain_count") == 0
+        and _int_count(witness, "overdue_obligation_count") == 0
+        and _int_count(witness, "escalated_obligation_count") == 0
+        and _int_count(witness, "unowned_high_risk_capability_count") == 0
+    )
 
 
 def _int_count(payload: dict[str, Any], field: str) -> int:

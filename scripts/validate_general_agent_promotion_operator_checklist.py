@@ -32,6 +32,7 @@ REQUIRED_STEP_IDS = frozenset({
     "collect_adapter_evidence",
     "write_promotion_readiness",
     "write_source_closure_plans",
+    "validate_adapter_closure_plan_schema",
     "validate_aggregate_closure_plan",
     "validate_environment_binding_receipt",
     "produce_live_adapter_receipts",
@@ -56,6 +57,11 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     "collect_adapter_evidence": ("collect_capability_adapter_evidence.py",),
     "write_promotion_readiness": ("validate_general_agent_promotion.py", "--output"),
     "write_source_closure_plans": ("plan_capability_adapter_closure.py", "plan_deployment_publication_closure.py"),
+    "validate_adapter_closure_plan_schema": (
+        "validate_capability_adapter_closure_plan_schema.py",
+        "capability_adapter_closure_plan_schema_validation.json",
+        "--strict",
+    ),
     "validate_aggregate_closure_plan": (
         "plan_general_agent_promotion_closure.py",
         "validate_general_agent_promotion_closure_plan_schema.py",
@@ -84,6 +90,12 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     ),
 }
 REQUIRED_STEP_EVIDENCE = {
+    "validate_adapter_closure_plan_schema": frozenset({
+        "capability_adapter_closure_plan_schema_validation.json ok=true",
+        "adapter blocker coverage complete",
+        "adapter action verification_command present",
+        "adapter action receipt_validator present",
+    }),
     "validate_aggregate_closure_plan": frozenset({
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",

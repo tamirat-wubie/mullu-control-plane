@@ -28,6 +28,7 @@ EXPECTED_STEP_NAMES = (
     "environment binding contract validation",
     "environment binding receipt validation",
     "required environment bindings",
+    "adapter closure schema validation",
     "closure plan schema validation",
     "closure plan drift validation",
     "promotion readiness report",
