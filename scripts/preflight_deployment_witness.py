@@ -334,11 +334,13 @@ def _check_runtime_witness_endpoint(
     runtime_status = str(payload.get("runtime_status", ""))
     gateway_status = str(payload.get("gateway_status", ""))
     runtime_environment = str(payload.get("environment", ""))
+    responsibility_debt_clear = payload.get("responsibility_debt_clear") is True
     passed = (
         status == 200
         and not missing_fields
         and runtime_status == "healthy"
         and gateway_status in {"healthy", "degraded"}
+        and responsibility_debt_clear
         and runtime_environment == expected_environment
     )
     return PreflightStep(
@@ -347,6 +349,7 @@ def _check_runtime_witness_endpoint(
         (
             f"status={status} runtime_status={runtime_status} "
             f"gateway_status={gateway_status} environment={runtime_environment} "
+            f"responsibility_debt_clear={responsibility_debt_clear} "
             f"missing={missing_fields}"
         ),
     )
