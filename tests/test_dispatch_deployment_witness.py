@@ -107,6 +107,33 @@ class FakeRunner:
         raise AssertionError(f"unexpected command: {command}")
 
 
+class FailingWorkflowRunRunner(FakeRunner):
+    """Runner that fails at workflow dispatch with untrusted CLI text."""
+
+    def __call__(
+        self,
+        command: list[str],
+        *,
+        check: bool,
+        capture_output: bool,
+        text: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        if command[:3] == ["gh", "workflow", "run"]:
+            self.commands.append(command)
+            raise subprocess.CalledProcessError(
+                returncode=7,
+                cmd=command,
+                output="stdout-secret-token",
+                stderr="stderr-secret-token",
+            )
+        return super().__call__(
+            command,
+            check=check,
+            capture_output=capture_output,
+            text=text,
+        )
+
+
 def test_dispatch_deployment_witness_runs_workflow_and_downloads_artifact(tmp_path: Path) -> None:
     runner = FakeRunner()
 
@@ -214,6 +241,28 @@ def test_dispatch_deployment_witness_fails_before_dispatch_when_workflow_inactiv
     assert runner.commands[1][:3] == ["gh", "secret", "list"]
     assert runner.commands[2][:3] == ["gh", "workflow", "list"]
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_dispatch_deployment_witness_command_failure_is_bounded(tmp_path: Path) -> None:
+    runner = FailingWorkflowRunRunner()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        dispatch_deployment_witness(
+            gateway_url="https://gateway.example.com/private-path",
+            expected_environment="pilot",
+            download_dir=tmp_path / "artifact",
+            poll_seconds=1,
+            runner=runner,
+        )
+
+    message = str(exc_info.value)
+    assert message == "command failed: gh workflow run: exit_code=7"
+    assert "stdout-secret-token" not in message
+    assert "stderr-secret-token" not in message
+    assert "gateway.example.com/private-path" not in message
+    assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+    assert not any(command[:3] == ["gh", "run", "download"] for command in runner.commands)
+    assert not (tmp_path / "artifact").exists()
 
 
 def test_cli_reports_missing_gateway_url(monkeypatch, capsys) -> None:

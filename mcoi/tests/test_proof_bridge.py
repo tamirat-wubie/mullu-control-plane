@@ -8,10 +8,16 @@ import json
 from unittest.mock import patch
 
 import mcoi_runtime.core.proof_bridge as proof_bridge_module
+from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest
+from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.proof_bridge import (
     GOVERNANCE_MACHINE,
     ProofBridge,
+    TEMPORAL_SCHEDULER_MACHINE,
+    TemporalSchedulerProof,
 )
+from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
+from mcoi_runtime.core.temporal_scheduler import TemporalSchedulerEngine
 from mcoi_runtime.contracts.proof import (
     ProofCapsule,
 )
@@ -20,6 +26,39 @@ from mcoi_runtime.contracts.state_machine import TransitionVerdict
 
 def _clock() -> str:
     return "2026-01-01T00:00:00Z"
+
+
+class MutableClock:
+    def __init__(self, now: str) -> None:
+        self.now = now
+
+    def __call__(self) -> str:
+        return self.now
+
+    def set(self, now: str) -> None:
+        self.now = now
+
+
+def _temporal_scheduler(clock: MutableClock) -> TemporalSchedulerEngine:
+    temporal = TemporalRuntimeEngine(EventSpineEngine(), clock=clock)
+    return TemporalSchedulerEngine(temporal, clock=clock)
+
+
+def _temporal_action(
+    *,
+    action_id: str = "act-1",
+    execute_at: str = "2026-05-04T14:00:00+00:00",
+    approval_expires_at: str = "",
+) -> TemporalActionRequest:
+    return TemporalActionRequest(
+        action_id=action_id,
+        tenant_id="tenant-a",
+        actor_id="user-a",
+        action_type="reminder",
+        requested_at="2026-05-04T13:00:00+00:00",
+        execute_at=execute_at,
+        approval_expires_at=approval_expires_at,
+    )
 
 
 # ═══ Governance State Machine ═══
@@ -49,6 +88,123 @@ class TestGovernanceMachine:
 
 
 # ═══ ProofBridge — Allowed Decision ═══
+
+
+class TestTemporalSchedulerMachine:
+    def test_machine_has_required_states(self):
+        assert "pending" in TEMPORAL_SCHEDULER_MACHINE.states
+        assert "running" in TEMPORAL_SCHEDULER_MACHINE.states
+        assert "completed" in TEMPORAL_SCHEDULER_MACHINE.states
+        assert "blocked" in TEMPORAL_SCHEDULER_MACHINE.states
+
+    def test_legal_temporal_transitions(self):
+        assert (
+            TEMPORAL_SCHEDULER_MACHINE.is_legal("pending", "running", "temporal_action_due")
+            == TransitionVerdict.ALLOWED
+        )
+        assert (
+            TEMPORAL_SCHEDULER_MACHINE.is_legal("pending", "blocked", "temporal_action_blocked")
+            == TransitionVerdict.ALLOWED
+        )
+        assert (
+            TEMPORAL_SCHEDULER_MACHINE.is_legal("running", "completed", "temporal_action_completed")
+            == TransitionVerdict.ALLOWED
+        )
+
+    def test_terminal_temporal_states_do_not_reopen(self):
+        assert (
+            TEMPORAL_SCHEDULER_MACHINE.is_legal("completed", "running", "temporal_action_due")
+            == TransitionVerdict.DENIED_TERMINAL_STATE
+        )
+        assert (
+            TEMPORAL_SCHEDULER_MACHINE.is_legal("blocked", "pending", "temporal_action_deferred")
+            == TransitionVerdict.DENIED_TERMINAL_STATE
+        )
+        assert (
+            TEMPORAL_SCHEDULER_MACHINE.is_legal("pending", "completed", "skip_execution")
+            == TransitionVerdict.DENIED_ILLEGAL_EDGE
+        )
+
+
+class TestTemporalSchedulerProof:
+    def test_due_scheduler_receipt_certifies_running_transition(self):
+        clock = MutableClock("2026-05-04T14:00:00+00:00")
+        scheduler = _temporal_scheduler(clock)
+        scheduled = scheduler.register("sched-1", _temporal_action())
+        run_receipt = scheduler.evaluate_due_action("sched-1", worker_id="worker-a")
+        bridge = ProofBridge(clock=clock)
+
+        proof = bridge.certify_temporal_run_receipt(
+            scheduled_action=scheduled,
+            run_receipt=run_receipt,
+            actor_id="worker-a",
+        )
+
+        assert isinstance(proof, TemporalSchedulerProof)
+        assert proof.decision == "running"
+        assert proof.capsule.receipt.machine_id == "temporal-scheduler"
+        assert proof.capsule.receipt.from_state == "pending"
+        assert proof.capsule.receipt.to_state == "running"
+        assert proof.capsule.receipt.guard_verdicts[0].passed is True
+        assert bridge.get_lineage("temporal_schedule:tenant-a:sched-1") is not None
+
+    def test_blocked_scheduler_receipt_certifies_denied_guard_transition(self):
+        clock = MutableClock("2026-05-04T15:01:00+00:00")
+        scheduler = _temporal_scheduler(clock)
+        scheduled = scheduler.register(
+            "sched-1",
+            _temporal_action(
+                execute_at="2026-05-04T14:00:00+00:00",
+                approval_expires_at="2026-05-04T15:00:00+00:00",
+            ),
+        )
+        run_receipt = scheduler.evaluate_due_action("sched-1", worker_id="worker-a")
+        bridge = ProofBridge(clock=clock)
+
+        proof = bridge.certify_temporal_run_receipt(
+            scheduled_action=scheduled,
+            run_receipt=run_receipt,
+            actor_id="worker-a",
+        )
+
+        assert proof.decision == "blocked"
+        assert proof.capsule.receipt.to_state == "blocked"
+        assert proof.capsule.receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        assert proof.capsule.receipt.guard_verdicts[0].passed is False
+        assert proof.capsule.receipt.guard_verdicts[0].detail["temporal_verdict"] == "deny"
+
+    def test_temporal_scheduler_proof_serializes_scheduler_detail(self):
+        clock = MutableClock("2026-05-04T14:00:00+00:00")
+        scheduler = _temporal_scheduler(clock)
+        scheduled = scheduler.register("sched-1", _temporal_action(), handler_name="reminder_handler")
+        run_receipt = scheduler.evaluate_due_action("sched-1", worker_id="worker-a")
+        bridge = ProofBridge(clock=clock)
+        proof = bridge.certify_temporal_run_receipt(scheduled_action=scheduled, run_receipt=run_receipt)
+
+        data = bridge.serialize_temporal_scheduler_proof(proof)
+
+        assert data["decision"] == "running"
+        assert data["schedule_id"] == "sched-1"
+        assert data["scheduler_receipt_id"] == run_receipt.receipt_id
+        assert data["receipt"]["guard_verdicts"][0]["detail"]["handler_name"] == "reminder_handler"
+        assert json.loads(json.dumps(data, sort_keys=True))["tenant_id"] == "tenant-a"
+
+    def test_temporal_scheduler_proof_rejects_mismatched_receipt(self):
+        clock = MutableClock("2026-05-04T14:00:00+00:00")
+        scheduler = _temporal_scheduler(clock)
+        scheduled = scheduler.register("sched-1", _temporal_action(action_id="act-1"))
+        scheduler.register("sched-2", _temporal_action(action_id="act-2"))
+        run_receipt = scheduler.evaluate_due_action("sched-2", worker_id="worker-a")
+        bridge = ProofBridge(clock=clock)
+
+        try:
+            bridge.certify_temporal_run_receipt(scheduled_action=scheduled, run_receipt=run_receipt)
+        except ValueError as exc:
+            assert "schedule_id" in str(exc)
+            assert bridge.receipt_count == 0
+            assert bridge.lineage_count == 0
+        else:
+            raise AssertionError("mismatched scheduler receipt should fail closed")
 
 
 class TestAllowedDecision:

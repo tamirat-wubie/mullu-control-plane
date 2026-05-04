@@ -128,6 +128,23 @@ def test_receipt_readiness_mismatch_is_invalid(tmp_path: Path) -> None:
     assert _step(validation, "dispatch consistency").passed is True
 
 
+def test_expected_value_mismatch_detail_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
+
+    validation = validate_gateway_publication_receipt(
+        receipt_path=receipt_path,
+        expected_gateway_url="https://private-gateway-token.mullusi.com/private-path",
+    )
+    expected_step = _step(validation, "expected gateway_url")
+
+    assert validation.valid is False
+    assert expected_step.passed is False
+    assert expected_step.detail == "mismatched"
+    assert "private-gateway-token" not in json.dumps(validation.to_json_dict(), sort_keys=True)
+    assert "gateway.mullusi.com" not in expected_step.detail
+
+
 def test_receipt_missing_readiness_proof_steps_is_invalid(tmp_path: Path) -> None:
     receipt_path = tmp_path / "receipt.json"
     _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
@@ -219,6 +236,29 @@ def test_cli_writes_validation_report_and_returns_nonzero_for_failed_success_pol
     assert payload["valid"] is False
     assert "valid: false" in captured.out
     assert "conclusion=failure" in captured.out
+
+
+def test_missing_receipt_file_error_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-receipt-path.json"
+
+    with pytest.raises(RuntimeError) as exc_info:
+        validate_gateway_publication_receipt(receipt_path=receipt_path)
+
+    message = str(exc_info.value)
+    assert message == "failed to read gateway publication receipt"
+    assert "secret-receipt-path" not in message
+
+
+def test_invalid_receipt_json_error_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    receipt_path.write_text('{"receipt": "secret-json-token"', encoding="utf-8")
+
+    with pytest.raises(RuntimeError) as exc_info:
+        validate_gateway_publication_receipt(receipt_path=receipt_path)
+
+    message = str(exc_info.value)
+    assert message == "gateway publication receipt returned invalid JSON"
+    assert "secret-json-token" not in message
 
 
 def _write_receipt(

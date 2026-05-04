@@ -44,6 +44,7 @@ class ScheduledActionState(StrEnum):
     BLOCKED = "blocked"
     MISSED = "missed"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class ScheduleDecisionVerdict(StrEnum):
@@ -161,6 +162,17 @@ class TemporalSchedulerEngine:
             raise RuntimeCoreInvariantError("Unknown schedule_id")
         return action
 
+    def restore(self, actions: tuple[ScheduledTemporalAction, ...]) -> None:
+        """Restore scheduled action snapshots into an empty scheduler."""
+        if self._actions or self._leases or self._receipts:
+            raise RuntimeCoreInvariantError("restore requires an empty scheduler")
+        for action in actions:
+            if not isinstance(action, ScheduledTemporalAction):
+                raise RuntimeCoreInvariantError("restore item must be a ScheduledTemporalAction")
+            if action.schedule_id in self._actions:
+                raise RuntimeCoreInvariantError("duplicate restored schedule_id")
+            self._actions[action.schedule_id] = action
+
     def due_actions(self, now: str | None = None) -> tuple[ScheduledTemporalAction, ...]:
         """Return pending actions due at or before now."""
         now_dt = _parse_iso(now or self._clock())
@@ -247,12 +259,18 @@ class TemporalSchedulerEngine:
         self._leases.pop(schedule_id, None)
         return self._record(action, ScheduleDecisionVerdict.COMPLETED, "completed", self._clock(), worker_id)
 
-    def mark_failed(self, schedule_id: str, *, worker_id: str = "") -> TemporalRunReceipt:
+    def mark_failed(
+        self,
+        schedule_id: str,
+        *,
+        worker_id: str = "",
+        reason: str = "failed",
+    ) -> TemporalRunReceipt:
         """Mark a scheduled action failed and release its lease."""
         action = self.get(schedule_id)
         self._replace_action(action, ScheduledActionState.FAILED)
         self._leases.pop(schedule_id, None)
-        return self._record(action, ScheduleDecisionVerdict.BLOCKED, "failed", self._clock(), worker_id)
+        return self._record(action, ScheduleDecisionVerdict.BLOCKED, reason, self._clock(), worker_id)
 
     def mark_missed(self, schedule_id: str, *, worker_id: str = "") -> TemporalRunReceipt:
         """Mark a scheduled action missed and release its lease."""
@@ -260,6 +278,13 @@ class TemporalSchedulerEngine:
         self._replace_action(action, ScheduledActionState.MISSED)
         self._leases.pop(schedule_id, None)
         return self._record(action, ScheduleDecisionVerdict.BLOCKED, "missed_run", self._clock(), worker_id)
+
+    def mark_cancelled(self, schedule_id: str, *, worker_id: str = "") -> TemporalRunReceipt:
+        """Mark a scheduled action cancelled and release its lease."""
+        action = self.get(schedule_id)
+        self._replace_action(action, ScheduledActionState.CANCELLED)
+        self._leases.pop(schedule_id, None)
+        return self._record(action, ScheduleDecisionVerdict.BLOCKED, "cancelled", self._clock(), worker_id)
 
     def release_lease(self, schedule_id: str) -> bool:
         """Release a lease and return a running action to pending."""

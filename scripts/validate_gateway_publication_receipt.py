@@ -134,7 +134,7 @@ def _read_receipt_payload(receipt_path: Path) -> dict[str, Any]:
     try:
         raw_text = receipt_path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise RuntimeError(f"failed to read gateway publication receipt {receipt_path}") from exc
+        raise RuntimeError("failed to read gateway publication receipt") from exc
     try:
         parsed = json.loads(raw_text)
     except json.JSONDecodeError as exc:
@@ -404,7 +404,7 @@ def _check_expected_value(
     return ReceiptValidationStep(
         f"expected {field_name}",
         actual_value == expected_value,
-        f"expected={expected_value} actual={actual_value}",
+        "matched" if actual_value == expected_value else "mismatched",
     )
 
 

@@ -79,3 +79,30 @@ def test_validate_promotion_operator_checklist_rejects_missing_adapter_schema_ga
     assert result.valid is False
     assert any("required_commands missing steps" in error for error in result.errors)
     assert any("validate_adapter_closure_plan_schema" in error for error in result.errors)
+
+
+def test_validate_promotion_operator_checklist_missing_file_error_is_bounded(
+    tmp_path: Path,
+) -> None:
+    checklist_path = tmp_path / "secret-checklist-path.json"
+
+    result = validate_general_agent_promotion_operator_checklist(checklist_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "checklist could not be read" in result.errors
+    assert "secret-checklist-path" not in serialized_errors
+
+
+def test_validate_promotion_operator_checklist_json_parse_error_is_bounded(
+    tmp_path: Path,
+) -> None:
+    checklist_path = tmp_path / "checklist.json"
+    checklist_path.write_text('{"checklist_id": "secret-json-token"', encoding="utf-8")
+
+    result = validate_general_agent_promotion_operator_checklist(checklist_path)
+    serialized = json.dumps(result.as_dict(), sort_keys=True)
+
+    assert result.valid is False
+    assert "checklist must be JSON" in result.errors
+    assert "secret-json-token" not in serialized

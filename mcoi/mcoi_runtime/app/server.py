@@ -42,9 +42,16 @@ from mcoi_runtime.app.software_receipt_observability import (
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
+from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
+from mcoi_runtime.core.temporal_scheduler import TemporalSchedulerEngine
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
+)
+from mcoi_runtime.persistence.temporal_scheduler_store import (
+    FileTemporalSchedulerStore,
+    TemporalSchedulerStore,
 )
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
@@ -204,6 +211,23 @@ register_software_receipt_observability(
     observability=observability,
     receipt_store=software_receipt_store,
 )
+
+_temporal_scheduler_store_path = os.environ.get("MULLU_TEMPORAL_SCHEDULER_STORE_PATH")
+temporal_scheduler_store = (
+    FileTemporalSchedulerStore(Path(_temporal_scheduler_store_path))
+    if _temporal_scheduler_store_path
+    else TemporalSchedulerStore()
+)
+temporal_event_spine = EventSpineEngine()
+temporal_runtime = TemporalRuntimeEngine(temporal_event_spine, clock=_clock)
+temporal_scheduler = TemporalSchedulerEngine(temporal_runtime, clock=_clock)
+temporal_scheduler.restore(temporal_scheduler_store.list_actions())
+temporal_action_handlers: dict[str, Any] = {}
+deps.set("temporal_event_spine", temporal_event_spine)
+deps.set("temporal_runtime", temporal_runtime)
+deps.set("temporal_scheduler", temporal_scheduler)
+deps.set("temporal_scheduler_store", temporal_scheduler_store)
+deps.set("temporal_action_handlers", temporal_action_handlers)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

@@ -65,3 +65,26 @@ def test_validate_environment_bindings_cli_outputs_json(capsys) -> None:
     assert payload["valid"] is True
     assert payload["binding_count"] == 6
     assert "MULLU_AUTHORITY_OPERATOR_SECRET" in payload["required_names"]
+
+
+def test_validate_environment_bindings_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    contract_path = tmp_path / "secret-contract-path.json"
+
+    result = validate_general_agent_promotion_environment_bindings(contract_path=contract_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "environment binding contract could not be read" in result.errors
+    assert "secret-contract-path" not in serialized_errors
+
+
+def test_validate_environment_bindings_json_parse_error_is_bounded(tmp_path: Path) -> None:
+    contract_path = tmp_path / "environment-bindings.json"
+    contract_path.write_text('{"contract_id": "secret-json-token"', encoding="utf-8")
+
+    result = validate_general_agent_promotion_environment_bindings(contract_path=contract_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "environment binding contract must be JSON" in result.errors
+    assert "secret-json-token" not in serialized_errors

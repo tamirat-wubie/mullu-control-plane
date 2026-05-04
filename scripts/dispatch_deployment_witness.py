@@ -333,10 +333,8 @@ def _run_checked(
     except FileNotFoundError as exc:
         raise RuntimeError("GitHub CLI executable 'gh' was not found") from exc
     except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.strip() if exc.stderr else ""
-        stdout = exc.stdout.strip() if exc.stdout else ""
-        detail = stderr or stdout or f"exit code {exc.returncode}"
-        raise RuntimeError(f"command failed: {' '.join(command)}: {detail}") from exc
+        command_name = " ".join(command[:3])
+        raise RuntimeError(f"command failed: {command_name}: exit_code={exc.returncode}") from exc
 
 
 def _json_list(raw_text: str, command_name: str) -> list[dict[str, Any]]:

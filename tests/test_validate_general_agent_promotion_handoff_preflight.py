@@ -76,6 +76,29 @@ def test_validate_handoff_preflight_cli_outputs_json(tmp_path: Path, capsys) -> 
     assert payload["step_count"] == 9
 
 
+def test_validate_handoff_preflight_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    report_path = tmp_path / "secret-preflight-path.json"
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "preflight report could not be read" in result.errors
+    assert "secret-preflight-path" not in serialized_errors
+
+
+def test_validate_handoff_preflight_json_parse_error_is_bounded(tmp_path: Path) -> None:
+    report_path = tmp_path / "preflight.json"
+    report_path.write_text('{"readiness_level": "secret-json-token"', encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_preflight(report_path=report_path)
+    serialized = json.dumps(result.as_dict(), sort_keys=True)
+
+    assert result.valid is False
+    assert "preflight report must be JSON" in result.errors
+    assert "secret-json-token" not in serialized
+
+
 def _ready_report() -> dict[str, object]:
     return {
         "blockers": [],

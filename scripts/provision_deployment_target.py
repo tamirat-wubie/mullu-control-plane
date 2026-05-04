@@ -106,10 +106,9 @@ def _set_variable(
     except FileNotFoundError as exc:
         raise RuntimeError("GitHub CLI executable 'gh' was not found") from exc
     except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.strip() if exc.stderr else ""
-        stdout = exc.stdout.strip() if exc.stdout else ""
-        detail = stderr or stdout or f"exit code {exc.returncode}"
-        raise RuntimeError(f"failed to set GitHub variable {variable_name}: {detail}") from exc
+        raise RuntimeError(
+            f"failed to set GitHub variable {variable_name}: exit_code={exc.returncode}"
+        ) from exc
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

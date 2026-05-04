@@ -178,11 +178,11 @@ def _validation_result(
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
-    except OSError as exc:
-        errors.append(f"{label} could not be read: {exc}")
+    except OSError:
+        errors.append(f"{label} could not be read")
         return {}
-    except json.JSONDecodeError as exc:
-        errors.append(f"{label} must be JSON: {exc}")
+    except json.JSONDecodeError:
+        errors.append(f"{label} must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append(f"{label} root must be an object")

@@ -105,3 +105,26 @@ def test_validate_promotion_handoff_packet_cli_outputs_json(capsys) -> None:
     assert payload["packet_id"] == "general-agent-promotion-handoff-v1"
     assert payload["open_blocker_count"] == 6
     assert payload["approval_required_count"] == 4
+
+
+def test_validate_promotion_handoff_packet_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    packet_path = tmp_path / "secret-packet-path.json"
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "handoff packet could not be read" in result.errors
+    assert "secret-packet-path" not in serialized_errors
+
+
+def test_validate_promotion_handoff_packet_json_parse_error_is_bounded(tmp_path: Path) -> None:
+    packet_path = tmp_path / "handoff-packet.json"
+    packet_path.write_text('{"packet_id": "secret-json-token"', encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "handoff packet must be JSON" in result.errors
+    assert "secret-json-token" not in serialized_errors
