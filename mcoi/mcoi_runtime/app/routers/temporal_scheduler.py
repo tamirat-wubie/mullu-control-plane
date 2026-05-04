@@ -236,8 +236,14 @@ def tick_temporal_worker(req: TemporalWorkerTickRequest):
 def temporal_scheduler_summary():
     """Return temporal scheduler runtime and persistence summaries."""
     deps.metrics.inc("requests_governed")
+    background = None
+    try:
+        background = deps.temporal_scheduler_background.summary()
+    except RuntimeError:
+        background = {"running": False, "enabled": False, "governed": True}
     return {
         "runtime": deps.temporal_scheduler.summary(),
         "store": deps.temporal_scheduler_store.summary(),
+        "background": background,
         "governed": True,
     }
