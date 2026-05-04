@@ -113,18 +113,18 @@ def validate_sandbox_execution_receipt(
         receipt_id=receipt_id,
         capability_id=capability_id,
         verification_status=verification_status,
-        detail=f"sandbox receipt verified: {receipt_id}",
+        detail="sandbox receipt verified",
         blockers=(),
     )
 
 
 def _load_payload(path: Path) -> tuple[dict[str, Any], str]:
     if not path.exists():
-        return {}, f"sandbox receipt file not found: {path}"
+        return {}, "sandbox receipt file not found"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        return {}, f"sandbox receipt unreadable: {type(exc).__name__}"
+    except (OSError, json.JSONDecodeError):
+        return {}, "sandbox receipt unreadable"
     if not isinstance(payload, dict):
         return {}, "sandbox receipt root must be an object"
     return payload, ""
@@ -203,9 +203,10 @@ def _invalid(
     detail: str,
     blockers: tuple[str, ...],
 ) -> SandboxReceiptValidation:
+    del path
     return SandboxReceiptValidation(
         valid=False,
-        receipt_path=str(path),
+        receipt_path="",
         status="failed",
         receipt_id="",
         capability_id="",

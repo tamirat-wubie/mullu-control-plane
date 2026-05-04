@@ -125,6 +125,20 @@ jobs:
       - name: Validate deployment publication closure
         run: python scripts/validate_deployment_publication_closure.py
 
+      - name: Validate Reflex deployment witness replay
+        run: |
+          mkdir -p .change_assurance
+          python -m pytest tests/test_validate_reflex_deployment_witness.py -q --junitxml=.change_assurance/reflex_deployment_witness_validator_junit.xml
+          python scripts/emit_reflex_deployment_witness_validator_receipt.py --junit .change_assurance/reflex_deployment_witness_validator_junit.xml --output .change_assurance/reflex_deployment_witness_validator_receipt.json --json
+
+      - name: Upload Reflex deployment witness validator receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: reflex-deployment-witness-validator-receipt
+          path: |
+            .change_assurance/reflex_deployment_witness_validator_junit.xml
+            .change_assurance/reflex_deployment_witness_validator_receipt.json
+
       - name: Validate general-agent promotion closure plan
         run: |
           python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json
