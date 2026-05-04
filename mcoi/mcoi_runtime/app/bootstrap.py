@@ -4,7 +4,7 @@ Dependencies: execution-slice adapters, runtime-core boundaries, and local app c
 Invariants:
   - bootstrap constructs deterministic wiring only.
   - bootstrap never executes commands or observes the live machine.
-  - persisted memory, job, workforce, and queue restore are explicit and read-only during bootstrap.
+  - persisted memory, workflow, job, workforce, and queue restore are explicit and read-only during bootstrap.
 """
 
 from __future__ import annotations
@@ -137,6 +137,7 @@ def bootstrap_runtime(
     workforce_store: WorkforceStore | None = None,
     memory_store: MemoryStore | None = None,
     restore_memory: bool = False,
+    restore_workflows: bool = False,
     restore_jobs: bool = False,
     restore_work_queue: bool = False,
     restore_team_queue: bool = False,
@@ -147,6 +148,8 @@ def bootstrap_runtime(
 
     if restore_memory and memory_store is None:
         raise RuntimeCoreInvariantError("restore_memory requires a memory_store")
+    if restore_workflows and workflow_store is None:
+        raise RuntimeCoreInvariantError("restore_workflows requires a workflow_store")
     if restore_jobs and job_store is None:
         raise RuntimeCoreInvariantError("restore_jobs requires a job_store")
     if restore_work_queue and work_queue_store is None:
@@ -225,6 +228,9 @@ def bootstrap_runtime(
     else:
         working_memory = WorkingMemory()
         episodic_memory = EpisodicMemory()
+
+    if restore_workflows and workflow_store is not None:
+        workflow_store.restore_state(workflow_engine_inst)
 
     if restore_jobs and job_store is not None:
         job_store.restore_state(job_engine)

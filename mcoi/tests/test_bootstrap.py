@@ -29,7 +29,17 @@ from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
+from mcoi_runtime.persistence.workflow_store import WorkflowStore
 from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
+from mcoi_runtime.contracts.workflow import (
+    StageExecutionResult,
+    StageStatus,
+    StageType,
+    WorkflowDescriptor,
+    WorkflowExecutionRecord,
+    WorkflowStage,
+    WorkflowStatus,
+)
 
 
 def test_bootstrap_runtime_returns_wired_components_without_side_effects() -> None:
@@ -217,6 +227,92 @@ def test_bootstrap_runtime_restores_jobs_only_when_explicit(tmp_path: Path) -> N
 def test_bootstrap_runtime_rejects_job_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="job_store"):
         bootstrap_runtime(restore_jobs=True)
+
+
+def test_bootstrap_runtime_does_not_restore_workflows_implicitly(tmp_path: Path) -> None:
+    workflow_store = WorkflowStore(tmp_path / "workflows")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    descriptor = WorkflowDescriptor(
+        workflow_id="workflow-1",
+        name="Persisted Workflow",
+        stages=(WorkflowStage(stage_id="stage-1", stage_type=StageType.OBSERVATION),),
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    record = WorkflowExecutionRecord(
+        workflow_id="workflow-1",
+        execution_id="wf-exec-1",
+        status=WorkflowStatus.SUSPENDED,
+        stage_results=(
+            StageExecutionResult(
+                stage_id="stage-1",
+                status=StageStatus.COMPLETED,
+                output={"result": "ok"},
+                started_at="2026-03-18T12:00:01+00:00",
+                completed_at="2026-03-18T12:00:02+00:00",
+            ),
+        ),
+        started_at="2026-03-18T12:00:00+00:00",
+        completed_at="2026-03-18T12:00:02+00:00",
+    )
+    source_runtime.workflow_engine.restore_descriptor(descriptor)
+    source_runtime.workflow_engine.restore_execution_record(record)
+    before = workflow_store.save_state(source_runtime.workflow_engine)
+
+    runtime = bootstrap_runtime(workflow_store=workflow_store)
+
+    after = workflow_store.save_state(source_runtime.workflow_engine)
+    assert runtime.workflow_store is workflow_store
+    assert runtime.workflow_engine.list_workflow_descriptors() == ()
+    assert runtime.workflow_engine.list_execution_records() == ()
+    assert before == after
+
+
+def test_bootstrap_runtime_restores_workflows_only_when_explicit(tmp_path: Path) -> None:
+    workflow_store = WorkflowStore(tmp_path / "workflows")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    descriptor = WorkflowDescriptor(
+        workflow_id="workflow-1",
+        name="Persisted Workflow",
+        stages=(WorkflowStage(stage_id="stage-1", stage_type=StageType.OBSERVATION),),
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    record = WorkflowExecutionRecord(
+        workflow_id="workflow-1",
+        execution_id="wf-exec-1",
+        status=WorkflowStatus.SUSPENDED,
+        stage_results=(
+            StageExecutionResult(
+                stage_id="stage-1",
+                status=StageStatus.COMPLETED,
+                output={"result": "ok"},
+                started_at="2026-03-18T12:00:01+00:00",
+                completed_at="2026-03-18T12:00:02+00:00",
+            ),
+        ),
+        started_at="2026-03-18T12:00:00+00:00",
+        completed_at="2026-03-18T12:00:02+00:00",
+    )
+    source_runtime.workflow_engine.restore_descriptor(descriptor)
+    source_runtime.workflow_engine.restore_execution_record(record)
+    workflow_store.save_state(source_runtime.workflow_engine)
+
+    runtime = bootstrap_runtime(
+        workflow_store=workflow_store,
+        restore_workflows=True,
+    )
+
+    restored_descriptor = runtime.workflow_engine.get_workflow_descriptor("workflow-1")
+    restored_record = runtime.workflow_engine.get_execution_record("wf-exec-1")
+    assert runtime.workflow_store is workflow_store
+    assert restored_descriptor is not None
+    assert restored_descriptor.name == "Persisted Workflow"
+    assert restored_record is not None
+    assert restored_record.status is WorkflowStatus.SUSPENDED
+
+
+def test_bootstrap_runtime_rejects_workflow_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="workflow_store"):
+        bootstrap_runtime(restore_workflows=True)
 
 
 def test_bootstrap_runtime_does_not_restore_team_queue_implicitly(tmp_path: Path) -> None:

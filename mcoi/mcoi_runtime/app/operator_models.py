@@ -233,6 +233,7 @@ class CoordinationRecoveryRequest:
 
     request_id: str
     subject_id: str
+    restore_workflows: bool = False
     restore_jobs: bool = False
     restore_work_queue: bool = False
     restore_team_queue: bool = False
@@ -246,6 +247,7 @@ class CoordinationRecoveryRequest:
             if not isinstance(value, str) or not value.strip():
                 raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
         for field_name in (
+            "restore_workflows",
             "restore_jobs",
             "restore_work_queue",
             "restore_team_queue",

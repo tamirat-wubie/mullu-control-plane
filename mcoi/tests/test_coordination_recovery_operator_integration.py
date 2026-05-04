@@ -4,7 +4,7 @@ Dependencies: app bootstrap/operator facade, persistence stores, and autonomy en
 Invariants:
   - bundled recovery restores in explicit fixed order only after preflight passes.
   - cross-store identity mismatches fail closed before mutation.
-  - workflow inventory inspection never pretends to restore in-memory workflow state.
+  - workflow runtime restore is explicit and occurs before dependent job restore.
 """
 
 from __future__ import annotations
@@ -174,6 +174,7 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
         CoordinationRecoveryRequest(
             request_id="coordination-recovery-1",
             subject_id="subject-1",
+            restore_workflows=True,
             restore_jobs=True,
             restore_work_queue=True,
             restore_team_queue=True,
@@ -182,13 +183,19 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
         )
     )
 
-    assert report.restored_components == ("jobs", "work_queue", "team_queue", "workforce")
-    assert report.inspected_components == (
+    assert report.restored_components == (
+        "workflows",
         "jobs",
         "work_queue",
         "team_queue",
         "workforce",
+    )
+    assert report.inspected_components == (
         "workflow_store",
+        "jobs",
+        "work_queue",
+        "team_queue",
+        "workforce",
     )
     assert report.policy_status == "allow"
     assert report.cross_store_checks_passed is True
@@ -201,6 +208,8 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
     assert report.workflow_descriptor_count == 1
     assert report.workflow_execution_count == 1
     assert report.errors == ()
+    assert runtime.workflow_engine.get_workflow_descriptor("workflow-1") is not None
+    assert runtime.workflow_engine.get_execution_record("wf-exec-1") is not None
     assert runtime.job_engine.get_job_descriptor("job-1") is not None
     assert runtime.work_queue.get("entry-1") is not None
     assert runtime.team_engine.get_queue_state("team-a") is not None
@@ -255,6 +264,32 @@ def test_recover_coordination_state_fails_closed_on_invalid_workflow_inventory(t
         "coordination_store_not_available",
         "workflow_store_invalid",
     }
+
+
+def test_recover_coordination_state_restores_workflow_runtime_before_jobs(tmp_path: Path) -> None:
+    job_store = _seed_job_store(tmp_path / "jobs")
+    workflow_store = _seed_workflow_store(tmp_path / "workflows")
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        job_store=job_store,
+        workflow_store=workflow_store,
+    )
+    loop = OperatorLoop(runtime)
+
+    report = loop.recover_coordination_state(
+        CoordinationRecoveryRequest(
+            request_id="coordination-recovery-3b",
+            subject_id="subject-1",
+            restore_workflows=True,
+            restore_jobs=True,
+        )
+    )
+
+    assert report.restored_components == ("workflows", "jobs")
+    assert report.cross_store_checks_passed is True
+    assert runtime.workflow_engine.get_workflow_descriptor("workflow-1") is not None
+    assert runtime.workflow_engine.get_execution_record("wf-exec-1") is not None
+    assert runtime.job_engine.get_job_descriptor("job-1") is not None
 
 
 def test_recover_coordination_state_restore_is_blocked_when_approval_is_required(tmp_path: Path) -> None:

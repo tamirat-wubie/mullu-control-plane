@@ -27,6 +27,7 @@ from mcoi_runtime.contracts.workflow import (
     StageStatus,
 )
 from mcoi_runtime.persistence.errors import PersistenceError
+from mcoi_runtime.persistence.workflow_store import WorkflowRuntimeState
 from mcoi_runtime.core.errors import (
     Recoverability,
     SourcePlane,
@@ -952,30 +953,8 @@ def _load_workflow_inventory(loop: OperatorLoop) -> tuple[tuple[object, ...], tu
     store = loop.runtime.workflow_store
     if store is None:
         raise PersistenceError("workflow store not configured")
-    descriptors = tuple(
-        store.load_descriptor(workflow_id)
-        for workflow_id in store.list_descriptors()
-    )
-    executions = tuple(
-        store.load_execution_record(execution_id)
-        for execution_id in store.list_executions()
-    )
-    descriptor_ids = {descriptor.workflow_id for descriptor in descriptors}
-    missing_workflow_ids = tuple(
-        sorted(
-            {
-                execution.workflow_id
-                for execution in executions
-                if execution.workflow_id not in descriptor_ids
-            }
-        )
-    )
-    if missing_workflow_ids:
-        raise RuntimeCoreInvariantError(
-            "workflow execution record references missing workflow descriptor: "
-            + ", ".join(missing_workflow_ids)
-        )
-    return descriptors, executions
+    state = store.load_state()
+    return state.descriptors, state.execution_records
 
 
 def _coordination_consistency_errors(
@@ -1054,6 +1033,7 @@ def recover_coordination_state(
     started_at = loop.runtime.clock()
     has_write_effects = any(
         (
+            request.restore_workflows,
             request.restore_jobs,
             request.restore_work_queue,
             request.restore_team_queue,
@@ -1158,6 +1138,7 @@ def recover_coordination_state(
 
     inspected_components: list[str] = []
     restored_components: list[str] = []
+    workflow_state: WorkflowRuntimeState | None = None
     job_state = None
     work_queue_state = None
     team_queue_states = None
@@ -1166,6 +1147,13 @@ def recover_coordination_state(
     workflow_executions: tuple[object, ...] | None = None
 
     try:
+        if request.restore_workflows:
+            if loop.runtime.workflow_store is None:
+                raise PersistenceError("workflow store not configured")
+            workflow_state = loop.runtime.workflow_store.load_state()
+            workflow_descriptors = workflow_state.descriptors
+            workflow_executions = workflow_state.execution_records
+            inspected_components.append("workflow_store")
         if request.restore_jobs:
             if loop.runtime.job_store is None:
                 raise PersistenceError("job store not configured")
@@ -1186,7 +1174,7 @@ def recover_coordination_state(
                 raise PersistenceError("workforce store not configured")
             workforce_state = loop.runtime.workforce_store.load_state()
             inspected_components.append("workforce")
-        if request.inspect_workflow_store:
+        if request.inspect_workflow_store and workflow_state is None:
             workflow_descriptors, workflow_executions = _load_workflow_inventory(loop)
             inspected_components.append("workflow_store")
     except PersistenceError as exc:
@@ -1279,16 +1267,29 @@ def recover_coordination_state(
             )
 
     try:
+        if request.restore_workflows:
+            if loop.runtime.workflow_store is None:
+                raise PersistenceError("workflow store not configured")
+            loop.runtime.workflow_store.restore_state(loop.runtime.workflow_engine)
+            restored_components.append("workflows")
         if request.restore_jobs:
+            if loop.runtime.job_store is None:
+                raise PersistenceError("job store not configured")
             loop.runtime.job_store.restore_state(loop.runtime.job_engine)
             restored_components.append("jobs")
         if request.restore_work_queue:
+            if loop.runtime.work_queue_store is None:
+                raise PersistenceError("work queue store not configured")
             loop.runtime.work_queue_store.restore_state(loop.runtime.work_queue)
             restored_components.append("work_queue")
         if request.restore_team_queue:
+            if loop.runtime.team_queue_store is None:
+                raise PersistenceError("team queue store not configured")
             loop.runtime.team_queue_store.restore_queue_states(loop.runtime.team_engine)
             restored_components.append("team_queue")
         if request.restore_workforce:
+            if loop.runtime.workforce_store is None:
+                raise PersistenceError("workforce store not configured")
             loop.runtime.workforce_store.restore_state(loop.runtime.workforce_engine)
             restored_components.append("workforce")
     except (PersistenceError, RuntimeCoreInvariantError) as exc:
