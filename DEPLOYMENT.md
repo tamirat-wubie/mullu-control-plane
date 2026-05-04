@@ -53,6 +53,7 @@
 | `MULLU_REQUIRE_COMMAND_ANCHOR` | profile-based | Require command-event anchor signing. Defaults to true in `pilot` and `production` |
 | `MULLU_RUNTIME_WITNESS_SECRET` | unset | HMAC secret used by `/gateway/witness` and `/runtime/witness` |
 | `MULLU_RUNTIME_WITNESS_KEY_ID` | `runtime-witness-local` | Key identifier recorded on runtime witness objects |
+| `MULLU_RUNTIME_CONFORMANCE_SECRET` | unset | HMAC secret used to verify runtime conformance witness collection |
 | `MULLU_CAPABILITY_WORKER_URL` | unset | Restricted worker endpoint for dangerous capability execution, for example `http://capability-worker:8010/capability/execute` |
 | `MULLU_CAPABILITY_WORKER_SECRET` | unset | HMAC secret shared by gateway and restricted capability worker |
 | `MULLU_CAPABILITY_WORKER_TIMEOUT_SECONDS` | `10.0` | HTTP timeout for restricted capability worker calls |
@@ -414,31 +415,34 @@ The worker services expose:
 10. If approvals are deferred, run `python -m gateway.worker` beside the gateway with PostgreSQL command ledger storage
 11. Set `MULLU_TENANT_IDENTITY_BACKEND=postgresql` so channel identities resolve from durable storage
 12. Set `MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY=true` so gateway startup fails closed if identity storage is unavailable
-13. Set `MULLU_COMMAND_ANCHOR_SECRET` for signed command-event batch anchors
-14. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
-15. Run `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` and set the same `MULLU_RUNTIME_WITNESS_SECRET` value in the deployed gateway runtime
-16. Run `python scripts/provision_deployment_target.py --gateway-url "<deployed-gateway-url>" --expected-environment production`
-17. Run `python scripts/render_gateway_ingress.py --gateway-host "<gateway-dns-host>" --apply`
-18. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
-19. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
-20. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
-21. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
-22. Set `MULLU_BROWSER_WORKER_URL`, `MULLU_BROWSER_WORKER_SECRET`, `MULLU_DOCUMENT_WORKER_URL`, `MULLU_DOCUMENT_WORKER_SECRET`, `MULLU_VOICE_WORKER_URL`, `MULLU_VOICE_WORKER_SECRET`, `MULLU_EMAIL_CALENDAR_WORKER_URL`, and `MULLU_EMAIL_CALENDAR_WORKER_SECRET` on gateway and gateway worker before enabling adapter-backed capabilities
-23. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO"` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
-24. Run `python scripts/collect_capability_adapter_evidence.py --strict` after browser, document, voice, and email/calendar live receipts are available
-25. If adapter evidence is not closed, run `python scripts/plan_capability_adapter_closure.py --json` and resolve every generated dependency, credential, and live-receipt action before promotion
-26. Run `python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json` to write the current promotion-readiness artifact
-27. If deployment witness or public health blockers remain, run `python scripts/plan_deployment_publication_closure.py --json`
-28. Run `python scripts/plan_general_agent_promotion_closure.py --json`, `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict`, and `python scripts/validate_general_agent_promotion_closure_plan.py --strict` before executing promotion closure actions
-29. Run `python scripts/validate_general_agent_promotion.py --strict` before claiming production general-agent readiness
+13. Set `MULLU_COMMAND_LEDGER_DB_URL` when command ledger storage uses a dedicated database URL
+14. Set `MULLU_COMMAND_ANCHOR_SECRET` and `MULLU_COMMAND_ANCHOR_KEY_ID` for signed command-event batch anchors
+15. Set `MULLU_REQUIRE_COMMAND_ANCHOR=true` so `gateway.worker` fails closed if anchor signing is unavailable
+16. Set `MULLU_GATEWAY_APPROVAL_SECRET` for approval callbacks and deferred execution admission
+17. Run `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` and set the same `MULLU_RUNTIME_WITNESS_SECRET` value in the deployed gateway runtime
+18. Set `MULLU_RUNTIME_CONFORMANCE_SECRET` in the deployed gateway runtime and witness collector
+19. Run `python scripts/provision_deployment_target.py --gateway-url "<deployed-gateway-url>" --expected-environment production`
+20. Run `python scripts/render_gateway_ingress.py --gateway-host "<gateway-dns-host>" --apply`
+21. Run `gateway.capability_worker:app` outside the gateway process for dangerous capability execution
+22. Set `MULLU_CAPABILITY_WORKER_URL` and `MULLU_CAPABILITY_WORKER_SECRET` on gateway and gateway worker
+23. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
+24. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
+25. Set `MULLU_BROWSER_WORKER_URL`, `MULLU_BROWSER_WORKER_SECRET`, `MULLU_DOCUMENT_WORKER_URL`, `MULLU_DOCUMENT_WORKER_SECRET`, `MULLU_VOICE_WORKER_URL`, `MULLU_VOICE_WORKER_SECRET`, `MULLU_EMAIL_CALENDAR_WORKER_URL`, and `MULLU_EMAIL_CALENDAR_WORKER_SECRET` on gateway and gateway worker before enabling adapter-backed capabilities
+26. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO"` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
+27. Run `python scripts/collect_capability_adapter_evidence.py --strict` after browser, document, voice, and email/calendar live receipts are available
+28. If adapter evidence is not closed, run `python scripts/plan_capability_adapter_closure.py --json` and resolve every generated dependency, credential, and live-receipt action before promotion
+29. Run `python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json` to write the current promotion-readiness artifact
+30. If deployment witness or public health blockers remain, run `python scripts/plan_deployment_publication_closure.py --json`
+31. Run `python scripts/plan_general_agent_promotion_closure.py --json`, `python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict`, and `python scripts/validate_general_agent_promotion_closure_plan.py --strict` before executing promotion closure actions
+32. Run `python scripts/validate_general_agent_promotion.py --strict` before claiming production general-agent readiness
 
 ## Startup Behavior
 
 On startup, the platform:
 
 1. Creates the persistence store (memory, SQLite, or PostgreSQL)
-2. Warns if `MULLU_DB_BACKEND=memory` in non-dev environments
-3. Warns if `MULLU_CORS_ORIGINS` is empty in production
+2. Fails closed if `MULLU_DB_BACKEND` is not `postgresql` in pilot/production
+3. Fails closed if `MULLU_API_AUTH_REQUIRED`, `MULLU_CORS_ORIGINS`, durable DB URLs, command anchors, approval secrets, runtime witness/conformance secrets, or restricted capability-worker bindings are missing in pilot/production
 4. Fails closed if production PostgreSQL starts without field encryption enabled
 5. Fails closed if pilot/production gateway identity storage is not persistent and available
 6. Fails closed if pilot/production `gateway.worker` lacks command anchor signing material
