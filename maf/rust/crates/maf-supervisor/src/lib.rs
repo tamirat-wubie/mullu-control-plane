@@ -14,7 +14,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Enums
@@ -111,7 +111,7 @@ pub struct SupervisorDecision {
     pub governance_approved: bool,
     pub decided_at: String,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
 }
 
 /// Immutable record of one supervisor tick cycle.
@@ -278,11 +278,31 @@ mod tests {
             reason: "pending obligation".to_string(),
             governance_approved: true,
             decided_at: "2025-01-01T00:00:00+00:00".to_string(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&decision).unwrap();
         let back: SupervisorDecision = serde_json::from_str(&json).unwrap();
         assert_eq!(decision, back);
+    }
+
+    #[test]
+    fn supervisor_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".to_string(), serde_json::json!(1));
+        metadata.insert("alpha".to_string(), serde_json::json!(2));
+        let decision = SupervisorDecision {
+            decision_id: "d-ordered".to_string(),
+            action_type: "checkpoint".to_string(),
+            target_id: "runtime".to_string(),
+            reason: "deterministic serialization check".to_string(),
+            governance_approved: true,
+            decided_at: "2025-01-01T00:00:00+00:00".to_string(),
+            metadata,
+        };
+
+        let json = serde_json::to_string(&decision).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     #[test]

@@ -16,7 +16,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Simulation
@@ -120,7 +120,7 @@ pub mod simulation {
         pub comparison_id: String,
         pub request_id: String,
         pub ranked_option_ids: Vec<String>,
-        pub scores: HashMap<String, f64>,
+        pub scores: BTreeMap<String, f64>,
         pub top_risk_level: RiskLevel,
         pub review_burden: f64,
     }
@@ -210,7 +210,7 @@ pub mod utility {
         pub option_id: String,
         pub raw_score: f64,
         pub weighted_score: f64,
-        pub factor_contributions: HashMap<String, f64>,
+        pub factor_contributions: BTreeMap<String, f64>,
         pub rank: u64,
     }
 
@@ -357,10 +357,10 @@ pub mod benchmark {
         pub name: String,
         pub description: String,
         pub category: BenchmarkCategory,
-        pub inputs: HashMap<String, serde_json::Value>,
+        pub inputs: BTreeMap<String, serde_json::Value>,
         pub expected_outcome: BenchmarkOutcome,
         #[serde(default)]
-        pub expected_properties: HashMap<String, serde_json::Value>,
+        pub expected_properties: BTreeMap<String, serde_json::Value>,
         #[serde(default)]
         pub tags: Vec<String>,
         #[serde(default = "default_timeout")]
@@ -397,7 +397,7 @@ pub mod benchmark {
         pub scenario_id: String,
         pub outcome: BenchmarkOutcome,
         pub metrics: Vec<BenchmarkMetric>,
-        pub actual_properties: HashMap<String, serde_json::Value>,
+        pub actual_properties: BTreeMap<String, serde_json::Value>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub error_message: Option<String>,
         #[serde(default)]
@@ -414,7 +414,7 @@ pub mod benchmark {
         pub started_at: String,
         pub finished_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -426,7 +426,7 @@ pub mod benchmark {
         pub severity: AdversarialSeverity,
         pub target_subsystem: BenchmarkCategory,
         pub attack_vector: String,
-        pub inputs: HashMap<String, serde_json::Value>,
+        pub inputs: BTreeMap<String, serde_json::Value>,
         pub expected_behavior: String,
         #[serde(default)]
         pub tags: Vec<String>,
@@ -511,7 +511,7 @@ pub mod graph {
         pub label: String,
         pub created_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -523,7 +523,7 @@ pub mod graph {
         pub label: String,
         pub created_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -645,6 +645,25 @@ mod tests {
         assert_eq!(v, back);
     }
 
+    #[test]
+    fn simulation_scores_serialize_in_lexicographic_key_order() {
+        let mut scores = BTreeMap::new();
+        scores.insert("zeta".to_string(), 1.0);
+        scores.insert("alpha".to_string(), 2.0);
+        let comparison = simulation::SimulationComparison {
+            comparison_id: "cmp-1".into(),
+            request_id: "req-1".into(),
+            ranked_option_ids: vec!["alpha".into(), "zeta".into()],
+            scores,
+            top_risk_level: simulation::RiskLevel::Low,
+            review_burden: 1.0,
+        };
+
+        let json = serde_json::to_string(&comparison).unwrap();
+        assert!(json.contains(r#""scores":{"alpha":2.0,"zeta":1.0}"#));
+        assert!(json.find(r#""alpha":2.0"#).unwrap() < json.find(r#""zeta":1.0"#).unwrap());
+    }
+
     // --- Utility ---
 
     #[test]
@@ -725,6 +744,28 @@ mod tests {
         assert_eq!(sc, back);
     }
 
+    #[test]
+    fn benchmark_inputs_serialize_in_lexicographic_key_order() {
+        let mut inputs = BTreeMap::new();
+        inputs.insert("zeta".to_string(), serde_json::json!(1));
+        inputs.insert("alpha".to_string(), serde_json::json!(2));
+        let scenario = benchmark::BenchmarkScenario {
+            scenario_id: "scenario-1".into(),
+            name: "Governed benchmark".into(),
+            description: "Checks deterministic input ordering".into(),
+            category: benchmark::BenchmarkCategory::Governance,
+            inputs,
+            expected_outcome: benchmark::BenchmarkOutcome::Pass,
+            expected_properties: BTreeMap::new(),
+            tags: vec![],
+            timeout_ms: 30000,
+        };
+
+        let json = serde_json::to_string(&scenario).unwrap();
+        assert!(json.contains(r#""inputs":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
     // --- Graph ---
 
     #[test]
@@ -746,7 +787,7 @@ mod tests {
             node_type: graph::NodeType::Job,
             label: "Deploy service".into(),
             created_at: "2025-01-01T00:00:00+00:00".into(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&node).unwrap();
         let back: graph::OperationalNode = serde_json::from_str(&json).unwrap();
