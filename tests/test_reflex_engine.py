@@ -26,6 +26,7 @@ from mcoi_runtime.contracts.reflex import (
     RuntimeHealthSnapshot,
 )
 from mcoi_runtime.core.reflex import (
+    build_canary_handoff,
     build_certification_handoff,
     build_reflex_change_command,
     build_sandbox_bundle,
@@ -139,6 +140,38 @@ def test_low_risk_provider_routing_candidate_can_reach_auto_canary_after_gates()
     assert decision.disposition is ReflexPromotionDisposition.AUTO_CANARY_ALLOWED
     assert decision.requires_human_approval is False
     assert decision.protected_surface is False
+
+
+def test_low_risk_candidate_builds_non_mutating_canary_handoff() -> None:
+    snapshot = _snapshot(premium_model_low_risk_requests=4)
+    diagnosis = diagnose_anomaly(detect_anomalies(snapshot)[0], snapshot)
+    eval_cases = generate_eval_cases(diagnosis)
+    candidate = propose_upgrade(diagnosis, eval_cases)
+    bundle = build_sandbox_bundle(candidate, eval_cases)
+
+    handoff = build_canary_handoff(candidate, bundle, _certificate())
+
+    assert handoff.mutation_applied is False
+    assert handoff.deployment_witness_required is True
+    assert handoff.promotion_decision.disposition is ReflexPromotionDisposition.AUTO_CANARY_ALLOWED
+    assert "deploy_canary" in handoff.canary_steps
+    assert "publish_deployment_witness" in handoff.canary_steps
+
+
+def test_protected_candidate_canary_handoff_routes_to_human_approval() -> None:
+    snapshot = _snapshot(unverified_executions=1)
+    diagnosis = diagnose_anomaly(detect_anomalies(snapshot)[0], snapshot)
+    eval_cases = generate_eval_cases(diagnosis)
+    candidate = propose_upgrade(diagnosis, eval_cases)
+    bundle = build_sandbox_bundle(candidate, eval_cases)
+
+    handoff = build_canary_handoff(candidate, bundle, _certificate())
+
+    assert handoff.mutation_applied is False
+    assert handoff.promotion_decision.disposition is ReflexPromotionDisposition.HUMAN_APPROVAL_REQUIRED
+    assert handoff.promotion_decision.protected_surface is True
+    assert "open_human_approval_case" in handoff.canary_steps
+    assert "attach_sandbox_bundle" in handoff.canary_steps
 
 
 def test_certificate_or_sandbox_failure_rejects_candidate_before_promotion() -> None:

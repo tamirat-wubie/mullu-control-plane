@@ -17,9 +17,8 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
-import json
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from mcoi_runtime.contracts.proof import (
@@ -35,9 +34,7 @@ from mcoi_runtime.contracts.receipt_store import (
 )
 from mcoi_runtime.contracts.state_machine import (
     StateMachineSpec,
-    TransitionAuditRecord,
     TransitionRule,
-    TransitionVerdict,
 )
 
 
@@ -160,6 +157,7 @@ class ProofBridge:
                 guard_id=g.get("guard_name", "unknown"),
                 passed=g.get("allowed", False),
                 reason=g.get("reason", ""),
+                detail=g.get("detail", {}),
             )
             for g in guard_results
         )

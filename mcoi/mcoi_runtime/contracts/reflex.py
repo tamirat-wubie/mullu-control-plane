@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
-from .change_assurance import ChangeCommand
+from .change_assurance import ChangeCertificate, ChangeCommand
 from ._base import (
     ContractRecord,
     freeze_value,
@@ -373,6 +373,91 @@ class ReflexCertificationHandoff(ContractRecord):
             raise ValueError("mutation_applied must be a boolean")
         if self.mutation_applied:
             raise ValueError("reflex certification handoff cannot apply mutation")
+
+
+@dataclass(frozen=True, slots=True)
+class ReflexCanaryHandoff(ContractRecord):
+    candidate_id: str = ""
+    sandbox_bundle: ReflexSandboxBundle | None = None
+    certificate: ChangeCertificate | None = None
+    promotion_decision: ReflexPromotionDecision | None = None
+    canary_steps: tuple[str, ...] = ()
+    rollback_plan_ref: str = ""
+    deployment_witness_required: bool = True
+    mutation_applied: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "candidate_id",
+            require_non_empty_text(self.candidate_id, "candidate_id"),
+        )
+        if not isinstance(self.sandbox_bundle, ReflexSandboxBundle):
+            raise ValueError("sandbox_bundle must be a ReflexSandboxBundle")
+        if self.sandbox_bundle.candidate_id != self.candidate_id:
+            raise ValueError("sandbox_bundle candidate_id must match handoff candidate_id")
+        if not isinstance(self.certificate, ChangeCertificate):
+            raise ValueError("certificate must be a ChangeCertificate")
+        if not isinstance(self.promotion_decision, ReflexPromotionDecision):
+            raise ValueError("promotion_decision must be a ReflexPromotionDecision")
+        if self.promotion_decision.candidate_id != self.candidate_id:
+            raise ValueError("promotion_decision candidate_id must match handoff candidate_id")
+        object.__setattr__(self, "canary_steps", freeze_value(list(self.canary_steps)))
+        if not self.canary_steps:
+            raise ValueError("canary_steps must not be empty")
+        object.__setattr__(
+            self,
+            "rollback_plan_ref",
+            require_non_empty_text(self.rollback_plan_ref, "rollback_plan_ref"),
+        )
+        if not isinstance(self.deployment_witness_required, bool):
+            raise ValueError("deployment_witness_required must be a boolean")
+        if not isinstance(self.mutation_applied, bool):
+            raise ValueError("mutation_applied must be a boolean")
+        if self.mutation_applied:
+            raise ValueError("reflex canary handoff cannot apply mutation")
+
+
+@dataclass(frozen=True, slots=True)
+class ReflexDeploymentWitness(ContractRecord):
+    witness_id: str = ""
+    candidate_id: str = ""
+    certificate_id: str = ""
+    promotion_decision_id: str = ""
+    target_environment: str = "canary"
+    canary_status: str = "planned"
+    health_refs: tuple[ReflexEvidenceRef, ...] = ()
+    rollback_plan_ref: str = ""
+    signed_at: str = ""
+    signature_key_id: str = ""
+    signature: str = ""
+    production_mutation_applied: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "witness_id",
+            "candidate_id",
+            "certificate_id",
+            "promotion_decision_id",
+            "target_environment",
+            "canary_status",
+            "rollback_plan_ref",
+            "signature_key_id",
+            "signature",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        object.__setattr__(self, "signed_at", require_datetime_text(self.signed_at, "signed_at"))
+        object.__setattr__(self, "health_refs", freeze_value(list(self.health_refs)))
+        if not self.health_refs:
+            raise ValueError("health_refs must not be empty")
+        if not isinstance(self.production_mutation_applied, bool):
+            raise ValueError("production_mutation_applied must be a boolean")
+        if self.production_mutation_applied:
+            raise ValueError("reflex deployment witness cannot claim production mutation")
 
 
 @dataclass(frozen=True, slots=True)

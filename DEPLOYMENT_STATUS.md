@@ -131,6 +131,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
 | Adapter worker signed dispatch test | `python -m pytest tests/test_gateway/test_adapter_worker_clients.py tests/test_gateway/test_adapter_worker_dispatch.py` |
 | Browser sandbox evidence production | `python scripts/produce_browser_sandbox_evidence.py --output "$MULLU_BROWSER_SANDBOX_EVIDENCE" --strict` |
+| Sandbox execution receipt validation | `python scripts/validate_sandbox_execution_receipt.py --receipt "$MULLU_BROWSER_SANDBOX_EVIDENCE" --capability-prefix browser. --require-no-workspace-changes --json` |
 | Browser sandbox evidence validation | `python scripts/validate_browser_sandbox_evidence.py --evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --json` |
 | Capability adapter live receipt production | `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO"` |
 | Capability adapter evidence collection | `python scripts/collect_capability_adapter_evidence.py --strict` |

@@ -77,6 +77,7 @@ REQUIRED_STEP_COMMAND_TOKENS = {
     ),
     "produce_live_adapter_receipts": (
         "produce_browser_sandbox_evidence.py",
+        "validate_sandbox_execution_receipt.py",
         "validate_browser_sandbox_evidence.py",
         "produce_capability_adapter_live_receipts.py",
         "--browser-sandbox-evidence",
@@ -109,6 +110,7 @@ REQUIRED_STEP_EVIDENCE = {
     }),
     "produce_live_adapter_receipts": frozenset({
         "browser_sandbox_evidence.json verification_status=passed",
+        "sandbox execution receipt validation valid=true",
         "browser_sandbox_evidence validation valid=true",
         "browser_live_receipt.json status=passed",
         "voice_live_receipt.json status=passed",

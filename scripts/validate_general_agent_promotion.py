@@ -229,7 +229,7 @@ def evaluate_deployment_publication(
     *,
     deployment_status_path: Path,
     deployment_witness_path: Path,
-) -> tuple[PromotionCheck, PromotionCheck]:
+) -> tuple[PromotionCheck, ...]:
     """Evaluate deployment witness and public health evidence for promotion."""
     status_text = _read_text_optional(deployment_status_path)
     deployment_state = _extract_field(status_text, DEPLOYMENT_STATE_PATTERN)
@@ -246,6 +246,18 @@ def evaluate_deployment_publication(
         and deployment_state == "published"
         and not witness_errors
         and not closure_errors
+    )
+    debt_applicable = bool(
+        witness_payload
+        and witness_payload.get("deployment_claim") == "published"
+        and deployment_state == "published"
+        and not witness_errors
+    )
+    runtime_debt_clear = (
+        not debt_applicable or witness_payload.get("runtime_responsibility_debt_clear") is True
+    )
+    authority_debt_clear = (
+        not debt_applicable or witness_payload.get("authority_responsibility_debt_clear") is True
     )
     witness_detail = (
         "deployment witness is published and publication closure validates"
@@ -287,6 +299,32 @@ def evaluate_deployment_publication(
                 str(deployment_witness_path),
             ),
             blocker_id="" if witness_published else "deployment_witness_not_published",
+        ),
+        PromotionCheck(
+            name="deployment runtime responsibility debt",
+            passed=runtime_debt_clear,
+            detail=(
+                "runtime responsibility debt is clear"
+                if runtime_debt_clear
+                else "deployment witness has runtime_responsibility_debt_clear=false"
+            ),
+            evidence_refs=(str(deployment_witness_path),),
+            blocker_id=(
+                "" if runtime_debt_clear else "deployment_runtime_responsibility_debt_present"
+            ),
+        ),
+        PromotionCheck(
+            name="deployment authority responsibility debt",
+            passed=authority_debt_clear,
+            detail=(
+                "authority responsibility debt is clear"
+                if authority_debt_clear
+                else "deployment witness has authority_responsibility_debt_clear=false"
+            ),
+            evidence_refs=(str(deployment_witness_path),),
+            blocker_id=(
+                "" if authority_debt_clear else "deployment_authority_responsibility_debt_present"
+            ),
         ),
         PromotionCheck(
             name="public production health endpoint",

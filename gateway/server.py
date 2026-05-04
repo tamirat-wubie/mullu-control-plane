@@ -20,14 +20,19 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from mcoi_runtime.contracts.change_assurance import ChangeCertificate
 from mcoi_runtime.contracts.reflex import (
+    ReflexCanaryHandoff,
+    ReflexDeploymentWitness,
     ReflexEvidenceRef,
+    ReflexPromotionDisposition,
+    ReflexReplayResult,
+    ReflexSandboxBundle,
     ReflexSandboxResult,
     RuntimeHealthSnapshot,
 )
 from mcoi_runtime.core.reflex import (
+    build_canary_handoff,
     build_certification_handoff,
     build_sandbox_bundle,
-    decide_promotion,
     detect_anomalies,
     diagnose_anomaly,
     generate_eval_cases,
@@ -92,6 +97,12 @@ def create_gateway_app(
     def _clock() -> str:
         return datetime.now(timezone.utc).isoformat()
 
+    def _int_env(name: str, default: int = 0) -> int:
+        try:
+            return int(os.environ.get(name, str(default)))
+        except ValueError:
+            return default
+
     gateway_env = (os.environ.get("MULLU_ENV", "local_dev") or "local_dev").strip().lower()
     approval_secret = os.environ.get("MULLU_GATEWAY_APPROVAL_SECRET", "")
     authority_operator_secret = os.environ.get("MULLU_AUTHORITY_OPERATOR_SECRET", "")
@@ -103,7 +114,17 @@ def create_gateway_app(
         ).split(",")
         if role.strip()
     )
+    deployment_authority_secret = os.environ.get("MULLU_DEPLOYMENT_AUTHORITY_SECRET", "")
+    deployment_authority_roles = tuple(
+        role.strip()
+        for role in os.environ.get(
+            "MULLU_DEPLOYMENT_AUTHORITY_ROLES",
+            "deployment_authority,platform_operator",
+        ).split(",")
+        if role.strip()
+    )
     authority_operator_audit_events: list[dict[str, Any]] = []
+    reflex_deployment_witnesses: list[dict[str, Any]] = []
     defer_approved_execution = (
         os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
         in {"1", "true", "yes", "on"}
@@ -143,6 +164,31 @@ def create_gateway_app(
         _record_authority_operator_audit(request, authorized=authorized)
         if not authorized:
             raise HTTPException(403, detail="Authority operator access not authorized")
+
+    def _deployment_authority_authorized(request: Request) -> bool:
+        """Fail closed outside local and test unless deployment authority is explicit."""
+        if gateway_env in {"local_dev", "test"}:
+            return True
+        provided = request.headers.get("X-Mullu-Deployment-Secret", "")
+        if deployment_authority_secret and hmac.compare_digest(provided, deployment_authority_secret):
+            return True
+        channel = request.headers.get("X-Mullu-Authority-Channel", "").strip()
+        sender_id = request.headers.get("X-Mullu-Authority-Sender-Id", "").strip()
+        if not channel or not sender_id:
+            return False
+        mapping = tenant_identity_store.resolve(channel, sender_id)
+        if mapping is None:
+            return False
+        tenant_id = request.headers.get("X-Mullu-Authority-Tenant-Id", "").strip()
+        if tenant_id and mapping.tenant_id != tenant_id:
+            return False
+        roles = set(mapping.roles)
+        return bool(roles.intersection(deployment_authority_roles))
+
+    def _require_deployment_authority(request: Request) -> None:
+        authorized = _deployment_authority_authorized(request)
+        if not authorized:
+            raise HTTPException(403, detail="Deployment authority access not authorized")
 
     def _record_authority_operator_audit(request: Request, *, authorized: bool) -> None:
         """Record bounded authority operator access without storing bearer secrets."""
@@ -653,6 +699,9 @@ def create_gateway_app(
             "unverified_executions": int(state_counts.get("requires_review", 0)),
             "deployment_witness_missing": missing_deployment_witnesses,
             "missing_deployment_witnesses": missing_deployment_witnesses,
+            "premium_model_low_risk_requests": _int_env(
+                "MULLU_REFLEX_PREMIUM_MODEL_LOW_RISK_REQUESTS"
+            ),
             "terminal_certificates": terminal_certificates,
         }
         return RuntimeHealthSnapshot(
@@ -700,6 +749,112 @@ def create_gateway_app(
             "eval_cases": eval_cases,
             "candidates": candidates,
         }
+
+    def _reflex_evidence_from_payload(payload: dict[str, Any]) -> ReflexEvidenceRef:
+        return ReflexEvidenceRef(
+            kind=str(payload.get("kind", "")).strip(),
+            ref_id=str(payload.get("ref_id", "")).strip(),
+            evidence_hash=payload.get("evidence_hash"),
+        )
+
+    def _reflex_sandbox_result_from_payload(payload: dict[str, Any]) -> ReflexSandboxResult:
+        report_refs = tuple(
+            _reflex_evidence_from_payload(report_ref)
+            for report_ref in payload.get("report_refs", ())
+            if isinstance(report_ref, dict)
+        )
+        return ReflexSandboxResult(
+            candidate_id=str(payload.get("candidate_id", "")).strip(),
+            passed=bool(payload.get("passed", False)),
+            failed_checks=tuple(str(check) for check in payload.get("failed_checks", ())),
+            report_refs=report_refs,
+        )
+
+    def _reflex_replay_from_payload(payload: dict[str, Any]) -> ReflexReplayResult:
+        evidence_payload = payload.get("evidence_ref")
+        if not isinstance(evidence_payload, dict):
+            raise ValueError("replay evidence_ref must be an object")
+        return ReflexReplayResult(
+            replay_id=str(payload.get("replay_id", "")).strip(),
+            passed=bool(payload.get("passed", False)),
+            evidence_ref=_reflex_evidence_from_payload(evidence_payload),
+            detail=str(payload.get("detail", "")).strip(),
+        )
+
+    def _reflex_sandbox_bundle_from_payload(
+        candidate_id: str,
+        payload: dict[str, Any],
+    ) -> ReflexSandboxBundle:
+        bundle_payload = payload.get("sandbox_bundle")
+        if isinstance(bundle_payload, dict):
+            sandbox_payload = bundle_payload.get("sandbox_result")
+            if not isinstance(sandbox_payload, dict):
+                raise ValueError("sandbox_bundle.sandbox_result must be an object")
+            return ReflexSandboxBundle(
+                bundle_id=str(bundle_payload.get("bundle_id", "")).strip(),
+                candidate_id=str(bundle_payload.get("candidate_id", "")).strip(),
+                eval_ids=tuple(str(eval_id) for eval_id in bundle_payload.get("eval_ids", ())),
+                replay_results=tuple(
+                    _reflex_replay_from_payload(replay_payload)
+                    for replay_payload in bundle_payload.get("replay_results", ())
+                    if isinstance(replay_payload, dict)
+                ),
+                sandbox_result=_reflex_sandbox_result_from_payload(sandbox_payload),
+                mutation_applied=bool(bundle_payload.get("mutation_applied", False)),
+            )
+        sandbox_payload = payload.get("sandbox_result")
+        if not isinstance(sandbox_payload, dict):
+            raise ValueError("sandbox_bundle or sandbox_result is required before promotion")
+        return ReflexSandboxBundle(
+            bundle_id=f"sandbox:{candidate_id}",
+            candidate_id=candidate_id,
+            eval_ids=(),
+            replay_results=(),
+            sandbox_result=_reflex_sandbox_result_from_payload(sandbox_payload),
+            mutation_applied=False,
+        )
+
+    def _build_reflex_deployment_witness(
+        handoff: ReflexCanaryHandoff,
+        snapshot: RuntimeHealthSnapshot,
+        *,
+        target_environment: str,
+    ) -> ReflexDeploymentWitness:
+        witness_core = {
+            "candidate_id": handoff.candidate_id,
+            "certificate_id": handoff.certificate.certificate_id,
+            "promotion_decision_id": handoff.promotion_decision.decision_id,
+            "target_environment": target_environment,
+            "canary_status": "planned",
+            "rollback_plan_ref": handoff.rollback_plan_ref,
+            "signed_at": _clock(),
+            "signature_key_id": os.environ.get(
+                "MULLU_REFLEX_DEPLOYMENT_WITNESS_KEY_ID",
+                "reflex-deployment-witness-local",
+            ),
+            "production_mutation_applied": False,
+        }
+        witness_id_seed = json.dumps(
+            {
+                **witness_core,
+                "health_refs": [ref.to_json_dict() for ref in snapshot.evidence_refs],
+            },
+            sort_keys=True,
+        )
+        signature = hmac.new(
+            os.environ.get(
+                "MULLU_REFLEX_DEPLOYMENT_WITNESS_SECRET",
+                "local-reflex-deployment-witness-secret",
+            ).encode("utf-8"),
+            witness_id_seed.encode("utf-8"),
+            sha256,
+        ).hexdigest()
+        return ReflexDeploymentWitness(
+            witness_id=f"reflex-deployment-witness-{sha256(witness_id_seed.encode()).hexdigest()[:16]}",
+            health_refs=snapshot.evidence_refs,
+            signature=f"hmac-sha256:{signature}",
+            **witness_core,
+        )
 
     @app.get("/runtime/self/health")
     def runtime_self_health(request: Request):
@@ -795,28 +950,52 @@ def create_gateway_app(
         candidate = candidates.get(candidate_id)
         if candidate is None:
             raise HTTPException(404, detail="reflex candidate not found")
-        sandbox_payload = payload.get("sandbox_result")
         certificate_payload = payload.get("certificate")
-        if not isinstance(sandbox_payload, dict) or not isinstance(certificate_payload, dict):
+        if not isinstance(certificate_payload, dict) or (
+            not isinstance(payload.get("sandbox_bundle"), dict)
+            and not isinstance(payload.get("sandbox_result"), dict)
+        ):
             return {
                 "candidate_id": candidate_id,
                 "disposition": "human_approval_required",
                 "requires_human_approval": True,
                 "mutation_applied": False,
-                "reason": "sandbox_result and certificate are required before promotion",
+                "reason": "sandbox bundle and certificate are required before promotion",
             }
         try:
-            sandbox_result = ReflexSandboxResult(**sandbox_payload)
+            sandbox_bundle = _reflex_sandbox_bundle_from_payload(candidate_id, payload)
             certificate = ChangeCertificate(**certificate_payload)
         except (TypeError, ValueError) as exc:
             raise HTTPException(
                 400,
                 detail=f"invalid reflex promotion evidence: {exc}",
             ) from exc
-        decision = decide_promotion(candidate, sandbox_result, certificate)
+        handoff = build_canary_handoff(candidate, sandbox_bundle, certificate)
+        decision = handoff.promotion_decision
+        deployment_witness = None
+        witness_persisted = False
+        if bool(payload.get("apply_canary", False)):
+            _require_deployment_authority(request)
+            if decision.disposition is not ReflexPromotionDisposition.AUTO_CANARY_ALLOWED:
+                raise HTTPException(
+                    409,
+                    detail="reflex canary application requires auto-canary promotion decision",
+                )
+            target_environment = str(payload.get("target_environment", "canary")).strip() or "canary"
+            deployment_witness = _build_reflex_deployment_witness(
+                handoff,
+                pipeline["snapshot"],
+                target_environment=target_environment,
+            ).to_json_dict()
+            reflex_deployment_witnesses.append(deployment_witness)
+            witness_persisted = True
         return {
-            **decision.to_json_dict(),
+            **handoff.to_json_dict(),
             "mutation_applied": False,
+            "disposition": decision.disposition.value,
+            "requires_human_approval": decision.requires_human_approval,
+            "deployment_witness": deployment_witness,
+            "deployment_witness_persisted": witness_persisted,
         }
 
     @app.get("/runtime/self/witness")
@@ -832,6 +1011,12 @@ def create_gateway_app(
             "candidate_count": len(pipeline["candidates"]),
             "mutation_applied": False,
             "protected_surfaces_auto_promote": False,
+            "deployment_witness_count": len(reflex_deployment_witnesses),
+            "latest_deployment_witness_id": (
+                reflex_deployment_witnesses[-1]["witness_id"]
+                if reflex_deployment_witnesses
+                else None
+            ),
             "signed_at": _clock(),
             "signature_key_id": os.environ.get("MULLU_REFLEX_WITNESS_KEY_ID", "reflex-witness-local"),
         }
