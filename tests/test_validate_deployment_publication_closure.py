@@ -86,6 +86,42 @@ def test_published_status_accepts_verified_witness() -> None:
     assert _published_witness()["signature_status"] == "verified"
 
 
+def test_published_status_rejects_http_gateway_witness() -> None:
+    witness = _published_witness()
+    witness["gateway_url"] = "http://gateway.example"
+
+    errors = validate_publication_closure(
+        deployment_status_text=_deployment_status(
+            "published",
+            "http://gateway.example/health",
+        ),
+        witness_payload=witness,
+        witness_path=Path(".change_assurance/deployment_witness.json"),
+    )
+
+    assert len(errors) == 1
+    assert "published gateway_url must use https" in errors[0]
+    assert "deployment_witness.json" in errors[0]
+
+
+def test_published_status_rejects_missing_gateway_health_step() -> None:
+    witness = _published_witness()
+    witness["steps"][0]["name"] = "gateway status"
+
+    errors = validate_publication_closure(
+        deployment_status_text=_deployment_status(
+            "published",
+            "https://gateway.example/health",
+        ),
+        witness_payload=witness,
+        witness_path=Path(".change_assurance/deployment_witness.json"),
+    )
+
+    assert len(errors) == 1
+    assert "requires passing gateway health step" in errors[0]
+    assert "deployment_witness.json" in errors[0]
+
+
 def test_published_status_rejects_health_endpoint_witness_mismatch() -> None:
     errors = validate_publication_closure(
         deployment_status_text=_deployment_status(

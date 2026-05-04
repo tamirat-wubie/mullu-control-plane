@@ -16,12 +16,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from scripts.dispatch_deployment_witness import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS
-from scripts.publish_gateway_publication import DEFAULT_RECEIPT_OUTPUT
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.dispatch_deployment_witness import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS  # noqa: E402
+from scripts.publish_gateway_publication import DEFAULT_RECEIPT_OUTPUT  # noqa: E402
 
 DEFAULT_VALIDATION_OUTPUT = (
     Path(".change_assurance") / "gateway_publication_receipt_validation.json"
@@ -73,7 +78,9 @@ def validate_gateway_publication_receipt(
         _check_required_fields(payload),
         _check_resolution_state(payload),
         _check_readiness_consistency(payload),
+        _check_readiness_proof_steps(payload),
         _check_dispatch_consistency(payload),
+        _check_dispatch_proof_quality(payload),
         _check_expected_value(
             payload=payload,
             field_name="repository",
@@ -268,6 +275,40 @@ def _check_readiness_consistency(payload: dict[str, Any]) -> ReceiptValidationSt
     return ReceiptValidationStep("readiness consistency", True, "matched")
 
 
+def _check_readiness_proof_steps(payload: dict[str, Any]) -> ReceiptValidationStep:
+    readiness = payload.get("readiness")
+    if not isinstance(readiness, dict):
+        return ReceiptValidationStep("readiness proof steps", False, "missing-readiness")
+    raw_steps = readiness.get("steps", ())
+    if not isinstance(raw_steps, list):
+        return ReceiptValidationStep("readiness proof steps", False, "steps-not-list")
+    required_step_names = {
+        "repository variables",
+        "runtime witness secret",
+        "kubeconfig secret",
+        "gateway publication workflow",
+        "dns resolution",
+    }
+    step_by_name = {
+        str(step.get("name", "")): step
+        for step in raw_steps
+        if isinstance(step, dict)
+    }
+    missing = sorted(required_step_names - set(step_by_name))
+    failed = sorted(
+        name
+        for name in required_step_names & set(step_by_name)
+        if step_by_name[name].get("passed") is not True
+    )
+    if missing or failed:
+        return ReceiptValidationStep(
+            "readiness proof steps",
+            False,
+            f"missing={missing} failed={failed}",
+        )
+    return ReceiptValidationStep("readiness proof steps", True, "all-required-passed")
+
+
 def _append_mismatch(
     mismatches: list[str],
     field_name: str,
@@ -327,6 +368,28 @@ def _check_dispatch_consistency(payload: dict[str, Any]) -> ReceiptValidationSte
             f"unexpected={forbidden}",
         )
     return ReceiptValidationStep("dispatch consistency", True, "not-dispatched")
+
+
+def _check_dispatch_proof_quality(payload: dict[str, Any]) -> ReceiptValidationStep:
+    if payload.get("dispatch_performed") is not True:
+        return ReceiptValidationStep("dispatch proof quality", True, "not-dispatched")
+    dispatch_run_url = str(payload.get("dispatch_run_url", ""))
+    dispatch_status = str(payload.get("dispatch_status", ""))
+    artifact_dir = str(payload.get("artifact_dir", ""))
+    malformed = []
+    if not dispatch_run_url.startswith("https://github.com/"):
+        malformed.append("dispatch_run_url")
+    if dispatch_status != "completed":
+        malformed.append("dispatch_status")
+    if not artifact_dir.strip():
+        malformed.append("artifact_dir")
+    if malformed:
+        return ReceiptValidationStep(
+            "dispatch proof quality",
+            False,
+            f"malformed={malformed}",
+        )
+    return ReceiptValidationStep("dispatch proof quality", True, "github-run-completed")
 
 
 def _check_expected_value(

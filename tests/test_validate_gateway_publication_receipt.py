@@ -128,6 +128,64 @@ def test_receipt_readiness_mismatch_is_invalid(tmp_path: Path) -> None:
     assert _step(validation, "dispatch consistency").passed is True
 
 
+def test_receipt_missing_readiness_proof_steps_is_invalid(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["readiness"]["steps"] = []
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
+    proof_step = _step(validation, "readiness proof steps")
+
+    assert validation.valid is False
+    assert proof_step.passed is False
+    assert "repository variables" in proof_step.detail
+    assert _step(validation, "readiness consistency").passed is True
+
+
+def test_receipt_failed_readiness_proof_step_is_invalid(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["readiness"]["steps"][4]["passed"] = False
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
+    proof_step = _step(validation, "readiness proof steps")
+
+    assert validation.valid is False
+    assert proof_step.passed is False
+    assert "dns resolution" in proof_step.detail
+    assert _step(validation, "readiness consistency").passed is True
+
+
+def test_dispatched_receipt_requires_github_completed_run_proof(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    _write_receipt(
+        receipt_path,
+        resolution_state="dispatched",
+        readiness_ready=True,
+        dispatch_requested=True,
+        dispatch_performed=True,
+        dispatch_conclusion="success",
+    )
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["artifact_dir"] = ""
+    payload["dispatch_run_url"] = "https://example.invalid/run/4567"
+    payload["dispatch_status"] = "queued"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
+    proof_step = _step(validation, "dispatch proof quality")
+
+    assert validation.valid is False
+    assert proof_step.passed is False
+    assert "artifact_dir" in proof_step.detail
+    assert "dispatch_run_url" in proof_step.detail
+    assert "dispatch_status" in proof_step.detail
+
+
 def test_cli_writes_validation_report_and_returns_nonzero_for_failed_success_policy(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -178,7 +236,13 @@ def _write_receipt(
         "gateway_url": "https://gateway.mullusi.com",
         "expected_environment": "pilot",
         "ready": readiness_ready,
-        "steps": [],
+        "steps": [
+            {"name": "repository variables", "passed": True, "detail": "matched"},
+            {"name": "runtime witness secret", "passed": True, "detail": "present"},
+            {"name": "kubeconfig secret", "passed": True, "detail": "not-required"},
+            {"name": "gateway publication workflow", "passed": True, "detail": "state=active"},
+            {"name": "dns resolution", "passed": True, "detail": "addresses=['203.0.113.10']"},
+        ],
     }
     receipt = {
         "artifact_dir": ".change_assurance/gateway-publication-artifact"
@@ -188,7 +252,9 @@ def _write_receipt(
         "dispatch_performed": dispatch_performed,
         "dispatch_requested": dispatch_requested,
         "dispatch_run_id": 4567 if dispatch_performed else 0,
-        "dispatch_run_url": "https://github.com/run/4567" if dispatch_performed else "",
+        "dispatch_run_url": "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/4567"
+        if dispatch_performed
+        else "",
         "dispatch_status": "completed" if dispatch_performed else "",
         "expected_environment": "pilot",
         "gateway_host": "gateway.mullusi.com",

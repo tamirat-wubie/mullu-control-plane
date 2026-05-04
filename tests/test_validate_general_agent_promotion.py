@@ -118,6 +118,32 @@ def test_deployment_publication_checks_accept_published_witness(tmp_path: Path) 
     assert "https://gateway.example/health" in health_check.detail
 
 
+def test_deployment_publication_health_requires_validated_witness(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_witness = tmp_path / "deployment_witness.json"
+    witness = _published_witness()
+    witness["steps"] = (
+        {"name": "gateway runtime witness", "passed": True, "detail": "ok"},
+        {"name": "runtime conformance signature", "passed": True, "detail": "ok"},
+    )
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+    deployment_witness.write_text(json.dumps(witness), encoding="utf-8")
+
+    witness_check, health_check = evaluate_deployment_publication(
+        deployment_status_path=deployment_status,
+        deployment_witness_path=deployment_witness,
+    )
+
+    assert witness_check.passed is False
+    assert "deployment_witness_not_published" == witness_check.blocker_id
+    assert health_check.passed is False
+    assert health_check.blocker_id == "production_health_not_declared"
+    assert "witness_published=False" in health_check.detail
+
+
 def test_cli_strict_json_blocks_current_repo(tmp_path: Path, capsys) -> None:
     missing_witness = tmp_path / "missing_deployment_witness.json"
 

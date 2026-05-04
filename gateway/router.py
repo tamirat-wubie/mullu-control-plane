@@ -1195,6 +1195,8 @@ class GatewayRouter:
             "active_compensation_review_count": responsibility_witness.active_compensation_review_count,
             "requires_review_count": responsibility_witness.requires_review_count,
             "pending_approval_chain_count": responsibility_witness.pending_approval_chain_count,
+            "overdue_approval_chain_count": responsibility_witness.overdue_approval_chain_count,
+            "expired_approval_chain_count": responsibility_witness.expired_approval_chain_count,
             "open_obligation_count": responsibility_witness.open_obligation_count,
             "overdue_obligation_count": responsibility_witness.overdue_obligation_count,
             "escalated_obligation_count": responsibility_witness.escalated_obligation_count,
