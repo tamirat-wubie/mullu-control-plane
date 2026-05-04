@@ -83,6 +83,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json",
+    "schemas/deployment_publication_closure_validation.schema.json",
     "deployment-publication-closure-validation",
     ".change_assurance/deployment_publication_closure_validation.json",
     "schemas/reflex_deployment_witness_validator_receipt.schema.json",

@@ -15,6 +15,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+import scripts.validate_deployment_publication_closure as closure_validator
 from scripts.validate_deployment_publication_closure import (
     load_witness_payload,
     main,
@@ -67,6 +69,32 @@ def test_closure_validation_report_matches_public_schema_for_not_published(
     assert output_path.exists()
     assert validation.deployment_status_path == "provided_deployment_status"
     assert validation.witness_path == "provided_witness"
+
+
+def test_closure_validation_report_write_fails_closed_on_schema_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_path = tmp_path / "deployment_publication_closure_validation.json"
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=Path("missing-status.md"),
+        witness_path=tmp_path / "missing-witness.json",
+    )
+
+    monkeypatch.setattr(
+        closure_validator,
+        "_validate_schema_instance",
+        lambda _schema, _payload: ["schema-failed-with-secret-detail"],
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        write_deployment_publication_closure_validation_report(validation, output_path)
+
+    assert str(exc_info.value) == (
+        "deployment publication closure validation report schema failed: 1 schema error(s)"
+    )
+    assert "secret-detail" not in str(exc_info.value)
+    assert not output_path.exists()
 
 
 def test_closure_validation_report_matches_public_schema_for_failed_closure(
