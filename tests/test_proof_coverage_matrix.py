@@ -87,15 +87,21 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert "scripts/orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
     assert ".github/workflows/gateway-publication.yml" in runtime_surface["evidence_files"]
     assert "schemas/deployment_orchestration_receipt.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/deployment_publication_closure_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/deployment_orchestration_receipt_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/gateway_publication_readiness.schema.json" in runtime_surface["evidence_files"]
+    assert "schemas/gateway_publication_receipt_validation.schema.json" in runtime_surface["evidence_files"]
     assert "schemas/mullu_governance_protocol.manifest.json" in runtime_surface["evidence_files"]
     assert "tests/test_orchestrate_deployment_witness.py" in runtime_surface["evidence_files"]
     assert "tests/test_report_gateway_publication_readiness.py" in runtime_surface["evidence_files"]
+    assert "tests/test_validate_gateway_publication_receipt.py" in runtime_surface["evidence_files"]
+    assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
     assert "tests/test_validate_protocol_manifest.py" in runtime_surface["evidence_files"]
     assert "deployment_witness_orchestration_receipt" in runtime_surface["runtime_witnesses"]
+    assert "deployment_publication_closure_validation_schema" in runtime_surface["runtime_witnesses"]
     assert "deployment_orchestration_validation_schema" in runtime_surface["runtime_witnesses"]
     assert "gateway_publication_readiness_schema" in runtime_surface["runtime_witnesses"]
+    assert "gateway_publication_receipt_validation_schema" in runtime_surface["runtime_witnesses"]
     assert closure_actions["publish_deployment_orchestration_receipt_contract"]["status"] == "closed"
 
 
