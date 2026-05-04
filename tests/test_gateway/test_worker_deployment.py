@@ -16,12 +16,18 @@ def test_compose_declares_gateway_worker_service():
     assert "gateway-worker:" in compose
     assert 'command: ["python", "-m", "gateway.worker"]' in compose
     assert "MULLU_COMMAND_LEDGER_BACKEND: postgresql" in compose
+    assert "MULLU_COMMAND_LEDGER_DB_URL:" in compose
     assert "MULLU_TENANT_IDENTITY_BACKEND: postgresql" in compose
+    assert 'MULLU_API_AUTH_REQUIRED: "true"' in compose
+    assert "MULLU_CORS_ORIGINS:" in compose
+    assert "MULLU_ENCRYPTION_KEY:" in compose
     assert 'MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"' in compose
     assert 'MULLU_COMMAND_ANCHOR_KEY_ID: "compose-local"' in compose
     assert "MULLU_COMMAND_ANCHOR_SECRET:" in compose
     assert 'MULLU_REQUIRE_COMMAND_ANCHOR: "true"' in compose
     assert 'MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"' in compose
+    assert "MULLU_GATEWAY_APPROVAL_SECRET:" in compose
+    assert "MULLU_RUNTIME_CONFORMANCE_SECRET:" in compose
     assert 'MULLU_GATEWAY_WORKER_ID: "gateway-worker-1"' in compose
 
 
@@ -31,10 +37,15 @@ def test_kubernetes_declares_gateway_worker_deployment():
     assert "name: mullu-gateway-worker" in manifest
     assert 'command: ["python", "-m", "gateway.worker"]' in manifest
     assert 'MULLU_COMMAND_LEDGER_BACKEND: "postgresql"' in manifest
+    assert "MULLU_COMMAND_LEDGER_DB_URL:" in manifest
     assert 'MULLU_TENANT_IDENTITY_BACKEND: "postgresql"' in manifest
+    assert 'MULLU_API_AUTH_REQUIRED: "true"' in manifest
+    assert 'MULLU_CORS_ORIGINS: "https://dashboard.mullusi.com"' in manifest
     assert 'MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY: "true"' in manifest
     assert 'MULLU_COMMAND_ANCHOR_KEY_ID: "k8s-command-anchor"' in manifest
     assert "MULLU_COMMAND_ANCHOR_SECRET:" in manifest
     assert 'MULLU_REQUIRE_COMMAND_ANCHOR: "true"' in manifest
     assert 'MULLU_GATEWAY_DEFER_APPROVED_EXECUTION: "true"' in manifest
+    assert "MULLU_GATEWAY_APPROVAL_SECRET:" in manifest
+    assert "MULLU_RUNTIME_CONFORMANCE_SECRET:" in manifest
     assert "name: mullu-gateway-worker-pdb" in manifest
