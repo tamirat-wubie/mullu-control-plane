@@ -92,10 +92,27 @@ MUTATING_METHODS = frozenset({"post", "put", "patch", "delete"})
 # A route here is exempt from receipt emission. Add entries only with a
 # clear written reason; reviewers should push back on unjustified entries.
 EXCLUSIONS: dict[str, str] = {
-    # (Empty on first ship. The first run surfaced 32 uncovered MUSIA +
-    # gateway-internal routes; they remain in UNCOVERED rather than
-    # EXCLUDED so the ratchet test in tests/test_receipt_coverage_invariant.py
-    # holds them visible until coverage or formal exclusion is decided.)
+    "/runtime/self/certify": (
+        "Reflex certification is an operator-gated handoff read model that returns "
+        "required certification commands and artifacts; it does not issue a "
+        "certificate or mutate runtime state."
+    ),
+    "/runtime/self/diagnose": (
+        "Reflex diagnosis is an operator-gated projection over runtime health "
+        "evidence; responses carry no mutation and no production promotion."
+    ),
+    "/runtime/self/evaluate": (
+        "Reflex evaluation generates deterministic eval-case projections from "
+        "diagnoses; it records no runtime transition and applies no change."
+    ),
+    "/runtime/self/promote": (
+        "Reflex promotion returns a decision projection and explicitly reports "
+        "mutation_applied=false; protected surfaces still require human approval."
+    ),
+    "/runtime/self/propose-upgrade": (
+        "Reflex upgrade proposal emits candidate records only; candidates cannot "
+        "mutate runtime state without later sandbox, certificate, and approval gates."
+    ),
 }
 
 # Same patterns proof_coverage_matrix.py uses, kept in sync deliberately.
