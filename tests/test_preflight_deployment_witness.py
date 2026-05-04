@@ -263,6 +263,23 @@ def test_preflight_deployment_witness_rejects_responsibility_debt() -> None:
     assert "responsibility_debt_clear=False" in conformance_step.detail
 
 
+def test_preflight_deployment_witness_rejects_runtime_witness_responsibility_debt() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_runtime_witness_responsibility_debt_getter,
+    )
+    witness_step = next(step for step in report.steps if step.name == "gateway runtime witness endpoint")
+
+    assert report.ready is False
+    assert witness_step.passed is False
+    assert "responsibility_debt_clear=False" in witness_step.detail
+
+
 def test_preflight_deployment_witness_rejects_invalid_runtime_mcp_manifest() -> None:
     runner = FakeRunner()
 
@@ -398,6 +415,13 @@ def _responsibility_debt_getter(url: str) -> tuple[int, dict[str, Any]]:
     status, payload = _healthy_getter(url)
     if url.endswith("/runtime/conformance"):
         return status, {**payload, "authority_responsibility_debt_clear": False}
+    return status, payload
+
+
+def _runtime_witness_responsibility_debt_getter(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _healthy_getter(url)
+    if url.endswith("/gateway/witness"):
+        return status, {**payload, "responsibility_debt_clear": False}
     return status, payload
 
 
