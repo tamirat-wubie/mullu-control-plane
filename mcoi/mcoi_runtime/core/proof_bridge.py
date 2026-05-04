@@ -36,6 +36,11 @@ from mcoi_runtime.contracts.state_machine import (
     StateMachineSpec,
     TransitionRule,
 )
+from mcoi_runtime.core.temporal_scheduler import (
+    ScheduledTemporalAction,
+    ScheduleDecisionVerdict,
+    TemporalRunReceipt,
+)
 
 
 # ═══ Governance State Machine ═══
@@ -57,6 +62,25 @@ GOVERNANCE_MACHINE = StateMachineSpec(
 )
 
 
+TEMPORAL_SCHEDULER_MACHINE = StateMachineSpec(
+    machine_id="temporal-scheduler",
+    name="Temporal Scheduler Machine",
+    version="1.0.0",
+    states=("pending", "running", "completed", "expired", "blocked", "missed", "failed"),
+    initial_state="pending",
+    terminal_states=("completed", "expired", "blocked", "missed", "failed"),
+    transitions=(
+        TransitionRule(from_state="pending", to_state="pending", action="temporal_action_deferred"),
+        TransitionRule(from_state="pending", to_state="running", action="temporal_action_due"),
+        TransitionRule(from_state="pending", to_state="expired", action="temporal_action_expired"),
+        TransitionRule(from_state="pending", to_state="blocked", action="temporal_action_blocked"),
+        TransitionRule(from_state="pending", to_state="missed", action="temporal_action_missed"),
+        TransitionRule(from_state="running", to_state="completed", action="temporal_action_completed"),
+        TransitionRule(from_state="running", to_state="failed", action="temporal_action_failed"),
+    ),
+)
+
+
 @dataclass(frozen=True, slots=True)
 class GovernanceProof:
     """Proof that a governance decision was made correctly.
@@ -70,6 +94,18 @@ class GovernanceProof:
     decision: str  # "allowed" or "denied"
     tenant_id: str
     endpoint: str
+    receipt_hash: str
+
+
+@dataclass(frozen=True, slots=True)
+class TemporalSchedulerProof:
+    """Proof that a scheduled temporal action changed state correctly."""
+
+    capsule: ProofCapsule
+    scheduler_receipt: TemporalRunReceipt
+    decision: str
+    tenant_id: str
+    schedule_id: str
     receipt_hash: str
 
 
@@ -135,6 +171,30 @@ class ProofBridge:
                 tenant_id=tenant_id, endpoint=endpoint,
                 guard_results=guard_results, decision=decision,
                 actor_id=actor_id, reason=reason,
+            )
+
+    def certify_temporal_run_receipt(
+        self,
+        *,
+        scheduled_action: ScheduledTemporalAction,
+        run_receipt: TemporalRunReceipt,
+        actor_id: str = "temporal-scheduler",
+    ) -> TemporalSchedulerProof:
+        """Convert a temporal scheduler receipt into a formal transition proof."""
+        if not isinstance(scheduled_action, ScheduledTemporalAction):
+            raise ValueError("scheduled_action must be a ScheduledTemporalAction")
+        if not isinstance(run_receipt, TemporalRunReceipt):
+            raise ValueError("run_receipt must be a TemporalRunReceipt")
+        if run_receipt.schedule_id != scheduled_action.schedule_id:
+            raise ValueError("run_receipt.schedule_id must match scheduled_action.schedule_id")
+        if run_receipt.tenant_id != scheduled_action.tenant_id:
+            raise ValueError("run_receipt.tenant_id must match scheduled_action.tenant_id")
+
+        with self._lock:
+            return self._certify_temporal_locked(
+                scheduled_action=scheduled_action,
+                run_receipt=run_receipt,
+                actor_id=actor_id,
             )
 
     def _certify_locked(
@@ -227,6 +287,64 @@ class ProofBridge:
             tenant_id=tenant_id,
             endpoint=endpoint,
             receipt_hash=final_capsule.receipt.receipt_hash,
+        )
+
+    def _certify_temporal_locked(
+        self,
+        *,
+        scheduled_action: ScheduledTemporalAction,
+        run_receipt: TemporalRunReceipt,
+        actor_id: str,
+    ) -> TemporalSchedulerProof:
+        """Internal temporal certification path; must be called under self._lock."""
+        from_state, to_state, action, guard_passed = self._temporal_transition(run_receipt)
+        entity_id = f"temporal_schedule:{run_receipt.tenant_id}:{run_receipt.schedule_id}"
+        timestamp = run_receipt.evaluated_at
+        guard = GuardVerdict(
+            guard_id="temporal_scheduler_receipt",
+            passed=guard_passed,
+            reason=run_receipt.reason,
+            detail={
+                "schedule_id": run_receipt.schedule_id,
+                "scheduler_receipt_id": run_receipt.receipt_id,
+                "scheduler_verdict": run_receipt.verdict.value,
+                "worker_id": run_receipt.worker_id,
+                "temporal_decision_id": run_receipt.temporal_decision_id,
+                "temporal_verdict": run_receipt.temporal_verdict,
+                "action_id": scheduled_action.action.action_id,
+                "action_type": scheduled_action.action.action_type,
+                "execute_at": scheduled_action.execute_at,
+                "handler_name": scheduled_action.handler_name,
+            },
+        )
+        before_hash = self._state_hash(from_state, entity_id, timestamp)
+        after_hash = self._state_hash(to_state, entity_id, timestamp)
+        capsule = certify_transition(
+            TEMPORAL_SCHEDULER_MACHINE,
+            entity_id=entity_id,
+            from_state=from_state,
+            to_state=to_state,
+            action=action,
+            before_state_hash=before_hash,
+            after_state_hash=after_hash,
+            guards=(guard,),
+            actor_id=actor_id,
+            reason=f"temporal scheduler receipt: {run_receipt.reason}",
+            causal_parent=self._last_receipt_hash,
+            timestamp=timestamp,
+        )
+
+        self._receipt_count += 1
+        self._last_receipt_hash = capsule.receipt.receipt_hash
+        self._update_lineage(entity_id, capsule.receipt, to_state)
+
+        return TemporalSchedulerProof(
+            capsule=capsule,
+            scheduler_receipt=run_receipt,
+            decision=to_state,
+            tenant_id=run_receipt.tenant_id,
+            schedule_id=run_receipt.schedule_id,
+            receipt_hash=capsule.receipt.receipt_hash,
         )
 
     def get_lineage(self, entity_id: str) -> CausalLineage | None:
@@ -330,6 +448,55 @@ class ProofBridge:
             "endpoint": proof.endpoint,
         }
 
+    def serialize_temporal_scheduler_proof(self, proof: TemporalSchedulerProof) -> dict[str, Any]:
+        """Serialize a temporal scheduler proof to a JSON-compatible dict."""
+        receipt = proof.capsule.receipt
+        audit = proof.capsule.audit_record
+        return {
+            "receipt": {
+                "receipt_id": receipt.receipt_id,
+                "machine_id": receipt.machine_id,
+                "entity_id": receipt.entity_id,
+                "from_state": receipt.from_state,
+                "to_state": receipt.to_state,
+                "action": receipt.action,
+                "before_state_hash": receipt.before_state_hash,
+                "after_state_hash": receipt.after_state_hash,
+                "guard_verdicts": [
+                    {
+                        "guard_id": v.guard_id,
+                        "passed": v.passed,
+                        "reason": v.reason,
+                        "detail": dict(v.detail),
+                    }
+                    for v in receipt.guard_verdicts
+                ],
+                "verdict": receipt.verdict.value,
+                "replay_token": receipt.replay_token,
+                "causal_parent": receipt.causal_parent,
+                "issued_at": receipt.issued_at,
+                "receipt_hash": receipt.receipt_hash,
+            },
+            "audit_record": {
+                "audit_id": audit.audit_id,
+                "machine_id": audit.machine_id,
+                "entity_id": audit.entity_id,
+                "from_state": audit.from_state,
+                "to_state": audit.to_state,
+                "action": audit.action,
+                "verdict": audit.verdict.value,
+                "actor_id": audit.actor_id,
+                "reason": audit.reason,
+                "transitioned_at": audit.transitioned_at,
+                "metadata": dict(audit.metadata),
+            },
+            "lineage_depth": proof.capsule.lineage_depth,
+            "decision": proof.decision,
+            "tenant_id": proof.tenant_id,
+            "schedule_id": proof.schedule_id,
+            "scheduler_receipt_id": proof.scheduler_receipt.receipt_id,
+        }
+
     @property
     def receipt_count(self) -> int:
         return self._receipt_count
@@ -349,6 +516,27 @@ class ProofBridge:
         """Compute a deterministic state hash."""
         content = f"{state}:{entity_id}:{timestamp}"
         return hashlib.sha256(content.encode()).hexdigest()
+
+    @staticmethod
+    def _temporal_transition(receipt: TemporalRunReceipt) -> tuple[str, str, str, bool]:
+        """Map a scheduler receipt to a legal temporal scheduler transition."""
+        if receipt.verdict is ScheduleDecisionVerdict.DUE:
+            return "pending", "running", "temporal_action_due", True
+        if receipt.verdict is ScheduleDecisionVerdict.NOT_DUE:
+            return "pending", "pending", "temporal_action_deferred", True
+        if receipt.verdict is ScheduleDecisionVerdict.COMPLETED:
+            return "running", "completed", "temporal_action_completed", True
+        if receipt.verdict is ScheduleDecisionVerdict.EXPIRED:
+            if receipt.reason == "missed_run":
+                return "pending", "missed", "temporal_action_missed", False
+            return "pending", "expired", "temporal_action_expired", False
+        if receipt.verdict is ScheduleDecisionVerdict.BLOCKED:
+            if receipt.reason == "failed":
+                return "running", "failed", "temporal_action_failed", False
+            if receipt.reason == "missed_run":
+                return "pending", "missed", "temporal_action_missed", False
+            return "pending", "blocked", "temporal_action_blocked", False
+        raise ValueError("unsupported temporal scheduler verdict")
 
     def _update_lineage(self, entity_id: str, receipt: TransitionReceipt, current_state: str) -> None:
         """Update causal lineage for an entity. Evicts oldest if at capacity.

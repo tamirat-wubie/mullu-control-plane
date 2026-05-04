@@ -89,6 +89,26 @@ class FakeRunner:
         raise AssertionError(f"unexpected command: {command}")
 
 
+class FailingRunner(FakeRunner):
+    """Runner that fails with untrusted CLI text."""
+
+    def __call__(
+        self,
+        command: list[str],
+        *,
+        check: bool,
+        capture_output: bool,
+        text: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        self.commands.append(command)
+        raise subprocess.CalledProcessError(
+            returncode=7,
+            cmd=command,
+            output="stdout-secret-token",
+            stderr="stderr-secret-token",
+        )
+
+
 def test_report_derives_host_from_repository_variables_and_writes_command(
     tmp_path: Path,
 ) -> None:
@@ -202,9 +222,28 @@ def test_report_marks_dns_failure_not_ready() -> None:
 
     assert report.ready is False
     assert dns_step.passed is False
-    assert dns_step.detail == "failed:dns unavailable"
+    assert dns_step.detail == "failed:resolution_error"
+    assert "dns unavailable" not in json.dumps(report.to_json_dict(), sort_keys=True)
     assert "--dispatch-witness" in report.next_command
     assert _step(report, "gateway publication workflow").passed is True
+
+
+def test_report_command_failure_is_bounded() -> None:
+    runner = FailingRunner()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        report_gateway_publication_readiness(
+            gateway_host="",
+            expected_environment="pilot",
+            runner=runner,
+            resolver=_resolve_ok,
+        )
+
+    message = str(exc_info.value)
+    assert message == "command failed: gh variable list: exit_code=7"
+    assert "stdout-secret-token" not in message
+    assert "stderr-secret-token" not in message
+    assert len(runner.commands) == 1
 
 
 def test_cli_writes_report_and_returns_nonzero_when_gate_fails(

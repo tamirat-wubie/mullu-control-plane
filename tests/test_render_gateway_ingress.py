@@ -41,6 +41,26 @@ class FakeRunner:
         return subprocess.CompletedProcess(command, 0, stdout="applied", stderr="")
 
 
+class FailingRunner(FakeRunner):
+    """Runner that fails with untrusted kubectl output."""
+
+    def __call__(
+        self,
+        command: list[str],
+        *,
+        check: bool,
+        capture_output: bool,
+        text: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        self.commands.append(command)
+        raise subprocess.CalledProcessError(
+            returncode=9,
+            cmd=command,
+            output="stdout-secret-token",
+            stderr="stderr-secret-token",
+        )
+
+
 def test_render_gateway_ingress_writes_valid_output(tmp_path: Path) -> None:
     source_path = tmp_path / "source.yaml"
     output_path = tmp_path / "rendered.yaml"
@@ -100,6 +120,29 @@ def test_render_gateway_ingress_applies_rendered_manifest(tmp_path: Path) -> Non
     )
 
     assert result.applied is True
+    assert runner.commands == [["kubectl", "apply", "-f", str(output_path)]]
+
+
+def test_render_gateway_ingress_apply_failure_is_bounded(tmp_path: Path) -> None:
+    source_path = tmp_path / "source.yaml"
+    output_path = tmp_path / "rendered-private-path.yaml"
+    source_path.write_text(_template(), encoding="utf-8")
+    runner = FailingRunner()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        render_gateway_ingress(
+            gateway_host="gateway.mullusi.com",
+            source_path=source_path,
+            output_path=output_path,
+            apply=True,
+            runner=runner,
+        )
+
+    message = str(exc_info.value)
+    assert message == "kubectl apply failed: exit_code=9"
+    assert "stdout-secret-token" not in message
+    assert "stderr-secret-token" not in message
+    assert "rendered-private-path" not in message
     assert runner.commands == [["kubectl", "apply", "-f", str(output_path)]]
 
 

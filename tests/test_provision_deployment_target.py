@@ -39,6 +39,26 @@ class FakeRunner:
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
 
+class FailingRunner(FakeRunner):
+    """Runner that fails with untrusted CLI text."""
+
+    def __call__(
+        self,
+        command: list[str],
+        *,
+        check: bool,
+        capture_output: bool,
+        text: bool,
+    ) -> subprocess.CompletedProcess[str]:
+        self.commands.append(command)
+        raise subprocess.CalledProcessError(
+            returncode=7,
+            cmd=command,
+            output="stdout-secret-token",
+            stderr="stderr-secret-token",
+        )
+
+
 def test_provision_deployment_target_sets_repository_variables() -> None:
     runner = FakeRunner()
 
@@ -88,6 +108,24 @@ def test_provision_deployment_target_rejects_invalid_environment() -> None:
         )
 
     assert runner.commands == []
+
+
+def test_provision_deployment_target_command_failure_is_bounded() -> None:
+    runner = FailingRunner()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        provision_deployment_target(
+            gateway_url="https://gateway.example.com/private-path",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    message = str(exc_info.value)
+    assert message == "failed to set GitHub variable MULLU_GATEWAY_URL: exit_code=7"
+    assert "stdout-secret-token" not in message
+    assert "stderr-secret-token" not in message
+    assert "gateway.example.com/private-path" not in message
+    assert len(runner.commands) == 1
 
 
 def test_cli_reports_invalid_url(capsys) -> None:
