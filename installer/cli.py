@@ -39,19 +39,54 @@ class MulluConfig:
         self.jwt_secret: str = ""
         self.encryption_key: str = ""
         self.env: str = "pilot"
+        self.cors_origins: str = "https://dashboard.mullusi.com,http://localhost:3000"
+        self.state_dir: str = "/var/lib/mullu/state"
+        self.command_anchor_key_id: str = "pilot-command-anchor-v1"
+        self.command_anchor_secret: str = ""
+        self.gateway_approval_secret: str = ""
+        self.runtime_witness_secret: str = ""
+        self.runtime_conformance_secret: str = ""
+        self.capability_worker_secret: str = ""
+        self.capability_worker_url: str = "http://capability-worker:8010/capability/execute"
+
+    def ensure_deployment_bindings(self) -> None:
+        """Generate missing governed deployment bindings without exposing values."""
+        if not self.encryption_key:
+            self.encryption_key = base64.b64encode(secrets.token_bytes(32)).decode()
+        if not self.command_anchor_secret:
+            self.command_anchor_secret = secrets.token_hex(32)
+        if not self.gateway_approval_secret:
+            self.gateway_approval_secret = secrets.token_hex(32)
+        if not self.runtime_witness_secret:
+            self.runtime_witness_secret = secrets.token_hex(32)
+        if not self.runtime_conformance_secret:
+            self.runtime_conformance_secret = secrets.token_hex(32)
+        if not self.capability_worker_secret:
+            self.capability_worker_secret = secrets.token_hex(32)
 
     def to_env_dict(self) -> dict[str, str]:
         """Convert to environment variable dict for .env file."""
+        strict_env = self.env in ("pilot", "production")
+        durable_backend = "postgresql" if self.db_backend == "postgresql" else "memory"
         env: dict[str, str] = {
             "MULLU_ENV": self.env,
-            "MULLU_API_AUTH_REQUIRED": "true" if self.env in ("pilot", "production") else "false",
+            "MULLU_API_AUTH_REQUIRED": "true" if strict_env else "false",
             "MULLU_DB_BACKEND": self.db_backend,
+            "MULLU_CORS_ORIGINS": self.cors_origins,
             "MULLU_LLM_BACKEND": self.llm_provider,
             "MULLU_PII_SCAN": "true",
             "MULLU_CERT_ENABLED": "true",
             "MULLU_CERT_INTERVAL": "300",
+            "MULLU_STATE_DIR": self.state_dir,
             "MULLU_LLM_BUDGET_MAX_COST": "100.0",
             "MULLU_LLM_BUDGET_MAX_CALLS": "10000",
+            "MULLU_COMMAND_LEDGER_BACKEND": durable_backend,
+            "MULLU_TENANT_IDENTITY_BACKEND": durable_backend,
+            "MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY": "true" if strict_env else "false",
+            "MULLU_GATEWAY_DEFER_APPROVED_EXECUTION": "true" if strict_env else "false",
+            "MULLU_COMMAND_ANCHOR_KEY_ID": self.command_anchor_key_id,
+            "MULLU_REQUIRE_COMMAND_ANCHOR": "true" if strict_env else "false",
+            "MULLU_CAPABILITY_WORKER_URL": self.capability_worker_url,
         }
         if self.llm_api_key:
             if self.llm_provider == "anthropic":
@@ -62,6 +97,7 @@ class MulluConfig:
             env["MULLU_LLM_MODEL"] = self.llm_model
         if self.db_url:
             env["MULLU_DB_URL"] = self.db_url
+            env["MULLU_COMMAND_LEDGER_DB_URL"] = self.db_url
         if self.postgres_password:
             env["POSTGRES_PASSWORD"] = self.postgres_password
         if self.jwt_secret:
@@ -70,6 +106,16 @@ class MulluConfig:
             env["MULLU_JWT_AUDIENCE"] = "mullu-api"
         if self.encryption_key:
             env["MULLU_ENCRYPTION_KEY"] = self.encryption_key
+        if self.command_anchor_secret:
+            env["MULLU_COMMAND_ANCHOR_SECRET"] = self.command_anchor_secret
+        if self.gateway_approval_secret:
+            env["MULLU_GATEWAY_APPROVAL_SECRET"] = self.gateway_approval_secret
+        if self.runtime_witness_secret:
+            env["MULLU_RUNTIME_WITNESS_SECRET"] = self.runtime_witness_secret
+        if self.runtime_conformance_secret:
+            env["MULLU_RUNTIME_CONFORMANCE_SECRET"] = self.runtime_conformance_secret
+        if self.capability_worker_secret:
+            env["MULLU_CAPABILITY_WORKER_SECRET"] = self.capability_worker_secret
 
         for creds in self.channels.values():
             for key, value in creds.items():
@@ -242,6 +288,7 @@ def setup_security(config: MulluConfig) -> None:
 
 def write_env_file(config: MulluConfig, path: Path) -> None:
     """Write .env file."""
+    config.ensure_deployment_bindings()
     env = config.to_env_dict()
     lines = [f"{k}={v}" for k, v in sorted(env.items())]
     path.write_text("\n".join(lines) + "\n")
@@ -308,6 +355,7 @@ def cmd_init(args: argparse.Namespace) -> int:
         setup_tenant(config)
         setup_security(config)
 
+    config.ensure_deployment_bindings()
     warnings = validate_config(config)
     if warnings:
         print("\nWarnings:")
@@ -315,6 +363,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             print(f"  - {warning}")
 
     root = Path(args.directory)
+    root.mkdir(parents=True, exist_ok=True)
     _print_step("Generating Configuration")
     write_env_file(config, root / ".env")
     write_yaml_file(config, root / "mullusi.yml")
