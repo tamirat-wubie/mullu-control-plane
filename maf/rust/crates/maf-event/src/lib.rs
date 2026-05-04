@@ -13,7 +13,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Event enums
@@ -83,7 +83,7 @@ pub struct EventRecord {
     pub event_type: EventType,
     pub source: EventSource,
     pub correlation_id: String,
-    pub payload: HashMap<String, serde_json::Value>,
+    pub payload: BTreeMap<String, serde_json::Value>,
     pub emitted_at: String,
 }
 
@@ -229,7 +229,7 @@ pub struct ObligationRecord {
     pub description: String,
     pub correlation_id: String,
     #[serde(default)]
-    pub metadata: HashMap<String, serde_json::Value>,
+    pub metadata: BTreeMap<String, serde_json::Value>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -300,7 +300,7 @@ mod tests {
 
     #[test]
     fn event_record_round_trips() {
-        let mut payload = HashMap::new();
+        let mut payload = BTreeMap::new();
         payload.insert("key".to_string(), serde_json::json!("value"));
 
         let record = EventRecord {
@@ -317,13 +317,33 @@ mod tests {
     }
 
     #[test]
+    fn event_payload_serializes_in_lexicographic_key_order() {
+        let mut payload = BTreeMap::new();
+        payload.insert("zeta".to_string(), serde_json::json!(1));
+        payload.insert("alpha".to_string(), serde_json::json!(2));
+
+        let record = EventRecord {
+            event_id: "evt-ordered".to_string(),
+            event_type: EventType::Custom,
+            source: EventSource::External,
+            correlation_id: "corr-ordered".to_string(),
+            payload,
+            emitted_at: "2025-01-01T00:00:00+00:00".to_string(),
+        };
+
+        let json = serde_json::to_string(&record).unwrap();
+        assert!(json.contains(r#""payload":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
     fn event_envelope_round_trips() {
         let record = EventRecord {
             event_id: "evt-2".to_string(),
             event_type: EventType::IncidentOpened,
             source: EventSource::IncidentSystem,
             correlation_id: "corr-2".to_string(),
-            payload: HashMap::new(),
+            payload: BTreeMap::new(),
             emitted_at: "2025-01-01T00:00:00+00:00".to_string(),
         };
         let envelope = EventEnvelope {
@@ -476,7 +496,7 @@ mod tests {
             },
             description: "test obligation".to_string(),
             correlation_id: "corr-1".to_string(),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
             created_at: "2025-01-01T00:00:00+00:00".to_string(),
             updated_at: "2025-01-01T00:00:00+00:00".to_string(),
         };
