@@ -487,11 +487,14 @@
         "gateway/server.py",
         "mcoi/mcoi_runtime/contracts/reflex.py",
         "mcoi/mcoi_runtime/core/reflex.py",
+        "schemas/reflex_deployment_witness_envelope.schema.json",
+        "scripts/validate_reflex_deployment_witness.py",
         "tests/test_reflex_engine.py",
         "tests/test_gateway/test_reflex_endpoints.py",
+        "tests/test_validate_reflex_deployment_witness.py",
         "tests/test_gateway/test_webhooks.py"
       ],
-      "notes": "Runtime Reflex surfaces expose operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, and signed witness projections without direct runtime mutation.",
+      "notes": "Runtime Reflex surfaces expose operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, signed witness projections, and schema-backed offline witness replay without direct runtime mutation.",
       "representative_paths": [
         "/runtime/self/health",
         "/runtime/self/inspect",
@@ -500,6 +503,7 @@
         "/runtime/self/propose-upgrade",
         "/runtime/self/certify",
         "/runtime/self/promote",
+        "/runtime/self/deployment-witnesses",
         "/runtime/self/witness"
       ],
       "request_proof": "read_model",
@@ -508,7 +512,9 @@
         "mutation_applied_false",
         "certification_handoff_required",
         "protected_surfaces_auto_promote_false",
-        "signed_reflex_witness"
+        "signed_reflex_witness",
+        "reflex_deployment_witness_schema",
+        "offline_reflex_witness_replay"
       ],
       "surface_id": "runtime_reflex_engine"
     },

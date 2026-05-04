@@ -37,6 +37,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 14. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
 15. Governed runtime promotion validators are public contracts when they provide domain-neutral terminal commands over compatibility-bound promotion evidence.
 16. Terminal closure certificates are public contracts when they certify final command disposition.
+17. Reflex deployment witness envelopes are public contracts when they export replayable promotion evidence for offline validation.
 
 ## Verification
 
@@ -49,11 +50,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 32 schemas
+protocol manifest ok: 33 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes

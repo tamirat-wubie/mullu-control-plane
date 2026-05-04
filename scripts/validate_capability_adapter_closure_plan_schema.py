@@ -205,8 +205,8 @@ def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, An
         return {}
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        errors.append(f"{label} JSON parse failed: {exc.msg}")
+    except json.JSONDecodeError:
+        errors.append(f"{label} JSON parse failed")
         return {}
     if not isinstance(payload, dict):
         errors.append(f"{label} JSON root must be an object")

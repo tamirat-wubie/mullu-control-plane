@@ -15,6 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts.validate_deployment_publication_closure import (
+    load_witness_payload,
     main,
     validate_publication_closure,
 )
@@ -70,6 +71,17 @@ def test_published_status_requires_witness_artifact() -> None:
     assert len(errors) == 1
     assert "published deployment requires witness artifact" in errors[0]
     assert "deployment_witness.json" in errors[0]
+
+
+def test_load_witness_payload_bounds_malformed_json_detail(tmp_path: Path) -> None:
+    witness_path = tmp_path / "deployment_witness.json"
+    witness_path.write_text('{"secret": "secret-witness-token",', encoding="utf-8")
+
+    payload, errors = load_witness_payload(witness_path)
+
+    assert payload is None
+    assert errors == [f"{witness_path}: witness JSON parse failed"]
+    assert all("secret-witness-token" not in error for error in errors)
 
 
 def test_published_status_accepts_verified_witness() -> None:

@@ -133,8 +133,8 @@ def load_witness_payload(witness_path: Path) -> tuple[dict[str, Any] | None, lis
         return None, []
     try:
         parsed = json.loads(witness_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        return None, [f"{witness_path}: witness JSON parse failed: {exc.msg}"]
+    except json.JSONDecodeError:
+        return None, [f"{witness_path}: witness JSON parse failed"]
     if not isinstance(parsed, dict):
         return None, [f"{witness_path}: witness JSON root must be an object"]
     return parsed, []

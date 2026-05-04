@@ -146,12 +146,13 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "schemas/mullu_governance_protocol.manifest.json",
     "scripts/validate_protocol_manifest.py",
     "python scripts\\validate_protocol_manifest.py",
-    "protocol manifest ok: 32 schemas",
+    "protocol manifest ok: 33 schemas",
     "Capability adapter closure plans are public contracts",
     "Deployment handoff receipts are public contracts",
     "General-agent promotion handoff packets are public contracts",
     "Governed runtime promotion",
     "Terminal closure certificates are public contracts",
+    "Reflex deployment witness envelopes are public contracts",
 )
 LOGIC_GOVERNANCE_DOC_PATH = "docs/60_logic_governance_application.md"
 LOGIC_GOVERNANCE_REQUIRED_LITERALS = (
