@@ -329,7 +329,7 @@ class ProofBridge:
             after_state_hash=after_hash,
             guards=(guard,),
             actor_id=actor_id,
-            reason=f"temporal scheduler receipt: {run_receipt.reason}",
+            reason="temporal scheduler receipt evaluated",
             causal_parent=self._last_receipt_hash,
             timestamp=timestamp,
         )
