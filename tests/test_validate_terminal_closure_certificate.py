@@ -77,12 +77,82 @@ def test_terminal_closure_certificate_cli_returns_success(capsys: Any) -> None:
     assert "error:" not in output
 
 
+def test_terminal_closure_certificate_reports_evidence_refs_by_count_only(
+    tmp_path: Path,
+) -> None:
+    certificate_path = _write_certificate(
+        tmp_path,
+        evidence_refs=["proof://sensitive-token-1", "s3://private-proof-bucket/object"],
+    )
+
+    result = validate_terminal_closure_certificate(certificate_path=certificate_path)
+    payload = result.as_dict()
+    serialized_payload = json.dumps(payload, sort_keys=True)
+
+    assert result.valid is True
+    assert payload["evidence_ref_count"] == 2
+    assert "evidence_refs" not in payload
+    assert "sensitive-token-1" not in serialized_payload
+    assert "private-proof-bucket" not in serialized_payload
+
+
+def test_terminal_closure_certificate_errors_do_not_include_evidence_ref_values(
+    tmp_path: Path,
+) -> None:
+    certificate_path = _write_certificate(
+        tmp_path,
+        disposition="accepted_risk",
+        accepted_risk_id="accepted-risk-secret",
+        evidence_refs=["proof://sensitive-terminal-witness"],
+    )
+
+    result = validate_terminal_closure_certificate(certificate_path=certificate_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert result.evidence_ref_count == 1
+    assert any("accepted_risk closure requires case_id" in error for error in result.errors)
+    assert "sensitive-terminal-witness" not in serialized_errors
+    assert "accepted-risk-secret" not in serialized_errors
+
+
+def test_terminal_closure_certificate_missing_file_error_is_bounded(
+    tmp_path: Path,
+) -> None:
+    certificate_path = tmp_path / "secret-path-token.json"
+
+    result = validate_terminal_closure_certificate(certificate_path=certificate_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert result.errors == ("terminal closure certificate could not be read",)
+    assert result.evidence_ref_count == 0
+    assert "secret-path-token" not in serialized_errors
+
+
+def test_terminal_closure_certificate_json_parse_error_is_bounded(
+    tmp_path: Path,
+) -> None:
+    certificate_path = tmp_path / "secret-json-path.json"
+    certificate_path.write_text('{"certificate_id": "secret-json-value"', encoding="utf-8")
+
+    result = validate_terminal_closure_certificate(certificate_path=certificate_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert result.errors == ("terminal closure certificate must be JSON",)
+    assert result.evidence_ref_count == 0
+    assert "secret-json-path" not in serialized_errors
+    assert "secret-json-value" not in serialized_errors
+
+
 def _write_certificate(
     tmp_path: Path,
     *,
     disposition: str = "committed",
     compensation_outcome_id: str | None = None,
     accepted_risk_id: str | None = None,
+    evidence_refs: list[str] | None = None,
 ) -> Path:
     certificate = json.loads(DEFAULT_CERTIFICATE.read_text(encoding="utf-8"))
     certificate["disposition"] = disposition
@@ -90,6 +160,8 @@ def _write_certificate(
         certificate["compensation_outcome_id"] = compensation_outcome_id
     if accepted_risk_id is not None:
         certificate["accepted_risk_id"] = accepted_risk_id
+    if evidence_refs is not None:
+        certificate["evidence_refs"] = evidence_refs
     certificate_path = tmp_path / "terminal_closure_certificate.json"
     certificate_path.write_text(json.dumps(certificate), encoding="utf-8")
     return certificate_path

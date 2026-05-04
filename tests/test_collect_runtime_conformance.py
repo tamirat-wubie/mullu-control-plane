@@ -316,6 +316,63 @@ def test_collect_runtime_conformance_records_malformed_responsibility_read_model
     assert "authority responsibility cockpit read model was not available" in collection.errors
 
 
+def test_collect_runtime_conformance_signature_mismatch_is_bounded(monkeypatch) -> None:
+    certificate = _signed_certificate(secret="certificate-secret")
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret="collector-secret",
+    )
+    signature_step = next(step for step in collection.steps if step.name == "runtime conformance signature")
+    serialized_witness = json.dumps({
+        "errors": collection.errors,
+        "signature_status": collection.signature_status,
+        "steps": [_step_payload(step) for step in collection.steps],
+    }, sort_keys=True)
+
+    assert collection.signature_status == "failed:mismatch"
+    assert signature_step.passed is False
+    assert signature_step.detail == "failed:mismatch"
+    assert "runtime conformance signature was not verified" in collection.errors
+    assert "certificate-secret" not in serialized_witness
+    assert "collector-secret" not in serialized_witness
+
+
+def test_collect_runtime_conformance_read_model_failure_details_are_bounded(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(secret=secret)
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        _urlopen_for_certificate(
+            certificate,
+            responsibility_payload={
+                "authority_witness": {"internal_secret": "responsibility-secret"},
+                "priority_obligations": [{"secret": "obligation-secret"}],
+            },
+        ),
+    )
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    responsibility_step = next(
+        step for step in collection.steps
+        if step.name == "authority responsibility cockpit read model"
+    )
+    serialized_witness = json.dumps({
+        "errors": collection.errors,
+        "steps": [_step_payload(step) for step in collection.steps],
+    }, sort_keys=True)
+
+    assert responsibility_step.passed is False
+    assert responsibility_step.detail == "status=200 debt_clear=missing unresolved_obligation_count=missing"
+    assert "authority responsibility cockpit read model was not available" in collection.errors
+    assert "responsibility-secret" not in serialized_witness
+    assert "obligation-secret" not in serialized_witness
+
+
 def test_write_runtime_conformance_persists_json(tmp_path, monkeypatch) -> None:
     certificate = _signed_certificate(secret="conformance-secret")
 
@@ -410,6 +467,14 @@ def _urlopen_for_certificate(
         return StubHttpResponse(status=404, payload={})
 
     return fake_urlopen
+
+
+def _step_payload(step) -> dict[str, Any]:
+    return {
+        "detail": step.detail,
+        "name": step.name,
+        "passed": step.passed,
+    }
 
 
 def _signed_certificate(
