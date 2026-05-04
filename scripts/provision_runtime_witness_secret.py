@@ -192,8 +192,8 @@ def main(argv: list[str] | None = None) -> int:
             secret_bytes=args.generated_bytes,
             runtime_env_output=Path(args.runtime_env_output) if args.runtime_env_output else None,
         )
-    except RuntimeError as exc:
-        print(f"runtime witness secret provisioning failed: {exc}")
+    except RuntimeError:
+        print("runtime witness secret provisioning failed")
         return 1
 
     print(f"repository: {result.repository}")

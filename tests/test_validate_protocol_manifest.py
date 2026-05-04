@@ -115,6 +115,17 @@ def test_protocol_manifest_indexes_reflex_deployment_witness_envelope() -> None:
     assert envelope_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_reflex_validator_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/reflex_deployment_witness_validator_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:reflex-deployment-witness-validator-receipt:1"
+    assert receipt_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [

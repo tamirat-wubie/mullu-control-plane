@@ -488,6 +488,7 @@
         "mcoi/mcoi_runtime/contracts/reflex.py",
         "mcoi/mcoi_runtime/core/reflex.py",
         "schemas/reflex_deployment_witness_envelope.schema.json",
+        "schemas/reflex_deployment_witness_validator_receipt.schema.json",
         "scripts/emit_reflex_deployment_witness_validator_receipt.py",
         "scripts/validate_reflex_deployment_witness.py",
         "tests/test_reflex_engine.py",
@@ -516,6 +517,7 @@
         "protected_surfaces_auto_promote_false",
         "signed_reflex_witness",
         "reflex_deployment_witness_schema",
+        "reflex_validator_receipt_schema",
         "offline_reflex_witness_replay",
         "reflex_validator_receipt_artifact"
       ],

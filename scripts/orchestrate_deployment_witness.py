@@ -335,7 +335,9 @@ def main(argv: list[str] | None = None) -> int:
             poll_seconds=args.poll_seconds,
         )
     except RuntimeError as exc:
-        print(f"deployment witness orchestration failed: {exc}")
+        message = str(exc)
+        detail = message if message.startswith("gateway host ") else ""
+        print("deployment witness orchestration failed" + (f": {detail}" if detail else ""))
         return 1
 
     print(f"gateway_host: {orchestration.ingress.host}")

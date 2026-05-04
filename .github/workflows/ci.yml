@@ -128,6 +128,7 @@ jobs:
       - name: Validate Reflex deployment witness replay
         run: |
           mkdir -p .change_assurance
+          test -f schemas/reflex_deployment_witness_validator_receipt.schema.json
           python -m pytest tests/test_validate_reflex_deployment_witness.py -q --junitxml=.change_assurance/reflex_deployment_witness_validator_junit.xml
           python scripts/emit_reflex_deployment_witness_validator_receipt.py --junit .change_assurance/reflex_deployment_witness_validator_junit.xml --output .change_assurance/reflex_deployment_witness_validator_receipt.json --json
 

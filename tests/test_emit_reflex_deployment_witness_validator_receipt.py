@@ -19,6 +19,7 @@ from scripts.emit_reflex_deployment_witness_validator_receipt import (
     build_reflex_deployment_witness_validator_receipt,
     main,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 DT = "2026-05-04T12:00:00+00:00"
@@ -41,6 +42,21 @@ def test_reflex_validator_receipt_accepts_passing_junit(tmp_path: Path) -> None:
     assert "schema:schemas/reflex_deployment_witness_envelope.schema.json" in receipt.evidence_refs
 
 
+def test_reflex_validator_receipt_schema_accepts_passing_receipt(tmp_path: Path) -> None:
+    junit_path = _write_junit(tmp_path / "schema-pass.xml")
+    receipt = build_reflex_deployment_witness_validator_receipt(
+        junit_path=junit_path,
+        generated_at=DT,
+    )
+    schema = _load_schema(Path("schemas/reflex_deployment_witness_validator_receipt.schema.json"))
+
+    errors = _validate_schema_instance(schema, receipt.to_json_dict())
+
+    assert errors == []
+    assert receipt.status == "passed"
+    assert receipt.blockers == ()
+
+
 def test_reflex_validator_receipt_rejects_failed_junit(tmp_path: Path) -> None:
     junit_path = _write_junit(tmp_path / "failed.xml", failures=1)
 
@@ -54,6 +70,20 @@ def test_reflex_validator_receipt_rejects_failed_junit(tmp_path: Path) -> None:
     assert "junit_failures_present" in receipt.blockers
     assert receipt.junit_sha256
     assert receipt.junit_path == "provided-reflex-validator-junit"
+
+
+def test_reflex_validator_receipt_schema_accepts_failed_receipt(tmp_path: Path) -> None:
+    receipt = build_reflex_deployment_witness_validator_receipt(
+        junit_path=tmp_path / "missing.xml",
+        generated_at=DT,
+    )
+    schema = _load_schema(Path("schemas/reflex_deployment_witness_validator_receipt.schema.json"))
+
+    errors = _validate_schema_instance(schema, receipt.to_json_dict())
+
+    assert errors == []
+    assert receipt.status == "failed"
+    assert "junit_missing" in receipt.blockers
 
 
 def test_reflex_validator_receipt_rejects_missing_junit(tmp_path: Path) -> None:

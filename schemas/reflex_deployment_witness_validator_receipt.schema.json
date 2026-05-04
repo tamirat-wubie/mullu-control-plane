@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:reflex-deployment-witness-validator-receipt:1",
+  "title": "Reflex Deployment Witness Validator Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "status",
+    "validator",
+    "schema",
+    "test_suite",
+    "junit_path",
+    "junit_sha256",
+    "test_count",
+    "failure_count",
+    "error_count",
+    "skipped_count",
+    "generated_at",
+    "evidence_refs",
+    "blockers"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^reflex-witness-validator-receipt-[0-9a-f]{16}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "validator": {
+      "type": "string",
+      "const": "scripts/validate_reflex_deployment_witness.py"
+    },
+    "schema": {
+      "type": "string",
+      "const": "schemas/reflex_deployment_witness_envelope.schema.json"
+    },
+    "test_suite": {
+      "type": "string",
+      "const": "tests/test_validate_reflex_deployment_witness.py"
+    },
+    "junit_path": {
+      "type": "string",
+      "const": "provided-reflex-validator-junit"
+    },
+    "junit_sha256": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "test_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failure_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "error_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "skipped_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "contains": {
+        "type": "string",
+        "const": "schema:schemas/reflex_deployment_witness_envelope.schema.json"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "failure_count": {
+            "const": 0
+          },
+          "error_count": {
+            "const": 0
+          },
+          "blockers": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}

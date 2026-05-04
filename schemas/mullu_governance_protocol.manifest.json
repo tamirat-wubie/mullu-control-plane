@@ -167,6 +167,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "reflex-deployment-witness-validator-receipt",
+      "path": "schemas/reflex_deployment_witness_validator_receipt.schema.json",
+      "urn": "urn:mullusi:schema:reflex-deployment-witness-validator-receipt:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "replay-record",
       "path": "schemas/replay_record.schema.json",
       "urn": "urn:mullusi:schema:replay-record:1",

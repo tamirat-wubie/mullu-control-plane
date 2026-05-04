@@ -143,7 +143,9 @@ def main(argv: list[str] | None = None) -> int:
             apply=args.apply,
         )
     except RuntimeError as exc:
-        print(f"gateway ingress render failed: {exc}")
+        message = str(exc)
+        detail = message if message.startswith("gateway host ") else ""
+        print("gateway ingress render failed" + (f": {detail}" if detail else ""))
         return 1
 
     print(f"source_path: {rendered.source_path}")

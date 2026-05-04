@@ -539,8 +539,8 @@ def main(argv: list[str] | None = None) -> int:
             runtime_secret_name=args.runtime_secret_name,
             kubeconfig_secret_name=args.kubeconfig_secret_name,
         )
-    except RuntimeError as exc:
-        print(f"gateway publication readiness failed: {exc}")
+    except RuntimeError:
+        print("gateway publication readiness failed")
         return 1
 
     output_path = write_gateway_publication_readiness(report, Path(args.output))
