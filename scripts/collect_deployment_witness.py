@@ -49,6 +49,13 @@ REQUIRED_CONFORMANCE_FIELDS = (
     "expires_at",
     "gateway_witness_valid",
     "runtime_witness_valid",
+    "latest_anchor_valid",
+    "command_closure_canary_passed",
+    "capability_admission_canary_passed",
+    "dangerous_capability_isolation_canary_passed",
+    "streaming_budget_canary_passed",
+    "lineage_query_canary_passed",
+    "authority_obligation_canary_passed",
     "authority_responsibility_debt_clear",
     "authority_pending_approval_chain_count",
     "authority_overdue_approval_chain_count",
@@ -62,13 +69,29 @@ REQUIRED_CONFORMANCE_FIELDS = (
     "mcp_capability_manifest_capability_count",
     "capability_plan_bundle_canary_passed",
     "capability_plan_bundle_count",
+    "capsule_registry_certified",
+    "proof_coverage_matrix_current",
+    "known_limitations_aligned",
+    "security_model_aligned",
     "terminal_status",
     "open_conformance_gaps",
     "evidence_refs",
+    "checks",
     "signature_key_id",
     "signature",
 )
 ACCEPTED_CONFORMANCE_STATUSES = frozenset({"conformant", "conformant_with_gaps"})
+CORE_CONFORMANCE_BOOL_FIELDS = (
+    "latest_anchor_valid",
+    "command_closure_canary_passed",
+    "capability_admission_canary_passed",
+    "dangerous_capability_isolation_canary_passed",
+    "streaming_budget_canary_passed",
+    "lineage_query_canary_passed",
+    "authority_obligation_canary_passed",
+    "capsule_registry_certified",
+    "proof_coverage_matrix_current",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,12 +240,18 @@ def collect_deployment_witness(
     mcp_manifest_valid = bool(conformance_payload.get("mcp_capability_manifest_valid"))
     mcp_manifest_passed = (not mcp_manifest_configured) or mcp_manifest_valid
     plan_bundle_passed = bool(conformance_payload.get("capability_plan_bundle_canary_passed"))
+    failed_core_canaries = _failed_boolean_fields(
+        conformance_payload,
+        CORE_CONFORMANCE_BOOL_FIELDS,
+    )
+    core_canaries_passed = not failed_core_canaries
     conformance_passed = (
         conformance_endpoint_status == 200
         and not missing_conformance_fields
         and conformance_status in ACCEPTED_CONFORMANCE_STATUSES
         and bool(conformance_payload.get("gateway_witness_valid"))
         and bool(conformance_payload.get("runtime_witness_valid"))
+        and core_canaries_passed
         and runtime_responsibility_debt_clear
         and bool(conformance_payload.get("authority_responsibility_debt_clear"))
         and mcp_manifest_passed
@@ -242,6 +271,7 @@ def collect_deployment_witness(
                 f"mcp_manifest_configured={mcp_manifest_configured} "
                 f"mcp_manifest_valid={mcp_manifest_valid} "
                 f"plan_bundle_passed={plan_bundle_passed} "
+                f"failed_core_canaries={list(failed_core_canaries)} "
                 f"missing={list(missing_conformance_fields)}"
             ),
         )
@@ -422,6 +452,10 @@ def _verify_hmac_signature(
     ).hexdigest()
     observed = signature.removeprefix("hmac-sha256:")
     return ("verified", True) if hmac.compare_digest(expected, observed) else ("failed:mismatch", False)
+
+
+def _failed_boolean_fields(payload: dict[str, Any], field_names: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(field_name for field_name in field_names if payload.get(field_name) is not True)
 
 
 def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:

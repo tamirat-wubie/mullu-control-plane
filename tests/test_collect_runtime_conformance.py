@@ -146,6 +146,31 @@ def test_collect_runtime_conformance_rejects_invalid_embedded_witness(monkeypatc
     assert "runtime conformance embedded witness validity failed" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_failed_core_canary(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        overrides={"command_closure_canary_passed": False},
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    canary_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance core canaries"
+    )
+
+    assert collection.certificate_status == "conformant_with_gaps"
+    assert collection.signature_status == "verified"
+    assert canary_step.passed is False
+    assert "command_closure_canary_passed" in canary_step.detail
+    assert "runtime conformance core canaries did not all pass" in collection.errors
+
+
 def test_collect_runtime_conformance_rejects_unclear_responsibility_debt(monkeypatch) -> None:
     secret = "conformance-secret"
     certificate = _signed_certificate(
@@ -400,6 +425,7 @@ def _signed_certificate(
     mcp_capability_manifest_valid: bool = True,
     capability_plan_bundle_canary_passed: bool = True,
     capability_plan_bundle_count: int = 0,
+    overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "certificate_id": "conf-0123456789abcdef",
@@ -445,6 +471,8 @@ def _signed_certificate(
         ],
         "signature_key_id": "runtime-conformance-test",
     }
+    if overrides:
+        payload.update(overrides)
     digest = hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
     ).hexdigest()

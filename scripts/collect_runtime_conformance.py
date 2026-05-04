@@ -36,6 +36,13 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "expires_at",
     "gateway_witness_valid",
     "runtime_witness_valid",
+    "latest_anchor_valid",
+    "command_closure_canary_passed",
+    "capability_admission_canary_passed",
+    "dangerous_capability_isolation_canary_passed",
+    "streaming_budget_canary_passed",
+    "lineage_query_canary_passed",
+    "authority_obligation_canary_passed",
     "authority_responsibility_debt_clear",
     "authority_pending_approval_chain_count",
     "authority_overdue_approval_chain_count",
@@ -49,13 +56,29 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "mcp_capability_manifest_capability_count",
     "capability_plan_bundle_canary_passed",
     "capability_plan_bundle_count",
+    "capsule_registry_certified",
+    "proof_coverage_matrix_current",
+    "known_limitations_aligned",
+    "security_model_aligned",
     "terminal_status",
     "open_conformance_gaps",
     "evidence_refs",
+    "checks",
     "signature_key_id",
     "signature",
 )
 ACCEPTED_CONFORMANCE_STATUSES = frozenset({"conformant", "conformant_with_gaps"})
+CORE_CONFORMANCE_BOOL_FIELDS = (
+    "latest_anchor_valid",
+    "command_closure_canary_passed",
+    "capability_admission_canary_passed",
+    "dangerous_capability_isolation_canary_passed",
+    "streaming_budget_canary_passed",
+    "lineage_query_canary_passed",
+    "authority_obligation_canary_passed",
+    "capsule_registry_certified",
+    "proof_coverage_matrix_current",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,6 +189,16 @@ def collect_runtime_conformance(
     ))
     if not witness_validity_passed:
         errors.append("runtime conformance embedded witness validity failed")
+
+    failed_core_canaries = _failed_boolean_fields(certificate, CORE_CONFORMANCE_BOOL_FIELDS)
+    core_canaries_passed = not failed_core_canaries
+    steps.append(CollectionStep(
+        name="runtime conformance core canaries",
+        passed=core_canaries_passed,
+        detail=f"failed={list(failed_core_canaries)}",
+    ))
+    if not core_canaries_passed:
+        errors.append("runtime conformance core canaries did not all pass")
 
     responsibility_debt_passed = bool(certificate.get("authority_responsibility_debt_clear"))
     steps.append(CollectionStep(
@@ -390,6 +423,10 @@ def _verify_certificate_signature(payload: dict[str, Any], conformance_secret: s
     ).hexdigest()
     observed = signature.removeprefix("hmac-sha256:")
     return ("verified", True) if hmac.compare_digest(expected, observed) else ("failed:mismatch", False)
+
+
+def _failed_boolean_fields(payload: dict[str, Any], field_names: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(field_name for field_name in field_names if payload.get(field_name) is not True)
 
 
 def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:
