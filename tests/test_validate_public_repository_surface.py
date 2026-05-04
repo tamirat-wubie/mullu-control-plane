@@ -44,6 +44,9 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "## GitHub Runtime Input State" in content
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in content
     assert "MULLU_GATEWAY_URL" in content
+    assert "responsibility_debt_clear=true" in content
+    assert "runtime_responsibility_debt_clear=true" in content
+    assert "authority_responsibility_debt_clear=true" in content
     assert "python scripts/plan_capability_adapter_closure.py --json" in content
     assert "python scripts/plan_deployment_publication_closure.py --json" in content
     assert "python scripts/plan_general_agent_promotion_closure.py --json" in content

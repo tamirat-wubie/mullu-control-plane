@@ -1,15 +1,23 @@
 """Phase 207B — Governance guards tests."""
 
-import pytest
 from mcoi_runtime.governance.guards.chain import (
     GovernanceGuard, GovernanceGuardChain, GuardResult,
-    create_rate_limit_guard, create_budget_guard, create_tenant_guard, create_api_key_guard,
+    create_rate_limit_guard, create_budget_guard, create_temporal_guard,
+    create_tenant_guard, create_api_key_guard,
 )
+from mcoi_runtime.contracts.temporal_runtime import (
+    TemporalActionRequest,
+    TemporalPolicyVerdict,
+    TemporalRiskLevel,
+)
+from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.governance.auth.api_key import APIKeyManager
 from mcoi_runtime.governance.guards.rate_limit import RateLimiter, RateLimitConfig
 from mcoi_runtime.governance.guards.budget import TenantBudgetManager
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 class TestGovernanceGuard:
@@ -108,6 +116,70 @@ class TestBuiltInGuards:
         assert result.allowed is False
         assert result.reason == "tenant disabled"
         assert "t1" not in result.reason
+
+    def test_temporal_guard_allows_when_no_action_contract(self):
+        engine = TemporalRuntimeEngine(EventSpineEngine(), clock=FIXED_CLOCK)
+        guard = create_temporal_guard(engine)
+        result = guard.check({"tenant_id": "t1"})
+        assert result.allowed is True
+        assert result.guard_name == "temporal"
+        assert result.reason == ""
+
+    def test_temporal_guard_denies_expired_approval(self):
+        engine = TemporalRuntimeEngine(
+            EventSpineEngine(),
+            clock=lambda: "2026-05-04T15:01:00+00:00",
+        )
+        guard = create_temporal_guard(engine)
+        ctx = {
+            "tenant_id": "t1",
+            "temporal_action": TemporalActionRequest(
+                action_id="act-1",
+                tenant_id="t1",
+                actor_id="user-1",
+                action_type="payment",
+                risk=TemporalRiskLevel.HIGH,
+                requested_at="2026-05-04T13:00:00+00:00",
+                approval_expires_at="2026-05-04T15:00:00+00:00",
+            ),
+        }
+        result = guard.check(ctx)
+        assert result.allowed is False
+        assert result.reason == "approval_expired"
+        assert ctx["temporal_policy_verdict"] == TemporalPolicyVerdict.DENY.value
+
+    def test_temporal_guard_defers_future_schedule_in_chain(self):
+        engine = TemporalRuntimeEngine(
+            EventSpineEngine(),
+            clock=lambda: "2026-05-04T13:00:00+00:00",
+        )
+        chain = GovernanceGuardChain()
+        chain.add(GovernanceGuard("tenant", lambda ctx: GuardResult(True, "tenant")))
+        chain.add(create_temporal_guard(engine))
+        chain.add(GovernanceGuard("dispatch", lambda ctx: GuardResult(True, "dispatch")))
+
+        result = chain.evaluate({
+            "tenant_id": "t1",
+            "temporal_action": TemporalActionRequest(
+                action_id="act-2",
+                tenant_id="t1",
+                actor_id="user-1",
+                action_type="reminder",
+                requested_at="2026-05-04T13:00:00+00:00",
+                execute_at="2026-05-04T14:00:00+00:00",
+            ),
+        })
+        assert result.allowed is False
+        assert result.blocking_guard == "temporal"
+        assert len(result.results) == 2
+
+    def test_temporal_guard_rejects_invalid_action_contract(self):
+        engine = TemporalRuntimeEngine(EventSpineEngine(), clock=FIXED_CLOCK)
+        guard = create_temporal_guard(engine)
+        result = guard.check({"tenant_id": "t1", "temporal_action": {"action_id": "act-1"}})
+        assert result.allowed is False
+        assert result.reason == "invalid temporal action"
+        assert "act-1" not in result.reason
 
     def test_tenant_guard_allows(self):
         guard = create_tenant_guard()

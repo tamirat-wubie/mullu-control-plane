@@ -22,6 +22,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
 from mcoi_runtime.governance.guards.content_safety import ContentSafetyChain, create_input_safety_guard
 from mcoi_runtime.governance.guards.chain import (
     GovernanceGuardChain,
@@ -30,6 +31,7 @@ from mcoi_runtime.governance.guards.chain import (
     create_jwt_guard,
     create_rbac_guard,
     create_rate_limit_guard,
+    create_temporal_guard,
     create_tenant_guard,
 )
 
@@ -61,6 +63,54 @@ def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
     if isinstance(content, str):
         extracted["content"] = content
     return extracted
+
+
+def _extract_temporal_action_field(body: bytes) -> dict[str, Any]:
+    """Extract a governed temporal action contract from a JSON body."""
+    if not body or len(body) > MAX_BODY_PARSE_SIZE:
+        return {}
+    try:
+        parsed = json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {}
+    if not isinstance(parsed, dict) or "temporal_action" not in parsed:
+        return {}
+
+    action = parsed["temporal_action"]
+    if not isinstance(action, dict):
+        return {"temporal_action": action}
+
+    fields = {
+        "action_id",
+        "tenant_id",
+        "actor_id",
+        "action_type",
+        "risk",
+        "requested_at",
+        "execute_at",
+        "not_before",
+        "expires_at",
+        "approval_expires_at",
+        "evidence_fresh_until",
+        "retry_after",
+        "max_attempts",
+        "attempt_count",
+        "metadata",
+    }
+    if any(key not in fields for key in action):
+        return {"temporal_action": action}
+
+    candidate = dict(action)
+    risk = candidate.get("risk")
+    if isinstance(risk, str):
+        try:
+            candidate["risk"] = TemporalRiskLevel(risk)
+        except ValueError:
+            return {"temporal_action": action}
+    try:
+        return {"temporal_action": TemporalActionRequest(**candidate)}
+    except (TypeError, ValueError):
+        return {"temporal_action": action}
 
 
 class GovernanceMiddleware(BaseHTTPMiddleware):
@@ -132,6 +182,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
             try:
                 body = await request.body()
                 context.update(_extract_content_safety_fields(body))
+                context.update(_extract_temporal_action_field(body))
             except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
                 pass  # Non-JSON or malformed body - skip content extraction
 
@@ -266,6 +317,7 @@ def build_guard_chain(
     tenant_gating_registry: Any | None = None,
     access_runtime: Any | None = None,
     content_safety_chain: ContentSafetyChain | None = None,
+    temporal_runtime: Any | None = None,
 ) -> GovernanceGuardChain:
     """Build the standard governance guard chain.
 
@@ -275,8 +327,9 @@ def build_guard_chain(
     3. Tenant gating (is tenant active?)
     4. RBAC (does this identity have permission?)
     5. Lambda_input_safety (is the prompt/content safe?)
-    6. Rate limit (within limits?)
-    7. Budget (can you afford this?)
+    6. Temporal policy (is this action valid now?)
+    7. Rate limit (within limits?)
+    8. Budget (can you afford this?)
     """
     chain = GovernanceGuardChain()
     if api_key_mgr is not None:
@@ -291,6 +344,8 @@ def build_guard_chain(
         chain.add(create_rbac_guard(access_runtime))
     if content_safety_chain is not None:
         chain.add(create_input_safety_guard(content_safety_chain))
+    if temporal_runtime is not None:
+        chain.add(create_temporal_guard(temporal_runtime))
     chain.add(create_rate_limit_guard(rate_limiter))
     chain.add(create_budget_guard(budget_mgr))
     return chain

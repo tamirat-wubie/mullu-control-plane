@@ -14,6 +14,7 @@ from types import MappingProxyType
 import pytest
 
 from mcoi_runtime.contracts.change_assurance import ChangeCertificate
+from mcoi_runtime.contracts.change_assurance import ChangeRisk, EvolutionChangeType
 from mcoi_runtime.contracts.reflex import (
     CapabilityMaturityScore,
     ReflexEvidenceRef,
@@ -21,9 +22,13 @@ from mcoi_runtime.contracts.reflex import (
     ReflexPromotionDisposition,
     ReflexRisk,
     ReflexSandboxResult,
+    ReflexUpgradeCandidate,
     RuntimeHealthSnapshot,
 )
 from mcoi_runtime.core.reflex import (
+    build_certification_handoff,
+    build_reflex_change_command,
+    build_sandbox_bundle,
     candidate_requires_human_approval,
     decide_promotion,
     detect_anomalies,
@@ -31,6 +36,7 @@ from mcoi_runtime.core.reflex import (
     generate_eval_cases,
     propose_upgrade,
     rank_capability_gaps,
+    run_reflex_replay,
 )
 
 
@@ -187,4 +193,98 @@ def test_capability_maturity_ranking_prefers_largest_verified_gap() -> None:
     assert ranked[0].verdict == "not_production_closed"
     assert ranked[1].verdict == "production_closed"
     assert ranked[0].value_gap > ranked[1].value_gap
+
+
+def test_reflex_candidate_builds_governed_change_command_for_protected_surface() -> None:
+    snapshot = _snapshot(unverified_executions=1)
+    diagnosis = diagnose_anomaly(detect_anomalies(snapshot)[0], snapshot)
+    candidate = propose_upgrade(diagnosis, generate_eval_cases(diagnosis))
+
+    command = build_reflex_change_command(
+        candidate,
+        author_id="reflex@mullusi.com",
+        branch="codex/reflex-proof-gap",
+        base_commit="a" * 40,
+        head_commit="b" * 40,
+        created_at=DT,
+    )
+
+    assert command.change_id == f"change:{candidate.candidate_id}"
+    assert command.change_type is EvolutionChangeType.POLICY
+    assert command.risk is ChangeRisk.CRITICAL
+    assert command.requires_approval is True
+    assert command.rollback_required is True
+    assert command.metadata["reflex_candidate_id"] == candidate.candidate_id
+    assert "no_protected_reflex_surface_without_human_approval" in command.affected_invariants
+
+
+def test_reflex_certification_handoff_is_non_mutating_and_cli_ready() -> None:
+    snapshot = _snapshot(premium_model_low_risk_requests=4)
+    diagnosis = diagnose_anomaly(detect_anomalies(snapshot)[0], snapshot)
+    candidate = propose_upgrade(diagnosis, generate_eval_cases(diagnosis))
+
+    handoff = build_certification_handoff(
+        candidate,
+        author_id="reflex@mullusi.com",
+        branch="codex/reflex-routing",
+        base_commit="a" * 40,
+        head_commit="b" * 40,
+        created_at=DT,
+        base_ref="main",
+        head_ref="codex/reflex-routing",
+    )
+    payload = handoff.to_json_dict()
+
+    assert handoff.mutation_applied is False
+    assert handoff.change_command.change_type is EvolutionChangeType.CONFIGURATION
+    assert handoff.change_command.risk is ChangeRisk.LOW
+    assert "--strict" in handoff.command_args
+    assert "main" in handoff.command_args
+    assert "codex/reflex-routing" in handoff.command_args
+    assert "release_certificate.json" in handoff.required_artifacts
+    assert payload["change_command"]["metadata"]["reflex_change_surface"] == "provider_routing"
+
+
+def test_reflex_sandbox_bundle_runs_declared_replays_without_side_effects() -> None:
+    snapshot = _snapshot(premium_model_low_risk_requests=4)
+    diagnosis = diagnose_anomaly(detect_anomalies(snapshot)[0], snapshot)
+    eval_cases = generate_eval_cases(diagnosis)
+    candidate = propose_upgrade(diagnosis, eval_cases)
+
+    bundle = build_sandbox_bundle(candidate, eval_cases)
+    payload = bundle.to_json_dict()
+
+    assert bundle.mutation_applied is False
+    assert bundle.sandbox_result.passed is True
+    assert bundle.sandbox_result.failed_checks == ()
+    assert bundle.eval_ids == candidate.eval_ids
+    assert {result.replay_id for result in bundle.replay_results} == set(candidate.required_replays)
+    assert all(result.passed for result in bundle.replay_results)
+    assert payload["sandbox_result"]["passed"] is True
+
+
+def test_reflex_sandbox_bundle_fails_missing_eval_and_unknown_replay() -> None:
+    candidate = ReflexUpgradeCandidate(
+        candidate_id="candidate:bad",
+        diagnosis_id="diagnosis:bad",
+        change_surface="provider_routing",
+        risk=ReflexRisk.LOW,
+        description="bad sandbox candidate",
+        affected_files=("mcoi/mcoi_runtime/core/provider_cost_routing.py",),
+        required_replays=("unknown_replay",),
+        rollback_plan_ref="rollback:provider_routing",
+        eval_ids=("eval:missing",),
+    )
+
+    replay_result = run_reflex_replay(candidate, "unknown_replay")
+    bundle = build_sandbox_bundle(candidate, ())
+
+    assert replay_result.passed is False
+    assert "not registered" in replay_result.detail
+    assert bundle.sandbox_result.passed is False
+    assert "missing_eval:eval:missing" in bundle.sandbox_result.failed_checks
+    assert any(
+        failed_check.startswith("replay_failed:unknown_replay")
+        for failed_check in bundle.sandbox_result.failed_checks
+    )
 

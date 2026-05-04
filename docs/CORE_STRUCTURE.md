@@ -151,7 +151,7 @@ true. The platform implements:
 - A complete governed runtime (47K+ tests of behavior)
 - Hash-chain audit trail with external verifier (LEDGER_SPEC.md)
 - Transition receipts on every governed action (MAF_RECEIPT_COVERAGE.md)
-- 8-guard governance chain with fail-closed semantics (GOVERNANCE_GUARD_CHAIN.md)
+- 9-slot governance chain with fail-closed semantics (GOVERNANCE_GUARD_CHAIN.md)
 - LLM provider integration (10 backends)
 - Field-level encryption at rest
 - Multi-tenant budget and quota management
@@ -208,7 +208,7 @@ The completed spec set:
 | Foundation | `docs/CORE_STRUCTURE.md` (this) | MAF/MCOI split, contracts, schemas, layering |
 | Audit trail | `docs/LEDGER_SPEC.md` | Hash-chain integrity, external verifier |
 | Receipts | `docs/MAF_RECEIPT_COVERAGE.md` | Transition receipts on every governed action |
-| Guards | `docs/GOVERNANCE_GUARD_CHAIN.md` | 8-guard chain with fail-closed semantics |
+| Guards | `docs/GOVERNANCE_GUARD_CHAIN.md` | 9-slot chain with fail-closed semantics |
 
 Each spec includes a compliance posture table. Together they cover the
 platform's four load-bearing claims with the same discipline.

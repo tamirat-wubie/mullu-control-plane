@@ -50,6 +50,7 @@ class GuardContext(TypedDict, total=False):
     authorization: str
     prompt: str
     content: str
+    temporal_action: Any
     # Set by auth guards
     authenticated_key_id: str
     authenticated_subject: str
@@ -216,6 +217,55 @@ def create_budget_guard(
             )
         return GuardResult(allowed=True, guard_name="budget")
     return GovernanceGuard("budget", check)
+
+
+def create_temporal_guard(
+    temporal_runtime: Any,
+) -> GovernanceGuard:
+    """Create a temporal policy guard.
+
+    The guard is inactive unless ``ctx["temporal_action"]`` carries a
+    TemporalActionRequest. When present, runtime-owned temporal policy
+    decides whether the action can proceed now.
+    """
+    from mcoi_runtime.contracts.temporal_runtime import (
+        TemporalActionRequest,
+        TemporalPolicyVerdict,
+    )
+
+    def check(ctx: dict[str, Any]) -> GuardResult:
+        action = ctx.get("temporal_action")
+        if action is None:
+            return GuardResult(allowed=True, guard_name="temporal")
+        if not isinstance(action, TemporalActionRequest):
+            return GuardResult(
+                allowed=False,
+                guard_name="temporal",
+                reason="invalid temporal action",
+            )
+        decision = temporal_runtime.decide_temporal_action(action)
+        ctx["temporal_decision_id"] = decision.decision_id
+        ctx["temporal_policy_verdict"] = decision.verdict.value
+        if decision.verdict is TemporalPolicyVerdict.ALLOW:
+            return GuardResult(
+                allowed=True,
+                guard_name="temporal",
+                reason=decision.reason,
+                detail={
+                    "decision_id": decision.decision_id,
+                    "verdict": decision.verdict.value,
+                },
+            )
+        return GuardResult(
+            allowed=False,
+            guard_name="temporal",
+            reason=decision.reason,
+            detail={
+                "decision_id": decision.decision_id,
+                "verdict": decision.verdict.value,
+            },
+        )
+    return GovernanceGuard("temporal", check)
 
 
 def create_tenant_guard() -> GovernanceGuard:

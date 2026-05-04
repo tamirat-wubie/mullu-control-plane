@@ -75,8 +75,8 @@ production_health_not_declared
 7. Emit and validate the redacted environment binding receipt.
 8. Complete dependency and credential actions with approval where required.
 9. Produce live adapter receipts.
-10. Publish deployment witness with approval.
-11. Update `DEPLOYMENT_STATUS.md` only after published witness and matching health probe evidence exist.
+10. Publish deployment witness with approval only after runtime and authority responsibility debt are clear.
+11. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
 12. Run final strict promotion validation.
 
 Browser adapter evidence remains open unless the adapter evidence report preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser sandbox proof.

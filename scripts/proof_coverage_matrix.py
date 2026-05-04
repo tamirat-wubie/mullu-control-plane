@@ -292,10 +292,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_collect_deployment_witness.py",
                 "tests/test_validate_deployment_publication_closure.py",
             ],
-            "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses project authority debt into publication closure, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
+            "Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require raw runtime and authority debt-clear evidence before publication closure, and orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness.",
             [
                 "latest_command_event_hash",
                 "latest_terminal_certificate_id",
+                "responsibility_debt_clear",
+                "runtime_responsibility_debt_clear",
                 "open_obligation_count",
                 "overdue_obligation_count",
                 "authority_responsibility_debt_clear",

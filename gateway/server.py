@@ -25,6 +25,8 @@ from mcoi_runtime.contracts.reflex import (
     RuntimeHealthSnapshot,
 )
 from mcoi_runtime.core.reflex import (
+    build_certification_handoff,
+    build_sandbox_bundle,
     decide_promotion,
     detect_anomalies,
     diagnose_anomaly,
@@ -727,9 +729,22 @@ def create_gateway_app(
     def runtime_self_evaluate(request: Request):
         _require_authority_operator(request)
         pipeline = _reflex_pipeline()
+        evals_by_diagnosis = {
+            diagnosis.diagnosis_id: tuple(
+                eval_case for eval_case in pipeline["eval_cases"]
+                if eval_case.diagnosis_id == diagnosis.diagnosis_id
+            )
+            for diagnosis in pipeline["diagnoses"]
+        }
+        sandbox_bundles = tuple(
+            build_sandbox_bundle(candidate, evals_by_diagnosis.get(candidate.diagnosis_id, ()))
+            for candidate in pipeline["candidates"]
+        )
         return {
             "eval_cases": [eval_case.to_json_dict() for eval_case in pipeline["eval_cases"]],
+            "sandbox_bundles": [bundle.to_json_dict() for bundle in sandbox_bundles],
             "eval_count": len(pipeline["eval_cases"]),
+            "sandbox_bundle_count": len(sandbox_bundles),
             "side_effects": "none",
         }
 
@@ -749,18 +764,26 @@ def create_gateway_app(
         candidate_id = str(payload.get("candidate_id", "")).strip()
         if not candidate_id:
             raise HTTPException(400, detail="candidate_id is required")
+        pipeline = _reflex_pipeline()
+        candidates = {candidate.candidate_id: candidate for candidate in pipeline["candidates"]}
+        candidate = candidates.get(candidate_id)
+        if candidate is None:
+            raise HTTPException(404, detail="reflex candidate not found")
+        handoff = build_certification_handoff(
+            candidate,
+            author_id=str(payload.get("author_id", "reflex@mullusi.com")).strip() or "reflex@mullusi.com",
+            branch=str(payload.get("branch", "reflex/candidate")).strip() or "reflex/candidate",
+            base_commit=str(payload.get("base_commit", "0" * 40)).strip() or "0" * 40,
+            head_commit=str(payload.get("head_commit", "1" * 40)).strip() or "1" * 40,
+            created_at=_clock(),
+            base_ref=str(payload.get("base_ref", "HEAD^")).strip() or "HEAD^",
+            head_ref=str(payload.get("head_ref", "HEAD")).strip() or "HEAD",
+        )
         return {
+            **handoff.to_json_dict(),
             "candidate_id": candidate_id,
             "status": "certification_required",
-            "mutation_applied": False,
-            "required_command": "python scripts/certify_change.py --base HEAD^ --head HEAD --strict",
-            "required_artifacts": [
-                "change_command.json",
-                "blast_radius.json",
-                "invariant_report.json",
-                "replay_report.json",
-                "release_certificate.json",
-            ],
+            "required_command": " ".join(handoff.command_args),
         }
 
     @app.post("/runtime/self/promote")
