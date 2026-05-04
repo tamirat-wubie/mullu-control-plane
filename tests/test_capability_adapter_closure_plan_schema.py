@@ -96,6 +96,25 @@ def test_adapter_closure_plan_schema_rejects_uncovered_blocker(tmp_path: Path) -
     assert any("missing closure actions" in error for error in validation.errors)
 
 
+def test_adapter_closure_plan_schema_requires_browser_sandbox_receipt_gate(
+    tmp_path: Path,
+) -> None:
+    plan_path = tmp_path / "capability_adapter_closure_plan.json"
+    payload = _valid_plan()
+    payload["actions"][0]["command"] = "python scripts/produce_capability_adapter_live_receipts.py --target browser"
+    payload["actions"][0]["evidence_required"] = ["browser_live_receipt.json"]
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_capability_adapter_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("validate_sandbox_execution_receipt.py" in error for error in validation.errors)
+    assert any("sandbox_execution_receipt_validation" in error for error in validation.errors)
+
+
 def test_adapter_closure_plan_schema_writer_and_cli_honor_strict(
     tmp_path: Path,
     capsys,
@@ -150,10 +169,25 @@ def _valid_plan() -> dict[str, object]:
                 "adapter_id": "browser.playwright",
                 "blocker": "browser_live_evidence_missing",
                 "action_type": "live-receipt",
-                "command": "python scripts/produce_capability_adapter_live_receipts.py --target browser --strict",
+                "command": (
+                    "python scripts/produce_browser_sandbox_evidence.py "
+                    "--output .change_assurance/browser_sandbox_evidence.json --strict && "
+                    "python scripts/validate_sandbox_execution_receipt.py "
+                    "--receipt .change_assurance/browser_sandbox_evidence.json "
+                    "--capability-prefix browser. --require-no-workspace-changes --json && "
+                    "python scripts/validate_browser_sandbox_evidence.py "
+                    "--evidence .change_assurance/browser_sandbox_evidence.json --json && "
+                    "python scripts/produce_capability_adapter_live_receipts.py --target browser "
+                    "--browser-sandbox-evidence .change_assurance/browser_sandbox_evidence.json --strict"
+                ),
                 "verification_command": "python scripts/collect_capability_adapter_evidence.py --output .change_assurance/capability_adapter_evidence.json",
                 "receipt_validator": "adapter_evidence.browser.playwright.receipt_check.passed",
-                "evidence_required": ["browser_live_receipt.json"],
+                "evidence_required": [
+                    "browser_sandbox_evidence.json",
+                    "sandbox_execution_receipt_validation",
+                    "browser_sandbox_evidence_validation",
+                    "browser_live_receipt.json",
+                ],
                 "risk_level": "medium",
                 "approval_required": False,
             },

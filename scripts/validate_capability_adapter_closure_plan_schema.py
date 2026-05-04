@@ -80,6 +80,7 @@ def validate_capability_adapter_closure_plan_schema(
     if plan.get("source_ready") is False and blockers and not actions:
         errors.append("non-ready adapter plan requires closure actions")
     _validate_action_proof_contract(actions, errors)
+    _validate_browser_sandbox_receipt_gate(actions, errors)
     _validate_blocker_coverage(blockers=blockers, actions=actions, errors=errors)
     return _validation_result(
         plan_path=plan_path,
@@ -114,6 +115,39 @@ def _validate_action_proof_contract(
             errors.append(f"adapter action {index} missing receipt_validator")
         if not action.get("evidence_required"):
             errors.append(f"adapter action {index} missing evidence_required")
+
+
+def _validate_browser_sandbox_receipt_gate(
+    actions: tuple[dict[str, Any], ...],
+    errors: list[str],
+) -> None:
+    for index, action in enumerate(actions):
+        if action.get("blocker") != "browser_live_evidence_missing":
+            continue
+        command = str(action.get("command", ""))
+        evidence_required = {str(item) for item in action.get("evidence_required", ())}
+        required_command_tokens = (
+            "produce_browser_sandbox_evidence.py",
+            "validate_sandbox_execution_receipt.py",
+            "--capability-prefix browser.",
+            "--require-no-workspace-changes",
+            "validate_browser_sandbox_evidence.py",
+            "produce_capability_adapter_live_receipts.py --target browser",
+        )
+        for token in required_command_tokens:
+            if token not in command:
+                errors.append(f"browser live action {index} command missing token {token}")
+        required_evidence = {
+            "browser_sandbox_evidence.json",
+            "sandbox_execution_receipt_validation",
+            "browser_sandbox_evidence_validation",
+            "browser_live_receipt.json",
+        }
+        missing_evidence = sorted(required_evidence - evidence_required)
+        if missing_evidence:
+            errors.append(
+                f"browser live action {index} evidence_required missing {missing_evidence}"
+            )
 
 
 def _validate_blocker_coverage(
