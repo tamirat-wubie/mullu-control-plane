@@ -108,6 +108,9 @@ jobs:
       - name: Validate protocol manifest
         run: python scripts/validate_protocol_manifest.py
 
+      - name: Validate logic governance application
+        run: python scripts/validate_logic_governance_application.py
+
       - name: Validate terminal closure certificate
         run: python scripts/validate_terminal_closure_certificate.py --json
 

@@ -18,6 +18,10 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from mcoi_runtime.governance.audit.decision_log import (
+    GovernanceDecisionLog,
+    GuardDecisionDetail,
+)
 from mcoi_runtime.contracts.change_assurance import ChangeCertificate
 from mcoi_runtime.contracts.reflex import (
     ReflexCanaryHandoff,
@@ -124,7 +128,9 @@ def create_gateway_app(
         if role.strip()
     )
     authority_operator_audit_events: list[dict[str, Any]] = []
-    reflex_deployment_witnesses: list[dict[str, Any]] = []
+    reflex_deployment_witness_log = getattr(platform, "_decision_log", None) or GovernanceDecisionLog(
+        clock=_clock
+    )
     defer_approved_execution = (
         os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
         in {"1", "true", "yes", "on"}
@@ -856,6 +862,88 @@ def create_gateway_app(
             **witness_core,
         )
 
+    def _record_reflex_deployment_witness(
+        witness: dict[str, Any],
+        request: Request,
+    ) -> None:
+        reflex_deployment_witness_log.record(
+            tenant_id=request.headers.get("X-Mullu-Authority-Tenant-Id", "platform") or "platform",
+            identity_id=request.headers.get("X-Mullu-Authority-Sender-Id", "reflex") or "reflex",
+            endpoint="/runtime/self/promote",
+            method="POST",
+            allowed=True,
+            guards=[
+                GuardDecisionDetail(
+                    guard_name="deployment_authority",
+                    allowed=True,
+                    reason="deployment authority authorized canary witness persistence",
+                ),
+                GuardDecisionDetail(
+                    guard_name="reflex_auto_canary_decision",
+                    allowed=True,
+                    reason="promotion decision allowed canary witness persistence",
+                ),
+            ],
+            detail={
+                "event_type": "reflex_deployment_witness_persisted_v1",
+                "witness": witness,
+            },
+        )
+
+    def _reflex_deployment_witness_records(limit: int = 1000) -> list[dict[str, Any]]:
+        decisions = reflex_deployment_witness_log.query(
+            endpoint="/runtime/self/promote",
+            allowed=True,
+            limit=limit,
+        )
+        records: list[dict[str, Any]] = []
+        for decision in decisions:
+            if decision.detail.get("event_type") != "reflex_deployment_witness_persisted_v1":
+                continue
+            witness = decision.detail.get("witness")
+            if isinstance(witness, dict):
+                records.append(witness)
+        return records
+
+    def _replay_reflex_deployment_witness(witness: dict[str, Any]) -> bool:
+        try:
+            witness_core = {
+                "candidate_id": witness["candidate_id"],
+                "certificate_id": witness["certificate_id"],
+                "promotion_decision_id": witness["promotion_decision_id"],
+                "target_environment": witness["target_environment"],
+                "canary_status": witness["canary_status"],
+                "rollback_plan_ref": witness["rollback_plan_ref"],
+                "signed_at": witness["signed_at"],
+                "signature_key_id": witness["signature_key_id"],
+                "production_mutation_applied": witness["production_mutation_applied"],
+            }
+            witness_id_seed = json.dumps(
+                {
+                    **witness_core,
+                    "health_refs": witness["health_refs"],
+                },
+                sort_keys=True,
+            )
+            expected_signature = hmac.new(
+                os.environ.get(
+                    "MULLU_REFLEX_DEPLOYMENT_WITNESS_SECRET",
+                    "local-reflex-deployment-witness-secret",
+                ).encode("utf-8"),
+                witness_id_seed.encode("utf-8"),
+                sha256,
+            ).hexdigest()
+            expected_witness_id = (
+                f"reflex-deployment-witness-{sha256(witness_id_seed.encode()).hexdigest()[:16]}"
+            )
+        except (KeyError, TypeError, ValueError):
+            return False
+        return (
+            witness.get("witness_id") == expected_witness_id
+            and witness.get("signature") == f"hmac-sha256:{expected_signature}"
+            and witness.get("production_mutation_applied") is False
+        )
+
     @app.get("/runtime/self/health")
     def runtime_self_health(request: Request):
         _require_authority_operator(request)
@@ -987,7 +1075,7 @@ def create_gateway_app(
                 pipeline["snapshot"],
                 target_environment=target_environment,
             ).to_json_dict()
-            reflex_deployment_witnesses.append(deployment_witness)
+            _record_reflex_deployment_witness(deployment_witness, request)
             witness_persisted = True
         return {
             **handoff.to_json_dict(),
@@ -1002,6 +1090,7 @@ def create_gateway_app(
     def runtime_self_witness(request: Request):
         _require_authority_operator(request)
         pipeline = _reflex_pipeline()
+        deployment_witness_records = _reflex_deployment_witness_records()
         payload = {
             "witness_id": f"reflex-witness-{sha256(pipeline['snapshot'].to_json().encode()).hexdigest()[:16]}",
             "snapshot_id": pipeline["snapshot"].snapshot_id,
@@ -1011,10 +1100,14 @@ def create_gateway_app(
             "candidate_count": len(pipeline["candidates"]),
             "mutation_applied": False,
             "protected_surfaces_auto_promote": False,
-            "deployment_witness_count": len(reflex_deployment_witnesses),
+            "deployment_witness_count": len(deployment_witness_records),
+            "deployment_witness_replay_passed": all(
+                _replay_reflex_deployment_witness(witness)
+                for witness in deployment_witness_records
+            ),
             "latest_deployment_witness_id": (
-                reflex_deployment_witnesses[-1]["witness_id"]
-                if reflex_deployment_witnesses
+                deployment_witness_records[0]["witness_id"]
+                if deployment_witness_records
                 else None
             ),
             "signed_at": _clock(),

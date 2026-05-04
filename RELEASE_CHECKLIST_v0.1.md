@@ -22,6 +22,7 @@
 - [x] PILOT_OPERATIONS_GUIDE_v0.1.md written
 - [x] Shared schemas validate with `scripts/validate_schemas.py --strict`
 - [x] Public protocol manifest validates with `scripts/validate_protocol_manifest.py`
+- [x] Logic governance application validates with `scripts/validate_logic_governance_application.py`
 - [x] Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`
 - [x] Release status derives from `scripts/validate_release_status.py --strict`
 - [x] CI workflow retains the full gated release command set in `.github/workflows/ci.yml`

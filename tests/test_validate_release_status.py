@@ -25,6 +25,7 @@ from scripts.validate_release_status import (
     validate_ci_workflow_text,
     validate_deployment_witness_workflow_text,
     validate_gateway_publication_workflow_text,
+    validate_logic_governance_surface,
     validate_protocol_manifest_surface,
     validate_public_surface_document_texts,
     validate_release_checklist_text,
@@ -110,6 +111,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "docs/52_mullu_governance_protocol.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/60_logic_governance_application.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "python scripts/validate_protocol_manifest.py" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
     assert "deployment_claim: published" in content
@@ -132,6 +134,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "Logic governance witness" in content
     assert "32-schema public contract index" in content
     assert "python scripts/validate_protocol_manifest.py" in content
+    assert "python scripts/validate_logic_governance_application.py" in content
     assert "docs/60_logic_governance_application.md" in content
 
 
@@ -182,7 +185,9 @@ def test_release_checklist_requires_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`" in content
+    assert "Logic governance application validates with `scripts/validate_logic_governance_application.py`" in content
     assert "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
+    assert "Logic governance application validates with `scripts/validate_logic_governance_application.py`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
     assert "Release status derives from `scripts/validate_release_status.py --strict`" in RELEASE_CHECKLIST_REQUIRED_LITERALS
 
 
@@ -197,6 +202,14 @@ def test_release_checklist_reports_missing_protocol_manifest_gate() -> None:
     assert "Release Checklist" not in errors[0]
 
 
+def test_release_gate_validates_logic_governance_application() -> None:
+    errors = validate_logic_governance_surface()
+
+    assert errors == []
+    assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
+    assert (REPO_ROOT / "scripts" / "validate_logic_governance_application.py").exists()
+
+
 def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
 
@@ -204,6 +217,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "python scripts/validate_protocol_manifest.py" in REQUIRED_CI_LITERALS
+    assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json" in REQUIRED_CI_LITERALS
     assert any(
         "validate_general_agent_promotion_closure_plan.py" in literal
@@ -226,7 +240,9 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
         for literal in REQUIRED_CI_LITERALS
     )
     assert content.count("python scripts/validate_protocol_manifest.py") == 2
+    assert content.count("python scripts/validate_logic_governance_application.py") == 1
     assert "Validate protocol manifest" in content
+    assert "Validate logic governance application" in content
 
 
 def test_ci_workflow_runs_promotion_closure_schema_gate() -> None:

@@ -85,6 +85,7 @@ def test_status_witness_requires_protocol_manifest_anchor() -> None:
     assert "Protocol witness" in content
     assert "docs/52_mullu_governance_protocol.md" in content
     assert "docs/60_logic_governance_application.md" in content
+    assert "validate_logic_governance_application.py" in content
     assert "python scripts/validate_protocol_manifest.py" in content
     assert "scripts/validate_governed_runtime_promotion.py" in content
 
