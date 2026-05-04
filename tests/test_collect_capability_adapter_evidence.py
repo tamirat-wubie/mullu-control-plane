@@ -107,6 +107,9 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
         json.dumps(
             {
                 "status": "passed",
+                "verification_status": "passed",
+                "adapter_id": "document.production_parsers",
+                "blockers": [],
                 "parser_ids": [
                     "production-pdf",
                     "production-docx",
@@ -212,6 +215,118 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
     assert report.report_id.startswith("capability-adapter-evidence-")
 
 
+def test_adapter_evidence_rejects_document_receipt_without_proof_contract(tmp_path: Path) -> None:
+    browser_receipt = tmp_path / "browser.json"
+    document_receipt = tmp_path / "document.json"
+    voice_receipt = tmp_path / "voice.json"
+    email_calendar_receipt = tmp_path / "email-calendar.json"
+    browser_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "adapter_id": "browser.playwright",
+                "sandboxed_worker": True,
+                "sandbox_evidence_id": "browser-sandbox-evidence-test",
+                "sandbox_receipt_id": "sandbox-receipt-test",
+                "url_before": "https://docs.mullusi.com/",
+                "url_after": "https://docs.mullusi.com/",
+                "screenshot_before_ref": "evidence:browser:before",
+                "screenshot_after_ref": "evidence:browser:after",
+                "network_requests": ["https://docs.mullusi.com/reference"],
+                "worker_receipt": {"verification_status": "passed"},
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    document_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "parser_ids": [
+                    "production-pdf",
+                    "production-docx",
+                    "production-xlsx",
+                    "production-pptx",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    voice_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "speech_to_text_status": "passed",
+                "text_to_speech_status": "passed",
+                "audio_input_hash": "a" * 64,
+                "speech_receipt": {
+                    "receipt_id": "voice-speech-receipt-test",
+                    "capability_id": "voice.speech_to_text",
+                    "verification_status": "passed",
+                    "forbidden_effects_observed": False,
+                    "requires_confirmation": False,
+                },
+                "synthesis_receipt": {
+                    "receipt_id": "voice-synthesis-receipt-test",
+                    "capability_id": "voice.text_to_speech",
+                    "verification_status": "passed",
+                    "audio_hash": "b" * 64,
+                    "audio_ref": "evidence:voice-synthesis:test.mp3",
+                    "forbidden_effects_observed": False,
+                    "requires_confirmation": False,
+                },
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    email_calendar_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "adapter_id": "communication.email_calendar_worker",
+                "connector_id": "gmail",
+                "provider_operation": "email.search",
+                "resource_id": "email-search-live",
+                "response_digest": "email-search-digest",
+                "external_write": False,
+                "worker_receipt": {
+                    "receipt_id": "email-calendar-receipt-test",
+                    "capability_id": "email.search",
+                    "action": "email.search",
+                    "connector_id": "gmail",
+                    "provider_operation": "email.search",
+                    "resource_id": "email-search-live",
+                    "response_digest": "email-search-digest",
+                    "verification_status": "passed",
+                    "external_write": False,
+                    "forbidden_effects_observed": False,
+                },
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = collect_capability_adapter_evidence(
+        repo_root=_ROOT,
+        browser_receipt_path=browser_receipt,
+        document_receipt_path=document_receipt,
+        voice_receipt_path=voice_receipt,
+        email_calendar_receipt_path=email_calendar_receipt,
+        module_available=lambda name: True,
+        env_reader=lambda name: "configured-secret",
+    )
+    document_evidence = next(adapter for adapter in report.adapters if adapter.adapter_id == "document.production_parsers")
+
+    assert report.ready is False
+    assert document_evidence.closed is False
+    assert document_evidence.receipt_check.passed is False
+    assert "document_live_evidence_missing" in report.blockers
+    assert "adapter_id=document.production_parsers" in document_evidence.receipt_check.detail
+
+
 def test_adapter_evidence_rejects_browser_receipt_without_action_evidence(tmp_path: Path) -> None:
     browser_receipt = tmp_path / "browser.json"
     document_receipt = tmp_path / "document.json"
@@ -233,6 +348,9 @@ def test_adapter_evidence_rejects_browser_receipt_without_action_evidence(tmp_pa
         json.dumps(
             {
                 "status": "passed",
+                "verification_status": "passed",
+                "adapter_id": "document.production_parsers",
+                "blockers": [],
                 "parser_ids": [
                     "production-pdf",
                     "production-docx",
@@ -328,6 +446,9 @@ def test_adapter_evidence_rejects_voice_receipt_without_worker_receipts(tmp_path
         json.dumps(
             {
                 "status": "passed",
+                "verification_status": "passed",
+                "adapter_id": "document.production_parsers",
+                "blockers": [],
                 "parser_ids": [
                     "production-pdf",
                     "production-docx",
@@ -407,6 +528,9 @@ def test_adapter_evidence_rejects_email_calendar_receipt_without_worker_receipt(
         json.dumps(
             {
                 "status": "passed",
+                "verification_status": "passed",
+                "adapter_id": "document.production_parsers",
+                "blockers": [],
                 "parser_ids": [
                     "production-pdf",
                     "production-docx",
