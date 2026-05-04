@@ -50,6 +50,33 @@ def test_valid_orchestration_receipt_satisfies_handoff_policy(tmp_path: Path) ->
     assert _step(validation, "require mcp operator checklist").passed is True
 
 
+def test_orchestration_validation_report_matches_public_schema(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(receipt_path, preflight_ready=True, mcp_checklist_valid=True)
+    validation = validate_deployment_orchestration_receipt(
+        receipt_path=receipt_path,
+        require_preflight=True,
+        require_mcp_operator_checklist=True,
+    )
+    write_orchestration_receipt_validation_report(validation, output_path)
+    schema = _load_schema(
+        Path("schemas/deployment_orchestration_receipt_validation.schema.json")
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    errors = _validate_schema_instance(schema, payload)
+
+    assert errors == []
+    assert payload["valid"] is True
+    assert payload["receipt_path"] == "provided_receipt"
+    assert any(step["name"] == "schema contract" for step in payload["steps"])
+    assert any(
+        step["name"] == "require mcp operator checklist"
+        for step in payload["steps"]
+    )
+
+
 def test_orchestration_receipt_rejects_missing_mcp_checklist_gate(tmp_path: Path) -> None:
     receipt_path = tmp_path / "orchestration.json"
     _write_receipt(receipt_path, mcp_checklist_required=False, mcp_checklist_valid=None)
@@ -62,8 +89,8 @@ def test_orchestration_receipt_rejects_missing_mcp_checklist_gate(tmp_path: Path
 
     assert validation.valid is False
     assert checklist_step.passed is False
-    assert "required=False" in checklist_step.detail
-    assert "valid=None" in checklist_step.detail
+    assert "required=false" in checklist_step.detail
+    assert "valid=none" in checklist_step.detail
 
 
 def test_orchestration_receipt_rejects_dispatch_success_policy(tmp_path: Path) -> None:
@@ -86,7 +113,7 @@ def test_orchestration_receipt_rejects_dispatch_success_policy(tmp_path: Path) -
     assert validation.valid is False
     assert dispatch_step.passed is True
     assert success_step.passed is False
-    assert "conclusion=failure" in success_step.detail
+    assert success_step.detail == "requested=true conclusion=not-success"
 
 
 def test_orchestration_receipt_rejects_missing_evidence_refs(tmp_path: Path) -> None:
@@ -133,8 +160,8 @@ def test_orchestration_receipt_rejects_schema_contract_violation(tmp_path: Path)
 
     assert validation.valid is False
     assert schema_step.passed is False
-    assert "unexpected_authority_gap" in schema_step.detail
-    assert "unexpected property" in schema_step.detail
+    assert schema_step.detail == "schema-errors=1"
+    assert "unexpected_authority_gap" not in schema_step.detail
 
 
 def test_expected_value_mismatch_detail_is_bounded(tmp_path: Path) -> None:
@@ -150,7 +177,10 @@ def test_expected_value_mismatch_detail_is_bounded(tmp_path: Path) -> None:
     assert validation.valid is False
     assert expected_step.passed is False
     assert expected_step.detail == "mismatched"
-    assert "private-gateway-token" not in json.dumps(validation.to_json_dict(), sort_keys=True)
+    assert "private-gateway-token" not in json.dumps(
+        validation.to_json_dict(),
+        sort_keys=True,
+    )
     assert "gateway.mullusi.com" not in expected_step.detail
 
 
@@ -170,8 +200,8 @@ def test_orchestration_receipt_schema_rejects_invalid_receipt_id_pattern(
     assert validation.valid is False
     assert schema_step.passed is False
     assert receipt_id_step.passed is False
-    assert "$.receipt_id" in schema_step.detail
-    assert "pattern" in schema_step.detail
+    assert schema_step.detail == "schema-errors=1"
+    assert receipt_id_step.detail == "invalid"
 
 
 def test_orchestration_receipt_schema_rejects_missing_evidence_prefix(
@@ -196,8 +226,8 @@ def test_orchestration_receipt_schema_rejects_missing_evidence_prefix(
     assert validation.valid is False
     assert schema_step.passed is False
     assert evidence_step.passed is False
-    assert "$.evidence_refs" in schema_step.detail
-    assert "contains" in schema_step.detail
+    assert schema_step.detail == "schema-errors=1"
+    assert "contains" not in schema_step.detail
     assert "dispatch:" in evidence_step.detail
 
 
@@ -220,13 +250,15 @@ def test_cli_writes_validation_report_and_returns_nonzero(tmp_path: Path, capsys
     output_path = tmp_path / "validation.json"
     _write_receipt(receipt_path, preflight_ready=False)
 
-    exit_code = main([
-        "--receipt",
-        str(receipt_path),
-        "--output",
-        str(output_path),
-        "--require-preflight",
-    ])
+    exit_code = main(
+        [
+            "--receipt",
+            str(receipt_path),
+            "--output",
+            str(output_path),
+            "--require-preflight",
+        ]
+    )
     captured = capsys.readouterr()
     payload = json.loads(output_path.read_text(encoding="utf-8"))
 
@@ -234,7 +266,43 @@ def test_cli_writes_validation_report_and_returns_nonzero(tmp_path: Path, capsys
     assert output_path.exists()
     assert payload["valid"] is False
     assert "valid: false" in captured.out
-    assert "preflight_ready=False" in captured.out
+    assert "required=true ready=false" in captured.out
+
+
+def test_invalid_receipt_id_validation_report_matches_public_schema(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(receipt_path)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["receipt_id"] = "secret-receipt-id-token"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+    write_orchestration_receipt_validation_report(validation, output_path)
+    report = json.loads(output_path.read_text(encoding="utf-8"))
+    schema = _load_schema(
+        Path("schemas/deployment_orchestration_receipt_validation.schema.json")
+    )
+
+    assert _validate_schema_instance(schema, report) == []
+    assert report["receipt_id"] == "invalid"
+    assert "secret-receipt-id-token" not in json.dumps(report, sort_keys=True)
+
+
+def test_validation_report_bounds_noncanonical_receipt_path(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-orchestration-path.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(receipt_path)
+
+    validation = validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+    write_orchestration_receipt_validation_report(validation, output_path)
+    report = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert report["receipt_path"] == "provided_receipt"
+    assert "secret-orchestration-path" not in json.dumps(report, sort_keys=True)
+    assert validation.receipt_path == "provided_receipt"
 
 
 def test_missing_orchestration_receipt_file_error_is_bounded(tmp_path: Path) -> None:

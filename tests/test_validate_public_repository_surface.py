@@ -17,6 +17,8 @@ from scripts.validate_public_repository_surface import (
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
+    CI_WORKFLOW_PATH,
+    CI_WORKFLOW_REQUIRED_LITERALS,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
     GITHUB_SURFACE_REQUIRED_LITERALS,
@@ -121,6 +123,23 @@ def test_gateway_publication_workflow_requires_receipt_validator() -> None:
     assert "actions/upload-artifact@v4" in content
 
 
+def test_ci_workflow_requires_reflex_validator_receipt_artifact() -> None:
+    workflow_path = REPO_ROOT / CI_WORKFLOW_PATH
+    content = workflow_path.read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name=CI_WORKFLOW_PATH,
+        content=content,
+        required_literals=CI_WORKFLOW_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "Validate Reflex deployment witness replay" in content
+    assert "schemas/reflex_deployment_witness_validator_receipt.schema.json" in content
+    assert "reflex-deployment-witness-validator-receipt" in content
+    assert ".change_assurance/reflex_deployment_witness_validator_receipt.json" in content
+
+
 def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> None:
     workflow_path = REPO_ROOT / DEPLOYMENT_WITNESS_WORKFLOW_PATH
     content = workflow_path.read_text(encoding="utf-8")
@@ -147,9 +166,11 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     )
 
     assert errors == []
-    assert "protocol manifest ok: 34 schemas" in content
+    assert "protocol manifest ok: 36 schemas" in content
     assert "Capability adapter closure plans are public contracts" in content
     assert "Deployment handoff receipts are public contracts" in content
+    assert "Deployment orchestration receipt validation reports are public contracts" in content
+    assert "Gateway publication readiness reports are public contracts" in content
     assert "Governed runtime promotion validators are public contracts" in content
     assert "Terminal closure certificates are public contracts" in content
     assert "Reflex deployment witness envelopes are public contracts" in content

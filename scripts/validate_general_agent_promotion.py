@@ -343,12 +343,12 @@ def _check_default_capability_fabric(
     try:
         gate = build_default_capability_admission_gate(clock=clock)
         read_model = gate.read_model()
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return (
             PromotionCheck(
                 name="default governed capability fabric",
                 passed=False,
-                detail=f"default capability fabric failed to build: {type(exc).__name__}",
+                detail="default capability fabric failed to build",
                 evidence_refs=("gateway.capability_fabric",),
                 blocker_id="capability_fabric_not_closed",
             ),

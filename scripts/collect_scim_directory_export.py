@@ -196,7 +196,19 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "output_unavailable"
-    return str(exc) or "invalid_scim_directory_export"
+    message = str(exc)
+    if message.startswith("SCIM endpoint returned HTTP "):
+        return message
+    if message in {
+        "SCIM endpoint unavailable",
+        "SCIM endpoint returned invalid JSON",
+        "SCIM endpoint JSON root must be mapping",
+        "SCIM pagination field must be integer",
+    }:
+        return message
+    if message.startswith("SCIM ") and message.endswith(" pagination exceeded page limit"):
+        return message
+    return "invalid_scim_directory_export"
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 
 from scripts.saml_groups_authority_directory_adapter import (
+    _bounded_error_reason,
     convert_saml_groups_authority_directory,
     main,
     write_saml_groups_authority_directory,
@@ -105,6 +106,14 @@ def test_saml_groups_authority_directory_adapter_reports_bounded_errors(tmp_path
     assert "SAML groups authority directory failed: SAML groups must be a list" in captured.err
     assert captured.out == ""
     assert not output.exists()
+
+
+def test_saml_groups_authority_directory_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-saml-authority-token"))
+
+    assert reason == "invalid_saml_groups_authority_directory"
+    assert "secret-saml-authority-token" not in reason
+    assert reason != "secret-saml-authority-token"
 
 
 def _saml_payload() -> dict:

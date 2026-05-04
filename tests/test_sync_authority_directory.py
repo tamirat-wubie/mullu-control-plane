@@ -13,6 +13,7 @@ from pathlib import Path
 from gateway.authority_obligation_mesh import InMemoryAuthorityObligationMeshStore
 import scripts.sync_authority_directory as sync_authority_directory
 from scripts.sync_authority_directory import (
+    _bounded_error_reason,
     apply_static_authority_directory,
     main,
     mark_receipt_persisted,
@@ -237,6 +238,14 @@ def test_static_authority_directory_cli_reports_bounded_parser_error(tmp_path, c
     assert "raw-secret-token" not in captured.err
     assert captured.out == ""
     assert not output.exists()
+
+
+def test_static_authority_directory_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-static-directory-token"))
+
+    assert reason == "invalid_static_directory"
+    assert "secret-static-directory-token" not in reason
+    assert reason != "secret-static-directory-token"
 
 
 def _directory_payload() -> dict:

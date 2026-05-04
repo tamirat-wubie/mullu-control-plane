@@ -416,9 +416,12 @@
         "scripts/validate_mcp_operator_checklist.py",
         "scripts/validate_deployment_orchestration_receipt.py",
         "schemas/deployment_orchestration_receipt.schema.json",
+        "schemas/deployment_orchestration_receipt_validation.schema.json",
+        "schemas/gateway_publication_readiness.schema.json",
         "schemas/deployment_witness.schema.json",
         "schemas/mullu_governance_protocol.manifest.json",
         "tests/test_orchestrate_deployment_witness.py",
+        "tests/test_report_gateway_publication_readiness.py",
         "tests/test_validate_deployment_orchestration_receipt.py",
         "tests/test_validate_protocol_manifest.py",
         "tests/test_preflight_deployment_witness.py",
@@ -444,7 +447,9 @@
         "authority_overdue_obligation_count",
         "authority_escalated_obligation_count",
         "authority_unowned_high_risk_capability_count",
-        "deployment_witness_orchestration_receipt"
+        "deployment_witness_orchestration_receipt",
+        "deployment_orchestration_validation_schema",
+        "gateway_publication_readiness_schema"
       ],
       "surface_id": "gateway_runtime_witness"
     },

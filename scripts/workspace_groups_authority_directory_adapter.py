@@ -173,7 +173,17 @@ def main(argv: list[str] | None = None) -> int:
 def _bounded_error_reason(exc: OSError | ValueError) -> str:
     if isinstance(exc, OSError):
         return "source_unavailable"
-    return str(exc) or "invalid_workspace_groups_authority_directory"
+    message = str(exc)
+    if message in {
+        "workspace_groups_export must be JSON",
+        "workspace_groups_mapping must be JSON",
+        "workspace_groups_export root must be mapping",
+        "workspace_groups_mapping root must be mapping",
+        "workspace groups must be a list",
+        "workspace users must be a list",
+    }:
+        return message
+    return "invalid_workspace_groups_authority_directory"
 
 
 if __name__ == "__main__":

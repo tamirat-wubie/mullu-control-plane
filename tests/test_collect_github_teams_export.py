@@ -12,6 +12,7 @@ from typing import Any
 import urllib.error
 
 from scripts.collect_github_teams_export import (
+    _bounded_error_reason,
     collect_github_teams_export,
     main,
     write_github_teams_export,
@@ -177,6 +178,14 @@ def test_collect_github_teams_export_reports_bounded_http_error(tmp_path, monkey
     assert "GitHub teams export failed: GitHub endpoint returned HTTP 403" in captured.err
     assert "secret-token" not in captured.err
     assert captured.out == ""
+
+
+def test_github_teams_export_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-github-export-token"))
+
+    assert reason == "invalid_github_teams_export"
+    assert "secret-github-export-token" not in reason
+    assert reason != "secret-github-export-token"
 
 
 def _urlopen_for_empty_org(request, timeout):

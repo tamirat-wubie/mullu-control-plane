@@ -158,13 +158,13 @@ def produce_browser_live_receipt(
             "worker_receipt": _json_ready(worker_receipt),
             "blockers": blockers,
         }
-    except Exception as exc:  # noqa: BLE001
-        blockers.append(f"browser_probe_exception:{type(exc).__name__}")
+    except Exception:  # noqa: BLE001
+        blockers.append("browser_probe_exception")
         payload = _failed_payload(
             adapter_id="browser.playwright",
             checked_at=checked_at,
             blockers=blockers,
-            error=str(exc),
+            error="browser_probe_exception",
         )
         payload.update(
             {
@@ -210,13 +210,13 @@ def produce_document_live_receipt(
             "required_parser_ids": sorted(REQUIRED_DOCUMENT_PARSERS),
             "blockers": blockers,
         }
-    except Exception as exc:  # noqa: BLE001
-        blockers.append(f"document_probe_exception:{type(exc).__name__}")
+    except Exception:  # noqa: BLE001
+        blockers.append("document_probe_exception")
         payload = _failed_payload(
             adapter_id="document.production_parsers",
             checked_at=checked_at,
             blockers=blockers,
-            error=str(exc),
+            error="document_probe_exception",
         )
     _write_json(output_path, payload)
     return LiveReceiptWrite(
@@ -293,13 +293,13 @@ def produce_voice_live_receipt(
             "synthesis_receipt": _json_ready(asdict(synthesis_response.receipt)),
             "blockers": blockers,
         }
-    except Exception as exc:  # noqa: BLE001
-        blockers.append(f"voice_probe_exception:{type(exc).__name__}")
+    except Exception:  # noqa: BLE001
+        blockers.append("voice_probe_exception")
         payload = _failed_payload(
             adapter_id="voice.openai",
             checked_at=checked_at,
             blockers=blockers,
-            error=str(exc),
+            error="voice_probe_exception",
         )
     _write_json(output_path, payload)
     return LiveReceiptWrite(
@@ -356,13 +356,13 @@ def produce_email_calendar_live_receipt(
             "worker_receipt": _json_ready(worker_receipt),
             "blockers": blockers,
         }
-    except Exception as exc:  # noqa: BLE001
-        blockers.append(f"email_calendar_probe_exception:{type(exc).__name__}")
+    except Exception:  # noqa: BLE001
+        blockers.append("email_calendar_probe_exception")
         payload = _failed_payload(
             adapter_id="communication.email_calendar_worker",
             checked_at=checked_at,
             blockers=blockers,
-            error=str(exc),
+            error="email_calendar_probe_exception",
         )
         payload["external_write"] = True
     _write_json(output_path, payload)

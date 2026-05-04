@@ -12,6 +12,7 @@ from typing import Any
 import urllib.error
 
 from scripts.collect_scim_directory_export import (
+    _bounded_error_reason,
     collect_scim_directory_export,
     main,
     write_scim_export,
@@ -168,6 +169,14 @@ def test_collect_scim_directory_export_reports_bounded_http_error(tmp_path, monk
     assert "SCIM directory export failed: SCIM endpoint returned HTTP 401" in captured.err
     assert "secret-token" not in captured.err
     assert captured.out == ""
+
+
+def test_scim_directory_export_bounds_unrecognized_error_reason() -> None:
+    reason = _bounded_error_reason(ValueError("secret-scim-export-token"))
+
+    assert reason == "invalid_scim_directory_export"
+    assert "secret-scim-export-token" not in reason
+    assert reason != "secret-scim-export-token"
 
 
 def _urlopen_for_empty_directory(request, timeout):
