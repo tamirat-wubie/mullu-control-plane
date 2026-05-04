@@ -36,6 +36,9 @@ DEFAULT_VALIDATION_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "deployment_publication_closure_validation.json"
 )
 DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
+DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION_SCHEMA_PATH = (
+    REPO_ROOT / "schemas" / "deployment_publication_closure_validation.schema.json"
+)
 DEPLOYMENT_STATE_PATTERN = re.compile(
     r"^\*\*Deployment witness state:\*\*\s+`([^`]+)`$",
     re.MULTILINE,
@@ -206,12 +209,26 @@ def write_deployment_publication_closure_validation_report(
     output_path: Path,
 ) -> Path:
     """Write one deployment publication closure validation report."""
+    schema_errors = _validate_closure_validation_report_schema(validation)
+    if schema_errors:
+        raise RuntimeError(
+            "deployment publication closure validation report schema failed: "
+            f"{len(schema_errors)} schema error(s)"
+        )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(validation.to_json_dict(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return output_path
+
+
+def _validate_closure_validation_report_schema(
+    validation: DeploymentPublicationClosureValidation,
+) -> list[str]:
+    """Validate the closure validation report against its public schema."""
+    schema = _load_schema(DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION_SCHEMA_PATH)
+    return _validate_schema_instance(schema, validation.to_json_dict())
 
 
 def _bounded_deployment_status_path(deployment_status_path: Path) -> str:

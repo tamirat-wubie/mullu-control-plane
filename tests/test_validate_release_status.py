@@ -77,6 +77,12 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
         "validate_deployment_orchestration_receipt.py" in literal
         for literal in deployment_literals
     )
+    assert any(
+        "validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json"
+        in literal
+        for literal in deployment_literals
+    )
+    assert ".change_assurance/deployment_publication_closure_validation.json" in deployment_literals
     assert any("plan_capability_adapter_closure.py" in literal for literal in deployment_literals)
     assert any("plan_deployment_publication_closure.py" in literal for literal in deployment_literals)
     assert any("plan_general_agent_promotion_closure.py" in literal for literal in deployment_literals)
@@ -217,6 +223,10 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "python scripts/validate_protocol_manifest.py" in REQUIRED_CI_LITERALS
+    assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
+    assert "schemas/deployment_publication_closure_validation.schema.json" in REQUIRED_CI_LITERALS
+    assert "deployment-publication-closure-validation" in REQUIRED_CI_LITERALS
+    assert ".change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json" in REQUIRED_CI_LITERALS
     assert any(
@@ -243,6 +253,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert content.count("python scripts/validate_logic_governance_application.py") == 1
     assert "Validate protocol manifest" in content
     assert "Validate logic governance application" in content
+    assert "test -f schemas/deployment_publication_closure_validation.schema.json" in content
 
 
 def test_ci_workflow_runs_promotion_closure_schema_gate() -> None:

@@ -123,7 +123,16 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Validate deployment publication closure
-        run: python scripts/validate_deployment_publication_closure.py
+        run: |
+          mkdir -p .change_assurance
+          test -f schemas/deployment_publication_closure_validation.schema.json
+          python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
+
+      - name: Upload deployment publication closure validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-publication-closure-validation
+          path: .change_assurance/deployment_publication_closure_validation.json
 
       - name: Validate Reflex deployment witness replay
         run: |
@@ -271,7 +280,9 @@ jobs:
         run: python scripts/validate_public_repository_surface.py --local-only
 
       - name: Deployment publication closure check
-        run: python scripts/validate_deployment_publication_closure.py
+        run: |
+          mkdir -p .change_assurance
+          python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
 
       - name: General-agent promotion closure plan check
         run: |

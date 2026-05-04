@@ -53,6 +53,8 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "authority_responsibility_debt_clear=true" in content
     assert "python scripts/plan_capability_adapter_closure.py --json" in content
     assert "python scripts/plan_deployment_publication_closure.py --json" in content
+    assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in content
+    assert ".change_assurance/deployment_publication_closure_validation.json" in content
     assert "python scripts/plan_general_agent_promotion_closure.py --json" in content
     assert "python scripts/validate_general_agent_promotion_closure_plan_schema.py --strict" in content
     assert "python scripts/validate_general_agent_promotion_closure_plan.py --strict" in content
