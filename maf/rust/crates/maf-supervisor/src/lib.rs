@@ -218,6 +218,17 @@ pub struct LivelockRecord {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     #[test]
     fn supervisor_phase_serializes_to_snake_case() {
@@ -329,6 +340,15 @@ mod tests {
         let json = serde_json::to_string(&tick).unwrap();
         let back: SupervisorTick = serde_json::from_str(&json).unwrap();
         assert_eq!(tick, back);
+    }
+
+    #[test]
+    fn canonical_supervisor_tick_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_tick.json"
+        ));
+        assert_fixture_round_trip::<SupervisorTick>(fixture_json);
     }
 
     #[test]

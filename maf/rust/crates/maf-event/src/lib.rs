@@ -274,6 +274,17 @@ pub struct ObligationEscalation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     // --- Event enum serialization ---
 
@@ -314,6 +325,15 @@ mod tests {
         let json = serde_json::to_string(&record).unwrap();
         let back: EventRecord = serde_json::from_str(&json).unwrap();
         assert_eq!(record, back);
+    }
+
+    #[test]
+    fn canonical_event_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_record.json"
+        ));
+        assert_fixture_round_trip::<EventRecord>(fixture_json);
     }
 
     #[test]

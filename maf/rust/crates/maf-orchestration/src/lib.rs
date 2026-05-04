@@ -731,6 +731,15 @@ mod tests {
         assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
+    #[test]
+    fn canonical_job_descriptor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_descriptor.json"
+        ));
+        assert_fixture_round_trip::<job::JobDescriptor>(fixture_json);
+    }
+
     // --- Workflows ---
 
     #[test]
@@ -823,6 +832,15 @@ mod tests {
         let json = serde_json::to_string(&plan).unwrap();
         let back: goal::GoalPlan = serde_json::from_str(&json).unwrap();
         assert_eq!(plan, back);
+    }
+
+    #[test]
+    fn canonical_goal_plan_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_plan.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalPlan>(fixture_json);
     }
 
     // --- Functions ---

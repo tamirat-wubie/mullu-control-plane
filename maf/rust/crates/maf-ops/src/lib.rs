@@ -600,6 +600,17 @@ pub mod graph {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::DeserializeOwned;
+
+    fn assert_fixture_round_trip<T>(fixture_json: &str)
+    where
+        T: DeserializeOwned + Serialize,
+    {
+        let fixture_value: serde_json::Value = serde_json::from_str(fixture_json).unwrap();
+        let parsed: T = serde_json::from_str(fixture_json).unwrap();
+        let round_trip_value = serde_json::to_value(parsed).unwrap();
+        assert_eq!(fixture_value, round_trip_value);
+    }
 
     // --- Simulation ---
 
@@ -662,6 +673,15 @@ mod tests {
         let json = serde_json::to_string(&comparison).unwrap();
         assert!(json.contains(r#""scores":{"alpha":2.0,"zeta":1.0}"#));
         assert!(json.find(r#""alpha":2.0"#).unwrap() < json.find(r#""zeta":1.0"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_simulation_comparison_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_comparison.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationComparison>(fixture_json);
     }
 
     // --- Utility ---
