@@ -204,6 +204,35 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
     assert any("action_count=7" in step.detail for step in report.steps)
 
 
+def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path: Path) -> None:
+    schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path, action_count=7)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    drift_validation.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "expected_action_count": 8,
+                "observed_action_count": 8,
+                "expected_approval_required_count": 4,
+                "observed_approval_required_count": 4,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+
+    assert report.ready is False
+    assert report.blockers == ("closure plan drift validation",)
+    assert any("schema=" in step.detail for step in report.steps)
+
+
 def _write_valid_reports(
     tmp_path: Path,
     *,
