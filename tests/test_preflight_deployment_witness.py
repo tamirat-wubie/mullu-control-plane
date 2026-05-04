@@ -315,6 +315,67 @@ def test_preflight_deployment_witness_rejects_missing_plan_bundle_witness() -> N
     assert "plan_bundle_passed=False" in conformance_step.detail
 
 
+def test_preflight_deployment_witness_dns_failure_detail_is_bounded() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        probe_endpoints=False,
+        runner=runner,
+        resolver=lambda host: (_ for _ in ()).throw(OSError("dns-secret-token")),
+    )
+    dns_step = next(step for step in report.steps if step.name == "dns resolution")
+    serialized_report = json.dumps(report.to_json_dict(), sort_keys=True)
+
+    assert report.ready is False
+    assert dns_step.passed is False
+    assert dns_step.detail == "failed:resolution_error"
+    assert "dns-secret-token" not in serialized_report
+
+
+def test_preflight_deployment_witness_endpoint_details_omit_raw_evidence_values() -> None:
+    runner = FakeRunner()
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_private_evidence_getter,
+    )
+    serialized_report = json.dumps(report.to_json_dict(), sort_keys=True)
+
+    assert report.ready is True
+    assert "health-secret" not in serialized_report
+    assert "runtime-secret-value" not in serialized_report
+    assert "private-conformance-evidence" not in serialized_report
+    assert "private-check-detail" not in serialized_report
+
+
+def test_preflight_deployment_witness_command_failure_is_bounded() -> None:
+    def failing_runner(command: list[str], *, check: bool, capture_output: bool, text: bool):
+        raise subprocess.CalledProcessError(
+            returncode=7,
+            cmd=command,
+            output="stdout-secret-token",
+            stderr="stderr-secret-token",
+        )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        preflight_deployment_witness(
+            gateway_host="gateway.mullusi.com",
+            expected_environment="pilot",
+            runner=failing_runner,
+            resolver=lambda host: ("203.0.113.10",),
+        )
+
+    message = str(exc_info.value)
+    assert message == "command failed: gh variable list: exit_code=7"
+    assert "stdout-secret-token" not in message
+    assert "stderr-secret-token" not in message
+
+
 def test_preflight_deployment_witness_rejects_invalid_host() -> None:
     runner = FakeRunner()
 
@@ -382,6 +443,13 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "expires_at": "2099-04-25T00:30:00+00:00",
             "gateway_witness_valid": True,
             "runtime_witness_valid": True,
+            "latest_anchor_valid": True,
+            "command_closure_canary_passed": True,
+            "capability_admission_canary_passed": True,
+            "dangerous_capability_isolation_canary_passed": True,
+            "streaming_budget_canary_passed": True,
+            "lineage_query_canary_passed": True,
+            "authority_obligation_canary_passed": True,
             "authority_responsibility_debt_clear": True,
             "authority_pending_approval_chain_count": 0,
             "authority_overdue_approval_chain_count": 0,
@@ -395,9 +463,21 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "mcp_capability_manifest_capability_count": 0,
             "capability_plan_bundle_canary_passed": True,
             "capability_plan_bundle_count": 0,
+            "capsule_registry_certified": True,
+            "proof_coverage_matrix_current": True,
+            "known_limitations_aligned": False,
+            "security_model_aligned": False,
             "terminal_status": "conformant_with_gaps",
             "open_conformance_gaps": ["known_limitations_documentation_drift"],
             "evidence_refs": ["gateway_witness:test"],
+            "checks": [
+                {
+                    "check_id": "gateway_witness_valid",
+                    "passed": True,
+                    "evidence_ref": "gateway_witness:test",
+                    "detail": "verified",
+                }
+            ],
             "signature_key_id": "runtime-conformance-test",
             "signature": "hmac-sha256:placeholder",
         }
@@ -442,6 +522,32 @@ def _missing_plan_bundle_conformance_getter(url: str) -> tuple[int, dict[str, An
     if url.endswith("/runtime/conformance"):
         return status, {**payload, "capability_plan_bundle_canary_passed": False}
     return status, payload
+
+
+def _private_evidence_getter(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _healthy_getter(url)
+    if url.endswith("/health"):
+        return status, {**payload, "internal_secret": "health-secret"}
+    if url.endswith("/gateway/witness"):
+        return status, {
+            **payload,
+            "signature": "hmac-sha256:runtime-secret-value",
+            "internal_evidence_ref": "proof://private-runtime-evidence",
+        }
+    if url.endswith("/runtime/conformance"):
+        return status, {
+            **payload,
+            "evidence_refs": ["proof://private-conformance-evidence"],
+            "checks": [
+                {
+                    "check_id": "private_check",
+                    "passed": True,
+                    "evidence_ref": "proof://private-check-evidence",
+                    "detail": "private-check-detail",
+                }
+            ],
+        }
+    raise AssertionError(f"unexpected url: {url}")
 
 
 def _completed(command: list[str], payload: object) -> subprocess.CompletedProcess[str]:
