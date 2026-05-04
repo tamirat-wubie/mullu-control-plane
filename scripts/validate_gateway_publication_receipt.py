@@ -486,8 +486,8 @@ def main(argv: list[str] | None = None) -> int:
             expected_gateway_url=args.expected_gateway_url,
             expected_environment=args.expected_environment,
         )
-    except RuntimeError as exc:
-        print(f"gateway publication receipt validation failed: {exc}")
+    except RuntimeError:
+        print("gateway publication receipt validation failed")
         return 1
 
     output_path = write_receipt_validation_report(validation, Path(args.output))

@@ -20,16 +20,20 @@ def test_protocol_manifest_is_valid() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     reflex_entry = entries["reflex-deployment-witness-envelope"]
+    receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
     errors = validate_protocol_manifest(manifest)
 
     assert errors == []
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 33
+    assert len(manifest["schemas"]) == 34
     assert reflex_entry["path"] == "schemas/reflex_deployment_witness_envelope.schema.json"
     assert reflex_entry["urn"] == "urn:mullusi:schema:reflex-deployment-witness-envelope:1"
     assert reflex_entry["surface"] == "deployment"
+    assert receipt_entry["path"] == "schemas/reflex_deployment_witness_validator_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:reflex-deployment-witness-validator-receipt:1"
+    assert receipt_entry["surface"] == "deployment"
 
 
 def test_protocol_manifest_defines_open_and_closed_surfaces() -> None:

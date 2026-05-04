@@ -417,8 +417,8 @@ def main(argv: list[str] | None = None) -> int:
             expected_gateway_url=args.expected_gateway_url,
             expected_environment=args.expected_environment,
         )
-    except RuntimeError as exc:
-        print(f"deployment orchestration receipt validation failed: {exc}")
+    except RuntimeError:
+        print("deployment orchestration receipt validation failed")
         return 1
 
     output_path = write_orchestration_receipt_validation_report(

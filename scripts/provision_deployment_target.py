@@ -136,7 +136,9 @@ def main(argv: list[str] | None = None) -> int:
             expected_environment=args.expected_environment,
         )
     except RuntimeError as exc:
-        print(f"deployment target provisioning failed: {exc}")
+        message = str(exc)
+        detail = message if message.startswith("gateway URL ") else ""
+        print("deployment target provisioning failed" + (f": {detail}" if detail else ""))
         return 1
 
     print(f"repository: {target.repository}")

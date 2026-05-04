@@ -390,9 +390,7 @@ def load_readiness_dispatch_inputs(
 
     report_repository = _readiness_string(payload, "repository")
     if report_repository != repository:
-        raise RuntimeError(
-            f"readiness report repository mismatch: {report_repository} != {repository}"
-        )
+        raise RuntimeError("readiness report repository mismatch")
 
     return GatewayPublicationDispatchInputs(
         repository=repository,
@@ -509,7 +507,13 @@ def main(argv: list[str] | None = None) -> int:
             poll_seconds=args.poll_seconds,
         )
     except RuntimeError as exc:
-        print(f"gateway publication dispatch failed: {exc}")
+        message = str(exc)
+        detail = ""
+        if message.startswith("readiness report repository mismatch"):
+            detail = "readiness report repository mismatch"
+        elif message == "failed to read readiness report":
+            detail = message
+        print("gateway publication dispatch failed" + (f": {detail}" if detail else ""))
         return 1
 
     print(f"gateway publication run: {result.run_url}")

@@ -246,8 +246,8 @@ def main(argv: list[str] | None = None) -> int:
             timeout_seconds=args.timeout_seconds,
             poll_seconds=args.poll_seconds,
         )
-    except RuntimeError as exc:
-        print(f"gateway publication publish failed: {exc}")
+    except RuntimeError:
+        print("gateway publication publish failed")
         return 1
 
     _print_publish_result(result)

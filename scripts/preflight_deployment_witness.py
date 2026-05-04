@@ -515,8 +515,8 @@ def main(argv: list[str] | None = None) -> int:
             mcp_capability_manifest_path=args.mcp_capability_manifest,
             probe_endpoints=not args.skip_endpoint_probes,
         )
-    except RuntimeError as exc:
-        print(f"deployment witness preflight failed: {exc}")
+    except RuntimeError:
+        print("deployment witness preflight failed")
         return 1
 
     output_path = write_preflight_report(report, Path(args.output))

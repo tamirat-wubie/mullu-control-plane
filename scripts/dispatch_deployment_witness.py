@@ -415,7 +415,9 @@ def main(argv: list[str] | None = None) -> int:
             poll_seconds=args.poll_seconds,
         )
     except RuntimeError as exc:
-        print(f"deployment witness dispatch failed: {exc}")
+        message = str(exc)
+        detail = message if message.startswith("gateway URL ") else ""
+        print("deployment witness dispatch failed" + (f": {detail}" if detail else ""))
         return 1
 
     print(f"deployment witness run: {result.run_url}")
