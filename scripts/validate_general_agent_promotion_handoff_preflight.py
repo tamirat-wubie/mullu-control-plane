@@ -144,10 +144,11 @@ def _validation_result(
     report: dict[str, Any],
     errors: list[str],
 ) -> PromotionHandoffPreflightValidation:
+    public_report_path = str(report_path) if report else "<unavailable>"
     return PromotionHandoffPreflightValidation(
         valid=not errors,
         ready=report.get("ready") is True,
-        report_path=str(report_path),
+        report_path=public_report_path,
         step_count=int(report.get("step_count", 0)) if isinstance(report.get("step_count", 0), int) else 0,
         blockers=_string_tuple(report.get("blockers", ()), "blockers", []),
         missing_environment_variables=_string_tuple(
@@ -162,11 +163,11 @@ def _validation_result(
 def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
-    except OSError as exc:
-        errors.append(f"preflight report could not be read: {exc}")
+    except OSError:
+        errors.append("preflight report could not be read")
         return {}
-    except json.JSONDecodeError as exc:
-        errors.append(f"preflight report must be JSON: {exc}")
+    except json.JSONDecodeError:
+        errors.append("preflight report must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append("preflight report root must be an object")

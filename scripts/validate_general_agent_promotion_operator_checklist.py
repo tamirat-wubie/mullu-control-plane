@@ -167,7 +167,7 @@ def validate_general_agent_promotion_operator_checklist(
     _require_superset(payload, "blocking_gap_ids", REQUIRED_BLOCKING_GAPS, errors)
     _validate_steps(steps, errors)
     return PromotionOperatorChecklistValidation(
-        checklist_path=checklist_path,
+        checklist_path=checklist_path if payload else Path("<unavailable>"),
         checklist_id=checklist_id,
         valid=not errors,
         step_count=len(steps) if isinstance(steps, list) else 0,
@@ -178,11 +178,11 @@ def validate_general_agent_promotion_operator_checklist(
 def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
-    except OSError as exc:
-        errors.append(f"checklist could not be read: {exc}")
+    except OSError:
+        errors.append("checklist could not be read")
         return {}
-    except json.JSONDecodeError as exc:
-        errors.append(f"checklist must be JSON: {exc}")
+    except json.JSONDecodeError:
+        errors.append("checklist must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append("checklist root must be an object")

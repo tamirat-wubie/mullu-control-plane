@@ -66,17 +66,19 @@ TEMPORAL_SCHEDULER_MACHINE = StateMachineSpec(
     machine_id="temporal-scheduler",
     name="Temporal Scheduler Machine",
     version="1.0.0",
-    states=("pending", "running", "completed", "expired", "blocked", "missed", "failed"),
+    states=("pending", "running", "completed", "expired", "blocked", "missed", "failed", "cancelled"),
     initial_state="pending",
-    terminal_states=("completed", "expired", "blocked", "missed", "failed"),
+    terminal_states=("completed", "expired", "blocked", "missed", "failed", "cancelled"),
     transitions=(
         TransitionRule(from_state="pending", to_state="pending", action="temporal_action_deferred"),
         TransitionRule(from_state="pending", to_state="running", action="temporal_action_due"),
         TransitionRule(from_state="pending", to_state="expired", action="temporal_action_expired"),
         TransitionRule(from_state="pending", to_state="blocked", action="temporal_action_blocked"),
         TransitionRule(from_state="pending", to_state="missed", action="temporal_action_missed"),
+        TransitionRule(from_state="pending", to_state="cancelled", action="temporal_action_cancelled"),
         TransitionRule(from_state="running", to_state="completed", action="temporal_action_completed"),
         TransitionRule(from_state="running", to_state="failed", action="temporal_action_failed"),
+        TransitionRule(from_state="running", to_state="cancelled", action="temporal_action_cancelled"),
     ),
 )
 
@@ -531,8 +533,10 @@ class ProofBridge:
                 return "pending", "missed", "temporal_action_missed", False
             return "pending", "expired", "temporal_action_expired", False
         if receipt.verdict is ScheduleDecisionVerdict.BLOCKED:
-            if receipt.reason == "failed":
+            if receipt.reason in {"failed", "missing_handler", "handler_error"}:
                 return "running", "failed", "temporal_action_failed", False
+            if receipt.reason == "cancelled":
+                return "pending", "cancelled", "temporal_action_cancelled", False
             if receipt.reason == "missed_run":
                 return "pending", "missed", "temporal_action_missed", False
             return "pending", "blocked", "temporal_action_blocked", False

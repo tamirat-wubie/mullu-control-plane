@@ -15,6 +15,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts.provision_deployment_target import DEFAULT_REPOSITORY
 from scripts.validate_deployment_orchestration_receipt import (
     ORCHESTRATION_RECEIPT_SCHEMA_PATH,
@@ -133,6 +135,23 @@ def test_orchestration_receipt_rejects_schema_contract_violation(tmp_path: Path)
     assert "unexpected property" in schema_step.detail
 
 
+def test_expected_value_mismatch_detail_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    _write_receipt(receipt_path)
+
+    validation = validate_deployment_orchestration_receipt(
+        receipt_path=receipt_path,
+        expected_gateway_url="https://private-gateway-token.mullusi.com/private-path",
+    )
+    expected_step = _step(validation, "expected gateway_url")
+
+    assert validation.valid is False
+    assert expected_step.passed is False
+    assert expected_step.detail == "mismatched"
+    assert "private-gateway-token" not in json.dumps(validation.to_json_dict(), sort_keys=True)
+    assert "gateway.mullusi.com" not in expected_step.detail
+
+
 def test_orchestration_receipt_schema_rejects_invalid_receipt_id_pattern(
     tmp_path: Path,
 ) -> None:
@@ -214,6 +233,29 @@ def test_cli_writes_validation_report_and_returns_nonzero(tmp_path: Path, capsys
     assert payload["valid"] is False
     assert "valid: false" in captured.out
     assert "preflight_ready=False" in captured.out
+
+
+def test_missing_orchestration_receipt_file_error_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-orchestration-path.json"
+
+    with pytest.raises(RuntimeError) as exc_info:
+        validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+
+    message = str(exc_info.value)
+    assert message == "failed to read deployment orchestration receipt"
+    assert "secret-orchestration-path" not in message
+
+
+def test_invalid_orchestration_receipt_json_error_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "orchestration.json"
+    receipt_path.write_text('{"receipt_id": "secret-json-token"', encoding="utf-8")
+
+    with pytest.raises(RuntimeError) as exc_info:
+        validate_deployment_orchestration_receipt(receipt_path=receipt_path)
+
+    message = str(exc_info.value)
+    assert message == "deployment orchestration receipt returned invalid JSON"
+    assert "secret-json-token" not in message
 
 
 def _write_receipt(

@@ -128,8 +128,12 @@ def create_gateway_app(
         if role.strip()
     )
     authority_operator_audit_events: list[dict[str, Any]] = []
-    reflex_deployment_witness_log = getattr(platform, "_decision_log", None) or GovernanceDecisionLog(
-        clock=_clock
+    platform_decision_log = getattr(platform, "_decision_log", None)
+    reflex_deployment_witness_log_backed = platform_decision_log is not None
+    reflex_deployment_witness_log = platform_decision_log or GovernanceDecisionLog(clock=_clock)
+    reflex_ephemeral_witness_log_allowed = gateway_env in {"local_dev", "test"} or (
+        os.environ.get("MULLU_ALLOW_EPHEMERAL_REFLEX_WITNESS_LOG", "").strip().lower()
+        in {"1", "true", "yes", "on"}
     )
     defer_approved_execution = (
         os.environ.get("MULLU_GATEWAY_DEFER_APPROVED_EXECUTION", "0").strip().lower()
@@ -195,6 +199,14 @@ def create_gateway_app(
         authorized = _deployment_authority_authorized(request)
         if not authorized:
             raise HTTPException(403, detail="Deployment authority access not authorized")
+
+    def _require_reflex_deployment_witness_log_backed() -> None:
+        if reflex_deployment_witness_log_backed or reflex_ephemeral_witness_log_allowed:
+            return
+        raise HTTPException(
+            503,
+            detail="Persistent Reflex deployment witness log required",
+        )
 
     def _record_authority_operator_audit(request: Request, *, authorized: bool) -> None:
         """Record bounded authority operator access without storing bearer secrets."""
@@ -866,6 +878,7 @@ def create_gateway_app(
         witness: dict[str, Any],
         request: Request,
     ) -> None:
+        _require_reflex_deployment_witness_log_backed()
         reflex_deployment_witness_log.record(
             tenant_id=request.headers.get("X-Mullu-Authority-Tenant-Id", "platform") or "platform",
             identity_id=request.headers.get("X-Mullu-Authority-Sender-Id", "reflex") or "reflex",
@@ -943,6 +956,14 @@ def create_gateway_app(
             and witness.get("signature") == f"hmac-sha256:{expected_signature}"
             and witness.get("production_mutation_applied") is False
         )
+
+    def _bounded_query_limit(request: Request, *, default: int = 50, maximum: int = 500) -> int:
+        raw_limit = request.query_params.get("limit", str(default))
+        try:
+            requested_limit = int(raw_limit)
+        except ValueError:
+            requested_limit = default
+        return max(1, min(requested_limit, maximum))
 
     @app.get("/runtime/self/health")
     def runtime_self_health(request: Request):
@@ -1086,6 +1107,27 @@ def create_gateway_app(
             "deployment_witness_persisted": witness_persisted,
         }
 
+    @app.get("/runtime/self/deployment-witnesses")
+    def runtime_self_deployment_witnesses(request: Request):
+        _require_authority_operator(request)
+        _require_reflex_deployment_witness_log_backed()
+        limit = _bounded_query_limit(request)
+        records = _reflex_deployment_witness_records(limit=limit)
+        replayed_records = [
+            {
+                "witness": witness,
+                "replay_passed": _replay_reflex_deployment_witness(witness),
+            }
+            for witness in records
+        ]
+        return {
+            "records": replayed_records,
+            "record_count": len(replayed_records),
+            "limit": limit,
+            "all_replay_passed": all(record["replay_passed"] for record in replayed_records),
+            "mutation_applied": False,
+        }
+
     @app.get("/runtime/self/witness")
     def runtime_self_witness(request: Request):
         _require_authority_operator(request)
@@ -1100,6 +1142,8 @@ def create_gateway_app(
             "candidate_count": len(pipeline["candidates"]),
             "mutation_applied": False,
             "protected_surfaces_auto_promote": False,
+            "deployment_witness_log_backed": reflex_deployment_witness_log_backed,
+            "ephemeral_deployment_witness_log_allowed": reflex_ephemeral_witness_log_allowed,
             "deployment_witness_count": len(deployment_witness_records),
             "deployment_witness_replay_passed": all(
                 _replay_reflex_deployment_witness(witness)

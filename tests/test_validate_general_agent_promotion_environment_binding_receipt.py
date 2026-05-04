@@ -107,3 +107,26 @@ def test_validate_environment_binding_receipt_cli_outputs_json(tmp_path: Path, c
     assert payload["valid"] is True
     assert payload["ready"] is True
     assert payload["binding_count"] == 6
+
+
+def test_validate_environment_binding_receipt_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-receipt-path.json"
+
+    result = validate_general_agent_promotion_environment_binding_receipt(receipt_path=receipt_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "environment binding receipt could not be read" in result.errors
+    assert "secret-receipt-path" not in serialized_errors
+
+
+def test_validate_environment_binding_receipt_json_parse_error_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "binding-receipt.json"
+    receipt_path.write_text('{"receipt_id": "secret-json-token"', encoding="utf-8")
+
+    result = validate_general_agent_promotion_environment_binding_receipt(receipt_path=receipt_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "environment binding receipt must be JSON" in result.errors
+    assert "secret-json-token" not in serialized_errors
