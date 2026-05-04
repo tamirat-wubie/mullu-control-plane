@@ -30,7 +30,12 @@ if str(MCOI_PATH) not in sys.path:
 
 from mcoi_runtime.app.policy_packs import PolicyPackRegistry  # noqa: E402
 from mcoi_runtime.app.profiles import list_profiles  # noqa: E402
-from scripts import validate_artifacts, validate_protocol_manifest, validate_schemas  # noqa: E402
+from scripts import (  # noqa: E402
+    validate_artifacts,
+    validate_logic_governance_application,
+    validate_protocol_manifest,
+    validate_schemas,
+)
 
 
 REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
@@ -64,6 +69,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "cargo clippy -- -D warnings",
     "python scripts/validate_schemas.py",
     "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_logic_governance_application.py",
     "python scripts/validate_artifacts.py",
     "python scripts/validate_schemas.py --strict",
     "python scripts/validate_artifacts.py --strict",
@@ -149,6 +155,7 @@ RELEASE_CHECKLIST_REQUIRED_LITERALS: tuple[str, ...] = (
     "Release Checklist",
     "Shared schemas validate with `scripts/validate_schemas.py --strict`",
     "Public protocol manifest validates with `scripts/validate_protocol_manifest.py`",
+    "Logic governance application validates with `scripts/validate_logic_governance_application.py`",
     "Shipped artifacts and document references validate with `scripts/validate_artifacts.py --strict`",
     "Release status derives from `scripts/validate_release_status.py --strict`",
     "CI workflow retains the full gated release command set in `.github/workflows/ci.yml`",
@@ -410,6 +417,14 @@ def validate_protocol_manifest_surface() -> list[str]:
     return [
         f"protocol manifest: {error}"
         for error in validate_protocol_manifest.validate_protocol_manifest(manifest)
+    ]
+
+
+def validate_logic_governance_surface() -> list[str]:
+    """Validate the formal logic governance doctrine as a release gate."""
+    return [
+        f"logic governance application: {error}"
+        for error in validate_logic_governance_application.validate_logic_governance_document()
     ]
 
 
@@ -685,6 +700,7 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     errors.extend(validate_schemas.validate_canonical_fixtures(strict=strict))
     errors.extend(validate_schemas.check_python_fixture_round_trip())
     errors.extend(validate_protocol_manifest_surface())
+    errors.extend(validate_logic_governance_surface())
     errors.extend(validate_artifacts.validate_example_artifacts(strict=strict))
 
     if strict:

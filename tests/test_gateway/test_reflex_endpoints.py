@@ -213,6 +213,7 @@ def test_reflex_auto_canary_persists_signed_deployment_witness_when_authorized(
     assert payload["deployment_witness"]["signature"].startswith("hmac-sha256:")
     assert payload["deployment_witness"]["production_mutation_applied"] is False
     assert witness["deployment_witness_count"] == 1
+    assert witness["deployment_witness_replay_passed"] is True
     assert witness["latest_deployment_witness_id"] == payload["deployment_witness"]["witness_id"]
 
 
@@ -229,3 +230,4 @@ def test_reflex_witness_is_signed_and_binds_pipeline_counts() -> None:
     assert payload["mutation_applied"] is False
     assert payload["protected_surfaces_auto_promote"] is False
     assert payload["candidate_count"] >= 1
+    assert payload["deployment_witness_replay_passed"] is True

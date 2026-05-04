@@ -187,6 +187,7 @@ OPERATIONAL_DOCUMENT_EXPECTATIONS: dict[str, OperationalDocumentExpectation] = {
             "pytest -q",
             "cargo test",
             "scripts/validate_schemas.py --strict",
+            "scripts/validate_logic_governance_application.py",
             "scripts/validate_artifacts.py --strict",
             "scripts/validate_release_status.py --strict",
             "scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0",
