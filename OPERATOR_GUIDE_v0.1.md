@@ -212,10 +212,11 @@ points for operators:
 - Working/episodic memory persistence is available, but only when you wire a
   local memory store and request restore explicitly.
 - Coordination persistence is partial: delegation, handoff, worker registry,
-  worker load-state, workforce assignment request/decision records, workflow
-  execution records, and aggregate queue-state witnesses can be persisted
-  explicitly, but live coordination still does not auto-save or auto-restore,
-  and workflow resume remains caller-driven.
+  worker load-state, workforce assignment request/decision records, goal
+  descriptors/execution state/plans/replans, workflow descriptors/execution
+  records, and aggregate queue-state witnesses can be persisted explicitly, but
+  live coordination still does not auto-save or auto-restore, and workflow
+  resume remains caller-driven.
 - Policy packs are enforced during evaluation through the runtime policy gate.
 - No web UI -- CLI only.
 - No background scheduling -- temporal contracts exist but no daemon monitors them.

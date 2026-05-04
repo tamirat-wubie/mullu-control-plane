@@ -13,6 +13,7 @@ import pytest
 from mcoi_runtime.adapters.filesystem_observer import FilesystemObserver
 from mcoi_runtime.adapters.process_observer import ProcessObserver
 from mcoi_runtime.adapters.shell_executor import ShellExecutor
+from mcoi_runtime.contracts.goal import GoalDescriptor, GoalExecutionState, GoalPlan, GoalPriority, GoalStatus, SubGoal
 from mcoi_runtime.app.bootstrap import bootstrap_runtime, build_policy_decision
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobStatus
@@ -24,6 +25,7 @@ from mcoi_runtime.core.policy_engine import PolicyInput
 from mcoi_runtime.core.jobs import JobEngine
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
 from mcoi_runtime.core.verification_engine import VerificationEngine
+from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.job_store import JobStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
@@ -176,6 +178,97 @@ def test_bootstrap_runtime_restores_memory_only_when_explicit(tmp_path: Path) ->
 def test_bootstrap_runtime_rejects_restore_without_store() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="memory_store"):
         bootstrap_runtime(restore_memory=True)
+
+
+def test_bootstrap_runtime_does_not_restore_goals_implicitly(tmp_path: Path) -> None:
+    goal_store = GoalStore(tmp_path / "goals")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    descriptor = GoalDescriptor(
+        goal_id="goal-1",
+        description="Persisted goal",
+        priority=GoalPriority.NORMAL,
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    state = source_runtime.goal_reasoning_engine.accept_goal(descriptor)
+    plan = source_runtime.goal_reasoning_engine.create_plan(
+        descriptor,
+        (
+            SubGoal(
+                sub_goal_id="sg-1",
+                goal_id="goal-1",
+                description="one",
+            ),
+        ),
+    )
+    goal_store.save_goal_descriptor(descriptor)
+    goal_store.save_goal_state(
+        GoalExecutionState(
+            goal_id=state.goal_id,
+            status=GoalStatus.EXECUTING,
+            current_plan_id=plan.plan_id,
+            updated_at="2026-03-18T12:00:00+00:00",
+        )
+    )
+    goal_store.save_plan(plan)
+    before = goal_store.save_state(source_runtime.goal_reasoning_engine)
+
+    runtime = bootstrap_runtime(goal_store=goal_store)
+
+    after = goal_store.save_state(source_runtime.goal_reasoning_engine)
+    assert runtime.goal_store is goal_store
+    assert runtime.goal_reasoning_engine.list_goal_descriptors() == ()
+    assert runtime.goal_reasoning_engine.list_goal_states() == ()
+    assert runtime.goal_reasoning_engine.list_plans() == ()
+    assert before == after
+
+
+def test_bootstrap_runtime_restores_goals_only_when_explicit(tmp_path: Path) -> None:
+    goal_store = GoalStore(tmp_path / "goals")
+    source_runtime = bootstrap_runtime(clock=lambda: "2026-03-18T12:00:00+00:00")
+    descriptor = GoalDescriptor(
+        goal_id="goal-1",
+        description="Persisted goal",
+        priority=GoalPriority.NORMAL,
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    state = source_runtime.goal_reasoning_engine.accept_goal(descriptor)
+    plan = source_runtime.goal_reasoning_engine.create_plan(
+        descriptor,
+        (
+            SubGoal(
+                sub_goal_id="sg-1",
+                goal_id="goal-1",
+                description="one",
+            ),
+        ),
+    )
+    goal_store.save_goal_descriptor(descriptor)
+    goal_store.save_goal_state(
+        GoalExecutionState(
+            goal_id=state.goal_id,
+            status=GoalStatus.EXECUTING,
+            current_plan_id=plan.plan_id,
+            updated_at="2026-03-18T12:00:00+00:00",
+        )
+    )
+    goal_store.save_plan(plan)
+
+    runtime = bootstrap_runtime(goal_store=goal_store, restore_goals=True)
+
+    restored_descriptor = runtime.goal_reasoning_engine.get_goal_descriptor("goal-1")
+    restored_state = runtime.goal_reasoning_engine.get_goal_state("goal-1")
+    restored_plan = runtime.goal_reasoning_engine.get_plan(plan.plan_id)
+    assert runtime.goal_store is goal_store
+    assert restored_descriptor is not None
+    assert restored_descriptor.description == "Persisted goal"
+    assert restored_state is not None
+    assert restored_state.current_plan_id == plan.plan_id
+    assert restored_plan is not None
+
+
+def test_bootstrap_runtime_rejects_goal_restore_without_store() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="goal_store"):
+        bootstrap_runtime(restore_goals=True)
 
 
 def test_bootstrap_runtime_does_not_restore_jobs_implicitly(tmp_path: Path) -> None:

@@ -11,13 +11,17 @@ from pathlib import Path
 import pytest
 
 from mcoi_runtime.contracts.goal import (
+    GoalDescriptor,
     GoalExecutionState,
     GoalPlan,
     GoalReplanRecord,
+    GoalPriority,
     GoalStatus,
     SubGoal,
     SubGoalStatus,
 )
+from mcoi_runtime.core.goal_reasoning import GoalReasoningEngine
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.errors import CorruptedDataError, PersistenceError
 
@@ -36,6 +40,17 @@ def _make_sub_goal(sub_goal_id="sg-1", goal_id="goal-1", **kw):
     )
     defaults.update(kw)
     return SubGoal(**defaults)
+
+
+def _make_descriptor(goal_id="goal-1", **kw):
+    defaults = dict(
+        goal_id=goal_id,
+        description=f"goal {goal_id}",
+        priority=GoalPriority.NORMAL,
+        created_at=FIXED_CLOCK,
+    )
+    defaults.update(kw)
+    return GoalDescriptor(**defaults)
 
 
 def _make_plan(plan_id="plan-1", goal_id="goal-1", sub_goals=None):
@@ -71,6 +86,16 @@ def _make_replan_record(goal_id="goal-1"):
 
 
 class TestGoalStoreState:
+    def test_save_and_load_descriptor_round_trip(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        descriptor = _make_descriptor()
+        store.save_goal_descriptor(descriptor)
+        loaded = store.load_goal_descriptor("goal-1")
+
+        assert loaded.goal_id == descriptor.goal_id
+        assert loaded.description == descriptor.description
+        assert loaded.priority is GoalPriority.NORMAL
+
     def test_save_and_load_round_trip(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
         state = _make_state()
@@ -199,6 +224,14 @@ class TestGoalStoreReplan:
 
 
 class TestGoalStoreListing:
+    def test_list_goal_descriptors(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_goal_descriptor(_make_descriptor("goal-b"))
+        store.save_goal_descriptor(_make_descriptor("goal-a"))
+
+        ids = store.list_goal_descriptors()
+        assert ids == ("goal-a", "goal-b")
+
     def test_list_goals(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
         store.save_goal_state(_make_state("goal-b"))
@@ -211,3 +244,96 @@ class TestGoalStoreListing:
     def test_list_goals_empty(self, tmp_path: Path):
         store = GoalStore(tmp_path / "goal-data")
         assert store.list_goals() == ()
+
+    def test_list_plans(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_plan(_make_plan("plan-b"))
+        store.save_plan(_make_plan("plan-a"))
+
+        ids = store.list_plans()
+        assert ids == ("plan-a", "plan-b")
+
+    def test_list_replans(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_replan_record(_make_replan_record("goal-b"))
+        store.save_replan_record(_make_replan_record("goal-a"))
+
+        ids = store.list_replans()
+        assert ids == ("goal-a_plan-2", "goal-b_plan-2")
+
+
+class TestGoalStoreRuntimeState:
+    def test_save_and_load_runtime_state_round_trip(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        engine = GoalReasoningEngine(clock=iter((FIXED_CLOCK,) * 8).__next__)
+        descriptor = _make_descriptor()
+        engine.accept_goal(descriptor)
+        plan = engine.create_plan(descriptor, (_make_sub_goal(),))
+        _new_plan, _record = engine.replan(
+            GoalExecutionState(
+                goal_id="goal-1",
+                status=GoalStatus.REPLANNING,
+                current_plan_id=plan.plan_id,
+                updated_at=FIXED_CLOCK,
+            ),
+            plan,
+            (_make_sub_goal(sub_goal_id="sg-2"),),
+            "replan",
+        )
+
+        payload = store.save_state(engine)
+        loaded = store.load_state()
+
+        assert '"descriptors"' in payload
+        assert len(loaded.descriptors) == 1
+        assert len(loaded.states) == 1
+        assert len(loaded.plans) == 2
+        assert len(loaded.replans) == 1
+
+    def test_restore_state_restores_goal_runtime(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        source = GoalReasoningEngine(clock=iter((FIXED_CLOCK,) * 8).__next__)
+        descriptor = _make_descriptor()
+        source.accept_goal(descriptor)
+        plan = source.create_plan(descriptor, (_make_sub_goal(),))
+        source.replan(
+            GoalExecutionState(
+                goal_id="goal-1",
+                status=GoalStatus.REPLANNING,
+                current_plan_id=plan.plan_id,
+                updated_at=FIXED_CLOCK,
+            ),
+            plan,
+            (_make_sub_goal(sub_goal_id="sg-2"),),
+            "replan",
+        )
+        store.save_state(source)
+
+        target = GoalReasoningEngine(clock=iter((FIXED_CLOCK,) * 2).__next__)
+        restored = store.restore_state(target)
+
+        assert len(restored.descriptors) == 1
+        assert target.get_goal_descriptor("goal-1") is not None
+        assert len(target.list_plans()) == 2
+        assert len(target.list_replan_records()) == 1
+
+    def test_load_runtime_state_fails_closed_on_missing_descriptor(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        store.save_goal_state(_make_state())
+
+        with pytest.raises(CorruptedDataError, match="descriptors and states must cover the same"):
+            store.load_state()
+
+    def test_restore_state_rejects_duplicate_goal_restore(self, tmp_path: Path):
+        store = GoalStore(tmp_path / "goal-data")
+        source = GoalReasoningEngine(clock=iter((FIXED_CLOCK,) * 4).__next__)
+        descriptor = _make_descriptor()
+        source.accept_goal(descriptor)
+        source.create_plan(descriptor, (_make_sub_goal(),))
+        store.save_state(source)
+
+        target = GoalReasoningEngine(clock=iter((FIXED_CLOCK,) * 2).__next__)
+        target.accept_goal(descriptor)
+
+        with pytest.raises(RuntimeCoreInvariantError, match="goal already restored"):
+            store.restore_state(target)

@@ -233,6 +233,7 @@ class CoordinationRecoveryRequest:
 
     request_id: str
     subject_id: str
+    restore_goals: bool = False
     restore_workflows: bool = False
     restore_jobs: bool = False
     restore_work_queue: bool = False
@@ -247,6 +248,7 @@ class CoordinationRecoveryRequest:
             if not isinstance(value, str) or not value.strip():
                 raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
         for field_name in (
+            "restore_goals",
             "restore_workflows",
             "restore_jobs",
             "restore_work_queue",
@@ -415,6 +417,10 @@ class CoordinationRecoveryReport:
     workflow_descriptor_count: int
     workflow_execution_count: int
     cross_store_checks_passed: bool
+    goal_descriptor_count: int = 0
+    goal_state_count: int = 0
+    goal_plan_count: int = 0
+    goal_replan_count: int = 0
     state_hash: str = ""
     errors: tuple[StructuredError, ...] = ()
     started_at: str = ""

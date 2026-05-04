@@ -45,6 +45,92 @@ class GoalReasoningEngine:
 
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
+        self._descriptors: dict[str, GoalDescriptor] = {}
+        self._states: dict[str, GoalExecutionState] = {}
+        self._plans: dict[str, GoalPlan] = {}
+        self._replan_records: dict[str, GoalReplanRecord] = {}
+
+    def restore_goal(
+        self,
+        descriptor: GoalDescriptor,
+        state: GoalExecutionState,
+    ) -> tuple[GoalDescriptor, GoalExecutionState]:
+        """Restore an exact persisted goal descriptor and state without replay."""
+        if not isinstance(descriptor, GoalDescriptor):
+            raise RuntimeCoreInvariantError("descriptor must be a GoalDescriptor instance")
+        if not isinstance(state, GoalExecutionState):
+            raise RuntimeCoreInvariantError("state must be a GoalExecutionState instance")
+        if descriptor.goal_id != state.goal_id:
+            raise RuntimeCoreInvariantError("descriptor and state goal_id must match")
+        if descriptor.goal_id in self._descriptors or descriptor.goal_id in self._states:
+            raise RuntimeCoreInvariantError(f"goal already restored: {descriptor.goal_id}")
+        self._descriptors[descriptor.goal_id] = descriptor
+        self._states[state.goal_id] = state
+        return descriptor, state
+
+    def restore_plan(self, plan: GoalPlan) -> GoalPlan:
+        """Restore an exact persisted goal plan without replay."""
+        if not isinstance(plan, GoalPlan):
+            raise RuntimeCoreInvariantError("plan must be a GoalPlan instance")
+        if plan.goal_id not in self._descriptors:
+            raise RuntimeCoreInvariantError(
+                "goal descriptor must be restored before plan"
+            )
+        if plan.plan_id in self._plans:
+            raise RuntimeCoreInvariantError(f"goal plan already restored: {plan.plan_id}")
+        self._plans[plan.plan_id] = plan
+        return plan
+
+    def restore_replan_record(self, record: GoalReplanRecord) -> GoalReplanRecord:
+        """Restore an exact persisted goal replan record without replay."""
+        if not isinstance(record, GoalReplanRecord):
+            raise RuntimeCoreInvariantError("record must be a GoalReplanRecord instance")
+        if record.goal_id not in self._descriptors:
+            raise RuntimeCoreInvariantError(
+                "goal descriptor must be restored before replan record"
+            )
+        if record.previous_plan_id not in self._plans or record.new_plan_id not in self._plans:
+            raise RuntimeCoreInvariantError(
+                "replan record must reference restored plans"
+            )
+        record_key = f"{record.goal_id}:{record.new_plan_id}"
+        if record_key in self._replan_records:
+            raise RuntimeCoreInvariantError(
+                f"goal replan record already restored: {record_key}"
+            )
+        self._replan_records[record_key] = record
+        return record
+
+    def get_goal_descriptor(self, goal_id: str) -> GoalDescriptor | None:
+        """Return a goal descriptor by identifier without mutating engine state."""
+        return self._descriptors.get(goal_id)
+
+    def get_goal_state(self, goal_id: str) -> GoalExecutionState | None:
+        """Return a goal execution state by identifier without mutating engine state."""
+        return self._states.get(goal_id)
+
+    def get_plan(self, plan_id: str) -> GoalPlan | None:
+        """Return a goal plan by identifier without mutating engine state."""
+        return self._plans.get(plan_id)
+
+    def list_goal_descriptors(self) -> tuple[GoalDescriptor, ...]:
+        """Return all goal descriptors in deterministic identifier order."""
+        return tuple(self._descriptors[goal_id] for goal_id in sorted(self._descriptors))
+
+    def list_goal_states(self) -> tuple[GoalExecutionState, ...]:
+        """Return all goal execution states in deterministic identifier order."""
+        return tuple(self._states[goal_id] for goal_id in sorted(self._states))
+
+    def list_plans(self) -> tuple[GoalPlan, ...]:
+        """Return all goal plans in deterministic identifier order."""
+        return tuple(self._plans[plan_id] for plan_id in sorted(self._plans))
+
+    def list_replan_records(self) -> tuple[GoalReplanRecord, ...]:
+        """Return all goal replan records in deterministic identifier order."""
+        return tuple(
+            self._replan_records[record_key]
+            for record_key in sorted(self._replan_records)
+        )
 
     # --- Goal acceptance ---
 
@@ -52,11 +138,14 @@ class GoalReasoningEngine:
         """Accept a proposed goal and produce its initial execution state."""
         if not isinstance(descriptor, GoalDescriptor):
             raise RuntimeCoreInvariantError("descriptor must be a GoalDescriptor instance")
-        return GoalExecutionState(
+        state = GoalExecutionState(
             goal_id=descriptor.goal_id,
             status=GoalStatus.ACCEPTED,
             updated_at=self._clock(),
         )
+        self._descriptors[descriptor.goal_id] = descriptor
+        self._states[state.goal_id] = state
+        return state
 
     # --- Plan creation ---
 
@@ -72,7 +161,10 @@ class GoalReasoningEngine:
         The GoalPlan constructor validates that sub_goals is non-empty and
         that predecessors form a DAG.
         """
-        return self._build_plan(goal.goal_id, sub_goals, version=version)
+        plan = self._build_plan(goal.goal_id, sub_goals, version=version)
+        self._descriptors[goal.goal_id] = goal
+        self._plans[plan.plan_id] = plan
+        return plan
 
     # --- Sub-goal execution ---
 
@@ -113,7 +205,7 @@ class GoalReasoningEngine:
             # All sub-goals done or blocked — check if we're fully complete
             all_ids = {sg.sub_goal_id for sg in plan.sub_goals}
             if completed >= all_ids:
-                return GoalExecutionState(
+                result_state = GoalExecutionState(
                     goal_id=state.goal_id,
                     status=GoalStatus.COMPLETED,
                     current_plan_id=state.current_plan_id,
@@ -121,6 +213,8 @@ class GoalReasoningEngine:
                     failed_sub_goals=state.failed_sub_goals,
                     updated_at=self._clock(),
                 )
+                self._states[result_state.goal_id] = result_state
+                return result_state
             return state
 
         result = executor.execute_sub_goal(eligible)
@@ -132,7 +226,7 @@ class GoalReasoningEngine:
             new_status = GoalStatus.EXECUTING
             if set(new_completed) >= all_ids:
                 new_status = GoalStatus.COMPLETED
-            return GoalExecutionState(
+            result_state = GoalExecutionState(
                 goal_id=state.goal_id,
                 status=new_status,
                 current_plan_id=state.current_plan_id,
@@ -140,10 +234,12 @@ class GoalReasoningEngine:
                 failed_sub_goals=state.failed_sub_goals,
                 updated_at=self._clock(),
             )
+            self._states[result_state.goal_id] = result_state
+            return result_state
 
         if result.status is SubGoalStatus.FAILED:
             new_failed = state.failed_sub_goals + (eligible.sub_goal_id,)
-            return GoalExecutionState(
+            result_state = GoalExecutionState(
                 goal_id=state.goal_id,
                 status=GoalStatus.FAILED,
                 current_plan_id=state.current_plan_id,
@@ -151,8 +247,11 @@ class GoalReasoningEngine:
                 failed_sub_goals=new_failed,
                 updated_at=self._clock(),
             )
+            self._states[result_state.goal_id] = result_state
+            return result_state
 
         # Any other status: return state unchanged
+        self._states[state.goal_id] = state
         return state
 
     # --- Replanning ---
@@ -178,6 +277,8 @@ class GoalReasoningEngine:
             reason=reason,
             replanned_at=self._clock(),
         )
+        self._plans[new_plan.plan_id] = new_plan
+        self._replan_records[f"{record.goal_id}:{record.new_plan_id}"] = record
         return new_plan, record
 
     # --- Deadline checking ---

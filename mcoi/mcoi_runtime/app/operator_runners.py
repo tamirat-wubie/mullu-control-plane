@@ -622,6 +622,7 @@ def run_goal(
     )
 
     if loop.runtime.goal_store is not None:
+        loop.runtime.goal_store.save_goal_descriptor(goal_descriptor)
         loop.runtime.goal_store.save_plan(plan)
         loop.runtime.goal_store.save_goal_state(state)
 
@@ -960,6 +961,7 @@ def _load_workflow_inventory(loop: OperatorLoop) -> tuple[tuple[object, ...], tu
 def _coordination_consistency_errors(
     *,
     loop: OperatorLoop,
+    goal_descriptors: tuple[object, ...] | None,
     job_descriptors: tuple[object, ...] | None,
     work_queue_entries: tuple[object, ...] | None,
     workflow_descriptors: tuple[object, ...] | None,
@@ -1022,6 +1024,38 @@ def _coordination_consistency_errors(
                 )
             )
 
+    if job_descriptors is not None:
+        available_goal_ids = (
+            {descriptor.goal_id for descriptor in goal_descriptors}
+            if goal_descriptors is not None
+            else {
+                descriptor.goal_id
+                for descriptor in loop.runtime.goal_reasoning_engine.list_goal_descriptors()
+            }
+        )
+        missing_goal_ids = tuple(
+            sorted(
+                {
+                    descriptor.goal_id
+                    for descriptor in job_descriptors
+                    if descriptor.goal_id is not None
+                    and descriptor.goal_id not in available_goal_ids
+                }
+            )
+        )
+        if missing_goal_ids:
+            errors.append(
+                validation_error(
+                    error_code="recovery_missing_goal_for_job",
+                    message=(
+                        "job descriptors reference missing goal descriptors: "
+                        + ", ".join(missing_goal_ids)
+                    ),
+                    source_plane=SourcePlane.COORDINATION,
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                )
+            )
+
     return tuple(errors)
 
 
@@ -1033,6 +1067,7 @@ def recover_coordination_state(
     started_at = loop.runtime.clock()
     has_write_effects = any(
         (
+            request.restore_goals,
             request.restore_workflows,
             request.restore_jobs,
             request.restore_work_queue,
@@ -1138,6 +1173,7 @@ def recover_coordination_state(
 
     inspected_components: list[str] = []
     restored_components: list[str] = []
+    goal_state = None
     workflow_state: WorkflowRuntimeState | None = None
     job_state = None
     work_queue_state = None
@@ -1147,6 +1183,11 @@ def recover_coordination_state(
     workflow_executions: tuple[object, ...] | None = None
 
     try:
+        if request.restore_goals:
+            if loop.runtime.goal_store is None:
+                raise PersistenceError("goal store not configured")
+            goal_state = loop.runtime.goal_store.load_state()
+            inspected_components.append("goals")
         if request.restore_workflows:
             if loop.runtime.workflow_store is None:
                 raise PersistenceError("workflow store not configured")
@@ -1195,6 +1236,10 @@ def recover_coordination_state(
             workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
             workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
             cross_store_checks_passed=False,
+            goal_descriptor_count=0 if goal_state is None else len(goal_state.descriptors),
+            goal_state_count=0 if goal_state is None else len(goal_state.states),
+            goal_plan_count=0 if goal_state is None else len(goal_state.plans),
+            goal_replan_count=0 if goal_state is None else len(goal_state.replans),
             errors=(
                 execution_error(
                     error_code="coordination_store_not_available",
@@ -1223,6 +1268,10 @@ def recover_coordination_state(
             workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
             workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
             cross_store_checks_passed=False,
+            goal_descriptor_count=0 if goal_state is None else len(goal_state.descriptors),
+            goal_state_count=0 if goal_state is None else len(goal_state.states),
+            goal_plan_count=0 if goal_state is None else len(goal_state.plans),
+            goal_replan_count=0 if goal_state is None else len(goal_state.replans),
             errors=(
                 validation_error(
                     error_code="workflow_store_invalid",
@@ -1239,6 +1288,7 @@ def recover_coordination_state(
     if request.require_cross_store_consistency:
         consistency_errors = _coordination_consistency_errors(
             loop=loop,
+            goal_descriptors=(None if goal_state is None else goal_state.descriptors),
             job_descriptors=(None if job_state is None else job_state.descriptors),
             work_queue_entries=(None if work_queue_state is None else work_queue_state.entries),
             workflow_descriptors=workflow_descriptors,
@@ -1261,12 +1311,21 @@ def recover_coordination_state(
                 workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
                 workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
                 cross_store_checks_passed=False,
+                goal_descriptor_count=0 if goal_state is None else len(goal_state.descriptors),
+                goal_state_count=0 if goal_state is None else len(goal_state.states),
+                goal_plan_count=0 if goal_state is None else len(goal_state.plans),
+                goal_replan_count=0 if goal_state is None else len(goal_state.replans),
                 errors=consistency_errors,
                 started_at=started_at,
                 completed_at=loop.runtime.clock(),
             )
 
     try:
+        if request.restore_goals:
+            if loop.runtime.goal_store is None:
+                raise PersistenceError("goal store not configured")
+            loop.runtime.goal_store.restore_state(loop.runtime.goal_reasoning_engine)
+            restored_components.append("goals")
         if request.restore_workflows:
             if loop.runtime.workflow_store is None:
                 raise PersistenceError("workflow store not configured")
@@ -1310,6 +1369,10 @@ def recover_coordination_state(
             workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
             workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
             cross_store_checks_passed=request.require_cross_store_consistency,
+            goal_descriptor_count=0 if goal_state is None else len(goal_state.descriptors),
+            goal_state_count=0 if goal_state is None else len(goal_state.states),
+            goal_plan_count=0 if goal_state is None else len(goal_state.plans),
+            goal_replan_count=0 if goal_state is None else len(goal_state.replans),
             errors=(
                 execution_error(
                     error_code="coordination_restore_failed",
@@ -1323,6 +1386,24 @@ def recover_coordination_state(
 
     state_hash = _coordination_payload_hash(
         {
+            "goals": (
+                None
+                if goal_state is None
+                else {
+                    "descriptors": [
+                        descriptor.to_json_dict() for descriptor in goal_state.descriptors
+                    ],
+                    "states": [
+                        state.to_json_dict() for state in goal_state.states
+                    ],
+                    "plans": [
+                        plan.to_json_dict() for plan in goal_state.plans
+                    ],
+                    "replans": [
+                        record.to_json_dict() for record in goal_state.replans
+                    ],
+                }
+            ),
             "jobs": (
                 None
                 if job_state is None
@@ -1379,6 +1460,10 @@ def recover_coordination_state(
         workflow_descriptor_count=0 if workflow_descriptors is None else len(workflow_descriptors),
         workflow_execution_count=0 if workflow_executions is None else len(workflow_executions),
         cross_store_checks_passed=request.require_cross_store_consistency,
+        goal_descriptor_count=0 if goal_state is None else len(goal_state.descriptors),
+        goal_state_count=0 if goal_state is None else len(goal_state.states),
+        goal_plan_count=0 if goal_state is None else len(goal_state.plans),
+        goal_replan_count=0 if goal_state is None else len(goal_state.replans),
         state_hash=state_hash,
         started_at=started_at,
         completed_at=loop.runtime.clock(),

@@ -15,6 +15,7 @@ from pathlib import Path
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.operator_loop import CoordinationRecoveryRequest, OperatorLoop
+from mcoi_runtime.contracts.goal import GoalDescriptor, GoalExecutionState, GoalPlan, GoalPriority, GoalStatus, SubGoal
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobState, JobStatus, SlaStatus, WorkQueueEntry
 from mcoi_runtime.contracts.roles import TeamQueueState
 from mcoi_runtime.contracts.workflow import (
@@ -29,6 +30,7 @@ from mcoi_runtime.contracts.workflow import (
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.workforce_runtime import WorkforceRuntimeEngine
 from mcoi_runtime.persistence.job_store import JobStore
+from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.team_queue_store import TeamQueueStore
 from mcoi_runtime.persistence.work_queue_store import WorkQueueStore
 from mcoi_runtime.persistence.workforce_store import WorkforceStore
@@ -45,18 +47,52 @@ def _seed_job_store(base_path: Path) -> JobStore:
             description="Persisted coordination job",
             priority=JobPriority.HIGH,
             created_at="2026-03-18T12:00:00+00:00",
+            goal_id="goal-1",
             workflow_id="workflow-1",
         ),
         JobState(
             job_id="job-1",
             status=JobStatus.IN_PROGRESS,
             sla_status=SlaStatus.ON_TRACK,
+            goal_id="goal-1",
             workflow_id="workflow-1",
             started_at="2026-03-18T12:00:01+00:00",
             updated_at="2026-03-18T12:00:01+00:00",
         ),
     )
     store.save_state(runtime.job_engine)
+    return store
+
+
+def _seed_goal_store(base_path: Path) -> GoalStore:
+    store = GoalStore(base_path)
+    descriptor = GoalDescriptor(
+        goal_id="goal-1",
+        description="Recovered Goal",
+        priority=GoalPriority.NORMAL,
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    plan = GoalPlan(
+        plan_id="goal-plan-1",
+        goal_id="goal-1",
+        sub_goals=(
+            SubGoal(
+                sub_goal_id="sg-1",
+                goal_id="goal-1",
+                description="Recovered sub-goal",
+            ),
+        ),
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    state = GoalExecutionState(
+        goal_id="goal-1",
+        status=GoalStatus.EXECUTING,
+        current_plan_id="goal-plan-1",
+        updated_at="2026-03-18T12:00:01+00:00",
+    )
+    store.save_goal_descriptor(descriptor)
+    store.save_plan(plan)
+    store.save_goal_state(state)
     return store
 
 
@@ -155,6 +191,7 @@ def _seed_workflow_store(base_path: Path) -> WorkflowStore:
 
 
 def test_recover_coordination_state_restores_all_selected_components(tmp_path: Path) -> None:
+    goal_store = _seed_goal_store(tmp_path / "goals")
     job_store = _seed_job_store(tmp_path / "jobs")
     work_queue_store = _seed_work_queue_store(tmp_path / "work-queue")
     team_queue_store = _seed_team_queue_store(tmp_path / "team-queue")
@@ -162,6 +199,7 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
     workflow_store = _seed_workflow_store(tmp_path / "workflows")
     runtime = bootstrap_runtime(
         clock=lambda: "2026-03-18T12:00:00+00:00",
+        goal_store=goal_store,
         job_store=job_store,
         work_queue_store=work_queue_store,
         team_queue_store=team_queue_store,
@@ -174,6 +212,7 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
         CoordinationRecoveryRequest(
             request_id="coordination-recovery-1",
             subject_id="subject-1",
+            restore_goals=True,
             restore_workflows=True,
             restore_jobs=True,
             restore_work_queue=True,
@@ -184,6 +223,7 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
     )
 
     assert report.restored_components == (
+        "goals",
         "workflows",
         "jobs",
         "work_queue",
@@ -191,6 +231,7 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
         "workforce",
     )
     assert report.inspected_components == (
+        "goals",
         "workflow_store",
         "jobs",
         "work_queue",
@@ -199,6 +240,10 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
     )
     assert report.policy_status == "allow"
     assert report.cross_store_checks_passed is True
+    assert report.goal_descriptor_count == 1
+    assert report.goal_state_count == 1
+    assert report.goal_plan_count == 1
+    assert report.goal_replan_count == 0
     assert report.job_count == 1
     assert report.work_queue_entry_count == 1
     assert report.team_queue_state_count == 1
@@ -208,6 +253,9 @@ def test_recover_coordination_state_restores_all_selected_components(tmp_path: P
     assert report.workflow_descriptor_count == 1
     assert report.workflow_execution_count == 1
     assert report.errors == ()
+    assert runtime.goal_reasoning_engine.get_goal_descriptor("goal-1") is not None
+    assert runtime.goal_reasoning_engine.get_goal_state("goal-1") is not None
+    assert runtime.goal_reasoning_engine.get_plan("goal-plan-1") is not None
     assert runtime.workflow_engine.get_workflow_descriptor("workflow-1") is not None
     assert runtime.workflow_engine.get_execution_record("wf-exec-1") is not None
     assert runtime.job_engine.get_job_descriptor("job-1") is not None
@@ -267,10 +315,12 @@ def test_recover_coordination_state_fails_closed_on_invalid_workflow_inventory(t
 
 
 def test_recover_coordination_state_restores_workflow_runtime_before_jobs(tmp_path: Path) -> None:
+    goal_store = _seed_goal_store(tmp_path / "goals")
     job_store = _seed_job_store(tmp_path / "jobs")
     workflow_store = _seed_workflow_store(tmp_path / "workflows")
     runtime = bootstrap_runtime(
         clock=lambda: "2026-03-18T12:00:00+00:00",
+        goal_store=goal_store,
         job_store=job_store,
         workflow_store=workflow_store,
     )
@@ -280,16 +330,41 @@ def test_recover_coordination_state_restores_workflow_runtime_before_jobs(tmp_pa
         CoordinationRecoveryRequest(
             request_id="coordination-recovery-3b",
             subject_id="subject-1",
+            restore_goals=True,
             restore_workflows=True,
             restore_jobs=True,
         )
     )
 
-    assert report.restored_components == ("workflows", "jobs")
+    assert report.restored_components == ("goals", "workflows", "jobs")
     assert report.cross_store_checks_passed is True
+    assert runtime.goal_reasoning_engine.get_goal_descriptor("goal-1") is not None
     assert runtime.workflow_engine.get_workflow_descriptor("workflow-1") is not None
     assert runtime.workflow_engine.get_execution_record("wf-exec-1") is not None
     assert runtime.job_engine.get_job_descriptor("job-1") is not None
+
+
+def test_recover_coordination_state_fails_closed_on_missing_goal_for_job(tmp_path: Path) -> None:
+    job_store = _seed_job_store(tmp_path / "jobs")
+    runtime = bootstrap_runtime(
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        job_store=job_store,
+    )
+    loop = OperatorLoop(runtime)
+
+    report = loop.recover_coordination_state(
+        CoordinationRecoveryRequest(
+            request_id="coordination-recovery-goal-missing",
+            subject_id="subject-1",
+            restore_jobs=True,
+        )
+    )
+
+    assert report.restored_components == ()
+    assert report.cross_store_checks_passed is False
+    assert report.goal_descriptor_count == 0
+    assert report.job_count == 1
+    assert report.errors[0].error_code == "recovery_missing_goal_for_job"
 
 
 def test_recover_coordination_state_restore_is_blocked_when_approval_is_required(tmp_path: Path) -> None:
