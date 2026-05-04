@@ -65,6 +65,20 @@ def test_validate_promotion_handoff_packet_rejects_count_drift(tmp_path: Path) -
     assert any("approval_required_actions does not match" in error for error in result.errors)
 
 
+def test_validate_promotion_handoff_packet_rejects_aggregate_count_drift(tmp_path: Path) -> None:
+    packet_path = tmp_path / "general_agent_promotion_handoff_packet.json"
+    payload = json.loads(PACKET_PATH.read_text(encoding="utf-8"))
+    payload["aggregate_closure_actions"] = 99
+    packet_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+
+    assert result.valid is False
+    assert result.open_blocker_count == 6
+    assert any("aggregate_closure_actions must be" in error for error in result.errors)
+    assert not any("approval_required_actions does not match" in error for error in result.errors)
+
+
 def test_validate_promotion_handoff_packet_cli_outputs_json(capsys) -> None:
     exit_code = main(["--json"])
     captured = capsys.readouterr()

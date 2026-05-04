@@ -148,6 +148,8 @@ def produce_browser_live_receipt(
             "sandbox_evidence_ref": sandbox_evidence_ref,
             "sandbox_evidence_status": sandbox_evidence["status"],
             "sandbox_evidence_detail": sandbox_evidence["detail"],
+            "sandbox_evidence_id": sandbox_evidence["evidence_id"],
+            "sandbox_receipt_id": sandbox_evidence["receipt_id"],
             "url_before": response.receipt.url_before,
             "url_after": response.receipt.url_after,
             "screenshot_before_ref": response.receipt.screenshot_before_ref,
@@ -170,6 +172,8 @@ def produce_browser_live_receipt(
                 "sandbox_evidence_ref": sandbox_evidence_ref,
                 "sandbox_evidence_status": sandbox_evidence["status"],
                 "sandbox_evidence_detail": sandbox_evidence["detail"],
+                "sandbox_evidence_id": sandbox_evidence["evidence_id"],
+                "sandbox_receipt_id": sandbox_evidence["receipt_id"],
             }
         )
     _write_json(output_path, payload)
@@ -437,6 +441,8 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
             "passed": False,
             "status": "failed",
             "detail": "missing sandbox evidence reference",
+            "evidence_id": "",
+            "receipt_id": "",
             "blockers": ("browser_sandbox_evidence_missing",),
         }
 
@@ -448,6 +454,8 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
             "passed": False,
             "status": "failed",
             "detail": f"sandbox evidence file not found: {ref}",
+            "evidence_id": "",
+            "receipt_id": "",
             "blockers": ("browser_sandbox_evidence_unverified",),
         }
 
@@ -458,6 +466,8 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
             "passed": False,
             "status": "failed",
             "detail": f"sandbox evidence unreadable: {type(exc).__name__}",
+            "evidence_id": "",
+            "receipt_id": "",
             "blockers": ("browser_sandbox_evidence_unverified",),
         }
     if not isinstance(payload, dict):
@@ -465,12 +475,16 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
             "passed": False,
             "status": "failed",
             "detail": "sandbox evidence root must be an object",
+            "evidence_id": "",
+            "receipt_id": "",
             "blockers": ("browser_sandbox_evidence_unverified",),
         }
 
     receipt = payload.get("receipt") if isinstance(payload.get("receipt"), dict) else payload
+    evidence_id = str(payload.get("evidence_id", "")).strip()
+    receipt_id = str(receipt.get("receipt_id", "")).strip()
     errors: list[str] = []
-    if not str(receipt.get("receipt_id", "")).strip():
+    if not receipt_id:
         errors.append("receipt_id_missing")
     if not str(receipt.get("sandbox_id", "")).strip():
         errors.append("sandbox_id_missing")
@@ -487,18 +501,26 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         errors.append("workspace_mount_not_workspace")
     if receipt.get("forbidden_effects_observed") is not False:
         errors.append("forbidden_effects_observed_not_false")
+    if receipt.get("changed_file_count", 0) != 0:
+        errors.append("changed_file_count_not_zero")
+    if receipt.get("changed_file_refs", ()) not in ((), []):
+        errors.append("changed_file_refs_not_empty")
 
     if errors:
         return {
             "passed": False,
             "status": "failed",
             "detail": ",".join(errors),
+            "evidence_id": evidence_id,
+            "receipt_id": receipt_id,
             "blockers": ("browser_sandbox_evidence_invalid",),
         }
     return {
         "passed": True,
         "status": "passed",
-        "detail": f"sandbox receipt verified: {receipt['receipt_id']}",
+        "detail": f"sandbox receipt verified: {receipt_id}",
+        "evidence_id": evidence_id,
+        "receipt_id": receipt_id,
         "blockers": (),
     }
 

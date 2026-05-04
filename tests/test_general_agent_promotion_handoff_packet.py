@@ -1,10 +1,12 @@
 """Conformance tests for the general-agent promotion handoff packet."""
 
+import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKET = ROOT / "docs" / "59_general_agent_promotion_handoff_packet.md"
+PACKET_JSON = ROOT / "examples" / "general_agent_promotion_handoff_packet.json"
 FORBIDDEN_PHRASE = " ".join(("artificial", "intelligence"))
 
 
@@ -40,6 +42,8 @@ def test_handoff_packet_links_operator_artifacts() -> None:
 
 def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     packet_text = _packet_text()
+    packet = json.loads(PACKET_JSON.read_text(encoding="utf-8"))
+    aggregate_closure_actions = packet["aggregate_closure_actions"]
     expected_blockers = {
         "adapter_evidence_not_closed",
         "browser_adapter_not_closed",
@@ -51,7 +55,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
 
     assert expected_blockers <= set(packet_text.split())
     assert "document_adapter_not_closed" not in packet_text
-    assert "Aggregate closure actions | 13" in packet_text
+    assert f"Aggregate closure actions | {aggregate_closure_actions}" in packet_text
     assert "Approval-required actions | 4" in packet_text
     assert "validate_general_agent_promotion.py --strict" in packet_text
     assert "STATUS:" in packet_text

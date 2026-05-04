@@ -62,7 +62,38 @@ def test_sandbox_runner_builds_no_network_readonly_docker_command(tmp_path: Path
     assert receipt.workspace_mount == "/workspace"
     assert receipt.forbidden_effects_observed is False
     assert receipt.verification_status == "passed"
+    assert receipt.changed_file_count == 0
+    assert receipt.changed_file_refs == ()
     assert receipt.evidence_refs[0].startswith("sandbox_execution:")
+
+
+def test_sandbox_runner_receipt_witnesses_workspace_changes(tmp_path: Path) -> None:
+    workspace_file = tmp_path / "result.txt"
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        workspace_file.write_text("changed", encoding="utf-8")
+        return subprocess.CompletedProcess(args[0], 0, stdout="ok", stderr="")
+
+    runner = DockerRootlessSandboxRunner(
+        host_workspace_root=str(tmp_path),
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+
+    result = runner.execute(
+        SandboxCommandRequest(
+            request_id="sandbox-request-diff",
+            tenant_id="tenant-1",
+            capability_id="computer.file.write.workspace",
+            argv=("python", "-m", "pytest"),
+        )
+    )
+
+    assert result.status == "succeeded"
+    assert result.receipt.changed_file_count == 1
+    assert len(result.receipt.changed_file_refs) == 1
+    assert result.receipt.changed_file_refs[0].startswith("workspace_diff:")
+    assert result.receipt.forbidden_effects_observed is False
 
 
 def test_sandbox_runner_blocks_on_non_linux_without_launch(tmp_path: Path) -> None:
@@ -92,6 +123,8 @@ def test_sandbox_runner_blocks_on_non_linux_without_launch(tmp_path: Path) -> No
     assert result.stderr == "sandbox runner is linux-only"
     assert result.receipt.forbidden_effects_observed is True
     assert result.receipt.verification_status == "blocked"
+    assert result.receipt.changed_file_count == 0
+    assert result.receipt.changed_file_refs == ()
     assert launched is False
 
 
@@ -114,6 +147,7 @@ def test_sandbox_runner_blocks_denied_executable(tmp_path: Path) -> None:
     assert result.stderr == "denied executable: bash"
     assert result.receipt.returncode is None
     assert result.receipt.network_disabled is True
+    assert result.receipt.changed_file_count == 0
 
 
 def test_sandbox_runner_blocks_unallowlisted_executable(tmp_path: Path) -> None:
@@ -135,6 +169,35 @@ def test_sandbox_runner_blocks_unallowlisted_executable(tmp_path: Path) -> None:
     assert result.stderr == "executable not allowlisted: ruby"
     assert result.receipt.forbidden_effects_observed is True
     assert result.receipt.evidence_refs
+    assert result.receipt.changed_file_refs == ()
+
+
+def test_sandbox_runner_timeout_receipt_witnesses_workspace_changes(tmp_path: Path) -> None:
+    workspace_file = tmp_path / "partial.txt"
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        workspace_file.write_text("partial", encoding="utf-8")
+        raise subprocess.TimeoutExpired(args[0], timeout=1, output="partial", stderr="")
+
+    runner = DockerRootlessSandboxRunner(
+        host_workspace_root=str(tmp_path),
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+
+    result = runner.execute(
+        SandboxCommandRequest(
+            request_id="sandbox-request-timeout",
+            tenant_id="tenant-1",
+            capability_id="computer.code.patch",
+            argv=("python", "-m", "pytest"),
+        )
+    )
+
+    assert result.status == "timeout"
+    assert result.receipt.verification_status == "timeout"
+    assert result.receipt.changed_file_count == 1
+    assert result.receipt.changed_file_refs[0].startswith("workspace_diff:")
 
 
 def test_sandbox_runner_rejects_networked_profile() -> None:

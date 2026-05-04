@@ -236,6 +236,8 @@ class StubSandboxRunner:
             read_only_rootfs=True,
             workspace_mount="/workspace",
             forbidden_effects_observed=False,
+            changed_file_count=0,
+            changed_file_refs=(),
             verification_status="passed",
             evidence_refs=("sandbox_execution:test",),
         )

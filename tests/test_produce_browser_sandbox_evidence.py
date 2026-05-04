@@ -52,6 +52,8 @@ def test_browser_sandbox_evidence_uses_rootless_runner_receipt(tmp_path: Path) -
     assert payload["receipt"]["network_disabled"] is True
     assert payload["receipt"]["read_only_rootfs"] is True
     assert payload["receipt"]["workspace_mount"] == "/workspace"
+    assert payload["receipt"]["changed_file_count"] == 0
+    assert payload["receipt"]["changed_file_refs"] == []
     assert "--read-only" in captured["argv"]
     assert captured["shell"] is False
     assert captured["timeout"] == 120
