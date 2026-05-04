@@ -1162,6 +1162,7 @@ class AuthorityObligationMesh:
                 obligation_type="accepted_risk_review",
                 due_at=due_at,
                 evidence_required=("review_decision", "risk_owner_attestation"),
+                escalation_policy_id=self._escalation_policy_id_for(command.tenant_id, command_id),
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         elif certificate.disposition is ClosureDisposition.REQUIRES_REVIEW:
@@ -1178,6 +1179,7 @@ class AuthorityObligationMesh:
                 obligation_type="case_review",
                 due_at=self._future_iso(hours=24),
                 evidence_required=("case_disposition",),
+                escalation_policy_id=self._escalation_policy_id_for(command.tenant_id, command_id),
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         elif certificate.disposition is ClosureDisposition.COMPENSATED:
@@ -1195,6 +1197,7 @@ class AuthorityObligationMesh:
                 obligation_type="compensation_review",
                 due_at=self._future_iso(hours=24),
                 evidence_required=("compensation_receipt", "compensation_reviewer_attestation"),
+                escalation_policy_id=self._escalation_policy_id_for(command.tenant_id, command_id),
                 terminal_certificate_id=certificate.certificate_id,
             ),)
         else:
@@ -1243,6 +1246,7 @@ class AuthorityObligationMesh:
             if due_at > now:
                 continue
             updated = self._replace_obligation(obligation, status=ObligationStatus.ESCALATED)
+            route = self._escalation_route(updated)
             event = {
                 "event_id": f"obl-escalation-{uuid4().hex[:16]}",
                 "obligation_id": updated.obligation_id,
@@ -1250,6 +1254,9 @@ class AuthorityObligationMesh:
                 "tenant_id": updated.tenant_id,
                 "owner_id": updated.owner_id,
                 "owner_team": updated.owner_team,
+                "escalation_policy_id": updated.escalation_policy_id,
+                "fallback_owner_id": route["fallback_owner_id"],
+                "escalation_team": route["escalation_team"],
                 "escalated_at": self._clock(),
             }
             self._store.append_escalation_event(event)
@@ -1465,6 +1472,7 @@ class AuthorityObligationMesh:
         obligation_type: str,
         due_at: str,
         evidence_required: tuple[str, ...],
+        escalation_policy_id: str,
         terminal_certificate_id: str,
     ) -> Obligation:
         obligation_hash = canonical_hash({
@@ -1483,7 +1491,7 @@ class AuthorityObligationMesh:
             due_at=due_at,
             status=ObligationStatus.OPEN,
             evidence_required=evidence_required,
-            escalation_policy_id="default",
+            escalation_policy_id=escalation_policy_id,
             terminal_certificate_id=terminal_certificate_id,
         )
         self._store.save_obligation(obligation)
@@ -1554,6 +1562,38 @@ class AuthorityObligationMesh:
         )
         self._store.save_obligation(updated)
         return updated
+
+    def _escalation_policy_id_for(self, tenant_id: str, command_id: str) -> str:
+        chain = self._store.load_approval_chain_for_command(command_id)
+        if chain is not None:
+            return self._policy_for_chain(chain).escalation_policy_id
+        policies = tuple(policy for policy in self._store.list_escalation_policies() if policy.tenant_id == tenant_id)
+        return policies[0].policy_id if len(policies) == 1 else "default"
+
+    def _escalation_route(self, obligation: Obligation) -> dict[str, str]:
+        policy = self._store.load_escalation_policy(obligation.tenant_id, obligation.escalation_policy_id)
+        if policy is not None:
+            return {
+                "fallback_owner_id": policy.fallback_owner_id,
+                "escalation_team": policy.escalation_team,
+            }
+        command = self._commands.get(obligation.command_id)
+        action = self._commands.governed_action_for(obligation.command_id)
+        resource_ref = action.capability if action is not None else command.intent if command is not None else ""
+        ownership = (
+            self._store.load_ownership(obligation.tenant_id, resource_ref)
+            if resource_ref
+            else None
+        )
+        if ownership is not None:
+            return {
+                "fallback_owner_id": ownership.fallback_owner_id,
+                "escalation_team": ownership.escalation_team,
+            }
+        return {
+            "fallback_owner_id": obligation.owner_id,
+            "escalation_team": obligation.owner_team,
+        }
 
     def _policy_for_chain(self, chain: ApprovalChain) -> ApprovalPolicy:
         for policy in self._store.list_approval_policies():

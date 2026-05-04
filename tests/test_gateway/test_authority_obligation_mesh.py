@@ -304,6 +304,15 @@ def test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_o
     )
     mesh = AuthorityObligationMesh(commands=ledger, clock=clock)
     _register_payment_owner(mesh)
+    mesh.register_escalation_policy(EscalationPolicy(
+        policy_id="finance-escalation",
+        tenant_id="tenant-1",
+        notify_after_seconds=1800,
+        escalate_after_seconds=7200,
+        incident_after_seconds=86400,
+        fallback_owner_id="tenant-owner-1",
+        escalation_team="executive_ops",
+    ))
 
     obligations = mesh.open_post_closure_obligations(
         command_id=command.command_id,
@@ -318,11 +327,14 @@ def test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_o
     assert obligations[0].owner_team == "finance_ops"
     assert obligations[0].obligation_type == "case_review"
     assert obligations[0].evidence_required == ("case_disposition",)
+    assert obligations[0].escalation_policy_id == "finance-escalation"
     assert witness_before.open_obligation_count == 1
     assert len(escalated) == 1
     assert escalated[0].status is ObligationStatus.ESCALATED
     assert witness_after.escalated_obligation_count == 1
     assert mesh.escalation_events()[0]["obligation_id"] == escalated[0].obligation_id
+    assert mesh.escalation_events()[0]["fallback_owner_id"] == "tenant-owner-1"
+    assert mesh.escalation_events()[0]["escalation_team"] == "executive_ops"
 
 
 def test_accepted_risk_certificate_requires_expiry_before_mesh_review():
