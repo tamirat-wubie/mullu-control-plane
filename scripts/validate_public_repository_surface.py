@@ -54,6 +54,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
     "docs/52_mullu_governance_protocol.md",
+    "docs/60_logic_governance_application.md",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = ".github/workflows/deployment-witness.yml"
 GATEWAY_PUBLICATION_WORKFLOW_PATH = ".github/workflows/gateway-publication.yml"
@@ -78,6 +79,7 @@ STATUS_REQUIRED_LITERALS = (
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
     "docs/52_mullu_governance_protocol.md",
+    "docs/60_logic_governance_application.md",
     "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_public_repository_surface.py",
 )
@@ -150,6 +152,18 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "General-agent promotion handoff packets are public contracts",
     "Governed runtime promotion",
     "Terminal closure certificates are public contracts",
+)
+LOGIC_GOVERNANCE_DOC_PATH = "docs/60_logic_governance_application.md"
+LOGIC_GOVERNANCE_REQUIRED_LITERALS = (
+    "Logic Governance Application",
+    "Governance scope: OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS",
+    "Full logic discipline is mandatory",
+    "Governance Law Mapping",
+    "Surface-Specific Logic Rules",
+    "Mfidel substrate and overlay",
+    "No Unicode normalization, decomposition, recomposition, root-letter logic",
+    "Proof-of-Resolution Stamp Template",
+    "STATUS:",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "Deployment Witness Collection",
@@ -312,6 +326,16 @@ def validate_local_public_documents() -> list[str]:
                 document_name=GOVERNANCE_PROTOCOL_DOC_PATH,
                 content=governance_protocol_path.read_text(encoding="utf-8"),
                 required_literals=GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
+            )
+        )
+
+    logic_governance_path = REPO_ROOT / LOGIC_GOVERNANCE_DOC_PATH
+    if logic_governance_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name=LOGIC_GOVERNANCE_DOC_PATH,
+                content=logic_governance_path.read_text(encoding="utf-8"),
+                required_literals=LOGIC_GOVERNANCE_REQUIRED_LITERALS,
             )
         )
 

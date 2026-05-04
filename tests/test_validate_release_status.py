@@ -106,7 +106,9 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert errors == []
     assert "Deployment runtime input witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Protocol witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "Logic governance witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/52_mullu_governance_protocol.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "docs/60_logic_governance_application.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "python scripts/validate_protocol_manifest.py" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
@@ -127,8 +129,10 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "validate_general_agent_promotion_handoff_preflight.py" in content
     assert "validate_governed_runtime_promotion.py" in content
     assert "Protocol witness" in content
+    assert "Logic governance witness" in content
     assert "32-schema public contract index" in content
     assert "python scripts/validate_protocol_manifest.py" in content
+    assert "docs/60_logic_governance_application.md" in content
 
 
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:
