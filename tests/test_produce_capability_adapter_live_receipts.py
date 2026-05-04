@@ -72,6 +72,8 @@ def test_browser_live_receipt_passes_with_sandbox_evidence_and_worker_response(t
     assert payload["adapter_id"] == "browser.playwright"
     assert payload["sandboxed_worker"] is True
     assert payload["sandbox_evidence_status"] == "passed"
+    assert payload["sandbox_evidence_id"].startswith("browser-sandbox-evidence-")
+    assert payload["sandbox_receipt_id"].startswith("sandbox-receipt-")
     assert payload["worker_receipt"]["verification_status"] == "passed"
     assert payload["network_requests"] == ["https://docs.mullusi.com/reference"]
 
@@ -89,6 +91,8 @@ def test_browser_live_receipt_fails_without_sandbox_evidence(tmp_path: Path) -> 
     assert result.passed is False
     assert payload["status"] == "failed"
     assert payload["sandboxed_worker"] is False
+    assert payload["sandbox_evidence_id"] == ""
+    assert payload["sandbox_receipt_id"] == ""
     assert "browser_sandbox_evidence_missing" in payload["blockers"]
     assert "browser_sandbox_evidence_missing" in result.blockers
 
@@ -107,6 +111,8 @@ def test_browser_live_receipt_rejects_opaque_sandbox_evidence(tmp_path: Path) ->
     assert payload["status"] == "failed"
     assert payload["sandboxed_worker"] is False
     assert payload["sandbox_evidence_status"] == "failed"
+    assert payload["sandbox_evidence_id"] == ""
+    assert payload["sandbox_receipt_id"] == ""
     assert "browser_sandbox_evidence_unverified" in payload["blockers"]
 
 

@@ -31,6 +31,7 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 DEFAULT_PACKET = REPO_ROOT / "examples" / "general_agent_promotion_handoff_packet.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "general_agent_promotion_handoff_packet.schema.json"
+DEFAULT_CHECKLIST = REPO_ROOT / "examples" / "general_agent_promotion_operator_checklist.json"
 
 REQUIRED_OPEN_BLOCKERS = frozenset(
     {
@@ -118,23 +119,30 @@ def validate_general_agent_promotion_handoff_packet(
     *,
     packet_path: Path = DEFAULT_PACKET,
     schema_path: Path = DEFAULT_SCHEMA,
+    checklist_path: Path = DEFAULT_CHECKLIST,
 ) -> PromotionHandoffPacketValidation:
     """Validate one general-agent promotion handoff packet."""
     errors: list[str] = []
     schema = _load_json_object(schema_path, "handoff packet schema", errors)
     packet = _load_json_object(packet_path, "handoff packet", errors)
+    checklist = _load_json_object(checklist_path, "operator checklist", errors)
     if not schema or not packet:
         return _validation_result(packet_path, schema_path, packet, errors)
 
     errors.extend(_validate_schema_instance(schema, packet))
-    _validate_scalar_fields(packet, errors)
+    _validate_scalar_fields(packet, checklist, errors)
     _validate_required_sets(packet, errors)
     _validate_entry_points(packet, errors)
     _validate_terminal_proof(packet, errors)
     return _validation_result(packet_path, schema_path, packet, errors)
 
 
-def _validate_scalar_fields(packet: dict[str, Any], errors: list[str]) -> None:
+def _validate_scalar_fields(
+    packet: dict[str, Any],
+    checklist: dict[str, Any],
+    errors: list[str],
+) -> None:
+    expected_closure_actions = _expected_closure_actions_from_checklist(checklist, errors)
     expected_scalars: dict[str, Any] = {
         "schema_version": 1,
         "packet_id": "general-agent-promotion-handoff-v1",
@@ -142,13 +150,45 @@ def _validate_scalar_fields(packet: dict[str, Any], errors: list[str]) -> None:
         "readiness_level": "pilot-governed-core",
         "capability_capsules": 10,
         "governed_capabilities": 52,
-        "aggregate_closure_actions": 14,
         "approval_required_actions": 4,
         "production_promotion": "blocked",
     }
+    if expected_closure_actions is not None:
+        expected_scalars["aggregate_closure_actions"] = expected_closure_actions
     for field_name, expected_value in expected_scalars.items():
         if packet.get(field_name) != expected_value:
             errors.append(f"{field_name} must be {expected_value!r}")
+
+
+def _expected_closure_actions_from_checklist(
+    checklist: dict[str, Any],
+    errors: list[str],
+) -> int | None:
+    steps = checklist.get("required_commands", checklist.get("steps"))
+    if not isinstance(steps, list):
+        errors.append("operator checklist required_commands must be a list")
+        return None
+    for step in steps:
+        if not isinstance(step, dict) or step.get("step_id") != "validate_aggregate_closure_plan":
+            continue
+        evidence_items = step.get("required_evidence")
+        if not isinstance(evidence_items, list):
+            errors.append("validate_aggregate_closure_plan required_evidence must be a list")
+            return None
+        for item in evidence_items:
+            text = str(item)
+            prefix = "general_agent_promotion_closure_plan.json total_action_count="
+            if text.startswith(prefix):
+                raw_count = text.removeprefix(prefix)
+                try:
+                    return int(raw_count)
+                except ValueError:
+                    errors.append("operator checklist total_action_count must be an integer")
+                    return None
+        errors.append("operator checklist missing aggregate total_action_count evidence")
+        return None
+    errors.append("operator checklist missing validate_aggregate_closure_plan step")
+    return None
 
 
 def _validate_required_sets(packet: dict[str, Any], errors: list[str]) -> None:
@@ -240,6 +280,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate general-agent promotion handoff packet.")
     parser.add_argument("--packet", default=str(DEFAULT_PACKET))
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
+    parser.add_argument("--checklist", default=str(DEFAULT_CHECKLIST))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -250,6 +291,7 @@ def main(argv: list[str] | None = None) -> int:
     result = validate_general_agent_promotion_handoff_packet(
         packet_path=Path(args.packet),
         schema_path=Path(args.schema),
+        checklist_path=Path(args.checklist),
     )
     if args.json:
         print(json.dumps(result.as_dict(), indent=2, sort_keys=True))

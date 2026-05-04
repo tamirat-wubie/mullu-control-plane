@@ -62,10 +62,13 @@ class ReceiptCheck:
     passed: bool
     detail: str
     receipt_path: str
+    evidence_refs: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
         """Return a JSON-ready receipt check."""
-        return asdict(self)
+        payload = asdict(self)
+        payload["evidence_refs"] = list(self.evidence_refs)
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -353,7 +356,7 @@ def _adapter_evidence(
         dependency_checks=dependencies,
         receipt_check=receipt,
         blockers=tuple(all_blockers),
-        evidence_refs=(*module_refs, receipt.receipt_path),
+        evidence_refs=(*module_refs, receipt.receipt_path, *receipt.evidence_refs),
     )
 
 
@@ -370,20 +373,32 @@ def _dependency(name: str, module_available: ModuleAvailable) -> DependencyCheck
 def _browser_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
-        return ReceiptCheck("browser live receipt", False, error, str(path))
+        return ReceiptCheck("browser live receipt", False, error, str(path), ())
+    sandbox_evidence_id = str(payload.get("sandbox_evidence_id", "")).strip()
+    sandbox_receipt_id = str(payload.get("sandbox_receipt_id", "")).strip()
     passed = (
         _passed_status(payload)
         and payload.get("adapter_id") == "browser.playwright"
         and payload.get("sandboxed_worker") is True
+        and sandbox_evidence_id.startswith("browser-sandbox-evidence-")
+        and sandbox_receipt_id.startswith("sandbox-receipt-")
     )
-    detail = "passed" if passed else "requires status=passed, adapter_id=browser.playwright, sandboxed_worker=true"
-    return ReceiptCheck("browser live receipt", passed, detail, str(path))
+    detail = (
+        f"passed sandbox_evidence_id={sandbox_evidence_id} sandbox_receipt_id={sandbox_receipt_id}"
+        if passed
+        else (
+            "requires status=passed, adapter_id=browser.playwright, sandboxed_worker=true, "
+            "sandbox_evidence_id, and sandbox_receipt_id"
+        )
+    )
+    evidence_refs = tuple(ref for ref in (sandbox_evidence_id, sandbox_receipt_id) if ref)
+    return ReceiptCheck("browser live receipt", passed, detail, str(path), evidence_refs)
 
 
 def _document_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
-        return ReceiptCheck("document live receipt", False, error, str(path))
+        return ReceiptCheck("document live receipt", False, error, str(path), ())
     parser_ids = {
         str(parser_id)
         for parser_id in payload.get("parser_ids", payload.get("production_parser_ids", ()))
@@ -394,26 +409,26 @@ def _document_receipt_check(path: Path) -> ReceiptCheck:
         if passed
         else f"requires status=passed and parser_ids={sorted(REQUIRED_DOCUMENT_PARSERS)}"
     )
-    return ReceiptCheck("document live receipt", passed, detail, str(path))
+    return ReceiptCheck("document live receipt", passed, detail, str(path), ())
 
 
 def _voice_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
-        return ReceiptCheck("voice live receipt", False, error, str(path))
+        return ReceiptCheck("voice live receipt", False, error, str(path), ())
     passed = (
         _passed_status(payload)
         and payload.get("speech_to_text_status") == "passed"
         and payload.get("text_to_speech_status") == "passed"
     )
     detail = "passed" if passed else "requires passed speech_to_text and text_to_speech checks"
-    return ReceiptCheck("voice live receipt", passed, detail, str(path))
+    return ReceiptCheck("voice live receipt", passed, detail, str(path), ())
 
 
 def _email_calendar_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
-        return ReceiptCheck("email/calendar live receipt", False, error, str(path))
+        return ReceiptCheck("email/calendar live receipt", False, error, str(path), ())
     passed = (
         _passed_status(payload)
         and payload.get("adapter_id") == "communication.email_calendar_worker"
@@ -424,7 +439,7 @@ def _email_calendar_receipt_check(path: Path) -> ReceiptCheck:
         if passed
         else "requires status=passed, adapter_id=communication.email_calendar_worker, external_write=false"
     )
-    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path))
+    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path), ())
 
 
 def _load_receipt(path: Path) -> tuple[dict[str, Any], str]:

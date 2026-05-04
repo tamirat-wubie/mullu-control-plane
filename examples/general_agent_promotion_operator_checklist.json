@@ -1,102 +1,4 @@
 {
-  "schema_version": 1,
-  "checklist_id": "general-agent-promotion-operator-v1",
-  "title": "General-Agent Promotion Operator Checklist",
-  "status": "blocked_until_live_evidence",
-  "required_environment_variables": [
-    "MULLU_BROWSER_SANDBOX_EVIDENCE",
-    "MULLU_VOICE_PROBE_AUDIO",
-    "MULLU_GATEWAY_URL",
-    "MULLU_RUNTIME_WITNESS_SECRET",
-    "MULLU_RUNTIME_CONFORMANCE_SECRET",
-    "MULLU_AUTHORITY_OPERATOR_SECRET"
-  ],
-  "required_commands": [
-    {
-      "step_id": "collect_adapter_evidence",
-      "command": "python scripts\\collect_capability_adapter_evidence.py --output .change_assurance\\capability_adapter_evidence.json",
-      "required_evidence": [
-        "capability_adapter_evidence.json exists",
-        "browser adapter blockers explicit",
-        "document adapter closed evidence explicit",
-        "voice adapter blockers explicit",
-        "email/calendar adapter blockers explicit"
-      ]
-    },
-    {
-      "step_id": "write_promotion_readiness",
-      "command": "python scripts\\validate_general_agent_promotion.py --output .change_assurance\\general_agent_promotion_readiness.json",
-      "required_evidence": [
-        "readiness_level=pilot-governed-core",
-        "capability_count=52",
-        "capsule_count=10",
-        "production blockers explicit"
-      ]
-    },
-    {
-      "step_id": "write_source_closure_plans",
-      "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
-      "required_evidence": [
-        "capability_adapter_closure_plan.json action_count=12",
-        "deployment_publication_closure_plan.json action_count=2",
-        "credential actions approval_required=true",
-        "deployment actions approval_required=true"
-      ]
-    },
-    {
-      "step_id": "validate_aggregate_closure_plan",
-      "command": "python scripts\\plan_general_agent_promotion_closure.py --output .change_assurance\\general_agent_promotion_closure_plan.json && python scripts\\validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance\\general_agent_promotion_closure_plan_schema_validation.json --strict && python scripts\\validate_general_agent_promotion_closure_plan.py --output .change_assurance\\general_agent_promotion_closure_plan_validation.json --strict",
-      "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=14",
-        "general_agent_promotion_closure_plan_schema_validation.json ok=true",
-        "general_agent_promotion_closure_plan_validation.json ok=true",
-        "approval_required_action_count=4",
-        "source_plan_type includes adapter and deployment"
-      ]
-    },
-    {
-      "step_id": "validate_environment_binding_receipt",
-      "command": "python scripts\\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\\general_agent_promotion_environment_binding_receipt.json --json && python scripts\\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\\general_agent_promotion_environment_binding_receipt.json --require-ready --json",
-      "required_evidence": [
-        "general_agent_promotion_environment_binding_receipt.json exists",
-        "receipt valid=true",
-        "secret_serialization=forbidden",
-        "value_serialized=false for all bindings"
-      ]
-    },
-    {
-      "step_id": "produce_live_adapter_receipts",
-      "command": "python scripts\\produce_browser_sandbox_evidence.py --output \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --strict && python scripts\\validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json && python scripts\\produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --voice-audio-path \"$MULLU_VOICE_PROBE_AUDIO\"",
-      "required_evidence": [
-        "browser_sandbox_evidence.json verification_status=passed",
-        "browser_sandbox_evidence validation valid=true",
-        "browser_live_receipt.json status=passed",
-        "document_live_receipt.json status=passed",
-        "voice_live_receipt.json status=passed",
-        "email_calendar_live_receipt.json status=passed"
-      ]
-    },
-    {
-      "step_id": "publish_deployment_witness",
-      "command": "python scripts\\publish_gateway_publication.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness --dispatch --receipt-output .change_assurance\\gateway_publication_receipt.json",
-      "required_evidence": [
-        "operator_approval_ref present",
-        "gateway_publication_receipt.json dispatched=true",
-        "deployment_witness.json deployment_claim=published",
-        "deployment_witness.json signature_status=verified"
-      ]
-    },
-    {
-      "step_id": "validate_publication_and_promotion",
-      "command": "python scripts\\validate_deployment_publication_closure.py && python scripts\\validate_general_agent_promotion.py --strict --output .change_assurance\\general_agent_promotion_readiness.json",
-      "required_evidence": [
-        "deployment publication closure ok",
-        "public health endpoint matches witness gateway URL",
-        "general-agent promotion ready=true",
-        "readiness_level=production-general-agent"
-      ]
-    }
-  ],
   "approval_required_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
@@ -110,5 +12,103 @@
     "email_calendar_adapter_not_closed",
     "deployment_witness_not_published",
     "production_health_not_declared"
-  ]
+  ],
+  "checklist_id": "general-agent-promotion-operator-v1",
+  "required_commands": [
+    {
+      "command": "python scripts\\collect_capability_adapter_evidence.py --output .change_assurance\\capability_adapter_evidence.json",
+      "required_evidence": [
+        "capability_adapter_evidence.json exists",
+        "browser adapter blockers explicit",
+        "document adapter closed evidence explicit",
+        "voice adapter blockers explicit",
+        "email/calendar adapter blockers explicit"
+      ],
+      "step_id": "collect_adapter_evidence"
+    },
+    {
+      "command": "python scripts\\validate_general_agent_promotion.py --output .change_assurance\\general_agent_promotion_readiness.json",
+      "required_evidence": [
+        "readiness_level=pilot-governed-core",
+        "capability_count=52",
+        "capsule_count=10",
+        "production blockers explicit"
+      ],
+      "step_id": "write_promotion_readiness"
+    },
+    {
+      "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
+      "required_evidence": [
+        "capability_adapter_closure_plan.json action_count=12",
+        "deployment_publication_closure_plan.json action_count=2",
+        "credential actions approval_required=true",
+        "deployment actions approval_required=true"
+      ],
+      "step_id": "write_source_closure_plans"
+    },
+    {
+      "command": "python scripts\\plan_general_agent_promotion_closure.py --output .change_assurance\\general_agent_promotion_closure_plan.json && python scripts\\validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance\\general_agent_promotion_closure_plan_schema_validation.json --strict && python scripts\\validate_general_agent_promotion_closure_plan.py --output .change_assurance\\general_agent_promotion_closure_plan_validation.json --strict",
+      "required_evidence": [
+        "general_agent_promotion_closure_plan.json total_action_count=14",
+        "general_agent_promotion_closure_plan_schema_validation.json ok=true",
+        "general_agent_promotion_closure_plan_validation.json ok=true",
+        "approval_required_action_count=4",
+        "source_plan_type includes adapter and deployment"
+      ],
+      "step_id": "validate_aggregate_closure_plan"
+    },
+    {
+      "command": "python scripts\\emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance\\general_agent_promotion_environment_binding_receipt.json --json && python scripts\\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\\general_agent_promotion_environment_binding_receipt.json --require-ready --json",
+      "required_evidence": [
+        "general_agent_promotion_environment_binding_receipt.json exists",
+        "receipt valid=true",
+        "secret_serialization=forbidden",
+        "value_serialized=false for all bindings"
+      ],
+      "step_id": "validate_environment_binding_receipt"
+    },
+    {
+      "command": "python scripts\\produce_browser_sandbox_evidence.py --output \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --strict && python scripts\\validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json && python scripts\\produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --voice-audio-path \"$MULLU_VOICE_PROBE_AUDIO\"",
+      "required_evidence": [
+        "browser_sandbox_evidence.json verification_status=passed",
+        "browser_sandbox_evidence validation valid=true",
+        "browser_live_receipt.json status=passed",
+        "document_live_receipt.json status=passed",
+        "voice_live_receipt.json status=passed",
+        "email_calendar_live_receipt.json status=passed"
+      ],
+      "step_id": "produce_live_adapter_receipts"
+    },
+    {
+      "command": "python scripts\\publish_gateway_publication.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness --dispatch --receipt-output .change_assurance\\gateway_publication_receipt.json",
+      "required_evidence": [
+        "operator_approval_ref present",
+        "gateway_publication_receipt.json dispatched=true",
+        "deployment_witness.json deployment_claim=published",
+        "deployment_witness.json signature_status=verified"
+      ],
+      "step_id": "publish_deployment_witness"
+    },
+    {
+      "command": "python scripts\\validate_deployment_publication_closure.py && python scripts\\validate_general_agent_promotion.py --strict --output .change_assurance\\general_agent_promotion_readiness.json",
+      "required_evidence": [
+        "deployment publication closure ok",
+        "public health endpoint matches witness gateway URL",
+        "general-agent promotion ready=true",
+        "readiness_level=production-general-agent"
+      ],
+      "step_id": "validate_publication_and_promotion"
+    }
+  ],
+  "required_environment_variables": [
+    "MULLU_BROWSER_SANDBOX_EVIDENCE",
+    "MULLU_VOICE_PROBE_AUDIO",
+    "MULLU_GATEWAY_URL",
+    "MULLU_RUNTIME_WITNESS_SECRET",
+    "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_AUTHORITY_OPERATOR_SECRET"
+  ],
+  "schema_version": 1,
+  "status": "blocked_until_live_evidence",
+  "title": "General-Agent Promotion Operator Checklist"
 }

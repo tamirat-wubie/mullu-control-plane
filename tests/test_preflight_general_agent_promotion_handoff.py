@@ -76,6 +76,24 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     }
 
 
+def test_handoff_preflight_accepts_report_derived_action_count(tmp_path: Path) -> None:
+    schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path, action_count=12)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+    step_details = {step.name: step.detail for step in report.steps}
+
+    assert report.ready is True
+    assert "action_count=12" in step_details["closure plan schema validation"]
+    assert "expected_action_count=12" in step_details["closure plan drift validation"]
+
+
 def test_handoff_preflight_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
     schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
     environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
@@ -145,15 +163,15 @@ def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
     assert any("observed_action_count" in step.detail for step in report.steps)
 
 
-def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
-    schema_validation = tmp_path / "schema-validation.json"
-    drift_validation = tmp_path / "drift-validation.json"
-    readiness = tmp_path / "readiness.json"
+def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Path) -> None:
+    schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    generated_action_count = 7
     schema_validation.write_text(
         json.dumps(
             {
                 "ok": True,
-                "action_count": EXPECTED_ACTION_COUNT,
+                "action_count": generated_action_count,
                 "approval_required_action_count": 4,
                 "source_plan_types": ["adapter", "deployment"],
             }
@@ -164,8 +182,53 @@ def _write_valid_reports(tmp_path: Path) -> tuple[Path, Path, Path]:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": EXPECTED_ACTION_COUNT,
-                "observed_action_count": EXPECTED_ACTION_COUNT,
+                "expected_action_count": generated_action_count,
+                "observed_action_count": generated_action_count,
+                "expected_approval_required_count": 4,
+                "observed_approval_required_count": 4,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+
+    assert report.ready is True
+    assert report.blockers == ()
+    assert any("action_count=7" in step.detail for step in report.steps)
+
+
+def _write_valid_reports(
+    tmp_path: Path,
+    *,
+    action_count: int = EXPECTED_ACTION_COUNT,
+) -> tuple[Path, Path, Path]:
+    schema_validation = tmp_path / "schema-validation.json"
+    drift_validation = tmp_path / "drift-validation.json"
+    readiness = tmp_path / "readiness.json"
+    schema_validation.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "action_count": action_count,
+                "approval_required_action_count": 4,
+                "source_plan_types": ["adapter", "deployment"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    drift_validation.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "expected_action_count": action_count,
+                "observed_action_count": action_count,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }

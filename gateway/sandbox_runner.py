@@ -13,6 +13,7 @@ Invariants:
   - Docker --mount source paths cannot contain option delimiters.
   - Host root and Docker socket mounts are rejected before subprocess launch.
   - Commands are argv-only and executable allowlisted.
+  - Workspace mutations are witnessed as hash-only changed-file refs.
 """
 
 from __future__ import annotations
@@ -137,6 +138,8 @@ class SandboxExecutionReceipt:
     workspace_mount: str
     forbidden_effects_observed: bool
     verification_status: str
+    changed_file_count: int
+    changed_file_refs: tuple[str, ...]
     evidence_refs: tuple[str, ...]
 
 
@@ -196,9 +199,11 @@ class DockerRootlessSandboxRunner:
                 returncode=None,
                 verification_status="blocked",
                 forbidden_effects_observed=True,
+                changed_file_refs=(),
             )
             return SandboxCommandResult(status="blocked", stdout="", stderr=denial, receipt=receipt)
 
+        before_snapshot = _workspace_snapshot(self._host_workspace_root)
         try:
             completed = self._runner(
                 list(docker_args),
@@ -211,6 +216,10 @@ class DockerRootlessSandboxRunner:
         except subprocess.TimeoutExpired as exc:
             stdout = exc.output if isinstance(exc.output, str) else ""
             stderr = exc.stderr if isinstance(exc.stderr, str) else "sandbox command timed out"
+            changed_file_refs = _changed_file_refs(
+                before_snapshot,
+                _workspace_snapshot(self._host_workspace_root),
+            )
             receipt = self._receipt(
                 request=request,
                 docker_args=docker_args,
@@ -219,6 +228,7 @@ class DockerRootlessSandboxRunner:
                 returncode=None,
                 verification_status="timeout",
                 forbidden_effects_observed=False,
+                changed_file_refs=changed_file_refs,
             )
             return SandboxCommandResult(status="timeout", stdout=stdout, stderr=stderr, receipt=receipt)
         except OSError as exc:
@@ -231,10 +241,15 @@ class DockerRootlessSandboxRunner:
                 returncode=None,
                 verification_status="failed",
                 forbidden_effects_observed=False,
+                changed_file_refs=(),
             )
             return SandboxCommandResult(status="failed", stdout="", stderr=stderr, receipt=receipt)
 
         status = "succeeded" if completed.returncode == 0 else "failed"
+        changed_file_refs = _changed_file_refs(
+            before_snapshot,
+            _workspace_snapshot(self._host_workspace_root),
+        )
         receipt = self._receipt(
             request=request,
             docker_args=docker_args,
@@ -243,6 +258,7 @@ class DockerRootlessSandboxRunner:
             returncode=completed.returncode,
             verification_status="passed" if status == "succeeded" else "failed",
             forbidden_effects_observed=False,
+            changed_file_refs=changed_file_refs,
         )
         return SandboxCommandResult(
             status=status,
@@ -299,6 +315,7 @@ class DockerRootlessSandboxRunner:
         returncode: int | None,
         verification_status: str,
         forbidden_effects_observed: bool,
+        changed_file_refs: tuple[str, ...],
     ) -> SandboxExecutionReceipt:
         command_hash = canonical_hash({
             "argv": request.argv,
@@ -316,6 +333,7 @@ class DockerRootlessSandboxRunner:
             "stderr_hash": stderr_hash,
             "returncode": returncode,
             "verification_status": verification_status,
+            "changed_file_refs": changed_file_refs,
         })
         return SandboxExecutionReceipt(
             receipt_id=f"sandbox-receipt-{receipt_hash[:16]}",
@@ -334,6 +352,8 @@ class DockerRootlessSandboxRunner:
             workspace_mount=self._profile.workspace_mount,
             forbidden_effects_observed=forbidden_effects_observed,
             verification_status=verification_status,
+            changed_file_count=len(changed_file_refs),
+            changed_file_refs=changed_file_refs,
             evidence_refs=(f"sandbox_execution:{receipt_hash[:16]}",),
         )
 
@@ -397,6 +417,30 @@ def _validate_text_tuple(values: tuple[str, ...], field_name: str) -> None:
         raise ValueError(f"{field_name} must contain at least one item")
     for value in values:
         _require_text(value, field_name)
+
+
+def _workspace_snapshot(root: Path) -> dict[str, str]:
+    snapshot: dict[str, str] = {}
+    if not root.exists() or not root.is_dir():
+        return snapshot
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or ".git" in path.relative_to(root).parts:
+            continue
+        relative_path = path.relative_to(root).as_posix()
+        try:
+            snapshot[relative_path] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            snapshot[relative_path] = "unreadable"
+    return snapshot
+
+
+def _changed_file_refs(before: Mapping[str, str], after: Mapping[str, str]) -> tuple[str, ...]:
+    changed_paths = sorted(
+        path
+        for path in set(before) | set(after)
+        if before.get(path) != after.get(path)
+    )
+    return tuple(f"workspace_diff:{_sha256(path)[:16]}" for path in changed_paths)
 
 
 def _sha256(value: str) -> str:

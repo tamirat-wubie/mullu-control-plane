@@ -61,6 +61,8 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
                 "status": "passed",
                 "adapter_id": "browser.playwright",
                 "sandboxed_worker": True,
+                "sandbox_evidence_id": "browser-sandbox-evidence-test",
+                "sandbox_receipt_id": "sandbox-receipt-test",
             }
         ),
         encoding="utf-8",
@@ -119,6 +121,13 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
         "communication.email_calendar_worker",
     }
     assert all(adapter.closed for adapter in report.adapters)
+    browser_evidence = next(adapter for adapter in report.adapters if adapter.adapter_id == "browser.playwright")
+    assert browser_evidence.receipt_check.evidence_refs == (
+        "browser-sandbox-evidence-test",
+        "sandbox-receipt-test",
+    )
+    assert "browser-sandbox-evidence-test" in browser_evidence.evidence_refs
+    assert "sandbox-receipt-test" in browser_evidence.evidence_refs
     assert report.report_id.startswith("capability-adapter-evidence-")
 
 

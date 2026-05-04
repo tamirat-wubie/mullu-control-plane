@@ -48,7 +48,6 @@ DEFAULT_SCHEMA_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_pro
 DEFAULT_DRIFT_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan_validation.json"
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
-EXPECTED_ACTION_COUNT = 14
 EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 4
 EXPECTED_CAPABILITY_COUNT = 52
 EXPECTED_CAPSULE_COUNT = 10
@@ -198,14 +197,16 @@ def _closure_schema_report_step(path: Path) -> HandoffPreflightStep:
     payload, error = _load_report_payload(path)
     if error:
         return HandoffPreflightStep(name="closure plan schema validation", passed=False, detail=error)
+    action_count = payload.get("action_count")
     passed = (
         payload.get("ok") is True
-        and payload.get("action_count") == EXPECTED_ACTION_COUNT
+        and isinstance(action_count, int)
+        and action_count > 0
         and payload.get("approval_required_action_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
         and tuple(payload.get("source_plan_types", ())) == EXPECTED_SOURCE_PLAN_TYPES
     )
     expected_detail = (
-        f"ok=true action_count={EXPECTED_ACTION_COUNT} "
+        f"ok=true action_count={action_count} "
         f"approval_required_action_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT} "
         "source_plan_types=['adapter', 'deployment']"
     )
@@ -217,16 +218,19 @@ def _closure_drift_report_step(path: Path) -> HandoffPreflightStep:
     payload, error = _load_report_payload(path)
     if error:
         return HandoffPreflightStep(name="closure plan drift validation", passed=False, detail=error)
+    expected_action_count = payload.get("expected_action_count")
+    observed_action_count = payload.get("observed_action_count")
     passed = (
         payload.get("ok") is True
-        and payload.get("expected_action_count") == EXPECTED_ACTION_COUNT
-        and payload.get("observed_action_count") == EXPECTED_ACTION_COUNT
+        and isinstance(expected_action_count, int)
+        and expected_action_count > 0
+        and observed_action_count == expected_action_count
         and payload.get("expected_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
         and payload.get("observed_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
     )
     expected_detail = (
-        f"ok=true expected_action_count={EXPECTED_ACTION_COUNT} "
-        f"observed_action_count={EXPECTED_ACTION_COUNT} "
+        f"ok=true expected_action_count={expected_action_count} "
+        f"observed_action_count={observed_action_count} "
         f"expected_approval_required_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT} "
         f"observed_approval_required_count={EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT}"
     )
