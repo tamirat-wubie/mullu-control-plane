@@ -37,6 +37,8 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
     assert "scripts/plan_capability_adapter_closure.py" in manifest_text
     assert "scripts/plan_deployment_publication_closure.py" in manifest_text
     assert "scripts/plan_general_agent_promotion_closure.py" in manifest_text
+    assert "schemas/capability_adapter_closure_plan.schema.json" in manifest_text
+    assert "scripts/validate_capability_adapter_closure_plan_schema.py" in manifest_text
     assert "schemas/general_agent_promotion_closure_plan.schema.json" in manifest_text
     assert "scripts/validate_general_agent_promotion_closure_plan_schema.py" in manifest_text
     assert "scripts/validate_general_agent_promotion_closure_plan.py" in manifest_text

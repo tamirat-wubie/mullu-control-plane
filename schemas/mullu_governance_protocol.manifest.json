@@ -17,6 +17,12 @@
   },
   "schemas": [
     {
+      "schema_id": "capability-adapter-closure-plan",
+      "path": "schemas/capability_adapter_closure_plan.schema.json",
+      "urn": "urn:mullusi:schema:capability-adapter-closure-plan:1",
+      "surface": "promotion"
+    },
+    {
       "schema_id": "capability-descriptor",
       "path": "schemas/capability_descriptor.schema.json",
       "urn": "urn:mullusi:schema:capability-descriptor:1",

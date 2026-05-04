@@ -49,6 +49,8 @@ This is not a public-production claim. It is a governed-core readiness claim wit
 | Adapter closure planning | Built as blocker-to-action planner | `scripts/plan_capability_adapter_closure.py` |
 | Deployment closure planning | Built as publication blocker planner | `scripts/plan_deployment_publication_closure.py` |
 | Promotion closure planning | Built as aggregate closure planner | `scripts/plan_general_agent_promotion_closure.py` |
+| Adapter closure schema | Built as public source-plan contract | `schemas/capability_adapter_closure_plan.schema.json` |
+| Adapter closure schema validation | Built as shape, proof-contract, and blocker coverage gate | `scripts/validate_capability_adapter_closure_plan_schema.py` |
 | Promotion closure schema | Built as public plan contract | `schemas/general_agent_promotion_closure_plan.schema.json` |
 | Promotion closure schema validation | Built as shape and count gate | `scripts/validate_general_agent_promotion_closure_plan_schema.py` |
 | Promotion closure validation | Built as aggregate plan drift gate | `scripts/validate_general_agent_promotion_closure_plan.py` |
@@ -149,6 +151,7 @@ Latest local verification covered:
 | Adapter closure planning tests | passed |
 | Deployment closure planning tests | passed |
 | Promotion closure planning tests | passed |
+| Adapter closure schema tests | passed |
 | Promotion closure schema tests | passed |
 | Promotion closure validation tests | passed |
 | Promotion operator runbook tests | passed |

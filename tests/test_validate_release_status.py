@@ -125,7 +125,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "validate_general_agent_promotion_handoff_preflight.py" in content
     assert "validate_governed_runtime_promotion.py" in content
     assert "Protocol witness" in content
-    assert "31-schema public contract index" in content
+    assert "32-schema public contract index" in content
     assert "python scripts/validate_protocol_manifest.py" in content
 
 
