@@ -293,9 +293,9 @@ def _dedupe_actions(actions: list[AdapterClosureAction]) -> list[AdapterClosureA
 def _validate_actions(actions: tuple[AdapterClosureAction, ...]) -> None:
     for action in actions:
         if not action.verification_command.strip():
-            raise ValueError(f"adapter closure action missing verification command: {action.action_id}")
+            raise ValueError(f"verification_command is required for adapter closure action: {action.action_id}")
         if not action.receipt_validator.strip():
-            raise ValueError(f"adapter closure action missing receipt validator: {action.action_id}")
+            raise ValueError(f"receipt_validator is required for adapter closure action: {action.action_id}")
 
 
 def _load_evidence(path: Path) -> dict[str, Any]:

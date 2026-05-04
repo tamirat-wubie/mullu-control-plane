@@ -20,6 +20,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 
 | File | Purpose |
 | --- | --- |
+| `capability_adapter_closure_plan.schema.json` | Canonical adapter source closure action plan |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |

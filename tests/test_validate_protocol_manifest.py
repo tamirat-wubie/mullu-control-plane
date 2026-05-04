@@ -49,6 +49,17 @@ def test_protocol_manifest_indexes_promotion_closure_plan() -> None:
     assert plan_entry["surface"] == "promotion"
 
 
+def test_protocol_manifest_indexes_capability_adapter_closure_plan() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    plan_entry = entries["capability-adapter-closure-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert plan_entry["path"] == "schemas/capability_adapter_closure_plan.schema.json"
+    assert plan_entry["urn"] == "urn:mullusi:schema:capability-adapter-closure-plan:1"
+    assert plan_entry["surface"] == "promotion"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -138,6 +149,22 @@ def test_protocol_manifest_rejects_missing_promotion_closure_plan_entry() -> Non
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "general_agent_promotion_closure_plan.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_capability_adapter_closure_plan_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "capability-adapter-closure-plan"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "capability_adapter_closure_plan.schema.json" in errors[0]
     assert "schemas/" in errors[0]
 
 

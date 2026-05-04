@@ -104,7 +104,7 @@ def test_adapter_closure_plan_rejects_action_without_verification_contract() -> 
     try:
         _validate_actions((action,))
     except ValueError as exc:
-        assert "missing verification command" in str(exc)
+        assert "verification_command is required" in str(exc)
         assert "bad-action" in str(exc)
     else:
         raise AssertionError("expected verification contract failure")
