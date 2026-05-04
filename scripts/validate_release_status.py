@@ -82,6 +82,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json",
     "python scripts/validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json --require-ready --json",
     "python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json",
+    "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json",
     "python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json",
     "python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json",
     "python scripts/plan_general_agent_promotion_closure.py --output .change_assurance/general_agent_promotion_closure_plan.json",
@@ -130,6 +131,7 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "validate_general_agent_promotion_environment_binding_receipt.py",
     "preflight_general_agent_promotion_handoff.py",
     "validate_general_agent_promotion_handoff_preflight.py",
+    "validate_governed_runtime_promotion.py",
 )
 
 RELEASE_NOTES_REQUIRED_LITERALS: tuple[str, ...] = (
@@ -185,6 +187,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "python scripts/validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json",
         "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
         "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json",
+        "python scripts/validate_governed_runtime_promotion.py --strict",
         "docs/59_general_agent_promotion_handoff_packet.md",
         "examples/general_agent_promotion_handoff_packet.json",
         "examples/general_agent_promotion_environment_bindings.json",

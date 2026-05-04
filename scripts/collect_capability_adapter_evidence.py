@@ -19,6 +19,8 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
+import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -38,6 +40,18 @@ REQUIRED_DOCUMENT_PARSERS = frozenset(
         "production-pptx",
     }
 )
+MODULE_PACKAGE_NAMES = {
+    "docx": "python-docx",
+    "pptx": "python-pptx",
+}
+WORKER_EXTRA_BY_MODULE = {
+    "playwright": "browser-worker",
+    "pypdf": "document-worker",
+    "docx": "document-worker",
+    "openpyxl": "document-worker",
+    "pptx": "document-worker",
+    "openai": "voice-worker",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,23 +158,27 @@ def collect_capability_adapter_evidence(
     resolved_env_reader = env_reader or os.environ.get
     resolved_clock = clock or _validation_clock
     resolved_repo_root = repo_root.resolve(strict=False)
+    worker_dependency_contract = _worker_dependency_contract(resolved_repo_root)
 
     adapters = (
         _browser_evidence(
             repo_root=resolved_repo_root,
             receipt_path=browser_receipt_path,
             module_available=resolved_module_available,
+            worker_dependency_contract=worker_dependency_contract,
         ),
         _document_evidence(
             repo_root=resolved_repo_root,
             receipt_path=document_receipt_path,
             module_available=resolved_module_available,
+            worker_dependency_contract=worker_dependency_contract,
         ),
         _voice_evidence(
             repo_root=resolved_repo_root,
             receipt_path=voice_receipt_path,
             module_available=resolved_module_available,
             env_reader=resolved_env_reader,
+            worker_dependency_contract=worker_dependency_contract,
         ),
         _email_calendar_evidence(
             repo_root=resolved_repo_root,
@@ -207,8 +225,9 @@ def _browser_evidence(
     repo_root: Path,
     receipt_path: Path,
     module_available: ModuleAvailable,
+    worker_dependency_contract: dict[str, bool],
 ) -> AdapterEvidence:
-    dependencies = (_dependency("playwright", module_available),)
+    dependencies = (_dependency("playwright", module_available, worker_dependency_contract),)
     receipt = _browser_receipt_check(receipt_path)
     blockers = [
         f"browser_dependency_missing:{check.name}"
@@ -233,9 +252,10 @@ def _document_evidence(
     repo_root: Path,
     receipt_path: Path,
     module_available: ModuleAvailable,
+    worker_dependency_contract: dict[str, bool],
 ) -> AdapterEvidence:
     dependencies = tuple(
-        _dependency(module_name, module_available)
+        _dependency(module_name, module_available, worker_dependency_contract)
         for module_name in ("pypdf", "docx", "openpyxl", "pptx")
     )
     receipt = _document_receipt_check(receipt_path)
@@ -263,8 +283,9 @@ def _voice_evidence(
     receipt_path: Path,
     module_available: ModuleAvailable,
     env_reader: EnvReader,
+    worker_dependency_contract: dict[str, bool],
 ) -> AdapterEvidence:
-    openai_dependency = _dependency("openai", module_available)
+    openai_dependency = _dependency("openai", module_available, worker_dependency_contract)
     credential_present = bool((env_reader("OPENAI_API_KEY") or "").strip())
     credential_check = DependencyCheck(
         name="OPENAI_API_KEY",
@@ -360,14 +381,89 @@ def _adapter_evidence(
     )
 
 
-def _dependency(name: str, module_available: ModuleAvailable) -> DependencyCheck:
-    available = module_available(name)
+def _dependency(
+    name: str,
+    module_available: ModuleAvailable,
+    worker_dependency_contract: dict[str, bool],
+) -> DependencyCheck:
+    runtime_available = module_available(name)
+    worker_declared = worker_dependency_contract.get(name) is True
+    available = runtime_available or worker_declared
+    detail = "available" if runtime_available else "worker_dependency_declared" if worker_declared else "missing"
     return DependencyCheck(
         name=name,
         available=available,
         required=True,
-        detail="available" if available else "missing",
+        detail=detail,
     )
+
+
+def _worker_dependency_contract(repo_root: Path) -> dict[str, bool]:
+    pyproject_extras = _mcoi_optional_dependency_packages(repo_root / "mcoi" / "pyproject.toml")
+    dockerfile_text = _read_text(repo_root / "Dockerfile")
+    installs_worker_extras = _dockerfile_installs_worker_extras(dockerfile_text)
+    return {
+        module_name: (
+            installs_worker_extras
+            and _package_declared_for_worker_extra(
+                pyproject_extras,
+                package_name=MODULE_PACKAGE_NAMES.get(module_name, module_name),
+                extra_name=extra_name,
+            )
+        )
+        for module_name, extra_name in WORKER_EXTRA_BY_MODULE.items()
+    }
+
+
+def _mcoi_optional_dependency_packages(pyproject_path: Path) -> dict[str, set[str]]:
+    try:
+        payload = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+    extras = payload.get("project", {}).get("optional-dependencies", {})
+    if not isinstance(extras, dict):
+        return {}
+    parsed: dict[str, set[str]] = {}
+    for extra_name, raw_requirements in extras.items():
+        if not isinstance(extra_name, str) or not isinstance(raw_requirements, list):
+            continue
+        parsed[extra_name] = {
+            _requirement_package_name(str(requirement))
+            for requirement in raw_requirements
+            if str(requirement).strip()
+        }
+    return parsed
+
+
+def _requirement_package_name(requirement: str) -> str:
+    match = re.match(r"^\s*([A-Za-z0-9_.-]+)", requirement)
+    return match.group(1).lower().replace("_", "-") if match else ""
+
+
+def _dockerfile_installs_worker_extras(dockerfile_text: str) -> bool:
+    normalized = dockerfile_text.replace('"', "'").replace(" ", "")
+    return "mcoi[all]" in normalized or "mcoi[worker]" in normalized
+
+
+def _package_declared_for_worker_extra(
+    extras: dict[str, set[str]],
+    *,
+    package_name: str,
+    extra_name: str,
+) -> bool:
+    normalized_package = package_name.lower().replace("_", "-")
+    return (
+        normalized_package in extras.get(extra_name, set())
+        or normalized_package in extras.get("worker", set())
+        or normalized_package in extras.get("all", set())
+    )
+
+
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
 
 
 def _browser_receipt_check(path: Path) -> ReceiptCheck:
@@ -376,19 +472,31 @@ def _browser_receipt_check(path: Path) -> ReceiptCheck:
         return ReceiptCheck("browser live receipt", False, error, str(path), ())
     sandbox_evidence_id = str(payload.get("sandbox_evidence_id", "")).strip()
     sandbox_receipt_id = str(payload.get("sandbox_receipt_id", "")).strip()
+    worker_receipt = payload.get("worker_receipt") if isinstance(payload.get("worker_receipt"), dict) else {}
+    network_requests = payload.get("network_requests", ())
+    blockers = payload.get("blockers", ())
     passed = (
         _passed_status(payload)
         and payload.get("adapter_id") == "browser.playwright"
         and payload.get("sandboxed_worker") is True
         and sandbox_evidence_id.startswith("browser-sandbox-evidence-")
         and sandbox_receipt_id.startswith("sandbox-receipt-")
+        and worker_receipt.get("verification_status") == "passed"
+        and bool(str(payload.get("url_before", "")).strip())
+        and bool(str(payload.get("url_after", "")).strip())
+        and bool(str(payload.get("screenshot_before_ref", "")).strip())
+        and bool(str(payload.get("screenshot_after_ref", "")).strip())
+        and isinstance(network_requests, list)
+        and bool(network_requests)
+        and blockers == []
     )
     detail = (
         f"passed sandbox_evidence_id={sandbox_evidence_id} sandbox_receipt_id={sandbox_receipt_id}"
         if passed
         else (
             "requires status=passed, adapter_id=browser.playwright, sandboxed_worker=true, "
-            "sandbox_evidence_id, and sandbox_receipt_id"
+            "sandbox_evidence_id, sandbox_receipt_id, worker receipt, URL/screenshot refs, "
+            "network requests, and empty blockers"
         )
     )
     evidence_refs = tuple(ref for ref in (sandbox_evidence_id, sandbox_receipt_id) if ref)
@@ -416,30 +524,90 @@ def _voice_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
         return ReceiptCheck("voice live receipt", False, error, str(path), ())
+    speech_receipt = payload.get("speech_receipt") if isinstance(payload.get("speech_receipt"), dict) else {}
+    synthesis_receipt = payload.get("synthesis_receipt") if isinstance(payload.get("synthesis_receipt"), dict) else {}
+    blockers = payload.get("blockers", ())
     passed = (
         _passed_status(payload)
         and payload.get("speech_to_text_status") == "passed"
         and payload.get("text_to_speech_status") == "passed"
+        and speech_receipt.get("verification_status") == "passed"
+        and synthesis_receipt.get("verification_status") == "passed"
+        and speech_receipt.get("capability_id") == "voice.speech_to_text"
+        and synthesis_receipt.get("capability_id") == "voice.text_to_speech"
+        and bool(str(payload.get("audio_input_hash", "")).strip())
+        and bool(str(synthesis_receipt.get("audio_hash", "")).strip())
+        and bool(str(synthesis_receipt.get("audio_ref", "")).strip())
+        and speech_receipt.get("forbidden_effects_observed") is False
+        and synthesis_receipt.get("forbidden_effects_observed") is False
+        and speech_receipt.get("requires_confirmation") is False
+        and synthesis_receipt.get("requires_confirmation") is False
+        and blockers == []
     )
-    detail = "passed" if passed else "requires passed speech_to_text and text_to_speech checks"
-    return ReceiptCheck("voice live receipt", passed, detail, str(path), ())
+    evidence_refs = tuple(
+        ref
+        for ref in (
+            str(speech_receipt.get("receipt_id", "")).strip(),
+            str(synthesis_receipt.get("receipt_id", "")).strip(),
+            str(synthesis_receipt.get("audio_ref", "")).strip(),
+        )
+        if ref
+    )
+    detail = (
+        f"passed speech_receipt={speech_receipt.get('receipt_id', '')} "
+        f"synthesis_receipt={synthesis_receipt.get('receipt_id', '')}"
+        if passed
+        else (
+            "requires passed speech_to_text/text_to_speech worker receipts, audio input hash, "
+            "synthesis audio ref/hash, no forbidden effects, no confirmation requirement, and empty blockers"
+        )
+    )
+    return ReceiptCheck("voice live receipt", passed, detail, str(path), evidence_refs)
 
 
 def _email_calendar_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
         return ReceiptCheck("email/calendar live receipt", False, error, str(path), ())
+    worker_receipt = payload.get("worker_receipt") if isinstance(payload.get("worker_receipt"), dict) else {}
+    blockers = payload.get("blockers", ())
     passed = (
         _passed_status(payload)
         and payload.get("adapter_id") == "communication.email_calendar_worker"
         and payload.get("external_write") is False
+        and payload.get("connector_id") == worker_receipt.get("connector_id")
+        and payload.get("provider_operation") == worker_receipt.get("provider_operation")
+        and payload.get("resource_id") == worker_receipt.get("resource_id")
+        and payload.get("response_digest") == worker_receipt.get("response_digest")
+        and worker_receipt.get("verification_status") == "passed"
+        and worker_receipt.get("capability_id") == "email.search"
+        and worker_receipt.get("action") == "email.search"
+        and worker_receipt.get("external_write") is False
+        and worker_receipt.get("forbidden_effects_observed") is False
+        and bool(str(worker_receipt.get("connector_id", "")).strip())
+        and bool(str(worker_receipt.get("provider_operation", "")).strip())
+        and bool(str(worker_receipt.get("resource_id", "")).strip())
+        and bool(str(worker_receipt.get("response_digest", "")).strip())
+        and blockers == []
+    )
+    evidence_refs = tuple(
+        ref
+        for ref in (
+            str(worker_receipt.get("receipt_id", "")).strip(),
+            str(worker_receipt.get("connector_id", "")).strip(),
+            str(worker_receipt.get("resource_id", "")).strip(),
+        )
+        if ref
     )
     detail = (
-        "passed"
+        f"passed worker_receipt={worker_receipt.get('receipt_id', '')} connector_id={payload.get('connector_id', '')}"
         if passed
-        else "requires status=passed, adapter_id=communication.email_calendar_worker, external_write=false"
+        else (
+            "requires status=passed, adapter_id=communication.email_calendar_worker, "
+            "read-only worker receipt, connector/resource/digest match, no forbidden effects, and empty blockers"
+        )
     )
-    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path), ())
+    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path), evidence_refs)
 
 
 def _load_receipt(path: Path) -> tuple[dict[str, Any], str]:

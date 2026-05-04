@@ -43,7 +43,7 @@ from gateway.operator_capability_console import (
 from gateway.plan_ledger import build_capability_plan_ledger_from_env
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
-from gateway.skill_dispatch import build_skill_dispatcher_from_platform
+from gateway.capability_dispatch import build_capability_dispatcher_from_platform
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
 )
@@ -201,10 +201,10 @@ def create_gateway_app(
         store=authority_mesh_store,
     )
     plan_ledger = build_capability_plan_ledger_from_env(clock=_clock)
-    skill_dispatcher = build_skill_dispatcher_from_platform(platform)
+    capability_dispatcher = build_capability_dispatcher_from_platform(platform)
     if mcp_capability_entries and mcp_executor is not None:
         register_mcp_capabilities(
-            skill_dispatcher,
+            capability_dispatcher,
             capabilities=mcp_capability_entries,
             executor=mcp_executor,
         )
@@ -215,7 +215,7 @@ def create_gateway_app(
         tenant_identity_store=tenant_identity_store,
         authority_obligation_mesh=authority_obligation_mesh,
         plan_ledger=plan_ledger,
-        skill_dispatcher=skill_dispatcher,
+        capability_dispatcher=capability_dispatcher,
         defer_approved_execution=defer_approved_execution,
         environment=gateway_env,
         isolated_capability_executor=isolated_capability_executor,

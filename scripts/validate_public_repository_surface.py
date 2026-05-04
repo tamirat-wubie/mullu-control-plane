@@ -66,6 +66,7 @@ GITHUB_SURFACE_REQUIRED_LITERALS = (
     "docs/52_mullu_governance_protocol.md",
     "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_public_repository_surface.py",
+    "scripts/validate_governed_runtime_promotion.py",
 )
 STATUS_REQUIRED_LITERALS = (
     "Repository Status Witness",
@@ -121,6 +122,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json",
     "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
     "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json",
+    "python scripts/validate_governed_runtime_promotion.py --strict",
     "docs/59_general_agent_promotion_handoff_packet.md",
     "examples/general_agent_promotion_handoff_packet.json",
     "examples/general_agent_promotion_environment_bindings.json",
@@ -140,6 +142,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "protocol manifest ok: 31 schemas",
     "Deployment handoff receipts are public contracts",
     "General-agent promotion handoff packets are public contracts",
+    "Governed runtime promotion",
     "Terminal closure certificates are public contracts",
 )
 DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (

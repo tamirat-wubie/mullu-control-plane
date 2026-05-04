@@ -70,17 +70,25 @@ class CausalClosureKernel:
         *,
         commands: CommandLedger,
         platform: Any,
-        skills: CapabilityDispatcher,
-        skill_intent_loader: Callable[[CommandEnvelope], CapabilityIntent | None],
         error_recorder: Callable[[], None],
+        capability_dispatcher: CapabilityDispatcher | None = None,
+        capability_intent_loader: Callable[[CommandEnvelope], CapabilityIntent | None] | None = None,
         clock: Callable[[], str] | None = None,
         isolation_policy: CapabilityIsolationPolicy | None = None,
         isolated_executor: IsolatedCapabilityExecutor | None = None,
+        skills: CapabilityDispatcher | None = None,
+        skill_intent_loader: Callable[[CommandEnvelope], CapabilityIntent | None] | None = None,
     ) -> None:
+        dispatcher = capability_dispatcher or skills
+        intent_loader = capability_intent_loader or skill_intent_loader
+        if dispatcher is None:
+            raise ValueError("capability_dispatcher is required")
+        if intent_loader is None:
+            raise ValueError("capability_intent_loader is required")
         self._commands = commands
         self._platform = platform
-        self._skills = skills
-        self._skill_intent_loader = skill_intent_loader
+        self._capabilities = dispatcher
+        self._capability_intent_loader = intent_loader
         self._record_error = error_recorder
         self._isolation_policy = isolation_policy or CapabilityIsolationPolicy()
         if isolated_executor is not None:
@@ -88,7 +96,7 @@ class CausalClosureKernel:
         elif self._isolation_policy.fail_closed_without_worker:
             self._isolated_executor = None
         else:
-            self._isolated_executor = LocalCapabilityExecutionWorker(skills)
+            self._isolated_executor = LocalCapabilityExecutionWorker(dispatcher)
         self._proof_adapter = ProofCarryingCapabilityAdapter(clock=clock or commands._clock)
 
     def run(self, command_id: str) -> CausalClosureResult:
@@ -125,25 +133,25 @@ class CausalClosureKernel:
         try:
             self._commands.transition(command.command_id, CommandState.BUDGET_RESERVED, budget_decision="session")
             self._commands.transition(command.command_id, CommandState.DISPATCHED, tool_name=command.intent)
-            skill_intent = self._skill_intent_loader(command)
-            if skill_intent is not None:
-                skill_result = self._dispatch_skill(command, skill_intent)
-                if skill_result is not None:
-                    if skill_result.get("receipt_status") == "isolation_worker_required":
+            capability_intent = self._capability_intent_loader(command)
+            if capability_intent is not None:
+                capability_result = self._dispatch_capability(command, capability_intent)
+                if capability_result is not None:
+                    if capability_result.get("receipt_status") == "isolation_worker_required":
                         return self._review_result(
                             command,
-                            body=str(skill_result.get(
+                            body=str(capability_result.get(
                                 "response",
                                 "This capability requires an isolated execution worker before dispatch.",
                             )),
                             metadata={
-                                **skill_result,
+                                **capability_result,
                                 "error": "isolation_worker_required",
                                 "command_id": command.command_id,
                             },
                             reason="isolation_worker_required",
                         )
-                    return self._close_skill_result(command, skill_result)
+                    return self._close_capability_result(command, capability_result)
 
             action = self._commands.governed_action_for(command.command_id)
             if action is None:
@@ -193,8 +201,8 @@ class CausalClosureKernel:
             {"command_id": command.command_id},
         )
 
-    def _dispatch_skill(self, command: CommandEnvelope, skill_intent: CapabilityIntent) -> dict[str, Any] | None:
-        """Dispatch skill intent through the governed execution boundary."""
+    def _dispatch_capability(self, command: CommandEnvelope, capability_intent: CapabilityIntent) -> dict[str, Any] | None:
+        """Dispatch capability intent through the governed execution boundary."""
         action = self._commands.governed_action_for(command.command_id)
         if action is None:
             raise RuntimeError("missing governed action")
@@ -206,8 +214,8 @@ class CausalClosureKernel:
                 command=command,
                 governed_action=action,
                 capability_passport=passport,
-                executor=lambda: self._skills.dispatch(
-                    skill_intent,
+                executor=lambda: self._capabilities.dispatch(
+                    capability_intent,
                     command.tenant_id,
                     command.actor_id,
                     command_id=command.command_id,
@@ -221,7 +229,9 @@ class CausalClosureKernel:
             return {
                 "response": "This capability requires an isolated execution worker before dispatch.",
                 "governed": True,
-                "skill": skill_intent.action,
+                "capability_id": capability_intent.capability_id,
+                "capability_action": capability_intent.action,
+                "skill": capability_intent.action,
                 "receipt_status": "isolation_worker_required",
                 "capability_execution_boundary": asdict(boundary),
             }
@@ -231,7 +241,7 @@ class CausalClosureKernel:
             governed_action=action,
             capability_passport=passport,
             executor=lambda: self._isolated_executor.execute(
-                intent=skill_intent,
+                intent=capability_intent,
                 tenant_id=command.tenant_id,
                 identity_id=command.actor_id,
                 boundary=boundary,
@@ -355,15 +365,15 @@ class CausalClosureKernel:
                 )
         return None
 
-    def _close_skill_result(self, command: CommandEnvelope, skill_result: dict[str, Any]) -> CausalClosureResult:
-        response_body = skill_result.get("response", "Skill executed.")
+    def _close_capability_result(self, command: CommandEnvelope, capability_result: dict[str, Any]) -> CausalClosureResult:
+        response_body = capability_result.get("response", "Capability executed.")
         self._commands.transition(
             command.command_id,
             CommandState.OBSERVED,
             tool_name=command.intent,
-            output=skill_result,
+            output=capability_result,
         )
-        reconciliation = self._commands.observe_and_reconcile_effect(command.command_id, output=skill_result)
+        reconciliation = self._commands.observe_and_reconcile_effect(command.command_id, output=capability_result)
         if not reconciliation.reconciled:
             self._record_error()
             return self._review_result(
@@ -376,9 +386,9 @@ class CausalClosureKernel:
                 },
                 reason="effect_reconciliation_failed",
             )
-        self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "skill_dispatch"})
+        self._commands.transition(command.command_id, CommandState.VERIFIED, detail={"verifier": "capability_dispatch"})
         self._commands.transition(command.command_id, CommandState.COMMITTED)
-        return self._certify_committed(command, response_body=response_body, base_metadata=dict(skill_result))
+        return self._certify_committed(command, response_body=response_body, base_metadata=dict(capability_result))
 
     def _close_llm_result(
         self,

@@ -146,7 +146,10 @@ def preflight_general_agent_promotion_handoff(
         ),
         environment_step,
         _closure_schema_report_step(schema_validation_path),
-        _closure_drift_report_step(drift_validation_path),
+        _closure_drift_report_step(
+            drift_validation_path,
+            schema_validation_path=schema_validation_path,
+        ),
         readiness_step,
     ]
     blockers = tuple(step.name for step in steps if not step.passed)
@@ -214,16 +217,21 @@ def _closure_schema_report_step(path: Path) -> HandoffPreflightStep:
     return HandoffPreflightStep(name="closure plan schema validation", passed=passed, detail=detail)
 
 
-def _closure_drift_report_step(path: Path) -> HandoffPreflightStep:
+def _closure_drift_report_step(path: Path, *, schema_validation_path: Path) -> HandoffPreflightStep:
     payload, error = _load_report_payload(path)
     if error:
         return HandoffPreflightStep(name="closure plan drift validation", passed=False, detail=error)
+    schema_payload, schema_error = _load_report_payload(schema_validation_path)
+    if schema_error:
+        return HandoffPreflightStep(name="closure plan drift validation", passed=False, detail=schema_error)
     expected_action_count = payload.get("expected_action_count")
     observed_action_count = payload.get("observed_action_count")
+    schema_action_count = schema_payload.get("action_count")
     passed = (
         payload.get("ok") is True
         and isinstance(expected_action_count, int)
         and expected_action_count > 0
+        and schema_action_count == expected_action_count
         and observed_action_count == expected_action_count
         and payload.get("expected_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
         and payload.get("observed_approval_required_count") == EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT
@@ -237,7 +245,11 @@ def _closure_drift_report_step(path: Path) -> HandoffPreflightStep:
     detail = (
         expected_detail
         if passed
-        else f"expected ok=true matching action and approval-required counts; observed={_public_report_projection(payload)}"
+        else (
+            "expected ok=true matching schema, drift action, and approval-required counts; "
+            f"schema={_public_report_projection(schema_payload)}; "
+            f"observed={_public_report_projection(payload)}"
+        )
     )
     return HandoffPreflightStep(name="closure plan drift validation", passed=passed, detail=detail)
 

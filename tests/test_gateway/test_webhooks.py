@@ -1423,7 +1423,7 @@ class TestGatewayStatus:
         )
         satisfy_resp = client.post(
             f"/authority/obligations/{obligation.obligation_id}/satisfy",
-            json={"evidence_refs": ["case:read-model-closed"]},
+            json={"evidence_refs": ["case_disposition:read-model-closed"]},
         )
         command_resp = client.get(f"/commands/{obligation.command_id}/authority")
         escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}&limit=1")
@@ -1466,7 +1466,7 @@ class TestGatewayStatus:
         assert satisfy_resp.status_code == 200
         assert satisfy_resp.json()["status"] == "satisfied"
         assert satisfy_resp.json()["obligation"]["status"] == "satisfied"
-        assert satisfy_resp.json()["evidence_refs"] == ["case:read-model-closed"]
+        assert satisfy_resp.json()["evidence_refs"] == ["case_disposition:read-model-closed"]
         assert command_resp.status_code == 200
         assert command_resp.json()["obligations"][0]["owner_team"] == "ops"
         assert command_resp.json()["obligations"][0]["status"] == "satisfied"

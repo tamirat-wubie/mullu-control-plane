@@ -28,7 +28,7 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 14 |
+| Total closure actions | 7 |
 | Approval-required actions | 4 |
 | Source plan types | `adapter`, `deployment` |
 | Current readiness level | `pilot-governed-core` |
@@ -106,6 +106,8 @@ python scripts\produce_capability_adapter_live_receipts.py --target email-calend
 ```powershell
 python scripts\collect_capability_adapter_evidence.py --strict --output .change_assurance\capability_adapter_evidence.json
 ```
+
+The browser adapter evidence is not closed unless `.change_assurance\capability_adapter_evidence.json` preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser live receipt.
 
 8. Publish deployment witness only after approval:
 
