@@ -526,6 +526,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_obligation_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_record.json"
+        ));
+        assert_fixture_round_trip::<ObligationRecord>(fixture_json);
+    }
+
+    #[test]
     fn obligation_closure_round_trips() {
         let closure = ObligationClosure {
             closure_id: "cls-1".to_string(),

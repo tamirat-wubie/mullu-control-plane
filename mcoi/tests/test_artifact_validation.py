@@ -29,6 +29,9 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "request-echo.json" in request_names
     assert "input_document.json" in auxiliary_names
     assert "event_record.json" in maf_runtime_fixture_names
+    assert "obligation_record.json" in maf_runtime_fixture_names
+    assert "service_function_template.json" in maf_runtime_fixture_names
+    assert "role_descriptor.json" in maf_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -40,7 +43,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 5
+    assert len(inventory.maf_runtime_fixture_paths) >= 8
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:

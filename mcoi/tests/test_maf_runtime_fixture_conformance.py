@@ -18,8 +18,17 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from mcoi_runtime.contracts.event import EventRecord, EventSource, EventType
+from mcoi_runtime.contracts.function import FunctionType, ServiceFunctionTemplate
 from mcoi_runtime.contracts.goal import GoalPlan, GoalPriority, GoalDescriptor, SubGoal, SubGoalStatus
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
+from mcoi_runtime.contracts.obligation import (
+    ObligationDeadline,
+    ObligationOwner,
+    ObligationRecord,
+    ObligationState,
+    ObligationTrigger,
+)
+from mcoi_runtime.contracts.roles import RoleDescriptor
 from mcoi_runtime.contracts.simulation import RiskLevel, SimulationComparison
 from mcoi_runtime.contracts.supervisor import (
     LivelockStrategy,
@@ -125,6 +134,45 @@ def _build_goal_plan(payload: dict) -> GoalPlan:
     )
 
 
+def _build_obligation_record(payload: dict) -> ObligationRecord:
+    return ObligationRecord(
+        obligation_id=payload["obligation_id"],
+        trigger=ObligationTrigger(payload["trigger"]),
+        trigger_ref_id=payload["trigger_ref_id"],
+        state=ObligationState(payload["state"]),
+        owner=ObligationOwner(**payload["owner"]),
+        deadline=ObligationDeadline(**payload["deadline"]),
+        description=payload["description"],
+        correlation_id=payload["correlation_id"],
+        metadata=payload["metadata"],
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+    )
+
+
+def _build_service_function_template(payload: dict) -> ServiceFunctionTemplate:
+    return ServiceFunctionTemplate(
+        function_id=payload["function_id"],
+        name=payload["name"],
+        function_type=FunctionType(payload["function_type"]),
+        description=payload["description"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_role_descriptor(payload: dict) -> RoleDescriptor:
+    return RoleDescriptor(
+        role_id=payload["role_id"],
+        name=payload["name"],
+        description=payload["description"],
+        required_skills=tuple(payload["required_skills"]),
+        approval_required=payload["approval_required"],
+        max_concurrent_per_worker=payload["max_concurrent_per_worker"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -133,6 +181,9 @@ def _build_goal_plan(payload: dict) -> GoalPlan:
         ("simulation_comparison.json", _build_simulation_comparison),
         ("job_descriptor.json", _build_job_descriptor),
         ("goal_plan.json", _build_goal_plan),
+        ("obligation_record.json", _build_obligation_record),
+        ("service_function_template.json", _build_service_function_template),
+        ("role_descriptor.json", _build_role_descriptor),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(

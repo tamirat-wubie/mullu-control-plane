@@ -889,6 +889,15 @@ mod tests {
         assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
+    #[test]
+    fn canonical_service_function_template_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/service_function_template.json"
+        ));
+        assert_fixture_round_trip::<function::ServiceFunctionTemplate>(fixture_json);
+    }
+
     // --- Roles ---
 
     #[test]
@@ -943,6 +952,15 @@ mod tests {
         let json = serde_json::to_string(&role).unwrap();
         assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
         assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_role_descriptor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/role_descriptor.json"
+        ));
+        assert_fixture_round_trip::<roles::RoleDescriptor>(fixture_json);
     }
 
     #[test]

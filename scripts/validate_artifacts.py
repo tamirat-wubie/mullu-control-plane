@@ -554,12 +554,182 @@ def _validate_goal_plan_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_obligation_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "obligation_id",
+            "trigger",
+            "trigger_ref_id",
+            "state",
+            "owner",
+            "deadline",
+            "description",
+            "correlation_id",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    for field_name in (
+        "obligation_id",
+        "trigger",
+        "trigger_ref_id",
+        "state",
+        "description",
+        "correlation_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("created_at", "updated_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+
+    owner = payload["owner"]
+    if not isinstance(owner, dict):
+        errors.append(f"{_relative_path(path)}: field 'owner' must be an object")
+    else:
+        owner_errors = _validate_exact_object_fields(
+            owner,
+            path=path,
+            expected_fields=("owner_id", "owner_type", "display_name"),
+            kind="owner",
+        )
+        if owner_errors:
+            errors.extend(owner_errors)
+        else:
+            for field_name in ("owner_id", "owner_type", "display_name"):
+                errors.extend(
+                    _require_non_empty_text(
+                        owner[field_name],
+                        field_name=f"owner.{field_name}",
+                        path=path,
+                    )
+                )
+
+    deadline = payload["deadline"]
+    if not isinstance(deadline, dict):
+        errors.append(f"{_relative_path(path)}: field 'deadline' must be an object")
+    else:
+        deadline_errors = _validate_exact_object_fields(
+            deadline,
+            path=path,
+            expected_fields=("deadline_id", "due_at", "warn_at", "hard"),
+            kind="deadline",
+        )
+        if deadline_errors:
+            errors.extend(deadline_errors)
+        else:
+            errors.extend(
+                _require_non_empty_text(
+                    deadline["deadline_id"],
+                    field_name="deadline.deadline_id",
+                    path=path,
+                )
+            )
+            errors.extend(
+                _validate_iso8601_text(deadline["due_at"], field_name="deadline.due_at", path=path)
+            )
+            errors.extend(
+                _validate_iso8601_text(
+                    deadline["warn_at"],
+                    field_name="deadline.warn_at",
+                    path=path,
+                )
+            )
+            if not isinstance(deadline["hard"], bool):
+                errors.append(f"{_relative_path(path)}: field 'deadline.hard' must be boolean")
+
+    return errors
+
+
+def _validate_service_function_template_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "function_id",
+            "name",
+            "function_type",
+            "description",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    for field_name in ("function_id", "name", "function_type", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+
+    return errors
+
+
+def _validate_role_descriptor_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "role_id",
+            "name",
+            "description",
+            "required_skills",
+            "approval_required",
+            "max_concurrent_per_worker",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    for field_name in ("role_id", "name", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    required_skills = payload["required_skills"]
+    if not isinstance(required_skills, list) or not required_skills:
+        errors.append(f"{_relative_path(path)}: field 'required_skills' must be a non-empty array")
+    else:
+        for index, skill in enumerate(required_skills):
+            if not isinstance(skill, str) or not skill.strip():
+                errors.append(
+                    f"{_relative_path(path)}: required_skills[{index}] must be a non-empty string"
+                )
+    if not isinstance(payload["approval_required"], bool):
+        errors.append(f"{_relative_path(path)}: field 'approval_required' must be boolean")
+    errors.extend(
+        _require_positive_int(
+            payload["max_concurrent_per_worker"],
+            field_name="max_concurrent_per_worker",
+            path=path,
+        )
+    )
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "event_record.json": _validate_event_record_fixture,
-    "supervisor_tick.json": _validate_supervisor_tick_fixture,
-    "simulation_comparison.json": _validate_simulation_comparison_fixture,
     "job_descriptor.json": _validate_job_descriptor_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
+    "obligation_record.json": _validate_obligation_record_fixture,
+    "role_descriptor.json": _validate_role_descriptor_fixture,
+    "service_function_template.json": _validate_service_function_template_fixture,
+    "simulation_comparison.json": _validate_simulation_comparison_fixture,
+    "supervisor_tick.json": _validate_supervisor_tick_fixture,
 }
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
