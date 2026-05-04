@@ -131,6 +131,22 @@ class WorkflowResumeRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class GoalResumeRequest:
+    """Request to resume a persisted goal execution explicitly."""
+
+    request_id: str
+    subject_id: str
+    goal_id: str
+    input_context: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id", "goal_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+
+
+@dataclass(frozen=True, slots=True)
 class WorkforceReconcileRequest:
     """Request to assess or restore persisted workforce assignment state."""
 
@@ -473,6 +489,7 @@ class OperatorRunReport:
 __all__ = [
     "CoordinationRecoveryReport",
     "CoordinationRecoveryRequest",
+    "GoalResumeRequest",
     "GoalRunReport",
     "JobReconcileReport",
     "JobReconcileRequest",

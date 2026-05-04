@@ -48,6 +48,7 @@ from .operator_executors import (
 from .operator_models import (
     CoordinationRecoveryReport,
     CoordinationRecoveryRequest,
+    GoalResumeRequest,
     GoalRunReport,
     JobReconcileReport,
     JobReconcileRequest,
@@ -446,6 +447,317 @@ def resume_workflow(
     )
 
 
+def _persist_goal_runtime(
+    loop: OperatorLoop,
+    goal_descriptor: GoalDescriptor,
+    plan: object,
+    state: GoalExecutionState,
+) -> None:
+    """Persist goal runtime witnesses when a goal store is configured."""
+    goal_store = loop.runtime.goal_store
+    if goal_store is None:
+        return
+    goal_store.save_goal_descriptor(goal_descriptor)
+    goal_store.save_plan(plan)
+    goal_store.save_goal_state(state)
+
+
+def _advance_goal_state(
+    loop: OperatorLoop,
+    request: SkillRequest | GoalResumeRequest,
+    goal_descriptor: GoalDescriptor,
+    plan: object,
+    state: GoalExecutionState,
+) -> GoalExecutionState:
+    """Advance a goal from its current state through the governed sub-goal path."""
+    goal_engine = loop.runtime.goal_reasoning_engine
+    _persist_goal_runtime(loop, goal_descriptor, plan, state)
+    sub_goal_executor = _GoalSubGoalExecutor(loop=loop, request=request)
+
+    while state.status in (GoalStatus.ACCEPTED, GoalStatus.PLANNING, GoalStatus.EXECUTING):
+        new_state = goal_engine.execute_next_sub_goal(state, plan, sub_goal_executor)
+        if new_state is state:
+            state = GoalExecutionState(
+                goal_id=state.goal_id,
+                status=GoalStatus.FAILED,
+                current_plan_id=state.current_plan_id,
+                updated_at=loop.runtime.clock(),
+                completed_sub_goals=state.completed_sub_goals,
+                failed_sub_goals=state.failed_sub_goals,
+            )
+            if loop.runtime.goal_store is not None:
+                loop.runtime.goal_store.save_goal_state(state)
+            break
+        state = new_state
+        if loop.runtime.goal_store is not None:
+            loop.runtime.goal_store.save_goal_state(state)
+
+    return state
+
+
+def _goal_errors(state: GoalExecutionState) -> tuple[StructuredError, ...]:
+    """Encode deterministic goal failure causes for operator reports."""
+    if state.status is not GoalStatus.FAILED:
+        return ()
+    if state.failed_sub_goals:
+        return (
+            execution_error(
+                error_code="goal_sub_goal_failed",
+                message=f"goal failed: sub-goals {', '.join(state.failed_sub_goals)} failed",
+                related_ids=state.failed_sub_goals,
+            ),
+        )
+    return (
+        execution_error(
+            error_code="goal_stuck_no_progress",
+            message="goal execution made no progress - sub-goals are blocked",
+        ),
+    )
+
+
+def resume_goal(
+    loop: OperatorLoop,
+    request: GoalResumeRequest,
+) -> GoalRunReport:
+    """Resume a persisted goal execution explicitly through the operator facade."""
+    started_at = loop.runtime.clock()
+    store = loop.runtime.goal_store
+    if store is None:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=None,
+            errors=(
+                execution_error(
+                    error_code="goal_store_not_configured",
+                    message="goal resume requires a configured goal store",
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    try:
+        runtime_state = store.load_state()
+    except PersistenceError as exc:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=None,
+            errors=(
+                execution_error(
+                    error_code="goal_resume_load_failed",
+                    message=str(exc),
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    goal_descriptor = next(
+        (descriptor for descriptor in runtime_state.descriptors if descriptor.goal_id == request.goal_id),
+        None,
+    )
+    state = next(
+        (goal_state for goal_state in runtime_state.states if goal_state.goal_id == request.goal_id),
+        None,
+    )
+    if goal_descriptor is None or state is None:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=None,
+            errors=(
+                validation_error(
+                    error_code="goal_runtime_missing",
+                    message="persisted goal runtime witness not found",
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if state.current_plan_id is None:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=None,
+            errors=(
+                validation_error(
+                    error_code="goal_resume_invalid_state",
+                    message="persisted goal state has no current plan assigned",
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=goal_descriptor.created_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if state.status in (GoalStatus.COMPLETED, GoalStatus.FAILED, GoalStatus.ARCHIVED):
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=state.current_plan_id,
+            completed_sub_goals=state.completed_sub_goals,
+            failed_sub_goals=state.failed_sub_goals,
+            errors=(
+                validation_error(
+                    error_code="goal_resume_invalid_state",
+                    message=f"goal is in terminal state {state.status.value}; cannot resume",
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=goal_descriptor.created_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    plan = next(
+        (candidate for candidate in runtime_state.plans if candidate.plan_id == state.current_plan_id),
+        None,
+    )
+    if plan is None or plan.goal_id != request.goal_id:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=state.current_plan_id,
+            completed_sub_goals=state.completed_sub_goals,
+            failed_sub_goals=state.failed_sub_goals,
+            errors=(
+                validation_error(
+                    error_code="goal_resume_invalid_state",
+                    message="persisted goal current plan does not match the requested goal",
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=goal_descriptor.created_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    existing_descriptor = loop.runtime.goal_reasoning_engine.get_goal_descriptor(request.goal_id)
+    existing_state = loop.runtime.goal_reasoning_engine.get_goal_state(request.goal_id)
+    existing_plan = loop.runtime.goal_reasoning_engine.get_plan(plan.plan_id)
+    if existing_descriptor is None and existing_state is None and existing_plan is None:
+        try:
+            loop.runtime.goal_reasoning_engine.restore_goal(goal_descriptor, state)
+            loop.runtime.goal_reasoning_engine.restore_plan(plan)
+        except RuntimeCoreInvariantError as exc:
+            return GoalRunReport(
+                goal_id=request.goal_id,
+                status=GoalStatus.FAILED,
+                plan_id=plan.plan_id,
+                completed_sub_goals=state.completed_sub_goals,
+                failed_sub_goals=state.failed_sub_goals,
+                errors=(
+                    validation_error(
+                        error_code="goal_resume_restore_failed",
+                        message=str(exc),
+                        source_plane=SourcePlane.EXECUTION,
+                    ),
+                ),
+                started_at=goal_descriptor.created_at,
+                completed_at=loop.runtime.clock(),
+            )
+    elif (
+        existing_descriptor != goal_descriptor
+        or existing_state != state
+        or existing_plan != plan
+    ):
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=plan.plan_id,
+            completed_sub_goals=state.completed_sub_goals,
+            failed_sub_goals=state.failed_sub_goals,
+            errors=(
+                validation_error(
+                    error_code="goal_resume_runtime_mismatch",
+                    message="live goal runtime does not match the persisted goal witness",
+                    source_plane=SourcePlane.EXECUTION,
+                ),
+            ),
+            started_at=goal_descriptor.created_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        ActionClass.EXECUTE_WRITE,
+        action_description=f"goal_resume:{request.goal_id}",
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=plan.plan_id,
+            completed_sub_goals=state.completed_sub_goals,
+            failed_sub_goals=state.failed_sub_goals,
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        f"blocked goal resume: {autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.FATAL_FOR_RUN,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=goal_descriptor.created_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id=request.goal_id,
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=True,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return GoalRunReport(
+            goal_id=request.goal_id,
+            status=GoalStatus.FAILED,
+            plan_id=plan.plan_id,
+            completed_sub_goals=state.completed_sub_goals,
+            failed_sub_goals=state.failed_sub_goals,
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=f"policy gate returned {policy_decision.status.value} for goal resume",
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=goal_descriptor.created_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    state = _advance_goal_state(loop, request, goal_descriptor, plan, state)
+    return GoalRunReport(
+        goal_id=request.goal_id,
+        status=state.status,
+        plan_id=plan.plan_id,
+        completed_sub_goals=state.completed_sub_goals,
+        failed_sub_goals=state.failed_sub_goals,
+        errors=_goal_errors(state),
+        started_at=goal_descriptor.created_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
 def _advance_workflow_record(
     *,
     loop: OperatorLoop,
@@ -620,55 +932,14 @@ def run_goal(
         current_plan_id=plan.plan_id,
         updated_at=loop.runtime.clock(),
     )
-
-    if loop.runtime.goal_store is not None:
-        loop.runtime.goal_store.save_goal_descriptor(goal_descriptor)
-        loop.runtime.goal_store.save_plan(plan)
-        loop.runtime.goal_store.save_goal_state(state)
-
-    sub_goal_executor = _GoalSubGoalExecutor(loop=loop, request=request)
-
-    while state.status is GoalStatus.EXECUTING:
-        new_state = goal_engine.execute_next_sub_goal(state, plan, sub_goal_executor)
-        if new_state is state:
-            state = GoalExecutionState(
-                goal_id=state.goal_id,
-                status=GoalStatus.FAILED,
-                current_plan_id=state.current_plan_id,
-                updated_at=loop.runtime.clock(),
-                completed_sub_goals=state.completed_sub_goals,
-                failed_sub_goals=state.failed_sub_goals,
-            )
-            break
-        state = new_state
-        if loop.runtime.goal_store is not None:
-            loop.runtime.goal_store.save_goal_state(state)
-
-    errors: list[StructuredError] = []
-    if state.status is GoalStatus.FAILED:
-        if state.failed_sub_goals:
-            errors.append(
-                execution_error(
-                    error_code="goal_sub_goal_failed",
-                    message=f"goal failed: sub-goals {', '.join(state.failed_sub_goals)} failed",
-                    related_ids=state.failed_sub_goals,
-                )
-            )
-        else:
-            errors.append(
-                execution_error(
-                    error_code="goal_stuck_no_progress",
-                    message="goal execution made no progress - sub-goals are blocked",
-                )
-            )
-
+    state = _advance_goal_state(loop, request, goal_descriptor, plan, state)
     return GoalRunReport(
         goal_id=goal_descriptor.goal_id,
         status=state.status,
         plan_id=plan.plan_id,
         completed_sub_goals=state.completed_sub_goals,
         failed_sub_goals=state.failed_sub_goals,
-        errors=tuple(errors),
+        errors=_goal_errors(state),
         started_at=started_at,
         completed_at=loop.runtime.clock(),
     )
@@ -2103,6 +2374,7 @@ __all__ = [
     "reconcile_work_queue",
     "reconcile_team_queues",
     "reconcile_workforce",
+    "resume_goal",
     "resume_workflow",
     "run_goal",
     "run_skill",

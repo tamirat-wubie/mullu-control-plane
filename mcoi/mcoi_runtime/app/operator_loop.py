@@ -40,6 +40,7 @@ from .bootstrap import BootstrappedRuntime, build_policy_decision
 from .operator_models import (
     CoordinationRecoveryReport,
     CoordinationRecoveryRequest,
+    GoalResumeRequest,
     GoalRunReport,
     JobReconcileReport,
     JobReconcileRequest,
@@ -64,6 +65,7 @@ from .operator_runners import (
     reconcile_work_queue,
     reconcile_team_queues,
     reconcile_workforce,
+    resume_goal,
     resume_workflow,
     run_goal,
     run_skill,
@@ -358,6 +360,12 @@ class OperatorLoop:
         goal_descriptor: GoalDescriptor,
     ) -> GoalRunReport:
         return run_goal(self, request, goal_descriptor)
+
+    def resume_goal(
+        self,
+        request: GoalResumeRequest,
+    ) -> GoalRunReport:
+        return resume_goal(self, request)
 
     def recover_coordination_state(
         self,
