@@ -18,7 +18,7 @@
 #![forbid(unsafe_code)]
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 // ===========================================================================
 // Jobs
@@ -88,7 +88,7 @@ pub mod job {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub sla_target_minutes: Option<u64>,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -279,7 +279,7 @@ pub mod workflow {
     pub struct StageExecutionResult {
         pub stage_id: String,
         pub status: StageStatus,
-        pub output: HashMap<String, serde_json::Value>,
+        pub output: BTreeMap<String, serde_json::Value>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub error: Option<serde_json::Value>,
         #[serde(default, skip_serializing_if = "String::is_empty")]
@@ -357,7 +357,7 @@ pub mod goal {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         pub deadline: Option<String>,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -457,7 +457,7 @@ pub mod function {
         pub description: String,
         pub created_at: String,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -565,7 +565,7 @@ pub mod roles {
         #[serde(default = "default_max_concurrent")]
         pub max_concurrent_per_worker: u64,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     fn default_max_concurrent() -> u64 {
@@ -582,7 +582,7 @@ pub mod roles {
         #[serde(default)]
         pub status: WorkerStatus,
         #[serde(default)]
-        pub metadata: HashMap<String, serde_json::Value>,
+        pub metadata: BTreeMap<String, serde_json::Value>,
     }
 
     // Default derived via #[default] on Available variant
@@ -701,11 +701,34 @@ mod tests {
             workflow_id: None,
             deadline: Some("2025-01-02T00:00:00+00:00".into()),
             sla_target_minutes: Some(60),
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&jd).unwrap();
         let back: job::JobDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(jd, back);
+    }
+
+    #[test]
+    fn job_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let descriptor = job::JobDescriptor {
+            job_id: "j-ordered".into(),
+            name: "Ordered metadata".into(),
+            description: "Checks deterministic job metadata ordering".into(),
+            priority: job::JobPriority::Normal,
+            created_at: "2025-01-01T00:00:00+00:00".into(),
+            goal_id: None,
+            workflow_id: None,
+            deadline: None,
+            sla_target_minutes: None,
+            metadata,
+        };
+
+        let json = serde_json::to_string(&descriptor).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     // --- Workflows ---
@@ -751,6 +774,25 @@ mod tests {
             "/../../../../integration/contracts_compat/fixtures/workflow.json"
         ));
         assert_fixture_round_trip::<workflow::WorkflowDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn workflow_stage_output_serializes_in_lexicographic_key_order() {
+        let mut output = BTreeMap::new();
+        output.insert("zeta".into(), serde_json::json!(1));
+        output.insert("alpha".into(), serde_json::json!(2));
+        let result = workflow::StageExecutionResult {
+            stage_id: "s-ordered".into(),
+            status: workflow::StageStatus::Completed,
+            output,
+            error: None,
+            started_at: "2025-01-01T00:00:00+00:00".into(),
+            completed_at: "2025-01-01T00:00:01+00:00".into(),
+        };
+
+        let json = serde_json::to_string(&result).unwrap();
+        assert!(json.contains(r#""output":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     // --- Goals ---
@@ -810,6 +852,25 @@ mod tests {
         assert_eq!(sla, back);
     }
 
+    #[test]
+    fn function_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let template = function::ServiceFunctionTemplate {
+            function_id: "fn-ordered".into(),
+            name: "Ordered function".into(),
+            function_type: function::FunctionType::Custom,
+            description: "Checks deterministic function metadata ordering".into(),
+            created_at: "2025-01-01T00:00:00+00:00".into(),
+            metadata,
+        };
+
+        let json = serde_json::to_string(&template).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
     // --- Roles ---
 
     #[test]
@@ -839,11 +900,31 @@ mod tests {
             required_skills: vec!["rust".into(), "review".into()],
             approval_required: false,
             max_concurrent_per_worker: 3,
-            metadata: HashMap::new(),
+            metadata: BTreeMap::new(),
         };
         let json = serde_json::to_string(&rd).unwrap();
         let back: roles::RoleDescriptor = serde_json::from_str(&json).unwrap();
         assert_eq!(rd, back);
+    }
+
+    #[test]
+    fn role_metadata_serializes_in_lexicographic_key_order() {
+        let mut metadata = BTreeMap::new();
+        metadata.insert("zeta".into(), serde_json::json!(1));
+        metadata.insert("alpha".into(), serde_json::json!(2));
+        let role = roles::RoleDescriptor {
+            role_id: "r-ordered".into(),
+            name: "Ordered role".into(),
+            description: "Checks deterministic role metadata ordering".into(),
+            required_skills: vec!["rust".into()],
+            approval_required: true,
+            max_concurrent_per_worker: 2,
+            metadata,
+        };
+
+        let json = serde_json::to_string(&role).unwrap();
+        assert!(json.contains(r#""metadata":{"alpha":2,"zeta":1}"#));
+        assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
     #[test]
