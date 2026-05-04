@@ -16,7 +16,7 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 10 |
 | Governed capabilities | 52 |
-| Aggregate closure actions | 14 |
+| Aggregate closure actions | 13 |
 | Approval-required actions | 4 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
