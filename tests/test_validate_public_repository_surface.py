@@ -22,6 +22,8 @@ from scripts.validate_public_repository_surface import (
     GITHUB_SURFACE_REQUIRED_LITERALS,
     GOVERNANCE_PROTOCOL_DOC_PATH,
     GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
+    LOGIC_GOVERNANCE_DOC_PATH,
+    LOGIC_GOVERNANCE_REQUIRED_LITERALS,
     REPO_ROOT,
     STATUS_REQUIRED_LITERALS,
     validate_required_document_text,
@@ -82,6 +84,7 @@ def test_status_witness_requires_protocol_manifest_anchor() -> None:
     assert errors == []
     assert "Protocol witness" in content
     assert "docs/52_mullu_governance_protocol.md" in content
+    assert "docs/60_logic_governance_application.md" in content
     assert "python scripts/validate_protocol_manifest.py" in content
     assert "scripts/validate_governed_runtime_promotion.py" in content
 
@@ -149,6 +152,21 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Governed runtime promotion validators are public contracts" in content
     assert "Terminal closure certificates are public contracts" in content
     assert "python scripts\\validate_protocol_manifest.py" in content
+
+
+def test_logic_governance_doc_is_public_surface_anchor() -> None:
+    content = (REPO_ROOT / LOGIC_GOVERNANCE_DOC_PATH).read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name=LOGIC_GOVERNANCE_DOC_PATH,
+        content=content,
+        required_literals=LOGIC_GOVERNANCE_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "Governance Law Mapping" in content
+    assert "Mfidel substrate and overlay" in content
+    assert "Proof-of-Resolution Stamp Template" in content
 
 
 def test_required_document_text_reports_missing_orchestration_literal() -> None:

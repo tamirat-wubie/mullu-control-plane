@@ -47,6 +47,7 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
     "PILOT_CHECKLIST_v0.1.md",
     "PILOT_OPERATIONS_GUIDE_v0.1.md",
     "docs/59_general_agent_promotion_handoff_packet.md",
+    "docs/60_logic_governance_application.md",
 )
 
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
@@ -111,6 +112,7 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "DEPLOYMENT_STATUS.md",
     "docs/52_mullu_governance_protocol.md",
     "Protocol witness",
+    "Logic governance witness",
     "32-schema public contract index",
     "python scripts/validate_protocol_manifest.py",
     "python scripts/validate_release_status.py --strict",
@@ -122,6 +124,7 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "MULLU_GATEWAY_URL",
     "deployment_claim: published",
     "docs/59_general_agent_promotion_handoff_packet.md",
+    "docs/60_logic_governance_application.md",
     "examples/general_agent_promotion_handoff_packet.json",
     "examples/general_agent_promotion_environment_bindings.json",
     ".change_assurance/general_agent_promotion_environment_binding_receipt.json",
