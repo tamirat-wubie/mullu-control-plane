@@ -233,6 +233,17 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
                 "state_hash": lambda self: "data-hash",
             },
         )(),
+        temporal_runtime_engine_cls=lambda spine, clock: type(
+            "TemporalRuntime",
+            (),
+            {
+                "event_count": 9,
+                "interval_count": 10,
+                "constraint_count": 11,
+                "action_decision_count": 12,
+                "violation_count": 13,
+            },
+        )(),
         event_bus_cls=lambda **kwargs: type(
             "Bus",
             (),
@@ -257,6 +268,7 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
         "audit_anchors",
         "knowledge",
         "data_governance",
+        "temporal_runtime",
         "event_bus",
         "pipelines",
     }
@@ -276,6 +288,13 @@ def test_bootstrap_subsystems_registers_observability_and_event_bus_health() -> 
         "decisions": 7,
         "violations": 8,
         "state_hash": "data-hash",
+    }
+    assert sources["temporal_runtime"]() == {
+        "events": 9,
+        "intervals": 10,
+        "constraints": 11,
+        "action_decisions": 12,
+        "violations": 13,
     }
     assert deep_health.probes["event_bus"]() == {
         "status": "healthy",
