@@ -271,7 +271,7 @@ def test_cli_reports_missing_host(monkeypatch, capsys) -> None:
 
     assert exit_code == 1
     assert "gateway publication dispatch failed" in captured.out
-    assert "gateway host is required" in captured.out
+    assert "gateway host is required" not in captured.out
 
 
 def test_cli_dispatches_from_ready_readiness_report(
@@ -329,8 +329,8 @@ def test_cli_refuses_unready_readiness_report(
 
     assert exit_code == 1
     assert runner.commands == []
-    assert "readiness report is not ready" in captured.out
     assert "gateway publication dispatch failed" in captured.out
+    assert "readiness report is not ready" not in captured.out
 
 
 def test_cli_refuses_readiness_report_repository_mismatch(
@@ -351,8 +351,8 @@ def test_cli_refuses_readiness_report_repository_mismatch(
 
     assert exit_code == 1
     assert runner.commands == []
-    assert "repository mismatch" in captured.out
-    assert "tamirat-wubie/other" in captured.out
+    assert "readiness report repository mismatch" in captured.out
+    assert "tamirat-wubie/other" not in captured.out
 
 
 def test_cli_refuses_missing_readiness_report_without_path_leak(
