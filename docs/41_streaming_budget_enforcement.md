@@ -15,6 +15,7 @@ settlement, and proof identifiers carried through the streaming audit chain.
 | Cutoff | Stop delivery when reserved output tokens are exhausted | `cutoff` proof id |
 | Settlement | Compare actual usage and cost against reservation | `final-reconcile` proof id |
 | Audit | Persist bounded events under `streaming_budget_enforcement.schema.json` | trace entry or hash-chain event |
+| Validation | Prove cross-field arithmetic and cutoff semantics | `validate_streaming_budget_enforcement.py` |
 
 ## Cutoff Semantics
 
@@ -39,6 +40,19 @@ settlement, and proof identifiers carried through the streaming audit chain.
 7. Reject silent continuation after cutoff; later debit attempts return zero
    allowed tokens and repeat the cutoff witness.
 
+## Validation Gate
+
+The schema validates event shape. The deterministic validator
+`scripts/validate_streaming_budget_enforcement.py` validates protocol
+invariants that cannot be expressed by the project-local schema subset:
+
+1. `reserved_total_tokens = estimated_input_tokens + reserved_output_tokens`
+2. `emitted_output_tokens <= reserved_output_tokens`
+3. `cutoff_semantic=retry_eligible` requires `retry_eligible=true`
+4. `cutoff_semantic in {graceful, abrupt}` requires `retry_eligible=false`
+5. `cutoff_emitted` requires emitted output to equal the reserved output limit
+6. `delta_tokens = actual_input_tokens + actual_output_tokens - reserved_total_tokens`
+
 ## Schema
 
 The canonical event surface is
@@ -59,6 +73,6 @@ The canonical event surface is
 
 STATUS:
   Completeness: 100%
-  Invariants verified: reservation arithmetic, bounded cutoff semantics, settlement delta, policy-bound witness fields, `/api/v1/stream` binding, `/api/v1/chat/stream` binding, provider-native output delta debit
+  Invariants verified: reservation arithmetic, bounded cutoff semantics, settlement delta, policy-bound witness fields, `/api/v1/stream` binding, `/api/v1/chat/stream` binding, provider-native output delta debit, deterministic validation gate
   Open issues: none
   Next action: benchmark provider-native stream debit behavior against pilot traces
