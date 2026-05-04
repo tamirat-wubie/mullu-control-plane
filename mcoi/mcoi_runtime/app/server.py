@@ -7,6 +7,7 @@ Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certificati
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
+from contextlib import asynccontextmanager
 from typing import Any
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import StreamingResponse
@@ -709,7 +710,21 @@ wf_templates.register(WorkflowTemplate(
     parameters=("topic", "format"), category="research",
 ))
 
-app = FastAPI(title="Mullu Platform", version="3.10.2", description="Governed AI Operating System")
+@asynccontextmanager
+async def _app_lifespan(_: FastAPI):
+    """Run graceful shutdown through the FastAPI lifespan surface."""
+    try:
+        yield
+    finally:
+        shutdown_mgr.execute()
+
+
+app = FastAPI(
+    title="Mullu Platform",
+    version="3.10.2",
+    description="Governed AI Operating System",
+    lifespan=_app_lifespan,
+)
 
 # Wire middleware
 app.add_middleware(
@@ -971,10 +986,4 @@ _startup_restored = _restore_state_on_startup()
 shutdown_mgr.register("save_state", _flush_state_on_shutdown, priority=100)
 shutdown_mgr.register("flush_metrics", lambda: {"flushed": True}, priority=90)
 shutdown_mgr.register("close_connections", lambda: {"closed": True}, priority=10)
-
-
-@app.on_event("shutdown")
-def on_shutdown():
-    """Execute graceful shutdown: flush state, close connections."""
-    shutdown_mgr.execute()
 
