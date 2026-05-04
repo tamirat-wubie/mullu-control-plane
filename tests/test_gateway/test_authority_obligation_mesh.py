@@ -502,23 +502,29 @@ def test_satisfy_obligation_requires_evidence_and_active_status():
     with pytest.raises(ValueError, match="requires evidence_refs"):
         mesh.satisfy_obligation(obligation.obligation_id, evidence_refs=())
 
+    with pytest.raises(ValueError, match="missing required evidence: case_disposition"):
+        mesh.satisfy_obligation(
+            obligation.obligation_id,
+            evidence_refs=("case:authority-review-closed",),
+        )
+
     satisfied = mesh.satisfy_obligation(
         obligation.obligation_id,
-        evidence_refs=("case:authority-review-closed",),
+        evidence_refs=("case_disposition:authority-review-closed",),
     )
     events = ledger.events_for(command.command_id)
     witness = mesh.responsibility_witness()
 
     assert satisfied.status is ObligationStatus.SATISFIED
     assert events[-1].next_state is CommandState.OBLIGATIONS_SATISFIED
-    assert events[-1].detail["evidence_refs"] == ("case:authority-review-closed",)
+    assert events[-1].detail["evidence_refs"] == ("case_disposition:authority-review-closed",)
     assert witness.open_obligation_count == 0
     assert witness.requires_review_count == 0
 
     with pytest.raises(ValueError, match="open or escalated"):
         mesh.satisfy_obligation(
             obligation.obligation_id,
-            evidence_refs=("case:duplicate-authority-review-closed",),
+            evidence_refs=("case_disposition:duplicate-authority-review-closed",),
         )
 
 

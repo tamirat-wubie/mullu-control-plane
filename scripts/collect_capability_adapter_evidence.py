@@ -569,17 +569,45 @@ def _email_calendar_receipt_check(path: Path) -> ReceiptCheck:
     payload, error = _load_receipt(path)
     if error:
         return ReceiptCheck("email/calendar live receipt", False, error, str(path), ())
+    worker_receipt = payload.get("worker_receipt") if isinstance(payload.get("worker_receipt"), dict) else {}
+    blockers = payload.get("blockers", ())
     passed = (
         _passed_status(payload)
         and payload.get("adapter_id") == "communication.email_calendar_worker"
         and payload.get("external_write") is False
+        and payload.get("connector_id") == worker_receipt.get("connector_id")
+        and payload.get("provider_operation") == worker_receipt.get("provider_operation")
+        and payload.get("resource_id") == worker_receipt.get("resource_id")
+        and payload.get("response_digest") == worker_receipt.get("response_digest")
+        and worker_receipt.get("verification_status") == "passed"
+        and worker_receipt.get("capability_id") == "email.search"
+        and worker_receipt.get("action") == "email.search"
+        and worker_receipt.get("external_write") is False
+        and worker_receipt.get("forbidden_effects_observed") is False
+        and bool(str(worker_receipt.get("connector_id", "")).strip())
+        and bool(str(worker_receipt.get("provider_operation", "")).strip())
+        and bool(str(worker_receipt.get("resource_id", "")).strip())
+        and bool(str(worker_receipt.get("response_digest", "")).strip())
+        and blockers == []
+    )
+    evidence_refs = tuple(
+        ref
+        for ref in (
+            str(worker_receipt.get("receipt_id", "")).strip(),
+            str(worker_receipt.get("connector_id", "")).strip(),
+            str(worker_receipt.get("resource_id", "")).strip(),
+        )
+        if ref
     )
     detail = (
-        "passed"
+        f"passed worker_receipt={worker_receipt.get('receipt_id', '')} connector_id={payload.get('connector_id', '')}"
         if passed
-        else "requires status=passed, adapter_id=communication.email_calendar_worker, external_write=false"
+        else (
+            "requires status=passed, adapter_id=communication.email_calendar_worker, "
+            "read-only worker receipt, connector/resource/digest match, no forbidden effects, and empty blockers"
+        )
     )
-    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path), ())
+    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path), evidence_refs)
 
 
 def _load_receipt(path: Path) -> tuple[dict[str, Any], str]:

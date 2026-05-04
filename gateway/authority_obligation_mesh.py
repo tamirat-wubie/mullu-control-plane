@@ -1223,6 +1223,9 @@ class AuthorityObligationMesh:
             raise ValueError("obligation must be open or escalated before satisfaction")
         if obligation.evidence_required and not evidence_refs:
             raise ValueError("obligation satisfaction requires evidence_refs")
+        missing_evidence = self._missing_obligation_evidence(obligation, evidence_refs)
+        if missing_evidence:
+            raise ValueError(f"obligation satisfaction missing required evidence: {', '.join(missing_evidence)}")
         updated = self._replace_obligation(obligation, status=ObligationStatus.SATISFIED)
         self._commands.transition(
             updated.command_id,
@@ -1594,6 +1597,24 @@ class AuthorityObligationMesh:
             "fallback_owner_id": obligation.owner_id,
             "escalation_team": obligation.owner_team,
         }
+
+    def _missing_obligation_evidence(
+        self,
+        obligation: Obligation,
+        evidence_refs: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        return tuple(
+            evidence_name for evidence_name in obligation.evidence_required
+            if not self._evidence_ref_satisfies(evidence_name, evidence_refs)
+        )
+
+    def _evidence_ref_satisfies(self, evidence_name: str, evidence_refs: tuple[str, ...]) -> bool:
+        prefixes = (
+            evidence_name,
+            f"{evidence_name}:",
+            f"evidence:{evidence_name}:",
+        )
+        return any(ref == evidence_name or ref.startswith(prefixes[1:]) for ref in evidence_refs)
 
     def _policy_for_chain(self, chain: ApprovalChain) -> ApprovalPolicy:
         for policy in self._store.list_approval_policies():
