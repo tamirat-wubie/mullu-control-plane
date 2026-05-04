@@ -494,11 +494,11 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
         )
     try:
         payload = json.loads(adapter_evidence_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+    except json.JSONDecodeError:
         return PromotionCheck(
             name="capability adapter closure evidence",
             passed=False,
-            detail=f"capability adapter evidence JSON parse failed: {exc.msg}",
+            detail="capability adapter evidence JSON parse failed",
             evidence_refs=(str(adapter_evidence_path),),
             blocker_id="adapter_evidence_not_closed",
         )

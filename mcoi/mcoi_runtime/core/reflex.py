@@ -12,7 +12,10 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Mapping
+import hmac
+import json
+from hashlib import sha256
+from typing import Any, Iterable, Mapping
 
 from mcoi_runtime.contracts.change_assurance import (
     ChangeCertificate,
@@ -448,6 +451,58 @@ def build_canary_handoff(
         rollback_plan_ref=candidate.rollback_plan_ref,
         deployment_witness_required=True,
         mutation_applied=False,
+    )
+
+
+def reflex_deployment_witness_seed(witness: Mapping[str, Any]) -> str:
+    """Return the canonical seed used to sign and replay a Reflex deployment witness."""
+    witness_core = {
+        "candidate_id": witness["candidate_id"],
+        "certificate_id": witness["certificate_id"],
+        "promotion_decision_id": witness["promotion_decision_id"],
+        "target_environment": witness["target_environment"],
+        "canary_status": witness["canary_status"],
+        "rollback_plan_ref": witness["rollback_plan_ref"],
+        "signed_at": witness["signed_at"],
+        "signature_key_id": witness["signature_key_id"],
+        "production_mutation_applied": witness["production_mutation_applied"],
+    }
+    return json.dumps(
+        {
+            **witness_core,
+            "health_refs": witness["health_refs"],
+        },
+        sort_keys=True,
+    )
+
+
+def verify_reflex_deployment_witness(
+    witness: Mapping[str, Any],
+    *,
+    signing_secret: str,
+) -> bool:
+    """Replay a signed Reflex deployment witness without producing side effects."""
+    if not signing_secret:
+        return False
+    try:
+        witness_seed = reflex_deployment_witness_seed(witness)
+        expected_signature = hmac.new(
+            signing_secret.encode("utf-8"),
+            witness_seed.encode("utf-8"),
+            sha256,
+        ).hexdigest()
+        expected_witness_id = (
+            f"reflex-deployment-witness-{sha256(witness_seed.encode()).hexdigest()[:16]}"
+        )
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (
+        hmac.compare_digest(str(witness.get("witness_id", "")), expected_witness_id)
+        and hmac.compare_digest(
+            str(witness.get("signature", "")),
+            f"hmac-sha256:{expected_signature}",
+        )
+        and witness.get("production_mutation_applied") is False
     )
 
 

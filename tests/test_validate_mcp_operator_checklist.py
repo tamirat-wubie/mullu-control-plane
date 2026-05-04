@@ -112,3 +112,26 @@ def test_validate_mcp_operator_checklist_rejects_duplicate_step_id(tmp_path: Pat
     assert result.step_count == 8
     assert any("duplicate required_commands step_id validate_manifest" in error for error in result.errors)
     assert checklist_path.name == "mcp_operator_handoff_checklist.json"
+
+
+def test_validate_mcp_operator_checklist_missing_file_error_is_bounded(tmp_path: Path) -> None:
+    checklist_path = tmp_path / "secret-mcp-checklist-path.json"
+
+    result = validate_mcp_operator_checklist(checklist_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "checklist could not be read" in result.errors
+    assert "secret-mcp-checklist-path" not in serialized_errors
+
+
+def test_validate_mcp_operator_checklist_json_parse_error_is_bounded(tmp_path: Path) -> None:
+    checklist_path = tmp_path / "mcp_operator_handoff_checklist.json"
+    checklist_path.write_text('{"checklist_id": "secret-json-token"', encoding="utf-8")
+
+    result = validate_mcp_operator_checklist(checklist_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert "checklist must be JSON" in result.errors
+    assert "secret-json-token" not in serialized_errors

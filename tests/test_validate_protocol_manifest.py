@@ -104,6 +104,17 @@ def test_protocol_manifest_indexes_terminal_closure_certificate() -> None:
     assert closure_entry["surface"] == "closure"
 
 
+def test_protocol_manifest_indexes_reflex_deployment_witness_envelope() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    envelope_entry = entries["reflex-deployment-witness-envelope"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert envelope_entry["path"] == "schemas/reflex_deployment_witness_envelope.schema.json"
+    assert envelope_entry["urn"] == "urn:mullusi:schema:reflex-deployment-witness-envelope:1"
+    assert envelope_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [

@@ -173,11 +173,11 @@ def validate_mcp_operator_checklist(
 def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
     try:
         parsed = json.loads(path.read_text(encoding="utf-8"))
-    except OSError as exc:
-        errors.append(f"checklist could not be read: {exc}")
+    except OSError:
+        errors.append("checklist could not be read")
         return {}
-    except json.JSONDecodeError as exc:
-        errors.append(f"checklist must be JSON: {exc}")
+    except json.JSONDecodeError:
+        errors.append("checklist must be JSON")
         return {}
     if not isinstance(parsed, dict):
         errors.append("checklist root must be an object")

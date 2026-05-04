@@ -211,7 +211,7 @@ def _check_resolution_state(payload: dict[str, Any]) -> ReceiptValidationStep:
         return ReceiptValidationStep(
             "resolution state",
             False,
-            f"expected={expected_state} actual={resolution_state}",
+            "state-mismatch",
         )
     return ReceiptValidationStep("resolution state", True, f"state={resolution_state}")
 

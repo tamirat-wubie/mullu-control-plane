@@ -203,6 +203,18 @@ def test_dispatched_receipt_requires_github_completed_run_proof(tmp_path: Path) 
     assert "dispatch_status" in proof_step.detail
 
 
+def test_resolution_state_mismatch_detail_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=False)
+
+    validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
+    state_step = _step(validation, "resolution state")
+
+    assert validation.valid is False
+    assert state_step.passed is False
+    assert state_step.detail == "state-mismatch"
+
+
 def test_cli_writes_validation_report_and_returns_nonzero_for_failed_success_policy(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

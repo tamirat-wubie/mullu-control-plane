@@ -138,10 +138,7 @@ def _set_github_secret(
     except FileNotFoundError as exc:
         raise RuntimeError("GitHub CLI executable 'gh' was not found") from exc
     except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.strip() if exc.stderr else ""
-        stdout = exc.stdout.strip() if exc.stdout else ""
-        detail = stderr or stdout or f"exit code {exc.returncode}"
-        raise RuntimeError(f"failed to set GitHub secret {secret_name}: {detail}") from exc
+        raise RuntimeError(f"failed to set GitHub secret {secret_name}: exit_code={exc.returncode}") from exc
 
 
 def _write_runtime_env_output(

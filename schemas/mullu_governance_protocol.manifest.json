@@ -161,6 +161,12 @@
       "surface": "provider"
     },
     {
+      "schema_id": "reflex-deployment-witness-envelope",
+      "path": "schemas/reflex_deployment_witness_envelope.schema.json",
+      "urn": "urn:mullusi:schema:reflex-deployment-witness-envelope:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "replay-record",
       "path": "schemas/replay_record.schema.json",
       "urn": "urn:mullusi:schema:replay-record:1",

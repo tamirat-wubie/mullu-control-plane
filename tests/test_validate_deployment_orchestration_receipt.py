@@ -17,9 +17,11 @@ from pathlib import Path
 
 import pytest
 
+import scripts.validate_deployment_orchestration_receipt as orchestration_validator
 from scripts.provision_deployment_target import DEFAULT_REPOSITORY
 from scripts.validate_deployment_orchestration_receipt import (
     ORCHESTRATION_RECEIPT_SCHEMA_PATH,
+    _check_schema_contract,
     main,
     validate_deployment_orchestration_receipt,
     write_orchestration_receipt_validation_report,
@@ -256,6 +258,19 @@ def test_invalid_orchestration_receipt_json_error_is_bounded(tmp_path: Path) -> 
     message = str(exc_info.value)
     assert message == "deployment orchestration receipt returned invalid JSON"
     assert "secret-json-token" not in message
+
+
+def test_schema_read_failure_detail_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _raise_secret_path(_path: Path):
+        raise OSError("secret-schema-path")
+
+    monkeypatch.setattr(orchestration_validator, "_load_schema", _raise_secret_path)
+
+    step = _check_schema_contract({})
+
+    assert step.passed is False
+    assert step.detail == "schema-read-failed"
+    assert "secret-schema-path" not in step.detail
 
 
 def _write_receipt(
