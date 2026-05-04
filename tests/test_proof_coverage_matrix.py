@@ -226,8 +226,10 @@ def test_runtime_reflex_engine_surface_is_operator_gated_and_non_mutating() -> N
     assert "mcoi/mcoi_runtime/contracts/reflex.py" in reflex_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/reflex.py" in reflex_surface["evidence_files"]
     assert "schemas/reflex_deployment_witness_envelope.schema.json" in reflex_surface["evidence_files"]
+    assert "scripts/emit_reflex_deployment_witness_validator_receipt.py" in reflex_surface["evidence_files"]
     assert "scripts/validate_reflex_deployment_witness.py" in reflex_surface["evidence_files"]
     assert "tests/test_gateway/test_reflex_endpoints.py" in reflex_surface["evidence_files"]
+    assert "tests/test_emit_reflex_deployment_witness_validator_receipt.py" in reflex_surface["evidence_files"]
     assert "tests/test_validate_reflex_deployment_witness.py" in reflex_surface["evidence_files"]
     assert "operator_only_access" in witnesses
     assert "mutation_applied_false" in witnesses
@@ -235,6 +237,7 @@ def test_runtime_reflex_engine_surface_is_operator_gated_and_non_mutating() -> N
     assert "signed_reflex_witness" in witnesses
     assert "reflex_deployment_witness_schema" in witnesses
     assert "offline_reflex_witness_replay" in witnesses
+    assert "reflex_validator_receipt_artifact" in witnesses
     assert closure_actions["publish_runtime_reflex_engine_read_models"]["status"] == "closed"
 
 
