@@ -38,6 +38,8 @@ def test_deployment_witness_schema_accepts_not_published_witness() -> None:
     schema = _load_schema(SCHEMA_PATH)
     witness = _deployment_witness()
     witness["deployment_claim"] = "not-published"
+    witness["health_http_status"] = 0
+    witness["health_response_digest"] = ""
     witness["signature_status"] = "skipped:no_witness_secret"
     witness["conformance_signature_status"] = "skipped:no_conformance_secret"
     witness["steps"][1]["passed"] = False
@@ -80,6 +82,11 @@ def _deployment_witness() -> dict[str, Any]:
             "witness_id": "deployment-witness-0123456789abcdef",
             "collected_at": "2026-05-01T14:30:00Z",
             "gateway_url": "https://gateway.example",
+            "public_health_endpoint": "https://gateway.example/health",
+            "health_http_status": 200,
+            "health_response_digest": (
+                "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            ),
             "deployment_claim": "published",
             "health_status": "healthy",
             "runtime_witness_status": "healthy",

@@ -8,6 +8,7 @@ Dependencies: standard-library HTTP client and gateway runtime witness contract.
 Invariants:
   - Deployment health is claimed only when health, runtime witness, and
     runtime conformance certificate pass.
+  - Public health proof records the probed endpoint, HTTP status, and body digest.
   - Missing or malformed endpoint evidence is recorded as a failed witness.
   - HMAC verification is explicit for runtime and conformance signatures.
   - Output is structured JSON suitable for repository status reflection.
@@ -85,6 +86,9 @@ class DeploymentWitness:
     witness_id: str
     collected_at: str
     gateway_url: str
+    public_health_endpoint: str
+    health_http_status: int
+    health_response_digest: str
     deployment_claim: str
     health_status: str
     runtime_witness_status: str
@@ -121,13 +125,18 @@ def collect_deployment_witness(
     steps: list[ProbeStep] = []
     errors: list[str] = []
 
-    health_status, health_payload = _probe_health(gateway_base)
+    public_health_endpoint = f"{gateway_base}/health"
+    health_status, health_payload, health_response_digest = _probe_health(gateway_base)
     health_passed = health_status == 200 and health_payload.get("status") == "healthy"
     steps.append(
         ProbeStep(
             name="gateway health",
             passed=health_passed,
-            detail=f"status={health_status} body_status={health_payload.get('status', '')}",
+            detail=(
+                f"endpoint={public_health_endpoint} status={health_status} "
+                f"body_status={health_payload.get('status', '')} "
+                f"response_digest={health_response_digest}"
+            ),
         )
     )
     if not health_passed:
@@ -252,6 +261,8 @@ def collect_deployment_witness(
     )
     witness_seed = {
         "gateway_url": gateway_base,
+        "public_health_endpoint": public_health_endpoint,
+        "health_response_digest": health_response_digest,
         "collected_at": collected_at,
         "deployment_claim": deployment_claim,
         "runtime_witness_id": str(runtime_payload.get("witness_id", "")),
@@ -262,6 +273,9 @@ def collect_deployment_witness(
         witness_id=f"deployment-witness-{_stable_hash(witness_seed)[:16]}",
         collected_at=collected_at,
         gateway_url=gateway_base,
+        public_health_endpoint=public_health_endpoint,
+        health_http_status=health_status,
+        health_response_digest=health_response_digest,
         deployment_claim=deployment_claim,
         health_status=str(health_payload.get("status", "")),
         runtime_witness_status=runtime_status,
@@ -289,9 +303,9 @@ def write_deployment_witness(witness: DeploymentWitness, output_path: Path) -> P
     return output_path
 
 
-def _probe_health(gateway_base: str) -> tuple[int, dict[str, Any]]:
-    status, payload = _get_json(f"{gateway_base}/health")
-    return status, payload
+def _probe_health(gateway_base: str) -> tuple[int, dict[str, Any], str]:
+    status, payload, response_digest = _get_json_with_digest(f"{gateway_base}/health")
+    return status, payload, response_digest
 
 
 def _probe_runtime_witness(gateway_base: str) -> tuple[int, dict[str, Any]]:
@@ -305,15 +319,22 @@ def _probe_runtime_conformance(gateway_base: str) -> tuple[int, dict[str, Any]]:
 
 
 def _get_json(url: str) -> tuple[int, dict[str, Any]]:
+    status, payload, _response_digest = _get_json_with_digest(url)
+    return status, payload
+
+
+def _get_json_with_digest(url: str) -> tuple[int, dict[str, Any], str]:
     try:
         with urllib.request.urlopen(url, timeout=10) as response:
-            return response.status, _loads_json(response.read())
+            raw = response.read()
+            return response.status, _loads_json(raw), _response_digest(raw)
     except urllib.error.HTTPError as exc:
-        return exc.code, _loads_json(exc.read())
+        raw = exc.read()
+        return exc.code, _loads_json(raw), _response_digest(raw)
     except urllib.error.URLError:
-        return 0, {}
+        return 0, {}, _response_digest(b"")
     except TimeoutError:
-        return 0, {}
+        return 0, {}, _response_digest(b"")
 
 
 def _loads_json(raw: bytes) -> dict[str, Any]:
@@ -322,6 +343,10 @@ def _loads_json(raw: bytes) -> dict[str, Any]:
     except (UnicodeDecodeError, json.JSONDecodeError):
         return {}
     return parsed if isinstance(parsed, dict) else {}
+
+
+def _response_digest(raw: bytes) -> str:
+    return f"sha256:{hashlib.sha256(raw).hexdigest()}"
 
 
 def _verify_runtime_signature(payload: dict[str, Any], witness_secret: str) -> tuple[str, bool]:
