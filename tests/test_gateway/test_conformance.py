@@ -19,14 +19,16 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from gateway.server import create_gateway_app  # noqa: E402
+import gateway.conformance as conformance  # noqa: E402
 from gateway.conformance import _known_limitations_aligned, issue_conformance_certificate  # noqa: E402
+from gateway.server import create_gateway_app  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -88,6 +90,20 @@ def test_runtime_conformance_certificate_matches_schema(monkeypatch) -> None:
     assert errors == []
     assert payload["checks"]
     assert all(check["evidence_ref"] for check in payload["checks"])
+
+
+def test_runtime_conformance_certificate_schema_gate_fails_closed(tmp_path, monkeypatch) -> None:
+    def reject_schema(_schema, _payload):
+        return ["$.signature: forced schema failure"]
+
+    monkeypatch.setattr(conformance, "_validate_schema_instance", reject_schema)
+
+    with pytest.raises(RuntimeError) as exc:
+        _issue_test_conformance(repo_root=tmp_path)
+
+    assert "runtime conformance certificate schema validation failed" in str(exc.value)
+    assert "1 schema error(s)" in str(exc.value)
+    assert "$.signature" not in str(exc.value)
 
 
 def test_runtime_conformance_reports_missing_authority_directory_sync_receipt(tmp_path) -> None:

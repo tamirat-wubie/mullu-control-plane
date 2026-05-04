@@ -336,10 +336,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_conformance.py",
                 "tests/test_collect_runtime_conformance.py",
             ],
-            "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix, and document-drift checks into one signed attestation.",
+            "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix, document-drift checks, and schema self-validation into one signed attestation.",
             [
                 "gateway_witness_valid",
                 "runtime_witness_valid",
+                "runtime_conformance_certificate_schema_valid",
                 "command_closure_canary_passed",
                 "capability_admission_canary_passed",
                 "dangerous_capability_isolation_canary_passed",
