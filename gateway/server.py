@@ -18,6 +18,19 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from mcoi_runtime.contracts.change_assurance import ChangeCertificate
+from mcoi_runtime.contracts.reflex import (
+    ReflexEvidenceRef,
+    ReflexSandboxResult,
+    RuntimeHealthSnapshot,
+)
+from mcoi_runtime.core.reflex import (
+    decide_promotion,
+    detect_anomalies,
+    diagnose_anomaly,
+    generate_eval_cases,
+    propose_upgrade,
+)
 
 from gateway.channels.discord import DiscordAdapter
 from gateway.channels.slack import SlackAdapter
@@ -612,6 +625,203 @@ def create_gateway_app(
             runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
         return certificate.to_json_dict()
+
+    def _reflex_snapshot() -> RuntimeHealthSnapshot:
+        router_summary = router.summary()
+        command_summary = router_summary.get("command_ledger", {})
+        state_counts = command_summary.get("states", {}) if isinstance(command_summary, dict) else {}
+        runtime_witness_payload = router.runtime_witness(
+            environment=gateway_env,
+            signature_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
+            signing_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
+        )
+        missing_deployment_witnesses = 0 if runtime_witness_payload.get("latest_anchor_id") else 1
+        terminal_certificates = (
+            int(command_summary.get("terminal_certificates", 0))
+            if isinstance(command_summary, dict)
+            else 0
+        )
+        pending_approval_count = int(router.pending_approvals)
+        metrics = {
+            "requests": int(router_summary.get("message_count", 0)),
+            "failures": int(router_summary.get("error_count", 0)),
+            "duplicate_messages": int(router_summary.get("duplicate_count", 0)),
+            "missing_approvals": pending_approval_count,
+            "approval_escalations": pending_approval_count,
+            "unverified_executions": int(state_counts.get("requires_review", 0)),
+            "deployment_witness_missing": missing_deployment_witnesses,
+            "missing_deployment_witnesses": missing_deployment_witnesses,
+            "terminal_certificates": terminal_certificates,
+        }
+        return RuntimeHealthSnapshot(
+            snapshot_id=f"reflex-snapshot-{sha256(json.dumps(metrics, sort_keys=True).encode()).hexdigest()[:16]}",
+            runtime=gateway_env,
+            time_window="current_process",
+            metrics=metrics,
+            evidence_refs=(
+                ReflexEvidenceRef(
+                    kind="gateway_summary",
+                    ref_id="gateway:router.summary",
+                    evidence_hash=sha256(json.dumps(router_summary, sort_keys=True, default=str).encode()).hexdigest(),
+                ),
+                ReflexEvidenceRef(
+                    kind="runtime_witness",
+                    ref_id=str(runtime_witness_payload.get("witness_id", "runtime-witness:missing")),
+                    evidence_hash=sha256(
+                        json.dumps(runtime_witness_payload, sort_keys=True, default=str).encode()
+                    ).hexdigest(),
+                ),
+            ),
+            captured_at=_clock(),
+        )
+
+    def _reflex_pipeline() -> dict[str, Any]:
+        snapshot = _reflex_snapshot()
+        anomalies = detect_anomalies(snapshot)
+        diagnoses = tuple(diagnose_anomaly(anomaly, snapshot) for anomaly in anomalies)
+        eval_cases = tuple(eval_case for diagnosis in diagnoses for eval_case in generate_eval_cases(diagnosis))
+        evals_by_diagnosis = {
+            diagnosis.diagnosis_id: tuple(
+                eval_case for eval_case in eval_cases
+                if eval_case.diagnosis_id == diagnosis.diagnosis_id
+            )
+            for diagnosis in diagnoses
+        }
+        candidates = tuple(
+            propose_upgrade(diagnosis, evals_by_diagnosis[diagnosis.diagnosis_id])
+            for diagnosis in diagnoses
+        )
+        return {
+            "snapshot": snapshot,
+            "anomalies": anomalies,
+            "diagnoses": diagnoses,
+            "eval_cases": eval_cases,
+            "candidates": candidates,
+        }
+
+    @app.get("/runtime/self/health")
+    def runtime_self_health(request: Request):
+        _require_authority_operator(request)
+        return _reflex_snapshot().to_json_dict()
+
+    @app.get("/runtime/self/inspect")
+    def runtime_self_inspect(request: Request):
+        _require_authority_operator(request)
+        pipeline = _reflex_pipeline()
+        return {
+            "snapshot": pipeline["snapshot"].to_json_dict(),
+            "anomalies": [anomaly.to_json_dict() for anomaly in pipeline["anomalies"]],
+            "anomaly_count": len(pipeline["anomalies"]),
+        }
+
+    @app.post("/runtime/self/diagnose")
+    def runtime_self_diagnose(request: Request):
+        _require_authority_operator(request)
+        pipeline = _reflex_pipeline()
+        return {
+            "diagnoses": [diagnosis.to_json_dict() for diagnosis in pipeline["diagnoses"]],
+            "diagnosis_count": len(pipeline["diagnoses"]),
+        }
+
+    @app.post("/runtime/self/evaluate")
+    def runtime_self_evaluate(request: Request):
+        _require_authority_operator(request)
+        pipeline = _reflex_pipeline()
+        return {
+            "eval_cases": [eval_case.to_json_dict() for eval_case in pipeline["eval_cases"]],
+            "eval_count": len(pipeline["eval_cases"]),
+            "side_effects": "none",
+        }
+
+    @app.post("/runtime/self/propose-upgrade")
+    def runtime_self_propose_upgrade(request: Request):
+        _require_authority_operator(request)
+        pipeline = _reflex_pipeline()
+        return {
+            "candidates": [candidate.to_json_dict() for candidate in pipeline["candidates"]],
+            "candidate_count": len(pipeline["candidates"]),
+            "mutation_applied": False,
+        }
+
+    @app.post("/runtime/self/certify")
+    def runtime_self_certify(payload: dict[str, Any], request: Request):
+        _require_authority_operator(request)
+        candidate_id = str(payload.get("candidate_id", "")).strip()
+        if not candidate_id:
+            raise HTTPException(400, detail="candidate_id is required")
+        return {
+            "candidate_id": candidate_id,
+            "status": "certification_required",
+            "mutation_applied": False,
+            "required_command": "python scripts/certify_change.py --base HEAD^ --head HEAD --strict",
+            "required_artifacts": [
+                "change_command.json",
+                "blast_radius.json",
+                "invariant_report.json",
+                "replay_report.json",
+                "release_certificate.json",
+            ],
+        }
+
+    @app.post("/runtime/self/promote")
+    def runtime_self_promote(payload: dict[str, Any], request: Request):
+        _require_authority_operator(request)
+        pipeline = _reflex_pipeline()
+        candidates = {candidate.candidate_id: candidate for candidate in pipeline["candidates"]}
+        candidate_id = str(payload.get("candidate_id", "")).strip()
+        candidate = candidates.get(candidate_id)
+        if candidate is None:
+            raise HTTPException(404, detail="reflex candidate not found")
+        sandbox_payload = payload.get("sandbox_result")
+        certificate_payload = payload.get("certificate")
+        if not isinstance(sandbox_payload, dict) or not isinstance(certificate_payload, dict):
+            return {
+                "candidate_id": candidate_id,
+                "disposition": "human_approval_required",
+                "requires_human_approval": True,
+                "mutation_applied": False,
+                "reason": "sandbox_result and certificate are required before promotion",
+            }
+        try:
+            sandbox_result = ReflexSandboxResult(**sandbox_payload)
+            certificate = ChangeCertificate(**certificate_payload)
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                400,
+                detail=f"invalid reflex promotion evidence: {exc}",
+            ) from exc
+        decision = decide_promotion(candidate, sandbox_result, certificate)
+        return {
+            **decision.to_json_dict(),
+            "mutation_applied": False,
+        }
+
+    @app.get("/runtime/self/witness")
+    def runtime_self_witness(request: Request):
+        _require_authority_operator(request)
+        pipeline = _reflex_pipeline()
+        payload = {
+            "witness_id": f"reflex-witness-{sha256(pipeline['snapshot'].to_json().encode()).hexdigest()[:16]}",
+            "snapshot_id": pipeline["snapshot"].snapshot_id,
+            "anomaly_count": len(pipeline["anomalies"]),
+            "diagnosis_count": len(pipeline["diagnoses"]),
+            "eval_count": len(pipeline["eval_cases"]),
+            "candidate_count": len(pipeline["candidates"]),
+            "mutation_applied": False,
+            "protected_surfaces_auto_promote": False,
+            "signed_at": _clock(),
+            "signature_key_id": os.environ.get("MULLU_REFLEX_WITNESS_KEY_ID", "reflex-witness-local"),
+        }
+        signature_payload = sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+        signature = hmac.new(
+            os.environ.get("MULLU_REFLEX_WITNESS_SECRET", "local-reflex-witness-secret").encode("utf-8"),
+            signature_payload.encode("utf-8"),
+            sha256,
+        ).hexdigest()
+        return {
+            **payload,
+            "signature": f"hmac-sha256:{signature}",
+        }
 
     @app.get("/authority/witness")
     def authority_witness(request: Request):

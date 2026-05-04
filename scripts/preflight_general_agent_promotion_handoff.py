@@ -45,6 +45,9 @@ from scripts.validate_general_agent_promotion_operator_checklist import (  # noq
 )
 
 DEFAULT_SCHEMA_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan_schema_validation.json"
+DEFAULT_ADAPTER_SCHEMA_VALIDATION = (
+    REPO_ROOT / ".change_assurance" / "capability_adapter_closure_plan_schema_validation.json"
+)
 DEFAULT_DRIFT_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan_validation.json"
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
@@ -103,6 +106,7 @@ def preflight_general_agent_promotion_handoff(
     packet_path: Path = DEFAULT_PACKET,
     environment_bindings_path: Path = DEFAULT_ENVIRONMENT_BINDINGS,
     environment_binding_receipt_path: Path = DEFAULT_ENVIRONMENT_BINDING_RECEIPT,
+    adapter_schema_validation_path: Path = DEFAULT_ADAPTER_SCHEMA_VALIDATION,
     schema_validation_path: Path = DEFAULT_SCHEMA_VALIDATION,
     drift_validation_path: Path = DEFAULT_DRIFT_VALIDATION,
     readiness_path: Path = DEFAULT_READINESS,
@@ -145,6 +149,7 @@ def preflight_general_agent_promotion_handoff(
             detail=_validation_detail(binding_receipt_result.errors),
         ),
         environment_step,
+        _adapter_schema_report_step(adapter_schema_validation_path),
         _closure_schema_report_step(schema_validation_path),
         _closure_drift_report_step(
             drift_validation_path,
@@ -194,6 +199,30 @@ def _required_environment_step(
         ),
         missing,
     )
+
+
+def _adapter_schema_report_step(path: Path) -> HandoffPreflightStep:
+    payload, error = _load_report_payload(path)
+    if error:
+        return HandoffPreflightStep(name="adapter closure schema validation", passed=False, detail=error)
+    action_count = payload.get("action_count")
+    blocker_count = payload.get("blocker_count")
+    passed = (
+        payload.get("ok") is True
+        and isinstance(action_count, int)
+        and action_count > 0
+        and isinstance(blocker_count, int)
+        and blocker_count > 0
+        and payload.get("approval_required_action_count") == 2
+    )
+    expected_detail = (
+        "ok=true "
+        f"action_count={action_count} "
+        "approval_required_action_count=2 "
+        f"blocker_count={blocker_count}"
+    )
+    detail = expected_detail if passed else f"expected {expected_detail}; observed={_public_report_projection(payload)}"
+    return HandoffPreflightStep(name="adapter closure schema validation", passed=passed, detail=detail)
 
 
 def _closure_schema_report_step(path: Path) -> HandoffPreflightStep:
@@ -307,6 +336,7 @@ def _public_report_projection(payload: dict[str, Any]) -> dict[str, Any]:
         "ok",
         "action_count",
         "approval_required_action_count",
+        "blocker_count",
         "source_plan_types",
         "expected_action_count",
         "observed_action_count",
@@ -331,6 +361,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--packet", default=str(DEFAULT_PACKET))
     parser.add_argument("--environment-bindings", default=str(DEFAULT_ENVIRONMENT_BINDINGS))
     parser.add_argument("--environment-binding-receipt", default=str(DEFAULT_ENVIRONMENT_BINDING_RECEIPT))
+    parser.add_argument("--adapter-schema-validation", default=str(DEFAULT_ADAPTER_SCHEMA_VALIDATION))
     parser.add_argument("--schema-validation", default=str(DEFAULT_SCHEMA_VALIDATION))
     parser.add_argument("--drift-validation", default=str(DEFAULT_DRIFT_VALIDATION))
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
@@ -348,6 +379,7 @@ def main(argv: list[str] | None = None) -> int:
         packet_path=Path(args.packet),
         environment_bindings_path=Path(args.environment_bindings),
         environment_binding_receipt_path=Path(args.environment_binding_receipt),
+        adapter_schema_validation_path=Path(args.adapter_schema_validation),
         schema_validation_path=Path(args.schema_validation),
         drift_validation_path=Path(args.drift_validation),
         readiness_path=Path(args.readiness),

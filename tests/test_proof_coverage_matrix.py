@@ -208,6 +208,28 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 
 
+def test_runtime_reflex_engine_surface_is_operator_gated_and_non_mutating() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    reflex_surface = surfaces["runtime_reflex_engine"]
+    witnesses = set(reflex_surface["runtime_witnesses"])
+
+    assert reflex_surface["coverage_state"] == "witnessed"
+    assert reflex_surface["request_proof"] == "read_model"
+    assert reflex_surface["action_proof"] == "request_proof"
+    assert "/runtime/self/propose-upgrade" in reflex_surface["representative_paths"]
+    assert "/runtime/self/promote" in reflex_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/contracts/reflex.py" in reflex_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/reflex.py" in reflex_surface["evidence_files"]
+    assert "tests/test_gateway/test_reflex_endpoints.py" in reflex_surface["evidence_files"]
+    assert "operator_only_access" in witnesses
+    assert "mutation_applied_false" in witnesses
+    assert "certification_handoff_required" in witnesses
+    assert "signed_reflex_witness" in witnesses
+    assert closure_actions["publish_runtime_reflex_engine_read_models"]["status"] == "closed"
+
+
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()

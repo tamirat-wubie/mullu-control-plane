@@ -60,6 +60,7 @@ REQUIRED_PUBLISHED_FIELDS = (
     "runtime_witness_id",
     "runtime_environment",
     "runtime_signature_key_id",
+    "runtime_responsibility_debt_clear",
     "authority_responsibility_debt_clear",
     "authority_pending_approval_chain_count",
     "authority_overdue_approval_chain_count",
@@ -202,6 +203,8 @@ def _validate_published_witness(
         errors.append(f"{witness_path}: health_response_digest must be a sha256 digest")
     if witness_payload.get("authority_responsibility_debt_clear") is not True:
         errors.append(f"{witness_path}: authority responsibility debt must be clear")
+    if witness_payload.get("runtime_responsibility_debt_clear") is not True:
+        errors.append(f"{witness_path}: runtime responsibility debt must be clear")
     for field_name in (
         "authority_overdue_approval_chain_count",
         "authority_overdue_obligation_count",

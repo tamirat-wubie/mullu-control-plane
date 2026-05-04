@@ -511,13 +511,24 @@ def _document_receipt_check(path: Path) -> ReceiptCheck:
         str(parser_id)
         for parser_id in payload.get("parser_ids", payload.get("production_parser_ids", ()))
     }
-    passed = _passed_status(payload) and REQUIRED_DOCUMENT_PARSERS.issubset(parser_ids)
+    blockers = payload.get("blockers", ())
+    passed = (
+        payload.get("status") == "passed"
+        and payload.get("verification_status") == "passed"
+        and payload.get("adapter_id") == "document.production_parsers"
+        and REQUIRED_DOCUMENT_PARSERS.issubset(parser_ids)
+        and blockers == []
+    )
     detail = (
         "passed"
         if passed
-        else f"requires status=passed and parser_ids={sorted(REQUIRED_DOCUMENT_PARSERS)}"
+        else (
+            "requires status=passed, verification_status=passed, "
+            "adapter_id=document.production_parsers, empty blockers, "
+            f"and parser_ids={sorted(REQUIRED_DOCUMENT_PARSERS)}"
+        )
     )
-    return ReceiptCheck("document live receipt", passed, detail, str(path), ())
+    return ReceiptCheck("document live receipt", passed, detail, str(path), tuple(sorted(parser_ids)))
 
 
 def _voice_receipt_check(path: Path) -> ReceiptCheck:

@@ -15,6 +15,7 @@ This runbook executes the aggregate closure plan without bypassing governance:
 adapter evidence
 -> promotion readiness
 -> adapter closure plan
+-> adapter closure schema validation
 -> deployment closure plan
 -> aggregate closure plan
 -> aggregate closure schema validation
@@ -76,6 +77,8 @@ python scripts\validate_general_agent_promotion_closure_plan.py --output .change
 python scripts\preflight_general_agent_promotion_handoff.py --output .change_assurance\general_agent_promotion_handoff_preflight.json --strict --json
 python scripts\validate_general_agent_promotion_handoff_preflight.py --report .change_assurance\general_agent_promotion_handoff_preflight.json --require-ready --json
 ```
+
+The handoff preflight is not ready unless `.change_assurance\capability_adapter_closure_plan_schema_validation.json` reports `ok=true` before aggregate closure reports are accepted.
 
 3. Inspect `.change_assurance/general_agent_promotion_closure_plan.json`.
 

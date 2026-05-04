@@ -137,6 +137,7 @@ class Obligation:
 class ResponsibilityWitness:
     """Runtime counts exposing unresolved organizational responsibility."""
 
+    responsibility_debt_clear: bool
     pending_approval_chain_count: int
     overdue_approval_chain_count: int
     expired_approval_chain_count: int
@@ -1340,25 +1341,40 @@ class AuthorityObligationMesh:
         ]
         obligations = self._store.list_obligations()
         chains = self._store.list_approval_chains()
+        pending_approval_chain_count = sum(
+            1 for chain in chains if chain.status is ApprovalChainStatus.PENDING
+        )
+        overdue_approval_chain_count = sum(
+            1 for chain in chains
+            if chain.status is ApprovalChainStatus.PENDING
+            and self._parse_time(chain.due_at) <= now
+        )
+        expired_approval_chain_count = sum(
+            1 for chain in chains if chain.status is ApprovalChainStatus.EXPIRED
+        )
+        open_obligation_count = len(open_obligations)
+        overdue_obligation_count = sum(
+            1 for obligation in open_obligations if self._parse_time(obligation.due_at) <= now
+        )
+        escalated_obligation_count = sum(
+            1 for obligation in obligations if obligation.status is ObligationStatus.ESCALATED
+        )
+        unowned_high_risk_capability_count = len(self._store.list_unowned_high_risk_capabilities())
+        responsibility_debt_clear = (
+            overdue_approval_chain_count == 0
+            and expired_approval_chain_count == 0
+            and overdue_obligation_count == 0
+            and escalated_obligation_count == 0
+            and unowned_high_risk_capability_count == 0
+        )
         return ResponsibilityWitness(
-            pending_approval_chain_count=sum(
-                1 for chain in chains if chain.status is ApprovalChainStatus.PENDING
-            ),
-            overdue_approval_chain_count=sum(
-                1 for chain in chains
-                if chain.status is ApprovalChainStatus.PENDING
-                and self._parse_time(chain.due_at) <= now
-            ),
-            expired_approval_chain_count=sum(
-                1 for chain in chains if chain.status is ApprovalChainStatus.EXPIRED
-            ),
-            open_obligation_count=len(open_obligations),
-            overdue_obligation_count=sum(
-                1 for obligation in open_obligations if self._parse_time(obligation.due_at) <= now
-            ),
-            escalated_obligation_count=sum(
-                1 for obligation in obligations if obligation.status is ObligationStatus.ESCALATED
-            ),
+            responsibility_debt_clear=responsibility_debt_clear,
+            pending_approval_chain_count=pending_approval_chain_count,
+            overdue_approval_chain_count=overdue_approval_chain_count,
+            expired_approval_chain_count=expired_approval_chain_count,
+            open_obligation_count=open_obligation_count,
+            overdue_obligation_count=overdue_obligation_count,
+            escalated_obligation_count=escalated_obligation_count,
             active_accepted_risk_count=sum(
                 1 for obligation in obligations
                 if obligation.obligation_type == "accepted_risk_review"
@@ -1374,7 +1390,7 @@ class AuthorityObligationMesh:
                 if obligation.obligation_type == "case_review"
                 and obligation.status in {ObligationStatus.OPEN, ObligationStatus.ESCALATED}
             ),
-            unowned_high_risk_capability_count=len(self._store.list_unowned_high_risk_capabilities()),
+            unowned_high_risk_capability_count=unowned_high_risk_capability_count,
         )
 
     def summary(self) -> dict[str, Any]:

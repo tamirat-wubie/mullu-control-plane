@@ -1038,6 +1038,7 @@ class TestGatewayStatus:
         assert data["overdue_approval_chain_count"] == 0
         assert data["expired_approval_chain_count"] == 0
         assert data["open_obligation_count"] == 0
+        assert data["responsibility_debt_clear"] is True
         assert data["signature_key_id"]
         assert data["signature"].startswith("hmac-sha256:")
 
@@ -1047,6 +1048,60 @@ class TestGatewayStatus:
         data = resp.json()
         assert data["witness_id"].startswith("runtime-witness-")
         assert data["signature"].startswith("hmac-sha256:")
+
+    def test_runtime_self_reflex_read_models_do_not_mutate(self, client):
+        health_resp = client.get("/runtime/self/health")
+        inspect_resp = client.get("/runtime/self/inspect")
+        diagnose_resp = client.post("/runtime/self/diagnose")
+        evaluate_resp = client.post("/runtime/self/evaluate")
+        proposal_resp = client.post("/runtime/self/propose-upgrade")
+        certify_missing_resp = client.post("/runtime/self/certify", json={})
+        witness_resp = client.get("/runtime/self/witness")
+        health_payload = health_resp.json()
+        inspect_payload = inspect_resp.json()
+        proposal_payload = proposal_resp.json()
+
+        assert health_resp.status_code == 200
+        assert health_payload["snapshot_id"].startswith("reflex-snapshot-")
+        assert health_payload["metrics"]["deployment_witness_missing"] == 1
+        assert health_payload["metrics"]["missing_approvals"] == 0
+        assert health_payload["evidence_refs"]
+        assert inspect_resp.status_code == 200
+        assert inspect_payload["anomaly_count"] >= 1
+        assert any(
+            anomaly["metric_name"] == "deployment_witness_missing"
+            for anomaly in inspect_payload["anomalies"]
+        )
+        assert diagnose_resp.status_code == 200
+        assert diagnose_resp.json()["diagnosis_count"] >= 1
+        assert evaluate_resp.status_code == 200
+        assert evaluate_resp.json()["side_effects"] == "none"
+        assert proposal_resp.status_code == 200
+        assert proposal_payload["mutation_applied"] is False
+        assert proposal_payload["candidate_count"] >= 1
+        assert any(
+            candidate["change_surface"] == "deployment_witness"
+            for candidate in proposal_payload["candidates"]
+        )
+        deployment_candidate_id = next(
+            candidate["candidate_id"]
+            for candidate in proposal_payload["candidates"]
+            if candidate["change_surface"] == "deployment_witness"
+        )
+        promote_without_proof_resp = client.post(
+            "/runtime/self/promote",
+            json={"candidate_id": deployment_candidate_id},
+        )
+        assert promote_without_proof_resp.status_code == 200
+        assert promote_without_proof_resp.json()["requires_human_approval"] is True
+        assert promote_without_proof_resp.json()["mutation_applied"] is False
+        assert certify_missing_resp.status_code == 400
+        assert certify_missing_resp.json()["detail"] == "candidate_id is required"
+        assert witness_resp.status_code == 200
+        assert witness_resp.json()["witness_id"].startswith("reflex-witness-")
+        assert witness_resp.json()["mutation_applied"] is False
+        assert witness_resp.json()["protected_surfaces_auto_promote"] is False
+        assert witness_resp.json()["signature"].startswith("hmac-sha256:")
 
     def test_authority_witness_read_model(self, client):
         resp = client.get("/authority/witness")
@@ -1058,6 +1113,7 @@ class TestGatewayStatus:
         assert data["open_obligation_count"] == 0
         assert data["active_compensation_review_count"] == 0
         assert data["unowned_high_risk_capability_count"] == 0
+        assert data["responsibility_debt_clear"] is True
 
     def test_authority_operator_console_renders_empty_state(self, client):
         resp = client.get("/authority/operator")
@@ -1493,6 +1549,7 @@ class TestGatewayStatus:
         assert "authority:obligations_read_model" in responsibility_payload["evidence_refs"]
         assert satisfied_resp.json()["count"] == 1
         assert witness_resp.json()["requires_review_count"] == 0
+        assert witness_resp.json()["responsibility_debt_clear"] is False
         assert console_resp.status_code == 200
         assert obligation.obligation_id in console_resp.text
         assert "/authority/responsibility" in console_resp.text

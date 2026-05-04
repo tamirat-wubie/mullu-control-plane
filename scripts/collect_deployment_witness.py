@@ -35,6 +35,7 @@ REQUIRED_WITNESS_FIELDS = (
     "environment",
     "runtime_status",
     "gateway_status",
+    "responsibility_debt_clear",
     "latest_command_event_hash",
     "latest_terminal_certificate_id",
     "signed_at",
@@ -101,6 +102,7 @@ class DeploymentWitness:
     runtime_witness_id: str
     runtime_environment: str
     runtime_signature_key_id: str
+    runtime_responsibility_debt_clear: bool
     authority_responsibility_debt_clear: bool
     authority_pending_approval_chain_count: int
     authority_overdue_approval_chain_count: int
@@ -153,11 +155,13 @@ def collect_deployment_witness(
     missing_fields = tuple(field for field in REQUIRED_WITNESS_FIELDS if field not in runtime_payload)
     runtime_status = str(runtime_payload.get("runtime_status", ""))
     gateway_status = str(runtime_payload.get("gateway_status", ""))
+    runtime_responsibility_debt_clear = runtime_payload.get("responsibility_debt_clear") is True
     runtime_passed = (
         witness_status == 200
         and not missing_fields
         and runtime_status == "healthy"
         and gateway_status in {"healthy", "degraded"}
+        and runtime_responsibility_debt_clear
     )
     steps.append(
         ProbeStep(
@@ -165,7 +169,9 @@ def collect_deployment_witness(
             passed=runtime_passed,
             detail=(
                 f"status={witness_status} runtime_status={runtime_status} "
-                f"gateway_status={gateway_status} missing={list(missing_fields)}"
+                f"gateway_status={gateway_status} "
+                f"responsibility_debt_clear={runtime_responsibility_debt_clear} "
+                f"missing={list(missing_fields)}"
             ),
         )
     )
@@ -217,6 +223,7 @@ def collect_deployment_witness(
         and conformance_status in ACCEPTED_CONFORMANCE_STATUSES
         and bool(conformance_payload.get("gateway_witness_valid"))
         and bool(conformance_payload.get("runtime_witness_valid"))
+        and runtime_responsibility_debt_clear
         and bool(conformance_payload.get("authority_responsibility_debt_clear"))
         and mcp_manifest_passed
         and plan_bundle_passed
@@ -295,6 +302,7 @@ def collect_deployment_witness(
         runtime_witness_id=str(runtime_payload.get("witness_id", "")),
         runtime_environment=runtime_environment,
         runtime_signature_key_id=str(runtime_payload.get("signature_key_id", "")),
+        runtime_responsibility_debt_clear=runtime_responsibility_debt_clear,
         authority_responsibility_debt_clear=bool(
             conformance_payload.get("authority_responsibility_debt_clear")
         ),

@@ -88,6 +88,14 @@
       "surfaces": [
         "gateway_runtime_witness"
       ]
+    },
+    {
+      "action_id": "publish_runtime_reflex_engine_read_models",
+      "status": "closed",
+      "surfaces": [
+        "runtime_reflex_engine",
+        "runtime_conformance_attestation"
+      ]
     }
   ],
   "coverage_levels": [
@@ -108,11 +116,11 @@
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
-      "request_proof": 0
+      "request_proof": 1
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 17,
+      "audit_chain": 18,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -120,16 +128,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 20
+      "witnessed": 21
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 7,
+      "read_model": 8,
       "request_proof": 14
     },
-    "surface_count": 21
+    "surface_count": 22
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -468,6 +476,39 @@
         "capability_plan_bundle_canary_passed"
       ],
       "surface_id": "runtime_conformance_attestation"
+    },
+    {
+      "action_proof": "request_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "mcoi/mcoi_runtime/contracts/reflex.py",
+        "mcoi/mcoi_runtime/core/reflex.py",
+        "tests/test_reflex_engine.py",
+        "tests/test_gateway/test_reflex_endpoints.py",
+        "tests/test_gateway/test_webhooks.py"
+      ],
+      "notes": "Runtime Reflex surfaces expose operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, and signed witness projections without direct runtime mutation.",
+      "representative_paths": [
+        "/runtime/self/health",
+        "/runtime/self/inspect",
+        "/runtime/self/diagnose",
+        "/runtime/self/evaluate",
+        "/runtime/self/propose-upgrade",
+        "/runtime/self/certify",
+        "/runtime/self/promote",
+        "/runtime/self/witness"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "operator_only_access",
+        "mutation_applied_false",
+        "certification_handoff_required",
+        "protected_surfaces_auto_promote_false",
+        "signed_reflex_witness"
+      ],
+      "surface_id": "runtime_reflex_engine"
     },
     {
       "action_proof": "action_proof",

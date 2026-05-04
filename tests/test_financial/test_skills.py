@@ -187,8 +187,8 @@ class TestSpendingInsights:
 class TestFinancialRBAC:
     def test_financial_roles_seeded(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
         from mcoi_runtime.core.rbac_defaults import seed_default_permissions
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 
         def _clock():
             return "2026-01-01T00:00:00Z"
@@ -205,8 +205,8 @@ class TestFinancialRBAC:
 
     def test_financial_viewer_permissions(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
         from mcoi_runtime.core.rbac_defaults import seed_default_permissions
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 
         spine = EventSpineEngine(clock=lambda: "2026-01-01T00:00:00Z")
         engine = AccessRuntimeEngine(spine)
@@ -219,8 +219,8 @@ class TestFinancialRBAC:
 
     def test_financial_admin_has_wildcard(self):
         from mcoi_runtime.core.event_spine import EventSpineEngine
-        from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
         from mcoi_runtime.core.rbac_defaults import seed_default_permissions
+        from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 
         spine = EventSpineEngine(clock=lambda: "2026-01-01T00:00:00Z")
         engine = AccessRuntimeEngine(spine)

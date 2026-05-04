@@ -14,18 +14,12 @@ from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.contracts.temporal_runtime import (
-    EventSequenceStatus,
     IntervalDisposition,
-    PersistenceRecord,
     PersistenceStatus,
-    TemporalAssessment,
-    TemporalClosureReport,
-    TemporalConstraint,
-    TemporalEvent,
-    TemporalInterval,
+    TemporalActionRequest,
+    TemporalPolicyVerdict,
     TemporalRelation,
-    TemporalSequence,
-    TemporalSnapshot,
+    TemporalRiskLevel,
 )
 
 
@@ -161,6 +155,101 @@ class TestEvaluateRelation:
         rel = engine.evaluate_temporal_relation("e-1", "e-2")
         assert rel == TemporalRelation.EQUALS
 
+    def test_relation_uses_absolute_instant_not_offset_text(self, engine: TemporalRuntimeEngine) -> None:
+        engine.register_temporal_event("e-1", "t-1", "utc", "2026-05-04T13:00:00+00:00")
+        engine.register_temporal_event("e-2", "t-1", "local", "2026-05-04T09:00:00-04:00")
+        rel = engine.evaluate_temporal_relation("e-1", "e-2")
+        assert rel == TemporalRelation.EQUALS
+        assert engine.get_temporal_event("e-1").occurred_at.endswith("+00:00")
+        assert engine.get_temporal_event("e-2").occurred_at.endswith("-04:00")
+
+
+# ===================================================================
+# SECTION 5B: Temporal action policy
+# ===================================================================
+
+
+class TestTemporalActionPolicy:
+    def test_approval_expiry_boundary_remains_valid(self, spine: EventSpineEngine) -> None:
+        engine = TemporalRuntimeEngine(spine, clock=lambda: "2026-05-04T15:00:00+00:00")
+        action = TemporalActionRequest(
+            action_id="act-1",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="payment",
+            risk=TemporalRiskLevel.HIGH,
+            requested_at="2026-05-04T13:00:00+00:00",
+            approval_expires_at="2026-05-04T15:00:00+00:00",
+        )
+        decision = engine.decide_temporal_action(action, decision_id="dec-1")
+        assert decision.verdict == TemporalPolicyVerdict.ALLOW
+        assert decision.reason == "temporal_policy_passed"
+        assert engine.action_decision_count == 1
+
+    def test_expired_approval_denies_high_risk_action(self, spine: EventSpineEngine) -> None:
+        engine = TemporalRuntimeEngine(spine, clock=lambda: "2026-05-04T15:01:00+00:00")
+        action = TemporalActionRequest(
+            action_id="act-1",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="payment",
+            risk=TemporalRiskLevel.HIGH,
+            requested_at="2026-05-04T13:00:00+00:00",
+            approval_expires_at="2026-05-04T15:00:00+00:00",
+        )
+        decision = engine.decide_temporal_action(action, decision_id="dec-1")
+        assert decision.verdict == TemporalPolicyVerdict.DENY
+        assert decision.reason == "approval_expired"
+        assert decision.action_ref == "act-1"
+
+    def test_stale_evidence_escalates_action(self, spine: EventSpineEngine) -> None:
+        engine = TemporalRuntimeEngine(spine, clock=lambda: "2026-05-04T15:01:00+00:00")
+        action = TemporalActionRequest(
+            action_id="act-2",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="vendor_check",
+            risk=TemporalRiskLevel.MEDIUM,
+            requested_at="2026-05-04T13:00:00+00:00",
+            evidence_fresh_until="2026-05-04T15:00:00+00:00",
+        )
+        decision = engine.decide_temporal_action(action, decision_id="dec-2")
+        assert decision.verdict == TemporalPolicyVerdict.ESCALATE
+        assert decision.reason == "evidence_stale"
+        assert decision.metadata["risk"] == TemporalRiskLevel.MEDIUM.value
+
+    def test_future_schedule_defers_execution(self, spine: EventSpineEngine) -> None:
+        engine = TemporalRuntimeEngine(spine, clock=lambda: "2026-05-04T13:00:00+00:00")
+        action = TemporalActionRequest(
+            action_id="act-3",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="reminder",
+            requested_at="2026-05-04T13:00:00+00:00",
+            execute_at="2026-05-04T14:00:00+00:00",
+        )
+        decision = engine.decide_temporal_action(action, decision_id="dec-3")
+        assert decision.verdict == TemporalPolicyVerdict.DEFER
+        assert decision.reason == "scheduled_for_future"
+        assert engine.snapshot()["action_decisions"] == 1
+
+    def test_retry_attempt_limit_denies_before_dispatch(self, spine: EventSpineEngine) -> None:
+        engine = TemporalRuntimeEngine(spine, clock=lambda: "2026-05-04T13:00:00+00:00")
+        action = TemporalActionRequest(
+            action_id="act-4",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="webhook_retry",
+            requested_at="2026-05-04T13:00:00+00:00",
+            retry_after="2026-05-04T14:00:00+00:00",
+            max_attempts=3,
+            attempt_count=3,
+        )
+        decision = engine.decide_temporal_action(action, decision_id="dec-4")
+        assert decision.verdict == TemporalPolicyVerdict.DENY
+        assert decision.reason == "retry_attempts_exhausted"
+        assert engine.action_decision_count == 1
+
 
 # ===================================================================
 # SECTION 6: Persistence
@@ -269,6 +358,7 @@ class TestViolationDetection:
         )
         v1 = engine_with_events.detect_temporal_violations()
         v2 = engine_with_events.detect_temporal_violations()
+        assert len(v1) >= 1
         assert len(v2) == 0  # idempotent
 
     def test_sequence_disordered(self, engine: TemporalRuntimeEngine) -> None:

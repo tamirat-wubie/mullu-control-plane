@@ -237,6 +237,7 @@ def _published_witness() -> dict[str, object]:
         "runtime_witness_id": "runtime-witness-001",
         "runtime_environment": "pilot",
         "runtime_signature_key_id": "runtime-key-001",
+        "runtime_responsibility_debt_clear": True,
         "authority_responsibility_debt_clear": True,
         "authority_pending_approval_chain_count": 0,
         "authority_overdue_approval_chain_count": 0,

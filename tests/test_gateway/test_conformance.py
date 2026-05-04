@@ -309,6 +309,7 @@ class StubAuthorityObligationMesh:
         from gateway.authority_obligation_mesh import ResponsibilityWitness
 
         return ResponsibilityWitness(
+            responsibility_debt_clear=self._overdue_obligation_count == 0,
             pending_approval_chain_count=0,
             overdue_approval_chain_count=0,
             expired_approval_chain_count=0,

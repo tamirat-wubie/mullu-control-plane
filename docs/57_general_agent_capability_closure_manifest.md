@@ -44,6 +44,7 @@ This is not a public-production claim. It is a governed-core readiness claim wit
 | Workflow automation | Built as checkpointed governed execution | `workflow.resume` |
 | Specialist delegation | Built as bounded lease runtime | `agent.delegate` |
 | Voice | Built as transcript-to-intent worker contract | `voice.intent_confirm` |
+| Runtime Reflex Engine | Built as operator-gated evaluation and proposal surface | `/runtime/self/witness` |
 | Operator capability console | Built as read-only governed surface | `/operator/capabilities` |
 | Deployment witness | Built as governed publication capability | `deployment.witness.publish.with_approval` |
 | Adapter closure planning | Built as blocker-to-action planner | `scripts/plan_capability_adapter_closure.py` |
@@ -63,6 +64,7 @@ This is not a public-production claim. It is a governed-core readiness claim wit
 | Promotion environment binding validation | Built as contract/checklist drift gate | `scripts/validate_general_agent_promotion_environment_bindings.py` |
 | Promotion environment binding receipt | Built and validated as redacted binding presence witness | `scripts/emit_general_agent_promotion_environment_binding_receipt.py`, `scripts/validate_general_agent_promotion_environment_binding_receipt.py` |
 | Promotion handoff preflight | Built as local execution readiness check | `scripts/preflight_general_agent_promotion_handoff.py` |
+| Runtime Reflex proof coverage | Built as non-mutating runtime evaluation witness | `scripts/proof_coverage_matrix.py` |
 
 ## Open Production Blockers
 
@@ -139,8 +141,9 @@ The handoff preflight path is:
 3. Emit `.change_assurance/general_agent_promotion_environment_binding_receipt.json` with names and presence only.
 4. Validate `.change_assurance/general_agent_promotion_environment_binding_receipt.json` against the contract before preflight.
 5. Verify required environment bindings by variable name without serializing secret values.
-6. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
-7. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
+6. Verify adapter source-plan schema validation before aggregate promotion validation.
+7. Verify aggregate schema validation, aggregate drift validation, and readiness report counts.
+8. Write `.change_assurance/general_agent_promotion_handoff_preflight.json`.
 
 ## Verification
 

@@ -7,6 +7,8 @@ Invariants:
   - Intervals auto-derive disposition from start/end presence.
   - Constraints relate temporal events.
   - Persistence tracks fact validity windows.
+  - Temporal action policy gates expiry, freshness, schedule, and retry
+    windows before execution.
   - Every mutation emits an event.
   - All returns are immutable.
 """
@@ -22,18 +24,18 @@ from ..contracts.temporal_runtime import (
     IntervalDisposition,
     PersistenceRecord,
     PersistenceStatus,
+    TemporalActionDecision,
+    TemporalActionRequest,
     TemporalAssessment,
     TemporalClosureReport,
     TemporalConstraint,
     TemporalDecision,
     TemporalEvent,
     TemporalInterval,
+    TemporalPolicyVerdict,
     TemporalRelation,
-    TemporalRiskLevel,
     TemporalSequence,
     TemporalSnapshot,
-    TemporalStatus,
-    TemporalViolation,
 )
 from ..contracts.event import EventRecord, EventSource, EventType
 from .event_spine import EventSpineEngine
@@ -42,6 +44,10 @@ from .invariants import RuntimeCoreInvariantError, stable_identifier
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _parse_iso(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
 
 
 def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str) -> EventRecord:
@@ -73,6 +79,7 @@ class TemporalRuntimeEngine:
         self._persistence: dict[str, PersistenceRecord] = {}
         self._sequences: dict[str, TemporalSequence] = {}
         self._decisions: dict[str, TemporalDecision] = {}
+        self._action_decisions: dict[str, TemporalActionDecision] = {}
         self._violations: dict[str, Any] = {}
         self._snapshot_ids: set[str] = set()
         # Track which events belong to which sequence
@@ -105,6 +112,10 @@ class TemporalRuntimeEngine:
     @property
     def decision_count(self) -> int:
         return len(self._decisions)
+
+    @property
+    def action_decision_count(self) -> int:
+        return len(self._action_decisions)
 
     @property
     def violation_count(self) -> int:
@@ -222,11 +233,75 @@ class TemporalRuntimeEngine:
         """Compare two events: BEFORE if a < b, AFTER if a > b, EQUALS if same."""
         a = self.get_temporal_event(event_a_ref)
         b = self.get_temporal_event(event_b_ref)
-        if a.occurred_at < b.occurred_at:
+        occurred_a = _parse_iso(a.occurred_at)
+        occurred_b = _parse_iso(b.occurred_at)
+        if occurred_a < occurred_b:
             return TemporalRelation.BEFORE
-        if a.occurred_at > b.occurred_at:
+        if occurred_a > occurred_b:
             return TemporalRelation.AFTER
         return TemporalRelation.EQUALS
+
+    # ------------------------------------------------------------------
+    # Temporal action policy
+    # ------------------------------------------------------------------
+
+    def decide_temporal_action(
+        self,
+        action: TemporalActionRequest,
+        *,
+        decision_id: str = "",
+    ) -> TemporalActionDecision:
+        """Apply runtime-owned temporal policy to an action request."""
+        if not isinstance(action, TemporalActionRequest):
+            raise RuntimeCoreInvariantError("action must be a TemporalActionRequest")
+        now_text = self._clock()
+        now = _parse_iso(now_text)
+        verdict = TemporalPolicyVerdict.ALLOW
+        reason = "temporal_policy_passed"
+
+        if action.max_attempts > 0 and action.attempt_count >= action.max_attempts:
+            verdict = TemporalPolicyVerdict.DENY
+            reason = "retry_attempts_exhausted"
+        elif action.expires_at and now > _parse_iso(action.expires_at):
+            verdict = TemporalPolicyVerdict.DENY
+            reason = "command_expired"
+        elif action.approval_expires_at and now > _parse_iso(action.approval_expires_at):
+            verdict = TemporalPolicyVerdict.DENY
+            reason = "approval_expired"
+        elif action.evidence_fresh_until and now > _parse_iso(action.evidence_fresh_until):
+            verdict = TemporalPolicyVerdict.ESCALATE
+            reason = "evidence_stale"
+        elif action.retry_after and now < _parse_iso(action.retry_after):
+            verdict = TemporalPolicyVerdict.DEFER
+            reason = "retry_window_not_open"
+        elif action.not_before and now < _parse_iso(action.not_before):
+            verdict = TemporalPolicyVerdict.DEFER
+            reason = "not_before_window"
+        elif action.execute_at and now < _parse_iso(action.execute_at):
+            verdict = TemporalPolicyVerdict.DEFER
+            reason = "scheduled_for_future"
+
+        did = decision_id or stable_identifier(
+            "dec-temp-action",
+            {"action": action.action_id, "verdict": verdict.value, "reason": reason, "now": now_text},
+        )
+        decision = TemporalActionDecision(
+            decision_id=did,
+            tenant_id=action.tenant_id,
+            action_ref=action.action_id,
+            verdict=verdict,
+            reason=reason,
+            decided_at=now_text,
+            metadata={"risk": action.risk.value, "action_type": action.action_type},
+        )
+        self._action_decisions[did] = decision
+        _emit(self._events, "temporal_action_decided", {
+            "decision_id": did,
+            "action_ref": action.action_id,
+            "verdict": verdict.value,
+            "reason": reason,
+        }, did)
+        return decision
 
     # ------------------------------------------------------------------
     # Persistence
@@ -536,6 +611,7 @@ class TemporalRuntimeEngine:
             "persistence": self._persistence,
             "sequences": self._sequences,
             "decisions": self._decisions,
+            "action_decisions": self._action_decisions,
             "violations": self._violations,
         }
 
@@ -547,6 +623,7 @@ class TemporalRuntimeEngine:
             "persistence": self.persistence_count,
             "sequences": self.sequence_count,
             "decisions": self.decision_count,
+            "action_decisions": self.action_decision_count,
             "violations": self.violation_count,
         }
 
@@ -559,6 +636,7 @@ class TemporalRuntimeEngine:
             f"persistence={self.persistence_count}",
             f"sequences={self.sequence_count}",
             f"decisions={self.decision_count}",
+            f"action_decisions={self.action_decision_count}",
             f"violations={self.violation_count}",
         ]
         return sha256("|".join(parts).encode()).hexdigest()

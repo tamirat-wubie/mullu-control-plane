@@ -47,6 +47,16 @@
       "step_id": "write_source_closure_plans"
     },
     {
+      "command": "python scripts\\validate_capability_adapter_closure_plan_schema.py --output .change_assurance\\capability_adapter_closure_plan_schema_validation.json --strict",
+      "required_evidence": [
+        "capability_adapter_closure_plan_schema_validation.json ok=true",
+        "adapter blocker coverage complete",
+        "adapter action verification_command present",
+        "adapter action receipt_validator present"
+      ],
+      "step_id": "validate_adapter_closure_plan_schema"
+    },
+    {
       "command": "python scripts\\plan_general_agent_promotion_closure.py --output .change_assurance\\general_agent_promotion_closure_plan.json && python scripts\\validate_general_agent_promotion_closure_plan_schema.py --output .change_assurance\\general_agent_promotion_closure_plan_schema_validation.json --strict && python scripts\\validate_general_agent_promotion_closure_plan.py --output .change_assurance\\general_agent_promotion_closure_plan_validation.json --strict",
       "required_evidence": [
         "general_agent_promotion_closure_plan.json total_action_count=7",

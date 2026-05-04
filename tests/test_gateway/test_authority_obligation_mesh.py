@@ -135,6 +135,7 @@ def test_prepare_authority_binds_ownership_and_pending_approval_chain():
     assert events[-2].next_state is CommandState.AUTHORITY_PATH_BUILT
     assert events[-1].next_state is CommandState.APPROVAL_CHAIN_PENDING
     assert witness.pending_approval_chain_count == 1
+    assert witness.responsibility_debt_clear is True
 
 
 def test_strict_mesh_rejects_high_risk_capability_without_owner():
@@ -152,6 +153,7 @@ def test_strict_mesh_rejects_high_risk_capability_without_owner():
     witness = mesh.responsibility_witness()
 
     assert witness.unowned_high_risk_capability_count == 1
+    assert witness.responsibility_debt_clear is False
     assert witness.pending_approval_chain_count == 0
     assert mesh.approval_chain_for(command.command_id) is None
 
@@ -248,6 +250,7 @@ def test_overdue_approval_chain_expires_and_emits_escalation_event():
     assert updated.status is ApprovalChainStatus.EXPIRED
     assert witness.pending_approval_chain_count == 0
     assert witness.expired_approval_chain_count == 1
+    assert witness.responsibility_debt_clear is False
     assert mesh.escalation_events()[0]["event_type"] == "approval_chain_expired"
     assert events[-1].next_state is CommandState.DENIED
     assert events[-1].detail["cause"] == "approval_chain_expired_escalated"
@@ -332,6 +335,7 @@ def test_review_terminal_certificate_opens_owned_obligation_and_escalates_when_o
     assert len(escalated) == 1
     assert escalated[0].status is ObligationStatus.ESCALATED
     assert witness_after.escalated_obligation_count == 1
+    assert witness_after.responsibility_debt_clear is False
     assert mesh.escalation_events()[0]["obligation_id"] == escalated[0].obligation_id
     assert mesh.escalation_events()[0]["fallback_owner_id"] == "tenant-owner-1"
     assert mesh.escalation_events()[0]["escalation_team"] == "executive_ops"
@@ -419,6 +423,7 @@ def test_accepted_risk_obligation_requires_explicit_owner_and_future_expiry():
     assert obligations[0].terminal_certificate_id == certificate.certificate_id
     assert witness.active_accepted_risk_count == 1
     assert witness.open_obligation_count == 1
+    assert witness.responsibility_debt_clear is True
 
 
 def test_compensated_certificate_requires_reviewer_before_mesh_review():
@@ -476,6 +481,7 @@ def test_compensated_obligation_requires_explicit_owner_and_reviewer():
     assert witness.open_obligation_count == 1
     assert witness.active_compensation_review_count == 1
     assert witness.requires_review_count == 0
+    assert witness.responsibility_debt_clear is True
 
 
 def test_satisfy_obligation_requires_evidence_and_active_status():
@@ -520,6 +526,7 @@ def test_satisfy_obligation_requires_evidence_and_active_status():
     assert events[-1].detail["evidence_refs"] == ("case_disposition:authority-review-closed",)
     assert witness.open_obligation_count == 0
     assert witness.requires_review_count == 0
+    assert witness.responsibility_debt_clear is True
 
     with pytest.raises(ValueError, match="open or escalated"):
         mesh.satisfy_obligation(

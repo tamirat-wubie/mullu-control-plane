@@ -37,6 +37,22 @@ def test_validate_promotion_handoff_packet_rejects_missing_entry_point(tmp_path:
     assert any("entry_points.handoff_packet_validator" in error for error in result.errors)
 
 
+def test_validate_promotion_handoff_packet_rejects_missing_adapter_schema_report(
+    tmp_path: Path,
+) -> None:
+    packet_path = tmp_path / "general_agent_promotion_handoff_packet.json"
+    payload = json.loads(PACKET_PATH.read_text(encoding="utf-8"))
+    payload["required_validation_reports"].remove("capability_adapter_closure_plan_schema_validation ok=true")
+    packet_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+
+    assert result.valid is False
+    assert result.open_blocker_count == 6
+    assert any("required_validation_reports missing" in error for error in result.errors)
+    assert any("capability_adapter_closure_plan_schema_validation" in error for error in result.errors)
+
+
 def test_validate_promotion_handoff_packet_rejects_ready_with_blockers(tmp_path: Path) -> None:
     packet_path = tmp_path / "general_agent_promotion_handoff_packet.json"
     payload = json.loads(PACKET_PATH.read_text(encoding="utf-8"))

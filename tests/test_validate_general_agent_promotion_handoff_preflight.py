@@ -19,7 +19,7 @@ def test_validate_handoff_preflight_accepts_ready_report(tmp_path: Path) -> None
 
     assert result.valid is True
     assert result.ready is True
-    assert result.step_count == 8
+    assert result.step_count == 9
     assert result.blockers == ()
 
 
@@ -73,7 +73,7 @@ def test_validate_handoff_preflight_cli_outputs_json(tmp_path: Path, capsys) -> 
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
-    assert payload["step_count"] == 8
+    assert payload["step_count"] == 9
 
 
 def _ready_report() -> dict[str, object]:
@@ -84,13 +84,14 @@ def _ready_report() -> dict[str, object]:
         "production_ready": False,
         "readiness_level": "pilot-governed-core",
         "ready": True,
-        "step_count": 8,
+        "step_count": 9,
         "steps": [
             {"detail": "valid=true", "name": "operator checklist validation", "passed": True},
             {"detail": "valid=true", "name": "handoff packet validation", "passed": True},
             {"detail": "valid=true", "name": "environment binding contract validation", "passed": True},
             {"detail": "valid=true", "name": "environment binding receipt validation", "passed": True},
             {"detail": "all required environment variables are present", "name": "required environment bindings", "passed": True},
+            {"detail": "ok=true action_count=5 approval_required_action_count=2 blocker_count=5", "name": "adapter closure schema validation", "passed": True},
             {"detail": "ok=true action_count=7 approval_required_action_count=4 source_plan_types=['adapter', 'deployment']", "name": "closure plan schema validation", "passed": True},
             {"detail": "ok=true expected_action_count=7 observed_action_count=7 expected_approval_required_count=4 observed_approval_required_count=4", "name": "closure plan drift validation", "passed": True},
             {"detail": "readiness_level=pilot-governed-core capability_count=52 capsule_count=10 production_ready=false", "name": "promotion readiness report", "passed": True},
