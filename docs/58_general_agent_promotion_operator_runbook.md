@@ -28,7 +28,7 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 14 |
+| Total closure actions | 13 |
 | Approval-required actions | 4 |
 | Source plan types | `adapter`, `deployment` |
 | Current readiness level | `pilot-governed-core` |

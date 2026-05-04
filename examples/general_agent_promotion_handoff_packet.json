@@ -1,33 +1,39 @@
 {
-  "schema_version": 1,
-  "packet_id": "general-agent-promotion-handoff-v1",
-  "title": "General-Agent Promotion Handoff Packet",
-  "status": "blocked_until_live_evidence",
-  "readiness_level": "pilot-governed-core",
-  "capability_capsules": 10,
-  "governed_capabilities": 52,
-  "aggregate_closure_actions": 14,
+  "aggregate_closure_actions": 13,
   "approval_required_actions": 4,
-  "production_promotion": "blocked",
+  "approval_required_blockers": [
+    "voice_dependency_missing:OPENAI_API_KEY",
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "deployment_witness_not_published",
+    "production_health_not_declared"
+  ],
+  "capability_capsules": 10,
   "entry_points": {
+    "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
+    "checklist_validator": "scripts/validate_general_agent_promotion_operator_checklist.py",
+    "drift_validation_report": ".change_assurance/general_agent_promotion_closure_plan_validation.json",
+    "environment_binding_contract": "examples/general_agent_promotion_environment_bindings.json",
+    "environment_binding_receipt": ".change_assurance/general_agent_promotion_environment_binding_receipt.json",
+    "environment_binding_receipt_emitter": "scripts/emit_general_agent_promotion_environment_binding_receipt.py",
+    "environment_binding_receipt_validator": "scripts/validate_general_agent_promotion_environment_binding_receipt.py",
+    "environment_binding_validator": "scripts/validate_general_agent_promotion_environment_bindings.py",
+    "handoff_packet_validator": "scripts/validate_general_agent_promotion_handoff_packet.py",
+    "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
+    "handoff_preflight_validator": "scripts/validate_general_agent_promotion_handoff_preflight.py",
     "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
     "machine_checklist": "examples/general_agent_promotion_operator_checklist.json",
     "machine_handoff_packet": "examples/general_agent_promotion_handoff_packet.json",
-    "environment_binding_contract": "examples/general_agent_promotion_environment_bindings.json",
-    "checklist_validator": "scripts/validate_general_agent_promotion_operator_checklist.py",
-    "handoff_packet_validator": "scripts/validate_general_agent_promotion_handoff_packet.py",
-    "environment_binding_validator": "scripts/validate_general_agent_promotion_environment_bindings.py",
-    "environment_binding_receipt_emitter": "scripts/emit_general_agent_promotion_environment_binding_receipt.py",
-    "environment_binding_receipt_validator": "scripts/validate_general_agent_promotion_environment_binding_receipt.py",
-    "handoff_preflight": "scripts/preflight_general_agent_promotion_handoff.py",
-    "handoff_preflight_validator": "scripts/validate_general_agent_promotion_handoff_preflight.py",
-    "aggregate_closure_plan": ".change_assurance/general_agent_promotion_closure_plan.json",
-    "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json",
-    "drift_validation_report": ".change_assurance/general_agent_promotion_closure_plan_validation.json",
-    "readiness_report": ".change_assurance/general_agent_promotion_readiness.json",
     "preflight_report": ".change_assurance/general_agent_promotion_handoff_preflight.json",
-    "environment_binding_receipt": ".change_assurance/general_agent_promotion_environment_binding_receipt.json"
+    "readiness_report": ".change_assurance/general_agent_promotion_readiness.json",
+    "schema_validation_report": ".change_assurance/general_agent_promotion_closure_plan_schema_validation.json"
   },
+  "governed_capabilities": 52,
+  "invariants": [
+    "production_promotion remains blocked until live adapter evidence closes",
+    "credential actions require governed approval",
+    "DEPLOYMENT_STATUS.md is not mutated before published witness and health evidence",
+    "terminal proof command must fail until blockers close"
+  ],
   "open_blockers": [
     "adapter_evidence_not_closed",
     "browser_adapter_not_closed",
@@ -35,17 +41,6 @@
     "email_calendar_adapter_not_closed",
     "deployment_witness_not_published",
     "production_health_not_declared"
-  ],
-  "approval_required_blockers": [
-    "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_witness_not_published",
-    "production_health_not_declared"
-  ],
-  "required_validation_reports": [
-    "general_agent_promotion_operator_checklist valid=true",
-    "general_agent_promotion_closure_plan_schema_validation ok=true",
-    "general_agent_promotion_closure_plan_validation ok=true"
   ],
   "operator_sequence": [
     "validate_operator_checklist",
@@ -62,11 +57,16 @@
     "declare_public_health_after_witness",
     "run_terminal_promotion_validation"
   ],
+  "packet_id": "general-agent-promotion-handoff-v1",
+  "production_promotion": "blocked",
+  "readiness_level": "pilot-governed-core",
+  "required_validation_reports": [
+    "general_agent_promotion_operator_checklist valid=true",
+    "general_agent_promotion_closure_plan_schema_validation ok=true",
+    "general_agent_promotion_closure_plan_validation ok=true"
+  ],
+  "schema_version": 1,
+  "status": "blocked_until_live_evidence",
   "terminal_proof_command": "python scripts/validate_general_agent_promotion.py --strict --output .change_assurance/general_agent_promotion_readiness.json",
-  "invariants": [
-    "production_promotion remains blocked until live adapter evidence closes",
-    "credential actions require governed approval",
-    "DEPLOYMENT_STATUS.md is not mutated before published witness and health evidence",
-    "terminal proof command must fail until blockers close"
-  ]
+  "title": "General-Agent Promotion Handoff Packet"
 }
