@@ -44,7 +44,9 @@ from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
+from mcoi_runtime.core.temporal_scheduler_background import TemporalSchedulerBackgroundLoop
 from mcoi_runtime.core.temporal_scheduler import TemporalSchedulerEngine
+from mcoi_runtime.core.temporal_scheduler_worker import TemporalSchedulerWorker
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
@@ -223,11 +225,30 @@ temporal_runtime = TemporalRuntimeEngine(temporal_event_spine, clock=_clock)
 temporal_scheduler = TemporalSchedulerEngine(temporal_runtime, clock=_clock)
 temporal_scheduler.restore(temporal_scheduler_store.list_actions())
 temporal_action_handlers: dict[str, Any] = {}
+temporal_scheduler_background = None
+if _env_flag(os.environ.get("MULLU_TEMPORAL_WORKER_ENABLED")):
+    temporal_worker = TemporalSchedulerWorker(
+        scheduler=temporal_scheduler,
+        store=temporal_scheduler_store,
+        worker_id=os.environ.get("MULLU_TEMPORAL_WORKER_ID", "temporal-worker"),
+        handlers=temporal_action_handlers,
+        proof_bridge=proof_bridge,
+        lease_seconds=int(os.environ.get("MULLU_TEMPORAL_WORKER_LEASE_SECONDS", "60")),
+    )
+    temporal_scheduler_background = TemporalSchedulerBackgroundLoop(
+        worker=temporal_worker,
+        interval_seconds=float(os.environ.get("MULLU_TEMPORAL_WORKER_INTERVAL_SECONDS", "30")),
+        limit=int(os.environ.get("MULLU_TEMPORAL_WORKER_LIMIT", "10")),
+    )
+    temporal_scheduler_background.start()
+    shutdown_mgr.register("stop_temporal_scheduler", temporal_scheduler_background.stop, priority=95)
 deps.set("temporal_event_spine", temporal_event_spine)
 deps.set("temporal_runtime", temporal_runtime)
 deps.set("temporal_scheduler", temporal_scheduler)
 deps.set("temporal_scheduler_store", temporal_scheduler_store)
 deps.set("temporal_action_handlers", temporal_action_handlers)
+if temporal_scheduler_background is not None:
+    deps.set("temporal_scheduler_background", temporal_scheduler_background)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

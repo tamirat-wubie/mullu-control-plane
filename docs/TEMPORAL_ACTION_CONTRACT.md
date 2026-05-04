@@ -6,6 +6,7 @@ Governance scope: request admission, temporal policy, audit witness, and
 pre-dispatch blocking.
 Dependencies: `GovernanceMiddleware`, `create_temporal_guard`,
 `TemporalRuntimeEngine`, and `TemporalActionRequest`.
+Companion document: `docs/61_temporal_scheduler_runbook.md`.
 Invariants:
 - Runtime time is authoritative.
 - Invalid temporal action payloads fail closed.
@@ -100,3 +101,25 @@ For a temporal denial, operators should verify:
 4. Proof receipt guard detail has the same `decision_id`.
 5. The endpoint did not execute when the verdict was `deny`, `defer`, or
    `escalate`.
+
+## Scheduled Execution
+
+This contract governs request-time temporal admission. Durable scheduled
+execution is covered by `docs/61_temporal_scheduler_runbook.md`.
+
+The scheduler path adds:
+
+1. `POST /api/v1/temporal/schedules`
+2. persistent `ScheduledTemporalAction` snapshots
+3. worker lease acquisition
+4. wake-time temporal policy re-check
+5. scheduler run receipts
+6. optional proof certification
+7. opt-in background worker execution
+
+The same rule still applies:
+
+```text
+LLM/parser may interpret temporal language.
+Runtime clock and temporal policy decide temporal truth.
+```

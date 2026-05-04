@@ -40,6 +40,11 @@ class MutableClock:
         return self.now
 
 
+class DisabledBackground:
+    def summary(self) -> dict[str, object]:
+        return {"running": False, "enabled": False, "governed": True}
+
+
 def _install_deps(clock: MutableClock, handlers=None) -> MetricsStub:
     metrics = MetricsStub()
     temporal_runtime = TemporalRuntimeEngine(EventSpineEngine(), clock=clock)
@@ -51,6 +56,7 @@ def _install_deps(clock: MutableClock, handlers=None) -> MetricsStub:
     deps.set("temporal_scheduler_store", TemporalSchedulerStore())
     deps.set("temporal_action_handlers", dict(handlers or {}))
     deps.set("proof_bridge", ProofBridge(clock=clock))
+    deps.set("temporal_scheduler_background", DisabledBackground())
     return metrics
 
 
@@ -148,3 +154,16 @@ def test_default_routers_include_temporal_scheduler_summary() -> None:
     assert "/api/v1/temporal/summary" in paths
     assert "/api/v1/temporal/schedules" in paths
     assert "/api/v1/temporal/worker/tick" in paths
+
+
+def test_temporal_summary_reports_background_disabled() -> None:
+    client = _client(MutableClock("2026-05-04T13:00:00+00:00"))
+
+    response = client.get("/api/v1/temporal/summary")
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["background"]["enabled"] is False
+    assert body["background"]["running"] is False
+    assert body["runtime"]["actions"] == 0
+    assert body["governed"] is True
