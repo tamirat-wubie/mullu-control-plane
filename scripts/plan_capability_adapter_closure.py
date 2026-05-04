@@ -7,6 +7,7 @@ Dependencies: .change_assurance/capability_adapter_evidence.json and live receip
 Invariants:
   - Planning does not claim closure or mutate adapter receipts.
   - Every blocker maps to an explicit action, dependency, credential, or evidence request.
+  - Every action carries a deterministic verification command and receipt validator.
   - Unknown blockers remain visible as manual-review actions.
 """
 
@@ -33,6 +34,8 @@ class AdapterClosureAction:
     blocker: str
     action_type: str
     command: str
+    verification_command: str
+    receipt_validator: str
     evidence_required: tuple[str, ...]
     risk_level: str
     approval_required: bool
@@ -88,6 +91,7 @@ def plan_capability_adapter_closure(evidence_path: Path = DEFAULT_EVIDENCE) -> A
             actions.append(_action_for("unknown.adapter", blocker_text))
     unique_blockers = tuple(dict.fromkeys(blockers))
     unique_actions = tuple(_dedupe_actions(actions))
+    _validate_actions(unique_actions)
     plan_material = {
         "source_report_id": str(payload.get("report_id", "")),
         "source_ready": payload.get("ready") is True,
@@ -135,7 +139,11 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
                 "python scripts/produce_capability_adapter_live_receipts.py --target browser "
                 "--browser-sandbox-evidence .change_assurance/browser_sandbox_evidence.json --strict"
             ),
-            ("browser_sandbox_evidence.json", "browser_live_receipt.json"),
+            (
+                "linux_rootless_docker_runner_attestation",
+                "browser_sandbox_evidence.json",
+                "browser_live_receipt.json",
+            ),
         )
     if blocker.startswith("document_dependency_missing:"):
         module_name = blocker.split(":", 1)[1]
@@ -159,6 +167,11 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
             blocker=blocker,
             action_type="credential",
             command="Set OPENAI_API_KEY only in the governed voice-worker secret store.",
+            verification_command=(
+                "python scripts/collect_capability_adapter_evidence.py "
+                "--output .change_assurance/capability_adapter_evidence.json"
+            ),
+            receipt_validator="adapter_evidence.voice.openai.dependency.OPENAI_API_KEY",
             evidence_required=("secret_presence_attestation", "voice_worker_secret_binding"),
             risk_level="high",
             approval_required=True,
@@ -184,6 +197,11 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
             blocker=blocker,
             action_type="credential",
             command="Bind one scoped connector token: GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, or MICROSOFT_GRAPH_ACCESS_TOKEN.",
+            verification_command=(
+                "python scripts/collect_capability_adapter_evidence.py "
+                "--output .change_assurance/capability_adapter_evidence.json"
+            ),
+            receipt_validator="adapter_evidence.communication.email_calendar_worker.dependency.EMAIL_CALENDAR_CONNECTOR_TOKEN",
             evidence_required=("connector_scope_attestation", "secret_presence_attestation"),
             risk_level="high",
             approval_required=True,
@@ -201,6 +219,8 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
         blocker=blocker,
         action_type="manual-review",
         command="Review blocker and add a governed closure action before claiming production readiness.",
+        verification_command="python scripts/plan_capability_adapter_closure.py --json",
+        receipt_validator="manual_review_receipt.present",
         evidence_required=("manual_review_receipt",),
         risk_level="medium",
         approval_required=True,
@@ -219,6 +239,11 @@ def _dependency_action(
         blocker=blocker,
         action_type="dependency",
         command=command,
+        verification_command=(
+            "python scripts/collect_capability_adapter_evidence.py "
+            "--output .change_assurance/capability_adapter_evidence.json"
+        ),
+        receipt_validator=f"adapter_evidence.{adapter_id}.dependency.{_dependency_name(blocker)}",
         evidence_required=evidence_required,
         risk_level="medium",
         approval_required=False,
@@ -237,6 +262,11 @@ def _receipt_action(
         blocker=blocker,
         action_type="live-receipt",
         command=command,
+        verification_command=(
+            "python scripts/collect_capability_adapter_evidence.py "
+            "--output .change_assurance/capability_adapter_evidence.json"
+        ),
+        receipt_validator=f"adapter_evidence.{adapter_id}.receipt_check.passed",
         evidence_required=evidence_required,
         risk_level="medium",
         approval_required=False,
@@ -249,11 +279,23 @@ def _action_id(adapter_id: str, blocker: str) -> str:
     return f"{normalized_adapter}-{normalized_blocker}"
 
 
+def _dependency_name(blocker: str) -> str:
+    return blocker.split(":", 1)[1] if ":" in blocker else blocker
+
+
 def _dedupe_actions(actions: list[AdapterClosureAction]) -> list[AdapterClosureAction]:
     deduped: dict[str, AdapterClosureAction] = {}
     for action in actions:
         deduped.setdefault(action.action_id, action)
     return list(deduped.values())
+
+
+def _validate_actions(actions: tuple[AdapterClosureAction, ...]) -> None:
+    for action in actions:
+        if not action.verification_command.strip():
+            raise ValueError(f"adapter closure action missing verification command: {action.action_id}")
+        if not action.receipt_validator.strip():
+            raise ValueError(f"adapter closure action missing receipt validator: {action.action_id}")
 
 
 def _load_evidence(path: Path) -> dict[str, Any]:

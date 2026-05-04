@@ -76,6 +76,9 @@ def test_collect_deployment_witness_publishes_with_verified_signature(monkeypatc
     assert witness.latest_conformance_certificate_id == "conf-0123456789abcdef"
     assert witness.conformance_signature_status == "verified"
     assert witness.runtime_environment == "pilot"
+    assert witness.authority_responsibility_debt_clear is True
+    assert witness.authority_overdue_obligation_count == 0
+    assert witness.authority_unowned_high_risk_capability_count == 0
     assert all(step.passed for step in witness.steps)
 
 
@@ -282,6 +285,9 @@ def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     assert loaded["deployment_claim"] == "published"
     assert loaded["witness_id"] == witness.witness_id
     assert loaded["latest_conformance_certificate_id"] == "conf-0123456789abcdef"
+    assert loaded["authority_responsibility_debt_clear"] is True
+    assert loaded["authority_overdue_approval_chain_count"] == 0
+    assert loaded["authority_overdue_obligation_count"] == 0
     assert loaded["steps"][0]["name"] == "gateway health"
     assert _validate_schema_instance(_load_schema(DEPLOYMENT_WITNESS_SCHEMA_PATH), loaded) == []
 

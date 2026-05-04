@@ -60,6 +60,13 @@ REQUIRED_PUBLISHED_FIELDS = (
     "runtime_witness_id",
     "runtime_environment",
     "runtime_signature_key_id",
+    "authority_responsibility_debt_clear",
+    "authority_pending_approval_chain_count",
+    "authority_overdue_approval_chain_count",
+    "authority_open_obligation_count",
+    "authority_overdue_obligation_count",
+    "authority_escalated_obligation_count",
+    "authority_unowned_high_risk_capability_count",
     "steps",
 )
 
@@ -193,6 +200,16 @@ def _validate_published_witness(
     health_response_digest = str(witness_payload.get("health_response_digest", ""))
     if HEALTH_RESPONSE_DIGEST_PATTERN.fullmatch(health_response_digest) is None:
         errors.append(f"{witness_path}: health_response_digest must be a sha256 digest")
+    if witness_payload.get("authority_responsibility_debt_clear") is not True:
+        errors.append(f"{witness_path}: authority responsibility debt must be clear")
+    for field_name in (
+        "authority_overdue_approval_chain_count",
+        "authority_overdue_obligation_count",
+        "authority_escalated_obligation_count",
+        "authority_unowned_high_risk_capability_count",
+    ):
+        if witness_payload.get(field_name) != 0:
+            errors.append(f"{witness_path}: {field_name} {witness_payload.get(field_name)!r} != 0")
 
     steps = witness_payload.get("steps")
     if not isinstance(steps, list) or not steps:

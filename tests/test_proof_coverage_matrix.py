@@ -94,6 +94,22 @@ def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     assert closure_actions["publish_deployment_orchestration_receipt_contract"]["status"] == "closed"
 
 
+def test_gateway_runtime_witness_covers_publication_responsibility_debt() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    runtime_surface = surfaces["gateway_runtime_witness"]
+    witnesses = set(runtime_surface["runtime_witnesses"])
+
+    assert "schemas/deployment_witness.schema.json" in runtime_surface["evidence_files"]
+    assert "scripts/validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
+    assert "tests/test_validate_deployment_publication_closure.py" in runtime_surface["evidence_files"]
+    assert "authority_responsibility_debt_clear" in witnesses
+    assert "authority_overdue_approval_chain_count" in witnesses
+    assert "authority_overdue_obligation_count" in witnesses
+    assert "authority_escalated_obligation_count" in witnesses
+    assert "authority_unowned_high_risk_capability_count" in witnesses
+
+
 def test_governed_session_request_envelope_is_covered() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

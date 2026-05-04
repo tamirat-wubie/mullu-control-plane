@@ -237,6 +237,13 @@ def _published_witness() -> dict[str, object]:
         "runtime_witness_id": "runtime-witness-001",
         "runtime_environment": "pilot",
         "runtime_signature_key_id": "runtime-key-001",
+        "authority_responsibility_debt_clear": True,
+        "authority_pending_approval_chain_count": 0,
+        "authority_overdue_approval_chain_count": 0,
+        "authority_open_obligation_count": 0,
+        "authority_overdue_obligation_count": 0,
+        "authority_escalated_obligation_count": 0,
+        "authority_unowned_high_risk_capability_count": 0,
         "steps": [
             {"name": "gateway health", "passed": True, "detail": "ok"},
             {"name": "gateway runtime witness", "passed": True, "detail": "ok"},

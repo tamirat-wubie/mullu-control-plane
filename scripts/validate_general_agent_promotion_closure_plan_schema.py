@@ -8,6 +8,7 @@ Dependencies: schemas/general_agent_promotion_closure_plan.schema.json and
 .change_assurance/general_agent_promotion_closure_plan.json.
 Invariants:
   - The aggregate closure plan matches the public protocol schema.
+  - Adapter closure actions carry verification commands and receipt validators.
   - Action counts are derived from the action list, not trusted blindly.
   - Approval-required counts are recomputed from action payloads.
   - Non-empty plans must contain adapter and deployment source actions.
@@ -84,6 +85,13 @@ def validate_general_agent_promotion_closure_plan_schema(
         errors.append("approval_required_action_count cannot exceed total_action_count")
     if action_count and {"adapter", "deployment"} - set(source_plan_types):
         errors.append("non-empty promotion closure plan must include adapter and deployment source actions")
+    for index, action in enumerate(actions):
+        if action.get("source_plan_type") != "adapter":
+            continue
+        if not str(action.get("verification_command", "")).strip():
+            errors.append(f"adapter action {index} missing verification_command")
+        if not str(action.get("receipt_validator", "")).strip():
+            errors.append(f"adapter action {index} missing receipt_validator")
 
     return _validation_result(
         plan_path=plan_path,
