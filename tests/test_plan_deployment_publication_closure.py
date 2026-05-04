@@ -63,6 +63,36 @@ def test_deployment_closure_plan_preserves_unknown_deployment_blocker(tmp_path: 
     assert action.approval_required is True
 
 
+def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    readiness_path.write_text(
+        json.dumps(
+            {
+                "ready": False,
+                "blockers": [
+                    "deployment_runtime_responsibility_debt_present",
+                    "deployment_authority_responsibility_debt_present",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(readiness_path)
+    actions_by_blocker = {action.blocker: action for action in plan.actions}
+
+    assert plan.action_count == 2
+    assert actions_by_blocker[
+        "deployment_runtime_responsibility_debt_present"
+    ].action_type == "responsibility-debt-closure"
+    assert actions_by_blocker[
+        "deployment_authority_responsibility_debt_present"
+    ].approval_required is True
+    assert "/authority/responsibility" in actions_by_blocker[
+        "deployment_authority_responsibility_debt_present"
+    ].command
+
+
 def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -> None:
     readiness_path = tmp_path / "general_agent_promotion_readiness.json"
     output_path = tmp_path / "deployment_publication_closure_plan.json"

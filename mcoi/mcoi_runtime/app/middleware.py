@@ -207,6 +207,7 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                         guard_name=r.guard_name,
                         allowed=r.allowed,
                         reason=r.reason,
+                        detail=r.detail or {},
                     )
                     for r in result.results
                 ]
@@ -232,7 +233,12 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         if self._proof_bridge is not None:
             try:
                 guard_results = [
-                    {"guard_name": r.guard_name, "allowed": r.allowed, "reason": r.reason}
+                    {
+                        "guard_name": r.guard_name,
+                        "allowed": r.allowed,
+                        "reason": r.reason,
+                        "detail": r.detail or {},
+                    }
                     for r in result.results
                 ]
                 self._proof_bridge.certify_governance_decision(

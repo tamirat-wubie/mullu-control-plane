@@ -154,6 +154,40 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
             risk_level="high",
             approval_required=True,
         )
+    if blocker == "deployment_runtime_responsibility_debt_present":
+        return DeploymentClosureAction(
+            action_id="clear-runtime-responsibility-debt",
+            blocker=blocker,
+            action_type="responsibility-debt-closure",
+            command=(
+                "Inspect /gateway/witness and /runtime/conformance; clear runtime "
+                "responsibility debt before re-running deployment witness collection."
+            ),
+            evidence_required=(
+                "gateway_witness_responsibility_debt_clear",
+                "runtime_responsibility_debt_clear",
+                "deployment_witness.json",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
+    if blocker == "deployment_authority_responsibility_debt_present":
+        return DeploymentClosureAction(
+            action_id="clear-authority-responsibility-debt",
+            blocker=blocker,
+            action_type="responsibility-debt-closure",
+            command=(
+                "Inspect /authority/responsibility, close or escalate overdue "
+                "obligations, then re-collect runtime conformance and deployment witness."
+            ),
+            evidence_required=(
+                "authority_responsibility_debt_clear",
+                "authority_obligation_closure_receipts",
+                "deployment_witness.json",
+            ),
+            risk_level="high",
+            approval_required=True,
+        )
     return DeploymentClosureAction(
         action_id=f"manual-review-{blocker.replace('_', '-')}",
         blocker=blocker,
@@ -169,6 +203,8 @@ def _deployment_blockers() -> frozenset[str]:
     return frozenset(
         {
             "deployment_witness_not_published",
+            "deployment_runtime_responsibility_debt_present",
+            "deployment_authority_responsibility_debt_present",
             "production_health_not_declared",
         }
     )

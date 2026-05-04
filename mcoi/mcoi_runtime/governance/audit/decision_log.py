@@ -30,6 +30,7 @@ class GuardDecisionDetail:
     guard_name: str
     allowed: bool
     reason: str = ""
+    detail: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,7 +63,12 @@ class GovernanceDecision:
             "blocking_guard": self.blocking_guard,
             "blocking_reason": self.blocking_reason,
             "guards_evaluated": [
-                {"guard_name": g.guard_name, "allowed": g.allowed, "reason": g.reason}
+                {
+                    "guard_name": g.guard_name,
+                    "allowed": g.allowed,
+                    "reason": g.reason,
+                    "detail": g.detail,
+                }
                 for g in self.guards_evaluated
             ],
             "evaluated_at": self.evaluated_at,

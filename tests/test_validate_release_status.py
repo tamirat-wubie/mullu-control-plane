@@ -87,6 +87,7 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert any("emit_general_agent_promotion_environment_binding_receipt.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_environment_binding_receipt.py" in literal for literal in deployment_literals)
     assert any("produce_browser_sandbox_evidence.py" in literal for literal in deployment_literals)
+    assert any("validate_sandbox_execution_receipt.py" in literal for literal in deployment_literals)
     assert any("validate_browser_sandbox_evidence.py" in literal for literal in deployment_literals)
     assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_handoff_preflight.py" in literal for literal in deployment_literals)
@@ -120,6 +121,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "emit_general_agent_promotion_environment_binding_receipt.py" in content
     assert "validate_general_agent_promotion_environment_binding_receipt.py" in content
     assert "produce_browser_sandbox_evidence.py" in content
+    assert "validate_sandbox_execution_receipt.py" in content
     assert "validate_browser_sandbox_evidence.py" in content
     assert "preflight_general_agent_promotion_handoff.py" in content
     assert "validate_general_agent_promotion_handoff_preflight.py" in content

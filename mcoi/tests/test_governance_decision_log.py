@@ -2,7 +2,6 @@
 
 import pytest
 from mcoi_runtime.governance.audit.decision_log import (
-    GovernanceDecision,
     GovernanceDecisionLog,
     GuardDecisionDetail,
 )
@@ -95,6 +94,30 @@ class TestRecording:
         assert data["allowed"] is True
         assert len(data["guards_evaluated"]) == 3
         assert data["guards_evaluated"][0]["guard_name"] == "auth"
+        assert data["guards_evaluated"][0]["detail"] == {}
+
+    def test_to_dict_preserves_guard_detail(self):
+        log = _log()
+        d = log.record(
+            tenant_id="t1",
+            endpoint="/api",
+            method="POST",
+            allowed=False,
+            blocking_guard="temporal",
+            blocking_reason="approval_expired",
+            guards=[
+                GuardDecisionDetail(
+                    "temporal",
+                    False,
+                    "approval_expired",
+                    detail={"decision_id": "dec-1", "verdict": "deny"},
+                ),
+            ],
+        )
+        data = d.to_dict()
+        assert data["guards_evaluated"][0]["detail"]["decision_id"] == "dec-1"
+        assert data["guards_evaluated"][0]["detail"]["verdict"] == "deny"
+        assert data["blocking_guard"] == "temporal"
 
 
 # ── Query ──────────────────────────────────────────────────────

@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.change_assurance import (
 from mcoi_runtime.contracts.reflex import (
     CapabilityMaturityScore,
     ReflexAnomaly,
+    ReflexCanaryHandoff,
     ReflexCertificationHandoff,
     ReflexDiagnosis,
     ReflexEvalCase,
@@ -431,6 +432,25 @@ def decide_promotion(
     )
 
 
+def build_canary_handoff(
+    candidate: ReflexUpgradeCandidate,
+    sandbox_bundle: ReflexSandboxBundle,
+    certificate: ChangeCertificate,
+) -> ReflexCanaryHandoff:
+    """Bind sandbox and certificate proof into a non-mutating canary handoff."""
+    decision = decide_promotion(candidate, sandbox_bundle.sandbox_result, certificate)
+    return ReflexCanaryHandoff(
+        candidate_id=candidate.candidate_id,
+        sandbox_bundle=sandbox_bundle,
+        certificate=certificate,
+        promotion_decision=decision,
+        canary_steps=_canary_steps_for_decision(decision),
+        rollback_plan_ref=candidate.rollback_plan_ref,
+        deployment_witness_required=True,
+        mutation_applied=False,
+    )
+
+
 def rank_capability_gaps(
     scores: Iterable[CapabilityMaturityScore],
 ) -> tuple[CapabilityMaturityScore, ...]:
@@ -720,6 +740,29 @@ def _certificate_passed(certificate: ChangeCertificate) -> bool:
         and certificate.migration_safe
         and certificate.rollback_plan_present
         and bool(certificate.evidence_refs)
+    )
+
+
+def _canary_steps_for_decision(decision: ReflexPromotionDecision) -> tuple[str, ...]:
+    if decision.disposition is ReflexPromotionDisposition.AUTO_CANARY_ALLOWED:
+        return (
+            "deploy_canary",
+            "watch_health",
+            "compare_before_after",
+            "rollback_on_regression",
+            "publish_deployment_witness",
+        )
+    if decision.disposition is ReflexPromotionDisposition.HUMAN_APPROVAL_REQUIRED:
+        return (
+            "open_human_approval_case",
+            "attach_certificate",
+            "attach_sandbox_bundle",
+            "await_approval",
+        )
+    return (
+        "record_rejected_candidate",
+        "preserve_eval_regression",
+        "block_promotion",
     )
 
 
