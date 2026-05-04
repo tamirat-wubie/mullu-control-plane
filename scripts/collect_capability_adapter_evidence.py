@@ -376,19 +376,31 @@ def _browser_receipt_check(path: Path) -> ReceiptCheck:
         return ReceiptCheck("browser live receipt", False, error, str(path), ())
     sandbox_evidence_id = str(payload.get("sandbox_evidence_id", "")).strip()
     sandbox_receipt_id = str(payload.get("sandbox_receipt_id", "")).strip()
+    worker_receipt = payload.get("worker_receipt") if isinstance(payload.get("worker_receipt"), dict) else {}
+    network_requests = payload.get("network_requests", ())
+    blockers = payload.get("blockers", ())
     passed = (
         _passed_status(payload)
         and payload.get("adapter_id") == "browser.playwright"
         and payload.get("sandboxed_worker") is True
         and sandbox_evidence_id.startswith("browser-sandbox-evidence-")
         and sandbox_receipt_id.startswith("sandbox-receipt-")
+        and worker_receipt.get("verification_status") == "passed"
+        and bool(str(payload.get("url_before", "")).strip())
+        and bool(str(payload.get("url_after", "")).strip())
+        and bool(str(payload.get("screenshot_before_ref", "")).strip())
+        and bool(str(payload.get("screenshot_after_ref", "")).strip())
+        and isinstance(network_requests, list)
+        and bool(network_requests)
+        and blockers == []
     )
     detail = (
         f"passed sandbox_evidence_id={sandbox_evidence_id} sandbox_receipt_id={sandbox_receipt_id}"
         if passed
         else (
             "requires status=passed, adapter_id=browser.playwright, sandboxed_worker=true, "
-            "sandbox_evidence_id, and sandbox_receipt_id"
+            "sandbox_evidence_id, sandbox_receipt_id, worker receipt, URL/screenshot refs, "
+            "network requests, and empty blockers"
         )
     )
     evidence_refs = tuple(ref for ref in (sandbox_evidence_id, sandbox_receipt_id) if ref)

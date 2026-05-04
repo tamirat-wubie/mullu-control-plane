@@ -63,6 +63,13 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
                 "sandboxed_worker": True,
                 "sandbox_evidence_id": "browser-sandbox-evidence-test",
                 "sandbox_receipt_id": "sandbox-receipt-test",
+                "url_before": "https://docs.mullusi.com/",
+                "url_after": "https://docs.mullusi.com/",
+                "screenshot_before_ref": "evidence:browser:before",
+                "screenshot_after_ref": "evidence:browser:after",
+                "network_requests": ["https://docs.mullusi.com/reference"],
+                "worker_receipt": {"verification_status": "passed"},
+                "blockers": [],
             }
         ),
         encoding="utf-8",
@@ -129,6 +136,76 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
     assert "browser-sandbox-evidence-test" in browser_evidence.evidence_refs
     assert "sandbox-receipt-test" in browser_evidence.evidence_refs
     assert report.report_id.startswith("capability-adapter-evidence-")
+
+
+def test_adapter_evidence_rejects_browser_receipt_without_action_evidence(tmp_path: Path) -> None:
+    browser_receipt = tmp_path / "browser.json"
+    document_receipt = tmp_path / "document.json"
+    voice_receipt = tmp_path / "voice.json"
+    email_calendar_receipt = tmp_path / "email-calendar.json"
+    browser_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "adapter_id": "browser.playwright",
+                "sandboxed_worker": True,
+                "sandbox_evidence_id": "browser-sandbox-evidence-test",
+                "sandbox_receipt_id": "sandbox-receipt-test",
+            }
+        ),
+        encoding="utf-8",
+    )
+    document_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "parser_ids": [
+                    "production-pdf",
+                    "production-docx",
+                    "production-xlsx",
+                    "production-pptx",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    voice_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "speech_to_text_status": "passed",
+                "text_to_speech_status": "passed",
+            }
+        ),
+        encoding="utf-8",
+    )
+    email_calendar_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "adapter_id": "communication.email_calendar_worker",
+                "external_write": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = collect_capability_adapter_evidence(
+        repo_root=_ROOT,
+        browser_receipt_path=browser_receipt,
+        document_receipt_path=document_receipt,
+        voice_receipt_path=voice_receipt,
+        email_calendar_receipt_path=email_calendar_receipt,
+        module_available=lambda name: True,
+        env_reader=lambda name: "configured-secret",
+    )
+    browser_evidence = next(adapter for adapter in report.adapters if adapter.adapter_id == "browser.playwright")
+
+    assert report.ready is False
+    assert browser_evidence.closed is False
+    assert browser_evidence.receipt_check.passed is False
+    assert "browser_live_evidence_missing" in report.blockers
+    assert "worker receipt" in browser_evidence.receipt_check.detail
 
 
 def test_adapter_evidence_cli_writes_report_and_honors_strict(tmp_path: Path, capsys) -> None:

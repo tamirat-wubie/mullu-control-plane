@@ -79,6 +79,8 @@ production_health_not_declared
 11. Update `DEPLOYMENT_STATUS.md` only after published witness and matching health probe evidence exist.
 12. Run final strict promotion validation.
 
+Browser adapter evidence remains open unless the adapter evidence report preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser sandbox proof.
+
 ## Terminal Proof Command
 
 ```powershell

@@ -90,12 +90,22 @@ def test_command_ledger_persists_command_and_events_through_store():
     assert events[1].next_state == CommandState.ALLOWED
 
 
-def test_redact_payload_masks_free_text_and_secret_fields_without_breaking_skill_params():
+def test_redact_payload_masks_free_text_and_secret_fields_without_breaking_capability_params():
     payload = {
         "body": "Email owner@example.com, call +1 202-555-0199, ssn 123-45-6789, card 4111 1111 1111 1111.",
         "metadata": {
             "api_key": "sk-live-secret",
             "notes": ["backup@example.com"],
+        },
+        "capability_intent": {
+            "domain": "communication",
+            "action": "send_email",
+            "capability_id": "communication.send_email",
+            "params": {
+                "recipient": "owner@example.com",
+                "body": "Send the report to owner@example.com",
+                "api_key": "never-store-this",
+            },
         },
         "skill_intent": {
             "skill": "communication",
@@ -116,6 +126,9 @@ def test_redact_payload_masks_free_text_and_secret_fields_without_breaking_skill
     )
     assert redacted["metadata"]["api_key"] == "[REDACTED:SECRET]"
     assert redacted["metadata"]["notes"] == ["[REDACTED:EMAIL]"]
+    assert redacted["capability_intent"]["params"]["recipient"] == "owner@example.com"
+    assert redacted["capability_intent"]["params"]["body"] == "Send the report to owner@example.com"
+    assert redacted["capability_intent"]["params"]["api_key"] == "[REDACTED:SECRET]"
     assert redacted["skill_intent"]["params"]["recipient"] == "owner@example.com"
     assert redacted["skill_intent"]["params"]["body"] == "Send the report to owner@example.com"
     assert redacted["skill_intent"]["params"]["api_key"] == "[REDACTED:SECRET]"
@@ -346,7 +359,46 @@ def test_command_ledger_anchor_returns_none_when_no_unanchored_events():
     assert ledger.list_anchors() == []
 
 
-def test_typed_intent_compiler_binds_skill_payload_to_contract():
+def test_typed_intent_compiler_prefers_capability_payload_to_contract():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-capability-payload",
+        intent="financial.send_payment",
+        payload={
+            "body": "pay vendor $50",
+            "capability_intent": {
+                "domain": "financial",
+                "action": "send_payment",
+                "capability_id": "financial.send_payment",
+                "params": {"amount": "50"},
+            },
+            "skill_intent": {
+                "skill": "enterprise",
+                "action": "knowledge_search",
+                "params": {"query": "legacy fallback"},
+            },
+        },
+    )
+
+    typed_intent = compile_typed_intent(command)
+    passport = capability_passport_for(typed_intent.name)
+
+    assert typed_intent.name == "financial.send_payment"
+    assert typed_intent.params == {"amount": "50"}
+    assert typed_intent.payload_hash == command.payload_hash
+    assert passport.capability == typed_intent.name
+    assert passport.risk_tier == "high"
+    assert "financial_admin" in passport.authority_required
+
+
+def test_typed_intent_compiler_binds_legacy_skill_payload_to_contract():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",
         store=InMemoryCommandLedgerStore(),

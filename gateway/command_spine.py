@@ -1260,7 +1260,7 @@ def _is_secret_field(field_name: str) -> bool:
 
 
 def _is_execution_params_path(path: tuple[str, ...]) -> bool:
-    return len(path) >= 2 and path[-2:] == ("skill_intent", "params")
+    return len(path) >= 2 and path[-2] in {"capability_intent", "skill_intent"} and path[-1] == "params"
 
 
 _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
@@ -1528,19 +1528,21 @@ _CAPABILITY_PASSPORTS: dict[str, CapabilityPassport] = {
 
 def compile_typed_intent(command: CommandEnvelope) -> TypedIntent:
     """Compile a command payload into a typed intent contract."""
-    skill_intent = command.redacted_payload.get("skill_intent")
-    if isinstance(skill_intent, dict):
-        skill = skill_intent.get("skill")
-        action = skill_intent.get("action")
-        params = skill_intent.get("params", {})
-        if not isinstance(skill, str) or not skill:
-            raise ValueError("skill intent requires skill")
+    capability_intent = command.redacted_payload.get("capability_intent")
+    if not isinstance(capability_intent, dict):
+        capability_intent = command.redacted_payload.get("skill_intent")
+    if isinstance(capability_intent, dict):
+        domain = capability_intent.get("domain") or capability_intent.get("skill")
+        action = capability_intent.get("action")
+        params = capability_intent.get("params", {})
+        if not isinstance(domain, str) or not domain:
+            raise ValueError("capability intent requires domain")
         if not isinstance(action, str) or not action:
-            raise ValueError("skill intent requires action")
+            raise ValueError("capability intent requires action")
         if not isinstance(params, dict):
-            raise ValueError("skill intent params must be an object")
-        name = f"{skill}.{action}"
-        schema_name = f"{skill}.{action}.intent.v1"
+            raise ValueError("capability intent params must be an object")
+        name = f"{domain}.{action}"
+        schema_name = f"{domain}.{action}.intent.v1"
         typed_params = dict(params)
     else:
         name = "llm_completion"

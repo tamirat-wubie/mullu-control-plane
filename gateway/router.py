@@ -93,6 +93,7 @@ class GatewayRouter:
         platform: Any,  # Platform instance from governed_session.py
         clock: Callable[[], str] | None = None,
         approval_router: ApprovalRouter | None = None,
+        capability_dispatcher: CapabilityDispatcher | None = None,
         skill_dispatcher: CapabilityDispatcher | None = None,
         intent_resolver: CapabilityIntentResolver | None = None,
         deduplicator: MessageDeduplicator | None = None,
@@ -106,10 +107,12 @@ class GatewayRouter:
         isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
         mcp_authority_records: MCPAuthorityRecords | None = None,
     ) -> None:
+        if capability_dispatcher is not None and skill_dispatcher is not None:
+            raise ValueError("use capability_dispatcher or skill_dispatcher, not both")
         self._platform = platform
         self._clock = clock or (lambda: datetime.now(timezone.utc).isoformat())
         self._approval = approval_router or ApprovalRouter(clock=self._clock)
-        self._skills = skill_dispatcher or CapabilityDispatcher()
+        self._capabilities = capability_dispatcher or skill_dispatcher or CapabilityDispatcher()
         self._intent_resolver = intent_resolver or CapabilityIntentResolver()
         self._dedup = deduplicator or MessageDeduplicator()
         self._commands = command_ledger or CommandLedger(clock=self._clock)
@@ -130,13 +133,14 @@ class GatewayRouter:
         self._closure_kernel = CausalClosureKernel(
             commands=self._commands,
             platform=self._platform,
-            skills=self._skills,
-            skill_intent_loader=self._skill_intent_from_command,
+            capability_dispatcher=self._capabilities,
+            capability_intent_loader=self._capability_intent_from_command,
             error_recorder=self._record_error,
             clock=self._clock,
             isolation_policy=CapabilityIsolationPolicy(environment=environment),
             isolated_executor=isolated_capability_executor,
         )
+        self._skills = self._capabilities
         self._channels: dict[str, ChannelAdapter] = {}
         self._message_count = 0
         self._duplicate_count = 0
@@ -259,6 +263,12 @@ class GatewayRouter:
             "metadata": dict(message.metadata),
         }
         if intent is not None:
+            payload["capability_intent"] = {
+                "domain": intent.domain,
+                "action": intent.action,
+                "capability_id": intent.capability_id,
+                "params": dict(intent.params),
+            }
             payload["skill_intent"] = {
                 "skill": intent.domain,
                 "domain": intent.domain,
@@ -303,9 +313,11 @@ class GatewayRouter:
             raise RuntimeError("governed action binding lost command")
         return governed
 
-    def _skill_intent_from_command(self, command: CommandEnvelope) -> CapabilityIntent | None:
-        """Rebuild the stored skill intent without reclassifying message text."""
-        raw = command.redacted_payload.get("skill_intent")
+    def _capability_intent_from_command(self, command: CommandEnvelope) -> CapabilityIntent | None:
+        """Rebuild the stored capability intent without reclassifying message text."""
+        raw = command.redacted_payload.get("capability_intent")
+        if not isinstance(raw, dict):
+            raw = command.redacted_payload.get("skill_intent")
         if not isinstance(raw, dict):
             return None
         skill = raw.get("domain") or raw.get("skill")
@@ -314,6 +326,10 @@ class GatewayRouter:
         if not isinstance(skill, str) or not isinstance(action, str) or not isinstance(params, dict):
             return None
         return CapabilityIntent(skill, action, dict(params))
+
+    def _skill_intent_from_command(self, command: CommandEnvelope) -> CapabilityIntent | None:
+        """Compatibility alias for older tests and persisted call paths."""
+        return self._capability_intent_from_command(command)
 
     def _record_error(self, reason_code: str = "gateway_runtime_error") -> None:
         """Record a kernel-visible gateway error."""

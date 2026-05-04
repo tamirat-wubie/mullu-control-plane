@@ -43,5 +43,6 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 |---|---|
 | Public repository surface | `python scripts/validate_public_repository_surface.py` |
 | Protocol manifest | `python scripts/validate_protocol_manifest.py` |
+| Governed runtime promotion | `python scripts/validate_governed_runtime_promotion.py --strict` |
 | Release gate anchoring | `python scripts/validate_release_status.py --strict` |
 

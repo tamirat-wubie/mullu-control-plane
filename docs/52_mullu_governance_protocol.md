@@ -19,6 +19,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 
 ## Protocol Rules
 
+### Governed Runtime Promotion
+
 1. Public contracts live in `schemas/`.
 2. Runtime-local Python, FastAPI, gateway, and script modules are not protocol contracts.
 3. Every public schema must use JSON Schema draft 2020-12 and a `urn:mullusi:schema:*` id.
@@ -32,7 +34,8 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 11. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
 12. General-agent promotion environment bindings are public contracts when they define the presence-only inputs required for operator handoff preflight.
 13. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
-14. Terminal closure certificates are public contracts when they certify final command disposition.
+14. Governed runtime promotion validators are public contracts when they provide domain-neutral terminal commands over compatibility-bound promotion evidence.
+15. Terminal closure certificates are public contracts when they certify final command disposition.
 
 ## Verification
 
@@ -50,6 +53,6 @@ protocol manifest ok: 31 schemas
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, terminal closure certificate contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment witness artifact contract, effect assurance record contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes

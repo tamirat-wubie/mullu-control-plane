@@ -402,6 +402,44 @@ class TestMessageRouting:
         assert captured_contexts[0].metadata["isolation_boundary_id"].startswith("isolation-boundary-")
         assert captured_contexts[0].metadata["isolation_boundary"]["execution_plane"] == "gateway_process"
 
+    def test_router_stores_capability_intent_with_legacy_alias(self):
+        dispatcher = SkillDispatcher()
+        dispatcher.register(FunctionCapabilityHandler(
+            "enterprise.knowledge_search",
+            lambda context, params: {
+                "response": "Knowledge searched.",
+                "chunks": ["policy"],
+                "scores": [1.0],
+                "total_chunks_searched": 1,
+                "receipt_status": "searched",
+            },
+        ))
+        router = GatewayRouter(
+            platform=StubPlatform(llm_response="fallback"),
+            capability_dispatcher=dispatcher,
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-capability-payload-1",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs",
+        ))
+        command = router._commands.get(response.metadata["command_id"])
+
+        assert command is not None
+        assert command.redacted_payload["capability_intent"]["capability_id"] == "enterprise.knowledge_search"
+        assert command.redacted_payload["capability_intent"]["domain"] == "enterprise"
+        assert command.redacted_payload["skill_intent"]["skill"] == "enterprise"
+        assert response.metadata["capability_id"] == "enterprise.knowledge_search"
+
     def test_multi_step_plan_executes_child_commands_and_certifies_plan(self):
         dispatcher = SkillDispatcher()
         dispatcher.register(FunctionCapabilityHandler(

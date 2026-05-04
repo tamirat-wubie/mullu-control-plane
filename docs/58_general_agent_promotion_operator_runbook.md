@@ -107,6 +107,8 @@ python scripts\produce_capability_adapter_live_receipts.py --target email-calend
 python scripts\collect_capability_adapter_evidence.py --strict --output .change_assurance\capability_adapter_evidence.json
 ```
 
+The browser adapter evidence is not closed unless `.change_assurance\capability_adapter_evidence.json` preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser live receipt.
+
 8. Publish deployment witness only after approval:
 
 ```powershell

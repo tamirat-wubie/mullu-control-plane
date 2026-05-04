@@ -29,6 +29,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Gateway closure witness | CI runs `python -m pytest tests/test_gateway -q` and `python scripts/validate_gateway_deployment_env.py --strict` | Reflected |
 | Deployment runtime input witness | `DEPLOYMENT_STATUS.md` records witness/conformance secret-name presence, absent deployment target variables, and absent `deployment-witness.yml` workflow runs | Reflected |
 | General-agent promotion handoff witness | `docs/59_general_agent_promotion_handoff_packet.md`, `examples/general_agent_promotion_handoff_packet.json`, `examples/general_agent_promotion_environment_bindings.json`, `scripts/validate_general_agent_promotion_handoff_packet.py`, `scripts/validate_general_agent_promotion_operator_checklist.py`, `scripts/validate_general_agent_promotion_environment_bindings.py`, `scripts/emit_general_agent_promotion_environment_binding_receipt.py`, `scripts/validate_general_agent_promotion_environment_binding_receipt.py`, `.change_assurance/general_agent_promotion_environment_binding_receipt.json`, and `scripts/preflight_general_agent_promotion_handoff.py` bind the operator checklist, closure plans, validation reports, environment binding preflight, and terminal proof command | Reflected |
+| Governed runtime promotion witness | `scripts/validate_governed_runtime_promotion.py` provides a domain-neutral terminal validation command over the existing governed promotion readiness contract | Reflected |
 | Operational witness | Runtime deployment, live health, and production readiness are not exposed on the repository landing page | Not reflected |
 
 ## Required Public Anchors
@@ -77,5 +78,6 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Browser sandbox evidence validation | `python scripts/validate_browser_sandbox_evidence.py --evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --json` |
 | General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |
 | General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |
+| Governed runtime promotion validation | `python scripts/validate_governed_runtime_promotion.py --strict` |
 | Change assurance | `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md` |
 

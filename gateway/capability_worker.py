@@ -2,9 +2,9 @@
 
 Purpose: Hosts the restricted worker HTTP surface used by the gateway control
     plane for dangerous capability execution.
-Governance scope: signed capability request verification, bounded skill
+Governance scope: signed capability request verification, bounded capability
     dispatch, signed execution receipt response.
-Dependencies: FastAPI, capability isolation contracts, skill dispatcher.
+Dependencies: FastAPI, capability isolation contracts, capability dispatcher.
 Invariants:
   - Unsigned or incorrectly signed requests are rejected before dispatch.
   - Worker responses carry execution receipts with evidence references.
@@ -30,12 +30,16 @@ from gateway.capability_isolation import (
     sign_capability_payload,
     verify_capability_signature,
 )
-from gateway.skill_dispatch import SkillDispatcher, SkillIntent, build_skill_dispatcher_from_platform
+from gateway.capability_dispatch import (
+    CapabilityDispatcher,
+    CapabilityIntent,
+    build_capability_dispatcher_from_platform,
+)
 
 
 def create_capability_worker_app(
     *,
-    dispatcher: SkillDispatcher | None = None,
+    dispatcher: CapabilityDispatcher | None = None,
     platform: Any = None,
     signing_secret: str | None = None,
     worker_id: str = "restricted-capability-worker",
@@ -44,7 +48,7 @@ def create_capability_worker_app(
     secret = signing_secret if signing_secret is not None else os.environ.get("MULLU_CAPABILITY_WORKER_SECRET", "")
     if not secret:
         raise ValueError("capability worker signing secret is required")
-    resolved_dispatcher = dispatcher or build_skill_dispatcher_from_platform(platform)
+    resolved_dispatcher = dispatcher or build_capability_dispatcher_from_platform(platform)
     worker = LocalCapabilityExecutionWorker(resolved_dispatcher, worker_id=worker_id)
     app = FastAPI(title="Mullu Capability Worker", version="1.0.0")
 
@@ -69,7 +73,7 @@ def create_capability_worker_app(
             execution_request = capability_execution_request_from_mapping(raw)
             if not execution_request.boundary.isolation_required:
                 raise RuntimeError("restricted worker requires an isolated capability boundary")
-            intent = SkillIntent(
+            intent = CapabilityIntent(
                 str(execution_request.intent["skill"]),
                 str(execution_request.intent["action"]),
                 dict(execution_request.intent.get("params", {})),
@@ -134,7 +138,7 @@ def _default_app() -> FastAPI:
         secret = "local-capability-worker-secret"
     dispatcher = None
     if environment in {"local_dev", "test"} and _truthy(os.environ.get("MULLU_CAPABILITY_WORKER_ENABLE_SMOKE_STUB", "")):
-        dispatcher = SkillDispatcher(payment_executor=_SmokePaymentExecutor())
+        dispatcher = CapabilityDispatcher(payment_executor=_SmokePaymentExecutor())
     return create_capability_worker_app(dispatcher=dispatcher, signing_secret=secret)
 
 

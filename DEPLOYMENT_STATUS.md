@@ -68,6 +68,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | General-agent promotion handoff preflight | `scripts/preflight_general_agent_promotion_handoff.py` verifies packet, checklist, closure reports, readiness report, and environment binding presence without printing secret values | Reflected |
 | Deployment capability capsule | `capsules/deployment.json` and `capabilities/deployment/capability_pack.json` govern `deployment.witness.collect` and `deployment.witness.publish.with_approval` | Reflected |
 | General-agent promotion validator | `scripts/validate_general_agent_promotion.py --strict` blocks production general-agent claims until governed capability records, real browser/document/voice adapters, sandbox runner evidence, MCP import governance, deployment witness publication, and public health evidence all pass | Reflected |
+| Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
 | Public production health | No governed production endpoint is declared in this repository | Not reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
@@ -144,4 +145,5 @@ Before this witness can claim public deployment health, the repository must name
 | General-agent promotion handoff preflight | `python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json` |
 | General-agent promotion handoff preflight validation | `python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json` |
 | General-agent promotion validation | `python scripts/validate_general_agent_promotion.py --strict` |
+| Governed runtime promotion validation | `python scripts/validate_governed_runtime_promotion.py --strict` |
 

@@ -2,8 +2,8 @@
 
 Purpose: Classifies dangerous gateway capabilities and routes them through an
     explicit execution plane before effects can be claimed.
-Governance scope: gateway skill dispatch for world-mutating capabilities.
-Dependencies: gateway command spine capability passports, skill dispatcher.
+Governance scope: gateway capability dispatch for world-mutating capabilities.
+Dependencies: gateway command spine capability passports, capability dispatcher.
 Invariants:
   - Dangerous capabilities carry an execution-boundary witness.
   - Pilot and production runtimes fail closed without an isolated executor.
@@ -21,8 +21,8 @@ import urllib.request
 from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol
 
+from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 from gateway.command_spine import CapabilityPassport, canonical_hash
-from gateway.skill_dispatch import SkillDispatcher, SkillIntent
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,7 +140,7 @@ class IsolatedCapabilityExecutor(Protocol):
     def execute(
         self,
         *,
-        intent: SkillIntent,
+        intent: CapabilityIntent,
         tenant_id: str,
         identity_id: str,
         boundary: CapabilityExecutionBoundary,
@@ -203,14 +203,14 @@ class CapabilityIsolationPolicy:
 class LocalCapabilityExecutionWorker:
     """Local development execution plane that emits isolation receipts."""
 
-    def __init__(self, dispatcher: SkillDispatcher, *, worker_id: str = "local-capability-worker") -> None:
+    def __init__(self, dispatcher: CapabilityDispatcher, *, worker_id: str = "local-capability-worker") -> None:
         self._dispatcher = dispatcher
         self._worker_id = worker_id
 
     def execute(
         self,
         *,
-        intent: SkillIntent,
+        intent: CapabilityIntent,
         tenant_id: str,
         identity_id: str,
         boundary: CapabilityExecutionBoundary,
@@ -323,7 +323,7 @@ class RemoteCapabilityExecutionExecutor:
     def execute(
         self,
         *,
-        intent: SkillIntent,
+        intent: CapabilityIntent,
         tenant_id: str,
         identity_id: str,
         boundary: CapabilityExecutionBoundary,
@@ -371,7 +371,7 @@ def build_isolated_capability_executor_from_env() -> IsolatedCapabilityExecutor 
 
 def build_capability_execution_request(
     *,
-    intent: SkillIntent,
+    intent: CapabilityIntent,
     tenant_id: str,
     identity_id: str,
     boundary: CapabilityExecutionBoundary,
@@ -393,7 +393,7 @@ def build_capability_execution_request(
 
 def _build_execution_request(
     *,
-    intent: SkillIntent,
+    intent: CapabilityIntent,
     tenant_id: str,
     identity_id: str,
     boundary: CapabilityExecutionBoundary,
@@ -558,7 +558,7 @@ def _validate_worker_response(
         raise RuntimeError("capability worker receipt output mismatch")
 
 
-def _validate_boundary_matches_intent(boundary: CapabilityExecutionBoundary, intent: SkillIntent) -> None:
+def _validate_boundary_matches_intent(boundary: CapabilityExecutionBoundary, intent: CapabilityIntent) -> None:
     expected_capability_id = f"{intent.skill}.{intent.action}"
     if boundary.capability_id != expected_capability_id:
         raise RuntimeError("capability boundary does not match intent")

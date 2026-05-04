@@ -57,5 +57,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     assert "document_adapter_not_closed" not in packet_text
     assert f"Aggregate closure actions | {aggregate_closure_actions}" in packet_text
     assert "Approval-required actions | 4" in packet_text
+    assert "browser-sandbox-evidence-*" in packet_text
+    assert "sandbox-receipt-*" in packet_text
     assert "validate_general_agent_promotion.py --strict" in packet_text
     assert "STATUS:" in packet_text

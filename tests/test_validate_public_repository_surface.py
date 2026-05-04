@@ -58,6 +58,7 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "python scripts/validate_browser_sandbox_evidence.py --evidence \"$MULLU_BROWSER_SANDBOX_EVIDENCE\" --json" in content
     assert "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json" in content
     assert "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json" in content
+    assert "python scripts/validate_governed_runtime_promotion.py --strict" in content
     assert "docs/59_general_agent_promotion_handoff_packet.md" in content
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
@@ -78,6 +79,7 @@ def test_status_witness_requires_protocol_manifest_anchor() -> None:
     assert "Protocol witness" in content
     assert "docs/52_mullu_governance_protocol.md" in content
     assert "python scripts/validate_protocol_manifest.py" in content
+    assert "scripts/validate_governed_runtime_promotion.py" in content
 
 
 def test_github_surface_requires_protocol_document_anchor() -> None:
@@ -139,6 +141,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert errors == []
     assert "protocol manifest ok: 31 schemas" in content
     assert "Deployment handoff receipts are public contracts" in content
+    assert "Governed runtime promotion validators are public contracts" in content
     assert "Terminal closure certificates are public contracts" in content
     assert "python scripts\\validate_protocol_manifest.py" in content
 

@@ -90,6 +90,7 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert any("validate_browser_sandbox_evidence.py" in literal for literal in deployment_literals)
     assert any("preflight_general_agent_promotion_handoff.py" in literal for literal in deployment_literals)
     assert any("validate_general_agent_promotion_handoff_preflight.py" in literal for literal in deployment_literals)
+    assert any("validate_governed_runtime_promotion.py" in literal for literal in deployment_literals)
     assert any("docs/59_general_agent_promotion_handoff_packet.md" in literal for literal in deployment_literals)
     assert any("examples/general_agent_promotion_handoff_packet.json" in literal for literal in deployment_literals)
     assert any("examples/general_agent_promotion_environment_bindings.json" in literal for literal in deployment_literals)
@@ -122,6 +123,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "validate_browser_sandbox_evidence.py" in content
     assert "preflight_general_agent_promotion_handoff.py" in content
     assert "validate_general_agent_promotion_handoff_preflight.py" in content
+    assert "validate_governed_runtime_promotion.py" in content
     assert "Protocol witness" in content
     assert "31-schema public contract index" in content
     assert "python scripts/validate_protocol_manifest.py" in content
@@ -196,6 +198,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
 
     assert errors == []
     assert "python scripts/validate_protocol_manifest.py" in REQUIRED_CI_LITERALS
+    assert "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json" in REQUIRED_CI_LITERALS
     assert any(
         "validate_general_agent_promotion_closure_plan.py" in literal
         for literal in REQUIRED_CI_LITERALS

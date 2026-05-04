@@ -10,13 +10,13 @@ from scripts.emit_general_agent_promotion_environment_binding_receipt import (
     write_environment_binding_receipt,
 )
 from scripts.preflight_general_agent_promotion_handoff import (
-    EXPECTED_ACTION_COUNT,
     main,
     preflight_general_agent_promotion_handoff,
     write_handoff_preflight_report,
 )
 
 
+DEFAULT_ACTION_COUNT = 13
 REQUIRED_ENV = {
     "MULLU_BROWSER_SANDBOX_EVIDENCE",
     "MULLU_VOICE_PROBE_AUDIO",
@@ -141,8 +141,8 @@ def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
         json.dumps(
             {
                 "ok": True,
-                "expected_action_count": EXPECTED_ACTION_COUNT,
-                "observed_action_count": EXPECTED_ACTION_COUNT - 1,
+                "expected_action_count": DEFAULT_ACTION_COUNT,
+                "observed_action_count": DEFAULT_ACTION_COUNT - 1,
                 "expected_approval_required_count": 4,
                 "observed_approval_required_count": 4,
             }
@@ -207,7 +207,7 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
 def _write_valid_reports(
     tmp_path: Path,
     *,
-    action_count: int = EXPECTED_ACTION_COUNT,
+    action_count: int = DEFAULT_ACTION_COUNT,
 ) -> tuple[Path, Path, Path]:
     schema_validation = tmp_path / "schema-validation.json"
     drift_validation = tmp_path / "drift-validation.json"
