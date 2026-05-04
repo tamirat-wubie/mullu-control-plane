@@ -122,6 +122,27 @@ def test_published_status_rejects_missing_gateway_health_step() -> None:
     assert "deployment_witness.json" in errors[0]
 
 
+def test_published_status_rejects_unproven_health_probe_receipt() -> None:
+    witness = _published_witness()
+    witness["public_health_endpoint"] = "https://other-gateway.example/health"
+    witness["health_http_status"] = 503
+    witness["health_response_digest"] = ""
+
+    errors = validate_publication_closure(
+        deployment_status_text=_deployment_status(
+            "published",
+            "https://gateway.example/health",
+        ),
+        witness_payload=witness,
+        witness_path=Path(".change_assurance/deployment_witness.json"),
+    )
+
+    assert len(errors) == 3
+    assert "health_http_status 503 != 200" in errors[0]
+    assert "health_response_digest must be a sha256 digest" in errors[1]
+    assert "witness public health endpoint does not match" in errors[2]
+
+
 def test_published_status_rejects_health_endpoint_witness_mismatch() -> None:
     errors = validate_publication_closure(
         deployment_status_text=_deployment_status(
@@ -196,6 +217,11 @@ def _published_witness() -> dict[str, object]:
     return {
         "witness_id": "deployment-witness-001",
         "gateway_url": "https://gateway.example",
+        "public_health_endpoint": "https://gateway.example/health",
+        "health_http_status": 200,
+        "health_response_digest": (
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        ),
         "deployment_claim": "published",
         "health_status": "healthy",
         "runtime_witness_status": "healthy",

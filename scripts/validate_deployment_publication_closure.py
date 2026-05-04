@@ -40,10 +40,14 @@ PUBLIC_HEALTH_PATTERN = re.compile(
     r"^\*\*Public production health endpoint:\*\*\s+`([^`]+)`$",
     re.MULTILINE,
 )
+HEALTH_RESPONSE_DIGEST_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 VALID_DEPLOYMENT_STATES = frozenset({"not-published", "published"})
 REQUIRED_PUBLISHED_FIELDS = (
     "witness_id",
     "gateway_url",
+    "public_health_endpoint",
+    "health_http_status",
+    "health_response_digest",
     "deployment_claim",
     "health_status",
     "runtime_witness_status",
@@ -167,6 +171,7 @@ def _validate_published_witness(
     for field_name in (
         "witness_id",
         "gateway_url",
+        "public_health_endpoint",
         "latest_conformance_certificate_id",
         "latest_terminal_certificate_id",
         "latest_command_event_hash",
@@ -182,6 +187,12 @@ def _validate_published_witness(
         errors.append(f"{witness_path}: published gateway_url must not be localhost")
     if gateway_url and not gateway_url.startswith("https://"):
         errors.append(f"{witness_path}: published gateway_url must use https")
+    health_http_status = witness_payload.get("health_http_status")
+    if health_http_status != 200:
+        errors.append(f"{witness_path}: health_http_status {health_http_status!r} != 200")
+    health_response_digest = str(witness_payload.get("health_response_digest", ""))
+    if HEALTH_RESPONSE_DIGEST_PATTERN.fullmatch(health_response_digest) is None:
+        errors.append(f"{witness_path}: health_response_digest must be a sha256 digest")
 
     steps = witness_payload.get("steps")
     if not isinstance(steps, list) or not steps:
@@ -214,7 +225,14 @@ def _validate_public_health_matches_witness(
         return []
     if not gateway_url.startswith("https://"):
         return []
-    expected_health_endpoint = f"{gateway_url}/health"
+    witness_health_endpoint = str(witness_payload.get("public_health_endpoint", "")).strip()
+    expected_health_endpoint = witness_health_endpoint or f"{gateway_url}/health"
+    if witness_health_endpoint and witness_health_endpoint != f"{gateway_url}/health":
+        return [
+            "witness public health endpoint does not match witness gateway URL: "
+            f"{witness_health_endpoint!r} != {gateway_url + '/health'!r} "
+            f"from {witness_path}"
+        ]
     if not public_health_endpoint.startswith("https://"):
         return ["public production health endpoint must use https"]
     if public_health_endpoint != expected_health_endpoint:

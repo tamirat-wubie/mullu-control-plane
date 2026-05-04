@@ -8,6 +8,9 @@
     "witness_id",
     "collected_at",
     "gateway_url",
+    "public_health_endpoint",
+    "health_http_status",
+    "health_response_digest",
     "deployment_claim",
     "health_status",
     "runtime_witness_status",
@@ -35,6 +38,18 @@
     "gateway_url": {
       "type": "string",
       "minLength": 1
+    },
+    "public_health_endpoint": {
+      "type": "string",
+      "minLength": 1
+    },
+    "health_http_status": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "health_response_digest": {
+      "type": "string",
+      "pattern": "^(sha256:[0-9a-f]{64})?$"
     },
     "deployment_claim": {
       "type": "string",

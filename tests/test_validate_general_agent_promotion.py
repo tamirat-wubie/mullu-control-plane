@@ -218,8 +218,13 @@ def _deployment_status(state: str, public_health_endpoint: str) -> str:
 
 def _published_witness() -> dict[str, object]:
     return {
-        "witness_id": "deployment-witness-001",
+        "witness_id": "deployment-witness-0123456789abcdef",
         "gateway_url": "https://gateway.example",
+        "public_health_endpoint": "https://gateway.example/health",
+        "health_http_status": 200,
+        "health_response_digest": (
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        ),
         "deployment_claim": "published",
         "health_status": "healthy",
         "runtime_witness_status": "healthy",
@@ -232,10 +237,10 @@ def _published_witness() -> dict[str, object]:
         "runtime_witness_id": "runtime-witness-001",
         "runtime_environment": "pilot",
         "runtime_signature_key_id": "runtime-key-001",
-        "steps": (
+        "steps": [
             {"name": "gateway health", "passed": True, "detail": "ok"},
             {"name": "gateway runtime witness", "passed": True, "detail": "ok"},
             {"name": "runtime conformance signature", "passed": True, "detail": "ok"},
-        ),
-        "errors": (),
+        ],
+        "errors": [],
     }
