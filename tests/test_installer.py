@@ -38,6 +38,8 @@ class TestMulluConfig:
         assert env["MULLU_ENV"] == "pilot"
         assert env["MULLU_DB_BACKEND"] == "memory"
         assert env["MULLU_LLM_BACKEND"] == "stub"
+        assert env["MULLU_CORS_ORIGINS"] == "https://dashboard.mullusi.com,http://localhost:3000"
+        assert env["MULLU_CAPABILITY_WORKER_URL"] == "http://capability-worker:8010/capability/execute"
 
     def test_to_env_dict_with_anthropic(self):
         cfg = MulluConfig()
@@ -138,6 +140,11 @@ class TestFileGeneration:
         content = env_path.read_text()
         assert "ANTHROPIC_API_KEY=test-key" in content
         assert "MULLU_LLM_BACKEND=anthropic" in content
+        assert "MULLU_COMMAND_ANCHOR_SECRET=" in content
+        assert "MULLU_ENCRYPTION_KEY=" in content
+        assert "MULLU_GATEWAY_APPROVAL_SECRET=" in content
+        assert "MULLU_RUNTIME_CONFORMANCE_SECRET=" in content
+        assert "MULLU_CAPABILITY_WORKER_SECRET=" in content
 
     def test_write_yaml_file(self, tmp_path):
         cfg = MulluConfig()
@@ -176,6 +183,8 @@ class TestNonInteractiveInit:
         content = (tmp_path / ".env").read_text()
         assert "MULLU_LLM_BACKEND=stub" in content
         assert "MULLU_DB_BACKEND=memory" in content
+        assert "MULLU_GATEWAY_APPROVAL_SECRET=" in content
+        assert "MULLU_RUNTIME_CONFORMANCE_SECRET=" in content
 
 
 # ═══ Status Command ═══

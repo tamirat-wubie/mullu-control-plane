@@ -11,6 +11,7 @@ Invariants:
 - Invalid temporal action payloads fail closed.
 - Temporal policy runs before rate-limit and budget guards in the standard chain.
 - Endpoint logic does not execute when temporal policy denies, defers, or escalates.
+- Temporal guard details are preserved in decision logs and proof receipts.
 
 ## Contract Shape
 
@@ -66,3 +67,36 @@ ctx["temporal_policy_verdict"]
 
 The temporal runtime emits a `temporal_action_decided` event. This anchors the
 causal chain from request boundary to temporal policy decision.
+
+The middleware also forwards the temporal guard detail into the governance
+decision log and proof bridge:
+
+```json
+{
+  "guard_name": "temporal",
+  "allowed": false,
+  "reason": "approval_expired",
+  "detail": {
+    "decision_id": "dec-temp-action-...",
+    "verdict": "deny"
+  }
+}
+```
+
+This detail appears in:
+
+1. `GovernanceDecision.guards_evaluated[].detail`
+2. `GovernanceDecision.to_dict()["guards_evaluated"][].detail`
+3. `GovernanceProof.guard_verdicts[].detail`
+4. `ProofCapsule.receipt.guard_verdicts[].detail`
+
+## Operator Checks
+
+For a temporal denial, operators should verify:
+
+1. HTTP response has `guard = "temporal"`.
+2. HTTP response `error` matches the bounded temporal reason.
+3. Decision log guard detail has a `decision_id`.
+4. Proof receipt guard detail has the same `decision_id`.
+5. The endpoint did not execute when the verdict was `deny`, `defer`, or
+   `escalate`.

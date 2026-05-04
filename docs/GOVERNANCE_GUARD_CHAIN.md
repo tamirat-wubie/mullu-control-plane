@@ -126,6 +126,7 @@ class of silent bypass G4.1 closes for the RBAC engine.
 | Failure semantics | Deny/defer/escalate verdicts from `TemporalRuntimeEngine.decide_temporal_action()` block admission; invalid temporal action contracts deny fail-closed |
 | Engine | `TemporalRuntimeEngine` |
 | Bypass conditions | If `temporal_action` is absent, the guard is a no-op. If `temporal_runtime is None`, the guard is skipped; the default server stack wires it. |
+| Audit/proof detail | Guard result detail carries `decision_id` and temporal `verdict`; middleware forwards that detail into decision logs and proof receipts. |
 
 ### 8. Rate Limit (`rate_limit`)
 
@@ -234,6 +235,41 @@ The chain has no "skip" path. There is no admin override, no
 system-actor bypass, no debug flag. System-actor concessions exist
 inside individual guards (e.g., empty `tenant_id` may pass the budget
 guard) but these are documented per-guard, not chain-wide.
+
+## Temporal Proof Witness
+
+Temporal policy has an additional proof witness because its decision is
+stateful: it depends on runtime time, request windows, retry counts,
+evidence freshness, and approval validity.
+
+When a request body includes `temporal_action`, the admission path is:
+
+```
+GovernanceMiddleware
+  -> _extract_temporal_action_field
+  -> ctx["temporal_action"]
+  -> create_temporal_guard
+  -> TemporalRuntimeEngine.decide_temporal_action
+  -> GuardResult.detail
+  -> GovernanceDecisionLog
+  -> ProofBridge
+  -> ProofCapsule.receipt.guard_verdicts[].detail
+```
+
+The temporal guard detail has this bounded shape:
+
+```json
+{
+  "decision_id": "dec-temp-action-...",
+  "verdict": "deny"
+}
+```
+
+Operators can join `decision_id` across decision logs and proof receipts
+to show that the same runtime temporal decision caused the request
+admission result. This is the audit witness for causal continuity:
+request boundary, temporal policy, guard denial, and proof receipt all
+name the same temporal decision.
 
 ## What this spec does NOT claim
 

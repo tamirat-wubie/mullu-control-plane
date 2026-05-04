@@ -5,12 +5,13 @@ metadata:
   namespace: mullu
 data:
   MULLU_ENV: "production"
+  MULLU_API_AUTH_REQUIRED: "true"
   MULLU_DB_BACKEND: "postgresql"
   MULLU_LLM_BACKEND: "anthropic"
   MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
   MULLU_CERT_INTERVAL: "300"
   MULLU_CERT_ENABLED: "true"
-  MULLU_CORS_ORIGINS: ""  # Set to production frontend URL
+  MULLU_CORS_ORIGINS: "https://dashboard.mullusi.com"
   MULLU_STATE_DIR: "/data/state"
   MULLU_PII_SCAN: "true"
   MULLU_COMMAND_LEDGER_BACKEND: "postgresql"
@@ -35,12 +36,15 @@ metadata:
 type: Opaque
 stringData:
   MULLU_DB_URL: ""  # Set via: kubectl create secret generic mullu-secrets --from-literal=MULLU_DB_URL=postgresql://...
+  MULLU_COMMAND_LEDGER_DB_URL: ""  # Set to MULLU_DB_URL or a dedicated PostgreSQL ledger URL
   ANTHROPIC_API_KEY: ""
   OPENAI_API_KEY: ""
   MULLU_JWT_SECRET: ""  # base64-encoded 32-byte key — set via kubectl create secret
   MULLU_ENCRYPTION_KEY: ""  # base64-encoded 32-byte AES key — set via kubectl create secret
   MULLU_COMMAND_ANCHOR_SECRET: ""  # HMAC secret for command event anchor signatures
+  MULLU_GATEWAY_APPROVAL_SECRET: ""  # HMAC secret for governed approval callbacks
   MULLU_RUNTIME_WITNESS_SECRET: ""  # HMAC secret for runtime witness signatures
+  MULLU_RUNTIME_CONFORMANCE_SECRET: ""  # HMAC secret for runtime conformance witness collection
   MULLU_CAPABILITY_WORKER_SECRET: ""  # HMAC secret shared by gateway and capability worker
 ---
 apiVersion: v1
