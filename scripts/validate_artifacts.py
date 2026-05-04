@@ -1127,6 +1127,498 @@ def _validate_worker_capacity_fixture_dict(payload: dict[str, Any], path: Path) 
     return errors
 
 
+def _validate_simulation_option_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "option_id",
+            "label",
+            "risk_level",
+            "estimated_cost",
+            "estimated_duration_seconds",
+            "success_probability",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("option_id", "label", "risk_level"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_non_negative_float(payload["estimated_cost"], field_name="estimated_cost", path=path)
+    )
+    errors.extend(
+        _require_non_negative_float(
+            payload["estimated_duration_seconds"],
+            field_name="estimated_duration_seconds",
+            path=path,
+        )
+    )
+    errors.extend(
+        _require_number_in_range(
+            payload["success_probability"],
+            field_name="success_probability",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    return errors
+
+
+def _require_non_negative_float(value: Any, *, field_name: str, path: Path) -> list[str]:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return [f"{_relative_path(path)}: field '{field_name}' must be a numeric value"]
+    if value < 0:
+        return [f"{_relative_path(path)}: field '{field_name}' must be non-negative"]
+    return []
+
+
+def _validate_simulation_request_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("request_id", "context_type", "context_id", "description", "options"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("request_id", "context_type", "context_id", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    options = payload["options"]
+    if not isinstance(options, list) or not options:
+        errors.append(f"{_relative_path(path)}: field 'options' must be a non-empty array")
+        return errors
+    seen_option_ids: set[str] = set()
+    for index, option in enumerate(options):
+        if not isinstance(option, dict):
+            errors.append(f"{_relative_path(path)}: options[{index}] must be an object")
+            continue
+        nested_path = Path(f"{path.as_posix()}#options[{index}]")
+        errors.extend(_validate_simulation_option_fixture_dict(option, nested_path))
+        option_id = option.get("option_id")
+        if isinstance(option_id, str) and option_id in seen_option_ids:
+            errors.append(f"{_relative_path(path)}: options must not repeat option_id '{option_id}'")
+        elif isinstance(option_id, str):
+            seen_option_ids.add(option_id)
+    return errors
+
+
+def _validate_consequence_estimate_dict(payload: dict[str, Any], path: Path) -> list[str]:
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "estimate_id",
+            "option_id",
+            "affected_node_ids",
+            "new_edges_count",
+            "new_obligations_count",
+            "blocked_nodes_count",
+            "unblocked_nodes_count",
+        ),
+        kind="consequence",
+    )
+    if errors:
+        return errors
+    for field_name in ("estimate_id", "option_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    affected_node_ids = payload["affected_node_ids"]
+    if not isinstance(affected_node_ids, list):
+        errors.append(f"{_relative_path(path)}: field 'affected_node_ids' must be an array")
+    else:
+        for index, node_id in enumerate(affected_node_ids):
+            if not isinstance(node_id, str) or not node_id.strip():
+                errors.append(
+                    f"{_relative_path(path)}: affected_node_ids[{index}] must be a non-empty string"
+                )
+    for field_name in (
+        "new_edges_count",
+        "new_obligations_count",
+        "blocked_nodes_count",
+        "unblocked_nodes_count",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_risk_estimate_dict(payload: dict[str, Any], path: Path) -> list[str]:
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "estimate_id",
+            "option_id",
+            "risk_level",
+            "incident_probability",
+            "review_burden",
+            "provider_exposure_count",
+            "verification_difficulty",
+            "rationale",
+        ),
+        kind="risk",
+    )
+    if errors:
+        return errors
+    for field_name in ("estimate_id", "option_id", "risk_level", "verification_difficulty", "rationale"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(
+            payload["incident_probability"],
+            field_name="incident_probability",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    for field_name in ("review_burden", "provider_exposure_count"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_obligation_projection_dict(payload: dict[str, Any], path: Path) -> list[str]:
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "projection_id",
+            "option_id",
+            "new_obligations",
+            "fulfilled_obligations",
+            "deadline_pressure",
+        ),
+        kind="obligation_projection",
+    )
+    if errors:
+        return errors
+    for field_name in ("projection_id", "option_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for list_name in ("new_obligations", "fulfilled_obligations"):
+        values = payload[list_name]
+        if not isinstance(values, list):
+            errors.append(f"{_relative_path(path)}: field '{list_name}' must be an array")
+        else:
+            for index, obligation_id in enumerate(values):
+                if not isinstance(obligation_id, str) or not obligation_id.strip():
+                    errors.append(
+                        f"{_relative_path(path)}: {list_name}[{index}] must be a non-empty string"
+                    )
+    errors.extend(
+        _require_non_negative_int(
+            payload["deadline_pressure"],
+            field_name="deadline_pressure",
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_simulation_option_fixture_dict(payload: dict[str, Any], path: Path) -> list[str]:
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "option_id",
+            "label",
+            "risk_level",
+            "estimated_cost",
+            "estimated_duration_seconds",
+            "success_probability",
+        ),
+        kind="simulation_option",
+    )
+    if errors:
+        return errors
+    for field_name in ("option_id", "label", "risk_level"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["estimated_cost"], field_name="estimated_cost", path=path))
+    errors.extend(
+        _require_non_negative_float(
+            payload["estimated_duration_seconds"],
+            field_name="estimated_duration_seconds",
+            path=path,
+        )
+    )
+    errors.extend(
+        _require_number_in_range(
+            payload["success_probability"],
+            field_name="success_probability",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    return errors
+
+
+def _validate_simulation_outcome_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "outcome_id",
+            "option_id",
+            "consequence",
+            "risk",
+            "obligation_projection",
+            "simulated_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["outcome_id"], field_name="outcome_id", path=path))
+    errors.extend(_require_non_empty_text(payload["option_id"], field_name="option_id", path=path))
+    errors.extend(_validate_iso8601_text(payload["simulated_at"], field_name="simulated_at", path=path))
+    for nested_name, validator in (
+        ("consequence", _validate_consequence_estimate_dict),
+        ("risk", _validate_risk_estimate_dict),
+        ("obligation_projection", _validate_obligation_projection_dict),
+    ):
+        nested_value = payload[nested_name]
+        if not isinstance(nested_value, dict):
+            errors.append(f"{_relative_path(path)}: field '{nested_name}' must be an object")
+        else:
+            nested_path = Path(f"{path.as_posix()}#{nested_name}")
+            errors.extend(validator(nested_value, nested_path))
+            option_id = nested_value.get("option_id")
+            if isinstance(option_id, str) and option_id != payload["option_id"]:
+                errors.append(
+                    f"{_relative_path(path)}: {nested_name}.option_id must match outcome option_id"
+                )
+    return errors
+
+
+def _validate_simulation_verdict_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "verdict_id",
+            "comparison_id",
+            "verdict_type",
+            "recommended_option_id",
+            "confidence",
+            "reasons",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("verdict_id", "comparison_id", "verdict_type", "recommended_option_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(
+            payload["confidence"],
+            field_name="confidence",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    reasons = payload["reasons"]
+    if not isinstance(reasons, list) or not reasons:
+        errors.append(f"{_relative_path(path)}: field 'reasons' must be a non-empty array")
+    else:
+        for index, reason in enumerate(reasons):
+            if not isinstance(reason, str) or not reason.strip():
+                errors.append(f"{_relative_path(path)}: reasons[{index}] must be a non-empty string")
+    return errors
+
+
+def _validate_supervisor_policy_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "policy_id",
+            "tick_interval_ms",
+            "max_events_per_tick",
+            "max_actions_per_tick",
+            "backpressure_threshold",
+            "livelock_repeat_threshold",
+            "livelock_strategy",
+            "heartbeat_every_n_ticks",
+            "checkpoint_every_n_ticks",
+            "max_consecutive_errors",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["policy_id"], field_name="policy_id", path=path))
+    errors.extend(_require_non_empty_text(payload["livelock_strategy"], field_name="livelock_strategy", path=path))
+    for field_name in (
+        "tick_interval_ms",
+        "max_events_per_tick",
+        "max_actions_per_tick",
+        "backpressure_threshold",
+        "livelock_repeat_threshold",
+        "heartbeat_every_n_ticks",
+        "checkpoint_every_n_ticks",
+        "max_consecutive_errors",
+    ):
+        errors.extend(_require_positive_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_supervisor_health_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "health_id",
+            "tick_number",
+            "phase",
+            "consecutive_errors",
+            "consecutive_idle_ticks",
+            "backpressure_active",
+            "livelock_detected",
+            "open_obligations",
+            "pending_events",
+            "overall_confidence",
+            "assessed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("health_id", "phase"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "tick_number",
+        "consecutive_errors",
+        "consecutive_idle_ticks",
+        "open_obligations",
+        "pending_events",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("backpressure_active", "livelock_detected"):
+        if not isinstance(payload[field_name], bool):
+            errors.append(f"{_relative_path(path)}: field '{field_name}' must be boolean")
+    errors.extend(
+        _require_number_in_range(
+            payload["overall_confidence"],
+            field_name="overall_confidence",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    return errors
+
+
+def _validate_runtime_heartbeat_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "heartbeat_id",
+            "tick_number",
+            "phase",
+            "outcome_of_last_tick",
+            "open_obligations",
+            "pending_events",
+            "uptime_ticks",
+            "emitted_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("heartbeat_id", "phase", "outcome_of_last_tick"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("tick_number", "open_obligations", "pending_events", "uptime_ticks"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["emitted_at"], field_name="emitted_at", path=path))
+    return errors
+
+
+def _validate_supervisor_checkpoint_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "checkpoint_id",
+            "tick_number",
+            "phase",
+            "status",
+            "open_obligation_ids",
+            "pending_event_count",
+            "consecutive_errors",
+            "consecutive_idle_ticks",
+            "recent_tick_outcomes",
+            "state_hash",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("checkpoint_id", "phase", "status", "state_hash"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "tick_number",
+        "pending_event_count",
+        "consecutive_errors",
+        "consecutive_idle_ticks",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    for list_name in ("open_obligation_ids", "recent_tick_outcomes"):
+        values = payload[list_name]
+        if not isinstance(values, list):
+            errors.append(f"{_relative_path(path)}: field '{list_name}' must be an array")
+        else:
+            for index, value in enumerate(values):
+                if not isinstance(value, str) or not value.strip():
+                    errors.append(f"{_relative_path(path)}: {list_name}[{index}] must be a non-empty string")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_livelock_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "livelock_id",
+            "tick_number",
+            "repeated_pattern",
+            "repeat_count",
+            "strategy_applied",
+            "resolved",
+            "detected_at",
+            "resolution_detail",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("livelock_id", "repeated_pattern", "strategy_applied"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_int(payload["tick_number"], field_name="tick_number", path=path))
+    errors.extend(_require_positive_int(payload["repeat_count"], field_name="repeat_count", path=path))
+    if not isinstance(payload["resolved"], bool):
+        errors.append(f"{_relative_path(path)}: field 'resolved' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["resolution_detail"], str):
+        errors.append(f"{_relative_path(path)}: field 'resolution_detail' must be a string")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "assignment_policy.json": _validate_assignment_policy_fixture,
     "assignment_decision.json": _validate_assignment_decision_fixture,
@@ -1138,11 +1630,20 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "function_sla_profile.json": _validate_function_sla_profile_fixture,
     "handoff_record.json": _validate_handoff_record_fixture,
     "job_descriptor.json": _validate_job_descriptor_fixture,
+    "livelock_record.json": _validate_livelock_record_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
     "obligation_record.json": _validate_obligation_record_fixture,
     "role_descriptor.json": _validate_role_descriptor_fixture,
+    "runtime_heartbeat.json": _validate_runtime_heartbeat_fixture,
     "service_function_template.json": _validate_service_function_template_fixture,
+    "simulation_option.json": _validate_simulation_option_fixture,
+    "simulation_outcome.json": _validate_simulation_outcome_fixture,
+    "simulation_request.json": _validate_simulation_request_fixture,
     "simulation_comparison.json": _validate_simulation_comparison_fixture,
+    "simulation_verdict.json": _validate_simulation_verdict_fixture,
+    "supervisor_checkpoint.json": _validate_supervisor_checkpoint_fixture,
+    "supervisor_health.json": _validate_supervisor_health_fixture,
+    "supervisor_policy.json": _validate_supervisor_policy_fixture,
     "supervisor_tick.json": _validate_supervisor_tick_fixture,
     "team_queue_state.json": _validate_team_queue_state_fixture,
     "worker_profile.json": _validate_worker_profile_fixture,

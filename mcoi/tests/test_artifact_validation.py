@@ -44,6 +44,15 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "workload_snapshot.json" in maf_runtime_fixture_names
     assert "function_outcome_record.json" in maf_runtime_fixture_names
     assert "function_metrics_snapshot.json" in maf_runtime_fixture_names
+    assert "simulation_option.json" in maf_runtime_fixture_names
+    assert "simulation_request.json" in maf_runtime_fixture_names
+    assert "simulation_outcome.json" in maf_runtime_fixture_names
+    assert "simulation_verdict.json" in maf_runtime_fixture_names
+    assert "supervisor_policy.json" in maf_runtime_fixture_names
+    assert "supervisor_health.json" in maf_runtime_fixture_names
+    assert "runtime_heartbeat.json" in maf_runtime_fixture_names
+    assert "supervisor_checkpoint.json" in maf_runtime_fixture_names
+    assert "livelock_record.json" in maf_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -55,7 +64,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 20
+    assert len(inventory.maf_runtime_fixture_paths) >= 29
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -337,4 +346,50 @@ def test_validate_maf_runtime_fixture_rejects_duplicate_workload_snapshot_worker
 
     assert len(errors) == 1
     assert "must not repeat worker_id 'worker-7'" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_simulation_outcome_option_mismatch(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "simulation_outcome.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "outcome_id": "simout-drift",
+                "option_id": "opt-safe",
+                "consequence": {
+                    "estimate_id": "con-drift",
+                    "option_id": "opt-fast",
+                    "affected_node_ids": ["job-42"],
+                    "new_edges_count": 1,
+                    "new_obligations_count": 0,
+                    "blocked_nodes_count": 0,
+                    "unblocked_nodes_count": 1,
+                },
+                "risk": {
+                    "estimate_id": "risk-drift",
+                    "option_id": "opt-safe",
+                    "risk_level": "low",
+                    "incident_probability": 0.1,
+                    "review_burden": 1,
+                    "provider_exposure_count": 0,
+                    "verification_difficulty": "moderate",
+                    "rationale": "bounded",
+                },
+                "obligation_projection": {
+                    "projection_id": "oblproj-drift",
+                    "option_id": "opt-safe",
+                    "new_obligations": [],
+                    "fulfilled_obligations": [],
+                    "deadline_pressure": 0,
+                },
+                "simulated_at": "2025-01-01T00:35:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "consequence.option_id must match outcome option_id" in errors[0]
     assert fixture_path.name in errors[0]

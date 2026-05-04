@@ -281,6 +281,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_policy.json"
+        ));
+        assert_fixture_round_trip::<SupervisorPolicy>(fixture_json);
+    }
+
+    #[test]
     fn supervisor_decision_round_trips() {
         let decision = SupervisorDecision {
             decision_id: "d-1".to_string(),
@@ -372,6 +381,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_health_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_health.json"
+        ));
+        assert_fixture_round_trip::<SupervisorHealth>(fixture_json);
+    }
+
+    #[test]
     fn runtime_heartbeat_round_trips() {
         let hb = RuntimeHeartbeat {
             heartbeat_id: "hb-1".to_string(),
@@ -386,6 +404,15 @@ mod tests {
         let json = serde_json::to_string(&hb).unwrap();
         let back: RuntimeHeartbeat = serde_json::from_str(&json).unwrap();
         assert_eq!(hb, back);
+    }
+
+    #[test]
+    fn canonical_runtime_heartbeat_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/runtime_heartbeat.json"
+        ));
+        assert_fixture_round_trip::<RuntimeHeartbeat>(fixture_json);
     }
 
     #[test]
@@ -409,6 +436,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_supervisor_checkpoint_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/supervisor_checkpoint.json"
+        ));
+        assert_fixture_round_trip::<SupervisorCheckpoint>(fixture_json);
+    }
+
+    #[test]
     fn livelock_record_round_trips() {
         let ll = LivelockRecord {
             livelock_id: "ll-1".to_string(),
@@ -423,6 +459,15 @@ mod tests {
         let json = serde_json::to_string(&ll).unwrap();
         let back: LivelockRecord = serde_json::from_str(&json).unwrap();
         assert_eq!(ll, back);
+    }
+
+    #[test]
+    fn canonical_livelock_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/livelock_record.json"
+        ));
+        assert_fixture_round_trip::<LivelockRecord>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

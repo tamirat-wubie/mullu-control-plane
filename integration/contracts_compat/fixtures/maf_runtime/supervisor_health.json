@@ -1,0 +1,13 @@
+{
+  "health_id": "sup-health-42",
+  "tick_number": 42,
+  "phase": "acting",
+  "consecutive_errors": 0,
+  "consecutive_idle_ticks": 1,
+  "backpressure_active": false,
+  "livelock_detected": false,
+  "open_obligations": 3,
+  "pending_events": 2,
+  "overall_confidence": 0.96,
+  "assessed_at": "2025-01-01T00:42:00+00:00"
+}

@@ -642,6 +642,33 @@ mod tests {
     }
 
     #[test]
+    fn canonical_simulation_option_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_option.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationOption>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_simulation_request_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_request.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationRequest>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_simulation_outcome_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_outcome.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationOutcome>(fixture_json);
+    }
+
+    #[test]
     fn simulation_verdict_round_trips() {
         let v = simulation::SimulationVerdict {
             verdict_id: "v-1".into(),
@@ -654,6 +681,15 @@ mod tests {
         let json = serde_json::to_string(&v).unwrap();
         let back: simulation::SimulationVerdict = serde_json::from_str(&json).unwrap();
         assert_eq!(v, back);
+    }
+
+    #[test]
+    fn canonical_simulation_verdict_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/simulation_verdict.json"
+        ));
+        assert_fixture_round_trip::<simulation::SimulationVerdict>(fixture_json);
     }
 
     #[test]

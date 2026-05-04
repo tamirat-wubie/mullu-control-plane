@@ -50,11 +50,28 @@ from mcoi_runtime.contracts.roles import (
     WorkerStatus,
     WorkloadSnapshot,
 )
-from mcoi_runtime.contracts.simulation import RiskLevel, SimulationComparison
+from mcoi_runtime.contracts.simulation import (
+    ConsequenceEstimate,
+    ObligationProjection,
+    RiskEstimate,
+    RiskLevel,
+    SimulationComparison,
+    SimulationOption,
+    SimulationOutcome,
+    SimulationRequest,
+    SimulationVerdict,
+    VerdictType,
+)
 from mcoi_runtime.contracts.supervisor import (
     LivelockStrategy,
+    LivelockRecord,
+    RuntimeHeartbeat,
+    CheckpointStatus,
+    SupervisorCheckpoint,
     SupervisorDecision,
+    SupervisorHealth,
     SupervisorPhase,
+    SupervisorPolicy,
     SupervisorTick,
     TickOutcome,
 )
@@ -116,6 +133,58 @@ def _build_simulation_comparison(payload: dict) -> SimulationComparison:
         scores=payload["scores"],
         top_risk_level=RiskLevel(payload["top_risk_level"]),
         review_burden=payload["review_burden"],
+    )
+
+
+def _build_simulation_option(payload: dict) -> SimulationOption:
+    return SimulationOption(
+        option_id=payload["option_id"],
+        label=payload["label"],
+        risk_level=RiskLevel(payload["risk_level"]),
+        estimated_cost=payload["estimated_cost"],
+        estimated_duration_seconds=payload["estimated_duration_seconds"],
+        success_probability=payload["success_probability"],
+    )
+
+
+def _build_simulation_request(payload: dict) -> SimulationRequest:
+    return SimulationRequest(
+        request_id=payload["request_id"],
+        context_type=payload["context_type"],
+        context_id=payload["context_id"],
+        description=payload["description"],
+        options=tuple(_build_simulation_option(option) for option in payload["options"]),
+    )
+
+
+def _build_simulation_outcome(payload: dict) -> SimulationOutcome:
+    return SimulationOutcome(
+        outcome_id=payload["outcome_id"],
+        option_id=payload["option_id"],
+        consequence=ConsequenceEstimate(**payload["consequence"]),
+        risk=RiskEstimate(
+            estimate_id=payload["risk"]["estimate_id"],
+            option_id=payload["risk"]["option_id"],
+            risk_level=RiskLevel(payload["risk"]["risk_level"]),
+            incident_probability=payload["risk"]["incident_probability"],
+            review_burden=payload["risk"]["review_burden"],
+            provider_exposure_count=payload["risk"]["provider_exposure_count"],
+            verification_difficulty=payload["risk"]["verification_difficulty"],
+            rationale=payload["risk"]["rationale"],
+        ),
+        obligation_projection=ObligationProjection(**payload["obligation_projection"]),
+        simulated_at=payload["simulated_at"],
+    )
+
+
+def _build_simulation_verdict(payload: dict) -> SimulationVerdict:
+    return SimulationVerdict(
+        verdict_id=payload["verdict_id"],
+        comparison_id=payload["comparison_id"],
+        verdict_type=VerdictType(payload["verdict_type"]),
+        recommended_option_id=payload["recommended_option_id"],
+        confidence=payload["confidence"],
+        reasons=tuple(payload["reasons"]),
     )
 
 
@@ -327,6 +396,80 @@ def _build_function_metrics_snapshot(payload: dict) -> FunctionMetricsSnapshot:
     )
 
 
+def _build_supervisor_policy(payload: dict) -> SupervisorPolicy:
+    return SupervisorPolicy(
+        policy_id=payload["policy_id"],
+        tick_interval_ms=payload["tick_interval_ms"],
+        max_events_per_tick=payload["max_events_per_tick"],
+        max_actions_per_tick=payload["max_actions_per_tick"],
+        backpressure_threshold=payload["backpressure_threshold"],
+        livelock_repeat_threshold=payload["livelock_repeat_threshold"],
+        livelock_strategy=LivelockStrategy(payload["livelock_strategy"]),
+        heartbeat_every_n_ticks=payload["heartbeat_every_n_ticks"],
+        checkpoint_every_n_ticks=payload["checkpoint_every_n_ticks"],
+        max_consecutive_errors=payload["max_consecutive_errors"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_supervisor_health(payload: dict) -> SupervisorHealth:
+    return SupervisorHealth(
+        health_id=payload["health_id"],
+        tick_number=payload["tick_number"],
+        phase=SupervisorPhase(payload["phase"]),
+        consecutive_errors=payload["consecutive_errors"],
+        consecutive_idle_ticks=payload["consecutive_idle_ticks"],
+        backpressure_active=payload["backpressure_active"],
+        livelock_detected=payload["livelock_detected"],
+        open_obligations=payload["open_obligations"],
+        pending_events=payload["pending_events"],
+        overall_confidence=payload["overall_confidence"],
+        assessed_at=payload["assessed_at"],
+    )
+
+
+def _build_runtime_heartbeat(payload: dict) -> RuntimeHeartbeat:
+    return RuntimeHeartbeat(
+        heartbeat_id=payload["heartbeat_id"],
+        tick_number=payload["tick_number"],
+        phase=SupervisorPhase(payload["phase"]),
+        outcome_of_last_tick=TickOutcome(payload["outcome_of_last_tick"]),
+        open_obligations=payload["open_obligations"],
+        pending_events=payload["pending_events"],
+        uptime_ticks=payload["uptime_ticks"],
+        emitted_at=payload["emitted_at"],
+    )
+
+
+def _build_supervisor_checkpoint(payload: dict) -> SupervisorCheckpoint:
+    return SupervisorCheckpoint(
+        checkpoint_id=payload["checkpoint_id"],
+        tick_number=payload["tick_number"],
+        phase=SupervisorPhase(payload["phase"]),
+        status=CheckpointStatus(payload["status"]),
+        open_obligation_ids=tuple(payload["open_obligation_ids"]),
+        pending_event_count=payload["pending_event_count"],
+        consecutive_errors=payload["consecutive_errors"],
+        consecutive_idle_ticks=payload["consecutive_idle_ticks"],
+        recent_tick_outcomes=tuple(TickOutcome(value) for value in payload["recent_tick_outcomes"]),
+        state_hash=payload["state_hash"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_livelock_record(payload: dict) -> LivelockRecord:
+    return LivelockRecord(
+        livelock_id=payload["livelock_id"],
+        tick_number=payload["tick_number"],
+        repeated_pattern=payload["repeated_pattern"],
+        repeat_count=payload["repeat_count"],
+        strategy_applied=LivelockStrategy(payload["strategy_applied"]),
+        resolved=payload["resolved"],
+        detected_at=payload["detected_at"],
+        resolution_detail=payload["resolution_detail"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -350,6 +493,15 @@ def _build_function_metrics_snapshot(payload: dict) -> FunctionMetricsSnapshot:
         ("workload_snapshot.json", _build_workload_snapshot),
         ("function_outcome_record.json", _build_function_outcome_record),
         ("function_metrics_snapshot.json", _build_function_metrics_snapshot),
+        ("simulation_option.json", _build_simulation_option),
+        ("simulation_request.json", _build_simulation_request),
+        ("simulation_outcome.json", _build_simulation_outcome),
+        ("simulation_verdict.json", _build_simulation_verdict),
+        ("supervisor_policy.json", _build_supervisor_policy),
+        ("supervisor_health.json", _build_supervisor_health),
+        ("runtime_heartbeat.json", _build_runtime_heartbeat),
+        ("supervisor_checkpoint.json", _build_supervisor_checkpoint),
+        ("livelock_record.json", _build_livelock_record),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(
