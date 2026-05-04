@@ -78,6 +78,23 @@ def test_browser_live_receipt_passes_with_sandbox_evidence_and_worker_response(t
     assert payload["network_requests"] == ["https://docs.mullusi.com/reference"]
 
 
+def test_browser_live_receipt_bounds_malformed_sandbox_evidence_detail(tmp_path: Path) -> None:
+    output_path = tmp_path / "browser_live_receipt.json"
+    sandbox_evidence = tmp_path / "sandbox-evidence.json"
+    sandbox_evidence.write_text('{"evidence_id": "secret-sandbox-evidence"', encoding="utf-8")
+
+    result = produce_browser_live_receipt(
+        output_path=output_path,
+        sandbox_evidence_ref=str(sandbox_evidence),
+        executor=_browser_executor(),
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert result.passed is False
+    assert payload["sandbox_evidence_detail"] == "sandbox evidence unreadable"
+    assert "secret-sandbox-evidence" not in json.dumps(payload, sort_keys=True)
+
+
 def test_browser_live_receipt_fails_without_sandbox_evidence(tmp_path: Path) -> None:
     output_path = tmp_path / "browser_live_receipt.json"
 

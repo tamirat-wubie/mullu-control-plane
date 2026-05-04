@@ -129,8 +129,8 @@ def _load_payload(path: Path) -> tuple[dict[str, Any], str]:
         return {}, "reflex deployment witness file not found"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        return {}, f"reflex deployment witness unreadable: {type(exc).__name__}"
+    except (OSError, json.JSONDecodeError):
+        return {}, "reflex deployment witness unreadable"
     if not isinstance(payload, dict):
         return {}, "reflex deployment witness root must be an object"
     return payload, ""

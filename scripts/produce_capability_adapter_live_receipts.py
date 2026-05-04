@@ -461,11 +461,11 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
 
     try:
         payload = json.loads(evidence_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, json.JSONDecodeError):
         return {
             "passed": False,
             "status": "failed",
-            "detail": f"sandbox evidence unreadable: {type(exc).__name__}",
+            "detail": "sandbox evidence unreadable",
             "evidence_id": "",
             "receipt_id": "",
             "blockers": ("browser_sandbox_evidence_unverified",),
