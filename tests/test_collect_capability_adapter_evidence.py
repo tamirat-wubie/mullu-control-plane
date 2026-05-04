@@ -28,7 +28,7 @@ from scripts.collect_capability_adapter_evidence import (  # noqa: E402
 
 def test_adapter_evidence_blocks_without_dependencies_or_receipts(tmp_path: Path) -> None:
     report = collect_capability_adapter_evidence(
-        repo_root=_ROOT,
+        repo_root=tmp_path,
         browser_receipt_path=tmp_path / "missing-browser.json",
         document_receipt_path=tmp_path / "missing-document.json",
         voice_receipt_path=tmp_path / "missing-voice.json",
@@ -48,6 +48,35 @@ def test_adapter_evidence_blocks_without_dependencies_or_receipts(tmp_path: Path
     assert "document_live_evidence_missing" in report.blockers
     assert "voice_live_evidence_missing" in report.blockers
     assert "email_calendar_live_evidence_missing" in report.blockers
+
+
+def test_adapter_evidence_uses_worker_dependency_contract_before_host_imports(tmp_path: Path) -> None:
+    report = collect_capability_adapter_evidence(
+        repo_root=_ROOT,
+        browser_receipt_path=tmp_path / "missing-browser.json",
+        document_receipt_path=tmp_path / "missing-document.json",
+        voice_receipt_path=tmp_path / "missing-voice.json",
+        email_calendar_receipt_path=tmp_path / "missing-email-calendar.json",
+        module_available=lambda name: False,
+        env_reader=lambda name: "",
+    )
+    dependency_details = {
+        check.name: check.detail
+        for adapter in report.adapters
+        for check in adapter.dependency_checks
+        if check.name != "EMAIL_CALENDAR_CONNECTOR_TOKEN"
+    }
+
+    assert "browser_dependency_missing:playwright" not in report.blockers
+    assert "document_dependency_missing:pypdf" not in report.blockers
+    assert "document_dependency_missing:docx" not in report.blockers
+    assert "voice_dependency_missing:openai" not in report.blockers
+    assert dependency_details["playwright"] == "worker_dependency_declared"
+    assert dependency_details["pypdf"] == "worker_dependency_declared"
+    assert dependency_details["docx"] == "worker_dependency_declared"
+    assert dependency_details["openai"] == "worker_dependency_declared"
+    assert "voice_dependency_missing:OPENAI_API_KEY" in report.blockers
+    assert "browser_live_evidence_missing" in report.blockers
 
 
 def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path) -> None:
@@ -94,6 +123,24 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
                 "status": "passed",
                 "speech_to_text_status": "passed",
                 "text_to_speech_status": "passed",
+                "audio_input_hash": "a" * 64,
+                "speech_receipt": {
+                    "receipt_id": "voice-speech-receipt-test",
+                    "capability_id": "voice.speech_to_text",
+                    "verification_status": "passed",
+                    "forbidden_effects_observed": False,
+                    "requires_confirmation": False,
+                },
+                "synthesis_receipt": {
+                    "receipt_id": "voice-synthesis-receipt-test",
+                    "capability_id": "voice.text_to_speech",
+                    "verification_status": "passed",
+                    "audio_hash": "b" * 64,
+                    "audio_ref": "evidence:voice-synthesis:test.mp3",
+                    "forbidden_effects_observed": False,
+                    "requires_confirmation": False,
+                },
+                "blockers": [],
             }
         ),
         encoding="utf-8",
@@ -135,6 +182,10 @@ def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path)
     )
     assert "browser-sandbox-evidence-test" in browser_evidence.evidence_refs
     assert "sandbox-receipt-test" in browser_evidence.evidence_refs
+    voice_evidence = next(adapter for adapter in report.adapters if adapter.adapter_id == "voice.openai")
+    assert "voice-speech-receipt-test" in voice_evidence.evidence_refs
+    assert "voice-synthesis-receipt-test" in voice_evidence.evidence_refs
+    assert "evidence:voice-synthesis:test.mp3" in voice_evidence.evidence_refs
     assert report.report_id.startswith("capability-adapter-evidence-")
 
 
@@ -175,6 +226,24 @@ def test_adapter_evidence_rejects_browser_receipt_without_action_evidence(tmp_pa
                 "status": "passed",
                 "speech_to_text_status": "passed",
                 "text_to_speech_status": "passed",
+                "audio_input_hash": "a" * 64,
+                "speech_receipt": {
+                    "receipt_id": "voice-speech-receipt-test",
+                    "capability_id": "voice.speech_to_text",
+                    "verification_status": "passed",
+                    "forbidden_effects_observed": False,
+                    "requires_confirmation": False,
+                },
+                "synthesis_receipt": {
+                    "receipt_id": "voice-synthesis-receipt-test",
+                    "capability_id": "voice.text_to_speech",
+                    "verification_status": "passed",
+                    "audio_hash": "b" * 64,
+                    "audio_ref": "evidence:voice-synthesis:test.mp3",
+                    "forbidden_effects_observed": False,
+                    "requires_confirmation": False,
+                },
+                "blockers": [],
             }
         ),
         encoding="utf-8",
@@ -206,6 +275,85 @@ def test_adapter_evidence_rejects_browser_receipt_without_action_evidence(tmp_pa
     assert browser_evidence.receipt_check.passed is False
     assert "browser_live_evidence_missing" in report.blockers
     assert "worker receipt" in browser_evidence.receipt_check.detail
+
+
+def test_adapter_evidence_rejects_voice_receipt_without_worker_receipts(tmp_path: Path) -> None:
+    browser_receipt = tmp_path / "browser.json"
+    document_receipt = tmp_path / "document.json"
+    voice_receipt = tmp_path / "voice.json"
+    email_calendar_receipt = tmp_path / "email-calendar.json"
+    browser_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "adapter_id": "browser.playwright",
+                "sandboxed_worker": True,
+                "sandbox_evidence_id": "browser-sandbox-evidence-test",
+                "sandbox_receipt_id": "sandbox-receipt-test",
+                "url_before": "https://docs.mullusi.com/",
+                "url_after": "https://docs.mullusi.com/",
+                "screenshot_before_ref": "evidence:browser:before",
+                "screenshot_after_ref": "evidence:browser:after",
+                "network_requests": ["https://docs.mullusi.com/reference"],
+                "worker_receipt": {"verification_status": "passed"},
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    document_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "parser_ids": [
+                    "production-pdf",
+                    "production-docx",
+                    "production-xlsx",
+                    "production-pptx",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    voice_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "speech_to_text_status": "passed",
+                "text_to_speech_status": "passed",
+                "audio_input_hash": "a" * 64,
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    email_calendar_receipt.write_text(
+        json.dumps(
+            {
+                "status": "passed",
+                "adapter_id": "communication.email_calendar_worker",
+                "external_write": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = collect_capability_adapter_evidence(
+        repo_root=_ROOT,
+        browser_receipt_path=browser_receipt,
+        document_receipt_path=document_receipt,
+        voice_receipt_path=voice_receipt,
+        email_calendar_receipt_path=email_calendar_receipt,
+        module_available=lambda name: True,
+        env_reader=lambda name: "configured-secret",
+    )
+    voice_evidence = next(adapter for adapter in report.adapters if adapter.adapter_id == "voice.openai")
+
+    assert report.ready is False
+    assert voice_evidence.closed is False
+    assert voice_evidence.receipt_check.passed is False
+    assert "voice_live_evidence_missing" in report.blockers
+    assert "worker receipts" in voice_evidence.receipt_check.detail
 
 
 def test_adapter_evidence_cli_writes_report_and_honors_strict(tmp_path: Path, capsys) -> None:
