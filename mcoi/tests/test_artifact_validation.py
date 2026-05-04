@@ -38,6 +38,12 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "assignment_policy.json" in maf_runtime_fixture_names
     assert "worker_capacity.json" in maf_runtime_fixture_names
     assert "team_queue_state.json" in maf_runtime_fixture_names
+    assert "worker_profile.json" in maf_runtime_fixture_names
+    assert "assignment_decision.json" in maf_runtime_fixture_names
+    assert "handoff_record.json" in maf_runtime_fixture_names
+    assert "workload_snapshot.json" in maf_runtime_fixture_names
+    assert "function_outcome_record.json" in maf_runtime_fixture_names
+    assert "function_metrics_snapshot.json" in maf_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -49,7 +55,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 14
+    assert len(inventory.maf_runtime_fixture_paths) >= 20
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -295,4 +301,40 @@ def test_validate_maf_runtime_fixture_rejects_worker_capacity_drift(tmp_path: Pa
 
     assert len(errors) == 1
     assert "available_slots must equal max_concurrent - current_load" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_duplicate_workload_snapshot_workers(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "workload_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snap-drift",
+                "team_id": "team-release",
+                "worker_capacities": [
+                    {
+                        "worker_id": "worker-7",
+                        "max_concurrent": 5,
+                        "current_load": 2,
+                        "available_slots": 3,
+                        "updated_at": "2025-01-01T00:20:00+00:00",
+                    },
+                    {
+                        "worker_id": "worker-7",
+                        "max_concurrent": 4,
+                        "current_load": 1,
+                        "available_slots": 3,
+                        "updated_at": "2025-01-01T00:20:00+00:00",
+                    },
+                ],
+                "captured_at": "2025-01-01T00:21:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "must not repeat worker_id 'worker-7'" in errors[0]
     assert fixture_path.name in errors[0]

@@ -20,6 +20,8 @@ if str(REPO_ROOT) not in sys.path:
 from mcoi_runtime.contracts.event import EventRecord, EventSource, EventType
 from mcoi_runtime.contracts.function import (
     CommunicationStyle,
+    FunctionMetricsSnapshot,
+    FunctionOutcomeRecord,
     FunctionPolicyBinding,
     FunctionQueueProfile,
     FunctionSlaProfile,
@@ -35,7 +37,19 @@ from mcoi_runtime.contracts.obligation import (
     ObligationState,
     ObligationTrigger,
 )
-from mcoi_runtime.contracts.roles import AssignmentPolicy, AssignmentStrategy, RoleDescriptor, TeamQueueState, WorkerCapacity
+from mcoi_runtime.contracts.roles import (
+    AssignmentDecision,
+    AssignmentPolicy,
+    AssignmentStrategy,
+    HandoffReason,
+    HandoffRecord,
+    RoleDescriptor,
+    TeamQueueState,
+    WorkerCapacity,
+    WorkerProfile,
+    WorkerStatus,
+    WorkloadSnapshot,
+)
 from mcoi_runtime.contracts.simulation import RiskLevel, SimulationComparison
 from mcoi_runtime.contracts.supervisor import (
     LivelockStrategy,
@@ -242,6 +256,77 @@ def _build_team_queue_state(payload: dict) -> TeamQueueState:
     )
 
 
+def _build_worker_profile(payload: dict) -> WorkerProfile:
+    return WorkerProfile(
+        worker_id=payload["worker_id"],
+        name=payload["name"],
+        roles=tuple(payload["roles"]),
+        max_concurrent_jobs=payload["max_concurrent_jobs"],
+        status=WorkerStatus(payload["status"]),
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assignment_decision(payload: dict) -> AssignmentDecision:
+    return AssignmentDecision(
+        decision_id=payload["decision_id"],
+        job_id=payload["job_id"],
+        worker_id=payload["worker_id"],
+        role_id=payload["role_id"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+    )
+
+
+def _build_handoff_record(payload: dict) -> HandoffRecord:
+    return HandoffRecord(
+        handoff_id=payload["handoff_id"],
+        job_id=payload["job_id"],
+        from_worker_id=payload["from_worker_id"],
+        to_worker_id=payload["to_worker_id"],
+        reason=HandoffReason(payload["reason"]),
+        thread_id=payload["thread_id"],
+        handoff_at=payload["handoff_at"],
+    )
+
+
+def _build_workload_snapshot(payload: dict) -> WorkloadSnapshot:
+    return WorkloadSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        team_id=payload["team_id"],
+        worker_capacities=tuple(_build_worker_capacity(entry) for entry in payload["worker_capacities"]),
+        captured_at=payload["captured_at"],
+    )
+
+
+def _build_function_outcome_record(payload: dict) -> FunctionOutcomeRecord:
+    return FunctionOutcomeRecord(
+        outcome_id=payload["outcome_id"],
+        function_id=payload["function_id"],
+        job_id=payload["job_id"],
+        completed=payload["completed"],
+        completion_minutes=payload["completion_minutes"],
+        escalated=payload["escalated"],
+        drift_detected=payload["drift_detected"],
+        recorded_at=payload["recorded_at"],
+    )
+
+
+def _build_function_metrics_snapshot(payload: dict) -> FunctionMetricsSnapshot:
+    return FunctionMetricsSnapshot(
+        function_id=payload["function_id"],
+        period_start=payload["period_start"],
+        period_end=payload["period_end"],
+        total_jobs=payload["total_jobs"],
+        completed_jobs=payload["completed_jobs"],
+        failed_jobs=payload["failed_jobs"],
+        avg_completion_minutes=payload["avg_completion_minutes"],
+        escalation_count=payload["escalation_count"],
+        drift_count=payload["drift_count"],
+        captured_at=payload["captured_at"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -259,6 +344,12 @@ def _build_team_queue_state(payload: dict) -> TeamQueueState:
         ("assignment_policy.json", _build_assignment_policy),
         ("worker_capacity.json", _build_worker_capacity),
         ("team_queue_state.json", _build_team_queue_state),
+        ("worker_profile.json", _build_worker_profile),
+        ("assignment_decision.json", _build_assignment_decision),
+        ("handoff_record.json", _build_handoff_record),
+        ("workload_snapshot.json", _build_workload_snapshot),
+        ("function_outcome_record.json", _build_function_outcome_record),
+        ("function_metrics_snapshot.json", _build_function_metrics_snapshot),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(
