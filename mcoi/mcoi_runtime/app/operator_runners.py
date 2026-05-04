@@ -48,6 +48,8 @@ from .operator_executors import (
 from .operator_models import (
     CoordinationRecoveryReport,
     CoordinationRecoveryRequest,
+    GoalReconcileReport,
+    GoalReconcileRequest,
     GoalResumeRequest,
     GoalRunReport,
     JobReconcileReport,
@@ -1188,6 +1190,37 @@ def _job_runtime_hash(
         "states": [
             state.to_json_dict() if hasattr(state, "to_json_dict") else state
             for state in states
+        ],
+    }
+    return sha256(
+        json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode(
+            "utf-8"
+        )
+    ).hexdigest()
+
+
+def _goal_runtime_hash(
+    descriptors: tuple[object, ...],
+    states: tuple[object, ...],
+    plans: tuple[object, ...],
+    replans: tuple[object, ...],
+) -> str:
+    payload = {
+        "descriptors": [
+            descriptor.to_json_dict() if hasattr(descriptor, "to_json_dict") else descriptor
+            for descriptor in descriptors
+        ],
+        "states": [
+            state.to_json_dict() if hasattr(state, "to_json_dict") else state
+            for state in states
+        ],
+        "plans": [
+            plan.to_json_dict() if hasattr(plan, "to_json_dict") else plan
+            for plan in plans
+        ],
+        "replans": [
+            record.to_json_dict() if hasattr(record, "to_json_dict") else record
+            for record in replans
         ],
     }
     return sha256(
@@ -2368,8 +2401,249 @@ def reconcile_jobs(
     )
 
 
+def reconcile_goals(
+    loop: OperatorLoop,
+    request: GoalReconcileRequest,
+) -> GoalReconcileReport:
+    """Assess or restore persisted goal runtime witnesses through the governed path."""
+    started_at = loop.runtime.clock()
+    action_class = (
+        ActionClass.EXECUTE_WRITE
+        if request.restore_from_store
+        else ActionClass.ANALYZE
+    )
+    autonomy_decision = loop.runtime.autonomy.evaluate(
+        action_class,
+        action_description=(
+            "goal_runtime_restore"
+            if request.restore_from_store
+            else "goal_runtime_assessment"
+        ),
+    )
+    if autonomy_decision.status is not AutonomyDecisionStatus.ALLOWED:
+        return GoalReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=None,
+            policy_status=None,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            goal_count=0,
+            goal_ids=(),
+            active_goal_count=0,
+            completed_goal_count=0,
+            failed_goal_count=0,
+            plan_count=0,
+            replan_count=0,
+            errors=(
+                policy_error(
+                    error_code="autonomy_blocked",
+                    message=(
+                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
+                        "blocked goal reconciliation: "
+                        f"{autonomy_decision.reason}"
+                    ),
+                    recoverability=Recoverability.APPROVAL_REQUIRED,
+                    related_ids=(autonomy_decision.decision_id,),
+                    context={
+                        "autonomy_mode": loop.runtime.autonomy.mode.value,
+                        "autonomy_status": autonomy_decision.status.value,
+                    },
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    policy_decision = loop.runtime.runtime_kernel.evaluate_policy(
+        PolicyInput(
+            subject_id=request.subject_id,
+            goal_id="goal_reconcile",
+            issued_at=loop.runtime.clock(),
+            policy_pack_id=loop.runtime.config.policy_pack_id,
+            policy_pack_version=loop.runtime.config.policy_pack_version,
+            has_write_effects=request.restore_from_store,
+        ),
+        build_policy_decision,
+    )
+    if policy_decision.status is not PolicyDecisionStatus.ALLOW:
+        return GoalReconcileReport(
+            request_id=request.request_id,
+            restored=False,
+            policy_decision_id=policy_decision.decision_id,
+            policy_status=policy_decision.status.value,
+            autonomy_mode=loop.runtime.autonomy.mode.value,
+            autonomy_decision=autonomy_decision.status.value,
+            goal_count=0,
+            goal_ids=(),
+            active_goal_count=0,
+            completed_goal_count=0,
+            failed_goal_count=0,
+            plan_count=0,
+            replan_count=0,
+            errors=(
+                policy_error(
+                    error_code=f"policy_{policy_decision.status.value}",
+                    message=(
+                        "policy gate returned "
+                        f"{policy_decision.status.value} for goal reconciliation"
+                    ),
+                    recoverability=(
+                        Recoverability.APPROVAL_REQUIRED
+                        if policy_decision.status is PolicyDecisionStatus.ESCALATE
+                        else Recoverability.FATAL_FOR_RUN
+                    ),
+                    related_ids=(policy_decision.decision_id,),
+                    context={"policy_status": policy_decision.status.value},
+                ),
+            ),
+            started_at=started_at,
+            completed_at=loop.runtime.clock(),
+        )
+
+    if request.restore_from_store:
+        store = loop.runtime.goal_store
+        if store is None:
+            return GoalReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                goal_count=0,
+                goal_ids=(),
+                active_goal_count=0,
+                completed_goal_count=0,
+                failed_goal_count=0,
+                plan_count=0,
+                replan_count=0,
+                errors=(
+                    execution_error(
+                        error_code="goal_store_not_configured",
+                        message="goal restore requires a configured goal store",
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+        try:
+            store.restore_state(loop.runtime.goal_reasoning_engine)
+        except (PersistenceError, RuntimeCoreInvariantError) as exc:
+            return GoalReconcileReport(
+                request_id=request.request_id,
+                restored=False,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                goal_count=0,
+                goal_ids=(),
+                active_goal_count=0,
+                completed_goal_count=0,
+                failed_goal_count=0,
+                plan_count=0,
+                replan_count=0,
+                errors=(
+                    execution_error(
+                        error_code="goal_restore_failed",
+                        message=str(exc),
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    descriptors = loop.runtime.goal_reasoning_engine.list_goal_descriptors()
+    states = loop.runtime.goal_reasoning_engine.list_goal_states()
+    plans = loop.runtime.goal_reasoning_engine.list_plans()
+    replans = loop.runtime.goal_reasoning_engine.list_replan_records()
+
+    if request.goal_ids:
+        requested_goal_ids = set(request.goal_ids)
+        descriptors = tuple(
+            descriptor for descriptor in descriptors if descriptor.goal_id in requested_goal_ids
+        )
+        states = tuple(
+            state for state in states if state.goal_id in requested_goal_ids
+        )
+        plans = tuple(
+            plan for plan in plans if plan.goal_id in requested_goal_ids
+        )
+        replans = tuple(
+            record for record in replans if record.goal_id in requested_goal_ids
+        )
+        available_goal_ids = {descriptor.goal_id for descriptor in descriptors}
+        missing_goal_ids = tuple(
+            goal_id for goal_id in request.goal_ids if goal_id not in available_goal_ids
+        )
+        if missing_goal_ids:
+            return GoalReconcileReport(
+                request_id=request.request_id,
+                restored=request.restore_from_store,
+                policy_decision_id=policy_decision.decision_id,
+                policy_status=policy_decision.status.value,
+                autonomy_mode=loop.runtime.autonomy.mode.value,
+                autonomy_decision=autonomy_decision.status.value,
+                goal_count=0,
+                goal_ids=(),
+                active_goal_count=0,
+                completed_goal_count=0,
+                failed_goal_count=0,
+                plan_count=0,
+                replan_count=0,
+                errors=(
+                    validation_error(
+                        error_code="goal_runtime_missing",
+                        message=(
+                            "requested goal runtime witness not found: "
+                            + ", ".join(missing_goal_ids)
+                        ),
+                        source_plane=SourcePlane.COORDINATION,
+                        recoverability=Recoverability.FATAL_FOR_RUN,
+                    ),
+                ),
+                started_at=started_at,
+                completed_at=loop.runtime.clock(),
+            )
+
+    terminal_statuses = {
+        GoalStatus.COMPLETED,
+        GoalStatus.FAILED,
+        GoalStatus.ARCHIVED,
+    }
+    selected_goal_ids = tuple(descriptor.goal_id for descriptor in descriptors)
+    return GoalReconcileReport(
+        request_id=request.request_id,
+        restored=request.restore_from_store,
+        policy_decision_id=policy_decision.decision_id,
+        policy_status=policy_decision.status.value,
+        autonomy_mode=loop.runtime.autonomy.mode.value,
+        autonomy_decision=autonomy_decision.status.value,
+        goal_count=len(descriptors),
+        goal_ids=selected_goal_ids,
+        active_goal_count=sum(
+            1 for state in states if state.status not in terminal_statuses
+        ),
+        completed_goal_count=sum(
+            1 for state in states if state.status is GoalStatus.COMPLETED
+        ),
+        failed_goal_count=sum(
+            1 for state in states if state.status is GoalStatus.FAILED
+        ),
+        plan_count=len(plans),
+        replan_count=len(replans),
+        state_hash=_goal_runtime_hash(descriptors, states, plans, replans),
+        started_at=started_at,
+        completed_at=loop.runtime.clock(),
+    )
+
+
 __all__ = [
     "recover_coordination_state",
+    "reconcile_goals",
     "reconcile_jobs",
     "reconcile_work_queue",
     "reconcile_team_queues",

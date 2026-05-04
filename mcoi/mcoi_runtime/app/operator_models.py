@@ -147,6 +147,31 @@ class GoalResumeRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class GoalReconcileRequest:
+    """Request to assess or restore persisted goal runtime witnesses."""
+
+    request_id: str
+    subject_id: str
+    goal_ids: tuple[str, ...] = ()
+    restore_from_store: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("request_id", "subject_id"):
+            value = getattr(self, field_name)
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty string")
+        if not isinstance(self.goal_ids, tuple):
+            raise RuntimeCoreInvariantError("goal_ids must be a tuple")
+        for index, value in enumerate(self.goal_ids):
+            if not isinstance(value, str) or not value.strip():
+                raise RuntimeCoreInvariantError(
+                    f"goal_ids[{index}] must be a non-empty string"
+                )
+        if not isinstance(self.restore_from_store, bool):
+            raise RuntimeCoreInvariantError("restore_from_store must be a bool")
+
+
+@dataclass(frozen=True, slots=True)
 class WorkforceReconcileRequest:
     """Request to assess or restore persisted workforce assignment state."""
 
@@ -324,6 +349,29 @@ class GoalRunReport:
 
 
 @dataclass(frozen=True, slots=True)
+class GoalReconcileReport:
+    """Report from governed goal-runtime reconciliation or witness restore."""
+
+    request_id: str
+    restored: bool
+    policy_decision_id: str | None
+    policy_status: str | None
+    autonomy_mode: str
+    autonomy_decision: str
+    goal_count: int
+    goal_ids: tuple[str, ...]
+    active_goal_count: int
+    completed_goal_count: int
+    failed_goal_count: int
+    plan_count: int
+    replan_count: int
+    state_hash: str = ""
+    errors: tuple[StructuredError, ...] = ()
+    started_at: str = ""
+    completed_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class WorkforceReconcileReport:
     """Report from governed workforce reconciliation or restore assessment."""
 
@@ -489,6 +537,8 @@ class OperatorRunReport:
 __all__ = [
     "CoordinationRecoveryReport",
     "CoordinationRecoveryRequest",
+    "GoalReconcileReport",
+    "GoalReconcileRequest",
     "GoalResumeRequest",
     "GoalRunReport",
     "JobReconcileReport",

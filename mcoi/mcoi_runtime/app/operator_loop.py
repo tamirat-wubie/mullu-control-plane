@@ -40,6 +40,8 @@ from .bootstrap import BootstrappedRuntime, build_policy_decision
 from .operator_models import (
     CoordinationRecoveryReport,
     CoordinationRecoveryRequest,
+    GoalReconcileReport,
+    GoalReconcileRequest,
     GoalResumeRequest,
     GoalRunReport,
     JobReconcileReport,
@@ -61,6 +63,7 @@ from .operator_models import (
 )
 from .operator_runners import (
     recover_coordination_state,
+    reconcile_goals,
     reconcile_jobs,
     reconcile_work_queue,
     reconcile_team_queues,
@@ -373,6 +376,12 @@ class OperatorLoop:
     ) -> CoordinationRecoveryReport:
         return recover_coordination_state(self, request)
 
+    def reconcile_goals(
+        self,
+        request: GoalReconcileRequest,
+    ) -> GoalReconcileReport:
+        return reconcile_goals(self, request)
+
     def reconcile_workforce(
         self,
         request: WorkforceReconcileRequest,
@@ -562,6 +571,8 @@ class OperatorLoop:
 __all__ = [
     "CoordinationRecoveryReport",
     "CoordinationRecoveryRequest",
+    "GoalReconcileReport",
+    "GoalReconcileRequest",
     "GoalRunReport",
     "JobReconcileReport",
     "JobReconcileRequest",
