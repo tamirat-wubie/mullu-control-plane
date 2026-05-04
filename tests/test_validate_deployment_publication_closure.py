@@ -12,13 +12,17 @@ Invariants:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from scripts.validate_deployment_publication_closure import (
     load_witness_payload,
     main,
+    validate_deployment_publication_closure_report,
     validate_publication_closure,
+    write_deployment_publication_closure_validation_report,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 def test_not_published_status_passes_without_witness() -> None:
@@ -30,6 +34,114 @@ def test_not_published_status_passes_without_witness() -> None:
     assert errors == []
     assert len(errors) == 0
     assert "not-published" in _deployment_status("not-published", "not-declared")
+
+
+def test_closure_validation_report_matches_public_schema_for_not_published(
+    tmp_path: Path,
+) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    output_path = tmp_path / "deployment_publication_closure_validation.json"
+    deployment_status.write_text(
+        _deployment_status("not-published", "not-declared"),
+        encoding="utf-8",
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+    )
+    write_deployment_publication_closure_validation_report(validation, output_path)
+    schema = _load_schema(
+        Path("schemas/deployment_publication_closure_validation.schema.json")
+    )
+
+    errors = _validate_schema_instance(
+        schema,
+        validation.to_json_dict(),
+    )
+
+    assert errors == []
+    assert validation.valid is True
+    assert validation.errors == ()
+    assert output_path.exists()
+    assert validation.deployment_status_path == "provided_deployment_status"
+    assert validation.witness_path == "provided_witness"
+
+
+def test_closure_validation_report_matches_public_schema_for_failed_closure(
+    tmp_path: Path,
+) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+    )
+    schema = _load_schema(
+        Path("schemas/deployment_publication_closure_validation.schema.json")
+    )
+
+    errors = _validate_schema_instance(schema, validation.to_json_dict())
+
+    assert errors == []
+    assert validation.valid is False
+    assert len(validation.errors) == 1
+    assert "published deployment requires witness artifact" in validation.errors[0]
+    assert str(witness_path) not in validation.errors[0]
+
+
+def test_closure_validation_report_bounds_noncanonical_paths(
+    tmp_path: Path,
+) -> None:
+    deployment_status = tmp_path / "secret-deployment-status.md"
+    witness_path = tmp_path / "secret-deployment-witness.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://gateway.example/health"),
+        encoding="utf-8",
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+    )
+    serialized = str(validation.to_json_dict())
+
+    assert validation.deployment_status_path == "provided_deployment_status"
+    assert validation.witness_path == "provided_witness"
+    assert "secret-deployment-status" not in serialized
+    assert "secret-deployment-witness" not in serialized
+
+
+def test_closure_validation_report_bounds_witness_values(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    deployment_status.write_text(
+        _deployment_status("published", "https://secret-public.example/health"),
+        encoding="utf-8",
+    )
+    witness = _published_witness()
+    witness["signature_status"] = "secret-signature-status"
+    witness["public_health_endpoint"] = "https://secret-witness.example/health"
+    witness_path.write_text(json.dumps(witness), encoding="utf-8")
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+    )
+    serialized = str(validation.to_json_dict())
+
+    assert validation.valid is False
+    assert any("signature_status mismatch" in error for error in validation.errors)
+    assert "witness public health endpoint mismatch" in validation.errors
+    assert "secret-signature-status" not in serialized
+    assert "secret-public.example" not in serialized
+    assert "secret-witness.example" not in serialized
 
 
 def test_not_published_status_rejects_declared_health_endpoint() -> None:
@@ -247,6 +359,31 @@ def test_cli_accepts_current_not_published_status_without_witness(tmp_path, caps
     assert exit_code == 0
     assert "DEPLOYMENT PUBLICATION CLOSURE OK" in captured.out
     assert not witness_path.exists()
+
+
+def test_cli_writes_optional_closure_validation_report(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_status.write_text(
+        _deployment_status("not-published", "not-declared"),
+        encoding="utf-8",
+    )
+    witness_path = tmp_path / "deployment_witness.json"
+    output_path = tmp_path / "deployment_publication_closure_validation.json"
+
+    exit_code = main(
+        [
+            "--deployment-status",
+            str(deployment_status),
+            "--witness",
+            str(witness_path),
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert output_path.exists()
+    assert '"valid": true' in output_path.read_text(encoding="utf-8")
 
 
 def _deployment_status(state: str, public_health_endpoint: str) -> str:

@@ -166,11 +166,13 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     )
 
     assert errors == []
-    assert "protocol manifest ok: 36 schemas" in content
+    assert "protocol manifest ok: 38 schemas" in content
     assert "Capability adapter closure plans are public contracts" in content
     assert "Deployment handoff receipts are public contracts" in content
+    assert "Deployment publication closure validation reports are public contracts" in content
     assert "Deployment orchestration receipt validation reports are public contracts" in content
     assert "Gateway publication readiness reports are public contracts" in content
+    assert "Gateway publication receipt validation reports are public contracts" in content
     assert "Governed runtime promotion validators are public contracts" in content
     assert "Terminal closure certificates are public contracts" in content
     assert "Reflex deployment witness envelopes are public contracts" in content

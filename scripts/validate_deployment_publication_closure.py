@@ -20,6 +20,7 @@ import argparse
 import json
 import re
 import sys
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,9 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 
 DEFAULT_DEPLOYMENT_STATUS_PATH = REPO_ROOT / "DEPLOYMENT_STATUS.md"
 DEFAULT_WITNESS_PATH = REPO_ROOT / ".change_assurance" / "deployment_witness.json"
+DEFAULT_VALIDATION_OUTPUT = (
+    REPO_ROOT / ".change_assurance" / "deployment_publication_closure_validation.json"
+)
 DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
 DEPLOYMENT_STATE_PATTERN = re.compile(
     r"^\*\*Deployment witness state:\*\*\s+`([^`]+)`$",
@@ -70,6 +74,22 @@ REQUIRED_PUBLISHED_FIELDS = (
     "authority_unowned_high_risk_capability_count",
     "steps",
 )
+
+
+@dataclass(frozen=True, slots=True)
+class DeploymentPublicationClosureValidation:
+    """Structured validation report for deployment publication closure."""
+
+    deployment_status_path: str
+    witness_path: str
+    valid: bool
+    errors: tuple[str, ...]
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable validation report."""
+        payload = asdict(self)
+        payload["errors"] = list(self.errors)
+        return payload
 
 
 def validate_publication_closure(
@@ -138,6 +158,160 @@ def load_witness_payload(witness_path: Path) -> tuple[dict[str, Any] | None, lis
     if not isinstance(parsed, dict):
         return None, [f"{witness_path}: witness JSON root must be an object"]
     return parsed, []
+
+
+def validate_deployment_publication_closure_report(
+    *,
+    deployment_status_path: Path = DEFAULT_DEPLOYMENT_STATUS_PATH,
+    witness_path: Path = DEFAULT_WITNESS_PATH,
+) -> DeploymentPublicationClosureValidation:
+    """Build one deterministic deployment publication closure validation report."""
+    errors: list[str] = []
+    if not deployment_status_path.exists():
+        errors.append(f"{deployment_status_path}: deployment status document missing")
+        deployment_status_text = ""
+    else:
+        deployment_status_text = deployment_status_path.read_text(encoding="utf-8")
+
+    witness_payload, witness_errors = load_witness_payload(witness_path)
+    errors.extend(witness_errors)
+    if deployment_status_text:
+        if witness_payload is not None:
+            errors.extend(_validate_witness_schema(witness_payload, witness_path))
+        errors.extend(
+            validate_publication_closure(
+                deployment_status_text=deployment_status_text,
+                witness_payload=witness_payload,
+                witness_path=witness_path,
+            )
+        )
+
+    return DeploymentPublicationClosureValidation(
+        deployment_status_path=_bounded_deployment_status_path(deployment_status_path),
+        witness_path=_bounded_witness_path(witness_path),
+        valid=not errors,
+        errors=tuple(
+            _bounded_report_error(
+                error,
+                deployment_status_path=deployment_status_path,
+                witness_path=witness_path,
+            )
+            for error in errors
+        ),
+    )
+
+
+def write_deployment_publication_closure_validation_report(
+    validation: DeploymentPublicationClosureValidation,
+    output_path: Path,
+) -> Path:
+    """Write one deployment publication closure validation report."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(validation.to_json_dict(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def _bounded_deployment_status_path(deployment_status_path: Path) -> str:
+    """Return a public-safe deployment status path label for validation reports."""
+    if deployment_status_path == DEFAULT_DEPLOYMENT_STATUS_PATH:
+        return "DEPLOYMENT_STATUS.md"
+    return "provided_deployment_status"
+
+
+def _bounded_witness_path(witness_path: Path) -> str:
+    """Return a public-safe witness path label for validation reports."""
+    if witness_path == DEFAULT_WITNESS_PATH:
+        return ".change_assurance/deployment_witness.json"
+    return "provided_witness"
+
+
+def _bounded_report_error(
+    error: str,
+    *,
+    deployment_status_path: Path,
+    witness_path: Path,
+) -> str:
+    """Return a public-safe error for structured validation reports."""
+    bounded = (
+        error.replace(
+            str(deployment_status_path),
+            _bounded_deployment_status_path(deployment_status_path),
+        )
+        .replace(str(witness_path), _bounded_witness_path(witness_path))
+    )
+    prefix, detail = _split_public_error_prefix(bounded)
+    return f"{prefix}{_bounded_report_error_detail(detail)}"
+
+
+def _split_public_error_prefix(error: str) -> tuple[str, str]:
+    for prefix in (
+        "DEPLOYMENT_STATUS.md: ",
+        "provided_deployment_status: ",
+        ".change_assurance/deployment_witness.json: ",
+        "provided_witness: ",
+    ):
+        if error.startswith(prefix):
+            return prefix, error.removeprefix(prefix)
+    return "", error
+
+
+def _bounded_report_error_detail(error_detail: str) -> str:
+    if error_detail.startswith("schema contract:"):
+        return "schema contract validation failed"
+    if error_detail.startswith("deployment witness state is unsupported"):
+        return "deployment witness state is unsupported"
+    if error_detail.startswith("missing published witness fields:"):
+        return error_detail
+    if error_detail in {
+        "deployment status document missing",
+        "not-published deployment must keep public production health endpoint not-declared",
+        "published witness conflicts with not-published status",
+        "published deployment requires a declared public health endpoint",
+        "published deployment requires witness artifact",
+        "witness JSON parse failed",
+        "witness JSON root must be an object",
+        "published gateway_url must not be localhost",
+        "published gateway_url must use https",
+        "health_response_digest must be a sha256 digest",
+        "authority responsibility debt must be clear",
+        "runtime responsibility debt must be clear",
+        "steps must be a non-empty list",
+        "published witness requires passing gateway health step",
+        "public production health endpoint must use https",
+    }:
+        return error_detail
+    if error_detail.startswith("DEPLOYMENT_STATUS.md missing field:"):
+        return error_detail
+    if error_detail.startswith("health_http_status "):
+        return "health_http_status mismatch"
+    if error_detail.startswith("witness step failed:"):
+        return "witness step failed"
+    if error_detail.startswith("steps[") and error_detail.endswith(" must be an object"):
+        return "witness step malformed"
+    if error_detail.startswith("witness public health endpoint does not match"):
+        return "witness public health endpoint mismatch"
+    if error_detail.startswith("public production health endpoint does not match"):
+        return "public production health endpoint mismatch"
+    if " != " in error_detail:
+        field_name = error_detail.split(" ", 1)[0]
+        if field_name in REQUIRED_PUBLISHED_FIELDS:
+            return f"{field_name} mismatch"
+    if error_detail.endswith(" must be non-empty"):
+        field_name = error_detail.removesuffix(" must be non-empty")
+        if field_name in REQUIRED_PUBLISHED_FIELDS:
+            return error_detail
+    for field_name in (
+        "authority_overdue_approval_chain_count",
+        "authority_overdue_obligation_count",
+        "authority_escalated_obligation_count",
+        "authority_unowned_high_risk_capability_count",
+    ):
+        if error_detail.startswith(f"{field_name} "):
+            return f"{field_name} must be zero"
+    return "deployment publication closure validation failed"
 
 
 def _validate_witness_schema(
@@ -292,6 +466,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=str(DEFAULT_WITNESS_PATH),
         help="Path to collected deployment witness JSON.",
     )
+    parser.add_argument(
+        "--output",
+        default="",
+        help=(
+            "Optional path for a structured validation report. "
+            f"Suggested: {DEFAULT_VALIDATION_OUTPUT}"
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -300,33 +482,22 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     deployment_status_path = Path(args.deployment_status)
     witness_path = Path(args.witness)
-
-    errors: list[str] = []
-    if not deployment_status_path.exists():
-        errors.append(f"{deployment_status_path}: deployment status document missing")
-        deployment_status_text = ""
-    else:
-        deployment_status_text = deployment_status_path.read_text(encoding="utf-8")
-
-    witness_payload, witness_errors = load_witness_payload(witness_path)
-    errors.extend(witness_errors)
-    if deployment_status_text:
-        if witness_payload is not None:
-            errors.extend(_validate_witness_schema(witness_payload, witness_path))
-        errors.extend(
-            validate_publication_closure(
-                deployment_status_text=deployment_status_text,
-                witness_payload=witness_payload,
-                witness_path=witness_path,
-            )
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status_path,
+        witness_path=witness_path,
+    )
+    if args.output:
+        write_deployment_publication_closure_validation_report(
+            validation,
+            Path(args.output),
         )
 
     print("=== Deployment Publication Closure Validation ===")
     print(f"  deployment status: {deployment_status_path}")
     print(f"  witness:           {witness_path}")
-    if errors:
-        print(f"\nFAILED - {len(errors)} error(s):")
-        for error in errors:
+    if not validation.valid:
+        print(f"\nFAILED - {len(validation.errors)} error(s):")
+        for error in validation.errors:
             print(f"  X {error}")
         return 1
     print("\nDEPLOYMENT PUBLICATION CLOSURE OK")

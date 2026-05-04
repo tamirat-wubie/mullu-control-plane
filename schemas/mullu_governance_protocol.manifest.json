@@ -71,6 +71,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-publication-closure-validation",
+      "path": "schemas/deployment_publication_closure_validation.schema.json",
+      "urn": "urn:mullusi:schema:deployment-publication-closure-validation:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "deployment-witness",
       "path": "schemas/deployment_witness.schema.json",
       "urn": "urn:mullusi:schema:deployment-witness:1",
@@ -122,6 +128,12 @@
       "schema_id": "gateway-publication-readiness",
       "path": "schemas/gateway_publication_readiness.schema.json",
       "urn": "urn:mullusi:schema:gateway-publication-readiness:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "gateway-publication-receipt-validation",
+      "path": "schemas/gateway_publication_receipt_validation.schema.json",
+      "urn": "urn:mullusi:schema:gateway-publication-receipt-validation:1",
       "surface": "deployment"
     },
     {

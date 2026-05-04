@@ -23,6 +23,7 @@ from scripts.validate_gateway_publication_receipt import (
     validate_gateway_publication_receipt,
     write_receipt_validation_report,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 def test_valid_ready_only_receipt_writes_validation_report(tmp_path: Path) -> None:
@@ -41,8 +42,32 @@ def test_valid_ready_only_receipt_writes_validation_report(tmp_path: Path) -> No
     assert validation.valid is True
     assert validation.resolution_state == "ready-only"
     assert payload["valid"] is True
+    assert payload["receipt_path"] == "provided_receipt"
     assert _step(validation, "require ready").passed is True
     assert _step(validation, "require dispatched").detail == "not-required"
+
+
+def test_receipt_validation_report_matches_public_schema(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
+    validation = validate_gateway_publication_receipt(
+        receipt_path=receipt_path,
+        require_ready=True,
+        expected_gateway_host="gateway.mullusi.com",
+    )
+    write_receipt_validation_report(validation, output_path)
+    schema = _load_schema(
+        Path("schemas/gateway_publication_receipt_validation.schema.json")
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    errors = _validate_schema_instance(schema, payload)
+
+    assert errors == []
+    assert payload["valid"] is True
+    assert payload["resolution_state"] == "ready-only"
+    assert any(step["name"] == "readiness proof steps" for step in payload["steps"])
 
 
 def test_require_dispatched_fails_ready_only_receipt(tmp_path: Path) -> None:
@@ -58,7 +83,7 @@ def test_require_dispatched_fails_ready_only_receipt(tmp_path: Path) -> None:
 
     assert validation.valid is False
     assert dispatched_step.passed is False
-    assert dispatched_step.detail == "dispatch_performed=False"
+    assert dispatched_step.detail == "dispatch_performed=false"
     assert _step(validation, "required fields").passed is True
     assert _step(validation, "resolution state").passed is True
 
@@ -108,7 +133,7 @@ def test_blocked_not_ready_receipt_is_valid_but_fails_ready_policy(tmp_path: Pat
     assert validation.resolution_state == "blocked-not-ready"
     assert _step(validation, "resolution state").passed is True
     assert ready_step.passed is False
-    assert ready_step.detail == "readiness_ready=False"
+    assert ready_step.detail == "readiness_ready=false"
 
 
 def test_receipt_readiness_mismatch_is_invalid(tmp_path: Path) -> None:
@@ -247,7 +272,43 @@ def test_cli_writes_validation_report_and_returns_nonzero_for_failed_success_pol
     assert output_path.exists()
     assert payload["valid"] is False
     assert "valid: false" in captured.out
-    assert "conclusion=failure" in captured.out
+    assert "conclusion=not-success" in captured.out
+
+
+def test_invalid_resolution_state_report_matches_public_schema(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "receipt.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
+    payload = json.loads(receipt_path.read_text(encoding="utf-8"))
+    payload["resolution_state"] = "secret-resolution-token"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
+    write_receipt_validation_report(validation, output_path)
+    report = json.loads(output_path.read_text(encoding="utf-8"))
+    schema = _load_schema(
+        Path("schemas/gateway_publication_receipt_validation.schema.json")
+    )
+
+    assert _validate_schema_instance(schema, report) == []
+    assert report["resolution_state"] == "invalid"
+    assert "secret-resolution-token" not in json.dumps(report, sort_keys=True)
+
+
+def test_validation_report_bounds_noncanonical_receipt_path(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-publication-receipt.json"
+    output_path = tmp_path / "validation.json"
+    _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
+
+    validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
+    write_receipt_validation_report(validation, output_path)
+    report = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert report["receipt_path"] == "provided_receipt"
+    assert validation.receipt_path == "provided_receipt"
+    assert "secret-publication-receipt" not in json.dumps(report, sort_keys=True)
 
 
 def test_missing_receipt_file_error_is_bounded(tmp_path: Path) -> None:

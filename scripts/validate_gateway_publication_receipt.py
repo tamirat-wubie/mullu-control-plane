@@ -110,9 +110,9 @@ def validate_gateway_publication_receipt(
     ]
     resolution_state = str(payload.get("resolution_state", ""))
     return GatewayPublicationReceiptValidation(
-        receipt_path=str(receipt_path),
+        receipt_path=_bounded_receipt_path(receipt_path),
         valid=all(step.passed for step in steps),
-        resolution_state=resolution_state,
+        resolution_state=_bounded_resolution_state(resolution_state),
         steps=tuple(steps),
     )
 
@@ -204,7 +204,7 @@ def _check_resolution_state(payload: dict[str, Any]) -> ReceiptValidationStep:
         return ReceiptValidationStep(
             "resolution state",
             False,
-            f"invalid={resolution_state}",
+            _resolution_state_status(resolution_state),
         )
     expected_state = _expected_resolution_state(payload)
     if expected_state != resolution_state:
@@ -419,7 +419,7 @@ def _check_require_ready(
     return ReceiptValidationStep(
         "require ready",
         readiness_ready is True,
-        f"readiness_ready={readiness_ready}",
+        f"readiness_ready={_bool_state(readiness_ready)}",
     )
 
 
@@ -434,7 +434,7 @@ def _check_require_dispatched(
     return ReceiptValidationStep(
         "require dispatched",
         dispatch_performed is True,
-        f"dispatch_performed={dispatch_performed}",
+        f"dispatch_performed={_bool_state(dispatch_performed)}",
     )
 
 
@@ -446,13 +446,55 @@ def _check_require_success(
     if not require_success:
         return ReceiptValidationStep("require success", True, "not-required")
     dispatch_performed = payload.get("dispatch_performed")
-    dispatch_conclusion = str(payload.get("dispatch_conclusion", ""))
+    dispatch_conclusion = payload.get("dispatch_conclusion", "")
     passed = dispatch_performed is True and dispatch_conclusion == "success"
     return ReceiptValidationStep(
         "require success",
         passed,
-        f"dispatch_performed={dispatch_performed} conclusion={dispatch_conclusion}",
+        (
+            f"dispatch_performed={_bool_state(dispatch_performed)} "
+            f"conclusion={_dispatch_conclusion_state(dispatch_conclusion)}"
+        ),
     )
+
+
+def _bounded_receipt_path(receipt_path: Path) -> str:
+    """Return a public-safe receipt path label for validation reports."""
+    if receipt_path == DEFAULT_RECEIPT_OUTPUT:
+        return DEFAULT_RECEIPT_OUTPUT.as_posix()
+    return "provided_receipt"
+
+
+def _bounded_resolution_state(resolution_state: str) -> str:
+    if resolution_state in VALID_RESOLUTION_STATES:
+        return resolution_state
+    return _resolution_state_status(resolution_state)
+
+
+def _resolution_state_status(resolution_state: str) -> str:
+    if not resolution_state:
+        return "missing"
+    return "invalid"
+
+
+def _bool_state(value: Any) -> str:
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    if value is None:
+        return "none"
+    return "invalid"
+
+
+def _dispatch_conclusion_state(value: Any) -> str:
+    if value == "success":
+        return "success"
+    if value in ("", None):
+        return "missing"
+    if isinstance(value, str):
+        return "not-success"
+    return "invalid"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
