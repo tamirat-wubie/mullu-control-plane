@@ -451,6 +451,7 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "gateway_status": "healthy",
             "latest_command_event_hash": "abc123",
             "latest_terminal_certificate_id": "terminal-1",
+            "responsibility_debt_clear": True,
             "signed_at": "2026-04-25T00:00:00Z",
             "signature_key_id": "runtime",
             "signature": "hmac-sha256:placeholder",

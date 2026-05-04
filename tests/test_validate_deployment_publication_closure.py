@@ -197,6 +197,23 @@ def test_published_status_rejects_authority_responsibility_debt() -> None:
     assert "authority_overdue_obligation_count 1 != 0" in errors[1]
 
 
+def test_published_status_rejects_runtime_responsibility_debt() -> None:
+    witness = _published_witness()
+    witness["runtime_responsibility_debt_clear"] = False
+
+    errors = validate_publication_closure(
+        deployment_status_text=_deployment_status(
+            "published",
+            "https://gateway.example/health",
+        ),
+        witness_payload=witness,
+        witness_path=Path(".change_assurance/deployment_witness.json"),
+    )
+
+    assert len(errors) == 1
+    assert "runtime responsibility debt must be clear" in errors[0]
+
+
 def test_cli_accepts_current_not_published_status_without_witness(tmp_path, capsys) -> None:
     deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
     deployment_status.write_text(
@@ -253,6 +270,7 @@ def _published_witness() -> dict[str, object]:
         "runtime_witness_id": "runtime-witness-001",
         "runtime_environment": "pilot",
         "runtime_signature_key_id": "runtime-key-001",
+        "runtime_responsibility_debt_clear": True,
         "authority_responsibility_debt_clear": True,
         "authority_pending_approval_chain_count": 0,
         "authority_overdue_approval_chain_count": 0,

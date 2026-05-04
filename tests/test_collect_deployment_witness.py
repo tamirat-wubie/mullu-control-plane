@@ -76,6 +76,7 @@ def test_collect_deployment_witness_publishes_with_verified_signature(monkeypatc
     assert witness.latest_conformance_certificate_id == "conf-0123456789abcdef"
     assert witness.conformance_signature_status == "verified"
     assert witness.runtime_environment == "pilot"
+    assert witness.runtime_responsibility_debt_clear is True
     assert witness.authority_responsibility_debt_clear is True
     assert witness.authority_overdue_obligation_count == 0
     assert witness.authority_unowned_high_risk_capability_count == 0
@@ -182,6 +183,44 @@ def test_collect_deployment_witness_rejects_responsibility_debt(monkeypatch) -> 
     assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
 
 
+def test_collect_deployment_witness_rejects_runtime_responsibility_debt(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(
+        secret=witness_secret,
+        responsibility_debt_clear=False,
+    )
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    runtime_step = next(step for step in witness.steps if step.name == "gateway runtime witness")
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.runtime_responsibility_debt_clear is False
+    assert runtime_step.passed is False
+    assert conformance_step.passed is False
+    assert "responsibility_debt_clear=False" in runtime_step.detail
+    assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
+
+
 def test_collect_deployment_witness_rejects_invalid_mcp_manifest(monkeypatch) -> None:
     witness_secret = "runtime-secret"
     conformance_secret = "conformance-secret"
@@ -285,6 +324,7 @@ def test_write_deployment_witness_persists_json(tmp_path, monkeypatch) -> None:
     assert loaded["deployment_claim"] == "published"
     assert loaded["witness_id"] == witness.witness_id
     assert loaded["latest_conformance_certificate_id"] == "conf-0123456789abcdef"
+    assert loaded["runtime_responsibility_debt_clear"] is True
     assert loaded["authority_responsibility_debt_clear"] is True
     assert loaded["authority_overdue_approval_chain_count"] == 0
     assert loaded["authority_overdue_obligation_count"] == 0
@@ -320,12 +360,17 @@ def test_cli_writes_not_published_witness_without_secret(tmp_path, monkeypatch, 
     assert _validate_schema_instance(_load_schema(DEPLOYMENT_WITNESS_SCHEMA_PATH), loaded) == []
 
 
-def _signed_runtime_witness(*, secret: str) -> dict[str, Any]:
+def _signed_runtime_witness(
+    *,
+    secret: str,
+    responsibility_debt_clear: bool = True,
+) -> dict[str, Any]:
     payload = {
         "witness_id": "runtime-witness-test",
         "environment": "pilot",
         "runtime_status": "healthy",
         "gateway_status": "healthy",
+        "responsibility_debt_clear": responsibility_debt_clear,
         "latest_command_event_hash": "event-hash",
         "latest_anchor_id": "anchor-1",
         "latest_terminal_certificate_id": "terminal-1",

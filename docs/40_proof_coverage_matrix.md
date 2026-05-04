@@ -24,6 +24,7 @@ document is the operator-readable witness.
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/responsibility`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
 | `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state; orchestration receipts bind ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and post-run receipt validation before deployment witness readiness. |
 | `runtime_conformance_attestation` | `/runtime/conformance` | read-model | read-model | conformance certificate | hash-chain | witnessed | Runtime conformance binds witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, plan evidence bundle readiness, proof-matrix, and document-drift checks into one signed attestation. |
+| `runtime_reflex_engine` | `/runtime/self/health`, `/runtime/self/inspect`, `/runtime/self/diagnose`, `/runtime/self/evaluate`, `/runtime/self/propose-upgrade`, `/runtime/self/certify`, `/runtime/self/promote`, `/runtime/self/witness` | read-model | yes | signed reflex witness | hash-chain | witnessed | Runtime Reflex exposes operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, and signed witness projections without direct runtime mutation. |
 | `capability_plan_evidence_bundle` | `/capability-plans/read-model`, `/capability-plans/{plan_id}/closure`, `/capability-plans/{plan_id}/recover` | yes | yes | plan proof bundle | hash-chain | witnessed | Capability plan surfaces expose terminal certificates, evidence bundles, failure witnesses, and recovery-attempt audit records. |
 | `replay_determinism` | `/api/v1/replay/{trace_id}/determinism` | yes | yes | replay report hash | hash-chain | witnessed | Replay determinism route emits governed reports over completed traces with bounded operation specs. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests. |
@@ -35,9 +36,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 21 |
+| Total surfaces | 22 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 20 |
+| Witnessed surfaces | 21 |
 | Unproven surfaces | 0 |
 
 Gateway runtime witness invariants:
@@ -60,6 +61,7 @@ Resolved closure actions:
 10. `publish_runtime_conformance_attestation`
 11. `publish_capability_plan_evidence_bundles`
 12. `publish_deployment_orchestration_receipt_contract`
+13. `publish_runtime_reflex_engine_read_models`
 
 Open closure actions:
 
@@ -67,6 +69,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, deployment preflight MCP manifest validation, deployment orchestration receipt, deployment orchestration receipt schema contract, runtime conformance MCP manifest witness, runtime conformance plan evidence bundle canary, runtime conformance attestation mapping, capability plan evidence bundle mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
+  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, deployment preflight MCP manifest validation, deployment orchestration receipt, deployment orchestration receipt schema contract, runtime conformance MCP manifest witness, runtime conformance plan evidence bundle canary, runtime conformance attestation mapping, runtime reflex engine mapping, capability plan evidence bundle mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
   Open issues: none
   Next action: run `python scripts/proof_coverage_matrix.py --check`

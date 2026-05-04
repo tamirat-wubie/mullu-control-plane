@@ -336,6 +336,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "runtime_reflex_engine",
+            [
+                "/runtime/self/health",
+                "/runtime/self/inspect",
+                "/runtime/self/diagnose",
+                "/runtime/self/evaluate",
+                "/runtime/self/propose-upgrade",
+                "/runtime/self/certify",
+                "/runtime/self/promote",
+                "/runtime/self/witness",
+            ],
+            "read_model",
+            "request_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/server.py",
+                "mcoi/mcoi_runtime/contracts/reflex.py",
+                "mcoi/mcoi_runtime/core/reflex.py",
+                "tests/test_reflex_engine.py",
+                "tests/test_gateway/test_reflex_endpoints.py",
+                "tests/test_gateway/test_webhooks.py",
+            ],
+            "Runtime Reflex surfaces expose operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, and signed witness projections without direct runtime mutation.",
+            [
+                "operator_only_access",
+                "mutation_applied_false",
+                "certification_handoff_required",
+                "protected_surfaces_auto_promote_false",
+                "signed_reflex_witness",
+            ],
+        ),
+        _surface(
             "capability_plan_evidence_bundle",
             [
                 "/capability-plans/read-model",
@@ -510,6 +543,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_deployment_orchestration_receipt_contract",
             "surfaces": ["gateway_runtime_witness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_runtime_reflex_engine_read_models",
+            "surfaces": ["runtime_reflex_engine", "runtime_conformance_attestation"],
             "status": "closed",
         },
     ]

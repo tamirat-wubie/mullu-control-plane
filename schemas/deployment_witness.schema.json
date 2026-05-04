@@ -23,6 +23,7 @@
     "runtime_witness_id",
     "runtime_environment",
     "runtime_signature_key_id",
+    "runtime_responsibility_debt_clear",
     "authority_responsibility_debt_clear",
     "authority_pending_approval_chain_count",
     "authority_overdue_approval_chain_count",
@@ -107,6 +108,9 @@
     },
     "runtime_signature_key_id": {
       "type": "string"
+    },
+    "runtime_responsibility_debt_clear": {
+      "type": "boolean"
     },
     "authority_responsibility_debt_clear": {
       "type": "boolean"
