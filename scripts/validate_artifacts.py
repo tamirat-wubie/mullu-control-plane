@@ -80,9 +80,9 @@ def _load_json_object(path: Path, *, kind: str) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"{_relative_path(path)}: invalid {kind} JSON: {exc.msg}") from exc
+        raise ValueError(f"{_relative_path(path)}: invalid {kind} JSON") from exc
     except OSError as exc:
-        raise ValueError(f"{_relative_path(path)}: cannot read {kind} artifact: {exc}") from exc
+        raise ValueError(f"{_relative_path(path)}: cannot read {kind} artifact") from exc
 
     if not isinstance(payload, dict):
         raise ValueError(f"{_relative_path(path)}: {kind} JSON root must be an object")
@@ -293,7 +293,9 @@ def validate_config_artifact(path: Path) -> list[str]:
         payload = _load_json_object(path, kind="config")
         AppConfig.from_mapping(payload)
     except ValueError as exc:
-        return [f"{_relative_path(path)}: {exc}"]
+        message = str(exc)
+        path_prefix = f"{_relative_path(path)}: "
+        return [message if message.startswith(path_prefix) else f"{path_prefix}{message}"]
     return []
 
 
@@ -321,7 +323,7 @@ def validate_request_artifact(path: Path) -> list[str]:
     try:
         validated_template = validator.validate(request.template, request.bindings)
     except TemplateValidationError as exc:
-        errors.append(f"{_relative_path(path)}: invalid request template {exc.code}: {exc}")
+        errors.append(f"{_relative_path(path)}: invalid request template {exc.code}")
         return errors
 
     config, config_errors = _load_request_config(path)

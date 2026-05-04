@@ -202,8 +202,8 @@ def validate_json_schemas() -> list[str]:
         try:
             with open(schema_path) as f:
                 schema = json.load(f)
-        except json.JSONDecodeError as e:
-            errors.append(f"{schema_path.name}: invalid JSON — {e}")
+        except json.JSONDecodeError:
+            errors.append(f"{schema_path.name}: invalid JSON")
             continue
 
         # Basic schema structure checks
@@ -337,8 +337,8 @@ def _validate_schema_instance(
     if "$ref" in schema:
         try:
             referenced_schema = _resolve_local_schema_ref(root, str(schema["$ref"]))
-        except ValueError as exc:
-            return [f"{path}: unresolved schema ref {schema['$ref']!r}: {exc}"]
+        except ValueError:
+            return [f"{path}: unresolved schema ref"]
         return _validate_schema_instance(referenced_schema, instance, path, root)
 
     errors: list[str] = []
@@ -976,8 +976,8 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
 
         try:
             rust_fields = _extract_rust_struct_fields(source_text, mapping.struct_name)
-        except ValueError as exc:
-            errors.append(f"{schema_file} <-> {mapping.struct_name}: {exc}")
+        except ValueError:
+            errors.append(f"{schema_file} <-> {mapping.struct_name}: Rust struct extraction failed")
             continue
 
         missing_required = required_fields - rust_fields
@@ -1005,8 +1005,8 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
             schema_enum = set(schema["properties"][property_name].get("enum", []))
             try:
                 rust_enum = _extract_rust_enum_values(source_text, enum_name)
-            except ValueError as exc:
-                errors.append(f"{schema_file} <-> {enum_name}: {exc}")
+            except ValueError:
+                errors.append(f"{schema_file} <-> {enum_name}: Rust enum extraction failed")
                 continue
             if schema_enum != rust_enum:
                 errors.append(
@@ -1020,8 +1020,8 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
             nested_required = set(nested_schema.get("required", []))
             try:
                 nested_fields = _extract_rust_struct_fields(source_text, nested_mapping.struct_name)
-            except ValueError as exc:
-                errors.append(f"{schema_file} <-> {nested_mapping.struct_name}: {exc}")
+            except ValueError:
+                errors.append(f"{schema_file} <-> {nested_mapping.struct_name}: Rust struct extraction failed")
                 continue
 
             missing_nested_required = nested_required - nested_fields
@@ -1052,8 +1052,8 @@ def check_rust_contract_parity(strict: bool = False) -> list[str]:
                 schema_enum = set(nested_schema["properties"][nested_property_name].get("enum", []))
                 try:
                     rust_enum = _extract_rust_enum_values(source_text, enum_name)
-                except ValueError as exc:
-                    errors.append(f"{schema_file} <-> {enum_name}: {exc}")
+                except ValueError:
+                    errors.append(f"{schema_file} <-> {enum_name}: Rust enum extraction failed")
                     continue
                 if schema_enum != rust_enum:
                     errors.append(

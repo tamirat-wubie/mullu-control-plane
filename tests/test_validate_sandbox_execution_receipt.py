@@ -55,13 +55,27 @@ def test_validate_sandbox_execution_receipt_accepts_nested_evidence_envelope(tmp
 
 
 def test_validate_sandbox_execution_receipt_rejects_missing_file(tmp_path: Path) -> None:
-    validation = validate_sandbox_execution_receipt(tmp_path / "missing.json")
+    validation = validate_sandbox_execution_receipt(tmp_path / "secret-missing-receipt.json")
+    serialized = json.dumps(validation.as_dict(), sort_keys=True)
 
     assert validation.valid is False
     assert validation.status == "failed"
     assert validation.receipt_id == ""
     assert validation.blockers == ("sandbox_receipt_unreadable",)
-    assert "not found" in validation.detail
+    assert validation.detail == "sandbox receipt file not found"
+    assert "secret-missing-receipt" not in serialized
+
+
+def test_validate_sandbox_execution_receipt_bounds_json_error_detail(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "sandbox-receipt.json"
+    receipt_path.write_text('{"receipt_id": "secret-sandbox-token"', encoding="utf-8")
+
+    validation = validate_sandbox_execution_receipt(receipt_path)
+    serialized = json.dumps(validation.as_dict(), sort_keys=True)
+
+    assert validation.valid is False
+    assert validation.detail == "sandbox receipt unreadable"
+    assert "secret-sandbox-token" not in serialized
 
 
 def test_validate_sandbox_execution_receipt_rejects_weak_isolation(tmp_path: Path) -> None:

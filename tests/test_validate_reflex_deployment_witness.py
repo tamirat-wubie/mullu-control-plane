@@ -175,7 +175,7 @@ def test_validate_reflex_deployment_witness_json_error_is_bounded(tmp_path: Path
     serialized = json.dumps(validation.as_dict(), sort_keys=True)
 
     assert validation.valid is False
-    assert validation.detail == "reflex deployment witness unreadable: JSONDecodeError"
+    assert validation.detail == "reflex deployment witness unreadable"
     assert validation.witness_path == "<provided>"
     assert "secret-json-token" not in serialized
 
