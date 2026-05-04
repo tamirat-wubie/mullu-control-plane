@@ -260,14 +260,22 @@ def evaluate_deployment_publication(
         )
     )
     public_health_published = bool(
-        public_health_endpoint
+        witness_published
+        and public_health_endpoint
         and public_health_endpoint != "not-declared"
         and public_health_endpoint.startswith("https://")
     )
     public_health_detail = (
-        f"public health endpoint declared: {public_health_endpoint}"
+        f"public health endpoint declared with validated witness: {public_health_endpoint}"
         if public_health_published
-        else f"public production health endpoint not declared: {public_health_endpoint or 'missing'}"
+        else _join_detail(
+            "public production health endpoint is not validated",
+            (
+                f"endpoint={public_health_endpoint or 'missing'}",
+                f"witness_published={witness_published}",
+                f"closure_errors={len(closure_errors)}",
+            ),
+        )
     )
     return (
         PromotionCheck(

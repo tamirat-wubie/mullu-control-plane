@@ -8,7 +8,9 @@ Dependencies: DEPLOYMENT_STATUS.md and .change_assurance/deployment_witness.json
 Invariants:
   - The repository may stay not-published without a witness artifact.
   - A published deployment claim requires a published witness artifact.
+  - Published public endpoints must be HTTPS production URLs.
   - Published witnesses require verified runtime and conformance signatures.
+  - Published witnesses require an explicit passing gateway health step.
   - Published witnesses require every collection step to pass.
 """
 
@@ -178,18 +180,26 @@ def _validate_published_witness(
     gateway_url = str(witness_payload.get("gateway_url", ""))
     if gateway_url.startswith(("http://localhost", "http://127.0.0.1")):
         errors.append(f"{witness_path}: published gateway_url must not be localhost")
+    if gateway_url and not gateway_url.startswith("https://"):
+        errors.append(f"{witness_path}: published gateway_url must use https")
 
     steps = witness_payload.get("steps")
     if not isinstance(steps, list) or not steps:
         errors.append(f"{witness_path}: steps must be a non-empty list")
         return errors
+    health_step_passed = False
     for index, step in enumerate(steps):
         if not isinstance(step, dict):
             errors.append(f"{witness_path}: steps[{index}] must be an object")
             continue
+        step_name = str(step.get("name", "")).strip().lower()
+        if step_name == "gateway health" and step.get("passed") is True:
+            health_step_passed = True
         if step.get("passed") is not True:
-            step_name = step.get("name", f"steps[{index}]")
-            errors.append(f"{witness_path}: witness step failed: {step_name}")
+            reported_step_name = step.get("name", f"steps[{index}]")
+            errors.append(f"{witness_path}: witness step failed: {reported_step_name}")
+    if not health_step_passed:
+        errors.append(f"{witness_path}: published witness requires passing gateway health step")
     return errors
 
 
@@ -202,7 +212,11 @@ def _validate_public_health_matches_witness(
     gateway_url = str(witness_payload.get("gateway_url", "")).rstrip("/")
     if not gateway_url:
         return []
+    if not gateway_url.startswith("https://"):
+        return []
     expected_health_endpoint = f"{gateway_url}/health"
+    if not public_health_endpoint.startswith("https://"):
+        return ["public production health endpoint must use https"]
     if public_health_endpoint != expected_health_endpoint:
         return [
             "public production health endpoint does not match witness gateway URL: "

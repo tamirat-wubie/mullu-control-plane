@@ -1034,6 +1034,10 @@ class TestGatewayStatus:
         assert "latest_command_event_hash" in data
         assert "latest_terminal_certificate_id" in data
         assert "active_compensation_review_count" in data
+        assert data["pending_approval_chain_count"] == 0
+        assert data["overdue_approval_chain_count"] == 0
+        assert data["expired_approval_chain_count"] == 0
+        assert data["open_obligation_count"] == 0
         assert data["signature_key_id"]
         assert data["signature"].startswith("hmac-sha256:")
 
@@ -1049,6 +1053,8 @@ class TestGatewayStatus:
         assert resp.status_code == 200
         data = resp.json()
         assert data["pending_approval_chain_count"] == 0
+        assert data["overdue_approval_chain_count"] == 0
+        assert data["expired_approval_chain_count"] == 0
         assert data["open_obligation_count"] == 0
         assert data["active_compensation_review_count"] == 0
         assert data["unowned_high_risk_capability_count"] == 0
