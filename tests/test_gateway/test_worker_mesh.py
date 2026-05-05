@@ -131,6 +131,26 @@ def test_worker_mesh_requires_evidence_for_successful_handler() -> None:
     assert receipt.metadata["receipt_is_not_terminal_closure"] is True
 
 
+def test_worker_mesh_fails_invalid_worker_status_before_receipt_publication() -> None:
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        _lease(),
+        lambda _request: WorkerHandlerResult(
+            status="unknown",
+            output={"accepted": True},
+            evidence_refs=["worker:evidence:1"],
+        ),
+    )
+
+    receipt = mesh.dispatch(lease.lease_id, _request())
+
+    assert receipt.status == "failed"
+    assert receipt.reason == "worker_status_invalid"
+    assert receipt.metadata["worker_receipt_status"] == "failed"
+    assert receipt.evidence_refs == ["worker:evidence:1"]
+    assert receipt.terminal_closure_required is True
+
+
 def test_worker_mesh_rejects_invalid_or_expired_leases() -> None:
     mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
 
