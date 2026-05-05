@@ -68,6 +68,20 @@
       ]
     },
     {
+      "action_id": "classify_data_governance_routes",
+      "status": "closed",
+      "surfaces": [
+        "data_governance_controls"
+      ]
+    },
+    {
+      "action_id": "classify_compliance_evidence_exports",
+      "status": "closed",
+      "surfaces": [
+        "compliance_evidence_exports"
+      ]
+    },
+    {
       "action_id": "publish_runtime_conformance_attestation",
       "status": "closed",
       "surfaces": [
@@ -133,7 +147,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 17,
+      "action_proof": 19,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -141,7 +155,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 21,
+      "audit_chain": 23,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -149,23 +163,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 24
+      "witnessed": 26
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 17
+      "request_proof": 19
     },
-    "surface_count": 25
+    "surface_count": 27
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 4,
-      "unproven": 237,
-      "witnessed": 60
+      "unproven": 225,
+      "witnessed": 72
     },
     "route_count": 301,
     "routes": [
@@ -370,24 +384,24 @@
         "surface_id": "llm_completion"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/compliance/audit-package",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "compliance_evidence_exports"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/compliance/incident-package",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "compliance_evidence_exports"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/compliance/mapping",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "compliance_evidence_exports"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/compliance/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "compliance_evidence_exports"
       },
       {
         "coverage_state": "unproven",
@@ -575,44 +589,44 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/classify",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/evaluate",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/policies",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/privacy-rules",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/redaction-rules",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/residency-constraints",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/retention-rules",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/data-governance/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "data_governance_controls"
       },
       {
         "coverage_state": "unproven",
@@ -1675,7 +1689,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 237
+    "unclassified_route_count": 225
   },
   "schema_version": 1,
   "surfaces": [
@@ -1875,6 +1889,63 @@
       "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "federated_control_plane"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/data.py",
+        "mcoi/mcoi_runtime/core/data_governance.py",
+        "mcoi/mcoi_runtime/contracts/data_governance.py",
+        "mcoi/tests/test_data_governance_endpoints.py",
+        "mcoi/tests/test_data_governance_engine.py",
+        "mcoi/tests/test_data_governance_integration.py"
+      ],
+      "notes": "Data governance routes bind classification, policy, residency, privacy, redaction, retention, and handling evaluation decisions to governed responses with action proof receipts and state-hash posture witnesses.",
+      "representative_paths": [
+        "/api/v1/data-governance/summary",
+        "/api/v1/data-governance/classify",
+        "/api/v1/data-governance/policies",
+        "/api/v1/data-governance/residency-constraints",
+        "/api/v1/data-governance/privacy-rules",
+        "/api/v1/data-governance/redaction-rules",
+        "/api/v1/data-governance/retention-rules",
+        "/api/v1/data-governance/evaluate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "data_governance_state_hash",
+        "data_governance_action_proof",
+        "tenant_visible_violation_read_model"
+      ],
+      "surface_id": "data_governance_controls"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/compliance.py",
+        "mcoi/tests/test_compliance_export.py",
+        "mcoi/tests/test_compliance_alignment_matrix.py",
+        "scripts/compliance_alignment_matrix.py",
+        "docs/50_compliance_alignment_mapping.md"
+      ],
+      "notes": "Compliance export routes emit bounded evidence packages with package hashes, audit-chain verification, supported-framework boundaries, and self-audited export events.",
+      "representative_paths": [
+        "/api/v1/compliance/audit-package",
+        "/api/v1/compliance/incident-package",
+        "/api/v1/compliance/mapping",
+        "/api/v1/compliance/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "compliance_package_hash",
+        "audit_chain_verification",
+        "self_audited_export_event"
+      ],
+      "surface_id": "compliance_evidence_exports"
     },
     {
       "action_proof": "action_proof",
