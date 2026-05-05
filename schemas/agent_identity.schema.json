@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agent-identity:1",
+  "title": "User-Owned Agent Identity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "agent_id",
+    "owner_id",
+    "tenant_id",
+    "role",
+    "status",
+    "allowed_capabilities",
+    "forbidden_capabilities",
+    "budget",
+    "memory_scope",
+    "approval_scope",
+    "delegation_scope",
+    "evidence_history",
+    "reputation_score",
+    "created_at",
+    "updated_at",
+    "identity_hash",
+    "metadata"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "suspended", "revoked"]
+    },
+    "allowed_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forbidden_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "contains": {
+        "const": "policy.modify"
+      }
+    },
+    "budget": {
+      "$ref": "#/$defs/agent_budget"
+    },
+    "memory_scope": {
+      "$ref": "#/$defs/agent_memory_scope"
+    },
+    "approval_scope": {
+      "$ref": "#/$defs/agent_approval_scope"
+    },
+    "delegation_scope": {
+      "$ref": "#/$defs/agent_delegation_scope"
+    },
+    "evidence_history": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent_evidence_record"
+      }
+    },
+    "reputation_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "identity_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "identity_is_accountable",
+        "agent_cannot_approve_self",
+        "policy_mutation_forbidden"
+      ],
+      "properties": {
+        "identity_is_accountable": {
+          "type": "boolean",
+          "const": true
+        },
+        "agent_cannot_approve_self": {
+          "type": "boolean",
+          "const": true
+        },
+        "policy_mutation_forbidden": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "agent_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "daily_action_limit",
+        "daily_cost_limit",
+        "per_action_cost_limit",
+        "currency"
+      ],
+      "properties": {
+        "daily_action_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "daily_cost_limit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "per_action_cost_limit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "agent_memory_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planning_memory_classes",
+        "execution_memory_classes",
+        "forbidden_memory_classes",
+        "tenant_bound",
+        "owner_bound"
+      ],
+      "properties": {
+        "planning_memory_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "execution_memory_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_memory_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tenant_bound": {
+          "type": "boolean",
+          "const": true
+        },
+        "owner_bound": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "agent_approval_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_request_approval",
+        "can_grant_approval",
+        "approval_roles",
+        "approval_limit",
+        "cannot_self_approve"
+      ],
+      "properties": {
+        "can_request_approval": {
+          "type": "boolean"
+        },
+        "can_grant_approval": {
+          "type": "boolean"
+        },
+        "approval_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "approval_limit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cannot_self_approve": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "agent_delegation_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_delegate",
+        "allowed_worker_roles",
+        "allowed_worker_capabilities",
+        "max_depth",
+        "requires_lease"
+      ],
+      "properties": {
+        "can_delegate": {
+          "type": "boolean"
+        },
+        "allowed_worker_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allowed_worker_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requires_lease": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "agent_evidence_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ref",
+        "evidence_type",
+        "observed_at",
+        "command_id",
+        "metadata"
+      ],
+      "properties": {
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "command_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

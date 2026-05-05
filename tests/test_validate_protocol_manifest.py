@@ -27,6 +27,17 @@ def test_protocol_manifest_indexes_deployment_orchestration_receipt() -> None:
     assert receipt_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_agent_identity() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    identity_entry = entries["agent-identity"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert identity_entry["path"] == "schemas/agent_identity.schema.json"
+    assert identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
+    assert identity_entry["surface"] == "identity"
+
+
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -71,6 +82,17 @@ def test_protocol_manifest_indexes_promotion_closure_plan() -> None:
     assert plan_entry["surface"] == "promotion"
 
 
+def test_protocol_manifest_indexes_policy_proof_report() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    policy_proof_entry = entries["policy-proof-report"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert policy_proof_entry["path"] == "schemas/policy_proof_report.schema.json"
+    assert policy_proof_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
+    assert policy_proof_entry["surface"] == "policy"
+
+
 def test_protocol_manifest_indexes_capability_adapter_closure_plan() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -80,6 +102,28 @@ def test_protocol_manifest_indexes_capability_adapter_closure_plan() -> None:
     assert plan_entry["path"] == "schemas/capability_adapter_closure_plan.schema.json"
     assert plan_entry["urn"] == "urn:mullusi:schema:capability-adapter-closure-plan:1"
     assert plan_entry["surface"] == "promotion"
+
+
+def test_protocol_manifest_indexes_capability_upgrade_plan() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    upgrade_entry = entries["capability-upgrade-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert upgrade_entry["path"] == "schemas/capability_upgrade_plan.schema.json"
+    assert upgrade_entry["urn"] == "urn:mullusi:schema:capability-upgrade-plan:1"
+    assert upgrade_entry["surface"] == "capability"
+
+
+def test_protocol_manifest_indexes_autonomous_test_generation_plan() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    test_generation_entry = entries["autonomous-test-generation-plan"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert test_generation_entry["path"] == "schemas/autonomous_test_generation_plan.schema.json"
+    assert test_generation_entry["urn"] == "urn:mullusi:schema:autonomous-test-generation-plan:1"
+    assert test_generation_entry["surface"] == "testing"
 
 
 def test_protocol_manifest_indexes_capability_candidate_package() -> None:
@@ -104,15 +148,48 @@ def test_protocol_manifest_indexes_capability_maturity_assessment() -> None:
     assert maturity_entry["surface"] == "capability"
 
 
-def test_protocol_manifest_indexes_policy_proof_report() -> None:
+def test_protocol_manifest_indexes_domain_operating_pack() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
-    policy_entry = entries["policy-proof-report"]
+    domain_entry = entries["domain-operating-pack"]
 
     assert validate_protocol_manifest(manifest) == []
-    assert policy_entry["path"] == "schemas/policy_proof_report.schema.json"
-    assert policy_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
-    assert policy_entry["surface"] == "policy"
+    assert domain_entry["path"] == "schemas/domain_operating_pack.schema.json"
+    assert domain_entry["urn"] == "urn:mullusi:schema:domain-operating-pack:1"
+    assert domain_entry["surface"] == "domain"
+
+
+def test_protocol_manifest_indexes_trust_ledger_bundle() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    trust_entry = entries["trust-ledger-bundle"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert trust_entry["path"] == "schemas/trust_ledger_bundle.schema.json"
+    assert trust_entry["urn"] == "urn:mullusi:schema:trust-ledger-bundle:1"
+    assert trust_entry["surface"] == "evidence"
+
+
+def test_protocol_manifest_indexes_trust_ledger_anchor_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    trust_entry = entries["trust-ledger-anchor-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert trust_entry["path"] == "schemas/trust_ledger_anchor_receipt.schema.json"
+    assert trust_entry["urn"] == "urn:mullusi:schema:trust-ledger-anchor-receipt:1"
+    assert trust_entry["surface"] == "evidence"
+
+
+def test_protocol_manifest_indexes_memory_lattice_admission() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    lattice_entry = entries["memory-lattice"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert lattice_entry["path"] == "schemas/memory_lattice.schema.json"
+    assert lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
+    assert lattice_entry["surface"] == "memory"
 
 
 def test_protocol_manifest_indexes_multimodal_operation_receipt() -> None:
@@ -220,6 +297,28 @@ def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
     assert world_state_entry["path"] == "schemas/world_state.schema.json"
     assert world_state_entry["urn"] == "urn:mullusi:schema:world-state:1"
     assert world_state_entry["surface"] == "world"
+
+
+def test_protocol_manifest_indexes_multimodal_operation_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    multimodal_entry = entries["multimodal-operation-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert multimodal_entry["path"] == "schemas/multimodal_operation_receipt.schema.json"
+    assert multimodal_entry["urn"] == "urn:mullusi:schema:multimodal-operation-receipt:1"
+    assert multimodal_entry["surface"] == "multimodal"
+
+
+def test_protocol_manifest_indexes_workflow_mining_report() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    workflow_entry = entries["workflow-mining-report"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert workflow_entry["path"] == "schemas/workflow_mining_report.schema.json"
+    assert workflow_entry["urn"] == "urn:mullusi:schema:workflow-mining-report:1"
+    assert workflow_entry["surface"] == "workflow"
 
 
 def test_protocol_manifest_indexes_terminal_closure_certificate() -> None:
