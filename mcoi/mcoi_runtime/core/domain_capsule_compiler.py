@@ -1,12 +1,13 @@
 """Purpose: deterministic domain capsule compiler for the governed capability fabric.
 Governance scope: convert a validated domain capsule into registry, policy, evidence,
-    obligation, read-model, operator-view, and certification artifacts.
+    obligation, read-model, operator-view, certification, and certification-evidence artifacts.
 Dependencies: governed capability fabric contracts and stable identifier helpers.
 Invariants:
   - Compilation is side-effect free and deterministic for a fixed clock.
   - Missing capability references fail compilation before artifact emission.
   - Domain mismatches fail compilation before artifact emission.
   - Non-certified capsule or capability state is surfaced as a warning, not hidden.
+  - Certification evidence is surfaced as an audit artifact, not as admission.
 """
 
 from __future__ import annotations
@@ -24,6 +25,24 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
 )
 
 from .invariants import stable_identifier
+
+
+_CERTIFICATION_EVIDENCE_EXTENSION_KEY = "capability_certification_evidence"
+_CERTIFICATION_EVIDENCE_REF_FIELDS = (
+    "certification_ref",
+    "sandbox_receipt_ref",
+    "live_read_receipt_ref",
+    "live_write_receipt_ref",
+    "worker_deployment_ref",
+    "recovery_evidence_ref",
+    "autonomy_controls_ref",
+)
+_CERTIFICATION_SOURCE_REF_FIELDS = (
+    "source_package_id",
+    "source_package_hash",
+    "source_handoff_hash",
+    "certification_evidence_hash",
+)
 
 
 class DomainCapsuleCompiler:
@@ -139,6 +158,11 @@ def _compile_artifacts(
                 "registry_entries": [entry.to_json_dict() for entry in entries],
             },
         ),
+        _artifact(
+            capsule,
+            "capability_certification_evidence_manifest",
+            _certification_evidence_manifest_payload(capsule, entries),
+        ),
         _artifact(capsule, "policy_pack_manifest", {"policy_refs": capsule.policy_refs}),
         _artifact(capsule, "evidence_pack_manifest", {"evidence_rules": capsule.evidence_rules}),
         _artifact(capsule, "approval_pack_manifest", {"approval_rules": capsule.approval_rules}),
@@ -169,6 +193,53 @@ def _compile_artifacts(
             },
         ),
     )
+
+
+def _certification_evidence_manifest_payload(
+    capsule: DomainCapsule,
+    entries: tuple[CapabilityRegistryEntry, ...],
+) -> dict[str, object]:
+    records = [
+        _certification_evidence_record(entry)
+        for entry in entries
+    ]
+    return {
+        "capsule_id": capsule.capsule_id,
+        "capability_ids": capsule.capability_refs,
+        "certification_evidence_records": records,
+        "manifest_is_not_admission": True,
+    }
+
+
+def _certification_evidence_record(entry: CapabilityRegistryEntry) -> dict[str, object]:
+    evidence = _certification_evidence_payload(entry)
+    return {
+        "capability_id": entry.capability_id,
+        "certification_status": entry.certification_status.value,
+        "has_certification_evidence": bool(evidence),
+        "certification_evidence": evidence,
+        "evidence_refs": [
+            str(evidence[field_name])
+            for field_name in _CERTIFICATION_EVIDENCE_REF_FIELDS
+            if evidence.get(field_name)
+        ],
+        "source_refs": {
+            field_name: str(evidence[field_name])
+            for field_name in _CERTIFICATION_SOURCE_REF_FIELDS
+            if evidence.get(field_name)
+        },
+        "certification_evidence_hash": str(evidence.get("certification_evidence_hash", "")),
+    }
+
+
+def _certification_evidence_payload(entry: CapabilityRegistryEntry) -> dict[str, object]:
+    extensions = entry.to_json_dict().get("extensions", {})
+    if not isinstance(extensions, Mapping):
+        return {}
+    evidence = extensions.get(_CERTIFICATION_EVIDENCE_EXTENSION_KEY, {})
+    if not isinstance(evidence, Mapping):
+        return {}
+    return dict(evidence)
 
 
 def _artifact(

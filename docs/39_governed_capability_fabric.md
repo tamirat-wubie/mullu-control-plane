@@ -83,11 +83,12 @@ capsule source
   -> capability reference validation
   -> policy/evidence/recovery compilation
   -> registry entry emission
+  -> certification evidence manifest emission
   -> fixture and read-model registration
   -> certification report
 ```
 
-Compiler output must include registry manifests, policy packs, evidence packs, approval packs, recovery packs, obligation templates, fixture references, read-model descriptors, operator-view descriptors, and a certification report. Marketplace installation is blocked until the certification report marks the capsule `certified`.
+Compiler output must include registry manifests, certification evidence manifests, policy packs, evidence packs, approval packs, recovery packs, obligation templates, fixture references, read-model descriptors, operator-view descriptors, and a certification report. The certification evidence manifest is an operator audit artifact over `extensions.capability_certification_evidence`; it is not admission authority. Marketplace installation is blocked until the certification report marks the capsule `certified`.
 
 ## Closure Rule
 
