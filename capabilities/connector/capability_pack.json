@@ -172,6 +172,18 @@
           "allowed_roles": ["connector_operator"],
           "allowed_tools": ["connector_worker.github_read"],
           "allowed_networks": ["api.github.com"]
+        },
+        "capability_maturity_evidence": {
+          "sandbox_receipt_valid": true,
+          "live_read_receipt_valid": true,
+          "worker_deployment_bound": true,
+          "recovery_evidence_present": true,
+          "evidence_refs": [
+            "proof://capabilities/connector.github.read/sandbox",
+            "proof://capabilities/connector.github.read/live-read",
+            "proof://capabilities/connector.github.read/worker",
+            "proof://capabilities/connector.github.read/recovery"
+          ]
         }
       }
     },

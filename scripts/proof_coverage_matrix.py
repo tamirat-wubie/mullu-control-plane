@@ -522,6 +522,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "witnessed",
             [
+                "capabilities/connector/capability_pack.json",
+                "capabilities/financial/capability_pack.json",
                 "docs/39_governed_capability_fabric.md",
                 "gateway/capability_fabric.py",
                 "gateway/capability_maturity.py",
@@ -532,10 +534,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_capability_maturity.py",
                 "tests/test_gateway/test_operator_capability_console.py",
             ],
-            "Capability maturity assessment derives C0-C7 readiness from explicit evidence, projects maturity onto capability fabric read models, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
+            "Capability maturity assessment derives C0-C7 readiness from explicit evidence, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
             [
                 "maturity_derived_from_evidence",
                 "registry_read_model_exposes_maturity",
+                "default_pack_C6_examples_projected",
                 "effect_bearing_production_requires_live_write",
                 "production_requires_worker_deployment_recovery",
                 "autonomy_requires_C7_controls",
