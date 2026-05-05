@@ -325,11 +325,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 4,
+      "proven": 6,
       "unproven": 199,
       "witnessed": 98
     },
-    "route_count": 301,
+    "route_count": 303,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1703,6 +1703,16 @@
       },
       {
         "coverage_state": "proven",
+        "route": "/capability-fabric/capsule-admission-receipts",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/capability-fabric/capsule-admissions",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "proven",
         "route": "/capability-fabric/read-model",
         "surface_id": "gateway_capability_fabric"
       },
@@ -1859,6 +1869,8 @@
         "/webhook/*",
         "/capability-fabric/read-model",
         "/commands/{command_id}/closure",
+        "/capability-fabric/capsule-admissions",
+        "/capability-fabric/capsule-admission-receipts",
         "DomainCapsuleCompiler.compile",
         "install_certified_capsule_with_handoff_evidence"
       ],
@@ -1868,7 +1880,8 @@
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
         "capsule_compiler_emits_certification_evidence_manifest",
-        "capsule_installer_stamps_admission_receipt"
+        "capsule_installer_stamps_admission_receipt",
+        "capsule_admission_operator_endpoint_records_receipt"
       ],
       "surface_id": "gateway_capability_fabric"
     },

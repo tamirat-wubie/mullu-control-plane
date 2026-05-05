@@ -64,6 +64,7 @@ class TestChannelFromPath:
             ("/authority/approval-chains/expire-overdue", "authority"),
             ("/authority/obligations/abc/satisfy", "authority"),
             ("/authority/obligations/escalate-overdue", "authority"),
+            ("/capability-fabric/capsule-admissions", "capability-fabric"),
             ("/capability-plans/plan-1/recover", "capability-plans"),
             ("/random/path", "other"),
             ("/webhook/", "webhook"),
@@ -149,6 +150,10 @@ def _make_app(proof_bridge):
     async def escalate():
         raise RuntimeError("simulated handler crash")
 
+    @app.post("/capability-fabric/capsule-admissions")
+    async def capsule_admission():
+        return {"admitted": True}
+
     @app.post("/capability-plans/{plan_id}/recover")
     async def recover_plan(plan_id: str):
         return {"recovered": plan_id}
@@ -218,6 +223,7 @@ class TestMiddlewareCertifies:
             "/authority/approval-chains/expire-overdue",
             "/authority/obligations/xyz/satisfy",
             "/authority/obligations/escalate-overdue",
+            "/capability-fabric/capsule-admissions",
             "/capability-plans/plan-1/recover",
         ]
         for p in certified_paths:

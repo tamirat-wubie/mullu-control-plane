@@ -62,6 +62,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/webhook/*",
                 "/capability-fabric/read-model",
                 "/commands/{command_id}/closure",
+                "/capability-fabric/capsule-admissions",
+                "/capability-fabric/capsule-admission-receipts",
                 "DomainCapsuleCompiler.compile",
                 "install_certified_capsule_with_handoff_evidence",
             ],
@@ -83,6 +85,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 *gateway_witnesses,
                 "capsule_compiler_emits_certification_evidence_manifest",
                 "capsule_installer_stamps_admission_receipt",
+                "capsule_admission_operator_endpoint_records_receipt",
             ],
         ),
         _surface(

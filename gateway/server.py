@@ -14,7 +14,7 @@ import os
 from dataclasses import asdict
 from hashlib import sha256
 import json
-from typing import Any
+from typing import Any, Mapping
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
@@ -53,8 +53,11 @@ from gateway.authority_obligation_mesh import (
     AuthorityObligationMesh,
     build_authority_obligation_mesh_store_from_env,
 )
+from gateway.capability_capsule_installer import install_certified_capsule_with_handoff_evidence
 from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
+from gateway.capability_forge import CapabilityCertificationHandoff
+from gateway.capability_maturity import CapabilityCertificationEvidenceBundle
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
 from gateway.event_log import WebhookEventLog
@@ -73,6 +76,7 @@ from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
 )
 from gateway.tenant_identity import build_tenant_identity_store_from_env
+from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 
 _log = logging.getLogger(__name__)
 
@@ -129,6 +133,7 @@ def create_gateway_app(
         if role.strip()
     )
     authority_operator_audit_events: list[dict[str, Any]] = []
+    capability_capsule_admission_receipts: list[dict[str, Any]] = []
     platform_decision_log = getattr(platform, "_decision_log", None)
     reflex_deployment_witness_log_backed = platform_decision_log is not None
     reflex_deployment_witness_log = platform_decision_log or GovernanceDecisionLog(clock=_clock)
@@ -1569,6 +1574,35 @@ def create_gateway_app(
             **capability_admission_gate.read_model(),
         }
 
+    @app.post("/capability-fabric/capsule-admissions")
+    async def capability_fabric_capsule_admission(request: Request):
+        _require_authority_operator(request)
+        if capability_admission_gate is None:
+            raise HTTPException(503, detail="Capability fabric admission is not enabled")
+        try:
+            payload = await request.json()
+            capsule, registry_entries, handoffs, require_production_ready = _capsule_admission_request(payload)
+            outcome = install_certified_capsule_with_handoff_evidence(
+                capsule=capsule,
+                registry_entries=registry_entries,
+                handoffs=handoffs,
+                registry=capability_admission_gate.registry,
+                clock=_clock,
+                require_production_ready=require_production_ready,
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+        receipt = asdict(outcome.receipt)
+        capability_capsule_admission_receipts.append(receipt)
+        del capability_capsule_admission_receipts[:-500]
+        return {
+            "admission_receipt": receipt,
+            "installation_record": outcome.installation_record.to_json_dict(),
+            "compilation_result": outcome.compilation_result.to_json_dict(),
+            "evidence_batch": _handoff_evidence_batch_payload(outcome.evidence_batch),
+        }
+
     @app.get("/commands/{command_id}/closure")
     def command_closure(command_id: str):
         certificate = command_ledger.terminal_certificate_for(command_id)
@@ -1611,6 +1645,32 @@ def create_gateway_app(
         return {
             "admission_audits": audits,
             "count": len(audits),
+        }
+
+    @app.get("/capability-fabric/capsule-admission-receipts")
+    def capability_fabric_capsule_admission_receipts(
+        request: Request,
+        status: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        receipts = tuple(reversed(capability_capsule_admission_receipts))
+        if status:
+            receipts = tuple(
+                receipt for receipt in receipts
+                if receipt.get("admission_status") == status
+            )
+        bounded_limit = max(1, min(int(limit), 500))
+        bounded_offset = max(0, int(offset))
+        page_items = list(receipts)[bounded_offset:bounded_offset + bounded_limit]
+        return {
+            "capsule_admission_receipts": page_items,
+            "count": len(page_items),
+            "total": len(receipts),
+            "status_filter": status,
+            "limit": bounded_limit,
+            "offset": bounded_offset,
         }
 
     @app.get("/operator/capabilities/read-model")
@@ -1779,6 +1839,7 @@ def create_gateway_app(
     app.state.authority_mesh_store = authority_mesh_store
     app.state.authority_obligation_mesh = authority_obligation_mesh
     app.state.authority_operator_audit_events = authority_operator_audit_events
+    app.state.capability_capsule_admission_receipts = capability_capsule_admission_receipts
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.capability_admission_gate = capability_admission_gate
@@ -1790,6 +1851,77 @@ def create_gateway_app(
     app.state.verifier = verifier
 
     return app
+
+
+def _capsule_admission_request(
+    payload: Any,
+) -> tuple[DomainCapsule, tuple[CapabilityRegistryEntry, ...], tuple[CapabilityCertificationHandoff, ...], bool]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("capsule_admission_request_must_be_object")
+    capsule_payload = _required_mapping(payload, "capsule")
+    raw_entries = payload.get("registry_entries")
+    raw_handoffs = payload.get("handoffs")
+    if not isinstance(raw_entries, list) or not raw_entries:
+        raise ValueError("capsule_admission_registry_entries_required")
+    if not isinstance(raw_handoffs, list) or not raw_handoffs:
+        raise ValueError("capsule_admission_handoffs_required")
+    return (
+        DomainCapsule.from_mapping(capsule_payload),
+        tuple(CapabilityRegistryEntry.from_mapping(_mapping_item(raw_entry, "registry_entries")) for raw_entry in raw_entries),
+        tuple(_certification_handoff_from_mapping(_mapping_item(raw_handoff, "handoffs")) for raw_handoff in raw_handoffs),
+        _payload_bool(payload, "require_production_ready", default=True),
+    )
+
+
+def _certification_handoff_from_mapping(payload: Mapping[str, Any]) -> CapabilityCertificationHandoff:
+    bundle_payload = _required_mapping(payload, "maturity_evidence_bundle")
+    raw_evidence_refs = payload.get("required_evidence_refs", ())
+    if not isinstance(raw_evidence_refs, (list, tuple)):
+        raise ValueError("capsule_admission_handoff_required_evidence_refs_must_be_array")
+    return CapabilityCertificationHandoff(
+        package_id=_required_text(payload, "package_id"),
+        capability_id=_required_text(payload, "capability_id"),
+        package_hash=_required_text(payload, "package_hash"),
+        maturity_evidence_bundle=CapabilityCertificationEvidenceBundle.from_mapping(bundle_payload),
+        required_evidence_refs=tuple(str(value) for value in raw_evidence_refs),
+        handoff_hash=_required_text(payload, "handoff_hash"),
+    )
+
+
+def _handoff_evidence_batch_payload(batch: Any) -> dict[str, Any]:
+    return {
+        "registry_entries": tuple(entry.to_json_dict() for entry in batch.registry_entries),
+        "installed_capability_ids": tuple(batch.installed_capability_ids),
+        "handoff_hashes": tuple(batch.handoff_hashes),
+        "batch_hash": batch.batch_hash,
+    }
+
+
+def _required_mapping(payload: Mapping[str, Any], field_name: str) -> Mapping[str, Any]:
+    value = payload.get(field_name)
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name}_must_be_object")
+    return value
+
+
+def _mapping_item(value: Any, field_name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field_name}_items_must_be_objects")
+    return value
+
+
+def _required_text(payload: Mapping[str, Any], field_name: str) -> str:
+    value = str(payload.get(field_name, "")).strip()
+    if not value:
+        raise ValueError(f"{field_name}_required")
+    return value
+
+
+def _payload_bool(payload: Mapping[str, Any], field_name: str, *, default: bool) -> bool:
+    value = payload.get(field_name, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name}_must_be_boolean")
+    return value
 
 
 def _authority_operator_console_html(
