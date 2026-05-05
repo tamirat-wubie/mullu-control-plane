@@ -95,6 +95,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/webhook/web"]["surface_id"] == "gateway_webhook_ingress"
     assert classified_routes["/api/v1/data-governance/evaluate"]["surface_id"] == "data_governance_controls"
     assert classified_routes["/api/v1/compliance/audit-package"]["surface_id"] == "compliance_evidence_exports"
+    assert classified_routes["/authority/operator"]["surface_id"] == "authority_operator_controls"
+    assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/api/v1/agent/register"]["coverage_state"] == "unproven"
 
 
@@ -151,6 +153,32 @@ def test_compliance_evidence_exports_surface_is_witnessed() -> None:
     assert "audit_chain_verification" in witnesses
     assert "self_audited_export_event" in witnesses
     assert closure_actions["classify_compliance_evidence_exports"]["status"] == "closed"
+
+
+def test_authority_operator_controls_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    operator_surface = surfaces["authority_operator_controls"]
+    witnesses = set(operator_surface["runtime_witnesses"])
+
+    assert operator_surface["coverage_state"] == "witnessed"
+    assert operator_surface["request_proof"] == "request_proof"
+    assert operator_surface["action_proof"] == "action_proof"
+    assert "/authority/operator" in operator_surface["representative_paths"]
+    assert "/authority/operator-audit" in operator_surface["representative_paths"]
+    assert "/authority/approval-chains/expire-overdue" in operator_surface["representative_paths"]
+    assert "/authority/obligations/{obligation_id}/satisfy" in operator_surface["representative_paths"]
+    assert "gateway/server.py" in operator_surface["evidence_files"]
+    assert "gateway/authority_obligation_mesh.py" in operator_surface["evidence_files"]
+    assert "scripts/collect_runtime_conformance.py" in operator_surface["evidence_files"]
+    assert "tests/test_gateway/test_webhooks.py" in operator_surface["evidence_files"]
+    assert "operator_access_guard" in witnesses
+    assert "operator_audit_events" in witnesses
+    assert "ownership_policy_read_models" in witnesses
+    assert "approval_expiration_witness" in witnesses
+    assert "obligation_satisfaction_escalation_witness" in witnesses
+    assert closure_actions["classify_authority_operator_controls"]["status"] == "closed"
 
 
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
@@ -375,11 +403,13 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert forge_surface["action_proof"] == "action_proof"
     assert "CapabilityForge.create_candidate" in forge_surface["representative_paths"]
     assert "CapabilityForge.validate" in forge_surface["representative_paths"]
+    assert "CapabilityForge.build_certification_handoff" in forge_surface["representative_paths"]
     assert "gateway/capability_forge.py" in forge_surface["evidence_files"]
     assert "schemas/capability_candidate.schema.json" in forge_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_forge.py" in forge_surface["evidence_files"]
     assert "candidate_promotion_blocked" in witnesses
     assert "candidate_schema_valid" in witnesses
+    assert "candidate_certification_handoff_emits_maturity_bundle" in witnesses
     assert "high_risk_approval_policy_required" in witnesses
     assert "effect_bearing_candidate_requires_sandbox" in witnesses
     assert "effect_bearing_candidate_requires_recovery_path" in witnesses

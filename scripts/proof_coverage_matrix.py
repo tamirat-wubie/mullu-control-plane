@@ -323,6 +323,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "authority_operator_controls",
+            [
+                "/authority/operator",
+                "/authority/operator-audit",
+                "/authority/ownership",
+                "/authority/policies",
+                "/authority/approval-chains/expire-overdue",
+                "/authority/obligations/{obligation_id}/satisfy",
+                "/authority/obligations/escalate-overdue",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/server.py",
+                "gateway/authority_obligation_mesh.py",
+                "gateway/tenant_identity.py",
+                "scripts/collect_runtime_conformance.py",
+                "tests/test_gateway/test_webhooks.py",
+                "tests/test_gateway/test_authority_obligation_mesh.py",
+            ],
+            "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, and obligation satisfaction/escalation controls.",
+            [
+                "operator_access_guard",
+                "operator_audit_events",
+                "ownership_policy_read_models",
+                "approval_expiration_witness",
+                "obligation_satisfaction_escalation_witness",
+            ],
+        ),
+        _surface(
             "gateway_runtime_witness",
             ["/gateway/witness", "/runtime/witness", "/anchors/latest"],
             "read_model",
@@ -490,6 +522,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "CapabilityForge.create_candidate",
                 "CapabilityForge.validate",
+                "CapabilityForge.build_certification_handoff",
             ],
             "request_proof",
             "action_proof",
@@ -501,10 +534,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/capability_candidate.schema.json",
                 "tests/test_gateway/test_capability_forge.py",
             ],
-            "Capability forge emits schema-backed candidate packages only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, and recovery evidence before certification handoff.",
+            "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff.",
             [
                 "candidate_promotion_blocked",
                 "candidate_schema_valid",
+                "candidate_certification_handoff_emits_maturity_bundle",
                 "high_risk_approval_policy_required",
                 "effect_bearing_candidate_requires_sandbox",
                 "effect_bearing_candidate_requires_recovery_path",
@@ -823,6 +857,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "bound_authority_read_models_to_paginated_windows",
             "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_authority_operator_controls",
+            "surfaces": ["authority_operator_controls", "authority_obligation_mesh"],
             "status": "closed",
         },
         {

@@ -3,14 +3,16 @@
 Purpose: Build and validate candidate capability packages before they can
     enter governed capability certification.
 Governance scope: candidate-only capability generation, policy/evidence/eval
-    completeness, side-effect classification, rollback coverage, and promotion
-    blocking for uncertified or high-risk packages.
-Dependencies: standard-library dataclasses and command-spine hashing.
+    completeness, side-effect classification, rollback coverage, certification
+    maturity handoff, and promotion blocking for uncertified or high-risk packages.
+Dependencies: standard-library dataclasses, command-spine hashing, and capability
+    maturity evidence bundles.
 Invariants:
   - The forge emits candidate packages, never production-certified powers.
   - Effect-bearing capabilities require receipt, sandbox, and recovery evidence.
   - High-risk capabilities require approval policy and tenant-boundary evals.
   - Candidate packages must name mock providers before sandbox promotion.
+  - Certification handoff emits evidence bundles, not registry mutations.
   - No candidate may self-deploy into the capability registry.
 """
 
@@ -19,6 +21,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Iterable
 
+from gateway.capability_maturity import CapabilityCertificationEvidenceBundle
 from gateway.command_spine import canonical_hash
 
 
@@ -197,6 +200,21 @@ class CapabilityForgeValidation:
     package_hash: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class CapabilityCertificationHandoff:
+    """Candidate-to-certification handoff carrying maturity evidence refs."""
+
+    package_id: str
+    capability_id: str
+    package_hash: str
+    maturity_evidence_bundle: CapabilityCertificationEvidenceBundle
+    required_evidence_refs: tuple[str, ...]
+    handoff_hash: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "required_evidence_refs", tuple(str(ref) for ref in self.required_evidence_refs))
+
+
 class CapabilityForge:
     """Create and validate candidate capability packages."""
 
@@ -318,6 +336,48 @@ class CapabilityForge:
             package_hash=package.package_hash,
         )
 
+    def build_certification_handoff(
+        self,
+        package: CandidateCapabilityPackage,
+        *,
+        live_read_receipt_ref: str,
+        worker_deployment_ref: str,
+        recovery_evidence_ref: str,
+        live_write_receipt_ref: str = "",
+        autonomy_controls_ref: str = "",
+        certification_ref: str = "",
+        sandbox_receipt_ref: str = "",
+    ) -> CapabilityCertificationHandoff:
+        """Build the maturity evidence handoff for an externally certified package."""
+        validation = self.validate(package)
+        if not validation.accepted:
+            raise ValueError("capability_candidate_invalid_for_certification_handoff")
+        normalized_live_read = _require_text(live_read_receipt_ref, "live_read_receipt_ref")
+        normalized_worker = _require_text(worker_deployment_ref, "worker_deployment_ref")
+        normalized_recovery = _require_text(recovery_evidence_ref, "recovery_evidence_ref")
+        normalized_live_write = str(live_write_receipt_ref).strip()
+        if _effect_bearing(package.side_effects) and not normalized_live_write:
+            raise ValueError("effect_bearing_certification_requires_live_write_ref")
+        bundle = CapabilityCertificationEvidenceBundle(
+            capability_id=package.capability_id,
+            certification_ref=str(certification_ref).strip() or package.documentation.promotion_evidence_ref,
+            sandbox_receipt_ref=str(sandbox_receipt_ref).strip() or _sandbox_receipt_ref(package),
+            live_read_receipt_ref=normalized_live_read,
+            live_write_receipt_ref=normalized_live_write,
+            worker_deployment_ref=normalized_worker,
+            recovery_evidence_ref=normalized_recovery,
+            autonomy_controls_ref=str(autonomy_controls_ref).strip(),
+        )
+        return _stamp_handoff(
+            CapabilityCertificationHandoff(
+                package_id=package.package_id,
+                capability_id=package.capability_id,
+                package_hash=package.package_hash,
+                maturity_evidence_bundle=bundle,
+                required_evidence_refs=_handoff_required_evidence_refs(package, bundle),
+            )
+        )
+
 
 def _validation_errors(package: CandidateCapabilityPackage) -> list[str]:
     errors: list[str] = []
@@ -379,6 +439,40 @@ def _effect_bearing(side_effects: Iterable[str]) -> bool:
     return bool(set(side_effects).intersection(_EFFECT_BEARING_EFFECTS))
 
 
+def _sandbox_receipt_ref(package: CandidateCapabilityPackage) -> str:
+    if not package.sandbox_tests:
+        raise ValueError("sandbox_receipt_ref_required")
+    return _require_text(package.sandbox_tests[0].expected_receipt_ref, "sandbox_receipt_ref")
+
+
+def _handoff_required_evidence_refs(
+    package: CandidateCapabilityPackage,
+    bundle: CapabilityCertificationEvidenceBundle,
+) -> tuple[str, ...]:
+    refs = (
+        package.documentation.promotion_evidence_ref,
+        bundle.sandbox_receipt_ref,
+        bundle.live_read_receipt_ref,
+        bundle.live_write_receipt_ref,
+        bundle.worker_deployment_ref,
+        bundle.recovery_evidence_ref,
+        bundle.autonomy_controls_ref,
+    )
+    return tuple(ref for ref in refs if ref)
+
+
+def _require_text(value: str, field_name: str) -> str:
+    normalized = str(value).strip()
+    if not normalized:
+        raise ValueError(f"{field_name}_required")
+    return normalized
+
+
 def _stamp_package(package: CandidateCapabilityPackage) -> CandidateCapabilityPackage:
     payload = asdict(replace(package, package_hash=""))
     return replace(package, package_hash=canonical_hash(payload))
+
+
+def _stamp_handoff(handoff: CapabilityCertificationHandoff) -> CapabilityCertificationHandoff:
+    payload = asdict(replace(handoff, handoff_hash=""))
+    return replace(handoff, handoff_hash=canonical_hash(payload))

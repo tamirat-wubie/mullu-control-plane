@@ -40,6 +40,14 @@
       ]
     },
     {
+      "action_id": "classify_authority_operator_controls",
+      "status": "closed",
+      "surfaces": [
+        "authority_operator_controls",
+        "authority_obligation_mesh"
+      ]
+    },
+    {
       "action_id": "implement_lineage_query_routes_and_schema",
       "status": "closed",
       "surfaces": [
@@ -182,7 +190,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 24,
+      "action_proof": 25,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -190,7 +198,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 28,
+      "audit_chain": 29,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -198,23 +206,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 31
+      "witnessed": 32
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 24
+      "request_proof": 25
     },
-    "surface_count": 32
+    "surface_count": 33
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 4,
-      "unproven": 225,
-      "witnessed": 72
+      "unproven": 218,
+      "witnessed": 79
     },
     "route_count": 301,
     "routes": [
@@ -1529,9 +1537,9 @@
         "surface_id": "gateway_approval_resolution"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/approval-chains/expire-overdue",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
         "coverage_state": "witnessed",
@@ -1544,34 +1552,34 @@
         "surface_id": "authority_obligation_mesh"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/obligations/escalate-overdue",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/obligations/{obligation_id}/satisfy",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/operator",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/operator-audit",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/ownership",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/authority/policies",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "authority_operator_controls"
       },
       {
         "coverage_state": "witnessed",
@@ -1724,7 +1732,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 225
+    "unclassified_route_count": 218
   },
   "schema_version": 1,
   "surfaces": [
@@ -2045,6 +2053,38 @@
       "surface_id": "authority_obligation_mesh"
     },
     {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "gateway/authority_obligation_mesh.py",
+        "gateway/tenant_identity.py",
+        "scripts/collect_runtime_conformance.py",
+        "tests/test_gateway/test_webhooks.py",
+        "tests/test_gateway/test_authority_obligation_mesh.py"
+      ],
+      "notes": "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, and obligation satisfaction/escalation controls.",
+      "representative_paths": [
+        "/authority/operator",
+        "/authority/operator-audit",
+        "/authority/ownership",
+        "/authority/policies",
+        "/authority/approval-chains/expire-overdue",
+        "/authority/obligations/{obligation_id}/satisfy",
+        "/authority/obligations/escalate-overdue"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "operator_access_guard",
+        "operator_audit_events",
+        "ownership_policy_read_models",
+        "approval_expiration_witness",
+        "obligation_satisfaction_escalation_witness"
+      ],
+      "surface_id": "authority_operator_controls"
+    },
+    {
       "action_proof": "read_model",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -2223,15 +2263,17 @@
         "schemas/capability_candidate.schema.json",
         "tests/test_gateway/test_capability_forge.py"
       ],
-      "notes": "Capability forge emits schema-backed candidate packages only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, and recovery evidence before certification handoff.",
+      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff.",
       "representative_paths": [
         "CapabilityForge.create_candidate",
-        "CapabilityForge.validate"
+        "CapabilityForge.validate",
+        "CapabilityForge.build_certification_handoff"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "candidate_promotion_blocked",
         "candidate_schema_valid",
+        "candidate_certification_handoff_emits_maturity_bundle",
         "high_risk_approval_policy_required",
         "effect_bearing_candidate_requires_sandbox",
         "effect_bearing_candidate_requires_recovery_path"
