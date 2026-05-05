@@ -17,6 +17,7 @@ from scripts.proof_coverage_matrix import (
     CANONICAL_OUTPUT,
     REPO_ROOT,
     discover_declared_routes,
+    route_coverage_report,
     proof_coverage_matrix,
     validate_matrix_routes,
 )
@@ -62,6 +63,37 @@ def test_coverage_summary_matches_surfaces() -> None:
     assert summary["by_coverage_state"]["unproven"] == 0
     assert summary["by_coverage_state"]["proven"] >= 1
     assert summary["by_coverage_state"]["witnessed"] >= 1
+
+
+def test_declared_routes_have_explicit_coverage_classification() -> None:
+    matrix = _load_fixture()
+    report = matrix["route_coverage"]
+    declared_report = route_coverage_report(matrix["surfaces"], discover_declared_routes())
+
+    assert report == declared_report
+    assert report["route_count"] == len(report["routes"])
+    assert sum(report["by_coverage_state"].values()) == report["route_count"]
+    assert report["unclassified_route_count"] == report["by_coverage_state"]["unproven"]
+    assert all(record["coverage_state"] in matrix["coverage_states"] for record in report["routes"])
+    assert all(record["surface_id"] for record in report["routes"])
+    assert any(
+        record["surface_id"] == "unclassified_declared_route"
+        and record["coverage_state"] == "unproven"
+        for record in report["routes"]
+    )
+
+
+def test_representative_routes_are_not_unclassified() -> None:
+    matrix = _load_fixture()
+    classified_routes = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
+
+    assert classified_routes["/api/v1/lineage/resolve"]["surface_id"] == "lineage_query_api"
+    assert classified_routes["/api/v1/stream"]["surface_id"] == "llm_streaming"
+    assert classified_routes["/webhook/web"]["surface_id"] == "gateway_webhook_ingress"
+    assert classified_routes["/api/v1/agent/register"]["coverage_state"] == "unproven"
 
 
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:

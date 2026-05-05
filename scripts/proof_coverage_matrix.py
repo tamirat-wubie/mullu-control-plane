@@ -652,6 +652,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "coverage_states": COVERAGE_STATES,
         "coverage_summary": coverage_summary(surfaces),
         "surfaces": surfaces,
+        "route_coverage": route_coverage_report(surfaces, discover_declared_routes()),
         "closure_actions": closure_actions,
     }
 
@@ -692,6 +693,71 @@ def discover_declared_routes(repo_root: Path = REPO_ROOT) -> set[str]:
             for prefix in prefixes:
                 routes.update(f"{prefix}{route}" for route in file_routes if route.startswith("/"))
     return routes
+
+
+def route_coverage_report(
+    surfaces: list[dict[str, Any]],
+    routes: set[str],
+) -> dict[str, Any]:
+    """Return per-route coverage classification for declared callable routes."""
+    route_records = []
+    for route in sorted(_proof_relevant_routes(routes)):
+        surface = _surface_for_route(route, surfaces)
+        if surface is None:
+            route_records.append(
+                {
+                    "route": route,
+                    "surface_id": "unclassified_declared_route",
+                    "coverage_state": "unproven",
+                }
+            )
+            continue
+        route_records.append(
+            {
+                "route": route,
+                "surface_id": surface["surface_id"],
+                "coverage_state": surface["coverage_state"],
+            }
+        )
+    by_state = {state: 0 for state in COVERAGE_STATES}
+    for record in route_records:
+        by_state[record["coverage_state"]] += 1
+    return {
+        "route_count": len(route_records),
+        "by_coverage_state": by_state,
+        "unclassified_route_count": by_state["unproven"],
+        "routes": route_records,
+    }
+
+
+def _proof_relevant_routes(routes: set[str]) -> tuple[str, ...]:
+    """Return routes that require an explicit proof coverage classification."""
+    prefixes = (
+        "/api/v1",
+        "/webhook",
+        "/authority",
+        "/runtime",
+        "/gateway",
+        "/anchors",
+        "/capability",
+        "/commands",
+    )
+    return tuple(route for route in routes if route.startswith(prefixes))
+
+
+def _surface_for_route(route: str, surfaces: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the surface that explicitly covers a declared route."""
+    for surface in surfaces:
+        for path in surface["representative_paths"]:
+            if not path.startswith("/"):
+                continue
+            if path == route:
+                return surface
+    for surface in surfaces:
+        for path in surface["representative_paths"]:
+            if path.startswith("/") and path.endswith("*") and route.startswith(path[:-1]):
+                return surface
+    return None
 
 
 def validate_matrix_routes(matrix: dict[str, Any], routes: set[str]) -> list[str]:
