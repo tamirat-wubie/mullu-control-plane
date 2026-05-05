@@ -7,6 +7,7 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: standard-library HTTP client and `/runtime/conformance`.
 Invariants:
   - Missing endpoint evidence is recorded as a failed collection.
+  - Certificate schema validation happens before production acceptance.
   - HMAC verification is explicit when a conformance secret is supplied.
   - Production readiness is not inferred from an unsigned or expired certificate.
   - Production readiness requires embedded gateway and runtime witness validity.
@@ -27,8 +28,15 @@ from typing import Any, Callable
 import urllib.error
 import urllib.request
 
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
+
 DEFAULT_GATEWAY_URL = "http://localhost:8001"
 DEFAULT_OUTPUT_PATH = Path(".change_assurance") / "runtime_conformance_certificate.json"
+RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "schemas"
+    / "runtime_conformance_certificate.schema.json"
+)
 REQUIRED_CERTIFICATE_FIELDS = (
     "certificate_id",
     "environment",
@@ -141,6 +149,16 @@ def collect_runtime_conformance(
     ))
     if not endpoint_passed:
         errors.append("runtime conformance endpoint did not return a complete certificate")
+
+    schema_errors = _validate_runtime_conformance_certificate_schema(certificate)
+    schema_passed = endpoint_status == 200 and not schema_errors
+    steps.append(CollectionStep(
+        name="runtime conformance certificate schema",
+        passed=schema_passed,
+        detail=f"schema_error_count={len(schema_errors)}",
+    ))
+    if not schema_passed:
+        errors.append("runtime conformance certificate schema validation failed")
 
     environment_passed = True
     if expected_environment:
@@ -427,6 +445,15 @@ def _verify_certificate_signature(payload: dict[str, Any], conformance_secret: s
 
 def _failed_boolean_fields(payload: dict[str, Any], field_names: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(field_name for field_name in field_names if payload.get(field_name) is not True)
+
+
+def _validate_runtime_conformance_certificate_schema(payload: dict[str, Any]) -> tuple[str, ...]:
+    """Validate a collected conformance certificate against the public schema."""
+    try:
+        schema = _load_schema(RUNTIME_CONFORMANCE_CERTIFICATE_SCHEMA_PATH)
+    except (OSError, json.JSONDecodeError):
+        return ("runtime_conformance_certificate_schema_unavailable",)
+    return tuple(_validate_schema_instance(schema, payload))
 
 
 def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:
