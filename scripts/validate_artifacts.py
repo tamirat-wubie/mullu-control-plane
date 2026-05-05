@@ -1700,6 +1700,327 @@ def _validate_simulation_verdict_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_resource_budget_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("resource_id", "resource_type", "total", "consumed", "reserved"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("resource_id", "resource_type"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("total", "consumed", "reserved"):
+        errors.extend(_require_non_negative_float(payload[field_name], field_name=field_name, path=path))
+    if (
+        isinstance(payload["total"], (int, float))
+        and isinstance(payload["consumed"], (int, float))
+        and isinstance(payload["reserved"], (int, float))
+        and not isinstance(payload["total"], bool)
+        and not isinstance(payload["consumed"], bool)
+        and not isinstance(payload["reserved"], bool)
+        and payload["consumed"] + payload["reserved"] > payload["total"]
+    ):
+        errors.append(f"{_relative_path(path)}: consumed + reserved must not exceed total")
+    return errors
+
+
+def _validate_decision_factor_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_decision_factor_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_decision_factor_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("factor_id", "kind", "weight", "value", "label"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("factor_id", "kind", "label"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    for nested_field_name in ("weight", "value"):
+        errors.extend(
+            _require_number_in_range(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+                minimum=0.0,
+                maximum=1.0,
+            )
+        )
+    return errors
+
+
+def _validate_utility_profile_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "profile_id",
+            "context_type",
+            "context_id",
+            "factors",
+            "tradeoff_direction",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("profile_id", "context_type", "context_id", "tradeoff_direction"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    factors = payload["factors"]
+    if not isinstance(factors, list) or not factors:
+        errors.append(f"{_relative_path(path)}: field 'factors' must be a non-empty array")
+    else:
+        total_weight = 0.0
+        for index, factor in enumerate(factors):
+            errors.extend(
+                _validate_decision_factor_dict(
+                    factor,
+                    path=path,
+                    field_name=f"factors[{index}]",
+                )
+            )
+            if (
+                isinstance(factor, dict)
+                and isinstance(factor.get("weight"), (int, float))
+                and not isinstance(factor.get("weight"), bool)
+            ):
+                total_weight += float(factor["weight"])
+        if total_weight <= 0.0:
+            errors.append(f"{_relative_path(path)}: sum of factor weights must be greater than 0")
+    return errors
+
+
+def _validate_option_utility_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_option_utility_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_option_utility_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("option_id", "raw_score", "weighted_score", "factor_contributions", "rank"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    errors.extend(
+        _require_non_empty_text(
+            payload["option_id"],
+            field_name=f"{prefix}option_id".strip("."),
+            path=path,
+        )
+    )
+    errors.extend(
+        _require_number_in_range(
+            payload["raw_score"],
+            field_name=f"{prefix}raw_score".strip("."),
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    errors.extend(
+        _require_number_in_range(
+            payload["weighted_score"],
+            field_name=f"{prefix}weighted_score".strip("."),
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    factor_contributions = payload["factor_contributions"]
+    if not isinstance(factor_contributions, dict):
+        factor_field_name = f"{prefix}factor_contributions".strip(".")
+        errors.append(
+            f"{_relative_path(path)}: field '{factor_field_name}' must be an object"
+        )
+    else:
+        for factor_id, contribution in factor_contributions.items():
+            if not isinstance(factor_id, str) or not factor_id.strip():
+                errors.append(f"{_relative_path(path)}: factor_contributions keys must be non-empty strings")
+                break
+            if isinstance(contribution, bool) or not isinstance(contribution, (int, float)):
+                errors.append(
+                    f"{_relative_path(path)}: factor_contributions['{factor_id}'] must be numeric"
+                )
+    errors.extend(
+        _require_positive_int(payload["rank"], field_name=f"{prefix}rank".strip("."), path=path)
+    )
+    return errors
+
+
+def _validate_decision_comparison_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "comparison_id",
+            "profile_id",
+            "option_utilities",
+            "best_option_id",
+            "spread",
+            "decided_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("comparison_id", "profile_id", "best_option_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["spread"], field_name="spread", path=path))
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    option_utilities = payload["option_utilities"]
+    if not isinstance(option_utilities, list) or not option_utilities:
+        errors.append(f"{_relative_path(path)}: field 'option_utilities' must be a non-empty array")
+    else:
+        option_ids: set[str] = set()
+        for index, option_utility in enumerate(option_utilities):
+            errors.extend(
+                _validate_option_utility_dict(
+                    option_utility,
+                    path=path,
+                    field_name=f"option_utilities[{index}]",
+                )
+            )
+            if isinstance(option_utility, dict) and isinstance(option_utility.get("option_id"), str):
+                option_ids.add(option_utility["option_id"])
+        if isinstance(payload["best_option_id"], str) and payload["best_option_id"] not in option_ids:
+            errors.append(f"{_relative_path(path)}: best_option_id must reference an option in option_utilities")
+    return errors
+
+
+def _validate_tradeoff_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "tradeoff_id",
+            "comparison_id",
+            "chosen_option_id",
+            "rejected_option_ids",
+            "tradeoff_direction",
+            "rationale",
+            "recorded_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("tradeoff_id", "comparison_id", "chosen_option_id", "tradeoff_direction", "rationale"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["recorded_at"], field_name="recorded_at", path=path))
+    rejected_option_ids = payload["rejected_option_ids"]
+    if not isinstance(rejected_option_ids, list):
+        errors.append(f"{_relative_path(path)}: field 'rejected_option_ids' must be an array")
+    else:
+        for index, option_id in enumerate(rejected_option_ids):
+            errors.extend(
+                _require_non_empty_text(option_id, field_name=f"rejected_option_ids[{index}]", path=path)
+            )
+    return errors
+
+
+def _validate_decision_policy_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "policy_id",
+            "name",
+            "min_confidence",
+            "max_risk_tolerance",
+            "max_cost",
+            "deadline_weight",
+            "require_human_above_risk",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("policy_id", "name"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("min_confidence", "max_risk_tolerance", "deadline_weight", "require_human_above_risk"):
+        errors.extend(
+            _require_number_in_range(
+                payload[field_name],
+                field_name=field_name,
+                path=path,
+                minimum=0.0,
+                maximum=1.0,
+            )
+        )
+    errors.extend(_require_non_negative_float(payload["max_cost"], field_name="max_cost", path=path))
+    return errors
+
+
+def _validate_utility_verdict_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "verdict_id",
+            "comparison_id",
+            "policy_id",
+            "approved",
+            "recommended_option_id",
+            "confidence",
+            "reasons",
+            "decided_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("verdict_id", "comparison_id", "policy_id", "recommended_option_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["approved"], bool):
+        errors.append(f"{_relative_path(path)}: field 'approved' must be boolean")
+    errors.extend(
+        _require_number_in_range(
+            payload["confidence"],
+            field_name="confidence",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    reasons = payload["reasons"]
+    if not isinstance(reasons, list) or not reasons:
+        errors.append(f"{_relative_path(path)}: field 'reasons' must be a non-empty array")
+    else:
+        for index, reason in enumerate(reasons):
+            errors.extend(_require_non_empty_text(reason, field_name=f"reasons[{index}]", path=path))
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    return errors
+
+
 def _validate_supervisor_policy_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     errors = _validate_exact_object_fields(
@@ -1891,6 +2212,9 @@ def _validate_livelock_record_fixture(path: Path) -> list[str]:
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "assignment_policy.json": _validate_assignment_policy_fixture,
     "assignment_decision.json": _validate_assignment_decision_fixture,
+    "decision_comparison.json": _validate_decision_comparison_fixture,
+    "decision_factor.json": _validate_decision_factor_fixture,
+    "decision_policy.json": _validate_decision_policy_fixture,
     "event_correlation.json": _validate_event_correlation_fixture,
     "event_envelope.json": _validate_event_envelope_fixture,
     "event_record.json": _validate_event_record_fixture,
@@ -1912,6 +2236,8 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "obligation_transfer.json": _validate_obligation_transfer_fixture,
     "role_descriptor.json": _validate_role_descriptor_fixture,
     "runtime_heartbeat.json": _validate_runtime_heartbeat_fixture,
+    "option_utility.json": _validate_option_utility_fixture,
+    "resource_budget.json": _validate_resource_budget_fixture,
     "service_function_template.json": _validate_service_function_template_fixture,
     "simulation_option.json": _validate_simulation_option_fixture,
     "simulation_outcome.json": _validate_simulation_outcome_fixture,
@@ -1923,6 +2249,9 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "supervisor_policy.json": _validate_supervisor_policy_fixture,
     "supervisor_tick.json": _validate_supervisor_tick_fixture,
     "team_queue_state.json": _validate_team_queue_state_fixture,
+    "tradeoff_record.json": _validate_tradeoff_record_fixture,
+    "utility_profile.json": _validate_utility_profile_fixture,
+    "utility_verdict.json": _validate_utility_verdict_fixture,
     "worker_profile.json": _validate_worker_profile_fixture,
     "worker_capacity.json": _validate_worker_capacity_fixture,
     "workload_snapshot.json": _validate_workload_snapshot_fixture,

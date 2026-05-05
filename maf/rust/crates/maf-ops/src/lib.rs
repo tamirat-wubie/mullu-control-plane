@@ -749,6 +749,86 @@ mod tests {
     }
 
     #[test]
+    fn canonical_resource_budget_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/resource_budget.json"
+        ));
+        assert_fixture_round_trip::<utility::ResourceBudget>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_factor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_factor.json"
+        ));
+        assert_fixture_round_trip::<utility::DecisionFactor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_utility_profile_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/utility_profile.json"
+        ));
+        assert_fixture_round_trip::<utility::UtilityProfile>(fixture_json);
+    }
+
+    #[test]
+    fn option_utility_factor_contributions_serialize_in_lexicographic_key_order() {
+        let mut factor_contributions = BTreeMap::new();
+        factor_contributions.insert("zeta".to_string(), 0.2);
+        factor_contributions.insert("alpha".to_string(), 0.8);
+        let option_utility = utility::OptionUtility {
+            option_id: "opt-ordered".into(),
+            raw_score: 0.7,
+            weighted_score: 0.8,
+            factor_contributions,
+            rank: 1,
+        };
+        let json = serde_json::to_string(&option_utility).unwrap();
+        assert!(json.contains(r#""factor_contributions":{"alpha":0.8,"zeta":0.2}"#));
+        assert!(json.find(r#""alpha":0.8"#).unwrap() < json.find(r#""zeta":0.2"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_option_utility_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/option_utility.json"
+        ));
+        assert_fixture_round_trip::<utility::OptionUtility>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_comparison_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_comparison.json"
+        ));
+        assert_fixture_round_trip::<utility::DecisionComparison>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_tradeoff_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/tradeoff_record.json"
+        ));
+        assert_fixture_round_trip::<utility::TradeoffRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_policy_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_policy.json"
+        ));
+        assert_fixture_round_trip::<utility::DecisionPolicy>(fixture_json);
+    }
+
+    #[test]
     fn utility_verdict_round_trips() {
         let v = utility::UtilityVerdict {
             verdict_id: "v-1".into(),
@@ -763,6 +843,15 @@ mod tests {
         let json = serde_json::to_string(&v).unwrap();
         let back: utility::UtilityVerdict = serde_json::from_str(&json).unwrap();
         assert_eq!(v, back);
+    }
+
+    #[test]
+    fn canonical_utility_verdict_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/utility_verdict.json"
+        ));
+        assert_fixture_round_trip::<utility::UtilityVerdict>(fixture_json);
     }
 
     // --- Benchmark ---

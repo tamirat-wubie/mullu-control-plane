@@ -1,0 +1,13 @@
+{
+  "verdict_id": "uverd-42",
+  "comparison_id": "ucmp-42",
+  "policy_id": "upol-42",
+  "approved": true,
+  "recommended_option_id": "opt-safe",
+  "confidence": 0.88,
+  "reasons": [
+    "within risk tolerance",
+    "highest weighted score"
+  ],
+  "decided_at": "2025-01-01T00:17:00+00:00"
+}

@@ -87,6 +87,19 @@ from mcoi_runtime.contracts.supervisor import (
     SupervisorTick,
     TickOutcome,
 )
+from mcoi_runtime.contracts.utility import (
+    DecisionComparison,
+    DecisionFactor,
+    DecisionFactorKind,
+    DecisionPolicy,
+    OptionUtility,
+    ResourceBudget,
+    ResourceType,
+    TradeoffDirection,
+    TradeoffRecord,
+    UtilityProfile,
+    UtilityVerdict,
+)
 
 
 FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fixtures" / "maf_runtime"
@@ -251,6 +264,98 @@ def _build_simulation_verdict(payload: dict) -> SimulationVerdict:
         recommended_option_id=payload["recommended_option_id"],
         confidence=payload["confidence"],
         reasons=tuple(payload["reasons"]),
+    )
+
+
+def _build_resource_budget(payload: dict) -> ResourceBudget:
+    return ResourceBudget(
+        resource_id=payload["resource_id"],
+        resource_type=ResourceType(payload["resource_type"]),
+        total=payload["total"],
+        consumed=payload["consumed"],
+        reserved=payload["reserved"],
+    )
+
+
+def _build_decision_factor(payload: dict) -> DecisionFactor:
+    return DecisionFactor(
+        factor_id=payload["factor_id"],
+        kind=DecisionFactorKind(payload["kind"]),
+        weight=payload["weight"],
+        value=payload["value"],
+        label=payload["label"],
+    )
+
+
+def _build_utility_profile(payload: dict) -> UtilityProfile:
+    return UtilityProfile(
+        profile_id=payload["profile_id"],
+        context_type=payload["context_type"],
+        context_id=payload["context_id"],
+        factors=tuple(_build_decision_factor(factor) for factor in payload["factors"]),
+        tradeoff_direction=TradeoffDirection(payload["tradeoff_direction"]),
+        created_at=payload["created_at"],
+    )
+
+
+def _build_option_utility(payload: dict) -> OptionUtility:
+    return OptionUtility(
+        option_id=payload["option_id"],
+        raw_score=payload["raw_score"],
+        weighted_score=payload["weighted_score"],
+        factor_contributions=payload["factor_contributions"],
+        rank=payload["rank"],
+    )
+
+
+def _build_decision_comparison(payload: dict) -> DecisionComparison:
+    return DecisionComparison(
+        comparison_id=payload["comparison_id"],
+        profile_id=payload["profile_id"],
+        option_utilities=tuple(
+            _build_option_utility(option_utility)
+            for option_utility in payload["option_utilities"]
+        ),
+        best_option_id=payload["best_option_id"],
+        spread=payload["spread"],
+        decided_at=payload["decided_at"],
+    )
+
+
+def _build_tradeoff_record(payload: dict) -> TradeoffRecord:
+    return TradeoffRecord(
+        tradeoff_id=payload["tradeoff_id"],
+        comparison_id=payload["comparison_id"],
+        chosen_option_id=payload["chosen_option_id"],
+        rejected_option_ids=tuple(payload["rejected_option_ids"]),
+        tradeoff_direction=TradeoffDirection(payload["tradeoff_direction"]),
+        rationale=payload["rationale"],
+        recorded_at=payload["recorded_at"],
+    )
+
+
+def _build_decision_policy(payload: dict) -> DecisionPolicy:
+    return DecisionPolicy(
+        policy_id=payload["policy_id"],
+        name=payload["name"],
+        min_confidence=payload["min_confidence"],
+        max_risk_tolerance=payload["max_risk_tolerance"],
+        max_cost=payload["max_cost"],
+        deadline_weight=payload["deadline_weight"],
+        require_human_above_risk=payload["require_human_above_risk"],
+    )
+
+
+def _build_utility_verdict(payload: dict) -> UtilityVerdict:
+    return UtilityVerdict(
+        verdict_id=payload["verdict_id"],
+        comparison_id=payload["comparison_id"],
+        policy_id=payload["policy_id"],
+        approved=payload["approved"],
+        recommended_option_id=payload["recommended_option_id"],
+        confidence=payload["confidence"],
+        reasons=tuple(payload["reasons"]),
+        decided_at=payload["decided_at"],
     )
 
 
@@ -609,6 +714,14 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("runtime_heartbeat.json", _build_runtime_heartbeat),
         ("supervisor_checkpoint.json", _build_supervisor_checkpoint),
         ("livelock_record.json", _build_livelock_record),
+        ("resource_budget.json", _build_resource_budget),
+        ("decision_factor.json", _build_decision_factor),
+        ("utility_profile.json", _build_utility_profile),
+        ("option_utility.json", _build_option_utility),
+        ("decision_comparison.json", _build_decision_comparison),
+        ("tradeoff_record.json", _build_tradeoff_record),
+        ("decision_policy.json", _build_decision_policy),
+        ("utility_verdict.json", _build_utility_verdict),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(

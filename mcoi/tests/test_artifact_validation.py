@@ -43,6 +43,14 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "function_policy_binding.json" in maf_runtime_fixture_names
     assert "function_sla_profile.json" in maf_runtime_fixture_names
     assert "function_queue_profile.json" in maf_runtime_fixture_names
+    assert "resource_budget.json" in maf_runtime_fixture_names
+    assert "decision_factor.json" in maf_runtime_fixture_names
+    assert "utility_profile.json" in maf_runtime_fixture_names
+    assert "option_utility.json" in maf_runtime_fixture_names
+    assert "decision_comparison.json" in maf_runtime_fixture_names
+    assert "tradeoff_record.json" in maf_runtime_fixture_names
+    assert "decision_policy.json" in maf_runtime_fixture_names
+    assert "utility_verdict.json" in maf_runtime_fixture_names
     assert "assignment_policy.json" in maf_runtime_fixture_names
     assert "worker_capacity.json" in maf_runtime_fixture_names
     assert "team_queue_state.json" in maf_runtime_fixture_names
@@ -72,7 +80,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 37
+    assert len(inventory.maf_runtime_fixture_paths) >= 45
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -476,4 +484,57 @@ def test_validate_maf_runtime_fixture_rejects_obligation_closure_non_terminal_st
 
     assert len(errors) == 1
     assert "final_state must be one of completed, expired, or cancelled" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_resource_budget_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "resource_budget.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "resource_id": "budget-overflow",
+                "resource_type": "compute",
+                "total": 100.0,
+                "consumed": 70.0,
+                "reserved": 40.0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "consumed + reserved must not exceed total" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_decision_comparison_best_option_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "decision_comparison.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "comparison_id": "cmp-drift",
+                "profile_id": "profile-1",
+                "option_utilities": [
+                    {
+                        "option_id": "opt-safe",
+                        "raw_score": 0.8,
+                        "weighted_score": 0.82,
+                        "factor_contributions": {"factor-risk": 0.32},
+                        "rank": 1,
+                    }
+                ],
+                "best_option_id": "opt-missing",
+                "spread": 0.1,
+                "decided_at": "2025-01-01T00:20:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "best_option_id must reference an option in option_utilities" in errors[0]
     assert fixture_path.name in errors[0]

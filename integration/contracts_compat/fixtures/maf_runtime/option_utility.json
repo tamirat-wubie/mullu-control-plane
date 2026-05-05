@@ -1,0 +1,10 @@
+{
+  "option_id": "opt-safe",
+  "raw_score": 0.81,
+  "weighted_score": 0.85,
+  "factor_contributions": {
+    "factor-confidence": 0.45,
+    "factor-risk": 0.4
+  },
+  "rank": 1
+}
