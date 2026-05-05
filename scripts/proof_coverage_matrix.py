@@ -570,6 +570,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "policy_proof_report",
+            [
+                "PolicyProver.prove",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/policy_prover.py",
+                "schemas/policy_proof_report.schema.json",
+                "schemas/README.md",
+                "tests/test_gateway/test_policy_prover.py",
+            ],
+            "Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy.",
+            [
+                "bounded_policy_cases_required",
+                "empty_invariants_rejected",
+                "counterexamples_are_concrete",
+                "proved_report_has_no_counterexamples",
+                "policy_weakening_forbidden",
+                "policy_proof_schema_valid",
+            ],
+        ),
+        _surface(
             "capability_plan_evidence_bundle",
             [
                 "/capability-plans/read-model",
@@ -779,6 +804,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_networked_worker_mesh_contract",
             "surfaces": ["networked_worker_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_policy_proof_report_contract",
+            "surfaces": ["policy_proof_report"],
             "status": "closed",
         },
     ]

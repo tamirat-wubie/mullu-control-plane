@@ -197,6 +197,12 @@
       "surface": "policy"
     },
     {
+      "schema_id": "policy-proof-report",
+      "path": "schemas/policy_proof_report.schema.json",
+      "urn": "urn:mullusi:schema:policy-proof-report:1",
+      "surface": "policy"
+    },
+    {
       "schema_id": "provider-attribution-witness",
       "path": "schemas/provider_attribution_witness.schema.json",
       "urn": "urn:mullusi:schema:provider-attribution-witness:1",

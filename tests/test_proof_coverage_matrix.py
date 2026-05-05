@@ -441,6 +441,29 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert closure_actions["publish_networked_worker_mesh_contract"]["status"] == "closed"
 
 
+def test_policy_proof_report_surface_is_counterexample_backed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    policy_surface = surfaces["policy_proof_report"]
+    witnesses = set(policy_surface["runtime_witnesses"])
+
+    assert policy_surface["coverage_state"] == "witnessed"
+    assert policy_surface["request_proof"] == "request_proof"
+    assert policy_surface["action_proof"] == "action_proof"
+    assert "PolicyProver.prove" in policy_surface["representative_paths"]
+    assert "gateway/policy_prover.py" in policy_surface["evidence_files"]
+    assert "schemas/policy_proof_report.schema.json" in policy_surface["evidence_files"]
+    assert "tests/test_gateway/test_policy_prover.py" in policy_surface["evidence_files"]
+    assert "bounded_policy_cases_required" in witnesses
+    assert "empty_invariants_rejected" in witnesses
+    assert "counterexamples_are_concrete" in witnesses
+    assert "proved_report_has_no_counterexamples" in witnesses
+    assert "policy_weakening_forbidden" in witnesses
+    assert "policy_proof_schema_valid" in witnesses
+    assert closure_actions["publish_policy_proof_report_contract"]["status"] == "closed"
+
+
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()

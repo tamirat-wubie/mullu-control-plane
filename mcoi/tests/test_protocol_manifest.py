@@ -26,6 +26,7 @@ def test_protocol_manifest_is_valid() -> None:
     gateway_readiness_entry = entries["gateway-publication-readiness"]
     gateway_receipt_validation_entry = entries["gateway-publication-receipt-validation"]
     goal_entry = entries["goal"]
+    policy_proof_entry = entries["policy-proof-report"]
     simulation_entry = entries["simulation-receipt"]
     worker_mesh_entry = entries["worker-mesh"]
     world_state_entry = entries["world-state"]
@@ -37,7 +38,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 44
+    assert len(manifest["schemas"]) == 45
     assert orchestration_validation_entry["path"] == "schemas/deployment_orchestration_receipt_validation.schema.json"
     assert orchestration_validation_entry["urn"] == "urn:mullusi:schema:deployment-orchestration-receipt-validation:1"
     assert orchestration_validation_entry["surface"] == "deployment"
@@ -59,6 +60,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert goal_entry["path"] == "schemas/goal.schema.json"
     assert goal_entry["urn"] == "urn:mullusi:schema:goal:1"
     assert goal_entry["surface"] == "planning"
+    assert policy_proof_entry["path"] == "schemas/policy_proof_report.schema.json"
+    assert policy_proof_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
+    assert policy_proof_entry["surface"] == "policy"
     assert simulation_entry["path"] == "schemas/simulation_receipt.schema.json"
     assert simulation_entry["urn"] == "urn:mullusi:schema:simulation-receipt:1"
     assert simulation_entry["surface"] == "simulation"

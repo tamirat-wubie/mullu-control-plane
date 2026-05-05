@@ -104,6 +104,17 @@ def test_protocol_manifest_indexes_capability_maturity_assessment() -> None:
     assert maturity_entry["surface"] == "capability"
 
 
+def test_protocol_manifest_indexes_policy_proof_report() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    policy_entry = entries["policy-proof-report"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert policy_entry["path"] == "schemas/policy_proof_report.schema.json"
+    assert policy_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
+    assert policy_entry["surface"] == "policy"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
