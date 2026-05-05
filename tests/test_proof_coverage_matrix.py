@@ -341,6 +341,31 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert closure_actions["publish_capability_forge_candidate_contract"]["status"] == "closed"
 
 
+def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    worker_surface = surfaces["networked_worker_mesh"]
+    witnesses = set(worker_surface["runtime_witnesses"])
+
+    assert worker_surface["coverage_state"] == "witnessed"
+    assert worker_surface["request_proof"] == "request_proof"
+    assert worker_surface["action_proof"] == "action_proof"
+    assert "NetworkedWorkerMesh.register_worker" in worker_surface["representative_paths"]
+    assert "NetworkedWorkerMesh.dispatch" in worker_surface["representative_paths"]
+    assert "NetworkedWorkerMesh.read_model" in worker_surface["representative_paths"]
+    assert "gateway/worker_mesh.py" in worker_surface["evidence_files"]
+    assert "schemas/worker_mesh.schema.json" in worker_surface["evidence_files"]
+    assert "tests/test_gateway/test_worker_mesh.py" in worker_surface["evidence_files"]
+    assert "active_lease_required" in witnesses
+    assert "tenant_capability_operation_budget_checked" in witnesses
+    assert "forbidden_operations_override_allowed" in witnesses
+    assert "worker_evidence_refs_required" in witnesses
+    assert "worker_receipt_not_terminal_closure" in witnesses
+    assert "worker_mesh_schema_valid" in witnesses
+    assert closure_actions["publish_networked_worker_mesh_contract"]["status"] == "closed"
+
+
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()

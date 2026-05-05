@@ -263,6 +263,12 @@
       "surface": "coordination"
     },
     {
+      "schema_id": "worker-mesh",
+      "path": "schemas/worker_mesh.schema.json",
+      "urn": "urn:mullusi:schema:worker-mesh:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",
