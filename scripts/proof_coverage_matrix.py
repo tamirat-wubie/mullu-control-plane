@@ -570,6 +570,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "multimodal_operating_layer",
+            [
+                "MultimodalOperatingLayer.evaluate",
+                "MultimodalOperationReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/multimodal_operating_layer.py",
+                "schemas/multimodal_operation_receipt.schema.json",
+                "tests/test_gateway/test_multimodal_operating_layer.py",
+            ],
+            "Multimodal operating layer gates text, document, visual, voice, browser, email, calendar, form, and video-frame operations before worker dispatch, preserves source references, blocks unsafe external effects, and emits schema-backed non-terminal receipts.",
+            [
+                "unknown_modalities_fail_closed",
+                "source_references_preserved",
+                "external_effects_require_certification",
+                "sensitive_inputs_require_redaction_evidence",
+                "multimodal_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "policy_proof_report",
             [
                 "PolicyProver.prove",
@@ -804,6 +829,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_networked_worker_mesh_contract",
             "surfaces": ["networked_worker_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_multimodal_operation_receipt_contract",
+            "surfaces": ["multimodal_operating_layer"],
             "status": "closed",
         },
         {
