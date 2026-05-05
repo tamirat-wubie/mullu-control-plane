@@ -24,6 +24,8 @@ from gateway.capability_forge import (
     CapabilityCertificationHandoff,
     CapabilityForge,
     CapabilityForgeInput,
+    CapabilityHandoffEvidenceInstallBatch,
+    install_certification_handoff_evidence_batch,
     install_certification_handoff_evidence,
 )
 from gateway.capability_maturity import CapabilityMaturityEvidenceSynthesizer, CapabilityRegistryMaturityProjector
@@ -106,6 +108,43 @@ def test_capability_forge_installs_handoff_as_certification_evidence_only() -> N
     assert assessment.maturity_level == "C6"
     assert assessment.production_ready is True
     assert assessment.autonomy_ready is False
+
+
+def test_capability_forge_installs_handoff_evidence_batch_with_audit_hash() -> None:
+    candidate = CapabilityForge().create_candidate(_forge_input())
+    handoff = _certification_handoff(candidate)
+    entry = _registry_entry_for_candidate(candidate)
+
+    batch = install_certification_handoff_evidence_batch((entry,), (handoff,), require_production_ready=True)
+    installed = batch.registry_entries[0]
+    extension = installed.extensions["capability_certification_evidence"]
+
+    assert isinstance(batch, CapabilityHandoffEvidenceInstallBatch)
+    assert batch.registry_entries == (installed,)
+    assert batch.installed_capability_ids == (entry.capability_id,)
+    assert batch.handoff_hashes == (handoff.handoff_hash,)
+    assert batch.batch_hash
+    assert installed is not entry
+    assert extension["source_handoff_hash"] == handoff.handoff_hash
+    assert "capability_maturity_evidence" not in installed.extensions
+
+
+def test_capability_forge_handoff_batch_rejects_coverage_drift() -> None:
+    candidate = CapabilityForge().create_candidate(_forge_input())
+    handoff = _certification_handoff(candidate)
+    entry = _registry_entry_for_candidate(candidate)
+    extra_handoff = replace(handoff, capability_id="payments.refund")
+
+    with pytest.raises(ValueError, match="^capability_handoff_batch_entry_required$"):
+        install_certification_handoff_evidence_batch((), ())
+    with pytest.raises(ValueError, match="^capability_handoff_batch_duplicate_entry$"):
+        install_certification_handoff_evidence_batch((entry, entry), (handoff,))
+    with pytest.raises(ValueError, match="^capability_handoff_batch_duplicate_handoff$"):
+        install_certification_handoff_evidence_batch((entry,), (handoff, handoff))
+    with pytest.raises(ValueError, match="^capability_handoff_batch_missing_handoff:payments\\.send$"):
+        install_certification_handoff_evidence_batch((entry,), ())
+    with pytest.raises(ValueError, match="^capability_handoff_batch_extra_handoff:payments\\.refund$"):
+        install_certification_handoff_evidence_batch((entry,), (handoff, extra_handoff))
 
 
 def test_capability_forge_handoff_install_rejects_gate_bypasses() -> None:

@@ -169,6 +169,13 @@
       ]
     },
     {
+      "action_id": "classify_temporal_scheduler_routes",
+      "status": "closed",
+      "surfaces": [
+        "temporal_kernel"
+      ]
+    },
+    {
       "action_id": "publish_temporal_scheduler_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -228,8 +235,8 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 4,
-      "unproven": 218,
-      "witnessed": 79
+      "unproven": 213,
+      "witnessed": 84
     },
     "route_count": 301,
     "routes": [
@@ -1359,29 +1366,29 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/temporal/schedules",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "temporal_kernel"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/temporal/schedules/{schedule_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "temporal_kernel"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/temporal/schedules/{schedule_id}/cancel",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "temporal_kernel"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/temporal/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "temporal_kernel"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/temporal/worker/tick",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "temporal_kernel"
       },
       {
         "coverage_state": "unproven",
@@ -1739,7 +1746,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 218
+    "unclassified_route_count": 213
   },
   "schema_version": 1,
   "surfaces": [
@@ -2270,12 +2277,13 @@
         "schemas/capability_candidate.schema.json",
         "tests/test_gateway/test_capability_forge.py"
       ],
-      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff, and installs certified handoffs as certification evidence without direct maturity overrides.",
+      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff, installs certified handoffs as certification evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission.",
       "representative_paths": [
         "CapabilityForge.create_candidate",
         "CapabilityForge.validate",
         "CapabilityForge.build_certification_handoff",
-        "install_certification_handoff_evidence"
+        "install_certification_handoff_evidence",
+        "install_certification_handoff_evidence_batch"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -2283,6 +2291,7 @@
         "candidate_schema_valid",
         "candidate_certification_handoff_emits_maturity_bundle",
         "certification_handoff_installs_evidence_without_maturity_claim",
+        "certification_handoff_batch_preserves_capsule_admission_gate",
         "high_risk_approval_policy_required",
         "effect_bearing_candidate_requires_sandbox",
         "effect_bearing_candidate_requires_recovery_path"
@@ -2384,11 +2393,21 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "gateway/temporal_kernel.py",
+        "mcoi/mcoi_runtime/app/routers/temporal_scheduler.py",
+        "mcoi/mcoi_runtime/core/temporal_scheduler.py",
+        "mcoi/mcoi_runtime/core/temporal_scheduler_worker.py",
+        "mcoi/mcoi_runtime/persistence/temporal_scheduler_store.py",
         "schemas/temporal_operation_receipt.schema.json",
-        "tests/test_gateway/test_temporal_kernel.py"
+        "tests/test_gateway/test_temporal_kernel.py",
+        "mcoi/tests/test_temporal_scheduler_router.py"
       ],
-      "notes": "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses before dispatch.",
+      "notes": "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, temporal schedule APIs, and monotonic duration witnesses before dispatch.",
       "representative_paths": [
+        "/api/v1/temporal/schedules",
+        "/api/v1/temporal/schedules/{schedule_id}",
+        "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "/api/v1/temporal/worker/tick",
+        "/api/v1/temporal/summary",
         "TemporalKernel.evaluate",
         "TrustedClock.now_utc",
         "TrustedClock.monotonic_ns"
@@ -2402,6 +2421,10 @@
         "stale_evidence_escalates",
         "budget_window_checked",
         "causal_preconditions_required",
+        "temporal_scheduler_routes_governed",
+        "schedule_read_models_persisted",
+        "worker_tick_certifies_proofs",
+        "cancel_emits_terminal_receipt",
         "temporal_receipt_schema_valid",
         "receipt_not_terminal_closure"
       ],
