@@ -21,6 +21,7 @@ document is the operator-readable witness.
 | `federated_control_plane` | `/api/v1/federation/summary` | read-model | read-model | policy sync receipts | read-model | witnessed | Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication. |
 | `data_governance_controls` | `/api/v1/data-governance/summary`, `/api/v1/data-governance/classify`, `/api/v1/data-governance/policies`, `/api/v1/data-governance/residency-constraints`, `/api/v1/data-governance/privacy-rules`, `/api/v1/data-governance/redaction-rules`, `/api/v1/data-governance/retention-rules`, `/api/v1/data-governance/evaluate` | yes | yes | state hash, action proof, tenant violation read model | hash-chain | witnessed | Data governance routes bind classification, policy, residency, privacy, redaction, retention, and handling evaluation decisions to governed responses with action proof receipts and state-hash posture witnesses. |
 | `compliance_evidence_exports` | `/api/v1/compliance/audit-package`, `/api/v1/compliance/incident-package`, `/api/v1/compliance/mapping`, `/api/v1/compliance/summary` | yes | yes | package hash, audit-chain verification, self-audited export | hash-chain | witnessed | Compliance export routes emit bounded evidence packages with package hashes, audit-chain verification, supported-framework boundaries, and self-audited export events. |
+| `audit_chain_api` | `/api/v1/audit`, `/api/v1/audit/verify`, `/api/v1/audit/summary`, `/api/v1/audit/anchor`, `/api/v1/audit/anchor/{anchor_id}/verify`, `/api/v1/audit/anchors` | read-model | yes | chain verification, checkpoint anchors, anchor verification | hash-chain | witnessed | Audit routes expose bounded audit entries, chain verification, summaries, checkpoint anchoring, anchor verification, and anchor history with hash-chain witnesses. |
 | `gateway_webhook_ingress` | `/webhook/web`, `/webhook/slack`, `/webhook/telegram` | yes | yes | command ledger | hash-chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/responsibility`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
@@ -32,11 +33,20 @@ document is the operator-readable witness.
 | `capability_forge` | `CapabilityForge.create_candidate`, `CapabilityForge.validate`, `CapabilityForge.build_certification_handoff`, `install_certification_handoff_evidence`, `install_certification_handoff_evidence_batch` | yes | yes | candidate package schema, promotion block, maturity bundle handoff, evidence-only installation, batch coverage witness, recovery evidence | hash-chain | witnessed | Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff, installs certified handoffs as certification evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission. |
 | `capability_maturity_assessment` | `CapabilityMaturityEvidenceSynthesizer.materialize_extension`, `CapabilityMaturityAssessor.assess`, `CapabilityRegistryMaturityProjector.decorate_read_model`, `MaturityProjectingCapabilityAdmissionGate.read_model` | yes | yes | certification evidence synthesis, maturity evidence, registry read-model projection, default C6 examples, production gate, autonomy gate | hash-chain | witnessed | Capability maturity assessment derives C0-C7 readiness from explicit evidence, synthesizes maturity extensions from certification evidence bundles, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present. |
 | `networked_worker_mesh` | `NetworkedWorkerMesh.register_worker`, `NetworkedWorkerMesh.dispatch`, `NetworkedWorkerMesh.read_model` | yes | yes | active lease, worker evidence, non-terminal receipt | hash-chain | witnessed | Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, and emits schema-backed receipts that explicitly require terminal closure. |
-| `multimodal_operating_layer` | `MultimodalOperatingLayer.evaluate`, `MultimodalOperationReceipt` | yes | yes | source preservation, effect controls, non-terminal receipt | hash-chain | witnessed | Multimodal operating layer gates text, document, visual, voice, browser, email, calendar, form, and video-frame operations before worker dispatch, preserves source references, blocks unsafe external effects, and emits schema-backed non-terminal receipts. |
 | `temporal_kernel` | `/api/v1/temporal/schedules`, `/api/v1/temporal/schedules/{schedule_id}`, `/api/v1/temporal/schedules/{schedule_id}/cancel`, `/api/v1/temporal/worker/tick`, `/api/v1/temporal/summary`, `TemporalKernel.evaluate`, `TrustedClock.now_utc`, `TrustedClock.monotonic_ns` | yes | yes | runtime clock, monotonic duration, expiry, freshness, causal order | hash-chain | witnessed | Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, temporal schedule APIs, and monotonic duration witnesses before dispatch. |
 | `temporal_memory` | `TemporalMemory.evaluate`, `TemporalMemoryRecord`, `TemporalMemoryReceipt` | yes | yes | memory age, freshness, validity, supersession, confidence decay | hash-chain | witnessed | Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action. |
 | `temporal_scheduler` | `TemporalScheduler.evaluate`, `ScheduledCommand`, `TemporalSchedulerReceipt` | yes | yes | due checks, retries, missed-run receipt, lease, idempotency | hash-chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | `PolicyProver.prove` | yes | yes | bounded proof cases, counterexamples, non-weakening report | hash-chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
+| `agent_identity` | `AgentIdentityRegistry.register`, `AgentIdentityRegistry.evaluate`, `AgentIdentityRegistry.record_outcome`, `AgentIdentity` | yes | yes | owner/tenant binding, self-approval block, lease-bound delegation, evidence-backed reputation | hash-chain | witnessed | Agent identity binds user-owned agents to owner, tenant, role, capability scopes, budget, memory scope, approval scope, delegation scope, evidence history, and reputation. |
+| `capability_maturity` | `CapabilityMaturityAssessor.assess`, `CapabilityMaturityAssessment` | yes | yes | maturity schema, missing-evidence projection, anti-overclaim checks | hash-chain | witnessed | Capability maturity derives production and autonomy readiness from explicit evidence, reports missing C6/C7 proof, and rejects overclaimed autonomy states. |
+| `policy_prover` | `PolicyProver.prove`, `PolicyProofReport` | yes | yes | policy proof report, counterexample path, required fix | hash-chain | witnessed | Policy prover evaluates modeled execution paths against named safety properties and emits schema-backed counterexamples for reachable bypasses. |
+| `memory_lattice` | `MemoryLatticeGate.assess`, `MemoryLatticeAdmission` | yes | yes | memory admission schema, learning gate, contradiction block | hash-chain | witnessed | Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, and contradiction state. |
+| `workflow_mining` | `WorkflowMiningEngine.mine`, `WorkflowMiningReport`, `WorkflowDraft` | yes | yes | workflow mining report, blocked draft, operator review | hash-chain | witnessed | Workflow mining detects repeated human traces and emits governed draft templates that remain blocked until sandbox replay and operator review. |
+| `trust_ledger` | `TrustLedger.issue`, `TrustLedger.verify`, `TrustLedger.anchor_bundle`, `TrustLedger.verify_anchor_receipt`, `TrustLedgerBundle`, `ExternalProofAnchorReceipt` | yes | yes | signed evidence bundle, terminal certificate anchor, tamper check, typed artifact root, anchor receipt signature | hash-chain | witnessed | Trust ledger signs terminal-closure evidence bundles and external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state. |
+| `domain_operating_pack` | `DomainOperatingPackCompiler.compile`, `DomainOperatingPackCompiler.validate`, `DomainOperatingPackCatalog` | yes | yes | blocked certification, governed artifacts, schema contract | hash-chain | witnessed | Domain operating packs compile governed buyer-facing solution bundles that remain activation-blocked until certification evidence is present. |
+| `multimodal_operating_layer` | `MultimodalOperatingLayer.evaluate`, `MultimodalOperationReceipt` | yes | yes | source-bound receipt, modality gate, worker certificate | hash-chain | witnessed | Multimodal operating layer emits source-bound pre-dispatch receipts and blocks unsafe modality worker effects before execution. |
+| `autonomous_capability_upgrade` | `AutonomousCapabilityUpgradeLoop.propose`, `CapabilityHealthSignal`, `CapabilityUpgradePlan` | yes | yes | health evidence, blocked upgrade, operator review | hash-chain | witnessed | Autonomous capability upgrade converts health signals into activation-blocked proposals that require evals, sandbox tests, ChangeCommand, ChangeCertificate, canary, terminal closure, and learning admission before promotion. |
+| `autonomous_test_generation` | `AutonomousTestGenerationEngine.generate`, `FailureTrace`, `TestGenerationPlan` | yes | yes | failure evidence, blocked plan, operator review | hash-chain | witnessed | Autonomous test generation converts certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals. |
 | `capability_plan_evidence_bundle` | `/capability-plans/read-model`, `/capability-plans/{plan_id}/closure`, `/capability-plans/{plan_id}/recover` | yes | yes | plan proof bundle | hash-chain | witnessed | Capability plan surfaces expose terminal certificates, evidence bundles, failure witnesses, and recovery-attempt audit records. |
 | `replay_determinism` | `/api/v1/replay/{trace_id}/determinism` | yes | yes | replay report hash | hash-chain | witnessed | Replay determinism route emits governed reports over completed traces with bounded operation specs. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests. |
@@ -48,9 +58,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 34 |
+| Total surfaces | 44 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 33 |
+| Witnessed surfaces | 43 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -59,8 +69,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 301 |
 | Proven routes | 4 |
-| Witnessed routes | 84 |
-| Unclassified declared routes | 213 |
+| Witnessed routes | 90 |
+| Unclassified declared routes | 207 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -86,20 +96,31 @@ Resolved closure actions:
 10. `publish_federated_control_plane_read_model`
 11. `classify_data_governance_routes`
 12. `classify_compliance_evidence_exports`
-13. `publish_runtime_conformance_attestation`
-14. `publish_capability_plan_evidence_bundles`
-15. `publish_deployment_orchestration_receipt_contract`
-16. `publish_runtime_reflex_engine_read_models`
-17. `publish_governed_operational_intelligence_witnesses`
-18. `publish_capability_forge_candidate_contract`
-19. `publish_capability_maturity_assessment_contract`
-20. `publish_networked_worker_mesh_contract`
-21. `publish_multimodal_operation_receipt_contract`
-22. `publish_temporal_operation_receipt_contract`
-23. `publish_temporal_memory_receipt_contract`
-24. `classify_temporal_scheduler_routes`
-25. `publish_temporal_scheduler_receipt_contract`
-26. `publish_policy_proof_report_contract`
+13. `classify_audit_chain_api`
+14. `publish_runtime_conformance_attestation`
+15. `publish_capability_plan_evidence_bundles`
+16. `publish_deployment_orchestration_receipt_contract`
+17. `publish_runtime_reflex_engine_read_models`
+18. `publish_governed_operational_intelligence_witnesses`
+19. `publish_capability_forge_candidate_contract`
+20. `publish_capability_maturity_assessment_contract`
+21. `publish_networked_worker_mesh_contract`
+22. `publish_agent_identity_contract`
+23. `publish_capability_maturity_contract`
+24. `publish_policy_prover_counterexample_contract`
+25. `publish_memory_lattice_admission_contract`
+26. `publish_workflow_mining_draft_contract`
+27. `publish_domain_operating_pack_contract`
+28. `publish_multimodal_operation_receipt_contract`
+29. `publish_temporal_operation_receipt_contract`
+30. `publish_temporal_memory_receipt_contract`
+31. `classify_temporal_scheduler_routes`
+32. `publish_temporal_scheduler_receipt_contract`
+33. `publish_policy_proof_report_contract`
+34. `publish_capability_upgrade_plan_contract`
+35. `publish_autonomous_test_generation_plan_contract`
+36. `publish_trust_ledger_bundle_contract`
+37. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -107,6 +128,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, deployment preflight MCP manifest validation, deployment publication closure validation schema contract, deployment orchestration receipt, deployment orchestration receipt schema contract, deployment orchestration validation schema contract, gateway publication readiness schema contract, gateway publication receipt validation schema contract, runtime conformance MCP manifest witness, runtime conformance plan evidence bundle canary, runtime conformance certificate schema self-validation, runtime conformance collector schema validation, runtime conformance proof route classification witness, runtime conformance attestation mapping, runtime reflex engine mapping, Reflex deployment witness schema replay, Reflex validator receipt schema and artifact, governed operational intelligence witness mapping, capability forge candidate contract mapping, capability maturity assessment mapping, networked worker mesh contract mapping, multimodal operation receipt mapping, temporal operation receipt mapping, temporal memory receipt mapping, temporal scheduler route mapping, temporal scheduler receipt mapping, policy proof report mapping, authority operator controls route mapping, data governance controls route mapping, compliance evidence export route mapping, capability plan evidence bundle mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
-  Open issues: 213 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, deployment preflight MCP manifest validation, deployment publication closure validation schema contract, deployment orchestration receipt, deployment orchestration receipt schema contract, deployment orchestration validation schema contract, gateway publication readiness schema contract, gateway publication receipt validation schema contract, runtime conformance MCP manifest witness, runtime conformance plan evidence bundle canary, runtime conformance certificate schema self-validation, runtime conformance collector schema validation, runtime conformance proof route classification witness, runtime conformance attestation mapping, runtime reflex engine mapping, Reflex deployment witness schema replay, Reflex validator receipt schema and artifact, governed operational intelligence witness mapping, capability forge candidate contract mapping, capability maturity assessment mapping, networked worker mesh contract mapping, agent identity contract mapping, authority operator controls route mapping, data governance controls route mapping, compliance evidence export route mapping, audit chain API route mapping, capability maturity contract mapping, policy prover counterexample contract mapping, memory lattice admission contract mapping, workflow mining draft contract mapping, trust ledger bundle contract mapping, trust ledger anchor receipt contract mapping, domain operating pack contract mapping, multimodal operation receipt mapping, temporal operation receipt mapping, temporal memory receipt mapping, temporal scheduler route mapping, temporal scheduler receipt mapping, policy proof report mapping, capability upgrade plan contract mapping, autonomous test-generation plan contract mapping, capability plan evidence bundle mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
+  Open issues: 207 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions
