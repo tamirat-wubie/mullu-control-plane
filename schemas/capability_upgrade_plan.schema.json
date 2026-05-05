@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-upgrade-plan:1",
+  "title": "Capability Upgrade Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "capability_id",
+    "health_signal",
+    "diagnosis",
+    "candidate",
+    "required_stages",
+    "blocked_reasons",
+    "operator_review_required",
+    "activation_blocked",
+    "plan_hash",
+    "metadata"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "pattern": "^capability-upgrade-plan-[0-9a-f]{16}$"
+    },
+    "capability_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "health_signal": {
+      "$ref": "#/$defs/capability_health_signal"
+    },
+    "diagnosis": {
+      "$ref": "#/$defs/capability_weakness_diagnosis"
+    },
+    "candidate": {
+      "$ref": "#/$defs/upgrade_candidate"
+    },
+    "required_stages": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "string",
+        "enum": [
+          "capability_health",
+          "weakness_diagnosis",
+          "eval_generation",
+          "upgrade_candidate",
+          "sandbox_test",
+          "change_command",
+          "change_certificate",
+          "canary",
+          "terminal_closure",
+          "learning_admission"
+        ]
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "operator_review_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "activation_blocked": {
+      "type": "boolean",
+      "const": true
+    },
+    "plan_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "plan_is_not_execution",
+        "autonomous_proposal_allowed",
+        "autonomous_direct_deploy_allowed"
+      ],
+      "properties": {
+        "plan_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "autonomous_proposal_allowed": {
+          "type": "boolean",
+          "const": true
+        },
+        "autonomous_direct_deploy_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "capability_health_signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "observed_at",
+        "maturity_level",
+        "success_rate",
+        "failure_count",
+        "mean_latency_ms",
+        "cost_per_success",
+        "open_incidents",
+        "blocker_codes",
+        "evidence_refs",
+        "metadata"
+      ],
+      "properties": {
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "maturity_level": {
+          "type": "string",
+          "enum": ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+        },
+        "success_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "failure_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "mean_latency_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_per_success": {
+          "type": "number",
+          "minimum": 0
+        },
+        "open_incidents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocker_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "capability_weakness_diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diagnosis_id",
+        "capability_id",
+        "weakness_codes",
+        "severity",
+        "recommended_change_classes",
+        "evidence_refs",
+        "diagnosis_hash",
+        "metadata"
+      ],
+      "properties": {
+        "diagnosis_id": {
+          "type": "string",
+          "pattern": "^capability-diagnosis-[0-9a-f]{16}$"
+        },
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weakness_codes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "recommended_change_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "code",
+              "schema",
+              "policy",
+              "capability",
+              "authority_rules",
+              "provider_behavior",
+              "deployment_profile",
+              "configuration",
+              "payment",
+              "audit",
+              "proof",
+              "command_spine"
+            ]
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "diagnosis_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "upgrade_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "capability_id",
+        "target_maturity_level",
+        "change_classes",
+        "risk_tier",
+        "evals",
+        "sandbox_tests",
+        "rollback_plan_ref",
+        "change_command_ref",
+        "change_certificate_ref",
+        "canary_handoff_ref",
+        "terminal_closure_ref",
+        "learning_admission_ref",
+        "authority_approval_required",
+        "second_approval_required",
+        "promotion_blocked",
+        "candidate_hash",
+        "metadata"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^capability-upgrade-candidate-[0-9a-f]{16}$"
+        },
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_maturity_level": {
+          "type": "string",
+          "enum": ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+        },
+        "change_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "code",
+              "schema",
+              "policy",
+              "capability",
+              "authority_rules",
+              "provider_behavior",
+              "deployment_profile",
+              "configuration",
+              "payment",
+              "audit",
+              "proof",
+              "command_spine"
+            ]
+          }
+        },
+        "risk_tier": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "evals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/upgrade_eval_requirement"
+          }
+        },
+        "sandbox_tests": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_plan_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "change_command_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "change_certificate_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canary_handoff_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_closure_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "learning_admission_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority_approval_required": {
+          "type": "boolean"
+        },
+        "second_approval_required": {
+          "type": "boolean"
+        },
+        "promotion_blocked": {
+          "type": "boolean",
+          "const": true
+        },
+        "candidate_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "change_command_required",
+            "change_certificate_required",
+            "canary_required",
+            "terminal_closure_required",
+            "learning_admission_required"
+          ],
+          "properties": {
+            "change_command_required": {
+              "type": "boolean",
+              "const": true
+            },
+            "change_certificate_required": {
+              "type": "boolean",
+              "const": true
+            },
+            "canary_required": {
+              "type": "boolean",
+              "const": true
+            },
+            "terminal_closure_required": {
+              "type": "boolean",
+              "const": true
+            },
+            "learning_admission_required": {
+              "type": "boolean",
+              "const": true
+            }
+          }
+        }
+      }
+    },
+    "upgrade_eval_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eval_id", "eval_type", "fixture_ref", "required"],
+      "properties": {
+        "eval_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "eval_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fixture_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

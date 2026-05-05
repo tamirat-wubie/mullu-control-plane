@@ -19,18 +19,26 @@ from scripts.validate_protocol_manifest import (
 def test_protocol_manifest_is_valid() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    agent_identity_entry = entries["agent-identity"]
+    autonomous_test_entry = entries["autonomous-test-generation-plan"]
+    capability_upgrade_entry = entries["capability-upgrade-plan"]
     orchestration_validation_entry = entries["deployment-orchestration-receipt-validation"]
     publication_closure_validation_entry = entries["deployment-publication-closure-validation"]
     candidate_entry = entries["capability-candidate"]
     maturity_entry = entries["capability-maturity"]
+    memory_lattice_entry = entries["memory-lattice"]
+    policy_proof_entry = entries["policy-proof-report"]
+    trust_ledger_entry = entries["trust-ledger-bundle"]
+    trust_anchor_entry = entries["trust-ledger-anchor-receipt"]
+    domain_pack_entry = entries["domain-operating-pack"]
+    multimodal_entry = entries["multimodal-operation-receipt"]
     gateway_readiness_entry = entries["gateway-publication-readiness"]
     gateway_receipt_validation_entry = entries["gateway-publication-receipt-validation"]
     goal_entry = entries["goal"]
-    policy_proof_entry = entries["policy-proof-report"]
-    multimodal_entry = entries["multimodal-operation-receipt"]
     temporal_entry = entries["temporal-operation-receipt"]
     scheduler_entry = entries["temporal-scheduler-receipt"]
     simulation_entry = entries["simulation-receipt"]
+    workflow_mining_entry = entries["workflow-mining-report"]
     worker_mesh_entry = entries["worker-mesh"]
     world_state_entry = entries["world-state"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
@@ -41,7 +49,16 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 48
+    assert len(manifest["schemas"]) == 56
+    assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
+    assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
+    assert agent_identity_entry["surface"] == "identity"
+    assert autonomous_test_entry["path"] == "schemas/autonomous_test_generation_plan.schema.json"
+    assert autonomous_test_entry["urn"] == "urn:mullusi:schema:autonomous-test-generation-plan:1"
+    assert autonomous_test_entry["surface"] == "testing"
+    assert capability_upgrade_entry["path"] == "schemas/capability_upgrade_plan.schema.json"
+    assert capability_upgrade_entry["urn"] == "urn:mullusi:schema:capability-upgrade-plan:1"
+    assert capability_upgrade_entry["surface"] == "capability"
     assert orchestration_validation_entry["path"] == "schemas/deployment_orchestration_receipt_validation.schema.json"
     assert orchestration_validation_entry["urn"] == "urn:mullusi:schema:deployment-orchestration-receipt-validation:1"
     assert orchestration_validation_entry["surface"] == "deployment"
@@ -54,6 +71,24 @@ def test_protocol_manifest_is_valid() -> None:
     assert maturity_entry["path"] == "schemas/capability_maturity.schema.json"
     assert maturity_entry["urn"] == "urn:mullusi:schema:capability-maturity:1"
     assert maturity_entry["surface"] == "capability"
+    assert memory_lattice_entry["path"] == "schemas/memory_lattice.schema.json"
+    assert memory_lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
+    assert memory_lattice_entry["surface"] == "memory"
+    assert policy_proof_entry["path"] == "schemas/policy_proof_report.schema.json"
+    assert policy_proof_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
+    assert policy_proof_entry["surface"] == "policy"
+    assert trust_ledger_entry["path"] == "schemas/trust_ledger_bundle.schema.json"
+    assert trust_ledger_entry["urn"] == "urn:mullusi:schema:trust-ledger-bundle:1"
+    assert trust_ledger_entry["surface"] == "evidence"
+    assert trust_anchor_entry["path"] == "schemas/trust_ledger_anchor_receipt.schema.json"
+    assert trust_anchor_entry["urn"] == "urn:mullusi:schema:trust-ledger-anchor-receipt:1"
+    assert trust_anchor_entry["surface"] == "evidence"
+    assert domain_pack_entry["path"] == "schemas/domain_operating_pack.schema.json"
+    assert domain_pack_entry["urn"] == "urn:mullusi:schema:domain-operating-pack:1"
+    assert domain_pack_entry["surface"] == "domain"
+    assert multimodal_entry["path"] == "schemas/multimodal_operation_receipt.schema.json"
+    assert multimodal_entry["urn"] == "urn:mullusi:schema:multimodal-operation-receipt:1"
+    assert multimodal_entry["surface"] == "multimodal"
     assert gateway_readiness_entry["path"] == "schemas/gateway_publication_readiness.schema.json"
     assert gateway_readiness_entry["urn"] == "urn:mullusi:schema:gateway-publication-readiness:1"
     assert gateway_readiness_entry["surface"] == "deployment"
@@ -63,12 +98,6 @@ def test_protocol_manifest_is_valid() -> None:
     assert goal_entry["path"] == "schemas/goal.schema.json"
     assert goal_entry["urn"] == "urn:mullusi:schema:goal:1"
     assert goal_entry["surface"] == "planning"
-    assert policy_proof_entry["path"] == "schemas/policy_proof_report.schema.json"
-    assert policy_proof_entry["urn"] == "urn:mullusi:schema:policy-proof-report:1"
-    assert policy_proof_entry["surface"] == "policy"
-    assert multimodal_entry["path"] == "schemas/multimodal_operation_receipt.schema.json"
-    assert multimodal_entry["urn"] == "urn:mullusi:schema:multimodal-operation-receipt:1"
-    assert multimodal_entry["surface"] == "multimodal"
     assert temporal_entry["path"] == "schemas/temporal_operation_receipt.schema.json"
     assert temporal_entry["urn"] == "urn:mullusi:schema:temporal-operation-receipt:1"
     assert temporal_entry["surface"] == "temporal"
@@ -78,6 +107,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert simulation_entry["path"] == "schemas/simulation_receipt.schema.json"
     assert simulation_entry["urn"] == "urn:mullusi:schema:simulation-receipt:1"
     assert simulation_entry["surface"] == "simulation"
+    assert workflow_mining_entry["path"] == "schemas/workflow_mining_report.schema.json"
+    assert workflow_mining_entry["urn"] == "urn:mullusi:schema:workflow-mining-report:1"
+    assert workflow_mining_entry["surface"] == "workflow"
     assert worker_mesh_entry["path"] == "schemas/worker_mesh.schema.json"
     assert worker_mesh_entry["urn"] == "urn:mullusi:schema:worker-mesh:1"
     assert worker_mesh_entry["surface"] == "worker"

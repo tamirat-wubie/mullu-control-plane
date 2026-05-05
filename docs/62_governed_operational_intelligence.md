@@ -217,6 +217,29 @@ Worker contract:
 
 Worker invariant: a worker receipt is necessary but never sufficient for terminal closure; closure still requires verification and reconciliation.
 
+### User-Owned Agent Identity
+
+Persistent agents are accountable identities, not anonymous processes.
+
+Agent identity contract:
+
+| Field | Role |
+| --- | --- |
+| `agent_id` | Stable agent identity |
+| `owner_id` | Human or organization owner |
+| `tenant_id` | Tenant boundary |
+| `role` | Operational role |
+| `allowed_capabilities` | Explicitly permitted capability set |
+| `forbidden_capabilities` | Explicitly denied capability set |
+| `budget` | Cost and action limits |
+| `memory_scope` | Planning and execution memory admission |
+| `approval_scope` | Approval request and grant limits |
+| `delegation_scope` | Lease-bound worker delegation limits |
+| `evidence_history` | Proof refs for identity outcomes |
+| `reputation_score` | Evidence-derived reliability score |
+
+Agent identity invariant: an agent cannot mutate policy, approve its own request, cross tenant scope, use unadmitted memory, delegate without a lease-bound scope, or update reputation without evidence.
+
 ## Evidence Plane
 
 The Evidence Plane binds commands to receipts, audit, terminal certificates, learning decisions, and external anchors.
