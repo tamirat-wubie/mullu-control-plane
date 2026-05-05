@@ -154,6 +154,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_scheduler_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_scheduler"
+      ]
+    },
+    {
       "action_id": "publish_policy_proof_report_contract",
       "status": "closed",
       "surfaces": [
@@ -175,7 +182,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 23,
+      "action_proof": 24,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -183,7 +190,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 27,
+      "audit_chain": 28,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -191,16 +198,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 30
+      "witnessed": 31
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 23
+      "request_proof": 24
     },
-    "surface_count": 31
+    "surface_count": 32
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2348,6 +2355,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_kernel"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_scheduler.py",
+        "schemas/temporal_scheduler_receipt.schema.json",
+        "tests/test_gateway/test_temporal_scheduler.py"
+      ],
+      "notes": "Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch.",
+      "representative_paths": [
+        "TemporalScheduler.evaluate",
+        "ScheduledCommand",
+        "TemporalSchedulerReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "scheduled_command_requires_execute_at",
+        "idempotency_required",
+        "lease_acquired_before_dispatch",
+        "future_schedule_defers",
+        "missed_run_receipt_emitted",
+        "retry_window_checked",
+        "high_risk_reapproval_required",
+        "active_lease_blocks_duplicate_execution",
+        "temporal_scheduler_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_scheduler"
     },
     {
       "action_proof": "action_proof",
