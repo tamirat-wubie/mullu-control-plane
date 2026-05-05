@@ -50,6 +50,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 27. Reflex deployment witness envelopes are public contracts when they export replayable promotion evidence for offline validation.
 28. Reflex deployment witness validator receipts are public contracts when they certify CI replay evidence without exposing raw JUnit paths.
 29. Multimodal operation receipts are public contracts when they gate text, document, visual, voice, browser, email, calendar, form, and video-frame worker operations before dispatch.
+30. Temporal operation receipts are public contracts when they certify runtime-owned time checks for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses.
 
 ## Verification
 
@@ -62,11 +63,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 46 schemas
+protocol manifest ok: 47 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment orchestration validation contract, gateway publication readiness contract, gateway publication receipt validation contract, deployment publication closure validation contract, capability candidate contract, capability maturity assessment contract, world-state contract, goal compilation contract, simulation receipt contract, policy proof report contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract, reflex validator receipt contract, multimodal operation receipt contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment orchestration validation contract, gateway publication readiness contract, gateway publication receipt validation contract, deployment publication closure validation contract, capability candidate contract, capability maturity assessment contract, world-state contract, goal compilation contract, simulation receipt contract, policy proof report contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract, reflex validator receipt contract, multimodal operation receipt contract, temporal operation receipt contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes
