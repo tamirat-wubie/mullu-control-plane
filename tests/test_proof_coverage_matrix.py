@@ -404,12 +404,14 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert "CapabilityForge.create_candidate" in forge_surface["representative_paths"]
     assert "CapabilityForge.validate" in forge_surface["representative_paths"]
     assert "CapabilityForge.build_certification_handoff" in forge_surface["representative_paths"]
+    assert "install_certification_handoff_evidence" in forge_surface["representative_paths"]
     assert "gateway/capability_forge.py" in forge_surface["evidence_files"]
     assert "schemas/capability_candidate.schema.json" in forge_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_forge.py" in forge_surface["evidence_files"]
     assert "candidate_promotion_blocked" in witnesses
     assert "candidate_schema_valid" in witnesses
     assert "candidate_certification_handoff_emits_maturity_bundle" in witnesses
+    assert "certification_handoff_installs_evidence_without_maturity_claim" in witnesses
     assert "high_risk_approval_policy_required" in witnesses
     assert "effect_bearing_candidate_requires_sandbox" in witnesses
     assert "effect_bearing_candidate_requires_recovery_path" in witnesses

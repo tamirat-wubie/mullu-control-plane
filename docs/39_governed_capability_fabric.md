@@ -51,6 +51,8 @@ Certification pipelines can avoid hand-authored maturity flags by emitting `exte
 
 The capability forge emits candidate packages and certification handoffs, never registry mutations. A candidate handoff binds the package id, package hash, sandbox receipt, live receipt, worker deployment, recovery evidence, and optional autonomy-control reference into a `CapabilityCertificationEvidenceBundle` that the maturity synthesizer can consume. Effect-bearing handoffs fail closed until live-write and recovery evidence references are present.
 
+The forge-side registry handoff installer accepts only a stamped handoff for an already certified registry entry. It writes the bundle as `extensions.capability_certification_evidence`, refuses direct `capability_maturity_evidence` overrides, and validates production readiness through the maturity synthesizer without installing executable capability records or bypassing capsule admission.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.
