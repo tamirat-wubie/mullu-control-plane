@@ -397,10 +397,18 @@ def test_capability_maturity_surface_blocks_readiness_overclaims() -> None:
     assert maturity_surface["request_proof"] == "request_proof"
     assert maturity_surface["action_proof"] == "action_proof"
     assert "CapabilityMaturityAssessor.assess" in maturity_surface["representative_paths"]
+    assert "CapabilityRegistryMaturityProjector.decorate_read_model" in maturity_surface["representative_paths"]
+    assert "MaturityProjectingCapabilityAdmissionGate.read_model" in maturity_surface["representative_paths"]
+    assert "docs/39_governed_capability_fabric.md" in maturity_surface["evidence_files"]
+    assert "gateway/capability_fabric.py" in maturity_surface["evidence_files"]
     assert "gateway/capability_maturity.py" in maturity_surface["evidence_files"]
+    assert "gateway/operator_capability_console.py" in maturity_surface["evidence_files"]
     assert "schemas/capability_maturity.schema.json" in maturity_surface["evidence_files"]
+    assert "tests/test_gateway/test_capability_fabric.py" in maturity_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
+    assert "tests/test_gateway/test_operator_capability_console.py" in maturity_surface["evidence_files"]
     assert "maturity_derived_from_evidence" in witnesses
+    assert "registry_read_model_exposes_maturity" in witnesses
     assert "effect_bearing_production_requires_live_write" in witnesses
     assert "production_requires_worker_deployment_recovery" in witnesses
     assert "autonomy_requires_C7_controls" in witnesses

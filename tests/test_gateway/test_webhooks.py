@@ -560,6 +560,10 @@ class TestWebChatWebhook:
         assert read_model["capsule_count"] == 10
         assert read_model["capability_count"] == 52
         assert len(read_model["governed_capability_records"]) == 52
+        assert len(read_model["capability_maturity_assessments"]) == 52
+        assert read_model["capability_maturity_counts"]["C3"] == 52
+        assert read_model["production_ready_count"] == 0
+        assert read_model["autonomy_ready_count"] == 0
         assert accepted.status is CommandCapabilityAdmissionStatus.ACCEPTED
         assert accepted.capability_id == "creative.document_generate"
         assert accepted.domain == "creative"

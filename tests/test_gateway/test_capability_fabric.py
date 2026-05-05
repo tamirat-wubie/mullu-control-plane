@@ -67,6 +67,10 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     read_model = gate.read_model()
     assert read_model["capsule_count"] == 10
     assert read_model["capability_count"] == 52
+    assert len(read_model["capability_maturity_assessments"]) == 52
+    assert read_model["capability_maturity_counts"]["C3"] == 52
+    assert read_model["production_ready_count"] == 0
+    assert read_model["autonomy_ready_count"] == 0
     assert {domain["domain"] for domain in read_model["domains"]} == {
         "browser",
         "communication",
@@ -148,7 +152,12 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         record["capability_id"]: record
         for record in gate.read_model()["governed_capability_records"]
     }
+    capabilities = {
+        capability["capability_id"]: capability
+        for capability in gate.read_model()["capabilities"]
+    }
     payment_record = records["financial.send_payment"]
+    payment_capability = capabilities["financial.send_payment"]
     balance_record = records["financial.balance_check"]
     command_record = records["computer.command.run"]
     browser_record = records["browser.submit"]
@@ -166,6 +175,14 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     deployment_publish_record = records["deployment.witness.publish.with_approval"]
 
     assert len(records) == 52
+    assert payment_capability["maturity_assessment"]["maturity_level"] == "C3"
+    assert payment_capability["maturity_assessment"]["production_ready"] is False
+    assert payment_capability["maturity_assessment"]["metadata"]["assessment_is_not_promotion"] is True
+    assert "capability_registry:financial.send_payment" in payment_capability["maturity_assessment"]["evidence_refs"]
+    assert payment_record["maturity_level"] == "C3"
+    assert payment_record["production_ready"] is False
+    assert payment_record["autonomy_ready"] is False
+    assert payment_record["maturity_assessment_id"].startswith("capability-maturity-")
     assert payment_record["risk_level"] == "high"
     assert payment_record["read_only"] is False
     assert payment_record["world_mutating"] is True
