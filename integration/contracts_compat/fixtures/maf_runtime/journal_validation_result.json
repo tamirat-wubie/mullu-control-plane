@@ -1,0 +1,12 @@
+{
+  "validation_id": "journal-validate-042",
+  "epoch_id": "epoch-2026-04-01",
+  "entry_count": 41,
+  "first_sequence": 1,
+  "last_sequence": 42,
+  "verdict": "sequence_gap",
+  "gap_positions": [
+    17
+  ],
+  "detail": "missing journal sequence 17"
+}

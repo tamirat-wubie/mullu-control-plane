@@ -1,0 +1,20 @@
+{
+  "verification_id": "restore-verify-042",
+  "checkpoint_id": "checkpoint-042",
+  "epoch_id": "epoch-2026-04-01",
+  "tick_number": 42,
+  "verdict": "verified",
+  "expected_composite_hash": "sha256:composite-042",
+  "actual_composite_hash": "sha256:composite-042",
+  "subsystem_results": {
+    "event_spine": {
+      "state_hash": "sha256:event-spine-state-042",
+      "status": "verified"
+    },
+    "supervisor": {
+      "state_hash": "sha256:supervisor-state-042",
+      "status": "verified"
+    }
+  },
+  "verified_at": "2026-04-01T12:02:00+00:00"
+}

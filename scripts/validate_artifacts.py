@@ -69,6 +69,64 @@ class OperationalDocumentExpectation:
 AuxiliaryArtifactValidator = Callable[[Path], list[str]]
 MAFRuntimeFixtureValidator = Callable[[Path], list[str]]
 
+JOURNAL_ENTRY_KINDS = frozenset(
+    {
+        "tick",
+        "transition",
+        "checkpoint",
+        "event_emitted",
+        "obligation_changed",
+        "reaction_decided",
+        "heartbeat",
+        "livelock",
+        "halt",
+        "resume",
+    }
+)
+CHECKPOINT_SCOPES = frozenset(
+    {
+        "supervisor",
+        "event_spine",
+        "obligation_runtime",
+        "reaction_engine",
+        "composite",
+    }
+)
+RESTORE_VERDICTS = frozenset(
+    {
+        "verified",
+        "hash_mismatch",
+        "subsystem_missing",
+        "rollback_triggered",
+    }
+)
+JOURNAL_VALIDATION_VERDICTS = frozenset(
+    {
+        "valid",
+        "sequence_gap",
+        "epoch_mismatch",
+        "ordering_violation",
+        "empty_journal",
+    }
+)
+REPLAY_STEP_VERDICTS = frozenset(
+    {
+        "match",
+        "outcome_diverged",
+        "tick_number_diverged",
+        "skipped",
+        "error",
+    }
+)
+REPLAY_SESSION_VERDICTS = frozenset(
+    {
+        "success",
+        "divergence_detected",
+        "empty_journal",
+        "aborted",
+    }
+)
+
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
     return tuple(sorted(paths, key=lambda path: path.relative_to(REPO_ROOT).as_posix()))
@@ -3496,6 +3554,379 @@ def _validate_livelock_record_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_journal_entry_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("entry_id", "epoch_id", "sequence", "kind", "subject_id", "payload", "recorded_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("entry_id", "epoch_id", "kind", "subject_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in JOURNAL_ENTRY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(JOURNAL_ENTRY_KINDS))}"
+        )
+    errors.extend(_require_non_negative_int(payload["sequence"], field_name="sequence", path=path))
+    if not isinstance(payload["payload"], (dict, list)):
+        errors.append(f"{_relative_path(path)}: field 'payload' must be structured JSON")
+    errors.extend(_validate_iso8601_text(payload["recorded_at"], field_name="recorded_at", path=path))
+    return errors
+
+
+def _validate_subsystem_snapshot_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("snapshot_id", "scope", "state_hash", "record_count", "captured_at", "payload"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("snapshot_id", "scope", "state_hash"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    if payload["scope"] not in CHECKPOINT_SCOPES:
+        errors.append(
+            f"{_relative_path(path)}: field '{f'{prefix}scope'.strip('.')}' must be one of {', '.join(sorted(CHECKPOINT_SCOPES))}"
+        )
+    errors.extend(
+        _require_non_negative_int(
+            payload["record_count"],
+            field_name=f"{prefix}record_count".strip("."),
+            path=path,
+        )
+    )
+    errors.extend(
+        _validate_iso8601_text(
+            payload["captured_at"],
+            field_name=f"{prefix}captured_at".strip("."),
+            path=path,
+        )
+    )
+    nested_payload = payload["payload"]
+    if not isinstance(nested_payload, dict):
+        errors.append(f"{_relative_path(path)}: field '{f'{prefix}payload'.strip('.')}' must be an object")
+    else:
+        for key in nested_payload:
+            if not isinstance(key, str) or not key.strip():
+                errors.append(
+                    f"{_relative_path(path)}: field '{f'{prefix}payload'.strip('.')}' must use non-empty string keys"
+                )
+                break
+    return errors
+
+
+def _validate_subsystem_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_subsystem_snapshot_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_composite_checkpoint_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "checkpoint_id",
+            "epoch_id",
+            "tick_number",
+            "snapshots",
+            "journal_sequence",
+            "composite_hash",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("checkpoint_id", "epoch_id", "composite_hash"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_int(payload["tick_number"], field_name="tick_number", path=path))
+    errors.extend(
+        _require_non_negative_int(payload["journal_sequence"], field_name="journal_sequence", path=path)
+    )
+    snapshots = payload["snapshots"]
+    snapshot_scopes: list[str] = []
+    if not isinstance(snapshots, list) or not snapshots:
+        errors.append(f"{_relative_path(path)}: field 'snapshots' must be a non-empty array")
+    else:
+        for index, snapshot in enumerate(snapshots):
+            errors.extend(
+                _validate_subsystem_snapshot_dict(
+                    snapshot,
+                    path=path,
+                    field_name=f"snapshots[{index}]",
+                )
+            )
+            if isinstance(snapshot, dict) and isinstance(snapshot.get("scope"), str):
+                snapshot_scopes.append(snapshot["scope"])
+        if len(set(snapshot_scopes)) != len(snapshot_scopes):
+            errors.append(f"{_relative_path(path)}: snapshots must not repeat scope values")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_restore_verification_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "verification_id",
+            "checkpoint_id",
+            "epoch_id",
+            "tick_number",
+            "verdict",
+            "expected_composite_hash",
+            "actual_composite_hash",
+            "subsystem_results",
+            "verified_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "verification_id",
+        "checkpoint_id",
+        "epoch_id",
+        "verdict",
+        "expected_composite_hash",
+        "actual_composite_hash",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["verdict"] not in RESTORE_VERDICTS:
+        errors.append(
+            f"{_relative_path(path)}: field 'verdict' must be one of {', '.join(sorted(RESTORE_VERDICTS))}"
+        )
+    errors.extend(_require_non_negative_int(payload["tick_number"], field_name="tick_number", path=path))
+    subsystem_results = payload["subsystem_results"]
+    if not isinstance(subsystem_results, dict) or not subsystem_results:
+        errors.append(f"{_relative_path(path)}: field 'subsystem_results' must be a non-empty object")
+    else:
+        for subsystem_name, subsystem_result in subsystem_results.items():
+            if not isinstance(subsystem_name, str) or not subsystem_name.strip():
+                errors.append(
+                    f"{_relative_path(path)}: field 'subsystem_results' must use non-empty string keys"
+                )
+                continue
+            if not isinstance(subsystem_result, dict) or not subsystem_result:
+                errors.append(
+                    f"{_relative_path(path)}: subsystem_results.{subsystem_name} must be a non-empty object"
+                )
+                continue
+            for result_key, result_value in subsystem_result.items():
+                if not isinstance(result_key, str) or not result_key.strip():
+                    errors.append(
+                        f"{_relative_path(path)}: subsystem_results.{subsystem_name} must use non-empty string keys"
+                    )
+                    break
+                if not isinstance(result_value, str) or not result_value.strip():
+                    errors.append(
+                        f"{_relative_path(path)}: subsystem_results.{subsystem_name}.{result_key} must be a non-empty string"
+                    )
+    errors.extend(_validate_iso8601_text(payload["verified_at"], field_name="verified_at", path=path))
+    if payload["verdict"] == "verified" and (
+        payload["expected_composite_hash"] != payload["actual_composite_hash"]
+    ):
+        errors.append(
+            f"{_relative_path(path)}: verified restore_verification must keep expected_composite_hash equal to actual_composite_hash"
+        )
+    if payload["verdict"] == "hash_mismatch" and (
+        payload["expected_composite_hash"] == payload["actual_composite_hash"]
+    ):
+        errors.append(
+            f"{_relative_path(path)}: hash_mismatch restore_verification must keep expected_composite_hash different from actual_composite_hash"
+        )
+    return errors
+
+
+def _validate_journal_validation_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "validation_id",
+            "epoch_id",
+            "entry_count",
+            "first_sequence",
+            "last_sequence",
+            "verdict",
+            "gap_positions",
+            "detail",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("validation_id", "epoch_id", "verdict", "detail"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["verdict"] not in JOURNAL_VALIDATION_VERDICTS:
+        errors.append(
+            f"{_relative_path(path)}: field 'verdict' must be one of {', '.join(sorted(JOURNAL_VALIDATION_VERDICTS))}"
+        )
+    for field_name in ("entry_count", "first_sequence", "last_sequence"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    gap_positions = payload["gap_positions"]
+    if not isinstance(gap_positions, list):
+        errors.append(f"{_relative_path(path)}: field 'gap_positions' must be an array")
+    else:
+        for index, gap_position in enumerate(gap_positions):
+            errors.extend(
+                _require_positive_int(gap_position, field_name=f"gap_positions[{index}]", path=path)
+            )
+    if payload["entry_count"] == 0:
+        if payload["verdict"] != "empty_journal":
+            errors.append(f"{_relative_path(path)}: empty journals must use verdict 'empty_journal'")
+        if payload["first_sequence"] != 0 or payload["last_sequence"] != 0:
+            errors.append(
+                f"{_relative_path(path)}: empty journals must keep first_sequence and last_sequence at 0"
+            )
+    elif payload["first_sequence"] > payload["last_sequence"]:
+        errors.append(f"{_relative_path(path)}: first_sequence must be less than or equal to last_sequence")
+    if payload["verdict"] == "sequence_gap" and not gap_positions:
+        errors.append(f"{_relative_path(path)}: sequence_gap verdict requires at least one gap_positions entry")
+    if payload["verdict"] == "valid" and gap_positions:
+        errors.append(f"{_relative_path(path)}: valid verdict must not carry gap_positions entries")
+    return errors
+
+
+def _validate_replay_step_result_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "step_id",
+            "sequence",
+            "kind",
+            "verdict",
+            "expected_payload",
+            "actual_payload",
+            "detail",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("step_id", "kind", "verdict", "detail"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    if payload["kind"] not in JOURNAL_ENTRY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field '{f'{prefix}kind'.strip('.')}' must be one of {', '.join(sorted(JOURNAL_ENTRY_KINDS))}"
+        )
+    if payload["verdict"] not in REPLAY_STEP_VERDICTS:
+        errors.append(
+            f"{_relative_path(path)}: field '{f'{prefix}verdict'.strip('.')}' must be one of {', '.join(sorted(REPLAY_STEP_VERDICTS))}"
+        )
+    errors.extend(
+        _require_non_negative_int(
+            payload["sequence"],
+            field_name=f"{prefix}sequence".strip("."),
+            path=path,
+        )
+    )
+    for nested_field_name in ("expected_payload", "actual_payload"):
+        if not isinstance(payload[nested_field_name], (dict, list)):
+            errors.append(
+                f"{_relative_path(path)}: field '{f'{prefix}{nested_field_name}'.strip('.')}' must be structured JSON"
+            )
+    if payload["verdict"] == "match" and (
+        payload["expected_payload"] != payload["actual_payload"]
+    ):
+        errors.append(
+            f"{_relative_path(path)}: match replay_step_result must keep expected_payload equal to actual_payload"
+        )
+    return errors
+
+
+def _validate_replay_step_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_replay_step_result_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_replay_session_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "session_id",
+            "epoch_id",
+            "entries_replayed",
+            "entries_matched",
+            "entries_diverged",
+            "entries_skipped",
+            "verdict",
+            "steps",
+            "started_at",
+            "completed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("session_id", "epoch_id", "verdict"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["verdict"] not in REPLAY_SESSION_VERDICTS:
+        errors.append(
+            f"{_relative_path(path)}: field 'verdict' must be one of {', '.join(sorted(REPLAY_SESSION_VERDICTS))}"
+        )
+    for field_name in ("entries_replayed", "entries_matched", "entries_diverged", "entries_skipped"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    steps = payload["steps"]
+    if not isinstance(steps, list):
+        errors.append(f"{_relative_path(path)}: field 'steps' must be an array")
+    else:
+        for index, step in enumerate(steps):
+            errors.extend(
+                _validate_replay_step_result_dict(
+                    step,
+                    path=path,
+                    field_name=f"steps[{index}]",
+                )
+            )
+    for field_name in ("started_at", "completed_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    total_entries = payload["entries_matched"] + payload["entries_diverged"] + payload["entries_skipped"]
+    if total_entries != payload["entries_replayed"]:
+        errors.append(
+            f"{_relative_path(path)}: entries_matched + entries_diverged + entries_skipped must equal entries_replayed"
+        )
+    if isinstance(steps, list) and len(steps) != payload["entries_replayed"]:
+        errors.append(f"{_relative_path(path)}: steps length must equal entries_replayed")
+    if payload["verdict"] == "success" and payload["entries_diverged"] != 0:
+        errors.append(f"{_relative_path(path)}: success replay_session_result must keep entries_diverged at 0")
+    if payload["verdict"] == "empty_journal" and (
+        payload["entries_replayed"] != 0 or (isinstance(steps, list) and steps)
+    ):
+        errors.append(
+            f"{_relative_path(path)}: empty_journal replay_session_result must keep entries_replayed at 0 and steps empty"
+        )
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -3535,6 +3966,8 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "job_pause_record.json": _validate_job_pause_record_fixture,
     "job_resume_record.json": _validate_job_resume_record_fixture,
     "job_state.json": _validate_job_state_fixture,
+    "journal_entry.json": _validate_journal_entry_fixture,
+    "journal_validation_result.json": _validate_journal_validation_result_fixture,
     "livelock_record.json": _validate_livelock_record_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
     "graph_query_result.json": _validate_graph_query_result_fixture,
@@ -3549,8 +3982,11 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "role_descriptor.json": _validate_role_descriptor_fixture,
     "runtime_heartbeat.json": _validate_runtime_heartbeat_fixture,
     "option_utility.json": _validate_option_utility_fixture,
+    "replay_session_result.json": _validate_replay_session_result_fixture,
+    "replay_step_result.json": _validate_replay_step_result_fixture,
     "resource_budget.json": _validate_resource_budget_fixture,
     "regression_record.json": _validate_regression_record_fixture,
+    "restore_verification.json": _validate_restore_verification_fixture,
     "service_function_template.json": _validate_service_function_template_fixture,
     "simulation_option.json": _validate_simulation_option_fixture,
     "simulation_outcome.json": _validate_simulation_outcome_fixture,
@@ -3562,6 +3998,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "supervisor_health.json": _validate_supervisor_health_fixture,
     "supervisor_policy.json": _validate_supervisor_policy_fixture,
     "supervisor_tick.json": _validate_supervisor_tick_fixture,
+    "subsystem_snapshot.json": _validate_subsystem_snapshot_fixture,
     "state_delta.json": _validate_state_delta_fixture,
     "stage_execution_result.json": _validate_stage_execution_result_fixture,
     "team_queue_state.json": _validate_team_queue_state_fixture,
@@ -3571,6 +4008,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "work_queue_entry.json": _validate_work_queue_entry_fixture,
     "worker_profile.json": _validate_worker_profile_fixture,
     "worker_capacity.json": _validate_worker_capacity_fixture,
+    "composite_checkpoint.json": _validate_composite_checkpoint_fixture,
     "workflow_binding.json": _validate_workflow_binding_fixture,
     "workflow_descriptor.json": _validate_workflow_descriptor_fixture,
     "workflow_execution_record.json": _validate_workflow_execution_record_fixture,

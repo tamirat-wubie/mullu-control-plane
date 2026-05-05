@@ -55,6 +55,13 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "sub_goal.json" in maf_runtime_fixture_names
     assert "goal_execution_state.json" in maf_runtime_fixture_names
     assert "goal_replan_record.json" in maf_runtime_fixture_names
+    assert "journal_entry.json" in maf_runtime_fixture_names
+    assert "subsystem_snapshot.json" in maf_runtime_fixture_names
+    assert "composite_checkpoint.json" in maf_runtime_fixture_names
+    assert "restore_verification.json" in maf_runtime_fixture_names
+    assert "journal_validation_result.json" in maf_runtime_fixture_names
+    assert "replay_step_result.json" in maf_runtime_fixture_names
+    assert "replay_session_result.json" in maf_runtime_fixture_names
     assert "workflow_stage.json" in maf_runtime_fixture_names
     assert "workflow_binding.json" in maf_runtime_fixture_names
     assert "workflow_descriptor.json" in maf_runtime_fixture_names
@@ -117,7 +124,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 82
+    assert len(inventory.maf_runtime_fixture_paths) >= 89
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -681,6 +688,142 @@ def test_validate_maf_runtime_fixture_rejects_goal_execution_state_overlap(tmp_p
 
     assert len(errors) == 1
     assert "appear in both completed and failed" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_composite_checkpoint_duplicate_scope(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "composite_checkpoint.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "checkpoint_id": "checkpoint-drift",
+                "epoch_id": "epoch-drift",
+                "tick_number": 7,
+                "snapshots": [
+                    {
+                        "snapshot_id": "snapshot-supervisor-a",
+                        "scope": "supervisor",
+                        "state_hash": "sha256:a",
+                        "record_count": 3,
+                        "captured_at": "2026-04-01T12:00:30+00:00",
+                        "payload": {"policy_id": "policy-a"},
+                    },
+                    {
+                        "snapshot_id": "snapshot-supervisor-b",
+                        "scope": "supervisor",
+                        "state_hash": "sha256:b",
+                        "record_count": 4,
+                        "captured_at": "2026-04-01T12:00:31+00:00",
+                        "payload": {"policy_id": "policy-b"},
+                    },
+                ],
+                "journal_sequence": 6,
+                "composite_hash": "sha256:checkpoint-drift",
+                "created_at": "2026-04-01T12:01:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "snapshots must not repeat scope values" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_restore_verification_hash_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "restore_verification.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "verification_id": "restore-drift",
+                "checkpoint_id": "checkpoint-drift",
+                "epoch_id": "epoch-drift",
+                "tick_number": 7,
+                "verdict": "verified",
+                "expected_composite_hash": "sha256:expected",
+                "actual_composite_hash": "sha256:actual",
+                "subsystem_results": {
+                    "supervisor": {
+                        "state_hash": "sha256:supervisor",
+                        "status": "verified",
+                    }
+                },
+                "verified_at": "2026-04-01T12:02:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "verified restore_verification must keep expected_composite_hash equal to actual_composite_hash" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_journal_validation_gap_verdict_without_positions(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "journal_validation_result.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "validation_id": "journal-gap-drift",
+                "epoch_id": "epoch-drift",
+                "entry_count": 5,
+                "first_sequence": 1,
+                "last_sequence": 6,
+                "verdict": "sequence_gap",
+                "gap_positions": [],
+                "detail": "missing journal entry",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "sequence_gap verdict requires at least one gap_positions entry" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_replay_session_tally_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "replay_session_result.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "session_id": "replay-session-drift",
+                "epoch_id": "epoch-drift",
+                "entries_replayed": 2,
+                "entries_matched": 1,
+                "entries_diverged": 0,
+                "entries_skipped": 0,
+                "verdict": "success",
+                "steps": [
+                    {
+                        "step_id": "replay-step-1",
+                        "sequence": 1,
+                        "kind": "checkpoint",
+                        "verdict": "match",
+                        "expected_payload": {"checkpoint_id": "checkpoint-1"},
+                        "actual_payload": {"checkpoint_id": "checkpoint-1"},
+                        "detail": "payload matched",
+                    }
+                ],
+                "started_at": "2026-04-01T12:03:00+00:00",
+                "completed_at": "2026-04-01T12:04:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 2
+    assert "entries_matched + entries_diverged + entries_skipped must equal entries_replayed" in errors[0]
     assert fixture_path.name in errors[0]
 
 

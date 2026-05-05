@@ -108,6 +108,26 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
         in summary.maf_runtime_fixtures
     )
     assert (
+        "integration/contracts_compat/fixtures/maf_runtime/journal_entry.json"
+        in summary.maf_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/maf_runtime/composite_checkpoint.json"
+        in summary.maf_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/maf_runtime/restore_verification.json"
+        in summary.maf_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/maf_runtime/journal_validation_result.json"
+        in summary.maf_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/maf_runtime/replay_session_result.json"
+        in summary.maf_runtime_fixtures
+    )
+    assert (
         "integration/contracts_compat/fixtures/maf_runtime/utility_verdict.json"
         in summary.maf_runtime_fixtures
     )
@@ -124,7 +144,7 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.release_documents) >= 8
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
-    assert len(summary.maf_runtime_fixtures) >= 82
+    assert len(summary.maf_runtime_fixtures) >= 89
     assert summary.ci_workflow_present is True
     assert summary.release_version == "0.3.0 (v3.10.2)"
     assert summary.release_date == "2026-03-27"

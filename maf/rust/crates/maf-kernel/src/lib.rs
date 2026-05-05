@@ -1508,6 +1508,69 @@ mod tests {
         assert_fixture_round_trip::<LearningAdmissionDecision>(fixture_json);
     }
 
+    #[test]
+    fn canonical_journal_entry_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/journal_entry.json"
+        ));
+        assert_fixture_round_trip::<JournalEntry>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_subsystem_snapshot_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/subsystem_snapshot.json"
+        ));
+        assert_fixture_round_trip::<SubsystemSnapshot>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_composite_checkpoint_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/composite_checkpoint.json"
+        ));
+        assert_fixture_round_trip::<CompositeCheckpoint>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_restore_verification_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/restore_verification.json"
+        ));
+        assert_fixture_round_trip::<RestoreVerification>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_journal_validation_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/journal_validation_result.json"
+        ));
+        assert_fixture_round_trip::<JournalValidationResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_replay_step_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/replay_step_result.json"
+        ));
+        assert_fixture_round_trip::<ReplayStepResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_replay_session_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/replay_session_result.json"
+        ));
+        assert_fixture_round_trip::<ReplaySessionResult>(fixture_json);
+    }
+
     // -------------------------------------------------------------------
     // State machine tests
     // -------------------------------------------------------------------
