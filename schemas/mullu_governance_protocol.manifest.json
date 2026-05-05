@@ -23,21 +23,39 @@
       "surface": "promotion"
     },
     {
+      "schema_id": "agent-identity",
+      "path": "schemas/agent_identity.schema.json",
+      "urn": "urn:mullusi:schema:agent-identity:1",
+      "surface": "identity"
+    },
+    {
+      "schema_id": "autonomous-test-generation-plan",
+      "path": "schemas/autonomous_test_generation_plan.schema.json",
+      "urn": "urn:mullusi:schema:autonomous-test-generation-plan:1",
+      "surface": "testing"
+    },
+    {
+      "schema_id": "capability-upgrade-plan",
+      "path": "schemas/capability_upgrade_plan.schema.json",
+      "urn": "urn:mullusi:schema:capability-upgrade-plan:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-candidate",
       "path": "schemas/capability_candidate.schema.json",
       "urn": "urn:mullusi:schema:capability-candidate:1",
       "surface": "capability"
     },
     {
-      "schema_id": "capability-descriptor",
-      "path": "schemas/capability_descriptor.schema.json",
-      "urn": "urn:mullusi:schema:capability-descriptor:1",
-      "surface": "capability"
-    },
-    {
       "schema_id": "capability-maturity",
       "path": "schemas/capability_maturity.schema.json",
       "urn": "urn:mullusi:schema:capability-maturity:1",
+      "surface": "capability"
+    },
+    {
+      "schema_id": "capability-descriptor",
+      "path": "schemas/capability_descriptor.schema.json",
+      "urn": "urn:mullusi:schema:capability-descriptor:1",
       "surface": "capability"
     },
     {
@@ -98,6 +116,12 @@
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",
+      "surface": "domain"
+    },
+    {
+      "schema_id": "domain-operating-pack",
+      "path": "schemas/domain_operating_pack.schema.json",
+      "urn": "urn:mullusi:schema:domain-operating-pack:1",
       "surface": "domain"
     },
     {
@@ -165,6 +189,12 @@
       "path": "schemas/learning_admission.schema.json",
       "urn": "urn:mullusi:schema:learning-admission:1",
       "surface": "learning"
+    },
+    {
+      "schema_id": "memory-lattice",
+      "path": "schemas/memory_lattice.schema.json",
+      "urn": "urn:mullusi:schema:memory-lattice:1",
+      "surface": "memory"
     },
     {
       "schema_id": "lineage-query",
@@ -263,6 +293,18 @@
       "surface": "closure"
     },
     {
+      "schema_id": "trust-ledger-bundle",
+      "path": "schemas/trust_ledger_bundle.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-bundle:1",
+      "surface": "evidence"
+    },
+    {
+      "schema_id": "trust-ledger-anchor-receipt",
+      "path": "schemas/trust_ledger_anchor_receipt.schema.json",
+      "urn": "urn:mullusi:schema:trust-ledger-anchor-receipt:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "trace-entry",
       "path": "schemas/trace_entry.schema.json",
       "urn": "urn:mullusi:schema:trace-entry:1",
@@ -285,6 +327,12 @@
       "path": "schemas/workflow.schema.json",
       "urn": "urn:mullusi:schema:workflow:1",
       "surface": "coordination"
+    },
+    {
+      "schema_id": "workflow-mining-report",
+      "path": "schemas/workflow_mining_report.schema.json",
+      "urn": "urn:mullusi:schema:workflow-mining-report:1",
+      "surface": "workflow"
     },
     {
       "schema_id": "worker-mesh",

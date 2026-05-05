@@ -20,11 +20,15 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 
 | File | Purpose |
 | --- | --- |
+| `agent_identity.schema.json` | Canonical user-owned agent identity, scope, budget, delegation, and reputation record |
+| `autonomous_test_generation_plan.schema.json` | Canonical activation-blocked test generation plan from failure traces |
 | `capability_adapter_closure_plan.schema.json` | Canonical adapter source closure action plan |
 | `capability_candidate.schema.json` | Canonical forge-generated candidate capability package |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_maturity.schema.json` | Canonical evidence-derived capability maturity assessment |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
+| `capability_upgrade_plan.schema.json` | Canonical governed capability upgrade proposal plan |
+| `collaboration_case.schema.json` | Canonical non-terminal collaboration case with approval separation and control evidence |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
@@ -42,8 +46,12 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
+| `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
+| `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
+| `memory_lattice.schema.json` | Canonical memory planning and execution admission claim |
+| `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation admission receipt |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation receipt |

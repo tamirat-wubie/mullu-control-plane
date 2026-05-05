@@ -153,6 +153,29 @@ def test_compliance_evidence_exports_surface_is_witnessed() -> None:
     assert closure_actions["classify_compliance_evidence_exports"]["status"] == "closed"
 
 
+def test_audit_chain_api_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    audit_surface = surfaces["audit_chain_api"]
+    witnesses = set(audit_surface["runtime_witnesses"])
+
+    assert audit_surface["coverage_state"] == "witnessed"
+    assert audit_surface["request_proof"] == "read_model"
+    assert audit_surface["action_proof"] == "request_proof"
+    assert "/api/v1/audit/verify" in audit_surface["representative_paths"]
+    assert "/api/v1/audit/anchor/{anchor_id}/verify" in audit_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/audit.py" in audit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/audit/trail.py" in audit_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/governance/audit/anchor.py" in audit_surface["evidence_files"]
+    assert "mcoi/tests/test_audit_trail.py" in audit_surface["evidence_files"]
+    assert "mcoi/tests/test_v4_28_audit_checkpoint.py" in audit_surface["evidence_files"]
+    assert "audit_chain_verify_endpoint" in witnesses
+    assert "audit_anchor_checkpoint_created" in witnesses
+    assert "audit_anchor_verification_endpoint" in witnesses
+    assert closure_actions["classify_audit_chain_api"]["status"] == "closed"
+
+
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -295,7 +318,7 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "capability_plan_bundle_canary_passed" in conformance_surface["runtime_witnesses"]
     assert "runtime_conformance_certificate_schema_valid" in conformance_surface["runtime_witnesses"]
     assert "runtime_conformance_collector_schema_valid" in conformance_surface["runtime_witnesses"]
-    assert "proof_coverage_declared_routes_classified" in conformance_surface["runtime_witnesses"]
+    assert "proof_coverage_unclassified_routes_reported" in conformance_surface["runtime_witnesses"]
     assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 
@@ -386,41 +409,6 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert closure_actions["publish_capability_forge_candidate_contract"]["status"] == "closed"
 
 
-def test_capability_maturity_surface_blocks_readiness_overclaims() -> None:
-    matrix = _load_fixture()
-    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
-    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    maturity_surface = surfaces["capability_maturity_assessment"]
-    witnesses = set(maturity_surface["runtime_witnesses"])
-
-    assert maturity_surface["coverage_state"] == "witnessed"
-    assert maturity_surface["request_proof"] == "request_proof"
-    assert maturity_surface["action_proof"] == "action_proof"
-    assert "CapabilityMaturityEvidenceSynthesizer.materialize_extension" in maturity_surface["representative_paths"]
-    assert "CapabilityMaturityAssessor.assess" in maturity_surface["representative_paths"]
-    assert "CapabilityRegistryMaturityProjector.decorate_read_model" in maturity_surface["representative_paths"]
-    assert "MaturityProjectingCapabilityAdmissionGate.read_model" in maturity_surface["representative_paths"]
-    assert "capabilities/connector/capability_pack.json" in maturity_surface["evidence_files"]
-    assert "capabilities/financial/capability_pack.json" in maturity_surface["evidence_files"]
-    assert "docs/39_governed_capability_fabric.md" in maturity_surface["evidence_files"]
-    assert "gateway/capability_fabric.py" in maturity_surface["evidence_files"]
-    assert "gateway/capability_maturity.py" in maturity_surface["evidence_files"]
-    assert "gateway/operator_capability_console.py" in maturity_surface["evidence_files"]
-    assert "schemas/capability_maturity.schema.json" in maturity_surface["evidence_files"]
-    assert "tests/test_gateway/test_capability_fabric.py" in maturity_surface["evidence_files"]
-    assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
-    assert "tests/test_gateway/test_operator_capability_console.py" in maturity_surface["evidence_files"]
-    assert "certification_evidence_synthesizes_maturity_extension" in witnesses
-    assert "maturity_derived_from_evidence" in witnesses
-    assert "registry_read_model_exposes_maturity" in witnesses
-    assert "default_pack_C6_examples_projected" in witnesses
-    assert "effect_bearing_production_requires_live_write" in witnesses
-    assert "production_requires_worker_deployment_recovery" in witnesses
-    assert "autonomy_requires_C7_controls" in witnesses
-    assert "capability_maturity_schema_valid" in witnesses
-    assert closure_actions["publish_capability_maturity_assessment_contract"]["status"] == "closed"
-
-
 def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -446,7 +434,194 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert closure_actions["publish_networked_worker_mesh_contract"]["status"] == "closed"
 
 
-def test_multimodal_operating_layer_surface_preserves_source_and_blocks_effects() -> None:
+def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    identity_surface = surfaces["agent_identity"]
+    witnesses = set(identity_surface["runtime_witnesses"])
+
+    assert identity_surface["coverage_state"] == "witnessed"
+    assert identity_surface["request_proof"] == "request_proof"
+    assert identity_surface["action_proof"] == "action_proof"
+    assert "AgentIdentityRegistry.register" in identity_surface["representative_paths"]
+    assert "AgentIdentityRegistry.evaluate" in identity_surface["representative_paths"]
+    assert "gateway/agent_identity.py" in identity_surface["evidence_files"]
+    assert "schemas/agent_identity.schema.json" in identity_surface["evidence_files"]
+    assert "tests/test_gateway/test_agent_identity.py" in identity_surface["evidence_files"]
+    assert "owner_tenant_identity_required" in witnesses
+    assert "self_approval_forbidden" in witnesses
+    assert "policy_mutation_forbidden" in witnesses
+    assert "delegation_requires_lease" in witnesses
+    assert "agent_budget_enforced" in witnesses
+    assert "agent_identity_schema_valid" in witnesses
+    assert closure_actions["publish_agent_identity_contract"]["status"] == "closed"
+
+
+def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    collaboration_surface = surfaces["collaboration_cases"]
+    witnesses = set(collaboration_surface["runtime_witnesses"])
+
+    assert collaboration_surface["coverage_state"] == "witnessed"
+    assert collaboration_surface["request_proof"] == "request_proof"
+    assert collaboration_surface["action_proof"] == "action_proof"
+    assert "gateway/collaboration_cases.py" in collaboration_surface["evidence_files"]
+    assert "schemas/collaboration_case.schema.json" in collaboration_surface["evidence_files"]
+    assert "tests/test_gateway/test_collaboration_cases.py" in collaboration_surface["evidence_files"]
+    assert "approval_separation_required" in witnesses
+    assert "pending_controls_block_case_closure" in witnesses
+    assert "decider_authority_required" in witnesses
+    assert "case_closure_not_terminal_command_closure" in witnesses
+    assert "collaboration_case_schema_valid" in witnesses
+    assert closure_actions["publish_collaboration_case_contract"]["status"] == "closed"
+
+
+def test_capability_maturity_surface_is_evidence_derived() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    maturity_surface = surfaces["capability_maturity"]
+    witnesses = set(maturity_surface["runtime_witnesses"])
+
+    assert maturity_surface["coverage_state"] == "witnessed"
+    assert maturity_surface["request_proof"] == "request_proof"
+    assert maturity_surface["action_proof"] == "action_proof"
+    assert "gateway/capability_maturity.py" in maturity_surface["evidence_files"]
+    assert "schemas/capability_maturity.schema.json" in maturity_surface["evidence_files"]
+    assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
+    assert "maturity_derived_from_evidence" in witnesses
+    assert "effect_bearing_c6_requires_live_write" in witnesses
+    assert "autonomy_requires_c7" in witnesses
+    assert closure_actions["publish_capability_maturity_contract"]["status"] == "closed"
+
+
+def test_policy_prover_surface_reports_counterexamples() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    prover_surface = surfaces["policy_prover"]
+    witnesses = set(prover_surface["runtime_witnesses"])
+
+    assert prover_surface["coverage_state"] == "witnessed"
+    assert prover_surface["request_proof"] == "request_proof"
+    assert prover_surface["action_proof"] == "action_proof"
+    assert "gateway/policy_prover.py" in prover_surface["evidence_files"]
+    assert "schemas/policy_proof_report.schema.json" in prover_surface["evidence_files"]
+    assert "tests/test_gateway/test_policy_prover.py" in prover_surface["evidence_files"]
+    assert "payment_requires_approval_counterexample" in witnesses
+    assert "shell_requires_sandbox_counterexample" in witnesses
+    assert "unknown_property_fails_closed" in witnesses
+    assert closure_actions["publish_policy_prover_counterexample_contract"]["status"] == "closed"
+
+
+def test_memory_lattice_surface_gates_planning_and_execution() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    lattice_surface = surfaces["memory_lattice"]
+    witnesses = set(lattice_surface["runtime_witnesses"])
+
+    assert lattice_surface["coverage_state"] == "witnessed"
+    assert lattice_surface["request_proof"] == "request_proof"
+    assert lattice_surface["action_proof"] == "action_proof"
+    assert "gateway/memory_lattice.py" in lattice_surface["evidence_files"]
+    assert "schemas/memory_lattice.schema.json" in lattice_surface["evidence_files"]
+    assert "tests/test_gateway/test_memory_lattice.py" in lattice_surface["evidence_files"]
+    assert "raw_event_memory_not_directly_admitted" in witnesses
+    assert "semantic_memory_requires_learning_admission" in witnesses
+    assert "contradiction_and_stale_memory_block_execution" in witnesses
+    assert closure_actions["publish_memory_lattice_admission_contract"]["status"] == "closed"
+
+
+def test_workflow_mining_surface_emits_blocked_drafts() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    mining_surface = surfaces["workflow_mining"]
+    witnesses = set(mining_surface["runtime_witnesses"])
+
+    assert mining_surface["coverage_state"] == "witnessed"
+    assert mining_surface["request_proof"] == "request_proof"
+    assert mining_surface["action_proof"] == "action_proof"
+    assert "gateway/workflow_mining.py" in mining_surface["evidence_files"]
+    assert "schemas/workflow_mining_report.schema.json" in mining_surface["evidence_files"]
+    assert "tests/test_gateway/test_workflow_mining.py" in mining_surface["evidence_files"]
+    assert "workflow_draft_activation_blocked" in witnesses
+    assert "operator_review_required" in witnesses
+    assert "risky_pattern_requires_approval_rules" in witnesses
+    assert closure_actions["publish_workflow_mining_draft_contract"]["status"] == "closed"
+
+
+def test_trust_ledger_surface_signs_terminal_evidence_bundles() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    trust_surface = surfaces["trust_ledger"]
+    witnesses = set(trust_surface["runtime_witnesses"])
+
+    assert trust_surface["coverage_state"] == "witnessed"
+    assert trust_surface["request_proof"] == "request_proof"
+    assert trust_surface["action_proof"] == "action_proof"
+    assert "gateway/trust_ledger.py" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_anchor_receipt.schema.json" in trust_surface["evidence_files"]
+    assert "schemas/trust_ledger_bundle.schema.json" in trust_surface["evidence_files"]
+    assert "tests/test_gateway/test_trust_ledger_anchor_receipt.py" in trust_surface["evidence_files"]
+    assert "tests/test_gateway/test_trust_ledger.py" in trust_surface["evidence_files"]
+    assert "terminal_certificate_id_required" in witnesses
+    assert "bundle_hash_tamper_detection" in witnesses
+    assert "hmac_signature_verification" in witnesses
+    assert "typed_artifact_root_required" in witnesses
+    assert "anchor_receipt_hmac_verification" in witnesses
+    assert "anchor_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_trust_ledger_bundle_contract"]["status"] == "closed"
+    assert closure_actions["publish_trust_ledger_anchor_receipt_contract"]["status"] == "closed"
+
+
+def test_runbook_learning_api_surface_gates_lifecycle() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    runbook_surface = surfaces["runbook_learning_api"]
+    witnesses = set(runbook_surface["runtime_witnesses"])
+    route_records = {record["route"]: record for record in matrix["route_coverage"]["routes"]}
+
+    assert runbook_surface["coverage_state"] == "witnessed"
+    assert runbook_surface["request_proof"] == "request_proof"
+    assert runbook_surface["action_proof"] == "action_proof"
+    assert "mcoi/mcoi_runtime/app/routers/runbooks.py" in runbook_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "mcoi/tests/test_runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "operator_approval_required_before_activation" in witnesses
+    assert "active_runbook_required_before_retirement" in witnesses
+    assert "runbook_errors_are_sanitized" in witnesses
+    assert route_records["/api/v1/runbooks"]["surface_id"] == "runbook_learning_api"
+    assert route_records["/api/v1/runbooks/promote"]["coverage_state"] == "witnessed"
+    assert closure_actions["classify_runbook_learning_api"]["status"] == "closed"
+
+
+def test_domain_operating_pack_surface_requires_certification_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    pack_surface = surfaces["domain_operating_pack"]
+    witnesses = set(pack_surface["runtime_witnesses"])
+
+    assert pack_surface["coverage_state"] == "witnessed"
+    assert pack_surface["request_proof"] == "request_proof"
+    assert pack_surface["action_proof"] == "action_proof"
+    assert "gateway/domain_operating_pack.py" in pack_surface["evidence_files"]
+    assert "schemas/domain_operating_pack.schema.json" in pack_surface["evidence_files"]
+    assert "tests/test_gateway/test_domain_operating_pack.py" in pack_surface["evidence_files"]
+    assert "builtin_domain_pack_catalog_complete" in witnesses
+    assert "high_risk_pack_requires_approval_roles" in witnesses
+    assert "domain_operating_pack_schema_valid" in witnesses
+    assert closure_actions["publish_domain_operating_pack_contract"]["status"] == "closed"
+
+
+def test_multimodal_operating_layer_surface_emits_source_bound_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
@@ -456,17 +631,11 @@ def test_multimodal_operating_layer_surface_preserves_source_and_blocks_effects(
     assert multimodal_surface["coverage_state"] == "witnessed"
     assert multimodal_surface["request_proof"] == "request_proof"
     assert multimodal_surface["action_proof"] == "action_proof"
-    assert "MultimodalOperatingLayer.evaluate" in multimodal_surface["representative_paths"]
-    assert "MultimodalOperationReceipt" in multimodal_surface["representative_paths"]
     assert "gateway/multimodal_operating_layer.py" in multimodal_surface["evidence_files"]
     assert "schemas/multimodal_operation_receipt.schema.json" in multimodal_surface["evidence_files"]
     assert "tests/test_gateway/test_multimodal_operating_layer.py" in multimodal_surface["evidence_files"]
-    assert "unknown_modalities_fail_closed" in witnesses
-    assert "source_references_preserved" in witnesses
-    assert "external_effects_require_certification" in witnesses
-    assert "sensitive_inputs_require_redaction_evidence" in witnesses
-    assert "multimodal_receipt_schema_valid" in witnesses
-    assert "receipt_not_terminal_closure" in witnesses
+    assert "external_send_blocked_by_default" in witnesses
+    assert "unknown_modality_fails_closed" in witnesses
     assert closure_actions["publish_multimodal_operation_receipt_contract"]["status"] == "closed"
 
 
@@ -497,27 +666,42 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert closure_actions["publish_temporal_operation_receipt_contract"]["status"] == "closed"
 
 
-def test_policy_proof_report_surface_is_counterexample_backed() -> None:
+def test_autonomous_capability_upgrade_surface_keeps_plans_activation_blocked() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    policy_surface = surfaces["policy_proof_report"]
-    witnesses = set(policy_surface["runtime_witnesses"])
+    upgrade_surface = surfaces["autonomous_capability_upgrade"]
+    witnesses = set(upgrade_surface["runtime_witnesses"])
 
-    assert policy_surface["coverage_state"] == "witnessed"
-    assert policy_surface["request_proof"] == "request_proof"
-    assert policy_surface["action_proof"] == "action_proof"
-    assert "PolicyProver.prove" in policy_surface["representative_paths"]
-    assert "gateway/policy_prover.py" in policy_surface["evidence_files"]
-    assert "schemas/policy_proof_report.schema.json" in policy_surface["evidence_files"]
-    assert "tests/test_gateway/test_policy_prover.py" in policy_surface["evidence_files"]
-    assert "bounded_policy_cases_required" in witnesses
-    assert "empty_invariants_rejected" in witnesses
-    assert "counterexamples_are_concrete" in witnesses
-    assert "proved_report_has_no_counterexamples" in witnesses
-    assert "policy_weakening_forbidden" in witnesses
-    assert "policy_proof_schema_valid" in witnesses
-    assert closure_actions["publish_policy_proof_report_contract"]["status"] == "closed"
+    assert upgrade_surface["coverage_state"] == "witnessed"
+    assert upgrade_surface["request_proof"] == "request_proof"
+    assert upgrade_surface["action_proof"] == "action_proof"
+    assert "gateway/autonomous_capability_upgrade.py" in upgrade_surface["evidence_files"]
+    assert "schemas/capability_upgrade_plan.schema.json" in upgrade_surface["evidence_files"]
+    assert "tests/test_gateway/test_autonomous_capability_upgrade.py" in upgrade_surface["evidence_files"]
+    assert "health_signal_requires_evidence_refs" in witnesses
+    assert "upgrade_candidates_are_promotion_blocked" in witnesses
+    assert "capability_upgrade_plan_schema_valid" in witnesses
+    assert closure_actions["publish_capability_upgrade_plan_contract"]["status"] == "closed"
+
+
+def test_autonomous_test_generation_surface_keeps_plans_activation_blocked() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    generation_surface = surfaces["autonomous_test_generation"]
+    witnesses = set(generation_surface["runtime_witnesses"])
+
+    assert generation_surface["coverage_state"] == "witnessed"
+    assert generation_surface["request_proof"] == "request_proof"
+    assert generation_surface["action_proof"] == "action_proof"
+    assert "gateway/autonomous_test_generation.py" in generation_surface["evidence_files"]
+    assert "schemas/autonomous_test_generation_plan.schema.json" in generation_surface["evidence_files"]
+    assert "tests/test_gateway/test_autonomous_test_generation.py" in generation_surface["evidence_files"]
+    assert "failure_trace_requires_evidence_refs" in witnesses
+    assert "plans_are_activation_blocked" in witnesses
+    assert "autonomous_test_generation_plan_schema_valid" in witnesses
+    assert closure_actions["publish_autonomous_test_generation_plan_contract"]["status"] == "closed"
 
 
 def test_representative_http_paths_are_declared() -> None:

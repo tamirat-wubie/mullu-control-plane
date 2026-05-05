@@ -82,6 +82,20 @@
       ]
     },
     {
+      "action_id": "classify_audit_chain_api",
+      "status": "closed",
+      "surfaces": [
+        "audit_chain_api"
+      ]
+    },
+    {
+      "action_id": "classify_runbook_learning_api",
+      "status": "closed",
+      "surfaces": [
+        "runbook_learning_api"
+      ]
+    },
+    {
       "action_id": "publish_runtime_conformance_attestation",
       "status": "closed",
       "surfaces": [
@@ -126,17 +140,59 @@
       ]
     },
     {
-      "action_id": "publish_capability_maturity_assessment_contract",
-      "status": "closed",
-      "surfaces": [
-        "capability_maturity_assessment"
-      ]
-    },
-    {
       "action_id": "publish_networked_worker_mesh_contract",
       "status": "closed",
       "surfaces": [
         "networked_worker_mesh"
+      ]
+    },
+    {
+      "action_id": "publish_agent_identity_contract",
+      "status": "closed",
+      "surfaces": [
+        "agent_identity"
+      ]
+    },
+    {
+      "action_id": "publish_collaboration_case_contract",
+      "status": "closed",
+      "surfaces": [
+        "collaboration_cases"
+      ]
+    },
+    {
+      "action_id": "publish_capability_maturity_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_maturity"
+      ]
+    },
+    {
+      "action_id": "publish_policy_prover_counterexample_contract",
+      "status": "closed",
+      "surfaces": [
+        "policy_prover"
+      ]
+    },
+    {
+      "action_id": "publish_memory_lattice_admission_contract",
+      "status": "closed",
+      "surfaces": [
+        "memory_lattice"
+      ]
+    },
+    {
+      "action_id": "publish_workflow_mining_draft_contract",
+      "status": "closed",
+      "surfaces": [
+        "workflow_mining"
+      ]
+    },
+    {
+      "action_id": "publish_domain_operating_pack_contract",
+      "status": "closed",
+      "surfaces": [
+        "domain_operating_pack"
       ]
     },
     {
@@ -154,10 +210,31 @@
       ]
     },
     {
-      "action_id": "publish_policy_proof_report_contract",
+      "action_id": "publish_capability_upgrade_plan_contract",
       "status": "closed",
       "surfaces": [
-        "policy_proof_report"
+        "autonomous_capability_upgrade"
+      ]
+    },
+    {
+      "action_id": "publish_autonomous_test_generation_plan_contract",
+      "status": "closed",
+      "surfaces": [
+        "autonomous_test_generation"
+      ]
+    },
+    {
+      "action_id": "publish_trust_ledger_bundle_contract",
+      "status": "closed",
+      "surfaces": [
+        "trust_ledger"
+      ]
+    },
+    {
+      "action_id": "publish_trust_ledger_anchor_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "trust_ledger"
       ]
     }
   ],
@@ -175,15 +252,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 23,
+      "action_proof": 32,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
-      "request_proof": 1
+      "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 27,
+      "audit_chain": 37,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -191,23 +268,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 30
+      "witnessed": 40
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 8,
-      "request_proof": 23
+      "read_model": 9,
+      "request_proof": 32
     },
-    "surface_count": 31
+    "surface_count": 41
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 4,
-      "unproven": 225,
-      "witnessed": 72
+      "unproven": 211,
+      "witnessed": 86
     },
     "route_count": 301,
     "routes": [
@@ -287,34 +364,34 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/audit",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/audit/anchor",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/audit/anchor/{anchor_id}/verify",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/audit/anchors",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/audit/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/audit/verify",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "audit_chain_api"
       },
       {
         "coverage_state": "unproven",
@@ -1142,44 +1219,44 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/analyze",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/approve",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/patterns",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/promote",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/{runbook_id}/activate",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/{runbook_id}/retire",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_api"
       },
       {
         "coverage_state": "witnessed",
@@ -1717,7 +1794,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 225
+    "unclassified_route_count": 211
   },
   "schema_version": 1,
   "surfaces": [
@@ -1864,6 +1941,40 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "docs/19_skill_system.md",
+        "mcoi/mcoi_runtime/app/routers/runbooks.py",
+        "mcoi/mcoi_runtime/core/runbook_learning.py",
+        "mcoi/mcoi_runtime/core/runbook.py",
+        "mcoi/tests/test_runbook_learning.py",
+        "mcoi/tests/test_runbook.py"
+      ],
+      "notes": "Runbook learning routes analyze audited patterns, promote candidates, require operator approval before activation, reject invalid lifecycle transitions, sanitize public errors, and expose bounded read models.",
+      "representative_paths": [
+        "/api/v1/runbooks",
+        "/api/v1/runbooks/analyze",
+        "/api/v1/runbooks/promote",
+        "/api/v1/runbooks/approve",
+        "/api/v1/runbooks/{runbook_id}/activate",
+        "/api/v1/runbooks/{runbook_id}/retire",
+        "/api/v1/runbooks/patterns",
+        "/api/v1/runbooks/summary"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runbook_pattern_analysis_endpoint",
+        "runbook_promotion_creates_candidate",
+        "operator_approval_required_before_activation",
+        "active_runbook_required_before_retirement",
+        "runbook_errors_are_sanitized",
+        "runbook_summary_read_model"
+      ],
+      "surface_id": "runbook_learning_api"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/pilot.py",
         "mcoi/mcoi_runtime/app/pilot_init.py",
         "mcoi/tests/test_pilot_init.py",
@@ -1974,6 +2085,39 @@
         "self_audited_export_event"
       ],
       "surface_id": "compliance_evidence_exports"
+    },
+    {
+      "action_proof": "request_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/audit.py",
+        "mcoi/mcoi_runtime/governance/audit/trail.py",
+        "mcoi/mcoi_runtime/governance/audit/anchor.py",
+        "mcoi/tests/test_audit_trail.py",
+        "mcoi/tests/test_v4_28_audit_checkpoint.py",
+        "mcoi/tests/test_server_phase202.py",
+        "mcoi/tests/test_production_truth.py"
+      ],
+      "notes": "Audit routes expose bounded audit entries, chain verification, summaries, checkpoint anchoring, anchor verification, and anchor history with hash-chain witnesses.",
+      "representative_paths": [
+        "/api/v1/audit",
+        "/api/v1/audit/verify",
+        "/api/v1/audit/summary",
+        "/api/v1/audit/anchor",
+        "/api/v1/audit/anchor/{anchor_id}/verify",
+        "/api/v1/audit/anchors"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "audit_chain_verify_endpoint",
+        "audit_summary_read_model",
+        "audit_anchor_checkpoint_created",
+        "audit_anchor_verification_endpoint",
+        "audit_anchor_history_read_model",
+        "audit_chain_hash_linked"
+      ],
+      "surface_id": "audit_chain_api"
     },
     {
       "action_proof": "action_proof",
@@ -2109,7 +2253,7 @@
         "tests/test_gateway/test_conformance.py",
         "tests/test_collect_runtime_conformance.py"
       ],
-      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix route classification, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation.",
+      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix route classification summary, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation.",
       "representative_paths": [
         "/runtime/conformance"
       ],
@@ -2119,7 +2263,7 @@
         "runtime_witness_valid",
         "runtime_conformance_certificate_schema_valid",
         "runtime_conformance_collector_schema_valid",
-        "proof_coverage_declared_routes_classified",
+        "proof_coverage_unclassified_routes_reported",
         "command_closure_canary_passed",
         "capability_admission_canary_passed",
         "dangerous_capability_isolation_canary_passed",
@@ -2236,43 +2380,6 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "capabilities/connector/capability_pack.json",
-        "capabilities/financial/capability_pack.json",
-        "docs/39_governed_capability_fabric.md",
-        "gateway/capability_fabric.py",
-        "gateway/capability_maturity.py",
-        "gateway/operator_capability_console.py",
-        "schemas/capability_maturity.schema.json",
-        "schemas/README.md",
-        "tests/test_gateway/test_capability_fabric.py",
-        "tests/test_gateway/test_capability_maturity.py",
-        "tests/test_gateway/test_operator_capability_console.py"
-      ],
-      "notes": "Capability maturity assessment derives C0-C7 readiness from explicit evidence, synthesizes maturity extensions from certification evidence bundles, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
-      "representative_paths": [
-        "CapabilityMaturityEvidenceSynthesizer.materialize_extension",
-        "CapabilityMaturityAssessor.assess",
-        "CapabilityRegistryMaturityProjector.decorate_read_model",
-        "MaturityProjectingCapabilityAdmissionGate.read_model"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "certification_evidence_synthesizes_maturity_extension",
-        "maturity_derived_from_evidence",
-        "registry_read_model_exposes_maturity",
-        "default_pack_C6_examples_projected",
-        "effect_bearing_production_requires_live_write",
-        "production_requires_worker_deployment_recovery",
-        "autonomy_requires_C7_controls",
-        "capability_maturity_schema_valid"
-      ],
-      "surface_id": "capability_maturity_assessment"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
         "gateway/worker_mesh.py",
         "schemas/worker_mesh.schema.json",
@@ -2300,23 +2407,241 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/agent_identity.py",
+        "schemas/agent_identity.schema.json",
+        "tests/test_gateway/test_agent_identity.py"
+      ],
+      "notes": "Agent identity binds user-owned agents to owner, tenant, role, capability scopes, budget, memory scope, approval scope, delegation scope, evidence history, and reputation.",
+      "representative_paths": [
+        "AgentIdentityRegistry.register",
+        "AgentIdentityRegistry.evaluate",
+        "AgentIdentityRegistry.record_outcome",
+        "AgentIdentity"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "owner_tenant_identity_required",
+        "capability_scope_conflict_denied",
+        "self_approval_forbidden",
+        "policy_mutation_forbidden",
+        "delegation_requires_lease",
+        "agent_budget_enforced",
+        "reputation_update_requires_evidence",
+        "agent_identity_schema_valid"
+      ],
+      "surface_id": "agent_identity"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/collaboration_cases.py",
+        "schemas/collaboration_case.schema.json",
+        "tests/test_gateway/test_collaboration_cases.py"
+      ],
+      "notes": "Collaboration cases bind requester separation, approval controls, decider authority, evidence hashing, and non-terminal case closure into governed operational casework.",
+      "representative_paths": [
+        "CollaborationCaseManager.open_case",
+        "CollaborationCaseManager.close_case",
+        "CollaborationControl"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "approval_separation_required",
+        "pending_controls_block_case_closure",
+        "decider_authority_required",
+        "case_closure_not_terminal_command_closure",
+        "collaboration_case_schema_valid"
+      ],
+      "surface_id": "collaboration_cases"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/capability_maturity.py",
+        "schemas/capability_maturity.schema.json",
+        "tests/test_gateway/test_capability_maturity.py"
+      ],
+      "notes": "Capability maturity derives production and autonomy readiness from explicit evidence, reports missing C6/C7 proof, and rejects overclaimed autonomy states.",
+      "representative_paths": [
+        "CapabilityMaturityAssessor.assess",
+        "CapabilityMaturityAssessment"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "maturity_derived_from_evidence",
+        "effect_bearing_c6_requires_live_write",
+        "production_requires_c6_or_c7",
+        "autonomy_requires_c7",
+        "capability_maturity_schema_valid"
+      ],
+      "surface_id": "capability_maturity"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/policy_prover.py",
+        "schemas/policy_proof_report.schema.json",
+        "tests/test_gateway/test_policy_prover.py"
+      ],
+      "notes": "Policy prover evaluates modeled execution paths against named safety properties and emits schema-backed counterexamples for reachable bypasses.",
+      "representative_paths": [
+        "PolicyProver.prove",
+        "PolicyProofReport"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "payment_requires_approval_counterexample",
+        "tenant_isolation_counterexample",
+        "shell_requires_sandbox_counterexample",
+        "provider_url_approved_counterexample",
+        "memory_requires_admission_counterexample",
+        "unknown_property_fails_closed",
+        "policy_proof_report_schema_valid"
+      ],
+      "surface_id": "policy_prover"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/memory_lattice.py",
+        "schemas/memory_lattice.schema.json",
+        "tests/test_gateway/test_memory_lattice.py"
+      ],
+      "notes": "Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, and contradiction state.",
+      "representative_paths": [
+        "MemoryLatticeGate.assess",
+        "MemoryLatticeAdmission"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "raw_event_memory_not_directly_admitted",
+        "semantic_memory_requires_learning_admission",
+        "policy_memory_requires_authority_ref",
+        "preference_memory_tenant_owner_scoped",
+        "contradiction_and_stale_memory_block_execution",
+        "memory_lattice_schema_valid"
+      ],
+      "surface_id": "memory_lattice"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/workflow_mining.py",
+        "schemas/workflow_mining_report.schema.json",
+        "tests/test_gateway/test_workflow_mining.py"
+      ],
+      "notes": "Workflow mining detects repeated human traces and emits governed draft templates that remain blocked until sandbox replay and operator review.",
+      "representative_paths": [
+        "WorkflowMiningEngine.mine",
+        "WorkflowMiningReport",
+        "WorkflowDraft"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "repeated_trace_pattern_required",
+        "workflow_draft_activation_blocked",
+        "operator_review_required",
+        "sandbox_replay_required",
+        "risky_pattern_requires_approval_rules",
+        "workflow_mining_report_schema_valid"
+      ],
+      "surface_id": "workflow_mining"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/trust_ledger.py",
+        "schemas/trust_ledger_anchor_receipt.schema.json",
+        "schemas/trust_ledger_bundle.schema.json",
+        "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
+        "tests/test_gateway/test_trust_ledger.py"
+      ],
+      "notes": "Trust ledger signs terminal-closure evidence bundles and external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+      "representative_paths": [
+        "TrustLedger.issue",
+        "TrustLedger.verify",
+        "TrustLedger.anchor_bundle",
+        "TrustLedger.verify_anchor_receipt",
+        "TrustLedgerBundle",
+        "ExternalProofAnchorReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "terminal_certificate_id_required",
+        "evidence_refs_required",
+        "bundle_hash_tamper_detection",
+        "hmac_signature_verification",
+        "anchored_bundle_requires_external_anchor_ref",
+        "typed_artifact_root_required",
+        "anchor_receipt_hmac_verification",
+        "anchor_receipt_schema_valid",
+        "anchor_receipt_non_terminal_marker_required",
+        "trust_ledger_bundle_schema_valid"
+      ],
+      "surface_id": "trust_ledger"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/domain_operating_pack.py",
+        "schemas/domain_operating_pack.schema.json",
+        "tests/test_gateway/test_domain_operating_pack.py"
+      ],
+      "notes": "Domain operating packs compile governed buyer-facing solution bundles that remain activation-blocked until certification evidence is present.",
+      "representative_paths": [
+        "DomainOperatingPackCompiler.compile",
+        "DomainOperatingPackCompiler.validate",
+        "DomainOperatingPackCatalog"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "builtin_domain_pack_catalog_complete",
+        "finance_ops_pack_declares_governed_artifacts",
+        "high_risk_pack_requires_approval_roles",
+        "certified_pack_requires_evidence_refs",
+        "domain_operating_pack_schema_valid"
+      ],
+      "surface_id": "domain_operating_pack"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/multimodal_operating_layer.py",
         "schemas/multimodal_operation_receipt.schema.json",
         "tests/test_gateway/test_multimodal_operating_layer.py"
       ],
-      "notes": "Multimodal operating layer gates text, document, visual, voice, browser, email, calendar, form, and video-frame operations before worker dispatch, preserves source references, blocks unsafe external effects, and emits schema-backed non-terminal receipts.",
+      "notes": "Multimodal operating layer emits source-bound pre-dispatch receipts and blocks unsafe modality worker effects before execution.",
       "representative_paths": [
         "MultimodalOperatingLayer.evaluate",
         "MultimodalOperationReceipt"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "unknown_modalities_fail_closed",
-        "source_references_preserved",
-        "external_effects_require_certification",
-        "sensitive_inputs_require_redaction_evidence",
         "multimodal_receipt_schema_valid",
-        "receipt_not_terminal_closure"
+        "external_send_blocked_by_default",
+        "sensitive_voice_requires_redaction_evidence",
+        "unknown_modality_fails_closed"
       ],
       "surface_id": "multimodal_operating_layer"
     },
@@ -2354,25 +2679,48 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "gateway/policy_prover.py",
-        "schemas/policy_proof_report.schema.json",
-        "schemas/README.md",
-        "tests/test_gateway/test_policy_prover.py"
+        "gateway/autonomous_capability_upgrade.py",
+        "schemas/capability_upgrade_plan.schema.json",
+        "tests/test_gateway/test_autonomous_capability_upgrade.py"
       ],
-      "notes": "Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy.",
+      "notes": "Autonomous capability upgrade converts health signals into activation-blocked proposals that require evals, sandbox tests, ChangeCommand, ChangeCertificate, canary, terminal closure, and learning admission before promotion.",
       "representative_paths": [
-        "PolicyProver.prove"
+        "AutonomousCapabilityUpgradeLoop.propose",
+        "CapabilityHealthSignal",
+        "CapabilityUpgradePlan"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
-        "bounded_policy_cases_required",
-        "empty_invariants_rejected",
-        "counterexamples_are_concrete",
-        "proved_report_has_no_counterexamples",
-        "policy_weakening_forbidden",
-        "policy_proof_schema_valid"
+        "health_signal_requires_evidence_refs",
+        "upgrade_candidates_are_promotion_blocked",
+        "critical_governance_changes_require_second_approval",
+        "capability_upgrade_plan_schema_valid"
       ],
-      "surface_id": "policy_proof_report"
+      "surface_id": "autonomous_capability_upgrade"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/autonomous_test_generation.py",
+        "schemas/autonomous_test_generation_plan.schema.json",
+        "tests/test_gateway/test_autonomous_test_generation.py"
+      ],
+      "notes": "Autonomous test generation converts certified failure traces into activation-blocked, operator-review-required replay, policy, tenant, approval, budget, and sandbox test proposals.",
+      "representative_paths": [
+        "AutonomousTestGenerationEngine.generate",
+        "FailureTrace",
+        "TestGenerationPlan"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "failure_trace_requires_evidence_refs",
+        "high_risk_failures_generate_governance_variants",
+        "plans_are_activation_blocked",
+        "autonomous_test_generation_plan_schema_valid"
+      ],
+      "surface_id": "autonomous_test_generation"
     },
     {
       "action_proof": "action_proof",
