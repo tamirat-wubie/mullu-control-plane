@@ -118,6 +118,19 @@ def test_parse_lineage_uri_extracts_bounded_query() -> None:
     assert query.verify is False
 
 
+def test_parse_lineage_uri_deduplicates_include_values() -> None:
+    query = parse_lineage_uri("lineage://trace/trace-1?include=policy,tenant,policy,budget")
+
+    assert query.include == ("policy", "tenant", "budget")
+    assert query.depth == 25
+    assert query.verify is True
+
+
+def test_lineage_uri_rejects_unsupported_include_value() -> None:
+    with pytest.raises(ValueError, match="unsupported lineage include value"):
+        parse_lineage_uri("lineage://trace/trace-1?include=policy,secrets")
+
+
 def test_resolve_trace_lineage_projects_replay_frames() -> None:
     recorder = _recorder_with_trace()
 

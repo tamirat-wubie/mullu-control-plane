@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlparse
 
 
 DEFAULT_INCLUDE = ("policy", "model", "tenant", "budget", "tool", "replay")
+SUPPORTED_INCLUDE = frozenset(DEFAULT_INCLUDE)
 SUPPORTED_REF_TYPES = frozenset({"trace", "output", "command"})
 MAX_DEPTH = 100
 MAX_TRACE_INDEX_SCAN = 1000
@@ -75,6 +76,11 @@ class LineageQuery:
             raise ValueError("depth must be at least 1")
         if self.depth > MAX_DEPTH:
             raise ValueError(f"depth must be at most {MAX_DEPTH}")
+        unsupported_include = tuple(
+            include_item for include_item in self.include if include_item not in SUPPORTED_INCLUDE
+        )
+        if unsupported_include:
+            raise ValueError("unsupported lineage include value")
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,7 +166,7 @@ def parse_lineage_uri(uri: str) -> LineageQuery:
     except (TypeError, ValueError) as exc:
         raise ValueError("depth must be an integer") from exc
     include_raw = query.get("include", [",".join(DEFAULT_INCLUDE)])[0]
-    include = tuple(part.strip() for part in include_raw.split(",") if part.strip())
+    include = _normalize_include(include_raw)
     verify = query.get("verify", ["true"])[0].lower() != "false"
     return LineageQuery(
         uri=uri,
@@ -169,6 +175,16 @@ def parse_lineage_uri(uri: str) -> LineageQuery:
         include=include or DEFAULT_INCLUDE,
         verify=verify,
     )
+
+
+def _normalize_include(include_raw: str) -> tuple[str, ...]:
+    """Return bounded include values in caller order without duplicates."""
+    include: list[str] = []
+    for raw_part in include_raw.split(","):
+        include_item = raw_part.strip()
+        if include_item and include_item not in include:
+            include.append(include_item)
+    return tuple(include) or DEFAULT_INCLUDE
 
 
 def resolve_lineage_query(

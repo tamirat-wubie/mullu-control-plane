@@ -35,6 +35,10 @@ Optional query parameters:
 | `verify` | Recompute proof and hash-chain validity | `true` |
 | `at` | Point-in-time version boundary | latest visible state |
 
+Allowed `include` values are bounded to `policy`, `model`, `tenant`,
+`budget`, `tool`, and `replay`. Duplicate values are removed while preserving
+caller order. Unknown include values fail closed as invalid lineage URIs.
+
 ## Lineage Node Contract
 
 Each node must include:
