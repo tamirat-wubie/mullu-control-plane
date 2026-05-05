@@ -147,6 +147,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_operation_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_kernel"
+      ]
+    },
+    {
       "action_id": "publish_policy_proof_report_contract",
       "status": "closed",
       "surfaces": [
@@ -168,7 +175,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 22,
+      "action_proof": 23,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -176,7 +183,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 26,
+      "audit_chain": 27,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -184,16 +191,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 29
+      "witnessed": 30
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 22
+      "request_proof": 23
     },
-    "surface_count": 30
+    "surface_count": 31
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2312,6 +2319,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "multimodal_operating_layer"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_kernel.py",
+        "schemas/temporal_operation_receipt.schema.json",
+        "tests/test_gateway/test_temporal_kernel.py"
+      ],
+      "notes": "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses before dispatch.",
+      "representative_paths": [
+        "TemporalKernel.evaluate",
+        "TrustedClock.now_utc",
+        "TrustedClock.monotonic_ns"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_injected",
+        "monotonic_duration_measured",
+        "future_schedule_defers",
+        "approval_expiry_denies",
+        "stale_evidence_escalates",
+        "budget_window_checked",
+        "causal_preconditions_required",
+        "temporal_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_kernel"
     },
     {
       "action_proof": "action_proof",
