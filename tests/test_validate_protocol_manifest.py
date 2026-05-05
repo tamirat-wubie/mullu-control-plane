@@ -115,6 +115,17 @@ def test_protocol_manifest_indexes_policy_proof_report() -> None:
     assert policy_entry["surface"] == "policy"
 
 
+def test_protocol_manifest_indexes_multimodal_operation_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    multimodal_entry = entries["multimodal-operation-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert multimodal_entry["path"] == "schemas/multimodal_operation_receipt.schema.json"
+    assert multimodal_entry["urn"] == "urn:mullusi:schema:multimodal-operation-receipt:1"
+    assert multimodal_entry["surface"] == "multimodal"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

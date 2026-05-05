@@ -446,6 +446,30 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert closure_actions["publish_networked_worker_mesh_contract"]["status"] == "closed"
 
 
+def test_multimodal_operating_layer_surface_preserves_source_and_blocks_effects() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    multimodal_surface = surfaces["multimodal_operating_layer"]
+    witnesses = set(multimodal_surface["runtime_witnesses"])
+
+    assert multimodal_surface["coverage_state"] == "witnessed"
+    assert multimodal_surface["request_proof"] == "request_proof"
+    assert multimodal_surface["action_proof"] == "action_proof"
+    assert "MultimodalOperatingLayer.evaluate" in multimodal_surface["representative_paths"]
+    assert "MultimodalOperationReceipt" in multimodal_surface["representative_paths"]
+    assert "gateway/multimodal_operating_layer.py" in multimodal_surface["evidence_files"]
+    assert "schemas/multimodal_operation_receipt.schema.json" in multimodal_surface["evidence_files"]
+    assert "tests/test_gateway/test_multimodal_operating_layer.py" in multimodal_surface["evidence_files"]
+    assert "unknown_modalities_fail_closed" in witnesses
+    assert "source_references_preserved" in witnesses
+    assert "external_effects_require_certification" in witnesses
+    assert "sensitive_inputs_require_redaction_evidence" in witnesses
+    assert "multimodal_receipt_schema_valid" in witnesses
+    assert "receipt_not_terminal_closure" in witnesses
+    assert closure_actions["publish_multimodal_operation_receipt_contract"]["status"] == "closed"
+
+
 def test_policy_proof_report_surface_is_counterexample_backed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

@@ -185,6 +185,12 @@
       "surface": "model"
     },
     {
+      "schema_id": "multimodal-operation-receipt",
+      "path": "schemas/multimodal_operation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:multimodal-operation-receipt:1",
+      "surface": "multimodal"
+    },
+    {
       "schema_id": "plan",
       "path": "schemas/plan.schema.json",
       "urn": "urn:mullusi:schema:plan:1",

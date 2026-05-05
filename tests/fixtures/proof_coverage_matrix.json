@@ -140,6 +140,13 @@
       ]
     },
     {
+      "action_id": "publish_multimodal_operation_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "multimodal_operating_layer"
+      ]
+    },
+    {
       "action_id": "publish_policy_proof_report_contract",
       "status": "closed",
       "surfaces": [
@@ -161,7 +168,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 21,
+      "action_proof": 22,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -169,7 +176,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 25,
+      "audit_chain": 26,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -177,16 +184,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 28
+      "witnessed": 29
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 21
+      "request_proof": 22
     },
-    "surface_count": 29
+    "surface_count": 30
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2280,6 +2287,31 @@
         "worker_mesh_schema_valid"
       ],
       "surface_id": "networked_worker_mesh"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/multimodal_operating_layer.py",
+        "schemas/multimodal_operation_receipt.schema.json",
+        "tests/test_gateway/test_multimodal_operating_layer.py"
+      ],
+      "notes": "Multimodal operating layer gates text, document, visual, voice, browser, email, calendar, form, and video-frame operations before worker dispatch, preserves source references, blocks unsafe external effects, and emits schema-backed non-terminal receipts.",
+      "representative_paths": [
+        "MultimodalOperatingLayer.evaluate",
+        "MultimodalOperationReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "unknown_modalities_fail_closed",
+        "source_references_preserved",
+        "external_effects_require_certification",
+        "sensitive_inputs_require_redaction_evidence",
+        "multimodal_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "multimodal_operating_layer"
     },
     {
       "action_proof": "action_proof",
