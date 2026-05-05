@@ -214,6 +214,20 @@
           "requires_sandbox": true,
           "allowed_tools": ["payment_executor.initiate_payment"],
           "rollback_or_compensation_required": true
+        },
+        "capability_maturity_evidence": {
+          "sandbox_receipt_valid": true,
+          "live_read_receipt_valid": true,
+          "live_write_receipt_valid": true,
+          "worker_deployment_bound": true,
+          "recovery_evidence_present": true,
+          "evidence_refs": [
+            "proof://capabilities/financial.send_payment/sandbox",
+            "proof://capabilities/financial.send_payment/live-read",
+            "proof://capabilities/financial.send_payment/live-write",
+            "proof://capabilities/financial.send_payment/worker",
+            "proof://capabilities/financial.send_payment/recovery"
+          ]
         }
       }
     },

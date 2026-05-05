@@ -68,8 +68,9 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     assert read_model["capsule_count"] == 10
     assert read_model["capability_count"] == 52
     assert len(read_model["capability_maturity_assessments"]) == 52
-    assert read_model["capability_maturity_counts"]["C3"] == 52
-    assert read_model["production_ready_count"] == 0
+    assert read_model["capability_maturity_counts"]["C3"] == 50
+    assert read_model["capability_maturity_counts"]["C6"] == 2
+    assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
     assert {domain["domain"] for domain in read_model["domains"]} == {
         "browser",
@@ -168,6 +169,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     voice_confirm_record = records["voice.intent_confirm"]
     voice_actions_record = records["voice.action_items_extract"]
     github_read_record = records["connector.github.read"]
+    github_read_capability = capabilities["connector.github.read"]
     postgres_write_record = records["connector.postgres.write.with_approval"]
     email_send_record = records["email.send.with_approval"]
     calendar_invite_record = records["calendar.invite"]
@@ -175,12 +177,15 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     deployment_publish_record = records["deployment.witness.publish.with_approval"]
 
     assert len(records) == 52
-    assert payment_capability["maturity_assessment"]["maturity_level"] == "C3"
-    assert payment_capability["maturity_assessment"]["production_ready"] is False
+    assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
+    assert payment_capability["maturity_assessment"]["production_ready"] is True
+    assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
+    assert payment_capability["maturity_assessment"]["blockers"] == ["autonomy_controls_missing"]
     assert payment_capability["maturity_assessment"]["metadata"]["assessment_is_not_promotion"] is True
     assert "capability_registry:financial.send_payment" in payment_capability["maturity_assessment"]["evidence_refs"]
-    assert payment_record["maturity_level"] == "C3"
-    assert payment_record["production_ready"] is False
+    assert "proof://capabilities/financial.send_payment/live-write" in payment_capability["maturity_assessment"]["evidence_refs"]
+    assert payment_record["maturity_level"] == "C6"
+    assert payment_record["production_ready"] is True
     assert payment_record["autonomy_ready"] is False
     assert payment_record["maturity_assessment_id"].startswith("capability-maturity-")
     assert payment_record["risk_level"] == "high"
@@ -227,6 +232,15 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert voice_actions_record["allowed_tools"] == ["voice_worker.action_items_extract"]
     assert voice_actions_record["forbidden_effects"] == ["tool_executed", "external_message_sent", "task_created"]
     assert github_read_record["risk_level"] == "low"
+    assert github_read_capability["maturity_assessment"]["maturity_level"] == "C6"
+    assert github_read_capability["maturity_assessment"]["production_ready"] is True
+    assert github_read_capability["maturity_assessment"]["autonomy_ready"] is False
+    assert "proof://capabilities/connector.github.read/live-read" in github_read_capability[
+        "maturity_assessment"
+    ]["evidence_refs"]
+    assert github_read_record["maturity_level"] == "C6"
+    assert github_read_record["production_ready"] is True
+    assert github_read_record["autonomy_ready"] is False
     assert github_read_record["read_only"] is True
     assert github_read_record["world_mutating"] is False
     assert github_read_record["requires_approval"] is False

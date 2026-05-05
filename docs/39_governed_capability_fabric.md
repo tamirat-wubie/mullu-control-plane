@@ -43,6 +43,8 @@ Each registry entry carries the minimum information needed to execute an action 
 
 Registry entries do not self-promote. Gateway-built fabric read models derive a `capability_maturity_assessment` from each installed entry and attach the C0-C7 summary to both the internal capability projection and the governed operator record. Certification can lift a capability to mock-evaluated maturity, but production readiness still requires explicit sandbox, live receipt, worker deployment, recovery, and autonomy evidence through `extensions.capability_maturity_evidence`.
 
+Checked-in default packs include two concrete C6 witnesses. `connector.github.read` is read-only and carries sandbox, live-read, worker deployment, and recovery evidence references; because it is not world-mutating, the live-write gate is not required. `financial.send_payment` is effect-bearing and reaches C6 only because it also carries live-write evidence. Both examples remain below C7 until bounded autonomy controls are supplied.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.
