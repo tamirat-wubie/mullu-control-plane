@@ -22,7 +22,7 @@ document is the operator-readable witness.
 | `gateway_webhook_ingress` | `/webhook/web`, `/webhook/slack`, `/webhook/telegram` | yes | yes | command ledger | hash-chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
 | `gateway_approval_resolution` | `/webhook/approve/{request_id}`, `/authority/approval-chains` | yes | yes | approval chain state | hash-chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | `/authority/witness`, `/authority/responsibility`, `/authority/obligations`, `/authority/escalations` | yes | yes | obligation counts | hash-chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
-| `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require schema-backed publication closure validation over raw runtime and authority debt-clear evidence, and gateway publication readiness plus publication and orchestration receipt validation bind DNS, workflow state, ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and schema-backed post-run receipt validation before deployment witness readiness. |
+| `gateway_runtime_witness` | `/gateway/witness`, `/runtime/witness`, `/anchors/latest` | read-model | read-model | deployment witness | hash-chain | witnessed | Runtime witness surfaces publish bounded operational and responsibility debt state; deployment witnesses require schema-backed publication closure validation over raw runtime and authority debt-clear evidence, responsibility-debt blockers project into approval-bound aggregate closure evidence, and gateway publication readiness plus publication and orchestration receipt validation bind DNS, workflow state, ingress render, MCP checklist validation, preflight, dispatch evidence, schema contract validation, and schema-backed post-run receipt validation before deployment witness readiness. |
 | `runtime_conformance_attestation` | `/runtime/conformance` | read-model | read-model | conformance certificate | hash-chain | witnessed | Runtime conformance binds witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, plan evidence bundle readiness, proof-matrix, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation. |
 | `runtime_reflex_engine` | `/runtime/self/health`, `/runtime/self/inspect`, `/runtime/self/diagnose`, `/runtime/self/evaluate`, `/runtime/self/propose-upgrade`, `/runtime/self/certify`, `/runtime/self/promote`, `/runtime/self/deployment-witnesses`, `/runtime/self/witness` | read-model | yes | signed reflex witness, schema-backed offline replay, schema-backed CI receipt artifact | hash-chain | witnessed | Runtime Reflex exposes operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, signed witness projections, schema-backed offline witness replay, and schema-backed CI receipt artifacts without direct runtime mutation. |
 | `governed_operational_intelligence` | `WorldStateStore.add_entity`, `GoalCompiler.compile`, `CausalSimulator.simulate` | yes | yes | world-state evidence, goal-plan certificate, simulation receipt | hash-chain | witnessed | Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution. |
@@ -63,9 +63,11 @@ Resolved closure actions:
 10. `publish_runtime_conformance_attestation`
 11. `publish_capability_plan_evidence_bundles`
 12. `publish_deployment_orchestration_receipt_contract`
-13. `publish_runtime_reflex_engine_read_models`
-14. `publish_governed_operational_intelligence_witnesses`
-15. `publish_capability_forge_candidate_contract`
+13. `publish_responsibility_debt_aggregate_closure_evidence`
+14. `publish_runtime_reflex_engine_read_models`
+15. `publish_governed_operational_intelligence_witnesses`
+16. `publish_capability_forge_candidate_contract`
+17. `publish_networked_worker_mesh_contract`
 
 Open closure actions:
 
