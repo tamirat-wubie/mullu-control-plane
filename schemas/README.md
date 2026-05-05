@@ -49,6 +49,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `worker_mesh.schema.json` | Canonical networked worker lease and dispatch receipt |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
+| `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
 
 ## Notes
 
