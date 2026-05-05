@@ -257,6 +257,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-scheduler-receipt",
+      "path": "schemas/temporal_scheduler_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-scheduler-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "terminal-closure-certificate",
       "path": "schemas/terminal_closure_certificate.schema.json",
       "urn": "urn:mullusi:schema:terminal-closure-certificate:1",

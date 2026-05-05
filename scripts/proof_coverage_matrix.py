@@ -663,6 +663,36 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_scheduler",
+            [
+                "TemporalScheduler.evaluate",
+                "ScheduledCommand",
+                "TemporalSchedulerReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_scheduler.py",
+                "schemas/temporal_scheduler_receipt.schema.json",
+                "tests/test_gateway/test_temporal_scheduler.py",
+            ],
+            "Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch.",
+            [
+                "scheduled_command_requires_execute_at",
+                "idempotency_required",
+                "lease_acquired_before_dispatch",
+                "future_schedule_defers",
+                "missed_run_receipt_emitted",
+                "retry_window_checked",
+                "high_risk_reapproval_required",
+                "active_lease_blocks_duplicate_execution",
+                "temporal_scheduler_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "policy_proof_report",
             [
                 "PolicyProver.prove",
@@ -912,6 +942,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_operation_receipt_contract",
             "surfaces": ["temporal_kernel"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_scheduler_receipt_contract",
+            "surfaces": ["temporal_scheduler"],
             "status": "closed",
         },
         {
