@@ -9,7 +9,7 @@ document is the operator-readable witness.
 
 | Surface | Representative paths | Request proof | Action proof | Runtime witnesses | Audit | Coverage state | Status |
 |---|---|---|---|---|---|---|---|
-| `gateway_capability_fabric` | `/webhook/*`, `/capability-fabric/read-model`, `/commands/{command_id}/closure`, `DomainCapsuleCompiler.compile` | yes | yes | closure invariants, certification evidence manifest | hash-chain | proven | Command admission, request receipt envelopes, terminal closure, and capsule compiler certification-evidence manifests expose runtime witnesses. |
+| `gateway_capability_fabric` | `/webhook/*`, `/capability-fabric/read-model`, `/commands/{command_id}/closure`, `DomainCapsuleCompiler.compile`, `install_certified_capsule_with_handoff_evidence` | yes | yes | closure invariants, certification evidence manifest, capsule admission receipt | hash-chain | proven | Command admission, request receipt envelopes, terminal closure, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses. |
 | `llm_streaming` | `/api/v1/stream`, `/api/v1/chat/stream` | yes | yes | streaming budget protocol | hash-chain | witnessed | Streaming emits precharge, first-byte, chunk-debit, cutoff, and final-reconcile proof identifiers. |
 | `llm_completion` | `/api/v1/complete`, `/api/v1/complete/safe`, `/api/v1/complete/auto` | yes | yes | proof bridge | hash-chain | witnessed | Completion routes are governed through budget, model routing, and proof bridge checks. |
 | `llm_chat_workflow` | `/api/v1/chat`, `/api/v1/chat/workflow`, `/api/v1/chat/workflow/history` | yes | yes | proof bridge | hash-chain | witnessed | Chat and workflow routes preserve governed request and action proof boundaries. |
