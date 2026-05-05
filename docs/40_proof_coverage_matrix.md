@@ -27,6 +27,7 @@ document is the operator-readable witness.
 | `runtime_reflex_engine` | `/runtime/self/health`, `/runtime/self/inspect`, `/runtime/self/diagnose`, `/runtime/self/evaluate`, `/runtime/self/propose-upgrade`, `/runtime/self/certify`, `/runtime/self/promote`, `/runtime/self/deployment-witnesses`, `/runtime/self/witness` | read-model | yes | signed reflex witness, schema-backed offline replay, schema-backed CI receipt artifact | hash-chain | witnessed | Runtime Reflex exposes operator-gated health, anomaly, diagnosis, eval, proposal, certification handoff, promotion decision, signed witness projections, schema-backed offline witness replay, and schema-backed CI receipt artifacts without direct runtime mutation. |
 | `governed_operational_intelligence` | `WorldStateStore.add_entity`, `GoalCompiler.compile`, `CausalSimulator.simulate` | yes | yes | world-state evidence, goal-plan certificate, simulation receipt | hash-chain | witnessed | Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution. |
 | `capability_forge` | `CapabilityForge.create_candidate`, `CapabilityForge.validate` | yes | yes | candidate package schema, promotion block, recovery evidence | hash-chain | witnessed | Capability forge emits schema-backed candidate packages only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, and recovery evidence before certification handoff. |
+| `networked_worker_mesh` | `NetworkedWorkerMesh.register_worker`, `NetworkedWorkerMesh.dispatch`, `NetworkedWorkerMesh.read_model` | yes | yes | active lease, worker evidence, non-terminal receipt | hash-chain | witnessed | Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, and emits schema-backed receipts that explicitly require terminal closure. |
 | `capability_plan_evidence_bundle` | `/capability-plans/read-model`, `/capability-plans/{plan_id}/closure`, `/capability-plans/{plan_id}/recover` | yes | yes | plan proof bundle | hash-chain | witnessed | Capability plan surfaces expose terminal certificates, evidence bundles, failure witnesses, and recovery-attempt audit records. |
 | `replay_determinism` | `/api/v1/replay/{trace_id}/determinism` | yes | yes | replay report hash | hash-chain | witnessed | Replay determinism route emits governed reports over completed traces with bounded operation specs. |
 | `tool_invocation` | `/api/v1/tools/invoke`, `/api/v1/workflow/tools` | yes | yes | policy receipts | hash-chain | witnessed | Tool invocation and MCP capability import bind action proof ids, capability policy receipts, authority-obligation ownership records, and validated operator manifests. |
@@ -38,9 +39,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 24 |
+| Total surfaces | 25 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 23 |
+| Witnessed surfaces | 24 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:

@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:worker-mesh:1",
+  "title": "Worker Mesh Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["lease", "request", "receipt"],
+  "properties": {
+    "lease": {
+      "$ref": "#/$defs/worker_lease"
+    },
+    "request": {
+      "$ref": "#/$defs/worker_dispatch_request"
+    },
+    "receipt": {
+      "$ref": "#/$defs/worker_dispatch_receipt"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "worker_lease_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_operations", "max_cost"],
+      "properties": {
+        "max_operations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_cost": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "worker_lease_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resource_refs", "data_classes", "network_allowlist"],
+      "properties": {
+        "resource_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "data_classes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "network_allowlist": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "worker_lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "capability",
+        "tenant_id",
+        "lease_id",
+        "allowed_operations",
+        "forbidden_operations",
+        "budget",
+        "scope",
+        "timeout_seconds",
+        "sandbox",
+        "policy_refs",
+        "receipt_schema_ref",
+        "verification_ref",
+        "recovery_ref",
+        "expires_at",
+        "issued_at",
+        "lease_hash"
+      ],
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lease_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowed_operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbidden_operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "budget": {
+          "$ref": "#/$defs/worker_lease_budget"
+        },
+        "scope": {
+          "$ref": "#/$defs/worker_lease_scope"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sandbox": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "receipt_schema_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recovery_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "issued_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lease_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "worker_dispatch_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "tenant_id",
+        "capability",
+        "operation",
+        "command_id",
+        "input_hash",
+        "estimated_cost",
+        "payload",
+        "requested_at"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "estimated_cost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "requested_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "worker_dispatch_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "request_id",
+        "worker_id",
+        "capability",
+        "tenant_id",
+        "lease_id",
+        "operation",
+        "command_id",
+        "status",
+        "reason",
+        "input_hash",
+        "output_hash",
+        "evidence_refs",
+        "verification_ref",
+        "recovery_ref",
+        "terminal_closure_required",
+        "dispatched_at",
+        "receipt_hash"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "worker_id": {
+          "type": "string"
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lease_id": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["succeeded", "failed", "rejected"]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output_hash": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "verification_ref": {
+          "type": "string"
+        },
+        "recovery_ref": {
+          "type": "string"
+        },
+        "terminal_closure_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "dispatched_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

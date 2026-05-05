@@ -453,6 +453,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "networked_worker_mesh",
+            [
+                "NetworkedWorkerMesh.register_worker",
+                "NetworkedWorkerMesh.dispatch",
+                "NetworkedWorkerMesh.read_model",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/62_governed_operational_intelligence.md",
+                "gateway/worker_mesh.py",
+                "schemas/worker_mesh.schema.json",
+                "tests/test_gateway/test_worker_mesh.py",
+            ],
+            "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, and emits schema-backed receipts that explicitly require terminal closure.",
+            [
+                "active_lease_required",
+                "tenant_capability_operation_budget_checked",
+                "forbidden_operations_override_allowed",
+                "worker_evidence_refs_required",
+                "worker_receipt_not_terminal_closure",
+                "worker_mesh_schema_valid",
+            ],
+        ),
+        _surface(
             "capability_plan_evidence_bundle",
             [
                 "/capability-plans/read-model",
@@ -642,6 +669,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_capability_forge_candidate_contract",
             "surfaces": ["capability_forge"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_networked_worker_mesh_contract",
+            "surfaces": ["networked_worker_mesh"],
             "status": "closed",
         },
     ]

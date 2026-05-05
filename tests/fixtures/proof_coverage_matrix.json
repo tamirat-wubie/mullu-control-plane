@@ -110,6 +110,13 @@
       "surfaces": [
         "capability_forge"
       ]
+    },
+    {
+      "action_id": "publish_networked_worker_mesh_contract",
+      "status": "closed",
+      "surfaces": [
+        "networked_worker_mesh"
+      ]
     }
   ],
   "coverage_levels": [
@@ -126,7 +133,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 16,
+      "action_proof": 17,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -134,7 +141,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 20,
+      "audit_chain": 21,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -142,16 +149,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 23
+      "witnessed": 24
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 16
+      "request_proof": 17
     },
-    "surface_count": 24
+    "surface_count": 25
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2123,6 +2130,33 @@
         "effect_bearing_candidate_requires_recovery_path"
       ],
       "surface_id": "capability_forge"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/worker_mesh.py",
+        "schemas/worker_mesh.schema.json",
+        "tests/test_gateway/test_worker_mesh.py"
+      ],
+      "notes": "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, and emits schema-backed receipts that explicitly require terminal closure.",
+      "representative_paths": [
+        "NetworkedWorkerMesh.register_worker",
+        "NetworkedWorkerMesh.dispatch",
+        "NetworkedWorkerMesh.read_model"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "active_lease_required",
+        "tenant_capability_operation_budget_checked",
+        "forbidden_operations_override_allowed",
+        "worker_evidence_refs_required",
+        "worker_receipt_not_terminal_closure",
+        "worker_mesh_schema_valid"
+      ],
+      "surface_id": "networked_worker_mesh"
     },
     {
       "action_proof": "action_proof",

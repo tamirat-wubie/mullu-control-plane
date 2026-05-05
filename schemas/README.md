@@ -45,6 +45,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |
 | `world_state.schema.json` | Canonical world-state graph projection |
+| `worker_mesh.schema.json` | Canonical networked worker lease and dispatch receipt |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 

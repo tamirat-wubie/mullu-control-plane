@@ -178,6 +178,17 @@ def test_protocol_manifest_indexes_terminal_closure_certificate() -> None:
     assert closure_entry["surface"] == "closure"
 
 
+def test_protocol_manifest_indexes_worker_mesh_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    worker_entry = entries["worker-mesh"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert worker_entry["path"] == "schemas/worker_mesh.schema.json"
+    assert worker_entry["urn"] == "urn:mullusi:schema:worker-mesh:1"
+    assert worker_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_reflex_deployment_witness_envelope() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
