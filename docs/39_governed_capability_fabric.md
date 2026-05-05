@@ -69,6 +69,15 @@ registry entries + certification handoffs
 
 The receipt records the batch hash, handoff hashes, compilation id, installation id, capability ids, artifact ids, certification-evidence manifest id, warnings, errors, and post-install registry counts. It is an audit witness only; `GovernedCapabilityRegistry.install` remains the admission authority. If strict admission rejects a compiled capsule, the function still returns a rejected receipt without mutating registry state.
 
+The gateway exposes this shortcut through the authority-operator boundary:
+
+| Route | Method | Role |
+| --- | --- | --- |
+| `/capability-fabric/capsule-admissions` | `POST` | Accepts one capsule, registry entry set, handoff set, and `require_production_ready` flag; returns the receipt, evidence batch, compilation result, and installation record. |
+| `/capability-fabric/capsule-admission-receipts` | `GET` | Returns recent admission receipts with optional `status`, `limit`, and `offset` bounds. |
+
+The POST surface fails closed when capability fabric admission is disabled, rejects malformed payloads before registry mutation, and stores only the hash-stamped receipt in the bounded in-process operator receipt window.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.

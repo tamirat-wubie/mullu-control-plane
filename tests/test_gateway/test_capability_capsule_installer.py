@@ -16,14 +16,18 @@ Invariants:
 from __future__ import annotations
 
 import json
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
+
+from fastapi.testclient import TestClient
 
 from gateway.capability_capsule_installer import (
     CapabilityCapsuleInstallationOutcome,
     install_certified_capsule_with_handoff_evidence,
 )
+from gateway.capability_fabric import MaturityProjectingCapabilityAdmissionGate
 from gateway.capability_forge import CapabilityCertificationHandoff, CapabilityForge, CapabilityForgeInput
+from gateway.server import create_gateway_app
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
@@ -36,6 +40,17 @@ from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityReg
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = ROOT / "integration" / "governed_capability_fabric" / "fixtures"
+
+
+class StubPlatform:
+    """Minimal platform fixture for gateway app construction."""
+
+    def process_message(self, message, tenant_id: str, identity_id: str):  # noqa: ANN001
+        return {
+            "response": "ok",
+            "tenant_id": tenant_id,
+            "identity_id": identity_id,
+        }
 
 
 def test_capsule_installer_admits_certified_handoff_batch_with_receipt() -> None:
@@ -96,6 +111,60 @@ def test_capsule_installer_returns_rejected_receipt_without_registry_mutation() 
     assert registry.capability_count == 0
     assert registry.artifact_count == 0
     assert outcome.receipt.receipt_hash
+
+
+def test_capsule_admission_operator_endpoint_installs_and_lists_receipt() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    gate = MaturityProjectingCapabilityAdmissionGate(registry=registry, clock=_clock)
+    app = create_gateway_app(platform=StubPlatform(), capability_admission_gate_override=gate)
+    client = TestClient(app)
+    entry = _certified_entry()
+    handoff = _certification_handoff_for(entry)
+
+    response = client.post(
+        "/capability-fabric/capsule-admissions",
+        json={
+            "capsule": _certified_capsule().to_json_dict(),
+            "registry_entries": [entry.to_json_dict()],
+            "handoffs": [asdict(handoff)],
+            "require_production_ready": True,
+        },
+    )
+    receipts = client.get("/capability-fabric/capsule-admission-receipts?status=installed")
+    read_model = client.get("/capability-fabric/read-model")
+
+    assert response.status_code == 200
+    assert response.json()["admission_receipt"]["admission_status"] == "installed"
+    assert response.json()["admission_receipt"]["receipt_is_not_admission_authority"] is True
+    assert response.json()["admission_receipt"]["admission_authority"] == "GovernedCapabilityRegistry.install"
+    assert response.json()["installation_record"]["status"] == "installed"
+    assert response.json()["evidence_batch"]["batch_hash"]
+    assert response.json()["compilation_result"]["status"] == "success"
+    assert receipts.status_code == 200
+    assert receipts.json()["count"] == 1
+    assert receipts.json()["capsule_admission_receipts"][0]["capsule_id"] == _certified_capsule().capsule_id
+    assert read_model.json()["capability_count"] == 1
+    assert read_model.json()["artifact_count"] == 11
+
+
+def test_capsule_admission_operator_endpoint_rejects_invalid_payload() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    gate = MaturityProjectingCapabilityAdmissionGate(registry=registry, clock=_clock)
+    app = create_gateway_app(platform=StubPlatform(), capability_admission_gate_override=gate)
+    client = TestClient(app)
+
+    response = client.post(
+        "/capability-fabric/capsule-admissions",
+        json={"capsule": {}, "registry_entries": [], "handoffs": [], "require_production_ready": "yes"},
+    )
+    receipts = client.get("/capability-fabric/capsule-admission-receipts")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "capsule_admission_registry_entries_required"
+    assert receipts.status_code == 200
+    assert receipts.json()["count"] == 0
+    assert registry.capability_count == 0
+    assert registry.artifact_count == 0
 
 
 def _registry_entry() -> CapabilityRegistryEntry:

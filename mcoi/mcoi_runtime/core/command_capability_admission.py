@@ -31,6 +31,11 @@ class CommandCapabilityAdmissionGate:
         self._registry = registry
         self._clock = clock
 
+    @property
+    def registry(self) -> GovernedCapabilityRegistry:
+        """Return the governed registry that owns capability admission authority."""
+        return self._registry
+
     def admit(self, *, command_id: str, intent_name: str) -> CommandCapabilityAdmissionDecision:
         """Return an explicit admission decision for one command intent."""
         command_id = ensure_non_empty_text("command_id", command_id)
