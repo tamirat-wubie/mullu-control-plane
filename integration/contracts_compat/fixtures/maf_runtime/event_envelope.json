@@ -1,0 +1,22 @@
+{
+  "envelope_id": "env-100",
+  "event": {
+    "event_id": "evt-100",
+    "event_type": "workflow_stage_transition",
+    "source": "workflow_runtime",
+    "correlation_id": "corr-100",
+    "payload": {
+      "job_id": "job-1",
+      "stage_id": "stage-verify",
+      "status": "completed"
+    },
+    "emitted_at": "2025-01-01T00:00:00+00:00"
+  },
+  "target_subsystems": [
+    "dashboard",
+    "obligation_runtime"
+  ],
+  "priority": 2,
+  "delivered": true,
+  "delivered_at": "2025-01-01T00:00:03+00:00"
+}

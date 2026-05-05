@@ -17,7 +17,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from mcoi_runtime.contracts.event import EventRecord, EventSource, EventType
+from mcoi_runtime.contracts.event import (
+    EventCorrelation,
+    EventEnvelope,
+    EventReaction,
+    EventRecord,
+    EventSource,
+    EventSubscription,
+    EventType,
+    EventWindow,
+)
 from mcoi_runtime.contracts.function import (
     CommunicationStyle,
     FunctionMetricsSnapshot,
@@ -93,6 +102,60 @@ def _build_event_record(payload: dict) -> EventRecord:
         correlation_id=payload["correlation_id"],
         payload=payload["payload"],
         emitted_at=payload["emitted_at"],
+    )
+
+
+def _build_event_envelope(payload: dict) -> EventEnvelope:
+    return EventEnvelope(
+        envelope_id=payload["envelope_id"],
+        event=_build_event_record(payload["event"]),
+        target_subsystems=tuple(payload["target_subsystems"]),
+        priority=payload["priority"],
+        delivered=payload["delivered"],
+        delivered_at=payload["delivered_at"],
+    )
+
+
+def _build_event_subscription(payload: dict) -> EventSubscription:
+    return EventSubscription(
+        subscription_id=payload["subscription_id"],
+        event_type=EventType(payload["event_type"]),
+        subscriber_id=payload["subscriber_id"],
+        reaction_id=payload["reaction_id"],
+        filter_source=EventSource(payload["filter_source"]),
+        active=payload["active"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_event_reaction(payload: dict) -> EventReaction:
+    return EventReaction(
+        reaction_id=payload["reaction_id"],
+        event_id=payload["event_id"],
+        subscription_id=payload["subscription_id"],
+        action_taken=payload["action_taken"],
+        result=payload["result"],
+        reacted_at=payload["reacted_at"],
+    )
+
+
+def _build_event_window(payload: dict) -> EventWindow:
+    return EventWindow(
+        window_id=payload["window_id"],
+        correlation_id=payload["correlation_id"],
+        window_start=payload["window_start"],
+        window_end=payload["window_end"],
+        event_count=payload["event_count"],
+    )
+
+
+def _build_event_correlation(payload: dict) -> EventCorrelation:
+    return EventCorrelation(
+        correlation_id=payload["correlation_id"],
+        event_ids=tuple(payload["event_ids"]),
+        root_event_id=payload["root_event_id"],
+        description=payload["description"],
+        created_at=payload["created_at"],
     )
 
 
@@ -473,7 +536,12 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("event_correlation.json", _build_event_correlation),
+        ("event_envelope.json", _build_event_envelope),
         ("event_record.json", _build_event_record),
+        ("event_reaction.json", _build_event_reaction),
+        ("event_subscription.json", _build_event_subscription),
+        ("event_window.json", _build_event_window),
         ("supervisor_tick.json", _build_supervisor_tick),
         ("simulation_comparison.json", _build_simulation_comparison),
         ("job_descriptor.json", _build_job_descriptor),

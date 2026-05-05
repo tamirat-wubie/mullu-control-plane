@@ -219,6 +219,17 @@ AUXILIARY_PILOT_VALIDATORS: dict[str, AuxiliaryArtifactValidator] = {
 
 def _validate_event_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_event_record_fixture_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_event_record_fixture_dict(
+    payload: object,
+    *,
+    path: Path,
+    field_name: str,
+) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
     errors = _validate_exact_object_fields(
         payload,
         path=path,
@@ -230,7 +241,7 @@ def _validate_event_record_fixture(path: Path) -> list[str]:
             "payload",
             "emitted_at",
         ),
-        kind="runtime fixture",
+        kind=field_name,
     )
     if errors:
         return errors
@@ -244,6 +255,164 @@ def _validate_event_record_fixture(path: Path) -> list[str]:
     errors.extend(_validate_iso8601_text(payload["emitted_at"], field_name="emitted_at", path=path))
     if not isinstance(payload["payload"], dict) or not payload["payload"]:
         errors.append(f"{_relative_path(path)}: field 'payload' must be a non-empty object")
+    return errors
+
+
+def _validate_event_envelope_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "envelope_id",
+            "event",
+            "target_subsystems",
+            "priority",
+            "delivered",
+            "delivered_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(_require_non_empty_text(payload["envelope_id"], field_name="envelope_id", path=path))
+    errors.extend(
+        _validate_event_record_fixture_dict(payload["event"], path=path, field_name="event")
+    )
+    target_subsystems = payload["target_subsystems"]
+    if not isinstance(target_subsystems, list) or not target_subsystems:
+        errors.append(f"{_relative_path(path)}: field 'target_subsystems' must be a non-empty array")
+    else:
+        for index, subsystem in enumerate(target_subsystems):
+            errors.extend(
+                _require_non_empty_text(
+                    subsystem,
+                    field_name=f"target_subsystems[{index}]",
+                    path=path,
+                )
+            )
+    errors.extend(_require_non_negative_int(payload["priority"], field_name="priority", path=path))
+    if not isinstance(payload["delivered"], bool):
+        errors.append(f"{_relative_path(path)}: field 'delivered' must be boolean")
+    errors.extend(
+        _validate_iso8601_text(payload["delivered_at"], field_name="delivered_at", path=path)
+    )
+    return errors
+
+
+def _validate_event_subscription_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "subscription_id",
+            "event_type",
+            "subscriber_id",
+            "reaction_id",
+            "filter_source",
+            "active",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    for field_name in ("subscription_id", "event_type", "subscriber_id", "reaction_id", "filter_source"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["active"], bool):
+        errors.append(f"{_relative_path(path)}: field 'active' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_event_reaction_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "reaction_id",
+            "event_id",
+            "subscription_id",
+            "action_taken",
+            "result",
+            "reacted_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    for field_name in ("reaction_id", "event_id", "subscription_id", "action_taken", "result"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["reacted_at"], field_name="reacted_at", path=path))
+    return errors
+
+
+def _validate_event_window_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "window_id",
+            "correlation_id",
+            "window_start",
+            "window_end",
+            "event_count",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(_require_non_empty_text(payload["window_id"], field_name="window_id", path=path))
+    errors.extend(
+        _require_non_empty_text(payload["correlation_id"], field_name="correlation_id", path=path)
+    )
+    errors.extend(_validate_iso8601_text(payload["window_start"], field_name="window_start", path=path))
+    errors.extend(_validate_iso8601_text(payload["window_end"], field_name="window_end", path=path))
+    errors.extend(_require_non_negative_int(payload["event_count"], field_name="event_count", path=path))
+    return errors
+
+
+def _validate_event_correlation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "correlation_id",
+            "event_ids",
+            "root_event_id",
+            "description",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+
+    errors.extend(
+        _require_non_empty_text(payload["correlation_id"], field_name="correlation_id", path=path)
+    )
+    errors.extend(_require_non_empty_text(payload["root_event_id"], field_name="root_event_id", path=path))
+    errors.extend(_require_non_empty_text(payload["description"], field_name="description", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+
+    event_ids = payload["event_ids"]
+    if not isinstance(event_ids, list) or not event_ids:
+        errors.append(f"{_relative_path(path)}: field 'event_ids' must be a non-empty array")
+    else:
+        for index, event_id in enumerate(event_ids):
+            errors.extend(
+                _require_non_empty_text(event_id, field_name=f"event_ids[{index}]", path=path)
+            )
+        if isinstance(payload["root_event_id"], str) and payload["root_event_id"] not in event_ids:
+            errors.append(f"{_relative_path(path)}: root_event_id must be present in event_ids")
     return errors
 
 
@@ -1622,7 +1791,12 @@ def _validate_livelock_record_fixture(path: Path) -> list[str]:
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "assignment_policy.json": _validate_assignment_policy_fixture,
     "assignment_decision.json": _validate_assignment_decision_fixture,
+    "event_correlation.json": _validate_event_correlation_fixture,
+    "event_envelope.json": _validate_event_envelope_fixture,
     "event_record.json": _validate_event_record_fixture,
+    "event_reaction.json": _validate_event_reaction_fixture,
+    "event_subscription.json": _validate_event_subscription_fixture,
+    "event_window.json": _validate_event_window_fixture,
     "function_metrics_snapshot.json": _validate_function_metrics_snapshot_fixture,
     "function_outcome_record.json": _validate_function_outcome_record_fixture,
     "function_policy_binding.json": _validate_function_policy_binding_fixture,

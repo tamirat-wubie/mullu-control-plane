@@ -380,6 +380,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_event_envelope_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_envelope.json"
+        ));
+        assert_fixture_round_trip::<EventEnvelope>(fixture_json);
+    }
+
+    #[test]
     fn event_subscription_round_trips() {
         let sub = EventSubscription {
             subscription_id: "sub-1".to_string(),
@@ -393,6 +402,15 @@ mod tests {
         let json = serde_json::to_string(&sub).unwrap();
         let back: EventSubscription = serde_json::from_str(&json).unwrap();
         assert_eq!(sub, back);
+    }
+
+    #[test]
+    fn canonical_event_subscription_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_subscription.json"
+        ));
+        assert_fixture_round_trip::<EventSubscription>(fixture_json);
     }
 
     #[test]
@@ -411,6 +429,38 @@ mod tests {
     }
 
     #[test]
+    fn canonical_event_reaction_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_reaction.json"
+        ));
+        assert_fixture_round_trip::<EventReaction>(fixture_json);
+    }
+
+    #[test]
+    fn event_window_round_trips() {
+        let window = EventWindow {
+            window_id: "win-1".to_string(),
+            correlation_id: "corr-1".to_string(),
+            window_start: "2025-01-01T00:00:00+00:00".to_string(),
+            window_end: "2025-01-01T00:05:00+00:00".to_string(),
+            event_count: 3,
+        };
+        let json = serde_json::to_string(&window).unwrap();
+        let back: EventWindow = serde_json::from_str(&json).unwrap();
+        assert_eq!(window, back);
+    }
+
+    #[test]
+    fn canonical_event_window_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_window.json"
+        ));
+        assert_fixture_round_trip::<EventWindow>(fixture_json);
+    }
+
+    #[test]
     fn event_correlation_round_trips() {
         let corr = EventCorrelation {
             correlation_id: "corr-1".to_string(),
@@ -422,6 +472,15 @@ mod tests {
         let json = serde_json::to_string(&corr).unwrap();
         let back: EventCorrelation = serde_json::from_str(&json).unwrap();
         assert_eq!(corr, back);
+    }
+
+    #[test]
+    fn canonical_event_correlation_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/event_correlation.json"
+        ));
+        assert_fixture_round_trip::<EventCorrelation>(fixture_json);
     }
 
     // --- Obligation enum serialization ---

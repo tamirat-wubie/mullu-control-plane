@@ -28,7 +28,12 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "config-local-dev.json" in config_names
     assert "request-echo.json" in request_names
     assert "input_document.json" in auxiliary_names
+    assert "event_correlation.json" in maf_runtime_fixture_names
+    assert "event_envelope.json" in maf_runtime_fixture_names
     assert "event_record.json" in maf_runtime_fixture_names
+    assert "event_reaction.json" in maf_runtime_fixture_names
+    assert "event_subscription.json" in maf_runtime_fixture_names
+    assert "event_window.json" in maf_runtime_fixture_names
     assert "obligation_record.json" in maf_runtime_fixture_names
     assert "service_function_template.json" in maf_runtime_fixture_names
     assert "role_descriptor.json" in maf_runtime_fixture_names
@@ -64,7 +69,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 29
+    assert len(inventory.maf_runtime_fixture_paths) >= 34
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -392,4 +397,26 @@ def test_validate_maf_runtime_fixture_rejects_simulation_outcome_option_mismatch
 
     assert len(errors) == 1
     assert "consequence.option_id must match outcome option_id" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_event_correlation_root_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "event_correlation.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "correlation_id": "corr-drift",
+                "event_ids": ["evt-100", "evt-101"],
+                "root_event_id": "evt-999",
+                "description": "causal chain drift",
+                "created_at": "2025-01-01T00:04:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "root_event_id must be present in event_ids" in errors[0]
     assert fixture_path.name in errors[0]
