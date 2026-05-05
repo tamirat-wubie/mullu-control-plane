@@ -98,7 +98,6 @@ def test_capability_candidate_schema_rejects_unblocked_candidate() -> None:
     payload["promotion_blocked"] = False
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     promotion_contract = schema["properties"]["promotion_blocked"]
-
     assert promotion_contract["type"] == "boolean"
     assert promotion_contract["const"] is True
     assert payload["promotion_blocked"] != promotion_contract["const"]
