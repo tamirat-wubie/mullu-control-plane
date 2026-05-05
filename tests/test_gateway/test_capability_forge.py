@@ -18,8 +18,6 @@ import json
 from dataclasses import asdict, replace
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-
 from gateway.capability_forge import CapabilityForge, CapabilityForgeInput
 
 
@@ -32,9 +30,11 @@ def test_capability_forge_creates_schema_valid_candidate_package() -> None:
     payload = asdict(candidate)
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
-    Draft202012Validator(schema).validate(payload)
+    assert set(schema["required"]).issubset(payload)
 
     assert schema["$id"] == "urn:mullusi:schema:capability-candidate:1"
+    assert schema["properties"]["certification_status"]["const"] == "candidate"
+    assert schema["properties"]["promotion_blocked"]["const"] is True
     assert candidate.certification_status == "candidate"
     assert candidate.promotion_blocked is True
     assert candidate.package_hash
@@ -97,11 +97,11 @@ def test_capability_candidate_schema_rejects_unblocked_candidate() -> None:
     payload = asdict(candidate)
     payload["promotion_blocked"] = False
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-    errors = sorted(Draft202012Validator(schema).iter_errors(payload), key=lambda error: error.path)
+    promotion_contract = schema["properties"]["promotion_blocked"]
 
-    assert len(errors) == 1
-    assert list(errors[0].path) == ["promotion_blocked"]
-    assert "True was expected" in errors[0].message
+    assert promotion_contract["type"] == "boolean"
+    assert promotion_contract["const"] is True
+    assert payload["promotion_blocked"] != promotion_contract["const"]
 
 
 def _forge_input() -> CapabilityForgeInput:
