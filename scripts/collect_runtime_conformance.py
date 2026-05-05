@@ -66,6 +66,9 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "capability_plan_bundle_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
+    "proof_coverage_declared_routes_classified",
+    "proof_coverage_declared_route_count",
+    "proof_coverage_unclassified_route_count",
     "known_limitations_aligned",
     "security_model_aligned",
     "terminal_status",
@@ -217,6 +220,21 @@ def collect_runtime_conformance(
     ))
     if not core_canaries_passed:
         errors.append("runtime conformance core canaries did not all pass")
+
+    declared_routes_classified = bool(certificate.get("proof_coverage_declared_routes_classified"))
+    declared_route_count = _int_count(certificate, "proof_coverage_declared_route_count")
+    unclassified_route_count = _int_count(certificate, "proof_coverage_unclassified_route_count")
+    steps.append(CollectionStep(
+        name="runtime conformance proof coverage route classification",
+        passed=declared_routes_classified,
+        detail=(
+            f"classified={declared_routes_classified} "
+            f"route_count={declared_route_count} "
+            f"unclassified_route_count={unclassified_route_count}"
+        ),
+    ))
+    if not declared_routes_classified:
+        errors.append("runtime conformance proof coverage declared routes were not fully classified")
 
     responsibility_debt_passed = bool(certificate.get("authority_responsibility_debt_clear"))
     steps.append(CollectionStep(
@@ -445,6 +463,11 @@ def _verify_certificate_signature(payload: dict[str, Any], conformance_secret: s
 
 def _failed_boolean_fields(payload: dict[str, Any], field_names: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(field_name for field_name in field_names if payload.get(field_name) is not True)
+
+
+def _int_count(payload: dict[str, Any], field_name: str) -> int:
+    value = payload.get(field_name, 0)
+    return value if isinstance(value, int) else 0
 
 
 def _validate_runtime_conformance_certificate_schema(payload: dict[str, Any]) -> tuple[str, ...]:

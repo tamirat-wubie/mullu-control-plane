@@ -27,7 +27,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import gateway.conformance as conformance  # noqa: E402
-from gateway.conformance import _known_limitations_aligned, issue_conformance_certificate  # noqa: E402
+from gateway.conformance import ProofCoverageStatus, _known_limitations_aligned, issue_conformance_certificate  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
@@ -90,6 +90,57 @@ def test_runtime_conformance_certificate_matches_schema(monkeypatch) -> None:
     assert errors == []
     assert payload["checks"]
     assert all(check["evidence_ref"] for check in payload["checks"])
+
+
+def test_runtime_conformance_surfaces_unclassified_proof_routes(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        conformance,
+        "_proof_coverage_status",
+        lambda _repo_root: ProofCoverageStatus(
+            matrix_current=True,
+            declared_route_count=12,
+            unclassified_route_count=3,
+        ),
+    )
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    route_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "proof_coverage_declared_routes_classified"
+    )
+
+    assert payload["proof_coverage_declared_route_count"] == 12
+    assert payload["proof_coverage_unclassified_route_count"] == 3
+    assert payload["proof_coverage_declared_routes_classified"] is False
+    assert route_check["passed"] is False
+    assert "unclassified_route_count=3" in route_check["detail"]
+    assert "proof_coverage_declared_routes_unclassified" in payload["open_conformance_gaps"]
+
+
+def test_runtime_conformance_accepts_fully_classified_proof_routes(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        conformance,
+        "_proof_coverage_status",
+        lambda _repo_root: ProofCoverageStatus(
+            matrix_current=True,
+            declared_route_count=12,
+            unclassified_route_count=0,
+        ),
+    )
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    route_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "proof_coverage_declared_routes_classified"
+    )
+
+    assert payload["proof_coverage_declared_routes_classified"] is True
+    assert payload["proof_coverage_unclassified_route_count"] == 0
+    assert route_check["passed"] is True
+    assert "route_count=12" in route_check["detail"]
+    assert "proof_coverage_declared_routes_unclassified" not in payload["open_conformance_gaps"]
 
 
 def test_runtime_conformance_certificate_schema_gate_fails_closed(tmp_path, monkeypatch) -> None:

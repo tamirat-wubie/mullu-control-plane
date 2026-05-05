@@ -193,6 +193,34 @@ def test_collect_runtime_conformance_rejects_failed_core_canary(monkeypatch) -> 
     assert "runtime conformance core canaries did not all pass" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_unclassified_proof_routes(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        overrides={
+            "proof_coverage_declared_routes_classified": False,
+            "proof_coverage_declared_route_count": 301,
+            "proof_coverage_unclassified_route_count": 237,
+        },
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    route_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance proof coverage route classification"
+    )
+
+    assert route_step.passed is False
+    assert "route_count=301" in route_step.detail
+    assert "unclassified_route_count=237" in route_step.detail
+    assert "runtime conformance proof coverage declared routes were not fully classified" in collection.errors
+
+
 def test_collect_runtime_conformance_rejects_unclear_responsibility_debt(monkeypatch) -> None:
     secret = "conformance-secret"
     certificate = _signed_certificate(
@@ -543,6 +571,9 @@ def _signed_certificate(
         "capability_plan_bundle_count": capability_plan_bundle_count,
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
+        "proof_coverage_declared_routes_classified": True,
+        "proof_coverage_declared_route_count": 301,
+        "proof_coverage_unclassified_route_count": 0,
         "known_limitations_aligned": False,
         "security_model_aligned": False,
         "open_conformance_gaps": ["known_limitations_documentation_drift"],

@@ -71,6 +71,9 @@ REQUIRED_CONFORMANCE_FIELDS = (
     "capability_plan_bundle_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
+    "proof_coverage_declared_routes_classified",
+    "proof_coverage_declared_route_count",
+    "proof_coverage_unclassified_route_count",
     "known_limitations_aligned",
     "security_model_aligned",
     "terminal_status",
@@ -91,6 +94,7 @@ CORE_CONFORMANCE_BOOL_FIELDS = (
     "authority_obligation_canary_passed",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
+    "proof_coverage_declared_routes_classified",
 )
 
 
@@ -271,6 +275,8 @@ def collect_deployment_witness(
                 f"mcp_manifest_configured={mcp_manifest_configured} "
                 f"mcp_manifest_valid={mcp_manifest_valid} "
                 f"plan_bundle_passed={plan_bundle_passed} "
+                "proof_route_unclassified_count="
+                f"{_int_count(conformance_payload, 'proof_coverage_unclassified_route_count')} "
                 f"failed_core_canaries={list(failed_core_canaries)} "
                 f"missing={list(missing_conformance_fields)}"
             ),
