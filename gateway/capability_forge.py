@@ -16,6 +16,7 @@ Invariants:
   - Certification handoff emits evidence bundles, not registry mutations.
   - Registry handoff installation writes certification evidence only.
   - Direct maturity overrides are refused on handoff installation.
+  - Batch handoff installation requires exact entry-to-handoff coverage.
   - No candidate may self-deploy into the capability registry.
 """
 
@@ -222,6 +223,35 @@ class CapabilityCertificationHandoff:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "required_evidence_refs", tuple(str(ref) for ref in self.required_evidence_refs))
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityHandoffEvidenceInstallBatch:
+    """Evidence-only installation batch for capsule compiler inputs."""
+
+    registry_entries: tuple[CapabilityRegistryEntry, ...]
+    installed_capability_ids: tuple[str, ...]
+    handoff_hashes: tuple[str, ...]
+    batch_hash: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "registry_entries", tuple(self.registry_entries))
+        for entry in self.registry_entries:
+            if not isinstance(entry, CapabilityRegistryEntry):
+                raise ValueError("registry_entries must contain CapabilityRegistryEntry values")
+        object.__setattr__(self, "installed_capability_ids", tuple(str(value) for value in self.installed_capability_ids))
+        object.__setattr__(self, "handoff_hashes", tuple(str(value) for value in self.handoff_hashes))
+        if self.installed_capability_ids != tuple(entry.capability_id for entry in self.registry_entries):
+            raise ValueError("installed_capability_ids must match registry_entries")
+        if len(self.handoff_hashes) != len(self.registry_entries):
+            raise ValueError("handoff_hashes must match registry_entries")
+        if any(not handoff_hash.strip() for handoff_hash in self.handoff_hashes):
+            raise ValueError("handoff_hashes must contain non-empty strings")
+        if self.batch_hash:
+            normalized_hash = str(self.batch_hash).strip()
+            if not normalized_hash:
+                raise ValueError("batch_hash must be non-empty when supplied")
+            object.__setattr__(self, "batch_hash", normalized_hash)
 
 
 class CapabilityForge:
@@ -435,6 +465,57 @@ def install_certification_handoff_evidence(
     )
 
 
+def install_certification_handoff_evidence_batch(
+    entries: Iterable[CapabilityRegistryEntry],
+    handoffs: Iterable[CapabilityCertificationHandoff],
+    *,
+    require_production_ready: bool = False,
+) -> CapabilityHandoffEvidenceInstallBatch:
+    """Return registry entries with exact handoff certification evidence installed.
+
+    Error contract:
+      - capability_handoff_batch_entry_required: no registry entries were supplied.
+      - capability_handoff_batch_duplicate_entry: one capability id appears twice.
+      - capability_handoff_batch_duplicate_handoff: one handoff capability id appears twice.
+      - capability_handoff_batch_missing_handoff:<ids>: entry ids lack handoffs.
+      - capability_handoff_batch_extra_handoff:<ids>: handoffs lack matching entries.
+      - single-entry install errors from install_certification_handoff_evidence.
+    """
+    entries_tuple = tuple(entries)
+    handoffs_tuple = tuple(handoffs)
+    if not entries_tuple:
+        raise ValueError("capability_handoff_batch_entry_required")
+    entry_ids = tuple(entry.capability_id for entry in entries_tuple)
+    if len(set(entry_ids)) != len(entry_ids):
+        raise ValueError("capability_handoff_batch_duplicate_entry")
+    handoff_ids = tuple(handoff.capability_id for handoff in handoffs_tuple)
+    if len(set(handoff_ids)) != len(handoff_ids):
+        raise ValueError("capability_handoff_batch_duplicate_handoff")
+    handoffs_by_capability = {handoff.capability_id: handoff for handoff in handoffs_tuple}
+    missing_handoffs = tuple(capability_id for capability_id in entry_ids if capability_id not in handoffs_by_capability)
+    if missing_handoffs:
+        raise ValueError(f"capability_handoff_batch_missing_handoff:{','.join(missing_handoffs)}")
+    extra_handoffs = tuple(capability_id for capability_id in handoff_ids if capability_id not in entry_ids)
+    if extra_handoffs:
+        raise ValueError(f"capability_handoff_batch_extra_handoff:{','.join(extra_handoffs)}")
+
+    installed_entries = tuple(
+        install_certification_handoff_evidence(
+            entry,
+            handoffs_by_capability[entry.capability_id],
+            require_production_ready=require_production_ready,
+        )
+        for entry in entries_tuple
+    )
+    return _stamp_handoff_evidence_install_batch(
+        CapabilityHandoffEvidenceInstallBatch(
+            registry_entries=installed_entries,
+            installed_capability_ids=entry_ids,
+            handoff_hashes=tuple(handoffs_by_capability[capability_id].handoff_hash for capability_id in entry_ids),
+        )
+    )
+
+
 def _validation_errors(package: CandidateCapabilityPackage) -> list[str]:
     errors: list[str] = []
     if not package.package_id:
@@ -548,6 +629,17 @@ def _certification_evidence_extension_from_handoff(
         **payload,
         "certification_evidence_hash": canonical_hash(payload),
     }
+
+
+def _stamp_handoff_evidence_install_batch(
+    batch: CapabilityHandoffEvidenceInstallBatch,
+) -> CapabilityHandoffEvidenceInstallBatch:
+    payload = {
+        "registry_entries": [entry.to_json_dict() for entry in batch.registry_entries],
+        "installed_capability_ids": list(batch.installed_capability_ids),
+        "handoff_hashes": list(batch.handoff_hashes),
+    }
+    return replace(batch, batch_hash=canonical_hash(payload))
 
 
 def _require_text(value: str, field_name: str) -> str:
