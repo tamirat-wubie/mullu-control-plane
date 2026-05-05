@@ -640,6 +640,480 @@ def _validate_job_descriptor_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_work_queue_entry_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "entry_id",
+            "job_id",
+            "priority",
+            "enqueued_at",
+            "assigned_to_person_id",
+            "assigned_to_team_id",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "entry_id",
+        "job_id",
+        "priority",
+        "assigned_to_person_id",
+        "assigned_to_team_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["enqueued_at"], field_name="enqueued_at", path=path))
+    return errors
+
+
+def _validate_assignment_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "assignment_id",
+            "job_id",
+            "assigned_to_id",
+            "assigned_by_id",
+            "assigned_at",
+            "reason",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "assignment_id",
+        "job_id",
+        "assigned_to_id",
+        "assigned_by_id",
+        "reason",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["assigned_at"], field_name="assigned_at", path=path))
+    return errors
+
+
+def _validate_job_state_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "job_id",
+            "status",
+            "sla_status",
+            "current_assignment_id",
+            "pause_reason",
+            "thread_id",
+            "goal_id",
+            "workflow_id",
+            "started_at",
+            "updated_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "job_id",
+        "status",
+        "sla_status",
+        "current_assignment_id",
+        "pause_reason",
+        "thread_id",
+        "goal_id",
+        "workflow_id",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("started_at", "updated_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_follow_up_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("follow_up_id", "job_id", "reason", "scheduled_at", "resolved", "executed_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("follow_up_id", "job_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("scheduled_at", "executed_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["resolved"], bool):
+        errors.append(f"{_relative_path(path)}: field 'resolved' must be boolean")
+    return errors
+
+
+def _validate_deadline_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("job_id", "deadline", "sla_status", "evaluated_at", "sla_target_minutes"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("job_id", "sla_status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("deadline", "evaluated_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_positive_int(
+            payload["sla_target_minutes"],
+            field_name="sla_target_minutes",
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_job_execution_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "job_id",
+            "execution_id",
+            "status",
+            "started_at",
+            "outcome_summary",
+            "errors",
+            "completed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("job_id", "execution_id", "status", "outcome_summary"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("started_at", "completed_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    errors_list = payload["errors"]
+    if not isinstance(errors_list, list):
+        errors.append(f"{_relative_path(path)}: field 'errors' must be an array")
+    else:
+        for index, error_value in enumerate(errors_list):
+            errors.extend(_require_non_empty_text(error_value, field_name=f"errors[{index}]", path=path))
+    return errors
+
+
+def _validate_job_pause_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("job_id", "paused_at", "reason", "resumed_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("job_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("paused_at", "resumed_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_job_resume_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("job_id", "resumed_at", "resumed_by_id", "reason"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("job_id", "resumed_by_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["resumed_at"], field_name="resumed_at", path=path))
+    return errors
+
+
+def _validate_workflow_stage_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_workflow_stage_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_workflow_stage_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("stage_id", "stage_type", "skill_id", "description", "predecessors", "timeout_seconds"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("stage_id", "stage_type", "skill_id", "description"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    predecessors = payload["predecessors"]
+    predecessors_field_name = f"{prefix}predecessors".strip(".")
+    if not isinstance(predecessors, list):
+        errors.append(f"{_relative_path(path)}: field '{predecessors_field_name}' must be an array")
+    else:
+        for index, predecessor in enumerate(predecessors):
+            errors.extend(
+                _require_non_empty_text(
+                    predecessor,
+                    field_name=f"{predecessors_field_name}[{index}]",
+                    path=path,
+                )
+            )
+    errors.extend(
+        _require_positive_int(
+            payload["timeout_seconds"],
+            field_name=f"{prefix}timeout_seconds".strip("."),
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_workflow_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_workflow_binding_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_workflow_binding_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "binding_id",
+            "source_stage_id",
+            "source_output_key",
+            "target_stage_id",
+            "target_input_key",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in (
+        "binding_id",
+        "source_stage_id",
+        "source_output_key",
+        "target_stage_id",
+        "target_input_key",
+    ):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    return errors
+
+
+def _validate_workflow_descriptor_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("workflow_id", "name", "description", "stages", "bindings", "created_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("workflow_id", "name", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    stages = payload["stages"]
+    if not isinstance(stages, list) or not stages:
+        errors.append(f"{_relative_path(path)}: field 'stages' must be a non-empty array")
+        return errors
+    stage_ids: set[str] = set()
+    for index, stage in enumerate(stages):
+        errors.extend(
+            _validate_workflow_stage_dict(
+                stage,
+                path=path,
+                field_name=f"stages[{index}]",
+            )
+        )
+        if isinstance(stage, dict) and isinstance(stage.get("stage_id"), str):
+            stage_id = stage["stage_id"]
+            if stage_id in stage_ids:
+                errors.append(f"{_relative_path(path)}: stages must not repeat stage_id '{stage_id}'")
+            stage_ids.add(stage_id)
+    for index, stage in enumerate(stages):
+        if isinstance(stage, dict):
+            for predecessor in stage.get("predecessors", []):
+                if predecessor not in stage_ids:
+                    errors.append(
+                        f"{_relative_path(path)}: stages[{index}].predecessors references unknown stage_id '{predecessor}'"
+                    )
+                elif predecessor == stage.get("stage_id"):
+                    errors.append(
+                        f"{_relative_path(path)}: stages[{index}] must not list itself as a predecessor"
+                    )
+    bindings = payload["bindings"]
+    if not isinstance(bindings, list):
+        errors.append(f"{_relative_path(path)}: field 'bindings' must be an array")
+    else:
+        for index, binding in enumerate(bindings):
+            errors.extend(
+                _validate_workflow_binding_dict(
+                    binding,
+                    path=path,
+                    field_name=f"bindings[{index}]",
+                )
+            )
+            if isinstance(binding, dict):
+                source_stage_id = binding.get("source_stage_id")
+                target_stage_id = binding.get("target_stage_id")
+                if isinstance(source_stage_id, str) and source_stage_id not in stage_ids:
+                    errors.append(
+                        f"{_relative_path(path)}: bindings[{index}].source_stage_id references unknown stage_id '{source_stage_id}'"
+                    )
+                if isinstance(target_stage_id, str) and target_stage_id not in stage_ids:
+                    errors.append(
+                        f"{_relative_path(path)}: bindings[{index}].target_stage_id references unknown stage_id '{target_stage_id}'"
+                    )
+    return errors
+
+
+def _validate_workflow_transition_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("from_stage_id", "to_stage_id", "transition_type", "condition"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("from_stage_id", "to_stage_id", "transition_type", "condition"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_stage_execution_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_stage_execution_result_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_stage_execution_result_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    required_fields = {"stage_id", "status", "output", "started_at", "completed_at"}
+    optional_fields = {"error"}
+    actual_fields = set(payload)
+    missing_fields = sorted(required_fields - actual_fields)
+    unexpected_fields = sorted(actual_fields - required_fields - optional_fields)
+    errors: list[str] = []
+    if missing_fields:
+        errors.append(
+            f"{_relative_path(path)}: {field_name} missing required fields {', '.join(repr(name) for name in missing_fields)}"
+        )
+    if unexpected_fields:
+        errors.append(
+            f"{_relative_path(path)}: {field_name} has unexpected fields {', '.join(repr(name) for name in unexpected_fields)}"
+        )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("stage_id", "status"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+    )
+    if not isinstance(payload["output"], dict):
+        errors.append(f"{_relative_path(path)}: field '{f'{prefix}output'.strip('.')}' must be an object")
+    if "error" in payload and payload["error"] is not None and isinstance(payload["error"], (str, int, float, bool)):
+        # Allow null or structured JSON objects/arrays, but reject scalar drift.
+        errors.append(f"{_relative_path(path)}: field '{f'{prefix}error'.strip('.')}' must be null or structured JSON")
+    for nested_field_name in ("started_at", "completed_at"):
+        errors.extend(
+            _validate_iso8601_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    return errors
+
+
+def _validate_workflow_execution_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("workflow_id", "execution_id", "status", "stage_results", "started_at", "completed_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("workflow_id", "execution_id", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    stage_results = payload["stage_results"]
+    if not isinstance(stage_results, list):
+        errors.append(f"{_relative_path(path)}: field 'stage_results' must be an array")
+    else:
+        for index, stage_result in enumerate(stage_results):
+            errors.extend(
+                _validate_stage_execution_result_dict(
+                    stage_result,
+                    path=path,
+                    field_name=f"stage_results[{index}]",
+                )
+            )
+    for field_name in ("started_at", "completed_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_workflow_verification_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("execution_id", "verified", "mismatch_reasons", "verified_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["execution_id"], field_name="execution_id", path=path))
+    if not isinstance(payload["verified"], bool):
+        errors.append(f"{_relative_path(path)}: field 'verified' must be boolean")
+    mismatch_reasons = payload["mismatch_reasons"]
+    if not isinstance(mismatch_reasons, list):
+        errors.append(f"{_relative_path(path)}: field 'mismatch_reasons' must be an array")
+    else:
+        for index, reason in enumerate(mismatch_reasons):
+            errors.extend(_require_non_empty_text(reason, field_name=f"mismatch_reasons[{index}]", path=path))
+    errors.extend(_validate_iso8601_text(payload["verified_at"], field_name="verified_at", path=path))
+    return errors
+
+
 def _validate_goal_plan_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     errors = _validate_exact_object_fields(
@@ -2887,6 +3361,7 @@ def _validate_livelock_record_fixture(path: Path) -> list[str]:
 
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
+    "assignment_record.json": _validate_assignment_record_fixture,
     "assignment_policy.json": _validate_assignment_policy_fixture,
     "assignment_decision.json": _validate_assignment_decision_fixture,
     "benchmark_metric.json": _validate_benchmark_metric_fixture,
@@ -2912,8 +3387,14 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "function_policy_binding.json": _validate_function_policy_binding_fixture,
     "function_queue_profile.json": _validate_function_queue_profile_fixture,
     "function_sla_profile.json": _validate_function_sla_profile_fixture,
+    "follow_up_record.json": _validate_follow_up_record_fixture,
     "handoff_record.json": _validate_handoff_record_fixture,
+    "deadline_record.json": _validate_deadline_record_fixture,
     "job_descriptor.json": _validate_job_descriptor_fixture,
+    "job_execution_record.json": _validate_job_execution_record_fixture,
+    "job_pause_record.json": _validate_job_pause_record_fixture,
+    "job_resume_record.json": _validate_job_resume_record_fixture,
+    "job_state.json": _validate_job_state_fixture,
     "livelock_record.json": _validate_livelock_record_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
     "graph_query_result.json": _validate_graph_query_result_fixture,
@@ -2941,12 +3422,20 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "supervisor_policy.json": _validate_supervisor_policy_fixture,
     "supervisor_tick.json": _validate_supervisor_tick_fixture,
     "state_delta.json": _validate_state_delta_fixture,
+    "stage_execution_result.json": _validate_stage_execution_result_fixture,
     "team_queue_state.json": _validate_team_queue_state_fixture,
     "tradeoff_record.json": _validate_tradeoff_record_fixture,
     "utility_profile.json": _validate_utility_profile_fixture,
     "utility_verdict.json": _validate_utility_verdict_fixture,
+    "work_queue_entry.json": _validate_work_queue_entry_fixture,
     "worker_profile.json": _validate_worker_profile_fixture,
     "worker_capacity.json": _validate_worker_capacity_fixture,
+    "workflow_binding.json": _validate_workflow_binding_fixture,
+    "workflow_descriptor.json": _validate_workflow_descriptor_fixture,
+    "workflow_execution_record.json": _validate_workflow_execution_record_fixture,
+    "workflow_stage.json": _validate_workflow_stage_fixture,
+    "workflow_transition.json": _validate_workflow_transition_fixture,
+    "workflow_verification_record.json": _validate_workflow_verification_record_fixture,
     "workload_snapshot.json": _validate_workload_snapshot_fixture,
 }
 

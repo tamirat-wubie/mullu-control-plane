@@ -1,0 +1,6 @@
+{
+  "job_id": "job-42",
+  "paused_at": "2025-01-01T01:05:00+00:00",
+  "reason": "awaiting_approval",
+  "resumed_at": "2025-01-01T01:18:00+00:00"
+}

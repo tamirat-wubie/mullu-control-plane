@@ -280,7 +280,7 @@ pub mod workflow {
         pub stage_id: String,
         pub status: StageStatus,
         pub output: BTreeMap<String, serde_json::Value>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[serde(default)]
         pub error: Option<serde_json::Value>,
         #[serde(default, skip_serializing_if = "String::is_empty")]
         pub started_at: String,
@@ -740,6 +740,78 @@ mod tests {
         assert_fixture_round_trip::<job::JobDescriptor>(fixture_json);
     }
 
+    #[test]
+    fn canonical_work_queue_entry_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/work_queue_entry.json"
+        ));
+        assert_fixture_round_trip::<job::WorkQueueEntry>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_assignment_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/assignment_record.json"
+        ));
+        assert_fixture_round_trip::<job::AssignmentRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_state_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_state.json"
+        ));
+        assert_fixture_round_trip::<job::JobState>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_follow_up_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/follow_up_record.json"
+        ));
+        assert_fixture_round_trip::<job::FollowUpRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_deadline_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/deadline_record.json"
+        ));
+        assert_fixture_round_trip::<job::DeadlineRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_execution_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_execution_record.json"
+        ));
+        assert_fixture_round_trip::<job::JobExecutionRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_pause_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_pause_record.json"
+        ));
+        assert_fixture_round_trip::<job::JobPauseRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_job_resume_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/job_resume_record.json"
+        ));
+        assert_fixture_round_trip::<job::JobResumeRecord>(fixture_json);
+    }
+
     // --- Workflows ---
 
     #[test]
@@ -802,6 +874,69 @@ mod tests {
         let json = serde_json::to_string(&result).unwrap();
         assert!(json.contains(r#""output":{"alpha":2,"zeta":1}"#));
         assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
+    }
+
+    #[test]
+    fn canonical_workflow_stage_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_stage.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowStage>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_binding_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_binding.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowBinding>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_descriptor_runtime_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_descriptor.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_transition_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_transition.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowTransition>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_stage_execution_result_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/stage_execution_result.json"
+        ));
+        assert_fixture_round_trip::<workflow::StageExecutionResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_execution_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_execution_record.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowExecutionRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_workflow_verification_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/workflow_verification_record.json"
+        ));
+        assert_fixture_round_trip::<workflow::WorkflowVerificationRecord>(fixture_json);
     }
 
     // --- Goals ---

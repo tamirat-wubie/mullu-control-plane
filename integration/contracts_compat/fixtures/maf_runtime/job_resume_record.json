@@ -1,0 +1,6 @@
+{
+  "job_id": "job-42",
+  "resumed_at": "2025-01-01T01:18:00+00:00",
+  "resumed_by_id": "operator-1",
+  "reason": "approval received from release manager"
+}

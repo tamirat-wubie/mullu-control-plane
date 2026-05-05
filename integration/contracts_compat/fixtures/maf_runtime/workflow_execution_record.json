@@ -1,0 +1,32 @@
+{
+  "workflow_id": "wf-release-42",
+  "execution_id": "wf-exec-42",
+  "status": "failed",
+  "stage_results": [
+    {
+      "stage_id": "stage-build",
+      "status": "completed",
+      "output": {
+        "artifact_id": "artifact-42"
+      },
+      "error": null,
+      "started_at": "2025-01-01T01:20:00+00:00",
+      "completed_at": "2025-01-01T01:21:00+00:00"
+    },
+    {
+      "stage_id": "stage-verify",
+      "status": "failed",
+      "output": {
+        "verification_closed": false
+      },
+      "error": {
+        "code": "approval_pending",
+        "message": "verification blocked pending approval"
+      },
+      "started_at": "2025-01-01T01:21:00+00:00",
+      "completed_at": "2025-01-01T01:24:00+00:00"
+    }
+  ],
+  "started_at": "2025-01-01T01:20:00+00:00",
+  "completed_at": "2025-01-01T01:24:00+00:00"
+}

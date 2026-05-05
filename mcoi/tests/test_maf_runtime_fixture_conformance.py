@@ -68,7 +68,21 @@ from mcoi_runtime.contracts.graph import (
     StateDelta,
 )
 from mcoi_runtime.contracts.goal import GoalPlan, GoalPriority, GoalDescriptor, SubGoal, SubGoalStatus
-from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
+from mcoi_runtime.contracts.job import (
+    AssignmentRecord,
+    DeadlineRecord,
+    FollowUpRecord,
+    JobDescriptor,
+    JobExecutionRecord,
+    JobPauseRecord,
+    JobPriority,
+    JobResumeRecord,
+    JobState,
+    JobStatus,
+    PauseReason,
+    SlaStatus,
+    WorkQueueEntry,
+)
 from mcoi_runtime.contracts.obligation import (
     ObligationClosure,
     ObligationDeadline,
@@ -129,6 +143,19 @@ from mcoi_runtime.contracts.utility import (
     TradeoffRecord,
     UtilityProfile,
     UtilityVerdict,
+)
+from mcoi_runtime.contracts.workflow import (
+    StageExecutionResult,
+    StageStatus,
+    StageType,
+    TransitionType,
+    WorkflowBinding,
+    WorkflowDescriptor,
+    WorkflowExecutionRecord,
+    WorkflowStage,
+    WorkflowStatus,
+    WorkflowTransition,
+    WorkflowVerificationRecord,
 )
 
 
@@ -605,6 +632,168 @@ def _build_job_descriptor(payload: dict) -> JobDescriptor:
     )
 
 
+def _build_work_queue_entry(payload: dict) -> WorkQueueEntry:
+    return WorkQueueEntry(
+        entry_id=payload["entry_id"],
+        job_id=payload["job_id"],
+        priority=JobPriority(payload["priority"]),
+        enqueued_at=payload["enqueued_at"],
+        assigned_to_person_id=payload["assigned_to_person_id"],
+        assigned_to_team_id=payload["assigned_to_team_id"],
+    )
+
+
+def _build_assignment_record(payload: dict) -> AssignmentRecord:
+    return AssignmentRecord(
+        assignment_id=payload["assignment_id"],
+        job_id=payload["job_id"],
+        assigned_to_id=payload["assigned_to_id"],
+        assigned_by_id=payload["assigned_by_id"],
+        assigned_at=payload["assigned_at"],
+        reason=payload["reason"],
+    )
+
+
+def _build_job_state(payload: dict) -> JobState:
+    return JobState(
+        job_id=payload["job_id"],
+        status=JobStatus(payload["status"]),
+        sla_status=SlaStatus(payload["sla_status"]),
+        current_assignment_id=payload["current_assignment_id"],
+        pause_reason=PauseReason(payload["pause_reason"]),
+        thread_id=payload["thread_id"],
+        goal_id=payload["goal_id"],
+        workflow_id=payload["workflow_id"],
+        started_at=payload["started_at"],
+        updated_at=payload["updated_at"],
+    )
+
+
+def _build_follow_up_record(payload: dict) -> FollowUpRecord:
+    return FollowUpRecord(
+        follow_up_id=payload["follow_up_id"],
+        job_id=payload["job_id"],
+        reason=payload["reason"],
+        scheduled_at=payload["scheduled_at"],
+        resolved=payload["resolved"],
+        executed_at=payload["executed_at"],
+    )
+
+
+def _build_deadline_record(payload: dict) -> DeadlineRecord:
+    return DeadlineRecord(
+        job_id=payload["job_id"],
+        deadline=payload["deadline"],
+        sla_status=SlaStatus(payload["sla_status"]),
+        evaluated_at=payload["evaluated_at"],
+        sla_target_minutes=payload["sla_target_minutes"],
+    )
+
+
+def _build_job_execution_record(payload: dict) -> JobExecutionRecord:
+    return JobExecutionRecord(
+        job_id=payload["job_id"],
+        execution_id=payload["execution_id"],
+        status=JobStatus(payload["status"]),
+        started_at=payload["started_at"],
+        outcome_summary=payload["outcome_summary"],
+        errors=tuple(payload["errors"]),
+        completed_at=payload["completed_at"],
+    )
+
+
+def _build_job_pause_record(payload: dict) -> JobPauseRecord:
+    return JobPauseRecord(
+        job_id=payload["job_id"],
+        paused_at=payload["paused_at"],
+        reason=PauseReason(payload["reason"]),
+        resumed_at=payload["resumed_at"],
+    )
+
+
+def _build_job_resume_record(payload: dict) -> JobResumeRecord:
+    return JobResumeRecord(
+        job_id=payload["job_id"],
+        resumed_at=payload["resumed_at"],
+        resumed_by_id=payload["resumed_by_id"],
+        reason=payload["reason"],
+    )
+
+
+def _build_workflow_stage(payload: dict) -> WorkflowStage:
+    return WorkflowStage(
+        stage_id=payload["stage_id"],
+        stage_type=StageType(payload["stage_type"]),
+        skill_id=payload["skill_id"],
+        description=payload["description"],
+        predecessors=tuple(payload["predecessors"]),
+        timeout_seconds=payload["timeout_seconds"],
+    )
+
+
+def _build_workflow_binding(payload: dict) -> WorkflowBinding:
+    return WorkflowBinding(
+        binding_id=payload["binding_id"],
+        source_stage_id=payload["source_stage_id"],
+        source_output_key=payload["source_output_key"],
+        target_stage_id=payload["target_stage_id"],
+        target_input_key=payload["target_input_key"],
+    )
+
+
+def _build_workflow_descriptor(payload: dict) -> WorkflowDescriptor:
+    return WorkflowDescriptor(
+        workflow_id=payload["workflow_id"],
+        name=payload["name"],
+        description=payload["description"],
+        stages=tuple(_build_workflow_stage(stage) for stage in payload["stages"]),
+        bindings=tuple(_build_workflow_binding(binding) for binding in payload["bindings"]),
+        created_at=payload["created_at"],
+    )
+
+
+def _build_workflow_transition(payload: dict) -> WorkflowTransition:
+    return WorkflowTransition(
+        from_stage_id=payload["from_stage_id"],
+        to_stage_id=payload["to_stage_id"],
+        transition_type=TransitionType(payload["transition_type"]),
+        condition=payload["condition"],
+    )
+
+
+def _build_stage_execution_result(payload: dict) -> StageExecutionResult:
+    return StageExecutionResult(
+        stage_id=payload["stage_id"],
+        status=StageStatus(payload["status"]),
+        output=payload["output"],
+        error=payload.get("error"),
+        started_at=payload["started_at"],
+        completed_at=payload["completed_at"],
+    )
+
+
+def _build_workflow_execution_record(payload: dict) -> WorkflowExecutionRecord:
+    return WorkflowExecutionRecord(
+        workflow_id=payload["workflow_id"],
+        execution_id=payload["execution_id"],
+        status=WorkflowStatus(payload["status"]),
+        stage_results=tuple(
+            _build_stage_execution_result(stage_result) for stage_result in payload["stage_results"]
+        ),
+        started_at=payload["started_at"],
+        completed_at=payload["completed_at"],
+    )
+
+
+def _build_workflow_verification_record(payload: dict) -> WorkflowVerificationRecord:
+    return WorkflowVerificationRecord(
+        execution_id=payload["execution_id"],
+        verified=payload["verified"],
+        mismatch_reasons=tuple(payload["mismatch_reasons"]),
+        verified_at=payload["verified_at"],
+    )
+
+
 def _build_goal_plan(payload: dict) -> GoalPlan:
     return GoalPlan(
         plan_id=payload["plan_id"],
@@ -909,6 +1098,7 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
     ("fixture_name", "builder"),
     [
         ("adversarial_case.json", _build_adversarial_case),
+        ("assignment_record.json", _build_assignment_record),
         ("benchmark_metric.json", _build_benchmark_metric),
         ("benchmark_result.json", _build_benchmark_result),
         ("benchmark_run.json", _build_benchmark_run),
@@ -934,15 +1124,21 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("function_policy_binding.json", _build_function_policy_binding),
         ("function_sla_profile.json", _build_function_sla_profile),
         ("function_queue_profile.json", _build_function_queue_profile),
+        ("follow_up_record.json", _build_follow_up_record),
         ("assignment_policy.json", _build_assignment_policy),
         ("worker_capacity.json", _build_worker_capacity),
         ("team_queue_state.json", _build_team_queue_state),
         ("worker_profile.json", _build_worker_profile),
         ("assignment_decision.json", _build_assignment_decision),
+        ("deadline_record.json", _build_deadline_record),
         ("handoff_record.json", _build_handoff_record),
+        ("job_execution_record.json", _build_job_execution_record),
         ("workload_snapshot.json", _build_workload_snapshot),
         ("function_outcome_record.json", _build_function_outcome_record),
         ("function_metrics_snapshot.json", _build_function_metrics_snapshot),
+        ("job_pause_record.json", _build_job_pause_record),
+        ("job_resume_record.json", _build_job_resume_record),
+        ("job_state.json", _build_job_state),
         ("simulation_option.json", _build_simulation_option),
         ("simulation_request.json", _build_simulation_request),
         ("simulation_outcome.json", _build_simulation_outcome),
@@ -967,9 +1163,17 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("decision_link.json", _build_decision_link),
         ("obligation_link.json", _build_obligation_link),
         ("state_delta.json", _build_state_delta),
+        ("stage_execution_result.json", _build_stage_execution_result),
         ("causal_path.json", _build_causal_path),
         ("graph_snapshot.json", _build_graph_snapshot),
         ("graph_query_result.json", _build_graph_query_result),
+        ("work_queue_entry.json", _build_work_queue_entry),
+        ("workflow_binding.json", _build_workflow_binding),
+        ("workflow_descriptor.json", _build_workflow_descriptor),
+        ("workflow_execution_record.json", _build_workflow_execution_record),
+        ("workflow_stage.json", _build_workflow_stage),
+        ("workflow_transition.json", _build_workflow_transition),
+        ("workflow_verification_record.json", _build_workflow_verification_record),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(

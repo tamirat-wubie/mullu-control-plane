@@ -42,6 +42,21 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "adversarial_case.json" in maf_runtime_fixture_names
     assert "regression_record.json" in maf_runtime_fixture_names
     assert "capability_scorecard.json" in maf_runtime_fixture_names
+    assert "work_queue_entry.json" in maf_runtime_fixture_names
+    assert "assignment_record.json" in maf_runtime_fixture_names
+    assert "job_state.json" in maf_runtime_fixture_names
+    assert "follow_up_record.json" in maf_runtime_fixture_names
+    assert "deadline_record.json" in maf_runtime_fixture_names
+    assert "job_execution_record.json" in maf_runtime_fixture_names
+    assert "job_pause_record.json" in maf_runtime_fixture_names
+    assert "job_resume_record.json" in maf_runtime_fixture_names
+    assert "workflow_stage.json" in maf_runtime_fixture_names
+    assert "workflow_binding.json" in maf_runtime_fixture_names
+    assert "workflow_descriptor.json" in maf_runtime_fixture_names
+    assert "workflow_transition.json" in maf_runtime_fixture_names
+    assert "stage_execution_result.json" in maf_runtime_fixture_names
+    assert "workflow_execution_record.json" in maf_runtime_fixture_names
+    assert "workflow_verification_record.json" in maf_runtime_fixture_names
     assert "operational_node.json" in maf_runtime_fixture_names
     assert "operational_edge.json" in maf_runtime_fixture_names
     assert "evidence_link.json" in maf_runtime_fixture_names
@@ -97,7 +112,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 62
+    assert len(inventory.maf_runtime_fixture_paths) >= 77
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -573,6 +588,71 @@ def test_validate_maf_runtime_fixture_rejects_scorecard_metric_overflow(tmp_path
 
     assert len(errors) == 1
     assert "metrics_passing cannot exceed metric_count" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_workflow_binding_unknown_stage(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "workflow_descriptor.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "workflow_id": "wf-drift",
+                "name": "Broken workflow",
+                "description": "binding drift",
+                "stages": [
+                    {
+                        "stage_id": "stage-build",
+                        "stage_type": "skill_execution",
+                        "skill_id": "build-release",
+                        "description": "Build the release artifact",
+                        "predecessors": [],
+                        "timeout_seconds": 600,
+                    }
+                ],
+                "bindings": [
+                    {
+                        "binding_id": "binding-drift",
+                        "source_stage_id": "stage-build",
+                        "source_output_key": "artifact_id",
+                        "target_stage_id": "stage-missing",
+                        "target_input_key": "artifact_id",
+                    }
+                ],
+                "created_at": "2025-01-01T00:50:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "target_stage_id references unknown stage_id 'stage-missing'" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_job_execution_empty_error(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "job_execution_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "job_id": "job-drift",
+                "execution_id": "job-exec-drift",
+                "status": "failed",
+                "started_at": "2025-01-01T01:20:00+00:00",
+                "outcome_summary": "approval gate blocked rollout completion",
+                "errors": [""],
+                "completed_at": "2025-01-01T01:25:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "errors[0]" in errors[0]
+    assert "must be a non-empty string" in errors[0]
     assert fixture_path.name in errors[0]
 
 

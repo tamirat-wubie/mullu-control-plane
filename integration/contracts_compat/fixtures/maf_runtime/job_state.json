@@ -1,0 +1,12 @@
+{
+  "job_id": "job-42",
+  "status": "paused",
+  "sla_status": "at_risk",
+  "current_assignment_id": "assign-42",
+  "pause_reason": "awaiting_approval",
+  "thread_id": "thread-42",
+  "goal_id": "goal-42",
+  "workflow_id": "wf-release-42",
+  "started_at": "2025-01-01T01:02:00+00:00",
+  "updated_at": "2025-01-01T01:05:00+00:00"
+}
