@@ -95,6 +95,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/webhook/web"]["surface_id"] == "gateway_webhook_ingress"
     assert classified_routes["/api/v1/data-governance/evaluate"]["surface_id"] == "data_governance_controls"
     assert classified_routes["/api/v1/compliance/audit-package"]["surface_id"] == "compliance_evidence_exports"
+    assert classified_routes["/api/v1/runbooks/analyze"]["surface_id"] == "runbook_learning_lifecycle"
+    assert classified_routes["/api/v1/runbooks/{runbook_id}/activate"]["surface_id"] == "runbook_learning_lifecycle"
     assert classified_routes["/authority/operator"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
@@ -155,6 +157,36 @@ def test_compliance_evidence_exports_surface_is_witnessed() -> None:
     assert "audit_chain_verification" in witnesses
     assert "self_audited_export_event" in witnesses
     assert closure_actions["classify_compliance_evidence_exports"]["status"] == "closed"
+
+
+def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    runbook_surface = surfaces["runbook_learning_lifecycle"]
+    witnesses = set(runbook_surface["runtime_witnesses"])
+
+    assert runbook_surface["coverage_state"] == "witnessed"
+    assert runbook_surface["request_proof"] == "request_proof"
+    assert runbook_surface["action_proof"] == "action_proof"
+    assert "/api/v1/runbooks" in runbook_surface["representative_paths"]
+    assert "/api/v1/runbooks/analyze" in runbook_surface["representative_paths"]
+    assert "/api/v1/runbooks/promote" in runbook_surface["representative_paths"]
+    assert "/api/v1/runbooks/approve" in runbook_surface["representative_paths"]
+    assert "/api/v1/runbooks/{runbook_id}/activate" in runbook_surface["representative_paths"]
+    assert "/api/v1/runbooks/{runbook_id}/retire" in runbook_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/runbooks.py" in runbook_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "mcoi/tests/test_runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "patterns_detected_from_audit_trail" in witnesses
+    assert "promotion_requires_detected_pattern" in witnesses
+    assert "approval_required_before_activation" in witnesses
+    assert "retirement_requires_active_runbook" in witnesses
+    assert "promote_and_approve_audit_records" in witnesses
+    assert "sanitized_runbook_error_details" in witnesses
+    assert "runbook_pattern_read_models_bounded" in witnesses
+    assert "runbook_responses_governed" in witnesses
+    assert closure_actions["classify_runbook_learning_routes"]["status"] == "closed"
 
 
 def test_authority_operator_controls_surface_is_witnessed() -> None:

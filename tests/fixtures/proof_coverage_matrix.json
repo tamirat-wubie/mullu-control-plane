@@ -97,6 +97,13 @@
       ]
     },
     {
+      "action_id": "classify_runbook_learning_routes",
+      "status": "closed",
+      "surfaces": [
+        "runbook_learning_lifecycle"
+      ]
+    },
+    {
       "action_id": "publish_runtime_conformance_attestation",
       "status": "closed",
       "surfaces": [
@@ -274,7 +281,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 34,
+      "action_proof": 35,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -282,7 +289,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 39,
+      "audit_chain": 40,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -290,23 +297,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 42
+      "witnessed": 43
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
-      "request_proof": 34
+      "request_proof": 35
     },
-    "surface_count": 43
+    "surface_count": 44
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 4,
-      "unproven": 207,
-      "witnessed": 90
+      "unproven": 199,
+      "witnessed": 98
     },
     "route_count": 301,
     "routes": [
@@ -1241,44 +1248,44 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/analyze",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/approve",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/patterns",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/promote",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/{runbook_id}/activate",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/runbooks/{runbook_id}/retire",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1816,7 +1823,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 207
+    "unclassified_route_count": 199
   },
   "schema_version": 1,
   "surfaces": [
@@ -2106,6 +2113,40 @@
         "audit_chain_hash_linked"
       ],
       "surface_id": "audit_chain_api"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/runbooks.py",
+        "mcoi/mcoi_runtime/core/runbook_learning.py",
+        "mcoi/mcoi_runtime/app/server_http.py",
+        "mcoi/tests/test_runbook_learning.py"
+      ],
+      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, and expose bounded read models for runbooks, patterns, and summaries.",
+      "representative_paths": [
+        "/api/v1/runbooks",
+        "/api/v1/runbooks/analyze",
+        "/api/v1/runbooks/approve",
+        "/api/v1/runbooks/patterns",
+        "/api/v1/runbooks/promote",
+        "/api/v1/runbooks/summary",
+        "/api/v1/runbooks/{runbook_id}/activate",
+        "/api/v1/runbooks/{runbook_id}/retire"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "patterns_detected_from_audit_trail",
+        "promotion_requires_detected_pattern",
+        "approval_required_before_activation",
+        "retirement_requires_active_runbook",
+        "promote_and_approve_audit_records",
+        "sanitized_runbook_error_details",
+        "runbook_pattern_read_models_bounded",
+        "runbook_responses_governed"
+      ],
+      "surface_id": "runbook_learning_lifecycle"
     },
     {
       "action_proof": "action_proof",
