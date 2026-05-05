@@ -53,6 +53,8 @@ The capability forge emits candidate packages and certification handoffs, never 
 
 The forge-side registry handoff installer accepts only a stamped handoff for an already certified registry entry. It writes the bundle as `extensions.capability_certification_evidence`, refuses direct `capability_maturity_evidence` overrides, and validates production readiness through the maturity synthesizer without installing executable capability records or bypassing capsule admission.
 
+For capsule compilation, the batch installer requires exact coverage between registry entries and handoffs, preserves entry order, and returns a hash-stamped batch witness. The capsule compiler then serializes those evidence-bearing entries, and `GovernedCapabilityRegistry.install` still performs the only executable registry admission.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.
