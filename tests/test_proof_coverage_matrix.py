@@ -93,6 +93,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/lineage/resolve"]["surface_id"] == "lineage_query_api"
     assert classified_routes["/api/v1/stream"]["surface_id"] == "llm_streaming"
     assert classified_routes["/webhook/web"]["surface_id"] == "gateway_webhook_ingress"
+    assert classified_routes["/api/v1/data-governance/evaluate"]["surface_id"] == "data_governance_controls"
+    assert classified_routes["/api/v1/compliance/audit-package"]["surface_id"] == "compliance_evidence_exports"
     assert classified_routes["/api/v1/agent/register"]["coverage_state"] == "unproven"
 
 
@@ -107,6 +109,48 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
+
+
+def test_data_governance_controls_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    data_surface = surfaces["data_governance_controls"]
+    witnesses = set(data_surface["runtime_witnesses"])
+
+    assert data_surface["coverage_state"] == "witnessed"
+    assert data_surface["request_proof"] == "request_proof"
+    assert data_surface["action_proof"] == "action_proof"
+    assert "/api/v1/data-governance/classify" in data_surface["representative_paths"]
+    assert "/api/v1/data-governance/evaluate" in data_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/data.py" in data_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/data_governance.py" in data_surface["evidence_files"]
+    assert "mcoi/tests/test_data_governance_endpoints.py" in data_surface["evidence_files"]
+    assert "data_governance_state_hash" in witnesses
+    assert "data_governance_action_proof" in witnesses
+    assert "tenant_visible_violation_read_model" in witnesses
+    assert closure_actions["classify_data_governance_routes"]["status"] == "closed"
+
+
+def test_compliance_evidence_exports_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    compliance_surface = surfaces["compliance_evidence_exports"]
+    witnesses = set(compliance_surface["runtime_witnesses"])
+
+    assert compliance_surface["coverage_state"] == "witnessed"
+    assert compliance_surface["request_proof"] == "request_proof"
+    assert compliance_surface["action_proof"] == "action_proof"
+    assert "/api/v1/compliance/audit-package" in compliance_surface["representative_paths"]
+    assert "/api/v1/compliance/summary" in compliance_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/app/routers/compliance.py" in compliance_surface["evidence_files"]
+    assert "mcoi/tests/test_compliance_export.py" in compliance_surface["evidence_files"]
+    assert "scripts/compliance_alignment_matrix.py" in compliance_surface["evidence_files"]
+    assert "compliance_package_hash" in witnesses
+    assert "audit_chain_verification" in witnesses
+    assert "self_audited_export_event" in witnesses
+    assert closure_actions["classify_compliance_evidence_exports"]["status"] == "closed"
 
 
 def test_gateway_runtime_witness_covers_orchestration_receipts() -> None:
