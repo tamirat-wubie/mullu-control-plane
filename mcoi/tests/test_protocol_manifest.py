@@ -22,6 +22,7 @@ def test_protocol_manifest_is_valid() -> None:
     orchestration_validation_entry = entries["deployment-orchestration-receipt-validation"]
     publication_closure_validation_entry = entries["deployment-publication-closure-validation"]
     candidate_entry = entries["capability-candidate"]
+    maturity_entry = entries["capability-maturity"]
     gateway_readiness_entry = entries["gateway-publication-readiness"]
     gateway_receipt_validation_entry = entries["gateway-publication-receipt-validation"]
     goal_entry = entries["goal"]
@@ -36,7 +37,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 43
+    assert len(manifest["schemas"]) == 44
     assert orchestration_validation_entry["path"] == "schemas/deployment_orchestration_receipt_validation.schema.json"
     assert orchestration_validation_entry["urn"] == "urn:mullusi:schema:deployment-orchestration-receipt-validation:1"
     assert orchestration_validation_entry["surface"] == "deployment"
@@ -46,6 +47,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert candidate_entry["path"] == "schemas/capability_candidate.schema.json"
     assert candidate_entry["urn"] == "urn:mullusi:schema:capability-candidate:1"
     assert candidate_entry["surface"] == "capability"
+    assert maturity_entry["path"] == "schemas/capability_maturity.schema.json"
+    assert maturity_entry["urn"] == "urn:mullusi:schema:capability-maturity:1"
+    assert maturity_entry["surface"] == "capability"
     assert gateway_readiness_entry["path"] == "schemas/gateway_publication_readiness.schema.json"
     assert gateway_readiness_entry["urn"] == "urn:mullusi:schema:gateway-publication-readiness:1"
     assert gateway_readiness_entry["surface"] == "deployment"

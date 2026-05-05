@@ -93,6 +93,17 @@ def test_protocol_manifest_indexes_capability_candidate_package() -> None:
     assert candidate_entry["surface"] == "capability"
 
 
+def test_protocol_manifest_indexes_capability_maturity_assessment() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    maturity_entry = entries["capability-maturity"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert maturity_entry["path"] == "schemas/capability_maturity.schema.json"
+    assert maturity_entry["urn"] == "urn:mullusi:schema:capability-maturity:1"
+    assert maturity_entry["surface"] == "capability"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
