@@ -323,6 +323,38 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "authority_operator_controls",
+            [
+                "/authority/operator",
+                "/authority/operator-audit",
+                "/authority/ownership",
+                "/authority/policies",
+                "/authority/approval-chains/expire-overdue",
+                "/authority/obligations/{obligation_id}/satisfy",
+                "/authority/obligations/escalate-overdue",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/server.py",
+                "gateway/authority_obligation_mesh.py",
+                "gateway/tenant_identity.py",
+                "scripts/collect_runtime_conformance.py",
+                "tests/test_gateway/test_webhooks.py",
+                "tests/test_gateway/test_authority_obligation_mesh.py",
+            ],
+            "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, and obligation satisfaction/escalation controls.",
+            [
+                "operator_access_guard",
+                "operator_audit_events",
+                "ownership_policy_read_models",
+                "approval_expiration_witness",
+                "obligation_satisfaction_escalation_witness",
+            ],
+        ),
+        _surface(
             "gateway_runtime_witness",
             ["/gateway/witness", "/runtime/witness", "/anchors/latest"],
             "read_model",
@@ -764,6 +796,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "bound_authority_read_models_to_paginated_windows",
             "surfaces": ["gateway_approval_resolution", "authority_obligation_mesh"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_authority_operator_controls",
+            "surfaces": ["authority_operator_controls", "authority_obligation_mesh"],
             "status": "closed",
         },
         {
