@@ -96,6 +96,20 @@
         "runtime_reflex_engine",
         "runtime_conformance_attestation"
       ]
+    },
+    {
+      "action_id": "publish_governed_operational_intelligence_witnesses",
+      "status": "closed",
+      "surfaces": [
+        "governed_operational_intelligence"
+      ]
+    },
+    {
+      "action_id": "publish_capability_forge_candidate_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_forge"
+      ]
     }
   ],
   "coverage_levels": [
@@ -112,7 +126,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 14,
+      "action_proof": 16,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -120,7 +134,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 18,
+      "audit_chain": 20,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -128,16 +142,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 21
+      "witnessed": 23
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 14
+      "request_proof": 16
     },
-    "surface_count": 22
+    "surface_count": 24
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "schema_version": 1,
@@ -536,6 +550,63 @@
         "reflex_validator_receipt_artifact"
       ],
       "surface_id": "runtime_reflex_engine"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/world_state.py",
+        "gateway/goal_compiler.py",
+        "gateway/causal_simulator.py",
+        "schemas/world_state.schema.json",
+        "schemas/goal.schema.json",
+        "schemas/simulation_receipt.schema.json",
+        "tests/test_gateway/test_world_state.py",
+        "tests/test_gateway/test_goal_compiler.py",
+        "tests/test_gateway/test_causal_simulator.py"
+      ],
+      "notes": "Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+      "representative_paths": [
+        "WorldStateStore.add_entity",
+        "GoalCompiler.compile",
+        "CausalSimulator.simulate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "world_assertions_require_source_evidence",
+        "goal_plan_certificate_hash_bound",
+        "simulation_receipt_schema_valid",
+        "open_world_contradictions_block_execution",
+        "high_risk_controls_projected_before_execution"
+      ],
+      "surface_id": "governed_operational_intelligence"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "docs/62_governed_operational_intelligence.md",
+        "gateway/capability_forge.py",
+        "schemas/capability_candidate.schema.json",
+        "tests/test_gateway/test_capability_forge.py"
+      ],
+      "notes": "Capability forge emits schema-backed candidate packages only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, and recovery evidence before certification handoff.",
+      "representative_paths": [
+        "CapabilityForge.create_candidate",
+        "CapabilityForge.validate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "candidate_promotion_blocked",
+        "candidate_schema_valid",
+        "high_risk_approval_policy_required",
+        "effect_bearing_candidate_requires_sandbox",
+        "effect_bearing_candidate_requires_recovery_path"
+      ],
+      "surface_id": "capability_forge"
     },
     {
       "action_proof": "action_proof",

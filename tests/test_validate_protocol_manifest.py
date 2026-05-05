@@ -82,6 +82,17 @@ def test_protocol_manifest_indexes_capability_adapter_closure_plan() -> None:
     assert plan_entry["surface"] == "promotion"
 
 
+def test_protocol_manifest_indexes_capability_candidate_package() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    candidate_entry = entries["capability-candidate"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert candidate_entry["path"] == "schemas/capability_candidate.schema.json"
+    assert candidate_entry["urn"] == "urn:mullusi:schema:capability-candidate:1"
+    assert candidate_entry["surface"] == "capability"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -135,6 +146,25 @@ def test_protocol_manifest_indexes_gateway_publication_receipt_validation() -> N
     assert validation_entry["path"] == "schemas/gateway_publication_receipt_validation.schema.json"
     assert validation_entry["urn"] == "urn:mullusi:schema:gateway-publication-receipt-validation:1"
     assert validation_entry["surface"] == "deployment"
+
+
+def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    goal_entry = entries["goal"]
+    simulation_entry = entries["simulation-receipt"]
+    world_state_entry = entries["world-state"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert goal_entry["path"] == "schemas/goal.schema.json"
+    assert goal_entry["urn"] == "urn:mullusi:schema:goal:1"
+    assert goal_entry["surface"] == "planning"
+    assert simulation_entry["path"] == "schemas/simulation_receipt.schema.json"
+    assert simulation_entry["urn"] == "urn:mullusi:schema:simulation-receipt:1"
+    assert simulation_entry["surface"] == "simulation"
+    assert world_state_entry["path"] == "schemas/world_state.schema.json"
+    assert world_state_entry["urn"] == "urn:mullusi:schema:world-state:1"
+    assert world_state_entry["surface"] == "world"
 
 
 def test_protocol_manifest_indexes_terminal_closure_certificate() -> None:

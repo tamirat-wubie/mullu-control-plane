@@ -21,8 +21,12 @@ def test_protocol_manifest_is_valid() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     orchestration_validation_entry = entries["deployment-orchestration-receipt-validation"]
     publication_closure_validation_entry = entries["deployment-publication-closure-validation"]
+    candidate_entry = entries["capability-candidate"]
     gateway_readiness_entry = entries["gateway-publication-readiness"]
     gateway_receipt_validation_entry = entries["gateway-publication-receipt-validation"]
+    goal_entry = entries["goal"]
+    simulation_entry = entries["simulation-receipt"]
+    world_state_entry = entries["world-state"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
     receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
     errors = validate_protocol_manifest(manifest)
@@ -31,19 +35,31 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 38
+    assert len(manifest["schemas"]) == 42
     assert orchestration_validation_entry["path"] == "schemas/deployment_orchestration_receipt_validation.schema.json"
     assert orchestration_validation_entry["urn"] == "urn:mullusi:schema:deployment-orchestration-receipt-validation:1"
     assert orchestration_validation_entry["surface"] == "deployment"
     assert publication_closure_validation_entry["path"] == "schemas/deployment_publication_closure_validation.schema.json"
     assert publication_closure_validation_entry["urn"] == "urn:mullusi:schema:deployment-publication-closure-validation:1"
     assert publication_closure_validation_entry["surface"] == "deployment"
+    assert candidate_entry["path"] == "schemas/capability_candidate.schema.json"
+    assert candidate_entry["urn"] == "urn:mullusi:schema:capability-candidate:1"
+    assert candidate_entry["surface"] == "capability"
     assert gateway_readiness_entry["path"] == "schemas/gateway_publication_readiness.schema.json"
     assert gateway_readiness_entry["urn"] == "urn:mullusi:schema:gateway-publication-readiness:1"
     assert gateway_readiness_entry["surface"] == "deployment"
     assert gateway_receipt_validation_entry["path"] == "schemas/gateway_publication_receipt_validation.schema.json"
     assert gateway_receipt_validation_entry["urn"] == "urn:mullusi:schema:gateway-publication-receipt-validation:1"
     assert gateway_receipt_validation_entry["surface"] == "deployment"
+    assert goal_entry["path"] == "schemas/goal.schema.json"
+    assert goal_entry["urn"] == "urn:mullusi:schema:goal:1"
+    assert goal_entry["surface"] == "planning"
+    assert simulation_entry["path"] == "schemas/simulation_receipt.schema.json"
+    assert simulation_entry["urn"] == "urn:mullusi:schema:simulation-receipt:1"
+    assert simulation_entry["surface"] == "simulation"
+    assert world_state_entry["path"] == "schemas/world_state.schema.json"
+    assert world_state_entry["urn"] == "urn:mullusi:schema:world-state:1"
+    assert world_state_entry["surface"] == "world"
     assert reflex_entry["path"] == "schemas/reflex_deployment_witness_envelope.schema.json"
     assert reflex_entry["urn"] == "urn:mullusi:schema:reflex-deployment-witness-envelope:1"
     assert reflex_entry["surface"] == "deployment"

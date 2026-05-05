@@ -85,6 +85,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json",
     "schemas/deployment_publication_closure_validation.schema.json",
     "deployment-publication-closure-validation",
+    "build-verification-deployment-publication-closure-validation",
     ".change_assurance/deployment_publication_closure_validation.json",
     "schemas/reflex_deployment_witness_validator_receipt.schema.json",
     "python -m pytest tests/test_validate_reflex_deployment_witness.py -q --junitxml=.change_assurance/reflex_deployment_witness_validator_junit.xml",

@@ -284,6 +284,12 @@ jobs:
           mkdir -p .change_assurance
           python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
 
+      - name: Upload build verification deployment publication closure validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-verification-deployment-publication-closure-validation
+          path: .change_assurance/deployment_publication_closure_validation.json
+
       - name: General-agent promotion closure plan check
         run: |
           python scripts/validate_general_agent_promotion_handoff_packet.py --packet examples/general_agent_promotion_handoff_packet.json --json

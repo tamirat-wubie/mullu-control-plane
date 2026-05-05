@@ -23,6 +23,12 @@
       "surface": "promotion"
     },
     {
+      "schema_id": "capability-candidate",
+      "path": "schemas/capability_candidate.schema.json",
+      "urn": "urn:mullusi:schema:capability-candidate:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-descriptor",
       "path": "schemas/capability_descriptor.schema.json",
       "urn": "urn:mullusi:schema:capability-descriptor:1",
@@ -137,6 +143,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "goal",
+      "path": "schemas/goal.schema.json",
+      "urn": "urn:mullusi:schema:goal:1",
+      "surface": "planning"
+    },
+    {
       "schema_id": "execution-result",
       "path": "schemas/execution_result.schema.json",
       "urn": "urn:mullusi:schema:execution-result:1",
@@ -209,6 +221,12 @@
       "surface": "conformance"
     },
     {
+      "schema_id": "simulation-receipt",
+      "path": "schemas/simulation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:simulation-receipt:1",
+      "surface": "simulation"
+    },
+    {
       "schema_id": "streaming-budget-enforcement",
       "path": "schemas/streaming_budget_enforcement.schema.json",
       "urn": "urn:mullusi:schema:streaming-budget-enforcement:1",
@@ -243,6 +261,12 @@
       "path": "schemas/workflow.schema.json",
       "urn": "urn:mullusi:schema:workflow:1",
       "surface": "coordination"
+    },
+    {
+      "schema_id": "world-state",
+      "path": "schemas/world_state.schema.json",
+      "urn": "urn:mullusi:schema:world-state:1",
+      "surface": "world"
     }
   ],
   "uri_schemes": [

@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:simulation-receipt:1",
+  "title": "Simulation Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "simulation_id",
+    "goal_id",
+    "plan_id",
+    "tenant_id",
+    "action",
+    "risk",
+    "would_execute",
+    "reason",
+    "required_controls",
+    "failure_modes",
+    "compensation_path",
+    "step_results",
+    "plan_certificate_id",
+    "state_hash",
+    "receipt_hash"
+  ],
+  "properties": {
+    "simulation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "goal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "would_execute": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required_controls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "failure_modes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "compensation_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "step_results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/simulation_step_result"
+      }
+    },
+    "plan_certificate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "receipt_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "simulation_step_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "capability_id",
+        "risk",
+        "would_execute",
+        "reason",
+        "required_controls",
+        "failed_preconditions",
+        "failure_modes",
+        "compensation_path",
+        "evidence_required"
+      ],
+      "properties": {
+        "step_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "would_execute": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_controls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failed_preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failure_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "compensation_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

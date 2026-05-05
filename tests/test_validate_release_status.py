@@ -226,6 +226,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "schemas/deployment_publication_closure_validation.schema.json" in REQUIRED_CI_LITERALS
     assert "deployment-publication-closure-validation" in REQUIRED_CI_LITERALS
+    assert "build-verification-deployment-publication-closure-validation" in REQUIRED_CI_LITERALS
     assert ".change_assurance/deployment_publication_closure_validation.json" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_logic_governance_application.py" in REQUIRED_CI_LITERALS
     assert "python scripts/validate_governed_runtime_promotion.py --output .change_assurance/governed_runtime_promotion_readiness.json" in REQUIRED_CI_LITERALS
@@ -254,6 +255,7 @@ def test_ci_workflow_runs_protocol_manifest_gate() -> None:
     assert "Validate protocol manifest" in content
     assert "Validate logic governance application" in content
     assert "test -f schemas/deployment_publication_closure_validation.schema.json" in content
+    assert "Upload build verification deployment publication closure validation" in content
 
 
 def test_ci_workflow_runs_promotion_closure_schema_gate() -> None:

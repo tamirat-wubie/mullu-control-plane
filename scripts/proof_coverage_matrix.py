@@ -396,6 +396,63 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "governed_operational_intelligence",
+            [
+                "WorldStateStore.add_entity",
+                "GoalCompiler.compile",
+                "CausalSimulator.simulate",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/62_governed_operational_intelligence.md",
+                "gateway/world_state.py",
+                "gateway/goal_compiler.py",
+                "gateway/causal_simulator.py",
+                "schemas/world_state.schema.json",
+                "schemas/goal.schema.json",
+                "schemas/simulation_receipt.schema.json",
+                "tests/test_gateway/test_world_state.py",
+                "tests/test_gateway/test_goal_compiler.py",
+                "tests/test_gateway/test_causal_simulator.py",
+            ],
+            "Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+            [
+                "world_assertions_require_source_evidence",
+                "goal_plan_certificate_hash_bound",
+                "simulation_receipt_schema_valid",
+                "open_world_contradictions_block_execution",
+                "high_risk_controls_projected_before_execution",
+            ],
+        ),
+        _surface(
+            "capability_forge",
+            [
+                "CapabilityForge.create_candidate",
+                "CapabilityForge.validate",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/62_governed_operational_intelligence.md",
+                "gateway/capability_forge.py",
+                "schemas/capability_candidate.schema.json",
+                "tests/test_gateway/test_capability_forge.py",
+            ],
+            "Capability forge emits schema-backed candidate packages only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, and recovery evidence before certification handoff.",
+            [
+                "candidate_promotion_blocked",
+                "candidate_schema_valid",
+                "high_risk_approval_policy_required",
+                "effect_bearing_candidate_requires_sandbox",
+                "effect_bearing_candidate_requires_recovery_path",
+            ],
+        ),
+        _surface(
             "capability_plan_evidence_bundle",
             [
                 "/capability-plans/read-model",
@@ -575,6 +632,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_runtime_reflex_engine_read_models",
             "surfaces": ["runtime_reflex_engine", "runtime_conformance_attestation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_governed_operational_intelligence_witnesses",
+            "surfaces": ["governed_operational_intelligence"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_capability_forge_candidate_contract",
+            "surfaces": ["capability_forge"],
             "status": "closed",
         },
     ]
