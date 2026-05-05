@@ -63,6 +63,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/capability-fabric/read-model",
                 "/commands/{command_id}/closure",
                 "DomainCapsuleCompiler.compile",
+                "install_certified_capsule_with_handoff_evidence",
             ],
             "request_proof",
             "action_proof",
@@ -71,14 +72,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "gateway/server.py",
                 "gateway/capability_fabric.py",
+                "gateway/capability_capsule_installer.py",
                 "mcoi/mcoi_runtime/core/command_capability_admission.py",
                 "mcoi/mcoi_runtime/core/domain_capsule_compiler.py",
+                "tests/test_gateway/test_capability_capsule_installer.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, terminal closure, and capsule compiler certification-evidence manifests expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, terminal closure, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capsule_compiler_emits_certification_evidence_manifest",
+                "capsule_installer_stamps_admission_receipt",
             ],
         ),
         _surface(

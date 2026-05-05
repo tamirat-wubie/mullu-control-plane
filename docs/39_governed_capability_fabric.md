@@ -55,6 +55,20 @@ The forge-side registry handoff installer accepts only a stamped handoff for an 
 
 For capsule compilation, the batch installer requires exact coverage between registry entries and handoffs, preserves entry order, and returns a hash-stamped batch witness. The capsule compiler then serializes those evidence-bearing entries, and `GovernedCapabilityRegistry.install` still performs the only executable registry admission.
 
+## Capsule Admission Shortcut
+
+Operators do not need to hand-correlate forge handoffs, compiler artifacts, and registry installation records. `install_certified_capsule_with_handoff_evidence` composes the existing gates in one deterministic sequence:
+
+```text
+registry entries + certification handoffs
+  -> exact handoff evidence batch
+  -> domain capsule compilation
+  -> GovernedCapabilityRegistry.install
+  -> capsule admission receipt
+```
+
+The receipt records the batch hash, handoff hashes, compilation id, installation id, capability ids, artifact ids, certification-evidence manifest id, warnings, errors, and post-install registry counts. It is an audit witness only; `GovernedCapabilityRegistry.install` remains the admission authority. If strict admission rejects a compiled capsule, the function still returns a rejected receipt without mutating registry state.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.
