@@ -842,6 +842,143 @@ def _validate_job_resume_record_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_goal_descriptor_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("goal_id", "description", "priority", "created_at", "deadline", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("goal_id", "description", "priority"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("created_at", "deadline"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_goal_dependency_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("goal_id", "depends_on_goal_id", "dependency_type"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("goal_id", "depends_on_goal_id", "dependency_type"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    return errors
+
+
+def _validate_sub_goal_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_sub_goal_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_sub_goal_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "sub_goal_id",
+            "goal_id",
+            "description",
+            "status",
+            "skill_id",
+            "workflow_id",
+            "predecessors",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("sub_goal_id", "goal_id", "description", "status", "skill_id", "workflow_id"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    predecessors = payload["predecessors"]
+    predecessors_field_name = f"{prefix}predecessors".strip(".")
+    if not isinstance(predecessors, list):
+        errors.append(f"{_relative_path(path)}: field '{predecessors_field_name}' must be an array")
+    else:
+        for index, predecessor in enumerate(predecessors):
+            errors.extend(
+                _require_non_empty_text(
+                    predecessor,
+                    field_name=f"{predecessors_field_name}[{index}]",
+                    path=path,
+                )
+            )
+    return errors
+
+
+def _validate_goal_execution_state_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "goal_id",
+            "status",
+            "updated_at",
+            "current_plan_id",
+            "completed_sub_goals",
+            "failed_sub_goals",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("goal_id", "status", "current_plan_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["updated_at"], field_name="updated_at", path=path))
+    for list_name in ("completed_sub_goals", "failed_sub_goals"):
+        values = payload[list_name]
+        if not isinstance(values, list):
+            errors.append(f"{_relative_path(path)}: field '{list_name}' must be an array")
+        else:
+            for index, value in enumerate(values):
+                errors.extend(_require_non_empty_text(value, field_name=f"{list_name}[{index}]", path=path))
+            if len(set(values)) != len(values):
+                errors.append(f"{_relative_path(path)}: {list_name} must not contain duplicates")
+    if isinstance(payload["completed_sub_goals"], list) and isinstance(payload["failed_sub_goals"], list):
+        overlap = set(payload["completed_sub_goals"]) & set(payload["failed_sub_goals"])
+        if overlap:
+            errors.append(
+                f"{_relative_path(path)}: sub-goal IDs appear in both completed and failed: {sorted(overlap)}"
+            )
+    return errors
+
+
+def _validate_goal_replan_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("goal_id", "previous_plan_id", "new_plan_id", "reason", "replanned_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("goal_id", "previous_plan_id", "new_plan_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["replanned_at"], field_name="replanned_at", path=path))
+    return errors
+
+
 def _validate_workflow_stage_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     return _validate_workflow_stage_dict(payload, path=path, field_name="runtime fixture")
@@ -3390,6 +3527,9 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "follow_up_record.json": _validate_follow_up_record_fixture,
     "handoff_record.json": _validate_handoff_record_fixture,
     "deadline_record.json": _validate_deadline_record_fixture,
+    "goal_dependency.json": _validate_goal_dependency_fixture,
+    "goal_descriptor.json": _validate_goal_descriptor_fixture,
+    "goal_execution_state.json": _validate_goal_execution_state_fixture,
     "job_descriptor.json": _validate_job_descriptor_fixture,
     "job_execution_record.json": _validate_job_execution_record_fixture,
     "job_pause_record.json": _validate_job_pause_record_fixture,
@@ -3417,6 +3557,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "simulation_request.json": _validate_simulation_request_fixture,
     "simulation_comparison.json": _validate_simulation_comparison_fixture,
     "simulation_verdict.json": _validate_simulation_verdict_fixture,
+    "sub_goal.json": _validate_sub_goal_fixture,
     "supervisor_checkpoint.json": _validate_supervisor_checkpoint_fixture,
     "supervisor_health.json": _validate_supervisor_health_fixture,
     "supervisor_policy.json": _validate_supervisor_policy_fixture,
@@ -3433,6 +3574,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "workflow_binding.json": _validate_workflow_binding_fixture,
     "workflow_descriptor.json": _validate_workflow_descriptor_fixture,
     "workflow_execution_record.json": _validate_workflow_execution_record_fixture,
+    "goal_replan_record.json": _validate_goal_replan_record_fixture,
     "workflow_stage.json": _validate_workflow_stage_fixture,
     "workflow_transition.json": _validate_workflow_transition_fixture,
     "workflow_verification_record.json": _validate_workflow_verification_record_fixture,

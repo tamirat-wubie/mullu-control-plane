@@ -978,6 +978,51 @@ mod tests {
         assert_fixture_round_trip::<goal::GoalPlan>(fixture_json);
     }
 
+    #[test]
+    fn canonical_goal_descriptor_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_descriptor.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalDescriptor>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_dependency_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_dependency.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalDependency>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_sub_goal_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/sub_goal.json"
+        ));
+        assert_fixture_round_trip::<goal::SubGoal>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_execution_state_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_execution_state.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalExecutionState>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_goal_replan_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/goal_replan_record.json"
+        ));
+        assert_fixture_round_trip::<goal::GoalReplanRecord>(fixture_json);
+    }
+
     // --- Functions ---
 
     #[test]

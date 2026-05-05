@@ -50,6 +50,11 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "job_execution_record.json" in maf_runtime_fixture_names
     assert "job_pause_record.json" in maf_runtime_fixture_names
     assert "job_resume_record.json" in maf_runtime_fixture_names
+    assert "goal_descriptor.json" in maf_runtime_fixture_names
+    assert "goal_dependency.json" in maf_runtime_fixture_names
+    assert "sub_goal.json" in maf_runtime_fixture_names
+    assert "goal_execution_state.json" in maf_runtime_fixture_names
+    assert "goal_replan_record.json" in maf_runtime_fixture_names
     assert "workflow_stage.json" in maf_runtime_fixture_names
     assert "workflow_binding.json" in maf_runtime_fixture_names
     assert "workflow_descriptor.json" in maf_runtime_fixture_names
@@ -112,7 +117,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 77
+    assert len(inventory.maf_runtime_fixture_paths) >= 82
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -653,6 +658,61 @@ def test_validate_maf_runtime_fixture_rejects_job_execution_empty_error(tmp_path
     assert len(errors) == 1
     assert "errors[0]" in errors[0]
     assert "must be a non-empty string" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_goal_execution_state_overlap(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "goal_execution_state.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "goal_id": "goal-drift",
+                "status": "replanning",
+                "updated_at": "2025-01-01T01:30:00+00:00",
+                "current_plan_id": "plan-drift",
+                "completed_sub_goals": ["sg-shared"],
+                "failed_sub_goals": ["sg-shared"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "appear in both completed and failed" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_goal_plan_unknown_predecessor(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "goal_plan.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "plan_id": "plan-drift",
+                "goal_id": "goal-drift",
+                "sub_goals": [
+                    {
+                        "sub_goal_id": "sg-verify",
+                        "goal_id": "goal-drift",
+                        "description": "Run the governed verification workflow",
+                        "status": "pending",
+                        "skill_id": "verify-release",
+                        "workflow_id": "wf-release-42",
+                        "predecessors": ["sg-missing"],
+                    }
+                ],
+                "created_at": "2025-01-01T00:05:00+00:00",
+                "version": 2,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "references unknown predecessor 'sg-missing'" in errors[0]
     assert fixture_path.name in errors[0]
 
 

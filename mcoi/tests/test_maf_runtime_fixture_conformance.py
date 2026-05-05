@@ -67,7 +67,17 @@ from mcoi_runtime.contracts.graph import (
     OperationalNode,
     StateDelta,
 )
-from mcoi_runtime.contracts.goal import GoalPlan, GoalPriority, GoalDescriptor, SubGoal, SubGoalStatus
+from mcoi_runtime.contracts.goal import (
+    GoalDependency,
+    GoalDescriptor,
+    GoalExecutionState,
+    GoalPlan,
+    GoalPriority,
+    GoalReplanRecord,
+    GoalStatus,
+    SubGoal,
+    SubGoalStatus,
+)
 from mcoi_runtime.contracts.job import (
     AssignmentRecord,
     DeadlineRecord,
@@ -815,6 +825,58 @@ def _build_goal_plan(payload: dict) -> GoalPlan:
     )
 
 
+def _build_goal_descriptor(payload: dict) -> GoalDescriptor:
+    return GoalDescriptor(
+        goal_id=payload["goal_id"],
+        description=payload["description"],
+        priority=GoalPriority(payload["priority"]),
+        created_at=payload["created_at"],
+        deadline=payload["deadline"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_goal_dependency(payload: dict) -> GoalDependency:
+    return GoalDependency(
+        goal_id=payload["goal_id"],
+        depends_on_goal_id=payload["depends_on_goal_id"],
+        dependency_type=payload["dependency_type"],
+    )
+
+
+def _build_sub_goal(payload: dict) -> SubGoal:
+    return SubGoal(
+        sub_goal_id=payload["sub_goal_id"],
+        goal_id=payload["goal_id"],
+        description=payload["description"],
+        status=SubGoalStatus(payload["status"]),
+        skill_id=payload["skill_id"],
+        workflow_id=payload["workflow_id"],
+        predecessors=tuple(payload["predecessors"]),
+    )
+
+
+def _build_goal_execution_state(payload: dict) -> GoalExecutionState:
+    return GoalExecutionState(
+        goal_id=payload["goal_id"],
+        status=GoalStatus(payload["status"]),
+        updated_at=payload["updated_at"],
+        current_plan_id=payload["current_plan_id"],
+        completed_sub_goals=tuple(payload["completed_sub_goals"]),
+        failed_sub_goals=tuple(payload["failed_sub_goals"]),
+    )
+
+
+def _build_goal_replan_record(payload: dict) -> GoalReplanRecord:
+    return GoalReplanRecord(
+        goal_id=payload["goal_id"],
+        previous_plan_id=payload["previous_plan_id"],
+        new_plan_id=payload["new_plan_id"],
+        reason=payload["reason"],
+        replanned_at=payload["replanned_at"],
+    )
+
+
 def _build_obligation_record(payload: dict) -> ObligationRecord:
     return ObligationRecord(
         obligation_id=payload["obligation_id"],
@@ -1112,8 +1174,12 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("event_window.json", _build_event_window),
         ("supervisor_tick.json", _build_supervisor_tick),
         ("simulation_comparison.json", _build_simulation_comparison),
+        ("goal_dependency.json", _build_goal_dependency),
+        ("goal_descriptor.json", _build_goal_descriptor),
+        ("goal_execution_state.json", _build_goal_execution_state),
         ("job_descriptor.json", _build_job_descriptor),
         ("goal_plan.json", _build_goal_plan),
+        ("goal_replan_record.json", _build_goal_replan_record),
         ("obligation_closure.json", _build_obligation_closure),
         ("obligation_escalation.json", _build_obligation_escalation),
         ("obligation_record.json", _build_obligation_record),
@@ -1143,6 +1209,7 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("simulation_request.json", _build_simulation_request),
         ("simulation_outcome.json", _build_simulation_outcome),
         ("simulation_verdict.json", _build_simulation_verdict),
+        ("sub_goal.json", _build_sub_goal),
         ("supervisor_policy.json", _build_supervisor_policy),
         ("supervisor_health.json", _build_supervisor_health),
         ("runtime_heartbeat.json", _build_runtime_heartbeat),

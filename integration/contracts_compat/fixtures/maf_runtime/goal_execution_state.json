@@ -1,0 +1,12 @@
+{
+  "goal_id": "goal-42",
+  "status": "replanning",
+  "updated_at": "2025-01-01T01:30:00+00:00",
+  "current_plan_id": "plan-42",
+  "completed_sub_goals": [
+    "sg-prepare"
+  ],
+  "failed_sub_goals": [
+    "sg-verify"
+  ]
+}
