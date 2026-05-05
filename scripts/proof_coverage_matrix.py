@@ -490,6 +490,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "CapabilityForge.create_candidate",
                 "CapabilityForge.validate",
+                "CapabilityForge.build_certification_handoff",
             ],
             "request_proof",
             "action_proof",
@@ -501,10 +502,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/capability_candidate.schema.json",
                 "tests/test_gateway/test_capability_forge.py",
             ],
-            "Capability forge emits schema-backed candidate packages only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, and recovery evidence before certification handoff.",
+            "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff.",
             [
                 "candidate_promotion_blocked",
                 "candidate_schema_valid",
+                "candidate_certification_handoff_emits_maturity_bundle",
                 "high_risk_approval_policy_required",
                 "effect_bearing_candidate_requires_sandbox",
                 "effect_bearing_candidate_requires_recovery_path",
