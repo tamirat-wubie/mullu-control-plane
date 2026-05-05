@@ -947,6 +947,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_memory",
+            [
+                "TemporalMemory.evaluate",
+                "TemporalMemoryRecord",
+                "TemporalMemoryReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_memory.py",
+                "schemas/temporal_memory_receipt.schema.json",
+                "tests/test_gateway/test_temporal_memory.py",
+            ],
+            "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
+            [
+                "memory_age_computed_from_runtime_clock",
+                "stale_memory_requires_refresh",
+                "validity_window_blocks_expired_memory",
+                "superseded_memory_not_usable",
+                "confidence_decay_blocks_weak_memory",
+                "tenant_owner_scope_checked",
+                "allowed_use_checked",
+                "temporal_memory_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_scheduler",
             [
                 "TemporalScheduler.evaluate",
@@ -1314,6 +1343,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_operation_receipt_contract",
             "surfaces": ["temporal_kernel"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_memory_receipt_contract",
+            "surfaces": ["temporal_memory"],
             "status": "closed",
         },
         {

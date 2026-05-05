@@ -214,6 +214,17 @@ def test_protocol_manifest_indexes_temporal_operation_receipt() -> None:
     assert temporal_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    memory_entry = entries["temporal-memory-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert memory_entry["path"] == "schemas/temporal_memory_receipt.schema.json"
+    assert memory_entry["urn"] == "urn:mullusi:schema:temporal-memory-receipt:1"
+    assert memory_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_scheduler_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -297,17 +308,6 @@ def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
     assert world_state_entry["path"] == "schemas/world_state.schema.json"
     assert world_state_entry["urn"] == "urn:mullusi:schema:world-state:1"
     assert world_state_entry["surface"] == "world"
-
-
-def test_protocol_manifest_indexes_multimodal_operation_receipt() -> None:
-    manifest = load_manifest()
-    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
-    multimodal_entry = entries["multimodal-operation-receipt"]
-
-    assert validate_protocol_manifest(manifest) == []
-    assert multimodal_entry["path"] == "schemas/multimodal_operation_receipt.schema.json"
-    assert multimodal_entry["urn"] == "urn:mullusi:schema:multimodal-operation-receipt:1"
-    assert multimodal_entry["surface"] == "multimodal"
 
 
 def test_protocol_manifest_indexes_workflow_mining_report() -> None:

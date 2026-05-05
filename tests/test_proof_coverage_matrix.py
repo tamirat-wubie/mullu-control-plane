@@ -744,6 +744,31 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert closure_actions["classify_temporal_scheduler_routes"]["status"] == "closed"
 
 
+def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    memory_surface = surfaces["temporal_memory"]
+    witnesses = set(memory_surface["runtime_witnesses"])
+
+    assert memory_surface["coverage_state"] == "witnessed"
+    assert memory_surface["request_proof"] == "request_proof"
+    assert memory_surface["action_proof"] == "action_proof"
+    assert "TemporalMemory.evaluate" in memory_surface["representative_paths"]
+    assert "TemporalMemoryRecord" in memory_surface["representative_paths"]
+    assert "TemporalMemoryReceipt" in memory_surface["representative_paths"]
+    assert "gateway/temporal_memory.py" in memory_surface["evidence_files"]
+    assert "schemas/temporal_memory_receipt.schema.json" in memory_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_memory.py" in memory_surface["evidence_files"]
+    assert "memory_age_computed_from_runtime_clock" in witnesses
+    assert "stale_memory_requires_refresh" in witnesses
+    assert "validity_window_blocks_expired_memory" in witnesses
+    assert "superseded_memory_not_usable" in witnesses
+    assert "confidence_decay_blocks_weak_memory" in witnesses
+    assert "temporal_memory_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_memory_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_scheduler_surface_requires_leases_and_retry_windows() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

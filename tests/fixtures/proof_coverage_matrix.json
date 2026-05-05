@@ -218,6 +218,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_memory_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_memory"
+      ]
+    },
+    {
       "action_id": "classify_temporal_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -281,7 +288,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 35,
+      "action_proof": 36,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -289,7 +296,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 40,
+      "audit_chain": 41,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -297,16 +304,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 43
+      "witnessed": 44
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
-      "request_proof": 35
+      "request_proof": 36
     },
-    "surface_count": 44
+    "surface_count": 45
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2770,6 +2777,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_kernel"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_memory.py",
+        "schemas/temporal_memory_receipt.schema.json",
+        "tests/test_gateway/test_temporal_memory.py"
+      ],
+      "notes": "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
+      "representative_paths": [
+        "TemporalMemory.evaluate",
+        "TemporalMemoryRecord",
+        "TemporalMemoryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "memory_age_computed_from_runtime_clock",
+        "stale_memory_requires_refresh",
+        "validity_window_blocks_expired_memory",
+        "superseded_memory_not_usable",
+        "confidence_decay_blocks_weak_memory",
+        "tenant_owner_scope_checked",
+        "allowed_use_checked",
+        "temporal_memory_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_memory"
     },
     {
       "action_proof": "action_proof",
