@@ -35,6 +35,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "capability-maturity",
+      "path": "schemas/capability_maturity.schema.json",
+      "urn": "urn:mullusi:schema:capability-maturity:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "capability-registry-entry",
       "path": "schemas/capability_registry_entry.schema.json",
       "urn": "urn:mullusi:schema:capability-registry-entry:1",

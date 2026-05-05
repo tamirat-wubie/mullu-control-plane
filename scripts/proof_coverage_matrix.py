@@ -511,6 +511,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "capability_maturity_assessment",
+            [
+                "CapabilityMaturityAssessor.assess",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/capability_maturity.py",
+                "schemas/capability_maturity.schema.json",
+                "schemas/README.md",
+                "tests/test_gateway/test_capability_maturity.py",
+            ],
+            "Capability maturity assessment derives C0-C7 readiness from explicit evidence, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
+            [
+                "maturity_derived_from_evidence",
+                "effect_bearing_production_requires_live_write",
+                "production_requires_worker_deployment_recovery",
+                "autonomy_requires_C7_controls",
+                "capability_maturity_schema_valid",
+            ],
+        ),
+        _surface(
             "networked_worker_mesh",
             [
                 "NetworkedWorkerMesh.register_worker",
@@ -737,6 +761,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_capability_forge_candidate_contract",
             "surfaces": ["capability_forge"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_capability_maturity_assessment_contract",
+            "surfaces": ["capability_maturity_assessment"],
             "status": "closed",
         },
         {

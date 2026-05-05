@@ -126,6 +126,13 @@
       ]
     },
     {
+      "action_id": "publish_capability_maturity_assessment_contract",
+      "status": "closed",
+      "surfaces": [
+        "capability_maturity_assessment"
+      ]
+    },
+    {
       "action_id": "publish_networked_worker_mesh_contract",
       "status": "closed",
       "surfaces": [
@@ -147,7 +154,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 19,
+      "action_proof": 20,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -155,7 +162,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 23,
+      "audit_chain": 24,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -163,16 +170,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 26
+      "witnessed": 27
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 19
+      "request_proof": 20
     },
-    "surface_count": 27
+    "surface_count": 28
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2202,6 +2209,30 @@
         "effect_bearing_candidate_requires_recovery_path"
       ],
       "surface_id": "capability_forge"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/capability_maturity.py",
+        "schemas/capability_maturity.schema.json",
+        "schemas/README.md",
+        "tests/test_gateway/test_capability_maturity.py"
+      ],
+      "notes": "Capability maturity assessment derives C0-C7 readiness from explicit evidence, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
+      "representative_paths": [
+        "CapabilityMaturityAssessor.assess"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "maturity_derived_from_evidence",
+        "effect_bearing_production_requires_live_write",
+        "production_requires_worker_deployment_recovery",
+        "autonomy_requires_C7_controls",
+        "capability_maturity_schema_valid"
+      ],
+      "surface_id": "capability_maturity_assessment"
     },
     {
       "action_proof": "action_proof",

@@ -386,6 +386,28 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert closure_actions["publish_capability_forge_candidate_contract"]["status"] == "closed"
 
 
+def test_capability_maturity_surface_blocks_readiness_overclaims() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    maturity_surface = surfaces["capability_maturity_assessment"]
+    witnesses = set(maturity_surface["runtime_witnesses"])
+
+    assert maturity_surface["coverage_state"] == "witnessed"
+    assert maturity_surface["request_proof"] == "request_proof"
+    assert maturity_surface["action_proof"] == "action_proof"
+    assert "CapabilityMaturityAssessor.assess" in maturity_surface["representative_paths"]
+    assert "gateway/capability_maturity.py" in maturity_surface["evidence_files"]
+    assert "schemas/capability_maturity.schema.json" in maturity_surface["evidence_files"]
+    assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
+    assert "maturity_derived_from_evidence" in witnesses
+    assert "effect_bearing_production_requires_live_write" in witnesses
+    assert "production_requires_worker_deployment_recovery" in witnesses
+    assert "autonomy_requires_C7_controls" in witnesses
+    assert "capability_maturity_schema_valid" in witnesses
+    assert closure_actions["publish_capability_maturity_assessment_contract"]["status"] == "closed"
+
+
 def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
