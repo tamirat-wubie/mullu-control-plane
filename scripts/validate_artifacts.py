@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Governed artifact validation for MCOI examples, pilot assets, and MAF runtime fixtures.
+"""Governed artifact validation for MCOI examples, pilot assets, and runtime fixtures.
 
 Validates:
   1. Shipped config artifacts deserialize through AppConfig without silent key drift.
@@ -8,8 +8,9 @@ Validates:
   4. Request action routes are admitted by their paired config artifact or by default config.
   5. Auxiliary pilot JSON artifacts remain inventory-bounded and contract-validated.
   6. MAF runtime fixtures remain inventory-bounded and structurally governed.
-  7. Operator and pilot markdown references stay aligned with governed artifact inventory.
-  8. Release and pilot operational documents stay aligned with live profiles, packs, and witnesses.
+  7. MCOI runtime fixtures remain inventory-bounded and structurally governed.
+  8. Operator and pilot markdown references stay aligned with governed artifact inventory.
+  9. Release and pilot operational documents stay aligned with live profiles, packs, and witnesses.
 
 Usage:
   python scripts/validate_artifacts.py
@@ -32,6 +33,7 @@ MCOI_PATH = REPO_ROOT / "mcoi"
 MCOI_EXAMPLES_DIR = MCOI_PATH / "examples"
 PILOT_EXAMPLES_DIR = REPO_ROOT / "examples" / "pilots"
 MAF_RUNTIME_FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fixtures" / "maf_runtime"
+MCOI_RUNTIME_FIXTURE_DIR = REPO_ROOT / "integration" / "contracts_compat" / "fixtures" / "mcoi_runtime"
 
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
@@ -53,6 +55,7 @@ class ExampleArtifactInventory:
     request_paths: tuple[Path, ...]
     auxiliary_paths: tuple[Path, ...]
     maf_runtime_fixture_paths: tuple[Path, ...]
+    mcoi_runtime_fixture_paths: tuple[Path, ...]
     pilot_directories: tuple[Path, ...]
 
 
@@ -68,6 +71,7 @@ class OperationalDocumentExpectation:
 
 AuxiliaryArtifactValidator = Callable[[Path], list[str]]
 MAFRuntimeFixtureValidator = Callable[[Path], list[str]]
+MCOIRuntimeFixtureValidator = Callable[[Path], list[str]]
 
 JOURNAL_ENTRY_KINDS = frozenset(
     {
@@ -126,6 +130,14 @@ REPLAY_SESSION_VERDICTS = frozenset(
         "aborted",
     }
 )
+INCIDENT_SEVERITIES = frozenset({"low", "medium", "high", "critical"})
+INCIDENT_STATUSES = frozenset({"open", "recovering", "escalated", "resolved", "closed"})
+RECOVERY_ACTIONS = frozenset(
+    {"retry", "retry_variant", "reobserve", "replan", "rollback", "escalate", "skip", "no_action"}
+)
+RECOVERY_DECISION_STATUSES = frozenset(
+    {"approved", "blocked_autonomy", "blocked_profile", "blocked_policy", "not_applicable"}
+)
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -161,6 +173,10 @@ def _validate_iso8601_text(value: Any, *, field_name: str, path: Path) -> list[s
     except ValueError:
         return [f"{_relative_path(path)}: field '{field_name}' must be a valid ISO 8601 string"]
     return []
+
+
+def _parse_iso8601_text(value: str) -> datetime:
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
 def _require_non_empty_text(value: Any, *, field_name: str, path: Path) -> list[str]:
@@ -3927,6 +3943,188 @@ def _validate_replay_session_result_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_incident_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "incident_id",
+            "severity",
+            "status",
+            "source_type",
+            "source_id",
+            "failure_family",
+            "message",
+            "occurred_at",
+            "run_id",
+            "skill_id",
+            "provider_id",
+            "escalation_id",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "incident_id",
+        "severity",
+        "status",
+        "source_type",
+        "source_id",
+        "failure_family",
+        "message",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["severity"] not in INCIDENT_SEVERITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'severity' must be one of {', '.join(sorted(INCIDENT_SEVERITIES))}"
+        )
+    if payload["status"] not in INCIDENT_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(INCIDENT_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["occurred_at"], field_name="occurred_at", path=path))
+    for optional_field_name in ("run_id", "skill_id", "provider_id", "escalation_id"):
+        optional_value = payload[optional_field_name]
+        if optional_value is not None and (not isinstance(optional_value, str) or not optional_value.strip()):
+            errors.append(
+                f"{_relative_path(path)}: field '{optional_field_name}' must be null or a non-empty string"
+            )
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    elif payload["status"] in {"escalated", "closed"} and payload["escalation_id"] is None:
+        errors.append(
+            f"{_relative_path(path)}: escalated or closed incident records must carry escalation_id"
+        )
+    return errors
+
+
+def _validate_recovery_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "incident_id",
+            "action",
+            "status",
+            "reason",
+            "autonomy_mode",
+            "profile_id",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "incident_id", "action", "status", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["action"] not in RECOVERY_ACTIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'action' must be one of {', '.join(sorted(RECOVERY_ACTIONS))}"
+        )
+    if payload["status"] not in RECOVERY_DECISION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(RECOVERY_DECISION_STATUSES))}"
+        )
+    for optional_field_name in ("autonomy_mode", "profile_id"):
+        optional_value = payload[optional_field_name]
+        if optional_value is not None and (not isinstance(optional_value, str) or not optional_value.strip()):
+            errors.append(
+                f"{_relative_path(path)}: field '{optional_field_name}' must be null or a non-empty string"
+            )
+    if payload["status"] == "approved" and payload["action"] == "no_action":
+        errors.append(
+            f"{_relative_path(path)}: approved recovery decisions must not use action 'no_action'"
+        )
+    if payload["status"] == "not_applicable" and payload["action"] != "no_action":
+        errors.append(
+            f"{_relative_path(path)}: not_applicable recovery decisions must use action 'no_action'"
+        )
+    return errors
+
+
+def _validate_recovery_attempt_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "attempt_id",
+            "incident_id",
+            "decision_id",
+            "action",
+            "succeeded",
+            "started_at",
+            "finished_at",
+            "error_message",
+            "result_run_id",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("attempt_id", "incident_id", "decision_id", "action"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["action"] not in RECOVERY_ACTIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'action' must be one of {', '.join(sorted(RECOVERY_ACTIONS))}"
+        )
+    if not isinstance(payload["succeeded"], bool):
+        errors.append(f"{_relative_path(path)}: field 'succeeded' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["started_at"], field_name="started_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["finished_at"], field_name="finished_at", path=path))
+    error_message = payload["error_message"]
+    if error_message is not None and (not isinstance(error_message, str) or not error_message.strip()):
+        errors.append(f"{_relative_path(path)}: field 'error_message' must be null or a non-empty string")
+    result_run_id = payload["result_run_id"]
+    if result_run_id is not None and (not isinstance(result_run_id, str) or not result_run_id.strip()):
+        errors.append(f"{_relative_path(path)}: field 'result_run_id' must be null or a non-empty string")
+    if not errors and _parse_iso8601_text(payload["finished_at"]) < _parse_iso8601_text(payload["started_at"]):
+        errors.append(f"{_relative_path(path)}: finished_at must be greater than or equal to started_at")
+    if payload["succeeded"] and error_message is not None:
+        errors.append(f"{_relative_path(path)}: succeeded recovery attempts must keep error_message null")
+    if not payload["succeeded"] and error_message is None:
+        errors.append(f"{_relative_path(path)}: failed recovery attempts must carry error_message")
+    return errors
+
+
+def _validate_recovery_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "recovery_id",
+            "execution_id",
+            "trace_id",
+            "recorded_at",
+            "metadata",
+            "extensions",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("recovery_id", "execution_id", "trace_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["recorded_at"], field_name="recorded_at", path=path))
+    for mapping_field_name in ("metadata", "extensions"):
+        mapping_value = payload[mapping_field_name]
+        if not isinstance(mapping_value, dict):
+            errors.append(f"{_relative_path(path)}: field '{mapping_field_name}' must be an object")
+            continue
+        for nested_key in mapping_value:
+            if not isinstance(nested_key, str) or not nested_key.strip():
+                errors.append(
+                    f"{_relative_path(path)}: field '{mapping_field_name}' must use non-empty string keys"
+                )
+                break
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -4017,6 +4215,13 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "workflow_transition.json": _validate_workflow_transition_fixture,
     "workflow_verification_record.json": _validate_workflow_verification_record_fixture,
     "workload_snapshot.json": _validate_workload_snapshot_fixture,
+}
+
+MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "incident_record.json": _validate_incident_record_fixture,
+    "recovery_attempt.json": _validate_recovery_attempt_fixture,
+    "recovery_decision.json": _validate_recovery_decision_fixture,
+    "recovery_record.json": _validate_recovery_record_fixture,
 }
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {
@@ -4138,11 +4343,17 @@ def discover_example_inventory() -> ExampleArtifactInventory:
         if MAF_RUNTIME_FIXTURE_DIR.exists()
         else ()
     )
+    mcoi_runtime_fixture_paths = (
+        _sort_paths(list(MCOI_RUNTIME_FIXTURE_DIR.glob("*.json")))
+        if MCOI_RUNTIME_FIXTURE_DIR.exists()
+        else ()
+    )
     return ExampleArtifactInventory(
         config_paths=config_paths,
         request_paths=request_paths,
         auxiliary_paths=auxiliary_paths,
         maf_runtime_fixture_paths=maf_runtime_fixture_paths,
+        mcoi_runtime_fixture_paths=mcoi_runtime_fixture_paths,
         pilot_directories=pilot_directories,
     )
 
@@ -4239,6 +4450,42 @@ def validate_maf_runtime_fixtures(*, strict: bool = False) -> list[str]:
 
     for fixture_path in actual_paths:
         errors.extend(validate_maf_runtime_fixture(fixture_path))
+
+    return errors
+
+
+def validate_mcoi_runtime_fixture(path: Path, *, fixture_name: str | None = None) -> list[str]:
+    """Validate one governed MCOI runtime fixture witness."""
+    validator_key = fixture_name or path.name
+    validator = MCOI_RUNTIME_FIXTURE_VALIDATORS.get(validator_key)
+    if validator is None:
+        return [f"{_relative_path(path)}: no MCOI runtime fixture validator registered"]
+    return validator(path)
+
+
+def validate_mcoi_runtime_fixtures(*, strict: bool = False) -> list[str]:
+    """Validate governed MCOI runtime fixture inventory and witness shape."""
+    errors: list[str] = []
+    inventory = discover_example_inventory()
+    actual_paths = inventory.mcoi_runtime_fixture_paths
+    actual_names = {path.name for path in actual_paths}
+    expected_names = set(MCOI_RUNTIME_FIXTURE_VALIDATORS)
+
+    if not MCOI_RUNTIME_FIXTURE_DIR.exists():
+        return [f"MCOI runtime fixture directory not found: {_relative_path(MCOI_RUNTIME_FIXTURE_DIR)}"]
+
+    missing_fixtures = sorted(expected_names - actual_names)
+    if missing_fixtures:
+        errors.append(f"missing governed MCOI runtime fixtures: {missing_fixtures}")
+    if strict:
+        unexpected_fixtures = sorted(actual_names - expected_names)
+        if unexpected_fixtures:
+            errors.append(f"unexpected MCOI runtime fixtures: {unexpected_fixtures}")
+    if strict and not actual_paths:
+        errors.append("no governed MCOI runtime fixtures discovered")
+
+    for fixture_path in actual_paths:
+        errors.extend(validate_mcoi_runtime_fixture(fixture_path))
 
     return errors
 
@@ -4389,6 +4636,8 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
         errors.append("no shipped request artifacts discovered")
     if strict and not inventory.maf_runtime_fixture_paths:
         errors.append("no governed MAF runtime fixtures discovered")
+    if strict and not inventory.mcoi_runtime_fixture_paths:
+        errors.append("no governed MCOI runtime fixtures discovered")
     if strict:
         expected_auxiliary = set(AUXILIARY_PILOT_VALIDATORS)
         actual_auxiliary = {_relative_path(path) for path in inventory.auxiliary_paths}
@@ -4415,6 +4664,7 @@ def validate_example_artifacts(*, strict: bool = False) -> list[str]:
         errors.extend(validate_auxiliary_artifact(auxiliary_path))
 
     errors.extend(validate_maf_runtime_fixtures(strict=strict))
+    errors.extend(validate_mcoi_runtime_fixtures(strict=strict))
     errors.extend(validate_documented_artifact_references(strict=strict))
     errors.extend(validate_operational_documents(strict=strict))
 
@@ -4430,6 +4680,7 @@ def main() -> None:
     print(f"  request artifacts: {len(inventory.request_paths)}")
     print(f"  auxiliary files:   {len(inventory.auxiliary_paths)}")
     print(f"  MAF fixtures:      {len(inventory.maf_runtime_fixture_paths)}")
+    print(f"  MCOI fixtures:     {len(inventory.mcoi_runtime_fixture_paths)}")
     print(f"  pilot directories: {len(inventory.pilot_directories)}")
 
     print("\n=== Artifact Validation ===")

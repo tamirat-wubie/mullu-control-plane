@@ -23,6 +23,7 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     request_names = {path.name for path in inventory.request_paths}
     auxiliary_names = {path.name for path in inventory.auxiliary_paths}
     maf_runtime_fixture_names = {path.name for path in inventory.maf_runtime_fixture_paths}
+    mcoi_runtime_fixture_names = {path.name for path in inventory.mcoi_runtime_fixture_paths}
     pilot_names = {path.name for path in inventory.pilot_directories}
 
     assert "config-local-dev.json" in config_names
@@ -113,6 +114,10 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "runtime_heartbeat.json" in maf_runtime_fixture_names
     assert "supervisor_checkpoint.json" in maf_runtime_fixture_names
     assert "livelock_record.json" in maf_runtime_fixture_names
+    assert "incident_record.json" in mcoi_runtime_fixture_names
+    assert "recovery_decision.json" in mcoi_runtime_fixture_names
+    assert "recovery_attempt.json" in mcoi_runtime_fixture_names
+    assert "recovery_record.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -125,10 +130,18 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 4
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
     errors = validate_artifacts.validate_maf_runtime_fixtures(strict=True)
+
+    assert errors == []
+    assert len(errors) == 0
+
+
+def test_validate_mcoi_runtime_fixtures_strictly() -> None:
+    errors = validate_artifacts.validate_mcoi_runtime_fixtures(strict=True)
 
     assert errors == []
     assert len(errors) == 0
@@ -688,6 +701,86 @@ def test_validate_maf_runtime_fixture_rejects_goal_execution_state_overlap(tmp_p
 
     assert len(errors) == 1
     assert "appear in both completed and failed" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_recovery_attempt_success_error_drift(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "recovery_attempt.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "attempt_id": "attempt-drift",
+                "incident_id": "inc-drift",
+                "decision_id": "decision-drift",
+                "action": "reobserve",
+                "succeeded": True,
+                "started_at": "2026-04-02T09:16:00+00:00",
+                "finished_at": "2026-04-02T09:17:00+00:00",
+                "error_message": "unexpected residual error",
+                "result_run_id": "run-44",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "succeeded recovery attempts must keep error_message null" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_recovery_attempt_reverse_time(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "recovery_attempt.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "attempt_id": "attempt-drift",
+                "incident_id": "inc-drift",
+                "decision_id": "decision-drift",
+                "action": "reobserve",
+                "succeeded": False,
+                "started_at": "2026-04-02T09:18:00+00:00",
+                "finished_at": "2026-04-02T09:17:00+00:00",
+                "error_message": "observer timed out",
+                "result_run_id": None,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "finished_at must be greater than or equal to started_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_not_applicable_decision_action_drift(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "recovery_decision.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "decision_id": "decision-drift",
+                "incident_id": "inc-drift",
+                "action": "retry",
+                "status": "not_applicable",
+                "reason": "incident is already closed",
+                "autonomy_mode": "observe_only",
+                "profile_id": "safe-readonly",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "not_applicable recovery decisions must use action 'no_action'" in errors[0]
     assert fixture_path.name in errors[0]
 
 
