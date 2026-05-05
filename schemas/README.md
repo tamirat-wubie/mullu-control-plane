@@ -41,6 +41,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
+| `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `verification_result.schema.json` | Canonical verification closure |
