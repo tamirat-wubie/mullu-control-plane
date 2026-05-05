@@ -918,6 +918,267 @@ def _validate_obligation_escalation_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_operational_node_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_operational_node_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_operational_node_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("node_id", "node_type", "label", "created_at", "metadata"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("node_id", "node_type", "label"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    errors.extend(
+        _validate_iso8601_text(
+            payload["created_at"],
+            field_name=f"{prefix}created_at".strip("."),
+            path=path,
+        )
+    )
+    if not isinstance(payload["metadata"], dict):
+        metadata_field_name = f"{prefix}metadata".strip(".")
+        errors.append(f"{_relative_path(path)}: field '{metadata_field_name}' must be an object")
+    return errors
+
+
+def _validate_operational_edge_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_operational_edge_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_operational_edge_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "edge_id",
+            "edge_type",
+            "source_node_id",
+            "target_node_id",
+            "label",
+            "created_at",
+            "metadata",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in (
+        "edge_id",
+        "edge_type",
+        "source_node_id",
+        "target_node_id",
+        "label",
+    ):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    errors.extend(
+        _validate_iso8601_text(
+            payload["created_at"],
+            field_name=f"{prefix}created_at".strip("."),
+            path=path,
+        )
+    )
+    if not isinstance(payload["metadata"], dict):
+        metadata_field_name = f"{prefix}metadata".strip(".")
+        errors.append(f"{_relative_path(path)}: field '{metadata_field_name}' must be an object")
+    return errors
+
+
+def _validate_evidence_link_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "edge_id",
+            "source_node_id",
+            "target_node_id",
+            "evidence_type",
+            "confidence",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("edge_id", "source_node_id", "target_node_id", "evidence_type"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(
+            payload["confidence"],
+            field_name="confidence",
+            path=path,
+            minimum=0.0,
+            maximum=1.0,
+        )
+    )
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_decision_link_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "edge_id",
+            "source_node_id",
+            "target_node_id",
+            "decision",
+            "decided_by_id",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("edge_id", "source_node_id", "target_node_id", "decision", "decided_by_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_obligation_link_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "edge_id",
+            "source_node_id",
+            "target_node_id",
+            "obligation",
+            "fulfilled",
+            "created_at",
+            "deadline",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("edge_id", "source_node_id", "target_node_id", "obligation"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["fulfilled"], bool):
+        errors.append(f"{_relative_path(path)}: field 'fulfilled' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["deadline"], field_name="deadline", path=path))
+    return errors
+
+
+def _validate_state_delta_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("delta_id", "node_id", "field_name", "old_value", "new_value", "changed_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("delta_id", "node_id", "field_name"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("old_value", "new_value"):
+        if not isinstance(payload[field_name], str):
+            errors.append(f"{_relative_path(path)}: field '{field_name}' must be a string")
+    errors.extend(_validate_iso8601_text(payload["changed_at"], field_name="changed_at", path=path))
+    return errors
+
+
+def _validate_causal_path_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("path_id", "node_ids", "edge_ids", "description"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("path_id", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for list_name in ("node_ids", "edge_ids"):
+        values = payload[list_name]
+        if not isinstance(values, list) or not values:
+            errors.append(f"{_relative_path(path)}: field '{list_name}' must be a non-empty array")
+        else:
+            for index, value in enumerate(values):
+                errors.extend(_require_non_empty_text(value, field_name=f"{list_name}[{index}]", path=path))
+    return errors
+
+
+def _validate_graph_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("snapshot_id", "node_count", "edge_count", "captured_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["snapshot_id"], field_name="snapshot_id", path=path))
+    errors.extend(_require_non_negative_int(payload["node_count"], field_name="node_count", path=path))
+    errors.extend(_require_non_negative_int(payload["edge_count"], field_name="edge_count", path=path))
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    return errors
+
+
+def _validate_graph_query_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("query_id", "matched_nodes", "matched_edges", "executed_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["query_id"], field_name="query_id", path=path))
+    errors.extend(_validate_iso8601_text(payload["executed_at"], field_name="executed_at", path=path))
+    matched_nodes = payload["matched_nodes"]
+    if not isinstance(matched_nodes, list):
+        errors.append(f"{_relative_path(path)}: field 'matched_nodes' must be an array")
+    else:
+        for index, node in enumerate(matched_nodes):
+            errors.extend(
+                _validate_operational_node_dict(node, path=path, field_name=f"matched_nodes[{index}]")
+            )
+    matched_edges = payload["matched_edges"]
+    if not isinstance(matched_edges, list):
+        errors.append(f"{_relative_path(path)}: field 'matched_edges' must be an array")
+    else:
+        for index, edge in enumerate(matched_edges):
+            errors.extend(
+                _validate_operational_edge_dict(edge, path=path, field_name=f"matched_edges[{index}]")
+            )
+    return errors
+
+
 def _validate_service_function_template_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     errors = _validate_exact_object_fields(
@@ -2212,9 +2473,12 @@ def _validate_livelock_record_fixture(path: Path) -> list[str]:
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "assignment_policy.json": _validate_assignment_policy_fixture,
     "assignment_decision.json": _validate_assignment_decision_fixture,
+    "causal_path.json": _validate_causal_path_fixture,
     "decision_comparison.json": _validate_decision_comparison_fixture,
     "decision_factor.json": _validate_decision_factor_fixture,
+    "decision_link.json": _validate_decision_link_fixture,
     "decision_policy.json": _validate_decision_policy_fixture,
+    "evidence_link.json": _validate_evidence_link_fixture,
     "event_correlation.json": _validate_event_correlation_fixture,
     "event_envelope.json": _validate_event_envelope_fixture,
     "event_record.json": _validate_event_record_fixture,
@@ -2230,10 +2494,15 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "job_descriptor.json": _validate_job_descriptor_fixture,
     "livelock_record.json": _validate_livelock_record_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
+    "graph_query_result.json": _validate_graph_query_result_fixture,
+    "graph_snapshot.json": _validate_graph_snapshot_fixture,
     "obligation_closure.json": _validate_obligation_closure_fixture,
     "obligation_escalation.json": _validate_obligation_escalation_fixture,
+    "obligation_link.json": _validate_obligation_link_fixture,
     "obligation_record.json": _validate_obligation_record_fixture,
     "obligation_transfer.json": _validate_obligation_transfer_fixture,
+    "operational_edge.json": _validate_operational_edge_fixture,
+    "operational_node.json": _validate_operational_node_fixture,
     "role_descriptor.json": _validate_role_descriptor_fixture,
     "runtime_heartbeat.json": _validate_runtime_heartbeat_fixture,
     "option_utility.json": _validate_option_utility_fixture,
@@ -2248,6 +2517,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "supervisor_health.json": _validate_supervisor_health_fixture,
     "supervisor_policy.json": _validate_supervisor_policy_fixture,
     "supervisor_tick.json": _validate_supervisor_tick_fixture,
+    "state_delta.json": _validate_state_delta_fixture,
     "team_queue_state.json": _validate_team_queue_state_fixture,
     "tradeoff_record.json": _validate_tradeoff_record_fixture,
     "utility_profile.json": _validate_utility_profile_fixture,

@@ -34,6 +34,15 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "event_reaction.json" in maf_runtime_fixture_names
     assert "event_subscription.json" in maf_runtime_fixture_names
     assert "event_window.json" in maf_runtime_fixture_names
+    assert "operational_node.json" in maf_runtime_fixture_names
+    assert "operational_edge.json" in maf_runtime_fixture_names
+    assert "evidence_link.json" in maf_runtime_fixture_names
+    assert "decision_link.json" in maf_runtime_fixture_names
+    assert "obligation_link.json" in maf_runtime_fixture_names
+    assert "state_delta.json" in maf_runtime_fixture_names
+    assert "causal_path.json" in maf_runtime_fixture_names
+    assert "graph_snapshot.json" in maf_runtime_fixture_names
+    assert "graph_query_result.json" in maf_runtime_fixture_names
     assert "obligation_closure.json" in maf_runtime_fixture_names
     assert "obligation_escalation.json" in maf_runtime_fixture_names
     assert "obligation_record.json" in maf_runtime_fixture_names
@@ -80,7 +89,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 45
+    assert len(inventory.maf_runtime_fixture_paths) >= 54
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -537,4 +546,48 @@ def test_validate_maf_runtime_fixture_rejects_decision_comparison_best_option_dr
 
     assert len(errors) == 1
     assert "best_option_id must reference an option in option_utilities" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_causal_path_without_edges(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "causal_path.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "path_id": "path-drift",
+                "node_ids": ["goal-42", "job-42"],
+                "edge_ids": [],
+                "description": "broken causal path",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'edge_ids' must be a non-empty array" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_evidence_link_confidence_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "evidence_link.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "edge_id": "evlink-drift",
+                "source_node_id": "doc-42",
+                "target_node_id": "verification-42",
+                "evidence_type": "document_evidence",
+                "confidence": 1.2,
+                "created_at": "2025-01-01T00:25:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'confidence' must be between 0.0 and 1.0" in errors[0]
     assert fixture_path.name in errors[0]

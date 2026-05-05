@@ -940,6 +940,60 @@ mod tests {
     }
 
     #[test]
+    fn canonical_operational_node_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/operational_node.json"
+        ));
+        assert_fixture_round_trip::<graph::OperationalNode>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_operational_edge_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/operational_edge.json"
+        ));
+        assert_fixture_round_trip::<graph::OperationalEdge>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_evidence_link_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/evidence_link.json"
+        ));
+        assert_fixture_round_trip::<graph::EvidenceLink>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_decision_link_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/decision_link.json"
+        ));
+        assert_fixture_round_trip::<graph::DecisionLink>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_obligation_link_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_link.json"
+        ));
+        assert_fixture_round_trip::<graph::ObligationLink>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_state_delta_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/state_delta.json"
+        ));
+        assert_fixture_round_trip::<graph::StateDelta>(fixture_json);
+    }
+
+    #[test]
     fn graph_causal_path_round_trips() {
         let path = graph::CausalPath {
             path_id: "p-1".into(),
@@ -950,6 +1004,33 @@ mod tests {
         let json = serde_json::to_string(&path).unwrap();
         let back: graph::CausalPath = serde_json::from_str(&json).unwrap();
         assert_eq!(path, back);
+    }
+
+    #[test]
+    fn canonical_causal_path_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/causal_path.json"
+        ));
+        assert_fixture_round_trip::<graph::CausalPath>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_graph_snapshot_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/graph_snapshot.json"
+        ));
+        assert_fixture_round_trip::<graph::GraphSnapshot>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_graph_query_result_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/graph_query_result.json"
+        ));
+        assert_fixture_round_trip::<graph::GraphQueryResult>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

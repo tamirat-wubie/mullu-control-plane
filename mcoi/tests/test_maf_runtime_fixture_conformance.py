@@ -37,6 +37,19 @@ from mcoi_runtime.contracts.function import (
     FunctionType,
     ServiceFunctionTemplate,
 )
+from mcoi_runtime.contracts.graph import (
+    CausalPath,
+    DecisionLink,
+    EvidenceLink,
+    GraphQueryResult,
+    GraphSnapshot,
+    NodeType,
+    EdgeType,
+    ObligationLink,
+    OperationalEdge,
+    OperationalNode,
+    StateDelta,
+)
 from mcoi_runtime.contracts.goal import GoalPlan, GoalPriority, GoalDescriptor, SubGoal, SubGoalStatus
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
 from mcoi_runtime.contracts.obligation import (
@@ -274,6 +287,100 @@ def _build_resource_budget(payload: dict) -> ResourceBudget:
         total=payload["total"],
         consumed=payload["consumed"],
         reserved=payload["reserved"],
+    )
+
+
+def _build_operational_node(payload: dict) -> OperationalNode:
+    return OperationalNode(
+        node_id=payload["node_id"],
+        node_type=NodeType(payload["node_type"]),
+        label=payload["label"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_operational_edge(payload: dict) -> OperationalEdge:
+    return OperationalEdge(
+        edge_id=payload["edge_id"],
+        edge_type=EdgeType(payload["edge_type"]),
+        source_node_id=payload["source_node_id"],
+        target_node_id=payload["target_node_id"],
+        label=payload["label"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_evidence_link(payload: dict) -> EvidenceLink:
+    return EvidenceLink(
+        edge_id=payload["edge_id"],
+        source_node_id=payload["source_node_id"],
+        target_node_id=payload["target_node_id"],
+        evidence_type=payload["evidence_type"],
+        confidence=payload["confidence"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_decision_link(payload: dict) -> DecisionLink:
+    return DecisionLink(
+        edge_id=payload["edge_id"],
+        source_node_id=payload["source_node_id"],
+        target_node_id=payload["target_node_id"],
+        decision=payload["decision"],
+        decided_by_id=payload["decided_by_id"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_obligation_link(payload: dict) -> ObligationLink:
+    return ObligationLink(
+        edge_id=payload["edge_id"],
+        source_node_id=payload["source_node_id"],
+        target_node_id=payload["target_node_id"],
+        obligation=payload["obligation"],
+        fulfilled=payload["fulfilled"],
+        created_at=payload["created_at"],
+        deadline=payload["deadline"],
+    )
+
+
+def _build_state_delta(payload: dict) -> StateDelta:
+    return StateDelta(
+        delta_id=payload["delta_id"],
+        node_id=payload["node_id"],
+        field_name=payload["field_name"],
+        old_value=payload["old_value"],
+        new_value=payload["new_value"],
+        changed_at=payload["changed_at"],
+    )
+
+
+def _build_causal_path(payload: dict) -> CausalPath:
+    return CausalPath(
+        path_id=payload["path_id"],
+        node_ids=tuple(payload["node_ids"]),
+        edge_ids=tuple(payload["edge_ids"]),
+        description=payload["description"],
+    )
+
+
+def _build_graph_snapshot(payload: dict) -> GraphSnapshot:
+    return GraphSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        node_count=payload["node_count"],
+        edge_count=payload["edge_count"],
+        captured_at=payload["captured_at"],
+    )
+
+
+def _build_graph_query_result(payload: dict) -> GraphQueryResult:
+    return GraphQueryResult(
+        query_id=payload["query_id"],
+        matched_nodes=tuple(_build_operational_node(node) for node in payload["matched_nodes"]),
+        matched_edges=tuple(_build_operational_edge(edge) for edge in payload["matched_edges"]),
+        executed_at=payload["executed_at"],
     )
 
 
@@ -722,6 +829,15 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("tradeoff_record.json", _build_tradeoff_record),
         ("decision_policy.json", _build_decision_policy),
         ("utility_verdict.json", _build_utility_verdict),
+        ("operational_node.json", _build_operational_node),
+        ("operational_edge.json", _build_operational_edge),
+        ("evidence_link.json", _build_evidence_link),
+        ("decision_link.json", _build_decision_link),
+        ("obligation_link.json", _build_obligation_link),
+        ("state_delta.json", _build_state_delta),
+        ("causal_path.json", _build_causal_path),
+        ("graph_snapshot.json", _build_graph_snapshot),
+        ("graph_query_result.json", _build_graph_query_result),
     ],
 )
 def test_maf_runtime_fixture_round_trips_exactly_through_mcoi_contracts(
