@@ -636,6 +636,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "temporal_kernel",
             [
+                "/api/v1/temporal/schedules",
+                "/api/v1/temporal/schedules/{schedule_id}",
+                "/api/v1/temporal/schedules/{schedule_id}/cancel",
+                "/api/v1/temporal/worker/tick",
+                "/api/v1/temporal/summary",
                 "TemporalKernel.evaluate",
                 "TrustedClock.now_utc",
                 "TrustedClock.monotonic_ns",
@@ -646,10 +651,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             [
                 "gateway/temporal_kernel.py",
+                "mcoi/mcoi_runtime/app/routers/temporal_scheduler.py",
+                "mcoi/mcoi_runtime/core/temporal_scheduler.py",
+                "mcoi/mcoi_runtime/core/temporal_scheduler_worker.py",
+                "mcoi/mcoi_runtime/persistence/temporal_scheduler_store.py",
                 "schemas/temporal_operation_receipt.schema.json",
                 "tests/test_gateway/test_temporal_kernel.py",
+                "mcoi/tests/test_temporal_scheduler_router.py",
             ],
-            "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses before dispatch.",
+            "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, temporal schedule APIs, and monotonic duration witnesses before dispatch.",
             [
                 "runtime_clock_injected",
                 "monotonic_duration_measured",
@@ -658,6 +668,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "stale_evidence_escalates",
                 "budget_window_checked",
                 "causal_preconditions_required",
+                "temporal_scheduler_routes_governed",
+                "schedule_read_models_persisted",
+                "worker_tick_certifies_proofs",
+                "cancel_emits_terminal_receipt",
                 "temporal_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
@@ -911,6 +925,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_temporal_operation_receipt_contract",
+            "surfaces": ["temporal_kernel"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_temporal_scheduler_routes",
             "surfaces": ["temporal_kernel"],
             "status": "closed",
         },
