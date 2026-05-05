@@ -33,6 +33,9 @@
     "capability_plan_bundle_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
+    "proof_coverage_declared_routes_classified",
+    "proof_coverage_declared_route_count",
+    "proof_coverage_unclassified_route_count",
     "known_limitations_aligned",
     "security_model_aligned",
     "open_conformance_gaps",
@@ -138,6 +141,17 @@
     },
     "proof_coverage_matrix_current": {
       "type": "boolean"
+    },
+    "proof_coverage_declared_routes_classified": {
+      "type": "boolean"
+    },
+    "proof_coverage_declared_route_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "proof_coverage_unclassified_route_count": {
+      "type": "integer",
+      "minimum": 0
     },
     "known_limitations_aligned": {
       "type": "boolean"

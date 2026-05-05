@@ -2003,7 +2003,7 @@
         "tests/test_gateway/test_conformance.py",
         "tests/test_collect_runtime_conformance.py"
       ],
-      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation.",
+      "notes": "Runtime conformance certificate binds live witness, closure, fabric, isolation, lineage, authority, MCP manifest validity, proof-matrix route classification, document-drift checks, issuer schema self-validation, and collector schema validation into one signed attestation.",
       "representative_paths": [
         "/runtime/conformance"
       ],
@@ -2013,6 +2013,7 @@
         "runtime_witness_valid",
         "runtime_conformance_certificate_schema_valid",
         "runtime_conformance_collector_schema_valid",
+        "proof_coverage_declared_routes_classified",
         "command_closure_canary_passed",
         "capability_admission_canary_passed",
         "dangerous_capability_isolation_canary_passed",

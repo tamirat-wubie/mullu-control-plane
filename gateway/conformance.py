@@ -55,6 +55,20 @@ class ConformanceCheck:
 
 
 @dataclass(frozen=True, slots=True)
+class ProofCoverageStatus:
+    """Bounded proof coverage route classification status."""
+
+    matrix_current: bool
+    declared_route_count: int
+    unclassified_route_count: int
+
+    @property
+    def declared_routes_classified(self) -> bool:
+        """Return whether every proof-relevant declared route is classified."""
+        return self.matrix_current and self.unclassified_route_count == 0
+
+
+@dataclass(frozen=True, slots=True)
 class RuntimeConformanceCertificate:
     """Signed certificate describing current runtime conformance."""
 
@@ -86,6 +100,9 @@ class RuntimeConformanceCertificate:
     capability_plan_bundle_count: int
     capsule_registry_certified: bool
     proof_coverage_matrix_current: bool
+    proof_coverage_declared_routes_classified: bool
+    proof_coverage_declared_route_count: int
+    proof_coverage_unclassified_route_count: int
     known_limitations_aligned: bool
     security_model_aligned: bool
     open_conformance_gaps: tuple[str, ...]
@@ -274,7 +291,9 @@ def issue_conformance_certificate(
         capability_plan_bundle_detail,
     ))
 
-    proof_coverage_matrix_current = _proof_coverage_matrix_current(repository_root)
+    proof_coverage_status = _proof_coverage_status(repository_root)
+    proof_coverage_matrix_current = proof_coverage_status.matrix_current
+    proof_coverage_declared_routes_classified = proof_coverage_status.declared_routes_classified
     known_limitations_aligned = _known_limitations_aligned(repository_root)
     security_model_aligned = _security_model_aligned(repository_root)
     checks.append(_check(
@@ -282,6 +301,15 @@ def issue_conformance_certificate(
         proof_coverage_matrix_current,
         "proof_matrix:canonical_fixture",
         "generated proof matrix matches canonical fixture",
+    ))
+    checks.append(_check(
+        "proof_coverage_declared_routes_classified",
+        proof_coverage_declared_routes_classified,
+        "proof_matrix:route_coverage",
+        (
+            f"route_count={proof_coverage_status.declared_route_count} "
+            f"unclassified_route_count={proof_coverage_status.unclassified_route_count}"
+        ),
     ))
     checks.append(_check(
         "known_limitations_aligned",
@@ -311,6 +339,7 @@ def issue_conformance_certificate(
             authority_responsibility_debt_clear,
             mcp_manifest_valid,
             capability_plan_bundle_canary_passed,
+            proof_coverage_declared_routes_classified,
         ),
     )
     unsigned = RuntimeConformanceCertificate(
@@ -342,6 +371,9 @@ def issue_conformance_certificate(
         capability_plan_bundle_count=capability_plan_bundle_count,
         capsule_registry_certified=capsule_registry_certified,
         proof_coverage_matrix_current=proof_coverage_matrix_current,
+        proof_coverage_declared_routes_classified=proof_coverage_declared_routes_classified,
+        proof_coverage_declared_route_count=proof_coverage_status.declared_route_count,
+        proof_coverage_unclassified_route_count=proof_coverage_status.unclassified_route_count,
         known_limitations_aligned=known_limitations_aligned,
         security_model_aligned=security_model_aligned,
         open_conformance_gaps=tuple(gaps),
@@ -622,16 +654,26 @@ def _plan_bundle_valid(bundle: Any, *, plan_id: str) -> bool:
     return all(isinstance(payload.get(field), (list, tuple)) for field in required[4:])
 
 
-def _proof_coverage_matrix_current(repo_root: Path) -> bool:
+def _proof_coverage_status(repo_root: Path) -> ProofCoverageStatus:
     try:
         from scripts.proof_coverage_matrix import CANONICAL_OUTPUT, proof_coverage_matrix
 
         if not CANONICAL_OUTPUT.exists():
-            return False
+            return ProofCoverageStatus(matrix_current=False, declared_route_count=0, unclassified_route_count=0)
         canonical = json.loads(CANONICAL_OUTPUT.read_text(encoding="utf-8"))
-        return canonical == proof_coverage_matrix()
+        generated = proof_coverage_matrix()
     except (ImportError, json.JSONDecodeError, OSError):
-        return False
+        return ProofCoverageStatus(matrix_current=False, declared_route_count=0, unclassified_route_count=0)
+    route_coverage = canonical.get("route_coverage", {}) if isinstance(canonical, dict) else {}
+    return ProofCoverageStatus(
+        matrix_current=canonical == generated,
+        declared_route_count=_int_count(route_coverage, "route_count"),
+        unclassified_route_count=_int_count(route_coverage, "unclassified_route_count"),
+    )
+
+
+def _proof_coverage_matrix_current(repo_root: Path) -> bool:
+    return _proof_coverage_status(repo_root).matrix_current
 
 
 def _known_limitations_aligned(repo_root: Path) -> bool:
@@ -711,6 +753,7 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
         "mcp_capability_manifest": "mcp_capability_manifest_invalid",
         "capability_plan_evidence_bundle": "capability_plan_evidence_bundle_not_witnessed",
         "proof_coverage_matrix_current": "proof_coverage_matrix_not_current",
+        "proof_coverage_declared_routes_classified": "proof_coverage_declared_routes_unclassified",
         "known_limitations_aligned": "known_limitations_documentation_drift",
         "security_model_aligned": "security_model_documentation_drift",
     }

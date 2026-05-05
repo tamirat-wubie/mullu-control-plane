@@ -251,6 +251,7 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "capability_plan_bundle_canary_passed" in conformance_surface["runtime_witnesses"]
     assert "runtime_conformance_certificate_schema_valid" in conformance_surface["runtime_witnesses"]
     assert "runtime_conformance_collector_schema_valid" in conformance_surface["runtime_witnesses"]
+    assert "proof_coverage_declared_routes_classified" in conformance_surface["runtime_witnesses"]
     assert closure_actions["publish_capability_plan_evidence_bundles"]["status"] == "closed"
     assert "runtime_conformance_attestation" in closure_actions["publish_capability_plan_evidence_bundles"]["surfaces"]
 

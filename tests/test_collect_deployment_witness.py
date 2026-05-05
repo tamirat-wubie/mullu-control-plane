@@ -257,6 +257,46 @@ def test_collect_deployment_witness_rejects_failed_core_canary(monkeypatch) -> N
     assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
 
 
+def test_collect_deployment_witness_rejects_unclassified_proof_routes(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        overrides={
+            "proof_coverage_declared_routes_classified": False,
+            "proof_coverage_declared_route_count": 301,
+            "proof_coverage_unclassified_route_count": 237,
+        },
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert conformance_step.passed is False
+    assert "proof_coverage_declared_routes_classified" in conformance_step.detail
+    assert "proof_route_unclassified_count=237" in conformance_step.detail
+    assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
+
+
 def test_collect_deployment_witness_rejects_invalid_mcp_manifest(monkeypatch) -> None:
     witness_secret = "runtime-secret"
     conformance_secret = "conformance-secret"
@@ -595,6 +635,9 @@ def _signed_conformance_certificate(
         "authority_directory_sync_receipt_valid": True,
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
+        "proof_coverage_declared_routes_classified": True,
+        "proof_coverage_declared_route_count": 301,
+        "proof_coverage_unclassified_route_count": 0,
         "known_limitations_aligned": False,
         "security_model_aligned": False,
         "open_conformance_gaps": ["known_limitations_documentation_drift"],
