@@ -20,6 +20,7 @@ def test_protocol_manifest_is_valid() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     agent_identity_entry = entries["agent-identity"]
+    collaboration_entry = entries["collaboration-case"]
     autonomous_test_entry = entries["autonomous-test-generation-plan"]
     capability_upgrade_entry = entries["capability-upgrade-plan"]
     orchestration_validation_entry = entries["deployment-orchestration-receipt-validation"]
@@ -50,10 +51,13 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 57
+    assert len(manifest["schemas"]) == 58
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
+    assert collaboration_entry["path"] == "schemas/collaboration_case.schema.json"
+    assert collaboration_entry["urn"] == "urn:mullusi:schema:collaboration-case:1"
+    assert collaboration_entry["surface"] == "collaboration"
     assert autonomous_test_entry["path"] == "schemas/autonomous_test_generation_plan.schema.json"
     assert autonomous_test_entry["urn"] == "urn:mullusi:schema:autonomous-test-generation-plan:1"
     assert autonomous_test_entry["surface"] == "testing"

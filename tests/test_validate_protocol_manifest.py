@@ -38,6 +38,17 @@ def test_protocol_manifest_indexes_agent_identity() -> None:
     assert identity_entry["surface"] == "identity"
 
 
+def test_protocol_manifest_indexes_collaboration_case() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    collaboration_entry = entries["collaboration-case"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert collaboration_entry["path"] == "schemas/collaboration_case.schema.json"
+    assert collaboration_entry["urn"] == "urn:mullusi:schema:collaboration-case:1"
+    assert collaboration_entry["surface"] == "collaboration"
+
+
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

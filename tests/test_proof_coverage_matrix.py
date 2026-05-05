@@ -572,6 +572,29 @@ def test_agent_identity_surface_binds_owner_tenant_and_scope() -> None:
     assert closure_actions["publish_agent_identity_contract"]["status"] == "closed"
 
 
+def test_collaboration_case_surface_keeps_closure_non_terminal() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    collaboration_surface = surfaces["collaboration_cases"]
+    witnesses = set(collaboration_surface["runtime_witnesses"])
+
+    assert collaboration_surface["coverage_state"] == "witnessed"
+    assert collaboration_surface["request_proof"] == "request_proof"
+    assert collaboration_surface["action_proof"] == "action_proof"
+    assert "CollaborationCaseManager.open_case" in collaboration_surface["representative_paths"]
+    assert "CollaborationCaseManager.close_case" in collaboration_surface["representative_paths"]
+    assert "gateway/collaboration_cases.py" in collaboration_surface["evidence_files"]
+    assert "schemas/collaboration_case.schema.json" in collaboration_surface["evidence_files"]
+    assert "tests/test_gateway/test_collaboration_cases.py" in collaboration_surface["evidence_files"]
+    assert "approval_separation_required" in witnesses
+    assert "pending_controls_block_case_closure" in witnesses
+    assert "decider_authority_required" in witnesses
+    assert "case_closure_not_terminal_command_closure" in witnesses
+    assert "collaboration_case_schema_valid" in witnesses
+    assert closure_actions["publish_collaboration_case_contract"]["status"] == "closed"
+
+
 def test_capability_maturity_surface_is_evidence_derived() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

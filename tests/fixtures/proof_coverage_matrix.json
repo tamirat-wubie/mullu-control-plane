@@ -169,6 +169,13 @@
       ]
     },
     {
+      "action_id": "publish_collaboration_case_contract",
+      "status": "closed",
+      "surfaces": [
+        "collaboration_cases"
+      ]
+    },
+    {
       "action_id": "publish_capability_maturity_contract",
       "status": "closed",
       "surfaces": [
@@ -288,7 +295,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 36,
+      "action_proof": 37,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -296,7 +303,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 41,
+      "audit_chain": 42,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -304,16 +311,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 44
+      "witnessed": 45
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
-      "request_proof": 36
+      "request_proof": 37
     },
-    "surface_count": 45
+    "surface_count": 46
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2563,6 +2570,31 @@
         "agent_identity_schema_valid"
       ],
       "surface_id": "agent_identity"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/collaboration_cases.py",
+        "schemas/collaboration_case.schema.json",
+        "tests/test_gateway/test_collaboration_cases.py"
+      ],
+      "notes": "Collaboration cases bind requester separation, approval controls, decider authority, evidence hashing, and non-terminal case closure into governed operational casework.",
+      "representative_paths": [
+        "CollaborationCaseManager.open_case",
+        "CollaborationCaseManager.close_case",
+        "CollaborationControl"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "approval_separation_required",
+        "pending_controls_block_case_closure",
+        "decider_authority_required",
+        "case_closure_not_terminal_command_closure",
+        "collaboration_case_schema_valid"
+      ],
+      "surface_id": "collaboration_cases"
     },
     {
       "action_proof": "action_proof",
