@@ -169,6 +169,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_scheduler_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_scheduler"
+      ]
+    },
+    {
       "action_id": "publish_policy_proof_report_contract",
       "status": "closed",
       "surfaces": [
@@ -190,7 +197,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 24,
+      "action_proof": 25,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -198,7 +205,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 28,
+      "audit_chain": 29,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -206,16 +213,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 31
+      "witnessed": 32
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
-      "request_proof": 24
+      "request_proof": 25
     },
-    "surface_count": 32
+    "surface_count": 33
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2263,17 +2270,19 @@
         "schemas/capability_candidate.schema.json",
         "tests/test_gateway/test_capability_forge.py"
       ],
-      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, and validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff.",
+      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff, and installs certified handoffs as certification evidence without direct maturity overrides.",
       "representative_paths": [
         "CapabilityForge.create_candidate",
         "CapabilityForge.validate",
-        "CapabilityForge.build_certification_handoff"
+        "CapabilityForge.build_certification_handoff",
+        "install_certification_handoff_evidence"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "candidate_promotion_blocked",
         "candidate_schema_valid",
         "candidate_certification_handoff_emits_maturity_bundle",
+        "certification_handoff_installs_evidence_without_maturity_claim",
         "high_risk_approval_policy_required",
         "effect_bearing_candidate_requires_sandbox",
         "effect_bearing_candidate_requires_recovery_path"
@@ -2411,6 +2420,36 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_kernel"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_scheduler.py",
+        "schemas/temporal_scheduler_receipt.schema.json",
+        "tests/test_gateway/test_temporal_scheduler.py"
+      ],
+      "notes": "Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch.",
+      "representative_paths": [
+        "TemporalScheduler.evaluate",
+        "ScheduledCommand",
+        "TemporalSchedulerReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "scheduled_command_requires_execute_at",
+        "idempotency_required",
+        "lease_acquired_before_dispatch",
+        "future_schedule_defers",
+        "missed_run_receipt_emitted",
+        "retry_window_checked",
+        "high_risk_reapproval_required",
+        "active_lease_blocks_duplicate_execution",
+        "temporal_scheduler_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_scheduler"
     },
     {
       "action_proof": "action_proof",

@@ -406,12 +406,14 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert "CapabilityForge.create_candidate" in forge_surface["representative_paths"]
     assert "CapabilityForge.validate" in forge_surface["representative_paths"]
     assert "CapabilityForge.build_certification_handoff" in forge_surface["representative_paths"]
+    assert "install_certification_handoff_evidence" in forge_surface["representative_paths"]
     assert "gateway/capability_forge.py" in forge_surface["evidence_files"]
     assert "schemas/capability_candidate.schema.json" in forge_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_forge.py" in forge_surface["evidence_files"]
     assert "candidate_promotion_blocked" in witnesses
     assert "candidate_schema_valid" in witnesses
     assert "candidate_certification_handoff_emits_maturity_bundle" in witnesses
+    assert "certification_handoff_installs_evidence_without_maturity_claim" in witnesses
     assert "high_risk_approval_policy_required" in witnesses
     assert "effect_bearing_candidate_requires_sandbox" in witnesses
     assert "effect_bearing_candidate_requires_recovery_path" in witnesses
@@ -542,6 +544,33 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert "temporal_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_operation_receipt_contract"]["status"] == "closed"
     assert closure_actions["classify_temporal_scheduler_routes"]["status"] == "closed"
+
+
+def test_temporal_scheduler_surface_requires_leases_and_retry_windows() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    scheduler_surface = surfaces["temporal_scheduler"]
+    witnesses = set(scheduler_surface["runtime_witnesses"])
+
+    assert scheduler_surface["coverage_state"] == "witnessed"
+    assert scheduler_surface["request_proof"] == "request_proof"
+    assert scheduler_surface["action_proof"] == "action_proof"
+    assert "TemporalScheduler.evaluate" in scheduler_surface["representative_paths"]
+    assert "ScheduledCommand" in scheduler_surface["representative_paths"]
+    assert "TemporalSchedulerReceipt" in scheduler_surface["representative_paths"]
+    assert "gateway/temporal_scheduler.py" in scheduler_surface["evidence_files"]
+    assert "schemas/temporal_scheduler_receipt.schema.json" in scheduler_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_scheduler.py" in scheduler_surface["evidence_files"]
+    assert "scheduled_command_requires_execute_at" in witnesses
+    assert "idempotency_required" in witnesses
+    assert "lease_acquired_before_dispatch" in witnesses
+    assert "missed_run_receipt_emitted" in witnesses
+    assert "retry_window_checked" in witnesses
+    assert "high_risk_reapproval_required" in witnesses
+    assert "active_lease_blocks_duplicate_execution" in witnesses
+    assert "temporal_scheduler_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_scheduler_receipt_contract"]["status"] == "closed"
 
 
 def test_policy_proof_report_surface_is_counterexample_backed() -> None:

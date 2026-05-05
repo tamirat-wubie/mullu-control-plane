@@ -4,25 +4,32 @@ Purpose: Build and validate candidate capability packages before they can
     enter governed capability certification.
 Governance scope: candidate-only capability generation, policy/evidence/eval
     completeness, side-effect classification, rollback coverage, certification
-    maturity handoff, and promotion blocking for uncertified or high-risk packages.
-Dependencies: standard-library dataclasses, command-spine hashing, and capability
-    maturity evidence bundles.
+    maturity handoff, registry evidence installation, and promotion blocking for
+    uncertified or high-risk packages.
+Dependencies: standard-library dataclasses, command-spine hashing, capability
+    maturity evidence bundles, and governed capability fabric contracts.
 Invariants:
   - The forge emits candidate packages, never production-certified powers.
   - Effect-bearing capabilities require receipt, sandbox, and recovery evidence.
   - High-risk capabilities require approval policy and tenant-boundary evals.
   - Candidate packages must name mock providers before sandbox promotion.
   - Certification handoff emits evidence bundles, not registry mutations.
+  - Registry handoff installation writes certification evidence only.
+  - Direct maturity overrides are refused on handoff installation.
   - No candidate may self-deploy into the capability registry.
 """
 
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, replace
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
-from gateway.capability_maturity import CapabilityCertificationEvidenceBundle
+from gateway.capability_maturity import CapabilityCertificationEvidenceBundle, CapabilityMaturityEvidenceSynthesizer
 from gateway.command_spine import canonical_hash
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityCertificationStatus,
+    CapabilityRegistryEntry,
+)
 
 
 _REQUIRED_BASE_EVALS = (
@@ -39,6 +46,8 @@ _EFFECT_BEARING_EFFECTS = {
     "filesystem_write",
     "database_write",
 }
+_CERTIFICATION_EVIDENCE_EXTENSION_KEY = "capability_certification_evidence"
+_MATURITY_EVIDENCE_EXTENSION_KEY = "capability_maturity_evidence"
 
 
 @dataclass(frozen=True, slots=True)
@@ -379,6 +388,53 @@ class CapabilityForge:
         )
 
 
+def install_certification_handoff_evidence(
+    entry: CapabilityRegistryEntry,
+    handoff: CapabilityCertificationHandoff,
+    *,
+    require_production_ready: bool = False,
+) -> CapabilityRegistryEntry:
+    """Return a certified registry entry carrying handoff certification evidence.
+
+    Error contract:
+      - capability_handoff_entry_mismatch: registry and handoff capability ids differ.
+      - capability_handoff_requires_certified_entry: entry has not passed certification.
+      - capability_handoff_hash_required: handoff has not been stamped.
+      - capability_handoff_hash_mismatch: handoff content differs from its stamp.
+      - capability_handoff_refuses_maturity_override: entry carries direct maturity evidence.
+      - capability_handoff_evidence_conflict: existing certification evidence differs.
+      - capability_certification_evidence_incomplete: strict production readiness failed.
+    """
+    if entry.capability_id != handoff.capability_id:
+        raise ValueError("capability_handoff_entry_mismatch")
+    if entry.certification_status is not CapabilityCertificationStatus.CERTIFIED:
+        raise ValueError("capability_handoff_requires_certified_entry")
+    _validate_handoff_stamp(handoff)
+    if _MATURITY_EVIDENCE_EXTENSION_KEY in entry.extensions:
+        raise ValueError("capability_handoff_refuses_maturity_override")
+
+    extension = _certification_evidence_extension_from_handoff(handoff)
+    existing_extension = entry.extensions.get(_CERTIFICATION_EVIDENCE_EXTENSION_KEY)
+    if existing_extension is not None:
+        if not isinstance(existing_extension, Mapping):
+            raise ValueError("capability_handoff_evidence_conflict")
+        if dict(existing_extension) != extension:
+            raise ValueError("capability_handoff_evidence_conflict")
+
+    CapabilityMaturityEvidenceSynthesizer().materialize_extension(
+        entry,
+        handoff.maturity_evidence_bundle,
+        require_production_ready=require_production_ready,
+    )
+    return replace(
+        entry,
+        extensions={
+            **dict(entry.extensions),
+            _CERTIFICATION_EVIDENCE_EXTENSION_KEY: extension,
+        },
+    )
+
+
 def _validation_errors(package: CandidateCapabilityPackage) -> list[str]:
     errors: list[str] = []
     if not package.package_id:
@@ -459,6 +515,39 @@ def _handoff_required_evidence_refs(
         bundle.autonomy_controls_ref,
     )
     return tuple(ref for ref in refs if ref)
+
+
+def _validate_handoff_stamp(handoff: CapabilityCertificationHandoff) -> None:
+    _require_text(handoff.package_id, "capability_handoff_package_id")
+    _require_text(handoff.package_hash, "capability_handoff_package_hash")
+    handoff_hash = _require_text(handoff.handoff_hash, "capability_handoff_hash")
+    payload = asdict(replace(handoff, handoff_hash=""))
+    if handoff_hash != canonical_hash(payload):
+        raise ValueError("capability_handoff_hash_mismatch")
+
+
+def _certification_evidence_extension_from_handoff(
+    handoff: CapabilityCertificationHandoff,
+) -> dict[str, Any]:
+    bundle = handoff.maturity_evidence_bundle
+    payload: dict[str, Any] = {
+        "capability_id": bundle.capability_id,
+        "certification_ref": bundle.certification_ref,
+        "sandbox_receipt_ref": bundle.sandbox_receipt_ref,
+        "live_read_receipt_ref": bundle.live_read_receipt_ref,
+        "live_write_receipt_ref": bundle.live_write_receipt_ref,
+        "worker_deployment_ref": bundle.worker_deployment_ref,
+        "recovery_evidence_ref": bundle.recovery_evidence_ref,
+        "autonomy_controls_ref": bundle.autonomy_controls_ref,
+        "source_package_id": handoff.package_id,
+        "source_package_hash": handoff.package_hash,
+        "source_handoff_hash": handoff.handoff_hash,
+        "installed_by": "install_certification_handoff_evidence",
+    }
+    return {
+        **payload,
+        "certification_evidence_hash": canonical_hash(payload),
+    }
 
 
 def _require_text(value: str, field_name: str) -> str:

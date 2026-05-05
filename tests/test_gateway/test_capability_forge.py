@@ -20,9 +20,17 @@ from pathlib import Path
 
 import pytest
 
-from gateway.capability_forge import CapabilityCertificationHandoff, CapabilityForge, CapabilityForgeInput
-from gateway.capability_maturity import CapabilityMaturityEvidenceSynthesizer
-from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry
+from gateway.capability_forge import (
+    CapabilityCertificationHandoff,
+    CapabilityForge,
+    CapabilityForgeInput,
+    install_certification_handoff_evidence,
+)
+from gateway.capability_maturity import CapabilityMaturityEvidenceSynthesizer, CapabilityRegistryMaturityProjector
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityCertificationStatus,
+    CapabilityRegistryEntry,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,13 +68,7 @@ def test_capability_forge_projects_high_risk_controls() -> None:
 
 def test_capability_forge_builds_certification_handoff_for_maturity_synthesis() -> None:
     candidate = CapabilityForge().create_candidate(_forge_input())
-    handoff = CapabilityForge().build_certification_handoff(
-        candidate,
-        live_read_receipt_ref="proof://payments.send/live-read",
-        live_write_receipt_ref="proof://payments.send/live-write",
-        worker_deployment_ref="proof://payments.send/worker",
-        recovery_evidence_ref="proof://payments.send/recovery",
-    )
+    handoff = _certification_handoff(candidate)
     extension = CapabilityMaturityEvidenceSynthesizer().materialize_extension(
         _registry_entry_for_candidate(candidate),
         handoff.maturity_evidence_bundle,
@@ -81,6 +83,51 @@ def test_capability_forge_builds_certification_handoff_for_maturity_synthesis() 
     assert extension["live_write_receipt_valid"] is True
     assert "proof://payments.send/worker" in handoff.required_evidence_refs
     assert handoff.handoff_hash
+
+
+def test_capability_forge_installs_handoff_as_certification_evidence_only() -> None:
+    candidate = CapabilityForge().create_candidate(_forge_input())
+    handoff = _certification_handoff(candidate)
+    entry = _registry_entry_for_candidate(candidate)
+
+    installed = install_certification_handoff_evidence(entry, handoff, require_production_ready=True)
+    extension = installed.extensions["capability_certification_evidence"]
+    assessment = CapabilityRegistryMaturityProjector().assess_entry(installed)
+
+    assert installed is not entry
+    assert installed.capability_id == entry.capability_id
+    assert "capability_certification_evidence" not in entry.extensions
+    assert "capability_maturity_evidence" not in installed.extensions
+    assert extension["capability_id"] == candidate.capability_id
+    assert extension["source_package_hash"] == candidate.package_hash
+    assert extension["source_handoff_hash"] == handoff.handoff_hash
+    assert extension["installed_by"] == "install_certification_handoff_evidence"
+    assert extension["certification_evidence_hash"]
+    assert assessment.maturity_level == "C6"
+    assert assessment.production_ready is True
+    assert assessment.autonomy_ready is False
+
+
+def test_capability_forge_handoff_install_rejects_gate_bypasses() -> None:
+    candidate = CapabilityForge().create_candidate(_forge_input())
+    handoff = _certification_handoff(candidate)
+    entry = _registry_entry_for_candidate(candidate)
+    mismatched_entry = replace(entry, capability_id="payments.refund")
+    uncertified_entry = replace(entry, certification_status=CapabilityCertificationStatus.CANDIDATE)
+    maturity_claim_entry = replace(entry, extensions={"capability_maturity_evidence": {"generated_by": "test"}})
+    unstamped_handoff = replace(handoff, handoff_hash="")
+    tampered_handoff = replace(handoff, package_hash="tampered")
+
+    with pytest.raises(ValueError, match="^capability_handoff_entry_mismatch$"):
+        install_certification_handoff_evidence(mismatched_entry, handoff)
+    with pytest.raises(ValueError, match="^capability_handoff_requires_certified_entry$"):
+        install_certification_handoff_evidence(uncertified_entry, handoff)
+    with pytest.raises(ValueError, match="^capability_handoff_hash_required$"):
+        install_certification_handoff_evidence(entry, unstamped_handoff)
+    with pytest.raises(ValueError, match="^capability_handoff_hash_mismatch$"):
+        install_certification_handoff_evidence(entry, tampered_handoff)
+    with pytest.raises(ValueError, match="^capability_handoff_refuses_maturity_override$"):
+        install_certification_handoff_evidence(maturity_claim_entry, handoff)
 
 
 def test_capability_forge_certification_handoff_rejects_missing_required_refs() -> None:
@@ -176,6 +223,16 @@ def _forge_input() -> CapabilityForgeInput:
         network_allowlist=("api.stripe.com",),
         secret_scope="payments/stripe",
         requires_approval=True,
+    )
+
+
+def _certification_handoff(candidate) -> CapabilityCertificationHandoff:
+    return CapabilityForge().build_certification_handoff(
+        candidate,
+        live_read_receipt_ref="proof://payments.send/live-read",
+        live_write_receipt_ref="proof://payments.send/live-write",
+        worker_deployment_ref="proof://payments.send/worker",
+        recovery_evidence_ref="proof://payments.send/recovery",
     )
 
 
