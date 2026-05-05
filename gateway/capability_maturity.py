@@ -1,12 +1,15 @@
 """Capability maturity assessment.
 
 Purpose: derive bounded capability maturity from explicit evidence flags.
-Governance scope: capability readiness, promotion claims, registry projection,
-    recovery evidence, worker evidence, and autonomy controls.
+Governance scope: capability readiness, certification evidence synthesis,
+    promotion claims, registry projection, recovery evidence, worker evidence,
+    and autonomy controls.
 Dependencies: dataclasses, governed capability fabric contracts, and canonical
     command-spine hashing.
 Invariants:
   - Maturity is derived from explicit evidence, never declared directly.
+  - Certification evidence bundles can generate maturity extensions, but cannot
+    bypass production or autonomy gates.
   - Registry projections add readiness assessments without mutating registry entries.
   - Effect-bearing production claims require live write evidence.
   - Production readiness requires worker deployment and recovery evidence.
@@ -51,6 +54,54 @@ class CapabilityMaturityEvidence:
             raise ValueError("capability_id_required")
         object.__setattr__(self, "capability_id", self.capability_id.strip())
         object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityCertificationEvidenceBundle:
+    """Structured certification output used to synthesize maturity evidence."""
+
+    capability_id: str
+    certification_ref: str = ""
+    sandbox_receipt_ref: str = ""
+    live_read_receipt_ref: str = ""
+    live_write_receipt_ref: str = ""
+    worker_deployment_ref: str = ""
+    recovery_evidence_ref: str = ""
+    autonomy_controls_ref: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.capability_id.strip():
+            raise ValueError("capability_id_required")
+        object.__setattr__(self, "capability_id", self.capability_id.strip())
+        for field_name in (
+            "certification_ref",
+            "sandbox_receipt_ref",
+            "live_read_receipt_ref",
+            "live_write_receipt_ref",
+            "worker_deployment_ref",
+            "recovery_evidence_ref",
+            "autonomy_controls_ref",
+        ):
+            object.__setattr__(self, field_name, str(getattr(self, field_name)).strip())
+
+    @classmethod
+    def from_mapping(
+        cls,
+        payload: Mapping[str, Any],
+        *,
+        default_capability_id: str = "",
+    ) -> "CapabilityCertificationEvidenceBundle":
+        """Return a bundle from a registry extension payload."""
+        return cls(
+            capability_id=str(payload.get("capability_id") or default_capability_id),
+            certification_ref=str(payload.get("certification_ref", "")),
+            sandbox_receipt_ref=str(payload.get("sandbox_receipt_ref", "")),
+            live_read_receipt_ref=str(payload.get("live_read_receipt_ref", "")),
+            live_write_receipt_ref=str(payload.get("live_write_receipt_ref", "")),
+            worker_deployment_ref=str(payload.get("worker_deployment_ref", "")),
+            recovery_evidence_ref=str(payload.get("recovery_evidence_ref", "")),
+            autonomy_controls_ref=str(payload.get("autonomy_controls_ref", "")),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +160,51 @@ class CapabilityMaturityAssessor:
             assessment,
             assessment_id=f"capability-maturity-{assessment_hash[:16]}",
             assessment_hash=assessment_hash,
+        )
+
+
+class CapabilityMaturityEvidenceSynthesizer:
+    """Generate maturity evidence extensions from certification receipts."""
+
+    def __init__(self, assessor: CapabilityMaturityAssessor | None = None) -> None:
+        self._assessor = assessor or CapabilityMaturityAssessor()
+
+    def materialize_extension(
+        self,
+        entry: CapabilityRegistryEntry,
+        bundle: CapabilityCertificationEvidenceBundle,
+        *,
+        require_production_ready: bool = False,
+    ) -> dict[str, Any]:
+        """Return a registry extension payload derived from certification evidence."""
+        if bundle.capability_id != entry.capability_id:
+            raise ValueError("capability_certification_evidence_capability_mismatch")
+        extension = _certification_bundle_to_maturity_extension(bundle)
+        evidence = _maturity_evidence_from_extension(entry, extension)
+        assessment = self._assessor.assess(evidence)
+        if require_production_ready and not assessment.production_ready:
+            raise ValueError("capability_certification_evidence_incomplete")
+        return extension
+
+    def registry_entry_with_maturity_evidence(
+        self,
+        entry: CapabilityRegistryEntry,
+        bundle: CapabilityCertificationEvidenceBundle,
+        *,
+        require_production_ready: bool = False,
+    ) -> CapabilityRegistryEntry:
+        """Return a registry entry with synthesized maturity evidence installed."""
+        extension = self.materialize_extension(
+            entry,
+            bundle,
+            require_production_ready=require_production_ready,
+        )
+        return replace(
+            entry,
+            extensions={
+                **dict(entry.extensions),
+                "capability_maturity_evidence": extension,
+            },
         )
 
 
@@ -184,9 +280,42 @@ def capability_maturity_evidence_from_registry_entry(
     entry: CapabilityRegistryEntry,
 ) -> CapabilityMaturityEvidence:
     """Derive bounded maturity evidence from one registry entry and extensions."""
-    maturity_extensions = entry.extensions.get("capability_maturity_evidence", {})
-    if not isinstance(maturity_extensions, Mapping):
-        maturity_extensions = {}
+    maturity_extensions = _maturity_extension_from_registry_entry(entry)
+    return _maturity_evidence_from_extension(entry, maturity_extensions)
+
+
+def capability_maturity_evidence_extension_from_certification(
+    entry: CapabilityRegistryEntry,
+    bundle: CapabilityCertificationEvidenceBundle,
+    *,
+    require_production_ready: bool = False,
+) -> dict[str, Any]:
+    """Return the maturity extension produced by a certification bundle."""
+    return CapabilityMaturityEvidenceSynthesizer().materialize_extension(
+        entry,
+        bundle,
+        require_production_ready=require_production_ready,
+    )
+
+
+def registry_entry_with_certification_maturity_evidence(
+    entry: CapabilityRegistryEntry,
+    bundle: CapabilityCertificationEvidenceBundle,
+    *,
+    require_production_ready: bool = False,
+) -> CapabilityRegistryEntry:
+    """Return a registry entry with certification-derived maturity evidence."""
+    return CapabilityMaturityEvidenceSynthesizer().registry_entry_with_maturity_evidence(
+        entry,
+        bundle,
+        require_production_ready=require_production_ready,
+    )
+
+
+def _maturity_evidence_from_extension(
+    entry: CapabilityRegistryEntry,
+    maturity_extensions: Mapping[str, Any],
+) -> CapabilityMaturityEvidence:
     governed_record = GovernedCapabilityRecord.from_registry_entry(entry)
     return CapabilityMaturityEvidence(
         capability_id=entry.capability_id,
@@ -202,6 +331,50 @@ def capability_maturity_evidence_from_registry_entry(
         effect_bearing=governed_record.world_mutating,
         evidence_refs=_evidence_refs(entry, maturity_extensions),
     )
+
+
+def _maturity_extension_from_registry_entry(entry: CapabilityRegistryEntry) -> Mapping[str, Any]:
+    if "capability_maturity_evidence" in entry.extensions:
+        maturity_extensions = entry.extensions.get("capability_maturity_evidence", {})
+        if isinstance(maturity_extensions, Mapping):
+            return maturity_extensions
+        return {}
+    certification_extensions = entry.extensions.get("capability_certification_evidence", {})
+    if not isinstance(certification_extensions, Mapping):
+        return {}
+    bundle = CapabilityCertificationEvidenceBundle.from_mapping(
+        certification_extensions,
+        default_capability_id=entry.capability_id,
+    )
+    return CapabilityMaturityEvidenceSynthesizer().materialize_extension(entry, bundle)
+
+
+def _certification_bundle_to_maturity_extension(
+    bundle: CapabilityCertificationEvidenceBundle,
+) -> dict[str, Any]:
+    refs = tuple(
+        ref
+        for ref in (
+            bundle.certification_ref,
+            bundle.sandbox_receipt_ref,
+            bundle.live_read_receipt_ref,
+            bundle.live_write_receipt_ref,
+            bundle.worker_deployment_ref,
+            bundle.recovery_evidence_ref,
+            bundle.autonomy_controls_ref,
+        )
+        if ref
+    )
+    return {
+        "generated_by": "capability_certification_evidence",
+        "sandbox_receipt_valid": bool(bundle.sandbox_receipt_ref),
+        "live_read_receipt_valid": bool(bundle.live_read_receipt_ref),
+        "live_write_receipt_valid": bool(bundle.live_write_receipt_ref),
+        "worker_deployment_bound": bool(bundle.worker_deployment_ref),
+        "recovery_evidence_present": bool(bundle.recovery_evidence_ref),
+        "autonomy_controls_bounded": bool(bundle.autonomy_controls_ref),
+        "evidence_refs": list(refs),
+    }
 
 
 def _maturity_level(evidence: CapabilityMaturityEvidence) -> str:
