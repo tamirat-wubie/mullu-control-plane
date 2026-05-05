@@ -40,10 +40,13 @@ from mcoi_runtime.contracts.function import (
 from mcoi_runtime.contracts.goal import GoalPlan, GoalPriority, GoalDescriptor, SubGoal, SubGoalStatus
 from mcoi_runtime.contracts.job import JobDescriptor, JobPriority
 from mcoi_runtime.contracts.obligation import (
+    ObligationClosure,
     ObligationDeadline,
+    ObligationEscalation,
     ObligationOwner,
     ObligationRecord,
     ObligationState,
+    ObligationTransfer,
     ObligationTrigger,
 )
 from mcoi_runtime.contracts.roles import (
@@ -303,6 +306,39 @@ def _build_obligation_record(payload: dict) -> ObligationRecord:
     )
 
 
+def _build_obligation_closure(payload: dict) -> ObligationClosure:
+    return ObligationClosure(
+        closure_id=payload["closure_id"],
+        obligation_id=payload["obligation_id"],
+        final_state=ObligationState(payload["final_state"]),
+        reason=payload["reason"],
+        closed_by=payload["closed_by"],
+        closed_at=payload["closed_at"],
+    )
+
+
+def _build_obligation_transfer(payload: dict) -> ObligationTransfer:
+    return ObligationTransfer(
+        transfer_id=payload["transfer_id"],
+        obligation_id=payload["obligation_id"],
+        from_owner=ObligationOwner(**payload["from_owner"]),
+        to_owner=ObligationOwner(**payload["to_owner"]),
+        reason=payload["reason"],
+        transferred_at=payload["transferred_at"],
+    )
+
+
+def _build_obligation_escalation(payload: dict) -> ObligationEscalation:
+    return ObligationEscalation(
+        escalation_id=payload["escalation_id"],
+        obligation_id=payload["obligation_id"],
+        escalated_to=ObligationOwner(**payload["escalated_to"]),
+        reason=payload["reason"],
+        severity=payload["severity"],
+        escalated_at=payload["escalated_at"],
+    )
+
+
 def _build_service_function_template(payload: dict) -> ServiceFunctionTemplate:
     return ServiceFunctionTemplate(
         function_id=payload["function_id"],
@@ -546,7 +582,10 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("simulation_comparison.json", _build_simulation_comparison),
         ("job_descriptor.json", _build_job_descriptor),
         ("goal_plan.json", _build_goal_plan),
+        ("obligation_closure.json", _build_obligation_closure),
+        ("obligation_escalation.json", _build_obligation_escalation),
         ("obligation_record.json", _build_obligation_record),
+        ("obligation_transfer.json", _build_obligation_transfer),
         ("service_function_template.json", _build_service_function_template),
         ("role_descriptor.json", _build_role_descriptor),
         ("function_policy_binding.json", _build_function_policy_binding),

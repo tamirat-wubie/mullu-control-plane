@@ -609,6 +609,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_obligation_closure_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_closure.json"
+        ));
+        assert_fixture_round_trip::<ObligationClosure>(fixture_json);
+    }
+
+    #[test]
     fn obligation_transfer_round_trips() {
         let xfr = ObligationTransfer {
             transfer_id: "xfr-1".to_string(),
@@ -632,6 +641,15 @@ mod tests {
     }
 
     #[test]
+    fn canonical_obligation_transfer_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_transfer.json"
+        ));
+        assert_fixture_round_trip::<ObligationTransfer>(fixture_json);
+    }
+
+    #[test]
     fn obligation_escalation_round_trips() {
         let esc = ObligationEscalation {
             escalation_id: "esc-1".to_string(),
@@ -648,6 +666,15 @@ mod tests {
         let json = serde_json::to_string(&esc).unwrap();
         let back: ObligationEscalation = serde_json::from_str(&json).unwrap();
         assert_eq!(esc, back);
+    }
+
+    #[test]
+    fn canonical_obligation_escalation_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/obligation_escalation.json"
+        ));
+        assert_fixture_round_trip::<ObligationEscalation>(fixture_json);
     }
 
     // --- Cross-format compatibility ---

@@ -34,7 +34,10 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "event_reaction.json" in maf_runtime_fixture_names
     assert "event_subscription.json" in maf_runtime_fixture_names
     assert "event_window.json" in maf_runtime_fixture_names
+    assert "obligation_closure.json" in maf_runtime_fixture_names
+    assert "obligation_escalation.json" in maf_runtime_fixture_names
     assert "obligation_record.json" in maf_runtime_fixture_names
+    assert "obligation_transfer.json" in maf_runtime_fixture_names
     assert "service_function_template.json" in maf_runtime_fixture_names
     assert "role_descriptor.json" in maf_runtime_fixture_names
     assert "function_policy_binding.json" in maf_runtime_fixture_names
@@ -69,7 +72,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 34
+    assert len(inventory.maf_runtime_fixture_paths) >= 37
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -419,4 +422,58 @@ def test_validate_maf_runtime_fixture_rejects_event_correlation_root_drift(tmp_p
 
     assert len(errors) == 1
     assert "root_event_id must be present in event_ids" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_obligation_transfer_same_owner(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "obligation_transfer.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "transfer_id": "xfr-drift",
+                "obligation_id": "obl-42",
+                "from_owner": {
+                    "owner_id": "team-ops",
+                    "owner_type": "team",
+                    "display_name": "Operations",
+                },
+                "to_owner": {
+                    "owner_id": "team-ops",
+                    "owner_type": "team",
+                    "display_name": "Operations",
+                },
+                "reason": "reassign",
+                "transferred_at": "2025-01-01T00:10:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "from_owner.owner_id must differ from to_owner.owner_id" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_obligation_closure_non_terminal_state(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "obligation_closure.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "closure_id": "cls-drift",
+                "obligation_id": "obl-42",
+                "final_state": "active",
+                "reason": "premature closure",
+                "closed_by": "operator-1",
+                "closed_at": "2025-01-01T00:09:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "final_state must be one of completed, expired, or cancelled" in errors[0]
     assert fixture_path.name in errors[0]

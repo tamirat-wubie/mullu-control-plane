@@ -760,27 +760,9 @@ def _validate_obligation_record_fixture(path: Path) -> list[str]:
     if not isinstance(payload["metadata"], dict):
         errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
 
-    owner = payload["owner"]
-    if not isinstance(owner, dict):
-        errors.append(f"{_relative_path(path)}: field 'owner' must be an object")
-    else:
-        owner_errors = _validate_exact_object_fields(
-            owner,
-            path=path,
-            expected_fields=("owner_id", "owner_type", "display_name"),
-            kind="owner",
-        )
-        if owner_errors:
-            errors.extend(owner_errors)
-        else:
-            for field_name in ("owner_id", "owner_type", "display_name"):
-                errors.extend(
-                    _require_non_empty_text(
-                        owner[field_name],
-                        field_name=f"owner.{field_name}",
-                        path=path,
-                    )
-                )
+    errors.extend(
+        _validate_obligation_owner_dict(payload["owner"], path=path, field_name="owner")
+    )
 
     deadline = payload["deadline"]
     if not isinstance(deadline, dict):
@@ -815,6 +797,124 @@ def _validate_obligation_record_fixture(path: Path) -> list[str]:
             if not isinstance(deadline["hard"], bool):
                 errors.append(f"{_relative_path(path)}: field 'deadline.hard' must be boolean")
 
+    return errors
+
+
+def _validate_obligation_owner_dict(owner: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(owner, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        owner,
+        path=path,
+        expected_fields=("owner_id", "owner_type", "display_name"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    for nested_field_name in ("owner_id", "owner_type", "display_name"):
+        errors.extend(
+            _require_non_empty_text(
+                owner[nested_field_name],
+                field_name=f"{field_name}.{nested_field_name}",
+                path=path,
+            )
+        )
+    return errors
+
+
+def _validate_obligation_closure_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "closure_id",
+            "obligation_id",
+            "final_state",
+            "reason",
+            "closed_by",
+            "closed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("closure_id", "obligation_id", "final_state", "reason", "closed_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if payload["final_state"] not in {"completed", "expired", "cancelled"}:
+        errors.append(
+            f"{_relative_path(path)}: final_state must be one of completed, expired, or cancelled"
+        )
+    return errors
+
+
+def _validate_obligation_transfer_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "transfer_id",
+            "obligation_id",
+            "from_owner",
+            "to_owner",
+            "reason",
+            "transferred_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("transfer_id", "obligation_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _validate_obligation_owner_dict(payload["from_owner"], path=path, field_name="from_owner")
+    )
+    errors.extend(
+        _validate_obligation_owner_dict(payload["to_owner"], path=path, field_name="to_owner")
+    )
+    errors.extend(
+        _validate_iso8601_text(payload["transferred_at"], field_name="transferred_at", path=path)
+    )
+    from_owner = payload["from_owner"]
+    to_owner = payload["to_owner"]
+    if (
+        isinstance(from_owner, dict)
+        and isinstance(to_owner, dict)
+        and isinstance(from_owner.get("owner_id"), str)
+        and isinstance(to_owner.get("owner_id"), str)
+        and from_owner.get("owner_id") == to_owner.get("owner_id")
+    ):
+        errors.append(f"{_relative_path(path)}: from_owner.owner_id must differ from to_owner.owner_id")
+    return errors
+
+
+def _validate_obligation_escalation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "escalation_id",
+            "obligation_id",
+            "escalated_to",
+            "reason",
+            "severity",
+            "escalated_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("escalation_id", "obligation_id", "reason", "severity"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _validate_obligation_owner_dict(payload["escalated_to"], path=path, field_name="escalated_to")
+    )
+    errors.extend(
+        _validate_iso8601_text(payload["escalated_at"], field_name="escalated_at", path=path)
+    )
     return errors
 
 
@@ -1806,7 +1906,10 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "job_descriptor.json": _validate_job_descriptor_fixture,
     "livelock_record.json": _validate_livelock_record_fixture,
     "goal_plan.json": _validate_goal_plan_fixture,
+    "obligation_closure.json": _validate_obligation_closure_fixture,
+    "obligation_escalation.json": _validate_obligation_escalation_fixture,
     "obligation_record.json": _validate_obligation_record_fixture,
+    "obligation_transfer.json": _validate_obligation_transfer_fixture,
     "role_descriptor.json": _validate_role_descriptor_fixture,
     "runtime_heartbeat.json": _validate_runtime_heartbeat_fixture,
     "service_function_template.json": _validate_service_function_template_fixture,
