@@ -4,7 +4,7 @@ Purpose: Builds an optional registry-backed command capability admission gate
     for gateway command execution.
 Governance scope: environment-gated domain capsule loading, capsule pack
     loading, capability pack loading, capability registry installation, and
-    command admission gate construction.
+    command admission gate construction with maturity read-model projection.
 Dependencies: governed capability fabric contracts, compiler, registry, and
     command admission core.
 Invariants:
@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 from typing import Callable
 
+from gateway.capability_maturity import CapabilityRegistryMaturityProjector
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityRegistryEntry,
     DomainCapsule,
@@ -57,6 +58,24 @@ _DEFAULT_CAPABILITY_PACK_PATHS = (
     _REPO_ROOT / "capabilities" / "computer" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "voice" / "capability_pack.json",
 )
+
+
+class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
+    """Admission gate that adds derived maturity to registry read models."""
+
+    def __init__(
+        self,
+        *,
+        registry: GovernedCapabilityRegistry,
+        clock: Callable[[], str],
+        maturity_projector: CapabilityRegistryMaturityProjector | None = None,
+    ) -> None:
+        super().__init__(registry=registry, clock=clock)
+        self._maturity_projector = maturity_projector or CapabilityRegistryMaturityProjector()
+
+    def read_model(self) -> dict:
+        """Return registry read model decorated with C0-C7 maturity evidence."""
+        return self._maturity_projector.decorate_read_model(super().read_model())
 
 
 def build_capability_admission_gate_from_env(
@@ -141,7 +160,7 @@ def build_capability_admission_gate(
         installation = registry.install(compilation, referenced_capabilities)
         if installation.errors:
             raise ValueError(f"fabric capsule installation failed for {capsule.capsule_id}: {list(installation.errors)}")
-    return CommandCapabilityAdmissionGate(registry=registry, clock=clock)
+    return MaturityProjectingCapabilityAdmissionGate(registry=registry, clock=clock)
 
 
 def _load_object(path: Path) -> dict:

@@ -58,10 +58,14 @@ def test_operator_capability_read_model_projects_governed_records_only() -> None
     assert read_model["risk_level_filter"] == "medium"
     assert read_model["capability_count"] == 6
     assert read_model["domain_counts"] == {"voice": 6}
+    assert read_model["maturity_counts"] == {"C3": 6}
+    assert read_model["production_ready_count"] == 0
+    assert read_model["autonomy_ready_count"] == 0
     assert read_model["sandbox_required_count"] == 6
     assert read_model["admission_audit_page"]["limit"] == 2
     assert all("extensions" not in item for item in read_model["capabilities"])
     assert all("input_schema_ref" not in item for item in read_model["capabilities"])
+    assert all(item["maturity_level"] == "C3" for item in read_model["capabilities"])
 
 
 def test_operator_capability_endpoint_reports_default_fabric() -> None:
@@ -80,6 +84,8 @@ def test_operator_capability_endpoint_reports_default_fabric() -> None:
     assert payload["domain_filter"] == "browser"
     assert payload["capability_count"] >= 1
     assert payload["raw_tool_surface_exposed"] is False
+    assert payload["maturity_counts"]["C3"] >= 1
+    assert payload["production_ready_count"] == 0
     assert payload["admission_audit_page"]["limit"] == 1
     assert all(item["domain"] == "browser" for item in payload["capabilities"])
 
@@ -99,4 +105,6 @@ def test_operator_capability_html_console_is_read_only() -> None:
     assert "Mullu Operator Capabilities" in response.text
     assert "Governed Capability Records" in response.text
     assert "voice.intent_confirm" in response.text
+    assert "Maturity" in response.text
+    assert "Production ready: 0" in response.text
     assert "Raw tools exposed: false" in response.text

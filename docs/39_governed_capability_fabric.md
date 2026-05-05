@@ -6,6 +6,7 @@ Dependencies: `docs/06_capability_planes.md`, `docs/31_operational_graph.md`, `d
 Invariants:
 - No command can execute without a typed capability registry entry.
 - No capability registry entry is complete without authority, isolation, evidence, recovery, cost, and obligation models.
+- Registry read models expose derived C-level maturity without mutating source registry entries.
 - No domain capsule is deployable without owner team, policies, evidence rules, recovery rules, test fixtures, read models, and operator views.
 - Terminal closure remains the only success authority for effect-bearing actions.
 
@@ -37,6 +38,10 @@ Each registry entry carries the minimum information needed to execute an action 
 | `cost_model` | Budget class and maximum estimated cost |
 | `obligation_model` | Owner, due time, and escalation path |
 | `certification_status` | Lifecycle gate for admission |
+
+## Maturity Projection
+
+Registry entries do not self-promote. Gateway-built fabric read models derive a `capability_maturity_assessment` from each installed entry and attach the C0-C7 summary to both the internal capability projection and the governed operator record. Certification can lift a capability to mock-evaluated maturity, but production readiness still requires explicit sandbox, live receipt, worker deployment, recovery, and autonomy evidence through `extensions.capability_maturity_evidence`.
 
 ## Domain Capsule
 

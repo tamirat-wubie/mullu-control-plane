@@ -58,6 +58,9 @@ def build_operator_capability_read_model(
         "capability_count": len(capabilities),
         "domain_counts": _counts(capabilities, "domain"),
         "risk_counts": _counts(capabilities, "risk_level"),
+        "maturity_counts": _counts(capabilities, "maturity_level"),
+        "production_ready_count": sum(1 for item in capabilities if item.get("production_ready") is True),
+        "autonomy_ready_count": sum(1 for item in capabilities if item.get("autonomy_ready") is True),
         "approval_required_count": sum(1 for item in capabilities if item.get("requires_approval") is True),
         "sandbox_required_count": sum(1 for item in capabilities if item.get("requires_sandbox") is True),
         "receipt_required_count": sum(1 for item in capabilities if item.get("receipt_required") is True),
@@ -76,6 +79,8 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
         f"<td>{escape(str(item.get('capability_id', '')))}</td>"
         f"<td>{escape(str(item.get('domain', '')))}</td>"
         f"<td>{escape(str(item.get('risk_level', '')))}</td>"
+        f"<td>{escape(str(item.get('maturity_level', '')))}</td>"
+        f"<td>{_bool_cell(item.get('production_ready'))}</td>"
         f"<td>{_bool_cell(item.get('requires_approval'))}</td>"
         f"<td>{_bool_cell(item.get('requires_sandbox'))}</td>"
         f"<td>{escape(', '.join(str(tool) for tool in item.get('allowed_tools', ())))}</td>"
@@ -109,6 +114,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
   <header>
     <h1>Mullu Operator Capabilities</h1>
     <span class="metric">Capabilities: {int(read_model.get("capability_count", 0))}</span>
+    <span class="metric">Production ready: {int(read_model.get("production_ready_count", 0))}</span>
     <span class="metric">Approval required: {int(read_model.get("approval_required_count", 0))}</span>
     <span class="metric">Sandbox required: {int(read_model.get("sandbox_required_count", 0))}</span>
     <span class="metric">Raw tools exposed: {escape(str(read_model.get("raw_tool_surface_exposed", False)).lower())}</span>
@@ -116,7 +122,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
   <section>
     <h2>Governed Capability Records</h2>
     <table>
-      <thead><tr><th>Capability</th><th>Domain</th><th>Risk</th><th>Approval</th><th>Sandbox</th><th>Allowed Tools</th></tr></thead>
+      <thead><tr><th>Capability</th><th>Domain</th><th>Risk</th><th>Maturity</th><th>Production</th><th>Approval</th><th>Sandbox</th><th>Allowed Tools</th></tr></thead>
       <tbody>{capability_rows}</tbody>
     </table>
   </section>

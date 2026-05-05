@@ -1,11 +1,13 @@
 """Capability maturity assessment.
 
 Purpose: derive bounded capability maturity from explicit evidence flags.
-Governance scope: capability readiness, promotion claims, recovery evidence,
-    worker evidence, and autonomy controls.
-Dependencies: dataclasses and canonical command-spine hashing.
+Governance scope: capability readiness, promotion claims, registry projection,
+    recovery evidence, worker evidence, and autonomy controls.
+Dependencies: dataclasses, governed capability fabric contracts, and canonical
+    command-spine hashing.
 Invariants:
   - Maturity is derived from explicit evidence, never declared directly.
+  - Registry projections add readiness assessments without mutating registry entries.
   - Effect-bearing production claims require live write evidence.
   - Production readiness requires worker deployment and recovery evidence.
   - C7 autonomy requires bounded autonomy controls.
@@ -14,9 +16,14 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, replace
-from typing import Any
+from typing import Any, Mapping
 
 from gateway.command_spine import canonical_hash
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityCertificationStatus,
+    CapabilityRegistryEntry,
+    GovernedCapabilityRecord,
+)
 
 
 MATURITY_LEVELS = ("C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7")
@@ -105,6 +112,98 @@ class CapabilityMaturityAssessor:
         )
 
 
+class CapabilityRegistryMaturityProjector:
+    """Project registry entries into maturity assessments for read models."""
+
+    def __init__(self, assessor: CapabilityMaturityAssessor | None = None) -> None:
+        self._assessor = assessor or CapabilityMaturityAssessor()
+
+    def assess_entry(self, entry: CapabilityRegistryEntry) -> CapabilityMaturityAssessment:
+        """Return maturity assessment for one registry entry."""
+        return self._assessor.assess(capability_maturity_evidence_from_registry_entry(entry))
+
+    def decorate_read_model(self, read_model: Mapping[str, Any]) -> dict[str, Any]:
+        """Return read model with derived maturity assessments attached."""
+        capability_items = tuple(read_model.get("capabilities", ()))
+        governed_items = tuple(read_model.get("governed_capability_records", ()))
+        assessments_by_capability: dict[str, dict[str, Any]] = {}
+        decorated_capabilities: list[Any] = []
+
+        for item in capability_items:
+            if not isinstance(item, Mapping):
+                decorated_capabilities.append(item)
+                continue
+            capability_payload = dict(item)
+            try:
+                entry = _entry_from_read_model_payload(capability_payload)
+            except (KeyError, TypeError, ValueError):
+                decorated_capabilities.append(capability_payload)
+                continue
+            assessment = self.assess_entry(entry)
+            assessment_payload = _assessment_payload(assessment)
+            assessments_by_capability[entry.capability_id] = assessment_payload
+            decorated_capabilities.append({
+                **capability_payload,
+                "maturity_assessment": assessment_payload,
+            })
+
+        decorated_governed_records: list[Any] = []
+        for item in governed_items:
+            if not isinstance(item, Mapping):
+                decorated_governed_records.append(item)
+                continue
+            governed_payload = dict(item)
+            assessment = assessments_by_capability.get(str(governed_payload.get("capability_id", "")))
+            if assessment is None:
+                decorated_governed_records.append(governed_payload)
+                continue
+            decorated_governed_records.append({
+                **governed_payload,
+                "maturity_level": assessment["maturity_level"],
+                "production_ready": assessment["production_ready"],
+                "autonomy_ready": assessment["autonomy_ready"],
+                "maturity_assessment_id": assessment["assessment_id"],
+            })
+
+        return {
+            **dict(read_model),
+            "capabilities": tuple(decorated_capabilities),
+            "governed_capability_records": tuple(decorated_governed_records),
+            "capability_maturity_assessments": tuple(assessments_by_capability.values()),
+            "capability_maturity_counts": _maturity_counts(assessments_by_capability.values()),
+            "production_ready_count": sum(
+                1 for assessment in assessments_by_capability.values() if assessment["production_ready"] is True
+            ),
+            "autonomy_ready_count": sum(
+                1 for assessment in assessments_by_capability.values() if assessment["autonomy_ready"] is True
+            ),
+        }
+
+
+def capability_maturity_evidence_from_registry_entry(
+    entry: CapabilityRegistryEntry,
+) -> CapabilityMaturityEvidence:
+    """Derive bounded maturity evidence from one registry entry and extensions."""
+    maturity_extensions = entry.extensions.get("capability_maturity_evidence", {})
+    if not isinstance(maturity_extensions, Mapping):
+        maturity_extensions = {}
+    governed_record = GovernedCapabilityRecord.from_registry_entry(entry)
+    return CapabilityMaturityEvidence(
+        capability_id=entry.capability_id,
+        schema_valid=True,
+        policy_bound=_policy_bound(entry),
+        mock_eval_passed=entry.certification_status is CapabilityCertificationStatus.CERTIFIED,
+        sandbox_receipt_valid=_extension_bool(maturity_extensions, "sandbox_receipt_valid"),
+        live_read_receipt_valid=_extension_bool(maturity_extensions, "live_read_receipt_valid"),
+        live_write_receipt_valid=_extension_bool(maturity_extensions, "live_write_receipt_valid"),
+        worker_deployment_bound=_extension_bool(maturity_extensions, "worker_deployment_bound"),
+        recovery_evidence_present=_recovery_evidence_present(entry, maturity_extensions),
+        autonomy_controls_bounded=_extension_bool(maturity_extensions, "autonomy_controls_bounded"),
+        effect_bearing=governed_record.world_mutating,
+        evidence_refs=_evidence_refs(entry, maturity_extensions),
+    )
+
+
 def _maturity_level(evidence: CapabilityMaturityEvidence) -> str:
     if not evidence.schema_valid:
         return "C0"
@@ -156,3 +255,64 @@ def _autonomy_blockers(
     if not evidence.autonomy_controls_bounded:
         blockers.append("autonomy_controls_missing")
     return tuple(blockers)
+
+
+def _entry_from_read_model_payload(payload: Mapping[str, Any]) -> CapabilityRegistryEntry:
+    entry_payload = {
+        key: value
+        for key, value in payload.items()
+        if key not in {"capsule_id", "maturity_assessment"}
+    }
+    return CapabilityRegistryEntry.from_mapping(entry_payload)
+
+
+def _assessment_payload(assessment: CapabilityMaturityAssessment) -> dict[str, Any]:
+    payload = asdict(assessment)
+    payload["blockers"] = list(assessment.blockers)
+    payload["evidence_refs"] = list(assessment.evidence_refs)
+    return payload
+
+
+def _policy_bound(entry: CapabilityRegistryEntry) -> bool:
+    return bool(
+        entry.authority_policy.required_roles
+        and entry.evidence_model.required_evidence
+        and entry.effect_model.expected_effects
+        and entry.obligation_model.owner_team
+    )
+
+
+def _recovery_evidence_present(
+    entry: CapabilityRegistryEntry,
+    maturity_extensions: Mapping[str, Any],
+) -> bool:
+    if "recovery_evidence_present" in maturity_extensions:
+        return _extension_bool(maturity_extensions, "recovery_evidence_present")
+    return bool(entry.recovery_plan.rollback_capability or entry.recovery_plan.compensation_capability)
+
+
+def _extension_bool(payload: Mapping[str, Any], key: str) -> bool:
+    return payload.get(key) is True
+
+
+def _evidence_refs(
+    entry: CapabilityRegistryEntry,
+    maturity_extensions: Mapping[str, Any],
+) -> tuple[str, ...]:
+    refs = maturity_extensions.get("evidence_refs", ())
+    if not isinstance(refs, (list, tuple)):
+        refs = ()
+    return (
+        f"capability_registry:{entry.capability_id}",
+        f"capability_certification:{entry.certification_status.value}",
+        *(str(ref) for ref in refs),
+    )
+
+
+def _maturity_counts(assessments: Any) -> dict[str, int]:
+    counts = {level: 0 for level in MATURITY_LEVELS}
+    for assessment in assessments:
+        level = str(assessment.get("maturity_level", ""))
+        if level in counts:
+            counts[level] += 1
+    return counts

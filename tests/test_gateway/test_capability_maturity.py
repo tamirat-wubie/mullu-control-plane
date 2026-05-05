@@ -24,12 +24,18 @@ from gateway.capability_maturity import (
     CapabilityMaturityAssessment,
     CapabilityMaturityAssessor,
     CapabilityMaturityEvidence,
+    CapabilityRegistryMaturityProjector,
+)
+from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityRegistryEntry,
+    GovernedCapabilityRecord,
 )
 from scripts.validate_schemas import _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "capability_maturity.schema.json"
+REGISTRY_FIXTURE_PATH = ROOT / "integration" / "governed_capability_fabric" / "fixtures" / "capability_registry_entry.json"
 
 
 def test_missing_evidence_assesses_to_c0_with_blockers() -> None:
@@ -158,6 +164,64 @@ def test_capability_maturity_rejects_invalid_manual_claims() -> None:
         )
 
 
+def test_registry_entry_projection_derives_c3_for_certified_entry_without_live_receipts() -> None:
+    entry = _registry_entry(certified=True)
+    assessment = CapabilityRegistryMaturityProjector().assess_entry(entry)
+
+    assert assessment.capability_id == "crm.update_customer_address"
+    assert assessment.maturity_level == "C3"
+    assert assessment.production_ready is False
+    assert assessment.autonomy_ready is False
+    assert "sandbox_receipt_missing" in assessment.blockers
+    assert "effect_bearing_production_requires_live_write" in assessment.blockers
+    assert "capability_registry:crm.update_customer_address" in assessment.evidence_refs
+
+
+def test_registry_entry_extension_evidence_can_reach_c6_without_autonomy() -> None:
+    entry = _registry_entry(
+        certified=True,
+        maturity_evidence={
+            "sandbox_receipt_valid": True,
+            "live_read_receipt_valid": True,
+            "live_write_receipt_valid": True,
+            "worker_deployment_bound": True,
+            "recovery_evidence_present": True,
+            "evidence_refs": ["proof://capabilities/crm.update_customer_address/live"],
+        },
+    )
+    assessment = CapabilityRegistryMaturityProjector().assess_entry(entry)
+
+    assert assessment.maturity_level == "C6"
+    assert assessment.production_ready is True
+    assert assessment.autonomy_ready is False
+    assert assessment.blockers == ("autonomy_controls_missing",)
+    assert "proof://capabilities/crm.update_customer_address/live" in assessment.evidence_refs
+    assert assessment.metadata["assessment_is_not_promotion"] is True
+
+
+def test_read_model_projection_attaches_maturity_to_capabilities_and_records() -> None:
+    entry = _registry_entry(certified=True)
+    governed_record = GovernedCapabilityRecord.from_registry_entry(entry)
+    read_model = {
+        "capabilities": ({**entry.to_json_dict(), "capsule_id": "customer_ops.v1"},),
+        "governed_capability_records": (governed_record.to_json_dict(),),
+    }
+
+    projected = CapabilityRegistryMaturityProjector().decorate_read_model(read_model)
+    capability = projected["capabilities"][0]
+    governed = projected["governed_capability_records"][0]
+    assessment = projected["capability_maturity_assessments"][0]
+
+    assert capability["maturity_assessment"]["maturity_level"] == "C3"
+    assert governed["maturity_level"] == "C3"
+    assert governed["production_ready"] is False
+    assert governed["autonomy_ready"] is False
+    assert governed["maturity_assessment_id"] == assessment["assessment_id"]
+    assert projected["capability_maturity_counts"]["C3"] == 1
+    assert projected["production_ready_count"] == 0
+    assert projected["autonomy_ready_count"] == 0
+
+
 def _evidence(
     *,
     effect_bearing: bool,
@@ -178,6 +242,22 @@ def _evidence(
         effect_bearing=effect_bearing,
         evidence_refs=("proof://capabilities/payments.send",),
     )
+
+
+def _registry_entry(
+    *,
+    certified: bool,
+    maturity_evidence: dict | None = None,
+) -> CapabilityRegistryEntry:
+    payload = json.loads(REGISTRY_FIXTURE_PATH.read_text(encoding="utf-8"))
+    if certified:
+        payload["certification_status"] = "certified"
+    if maturity_evidence is not None:
+        payload["extensions"] = {
+            **payload.get("extensions", {}),
+            "capability_maturity_evidence": maturity_evidence,
+        }
+    return CapabilityRegistryEntry.from_mapping(payload)
 
 
 def _json_payload(assessment: CapabilityMaturityAssessment) -> dict:

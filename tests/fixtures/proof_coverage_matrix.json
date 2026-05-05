@@ -2215,18 +2215,26 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "docs/39_governed_capability_fabric.md",
+        "gateway/capability_fabric.py",
         "gateway/capability_maturity.py",
+        "gateway/operator_capability_console.py",
         "schemas/capability_maturity.schema.json",
         "schemas/README.md",
-        "tests/test_gateway/test_capability_maturity.py"
+        "tests/test_gateway/test_capability_fabric.py",
+        "tests/test_gateway/test_capability_maturity.py",
+        "tests/test_gateway/test_operator_capability_console.py"
       ],
-      "notes": "Capability maturity assessment derives C0-C7 readiness from explicit evidence, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
+      "notes": "Capability maturity assessment derives C0-C7 readiness from explicit evidence, projects maturity onto capability fabric read models, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
       "representative_paths": [
-        "CapabilityMaturityAssessor.assess"
+        "CapabilityMaturityAssessor.assess",
+        "CapabilityRegistryMaturityProjector.decorate_read_model",
+        "MaturityProjectingCapabilityAdmissionGate.read_model"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "maturity_derived_from_evidence",
+        "registry_read_model_exposes_maturity",
         "effect_bearing_production_requires_live_write",
         "production_requires_worker_deployment_recovery",
         "autonomy_requires_C7_controls",
