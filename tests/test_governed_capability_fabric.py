@@ -31,6 +31,12 @@ from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmi
 from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from gateway.capability_forge import (
+    CapabilityForge,
+    CapabilityForgeInput,
+    install_certification_handoff_evidence_batch,
+)
+from gateway.capability_maturity import CapabilityRegistryMaturityProjector
 from gateway.command_spine import CommandLedger, InMemoryCommandLedgerStore, compile_typed_intent
 
 
@@ -106,6 +112,23 @@ def _certified_capsule() -> DomainCapsule:
         certification_status=DomainCapsuleCertificationStatus.CERTIFIED,
         metadata=capsule.metadata,
         extensions=capsule.extensions,
+    )
+
+
+def _forge_input_for_entry(entry: CapabilityRegistryEntry) -> CapabilityForgeInput:
+    return CapabilityForgeInput(
+        capability_id=entry.capability_id,
+        version=entry.version,
+        domain=entry.domain,
+        risk="high",
+        side_effects=("external_write",),
+        api_docs_ref=f"docs/providers/{entry.domain}.md",
+        input_schema_ref=entry.input_schema_ref,
+        output_schema_ref=entry.output_schema_ref,
+        owner_team=entry.obligation_model.owner_team,
+        network_allowlist=tuple(entry.isolation_profile.network_allowlist),
+        secret_scope=entry.isolation_profile.secret_scope,
+        requires_approval=True,
     )
 
 
@@ -278,6 +301,35 @@ def test_governed_capability_registry_installs_certified_compilation() -> None:
     assert registry.capability_count == 1
     assert registry.artifact_count == 10
     assert domain_capabilities == (entry,)
+
+
+def test_handoff_evidence_batch_preserves_capsule_registry_admission() -> None:
+    compiler = DomainCapsuleCompiler(clock=_clock)
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    entry = _certified_entry()
+    candidate = CapabilityForge().create_candidate(_forge_input_for_entry(entry))
+    handoff = CapabilityForge().build_certification_handoff(
+        candidate,
+        live_read_receipt_ref="proof://crm.update_customer_address/live-read",
+        live_write_receipt_ref="proof://crm.update_customer_address/live-write",
+        worker_deployment_ref="proof://crm.update_customer_address/worker",
+        recovery_evidence_ref="proof://crm.update_customer_address/recovery",
+    )
+    batch = install_certification_handoff_evidence_batch((entry,), (handoff,), require_production_ready=True)
+
+    result = compiler.compile(_certified_capsule(), batch.registry_entries)
+    installation = registry.install(result, batch.registry_entries)
+    installed = registry.get_capability(entry.capability_id)
+    assessment = CapabilityRegistryMaturityProjector().assess_entry(installed)
+
+    assert installation.status is CapsuleAdmissionStatus.INSTALLED
+    assert installation.capability_ids == (entry.capability_id,)
+    assert registry.capability_count == 1
+    assert installed.extensions["capability_certification_evidence"]["source_handoff_hash"] == handoff.handoff_hash
+    assert "capability_maturity_evidence" not in installed.extensions
+    assert assessment.production_ready is True
+    assert assessment.maturity_level == "C6"
+    assert batch.batch_hash
 
 
 def test_governed_capability_registry_rejects_uncertified_strict_install() -> None:
