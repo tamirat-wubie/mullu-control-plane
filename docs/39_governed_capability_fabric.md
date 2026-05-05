@@ -47,6 +47,10 @@ Checked-in default packs include two concrete C6 witnesses. `connector.github.re
 
 Certification pipelines can avoid hand-authored maturity flags by emitting `extensions.capability_certification_evidence` with concrete certification, sandbox, live-read, optional live-write, worker, recovery, and autonomy-control references. The maturity synthesizer converts that bundle into the canonical `capability_maturity_evidence` extension shape, validates the capability identity, and can run in strict mode when a caller requires production readiness before writing the generated extension.
 
+## Capability Forge
+
+The capability forge emits candidate packages and certification handoffs, never registry mutations. A candidate handoff binds the package id, package hash, sandbox receipt, live receipt, worker deployment, recovery evidence, and optional autonomy-control reference into a `CapabilityCertificationEvidenceBundle` that the maturity synthesizer can consume. Effect-bearing handoffs fail closed until live-write and recovery evidence references are present.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.

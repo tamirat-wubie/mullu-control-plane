@@ -18,11 +18,16 @@ import json
 from dataclasses import asdict, replace
 from pathlib import Path
 
-from gateway.capability_forge import CapabilityForge, CapabilityForgeInput
+import pytest
+
+from gateway.capability_forge import CapabilityCertificationHandoff, CapabilityForge, CapabilityForgeInput
+from gateway.capability_maturity import CapabilityMaturityEvidenceSynthesizer
+from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_PATH = ROOT / "schemas" / "capability_candidate.schema.json"
+REGISTRY_FIXTURE_PATH = ROOT / "integration" / "governed_capability_fabric" / "fixtures" / "capability_registry_entry.json"
 
 
 def test_capability_forge_creates_schema_valid_candidate_package() -> None:
@@ -51,6 +56,60 @@ def test_capability_forge_projects_high_risk_controls() -> None:
     assert candidate.adapter.sandbox_required is True
     assert candidate.receipt_contract.terminal_certificate_required is True
     assert candidate.rollback_path.review_required is True
+
+
+def test_capability_forge_builds_certification_handoff_for_maturity_synthesis() -> None:
+    candidate = CapabilityForge().create_candidate(_forge_input())
+    handoff = CapabilityForge().build_certification_handoff(
+        candidate,
+        live_read_receipt_ref="proof://payments.send/live-read",
+        live_write_receipt_ref="proof://payments.send/live-write",
+        worker_deployment_ref="proof://payments.send/worker",
+        recovery_evidence_ref="proof://payments.send/recovery",
+    )
+    extension = CapabilityMaturityEvidenceSynthesizer().materialize_extension(
+        _registry_entry_for_candidate(candidate),
+        handoff.maturity_evidence_bundle,
+        require_production_ready=True,
+    )
+
+    assert isinstance(handoff, CapabilityCertificationHandoff)
+    assert handoff.package_id == candidate.package_id
+    assert handoff.package_hash == candidate.package_hash
+    assert handoff.maturity_evidence_bundle.certification_ref == candidate.documentation.promotion_evidence_ref
+    assert handoff.maturity_evidence_bundle.sandbox_receipt_ref == "sandbox/payments.send/receipt.json"
+    assert extension["live_write_receipt_valid"] is True
+    assert "proof://payments.send/worker" in handoff.required_evidence_refs
+    assert handoff.handoff_hash
+
+
+def test_capability_forge_certification_handoff_rejects_missing_required_refs() -> None:
+    candidate = CapabilityForge().create_candidate(_forge_input())
+    unsafe_candidate = replace(candidate, promotion_blocked=False)
+
+    with pytest.raises(ValueError, match="^effect_bearing_certification_requires_live_write_ref$"):
+        CapabilityForge().build_certification_handoff(
+            candidate,
+            live_read_receipt_ref="proof://payments.send/live-read",
+            worker_deployment_ref="proof://payments.send/worker",
+            recovery_evidence_ref="proof://payments.send/recovery",
+        )
+    with pytest.raises(ValueError, match="^recovery_evidence_ref_required$"):
+        CapabilityForge().build_certification_handoff(
+            candidate,
+            live_read_receipt_ref="proof://payments.send/live-read",
+            live_write_receipt_ref="proof://payments.send/live-write",
+            worker_deployment_ref="proof://payments.send/worker",
+            recovery_evidence_ref="",
+        )
+    with pytest.raises(ValueError, match="^capability_candidate_invalid_for_certification_handoff$"):
+        CapabilityForge().build_certification_handoff(
+            unsafe_candidate,
+            live_read_receipt_ref="proof://payments.send/live-read",
+            live_write_receipt_ref="proof://payments.send/live-write",
+            worker_deployment_ref="proof://payments.send/worker",
+            recovery_evidence_ref="proof://payments.send/recovery",
+        )
 
 
 def test_capability_forge_rejects_candidate_self_promotion() -> None:
@@ -118,3 +177,14 @@ def _forge_input() -> CapabilityForgeInput:
         secret_scope="payments/stripe",
         requires_approval=True,
     )
+
+
+def _registry_entry_for_candidate(candidate) -> CapabilityRegistryEntry:
+    payload = json.loads(REGISTRY_FIXTURE_PATH.read_text(encoding="utf-8"))
+    payload["capability_id"] = candidate.capability_id
+    payload["domain"] = candidate.domain
+    payload["version"] = candidate.version
+    payload["input_schema_ref"] = candidate.schemas.input_schema_ref
+    payload["output_schema_ref"] = candidate.schemas.output_schema_ref
+    payload["certification_status"] = "certified"
+    return CapabilityRegistryEntry.from_mapping(payload)
