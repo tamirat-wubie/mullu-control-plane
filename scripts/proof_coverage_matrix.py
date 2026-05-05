@@ -720,6 +720,31 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "collaboration_cases",
+            [
+                "CollaborationCaseManager.open_case",
+                "CollaborationCaseManager.close_case",
+                "CollaborationControl",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/collaboration_cases.py",
+                "schemas/collaboration_case.schema.json",
+                "tests/test_gateway/test_collaboration_cases.py",
+            ],
+            "Collaboration cases bind requester separation, approval controls, decider authority, evidence hashing, and non-terminal case closure into governed operational casework.",
+            [
+                "approval_separation_required",
+                "pending_controls_block_case_closure",
+                "decider_authority_required",
+                "case_closure_not_terminal_command_closure",
+                "collaboration_case_schema_valid",
+            ],
+        ),
+        _surface(
             "capability_maturity",
             [
                 "CapabilityMaturityAssessor.assess",
@@ -1312,6 +1337,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_agent_identity_contract",
             "surfaces": ["agent_identity"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_collaboration_case_contract",
+            "surfaces": ["collaboration_cases"],
             "status": "closed",
         },
         {

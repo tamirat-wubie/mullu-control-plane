@@ -65,6 +65,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "collaboration-case",
+      "path": "schemas/collaboration_case.schema.json",
+      "urn": "urn:mullusi:schema:collaboration-case:1",
+      "surface": "collaboration"
+    },
+    {
       "schema_id": "communication-message",
       "path": "schemas/communication_message.schema.json",
       "urn": "urn:mullusi:schema:communication-message:1",
