@@ -275,6 +275,40 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "runbook_learning_lifecycle",
+            [
+                "/api/v1/runbooks",
+                "/api/v1/runbooks/analyze",
+                "/api/v1/runbooks/approve",
+                "/api/v1/runbooks/patterns",
+                "/api/v1/runbooks/promote",
+                "/api/v1/runbooks/summary",
+                "/api/v1/runbooks/{runbook_id}/activate",
+                "/api/v1/runbooks/{runbook_id}/retire",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/runbooks.py",
+                "mcoi/mcoi_runtime/core/runbook_learning.py",
+                "mcoi/mcoi_runtime/app/server_http.py",
+                "mcoi/tests/test_runbook_learning.py",
+            ],
+            "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, and expose bounded read models for runbooks, patterns, and summaries.",
+            [
+                "patterns_detected_from_audit_trail",
+                "promotion_requires_detected_pattern",
+                "approval_required_before_activation",
+                "retirement_requires_active_runbook",
+                "promote_and_approve_audit_records",
+                "sanitized_runbook_error_details",
+                "runbook_pattern_read_models_bounded",
+                "runbook_responses_governed",
+            ],
+        ),
+        _surface(
             "gateway_webhook_ingress",
             ["/webhook/web", "/webhook/slack", "/webhook/telegram"],
             "request_proof",
@@ -908,6 +942,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_compliance_evidence_exports",
             "surfaces": ["compliance_evidence_exports"],
+            "status": "closed",
+        },
+        {
+            "action_id": "classify_runbook_learning_routes",
+            "surfaces": ["runbook_learning_lifecycle"],
             "status": "closed",
         },
         {
