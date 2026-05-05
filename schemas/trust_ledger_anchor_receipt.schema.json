@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:trust-ledger-anchor-receipt:1",
+  "title": "Trust Ledger External Anchor Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "anchor_receipt_id",
+    "bundle_id",
+    "tenant_id",
+    "command_id",
+    "terminal_certificate_id",
+    "anchor_target",
+    "external_anchor_ref",
+    "external_anchor_status",
+    "bundle_hash",
+    "artifact_root_hash",
+    "hash_chain_root",
+    "artifact_count",
+    "required_artifact_types",
+    "anchored_at",
+    "signature_key_id",
+    "signature",
+    "anchor_receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "anchor_receipt_id": {
+      "type": "string",
+      "pattern": "^trust-anchor-receipt-[0-9a-f]{16}$"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "terminal_certificate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "anchor_target": {
+      "type": "string",
+      "enum": ["audit_chain", "transparency_log", "external_ledger", "regulatory_archive"]
+    },
+    "external_anchor_ref": {
+      "type": "string"
+    },
+    "external_anchor_status": {
+      "type": "string",
+      "enum": ["pending", "anchored", "failed"]
+    },
+    "bundle_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_root_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hash_chain_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "required_artifact_types": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "string",
+        "enum": [
+          "command",
+          "approval",
+          "execution_receipt",
+          "verification_result",
+          "effect_reconciliation",
+          "terminal_certificate",
+          "learning_decision",
+          "deployment_witness"
+        ]
+      }
+    },
+    "anchored_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signature_key_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^hmac-sha256:.+"
+    },
+    "anchor_receipt_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["anchor_receipt_is_not_terminal_closure"],
+      "properties": {
+        "anchor_receipt_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        },
+        "bundle_signature_key_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "external_anchor_status": {
+            "const": "anchored"
+          }
+        },
+        "required": ["external_anchor_status"]
+      },
+      "then": {
+        "properties": {
+          "external_anchor_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "required_artifact_types": {
+          "contains": {
+            "const": "command"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "required_artifact_types": {
+          "contains": {
+            "const": "execution_receipt"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "required_artifact_types": {
+          "contains": {
+            "const": "verification_result"
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "required_artifact_types": {
+          "contains": {
+            "const": "terminal_certificate"
+          }
+        }
+      }
+    }
+  ]
+}
