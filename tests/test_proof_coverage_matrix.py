@@ -288,6 +288,59 @@ def test_runtime_reflex_engine_surface_is_operator_gated_and_non_mutating() -> N
     assert closure_actions["publish_runtime_reflex_engine_read_models"]["status"] == "closed"
 
 
+def test_governed_operational_intelligence_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    operational_surface = surfaces["governed_operational_intelligence"]
+    witnesses = set(operational_surface["runtime_witnesses"])
+
+    assert operational_surface["coverage_state"] == "witnessed"
+    assert operational_surface["request_proof"] == "request_proof"
+    assert operational_surface["action_proof"] == "action_proof"
+    assert "WorldStateStore.add_entity" in operational_surface["representative_paths"]
+    assert "GoalCompiler.compile" in operational_surface["representative_paths"]
+    assert "CausalSimulator.simulate" in operational_surface["representative_paths"]
+    assert "gateway/world_state.py" in operational_surface["evidence_files"]
+    assert "gateway/goal_compiler.py" in operational_surface["evidence_files"]
+    assert "gateway/causal_simulator.py" in operational_surface["evidence_files"]
+    assert "schemas/world_state.schema.json" in operational_surface["evidence_files"]
+    assert "schemas/goal.schema.json" in operational_surface["evidence_files"]
+    assert "schemas/simulation_receipt.schema.json" in operational_surface["evidence_files"]
+    assert "tests/test_gateway/test_world_state.py" in operational_surface["evidence_files"]
+    assert "tests/test_gateway/test_goal_compiler.py" in operational_surface["evidence_files"]
+    assert "tests/test_gateway/test_causal_simulator.py" in operational_surface["evidence_files"]
+    assert "world_assertions_require_source_evidence" in witnesses
+    assert "goal_plan_certificate_hash_bound" in witnesses
+    assert "simulation_receipt_schema_valid" in witnesses
+    assert "open_world_contradictions_block_execution" in witnesses
+    assert "high_risk_controls_projected_before_execution" in witnesses
+    assert closure_actions["publish_governed_operational_intelligence_witnesses"]["status"] == "closed"
+
+
+def test_capability_forge_surface_is_candidate_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    forge_surface = surfaces["capability_forge"]
+    witnesses = set(forge_surface["runtime_witnesses"])
+
+    assert forge_surface["coverage_state"] == "witnessed"
+    assert forge_surface["request_proof"] == "request_proof"
+    assert forge_surface["action_proof"] == "action_proof"
+    assert "CapabilityForge.create_candidate" in forge_surface["representative_paths"]
+    assert "CapabilityForge.validate" in forge_surface["representative_paths"]
+    assert "gateway/capability_forge.py" in forge_surface["evidence_files"]
+    assert "schemas/capability_candidate.schema.json" in forge_surface["evidence_files"]
+    assert "tests/test_gateway/test_capability_forge.py" in forge_surface["evidence_files"]
+    assert "candidate_promotion_blocked" in witnesses
+    assert "candidate_schema_valid" in witnesses
+    assert "high_risk_approval_policy_required" in witnesses
+    assert "effect_bearing_candidate_requires_sandbox" in witnesses
+    assert "effect_bearing_candidate_requires_recovery_path" in witnesses
+    assert closure_actions["publish_capability_forge_candidate_contract"]["status"] == "closed"
+
+
 def test_representative_http_paths_are_declared() -> None:
     matrix = _load_fixture()
     routes = discover_declared_routes()

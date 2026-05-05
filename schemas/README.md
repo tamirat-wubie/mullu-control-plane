@@ -21,6 +21,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | File | Purpose |
 | --- | --- |
 | `capability_adapter_closure_plan.schema.json` | Canonical adapter source closure action plan |
+| `capability_candidate.schema.json` | Canonical forge-generated candidate capability package |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
@@ -31,16 +32,19 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
+| `goal.schema.json` | Canonical governed goal compilation contract |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
 | `replay_record.schema.json` | Canonical replay and audit capture |
+| `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |
+| `world_state.schema.json` | Canonical world-state graph projection |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 
