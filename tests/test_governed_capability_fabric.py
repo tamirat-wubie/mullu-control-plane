@@ -132,6 +132,11 @@ def _forge_input_for_entry(entry: CapabilityRegistryEntry) -> CapabilityForgeInp
     )
 
 
+def _artifact_payload(result: CapsuleCompilationResult, artifact_type: str) -> dict[str, Any]:
+    artifact = next(artifact for artifact in result.artifacts if artifact.artifact_type == artifact_type)
+    return dict(artifact.payload)
+
+
 def test_capability_registry_entry_fixture_is_governed() -> None:
     schema = _schema("capability_registry_entry.schema.json")
     fixture = _fixture("capability_registry_entry.json")
@@ -231,8 +236,29 @@ def test_domain_capsule_compiler_emits_governed_artifacts() -> None:
     assert result.status is CapsuleCompilationStatus.SUCCESS_WITH_WARNINGS
     assert result.errors == ()
     assert "capability_registry_manifest" in artifact_types
+    assert "capability_certification_evidence_manifest" in artifact_types
     assert "certification_report" in artifact_types
-    assert len(result.artifacts) == 10
+    assert len(result.artifacts) == 11
+
+
+def test_domain_capsule_compiler_emits_certification_evidence_manifest() -> None:
+    compiler = DomainCapsuleCompiler(clock=_clock)
+    result = compiler.compile(_capsule(), [_registry_entry()])
+    payload = _artifact_payload(result, "capability_certification_evidence_manifest")
+    records = payload["certification_evidence_records"]
+    record = dict(records[0])
+
+    assert payload["capsule_id"] == _capsule().capsule_id
+    assert payload["capability_ids"] == _capsule().capability_refs
+    assert payload["manifest_is_not_admission"] is True
+    assert len(records) == 1
+    assert record["capability_id"] == "crm.update_customer_address"
+    assert record["certification_status"] == "candidate"
+    assert record["has_certification_evidence"] is False
+    assert dict(record["certification_evidence"]) == {}
+    assert record["evidence_refs"] == ()
+    assert dict(record["source_refs"]) == {}
+    assert record["certification_evidence_hash"] == ""
 
 
 def test_domain_capsule_compiler_blocks_missing_capability_ref() -> None:
@@ -299,7 +325,7 @@ def test_governed_capability_registry_installs_certified_compilation() -> None:
     assert installation.status is CapsuleAdmissionStatus.INSTALLED
     assert installation.capability_ids == ("crm.update_customer_address",)
     assert registry.capability_count == 1
-    assert registry.artifact_count == 10
+    assert registry.artifact_count == 11
     assert domain_capabilities == (entry,)
 
 
@@ -321,6 +347,9 @@ def test_handoff_evidence_batch_preserves_capsule_registry_admission() -> None:
     installation = registry.install(result, batch.registry_entries)
     installed = registry.get_capability(entry.capability_id)
     assessment = CapabilityRegistryMaturityProjector().assess_entry(installed)
+    evidence_manifest = _artifact_payload(result, "capability_certification_evidence_manifest")
+    evidence_record = dict(evidence_manifest["certification_evidence_records"][0])
+    source_refs = dict(evidence_record["source_refs"])
 
     assert installation.status is CapsuleAdmissionStatus.INSTALLED
     assert installation.capability_ids == (entry.capability_id,)
@@ -329,6 +358,14 @@ def test_handoff_evidence_batch_preserves_capsule_registry_admission() -> None:
     assert "capability_maturity_evidence" not in installed.extensions
     assert assessment.production_ready is True
     assert assessment.maturity_level == "C6"
+    assert evidence_manifest["manifest_is_not_admission"] is True
+    assert evidence_record["has_certification_evidence"] is True
+    assert source_refs["source_handoff_hash"] == handoff.handoff_hash
+    assert evidence_record["certification_evidence_hash"] == installed.extensions["capability_certification_evidence"][
+        "certification_evidence_hash"
+    ]
+    assert "proof://crm.update_customer_address/live-write" in evidence_record["evidence_refs"]
+    assert "proof://crm.update_customer_address/recovery" in evidence_record["evidence_refs"]
     assert batch.batch_hash
 
 

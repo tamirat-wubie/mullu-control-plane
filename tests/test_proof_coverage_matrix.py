@@ -112,9 +112,13 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
 
     assert gateway_surface["action_proof"] == "action_proof"
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
+    assert "DomainCapsuleCompiler.compile" in gateway_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/core/domain_capsule_compiler.py" in gateway_surface["evidence_files"]
+    assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
+    assert "capsule_compiler_emits_certification_evidence_manifest" in witnesses
 
 
 def test_data_governance_controls_surface_is_witnessed() -> None:
