@@ -1,0 +1,29 @@
+{
+  "suite_id": "bench-suite-42",
+  "name": "Governance benchmark suite",
+  "category": "governance",
+  "scenarios": [
+    {
+      "scenario_id": "bench-scenario-42",
+      "name": "Governed rollout verification",
+      "description": "Checks that governed rollout preserves approval and verification gates",
+      "category": "governance",
+      "inputs": {
+        "mode": "guarded",
+        "workflow_id": "wf-release-42"
+      },
+      "expected_outcome": "pass",
+      "expected_properties": {
+        "approval_required": true,
+        "verification_closed": true
+      },
+      "tags": [
+        "governance",
+        "release"
+      ],
+      "timeout_ms": 45000
+    }
+  ],
+  "version": "2026.05.05",
+  "created_at": "2025-01-01T00:30:00+00:00"
+}

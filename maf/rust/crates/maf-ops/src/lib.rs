@@ -911,6 +911,78 @@ mod tests {
         assert!(json.find(r#""alpha":2"#).unwrap() < json.find(r#""zeta":1"#).unwrap());
     }
 
+    #[test]
+    fn canonical_benchmark_scenario_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_scenario.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkScenario>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_suite_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_suite.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkSuite>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_metric_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_metric.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkMetric>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_result_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_result.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkResult>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_benchmark_run_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/benchmark_run.json"
+        ));
+        assert_fixture_round_trip::<benchmark::BenchmarkRun>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_adversarial_case_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/adversarial_case.json"
+        ));
+        assert_fixture_round_trip::<benchmark::AdversarialCase>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_regression_record_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/regression_record.json"
+        ));
+        assert_fixture_round_trip::<benchmark::RegressionRecord>(fixture_json);
+    }
+
+    #[test]
+    fn canonical_capability_scorecard_fixture_round_trips() {
+        let fixture_json = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../../integration/contracts_compat/fixtures/maf_runtime/capability_scorecard.json"
+        ));
+        assert_fixture_round_trip::<benchmark::CapabilityScorecard>(fixture_json);
+    }
+
     // --- Graph ---
 
     #[test]

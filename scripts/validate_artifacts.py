@@ -1961,6 +1961,421 @@ def _validate_simulation_verdict_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_benchmark_scenario_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_benchmark_scenario_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_benchmark_scenario_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "scenario_id",
+            "name",
+            "description",
+            "category",
+            "inputs",
+            "expected_outcome",
+            "expected_properties",
+            "tags",
+            "timeout_ms",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("scenario_id", "name", "description", "category", "expected_outcome"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    for nested_field_name in ("inputs", "expected_properties"):
+        if not isinstance(payload[nested_field_name], dict):
+            errors.append(
+                f"{_relative_path(path)}: field '{f'{prefix}{nested_field_name}'.strip('.')}' must be an object"
+            )
+    tags = payload["tags"]
+    tags_field_name = f"{prefix}tags".strip(".")
+    if not isinstance(tags, list):
+        errors.append(f"{_relative_path(path)}: field '{tags_field_name}' must be an array")
+    else:
+        for index, tag in enumerate(tags):
+            errors.extend(_require_non_empty_text(tag, field_name=f"{tags_field_name}[{index}]", path=path))
+    errors.extend(
+        _require_positive_int(
+            payload["timeout_ms"],
+            field_name=f"{prefix}timeout_ms".strip("."),
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_benchmark_suite_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("suite_id", "name", "category", "scenarios", "version", "created_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("suite_id", "name", "category", "version"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    scenarios = payload["scenarios"]
+    if not isinstance(scenarios, list) or not scenarios:
+        errors.append(f"{_relative_path(path)}: field 'scenarios' must be a non-empty array")
+    else:
+        seen_scenario_ids: set[str] = set()
+        for index, scenario in enumerate(scenarios):
+            errors.extend(
+                _validate_benchmark_scenario_dict(
+                    scenario,
+                    path=path,
+                    field_name=f"scenarios[{index}]",
+                )
+            )
+            if isinstance(scenario, dict) and isinstance(scenario.get("scenario_id"), str):
+                scenario_id = scenario["scenario_id"]
+                if scenario_id in seen_scenario_ids:
+                    errors.append(
+                        f"{_relative_path(path)}: scenarios must not repeat scenario_id '{scenario_id}'"
+                    )
+                seen_scenario_ids.add(scenario_id)
+    return errors
+
+
+def _validate_benchmark_metric_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_benchmark_metric_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_benchmark_metric_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("metric_id", "kind", "name", "value", "threshold", "passed"),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("metric_id", "kind", "name"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    for nested_field_name in ("value", "threshold"):
+        errors.extend(
+            _require_number_in_range(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+                minimum=0.0,
+                maximum=1.0,
+            )
+        )
+    passed_field_name = f"{prefix}passed".strip(".")
+    if not isinstance(payload["passed"], bool):
+        errors.append(f"{_relative_path(path)}: field '{passed_field_name}' must be boolean")
+    elif (
+        isinstance(payload["value"], (int, float))
+        and not isinstance(payload["value"], bool)
+        and isinstance(payload["threshold"], (int, float))
+        and not isinstance(payload["threshold"], bool)
+        and payload["passed"] != (payload["value"] >= payload["threshold"])
+    ):
+        errors.append(
+            f"{_relative_path(path)}: {passed_field_name} must be true iff value >= threshold"
+        )
+    return errors
+
+
+def _validate_benchmark_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_benchmark_result_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_benchmark_result_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "result_id",
+            "scenario_id",
+            "outcome",
+            "metrics",
+            "actual_properties",
+            "error_message",
+            "duration_ms",
+            "executed_at",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in ("result_id", "scenario_id", "outcome"):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    metrics = payload["metrics"]
+    metrics_field_name = f"{prefix}metrics".strip(".")
+    if not isinstance(metrics, list):
+        errors.append(f"{_relative_path(path)}: field '{metrics_field_name}' must be an array")
+    else:
+        for index, metric in enumerate(metrics):
+            errors.extend(
+                _validate_benchmark_metric_dict(
+                    metric,
+                    path=path,
+                    field_name=f"{metrics_field_name}[{index}]",
+                )
+            )
+    actual_properties_field_name = f"{prefix}actual_properties".strip(".")
+    if not isinstance(payload["actual_properties"], dict):
+        errors.append(
+            f"{_relative_path(path)}: field '{actual_properties_field_name}' must be an object"
+        )
+    error_message_field_name = f"{prefix}error_message".strip(".")
+    if payload["error_message"] is not None and not isinstance(payload["error_message"], str):
+        errors.append(f"{_relative_path(path)}: field '{error_message_field_name}' must be a string or null")
+    errors.extend(
+        _require_non_negative_int(
+            payload["duration_ms"],
+            field_name=f"{prefix}duration_ms".strip("."),
+            path=path,
+        )
+    )
+    errors.extend(
+        _validate_iso8601_text(
+            payload["executed_at"],
+            field_name=f"{prefix}executed_at".strip("."),
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_benchmark_run_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("run_id", "suite_id", "results", "started_at", "finished_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("run_id", "suite_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    results = payload["results"]
+    if not isinstance(results, list):
+        errors.append(f"{_relative_path(path)}: field 'results' must be an array")
+    else:
+        for index, result in enumerate(results):
+            errors.extend(
+                _validate_benchmark_result_dict(
+                    result,
+                    path=path,
+                    field_name=f"results[{index}]",
+                )
+            )
+    for field_name in ("started_at", "finished_at"):
+        errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_adversarial_case_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "case_id",
+            "name",
+            "description",
+            "category",
+            "severity",
+            "target_subsystem",
+            "attack_vector",
+            "inputs",
+            "expected_behavior",
+            "tags",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "case_id",
+        "name",
+        "description",
+        "category",
+        "severity",
+        "target_subsystem",
+        "attack_vector",
+        "expected_behavior",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["inputs"], dict):
+        errors.append(f"{_relative_path(path)}: field 'inputs' must be an object")
+    tags = payload["tags"]
+    if not isinstance(tags, list):
+        errors.append(f"{_relative_path(path)}: field 'tags' must be an array")
+    else:
+        for index, tag in enumerate(tags):
+            errors.extend(_require_non_empty_text(tag, field_name=f"tags[{index}]", path=path))
+    return errors
+
+
+def _validate_regression_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    return _validate_regression_record_dict(payload, path=path, field_name="runtime fixture")
+
+
+def _validate_regression_record_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
+    if not isinstance(payload, dict):
+        return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "regression_id",
+            "metric_name",
+            "category",
+            "baseline_value",
+            "current_value",
+            "direction",
+            "delta",
+            "baseline_run_id",
+            "current_run_id",
+            "detected_at",
+        ),
+        kind=field_name,
+    )
+    if errors:
+        return errors
+    prefix = "" if field_name == "runtime fixture" else f"{field_name}."
+    for nested_field_name in (
+        "regression_id",
+        "metric_name",
+        "category",
+        "direction",
+        "baseline_run_id",
+        "current_run_id",
+    ):
+        errors.extend(
+            _require_non_empty_text(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+            )
+        )
+    for nested_field_name in ("baseline_value", "current_value"):
+        errors.extend(
+            _require_number_in_range(
+                payload[nested_field_name],
+                field_name=f"{prefix}{nested_field_name}".strip("."),
+                path=path,
+                minimum=0.0,
+                maximum=1.0,
+            )
+        )
+    delta_field_name = f"{prefix}delta".strip(".")
+    if isinstance(payload["delta"], bool) or not isinstance(payload["delta"], (int, float)):
+        errors.append(f"{_relative_path(path)}: field '{delta_field_name}' must be numeric")
+    errors.extend(
+        _validate_iso8601_text(
+            payload["detected_at"],
+            field_name=f"{prefix}detected_at".strip("."),
+            path=path,
+        )
+    )
+    return errors
+
+
+def _validate_capability_scorecard_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MAF runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "scorecard_id",
+            "category",
+            "status",
+            "pass_rate",
+            "metric_count",
+            "metrics_passing",
+            "adversarial_pass_rate",
+            "regressions",
+            "confidence_trend",
+            "assessed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("scorecard_id", "category", "status", "confidence_trend"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("pass_rate", "adversarial_pass_rate"):
+        errors.extend(
+            _require_number_in_range(
+                payload[field_name],
+                field_name=field_name,
+                path=path,
+                minimum=0.0,
+                maximum=1.0,
+            )
+        )
+    for field_name in ("metric_count", "metrics_passing"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if (
+        isinstance(payload["metric_count"], int)
+        and not isinstance(payload["metric_count"], bool)
+        and isinstance(payload["metrics_passing"], int)
+        and not isinstance(payload["metrics_passing"], bool)
+        and payload["metrics_passing"] > payload["metric_count"]
+    ):
+        errors.append(f"{_relative_path(path)}: metrics_passing cannot exceed metric_count")
+    regressions = payload["regressions"]
+    if not isinstance(regressions, list):
+        errors.append(f"{_relative_path(path)}: field 'regressions' must be an array")
+    else:
+        for index, regression in enumerate(regressions):
+            errors.extend(
+                _validate_regression_record_dict(
+                    regression,
+                    path=path,
+                    field_name=f"regressions[{index}]",
+                )
+            )
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    return errors
+
+
 def _validate_resource_budget_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     errors = _validate_exact_object_fields(
@@ -2471,9 +2886,16 @@ def _validate_livelock_record_fixture(path: Path) -> list[str]:
 
 
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
+    "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_policy.json": _validate_assignment_policy_fixture,
     "assignment_decision.json": _validate_assignment_decision_fixture,
+    "benchmark_metric.json": _validate_benchmark_metric_fixture,
+    "benchmark_result.json": _validate_benchmark_result_fixture,
+    "benchmark_run.json": _validate_benchmark_run_fixture,
+    "benchmark_scenario.json": _validate_benchmark_scenario_fixture,
+    "benchmark_suite.json": _validate_benchmark_suite_fixture,
     "causal_path.json": _validate_causal_path_fixture,
+    "capability_scorecard.json": _validate_capability_scorecard_fixture,
     "decision_comparison.json": _validate_decision_comparison_fixture,
     "decision_factor.json": _validate_decision_factor_fixture,
     "decision_link.json": _validate_decision_link_fixture,
@@ -2507,6 +2929,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "runtime_heartbeat.json": _validate_runtime_heartbeat_fixture,
     "option_utility.json": _validate_option_utility_fixture,
     "resource_budget.json": _validate_resource_budget_fixture,
+    "regression_record.json": _validate_regression_record_fixture,
     "service_function_template.json": _validate_service_function_template_fixture,
     "simulation_option.json": _validate_simulation_option_fixture,
     "simulation_outcome.json": _validate_simulation_outcome_fixture,

@@ -27,6 +27,23 @@ from mcoi_runtime.contracts.event import (
     EventType,
     EventWindow,
 )
+from mcoi_runtime.contracts.benchmark import (
+    AdversarialCase,
+    AdversarialCategory,
+    AdversarialSeverity,
+    BenchmarkCategory,
+    BenchmarkMetric,
+    BenchmarkOutcome,
+    BenchmarkResult,
+    BenchmarkRun,
+    BenchmarkScenario,
+    BenchmarkSuite,
+    CapabilityScorecard,
+    MetricKind,
+    RegressionDirection,
+    RegressionRecord,
+    ScorecardStatus,
+)
 from mcoi_runtime.contracts.function import (
     CommunicationStyle,
     FunctionMetricsSnapshot,
@@ -277,6 +294,113 @@ def _build_simulation_verdict(payload: dict) -> SimulationVerdict:
         recommended_option_id=payload["recommended_option_id"],
         confidence=payload["confidence"],
         reasons=tuple(payload["reasons"]),
+    )
+
+
+def _build_benchmark_scenario(payload: dict) -> BenchmarkScenario:
+    return BenchmarkScenario(
+        scenario_id=payload["scenario_id"],
+        name=payload["name"],
+        description=payload["description"],
+        category=BenchmarkCategory(payload["category"]),
+        inputs=payload["inputs"],
+        expected_outcome=BenchmarkOutcome(payload["expected_outcome"]),
+        expected_properties=payload["expected_properties"],
+        tags=tuple(payload["tags"]),
+        timeout_ms=payload["timeout_ms"],
+    )
+
+
+def _build_benchmark_suite(payload: dict) -> BenchmarkSuite:
+    return BenchmarkSuite(
+        suite_id=payload["suite_id"],
+        name=payload["name"],
+        category=BenchmarkCategory(payload["category"]),
+        scenarios=tuple(_build_benchmark_scenario(scenario) for scenario in payload["scenarios"]),
+        version=payload["version"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_benchmark_metric(payload: dict) -> BenchmarkMetric:
+    return BenchmarkMetric(
+        metric_id=payload["metric_id"],
+        kind=MetricKind(payload["kind"]),
+        name=payload["name"],
+        value=payload["value"],
+        threshold=payload["threshold"],
+        passed=payload["passed"],
+    )
+
+
+def _build_benchmark_result(payload: dict) -> BenchmarkResult:
+    return BenchmarkResult(
+        result_id=payload["result_id"],
+        scenario_id=payload["scenario_id"],
+        outcome=BenchmarkOutcome(payload["outcome"]),
+        metrics=tuple(_build_benchmark_metric(metric) for metric in payload["metrics"]),
+        actual_properties=payload["actual_properties"],
+        error_message=payload["error_message"],
+        duration_ms=payload["duration_ms"],
+        executed_at=payload["executed_at"],
+    )
+
+
+def _build_benchmark_run(payload: dict) -> BenchmarkRun:
+    return BenchmarkRun(
+        run_id=payload["run_id"],
+        suite_id=payload["suite_id"],
+        results=tuple(_build_benchmark_result(result) for result in payload["results"]),
+        started_at=payload["started_at"],
+        finished_at=payload["finished_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_adversarial_case(payload: dict) -> AdversarialCase:
+    return AdversarialCase(
+        case_id=payload["case_id"],
+        name=payload["name"],
+        description=payload["description"],
+        category=AdversarialCategory(payload["category"]),
+        severity=AdversarialSeverity(payload["severity"]),
+        target_subsystem=BenchmarkCategory(payload["target_subsystem"]),
+        attack_vector=payload["attack_vector"],
+        inputs=payload["inputs"],
+        expected_behavior=payload["expected_behavior"],
+        tags=tuple(payload["tags"]),
+    )
+
+
+def _build_regression_record(payload: dict) -> RegressionRecord:
+    return RegressionRecord(
+        regression_id=payload["regression_id"],
+        metric_name=payload["metric_name"],
+        category=BenchmarkCategory(payload["category"]),
+        baseline_value=payload["baseline_value"],
+        current_value=payload["current_value"],
+        direction=RegressionDirection(payload["direction"]),
+        delta=payload["delta"],
+        baseline_run_id=payload["baseline_run_id"],
+        current_run_id=payload["current_run_id"],
+        detected_at=payload["detected_at"],
+    )
+
+
+def _build_capability_scorecard(payload: dict) -> CapabilityScorecard:
+    return CapabilityScorecard(
+        scorecard_id=payload["scorecard_id"],
+        category=BenchmarkCategory(payload["category"]),
+        status=ScorecardStatus(payload["status"]),
+        pass_rate=payload["pass_rate"],
+        metric_count=payload["metric_count"],
+        metrics_passing=payload["metrics_passing"],
+        adversarial_pass_rate=payload["adversarial_pass_rate"],
+        regressions=tuple(
+            _build_regression_record(regression) for regression in payload["regressions"]
+        ),
+        confidence_trend=payload["confidence_trend"],
+        assessed_at=payload["assessed_at"],
     )
 
 
@@ -784,6 +908,12 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("adversarial_case.json", _build_adversarial_case),
+        ("benchmark_metric.json", _build_benchmark_metric),
+        ("benchmark_result.json", _build_benchmark_result),
+        ("benchmark_run.json", _build_benchmark_run),
+        ("benchmark_scenario.json", _build_benchmark_scenario),
+        ("benchmark_suite.json", _build_benchmark_suite),
         ("event_correlation.json", _build_event_correlation),
         ("event_envelope.json", _build_event_envelope),
         ("event_record.json", _build_event_record),
@@ -800,6 +930,7 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("obligation_transfer.json", _build_obligation_transfer),
         ("service_function_template.json", _build_service_function_template),
         ("role_descriptor.json", _build_role_descriptor),
+        ("regression_record.json", _build_regression_record),
         ("function_policy_binding.json", _build_function_policy_binding),
         ("function_sla_profile.json", _build_function_sla_profile),
         ("function_queue_profile.json", _build_function_queue_profile),
@@ -821,6 +952,7 @@ def _build_livelock_record(payload: dict) -> LivelockRecord:
         ("runtime_heartbeat.json", _build_runtime_heartbeat),
         ("supervisor_checkpoint.json", _build_supervisor_checkpoint),
         ("livelock_record.json", _build_livelock_record),
+        ("capability_scorecard.json", _build_capability_scorecard),
         ("resource_budget.json", _build_resource_budget),
         ("decision_factor.json", _build_decision_factor),
         ("utility_profile.json", _build_utility_profile),

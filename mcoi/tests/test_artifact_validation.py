@@ -34,6 +34,14 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "event_reaction.json" in maf_runtime_fixture_names
     assert "event_subscription.json" in maf_runtime_fixture_names
     assert "event_window.json" in maf_runtime_fixture_names
+    assert "benchmark_scenario.json" in maf_runtime_fixture_names
+    assert "benchmark_suite.json" in maf_runtime_fixture_names
+    assert "benchmark_metric.json" in maf_runtime_fixture_names
+    assert "benchmark_result.json" in maf_runtime_fixture_names
+    assert "benchmark_run.json" in maf_runtime_fixture_names
+    assert "adversarial_case.json" in maf_runtime_fixture_names
+    assert "regression_record.json" in maf_runtime_fixture_names
+    assert "capability_scorecard.json" in maf_runtime_fixture_names
     assert "operational_node.json" in maf_runtime_fixture_names
     assert "operational_edge.json" in maf_runtime_fixture_names
     assert "evidence_link.json" in maf_runtime_fixture_names
@@ -89,7 +97,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.config_paths) >= 5
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
-    assert len(inventory.maf_runtime_fixture_paths) >= 54
+    assert len(inventory.maf_runtime_fixture_paths) >= 62
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -515,6 +523,56 @@ def test_validate_maf_runtime_fixture_rejects_resource_budget_overflow(tmp_path:
 
     assert len(errors) == 1
     assert "consumed + reserved must not exceed total" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_benchmark_metric_pass_mismatch(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "benchmark_metric.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "metric_id": "metric-drift",
+                "kind": "correctness",
+                "name": "verification_closure_rate",
+                "value": 0.8,
+                "threshold": 0.9,
+                "passed": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "passed must be true iff value >= threshold" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_maf_runtime_fixture_rejects_scorecard_metric_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "capability_scorecard.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "scorecard_id": "scorecard-drift",
+                "category": "governance",
+                "status": "degraded",
+                "pass_rate": 0.8,
+                "metric_count": 4,
+                "metrics_passing": 5,
+                "adversarial_pass_rate": 0.75,
+                "regressions": [],
+                "confidence_trend": "downward",
+                "assessed_at": "2025-01-01T00:33:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_maf_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "metrics_passing cannot exceed metric_count" in errors[0]
     assert fixture_path.name in errors[0]
 
 
