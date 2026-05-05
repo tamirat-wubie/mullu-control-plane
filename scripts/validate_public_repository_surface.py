@@ -148,7 +148,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "schemas/mullu_governance_protocol.manifest.json",
     "scripts/validate_protocol_manifest.py",
     "python scripts\\validate_protocol_manifest.py",
-    "protocol manifest ok: 42 schemas",
+    "protocol manifest ok: 43 schemas",
     "Capability candidate packages are public contracts",
     "Capability adapter closure plans are public contracts",
     "Deployment handoff receipts are public contracts",
