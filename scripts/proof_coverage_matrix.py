@@ -632,6 +632,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_kernel",
+            [
+                "TemporalKernel.evaluate",
+                "TrustedClock.now_utc",
+                "TrustedClock.monotonic_ns",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_kernel.py",
+                "schemas/temporal_operation_receipt.schema.json",
+                "tests/test_gateway/test_temporal_kernel.py",
+            ],
+            "Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses before dispatch.",
+            [
+                "runtime_clock_injected",
+                "monotonic_duration_measured",
+                "future_schedule_defers",
+                "approval_expiry_denies",
+                "stale_evidence_escalates",
+                "budget_window_checked",
+                "causal_preconditions_required",
+                "temporal_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "policy_proof_report",
             [
                 "PolicyProver.prove",
@@ -876,6 +905,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_multimodal_operation_receipt_contract",
             "surfaces": ["multimodal_operating_layer"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_operation_receipt_contract",
+            "surfaces": ["temporal_kernel"],
             "status": "closed",
         },
         {

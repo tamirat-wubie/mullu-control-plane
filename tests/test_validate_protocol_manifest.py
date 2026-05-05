@@ -126,6 +126,17 @@ def test_protocol_manifest_indexes_multimodal_operation_receipt() -> None:
     assert multimodal_entry["surface"] == "multimodal"
 
 
+def test_protocol_manifest_indexes_temporal_operation_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    temporal_entry = entries["temporal-operation-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert temporal_entry["path"] == "schemas/temporal_operation_receipt.schema.json"
+    assert temporal_entry["urn"] == "urn:mullusi:schema:temporal-operation-receipt:1"
+    assert temporal_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

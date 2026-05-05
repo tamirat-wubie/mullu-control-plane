@@ -498,6 +498,33 @@ def test_multimodal_operating_layer_surface_preserves_source_and_blocks_effects(
     assert closure_actions["publish_multimodal_operation_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    temporal_surface = surfaces["temporal_kernel"]
+    witnesses = set(temporal_surface["runtime_witnesses"])
+
+    assert temporal_surface["coverage_state"] == "witnessed"
+    assert temporal_surface["request_proof"] == "request_proof"
+    assert temporal_surface["action_proof"] == "action_proof"
+    assert "TemporalKernel.evaluate" in temporal_surface["representative_paths"]
+    assert "TrustedClock.now_utc" in temporal_surface["representative_paths"]
+    assert "TrustedClock.monotonic_ns" in temporal_surface["representative_paths"]
+    assert "gateway/temporal_kernel.py" in temporal_surface["evidence_files"]
+    assert "schemas/temporal_operation_receipt.schema.json" in temporal_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_kernel.py" in temporal_surface["evidence_files"]
+    assert "runtime_clock_injected" in witnesses
+    assert "monotonic_duration_measured" in witnesses
+    assert "future_schedule_defers" in witnesses
+    assert "approval_expiry_denies" in witnesses
+    assert "stale_evidence_escalates" in witnesses
+    assert "budget_window_checked" in witnesses
+    assert "causal_preconditions_required" in witnesses
+    assert "temporal_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_operation_receipt_contract"]["status"] == "closed"
+
+
 def test_policy_proof_report_surface_is_counterexample_backed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

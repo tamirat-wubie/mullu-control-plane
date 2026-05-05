@@ -40,6 +40,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `replay_record.schema.json` | Canonical replay and audit capture |
 | `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
+| `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |

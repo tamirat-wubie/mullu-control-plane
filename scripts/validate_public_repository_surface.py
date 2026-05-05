@@ -148,7 +148,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "schemas/mullu_governance_protocol.manifest.json",
     "scripts/validate_protocol_manifest.py",
     "python scripts\\validate_protocol_manifest.py",
-    "protocol manifest ok: 46 schemas",
+    "protocol manifest ok: 47 schemas",
     "Capability candidate packages are public contracts",
     "Capability maturity assessments are public contracts",
     "Policy proof reports are public contracts",
@@ -167,6 +167,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Reflex deployment witness envelopes are public contracts",
     "Reflex deployment witness validator receipts are public contracts",
     "Multimodal operation receipts are public contracts",
+    "Temporal operation receipts are public contracts",
 )
 LOGIC_GOVERNANCE_DOC_PATH = "docs/60_logic_governance_application.md"
 LOGIC_GOVERNANCE_REQUIRED_LITERALS = (

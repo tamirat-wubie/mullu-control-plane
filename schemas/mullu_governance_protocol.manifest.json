@@ -251,6 +251,12 @@
       "surface": "budget"
     },
     {
+      "schema_id": "temporal-operation-receipt",
+      "path": "schemas/temporal_operation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-operation-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "terminal-closure-certificate",
       "path": "schemas/terminal_closure_certificate.schema.json",
       "urn": "urn:mullusi:schema:terminal-closure-certificate:1",
