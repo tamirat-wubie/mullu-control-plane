@@ -140,6 +140,1522 @@
     "surface_count": 22
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
+  "route_coverage": {
+    "by_coverage_state": {
+      "proven": 4,
+      "unproven": 237,
+      "witnessed": 60
+    },
+    "route_count": 301,
+    "routes": [
+      {
+        "coverage_state": "witnessed",
+        "route": "/anchors/latest",
+        "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/ab-test",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/ab-test/summary",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/action-request",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/action-result",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/adapter/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/checkpoint",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/heartbeat",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agent/restore",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agents",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/agents/{agent_id}/tasks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/analytics/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/api-keys",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/api-keys/{key_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/audit",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/audit/anchor",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/audit/anchor/{anchor_id}/verify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/audit/anchors",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/audit/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/audit/verify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/backpressure",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/bootstrap",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/budget",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/cache/stats",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/canary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/capabilities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/certify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/certify/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/chain/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/chain/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat/stream",
+        "surface_id": "llm_streaming"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat/workflow",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/chat/workflow/history",
+        "surface_id": "llm_chat_workflow"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/circuit-breaker",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/circuits/dashboard",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/complete",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/complete/auto",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/complete/safe",
+        "surface_id": "llm_completion"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/compliance/audit-package",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/compliance/incident-package",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/compliance/mapping",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/compliance/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/compression/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/drift",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/rollback",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/update",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/config/watcher",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/invoke",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/{connector_id}/disable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/connectors/{connector_id}/enable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/audit",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/checkpoints",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/home",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/providers",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/runs",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/console/scheduler",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/context/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/conversation/message",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/conversation/{conversation_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/conversations",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/coordination/checkpoint",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/coordination/restore",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/correlation/active",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/costs/by-model",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/costs/top-spenders",
+        "surface_id": "cost_budget_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/costs/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/costs/{tenant_id}/projection",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/daemon/force",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/daemon/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/daemon/tick",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dashboard",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/classify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/evaluate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/policies",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/privacy-rules",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/redaction-rules",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/residency-constraints",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/retention-rules",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/data-governance/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dedup/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dependencies",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/dependencies/{name}/impact",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/deploy/readiness",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events/publish",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events/store/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/events/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/explain/action",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/explain/audit/{entry_index}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/explain/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/export",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/export/sources",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/federation/summary",
+        "surface_id": "federated_control_plane"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/flags",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/flags/{flag_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/grafana/dashboard",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/guards",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/deep",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/score",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/v2",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/v3",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/idempotency/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/isolation/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/isolation/verify",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/contradictions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/contradictions/unresolved",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/entities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/entities/{entity_id}/links",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/links",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/knowledge/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ledger",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/command/{command_id}",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/output/{output_id}",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/resolve",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/lineage/{trace_id}",
+        "surface_id": "lineage_query_api"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/llm/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/logs",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/memory/search",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/memory/store",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/memory/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/metrics",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/migrations/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/models",
+        "surface_id": "model_experiment_control"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/monitor",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/conflict",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/conflicts/unresolved",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/delegate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/delegate/resolve",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/handoff",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/merge",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/multi-agent/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/notifications/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ops/benchmarks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ops/imports",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/ops/proof-bridge",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration/handoff",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration/plans",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/orchestration/plans/{plan_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/output/parse",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/output/schemas",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/partitions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/pilots/provision",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/pilots/provisions",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/pilots/provisions/{pilot_id}",
+        "surface_id": "pilot_provisioning"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/pipeline/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/pipeline/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/plugins",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/diff",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/rollback",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/shadow/{shadow_version}",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/versions",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/versions/{version}",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/policies/{policy_id}/versions/{version}/promote",
+        "surface_id": "policy_version_registry"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/prompts",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/prompts/render",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/process",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/result/{task_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/queue/submit",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/quotas/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/quotas/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rate-limit/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rate-limits/{client_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/bindings",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/identities",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/roles",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/rbac/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/readiness",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/regions",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/release",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/release/latest",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/replay/traces",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/replay/{trace_id}/determinism",
+        "surface_id": "replay_determinism"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/retries/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/analyze",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/approve",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/patterns",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/promote",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/{runbook_id}/activate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/runbooks/{runbook_id}/retire",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/lineage/{trace_id}",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/policy-evaluations",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/summary",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/sandbox/traces",
+        "surface_id": "hosted_demo_sandbox"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs/{job_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs/{job_id}/disable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/jobs/{job_id}/enable",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/scheduler/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/schemas",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/schemas/validate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/search",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/search/stats",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/secrets/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/session",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/shutdown/info",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/simulate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/simulate/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/simulate/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/sla",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/sla/violations",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/snapshot",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/snapshots",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/state",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/state/save",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/state/{state_type}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/stream",
+        "surface_id": "llm_streaming"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/templates",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/templates/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/temporal/schedules",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/temporal/schedules/{schedule_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/temporal/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/temporal/worker/tick",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant-isolation",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant-isolation/audits",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/budget",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/gates",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/register",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/budget",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/gate",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/ledger",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenant/{tenant_id}/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tenants",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tools",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tools/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/tools/invoke",
+        "surface_id": "tool_invocation"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/tools/llm-format",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces/slow",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/traces/{trace_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/usage/{tenant_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/validation/schemas",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/version",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/deliveries",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/retry/dead-letters",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/retry/summary",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/webhooks/subscribe",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/workflow/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/workflow/history",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/workflow/tools",
+        "surface_id": "tool_invocation"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/workflow/traced",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/approval-chains",
+        "surface_id": "gateway_approval_resolution"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/approval-chains/expire-overdue",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/escalations",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/obligations",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/obligations/escalate-overdue",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/obligations/{obligation_id}/satisfy",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/operator",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/operator-audit",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/ownership",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/authority/policies",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/responsibility",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/witness",
+        "surface_id": "authority_obligation_mesh"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/capability-fabric/admission-audits",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/capability-fabric/read-model",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/capability-plans/read-model",
+        "surface_id": "capability_plan_evidence_bundle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/capability-plans/{plan_id}/closure",
+        "surface_id": "capability_plan_evidence_bundle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/capability-plans/{plan_id}/recover",
+        "surface_id": "capability_plan_evidence_bundle"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/capability/execute",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/commands/{command_id}/authority",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/commands/{command_id}/capability-admission",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/commands/{command_id}/closure",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/gateway/status",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/gateway/witness",
+        "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/conformance",
+        "surface_id": "runtime_conformance_attestation"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/certify",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/deployment-witnesses",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/diagnose",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/evaluate",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/health",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/inspect",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/promote",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/propose-upgrade",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/self/witness",
+        "surface_id": "runtime_reflex_engine"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/runtime/witness",
+        "surface_id": "gateway_runtime_witness"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/approve/{request_id}",
+        "surface_id": "gateway_approval_resolution"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/webhook/discord",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/slack",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/telegram",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/webhook/web",
+        "surface_id": "gateway_webhook_ingress"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/webhook/whatsapp",
+        "surface_id": "gateway_capability_fabric"
+      }
+    ],
+    "unclassified_route_count": 237
+  },
   "schema_version": 1,
   "surfaces": [
     {

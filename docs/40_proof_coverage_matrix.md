@@ -41,6 +41,19 @@ Coverage summary:
 | Witnessed surfaces | 21 |
 | Unproven surfaces | 0 |
 
+Declared route coverage:
+
+| Metric | Count |
+|---|---:|
+| Proof-relevant declared routes | 301 |
+| Proven routes | 4 |
+| Witnessed routes | 60 |
+| Unclassified declared routes | 237 |
+
+The canonical JSON witness lists every proof-relevant declared route under
+`route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
+`coverage_state=unproven` until a named proof surface claims them.
+
 Gateway runtime witness invariants:
 
 1. `command_lifecycle_events_are_hash_linked`
@@ -69,6 +82,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, deployment preflight MCP manifest validation, deployment publication closure validation schema contract, deployment orchestration receipt, deployment orchestration receipt schema contract, deployment orchestration validation schema contract, gateway publication readiness schema contract, gateway publication receipt validation schema contract, runtime conformance MCP manifest witness, runtime conformance plan evidence bundle canary, runtime conformance certificate schema self-validation, runtime conformance collector schema validation, runtime conformance attestation mapping, runtime reflex engine mapping, Reflex deployment witness schema replay, Reflex validator receipt schema and artifact, capability plan evidence bundle mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
-  Open issues: none
-  Next action: run `python scripts/proof_coverage_matrix.py --check`
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, deployment preflight MCP manifest validation, deployment publication closure validation schema contract, deployment orchestration receipt, deployment orchestration receipt schema contract, deployment orchestration validation schema contract, gateway publication readiness schema contract, gateway publication receipt validation schema contract, runtime conformance MCP manifest witness, runtime conformance plan evidence bundle canary, runtime conformance certificate schema self-validation, runtime conformance collector schema validation, runtime conformance attestation mapping, runtime reflex engine mapping, Reflex deployment witness schema replay, Reflex validator receipt schema and artifact, capability plan evidence bundle mapping, streaming budget protocol witness, tool policy receipt mapping, MCP authority-obligation records, MCP manifest validation contract, governed session request envelope mapping, gateway request receipt normalization, bounded authority read-model pagination, lineage output index scan, lineage command index scan, pilot provisioning audit route, pilot provisioning history read models, hosted sandbox read-only routes, federated control-plane read model
+  Open issues: 237 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Next action: classify unproven declared routes into named proof surfaces or explicit exemptions
