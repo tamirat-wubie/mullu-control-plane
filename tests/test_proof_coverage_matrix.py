@@ -396,6 +396,7 @@ def test_capability_maturity_surface_blocks_readiness_overclaims() -> None:
     assert maturity_surface["coverage_state"] == "witnessed"
     assert maturity_surface["request_proof"] == "request_proof"
     assert maturity_surface["action_proof"] == "action_proof"
+    assert "CapabilityMaturityEvidenceSynthesizer.materialize_extension" in maturity_surface["representative_paths"]
     assert "CapabilityMaturityAssessor.assess" in maturity_surface["representative_paths"]
     assert "CapabilityRegistryMaturityProjector.decorate_read_model" in maturity_surface["representative_paths"]
     assert "MaturityProjectingCapabilityAdmissionGate.read_model" in maturity_surface["representative_paths"]
@@ -409,6 +410,7 @@ def test_capability_maturity_surface_blocks_readiness_overclaims() -> None:
     assert "tests/test_gateway/test_capability_fabric.py" in maturity_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_maturity.py" in maturity_surface["evidence_files"]
     assert "tests/test_gateway/test_operator_capability_console.py" in maturity_surface["evidence_files"]
+    assert "certification_evidence_synthesizes_maturity_extension" in witnesses
     assert "maturity_derived_from_evidence" in witnesses
     assert "registry_read_model_exposes_maturity" in witnesses
     assert "default_pack_C6_examples_projected" in witnesses

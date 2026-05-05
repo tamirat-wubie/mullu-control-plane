@@ -45,6 +45,8 @@ Registry entries do not self-promote. Gateway-built fabric read models derive a 
 
 Checked-in default packs include two concrete C6 witnesses. `connector.github.read` is read-only and carries sandbox, live-read, worker deployment, and recovery evidence references; because it is not world-mutating, the live-write gate is not required. `financial.send_payment` is effect-bearing and reaches C6 only because it also carries live-write evidence. Both examples remain below C7 until bounded autonomy controls are supplied.
 
+Certification pipelines can avoid hand-authored maturity flags by emitting `extensions.capability_certification_evidence` with concrete certification, sandbox, live-read, optional live-write, worker, recovery, and autonomy-control references. The maturity synthesizer converts that bundle into the canonical `capability_maturity_evidence` extension shape, validates the capability identity, and can run in strict mode when a caller requires production readiness before writing the generated extension.
+
 ## Domain Capsule
 
 A domain capsule is a packaged operating model, not a free-form plugin.

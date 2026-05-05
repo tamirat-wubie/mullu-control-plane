@@ -513,6 +513,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "capability_maturity_assessment",
             [
+                "CapabilityMaturityEvidenceSynthesizer.materialize_extension",
                 "CapabilityMaturityAssessor.assess",
                 "CapabilityRegistryMaturityProjector.decorate_read_model",
                 "MaturityProjectingCapabilityAdmissionGate.read_model",
@@ -534,8 +535,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_capability_maturity.py",
                 "tests/test_gateway/test_operator_capability_console.py",
             ],
-            "Capability maturity assessment derives C0-C7 readiness from explicit evidence, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
+            "Capability maturity assessment derives C0-C7 readiness from explicit evidence, synthesizes maturity extensions from certification evidence bundles, projects maturity onto capability fabric read models, includes read-only and effect-bearing default-pack C6 examples, blocks production overclaims until live and recovery evidence are complete, and blocks autonomy overclaims until bounded autonomy controls are present.",
             [
+                "certification_evidence_synthesizes_maturity_extension",
                 "maturity_derived_from_evidence",
                 "registry_read_model_exposes_maturity",
                 "default_pack_C6_examples_projected",
