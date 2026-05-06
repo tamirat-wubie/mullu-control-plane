@@ -40,6 +40,9 @@ REQUIRED_ARTIFACT_STATUSES = (
     "live_handoff_preflight",
 )
 REQUIRED_MUST_NOT_CLAIM = (
+    "autonomous payment execution",
+    "bank settlement",
+    "ERP reconciliation",
     "live email delivery",
     "production finance automation",
 )
@@ -107,7 +110,7 @@ def _validate_summary_semantics(summary: dict[str, Any], errors: list[str]) -> N
     if summary.get("promotion_mode") != expected_mode:
         errors.append(f"promotion_mode must be {expected_mode}")
     strict_command = str(summary.get("strict_promotion_command", ""))
-    for token in ("validate_finance_approval_live_handoff_chain.py", "--strict", "--require-ready"):
+    for token in ("validate_finance_approval_live_handoff_chain.py", "--strict", "--require-ready", "--json"):
         if token not in strict_command:
             errors.append(f"strict_promotion_command missing token {token}")
     artifact_statuses = summary.get("artifact_statuses", {})

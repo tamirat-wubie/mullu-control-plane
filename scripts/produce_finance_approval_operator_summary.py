@@ -101,10 +101,16 @@ def _validate_summary_semantics(summary: dict[str, Any], errors: list[str]) -> N
         errors.append("ready operator summary must not contain readiness_blockers")
     if not summary["packet_ready"] and not summary["readiness_blockers"]:
         errors.append("blocked operator summary must contain readiness_blockers")
-    for token in ("validate_finance_approval_live_handoff_chain.py", "--strict", "--require-ready"):
+    for token in ("validate_finance_approval_live_handoff_chain.py", "--strict", "--require-ready", "--json"):
         if token not in str(summary["strict_promotion_command"]):
             errors.append(f"strict_promotion_command missing token {token}")
-    for forbidden_claim in ("live email delivery", "production finance automation"):
+    for forbidden_claim in (
+        "autonomous payment execution",
+        "bank settlement",
+        "ERP reconciliation",
+        "live email delivery",
+        "production finance automation",
+    ):
         if forbidden_claim not in summary["must_not_claim"]:
             errors.append(f"must_not_claim missing {forbidden_claim}")
 
