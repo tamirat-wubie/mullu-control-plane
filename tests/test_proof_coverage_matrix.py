@@ -826,6 +826,29 @@ def test_temporal_scheduler_surface_requires_leases_and_retry_windows() -> None:
     assert closure_actions["publish_temporal_scheduler_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_sla_surface_governs_business_deadlines() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    sla_surface = surfaces["temporal_sla"]
+    witnesses = set(sla_surface["runtime_witnesses"])
+
+    assert sla_surface["coverage_state"] == "witnessed"
+    assert sla_surface["request_proof"] == "request_proof"
+    assert sla_surface["action_proof"] == "action_proof"
+    assert "TemporalSla.evaluate" in sla_surface["representative_paths"]
+    assert "SlaPolicy" in sla_surface["representative_paths"]
+    assert "SlaCase" in sla_surface["representative_paths"]
+    assert "gateway/temporal_sla.py" in sla_surface["evidence_files"]
+    assert "schemas/temporal_sla_receipt.schema.json" in sla_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_sla.py" in sla_surface["evidence_files"]
+    assert "business_time_deadline_skips_closed_windows" in witnesses
+    assert "business_window_dispatch_checked" in witnesses
+    assert "response_deadline_breach_escalates" in witnesses
+    assert "temporal_sla_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_sla_receipt_contract"]["status"] == "closed"
+
+
 def test_policy_proof_report_surface_is_counterexample_backed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

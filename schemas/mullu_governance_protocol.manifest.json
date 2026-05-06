@@ -305,6 +305,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-sla-receipt",
+      "path": "schemas/temporal_sla_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-sla-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "terminal-closure-certificate",
       "path": "schemas/terminal_closure_certificate.schema.json",
       "urn": "urn:mullusi:schema:terminal-closure-certificate:1",
