@@ -12,7 +12,7 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 
 **Repository:** `tamirat-wubie/mullu-control-plane`
 **Expected description:** `Governed symbolic intelligence control plane - multi-tenant LLM orchestration with budget enforcement, audit trails, and policy-driven governance`
-**Expected latest release:** `v3.13.0`
+**Expected latest release:** `v3.13.1`
 
 ## Required Topics
 

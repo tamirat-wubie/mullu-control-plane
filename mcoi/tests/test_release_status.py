@@ -37,8 +37,8 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert summary.ci_workflow_present is True
-    assert summary.release_version == "0.4.0 (v3.13.0)"
-    assert summary.release_date == "2026-03-30"
+    assert summary.release_version == "0.4.1 (v3.13.1)"
+    assert summary.release_date == "2026-05-06"
 
 
 def test_validate_deployment_matrix_requires_scaling_boundary() -> None:
