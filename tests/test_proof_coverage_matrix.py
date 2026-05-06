@@ -1000,6 +1000,33 @@ def test_temporal_dispatch_window_surface_rechecks_runtime_admission_windows() -
     assert closure_actions["publish_temporal_dispatch_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_budget_window_surface_rechecks_tenant_budget_periods() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    budget_window_surface = surfaces["temporal_budget_window"]
+    witnesses = set(budget_window_surface["runtime_witnesses"])
+
+    assert budget_window_surface["coverage_state"] == "witnessed"
+    assert budget_window_surface["request_proof"] == "request_proof"
+    assert budget_window_surface["action_proof"] == "action_proof"
+    assert "TemporalBudgetWindow.evaluate" in budget_window_surface["representative_paths"]
+    assert "BudgetWindowRequest" in budget_window_surface["representative_paths"]
+    assert "TemporalBudgetWindowReceipt" in budget_window_surface["representative_paths"]
+    assert "gateway/temporal_budget_window.py" in budget_window_surface["evidence_files"]
+    assert "schemas/temporal_budget_window_receipt.schema.json" in budget_window_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_budget_window.py" in budget_window_surface["evidence_files"]
+    assert "runtime_clock_owns_budget_window_time" in witnesses
+    assert "tenant_timezone_resolves_budget_period" in witnesses
+    assert "daily_weekly_monthly_budget_resets_computed" in witnesses
+    assert "spend_snapshot_period_matches_active_window" in witnesses
+    assert "projected_spend_blocks_over_limit_dispatch" in witnesses
+    assert "future_budget_window_defers_dispatch" in witnesses
+    assert "source_reapproval_bound_for_high_risk_budget_window" in witnesses
+    assert "temporal_budget_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_budget_window_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
