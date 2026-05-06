@@ -1,0 +1,15 @@
+{
+  "attestation_id": "attestation-control-042",
+  "tenant_id": "tenant-mullu-primary",
+  "scope": "control",
+  "scope_ref_id": "closure-control-042",
+  "level": "high",
+  "status": "granted",
+  "attested_by": "assurance-lead",
+  "attested_at": "2026-04-04T09:00:00+00:00",
+  "expires_at": "2027-04-04T09:00:00+00:00",
+  "metadata": {
+    "framework": "internal-governance",
+    "review_cycle": "annual"
+  }
+}

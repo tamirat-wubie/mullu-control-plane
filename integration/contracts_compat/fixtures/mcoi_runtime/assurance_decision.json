@@ -1,0 +1,13 @@
+{
+  "decision_id": "assurance-decision-042",
+  "target_id": "certification-workspace-042",
+  "target_type": "certification",
+  "level": "moderate",
+  "decided_by": "assurance-board-chair",
+  "reason": "Sufficient evidence and human review closure support moderate assurance for this workspace scope.",
+  "decided_at": "2026-04-04T09:27:00+00:00",
+  "metadata": {
+    "decision_class": "certification",
+    "policy_pack": "default-safe"
+  }
+}

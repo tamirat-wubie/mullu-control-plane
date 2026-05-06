@@ -90,6 +90,24 @@ from mcoi_runtime.contracts.human_workflow import (
     ReviewMode,
     ReviewPacket,
 )
+from mcoi_runtime.contracts.assurance_runtime import (
+    AssuranceAssessment,
+    AssuranceClosureReport,
+    AssuranceDecision,
+    AssuranceEvidenceBinding,
+    AssuranceFinding,
+    AssuranceLevel,
+    AssuranceScope,
+    AssuranceSnapshot,
+    AssuranceViolation,
+    AttestationRecord,
+    AttestationStatus,
+    CertificationRecord,
+    CertificationStatus,
+    EvidenceSufficiency,
+    RecertificationStatus,
+    RecertificationWindow,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -635,9 +653,156 @@ def _build_human_workflow_closure_report(payload: dict) -> HumanWorkflowClosureR
     )
 
 
+def _build_attestation_record(payload: dict) -> AttestationRecord:
+    return AttestationRecord(
+        attestation_id=payload["attestation_id"],
+        tenant_id=payload["tenant_id"],
+        scope=AssuranceScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        level=AssuranceLevel(payload["level"]),
+        status=AttestationStatus(payload["status"]),
+        attested_by=payload["attested_by"],
+        attested_at=payload["attested_at"],
+        expires_at=payload["expires_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_certification_record(payload: dict) -> CertificationRecord:
+    return CertificationRecord(
+        certification_id=payload["certification_id"],
+        tenant_id=payload["tenant_id"],
+        scope=AssuranceScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        status=CertificationStatus(payload["status"]),
+        level=AssuranceLevel(payload["level"]),
+        certified_by=payload["certified_by"],
+        certified_at=payload["certified_at"],
+        expires_at=payload["expires_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_assessment(payload: dict) -> AssuranceAssessment:
+    return AssuranceAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        scope=AssuranceScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        level=AssuranceLevel(payload["level"]),
+        sufficiency=EvidenceSufficiency(payload["sufficiency"]),
+        confidence=payload["confidence"],
+        assessed_by=payload["assessed_by"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_evidence_binding(payload: dict) -> AssuranceEvidenceBinding:
+    return AssuranceEvidenceBinding(
+        binding_id=payload["binding_id"],
+        target_id=payload["target_id"],
+        target_type=payload["target_type"],
+        source_type=payload["source_type"],
+        source_id=payload["source_id"],
+        bound_at=payload["bound_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_recertification_window(payload: dict) -> RecertificationWindow:
+    return RecertificationWindow(
+        window_id=payload["window_id"],
+        certification_id=payload["certification_id"],
+        status=RecertificationStatus(payload["status"]),
+        starts_at=payload["starts_at"],
+        ends_at=payload["ends_at"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_finding(payload: dict) -> AssuranceFinding:
+    return AssuranceFinding(
+        finding_id=payload["finding_id"],
+        target_id=payload["target_id"],
+        target_type=payload["target_type"],
+        description=payload["description"],
+        impact_level=AssuranceLevel(payload["impact_level"]),
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_decision(payload: dict) -> AssuranceDecision:
+    return AssuranceDecision(
+        decision_id=payload["decision_id"],
+        target_id=payload["target_id"],
+        target_type=payload["target_type"],
+        level=AssuranceLevel(payload["level"]),
+        decided_by=payload["decided_by"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_snapshot(payload: dict) -> AssuranceSnapshot:
+    return AssuranceSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        total_attestations=payload["total_attestations"],
+        granted_attestations=payload["granted_attestations"],
+        total_certifications=payload["total_certifications"],
+        active_certifications=payload["active_certifications"],
+        total_assessments=payload["total_assessments"],
+        total_evidence_bindings=payload["total_evidence_bindings"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_violation(payload: dict) -> AssuranceViolation:
+    return AssuranceViolation(
+        violation_id=payload["violation_id"],
+        target_id=payload["target_id"],
+        target_type=payload["target_type"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_assurance_closure_report(payload: dict) -> AssuranceClosureReport:
+    return AssuranceClosureReport(
+        report_id=payload["report_id"],
+        target_id=payload["target_id"],
+        target_type=payload["target_type"],
+        tenant_id=payload["tenant_id"],
+        final_level=AssuranceLevel(payload["final_level"]),
+        total_evidence_bindings=payload["total_evidence_bindings"],
+        total_assessments=payload["total_assessments"],
+        total_findings=payload["total_findings"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("assurance_assessment.json", _build_assurance_assessment),
+        ("assurance_closure_report.json", _build_assurance_closure_report),
+        ("assurance_decision.json", _build_assurance_decision),
+        ("assurance_evidence_binding.json", _build_assurance_evidence_binding),
+        ("assurance_finding.json", _build_assurance_finding),
+        ("assurance_snapshot.json", _build_assurance_snapshot),
+        ("assurance_violation.json", _build_assurance_violation),
+        ("attestation_record.json", _build_attestation_record),
         ("approval_board.json", _build_approval_board),
         ("board_member.json", _build_board_member),
         ("board_vote.json", _build_board_vote),
@@ -647,6 +812,7 @@ def _build_human_workflow_closure_report(payload: dict) -> HumanWorkflowClosureR
         ("case_record.json", _build_case_record),
         ("case_snapshot.json", _build_case_snapshot),
         ("case_violation.json", _build_case_violation),
+        ("certification_record.json", _build_certification_record),
         ("collaborative_decision.json", _build_collaborative_decision),
         ("conflict_record.json", _build_conflict_record),
         ("delegation_request.json", _build_delegation_request),
@@ -676,6 +842,7 @@ def _build_human_workflow_closure_report(payload: dict) -> HumanWorkflowClosureR
         ("recovery_record.json", _build_recovery_record),
         ("review_packet.json", _build_review_packet),
         ("review_record.json", _build_review_record),
+        ("recertification_window.json", _build_recertification_window),
         ("verification_record.json", _build_verification_record),
     ],
 )

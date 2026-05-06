@@ -153,6 +153,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "human_workflow_snapshot.json" in mcoi_runtime_fixture_names
     assert "human_workflow_violation.json" in mcoi_runtime_fixture_names
     assert "human_workflow_closure_report.json" in mcoi_runtime_fixture_names
+    assert "attestation_record.json" in mcoi_runtime_fixture_names
+    assert "certification_record.json" in mcoi_runtime_fixture_names
+    assert "assurance_assessment.json" in mcoi_runtime_fixture_names
+    assert "assurance_evidence_binding.json" in mcoi_runtime_fixture_names
+    assert "recertification_window.json" in mcoi_runtime_fixture_names
+    assert "assurance_finding.json" in mcoi_runtime_fixture_names
+    assert "assurance_decision.json" in mcoi_runtime_fixture_names
+    assert "assurance_snapshot.json" in mcoi_runtime_fixture_names
+    assert "assurance_violation.json" in mcoi_runtime_fixture_names
+    assert "assurance_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -165,7 +175,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 39
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 49
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1380,6 +1390,113 @@ def test_validate_mcoi_runtime_fixture_rejects_handoff_packet_to_self(tmp_path: 
 
     assert len(errors) == 1
     assert "from_ref and to_ref must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_attestation_expiry_before_attested_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "attestation_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "attestation_id": "attestation-drift",
+                "tenant_id": "tenant-1",
+                "scope": "control",
+                "scope_ref_id": "control-drift",
+                "level": "high",
+                "status": "granted",
+                "attested_by": "auditor-a",
+                "attested_at": "2026-04-04T09:00:00+00:00",
+                "expires_at": "2026-04-03T09:00:00+00:00",
+                "metadata": {"framework": "internal"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "expires_at must be greater than or equal to attested_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_completed_recertification_without_completed_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "recertification_window.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "window_id": "window-drift",
+                "certification_id": "certification-drift",
+                "status": "completed",
+                "starts_at": "2027-03-15T09:00:00+00:00",
+                "ends_at": "2027-04-04T09:00:00+00:00",
+                "completed_at": "",
+                "metadata": {"cycle": "annual"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "completed recertification windows must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_assurance_snapshot_granted_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "assurance_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snapshot-drift",
+                "scope_ref_id": "tenant-drift",
+                "total_attestations": 2,
+                "granted_attestations": 3,
+                "total_certifications": 2,
+                "active_certifications": 1,
+                "total_assessments": 4,
+                "total_evidence_bindings": 5,
+                "total_violations": 0,
+                "captured_at": "2026-04-04T09:30:00+00:00",
+                "metadata": {"captured_by": "assurance-monitor"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "granted_attestations must not exceed total_attestations" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_assurance_snapshot_active_certification_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "assurance_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snapshot-drift",
+                "scope_ref_id": "tenant-drift",
+                "total_attestations": 2,
+                "granted_attestations": 1,
+                "total_certifications": 1,
+                "active_certifications": 2,
+                "total_assessments": 4,
+                "total_evidence_bindings": 5,
+                "total_violations": 0,
+                "captured_at": "2026-04-04T09:30:00+00:00",
+                "metadata": {"captured_by": "assurance-monitor"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_certifications must not exceed total_certifications" in errors[0]
     assert fixture_path.name in errors[0]
 
 

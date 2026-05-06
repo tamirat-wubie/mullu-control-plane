@@ -1,0 +1,13 @@
+{
+  "violation_id": "assurance-violation-042",
+  "target_id": "certification-workspace-042",
+  "target_type": "certification",
+  "tenant_id": "tenant-mullu-primary",
+  "operation": "grant_certification",
+  "reason": "Certification grant was attempted before all evidence bindings were recorded.",
+  "detected_at": "2026-04-04T09:18:00+00:00",
+  "metadata": {
+    "policy_rule": "evidence-before-certification",
+    "severity": "medium"
+  }
+}

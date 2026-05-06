@@ -158,6 +158,12 @@ HUMAN_REVIEW_MODES = frozenset({"single", "parallel", "sequential"})
 APPROVAL_MODES = frozenset({"single", "quorum", "unanimous", "override"})
 BOARD_DECISION_STATUSES = frozenset({"pending", "approved", "rejected", "escalated", "overridden"})
 COLLABORATION_SCOPES = frozenset({"change", "case", "procurement", "service", "regulatory", "executive"})
+ATTESTATION_STATUSES = frozenset({"pending", "granted", "denied", "revoked", "expired"})
+CERTIFICATION_STATUSES = frozenset({"pending", "active", "suspended", "revoked", "expired", "recertification_required"})
+ASSURANCE_LEVELS = frozenset({"none", "low", "moderate", "high", "full"})
+ASSURANCE_SCOPES = frozenset({"control", "program", "workspace", "tenant", "connector", "campaign"})
+EVIDENCE_SUFFICIENCY_LEVELS = frozenset({"insufficient", "partial", "sufficient", "comprehensive"})
+RECERTIFICATION_STATUSES = frozenset({"scheduled", "in_progress", "completed", "overdue", "waived"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -5380,6 +5386,341 @@ def _validate_human_workflow_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_attestation_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "attestation_id",
+            "tenant_id",
+            "scope",
+            "scope_ref_id",
+            "level",
+            "status",
+            "attested_by",
+            "attested_at",
+            "expires_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("attestation_id", "tenant_id", "scope", "scope_ref_id", "level", "status", "attested_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope"] not in ASSURANCE_SCOPES:
+        errors.append(f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(ASSURANCE_SCOPES))}")
+    if payload["level"] not in ASSURANCE_LEVELS:
+        errors.append(f"{_relative_path(path)}: field 'level' must be one of {', '.join(sorted(ASSURANCE_LEVELS))}")
+    if payload["status"] not in ATTESTATION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(ATTESTATION_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["attested_at"], field_name="attested_at", path=path))
+    if not isinstance(payload["expires_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'expires_at' must be a string")
+    elif payload["expires_at"]:
+        errors.extend(_validate_iso8601_text(payload["expires_at"], field_name="expires_at", path=path))
+    if (
+        not errors
+        and payload["expires_at"]
+        and _parse_iso8601_text(payload["expires_at"]) < _parse_iso8601_text(payload["attested_at"])
+    ):
+        errors.append(f"{_relative_path(path)}: expires_at must be greater than or equal to attested_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_certification_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "certification_id",
+            "tenant_id",
+            "scope",
+            "scope_ref_id",
+            "status",
+            "level",
+            "certified_by",
+            "certified_at",
+            "expires_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("certification_id", "tenant_id", "scope", "scope_ref_id", "status", "level", "certified_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope"] not in ASSURANCE_SCOPES:
+        errors.append(f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(ASSURANCE_SCOPES))}")
+    if payload["status"] not in CERTIFICATION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(CERTIFICATION_STATUSES))}"
+        )
+    if payload["level"] not in ASSURANCE_LEVELS:
+        errors.append(f"{_relative_path(path)}: field 'level' must be one of {', '.join(sorted(ASSURANCE_LEVELS))}")
+    errors.extend(_validate_iso8601_text(payload["certified_at"], field_name="certified_at", path=path))
+    if not isinstance(payload["expires_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'expires_at' must be a string")
+    elif payload["expires_at"]:
+        errors.extend(_validate_iso8601_text(payload["expires_at"], field_name="expires_at", path=path))
+    if (
+        not errors
+        and payload["expires_at"]
+        and _parse_iso8601_text(payload["expires_at"]) < _parse_iso8601_text(payload["certified_at"])
+    ):
+        errors.append(f"{_relative_path(path)}: expires_at must be greater than or equal to certified_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_assessment_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "assessment_id",
+            "tenant_id",
+            "scope",
+            "scope_ref_id",
+            "level",
+            "sufficiency",
+            "confidence",
+            "assessed_by",
+            "assessed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("assessment_id", "tenant_id", "scope", "scope_ref_id", "level", "sufficiency", "assessed_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope"] not in ASSURANCE_SCOPES:
+        errors.append(f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(ASSURANCE_SCOPES))}")
+    if payload["level"] not in ASSURANCE_LEVELS:
+        errors.append(f"{_relative_path(path)}: field 'level' must be one of {', '.join(sorted(ASSURANCE_LEVELS))}")
+    if payload["sufficiency"] not in EVIDENCE_SUFFICIENCY_LEVELS:
+        errors.append(
+            f"{_relative_path(path)}: field 'sufficiency' must be one of {', '.join(sorted(EVIDENCE_SUFFICIENCY_LEVELS))}"
+        )
+    errors.extend(
+        _require_number_in_range(payload["confidence"], field_name="confidence", path=path, minimum=0.0, maximum=1.0)
+    )
+    errors.extend(_validate_iso8601_text(payload["assessed_at"], field_name="assessed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_evidence_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("binding_id", "target_id", "target_type", "source_type", "source_id", "bound_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("binding_id", "target_id", "target_type", "source_type", "source_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["bound_at"], field_name="bound_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_recertification_window_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("window_id", "certification_id", "status", "starts_at", "ends_at", "completed_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("window_id", "certification_id", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in RECERTIFICATION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(RECERTIFICATION_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["starts_at"], field_name="starts_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["ends_at"], field_name="ends_at", path=path))
+    if not isinstance(payload["completed_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'completed_at' must be a string")
+    elif payload["completed_at"]:
+        errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    if not errors and _parse_iso8601_text(payload["ends_at"]) < _parse_iso8601_text(payload["starts_at"]):
+        errors.append(f"{_relative_path(path)}: ends_at must be greater than or equal to starts_at")
+    if payload["status"] == "completed" and not payload["completed_at"]:
+        errors.append(f"{_relative_path(path)}: completed recertification windows must carry completed_at")
+    if payload["status"] != "completed" and payload["completed_at"]:
+        errors.append(f"{_relative_path(path)}: non-completed recertification windows must keep completed_at empty")
+    if (
+        not errors
+        and payload["completed_at"]
+        and _parse_iso8601_text(payload["completed_at"]) < _parse_iso8601_text(payload["starts_at"])
+    ):
+        errors.append(f"{_relative_path(path)}: completed_at must be greater than or equal to starts_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_finding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("finding_id", "target_id", "target_type", "description", "impact_level", "detected_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("finding_id", "target_id", "target_type", "impact_level"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["impact_level"] not in ASSURANCE_LEVELS:
+        errors.append(
+            f"{_relative_path(path)}: field 'impact_level' must be one of {', '.join(sorted(ASSURANCE_LEVELS))}"
+        )
+    if not isinstance(payload["description"], str):
+        errors.append(f"{_relative_path(path)}: field 'description' must be a string")
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("decision_id", "target_id", "target_type", "level", "decided_by", "reason", "decided_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "target_id", "target_type", "level", "decided_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["level"] not in ASSURANCE_LEVELS:
+        errors.append(f"{_relative_path(path)}: field 'level' must be one of {', '.join(sorted(ASSURANCE_LEVELS))}")
+    if not isinstance(payload["reason"], str):
+        errors.append(f"{_relative_path(path)}: field 'reason' must be a string")
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "scope_ref_id",
+            "total_attestations",
+            "granted_attestations",
+            "total_certifications",
+            "active_certifications",
+            "total_assessments",
+            "total_evidence_bindings",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["snapshot_id"], field_name="snapshot_id", path=path))
+    errors.extend(_require_non_empty_text(payload["scope_ref_id"], field_name="scope_ref_id", path=path))
+    for field_name in (
+        "total_attestations",
+        "granted_attestations",
+        "total_certifications",
+        "active_certifications",
+        "total_assessments",
+        "total_evidence_bindings",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["granted_attestations"] > payload["total_attestations"]:
+        errors.append(f"{_relative_path(path)}: granted_attestations must not exceed total_attestations")
+    if not errors and payload["active_certifications"] > payload["total_certifications"]:
+        errors.append(f"{_relative_path(path)}: active_certifications must not exceed total_certifications")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("violation_id", "target_id", "target_type", "tenant_id", "operation", "reason", "detected_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "target_id", "target_type", "tenant_id", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_assurance_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "target_id",
+            "target_type",
+            "tenant_id",
+            "final_level",
+            "total_evidence_bindings",
+            "total_assessments",
+            "total_findings",
+            "total_violations",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "target_id", "target_type", "tenant_id", "final_level"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["final_level"] not in ASSURANCE_LEVELS:
+        errors.append(
+            f"{_relative_path(path)}: field 'final_level' must be one of {', '.join(sorted(ASSURANCE_LEVELS))}"
+        )
+    for field_name in ("total_evidence_bindings", "total_assessments", "total_findings", "total_violations"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -5473,7 +5814,16 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "assurance_assessment.json": _validate_assurance_assessment_fixture,
+    "assurance_closure_report.json": _validate_assurance_closure_report_fixture,
+    "assurance_decision.json": _validate_assurance_decision_fixture,
+    "assurance_evidence_binding.json": _validate_assurance_evidence_binding_fixture,
+    "assurance_finding.json": _validate_assurance_finding_fixture,
+    "assurance_snapshot.json": _validate_assurance_snapshot_fixture,
+    "assurance_violation.json": _validate_assurance_violation_fixture,
+    "attestation_record.json": _validate_attestation_record_fixture,
     "approval_board.json": _validate_approval_board_fixture,
+    "certification_record.json": _validate_certification_record_fixture,
     "board_member.json": _validate_board_member_fixture,
     "board_vote.json": _validate_board_vote_fixture,
     "case_assignment.json": _validate_case_assignment_fixture,
@@ -5511,6 +5861,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "recovery_record.json": _validate_recovery_record_fixture,
     "review_packet.json": _validate_review_packet_fixture,
     "review_record.json": _validate_review_record_fixture,
+    "recertification_window.json": _validate_recertification_window_fixture,
     "verification_record.json": _validate_verification_record_fixture,
 }
 
