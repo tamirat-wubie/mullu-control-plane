@@ -44,25 +44,26 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 21. Multimodal operation receipts are public contracts when they gate modality-bound worker dispatch with source-preserving evidence.
 22. Temporal operation receipts are public contracts when they certify runtime-owned time checks for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses.
 23. Temporal memory receipts are public contracts when they certify memory age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession before memory can guide action.
-24. Temporal scheduler receipts are public contracts when they certify lease acquisition, retry windows, missed-run handling, idempotency, recurrence declarations, and high-risk temporal rechecks before scheduled dispatch.
-25. Temporal SLA receipts are public contracts when they certify business calendars, business-time response and resolution deadlines, warning escalation, breach detection, tenant scope, evidence refs, and dispatch windows before escalation or action.
-26. Capability upgrade plans are public contracts when they turn health signals into activation-blocked upgrade proposals with eval, sandbox, ChangeCommand, ChangeCertificate, canary, terminal-closure, and learning-admission gates.
-27. Autonomous test-generation plans are public contracts when they convert certified failure traces into activation-blocked replay, policy, tenant, approval, budget, and sandbox test proposals.
-28. World-state projections are public contracts when they expose sourced operational reality for planning and execution gates.
-29. Goal compilation reports are public contracts when they bind objectives to plan DAGs, evidence obligations, rollback obligations, approvals, and certificates.
-30. Workflow mining reports are public contracts when they convert repeated human traces into blocked, review-required workflow drafts.
-31. Simulation receipts are public contracts when they certify dry-run controls, failure modes, and compensation paths before risky execution.
-32. Effect assurance records are public contracts when they certify planned, observed, and reconciled reality changes.
-33. Deployment witness artifacts are public contracts when they support published gateway health claims.
-34. Capability adapter closure plans are public contracts when they translate adapter blockers into operator actions, verification commands, and receipt validators.
-35. General-agent promotion closure plans are public contracts when they coordinate operator approval and production-promotion work.
-36. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
-37. General-agent promotion environment bindings are public contracts when they define the presence-only inputs required for operator handoff preflight.
-38. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
-39. Governed runtime promotion validators are public contracts when they provide domain-neutral terminal commands over compatibility-bound promotion evidence.
-40. Terminal closure certificates are public contracts when they certify final command disposition.
-41. Reflex deployment witness envelopes are public contracts when they export replayable promotion evidence for offline validation.
-42. Reflex deployment witness validator receipts are public contracts when they certify CI replay evidence without exposing raw JUnit paths.
+24. Temporal memory refresh receipts are public contracts when they convert stale or refresh-required memory into governed refresh tasks with required evidence, due windows, owner scope, review readiness, and activation blocks before refreshed memory can guide action.
+25. Temporal scheduler receipts are public contracts when they certify lease acquisition, retry windows, missed-run handling, idempotency, recurrence declarations, and high-risk temporal rechecks before scheduled dispatch.
+26. Temporal SLA receipts are public contracts when they certify business calendars, business-time response and resolution deadlines, warning escalation, breach detection, tenant scope, evidence refs, and dispatch windows before escalation or action.
+27. Capability upgrade plans are public contracts when they turn health signals into activation-blocked upgrade proposals with eval, sandbox, ChangeCommand, ChangeCertificate, canary, terminal-closure, and learning-admission gates.
+28. Autonomous test-generation plans are public contracts when they convert certified failure traces into activation-blocked replay, policy, tenant, approval, budget, and sandbox test proposals.
+29. World-state projections are public contracts when they expose sourced operational reality for planning and execution gates.
+30. Goal compilation reports are public contracts when they bind objectives to plan DAGs, evidence obligations, rollback obligations, approvals, and certificates.
+31. Workflow mining reports are public contracts when they convert repeated human traces into blocked, review-required workflow drafts.
+32. Simulation receipts are public contracts when they certify dry-run controls, failure modes, and compensation paths before risky execution.
+33. Effect assurance records are public contracts when they certify planned, observed, and reconciled reality changes.
+34. Deployment witness artifacts are public contracts when they support published gateway health claims.
+35. Capability adapter closure plans are public contracts when they translate adapter blockers into operator actions, verification commands, and receipt validators.
+36. General-agent promotion closure plans are public contracts when they coordinate operator approval and production-promotion work.
+37. General-agent promotion handoff packets are public contracts when they bind runbooks, checklists, closure plans, validation reports, blockers, and terminal proof commands.
+38. General-agent promotion environment bindings are public contracts when they define the presence-only inputs required for operator handoff preflight.
+39. General-agent promotion environment binding receipts are public contracts when they record presence-only binding evidence without serializing values.
+40. Governed runtime promotion validators are public contracts when they provide domain-neutral terminal commands over compatibility-bound promotion evidence.
+41. Terminal closure certificates are public contracts when they certify final command disposition.
+42. Reflex deployment witness envelopes are public contracts when they export replayable promotion evidence for offline validation.
+43. Reflex deployment witness validator receipts are public contracts when they certify CI replay evidence without exposing raw JUnit paths.
 
 ## Verification
 
@@ -75,11 +76,11 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 59 schemas
+protocol manifest ok: 60 schemas
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment orchestration validation contract, gateway publication readiness contract, gateway publication receipt validation contract, deployment publication closure validation contract, capability candidate contract, capability maturity contract, policy proof report contract, memory lattice contract, trust ledger bundle contract, trust ledger anchor receipt contract, agent identity contract, collaboration case contract, domain operating pack contract, multimodal operation receipt contract, temporal operation receipt contract, temporal memory receipt contract, temporal scheduler receipt contract, temporal SLA receipt contract, capability upgrade plan contract, autonomous test-generation plan contract, world-state contract, goal compilation contract, workflow mining report contract, simulation receipt contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract, reflex validator receipt contract
+  Invariants verified: open schema index, closed runtime boundary, schema urn matching, URI scheme declaration, compatibility rules, deployment handoff receipt contract, deployment orchestration validation contract, gateway publication readiness contract, gateway publication receipt validation contract, deployment publication closure validation contract, capability candidate contract, capability maturity contract, policy proof report contract, memory lattice contract, trust ledger bundle contract, trust ledger anchor receipt contract, agent identity contract, collaboration case contract, domain operating pack contract, multimodal operation receipt contract, temporal operation receipt contract, temporal memory receipt contract, temporal memory refresh receipt contract, temporal scheduler receipt contract, temporal SLA receipt contract, capability upgrade plan contract, autonomous test-generation plan contract, world-state contract, goal compilation contract, workflow mining report contract, simulation receipt contract, deployment witness artifact contract, effect assurance record contract, capability adapter closure plan contract, promotion closure plan contract, promotion environment binding contract, promotion environment binding receipt contract, promotion handoff packet contract, governed runtime promotion validator contract, terminal closure certificate contract, reflex deployment witness envelope contract, reflex validator receipt contract
   Open issues: none
   Next action: publish the manifest from `docs.mullusi.com` with versioned release notes

@@ -236,6 +236,17 @@ def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     assert memory_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_memory_refresh_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    refresh_entry = entries["temporal-memory-refresh-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert refresh_entry["path"] == "schemas/temporal_memory_refresh_receipt.schema.json"
+    assert refresh_entry["urn"] == "urn:mullusi:schema:temporal-memory-refresh-receipt:1"
+    assert refresh_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_scheduler_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

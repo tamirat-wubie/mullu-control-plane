@@ -299,6 +299,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-memory-refresh-receipt",
+      "path": "schemas/temporal_memory_refresh_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-memory-refresh-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-scheduler-receipt",
       "path": "schemas/temporal_scheduler_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-scheduler-receipt:1",
