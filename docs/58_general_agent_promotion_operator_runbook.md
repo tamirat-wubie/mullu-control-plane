@@ -42,10 +42,15 @@ The current expected aggregate plan contains:
 | Document worker | Parser imports and live parser receipt already closed; external effects remain approval-gated |
 | Voice worker | OpenAI provider client, governed `OPENAI_API_KEY`, approved audio sample |
 | Email/calendar worker | One scoped connector token and read-only probe target |
-| Deployment publication | `MULLU_GATEWAY_URL`, runtime witness secret, conformance secret, runtime responsibility debt clear, authority responsibility debt clear, operator approval |
+| Deployment publication | `MULLU_GATEWAY_URL`, runtime witness secret, conformance secret, deployment witness secret, runtime responsibility debt clear, authority responsibility debt clear, operator approval |
 | Public health declaration | Published deployment witness and HTTPS health probe receipt |
 
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
+
+The deployment witness publication path requires all of these bound names before
+the handoff preflight can pass: `MULLU_GATEWAY_URL`,
+`MULLU_RUNTIME_WITNESS_SECRET`, `MULLU_RUNTIME_CONFORMANCE_SECRET`,
+`MULLU_DEPLOYMENT_WITNESS_SECRET`, and `MULLU_AUTHORITY_OPERATOR_SECRET`.
 
 ## Algorithm
 

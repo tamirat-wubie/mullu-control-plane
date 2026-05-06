@@ -21,6 +21,7 @@ REQUIRED_ENV = {
     "MULLU_GATEWAY_URL",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_DEPLOYMENT_WITNESS_SECRET",
     "MULLU_AUTHORITY_OPERATOR_SECRET",
 }
 
@@ -37,7 +38,7 @@ def test_validate_environment_binding_receipt_accepts_ready_receipt(tmp_path: Pa
     assert emit_errors == ()
     assert result.valid is True
     assert result.ready is True
-    assert result.binding_count == 6
+    assert result.binding_count == 7
     assert result.missing_bindings == ()
 
 
@@ -53,8 +54,9 @@ def test_validate_environment_binding_receipt_allows_blocked_non_strict_receipt(
     assert emit_errors == ()
     assert result.valid is True
     assert result.ready is False
-    assert result.binding_count == 6
+    assert result.binding_count == 7
     assert "MULLU_GATEWAY_URL" in result.missing_bindings
+    assert "MULLU_DEPLOYMENT_WITNESS_SECRET" in result.missing_bindings
 
 
 def test_validate_environment_binding_receipt_require_ready_blocks_missing(tmp_path: Path) -> None:
@@ -106,7 +108,7 @@ def test_validate_environment_binding_receipt_cli_outputs_json(tmp_path: Path, c
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
-    assert payload["binding_count"] == 6
+    assert payload["binding_count"] == 7
 
 
 def test_validate_environment_binding_receipt_missing_file_error_is_bounded(tmp_path: Path) -> None:

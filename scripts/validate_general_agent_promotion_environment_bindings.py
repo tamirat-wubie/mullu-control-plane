@@ -39,6 +39,7 @@ REQUIRED_BINDING_SPECS: dict[str, tuple[str, str, bool]] = {
     "MULLU_GATEWAY_URL": ("url", "high", False),
     "MULLU_RUNTIME_WITNESS_SECRET": ("secret", "critical", True),
     "MULLU_RUNTIME_CONFORMANCE_SECRET": ("secret", "critical", True),
+    "MULLU_DEPLOYMENT_WITNESS_SECRET": ("secret", "critical", True),
     "MULLU_AUTHORITY_OPERATOR_SECRET": ("secret", "critical", True),
 }
 
