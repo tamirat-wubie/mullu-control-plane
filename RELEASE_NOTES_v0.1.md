@@ -1,6 +1,6 @@
 # Mullu Platform MCOI Runtime -- Release Notes v0.1.0
 
-**Version:** 0.4.1 (v3.13.1)
+**Version:** 0.4.2 (v3.13.2)
 **Date:** 2026-05-06
 **Status:** Internal use only. Not for external distribution.
 
