@@ -774,6 +774,32 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert closure_actions["classify_temporal_scheduler_routes"]["status"] == "closed"
 
 
+def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    evidence_surface = surfaces["temporal_evidence_freshness"]
+    witnesses = set(evidence_surface["runtime_witnesses"])
+
+    assert evidence_surface["coverage_state"] == "witnessed"
+    assert evidence_surface["request_proof"] == "request_proof"
+    assert evidence_surface["action_proof"] == "action_proof"
+    assert "TemporalEvidenceFreshness.evaluate" in evidence_surface["representative_paths"]
+    assert "EvidenceFreshnessClaim" in evidence_surface["representative_paths"]
+    assert "TemporalEvidenceFreshnessReceipt" in evidence_surface["representative_paths"]
+    assert "gateway/temporal_evidence_freshness.py" in evidence_surface["evidence_files"]
+    assert "schemas/temporal_evidence_freshness_receipt.schema.json" in evidence_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_evidence_freshness.py" in evidence_surface["evidence_files"]
+    assert "evidence_age_computed_from_runtime_clock" in witnesses
+    assert "freshness_window_required_for_dispatch" in witnesses
+    assert "stale_required_evidence_triggers_refresh" in witnesses
+    assert "missing_required_evidence_blocks_dispatch" in witnesses
+    assert "revoked_or_unverified_high_risk_evidence_blocks" in witnesses
+    assert "expiring_evidence_warns_before_dispatch" in witnesses
+    assert "temporal_evidence_freshness_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

@@ -225,6 +225,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_evidence_freshness_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_evidence_freshness"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -309,7 +316,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 39,
+      "action_proof": 40,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 7,
@@ -317,7 +324,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 44,
+      "audit_chain": 45,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -325,16 +332,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 47
+      "witnessed": 48
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
-      "request_proof": 39
+      "request_proof": 40
     },
-    "surface_count": 48
+    "surface_count": 49
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2840,6 +2847,34 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_kernel"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_evidence_freshness.py",
+        "schemas/temporal_evidence_freshness_receipt.schema.json",
+        "tests/test_gateway/test_temporal_evidence_freshness.py"
+      ],
+      "notes": "Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch.",
+      "representative_paths": [
+        "TemporalEvidenceFreshness.evaluate",
+        "EvidenceFreshnessClaim",
+        "TemporalEvidenceFreshnessReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "evidence_age_computed_from_runtime_clock",
+        "freshness_window_required_for_dispatch",
+        "stale_required_evidence_triggers_refresh",
+        "missing_required_evidence_blocks_dispatch",
+        "revoked_or_unverified_high_risk_evidence_blocks",
+        "expiring_evidence_warns_before_dispatch",
+        "temporal_evidence_freshness_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_evidence_freshness"
     },
     {
       "action_proof": "action_proof",
