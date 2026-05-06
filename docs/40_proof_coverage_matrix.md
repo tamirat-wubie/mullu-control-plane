@@ -13,7 +13,7 @@ document is the operator-readable witness.
 | `llm_streaming` | /api/v1/stream, /api/v1/chat/stream | request_proof | action_proof | none | audit_chain | witnessed | SSE responses include precharge, first-byte, chunk-debit, and final-reconcile proof identifiers. |
 | `llm_completion` | /api/v1/complete, /api/v1/complete/safe, /api/v1/complete/auto | request_proof | action_proof | none | audit_chain | witnessed | Completion routes are governed through budget, model routing, and proof bridge checks. |
 | `llm_chat_workflow` | /api/v1/chat, /api/v1/chat/workflow, /api/v1/chat/workflow/history | request_proof | action_proof | none | audit_chain | witnessed | Chat and workflow routes preserve governed request and action proof boundaries. |
-| `cost_budget_read_models` | /api/v1/budget, /api/v1/costs, /api/v1/costs/top-spenders | read_model | read_model | none | audit_chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
+| `cost_budget_read_models` | /api/v1/budget, /api/v1/costs, /api/v1/costs/by-model, /api/v1/costs/top-spenders, /api/v1/costs/{tenant_id}, /api/v1/costs/{tenant_id}/projection | read_model | read_model | none | audit_chain | witnessed | Budget and cost surfaces expose bounded read models over governed spend state. |
 | `model_experiment_control` | /api/v1/models, /api/v1/ab-test, /api/v1/ab-test/summary | request_proof | action_proof | none | audit_chain | witnessed | Model catalog and experiment control routes are declared as governed control surfaces. |
 | `policy_version_registry` | /api/v1/policies/{policy_id}/versions, /api/v1/policies/{policy_id}/versions/{version}, /api/v1/policies/{policy_id}/versions/{version}/promote, /api/v1/policies/{policy_id}/rollback, /api/v1/policies/{policy_id}/diff, /api/v1/policies/{policy_id}/shadow/{shadow_version} | request_proof | action_proof | none | audit_chain | witnessed | Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation. |
 | `pilot_provisioning` | /api/v1/pilots/provision, /api/v1/pilots/provisions, /api/v1/pilots/provisions/{pilot_id} | request_proof | action_proof | none | audit_chain | witnessed | Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models. |
@@ -78,8 +78,8 @@ Declared route coverage:
 |---|---:|
 | Proof-relevant declared routes | 309 |
 | Proven routes | 4 |
-| Witnessed routes | 103 |
-| Unclassified declared routes | 202 |
+| Witnessed routes | 106 |
+| Unclassified declared routes | 199 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -149,5 +149,5 @@ Open closure actions:
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 202 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Open issues: 199 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

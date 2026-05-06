@@ -376,8 +376,8 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 4,
-      "unproven": 202,
-      "witnessed": 103
+      "unproven": 199,
+      "witnessed": 106
     },
     "route_count": 309,
     "routes": [
@@ -747,9 +747,9 @@
         "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/costs/by-model",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "cost_budget_read_models"
       },
       {
         "coverage_state": "witnessed",
@@ -757,14 +757,14 @@
         "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/costs/{tenant_id}",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "cost_budget_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/costs/{tenant_id}/projection",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "cost_budget_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1927,7 +1927,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 202
+    "unclassified_route_count": 199
   },
   "schema_version": 1,
   "surfaces": [
@@ -2031,7 +2031,10 @@
       "representative_paths": [
         "/api/v1/budget",
         "/api/v1/costs",
-        "/api/v1/costs/top-spenders"
+        "/api/v1/costs/by-model",
+        "/api/v1/costs/top-spenders",
+        "/api/v1/costs/{tenant_id}",
+        "/api/v1/costs/{tenant_id}/projection"
       ],
       "request_proof": "read_model",
       "runtime_witnesses": [],

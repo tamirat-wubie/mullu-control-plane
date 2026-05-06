@@ -130,7 +130,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
         ),
         _surface(
             "cost_budget_read_models",
-            ["/api/v1/budget", "/api/v1/costs", "/api/v1/costs/top-spenders"],
+            [
+                "/api/v1/budget",
+                "/api/v1/costs",
+                "/api/v1/costs/by-model",
+                "/api/v1/costs/top-spenders",
+                "/api/v1/costs/{tenant_id}",
+                "/api/v1/costs/{tenant_id}/projection",
+            ],
             "read_model",
             "read_model",
             "audit_chain",
