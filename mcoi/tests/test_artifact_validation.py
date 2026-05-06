@@ -183,6 +183,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "asset_snapshot.json" in mcoi_runtime_fixture_names
     assert "asset_violation.json" in mcoi_runtime_fixture_names
     assert "asset_closure_report.json" in mcoi_runtime_fixture_names
+    assert "billing_account.json" in mcoi_runtime_fixture_names
+    assert "invoice_record.json" in mcoi_runtime_fixture_names
+    assert "charge_record.json" in mcoi_runtime_fixture_names
+    assert "credit_record.json" in mcoi_runtime_fixture_names
+    assert "penalty_record.json" in mcoi_runtime_fixture_names
+    assert "dispute_record.json" in mcoi_runtime_fixture_names
+    assert "revenue_snapshot.json" in mcoi_runtime_fixture_names
+    assert "billing_decision.json" in mcoi_runtime_fixture_names
+    assert "billing_violation.json" in mcoi_runtime_fixture_names
+    assert "billing_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -195,7 +205,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 69
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 79
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1727,6 +1737,115 @@ def test_validate_mcoi_runtime_fixture_rejects_asset_closure_count_overflow(tmp_
 
     assert len(errors) == 1
     assert "total_active plus total_retired must not exceed total_assets" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_invoice_due_before_issue(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "invoice_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "invoice_id": "invoice-drift",
+                "account_id": "billing-account-1",
+                "tenant_id": "tenant-1",
+                "status": "issued",
+                "total_amount": 100.0,
+                "currency": "USD",
+                "issued_at": "2026-04-05T10:05:00+00:00",
+                "due_at": "2026-04-04T10:05:00+00:00",
+                "metadata": {"period": "2026-04"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "due_at must not precede issued_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_resolved_dispute_without_resolved_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "dispute_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "dispute_id": "dispute-drift",
+                "invoice_id": "invoice-1",
+                "account_id": "billing-account-1",
+                "status": "resolved_accepted",
+                "reason": "Resolution witness is missing a closure time.",
+                "amount": 25.0,
+                "opened_at": "2026-04-05T10:05:00+00:00",
+                "resolved_at": "",
+                "metadata": {"reviewed_by": "billing-review"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'resolved_at' must be a non-empty ISO 8601 string" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_revenue_snapshot_dispute_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "revenue_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "revenue-snapshot-drift",
+                "total_accounts": 2,
+                "total_invoices": 1,
+                "total_charges": 4,
+                "total_credits": 0,
+                "total_penalties": 0,
+                "total_disputes": 2,
+                "total_recognized_revenue": 500.0,
+                "total_pending_revenue": 30.0,
+                "total_violations": 0,
+                "captured_at": "2026-04-12T18:00:00+00:00",
+                "metadata": {"currency": "USD"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_disputes must not exceed total_invoices" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_billing_closure_dispute_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "billing_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "billing-closure-drift",
+                "account_id": "billing-account-1",
+                "tenant_id": "tenant-1",
+                "total_invoices": 1,
+                "total_charges": 2,
+                "total_credits": 1,
+                "total_penalties": 0,
+                "total_disputes": 2,
+                "total_revenue": 420.0,
+                "closed_at": "2026-04-30T23:59:00+00:00",
+                "metadata": {"period": "2026-04"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_disputes must not exceed total_invoices" in errors[0]
     assert fixture_path.name in errors[0]
 
 

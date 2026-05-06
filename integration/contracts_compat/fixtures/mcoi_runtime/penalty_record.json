@@ -1,0 +1,12 @@
+{
+  "penalty_id": "penalty-breach-042",
+  "account_id": "billing-account-042",
+  "breach_id": "breach-contract-043",
+  "amount": 75.0,
+  "reason": "Late commitment fulfillment penalty assessed per contract schedule.",
+  "assessed_at": "2026-04-09T09:30:00+00:00",
+  "metadata": {
+    "authorized_by": "contract-governance",
+    "currency": "USD"
+  }
+}

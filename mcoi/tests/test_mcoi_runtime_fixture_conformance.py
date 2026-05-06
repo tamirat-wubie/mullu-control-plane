@@ -144,6 +144,23 @@ from mcoi_runtime.contracts.asset_runtime import (
     LifecycleEvent,
     OwnershipType,
 )
+from mcoi_runtime.contracts.billing_runtime import (
+    BillingAccount,
+    BillingClosureReport,
+    BillingDecision,
+    BillingStatus,
+    BillingViolation,
+    ChargeKind,
+    ChargeRecord,
+    CreditDisposition,
+    CreditRecord,
+    DisputeRecord,
+    DisputeStatus,
+    InvoiceRecord,
+    InvoiceStatus,
+    PenaltyRecord,
+    RevenueSnapshot,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -1100,6 +1117,141 @@ def _build_asset_closure_report(payload: dict) -> AssetClosureReport:
     )
 
 
+def _build_billing_account(payload: dict) -> BillingAccount:
+    return BillingAccount(
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        counterparty=payload["counterparty"],
+        status=BillingStatus(payload["status"]),
+        currency=payload["currency"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_invoice_record(payload: dict) -> InvoiceRecord:
+    return InvoiceRecord(
+        invoice_id=payload["invoice_id"],
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        status=InvoiceStatus(payload["status"]),
+        total_amount=payload["total_amount"],
+        currency=payload["currency"],
+        issued_at=payload["issued_at"],
+        due_at=payload["due_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_charge_record(payload: dict) -> ChargeRecord:
+    return ChargeRecord(
+        charge_id=payload["charge_id"],
+        invoice_id=payload["invoice_id"],
+        kind=ChargeKind(payload["kind"]),
+        description=payload["description"],
+        amount=payload["amount"],
+        scope_ref_id=payload["scope_ref_id"],
+        scope_ref_type=payload["scope_ref_type"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_credit_record(payload: dict) -> CreditRecord:
+    return CreditRecord(
+        credit_id=payload["credit_id"],
+        account_id=payload["account_id"],
+        breach_id=payload["breach_id"],
+        disposition=CreditDisposition(payload["disposition"]),
+        amount=payload["amount"],
+        reason=payload["reason"],
+        applied_at=payload["applied_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_penalty_record(payload: dict) -> PenaltyRecord:
+    return PenaltyRecord(
+        penalty_id=payload["penalty_id"],
+        account_id=payload["account_id"],
+        breach_id=payload["breach_id"],
+        amount=payload["amount"],
+        reason=payload["reason"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_dispute_record(payload: dict) -> DisputeRecord:
+    return DisputeRecord(
+        dispute_id=payload["dispute_id"],
+        invoice_id=payload["invoice_id"],
+        account_id=payload["account_id"],
+        status=DisputeStatus(payload["status"]),
+        reason=payload["reason"],
+        amount=payload["amount"],
+        opened_at=payload["opened_at"],
+        resolved_at=payload["resolved_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_revenue_snapshot(payload: dict) -> RevenueSnapshot:
+    return RevenueSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_accounts=payload["total_accounts"],
+        total_invoices=payload["total_invoices"],
+        total_charges=payload["total_charges"],
+        total_credits=payload["total_credits"],
+        total_penalties=payload["total_penalties"],
+        total_disputes=payload["total_disputes"],
+        total_recognized_revenue=payload["total_recognized_revenue"],
+        total_pending_revenue=payload["total_pending_revenue"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_billing_decision(payload: dict) -> BillingDecision:
+    return BillingDecision(
+        decision_id=payload["decision_id"],
+        account_id=payload["account_id"],
+        description=payload["description"],
+        decided_by=payload["decided_by"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_billing_violation(payload: dict) -> BillingViolation:
+    return BillingViolation(
+        violation_id=payload["violation_id"],
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_billing_closure_report(payload: dict) -> BillingClosureReport:
+    return BillingClosureReport(
+        report_id=payload["report_id"],
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        total_invoices=payload["total_invoices"],
+        total_charges=payload["total_charges"],
+        total_credits=payload["total_credits"],
+        total_penalties=payload["total_penalties"],
+        total_disputes=payload["total_disputes"],
+        total_revenue=payload["total_revenue"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -1110,13 +1262,19 @@ def _build_asset_closure_report(payload: dict) -> AssetClosureReport:
         ("asset_record.json", _build_asset_record),
         ("asset_snapshot.json", _build_asset_snapshot),
         ("asset_violation.json", _build_asset_violation),
+        ("billing_account.json", _build_billing_account),
+        ("billing_closure_report.json", _build_billing_closure_report),
+        ("billing_decision.json", _build_billing_decision),
+        ("billing_violation.json", _build_billing_violation),
         ("breach_record.json", _build_breach_record),
+        ("charge_record.json", _build_charge_record),
         ("commitment_record.json", _build_commitment_record),
         ("configuration_item.json", _build_configuration_item),
         ("contract_assessment.json", _build_contract_assessment),
         ("contract_clause.json", _build_contract_clause),
         ("contract_closure_report.json", _build_contract_closure_report),
         ("contract_snapshot.json", _build_contract_snapshot),
+        ("credit_record.json", _build_credit_record),
         ("assurance_assessment.json", _build_assurance_assessment),
         ("assurance_closure_report.json", _build_assurance_closure_report),
         ("assurance_decision.json", _build_assurance_decision),
@@ -1145,6 +1303,7 @@ def _build_asset_closure_report(payload: dict) -> AssetClosureReport:
         ("continuity_violation.json", _build_continuity_violation),
         ("governance_contract_record.json", _build_governance_contract_record),
         ("disruption_event.json", _build_disruption_event),
+        ("dispute_record.json", _build_dispute_record),
         ("evidence_collection.json", _build_evidence_collection),
         ("evidence_item.json", _build_evidence_item),
         ("failover_record.json", _build_failover_record),
@@ -1157,14 +1316,17 @@ def _build_asset_closure_report(payload: dict) -> AssetClosureReport:
         ("human_workflow_violation.json", _build_human_workflow_violation),
         ("incident_record.json", _build_incident_record),
         ("inventory_record.json", _build_inventory_record),
+        ("invoice_record.json", _build_invoice_record),
         ("lifecycle_event.json", _build_lifecycle_event),
         ("merge_decision.json", _build_merge_decision),
+        ("penalty_record.json", _build_penalty_record),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),
         ("recovery_decision.json", _build_recovery_decision),
         ("recovery_attempt.json", _build_recovery_attempt),
         ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
+        ("revenue_snapshot.json", _build_revenue_snapshot),
         ("remedy_record.json", _build_remedy_record),
         ("review_packet.json", _build_review_packet),
         ("review_record.json", _build_review_record),
