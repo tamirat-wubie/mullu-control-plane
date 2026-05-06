@@ -143,6 +143,7 @@ CONTINUITY_STATUSES = frozenset({"active", "draft", "activated", "suspended", "r
 RECOVERY_EXECUTION_STATUSES = frozenset({"pending", "in_progress", "completed", "failed", "cancelled"})
 DISRUPTION_SEVERITIES = frozenset({"low", "medium", "high", "critical"})
 RECOVERY_VERIFICATION_STATUSES = frozenset({"pending", "passed", "failed", "skipped"})
+FAILOVER_DISPOSITIONS = frozenset({"initiated", "completed", "failed", "rolled_back"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -4182,6 +4183,90 @@ def _validate_continuity_plan_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_recovery_plan_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "recovery_plan_id",
+            "plan_id",
+            "name",
+            "tenant_id",
+            "status",
+            "priority",
+            "description",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("recovery_plan_id", "plan_id", "name", "tenant_id", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["description"], str):
+        errors.append(f"{_relative_path(path)}: field 'description' must be a string")
+    if payload["status"] not in RECOVERY_EXECUTION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(RECOVERY_EXECUTION_STATUSES))}"
+        )
+    errors.extend(_require_non_negative_int(payload["priority"], field_name="priority", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_failover_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "failover_id",
+            "plan_id",
+            "disruption_id",
+            "disposition",
+            "source_ref",
+            "target_ref",
+            "initiated_at",
+            "completed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "failover_id",
+        "plan_id",
+        "disruption_id",
+        "disposition",
+        "source_ref",
+        "target_ref",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in FAILOVER_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(FAILOVER_DISPOSITIONS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["initiated_at"], field_name="initiated_at", path=path))
+    if not isinstance(payload["completed_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'completed_at' must be a string")
+    elif payload["completed_at"]:
+        errors.extend(_validate_iso8601_text(payload["completed_at"], field_name="completed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    if not errors and payload["completed_at"] and _parse_iso8601_text(payload["completed_at"]) < _parse_iso8601_text(payload["initiated_at"]):
+        errors.append(f"{_relative_path(path)}: completed_at must be greater than or equal to initiated_at")
+    if payload["disposition"] in {"completed", "failed", "rolled_back"} and not payload["completed_at"]:
+        errors.append(f"{_relative_path(path)}: terminal failovers must carry completed_at")
+    if payload["disposition"] == "initiated" and payload["completed_at"]:
+        errors.append(f"{_relative_path(path)}: initiated failovers must keep completed_at empty")
+    return errors
+
+
 def _validate_disruption_event_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MCOI runtime fixture")
     errors = _validate_exact_object_fields(
@@ -4218,6 +4303,46 @@ def _validate_disruption_event_fixture(path: Path) -> list[str]:
         errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
     if not errors and _parse_iso8601_text(payload["resolved_at"]) < _parse_iso8601_text(payload["detected_at"]):
         errors.append(f"{_relative_path(path)}: resolved_at must be greater than or equal to detected_at")
+    return errors
+
+
+def _validate_recovery_objective_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "objective_id",
+            "plan_id",
+            "name",
+            "target_minutes",
+            "actual_minutes",
+            "met",
+            "evaluated_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("objective_id", "plan_id", "name"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_int(payload["target_minutes"], field_name="target_minutes", path=path))
+    errors.extend(_require_non_negative_int(payload["actual_minutes"], field_name="actual_minutes", path=path))
+    if not isinstance(payload["met"], bool):
+        errors.append(f"{_relative_path(path)}: field 'met' must be a boolean")
+    errors.extend(_validate_iso8601_text(payload["evaluated_at"], field_name="evaluated_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    if isinstance(payload["met"], bool):
+        if payload["met"] and payload["actual_minutes"] > payload["target_minutes"]:
+            errors.append(
+                f"{_relative_path(path)}: met recovery objectives must keep actual_minutes less than or equal to target_minutes"
+            )
+        if not payload["met"] and payload["actual_minutes"] <= payload["target_minutes"]:
+            errors.append(
+                f"{_relative_path(path)}: unmet recovery objectives must keep actual_minutes greater than target_minutes"
+            )
     return errors
 
 
@@ -4352,6 +4477,72 @@ def _validate_continuity_snapshot_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_continuity_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "violation_id",
+            "plan_id",
+            "tenant_id",
+            "operation",
+            "reason",
+            "detected_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "plan_id", "tenant_id", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_continuity_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_plans",
+            "total_disruptions",
+            "total_failovers",
+            "total_recoveries",
+            "total_verifications_passed",
+            "total_verifications_failed",
+            "total_violations",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_plans",
+        "total_disruptions",
+        "total_failovers",
+        "total_recoveries",
+        "total_verifications_passed",
+        "total_verifications_failed",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -4445,13 +4636,18 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "continuity_closure_report.json": _validate_continuity_closure_report_fixture,
     "continuity_plan.json": _validate_continuity_plan_fixture,
     "continuity_snapshot.json": _validate_continuity_snapshot_fixture,
+    "continuity_violation.json": _validate_continuity_violation_fixture,
     "disruption_event.json": _validate_disruption_event_fixture,
+    "failover_record.json": _validate_failover_record_fixture,
     "incident_record.json": _validate_incident_record_fixture,
+    "recovery_objective.json": _validate_recovery_objective_fixture,
     "recovery_attempt.json": _validate_recovery_attempt_fixture,
     "recovery_decision.json": _validate_recovery_decision_fixture,
     "recovery_execution.json": _validate_recovery_execution_fixture,
+    "recovery_plan.json": _validate_recovery_plan_fixture,
     "recovery_record.json": _validate_recovery_record_fixture,
     "verification_record.json": _validate_verification_record_fixture,
 }

@@ -152,6 +152,18 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
         in summary.mcoi_runtime_fixtures
     )
     assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/recovery_plan.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/failover_record.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/recovery_objective.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
         "integration/contracts_compat/fixtures/mcoi_runtime/continuity_plan.json"
         in summary.mcoi_runtime_fixtures
     )
@@ -171,6 +183,14 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
         "integration/contracts_compat/fixtures/mcoi_runtime/continuity_snapshot.json"
         in summary.mcoi_runtime_fixtures
     )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/continuity_violation.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/continuity_closure_report.json"
+        in summary.mcoi_runtime_fixtures
+    )
 
 
 def test_validate_release_status_strictly() -> None:
@@ -181,7 +201,7 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert len(summary.maf_runtime_fixtures) >= 89
-    assert len(summary.mcoi_runtime_fixtures) >= 9
+    assert len(summary.mcoi_runtime_fixtures) >= 14
     assert summary.ci_workflow_present is True
     assert summary.release_version == "0.3.0 (v3.10.2)"
     assert summary.release_date == "2026-03-27"

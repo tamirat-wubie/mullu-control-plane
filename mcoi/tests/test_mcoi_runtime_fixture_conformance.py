@@ -27,13 +27,19 @@ from mcoi_runtime.contracts.incident import (
     RecoveryDecisionStatus,
 )
 from mcoi_runtime.contracts.continuity_runtime import (
+    ContinuityClosureReport,
     ContinuityPlan,
     ContinuityScope,
     ContinuitySnapshot,
     ContinuityStatus,
+    ContinuityViolation,
     DisruptionEvent,
     DisruptionSeverity,
+    FailoverDisposition,
+    FailoverRecord,
+    RecoveryObjective,
     RecoveryExecution,
+    RecoveryPlan,
     RecoveryStatus,
     RecoveryVerificationStatus,
     VerificationRecord,
@@ -121,6 +127,34 @@ def _build_continuity_plan(payload: dict) -> ContinuityPlan:
     )
 
 
+def _build_recovery_plan(payload: dict) -> RecoveryPlan:
+    return RecoveryPlan(
+        recovery_plan_id=payload["recovery_plan_id"],
+        plan_id=payload["plan_id"],
+        name=payload["name"],
+        tenant_id=payload["tenant_id"],
+        status=RecoveryStatus(payload["status"]),
+        priority=payload["priority"],
+        description=payload["description"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_failover_record(payload: dict) -> FailoverRecord:
+    return FailoverRecord(
+        failover_id=payload["failover_id"],
+        plan_id=payload["plan_id"],
+        disruption_id=payload["disruption_id"],
+        disposition=FailoverDisposition(payload["disposition"]),
+        source_ref=payload["source_ref"],
+        target_ref=payload["target_ref"],
+        initiated_at=payload["initiated_at"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 def _build_disruption_event(payload: dict) -> DisruptionEvent:
     return DisruptionEvent(
         disruption_id=payload["disruption_id"],
@@ -131,6 +165,19 @@ def _build_disruption_event(payload: dict) -> DisruptionEvent:
         description=payload["description"],
         detected_at=payload["detected_at"],
         resolved_at=payload["resolved_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_recovery_objective(payload: dict) -> RecoveryObjective:
+    return RecoveryObjective(
+        objective_id=payload["objective_id"],
+        plan_id=payload["plan_id"],
+        name=payload["name"],
+        target_minutes=payload["target_minutes"],
+        actual_minutes=payload["actual_minutes"],
+        met=payload["met"],
+        evaluated_at=payload["evaluated_at"],
         metadata=payload["metadata"],
     )
 
@@ -178,16 +225,49 @@ def _build_continuity_snapshot(payload: dict) -> ContinuitySnapshot:
     )
 
 
+def _build_continuity_violation(payload: dict) -> ContinuityViolation:
+    return ContinuityViolation(
+        violation_id=payload["violation_id"],
+        plan_id=payload["plan_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
+    return ContinuityClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_plans=payload["total_plans"],
+        total_disruptions=payload["total_disruptions"],
+        total_failovers=payload["total_failovers"],
+        total_recoveries=payload["total_recoveries"],
+        total_verifications_passed=payload["total_verifications_passed"],
+        total_verifications_failed=payload["total_verifications_failed"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("continuity_closure_report.json", _build_continuity_closure_report),
         ("continuity_plan.json", _build_continuity_plan),
         ("continuity_snapshot.json", _build_continuity_snapshot),
+        ("continuity_violation.json", _build_continuity_violation),
         ("disruption_event.json", _build_disruption_event),
+        ("failover_record.json", _build_failover_record),
         ("incident_record.json", _build_incident_record),
+        ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),
         ("recovery_decision.json", _build_recovery_decision),
         ("recovery_attempt.json", _build_recovery_attempt),
+        ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
         ("verification_record.json", _build_verification_record),
     ],

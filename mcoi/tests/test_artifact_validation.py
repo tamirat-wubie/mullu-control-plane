@@ -118,11 +118,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "recovery_decision.json" in mcoi_runtime_fixture_names
     assert "recovery_attempt.json" in mcoi_runtime_fixture_names
     assert "recovery_record.json" in mcoi_runtime_fixture_names
+    assert "recovery_plan.json" in mcoi_runtime_fixture_names
+    assert "failover_record.json" in mcoi_runtime_fixture_names
+    assert "recovery_objective.json" in mcoi_runtime_fixture_names
     assert "continuity_plan.json" in mcoi_runtime_fixture_names
     assert "disruption_event.json" in mcoi_runtime_fixture_names
     assert "recovery_execution.json" in mcoi_runtime_fixture_names
     assert "verification_record.json" in mcoi_runtime_fixture_names
     assert "continuity_snapshot.json" in mcoi_runtime_fixture_names
+    assert "continuity_violation.json" in mcoi_runtime_fixture_names
+    assert "continuity_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -135,7 +140,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 9
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 14
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -873,6 +878,88 @@ def test_validate_mcoi_runtime_fixture_rejects_continuity_snapshot_active_count_
 
     assert len(errors) == 1
     assert "total_active_plans must not exceed total_plans" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_terminal_failover_without_completion(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "failover_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "failover_id": "failover-drift",
+                "plan_id": "plan-drift",
+                "disruption_id": "dis-drift",
+                "disposition": "completed",
+                "source_ref": "svc-a",
+                "target_ref": "svc-b",
+                "initiated_at": "2026-04-03T08:03:00+00:00",
+                "completed_at": "",
+                "metadata": {"mode": "active-passive"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "terminal failovers must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_recovery_objective_met_drift(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "recovery_objective.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "objective_id": "objective-drift",
+                "plan_id": "plan-drift",
+                "name": "RTO objective drift",
+                "target_minutes": 15,
+                "actual_minutes": 21,
+                "met": True,
+                "evaluated_at": "2026-04-03T08:18:00+00:00",
+                "metadata": {"objective_type": "rto"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "met recovery objectives must keep actual_minutes less than or equal to target_minutes" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_unmet_recovery_objective_success_drift(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "recovery_objective.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "objective_id": "objective-drift",
+                "plan_id": "plan-drift",
+                "name": "RPO objective drift",
+                "target_minutes": 15,
+                "actual_minutes": 12,
+                "met": False,
+                "evaluated_at": "2026-04-03T08:18:00+00:00",
+                "metadata": {"objective_type": "rpo"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "unmet recovery objectives must keep actual_minutes greater than target_minutes" in errors[0]
     assert fixture_path.name in errors[0]
 
 
