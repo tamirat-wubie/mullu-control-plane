@@ -2639,7 +2639,7 @@
         "schemas/capability_candidate.schema.json",
         "tests/test_gateway/test_capability_forge.py"
       ],
-      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff, installs certified handoffs as certification evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission.",
+      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, physical safety, and recovery evidence before certification handoff, installs certified handoffs as certification and physical safety evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission.",
       "representative_paths": [
         "CapabilityForge.create_candidate",
         "CapabilityForge.validate",
@@ -2654,6 +2654,8 @@
         "candidate_certification_handoff_emits_maturity_bundle",
         "certification_handoff_installs_evidence_without_maturity_claim",
         "certification_handoff_batch_preserves_capsule_admission_gate",
+        "physical_candidate_declares_live_safety_evidence_requirements",
+        "physical_handoff_installs_live_safety_evidence",
         "high_risk_approval_policy_required",
         "effect_bearing_candidate_requires_sandbox",
         "effect_bearing_candidate_requires_recovery_path"

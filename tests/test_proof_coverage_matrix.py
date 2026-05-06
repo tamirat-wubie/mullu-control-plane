@@ -566,6 +566,8 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert "candidate_certification_handoff_emits_maturity_bundle" in witnesses
     assert "certification_handoff_installs_evidence_without_maturity_claim" in witnesses
     assert "certification_handoff_batch_preserves_capsule_admission_gate" in witnesses
+    assert "physical_candidate_declares_live_safety_evidence_requirements" in witnesses
+    assert "physical_handoff_installs_live_safety_evidence" in witnesses
     assert "high_risk_approval_policy_required" in witnesses
     assert "effect_bearing_candidate_requires_sandbox" in witnesses
     assert "effect_bearing_candidate_requires_recovery_path" in witnesses
