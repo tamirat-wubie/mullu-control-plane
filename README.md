@@ -1,8 +1,19 @@
-# Mullu — Governed Autonomous Agent Platform
+# Mullu -- Governed Symbolic Work Platform
 
-**Every agent action is auditable, budget-controlled, policy-enforced, and approval-gated.**
+**Every governed action is auditable, budget-controlled, policy-enforced, and approval-gated.**
 
-Mullu is a governed operational intelligence platform. Users interact via messaging channels (WhatsApp, Telegram, Slack, Discord, Web). The agent executes real-world tasks — email, payments, document generation, data analysis — under deterministic governance: 8-guard chain, hash-chain audit trails, financial spend budgets, and skill boundary enforcement.
+Mullu is the flagship product by Mullusi: governed symbolic intelligence for
+personal, team, enterprise, and deployment work. This repository provides the
+Mullu Control Plane: gateway, approvals, status, traces, budgets, lineage, and
+deployment controls.
+
+Users interact through messaging channels (WhatsApp, Telegram, Slack, Discord,
+Web). Mullu executes bounded real-world tasks -- email, payments, document
+generation, data analysis -- under deterministic governance: 8-guard chain,
+hash-chain audit trails, financial spend budgets, and skill boundary
+enforcement.
+
+Product naming boundaries are recorded in [`docs/PRODUCT_BOUNDARY.md`](docs/PRODUCT_BOUNDARY.md).
 
 The next operational-intelligence extension is specified in [`docs/62_governed_operational_intelligence.md`](docs/62_governed_operational_intelligence.md): world-state graph, goal compiler, causal simulator, capability forge, worker mesh, maturity levels, policy prover, memory lattice, trust ledger, and domain operating packs.
 

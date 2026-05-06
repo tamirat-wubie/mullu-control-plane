@@ -35,6 +35,7 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 |---|---|
 | `STATUS.md` | Branch, release, CI, governance, and known reflection gaps |
 | `DEPLOYMENT_STATUS.md` | Deployment-health witness state and closure path |
+| `docs/PRODUCT_BOUNDARY.md` | Product naming, company boundary, control-plane identity, and launch constraint |
 | `docs/52_mullu_governance_protocol.md` | Public protocol schema index and closed runtime boundary |
 
 ## Proof Chain

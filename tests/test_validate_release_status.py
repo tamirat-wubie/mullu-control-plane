@@ -65,10 +65,16 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     errors = validate_public_surface_document_texts(document_texts)
     github_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS["GITHUB_SURFACE.md"]
     deployment_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS["DEPLOYMENT_STATUS.md"]
+    product_boundary_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS[
+        "docs/PRODUCT_BOUNDARY.md"
+    ]
 
     assert errors == []
+    assert "docs/PRODUCT_BOUNDARY.md" in github_literals
     assert "docs/52_mullu_governance_protocol.md" in github_literals
     assert "python scripts/validate_protocol_manifest.py" in github_literals
+    assert "Mullu Control Plane" in product_boundary_literals
+    assert "Launch Constraint" in product_boundary_literals
     assert ".github/workflows/gateway-publication.yml" in deployment_literals
     assert "## GitHub Runtime Input State" in deployment_literals
     assert any("orchestrate_deployment_witness.py" in literal for literal in deployment_literals)
@@ -114,6 +120,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "Deployment runtime input witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Protocol witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Logic governance witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "docs/PRODUCT_BOUNDARY.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/52_mullu_governance_protocol.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/60_logic_governance_application.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "python scripts/validate_protocol_manifest.py" in STATUS_DOCUMENT_REQUIRED_LITERALS
