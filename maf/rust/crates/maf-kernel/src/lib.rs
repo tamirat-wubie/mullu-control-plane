@@ -2543,9 +2543,8 @@ mod tests {
 
     #[test]
     fn python_denied_guard_fixture_deserializes_to_rust_proof_capsule() {
-        let json = include_str!(
-            "../../../../../tests/fixtures/python_proof_capsule_denied_guard.json"
-        );
+        let json =
+            include_str!("../../../../../tests/fixtures/python_proof_capsule_denied_guard.json");
         let restored: ProofCapsule = serde_json::from_str(json).unwrap();
 
         assert_eq!(
