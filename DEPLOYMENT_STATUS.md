@@ -32,7 +32,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Production evidence endpoint schemas | `schemas/production_evidence_witness.schema.json`, `schemas/capability_evidence_endpoint.schema.json`, `schemas/audit_verification_endpoint.schema.json`, and `schemas/proof_verification_endpoint.schema.json` define the live endpoint contracts | Reflected |
 | Runtime witness secret provisioner | `scripts/provision_runtime_witness_secret.py` binds `MULLU_RUNTIME_WITNESS_SECRET` into GitHub Actions without printing the secret | Reflected |
 | Deployment target provisioner | `scripts/provision_deployment_target.py` binds `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` into GitHub repository variables | Reflected |
-| Gateway ingress manifest | `k8s/mullu-gateway-ingress.yaml` publishes `/health` and `/gateway/witness` through the `mullu-gateway` service after host replacement | Reflected |
+| Gateway ingress manifest | `k8s/mullu-gateway-ingress.yaml` publishes `/health`, `/gateway/witness`, and `/runtime/conformance` through the `mullu-gateway` service after host replacement | Reflected |
 | Gateway ingress renderer | `scripts/render_gateway_ingress.py` renders a concrete ignored ingress manifest and optionally applies it through `kubectl` | Reflected |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` uploads `deployment-witness` artifact from the collector | Reflected |
 | Gateway publication workflow | `.github/workflows/gateway-publication.yml` runs the self-gating publication orchestrator from GitHub with optional kubeconfig-backed ingress apply | Reflected |

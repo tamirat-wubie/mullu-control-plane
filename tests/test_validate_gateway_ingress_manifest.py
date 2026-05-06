@@ -6,7 +6,7 @@ Governance scope: [OCE, CDCV, UWMA, PRS]
 Dependencies: scripts.validate_gateway_ingress_manifest.
 Invariants:
   - Placeholder hosts fail closed unless explicitly allowed by CLI.
-  - Health and runtime witness paths must route to mullu-gateway.
+  - Health, runtime witness, and conformance paths must route to mullu-gateway.
   - Valid hosts pass when required witness routes are present.
 """
 
@@ -59,6 +59,23 @@ def test_validate_gateway_ingress_manifest_requires_witness_route(tmp_path: Path
     assert result.host == "gateway.mullusi.com"
 
 
+def test_validate_gateway_ingress_manifest_requires_runtime_conformance_route(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "ingress.yaml"
+    manifest_path.write_text(
+        _manifest("gateway.mullusi.com").replace(
+            "          - path: /runtime/conformance\n",
+            "          - path: /not-conformance\n",
+        ),
+        encoding="utf-8",
+    )
+
+    result = validate_gateway_ingress_manifest(manifest_path)
+
+    assert result.ok is False
+    assert "missing ingress route for /runtime/conformance" in result.errors
+    assert result.host == "gateway.mullusi.com"
+
+
 def test_cli_allows_placeholder_for_repository_validation(capsys) -> None:
     exit_code = main(["--allow-placeholder"])
     captured = capsys.readouterr()
@@ -93,6 +110,13 @@ spec:
                 port:
                   number: 80
           - path: /gateway/witness
+            pathType: Exact
+            backend:
+              service:
+                name: mullu-gateway
+                port:
+                  number: 80
+          - path: /runtime/conformance
             pathType: Exact
             backend:
               service:

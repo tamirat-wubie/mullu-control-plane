@@ -78,7 +78,9 @@ def test_render_gateway_ingress_writes_valid_output(tmp_path: Path) -> None:
     assert result.applied is False
     assert validation.ok is True
     assert "gateway.example.com" in source_path.read_text(encoding="utf-8")
-    assert "gateway.mullusi.com" in output_path.read_text(encoding="utf-8")
+    output_text = output_path.read_text(encoding="utf-8")
+    assert "gateway.mullusi.com" in output_text
+    assert "/runtime/conformance" in output_text
 
 
 def test_render_gateway_ingress_rejects_placeholder_host(tmp_path: Path) -> None:
@@ -180,6 +182,13 @@ spec:
                 port:
                   number: 80
           - path: /gateway/witness
+            pathType: Exact
+            backend:
+              service:
+                name: mullu-gateway
+                port:
+                  number: 80
+          - path: /runtime/conformance
             pathType: Exact
             backend:
               service:

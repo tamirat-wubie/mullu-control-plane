@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Validate the gateway ingress publication manifest.
 
-Purpose: ensure the Kubernetes gateway ingress explicitly publishes the health
-and runtime witness paths needed for deployment evidence.
+Purpose: ensure the Kubernetes gateway ingress explicitly publishes the health,
+runtime witness, and runtime conformance paths needed for deployment evidence.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: k8s/mullu-gateway-ingress.yaml.
 Invariants:
   - The ingress manifest must exist before public gateway readiness is claimed.
   - The host must be explicit and must not remain the example placeholder.
-  - /health and /gateway/witness must route to the mullu-gateway service.
+  - /health, /gateway/witness, and /runtime/conformance must route to the
+    mullu-gateway service.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from pathlib import Path
 
 DEFAULT_MANIFEST = Path("k8s") / "mullu-gateway-ingress.yaml"
 PLACEHOLDER_HOSTS = {"gateway.example.com", "example.com"}
-REQUIRED_PATHS = ("/health", "/gateway/witness")
+REQUIRED_PATHS = ("/health", "/gateway/witness", "/runtime/conformance")
 
 
 @dataclass(frozen=True, slots=True)
