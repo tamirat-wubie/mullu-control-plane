@@ -50,6 +50,8 @@ document is the operator-readable witness.
 | `physical_action_boundary` | PhysicalActionBoundary.evaluate, PhysicalActionRequest, PhysicalActionReceipt | request_proof | action_proof | physical_action_receipt_schema_valid, hardware_identity_required, safety_envelope_required, manual_override_required, emergency_stop_required, simulation_pass_required, operator_approval_required, sensor_confirmation_required, physical_dispatch_blocked_until_controls_complete, physical_worker_canary_uses_sandbox_handler, physical_worker_canary_artifact_hash_bound | audit_chain | witnessed | Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present. |
 | `temporal_kernel` | /api/v1/temporal/schedules, /api/v1/temporal/schedules/{schedule_id}, /api/v1/temporal/schedules/{schedule_id}/cancel, /api/v1/temporal/worker/tick, /api/v1/temporal/summary, TemporalKernel.evaluate, TrustedClock.now_utc, TrustedClock.monotonic_ns | request_proof | action_proof | runtime_clock_injected, monotonic_duration_measured, future_schedule_defers, approval_expiry_denies, stale_evidence_escalates, budget_window_checked, causal_preconditions_required, temporal_scheduler_routes_governed, schedule_read_models_persisted, worker_tick_certifies_proofs, cancel_emits_terminal_receipt, temporal_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal kernel owns runtime time truth for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, temporal schedule APIs, and monotonic duration witnesses before dispatch. |
 | `temporal_memory` | TemporalMemory.evaluate, TemporalMemoryRecord, TemporalMemoryReceipt | request_proof | action_proof | memory_age_computed_from_runtime_clock, stale_memory_requires_refresh, validity_window_blocks_expired_memory, superseded_memory_not_usable, confidence_decay_blocks_weak_memory, tenant_owner_scope_checked, allowed_use_checked, temporal_memory_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action. |
+| `temporal_evidence_freshness` | TemporalEvidenceFreshness.evaluate, EvidenceFreshnessClaim, TemporalEvidenceFreshnessReceipt | request_proof | action_proof | evidence_age_computed_from_runtime_clock, freshness_window_required_for_dispatch, stale_required_evidence_triggers_refresh, missing_required_evidence_blocks_dispatch, revoked_or_unverified_high_risk_evidence_blocks, expiring_evidence_warns_before_dispatch, temporal_evidence_freshness_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch. |
+| `temporal_memory_refresh` | TemporalMemoryRefresh.evaluate, MemoryRefreshRequest, TemporalMemoryRefreshReceipt | request_proof | action_proof | usable_memory_does_not_create_refresh_task, stale_memory_creates_bounded_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action. |
 | `temporal_scheduler` | TemporalScheduler.evaluate, ScheduledCommand, TemporalSchedulerReceipt | request_proof | action_proof | scheduled_command_requires_execute_at, idempotency_required, lease_acquired_before_dispatch, future_schedule_defers, missed_run_receipt_emitted, retry_window_checked, high_risk_reapproval_required, active_lease_blocks_duplicate_execution, temporal_scheduler_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | PolicyProver.prove | request_proof | action_proof | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid | audit_chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
 | `autonomous_capability_upgrade` | AutonomousCapabilityUpgradeLoop.propose, CapabilityHealthSignal, CapabilityUpgradePlan | request_proof | action_proof | health_signal_requires_evidence_refs, upgrade_candidates_are_promotion_blocked, critical_governance_changes_require_second_approval, capability_upgrade_plan_schema_valid | audit_chain | witnessed | Autonomous capability upgrade converts health signals into activation-blocked proposals that require evals, sandbox tests, ChangeCommand, ChangeCertificate, canary, terminal closure, and learning admission before promotion. |
@@ -65,19 +67,19 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 51 |
+| Total surfaces | 53 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 50 |
+| Witnessed surfaces | 52 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
 
 | Metric | Count |
 |---|---:|
-| Proof-relevant declared routes | 307 |
+| Proof-relevant declared routes | 309 |
 | Proven routes | 4 |
 | Witnessed routes | 103 |
-| Unclassified declared routes | 200 |
+| Unclassified declared routes | 202 |
 
 The canonical JSON witness lists every proof-relevant declared route under
 `route_coverage.routes`. Routes mapped to `unclassified_declared_route` carry
@@ -130,13 +132,15 @@ Resolved closure actions:
 35. `publish_physical_action_receipt_contract`
 36. `publish_temporal_operation_receipt_contract`
 37. `publish_temporal_memory_receipt_contract`
-38. `classify_temporal_scheduler_routes`
-39. `publish_temporal_scheduler_receipt_contract`
-40. `publish_policy_proof_report_contract`
-41. `publish_capability_upgrade_plan_contract`
-42. `publish_autonomous_test_generation_plan_contract`
-43. `publish_trust_ledger_bundle_contract`
-44. `publish_trust_ledger_anchor_receipt_contract`
+38. `publish_temporal_evidence_freshness_receipt_contract`
+39. `publish_temporal_memory_refresh_receipt_contract`
+40. `classify_temporal_scheduler_routes`
+41. `publish_temporal_scheduler_receipt_contract`
+42. `publish_policy_proof_report_contract`
+43. `publish_capability_upgrade_plan_contract`
+44. `publish_autonomous_test_generation_plan_contract`
+45. `publish_trust_ledger_bundle_contract`
+46. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -144,6 +148,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: 200 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Open issues: 202 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

@@ -261,10 +261,24 @@
       ]
     },
     {
+      "action_id": "publish_temporal_evidence_freshness_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_evidence_freshness"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
         "temporal_memory"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_memory_refresh_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_memory_refresh"
       ]
     },
     {
@@ -331,7 +345,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 41,
+      "action_proof": 43,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -339,7 +353,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 47,
+      "audit_chain": 49,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -347,16 +361,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 50
+      "witnessed": 52
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 41
+      "request_proof": 43
     },
-    "surface_count": 51
+    "surface_count": 53
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3071,6 +3085,34 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/temporal_evidence_freshness.py",
+        "schemas/temporal_evidence_freshness_receipt.schema.json",
+        "tests/test_gateway/test_temporal_evidence_freshness.py"
+      ],
+      "notes": "Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch.",
+      "representative_paths": [
+        "TemporalEvidenceFreshness.evaluate",
+        "EvidenceFreshnessClaim",
+        "TemporalEvidenceFreshnessReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "evidence_age_computed_from_runtime_clock",
+        "freshness_window_required_for_dispatch",
+        "stale_required_evidence_triggers_refresh",
+        "missing_required_evidence_blocks_dispatch",
+        "revoked_or_unverified_high_risk_evidence_blocks",
+        "expiring_evidence_warns_before_dispatch",
+        "temporal_evidence_freshness_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_evidence_freshness"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/temporal_memory.py",
         "schemas/temporal_memory_receipt.schema.json",
         "tests/test_gateway/test_temporal_memory.py"
@@ -3094,6 +3136,33 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_memory"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_memory_refresh.py",
+        "schemas/temporal_memory_refresh_receipt.schema.json",
+        "tests/test_gateway/test_temporal_memory_refresh.py"
+      ],
+      "notes": "Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action.",
+      "representative_paths": [
+        "TemporalMemoryRefresh.evaluate",
+        "MemoryRefreshRequest",
+        "TemporalMemoryRefreshReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "usable_memory_does_not_create_refresh_task",
+        "stale_memory_creates_bounded_refresh_task",
+        "evidence_type_coverage_gates_review_readiness",
+        "invalid_refresh_policy_blocks_task_creation",
+        "superseded_memory_blocks_reactivation",
+        "temporal_memory_refresh_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_memory_refresh"
     },
     {
       "action_proof": "action_proof",

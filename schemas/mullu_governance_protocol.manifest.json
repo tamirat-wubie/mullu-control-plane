@@ -347,12 +347,6 @@
       "surface": "multimodal"
     },
     {
-      "schema_id": "physical-action-receipt",
-      "path": "schemas/physical_action_receipt.schema.json",
-      "urn": "urn:mullusi:schema:physical-action-receipt:1",
-      "surface": "physical"
-    },
-    {
       "schema_id": "plan",
       "path": "schemas/plan.schema.json",
       "urn": "urn:mullusi:schema:plan:1",
