@@ -47,6 +47,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
 | `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |
+| `temporal_sla_receipt.schema.json` | Canonical governed SLA, business-window, and escalation receipt |
 | `terminal_closure_certificate.schema.json` | Canonical final command closure certificate |
 | `trust_ledger_anchor_receipt.schema.json` | Canonical signed external proof anchor receipt for trust ledger bundles |
 | `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring |

@@ -247,6 +247,17 @@ def test_protocol_manifest_indexes_temporal_scheduler_receipt() -> None:
     assert scheduler_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_sla_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    sla_entry = entries["temporal-sla-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert sla_entry["path"] == "schemas/temporal_sla_receipt.schema.json"
+    assert sla_entry["urn"] == "urn:mullusi:schema:temporal-sla-receipt:1"
+    assert sla_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_promotion_environment_bindings() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

@@ -1038,6 +1038,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_sla",
+            [
+                "TemporalSla.evaluate",
+                "SlaPolicy",
+                "SlaCase",
+                "TemporalSlaReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_sla.py",
+                "schemas/temporal_sla_receipt.schema.json",
+                "tests/test_gateway/test_temporal_sla.py",
+            ],
+            "Temporal SLA gates operational deadline use through runtime-owned business calendars, business-time response and resolution deadlines, warning escalation, breach detection, tenant scope, evidence references, and non-terminal SLA receipts before escalation or dispatch.",
+            [
+                "business_time_deadline_skips_closed_windows",
+                "business_window_dispatch_checked",
+                "response_deadline_warning_escalates",
+                "response_deadline_breach_escalates",
+                "tenant_policy_case_scope_checked",
+                "high_severity_escalation_contacts_required",
+                "temporal_sla_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "policy_proof_report",
             [
                 "PolicyProver.prove",
@@ -1395,6 +1424,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_scheduler_receipt_contract",
             "surfaces": ["temporal_scheduler"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_sla_receipt_contract",
+            "surfaces": ["temporal_sla"],
             "status": "closed",
         },
         {
