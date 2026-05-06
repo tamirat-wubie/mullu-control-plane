@@ -377,9 +377,9 @@
     "by_coverage_state": {
       "proven": 4,
       "unproven": 199,
-      "witnessed": 107
+      "witnessed": 109
     },
-    "route_count": 310,
+    "route_count": 312,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1074,6 +1074,16 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/mil-audit/admit-runbook",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/runbooks",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/runbooks/{runbook_id}",
         "surface_id": "runbook_learning_lifecycle"
       },
       {
@@ -2289,7 +2299,9 @@
         "/api/v1/runbooks/summary",
         "/api/v1/runbooks/{runbook_id}/activate",
         "/api/v1/runbooks/{runbook_id}/retire",
-        "/api/v1/mil-audit/admit-runbook"
+        "/api/v1/mil-audit/admit-runbook",
+        "/api/v1/mil-audit/runbooks",
+        "/api/v1/mil-audit/runbooks/{runbook_id}"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [

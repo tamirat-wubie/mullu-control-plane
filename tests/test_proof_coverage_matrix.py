@@ -219,6 +219,8 @@ def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/runbooks/{runbook_id}/activate" in runbook_surface["representative_paths"]
     assert "/api/v1/runbooks/{runbook_id}/retire" in runbook_surface["representative_paths"]
     assert "/api/v1/mil-audit/admit-runbook" in runbook_surface["representative_paths"]
+    assert "/api/v1/mil-audit/runbooks" in runbook_surface["representative_paths"]
+    assert "/api/v1/mil-audit/runbooks/{runbook_id}" in runbook_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/runbooks.py" in runbook_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/mil_audit.py" in runbook_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/runbook_learning.py" in runbook_surface["evidence_files"]

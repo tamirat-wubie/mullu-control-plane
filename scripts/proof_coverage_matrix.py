@@ -369,6 +369,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/runbooks/{runbook_id}/activate",
                 "/api/v1/runbooks/{runbook_id}/retire",
                 "/api/v1/mil-audit/admit-runbook",
+                "/api/v1/mil-audit/runbooks",
+                "/api/v1/mil-audit/runbooks/{runbook_id}",
             ],
             "request_proof",
             "action_proof",

@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,7 @@ from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
 from mcoi_runtime.core.replay_engine import ReplayContext
 from mcoi_runtime.core.runbook import RunbookAdmissionResult, RunbookLibrary, RunbookProvenance
 from mcoi_runtime.persistence.errors import PersistenceError
+from mcoi_runtime.persistence._serialization import serialize_record
 from mcoi_runtime.persistence.mil_audit_store import MILAuditReplayPersistence, MILAuditStore
 from mcoi_runtime.persistence.replay_store import ReplayStore
 from mcoi_runtime.persistence.runbook_store import RunbookStore
@@ -68,6 +70,17 @@ class MILAuditRunbookEnvelope(BaseModel):
     governed: bool = True
 
 
+class MILAuditStoredRunbookEnvelope(BaseModel):
+    """HTTP response envelope for persisted MIL-derived runbooks."""
+
+    operation: str
+    count: int
+    runbook_id: str | None = None
+    found: bool | None = None
+    runbooks: list[dict[str, Any]]
+    governed: bool = True
+
+
 def _bounded_http_error(summary: str, exc: Exception) -> dict[str, str | bool]:
     """Return a bounded HTTP error payload without leaking local paths."""
     return {"error": summary, "type": type(exc).__name__, "governed": True}
@@ -92,6 +105,14 @@ def _provenance_dict(provenance: RunbookProvenance | None) -> dict[str, Any] | N
         "trace_id": provenance.trace_id,
         "learning_admission_id": provenance.learning_admission_id,
     }
+
+
+def _runbook_entry_dict(entry: Any) -> dict[str, Any]:
+    """Project a persisted runbook entry into deterministic JSON fields."""
+    raw = json.loads(serialize_record(entry))
+    if not isinstance(raw, dict):
+        raise ValueError("serialized runbook entry must be a JSON object")
+    return raw
 
 
 def _admit_mil_audit_runbook(
@@ -191,4 +212,55 @@ def admit_mil_audit_runbook(req: MILAuditAdmitRunbookRequest) -> MILAuditRunbook
         runbook_persisted=runbook_persisted,
         reasons=list(admission.reasons),
         provenance=_provenance_dict(admission.entry.provenance if admission.entry else None),
+    )
+
+
+@router.get("/api/v1/mil-audit/runbooks", response_model=MILAuditStoredRunbookEnvelope)
+def list_mil_audit_runbooks(runbook_store_path: str) -> MILAuditStoredRunbookEnvelope:
+    """List persisted MIL-derived runbooks from an explicit runbook store."""
+    try:
+        entries = RunbookStore(Path(runbook_store_path)).load_all()
+    except (PersistenceError, RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("MIL audit runbook query rejected", exc),
+        ) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("MIL audit runbook store access failed", exc),
+        ) from exc
+    return MILAuditStoredRunbookEnvelope(
+        operation="runbook-list",
+        count=len(entries),
+        runbooks=[_runbook_entry_dict(entry) for entry in entries],
+    )
+
+
+@router.get("/api/v1/mil-audit/runbooks/{runbook_id}", response_model=MILAuditStoredRunbookEnvelope)
+def get_mil_audit_runbook(runbook_id: str, runbook_store_path: str) -> MILAuditStoredRunbookEnvelope:
+    """Fetch one persisted MIL-derived runbook from an explicit runbook store."""
+    try:
+        entry = RunbookStore(Path(runbook_store_path)).load(runbook_id)
+    except PersistenceError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=_bounded_http_error("MIL audit runbook unavailable", exc),
+        ) from exc
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("MIL audit runbook query rejected", exc),
+        ) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("MIL audit runbook store access failed", exc),
+        ) from exc
+    return MILAuditStoredRunbookEnvelope(
+        operation="runbook-get",
+        count=1,
+        runbook_id=entry.runbook_id,
+        found=True,
+        runbooks=[_runbook_entry_dict(entry)],
     )

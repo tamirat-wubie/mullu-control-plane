@@ -121,6 +121,67 @@ def test_mil_audit_admit_runbook_cli_outputs_admission(tmp_path, capsys) -> None
     assert (runbook_store / "runbook-cli-1.json").exists()
 
 
+def test_mil_audit_runbook_get_and_list_cli_outputs_persisted_entries(tmp_path, capsys) -> None:
+    store_path, record_id = _record_id(tmp_path)
+    trace_store = tmp_path / "traces"
+    replay_store = tmp_path / "replays"
+    runbook_store = tmp_path / "runbooks"
+    main(
+        [
+            "mil-audit",
+            "admit-runbook",
+            "--store",
+            store_path,
+            "--trace-store",
+            str(trace_store),
+            "--replay-store",
+            str(replay_store),
+            "--runbook-store",
+            str(runbook_store),
+            "--runbook-id",
+            "runbook-cli-1",
+            "--name",
+            "CLI MIL Runbook",
+            "--description",
+            "Runbook admitted from a persisted MIL audit replay.",
+            "--json",
+            record_id,
+        ]
+    )
+    capsys.readouterr()
+
+    get_rc = main(
+        [
+            "mil-audit",
+            "runbook-get",
+            "--runbook-store",
+            str(runbook_store),
+            "--json",
+            "runbook-cli-1",
+        ]
+    )
+    get_output = json.loads(capsys.readouterr().out)
+    list_rc = main(
+        [
+            "mil-audit",
+            "runbook-list",
+            "--runbook-store",
+            str(runbook_store),
+            "--json",
+        ]
+    )
+    list_output = json.loads(capsys.readouterr().out)
+
+    assert get_rc == 0
+    assert get_output["operation"] == "runbook-get"
+    assert get_output["runbooks"][0]["runbook_id"] == "runbook-cli-1"
+    assert get_output["runbooks"][0]["provenance"]["verification_id"] == record_id
+    assert list_rc == 0
+    assert list_output["operation"] == "runbook-list"
+    assert list_output["count"] == 1
+    assert list_output["runbooks"][0]["provenance"]["replay_id"] == get_output["runbooks"][0]["provenance"]["replay_id"]
+
+
 def test_mil_audit_cli_missing_store_fails_closed(tmp_path, capsys) -> None:
     rc = main(["mil-audit", "get", "--store", str(tmp_path / "missing"), "record-1"])
     output = capsys.readouterr().out

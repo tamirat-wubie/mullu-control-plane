@@ -89,6 +89,49 @@ def test_mil_audit_router_admits_replay_backed_runbook(tmp_path) -> None:
     assert (runbook_store / "runbook-router-1.json").exists()
 
 
+def test_mil_audit_router_gets_and_lists_persisted_runbooks(tmp_path) -> None:
+    store_path, record_id = _record_id(tmp_path)
+    trace_store = tmp_path / "traces"
+    replay_store = tmp_path / "replays"
+    runbook_store = tmp_path / "runbooks"
+    client = _client()
+    admission = client.post(
+        "/api/v1/mil-audit/admit-runbook",
+        json={
+            "record_id": record_id,
+            "mil_audit_store_path": store_path,
+            "trace_store_path": str(trace_store),
+            "replay_store_path": str(replay_store),
+            "runbook_store_path": str(runbook_store),
+            "runbook_id": "runbook-router-1",
+            "name": "Router MIL Runbook",
+            "description": "Runbook admitted from a persisted MIL audit replay.",
+        },
+    )
+    assert admission.status_code == 200
+
+    get_response = client.get(
+        "/api/v1/mil-audit/runbooks/runbook-router-1",
+        params={"runbook_store_path": str(runbook_store)},
+    )
+    list_response = client.get(
+        "/api/v1/mil-audit/runbooks",
+        params={"runbook_store_path": str(runbook_store)},
+    )
+    get_payload = get_response.json()
+    list_payload = list_response.json()
+
+    assert get_response.status_code == 200
+    assert get_payload["operation"] == "runbook-get"
+    assert get_payload["found"] is True
+    assert get_payload["runbooks"][0]["runbook_id"] == "runbook-router-1"
+    assert get_payload["runbooks"][0]["provenance"]["verification_id"] == record_id
+    assert list_response.status_code == 200
+    assert list_payload["operation"] == "runbook-list"
+    assert list_payload["count"] == 1
+    assert list_payload["runbooks"][0]["provenance"]["replay_id"] == get_payload["runbooks"][0]["provenance"]["replay_id"]
+
+
 def test_mil_audit_router_missing_store_fails_closed(tmp_path) -> None:
     response = _client().post(
         "/api/v1/mil-audit/admit-runbook",
@@ -107,4 +150,17 @@ def test_mil_audit_router_missing_store_fails_closed(tmp_path) -> None:
     assert response.status_code == 404
     assert payload["detail"]["error"] == "MIL audit store unavailable"
     assert payload["detail"]["type"] == "FileNotFoundError"
+    assert payload["detail"]["governed"] is True
+
+
+def test_mil_audit_router_missing_runbook_fails_closed(tmp_path) -> None:
+    response = _client().get(
+        "/api/v1/mil-audit/runbooks/missing-runbook",
+        params={"runbook_store_path": str(tmp_path / "runbooks")},
+    )
+    payload = response.json()
+
+    assert response.status_code == 404
+    assert payload["detail"]["error"] == "MIL audit runbook unavailable"
+    assert payload["detail"]["type"] == "PersistenceError"
     assert payload["detail"]["governed"] is True
