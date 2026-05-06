@@ -28,6 +28,7 @@ REQUIRED_ENV = {
     "MULLU_GATEWAY_URL",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_DEPLOYMENT_WITNESS_SECRET",
     "MULLU_AUTHORITY_OPERATOR_SECRET",
 }
 
@@ -41,7 +42,7 @@ def test_environment_binding_receipt_records_presence_without_values() -> None:
 
     assert errors == ()
     assert receipt.ready is True
-    assert receipt.binding_count == 6
+    assert receipt.binding_count == 7
     assert receipt.missing_bindings == ()
     assert all(binding.present for binding in receipt.bindings)
     assert all(binding.value_serialized is False for binding in receipt.bindings)
@@ -55,8 +56,9 @@ def test_environment_binding_receipt_blocks_missing_bindings() -> None:
 
     assert errors == ()
     assert receipt.ready is False
-    assert receipt.binding_count == 6
+    assert receipt.binding_count == 7
     assert "MULLU_GATEWAY_URL" not in receipt.missing_bindings
+    assert "MULLU_DEPLOYMENT_WITNESS_SECRET" in receipt.missing_bindings
     assert "MULLU_RUNTIME_WITNESS_SECRET" in receipt.missing_bindings
     assert sum(1 for binding in receipt.bindings if binding.present) == 1
 

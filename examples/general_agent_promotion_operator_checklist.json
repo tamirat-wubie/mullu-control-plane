@@ -94,6 +94,7 @@
       "command": "python scripts\\publish_gateway_publication.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness --dispatch --receipt-output .change_assurance\\gateway_publication_receipt.json",
       "required_evidence": [
         "operator_approval_ref present",
+        "MULLU_DEPLOYMENT_WITNESS_SECRET binding present",
         "gateway_publication_receipt.json dispatched=true",
         "deployment_witness.json deployment_claim=published",
         "deployment_witness.json signature_status=verified"
@@ -117,6 +118,7 @@
     "MULLU_GATEWAY_URL",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_DEPLOYMENT_WITNESS_SECRET",
     "MULLU_AUTHORITY_OPERATOR_SECRET"
   ],
   "schema_version": 1,

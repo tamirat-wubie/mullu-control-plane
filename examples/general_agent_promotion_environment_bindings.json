@@ -71,6 +71,20 @@
       "receipt_projection": "name_and_presence_only"
     },
     {
+      "name": "MULLU_DEPLOYMENT_WITNESS_SECRET",
+      "purpose": "Governed deployment witness secret used to verify production evidence plane collection before publication.",
+      "binding_kind": "secret",
+      "risk": "critical",
+      "approval_required": true,
+      "may_serialize_value": false,
+      "required_for": [
+        "deployment_witness_publication",
+        "production_evidence_collection",
+        "handoff_preflight"
+      ],
+      "receipt_projection": "name_and_presence_only"
+    },
+    {
       "name": "MULLU_AUTHORITY_OPERATOR_SECRET",
       "purpose": "Governed operator authority secret required for approval-bound promotion actions.",
       "binding_kind": "secret",
