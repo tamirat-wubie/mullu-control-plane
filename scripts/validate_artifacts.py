@@ -4876,6 +4876,154 @@ def _validate_case_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_case_assignment_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("assignment_id", "case_id", "assignee_id", "role", "assigned_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("assignment_id", "case_id", "assignee_id", "role"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["assigned_at"], field_name="assigned_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_evidence_collection_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("collection_id", "case_id", "title", "evidence_ids", "created_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("collection_id", "case_id", "title"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    evidence_ids = payload["evidence_ids"]
+    if not isinstance(evidence_ids, list) or not evidence_ids:
+        errors.append(f"{_relative_path(path)}: field 'evidence_ids' must be a non-empty array")
+    else:
+        for index, evidence_id in enumerate(evidence_ids):
+            errors.extend(_require_non_empty_text(evidence_id, field_name=f"evidence_ids[{index}]", path=path))
+        if len(set(evidence_ids)) != len(evidence_ids):
+            errors.append(f"{_relative_path(path)}: field 'evidence_ids' must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_finding_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "finding_id",
+            "case_id",
+            "severity",
+            "title",
+            "description",
+            "evidence_ids",
+            "remediation",
+            "found_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("finding_id", "case_id", "severity", "title"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["severity"] not in CASE_SEVERITIES | {"informational"}:
+        errors.append(
+            f"{_relative_path(path)}: field 'severity' must be one of informational, {', '.join(sorted(CASE_SEVERITIES))}"
+        )
+    if not isinstance(payload["description"], str):
+        errors.append(f"{_relative_path(path)}: field 'description' must be a string")
+    evidence_ids = payload["evidence_ids"]
+    if not isinstance(evidence_ids, list) or not evidence_ids:
+        errors.append(f"{_relative_path(path)}: field 'evidence_ids' must be a non-empty array")
+    else:
+        for index, evidence_id in enumerate(evidence_ids):
+            errors.extend(_require_non_empty_text(evidence_id, field_name=f"evidence_ids[{index}]", path=path))
+        if len(set(evidence_ids)) != len(evidence_ids):
+            errors.append(f"{_relative_path(path)}: field 'evidence_ids' must not contain duplicates")
+    if not isinstance(payload["remediation"], str):
+        errors.append(f"{_relative_path(path)}: field 'remediation' must be a string")
+    errors.extend(_validate_iso8601_text(payload["found_at"], field_name="found_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_case_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "scope_ref_id",
+            "total_cases",
+            "open_cases",
+            "total_evidence",
+            "total_reviews",
+            "total_findings",
+            "total_decisions",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_cases",
+        "open_cases",
+        "total_evidence",
+        "total_reviews",
+        "total_findings",
+        "total_decisions",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["open_cases"] > payload["total_cases"]:
+        errors.append(f"{_relative_path(path)}: field 'open_cases' must not exceed total_cases")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_case_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("violation_id", "case_id", "tenant_id", "operation", "reason", "detected_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "case_id", "tenant_id", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -4969,9 +5117,12 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "case_assignment.json": _validate_case_assignment_fixture,
     "case_closure_report.json": _validate_case_closure_report_fixture,
     "case_decision.json": _validate_case_decision_fixture,
     "case_record.json": _validate_case_record_fixture,
+    "case_snapshot.json": _validate_case_snapshot_fixture,
+    "case_violation.json": _validate_case_violation_fixture,
     "conflict_record.json": _validate_conflict_record_fixture,
     "continuity_closure_report.json": _validate_continuity_closure_report_fixture,
     "continuity_plan.json": _validate_continuity_plan_fixture,
@@ -4980,8 +5131,10 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "delegation_request.json": _validate_delegation_request_fixture,
     "delegation_result.json": _validate_delegation_result_fixture,
     "disruption_event.json": _validate_disruption_event_fixture,
+    "evidence_collection.json": _validate_evidence_collection_fixture,
     "evidence_item.json": _validate_evidence_item_fixture,
     "failover_record.json": _validate_failover_record_fixture,
+    "finding_record.json": _validate_finding_record_fixture,
     "handoff_record.json": _validate_mcoi_handoff_record_fixture,
     "incident_record.json": _validate_incident_record_fixture,
     "merge_decision.json": _validate_merge_decision_fixture,

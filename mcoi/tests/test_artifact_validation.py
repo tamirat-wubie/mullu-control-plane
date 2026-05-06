@@ -127,10 +127,15 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "merge_decision.json" in mcoi_runtime_fixture_names
     assert "conflict_record.json" in mcoi_runtime_fixture_names
     assert "case_record.json" in mcoi_runtime_fixture_names
+    assert "case_assignment.json" in mcoi_runtime_fixture_names
+    assert "evidence_collection.json" in mcoi_runtime_fixture_names
     assert "evidence_item.json" in mcoi_runtime_fixture_names
+    assert "finding_record.json" in mcoi_runtime_fixture_names
     assert "review_record.json" in mcoi_runtime_fixture_names
     assert "case_decision.json" in mcoi_runtime_fixture_names
     assert "case_closure_report.json" in mcoi_runtime_fixture_names
+    assert "case_snapshot.json" in mcoi_runtime_fixture_names
+    assert "case_violation.json" in mcoi_runtime_fixture_names
     assert "continuity_plan.json" in mcoi_runtime_fixture_names
     assert "disruption_event.json" in mcoi_runtime_fixture_names
     assert "recovery_execution.json" in mcoi_runtime_fixture_names
@@ -150,7 +155,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 24
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 29
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1151,6 +1156,83 @@ def test_validate_mcoi_runtime_fixture_rejects_case_closure_reverse_time(tmp_pat
 
     assert len(errors) == 1
     assert "closed_at must be greater than or equal to opened_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_evidence_collection_duplicates(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "evidence_collection.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "collection_id": "collection-drift",
+                "case_id": "case-drift",
+                "title": "Duplicate evidence collection",
+                "evidence_ids": ["evidence-a", "evidence-a"],
+                "created_at": "2026-04-03T08:18:00+00:00",
+                "metadata": {"curated_by": "reviewer-a"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'evidence_ids' must not contain duplicates" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_finding_without_evidence(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "finding_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "finding_id": "finding-drift",
+                "case_id": "case-drift",
+                "severity": "high",
+                "title": "Unsupported finding",
+                "description": "A finding without evidence should fail closed.",
+                "evidence_ids": [],
+                "remediation": "Attach evidence before recording the finding.",
+                "found_at": "2026-04-03T08:20:00+00:00",
+                "metadata": {"owner": "review-team"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'evidence_ids' must be a non-empty array" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_snapshot_open_cases_over_total(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "case_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snapshot-drift",
+                "scope_ref_id": "tenant-drift",
+                "total_cases": 2,
+                "open_cases": 3,
+                "total_evidence": 4,
+                "total_reviews": 3,
+                "total_findings": 2,
+                "total_decisions": 2,
+                "total_violations": 0,
+                "captured_at": "2026-04-03T08:30:00+00:00",
+                "metadata": {"captured_by": "audit-runtime"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'open_cases' must not exceed total_cases" in errors[0]
     assert fixture_path.name in errors[0]
 
 
