@@ -28,6 +28,11 @@ def test_current_finance_handoff_packet_preserves_blockers_and_claim_boundary() 
 
     assert packet["status"] == "blocked"
     assert packet["ready"] is False
+    assert packet["promotion_boundary"]["ok"] is True
+    assert packet["promotion_boundary"]["ready"] is False
+    assert packet["promotion_boundary"]["mode"] == "proof-pilot-blocked"
+    assert "validate_finance_approval_live_handoff_chain.py" in packet["promotion_boundary"]["strict_promotion_command"]
+    assert packet["promotion_boundary"]["readiness_blockers"]
     assert packet["readiness_level"] == "proof-pilot-ready"
     assert "finance email/calendar binding receipt ready" in packet["blockers"]
     assert "email calendar evidence closed" in packet["blockers"]
@@ -50,6 +55,8 @@ def test_finance_handoff_packet_reports_missing_artifacts(tmp_path: Path) -> Non
     )
 
     assert packet["status"] == "blocked"
+    assert packet["promotion_boundary"]["ok"] is False
+    assert packet["promotion_boundary"]["ready"] is False
     assert "pilot_witness_missing" in packet["blockers"]
     assert "live_handoff_plan_missing" in packet["blockers"]
     assert "email_calendar_binding_receipt_missing" in packet["blockers"]

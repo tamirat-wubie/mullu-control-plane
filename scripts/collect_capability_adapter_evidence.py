@@ -322,6 +322,7 @@ def _email_calendar_evidence(
     credential_present = any(
         bool((env_reader(name) or "").strip())
         for name in (
+            "EMAIL_CALENDAR_CONNECTOR_TOKEN",
             "GMAIL_ACCESS_TOKEN",
             "GOOGLE_CALENDAR_ACCESS_TOKEN",
             "MICROSOFT_GRAPH_ACCESS_TOKEN",

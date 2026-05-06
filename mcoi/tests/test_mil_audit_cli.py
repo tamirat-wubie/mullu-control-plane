@@ -80,6 +80,42 @@ def test_mil_audit_replay_cli_outputs_observation_replay(tmp_path, capsys) -> No
     assert output["trace_entries"][-1]["parent_trace_id"] == output["trace_entries"][-2]["trace_id"]
 
 
+def test_mil_audit_admit_runbook_cli_outputs_admission(tmp_path, capsys) -> None:
+    store_path, record_id = _record_id(tmp_path)
+    trace_store = tmp_path / "traces"
+    replay_store = tmp_path / "replays"
+
+    rc = main(
+        [
+            "mil-audit",
+            "admit-runbook",
+            "--store",
+            store_path,
+            "--trace-store",
+            str(trace_store),
+            "--replay-store",
+            str(replay_store),
+            "--runbook-id",
+            "runbook-cli-1",
+            "--name",
+            "CLI MIL Runbook",
+            "--description",
+            "Runbook admitted from a persisted MIL audit replay.",
+            "--json",
+            record_id,
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+
+    assert rc == 0
+    assert output["operation"] == "admit-runbook"
+    assert output["runbook_status"] == "admitted"
+    assert output["runbook_id"] == "runbook-cli-1"
+    assert output["provenance"]["replay_id"] == output["replay_id"]
+    assert len(output["trace_ids"]) == 6
+    assert (replay_store / f"{output['replay_id']}.json").exists()
+
+
 def test_mil_audit_cli_missing_store_fails_closed(tmp_path, capsys) -> None:
     rc = main(["mil-audit", "get", "--store", str(tmp_path / "missing"), "record-1"])
     output = capsys.readouterr().out

@@ -58,6 +58,38 @@ def test_finance_handoff_packet_schema_rejects_status_drift(tmp_path: Path) -> N
     assert "status=ready requires ready=true" in validation.errors
 
 
+def test_finance_handoff_packet_schema_rejects_promotion_boundary_ready_drift(tmp_path: Path) -> None:
+    packet_path = tmp_path / "finance_handoff_packet.json"
+    packet = produce_finance_approval_handoff_packet()
+    packet["promotion_boundary"]["ready"] = True
+    packet["promotion_boundary"]["mode"] = "live-email-handoff"
+    packet["promotion_boundary"]["readiness_blockers"] = []
+    packet_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_finance_approval_handoff_packet_schema(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert "promotion_boundary.ready must match packet ready" in validation.errors
+
+
+def test_finance_handoff_packet_schema_rejects_missing_promotion_command_token(tmp_path: Path) -> None:
+    packet_path = tmp_path / "finance_handoff_packet.json"
+    packet = produce_finance_approval_handoff_packet()
+    packet["promotion_boundary"]["strict_promotion_command"] = "python scripts/validate_finance_approval_live_handoff_chain.py"
+    packet_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_finance_approval_handoff_packet_schema(
+        packet_path=packet_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("--require-ready" in error for error in validation.errors)
+
+
 def test_finance_handoff_packet_schema_rejects_missing_artifact(tmp_path: Path) -> None:
     packet_path = tmp_path / "finance_handoff_packet.json"
     packet = produce_finance_approval_handoff_packet()

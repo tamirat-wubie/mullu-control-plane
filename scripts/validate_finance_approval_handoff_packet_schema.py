@@ -99,6 +99,7 @@ def validate_finance_approval_handoff_packet_schema(
     _validate_binding_receipt_artifact(packet, packet_path, errors)
     _validate_closure_run_artifact(packet, packet_path, errors)
     _validate_preflight_artifact(packet, packet_path, errors)
+    _validate_promotion_boundary(packet, errors)
     _validate_proof_summary(packet, errors)
     _validate_claim_boundary(packet, errors)
     return _validation_result(packet_path=packet_path, schema_path=schema_path, packet=packet, errors=errors)
@@ -201,6 +202,45 @@ def _validate_preflight_artifact(packet: dict[str, Any], packet_path: Path, erro
             "live_handoff_preflight artifact status must match preflight blocker state: "
             f"artifact={preflight_artifact.get('status', '')} preflight={expected_status}"
         )
+
+
+def _validate_promotion_boundary(packet: dict[str, Any], errors: list[str]) -> None:
+    promotion_boundary = packet.get("promotion_boundary", {})
+    if not isinstance(promotion_boundary, dict):
+        errors.append("promotion_boundary must be an object")
+        return
+    packet_ready = packet.get("ready") is True
+    boundary_ready = promotion_boundary.get("ready") is True
+    if boundary_ready != packet_ready:
+        errors.append("promotion_boundary.ready must match packet ready")
+    boundary_ok = promotion_boundary.get("ok") is True
+    missing_artifacts = [
+        str(artifact.get("name", ""))
+        for artifact in packet.get("artifacts", [])
+        if isinstance(artifact, dict) and artifact.get("present") is not True
+    ]
+    if boundary_ok and missing_artifacts:
+        errors.append(f"promotion_boundary.ok=true requires all artifacts present: missing={missing_artifacts}")
+    readiness_blockers = promotion_boundary.get("readiness_blockers", [])
+    if not isinstance(readiness_blockers, list):
+        errors.append("promotion_boundary.readiness_blockers must be a list")
+        return
+    if boundary_ready and readiness_blockers:
+        errors.append("promotion_boundary.ready=true requires no readiness_blockers")
+    if not boundary_ready and not readiness_blockers:
+        errors.append("promotion_boundary.ready=false requires readiness_blockers")
+    strict_command = str(promotion_boundary.get("strict_promotion_command", ""))
+    for token in (
+        "validate_finance_approval_live_handoff_chain.py",
+        "--strict",
+        "--require-ready",
+    ):
+        if token not in strict_command:
+            errors.append(f"promotion_boundary.strict_promotion_command missing token {token}")
+    mode = str(promotion_boundary.get("mode", ""))
+    expected_mode = "live-email-handoff" if boundary_ready else "proof-pilot-blocked"
+    if mode != expected_mode:
+        errors.append(f"promotion_boundary.mode must be {expected_mode}")
 
 
 def _validate_proof_summary(packet: dict[str, Any], errors: list[str]) -> None:

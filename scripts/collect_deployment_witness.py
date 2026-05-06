@@ -69,6 +69,10 @@ REQUIRED_CONFORMANCE_FIELDS = (
     "mcp_capability_manifest_capability_count",
     "capability_plan_bundle_canary_passed",
     "capability_plan_bundle_count",
+    "physical_worker_canary_passed",
+    "physical_worker_canary_id",
+    "physical_worker_canary_artifact_hash",
+    "physical_worker_canary_evidence_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
     "proof_coverage_declared_routes_classified",
@@ -93,6 +97,7 @@ CORE_CONFORMANCE_BOOL_FIELDS = (
     "lineage_query_canary_passed",
     "authority_obligation_canary_passed",
     "capsule_registry_certified",
+    "physical_worker_canary_passed",
     "proof_coverage_matrix_current",
     "proof_coverage_declared_routes_classified",
 )
@@ -246,6 +251,11 @@ def collect_deployment_witness(
     mcp_manifest_valid = bool(conformance_payload.get("mcp_capability_manifest_valid"))
     mcp_manifest_passed = (not mcp_manifest_configured) or mcp_manifest_valid
     plan_bundle_passed = bool(conformance_payload.get("capability_plan_bundle_canary_passed"))
+    physical_worker_canary_passed = bool(conformance_payload.get("physical_worker_canary_passed"))
+    physical_worker_canary_evidence_count = _int_count(
+        conformance_payload,
+        "physical_worker_canary_evidence_count",
+    )
     failed_core_canaries = _failed_boolean_fields(
         conformance_payload,
         CORE_CONFORMANCE_BOOL_FIELDS,
@@ -262,6 +272,8 @@ def collect_deployment_witness(
         and bool(conformance_payload.get("authority_responsibility_debt_clear"))
         and mcp_manifest_passed
         and plan_bundle_passed
+        and physical_worker_canary_passed
+        and physical_worker_canary_evidence_count >= 3
         and conformance_fresh
     )
     if expected_environment:
@@ -277,6 +289,8 @@ def collect_deployment_witness(
                 f"mcp_manifest_configured={mcp_manifest_configured} "
                 f"mcp_manifest_valid={mcp_manifest_valid} "
                 f"plan_bundle_passed={plan_bundle_passed} "
+                f"physical_worker_canary_passed={physical_worker_canary_passed} "
+                f"physical_worker_canary_evidence_count={physical_worker_canary_evidence_count} "
                 "proof_route_unclassified_count="
                 f"{_int_count(conformance_payload, 'proof_coverage_unclassified_route_count')} "
                 f"failed_core_canaries={list(failed_core_canaries)} "

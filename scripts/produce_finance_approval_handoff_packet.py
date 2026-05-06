@@ -91,6 +91,7 @@ def produce_finance_approval_handoff_packet(
             ]
         )
     )
+    packet_ready = preflight.get("ready") is True and readiness.ready and not artifact_blockers
     claim_boundary = witness.get("claim_boundary", {}) if isinstance(witness.get("claim_boundary", {}), dict) else {}
     packet_material = {
         "witness_id": witness.get("witness_id", ""),
@@ -103,11 +104,27 @@ def produce_finance_approval_handoff_packet(
     return {
         "packet_id": packet_id,
         "checked_at": _validation_clock(),
-        "status": "ready" if preflight.get("ready") is True and readiness.ready and not artifact_blockers else "blocked",
+        "status": "ready" if packet_ready else "blocked",
         "readiness_level": readiness.readiness_level,
-        "ready": preflight.get("ready") is True and readiness.ready and not artifact_blockers,
+        "ready": packet_ready,
         "blockers": list(blocker_values),
         "artifacts": [artifact.as_dict() for artifact in artifacts],
+        "promotion_boundary": {
+            "ok": not artifact_blockers,
+            "ready": packet_ready,
+            "mode": "live-email-handoff" if packet_ready else "proof-pilot-blocked",
+            "readiness_blockers": _promotion_readiness_blockers(
+                artifacts=artifacts,
+                closure_run=closure_run,
+                preflight=preflight,
+                readiness_ready=readiness.ready,
+                blocker_values=blocker_values,
+            ),
+            "strict_promotion_command": (
+                "python scripts/validate_finance_approval_live_handoff_chain.py "
+                "--strict --require-ready --json"
+            ),
+        },
         "proof_summary": {
             "witness_id": witness.get("witness_id", ""),
             "witness_status": witness.get("status", "missing"),
@@ -164,6 +181,27 @@ def _next_actions(
     if not readiness_ready:
         actions.append("produce read-only email/calendar live receipt and collect adapter evidence")
     return actions
+
+
+def _promotion_readiness_blockers(
+    *,
+    artifacts: tuple[HandoffArtifact, ...],
+    closure_run: dict[str, Any],
+    preflight: dict[str, Any],
+    readiness_ready: bool,
+    blocker_values: tuple[str, ...],
+) -> list[str]:
+    """Return operator promotion blockers without changing packet validity."""
+    blockers = list(blocker_values)
+    missing = [f"{artifact.name}_missing" for artifact in artifacts if not artifact.present]
+    blockers.extend(missing)
+    if closure_run.get("status") != "ready":
+        blockers.append(f"finance closure run not ready: status={closure_run.get('status', 'missing')}")
+    if preflight.get("ready") is not True:
+        blockers.append("finance preflight not ready")
+    if not readiness_ready:
+        blockers.append("finance approval pilot readiness not ready")
+    return list(dict.fromkeys(blockers))
 
 
 def _load_json(path: Path) -> dict[str, Any]:

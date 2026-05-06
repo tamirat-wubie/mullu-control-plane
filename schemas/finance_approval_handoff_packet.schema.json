@@ -12,6 +12,7 @@
     "ready",
     "blockers",
     "artifacts",
+    "promotion_boundary",
     "proof_summary",
     "claim_boundary",
     "next_actions"
@@ -55,6 +56,43 @@
       "minItems": 5,
       "items": {
         "$ref": "#/$defs/artifact"
+      }
+    },
+    "promotion_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ok",
+        "ready",
+        "mode",
+        "readiness_blockers",
+        "strict_promotion_command"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "proof-pilot-blocked",
+            "live-email-handoff"
+          ]
+        },
+        "readiness_blockers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "strict_promotion_command": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "proof_summary": {

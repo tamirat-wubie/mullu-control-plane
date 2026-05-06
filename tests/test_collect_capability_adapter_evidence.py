@@ -91,6 +91,29 @@ def test_adapter_evidence_uses_worker_dependency_contract_before_host_imports(tm
     assert "browser_live_evidence_missing" in report.blockers
 
 
+def test_email_calendar_dependency_accepts_governed_connector_token(tmp_path: Path) -> None:
+    report = collect_capability_adapter_evidence(
+        repo_root=_ROOT,
+        browser_receipt_path=tmp_path / "missing-browser.json",
+        document_receipt_path=tmp_path / "missing-document.json",
+        voice_receipt_path=tmp_path / "missing-voice.json",
+        email_calendar_receipt_path=tmp_path / "missing-email-calendar.json",
+        module_available=lambda name: False,
+        env_reader=lambda name: "configured" if name == "EMAIL_CALENDAR_CONNECTOR_TOKEN" else "",
+    )
+    email_calendar_evidence = next(
+        adapter for adapter in report.adapters if adapter.adapter_id == "communication.email_calendar_worker"
+    )
+    credential_check = next(
+        check for check in email_calendar_evidence.dependency_checks if check.name == "EMAIL_CALENDAR_CONNECTOR_TOKEN"
+    )
+
+    assert credential_check.available is True
+    assert credential_check.detail == "configured"
+    assert "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN" not in report.blockers
+    assert "email_calendar_live_evidence_missing" in report.blockers
+
+
 def test_adapter_evidence_accepts_dependencies_and_live_receipts(tmp_path: Path) -> None:
     browser_receipt = tmp_path / "browser.json"
     document_receipt = tmp_path / "document.json"

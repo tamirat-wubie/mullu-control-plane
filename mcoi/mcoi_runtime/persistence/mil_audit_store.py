@@ -135,6 +135,7 @@ class MILAuditReplayPersistence(ContractRecord):
     replay_id: str
     trace_ids: tuple[str, ...]
     replay_record: CoreReplayRecord
+    replay_lookup: MILAuditReplayLookup
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
@@ -142,6 +143,8 @@ class MILAuditReplayPersistence(ContractRecord):
         object.__setattr__(self, "trace_ids", _freeze_text_tuple(self.trace_ids, "trace_ids"))
         if not isinstance(self.replay_record, CoreReplayRecord):
             raise ValueError("replay_record must be a core ReplayRecord")
+        if not isinstance(self.replay_lookup, MILAuditReplayLookup):
+            raise ValueError("replay_lookup must be a MILAuditReplayLookup")
 
 
 class MILAuditStore:
@@ -310,6 +313,7 @@ class MILAuditStore:
             replay_id=replay_record.replay_id,
             trace_ids=trace_projection.persisted_trace_ids,
             replay_record=replay_record,
+            replay_lookup=trace_projection.replay_lookup,
         )
 
     def _chain_entry_for_content_hash(self, content_hash: str) -> HashChainEntry | None:

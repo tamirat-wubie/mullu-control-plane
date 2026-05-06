@@ -31,14 +31,21 @@ from .pilot_init import PilotInitRequest, initialize_pilot
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
+from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
+from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceiptStage
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
+from mcoi_runtime.core.replay_engine import ReplayContext
 from mcoi_runtime.core.review import ReviewEngine
+from mcoi_runtime.core.runbook import RunbookLibrary
 from mcoi_runtime.persistence.errors import PersistenceError
 from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.replay_store import ReplayStore
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
 )
+from mcoi_runtime.persistence.trace_store import TraceStore
 
 
 _REQUEST_ALLOWED_KEYS = frozenset(
@@ -623,6 +630,13 @@ def _mil_audit_store_path(args: argparse.Namespace) -> Path:
     return path
 
 
+def _mil_output_store_path(value: str | None, *, field_name: str) -> Path:
+    """Resolve an explicit MIL output store directory."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} is required")
+    return Path(value)
+
+
 def _print_mil_audit_envelope(envelope: Mapping[str, Any], *, json_output: bool) -> None:
     """Render a MIL audit envelope for local operator inspection."""
     if json_output:
@@ -640,6 +654,9 @@ def _print_mil_audit_envelope(envelope: Mapping[str, Any], *, json_output: bool)
         print(f"replay_mode: {envelope['replay_mode']}")
         print(f"chain_sequence: {envelope['chain_sequence']}")
         print(f"source_hash: {envelope['source_hash']}")
+    if envelope.get("runbook_id") is not None:
+        print(f"runbook_id: {envelope['runbook_id']}")
+        print(f"runbook_status: {envelope['runbook_status']}")
 
 
 def _mil_verification_json(record: Any) -> dict[str, Any]:
@@ -707,6 +724,82 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 "source_hash": lookup.replay_record.source_hash,
                 "trace_entries": [entry.to_json_dict() for entry in lookup.trace_entries],
                 "replay_record": lookup.replay_record.to_json_dict(),
+            }
+        elif sub == "admit-runbook":
+            trace_store = TraceStore(_mil_output_store_path(args.trace_store, field_name="trace_store"))
+            replay_store = ReplayStore(_mil_output_store_path(args.replay_store, field_name="replay_store"))
+            bundle = store.persist_replay_bundle(
+                args.record_id,
+                trace_store=trace_store,
+                replay_store=replay_store,
+            )
+            record = bundle.replay_lookup.record
+            library = RunbookLibrary(
+                replay_validator=PersistedReplayValidator(
+                    replay_store=replay_store,
+                    trace_store=trace_store,
+                ),
+                clock=lambda: datetime.now(timezone.utc).isoformat(),
+            )
+            learning = LearningAdmissionDecision(
+                admission_id=stable_identifier(
+                    "mil-audit-runbook-admission",
+                    {"record_id": record.record_id, "runbook_id": args.runbook_id},
+                ),
+                knowledge_id=args.runbook_id,
+                status=LearningAdmissionStatus.ADMIT,
+                reasons=(DecisionReason("MIL audit replay verified", "mil_audit_replay_verified"),),
+                issued_at=datetime.now(timezone.utc).isoformat(),
+            )
+            context = ReplayContext(
+                state_hash=bundle.replay_record.state_hash,
+                environment_digest=bundle.replay_record.environment_digest,
+            )
+            admission = library.admit(
+                runbook_id=args.runbook_id,
+                name=args.name,
+                description=args.description,
+                template={
+                    "action_type": "mil_audit_replay",
+                    "program_id": record.program_id,
+                    "goal_id": record.goal_id,
+                },
+                bindings_schema={},
+                replay_id=bundle.replay_id,
+                execution_id=record.execution_id,
+                verification_id=record.record_id,
+                execution_succeeded=True,
+                verification_passed=record.verification_passed,
+                learning_admission=learning,
+                context=context,
+            )
+            envelope = {
+                "operation": "admit-runbook",
+                "record_id": record.record_id,
+                "program_id": record.program_id,
+                "goal_id": record.goal_id,
+                "execution_id": record.execution_id,
+                "policy_decision_id": record.policy_decision_id,
+                "verification_passed": record.verification_passed,
+                "replay_id": bundle.replay_id,
+                "replay_mode": bundle.replay_record.mode.value,
+                "chain_sequence": bundle.replay_lookup.chain_entry.sequence_number,
+                "source_hash": bundle.replay_record.source_hash,
+                "trace_ids": list(bundle.trace_ids),
+                "runbook_id": admission.runbook_id,
+                "runbook_status": admission.status.value,
+                "reasons": list(admission.reasons),
+                "provenance": (
+                    {
+                        "execution_id": admission.entry.provenance.execution_id,
+                        "verification_id": admission.entry.provenance.verification_id,
+                        "replay_id": admission.entry.provenance.replay_id,
+                        "trace_id": admission.entry.provenance.trace_id,
+                        "learning_admission_id": admission.entry.provenance.learning_admission_id,
+                    }
+                    if admission.entry
+                    else None
+                ),
             }
         else:
             print(f"error: unknown mil-audit subcommand {sub!r}")
@@ -882,6 +975,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Build an observation-only replay anchor for a MIL audit record",
     )
     mil_audit_replay_parser.add_argument("record_id", help="MIL audit record id")
+
+    mil_audit_admit_parser = mil_audit_subparsers.add_parser(
+        "admit-runbook",
+        parents=[mil_audit_common],
+        help="Persist a MIL audit replay bundle and admit it as a runbook candidate",
+    )
+    mil_audit_admit_parser.add_argument("record_id", help="MIL audit record id")
+    mil_audit_admit_parser.add_argument("--trace-store", required=True, help="TraceStore directory for MIL trace spine")
+    mil_audit_admit_parser.add_argument("--replay-store", required=True, help="ReplayStore directory for MIL replay record")
+    mil_audit_admit_parser.add_argument("--runbook-id", required=True, help="Runbook id to admit")
+    mil_audit_admit_parser.add_argument("--name", required=True, help="Runbook display name")
+    mil_audit_admit_parser.add_argument("--description", required=True, help="Runbook description")
 
     # v4.25.0: migrate — DB schema migration ops surface
     migrate_parser = subparsers.add_parser(
