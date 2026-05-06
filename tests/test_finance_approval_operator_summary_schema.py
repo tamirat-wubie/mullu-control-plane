@@ -34,6 +34,13 @@ EXPECTED_ARTIFACT_STATUS_KEYS = {
     "live_handoff_closure_run",
     "live_handoff_preflight",
 }
+EXPECTED_MUST_NOT_CLAIM = {
+    "autonomous payment execution",
+    "bank settlement",
+    "ERP reconciliation",
+    "live email delivery",
+    "production finance automation",
+}
 
 
 def test_finance_operator_summary_schema_accepts_current_summary(tmp_path: Path) -> None:
@@ -61,6 +68,17 @@ def test_finance_operator_summary_public_schema_bounds_artifact_status_keys() ->
     assert artifact_statuses["additionalProperties"] is False
     assert set(artifact_statuses["required"]) == EXPECTED_ARTIFACT_STATUS_KEYS
     assert set(artifact_statuses["properties"]) == EXPECTED_ARTIFACT_STATUS_KEYS
+
+
+def test_finance_operator_summary_public_schema_bounds_must_not_claim() -> None:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    must_not_claim = schema["properties"]["must_not_claim"]
+
+    assert must_not_claim["minItems"] == 5
+    assert must_not_claim["maxItems"] == 5
+    assert set(must_not_claim["items"]["enum"]) == EXPECTED_MUST_NOT_CLAIM
+    contains_values = {branch["contains"]["const"] for branch in must_not_claim["allOf"]}
+    assert contains_values == EXPECTED_MUST_NOT_CLAIM
 
 
 def test_finance_operator_summary_schema_rejects_ready_drift(tmp_path: Path) -> None:
@@ -161,6 +179,23 @@ def test_finance_operator_summary_schema_rejects_missing_full_claim_boundary(tmp
     assert errors == ()
     assert validation.ok is False
     assert any("bank settlement" in error for error in validation.errors)
+
+
+def test_finance_operator_summary_schema_rejects_unexpected_claim_boundary(tmp_path: Path) -> None:
+    summary_path = tmp_path / "finance_operator_summary.json"
+    summary, errors = produce_finance_approval_operator_summary()
+    summary["must_not_claim"].append("invented production claim")
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    validation = validate_finance_approval_operator_summary_schema(
+        summary_path=summary_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert errors == ()
+    assert validation.ok is False
+    assert any("must_not_claim contains unexpected" in error for error in validation.errors)
+    assert any("invented production claim" in error for error in validation.errors)
 
 
 def test_finance_operator_summary_schema_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:

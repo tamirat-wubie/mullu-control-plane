@@ -889,10 +889,12 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "scripts/emit_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "scripts/preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
     assert "schemas/physical_capability_promotion_receipt.schema.json" in physical_surface["evidence_files"]
+    assert "tests/test_emit_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_capsule_installer.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_capability_pack.py" in physical_surface["evidence_files"]
@@ -912,6 +914,8 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure" in witnesses
     assert "physical_promotion_receipt_binds_forge_handoff_registry_preflight" in witnesses
     assert "physical_promotion_receipt_schema_valid" in witnesses
+    assert "physical_promotion_receipt_cli_emits_schema_valid_bundle" in witnesses
+    assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses
@@ -1012,6 +1016,33 @@ def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -
     assert "low_risk_action_does_not_require_reapproval" in witnesses
     assert "temporal_reapproval_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_reapproval_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_dispatch_window_surface_rechecks_runtime_admission_windows() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    dispatch_window_surface = surfaces["temporal_dispatch_window"]
+    witnesses = set(dispatch_window_surface["runtime_witnesses"])
+
+    assert dispatch_window_surface["coverage_state"] == "witnessed"
+    assert dispatch_window_surface["request_proof"] == "request_proof"
+    assert dispatch_window_surface["action_proof"] == "action_proof"
+    assert "TemporalDispatchWindow.evaluate" in dispatch_window_surface["representative_paths"]
+    assert "DispatchWindowRequest" in dispatch_window_surface["representative_paths"]
+    assert "TemporalDispatchWindowReceipt" in dispatch_window_surface["representative_paths"]
+    assert "gateway/temporal_dispatch_window.py" in dispatch_window_surface["evidence_files"]
+    assert "schemas/temporal_dispatch_window_receipt.schema.json" in dispatch_window_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_dispatch_window.py" in dispatch_window_surface["evidence_files"]
+    assert "runtime_clock_owns_dispatch_window_time" in witnesses
+    assert "tenant_timezone_resolved" in witnesses
+    assert "allowed_window_required_for_high_risk_dispatch" in witnesses
+    assert "outside_allowed_window_defers_dispatch" in witnesses
+    assert "active_blackout_defers_dispatch" in witnesses
+    assert "holiday_closure_defers_dispatch" in witnesses
+    assert "source_reapproval_bound_for_high_risk_dispatch" in witnesses
+    assert "temporal_dispatch_window_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_dispatch_window_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

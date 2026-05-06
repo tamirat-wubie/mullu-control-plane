@@ -112,10 +112,45 @@
     },
     "must_not_claim": {
       "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
       "items": {
         "type": "string",
-        "minLength": 1
-      }
+        "enum": [
+          "autonomous payment execution",
+          "bank settlement",
+          "ERP reconciliation",
+          "live email delivery",
+          "production finance automation"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "autonomous payment execution"
+          }
+        },
+        {
+          "contains": {
+            "const": "bank settlement"
+          }
+        },
+        {
+          "contains": {
+            "const": "ERP reconciliation"
+          }
+        },
+        {
+          "contains": {
+            "const": "live email delivery"
+          }
+        },
+        {
+          "contains": {
+            "const": "production finance automation"
+          }
+        }
+      ]
     }
   }
 }

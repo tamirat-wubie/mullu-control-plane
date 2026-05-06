@@ -268,9 +268,13 @@ def test_protocol_manifest_indexes_trust_ledger_anchor_receipt() -> None:
 def test_protocol_manifest_indexes_memory_lattice_admission() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    builder_entry = entries["low-code-builder-catalog"]
     lattice_entry = entries["memory-lattice"]
 
     assert validate_protocol_manifest(manifest) == []
+    assert builder_entry["path"] == "schemas/low_code_builder_catalog.schema.json"
+    assert builder_entry["urn"] == "urn:mullusi:schema:low-code-builder-catalog:1"
+    assert builder_entry["surface"] == "builder"
     assert lattice_entry["path"] == "schemas/memory_lattice.schema.json"
     assert lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
     assert lattice_entry["surface"] == "memory"
@@ -340,6 +344,17 @@ def test_protocol_manifest_indexes_temporal_reapproval_receipt() -> None:
     assert reapproval_entry["path"] == "schemas/temporal_reapproval_receipt.schema.json"
     assert reapproval_entry["urn"] == "urn:mullusi:schema:temporal-reapproval-receipt:1"
     assert reapproval_entry["surface"] == "temporal"
+
+
+def test_protocol_manifest_indexes_temporal_dispatch_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    dispatch_window_entry = entries["temporal-dispatch-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert dispatch_window_entry["path"] == "schemas/temporal_dispatch_window_receipt.schema.json"
+    assert dispatch_window_entry["urn"] == "urn:mullusi:schema:temporal-dispatch-window-receipt:1"
+    assert dispatch_window_entry["surface"] == "temporal"
 
 
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:

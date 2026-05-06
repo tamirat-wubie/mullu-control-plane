@@ -194,6 +194,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Gateway publication receipt validation reports are public contracts" in content
     assert "World-state projections are public contracts" in content
     assert "Operator control tower snapshots are public contracts" in content
+    assert "Low-code builder catalogs are public contracts" in content
     assert "Goal compilation reports are public contracts" in content
     assert "Workflow mining reports are public contracts" in content
     assert "Simulation receipts are public contracts" in content
@@ -205,6 +206,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Reflex deployment witness validator receipts are public contracts" in content
     assert "Temporal evidence freshness receipts are public contracts" in content
     assert "Temporal reapproval receipts are public contracts" in content
+    assert "Temporal dispatch window receipts are public contracts" in content
     assert "Temporal memory refresh receipts are public contracts" in content
     assert "python scripts\\validate_protocol_manifest.py" in content
 

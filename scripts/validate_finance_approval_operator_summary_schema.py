@@ -13,6 +13,7 @@ Invariants:
   - Blocked summaries carry readiness blockers.
   - Strict promotion command includes --strict and --require-ready.
   - Artifact statuses are exactly the known finance source artifacts.
+  - Must-not-claim entries are exactly the finance claim boundary.
 """
 
 from __future__ import annotations
@@ -128,6 +129,9 @@ def _validate_summary_semantics(summary: dict[str, Any], errors: list[str]) -> N
     missing_claims = sorted(set(REQUIRED_MUST_NOT_CLAIM) - must_not_claim)
     if missing_claims:
         errors.append(f"must_not_claim missing {missing_claims}")
+    extra_claims = sorted(must_not_claim - set(REQUIRED_MUST_NOT_CLAIM))
+    if extra_claims:
+        errors.append(f"must_not_claim contains unexpected {extra_claims}")
 
 
 def _validation_result(

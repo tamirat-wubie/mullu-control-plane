@@ -329,6 +329,12 @@
       "surface": "learning"
     },
     {
+      "schema_id": "low-code-builder-catalog",
+      "path": "schemas/low_code_builder_catalog.schema.json",
+      "urn": "urn:mullusi:schema:low-code-builder-catalog:1",
+      "surface": "builder"
+    },
+    {
       "schema_id": "memory-lattice",
       "path": "schemas/memory_lattice.schema.json",
       "urn": "urn:mullusi:schema:memory-lattice:1",
@@ -470,6 +476,12 @@
       "schema_id": "temporal-reapproval-receipt",
       "path": "schemas/temporal_reapproval_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-reapproval-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-dispatch-window-receipt",
+      "path": "schemas/temporal_dispatch_window_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-dispatch-window-receipt:1",
       "surface": "temporal"
     },
     {
