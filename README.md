@@ -10,7 +10,7 @@ The next operational-intelligence extension is specified in [`docs/62_governed_o
 
 | Surface | Current public claim | Evidence boundary |
 |---|---|---|
-| Latest tagged GitHub release | `v3.13.0` | Reflected in [`GITHUB_SURFACE.md`](GITHUB_SURFACE.md), [`STATUS.md`](STATUS.md), and `RELEASE_NOTES_v0.1.md` as `0.4.0 (v3.13.0)` |
+| Latest tagged GitHub release | `v3.13.1` | Reflected in [`GITHUB_SURFACE.md`](GITHUB_SURFACE.md), [`STATUS.md`](STATUS.md), and [`RELEASE_NOTES_v3.13.1.md`](RELEASE_NOTES_v3.13.1.md) |
 | Main branch release notes | v4.x notes through `RELEASE_NOTES_v4.47.0.md` are repository-mainline implementation and hardening records | They do not by themselves supersede the latest GitHub release tag |
 | Local and CI governance evidence | Schema, protocol, logic-governance, release-status, gateway-closure, and promotion validators are repository/CI evidence | Commands are listed in [`STATUS.md`](STATUS.md) and [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) |
 | Live production runtime | Not published from this repository yet | [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) records `not-published`, `not-declared`, missing deployment target variables, and absent `deployment-witness.yml` runs |
@@ -136,7 +136,7 @@ A second governance layer added in v4.x: 25 universal constructs across 5 tiers,
 
 HTTP surface: `/constructs/*`, `/domains/<six>/process`, `/cognition/*`, `/ucja/*`, `/mfidel/*`, `/musia/tenants/*`, `/musia/governance/*`. Chain runs in microseconds (5–16μs typical, 5-guard chain p99 ≤ 41μs — see [`tests/test_v4_17_chain_latency_bench.py`](mcoi/tests/test_v4_17_chain_latency_bench.py)).
 
-Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.47.0.md` at repo root. These v4.x files are mainline implementation and hardening records, while the current GitHub latest-release witness remains `v3.13.0`.
+Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.47.0.md` at repo root. These v4.x files are mainline implementation and hardening records, while the current GitHub latest-release witness remains `v3.13.1`.
 
 ### MCP Server
 
