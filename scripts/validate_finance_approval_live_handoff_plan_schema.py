@@ -178,9 +178,16 @@ def _validate_email_calendar_live_receipt_action(actions: tuple[dict[str, Any], 
             "--target email-calendar",
             "--strict",
         )
+        command_missing_required_token = False
         for token in required_tokens:
             if token not in command:
+                command_missing_required_token = True
                 errors.append(f"email/calendar live action {index} command missing token {token}")
+        if command_missing_required_token:
+            errors.append(
+                f"email/calendar live action {index} command must be closed by "
+                "validate_finance_approval_email_calendar_live_receipt.py"
+            )
         verification_command = str(action.get("verification_command", ""))
         required_verification_tokens = (
             "validate_finance_approval_email_calendar_live_receipt.py",

@@ -8,13 +8,19 @@ from __future__ import annotations
 
 import pytest
 
+from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.mil import MILInstruction, MILOpcode, MILProgram
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
-from mcoi_runtime.core.mil_static_verifier import verify_mil_program
 from mcoi_runtime.contracts.replay import ReplayMode
+from mcoi_runtime.core.mil_static_verifier import verify_mil_program
+from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
+from mcoi_runtime.core.replay_engine import ReplayContext, ReplayVerdict
+from mcoi_runtime.core.runbook import RunbookAdmissionStatus, RunbookLibrary
 from mcoi_runtime.persistence.errors import CorruptedDataError
 from mcoi_runtime.persistence.errors import PersistenceWriteError
 from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.replay_store import ReplayStore
+from mcoi_runtime.persistence.trace_store import TraceStore
 
 
 def _program() -> MILProgram:
@@ -185,3 +191,96 @@ def test_replay_lookup_fails_closed_when_record_is_unanchored(tmp_path) -> None:
 
     with pytest.raises(CorruptedDataError, match="not anchored"):
         store.replay_lookup(result.record.record_id)
+
+
+def test_persist_replay_bundle_validates_with_persisted_replay(tmp_path) -> None:
+    program = _program()
+    verification = verify_mil_program(program)
+    audit_store = MILAuditStore(tmp_path / "mil-audit")
+    trace_store = TraceStore(tmp_path / "traces")
+    replay_store = ReplayStore(tmp_path / "replays")
+    result = audit_store.append(
+        program=program,
+        verification=verification,
+        execution_id="exec-1",
+        instruction_trace=("proof:emit_proof:goal-1",),
+        recorded_at="2026-05-06T12:00:02Z",
+    )
+
+    bundle = audit_store.persist_replay_bundle(
+        result.record.record_id,
+        trace_store=trace_store,
+        replay_store=replay_store,
+    )
+    replay_result = PersistedReplayValidator(
+        replay_store=replay_store,
+        trace_store=trace_store,
+    ).validate(
+        bundle.replay_id,
+        context=ReplayContext(
+            state_hash=bundle.replay_record.state_hash,
+            environment_digest=bundle.replay_record.environment_digest,
+        ),
+    )
+
+    assert replay_result.validation.ready is True
+    assert replay_result.validation.verdict is ReplayVerdict.MATCH
+    assert replay_result.trace_found is True
+    assert replay_result.trace_hash_matches is True
+
+
+def test_mil_audit_replay_can_feed_runbook_admission(tmp_path) -> None:
+    program = _program()
+    verification = verify_mil_program(program)
+    audit_store = MILAuditStore(tmp_path / "mil-audit")
+    trace_store = TraceStore(tmp_path / "traces")
+    replay_store = ReplayStore(tmp_path / "replays")
+    result = audit_store.append(
+        program=program,
+        verification=verification,
+        execution_id="exec-1",
+        instruction_trace=("proof:emit_proof:goal-1",),
+        recorded_at="2026-05-06T12:00:02Z",
+    )
+    bundle = audit_store.persist_replay_bundle(
+        result.record.record_id,
+        trace_store=trace_store,
+        replay_store=replay_store,
+    )
+    library = RunbookLibrary(
+        replay_validator=PersistedReplayValidator(
+            replay_store=replay_store,
+            trace_store=trace_store,
+        ),
+        clock=lambda: "2026-05-06T12:00:03Z",
+    )
+    learning = LearningAdmissionDecision(
+        admission_id="learn-runbook-1",
+        knowledge_id="runbook-mil-1",
+        status=LearningAdmissionStatus.ADMIT,
+        reasons=(DecisionReason("admit", "mil_audit_replay_verified"),),
+        issued_at="2026-05-06T12:00:04Z",
+    )
+
+    admission = library.admit(
+        runbook_id="runbook-mil-1",
+        name="MIL governed shell run",
+        description="Reusable governed procedure derived from MIL audit replay.",
+        template={"action_type": "shell_command"},
+        bindings_schema={"msg": "str"},
+        replay_id=bundle.replay_id,
+        execution_id=result.record.execution_id,
+        verification_id=result.record.record_id,
+        execution_succeeded=True,
+        verification_passed=True,
+        learning_admission=learning,
+        context=ReplayContext(
+            state_hash=bundle.replay_record.state_hash,
+            environment_digest=bundle.replay_record.environment_digest,
+        ),
+    )
+
+    assert admission.status is RunbookAdmissionStatus.ADMITTED
+    assert admission.entry is not None
+    assert admission.entry.provenance.replay_id == bundle.replay_id
+    assert admission.entry.provenance.trace_id == bundle.replay_record.trace_id
