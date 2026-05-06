@@ -26,6 +26,8 @@ from pathlib import Path
 from scripts.dispatch_deployment_witness import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS
 from scripts.dispatch_gateway_publication import (
     DEFAULT_ARTIFACT_NAME,
+    DEFAULT_CONFORMANCE_SECRET_NAME,
+    DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     DEFAULT_DOWNLOAD_DIR,
     DEFAULT_KUBECONFIG_SECRET_NAME,
     DEFAULT_READINESS_REPORT,
@@ -72,6 +74,8 @@ def publish_gateway_publication(
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     runtime_secret_name: str = DEFAULT_RUNTIME_SECRET_NAME,
+    conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
+    deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     kubeconfig_secret_name: str = DEFAULT_KUBECONFIG_SECRET_NAME,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
@@ -94,6 +98,8 @@ def publish_gateway_publication(
         workflow_file=workflow_file,
         workflow_name=workflow_name,
         runtime_secret_name=runtime_secret_name,
+        conformance_secret_name=conformance_secret_name,
+        deployment_witness_secret_name=deployment_witness_secret_name,
         kubeconfig_secret_name=kubeconfig_secret_name,
         runner=command_runner,
         resolver=resolver,
@@ -128,6 +134,8 @@ def publish_gateway_publication(
         workflow_file=workflow_file,
         workflow_name=workflow_name,
         runtime_secret_name=runtime_secret_name,
+        conformance_secret_name=conformance_secret_name,
+        deployment_witness_secret_name=deployment_witness_secret_name,
         kubeconfig_secret_name=kubeconfig_secret_name,
         artifact_name=artifact_name,
         download_dir=download_dir,
@@ -214,6 +222,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--runtime-secret-name", default=DEFAULT_RUNTIME_SECRET_NAME)
+    parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
+    parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--kubeconfig-secret-name", default=DEFAULT_KUBECONFIG_SECRET_NAME)
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
@@ -239,6 +249,8 @@ def main(argv: list[str] | None = None) -> int:
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             runtime_secret_name=args.runtime_secret_name,
+            conformance_secret_name=args.conformance_secret_name,
+            deployment_witness_secret_name=args.deployment_witness_secret_name,
             kubeconfig_secret_name=args.kubeconfig_secret_name,
             artifact_name=args.artifact_name,
             download_dir=Path(args.download_dir),
