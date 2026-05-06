@@ -1,0 +1,13 @@
+{
+  "verification_id": "verification-verify-042",
+  "execution_id": "recovery-exec-042",
+  "status": "passed",
+  "verified_by": "verifier-1",
+  "confidence": 0.98,
+  "reason": "recovery checks passed and verification output matched expected digest",
+  "verified_at": "2026-04-03T08:18:00+00:00",
+  "metadata": {
+    "verification_id": "verify-42",
+    "workflow_execution_id": "wf-exec-42"
+  }
+}

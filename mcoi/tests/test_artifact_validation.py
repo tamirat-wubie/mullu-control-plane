@@ -118,6 +118,11 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "recovery_decision.json" in mcoi_runtime_fixture_names
     assert "recovery_attempt.json" in mcoi_runtime_fixture_names
     assert "recovery_record.json" in mcoi_runtime_fixture_names
+    assert "continuity_plan.json" in mcoi_runtime_fixture_names
+    assert "disruption_event.json" in mcoi_runtime_fixture_names
+    assert "recovery_execution.json" in mcoi_runtime_fixture_names
+    assert "verification_record.json" in mcoi_runtime_fixture_names
+    assert "continuity_snapshot.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -130,7 +135,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 4
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 9
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -781,6 +786,93 @@ def test_validate_mcoi_runtime_fixture_rejects_not_applicable_decision_action_dr
 
     assert len(errors) == 1
     assert "not_applicable recovery decisions must use action 'no_action'" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_continuity_plan_rpo_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "continuity_plan.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "plan_id": "plan-drift",
+                "name": "Plan drift",
+                "tenant_id": "tenant-1",
+                "scope": "service",
+                "status": "active",
+                "scope_ref_id": "svc-drift",
+                "rto_minutes": 15,
+                "rpo_minutes": 20,
+                "failover_target_ref": "svc-drift-dr",
+                "owner_ref": "owner-1",
+                "created_at": "2026-04-03T08:00:00+00:00",
+                "metadata": {"tier": "critical"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "rpo_minutes must be less than or equal to rto_minutes" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_terminal_recovery_execution_without_completion(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "recovery_execution.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "execution_id": "exec-drift",
+                "recovery_plan_id": "rp-drift",
+                "disruption_id": "dis-drift",
+                "status": "completed",
+                "executed_by": "operator-1",
+                "started_at": "2026-04-03T08:06:00+00:00",
+                "completed_at": "",
+                "metadata": {"attempt_id": "attempt-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "terminal recovery executions must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_continuity_snapshot_active_count_drift(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "continuity_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snapshot-drift",
+                "total_plans": 3,
+                "total_active_plans": 4,
+                "total_recovery_plans": 2,
+                "total_disruptions": 1,
+                "total_failovers": 1,
+                "total_recoveries": 1,
+                "total_verifications": 1,
+                "total_violations": 0,
+                "total_objectives": 3,
+                "captured_at": "2026-04-03T08:20:00+00:00",
+                "metadata": {"tenant_id": "tenant-1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_active_plans must not exceed total_plans" in errors[0]
     assert fixture_path.name in errors[0]
 
 
