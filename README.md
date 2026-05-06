@@ -6,6 +6,20 @@ Mullu is a governed operational intelligence platform. Users interact via messag
 
 The next operational-intelligence extension is specified in [`docs/62_governed_operational_intelligence.md`](docs/62_governed_operational_intelligence.md): world-state graph, goal compiler, causal simulator, capability forge, worker mesh, maturity levels, policy prover, memory lattice, trust ledger, and domain operating packs.
 
+## Production Claim Boundary
+
+| Surface | Current public claim | Evidence boundary |
+|---|---|---|
+| Latest tagged GitHub release | `v3.13.0` | Reflected in [`GITHUB_SURFACE.md`](GITHUB_SURFACE.md), [`STATUS.md`](STATUS.md), and `RELEASE_NOTES_v0.1.md` as `0.4.0 (v3.13.0)` |
+| Main branch release notes | v4.x notes through `RELEASE_NOTES_v4.47.0.md` are repository-mainline implementation and hardening records | They do not by themselves supersede the latest GitHub release tag |
+| Local and CI governance evidence | Schema, protocol, logic-governance, release-status, gateway-closure, and promotion validators are repository/CI evidence | Commands are listed in [`STATUS.md`](STATUS.md) and [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) |
+| Live production runtime | Not published from this repository yet | [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) records `not-published`, `not-declared`, missing deployment target variables, and absent `deployment-witness.yml` runs |
+| Public production health | Not claimed | Requires reachable `/health`, `/gateway/witness`, `/runtime/conformance`, and production evidence plane endpoints before status can change |
+
+Until the deployment witness is collected and published, this README describes
+the governed platform, local deployment contracts, and repository-validated
+evidence. It does not claim an externally reachable production runtime.
+
 ## Quick Start
 
 ```bash
@@ -36,7 +50,7 @@ Every message flows through the full governance pipeline. No bypass path.
 
 ## Platform Capabilities
 
-### Governance Engine (47,800+ tests)
+### Governance Engine
 
 | Capability | What |
 |---|---|
@@ -122,7 +136,7 @@ A second governance layer added in v4.x: 25 universal constructs across 5 tiers,
 
 HTTP surface: `/constructs/*`, `/domains/<six>/process`, `/cognition/*`, `/ucja/*`, `/mfidel/*`, `/musia/tenants/*`, `/musia/governance/*`. Chain runs in microseconds (5–16μs typical, 5-guard chain p99 ≤ 41μs — see [`tests/test_v4_17_chain_latency_bench.py`](mcoi/tests/test_v4_17_chain_latency_bench.py)).
 
-Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.26.0.md` at repo root. v4.26.0 closes audit-found authorization gaps in the MUSIA layer (F13/F14/F16) and adds a route-coverage CI gate.
+Per-release detail in `RELEASE_NOTES_v4.0.0.md` through `RELEASE_NOTES_v4.47.0.md` at repo root. These v4.x files are mainline implementation and hardening records, while the current GitHub latest-release witness remains `v3.13.0`.
 
 ### MCP Server
 
@@ -138,7 +152,7 @@ External agents (Claude Code, Cursor, etc.) connect to Mullu as a governed tool 
 
 ```
 mullu-control-plane/
-├── mcoi/                   # MCOI Runtime (Python, 47,800+ tests)
+├── mcoi/                   # MCOI Runtime (Python test inventory in .change_assurance/test_inventory.json)
 │   ├── mcoi_runtime/
 │   │   ├── app/            # FastAPI server, 35 routers (legacy + MUSIA), CLI
 │   │   ├── substrate/      # MUSIA: Mfidel grid + 25-construct framework + Φ_gov
@@ -274,6 +288,11 @@ The public repository surface is bounded by a versioned status witness:
 [STATUS.md](STATUS.md). That witness names the audited branch head, release
 alignment, CI gates, governance checks, and known reflection gaps.
 
+Deployment publication is bounded separately by
+[DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md). The current deployment witness
+state is `not-published`; no public production health endpoint is declared in
+this repository.
+
 ## Docs
 
 - [OPERATOR_GUIDE_v0.1.md](OPERATOR_GUIDE_v0.1.md) — profiles, CLI, env vars
@@ -286,9 +305,15 @@ alignment, CI gates, governance checks, and known reflection gaps.
 ## Tests
 
 ```bash
-cd mcoi && python -m pytest tests/ -q          # 47,800+ tests
+cd mcoi && python -m pytest tests/ -q          # MCOI runtime tests
 cd .. && python -m pytest tests/ -q             # Gateway + financial + creative + enterprise
+python scripts/generate_test_inventory.py --check
 ```
+
+The generated machine-derived inventory is
+`.change_assurance/test_inventory.json`: `51,164` total tests at the
+2026-05-06 witness. The directory is ignored by repository convention; CI
+regenerates the artifact before checking freshness.
 
 ## License
 

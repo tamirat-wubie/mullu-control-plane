@@ -23,6 +23,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 |---|---|---|
 | Local API health contract | `RUNBOOK.md` and `DEPLOYMENT.md` document `/health` checks | Reflected |
 | Local gateway health contract | `README.md` documents `http://localhost:8001/health` | Reflected |
+| README production claim boundary | `README.md` states that live production runtime is not published and that public production health is not claimed until endpoint and evidence-plane witnesses are collected | Reflected |
 | Local gateway runtime witness | `DEPLOYMENT.md` documents `/gateway/witness` and `/runtime/witness` | Reflected |
 | Restricted capability worker | `DEPLOYMENT.md`, `docker-compose.yml`, and `k8s/mullu-api.yaml` declare `gateway.capability_worker:app` | Reflected |
 | Local pilot proof slice | `scripts/pilot_proof_slice.py` emits `.change_assurance/pilot_proof_slice_witness.json` through gateway closure | Reflected |
