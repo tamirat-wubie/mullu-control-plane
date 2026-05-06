@@ -148,7 +148,8 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             action_type="credential",
             command=(
                 "Bind one scoped read-capable connector token in the governed worker secret store: "
-                "GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, or MICROSOFT_GRAPH_ACCESS_TOKEN. "
+                "EMAIL_CALENDAR_CONNECTOR_TOKEN, GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, "
+                "or MICROSOFT_GRAPH_ACCESS_TOKEN. "
                 "Then run python scripts/emit_finance_approval_email_calendar_binding_receipt.py --strict"
             ),
             verification_command=(

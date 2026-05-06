@@ -269,7 +269,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 85 schemas
+protocol manifest ok: 88 schemas
 ```
 
 Finance pilot readiness verification:
@@ -319,10 +319,10 @@ python scripts\produce_finance_approval_operator_summary.py --output .change_ass
 python scripts\validate_finance_approval_operator_summary_schema.py --strict --json
 ```
 
-The receipt records only token-name presence for `GMAIL_ACCESS_TOKEN`, `GOOGLE_CALENDAR_ACCESS_TOKEN`, and `MICROSOFT_GRAPH_ACCESS_TOKEN`. It never serializes token values.
+The receipt records only token-name presence for `EMAIL_CALENDAR_CONNECTOR_TOKEN`, `GMAIL_ACCESS_TOKEN`, `GOOGLE_CALENDAR_ACCESS_TOKEN`, and `MICROSOFT_GRAPH_ACCESS_TOKEN`. It never serializes token values.
 The handoff packet carries `promotion_boundary.ok` separately from `promotion_boundary.ready`. `ok=true` means the packet artifacts are structurally usable. `ready=false` means live handoff promotion remains blocked. The strict promotion command is `python scripts\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json`.
 The operator summary is a redacted read-only artifact that copies packet readiness, chain readiness, readiness blockers, artifact statuses, next actions, and must-not-claim boundaries into `.change_assurance\finance_approval_operator_summary.json`.
-The closure runner is a dry-run artifact by default. It marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
+The closure runner is a 16-command dry-run artifact by default. It marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, validates the aggregate handoff chain, produces the operator summary, validates the operator summary schema, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
 
 Deterministic local pilot witness:
 
