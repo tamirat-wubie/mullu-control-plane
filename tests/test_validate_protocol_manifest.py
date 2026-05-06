@@ -706,3 +706,35 @@ def test_protocol_manifest_rejects_missing_terminal_closure_certificate_entry() 
     assert "manifest missing public schemas" in errors[0]
     assert "terminal_closure_certificate.schema.json" in errors[0]
     assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_finance_live_receipt_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "finance-approval-email-calendar-live-receipt"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "finance_approval_email_calendar_live_receipt.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_finance_operator_summary_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "finance-approval-operator-summary"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "finance_approval_operator_summary.schema.json" in errors[0]
+    assert "schemas/" in errors[0]

@@ -354,7 +354,7 @@ class CapabilityForge:
                 input_schema_ref=source.input_schema_ref,
                 output_schema_ref=source.output_schema_ref,
                 error_schema_ref=f"schemas/{source.capability_id}.error.schema.json",
-                receipt_schema_ref=f"schemas/{source.capability_id}.receipt.schema.json",
+                receipt_schema_ref=_receipt_schema_ref(source),
             ),
             adapter=CapabilityAdapterSpec(
                 adapter_id=f"adapter-{source.capability_id}",
@@ -481,6 +481,8 @@ def install_certification_handoff_evidence(
       - capability_handoff_hash_mismatch: handoff content differs from its stamp.
       - capability_handoff_refuses_maturity_override: entry carries direct maturity evidence.
       - capability_handoff_evidence_conflict: existing certification evidence differs.
+      - capability_handoff_physical_safety_evidence_conflict: existing physical safety evidence differs.
+      - capability_handoff_physical_safety_evidence_incomplete: physical safety refs are incomplete.
       - capability_certification_evidence_incomplete: strict production readiness failed.
     """
     if entry.capability_id != handoff.capability_id:
@@ -856,6 +858,27 @@ def _certification_evidence_extension_from_handoff(
     return {
         **payload,
         "certification_evidence_hash": canonical_hash(payload),
+    }
+
+
+def _physical_live_safety_extension_from_handoff(
+    handoff: CapabilityCertificationHandoff,
+) -> dict[str, str]:
+    if not handoff.physical_live_safety_evidence_refs:
+        return {}
+    missing = tuple(
+        field_name
+        for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS
+        if not str(handoff.physical_live_safety_evidence_refs.get(field_name, "")).strip()
+    )
+    if missing:
+        raise ValueError(f"capability_handoff_physical_safety_evidence_incomplete:{','.join(missing)}")
+    return {
+        "physical_action_receipt_schema_ref": _PHYSICAL_ACTION_RECEIPT_SCHEMA_REF,
+        **{
+            field_name: str(handoff.physical_live_safety_evidence_refs[field_name]).strip()
+            for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS
+        },
     }
 
 
