@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:eval-run:1",
+  "title": "Governance Eval Run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "suites",
+    "strict",
+    "passed",
+    "case_count",
+    "passed_count",
+    "failed_count",
+    "critical_failure_count",
+    "promotion_blocked",
+    "promotion_blockers",
+    "results",
+    "evidence_refs",
+    "run_hash",
+    "metadata"
+  ],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "suites": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/eval_suite"}
+    },
+    "strict": {"type": "boolean"},
+    "passed": {"type": "boolean"},
+    "case_count": {"type": "integer", "minimum": 0},
+    "passed_count": {"type": "integer", "minimum": 0},
+    "failed_count": {"type": "integer", "minimum": 0},
+    "critical_failure_count": {"type": "integer", "minimum": 0},
+    "promotion_blocked": {"type": "boolean"},
+    "promotion_blockers": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/eval_case_result"}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "run_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "eval_run_is_not_promotion",
+        "critical_failures_block_production"
+      ],
+      "properties": {
+        "eval_run_is_not_promotion": {"type": "boolean", "const": true},
+        "critical_failures_block_production": {"type": "boolean", "const": true},
+        "offline_deterministic": {"type": "boolean"},
+        "production_mutation_applied": {"type": "boolean", "const": false},
+        "strict_promotion_rule": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "eval_suite": {
+      "type": "string",
+      "enum": [
+        "governance",
+        "tenant_isolation",
+        "payments",
+        "prompt_injection",
+        "pii",
+        "memory",
+        "temporal",
+        "tools"
+      ]
+    },
+    "eval_outcome": {
+      "type": "string",
+      "enum": ["deny", "allow", "escalate", "redact", "ignore", "proof_required"]
+    },
+    "eval_case_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "suite",
+        "passed",
+        "expected_outcome",
+        "observed_outcome",
+        "failure_type",
+        "critical",
+        "evidence_refs",
+        "result_hash"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "suite": {"$ref": "#/$defs/eval_suite"},
+        "passed": {"type": "boolean"},
+        "expected_outcome": {"$ref": "#/$defs/eval_outcome"},
+        "observed_outcome": {"$ref": "#/$defs/eval_outcome"},
+        "failure_type": {"type": "string", "minLength": 1},
+        "critical": {"type": "boolean"},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "result_hash": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"passed": {"const": true}}, "required": ["passed"]},
+      "then": {
+        "properties": {
+          "failed_count": {"const": 0},
+          "critical_failure_count": {"const": 0},
+          "promotion_blocked": {"const": false},
+          "promotion_blockers": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"promotion_blocked": {"const": true}}, "required": ["promotion_blocked"]},
+      "then": {"properties": {"promotion_blockers": {"minItems": 1}}}
+    }
+  ]
+}

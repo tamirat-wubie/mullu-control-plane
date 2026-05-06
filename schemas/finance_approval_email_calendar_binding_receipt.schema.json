@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1",
+  "title": "Finance Approval Email Calendar Binding Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "checked_at",
+    "secret_serialization",
+    "ready",
+    "accepted_binding_names",
+    "present_binding_names",
+    "binding_count",
+    "bindings"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^finance-email-calendar-binding-receipt-[0-9a-f]{16}$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "secret_serialization": {
+      "type": "string",
+      "const": "forbidden"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "accepted_binding_names": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "enum": [
+          "GMAIL_ACCESS_TOKEN",
+          "GOOGLE_CALENDAR_ACCESS_TOKEN",
+          "MICROSOFT_GRAPH_ACCESS_TOKEN"
+        ]
+      }
+    },
+    "present_binding_names": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "GMAIL_ACCESS_TOKEN",
+          "GOOGLE_CALENDAR_ACCESS_TOKEN",
+          "MICROSOFT_GRAPH_ACCESS_TOKEN"
+        ]
+      }
+    },
+    "binding_count": {
+      "type": "integer",
+      "const": 3
+    },
+    "bindings": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "present",
+          "binding_kind",
+          "risk",
+          "approval_required",
+          "receipt_projection",
+          "value_serialized"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "GMAIL_ACCESS_TOKEN",
+              "GOOGLE_CALENDAR_ACCESS_TOKEN",
+              "MICROSOFT_GRAPH_ACCESS_TOKEN"
+            ]
+          },
+          "present": {
+            "type": "boolean"
+          },
+          "binding_kind": {
+            "type": "string",
+            "const": "secret"
+          },
+          "risk": {
+            "type": "string",
+            "const": "high"
+          },
+          "approval_required": {
+            "type": "boolean",
+            "const": true
+          },
+          "receipt_projection": {
+            "type": "string",
+            "const": "name_and_presence_only"
+          },
+          "value_serialized": {
+            "type": "boolean",
+            "const": false
+          }
+        }
+      }
+    }
+  }
+}

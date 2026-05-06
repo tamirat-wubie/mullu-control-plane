@@ -47,6 +47,8 @@ from mcoi_runtime.core.workflow import WorkflowEngine
 from mcoi_runtime.core.world_state import WorldStateEngine
 from mcoi_runtime.persistence.goal_store import GoalStore
 from mcoi_runtime.persistence.memory_store import MemoryStore
+from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.trace_store import TraceStore
 from mcoi_runtime.persistence.workflow_store import WorkflowStore
 
 from .config import AppConfig
@@ -79,6 +81,8 @@ class BootstrappedRuntime:
     workflow_engine: WorkflowEngine
     goal_store: GoalStore | None
     workflow_store: WorkflowStore | None
+    mil_audit_store: MILAuditStore | None
+    trace_store: TraceStore | None
     working_memory: WorkingMemory
     episodic_memory: EpisodicMemory
     memory_store: MemoryStore | None
@@ -124,6 +128,8 @@ def bootstrap_runtime(
     observers: Mapping[str, ObserverAdapter[object]] | None = None,
     goal_store: GoalStore | None = None,
     workflow_store: WorkflowStore | None = None,
+    mil_audit_store: MILAuditStore | None = None,
+    trace_store: TraceStore | None = None,
     memory_store: MemoryStore | None = None,
     restore_memory: bool = False,
 ) -> BootstrappedRuntime:
@@ -262,6 +268,8 @@ def bootstrap_runtime(
         workflow_engine=workflow_engine_inst,
         goal_store=goal_store,
         workflow_store=workflow_store,
+        mil_audit_store=mil_audit_store,
+        trace_store=trace_store,
         working_memory=working_memory,
         episodic_memory=episodic_memory,
         memory_store=memory_store,

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-live-handoff-chain-validation:1",
+  "title": "Finance Approval Live Handoff Chain Validation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "ready",
+    "checked_at",
+    "check_count",
+    "checks",
+    "blockers",
+    "readiness_blockers"
+  ],
+  "properties": {
+    "ok": {
+      "type": "boolean"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "check_count": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 5
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/chain_check"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "readiness_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "chain_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "passed",
+        "detail"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "finance closure run schema validation",
+            "finance email/calendar live receipt validation",
+            "finance preflight schema validation",
+            "finance handoff packet schema validation",
+            "governance protocol manifest validation"
+          ]
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

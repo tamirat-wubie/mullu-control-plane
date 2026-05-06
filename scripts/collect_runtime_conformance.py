@@ -64,6 +64,10 @@ REQUIRED_CERTIFICATE_FIELDS = (
     "mcp_capability_manifest_capability_count",
     "capability_plan_bundle_canary_passed",
     "capability_plan_bundle_count",
+    "physical_worker_canary_passed",
+    "physical_worker_canary_id",
+    "physical_worker_canary_artifact_hash",
+    "physical_worker_canary_evidence_count",
     "capsule_registry_certified",
     "proof_coverage_matrix_current",
     "proof_coverage_declared_routes_classified",
@@ -88,6 +92,7 @@ CORE_CONFORMANCE_BOOL_FIELDS = (
     "lineage_query_canary_passed",
     "authority_obligation_canary_passed",
     "capsule_registry_certified",
+    "physical_worker_canary_passed",
     "proof_coverage_matrix_current",
 )
 
@@ -278,6 +283,25 @@ def collect_runtime_conformance(
     ))
     if not plan_bundle_passed:
         errors.append("runtime conformance capability plan evidence bundle was not witnessed")
+
+    physical_worker_canary_passed = bool(certificate.get("physical_worker_canary_passed"))
+    physical_worker_canary_evidence_count = _int_count(certificate, "physical_worker_canary_evidence_count")
+    physical_worker_canary_evidence_passed = (
+        physical_worker_canary_passed
+        and physical_worker_canary_evidence_count >= 3
+        and bool(str(certificate.get("physical_worker_canary_artifact_hash", "")).strip())
+    )
+    steps.append(CollectionStep(
+        name="runtime conformance physical worker canary",
+        passed=physical_worker_canary_evidence_passed,
+        detail=(
+            f"passed={physical_worker_canary_passed} "
+            f"canary_id={certificate.get('physical_worker_canary_id', 'missing')} "
+            f"evidence_count={physical_worker_canary_evidence_count}"
+        ),
+    ))
+    if not physical_worker_canary_evidence_passed:
+        errors.append("runtime conformance physical worker canary was not witnessed")
 
     signature_status, signature_passed = _verify_certificate_signature(certificate, conformance_secret)
     steps.append(CollectionStep(

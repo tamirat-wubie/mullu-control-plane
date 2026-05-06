@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-handoff-packet:1",
+  "title": "Finance Approval Handoff Packet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "checked_at",
+    "status",
+    "readiness_level",
+    "ready",
+    "blockers",
+    "artifacts",
+    "promotion_boundary",
+    "proof_summary",
+    "claim_boundary",
+    "next_actions"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "pattern": "^finance-handoff-packet-[0-9a-f]{16}$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "blocked"
+      ]
+    },
+    "readiness_level": {
+      "type": "string",
+      "enum": [
+        "not-ready",
+        "proof-pilot-ready",
+        "live-email-handoff-ready"
+      ]
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "promotion_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ok",
+        "ready",
+        "mode",
+        "readiness_blockers",
+        "strict_promotion_command"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "proof-pilot-blocked",
+            "live-email-handoff"
+          ]
+        },
+        "readiness_blockers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "strict_promotion_command": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "proof_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_id",
+        "witness_status",
+        "blocked_case_state",
+        "successful_case_state",
+        "successful_effect_refs"
+      ],
+      "properties": {
+        "witness_id": {
+          "type": "string"
+        },
+        "witness_status": {
+          "type": "string"
+        },
+        "blocked_case_state": {
+          "type": "string"
+        },
+        "successful_case_state": {
+          "type": "string"
+        },
+        "successful_effect_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "claim_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_claim",
+        "must_not_claim"
+      ],
+      "properties": {
+        "can_claim": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "must_not_claim": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path",
+        "present",
+        "status"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "pilot_witness",
+            "live_handoff_plan",
+            "email_calendar_binding_receipt",
+            "live_handoff_closure_run",
+            "live_handoff_preflight"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "present": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

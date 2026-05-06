@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from mcoi_runtime.core.lineage_query import parse_lineage_uri
+from gateway.physical_worker_canary import run_physical_worker_canary
 from scripts.validate_mcp_capability_manifest import validate_mcp_capability_manifest
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -98,6 +99,10 @@ class RuntimeConformanceCertificate:
     mcp_capability_manifest_capability_count: int
     capability_plan_bundle_canary_passed: bool
     capability_plan_bundle_count: int
+    physical_worker_canary_passed: bool
+    physical_worker_canary_id: str
+    physical_worker_canary_artifact_hash: str
+    physical_worker_canary_evidence_count: int
     capsule_registry_certified: bool
     proof_coverage_matrix_current: bool
     proof_coverage_declared_routes_classified: bool
@@ -291,6 +296,21 @@ def issue_conformance_certificate(
         capability_plan_bundle_detail,
     ))
 
+    physical_worker_canary = run_physical_worker_canary()
+    physical_worker_canary_passed = physical_worker_canary.passed
+    physical_worker_canary_evidence_count = len(physical_worker_canary.evidence_refs)
+    physical_worker_canary_artifact_hash = physical_worker_canary.artifact_hash
+    checks.append(_check(
+        "physical_worker_canary",
+        physical_worker_canary_passed,
+        f"physical_worker_canary:{physical_worker_canary.canary_id}",
+        (
+            f"status={physical_worker_canary.status} "
+            f"evidence_count={physical_worker_canary_evidence_count} "
+            f"artifact_hash={physical_worker_canary_artifact_hash}"
+        ),
+    ))
+
     proof_coverage_status = _proof_coverage_status(repository_root)
     proof_coverage_matrix_current = proof_coverage_status.matrix_current
     proof_coverage_declared_routes_classified = proof_coverage_status.declared_routes_classified
@@ -339,6 +359,7 @@ def issue_conformance_certificate(
             authority_responsibility_debt_clear,
             mcp_manifest_valid,
             capability_plan_bundle_canary_passed,
+            physical_worker_canary_passed,
             proof_coverage_declared_routes_classified,
         ),
     )
@@ -369,6 +390,10 @@ def issue_conformance_certificate(
         mcp_capability_manifest_capability_count=mcp_manifest_capability_count,
         capability_plan_bundle_canary_passed=capability_plan_bundle_canary_passed,
         capability_plan_bundle_count=capability_plan_bundle_count,
+        physical_worker_canary_passed=physical_worker_canary_passed,
+        physical_worker_canary_id=physical_worker_canary.canary_id,
+        physical_worker_canary_artifact_hash=physical_worker_canary_artifact_hash,
+        physical_worker_canary_evidence_count=physical_worker_canary_evidence_count,
         capsule_registry_certified=capsule_registry_certified,
         proof_coverage_matrix_current=proof_coverage_matrix_current,
         proof_coverage_declared_routes_classified=proof_coverage_declared_routes_classified,

@@ -84,6 +84,7 @@
         "recovery_ref",
         "expires_at",
         "issued_at",
+        "physical_action_boundary_required",
         "lease_hash"
       ],
       "properties": {
@@ -158,6 +159,9 @@
         "issued_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "physical_action_boundary_required": {
+          "type": "boolean"
         },
         "lease_hash": {
           "type": "string",

@@ -84,6 +84,25 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
         "financial",
         "voice",
     }
+    assert read_model["general_agent_plane_count"] == 13
+    assert read_model["general_agent_execution_order"] == tuple(
+        plane["plane_id"] for plane in read_model["general_agent_planes"]
+    )
+    assert [plane["plane_id"] for plane in read_model["general_agent_planes"]] == [
+        "0.governance_core",
+        "1.llm_reasoning_plane",
+        "2.memory_plane",
+        "3.tool_skill_plane",
+        "4.computer_control_plane",
+        "5.browser_web_plane",
+        "6.document_data_plane",
+        "7.communication_plane",
+        "8.financial_effect_plane",
+        "9.mcp_external_tool_plane",
+        "10.scheduling_workflow_plane",
+        "11.observation_verification_plane",
+        "12.deployment_witness_plane",
+    ]
 
 
 def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
@@ -146,6 +165,62 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     assert rejected_decision.capability_id == ""
 
 
+def test_default_capability_admission_gate_can_require_production_ready_maturity() -> None:
+    gate = build_default_capability_admission_gate(clock=_clock, require_production_ready=True)
+
+    production_decision = gate.admit(command_id="command-1", intent_name="financial.send_payment")
+    sandbox_decision = gate.admit(command_id="command-2", intent_name="creative.translate")
+    unknown_decision = gate.admit(command_id="command-3", intent_name="gateway.unknown")
+    read_model = gate.read_model()
+
+    assert production_decision.status.value == "accepted"
+    assert production_decision.capability_id == "financial.send_payment"
+    assert production_decision.owner_team == "finance-ops"
+    assert sandbox_decision.status.value == "rejected"
+    assert sandbox_decision.capability_id == "creative.translate"
+    assert "capability is not production-ready" in sandbox_decision.reason
+    assert "sandbox_receipt_missing" in sandbox_decision.reason
+    assert unknown_decision.status.value == "rejected"
+    assert unknown_decision.capability_id == ""
+    assert read_model["require_production_ready"] is True
+    assert read_model["production_ready_count"] == 2
+
+
+def test_capability_fabric_env_loader_requires_production_ready_by_default_in_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MULLU_ENV", "production")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_USE_DEFAULT_PACKS", "true")
+
+    gate = build_capability_admission_gate_from_env(clock=_clock)
+    sandbox_decision = gate.admit(command_id="command-1", intent_name="document.extract_text")
+    production_decision = gate.admit(command_id="command-2", intent_name="connector.github.read")
+
+    assert gate.read_model()["require_production_ready"] is True
+    assert sandbox_decision.status.value == "rejected"
+    assert sandbox_decision.domain == "document"
+    assert "live_read_receipt_missing" in sandbox_decision.reason
+    assert production_decision.status.value == "accepted"
+    assert production_decision.capability_id == "connector.github.read"
+
+
+def test_capability_fabric_env_loader_allows_sandbox_maturity_when_explicitly_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MULLU_ENV", "production")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_USE_DEFAULT_PACKS", "true")
+    monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_REQUIRE_PRODUCTION_READY", "false")
+
+    gate = build_capability_admission_gate_from_env(clock=_clock)
+    sandbox_decision = gate.admit(command_id="command-1", intent_name="document.extract_text")
+
+    assert gate.read_model()["require_production_ready"] is False
+    assert sandbox_decision.status.value == "accepted"
+    assert sandbox_decision.capability_id == "document.extract_text"
+
+
 def test_default_read_model_projects_governed_capability_records() -> None:
     gate = build_default_capability_admission_gate(clock=_clock)
 
@@ -175,6 +250,10 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     calendar_invite_record = records["calendar.invite"]
     deployment_collect_record = records["deployment.witness.collect"]
     deployment_publish_record = records["deployment.witness.publish.with_approval"]
+    planes = {
+        plane["plane_id"]: plane
+        for plane in gate.read_model()["general_agent_planes"]
+    }
 
     assert len(records) == 52
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
@@ -281,3 +360,16 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         "unsigned_witness_published",
         "secret_value_exposed",
     ]
+    assert planes["0.governance_core"]["capability_ids"] == ()
+    assert "financial.send_payment" in planes["8.financial_effect_plane"]["capability_ids"]
+    assert "computer.command.run" in planes["4.computer_control_plane"]["capability_ids"]
+    assert "browser.submit" in planes["5.browser_web_plane"]["capability_ids"]
+    assert "document.extract_text" in planes["6.document_data_plane"]["capability_ids"]
+    assert "connector.github.read" in planes["9.mcp_external_tool_plane"]["capability_ids"]
+    assert "deployment.witness.collect" in planes["12.deployment_witness_plane"]["capability_ids"]
+    assert planes["8.financial_effect_plane"]["requires_approval_count"] >= 2
+    assert planes["3.tool_skill_plane"]["governed_record_count"] == 50
+    for plane in planes.values():
+        assert "allowed_tools" not in plane
+        assert "input_schema_ref" not in plane
+        assert "extensions" not in plane

@@ -25,6 +25,7 @@ from mcoi_runtime.app.server_policy import (
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.server_app import create_governed_app
 from mcoi_runtime.app.server_context import bootstrap_server_context, resolve_env
+from mcoi_runtime.app.governed_swarm_integration import mount_governed_swarm_router_from_env
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -50,6 +51,10 @@ from mcoi_runtime.core.temporal_scheduler_worker import TemporalSchedulerWorker
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
     SoftwareChangeReceiptStore,
+)
+from mcoi_runtime.persistence.finance_approval_store import (
+    FileFinanceApprovalPacketStore,
+    FinanceApprovalPacketStore,
 )
 from mcoi_runtime.persistence.temporal_scheduler_store import (
     FileTemporalSchedulerStore,
@@ -249,6 +254,20 @@ deps.set("temporal_scheduler_store", temporal_scheduler_store)
 deps.set("temporal_action_handlers", temporal_action_handlers)
 if temporal_scheduler_background is not None:
     deps.set("temporal_scheduler_background", temporal_scheduler_background)
+
+_finance_approval_store_path = os.environ.get("MULLU_FINANCE_APPROVAL_STORE_PATH")
+finance_approval_store = (
+    FileFinanceApprovalPacketStore(Path(_finance_approval_store_path))
+    if _finance_approval_store_path
+    else FinanceApprovalPacketStore()
+)
+deps.set("finance_approval_store", finance_approval_store)
+
+governed_swarm_bootstrap = mount_governed_swarm_router_from_env(
+    app=app,
+    runtime_env=os.environ,
+)
+deps.set("governed_swarm_bootstrap", governed_swarm_bootstrap)
 
 
 # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:proof-verification-endpoint:1",
+  "title": "Proof Verification Endpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "valid",
+    "runtime_env",
+    "deployment_id",
+    "commit_sha",
+    "checks",
+    "checks_passed",
+    "checks_missing",
+    "terminal_status",
+    "governed"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "runtime_env": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deployment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "checks": {
+      "$ref": "#/$defs/checks"
+    },
+    "checks_passed": {
+      "$ref": "#/$defs/check_ids"
+    },
+    "checks_missing": {
+      "$ref": "#/$defs/check_ids"
+    },
+    "terminal_status": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "verification_gaps"
+      ]
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "check_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "passed",
+          "detail"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

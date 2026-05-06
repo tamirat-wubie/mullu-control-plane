@@ -205,6 +205,13 @@ class OperatorRunReport:
     plane_attributed_provider_operation_count: int = 0
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
+    mil_program_id: str | None = None
+    mil_instruction_count: int = 0
+    mil_verification_passed: bool | None = None
+    mil_verification_issues: tuple[str, ...] = ()
+    mil_instruction_trace: tuple[str, ...] = ()
+    mil_audit_record_id: str | None = None
+    mil_trace_ids: tuple[str, ...] = ()
 
 
 __all__ = [

@@ -25,6 +25,8 @@ from gateway.command_spine import canonical_hash
 
 WorkerHandler = Callable[["WorkerDispatchRequest"], "WorkerHandlerResult"]
 VALID_WORKER_STATUSES = frozenset({"succeeded", "failed", "rejected"})
+PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY = "physical_action_receipt"
+PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +81,7 @@ class WorkerLease:
     recovery_ref: str
     expires_at: str
     issued_at: str
+    physical_action_boundary_required: bool = False
     lease_hash: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -312,6 +315,10 @@ def _admission_denial(binding: _WorkerBinding, request: WorkerDispatchRequest, *
         return "operation_forbidden"
     if request.operation not in lease.allowed_operations:
         return "operation_not_allowed"
+    if lease.physical_action_boundary_required:
+        physical_denial = _physical_action_receipt_denial(request.payload.get(PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY))
+        if physical_denial:
+            return physical_denial
     if not request.request_id:
         return "request_id_required"
     if binding.operation_count >= lease.budget.max_operations:
@@ -380,6 +387,12 @@ def _receipt(
             "estimated_cost": request.estimated_cost,
             "lease_hash": lease.lease_hash if lease else "",
             "worker_receipt_status": status,
+            "physical_action_boundary_required": lease.physical_action_boundary_required if lease else False,
+            "physical_action_receipt_validated": (
+                lease.physical_action_boundary_required
+                and status != "rejected"
+                if lease else False
+            ),
         },
     )
     receipt_hash = canonical_hash(asdict(receipt))
@@ -395,6 +408,35 @@ def _stamp_request(request: WorkerDispatchRequest, *, requested_at: str) -> Work
 def _stamp_lease(lease: WorkerLease) -> WorkerLease:
     payload = asdict(replace(lease, lease_hash=""))
     return replace(lease, lease_hash=canonical_hash(payload))
+
+
+def _physical_action_receipt_denial(receipt: Any) -> str:
+    if not isinstance(receipt, dict):
+        return "physical_action_receipt_required"
+    if receipt.get("receipt_schema_ref") != PHYSICAL_ACTION_RECEIPT_SCHEMA_REF:
+        return "physical_action_receipt_schema_invalid"
+    if receipt.get("status") != "allowed":
+        return "physical_action_receipt_not_allowed"
+    if receipt.get("terminal_closure_required") is not True:
+        return "physical_terminal_closure_required"
+    if receipt.get("physical_worker_receipt_required") is not True:
+        return "physical_worker_receipt_required"
+    if receipt.get("manual_override_required") is not True:
+        return "physical_manual_override_required"
+    if receipt.get("emergency_stop_required") is not True:
+        return "physical_emergency_stop_required"
+    if receipt.get("simulation_passed") is not True:
+        return "physical_simulation_required"
+    if not receipt.get("actuator_id"):
+        return "physical_actuator_id_required"
+    if not receipt.get("receipt_hash"):
+        return "physical_action_receipt_hash_required"
+    evidence_refs = receipt.get("evidence_refs")
+    if not isinstance(evidence_refs, list) or not evidence_refs:
+        return "physical_action_evidence_required"
+    if receipt.get("effect_mode") == "live" and receipt.get("operator_approval_required") is not True:
+        return "physical_operator_approval_required"
+    return ""
 
 
 def _is_expired(expires_at: str, now: str) -> bool:

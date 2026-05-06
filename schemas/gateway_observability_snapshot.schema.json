@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gateway-observability-snapshot:1",
+  "title": "Gateway Observability Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "enabled",
+    "retention_limit",
+    "retained_trace_count",
+    "metrics",
+    "latest_trace_ids",
+    "missing_signal_policy"
+  ],
+  "properties": {
+    "enabled": { "type": "boolean" },
+    "retention_limit": { "type": "integer", "minimum": 1 },
+    "retained_trace_count": { "type": "integer", "minimum": 0 },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_count",
+        "policy_denial_count",
+        "approval_escalation_count",
+        "tool_failure_count",
+        "payment_failure_count",
+        "p95_latency",
+        "model_cost_usd",
+        "cost_per_tenant",
+        "cost_per_capability",
+        "eval_pass_rate",
+        "capability_receipt_rate",
+        "unclosed_action_count",
+        "retry_count",
+        "missing_signal_count"
+      ],
+      "properties": {
+        "request_count": { "type": "integer", "minimum": 0 },
+        "policy_denial_count": { "type": "integer", "minimum": 0 },
+        "approval_escalation_count": { "type": "integer", "minimum": 0 },
+        "tool_failure_count": { "type": "integer", "minimum": 0 },
+        "payment_failure_count": { "type": "integer", "minimum": 0 },
+        "p95_latency": { "type": "number", "minimum": 0 },
+        "model_cost_usd": { "type": "number", "minimum": 0 },
+        "cost_per_tenant": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "cost_per_capability": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "eval_pass_rate": {
+          "anyOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "null" }
+          ]
+        },
+        "capability_receipt_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "unclosed_action_count": { "type": "integer", "minimum": 0 },
+        "retry_count": { "type": "integer", "minimum": 0 },
+        "missing_signal_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "latest_trace_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "missing_signal_policy": { "const": "explicit_not_observed" }
+  }
+}

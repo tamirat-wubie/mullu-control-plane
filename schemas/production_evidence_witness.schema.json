@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:production-evidence-witness:1",
+  "title": "Production Evidence Witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_id",
+    "commit_sha",
+    "runtime_env",
+    "version",
+    "gateway_health",
+    "api_health",
+    "db_health",
+    "policy_engine",
+    "audit_store",
+    "proof_store",
+    "capability_evidence",
+    "live_capabilities",
+    "sandbox_only_capabilities",
+    "checks",
+    "checks_passed",
+    "checks_missing",
+    "runtime_conformance_certificate_id",
+    "signed_at",
+    "witness",
+    "signature_key_id",
+    "claim_hash",
+    "signature"
+  ],
+  "properties": {
+    "deployment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit_sha": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_env": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gateway_health": {
+      "$ref": "#/$defs/pass_missing_status"
+    },
+    "api_health": {
+      "$ref": "#/$defs/pass_missing_status"
+    },
+    "db_health": {
+      "$ref": "#/$defs/pass_missing_status"
+    },
+    "policy_engine": {
+      "$ref": "#/$defs/pass_missing_status"
+    },
+    "audit_store": {
+      "$ref": "#/$defs/pass_missing_status"
+    },
+    "proof_store": {
+      "$ref": "#/$defs/pass_missing_status"
+    },
+    "capability_evidence": {
+      "$ref": "#/$defs/capability_evidence_map"
+    },
+    "live_capabilities": {
+      "$ref": "#/$defs/capability_ids"
+    },
+    "sandbox_only_capabilities": {
+      "$ref": "#/$defs/capability_ids"
+    },
+    "checks": {
+      "$ref": "#/$defs/checks"
+    },
+    "checks_passed": {
+      "$ref": "#/$defs/check_ids"
+    },
+    "checks_missing": {
+      "$ref": "#/$defs/check_ids"
+    },
+    "runtime_conformance_certificate_id": {
+      "type": "string"
+    },
+    "signed_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "witness": {
+      "type": "string",
+      "const": "mullu_gateway_production_evidence_v1"
+    },
+    "signature_key_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claim_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^hmac-sha256:[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "pass_missing_status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "missing"
+      ]
+    },
+    "capability_evidence_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "described_only",
+          "tested",
+          "sandbox",
+          "pilot",
+          "production"
+        ]
+      }
+    },
+    "capability_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "check_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "passed",
+          "detail"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

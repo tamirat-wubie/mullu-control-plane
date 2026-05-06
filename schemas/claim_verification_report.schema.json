@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:claim-verification-report:1",
+  "title": "Claim Verification Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "tenant_id",
+    "claim_id",
+    "claim_kind",
+    "status",
+    "allowed_for_planning",
+    "allowed_for_execution",
+    "confidence",
+    "domain_risk",
+    "supported_by",
+    "contradicted_by",
+    "missing_requirements",
+    "evidence_refs",
+    "checked_at",
+    "report_hash",
+    "metadata"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claim_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claim_kind": {
+      "type": "string",
+      "enum": [
+        "observed_fact",
+        "user_claim",
+        "model_inference",
+        "external_source_claim",
+        "verified_result",
+        "stale_result",
+        "contradicted_result"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "unsupported",
+        "contradicted",
+        "stale",
+        "requires_review"
+      ]
+    },
+    "allowed_for_planning": {
+      "type": "boolean"
+    },
+    "allowed_for_execution": {
+      "type": "boolean"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "domain_risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "supported_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "contradicted_by": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "missing_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "checked_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_hash": {
+      "type": "string",
+      "minLength": 32
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "claim_type_declared",
+        "source_evidence_required",
+        "contradictions_block_execution",
+        "stale_claims_block_execution",
+        "high_risk_requires_independent_support"
+      ],
+      "properties": {
+        "claim_type_declared": {
+          "type": "boolean",
+          "const": true
+        },
+        "source_evidence_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "contradictions_block_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "stale_claims_block_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "high_risk_requires_independent_support": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

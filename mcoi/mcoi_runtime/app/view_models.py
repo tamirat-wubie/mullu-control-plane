@@ -66,6 +66,13 @@ class RunSummaryView:
     plane_attributed_provider_operation_count: int = 0
     autonomy_mode: str | None = None
     autonomy_decision: str | None = None
+    mil_program_id: str | None = None
+    mil_instruction_count: int = 0
+    mil_verification_passed: bool | None = None
+    mil_verification_issues: tuple[str, ...] = ()
+    mil_instruction_trace: tuple[str, ...] = ()
+    mil_audit_record_id: str | None = None
+    mil_trace_ids: tuple[str, ...] = ()
 
     @staticmethod
     def from_report(report: OperatorRunReport) -> RunSummaryView:
@@ -100,6 +107,13 @@ class RunSummaryView:
             plane_attributed_provider_operation_count=report.plane_attributed_provider_operation_count,
             autonomy_mode=report.autonomy_mode,
             autonomy_decision=report.autonomy_decision,
+            mil_program_id=report.mil_program_id,
+            mil_instruction_count=report.mil_instruction_count,
+            mil_verification_passed=report.mil_verification_passed,
+            mil_verification_issues=report.mil_verification_issues,
+            mil_instruction_trace=report.mil_instruction_trace,
+            mil_audit_record_id=report.mil_audit_record_id,
+            mil_trace_ids=report.mil_trace_ids,
         )
 
 

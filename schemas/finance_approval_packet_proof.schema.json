@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-packet-proof:1",
+  "title": "Finance Approval Packet Proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "proof_id",
+    "case_id",
+    "tenant_id",
+    "final_state",
+    "policy_decisions",
+    "evidence_refs",
+    "audit_root_hash",
+    "generated_at"
+  ],
+  "properties": {
+    "proof_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "final_state": {
+      "type": "string",
+      "enum": [
+        "closed_prepared",
+        "closed_sent",
+        "closed_rejected",
+        "closed_duplicate",
+        "closed_accepted_risk",
+        "requires_review",
+        "failed_with_recovery"
+      ]
+    },
+    "policy_decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "approval_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "effect_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "closure_certificate_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "audit_root_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "final_state": {
+            "enum": [
+              "closed_prepared",
+              "closed_sent",
+              "closed_rejected",
+              "closed_duplicate",
+              "closed_accepted_risk",
+              "failed_with_recovery"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "closure_certificate_id"
+        ],
+        "properties": {
+          "closure_certificate_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "final_state": {
+            "const": "closed_sent"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "effect_refs"
+        ],
+        "properties": {
+          "effect_refs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  ]
+}
