@@ -5,7 +5,8 @@ runtime inputs and downloads the workflow artifact after completion.
 Governance scope: [OCE, CDCV, UWMA, PRS]
 Dependencies: scripts.dispatch_deployment_witness.
 Invariants:
-  - Missing runtime witness or conformance secret prevents workflow dispatch.
+  - Missing runtime witness, conformance, or deployment witness secret prevents
+    workflow dispatch.
   - Missing or inactive workflow prevents workflow dispatch.
   - Successful dispatch returns the completed run and artifact directory.
 """
@@ -29,12 +30,14 @@ class FakeRunner:
         *,
         secret_present: bool = True,
         conformance_secret_present: bool = True,
+        deployment_witness_secret_present: bool = True,
         workflow_state: str = "active",
         run_conclusion: str = "success",
         variables: dict[str, str] | None = None,
     ) -> None:
         self.secret_present = secret_present
         self.conformance_secret_present = conformance_secret_present
+        self.deployment_witness_secret_present = deployment_witness_secret_present
         self.workflow_state = workflow_state
         self.run_conclusion = run_conclusion
         self.variables = variables or {}
@@ -65,6 +68,8 @@ class FakeRunner:
                 payload.append({"name": "MULLU_RUNTIME_WITNESS_SECRET"})
             if self.conformance_secret_present:
                 payload.append({"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"})
+            if self.deployment_witness_secret_present:
+                payload.append({"name": "MULLU_DEPLOYMENT_WITNESS_SECRET"})
             return _completed(command, payload)
         if command[:3] == ["gh", "workflow", "list"]:
             return _completed(
@@ -200,6 +205,7 @@ def test_dispatch_deployment_witness_accepts_mounted_runtime_secret(tmp_path: Pa
         expected_environment="pilot",
         runtime_secret_present=True,
         conformance_secret_present=True,
+        deployment_witness_secret_present=True,
         download_dir=tmp_path / "artifact",
         poll_seconds=1,
         runner=runner,
@@ -225,6 +231,21 @@ def test_dispatch_deployment_witness_fails_without_conformance_secret(tmp_path: 
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
+def test_dispatch_deployment_witness_fails_without_deployment_witness_secret(tmp_path: Path) -> None:
+    runner = FakeRunner(deployment_witness_secret_present=False)
+
+    with pytest.raises(RuntimeError, match="MULLU_DEPLOYMENT_WITNESS_SECRET"):
+        dispatch_deployment_witness(
+            gateway_url="https://gateway.example.com",
+            expected_environment="pilot",
+            download_dir=tmp_path / "artifact",
+            runner=runner,
+        )
+
+    assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+    assert not (tmp_path / "artifact").exists()
+
+
 def test_dispatch_deployment_witness_fails_before_dispatch_when_workflow_inactive(tmp_path: Path) -> None:
     runner = FakeRunner(workflow_state="disabled_manually")
 
@@ -236,10 +257,11 @@ def test_dispatch_deployment_witness_fails_before_dispatch_when_workflow_inactiv
             runner=runner,
         )
 
-    assert len(runner.commands) == 3
+    assert len(runner.commands) == 4
     assert runner.commands[0][:3] == ["gh", "secret", "list"]
     assert runner.commands[1][:3] == ["gh", "secret", "list"]
-    assert runner.commands[2][:3] == ["gh", "workflow", "list"]
+    assert runner.commands[2][:3] == ["gh", "secret", "list"]
+    assert runner.commands[3][:3] == ["gh", "workflow", "list"]
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 

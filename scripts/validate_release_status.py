@@ -265,6 +265,7 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "dispatch_witness",
     "MULLU_RUNTIME_WITNESS_SECRET",
     "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_DEPLOYMENT_WITNESS_SECRET",
     "MULLU_KUBECONFIG_B64",
     "python scripts/orchestrate_deployment_witness.py",
     "--require-preflight",
@@ -274,6 +275,7 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     ".change_assurance/deployment_witness_orchestration_validation.json",
     "--accept-runtime-secret-env",
     "--accept-conformance-secret-env",
+    "--accept-deployment-witness-secret-env",
     "actions/upload-artifact@v4",
 )
 

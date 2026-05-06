@@ -67,6 +67,7 @@ class FakeRunner:
                 [
                     {"name": "MULLU_RUNTIME_WITNESS_SECRET"},
                     {"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"},
+                    {"name": "MULLU_DEPLOYMENT_WITNESS_SECRET"},
                 ],
             )
         if command[:3] == ["gh", "workflow", "list"]:
@@ -215,6 +216,7 @@ def test_orchestrate_deployment_witness_accepts_mounted_runtime_secret(tmp_path:
         dispatch=True,
         runtime_secret_present=True,
         conformance_secret_present=True,
+        deployment_witness_secret_present=True,
         download_dir=tmp_path / "artifact",
         poll_seconds=1,
         runner=runner,
@@ -485,6 +487,10 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "capability_plan_bundle_canary_passed": True,
             "capability_plan_bundle_count": 0,
             "capsule_registry_certified": True,
+            "physical_worker_canary_passed": True,
+            "physical_worker_canary_id": "physical-worker-canary-test",
+            "physical_worker_canary_artifact_hash": "sha256:" + "a" * 64,
+            "physical_worker_canary_evidence_count": 1,
             "proof_coverage_matrix_current": True,
             "proof_coverage_declared_routes_classified": True,
             "proof_coverage_declared_route_count": 301,

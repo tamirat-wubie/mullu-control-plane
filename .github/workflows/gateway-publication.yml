@@ -60,6 +60,7 @@ jobs:
         env:
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
           MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
         run: |
           if [ -z "$MULLU_RUNTIME_WITNESS_SECRET" ]; then
             echo "MULLU_RUNTIME_WITNESS_SECRET is required for gateway publication"
@@ -67,6 +68,10 @@ jobs:
           fi
           if [ -z "$MULLU_RUNTIME_CONFORMANCE_SECRET" ]; then
             echo "MULLU_RUNTIME_CONFORMANCE_SECRET is required for gateway publication"
+            exit 1
+          fi
+          if [ -z "$MULLU_DEPLOYMENT_WITNESS_SECRET" ]; then
+            echo "MULLU_DEPLOYMENT_WITNESS_SECRET is required for gateway publication"
             exit 1
           fi
 
@@ -92,6 +97,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
           MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
         run: |
           args=(
             --gateway-host "${{ inputs.gateway_host }}"
@@ -100,6 +106,7 @@ jobs:
             --require-mcp-operator-checklist
             --accept-runtime-secret-env
             --accept-conformance-secret-env
+            --accept-deployment-witness-secret-env
             --preflight-output .change_assurance/deployment_witness_preflight.json
             --orchestration-output .change_assurance/deployment_witness_orchestration.json
           )

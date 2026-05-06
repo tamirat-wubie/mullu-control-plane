@@ -7,10 +7,10 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: GitHub CLI, .github/workflows/deployment-witness.yml.
 Invariants:
   - Workflow dispatch requires an explicit gateway URL.
-  - Workflow dispatch requires runtime witness and conformance repository
-    secrets to exist.
-  - Mounted runtime and conformance secrets can witness presence without
-    listing secrets.
+  - Workflow dispatch requires runtime witness, conformance, and deployment
+    witness repository secrets to exist.
+  - Mounted runtime, conformance, and deployment witness secrets can witness
+    presence without listing secrets.
   - The selected workflow must be active before dispatch.
   - The deployment-witness artifact is downloaded after the run completes.
 """
@@ -32,6 +32,7 @@ DEFAULT_WORKFLOW_FILE = "deployment-witness.yml"
 DEFAULT_WORKFLOW_NAME = "Deployment Witness Collection"
 DEFAULT_SECRET_NAME = "MULLU_RUNTIME_WITNESS_SECRET"
 DEFAULT_CONFORMANCE_SECRET_NAME = "MULLU_RUNTIME_CONFORMANCE_SECRET"
+DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME = "MULLU_DEPLOYMENT_WITNESS_SECRET"
 DEFAULT_ARTIFACT_NAME = "deployment-witness"
 DEFAULT_DOWNLOAD_DIR = Path(".change_assurance") / "deployment-witness-artifact"
 DEFAULT_GATEWAY_URL_VARIABLE = "MULLU_GATEWAY_URL"
@@ -73,8 +74,10 @@ def dispatch_deployment_witness(
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
     conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
+    deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
+    deployment_witness_secret_present: bool = False,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     timeout_seconds: int = 600,
@@ -101,6 +104,8 @@ def dispatch_deployment_witness(
         _require_secret(repository=repository, secret_name=secret_name, runner=command_runner)
     if not conformance_secret_present:
         _require_secret(repository=repository, secret_name=conformance_secret_name, runner=command_runner)
+    if not deployment_witness_secret_present:
+        _require_secret(repository=repository, secret_name=deployment_witness_secret_name, runner=command_runner)
     _require_active_workflow(
         repository=repository,
         workflow_file=workflow_file,
@@ -380,8 +385,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
     parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
+    parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
+    parser.add_argument("--accept-deployment-witness-secret-env", action="store_true")
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=600)
@@ -401,6 +408,7 @@ def main(argv: list[str] | None = None) -> int:
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
             conformance_secret_name=args.conformance_secret_name,
+            deployment_witness_secret_name=args.deployment_witness_secret_name,
             runtime_secret_present=(
                 args.accept_runtime_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
@@ -408,6 +416,10 @@ def main(argv: list[str] | None = None) -> int:
             conformance_secret_present=(
                 args.accept_conformance_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET"))
+            ),
+            deployment_witness_secret_present=(
+                args.accept_deployment_witness_secret_env
+                and bool(os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET"))
             ),
             artifact_name=args.artifact_name,
             download_dir=Path(args.download_dir),
