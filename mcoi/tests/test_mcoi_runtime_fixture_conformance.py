@@ -161,6 +161,24 @@ from mcoi_runtime.contracts.billing_runtime import (
     PenaltyRecord,
     RevenueSnapshot,
 )
+from mcoi_runtime.contracts.settlement_runtime import (
+    AgingSnapshot,
+    CashApplication,
+    CollectionCase,
+    CollectionStatus,
+    DunningNotice,
+    DunningSeverity,
+    PaymentMethodKind,
+    PaymentRecord,
+    PaymentStatus,
+    RefundRecord,
+    SettlementClosureReport,
+    SettlementDecision,
+    SettlementRecord,
+    SettlementStatus,
+    WriteoffDisposition,
+    WriteoffRecord,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -1252,9 +1270,148 @@ def _build_billing_closure_report(payload: dict) -> BillingClosureReport:
     )
 
 
+def _build_payment_record(payload: dict) -> PaymentRecord:
+    return PaymentRecord(
+        payment_id=payload["payment_id"],
+        invoice_id=payload["invoice_id"],
+        account_id=payload["account_id"],
+        amount=payload["amount"],
+        currency=payload["currency"],
+        method=PaymentMethodKind(payload["method"]),
+        status=PaymentStatus(payload["status"]),
+        reference=payload["reference"],
+        received_at=payload["received_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_settlement_record(payload: dict) -> SettlementRecord:
+    return SettlementRecord(
+        settlement_id=payload["settlement_id"],
+        invoice_id=payload["invoice_id"],
+        account_id=payload["account_id"],
+        total_amount=payload["total_amount"],
+        paid_amount=payload["paid_amount"],
+        credit_applied=payload["credit_applied"],
+        outstanding=payload["outstanding"],
+        status=SettlementStatus(payload["status"]),
+        currency=payload["currency"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_collection_case(payload: dict) -> CollectionCase:
+    return CollectionCase(
+        case_id=payload["case_id"],
+        invoice_id=payload["invoice_id"],
+        account_id=payload["account_id"],
+        status=CollectionStatus(payload["status"]),
+        outstanding_amount=payload["outstanding_amount"],
+        dunning_count=payload["dunning_count"],
+        opened_at=payload["opened_at"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_dunning_notice(payload: dict) -> DunningNotice:
+    return DunningNotice(
+        notice_id=payload["notice_id"],
+        case_id=payload["case_id"],
+        account_id=payload["account_id"],
+        severity=DunningSeverity(payload["severity"]),
+        message=payload["message"],
+        sent_at=payload["sent_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_cash_application(payload: dict) -> CashApplication:
+    return CashApplication(
+        application_id=payload["application_id"],
+        settlement_id=payload["settlement_id"],
+        payment_id=payload["payment_id"],
+        amount=payload["amount"],
+        applied_at=payload["applied_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_refund_record(payload: dict) -> RefundRecord:
+    return RefundRecord(
+        refund_id=payload["refund_id"],
+        payment_id=payload["payment_id"],
+        account_id=payload["account_id"],
+        amount=payload["amount"],
+        reason=payload["reason"],
+        refunded_at=payload["refunded_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_writeoff_record(payload: dict) -> WriteoffRecord:
+    return WriteoffRecord(
+        writeoff_id=payload["writeoff_id"],
+        settlement_id=payload["settlement_id"],
+        account_id=payload["account_id"],
+        amount=payload["amount"],
+        disposition=WriteoffDisposition(payload["disposition"]),
+        reason=payload["reason"],
+        written_off_at=payload["written_off_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_aging_snapshot(payload: dict) -> AgingSnapshot:
+    return AgingSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_settlements=payload["total_settlements"],
+        total_open=payload["total_open"],
+        total_partial=payload["total_partial"],
+        total_settled=payload["total_settled"],
+        total_disputed=payload["total_disputed"],
+        total_written_off=payload["total_written_off"],
+        total_outstanding=payload["total_outstanding"],
+        total_collected=payload["total_collected"],
+        total_refunded=payload["total_refunded"],
+        total_collection_cases=payload["total_collection_cases"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_settlement_decision(payload: dict) -> SettlementDecision:
+    return SettlementDecision(
+        decision_id=payload["decision_id"],
+        settlement_id=payload["settlement_id"],
+        description=payload["description"],
+        decided_by=payload["decided_by"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_settlement_closure_report(payload: dict) -> SettlementClosureReport:
+    return SettlementClosureReport(
+        report_id=payload["report_id"],
+        account_id=payload["account_id"],
+        total_settlements=payload["total_settlements"],
+        total_payments=payload["total_payments"],
+        total_refunds=payload["total_refunds"],
+        total_writeoffs=payload["total_writeoffs"],
+        total_collection_cases=payload["total_collection_cases"],
+        total_collected=payload["total_collected"],
+        total_outstanding=payload["total_outstanding"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("aging_snapshot.json", _build_aging_snapshot),
         ("asset_assessment.json", _build_asset_assessment),
         ("asset_assignment.json", _build_asset_assignment),
         ("asset_closure_report.json", _build_asset_closure_report),
@@ -1267,8 +1424,10 @@ def _build_billing_closure_report(payload: dict) -> BillingClosureReport:
         ("billing_decision.json", _build_billing_decision),
         ("billing_violation.json", _build_billing_violation),
         ("breach_record.json", _build_breach_record),
+        ("cash_application.json", _build_cash_application),
         ("charge_record.json", _build_charge_record),
         ("commitment_record.json", _build_commitment_record),
+        ("collection_case.json", _build_collection_case),
         ("configuration_item.json", _build_configuration_item),
         ("contract_assessment.json", _build_contract_assessment),
         ("contract_clause.json", _build_contract_clause),
@@ -1304,6 +1463,7 @@ def _build_billing_closure_report(payload: dict) -> BillingClosureReport:
         ("governance_contract_record.json", _build_governance_contract_record),
         ("disruption_event.json", _build_disruption_event),
         ("dispute_record.json", _build_dispute_record),
+        ("dunning_notice.json", _build_dunning_notice),
         ("evidence_collection.json", _build_evidence_collection),
         ("evidence_item.json", _build_evidence_item),
         ("failover_record.json", _build_failover_record),
@@ -1319,6 +1479,7 @@ def _build_billing_closure_report(payload: dict) -> BillingClosureReport:
         ("invoice_record.json", _build_invoice_record),
         ("lifecycle_event.json", _build_lifecycle_event),
         ("merge_decision.json", _build_merge_decision),
+        ("payment_record.json", _build_payment_record),
         ("penalty_record.json", _build_penalty_record),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),
@@ -1327,13 +1488,18 @@ def _build_billing_closure_report(payload: dict) -> BillingClosureReport:
         ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
         ("revenue_snapshot.json", _build_revenue_snapshot),
+        ("refund_record.json", _build_refund_record),
         ("remedy_record.json", _build_remedy_record),
         ("review_packet.json", _build_review_packet),
         ("review_record.json", _build_review_record),
         ("recertification_window.json", _build_recertification_window),
         ("renewal_window.json", _build_renewal_window),
+        ("settlement_closure_report.json", _build_settlement_closure_report),
+        ("settlement_decision.json", _build_settlement_decision),
+        ("settlement_record.json", _build_settlement_record),
         ("sla_window.json", _build_sla_window),
         ("verification_record.json", _build_verification_record),
+        ("writeoff_record.json", _build_writeoff_record),
     ],
 )
 def test_mcoi_runtime_fixture_round_trips_exactly_through_mcoi_contracts(
