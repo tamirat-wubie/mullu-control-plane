@@ -1,6 +1,6 @@
 # Mullu Platform v3.13.1 — Substrate-Soak Telemetry Patch
 
-**Release date:** TBD (W0a, ~3 days before v4.0.0 announcement)
+**Release date:** 2026-05-06
 **Codename:** Pre-Soak
 **Migration required:** No
 

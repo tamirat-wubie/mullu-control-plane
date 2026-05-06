@@ -8,7 +8,7 @@ Invariants:
   - Runtime witness, conformance, and deployment witness secret presence is
     checked by name only.
   - Kubeconfig secret is required only when ingress apply is requested.
-  - Workflow dispatch happens only after validation succeeds.
+  - Workflow dispatch happens only after validation and readiness proof succeed.
 """
 
 from __future__ import annotations
@@ -368,6 +368,51 @@ def test_cli_refuses_unready_readiness_report(
     assert "readiness report is not ready" not in captured.out
 
 
+def test_cli_refuses_ready_report_without_proof_steps(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    report_path = tmp_path / "readiness.json"
+    _write_readiness_report(report_path, steps=[])
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(["--readiness-report", str(report_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert runner.commands == []
+    assert "gateway publication dispatch failed" in captured.out
+    assert "proof steps" not in captured.out
+
+
+def test_cli_refuses_ready_report_with_failed_proof_step(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    report_path = tmp_path / "readiness.json"
+    steps = _ready_steps()
+    steps[-1]["passed"] = False
+    _write_readiness_report(report_path, steps=steps)
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(["--readiness-report", str(report_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert runner.commands == []
+    assert "gateway publication dispatch failed" in captured.out
+
+
 def test_cli_refuses_readiness_report_repository_mismatch(
     tmp_path: Path,
     monkeypatch,
@@ -425,6 +470,7 @@ def _write_readiness_report(
     apply_ingress: bool = False,
     dispatch_witness: bool = False,
     skip_preflight_endpoint_probes: bool = False,
+    steps: list[dict[str, object]] | None = None,
 ) -> None:
     report_path.write_text(
         json.dumps(
@@ -437,8 +483,20 @@ def _write_readiness_report(
                 "dispatch_witness": dispatch_witness,
                 "skip_preflight_endpoint_probes": skip_preflight_endpoint_probes,
                 "ready": ready,
-                "steps": [],
+                "steps": _ready_steps() if steps is None else steps,
             }
         ),
         encoding="utf-8",
     )
+
+
+def _ready_steps() -> list[dict[str, object]]:
+    return [
+        {"name": "repository variables", "passed": True, "detail": "matched"},
+        {"name": "runtime witness secret", "passed": True, "detail": "present"},
+        {"name": "runtime conformance secret", "passed": True, "detail": "present"},
+        {"name": "deployment witness secret", "passed": True, "detail": "present"},
+        {"name": "kubeconfig secret", "passed": True, "detail": "not-required"},
+        {"name": "gateway publication workflow", "passed": True, "detail": "state=active"},
+        {"name": "dns resolution", "passed": True, "detail": "addresses=['203.0.113.10']"},
+    ]

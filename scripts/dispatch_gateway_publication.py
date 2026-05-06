@@ -10,7 +10,8 @@ Invariants:
   - Runtime witness, conformance, and deployment witness secret presence is
     checked by name, not value.
   - Kubeconfig secret presence is required only when ingress apply is requested.
-  - Readiness-report handoff fails closed unless the report is ready.
+  - Readiness-report handoff fails closed unless the report is ready and its
+    required proof steps passed.
   - The gateway-publication-witness artifact is downloaded after completion.
 """
 
@@ -44,6 +45,17 @@ DEFAULT_KUBECONFIG_SECRET_NAME = "MULLU_KUBECONFIG_B64"
 DEFAULT_ARTIFACT_NAME = "gateway-publication-witness"
 DEFAULT_DOWNLOAD_DIR = Path(".change_assurance") / "gateway-publication-artifact"
 DEFAULT_READINESS_REPORT = Path(".change_assurance") / "gateway_publication_readiness.json"
+REQUIRED_READINESS_STEP_NAMES = frozenset(
+    {
+        "repository variables",
+        "runtime witness secret",
+        "runtime conformance secret",
+        "deployment witness secret",
+        "kubeconfig secret",
+        "gateway publication workflow",
+        "dns resolution",
+    }
+)
 
 
 class CommandRunner(Protocol):
@@ -399,6 +411,7 @@ def load_readiness_dispatch_inputs(
     ready = _readiness_bool(payload, "ready")
     if not ready:
         raise RuntimeError(f"readiness report is not ready: {readiness_report_path}")
+    _require_readiness_proof_steps(payload)
 
     report_repository = _readiness_string(payload, "repository")
     if report_repository != repository:
@@ -416,6 +429,25 @@ def load_readiness_dispatch_inputs(
             "skip_preflight_endpoint_probes",
         ),
     )
+
+
+def _require_readiness_proof_steps(payload: dict[str, Any]) -> None:
+    raw_steps = payload.get("steps")
+    if not isinstance(raw_steps, list):
+        raise RuntimeError("readiness report proof steps must be a list")
+    step_by_name = {
+        str(step.get("name", "")): step
+        for step in raw_steps
+        if isinstance(step, dict)
+    }
+    missing = REQUIRED_READINESS_STEP_NAMES - set(step_by_name)
+    failed = {
+        name
+        for name in REQUIRED_READINESS_STEP_NAMES & set(step_by_name)
+        if step_by_name[name].get("passed") is not True
+    }
+    if missing or failed:
+        raise RuntimeError("readiness report proof steps failed")
 
 
 def _readiness_json_object(readiness_report_path: Path) -> dict[str, Any]:
