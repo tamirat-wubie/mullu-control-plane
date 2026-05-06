@@ -1,0 +1,16 @@
+{
+  "asset_id": "asset-runtime-042",
+  "name": "Governed Runtime Cluster",
+  "tenant_id": "tenant-mullu-primary",
+  "kind": "infrastructure",
+  "status": "active",
+  "ownership": "owned",
+  "owner_ref": "platform-operations",
+  "vendor_ref": "infra-vendor-a",
+  "value": 125000.0,
+  "registered_at": "2026-04-05T09:00:00+00:00",
+  "metadata": {
+    "region": "us-east-1",
+    "criticality": "high"
+  }
+}

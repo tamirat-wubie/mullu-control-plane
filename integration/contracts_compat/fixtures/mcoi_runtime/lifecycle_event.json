@@ -1,0 +1,12 @@
+{
+  "event_id": "asset-lifecycle-042-upgrade",
+  "asset_id": "asset-runtime-042",
+  "disposition": "upgraded",
+  "description": "Cluster control plane upgraded to the current governed runtime release.",
+  "performed_by": "release-automation",
+  "performed_at": "2026-04-05T09:20:00+00:00",
+  "metadata": {
+    "from_version": "v3.10.1",
+    "to_version": "v3.10.2"
+  }
+}

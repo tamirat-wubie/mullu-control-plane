@@ -126,6 +126,24 @@ from mcoi_runtime.contracts.contract_runtime import (
     SLAStatus,
     SLAWindow,
 )
+from mcoi_runtime.contracts.asset_runtime import (
+    AssetAssessment,
+    AssetAssignment,
+    AssetClosureReport,
+    AssetDependency,
+    AssetKind,
+    AssetRecord,
+    AssetSnapshot,
+    AssetStatus,
+    AssetViolation,
+    ConfigurationItem,
+    ConfigurationItemStatus,
+    InventoryDisposition,
+    InventoryRecord,
+    LifecycleDisposition,
+    LifecycleEvent,
+    OwnershipType,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -947,11 +965,154 @@ def _build_contract_closure_report(payload: dict) -> ContractClosureReport:
     )
 
 
+def _build_asset_record(payload: dict) -> AssetRecord:
+    return AssetRecord(
+        asset_id=payload["asset_id"],
+        name=payload["name"],
+        tenant_id=payload["tenant_id"],
+        kind=AssetKind(payload["kind"]),
+        status=AssetStatus(payload["status"]),
+        ownership=OwnershipType(payload["ownership"]),
+        owner_ref=payload["owner_ref"],
+        vendor_ref=payload["vendor_ref"],
+        value=payload["value"],
+        registered_at=payload["registered_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_configuration_item(payload: dict) -> ConfigurationItem:
+    return ConfigurationItem(
+        ci_id=payload["ci_id"],
+        asset_id=payload["asset_id"],
+        name=payload["name"],
+        status=ConfigurationItemStatus(payload["status"]),
+        environment_ref=payload["environment_ref"],
+        workspace_ref=payload["workspace_ref"],
+        version=payload["version"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_inventory_record(payload: dict) -> InventoryRecord:
+    return InventoryRecord(
+        inventory_id=payload["inventory_id"],
+        asset_id=payload["asset_id"],
+        tenant_id=payload["tenant_id"],
+        disposition=InventoryDisposition(payload["disposition"]),
+        total_quantity=payload["total_quantity"],
+        assigned_quantity=payload["assigned_quantity"],
+        available_quantity=payload["available_quantity"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_asset_assignment(payload: dict) -> AssetAssignment:
+    return AssetAssignment(
+        assignment_id=payload["assignment_id"],
+        asset_id=payload["asset_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        scope_ref_type=payload["scope_ref_type"],
+        assigned_by=payload["assigned_by"],
+        assigned_at=payload["assigned_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_asset_dependency(payload: dict) -> AssetDependency:
+    return AssetDependency(
+        dependency_id=payload["dependency_id"],
+        asset_id=payload["asset_id"],
+        depends_on_asset_id=payload["depends_on_asset_id"],
+        description=payload["description"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_lifecycle_event(payload: dict) -> LifecycleEvent:
+    return LifecycleEvent(
+        event_id=payload["event_id"],
+        asset_id=payload["asset_id"],
+        disposition=LifecycleDisposition(payload["disposition"]),
+        description=payload["description"],
+        performed_by=payload["performed_by"],
+        performed_at=payload["performed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_asset_assessment(payload: dict) -> AssetAssessment:
+    return AssetAssessment(
+        assessment_id=payload["assessment_id"],
+        asset_id=payload["asset_id"],
+        health_score=payload["health_score"],
+        risk_score=payload["risk_score"],
+        assessed_by=payload["assessed_by"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_asset_snapshot(payload: dict) -> AssetSnapshot:
+    return AssetSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_assets=payload["total_assets"],
+        total_active=payload["total_active"],
+        total_retired=payload["total_retired"],
+        total_config_items=payload["total_config_items"],
+        total_inventory=payload["total_inventory"],
+        total_assignments=payload["total_assignments"],
+        total_dependencies=payload["total_dependencies"],
+        total_violations=payload["total_violations"],
+        total_asset_value=payload["total_asset_value"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_asset_violation(payload: dict) -> AssetViolation:
+    return AssetViolation(
+        violation_id=payload["violation_id"],
+        asset_id=payload["asset_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_asset_closure_report(payload: dict) -> AssetClosureReport:
+    return AssetClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_assets=payload["total_assets"],
+        total_active=payload["total_active"],
+        total_retired=payload["total_retired"],
+        total_assignments=payload["total_assignments"],
+        total_dependencies=payload["total_dependencies"],
+        total_asset_value=payload["total_asset_value"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("asset_assessment.json", _build_asset_assessment),
+        ("asset_assignment.json", _build_asset_assignment),
+        ("asset_closure_report.json", _build_asset_closure_report),
+        ("asset_dependency.json", _build_asset_dependency),
+        ("asset_record.json", _build_asset_record),
+        ("asset_snapshot.json", _build_asset_snapshot),
+        ("asset_violation.json", _build_asset_violation),
         ("breach_record.json", _build_breach_record),
         ("commitment_record.json", _build_commitment_record),
+        ("configuration_item.json", _build_configuration_item),
         ("contract_assessment.json", _build_contract_assessment),
         ("contract_clause.json", _build_contract_clause),
         ("contract_closure_report.json", _build_contract_closure_report),
@@ -995,6 +1156,8 @@ def _build_contract_closure_report(payload: dict) -> ContractClosureReport:
         ("human_workflow_snapshot.json", _build_human_workflow_snapshot),
         ("human_workflow_violation.json", _build_human_workflow_violation),
         ("incident_record.json", _build_incident_record),
+        ("inventory_record.json", _build_inventory_record),
+        ("lifecycle_event.json", _build_lifecycle_event),
         ("merge_decision.json", _build_merge_decision),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),

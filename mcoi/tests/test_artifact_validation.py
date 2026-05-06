@@ -173,6 +173,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "contract_assessment.json" in mcoi_runtime_fixture_names
     assert "contract_snapshot.json" in mcoi_runtime_fixture_names
     assert "contract_closure_report.json" in mcoi_runtime_fixture_names
+    assert "asset_record.json" in mcoi_runtime_fixture_names
+    assert "configuration_item.json" in mcoi_runtime_fixture_names
+    assert "inventory_record.json" in mcoi_runtime_fixture_names
+    assert "asset_assignment.json" in mcoi_runtime_fixture_names
+    assert "asset_dependency.json" in mcoi_runtime_fixture_names
+    assert "lifecycle_event.json" in mcoi_runtime_fixture_names
+    assert "asset_assessment.json" in mcoi_runtime_fixture_names
+    assert "asset_snapshot.json" in mcoi_runtime_fixture_names
+    assert "asset_violation.json" in mcoi_runtime_fixture_names
+    assert "asset_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -185,7 +195,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 59
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 69
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1612,6 +1622,111 @@ def test_validate_mcoi_runtime_fixture_rejects_contract_snapshot_active_overflow
 
     assert len(errors) == 1
     assert "active_contracts must not exceed total_contracts" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_inventory_quantity_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "inventory_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "inventory_id": "inventory-drift",
+                "asset_id": "asset-drift",
+                "tenant_id": "tenant-1",
+                "disposition": "assigned",
+                "total_quantity": 5,
+                "assigned_quantity": 4,
+                "available_quantity": 2,
+                "updated_at": "2026-04-05T09:10:00+00:00",
+                "metadata": {"warehouse": "dc-a"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "assigned_quantity plus available_quantity must not exceed total_quantity" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_asset_dependency(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "asset_dependency.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "dependency_id": "dependency-drift",
+                "asset_id": "asset-drift",
+                "depends_on_asset_id": "asset-drift",
+                "description": "Self dependency should fail closed.",
+                "created_at": "2026-04-05T09:13:00+00:00",
+                "metadata": {"dependency_type": "self"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "asset_id and depends_on_asset_id must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_asset_snapshot_count_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "asset_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snapshot-drift",
+                "total_assets": 4,
+                "total_active": 3,
+                "total_retired": 2,
+                "total_config_items": 4,
+                "total_inventory": 3,
+                "total_assignments": 2,
+                "total_dependencies": 1,
+                "total_violations": 0,
+                "total_asset_value": 1000.0,
+                "captured_at": "2026-04-05T09:30:00+00:00",
+                "metadata": {"captured_by": "asset-monitor"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_active plus total_retired must not exceed total_assets" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_asset_closure_count_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "asset_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "asset-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_assets": 3,
+                "total_active": 2,
+                "total_retired": 2,
+                "total_assignments": 1,
+                "total_dependencies": 1,
+                "total_asset_value": 1200.0,
+                "closed_at": "2026-04-05T09:35:00+00:00",
+                "metadata": {"closed_by": "asset-governance"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_active plus total_retired must not exceed total_assets" in errors[0]
     assert fixture_path.name in errors[0]
 
 
