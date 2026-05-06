@@ -30,7 +30,7 @@ from mcoi_runtime.core.errors import (
 )
 from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceState
-from mcoi_runtime.app.governed_execution import governed_operator_dispatch
+from mcoi_runtime.app.governed_execution import governed_operator_mil_dispatch_with_trace
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.planning_boundary import PlanningBoundaryResult
 from mcoi_runtime.governance.policy.engine import PolicyInput
@@ -179,8 +179,14 @@ class OperatorLoop:
                 runtime_state_fields=runtime_state_fields,
             )
 
+        mil_program_id: str | None = None
+        mil_instruction_count = 0
+        mil_verification_passed: bool | None = None
+        mil_verification_issues: tuple[str, ...] = ()
+        mil_instruction_trace: tuple[str, ...] = ()
+
         if hasattr(self.runtime, 'governed_dispatcher') and self.runtime.governed_dispatcher is not None:
-            execution_result = governed_operator_dispatch(
+            mil_dispatch = governed_operator_mil_dispatch_with_trace(
                 self.runtime.governed_dispatcher,
                 DispatchRequest(
                     goal_id=request.goal_id,
@@ -188,8 +194,16 @@ class OperatorLoop:
                     template=request.template,
                     bindings=request.bindings,
                 ),
+                policy_decision=policy_decision,
+                issued_at=self.runtime.clock(),
                 actor_id="operator_main",
             )
+            execution_result = mil_dispatch.execution_result
+            mil_program_id = mil_dispatch.program.program_id
+            mil_instruction_count = len(mil_dispatch.program.instructions)
+            mil_verification_passed = mil_dispatch.verification.passed
+            mil_verification_issues = tuple(issue.code for issue in mil_dispatch.verification.issues)
+            mil_instruction_trace = mil_dispatch.instruction_trace
         else:
             execution_result = self.runtime.dispatcher.dispatch(
                 DispatchRequest(
@@ -288,6 +302,11 @@ class OperatorLoop:
             provider_attributions=provider_attributions,
             **provider_attribution_counters,
             autonomy_mode=self.runtime.autonomy.mode.value,
+            mil_program_id=mil_program_id,
+            mil_instruction_count=mil_instruction_count,
+            mil_verification_passed=mil_verification_passed,
+            mil_verification_issues=mil_verification_issues,
+            mil_instruction_trace=mil_instruction_trace,
             **self._resolve_provider_ids(),
         )
 

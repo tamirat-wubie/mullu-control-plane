@@ -16,6 +16,13 @@ from .hash_chain import HashChainStore, compute_chain_hash, compute_content_hash
 from .coordination_store import CoordinationStore
 from .goal_store import GoalStore
 from .memory_store import MemoryStore
+from .mil_audit_store import (
+    MILAuditAppendResult,
+    MILAuditRecord,
+    MILAuditReplayLookup,
+    MILAuditStore,
+    MILAuditTracePersistence,
+)
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
 from .skill_store import SkillStore
@@ -41,6 +48,11 @@ __all__ = [
     "compute_content_hash",
     "GoalStore",
     "MemoryStore",
+    "MILAuditAppendResult",
+    "MILAuditRecord",
+    "MILAuditReplayLookup",
+    "MILAuditStore",
+    "MILAuditTracePersistence",
     "PathTraversalError",
     "PersistenceError",
     "PersistenceWriteError",

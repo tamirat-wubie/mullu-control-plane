@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-email-calendar-live-receipt:1",
+  "title": "Finance Approval Email Calendar Live Receipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "receipt_id",
+    "adapter_id",
+    "status",
+    "verification_status",
+    "checked_at",
+    "external_write",
+    "blockers"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_id": {
+      "type": "string",
+      "const": "communication.email_calendar_worker"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provider_operation": {
+      "type": "string"
+    },
+    "external_write": {
+      "type": "boolean",
+      "const": false
+    },
+    "worker_receipt": {
+      "type": "object"
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "error": {
+      "type": "string"
+    }
+  }
+}

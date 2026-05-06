@@ -76,6 +76,13 @@
       ]
     },
     {
+      "action_id": "classify_finance_approval_packet_routes",
+      "status": "closed",
+      "surfaces": [
+        "finance_approval_packets"
+      ]
+    },
+    {
       "action_id": "classify_data_governance_routes",
       "status": "closed",
       "surfaces": [
@@ -108,6 +115,14 @@
       "status": "closed",
       "surfaces": [
         "runtime_conformance_attestation"
+      ]
+    },
+    {
+      "action_id": "publish_production_evidence_plane",
+      "status": "closed",
+      "surfaces": [
+        "production_evidence_plane",
+        "gateway_runtime_witness"
       ]
     },
     {
@@ -169,6 +184,20 @@
       ]
     },
     {
+      "action_id": "publish_claim_verification_report_contract",
+      "status": "closed",
+      "surfaces": [
+        "claim_verification"
+      ]
+    },
+    {
+      "action_id": "publish_connector_self_healing_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "connector_self_healing"
+      ]
+    },
+    {
       "action_id": "publish_collaboration_case_contract",
       "status": "closed",
       "surfaces": [
@@ -225,24 +254,10 @@
       ]
     },
     {
-      "action_id": "publish_temporal_evidence_freshness_receipt_contract",
-      "status": "closed",
-      "surfaces": [
-        "temporal_evidence_freshness"
-      ]
-    },
-    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
         "temporal_memory"
-      ]
-    },
-    {
-      "action_id": "publish_temporal_memory_refresh_receipt_contract",
-      "status": "closed",
-      "surfaces": [
-        "temporal_memory_refresh"
       ]
     },
     {
@@ -316,15 +331,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 40,
+      "action_proof": 41,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 7,
+      "read_model": 8,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 45,
+      "audit_chain": 47,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -332,25 +347,25 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 48
+      "witnessed": 50
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 9,
-      "request_proof": 40
+      "read_model": 10,
+      "request_proof": 41
     },
-    "surface_count": 49
+    "surface_count": 51
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 6,
-      "unproven": 199,
-      "witnessed": 98
+      "unproven": 200,
+      "witnessed": 103
     },
-    "route_count": 303,
+    "route_count": 309,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -871,6 +886,31 @@
         "coverage_state": "witnessed",
         "route": "/api/v1/federation/summary",
         "surface_id": "federated_control_plane"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/operator/read-model",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/{case_id}",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/{case_id}/approval",
+        "surface_id": "finance_approval_packets"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/finance/approval-packets/{case_id}/proof",
+        "surface_id": "finance_approval_packets"
       },
       {
         "coverage_state": "unproven",
@@ -1774,6 +1814,11 @@
       },
       {
         "coverage_state": "unproven",
+        "route": "/evidence/bundles/{command_id}",
+        "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "unproven",
         "route": "/gateway/status",
         "surface_id": "unclassified_declared_route"
       },
@@ -1868,7 +1913,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 199
+    "unclassified_route_count": 200
   },
   "schema_version": 1,
   "surfaces": [
@@ -2079,6 +2124,39 @@
       "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "federated_control_plane"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/finance_approval.py",
+        "mcoi/mcoi_runtime/contracts/finance_approval_packet.py",
+        "mcoi/mcoi_runtime/core/finance_approval/policy.py",
+        "mcoi/mcoi_runtime/core/finance_approval/state_machine.py",
+        "mcoi/mcoi_runtime/core/finance_approval/proof.py",
+        "mcoi/tests/test_finance_approval_packet.py",
+        "mcoi/tests/test_finance_approval_router.py",
+        "examples/finance_approval_packet_blocked.json",
+        "examples/finance_approval_packet_success.json"
+      ],
+      "notes": "Finance approval packet routes create policy-evaluated packet read models, expose a bounded operator read model, record explicit approval/effect receipts, and export bounded packet proofs for review-bound or closed cases.",
+      "representative_paths": [
+        "/api/v1/finance/approval-packets",
+        "/api/v1/finance/approval-packets/operator/read-model",
+        "/api/v1/finance/approval-packets/{case_id}",
+        "/api/v1/finance/approval-packets/{case_id}/approval",
+        "/api/v1/finance/approval-packets/{case_id}/proof"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "finance_packet_policy_reasons_explicit",
+        "blocked_packet_emits_no_effect",
+        "approval_action_binds_approval_effect_and_closure_refs",
+        "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
+        "operator_read_model_bounds_visible_packets_and_counts"
+      ],
+      "surface_id": "finance_approval_packets"
     },
     {
       "action_proof": "action_proof",
@@ -2392,6 +2470,39 @@
       "surface_id": "runtime_conformance_attestation"
     },
     {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/server.py",
+        "scripts/collect_deployment_witness.py",
+        ".github/workflows/deployment-witness.yml",
+        "schemas/production_evidence_witness.schema.json",
+        "schemas/capability_evidence_endpoint.schema.json",
+        "schemas/audit_verification_endpoint.schema.json",
+        "schemas/proof_verification_endpoint.schema.json",
+        "tests/test_gateway/test_production_evidence.py",
+        "tests/test_collect_deployment_witness.py"
+      ],
+      "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication.",
+      "representative_paths": [
+        "/deployment/witness",
+        "/capabilities/evidence",
+        "/audit/verify",
+        "/proof/verify"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "signed_production_evidence_witness",
+        "capability_evidence_schema_valid",
+        "audit_verification_schema_valid",
+        "proof_verification_schema_valid",
+        "deployment_collection_requires_production_evidence",
+        "missing_production_evidence_fails_closed"
+      ],
+      "surface_id": "production_evidence_plane"
+    },
+    {
       "action_proof": "request_proof",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -2597,6 +2708,58 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/claim_verification.py",
+        "schemas/claim_verification_report.schema.json",
+        "tests/test_gateway/test_claim_verification.py"
+      ],
+      "notes": "Claim verification reports distinguish observed facts, user claims, model inferences, external source claims, verified results, stale results, and contradicted results before planning or execution use.",
+      "representative_paths": [
+        "ClaimVerificationEngine.verify",
+        "ClaimNode",
+        "ClaimVerificationReport"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "claim_type_declared",
+        "source_evidence_required",
+        "contradictions_block_execution",
+        "stale_claims_block_execution",
+        "high_risk_requires_independent_support",
+        "claim_verification_schema_valid"
+      ],
+      "surface_id": "claim_verification"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/connector_self_healing.py",
+        "schemas/connector_self_healing_receipt.schema.json",
+        "tests/test_gateway/test_connector_self_healing.py"
+      ],
+      "notes": "Connector self-healing emits bounded non-terminal recovery receipts for provider failures, retries, fallback providers, read-only degradation, incident opening, and capability revocation.",
+      "representative_paths": [
+        "ConnectorSelfHealingEngine.evaluate",
+        "ConnectorFailure",
+        "ConnectorHealingReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "provider_success_not_assumed",
+        "write_failures_require_operator_review",
+        "missing_receipt_revokes_capability",
+        "fallback_provider_requires_certification",
+        "read_only_degradation_bounded",
+        "connector_self_healing_schema_valid"
+      ],
+      "surface_id": "connector_self_healing"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/collaboration_cases.py",
         "schemas/collaboration_case.schema.json",
         "tests/test_gateway/test_collaboration_cases.py"
@@ -2726,18 +2889,23 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
+        "gateway/evidence_bundle.py",
         "gateway/trust_ledger.py",
+        "scripts/verify_evidence_bundle.py",
         "schemas/trust_ledger_anchor_receipt.schema.json",
         "schemas/trust_ledger_bundle.schema.json",
+        "tests/test_gateway/test_evidence_bundle_endpoint.py",
         "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
         "tests/test_gateway/test_trust_ledger.py"
       ],
-      "notes": "Trust ledger signs terminal-closure evidence bundles and external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+      "notes": "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
       "representative_paths": [
         "TrustLedger.issue",
         "TrustLedger.verify",
         "TrustLedger.anchor_bundle",
         "TrustLedger.verify_anchor_receipt",
+        "GET /evidence/bundles/{command_id}",
+        "scripts/verify_evidence_bundle.py",
         "TrustLedgerBundle",
         "ExternalProofAnchorReceipt"
       ],
@@ -2745,6 +2913,8 @@
       "runtime_witnesses": [
         "terminal_certificate_id_required",
         "evidence_refs_required",
+        "evidence_bundle_endpoint_requires_terminal_certificate",
+        "offline_bundle_verifier_validates_schema_hash_and_signature",
         "bundle_hash_tamper_detection",
         "hmac_signature_verification",
         "anchored_bundle_requires_external_anchor_ref",
@@ -2853,34 +3023,6 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
-        "gateway/temporal_evidence_freshness.py",
-        "schemas/temporal_evidence_freshness_receipt.schema.json",
-        "tests/test_gateway/test_temporal_evidence_freshness.py"
-      ],
-      "notes": "Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch.",
-      "representative_paths": [
-        "TemporalEvidenceFreshness.evaluate",
-        "EvidenceFreshnessClaim",
-        "TemporalEvidenceFreshnessReceipt"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "evidence_age_computed_from_runtime_clock",
-        "freshness_window_required_for_dispatch",
-        "stale_required_evidence_triggers_refresh",
-        "missing_required_evidence_blocks_dispatch",
-        "revoked_or_unverified_high_risk_evidence_blocks",
-        "expiring_evidence_warns_before_dispatch",
-        "temporal_evidence_freshness_receipt_schema_valid",
-        "receipt_not_terminal_closure"
-      ],
-      "surface_id": "temporal_evidence_freshness"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
         "gateway/temporal_memory.py",
         "schemas/temporal_memory_receipt.schema.json",
         "tests/test_gateway/test_temporal_memory.py"
@@ -2904,33 +3046,6 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_memory"
-    },
-    {
-      "action_proof": "action_proof",
-      "audit": "audit_chain",
-      "coverage_state": "witnessed",
-      "evidence_files": [
-        "gateway/temporal_memory_refresh.py",
-        "schemas/temporal_memory_refresh_receipt.schema.json",
-        "tests/test_gateway/test_temporal_memory_refresh.py"
-      ],
-      "notes": "Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action.",
-      "representative_paths": [
-        "TemporalMemoryRefresh.evaluate",
-        "MemoryRefreshRequest",
-        "TemporalMemoryRefreshReceipt"
-      ],
-      "request_proof": "request_proof",
-      "runtime_witnesses": [
-        "usable_memory_does_not_create_refresh_task",
-        "stale_memory_creates_bounded_refresh_task",
-        "evidence_type_coverage_gates_review_readiness",
-        "invalid_refresh_policy_blocks_task_creation",
-        "superseded_memory_blocks_reactivation",
-        "temporal_memory_refresh_receipt_schema_valid",
-        "receipt_not_terminal_closure"
-      ],
-      "surface_id": "temporal_memory_refresh"
     },
     {
       "action_proof": "action_proof",

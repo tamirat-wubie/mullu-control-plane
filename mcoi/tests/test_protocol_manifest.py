@@ -20,6 +20,8 @@ def test_protocol_manifest_is_valid() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     agent_identity_entry = entries["agent-identity"]
+    claim_verification_entry = entries["claim-verification-report"]
+    connector_self_healing_entry = entries["connector-self-healing-receipt"]
     collaboration_entry = entries["collaboration-case"]
     autonomous_test_entry = entries["autonomous-test-generation-plan"]
     capability_upgrade_entry = entries["capability-upgrade-plan"]
@@ -41,7 +43,6 @@ def test_protocol_manifest_is_valid() -> None:
     temporal_memory_entry = entries["temporal-memory-receipt"]
     temporal_memory_refresh_entry = entries["temporal-memory-refresh-receipt"]
     scheduler_entry = entries["temporal-scheduler-receipt"]
-    temporal_sla_entry = entries["temporal-sla-receipt"]
     simulation_entry = entries["simulation-receipt"]
     workflow_mining_entry = entries["workflow-mining-report"]
     worker_mesh_entry = entries["worker-mesh"]
@@ -54,13 +55,19 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 61
+    assert len(manifest["schemas"]) == 87
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
+    assert claim_verification_entry["path"] == "schemas/claim_verification_report.schema.json"
+    assert claim_verification_entry["urn"] == "urn:mullusi:schema:claim-verification-report:1"
+    assert claim_verification_entry["surface"] == "claim"
     assert collaboration_entry["path"] == "schemas/collaboration_case.schema.json"
     assert collaboration_entry["urn"] == "urn:mullusi:schema:collaboration-case:1"
     assert collaboration_entry["surface"] == "collaboration"
+    assert connector_self_healing_entry["path"] == "schemas/connector_self_healing_receipt.schema.json"
+    assert connector_self_healing_entry["urn"] == "urn:mullusi:schema:connector-self-healing-receipt:1"
+    assert connector_self_healing_entry["surface"] == "connector"
     assert autonomous_test_entry["path"] == "schemas/autonomous_test_generation_plan.schema.json"
     assert autonomous_test_entry["urn"] == "urn:mullusi:schema:autonomous-test-generation-plan:1"
     assert autonomous_test_entry["surface"] == "testing"
@@ -121,9 +128,6 @@ def test_protocol_manifest_is_valid() -> None:
     assert scheduler_entry["path"] == "schemas/temporal_scheduler_receipt.schema.json"
     assert scheduler_entry["urn"] == "urn:mullusi:schema:temporal-scheduler-receipt:1"
     assert scheduler_entry["surface"] == "temporal"
-    assert temporal_sla_entry["path"] == "schemas/temporal_sla_receipt.schema.json"
-    assert temporal_sla_entry["urn"] == "urn:mullusi:schema:temporal-sla-receipt:1"
-    assert temporal_sla_entry["surface"] == "temporal"
     assert simulation_entry["path"] == "schemas/simulation_receipt.schema.json"
     assert simulation_entry["urn"] == "urn:mullusi:schema:simulation-receipt:1"
     assert simulation_entry["surface"] == "simulation"

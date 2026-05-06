@@ -1562,8 +1562,60 @@ def capability_passport_for(intent_name: str) -> CapabilityPassport:
     """Return the capability passport for a compiled intent."""
     passport = _CAPABILITY_PASSPORTS.get(intent_name)
     if passport is None:
+        passport = _restricted_worker_passport_for(intent_name)
+    if passport is None:
         raise ValueError(f"missing capability passport for intent: {intent_name}")
     return passport
+
+
+def _restricted_worker_passport_for(intent_name: str) -> CapabilityPassport | None:
+    """Return a fail-closed passport for worker-bound adapter capabilities."""
+    domain, separator, _action = intent_name.partition(".")
+    if not separator or domain not in {"browser", "computer", "shell"}:
+        return None
+    risk_tier = "high" if domain in {"computer", "shell"} else "medium"
+    external_system = {
+        "browser": "browser_worker",
+        "computer": "computer_worker",
+        "shell": "shell_worker",
+    }[domain]
+    declared_effects = {
+        "browser": ("browser_state_observed", "external_web_page_accessed"),
+        "computer": ("workspace_state_accessed", "sandbox_command_executed"),
+        "shell": ("sandbox_command_executed",),
+    }[domain]
+    forbidden_effects = {
+        "browser": ("unapproved_form_submit", "credential_exfiltration", "unapproved_network_target"),
+        "computer": ("workspace_escape", "unapproved_file_write", "unapproved_network_target"),
+        "shell": ("host_shell_execution", "workspace_escape", "unapproved_network_target"),
+    }[domain]
+    return CapabilityPassport(
+        capability=intent_name,
+        version="worker-bound-v1",
+        risk_tier=risk_tier,
+        input_schema=f"{intent_name}.intent.v1",
+        output_schema=f"{intent_name}.worker_receipt.v1",
+        authority_required=("operator",),
+        requires=(
+            "tenant_bound",
+            "budget_reserved",
+            "idempotency_key",
+            "isolated_worker",
+            "signed_worker_receipt",
+        ),
+        mutates_world=domain in {"computer", "shell"} or intent_name in {"browser.click", "browser.type", "browser.submit"},
+        external_system=external_system,
+        rollback_type="compensatable" if domain == "computer" else "irreversible",
+        compensation_capability="computer.restore_workspace_snapshot" if domain == "computer" else "",
+        proof_required_fields=("worker_receipt", "input_hash", "output_hash", "evidence_refs"),
+        declared_effects=declared_effects,
+        forbidden_effects=forbidden_effects,
+        evidence_required=("worker_receipt", "sandbox_receipt", "effect_observation"),
+        graph_projection={
+            "nodes": ("command", "worker", "sandbox", "verification", "evidence"),
+            "edges": ("leased_to", "verified_by", "produced"),
+        },
+    )
 
 
 def capability_passport_from_registry_entry(entry: CoreCapabilityRegistryEntry) -> CapabilityPassport:

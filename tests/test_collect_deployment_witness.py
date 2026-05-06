@@ -83,6 +83,180 @@ def test_collect_deployment_witness_publishes_with_verified_signature(monkeypatc
     assert all(step.passed for step in witness.steps)
 
 
+def test_collect_deployment_witness_requires_production_evidence_plane(monkeypatch) -> None:
+    secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    deployment_secret = "deployment-secret"
+    witness_payload = _signed_runtime_witness(secret=secret)
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+    production_payload = _signed_production_evidence_witness(secret=deployment_secret)
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        if str(url).endswith("/deployment/witness"):
+            return StubHttpResponse(status=200, payload=production_payload)
+        if str(url).endswith("/capabilities/evidence"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "runtime_env": "pilot",
+                    "commit_sha": "abc123",
+                    "deployment_id": "dep_001",
+                    "enabled": True,
+                    "capability_count": 1,
+                    "capability_evidence": {"rag.query": "production"},
+                    "live_capabilities": ["rag.query"],
+                    "sandbox_only_capabilities": [],
+                    "checks": [
+                        {
+                            "check_id": "capability_registry_configured",
+                            "passed": True,
+                            "detail": "capability_count=1",
+                        }
+                    ],
+                },
+            )
+        if str(url).endswith("/audit/verify"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "valid": True,
+                    "reason": "verified",
+                    "entries_checked": 3,
+                    "latest_anchor_id": "cmd-anchor-1",
+                    "last_hash": "a" * 16,
+                    "unanchored_event_count": 0,
+                    "governed": True,
+                },
+            )
+        if str(url).endswith("/proof/verify"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "valid": True,
+                    "runtime_env": "pilot",
+                    "deployment_id": "dep_001",
+                    "commit_sha": "abc123",
+                    "checks": [
+                        {
+                            "check_id": "audit_anchor_verification",
+                            "passed": True,
+                            "detail": "verified",
+                        }
+                    ],
+                    "checks_passed": ["audit_anchor_verification"],
+                    "checks_missing": [],
+                    "terminal_status": "verified",
+                    "governed": True,
+                },
+            )
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=secret,
+        conformance_secret=conformance_secret,
+        deployment_witness_secret=deployment_secret,
+        expected_environment="pilot",
+        require_production_evidence=True,
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+
+    assert witness.deployment_claim == "published"
+    assert all(step.passed for step in witness.steps)
+    assert any(step.name == "production evidence witness" for step in witness.steps)
+    assert any(step.name == "capability evidence endpoint" for step in witness.steps)
+    assert any(step.name == "audit verification endpoint" for step in witness.steps)
+    assert any(step.name == "proof verification endpoint" for step in witness.steps)
+
+
+def test_collect_deployment_witness_rejects_missing_production_evidence_secret(monkeypatch) -> None:
+    secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    deployment_secret = "deployment-secret"
+    witness_payload = _signed_runtime_witness(secret=secret)
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+    production_payload = _signed_production_evidence_witness(secret=deployment_secret)
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        if str(url).endswith("/deployment/witness"):
+            return StubHttpResponse(status=200, payload=production_payload)
+        if str(url).endswith("/capabilities/evidence"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "runtime_env": "pilot",
+                    "commit_sha": "abc123",
+                    "deployment_id": "dep_001",
+                    "enabled": True,
+                    "capability_count": 1,
+                    "capability_evidence": {"rag.query": "production"},
+                    "live_capabilities": ["rag.query"],
+                    "sandbox_only_capabilities": [],
+                    "checks": [{"check_id": "capability_registry_configured", "passed": True, "detail": "ok"}],
+                },
+            )
+        if str(url).endswith("/audit/verify"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "valid": True,
+                    "reason": "verified",
+                    "entries_checked": 3,
+                    "latest_anchor_id": "cmd-anchor-1",
+                    "unanchored_event_count": 0,
+                    "governed": True,
+                },
+            )
+        if str(url).endswith("/proof/verify"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "valid": True,
+                    "runtime_env": "pilot",
+                    "deployment_id": "dep_001",
+                    "commit_sha": "abc123",
+                    "checks": [{"check_id": "audit_anchor_verification", "passed": True, "detail": "verified"}],
+                    "checks_passed": ["audit_anchor_verification"],
+                    "checks_missing": [],
+                    "terminal_status": "verified",
+                    "governed": True,
+                },
+            )
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=secret,
+        conformance_secret=conformance_secret,
+        deployment_witness_secret="",
+        expected_environment="pilot",
+        require_production_evidence=True,
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    production_step = next(step for step in witness.steps if step.name == "production evidence witness")
+
+    assert witness.deployment_claim == "not-published"
+    assert production_step.passed is False
+    assert "signature=skipped:no_deployment_witness_secret" in production_step.detail
+    assert "production evidence witness is missing required closure" in witness.errors
+
+
 def test_collect_deployment_witness_fails_closed_without_secret(monkeypatch) -> None:
     witness_payload = _signed_runtime_witness(secret="runtime-secret")
     conformance_payload = _signed_conformance_certificate(secret="conformance-secret")
@@ -666,3 +840,43 @@ def _signed_conformance_certificate(
         hashlib.sha256,
     ).hexdigest()
     return {**payload, "signature": f"hmac-sha256:{signature}"}
+
+
+def _signed_production_evidence_witness(*, secret: str) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "deployment_id": "dep_001",
+        "commit_sha": "abc123",
+        "runtime_env": "pilot",
+        "version": "1.0.0",
+        "gateway_health": "pass",
+        "api_health": "pass",
+        "db_health": "pass",
+        "policy_engine": "pass",
+        "audit_store": "pass",
+        "proof_store": "pass",
+        "capability_evidence": {"rag.query": "production"},
+        "live_capabilities": ["rag.query"],
+        "sandbox_only_capabilities": [],
+        "checks": [
+            {"check_id": "gateway_health", "passed": True, "detail": "healthy"},
+            {"check_id": "audit_anchor", "passed": True, "detail": "cmd-anchor-1"},
+            {"check_id": "proof_store", "passed": True, "detail": "terminal_certificates=1"},
+        ],
+        "checks_passed": ["gateway_health", "audit_anchor", "proof_store"],
+        "checks_missing": [],
+        "runtime_conformance_certificate_id": "conf-0123456789abcdef",
+        "signed_at": "2026-04-25T00:00:00+00:00",
+        "witness": "mullu_gateway_production_evidence_v1",
+        "signature_key_id": "deployment-witness-test",
+    }
+    import hashlib
+    import hmac
+
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    claim_hash = hashlib.sha256(canonical).hexdigest()
+    signature = hmac.new(
+        secret.encode("utf-8"),
+        claim_hash.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return {**payload, "claim_hash": claim_hash, "signature": f"hmac-sha256:{signature}"}

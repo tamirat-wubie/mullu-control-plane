@@ -152,7 +152,9 @@ def collect_deployment_witness(
     gateway_url: str,
     witness_secret: str = "",
     conformance_secret: str = "",
+    deployment_witness_secret: str = "",
     expected_environment: str = "",
+    require_production_evidence: bool = False,
     clock: Callable[[], str] | None = None,
 ) -> DeploymentWitness:
     """Probe one live gateway and return a deployment witness."""
@@ -301,6 +303,84 @@ def collect_deployment_witness(
     if not conformance_signature_passed:
         errors.append("runtime conformance signature was not verified")
 
+    if require_production_evidence:
+        production_status, production_payload = _probe_production_evidence_witness(gateway_base)
+        production_signature_status, production_signature_passed = _verify_signed_claim(
+            production_payload,
+            deployment_witness_secret,
+            missing_secret_status="skipped:no_deployment_witness_secret",
+            missing_signature_status="failed:missing_hmac_sha256_signature",
+        )
+        production_evidence_passed = (
+            production_status == 200
+            and production_signature_passed
+            and not production_payload.get("checks_missing", ())
+        )
+        steps.append(
+            ProbeStep(
+                name="production evidence witness",
+                passed=production_evidence_passed,
+                detail=(
+                    f"status={production_status} signature={production_signature_status} "
+                    f"deployment_id={production_payload.get('deployment_id', '')} "
+                    f"checks_missing={list(production_payload.get('checks_missing', ())) }"
+                ),
+            )
+        )
+        if not production_evidence_passed:
+            errors.append("production evidence witness is missing required closure")
+
+        capability_status, capability_payload = _probe_capability_evidence(gateway_base)
+        capability_evidence_passed = (
+            capability_status == 200
+            and capability_payload.get("enabled") is True
+            and _int_count(capability_payload, "capability_count") > 0
+        )
+        steps.append(
+            ProbeStep(
+                name="capability evidence endpoint",
+                passed=capability_evidence_passed,
+                detail=(
+                    f"status={capability_status} enabled={capability_payload.get('enabled')} "
+                    f"capability_count={_int_count(capability_payload, 'capability_count')}"
+                ),
+            )
+        )
+        if not capability_evidence_passed:
+            errors.append("capability evidence endpoint is missing certified capability evidence")
+
+        audit_status, audit_payload = _probe_audit_verification(gateway_base)
+        audit_verification_passed = audit_status == 200 and audit_payload.get("valid") is True
+        steps.append(
+            ProbeStep(
+                name="audit verification endpoint",
+                passed=audit_verification_passed,
+                detail=(
+                    f"status={audit_status} valid={audit_payload.get('valid')} "
+                    f"reason={audit_payload.get('reason', '')} "
+                    f"entries_checked={_int_count(audit_payload, 'entries_checked')}"
+                ),
+            )
+        )
+        if not audit_verification_passed:
+            errors.append("audit verification endpoint did not verify latest anchor")
+
+        proof_status, proof_payload = _probe_proof_verification(gateway_base)
+        proof_verification_passed = proof_status == 200 and proof_payload.get("valid") is True
+        steps.append(
+            ProbeStep(
+                name="proof verification endpoint",
+                passed=proof_verification_passed,
+                detail=(
+                    f"status={proof_status} valid={proof_payload.get('valid')} "
+                    f"terminal_status={proof_payload.get('terminal_status', '')} "
+                    f"checks_missing={list(proof_payload.get('checks_missing', ())) }"
+                ),
+            )
+        )
+        if not proof_verification_passed:
+            errors.append("proof verification endpoint did not close all checks")
+
     claim_passed = all(step.passed for step in steps)
     deployment_claim = "published" if claim_passed else "not-published"
     latest_terminal_certificate_id = runtime_payload.get("latest_terminal_certificate_id")
@@ -396,6 +476,26 @@ def _probe_runtime_conformance(gateway_base: str) -> tuple[int, dict[str, Any]]:
     return status, payload
 
 
+def _probe_production_evidence_witness(gateway_base: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _get_json(f"{gateway_base}/deployment/witness")
+    return status, payload
+
+
+def _probe_capability_evidence(gateway_base: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _get_json(f"{gateway_base}/capabilities/evidence")
+    return status, payload
+
+
+def _probe_audit_verification(gateway_base: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _get_json(f"{gateway_base}/audit/verify")
+    return status, payload
+
+
+def _probe_proof_verification(gateway_base: str) -> tuple[int, dict[str, Any]]:
+    status, payload = _get_json(f"{gateway_base}/proof/verify")
+    return status, payload
+
+
 def _get_json(url: str) -> tuple[int, dict[str, Any]]:
     status, payload, _response_digest = _get_json_with_digest(url)
     return status, payload
@@ -460,6 +560,33 @@ def _verify_hmac_signature(
     return ("verified", True) if hmac.compare_digest(expected, observed) else ("failed:mismatch", False)
 
 
+def _verify_signed_claim(
+    payload: dict[str, Any],
+    secret: str,
+    *,
+    missing_secret_status: str,
+    missing_signature_status: str,
+) -> tuple[str, bool]:
+    signature = str(payload.get("signature", ""))
+    if not secret:
+        return missing_secret_status, False
+    if not signature.startswith("hmac-sha256:"):
+        return missing_signature_status, False
+    signed_payload = dict(payload)
+    signed_payload.pop("signature", None)
+    observed_claim_hash = str(signed_payload.pop("claim_hash", ""))
+    expected_claim_hash = _stable_hash(signed_payload)
+    if not hmac.compare_digest(observed_claim_hash, expected_claim_hash):
+        return "failed:claim_hash_mismatch", False
+    expected = hmac.new(
+        secret.encode("utf-8"),
+        expected_claim_hash.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    observed = signature.removeprefix("hmac-sha256:")
+    return ("verified", True) if hmac.compare_digest(expected, observed) else ("failed:mismatch", False)
+
+
 def _failed_boolean_fields(payload: dict[str, Any], field_names: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(field_name for field_name in field_names if payload.get(field_name) is not True)
 
@@ -497,7 +624,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--gateway-url", default=os.environ.get("MULLU_GATEWAY_URL", DEFAULT_GATEWAY_URL))
     parser.add_argument("--witness-secret", default=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", ""))
     parser.add_argument("--conformance-secret", default=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", ""))
+    parser.add_argument("--deployment-witness-secret", default=os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET", ""))
     parser.add_argument("--expected-environment", default=os.environ.get("MULLU_EXPECTED_RUNTIME_ENV", ""))
+    parser.add_argument(
+        "--require-production-evidence",
+        action="store_true",
+        default=os.environ.get("MULLU_REQUIRE_PRODUCTION_EVIDENCE", "").strip().lower() in {"1", "true", "yes", "on"},
+    )
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
     return parser.parse_args(argv)
 
@@ -509,7 +642,9 @@ def main(argv: list[str] | None = None) -> int:
         gateway_url=args.gateway_url,
         witness_secret=args.witness_secret,
         conformance_secret=args.conformance_secret,
+        deployment_witness_secret=args.deployment_witness_secret,
         expected_environment=args.expected_environment,
+        require_production_evidence=args.require_production_evidence,
     )
     output_path = write_deployment_witness(witness, Path(args.output))
     print(f"deployment witness written: {output_path}")

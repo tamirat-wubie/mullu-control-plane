@@ -231,6 +231,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication.",
         ),
         _surface(
+            "finance_approval_packets",
+            [
+                "/api/v1/finance/approval-packets",
+                "/api/v1/finance/approval-packets/operator/read-model",
+                "/api/v1/finance/approval-packets/{case_id}",
+                "/api/v1/finance/approval-packets/{case_id}/approval",
+                "/api/v1/finance/approval-packets/{case_id}/proof",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "mcoi/mcoi_runtime/app/routers/finance_approval.py",
+                "mcoi/mcoi_runtime/contracts/finance_approval_packet.py",
+                "mcoi/mcoi_runtime/core/finance_approval/policy.py",
+                "mcoi/mcoi_runtime/core/finance_approval/state_machine.py",
+                "mcoi/mcoi_runtime/core/finance_approval/proof.py",
+                "mcoi/tests/test_finance_approval_packet.py",
+                "mcoi/tests/test_finance_approval_router.py",
+                "examples/finance_approval_packet_blocked.json",
+                "examples/finance_approval_packet_success.json",
+            ],
+            "Finance approval packet routes create policy-evaluated packet read models, expose a bounded operator read model, record explicit approval/effect receipts, and export bounded packet proofs for review-bound or closed cases.",
+            [
+                "finance_packet_policy_reasons_explicit",
+                "blocked_packet_emits_no_effect",
+                "approval_action_binds_approval_effect_and_closure_refs",
+                "packet_proof_requires_policy_evidence_and_closure_for_closed_states",
+                "operator_read_model_bounds_visible_packets_and_counts",
+            ],
+        ),
+        _surface(
             "data_governance_controls",
             [
                 "/api/v1/data-governance/summary",
@@ -522,6 +555,39 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "production_evidence_plane",
+            [
+                "/deployment/witness",
+                "/capabilities/evidence",
+                "/audit/verify",
+                "/proof/verify",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/server.py",
+                "scripts/collect_deployment_witness.py",
+                ".github/workflows/deployment-witness.yml",
+                "schemas/production_evidence_witness.schema.json",
+                "schemas/capability_evidence_endpoint.schema.json",
+                "schemas/audit_verification_endpoint.schema.json",
+                "schemas/proof_verification_endpoint.schema.json",
+                "tests/test_gateway/test_production_evidence.py",
+                "tests/test_collect_deployment_witness.py",
+            ],
+            "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication.",
+            [
+                "signed_production_evidence_witness",
+                "capability_evidence_schema_valid",
+                "audit_verification_schema_valid",
+                "proof_verification_schema_valid",
+                "deployment_collection_requires_production_evidence",
+                "missing_production_evidence_fails_closed",
+            ],
+        ),
+        _surface(
             "runtime_reflex_engine",
             [
                 "/runtime/self/health",
@@ -723,6 +789,58 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "claim_verification",
+            [
+                "ClaimVerificationEngine.verify",
+                "ClaimNode",
+                "ClaimVerificationReport",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/claim_verification.py",
+                "schemas/claim_verification_report.schema.json",
+                "tests/test_gateway/test_claim_verification.py",
+            ],
+            "Claim verification reports distinguish observed facts, user claims, model inferences, external source claims, verified results, stale results, and contradicted results before planning or execution use.",
+            [
+                "claim_type_declared",
+                "source_evidence_required",
+                "contradictions_block_execution",
+                "stale_claims_block_execution",
+                "high_risk_requires_independent_support",
+                "claim_verification_schema_valid",
+            ],
+        ),
+        _surface(
+            "connector_self_healing",
+            [
+                "ConnectorSelfHealingEngine.evaluate",
+                "ConnectorFailure",
+                "ConnectorHealingReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/connector_self_healing.py",
+                "schemas/connector_self_healing_receipt.schema.json",
+                "tests/test_gateway/test_connector_self_healing.py",
+            ],
+            "Connector self-healing emits bounded non-terminal recovery receipts for provider failures, retries, fallback providers, read-only degradation, incident opening, and capability revocation.",
+            [
+                "provider_success_not_assumed",
+                "write_failures_require_operator_review",
+                "missing_receipt_revokes_capability",
+                "fallback_provider_requires_certification",
+                "read_only_degradation_bounded",
+                "connector_self_healing_schema_valid",
+            ],
+        ),
+        _surface(
             "collaboration_cases",
             [
                 "CollaborationCaseManager.open_case",
@@ -857,6 +975,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "TrustLedger.verify",
                 "TrustLedger.anchor_bundle",
                 "TrustLedger.verify_anchor_receipt",
+                "GET /evidence/bundles/{command_id}",
+                "scripts/verify_evidence_bundle.py",
                 "TrustLedgerBundle",
                 "ExternalProofAnchorReceipt",
             ],
@@ -866,16 +986,21 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "witnessed",
             [
                 "docs/62_governed_operational_intelligence.md",
+                "gateway/evidence_bundle.py",
                 "gateway/trust_ledger.py",
+                "scripts/verify_evidence_bundle.py",
                 "schemas/trust_ledger_anchor_receipt.schema.json",
                 "schemas/trust_ledger_bundle.schema.json",
+                "tests/test_gateway/test_evidence_bundle_endpoint.py",
                 "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
                 "tests/test_gateway/test_trust_ledger.py",
             ],
-            "Trust ledger signs terminal-closure evidence bundles and external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
+            "Trust ledger signs terminal-closure evidence bundles, exposes operator bundle export, verifies exported bundle files offline, and emits external anchor receipts that bind typed artifact roots, tenant, command, deployment, commit, hash-chain root, and external anchor state.",
             [
                 "terminal_certificate_id_required",
                 "evidence_refs_required",
+                "evidence_bundle_endpoint_requires_terminal_certificate",
+                "offline_bundle_verifier_validates_schema_hash_and_signature",
                 "bundle_hash_tamper_detection",
                 "hmac_signature_verification",
                 "anchored_bundle_requires_external_anchor_ref",
@@ -1362,6 +1487,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "status": "closed",
         },
         {
+            "action_id": "classify_finance_approval_packet_routes",
+            "surfaces": ["finance_approval_packets"],
+            "status": "closed",
+        },
+        {
             "action_id": "classify_data_governance_routes",
             "surfaces": ["data_governance_controls"],
             "status": "closed",
@@ -1384,6 +1514,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_runtime_conformance_attestation",
             "surfaces": ["runtime_conformance_attestation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_production_evidence_plane",
+            "surfaces": ["production_evidence_plane", "gateway_runtime_witness"],
             "status": "closed",
         },
         {
@@ -1424,6 +1559,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_agent_identity_contract",
             "surfaces": ["agent_identity"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_claim_verification_report_contract",
+            "surfaces": ["claim_verification"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_connector_self_healing_receipt_contract",
+            "surfaces": ["connector_self_healing"],
             "status": "closed",
         },
         {
@@ -1618,6 +1763,7 @@ def _proof_relevant_routes(routes: set[str]) -> tuple[str, ...]:
         "/anchors",
         "/capability",
         "/commands",
+        "/evidence",
     )
     return tuple(route for route in routes if route.startswith(prefixes))
 

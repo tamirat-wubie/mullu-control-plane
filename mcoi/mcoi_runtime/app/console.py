@@ -88,6 +88,16 @@ def render_run_summary(view: RunSummaryView) -> str:
         lines.append(f"  autonomy_mode:      {view.autonomy_mode}")
     if view.autonomy_decision:
         lines.append(f"  autonomy_decision:  {view.autonomy_decision}")
+    if view.mil_program_id:
+        lines.append(f"  mil_program_id:     {view.mil_program_id}")
+        lines.append(f"  mil_instructions:   {view.mil_instruction_count}")
+        lines.append(f"  mil_verified:       {view.mil_verification_passed}")
+        if view.mil_verification_issues:
+            lines.append(f"  mil_issues:         {', '.join(view.mil_verification_issues)}")
+        if view.mil_instruction_trace:
+            lines.append("  mil_trace:")
+            for instruction in view.mil_instruction_trace:
+                lines.append(f"    {instruction}")
     return "\n".join(lines)
 
 

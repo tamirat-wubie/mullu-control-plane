@@ -281,6 +281,7 @@ alignment, CI gates, governance checks, and known reflection gaps.
 - [SECURITY_MODEL_v0.1.md](SECURITY_MODEL_v0.1.md) — security model, 5 DCA audits
 - [KNOWN_LIMITATIONS_v0.1.md](KNOWN_LIMITATIONS_v0.1.md) — documented limitations
 - [RUNBOOK.md](RUNBOOK.md) — operational procedures
+- [docs/63_finance_approval_packet_pilot.md](docs/63_finance_approval_packet_pilot.md) — governed finance packet pilot, proof export, and operator read model
 
 ## Tests
 

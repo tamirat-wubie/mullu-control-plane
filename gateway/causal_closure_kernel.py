@@ -21,6 +21,7 @@ from typing import Any, Callable
 
 from gateway.capability_isolation import (
     CapabilityExecutionBoundary,
+    CapabilityExecutionReceipt,
     CapabilityIsolationPolicy,
     IsolatedCapabilityExecutor,
     LocalCapabilityExecutionWorker,
@@ -151,6 +152,30 @@ class CausalClosureKernel:
                             },
                             reason="isolation_worker_required",
                         )
+                    capability_domain = capability_intent.capability_id.split(".", 1)[0]
+                    if (
+                        capability_domain in {"browser", "computer", "shell"}
+                        and capability_result.get("receipt_status") in {"failed", "requires_review"}
+                    ):
+                        self._record_error()
+                        reason = (
+                            "capability_worker_receipt_invalid"
+                            if capability_result.get("error") == "RuntimeError"
+                            else "capability_execution_requires_review"
+                        )
+                        return self._review_result(
+                            command,
+                            body=str(capability_result.get(
+                                "response",
+                                "This capability could not be verified for safe closure.",
+                            )),
+                            metadata={
+                                **capability_result,
+                                "error": reason,
+                                "command_id": command.command_id,
+                            },
+                            reason=reason,
+                        )
                     return self._close_capability_result(command, capability_result)
 
             action = self._commands.governed_action_for(command.command_id)
@@ -240,15 +265,12 @@ class CausalClosureKernel:
             command=command,
             governed_action=action,
             capability_passport=passport,
-            executor=lambda: self._isolated_executor.execute(
-                intent=capability_intent,
-                tenant_id=command.tenant_id,
-                identity_id=command.actor_id,
+            executor=lambda: self._execute_isolated_capability(
+                command=command,
+                capability_intent=capability_intent,
                 boundary=boundary,
-                command_id=command.command_id,
-                conversation_id=command.conversation_id,
-                metadata=dispatch_metadata,
-            )[0],
+                dispatch_metadata=dispatch_metadata,
+            ),
         )
         self._commands.transition(
             command.command_id,
@@ -262,6 +284,56 @@ class CausalClosureKernel:
             },
         )
         return receipt_execution.result
+
+    def _execute_isolated_capability(
+        self,
+        *,
+        command: CommandEnvelope,
+        capability_intent: CapabilityIntent,
+        boundary: CapabilityExecutionBoundary,
+        dispatch_metadata: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Execute through an isolated worker and attach a kernel-validated receipt."""
+        if self._isolated_executor is None:
+            raise RuntimeError("isolated executor is required")
+        result, receipt = self._isolated_executor.execute(
+            intent=capability_intent,
+            tenant_id=command.tenant_id,
+            identity_id=command.actor_id,
+            boundary=boundary,
+            command_id=command.command_id,
+            conversation_id=command.conversation_id,
+            metadata=dispatch_metadata,
+        )
+        self._validate_isolated_receipt(boundary=boundary, receipt=receipt)
+        if not isinstance(result, dict):
+            return result
+        return {
+            **result,
+            "worker_receipt": asdict(receipt),
+            "capability_execution_boundary": asdict(boundary),
+            "capability_execution_receipt": asdict(receipt),
+        }
+
+    def _validate_isolated_receipt(
+        self,
+        *,
+        boundary: CapabilityExecutionBoundary,
+        receipt: CapabilityExecutionReceipt,
+    ) -> None:
+        """Fail closed when an isolated worker response lacks receipt fidelity."""
+        if not isinstance(receipt, CapabilityExecutionReceipt):
+            raise RuntimeError("isolated worker receipt missing")
+        if receipt.capability_id != boundary.capability_id:
+            raise RuntimeError("isolated worker receipt capability mismatch")
+        if receipt.execution_plane != boundary.execution_plane:
+            raise RuntimeError("isolated worker receipt plane mismatch")
+        if receipt.isolation_required != boundary.isolation_required:
+            raise RuntimeError("isolated worker receipt isolation mismatch")
+        if boundary.isolation_required and receipt.execution_plane != "isolated_worker":
+            raise RuntimeError("isolated worker receipt plane required")
+        if not receipt.evidence_refs:
+            raise RuntimeError("isolated worker receipt evidence missing")
 
     def _capability_dispatch_metadata(
         self,

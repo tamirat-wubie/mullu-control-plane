@@ -59,6 +59,23 @@ REQUIRED_DOMAINS = frozenset(
         "voice",
     }
 )
+REQUIRED_GENERAL_AGENT_PLANE_IDS = frozenset(
+    {
+        "0.governance_core",
+        "1.llm_reasoning_plane",
+        "2.memory_plane",
+        "3.tool_skill_plane",
+        "4.computer_control_plane",
+        "5.browser_web_plane",
+        "6.document_data_plane",
+        "7.communication_plane",
+        "8.financial_effect_plane",
+        "9.mcp_external_tool_plane",
+        "10.scheduling_workflow_plane",
+        "11.observation_verification_plane",
+        "12.deployment_witness_plane",
+    }
+)
 REQUIRED_GOVERNED_RECORD_FIELDS = frozenset(
     {
         "capability_id",
@@ -362,13 +379,34 @@ def _check_default_capability_fabric(
         if isinstance(domain_entry, dict)
     }
     missing_domains = tuple(sorted(REQUIRED_DOMAINS - domains))
+    planes = {
+        str(plane_entry.get("plane_id", ""))
+        for plane_entry in read_model.get("general_agent_planes", ())
+        if isinstance(plane_entry, dict)
+    }
+    missing_planes = tuple(sorted(REQUIRED_GENERAL_AGENT_PLANE_IDS - planes))
     capability_count = int(read_model.get("capability_count", 0))
     capsule_count = int(read_model.get("capsule_count", 0))
-    passed = not missing_domains and capability_count > 0 and capsule_count > 0
+    plane_count = int(read_model.get("general_agent_plane_count", 0))
+    passed = (
+        not missing_domains
+        and not missing_planes
+        and capability_count > 0
+        and capsule_count > 0
+        and plane_count == len(REQUIRED_GENERAL_AGENT_PLANE_IDS)
+    )
     detail = (
-        f"default fabric exposes {capsule_count} capsules and {capability_count} capabilities"
+        f"default fabric exposes {capsule_count} capsules, {capability_count} capabilities, "
+        f"and {plane_count} governed planes"
         if passed
-        else f"default fabric missing domains: {list(missing_domains)}"
+        else _join_detail(
+            "default fabric missing governed structure",
+            (
+                f"missing_domains={list(missing_domains)}",
+                f"missing_planes={list(missing_planes)}",
+                f"plane_count={plane_count}",
+            ),
+        )
     )
     return (
         PromotionCheck(

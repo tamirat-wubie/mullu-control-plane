@@ -21,24 +21,40 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | File | Purpose |
 | --- | --- |
 | `agent_identity.schema.json` | Canonical user-owned agent identity, scope, budget, delegation, and reputation record |
+| `audit_verification_endpoint.schema.json` | Canonical live gateway audit-chain verification response |
 | `autonomous_test_generation_plan.schema.json` | Canonical activation-blocked test generation plan from failure traces |
 | `capability_adapter_closure_plan.schema.json` | Canonical adapter source closure action plan |
 | `capability_candidate.schema.json` | Canonical forge-generated candidate capability package |
 | `capability_descriptor.schema.json` | Canonical capability declaration |
+| `capability_evidence_endpoint.schema.json` | Canonical live gateway capability evidence projection |
 | `capability_maturity.schema.json` | Canonical evidence-derived capability maturity assessment |
 | `collaboration_case.schema.json` | Canonical governed collaboration case with approval separation and non-terminal closure |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
 | `capability_upgrade_plan.schema.json` | Canonical governed capability upgrade proposal plan |
+| `claim_verification_report.schema.json` | Canonical claim graph verification report for support, contradiction, freshness, and execution admission |
+| `commercial_metering_snapshot.schema.json` | Canonical commercial metering snapshot with plans, usage, provider costs, decisions, and tenant billing summaries |
+| `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
+| `finance_approval_email_calendar_binding_receipt.schema.json` | Canonical redacted connector-token presence receipt for finance live handoff |
+| `finance_approval_email_calendar_live_receipt.schema.json` | Canonical redacted live email/calendar receipt for finance approval handoff evidence |
+| `finance_approval_handoff_packet.schema.json` | Canonical operator handoff packet for finance approval proof-pilot and live blockers |
+| `finance_approval_live_handoff_chain_validation.schema.json` | Canonical aggregate chain validation report for finance approval live handoff artifacts |
+| `finance_approval_live_handoff_closure_run.schema.json` | Canonical dry-run command sequence for finance approval live handoff closure |
+| `finance_approval_live_handoff_plan.schema.json` | Canonical finance approval live email handoff promotion plan |
+| `finance_approval_live_handoff_preflight.schema.json` | Canonical four-step preflight report for finance approval live handoff readiness |
+| `finance_approval_packet_proof.schema.json` | Canonical proof export for governed finance approval packet closure or review |
 | `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
 | `general_agent_promotion_handoff_packet.schema.json` | Canonical promotion handoff packet |
+| `gateway_observability_snapshot.schema.json` | Canonical gateway observability summary with bounded run metrics |
 | `goal.schema.json` | Canonical governed goal compilation contract |
 | `policy_decision.schema.json` | Canonical policy gate outcome |
+| `production_evidence_witness.schema.json` | Canonical live gateway production evidence witness response |
+| `proof_verification_endpoint.schema.json` | Canonical live gateway proof verification response |
 | `execution_result.schema.json` | Canonical execution outcome |
 | `trace_entry.schema.json` | Canonical causal audit entry |
 | `replay_record.schema.json` | Canonical replay and audit capture |
@@ -65,6 +81,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
+| `policy_studio_session.schema.json` | Canonical read-only policy studio session with simulations and bounded probe report |
 
 ## Notes
 

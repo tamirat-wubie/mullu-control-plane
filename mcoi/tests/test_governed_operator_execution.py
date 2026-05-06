@@ -15,9 +15,10 @@ import pytest
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
-from mcoi_runtime.app.governed_execution import governed_operator_dispatch
+from mcoi_runtime.app.governed_execution import governed_operator_dispatch, governed_operator_mil_dispatch
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
@@ -78,6 +79,17 @@ def _make_dispatch_request(goal_id: str = "goal-1") -> DispatchRequest:
     )
 
 
+def _policy(status: PolicyDecisionStatus = PolicyDecisionStatus.ALLOW) -> PolicyDecision:
+    return PolicyDecision(
+        decision_id=f"whqr:goal-1:{status.value}",
+        subject_id="operator_test",
+        goal_id="goal-1",
+        status=status,
+        reasons=(DecisionReason(status.value, f"whqr_{status.value}"),),
+        issued_at=FIXED_CLOCK(),
+    )
+
+
 # --- Test 1: happy path ---
 def test_governed_operator_dispatch_happy_path() -> None:
     executor = FakeExecutor()
@@ -119,6 +131,46 @@ def test_governed_operator_dispatch_blocked_returns_failure() -> None:
         for e in result.actual_effects
     )
     assert executor.calls == 0
+
+
+def test_governed_operator_mil_dispatch_happy_path() -> None:
+    executor = FakeExecutor()
+    governed = _build_governed_dispatcher(executor)
+    request = _make_dispatch_request()
+
+    result = governed_operator_mil_dispatch(
+        governed,
+        request,
+        policy_decision=_policy(),
+        issued_at=FIXED_CLOCK(),
+        actor_id="operator_test",
+        intent_id="test-mil-intent-1",
+    )
+
+    assert isinstance(result, ExecutionResult)
+    assert result.status is ExecutionOutcome.SUCCEEDED
+    assert executor.calls == 1
+    assert governed.ledger_count == 1
+
+
+def test_governed_operator_mil_dispatch_blocks_denied_policy() -> None:
+    executor = FakeExecutor()
+    governed = _build_governed_dispatcher(executor)
+    request = _make_dispatch_request()
+
+    result = governed_operator_mil_dispatch(
+        governed,
+        request,
+        policy_decision=_policy(PolicyDecisionStatus.DENY),
+        issued_at=FIXED_CLOCK(),
+        actor_id="operator_test",
+        intent_id="test-mil-denied-1",
+    )
+
+    assert result.status is ExecutionOutcome.FAILED
+    assert executor.calls == 0
+    assert any(effect.details.get("code") == "mil_static_verification_blocked" for effect in result.actual_effects)
+    assert governed.ledger_count == 0
 
 
 # --- Test 3: fallback to raw dispatch when no governed ---

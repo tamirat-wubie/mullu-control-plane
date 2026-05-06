@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:audit-verification-endpoint:1",
+  "title": "Audit Verification Endpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "valid",
+    "reason",
+    "entries_checked",
+    "latest_anchor_id",
+    "unanchored_event_count",
+    "governed"
+  ],
+  "properties": {
+    "valid": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entries_checked": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "latest_anchor_id": {
+      "type": "string"
+    },
+    "last_hash": {
+      "type": "string"
+    },
+    "unanchored_event_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "governed": {
+      "type": "boolean",
+      "const": true
+    }
+  }
+}

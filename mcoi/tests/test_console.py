@@ -82,6 +82,10 @@ def test_run_summary_from_successful_report() -> None:
     assert view.dispatched is True
     assert view.execution_id is not None
     assert view.structured_errors == ()
+    assert view.mil_program_id == "mil:g-1:shell_command"
+    assert view.mil_instruction_count == 4
+    assert view.mil_verification_passed is True
+    assert view.mil_instruction_trace[0].startswith("check-policy:check_policy")
 
 
 def test_run_summary_from_failed_report() -> None:
@@ -112,6 +116,9 @@ def test_run_summary_renders() -> None:
     assert "req-1" in output
     assert "g-1" in output
     assert view.policy_decision_id in output
+    assert "mil_program_id" in output
+    assert "mil:g-1:shell_command" in output
+    assert "check-policy:check_policy:g-1" in output
 
 
 # --- ExecutionSummaryView tests ---

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+from time import perf_counter
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
@@ -33,6 +34,7 @@ from gateway.memory_constitution import (
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 from gateway.intent_resolver import CapabilityIntentResolver
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, install_mcp_authority_records
+from gateway.observability import GatewayObservabilityRecorder
 from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanStep
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult
 from gateway.plan_ledger import CapabilityPlanLedger, CapabilityPlanWitnessRecord
@@ -106,6 +108,7 @@ class GatewayRouter:
         environment: str = "local_dev",
         isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
         mcp_authority_records: MCPAuthorityRecords | None = None,
+        observability_recorder: GatewayObservabilityRecorder | None = None,
     ) -> None:
         if capability_dispatcher is not None and skill_dispatcher is not None:
             raise ValueError("use capability_dispatcher or skill_dispatcher, not both")
@@ -146,6 +149,7 @@ class GatewayRouter:
         self._duplicate_count = 0
         self._error_count = 0
         self._error_reasons: dict[str, int] = {}
+        self._observability = observability_recorder or GatewayObservabilityRecorder()
 
     def register_channel(self, adapter: ChannelAdapter) -> None:
         """Register a channel adapter."""
@@ -335,6 +339,81 @@ class GatewayRouter:
         """Record a kernel-visible gateway error."""
         self._error_count += 1
         self._error_reasons[reason_code] = self._error_reasons.get(reason_code, 0) + 1
+
+    def _observe_gateway_response(
+        self,
+        *,
+        message: GatewayMessage,
+        response: GatewayResponse,
+        started_at: float,
+        mapping: TenantMapping | None = None,
+        command: CommandEnvelope | None = None,
+        intent: CapabilityIntent | None = None,
+        stage_names: tuple[str, ...] = (),
+    ) -> GatewayResponse:
+        """Record bounded observability for one response without payload text."""
+        metadata = response.metadata
+        command_id = str(metadata.get("command_id") or (command.command_id if command else ""))
+        command = command or (self._commands.get(command_id) if command_id else None)
+        tenant_id = mapping.tenant_id if mapping is not None else (command.tenant_id if command else "")
+        actor_id = mapping.identity_id if mapping is not None else (command.actor_id if command else "")
+        capability_id = (
+            intent.capability_id
+            if intent is not None
+            else str(metadata.get("capability_id") or (command.intent if command else "llm_completion"))
+        )
+        error_type = str(metadata.get("error") or metadata.get("delivery_error_type") or "")
+        approval_verdict = "not_required"
+        if metadata.get("approval_required") is True:
+            approval_verdict = "pending"
+        elif metadata.get("approval_resolved") is True:
+            approval_verdict = str(metadata.get("status") or "approved")
+        elif error_type == "approval_context_denied":
+            approval_verdict = "deny"
+        policy_verdict = "deny" if error_type in {
+            "tenant_not_found",
+            "capability_admission_rejected",
+            "approval_context_denied",
+        } else "allow"
+        terminal_certificate_id = str(metadata.get("terminal_certificate_id") or "")
+        if not terminal_certificate_id:
+            terminal_certificate = metadata.get("terminal_certificate")
+            if isinstance(terminal_certificate, dict):
+                terminal_certificate_id = str(terminal_certificate.get("certificate_id") or "")
+        tool_name = str(metadata.get("tool_name") or metadata.get("provider") or capability_id or "none")
+        status = "error" if error_type else "ok"
+        trace_id = command.trace_id if command else f"trace-{hashlib.sha256(message.message_id.encode()).hexdigest()[:16]}"
+        observed_stage_names = stage_names or (
+            "request_received",
+            "tenant_resolved" if mapping is not None else "tenant_resolution_failed",
+            "approval_checked" if command is not None else "policy_denied",
+            "verification_closed" if terminal_certificate_id else "response_observed",
+        )
+        self._observability.record_response(
+            trace_id=trace_id,
+            message_id=message.message_id,
+            command_id=command_id,
+            tenant_id=tenant_id,
+            actor_id=actor_id,
+            channel=message.channel,
+            capability_id=capability_id,
+            risk_class=str(metadata.get("risk_tier") or metadata.get("risk") or ""),
+            policy_verdict=policy_verdict,
+            approval_verdict=approval_verdict,
+            budget_verdict=str(metadata.get("budget_verdict") or metadata.get("budget_decision") or ""),
+            pii_decision=str(metadata.get("pii_decision") or ""),
+            model_used=str(metadata.get("model") or metadata.get("model_used") or ""),
+            tool_used=tool_name,
+            status=status,
+            error_type=error_type,
+            retry_count=int(metadata.get("retry_count") or 0),
+            receipt_id=str(metadata.get("receipt_id") or metadata.get("provider_receipt_id") or ""),
+            terminal_certificate_id=terminal_certificate_id,
+            cost_usd=metadata.get("cost_usd") or metadata.get("model_cost_usd") or 0.0,
+            latency_ms=(perf_counter() - started_at) * 1000.0,
+            stage_names=observed_stage_names,
+        )
+        return response
 
     def _execute_command(self, command: CommandEnvelope, *, recipient_id: str) -> GatewayResponse:
         """Execute an allowed command through the stored canonical payload."""
@@ -831,12 +910,18 @@ class GatewayRouter:
         dedup → tenant resolution → session → content safety → LLM → PII redaction → audit → proof.
         """
         self._message_count += 1
+        started_at = perf_counter()
 
         # 0. Deduplication — return cached response for retried webhooks
         dedup_result = self._dedup.check(message.channel, message.sender_id, message.message_id)
         if dedup_result.is_duplicate:
             self._duplicate_count += 1
-            return dedup_result.cached_response
+            return self._observe_gateway_response(
+                message=message,
+                response=dedup_result.cached_response,
+                started_at=started_at,
+                stage_names=("request_received", "deduplicated", "response_observed"),
+            )
 
         # 1. Resolve tenant
         mapping = self.resolve_tenant(message.channel, message.sender_id)
@@ -851,7 +936,12 @@ class GatewayRouter:
                 metadata={"error": "tenant_not_found"},
             )
             self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
-            return resp
+            return self._observe_gateway_response(
+                message=message,
+                response=resp,
+                started_at=started_at,
+                stage_names=("request_received", "tenant_resolution_failed", "policy_denied"),
+            )
 
         approval_command = self._parse_approval_command(message.body)
         if approval_command is not None:
@@ -859,7 +949,13 @@ class GatewayRouter:
             response = self._handle_approval_message(message, mapping, request_id, approved)
             response = self._send_response(response)
             self._dedup.record(message.channel, message.sender_id, message.message_id, response)
-            return response
+            return self._observe_gateway_response(
+                message=message,
+                response=response,
+                started_at=started_at,
+                mapping=mapping,
+                stage_names=("request_received", "tenant_resolved", "approval_checked", "response_observed"),
+            )
 
         plan = self._plan_builder.build(
             message=message.body,
@@ -870,7 +966,13 @@ class GatewayRouter:
             response = self._execute_plan(plan=plan, message=message, mapping=mapping)
             response = self._send_response(response)
             self._dedup.record(message.channel, message.sender_id, message.message_id, response)
-            return response
+            return self._observe_gateway_response(
+                message=message,
+                response=response,
+                started_at=started_at,
+                mapping=mapping,
+                stage_names=("request_received", "tenant_resolved", "workflow_executed", "response_observed"),
+            )
 
         intent = self._intent_resolver.resolve(message.body)
         try:
@@ -891,7 +993,14 @@ class GatewayRouter:
                 },
             )
             self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
-            return resp
+            return self._observe_gateway_response(
+                message=message,
+                response=resp,
+                started_at=started_at,
+                mapping=mapping,
+                intent=intent,
+                stage_names=("request_received", "tenant_resolved", "risk_classified", "policy_denied"),
+            )
         self._commands.transition(command.command_id, CommandState.POLICY_EVALUATED)
         approval = self._approval.request_approval(
             tenant_id=mapping.tenant_id,
@@ -922,10 +1031,25 @@ class GatewayRouter:
                     "request_id": approval.request_id,
                     "command_id": command.command_id,
                     "payload_hash": command.payload_hash,
+                    "risk_tier": approval.risk_tier.value,
                 },
             )
             self._dedup.record(message.channel, message.sender_id, message.message_id, resp)
-            return resp
+            return self._observe_gateway_response(
+                message=message,
+                response=resp,
+                started_at=started_at,
+                mapping=mapping,
+                command=command,
+                intent=intent,
+                stage_names=(
+                    "request_received",
+                    "tenant_resolved",
+                    "risk_classified",
+                    "approval_checked",
+                    "response_observed",
+                ),
+            )
 
         self._commands.transition(
             command.command_id,
@@ -936,7 +1060,25 @@ class GatewayRouter:
         response = self._execute_command(command, recipient_id=message.sender_id)
         response = self._send_response(response)
         self._dedup.record(message.channel, message.sender_id, message.message_id, response)
-        return response
+        return self._observe_gateway_response(
+            message=message,
+            response=response,
+            started_at=started_at,
+            mapping=mapping,
+            command=command,
+            intent=intent,
+            stage_names=(
+                "request_received",
+                "tenant_resolved",
+                "risk_classified",
+                "approval_checked",
+                "budget_checked",
+                "tool_called",
+                "effect_observed",
+                "verification_closed",
+                "terminal_certificate_emitted",
+            ),
+        )
 
     def process_ready_commands(
         self,
@@ -1170,7 +1312,16 @@ class GatewayRouter:
             "dedup": self._dedup.status(),
             "command_ledger": self._commands.summary(),
             "authority_obligation_mesh": self._authority_obligation_mesh.summary(),
+            "observability": self.observability_snapshot(),
         }
+
+    def observability_snapshot(self) -> dict[str, Any]:
+        """Return gateway observability metrics derived from governed runs."""
+        return self._observability.snapshot(command_summary=self._commands.summary())
+
+    def observability_trace(self, trace_id: str) -> dict[str, Any] | None:
+        """Return one retained privacy-preserving trace observation."""
+        return self._observability.trace(trace_id)
 
     def runtime_witness(self, *, environment: str, signature_key_id: str, signing_secret: str) -> dict[str, Any]:
         """Publish a signed witness for gateway closure and anchor state."""

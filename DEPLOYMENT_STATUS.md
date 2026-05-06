@@ -27,6 +27,8 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | Restricted capability worker | `DEPLOYMENT.md`, `docker-compose.yml`, and `k8s/mullu-api.yaml` declare `gateway.capability_worker:app` | Reflected |
 | Local pilot proof slice | `scripts/pilot_proof_slice.py` emits `.change_assurance/pilot_proof_slice_witness.json` through gateway closure | Reflected |
 | Live deployment witness collector | `scripts/collect_deployment_witness.py` writes `.change_assurance/deployment_witness.json` from `/health`, `/gateway/witness`, and `/runtime/conformance`; publication requires both runtime and authority responsibility debt to be clear | Reflected |
+| Production Evidence Plane | `/deployment/witness`, `/capabilities/evidence`, `/audit/verify`, and `/proof/verify` expose signed deployment posture, capability evidence, audit verification, and proof verification; `--require-production-evidence` makes them publication gates | Reflected |
+| Production evidence endpoint schemas | `schemas/production_evidence_witness.schema.json`, `schemas/capability_evidence_endpoint.schema.json`, `schemas/audit_verification_endpoint.schema.json`, and `schemas/proof_verification_endpoint.schema.json` define the live endpoint contracts | Reflected |
 | Runtime witness secret provisioner | `scripts/provision_runtime_witness_secret.py` binds `MULLU_RUNTIME_WITNESS_SECRET` into GitHub Actions without printing the secret | Reflected |
 | Deployment target provisioner | `scripts/provision_deployment_target.py` binds `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` into GitHub repository variables | Reflected |
 | Gateway ingress manifest | `k8s/mullu-gateway-ingress.yaml` publishes `/health` and `/gateway/witness` through the `mullu-gateway` service after host replacement | Reflected |
@@ -79,6 +81,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 |---|---|
 | Runtime witness secret | GitHub Actions secret name `MULLU_RUNTIME_WITNESS_SECRET` is present; secret value is not printed |
 | Runtime conformance secret | GitHub Actions secret name `MULLU_RUNTIME_CONFORMANCE_SECRET` is present; secret value is not printed |
+| Deployment witness secret | GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed |
 | Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not currently set |
 | Deployment witness workflow runs | No `deployment-witness.yml` workflow runs are currently recorded |
 
@@ -95,6 +98,7 @@ Before this witness can claim public deployment health, the repository must name
 7. Capability worker endpoint and last successful signed worker-response check.
 8. Runtime witness evidence with `responsibility_debt_clear=true`.
 9. Deployment witness evidence with `runtime_responsibility_debt_clear=true` and `authority_responsibility_debt_clear=true`.
+10. Production Evidence Plane evidence from `/deployment/witness`, `/capabilities/evidence`, `/audit/verify`, and `/proof/verify`.
 
 ## Proof Chain
 
@@ -105,6 +109,7 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
 | Local pilot proof slice | `python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json` |
 | Live deployment witness collection | `python scripts/collect_deployment_witness.py --gateway-url "$MULLU_GATEWAY_URL" --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" --conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET" --output .change_assurance/deployment_witness.json` |
+| Live production evidence collection | `python scripts/collect_deployment_witness.py --gateway-url "$MULLU_GATEWAY_URL" --witness-secret "$MULLU_RUNTIME_WITNESS_SECRET" --conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET" --deployment-witness-secret "$MULLU_DEPLOYMENT_WITNESS_SECRET" --require-production-evidence --output .change_assurance/deployment_witness.json` |
 | Runtime witness secret provisioning | `python scripts/provision_runtime_witness_secret.py --runtime-env-output .change_assurance/runtime_witness_secret.env` |
 | Deployment target provisioning | `python scripts/provision_deployment_target.py --gateway-url "$MULLU_GATEWAY_URL" --expected-environment pilot` |
 | Gateway ingress validation | `python scripts/validate_gateway_ingress_manifest.py --allow-placeholder` |

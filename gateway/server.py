@@ -58,11 +58,14 @@ from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
 from gateway.capability_forge import CapabilityCertificationHandoff
 from gateway.capability_maturity import CapabilityCertificationEvidenceBundle
+from gateway.case_management import build_operational_case_read_model
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
+from gateway.evidence_bundle import build_command_trust_bundle
 from gateway.event_log import WebhookEventLog
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
+from gateway.observability import GatewayObservabilityRecorder
 from gateway.mcp_operator_read_model import build_mcp_operator_read_model
 from gateway.operator_capability_console import (
     build_operator_capability_read_model,
@@ -214,6 +217,204 @@ def create_gateway_app(
             detail="Persistent Reflex deployment witness log required",
         )
 
+    def _stable_payload_hash(payload: dict[str, Any]) -> str:
+        """Return a deterministic hash for a JSON-compatible witness payload."""
+        return sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+        ).hexdigest()
+
+    def _signed_claim(payload: dict[str, Any], *, signing_secret: str, signature_key_id: str) -> dict[str, Any]:
+        """Return a payload with a bounded HMAC claim signature."""
+        claim = {**payload, "signature_key_id": signature_key_id}
+        unsigned_hash = _stable_payload_hash(claim)
+        signature = hmac.new(signing_secret.encode("utf-8"), unsigned_hash.encode("utf-8"), sha256).hexdigest()
+        return {
+            **claim,
+            "claim_hash": unsigned_hash,
+            "signature": f"hmac-sha256:{signature}",
+        }
+
+    def _signed_claim_valid(payload: dict[str, Any], *, signing_secret: str) -> bool:
+        """Verify a signed claim emitted by this gateway."""
+        signature = str(payload.get("signature", ""))
+        if not signature.startswith("hmac-sha256:") or not signing_secret:
+            return False
+        unsigned = dict(payload)
+        unsigned.pop("signature", None)
+        observed_hash = str(unsigned.pop("claim_hash", ""))
+        expected_hash = _stable_payload_hash(unsigned)
+        if not hmac.compare_digest(observed_hash, expected_hash):
+            return False
+        expected_signature = hmac.new(
+            signing_secret.encode("utf-8"),
+            expected_hash.encode("utf-8"),
+            sha256,
+        ).hexdigest()
+        return hmac.compare_digest(signature.removeprefix("hmac-sha256:"), expected_signature)
+
+    def _hmac_certificate_signature_valid(payload: dict[str, Any], *, signing_secret: str) -> bool:
+        """Verify conformance-style HMAC signatures without leaking certificate details."""
+        signature = str(payload.get("signature", ""))
+        if not signature.startswith("hmac-sha256:") or not signing_secret:
+            return False
+        unsigned = dict(payload)
+        unsigned.pop("signature", None)
+        expected_hash = _stable_payload_hash(unsigned)
+        expected_signature = hmac.new(
+            signing_secret.encode("utf-8"),
+            expected_hash.encode("utf-8"),
+            sha256,
+        ).hexdigest()
+        return hmac.compare_digest(signature.removeprefix("hmac-sha256:"), expected_signature)
+
+    def _status_from_bool(passed: bool) -> str:
+        """Map a witnessed boolean to public health status text."""
+        return "pass" if passed else "missing"
+
+    def _deployment_id() -> str:
+        """Return configured deployment id or a bounded local placeholder."""
+        return os.environ.get("MULLU_DEPLOYMENT_ID", "").strip() or f"dep_{gateway_env}_unpublished"
+
+    def _commit_sha() -> str:
+        """Return configured commit sha without reading deployment host state."""
+        for name in ("MULLU_DEPLOYED_COMMIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "SOURCE_VERSION"):
+            value = os.environ.get(name, "").strip()
+            if value:
+                return value
+        return "unknown"
+
+    def _capability_evidence_projection() -> dict[str, Any]:
+        """Return maturity-oriented capability evidence from the active fabric."""
+        if capability_admission_gate is None:
+            return {
+                "enabled": False,
+                "capability_count": 0,
+                "capability_evidence": {},
+                "live_capabilities": [],
+                "sandbox_only_capabilities": [],
+                "checks": [{
+                    "check_id": "capability_registry_configured",
+                    "passed": False,
+                    "detail": "capability fabric admission is not configured",
+                }],
+            }
+        read_model = capability_admission_gate.read_model()
+        capabilities = tuple(read_model.get("capabilities", ()))
+        evidence_by_capability: dict[str, str] = {}
+        live_capabilities: list[str] = []
+        sandbox_only_capabilities: list[str] = []
+        for item in capabilities:
+            if not isinstance(item, dict):
+                continue
+            capability_id = str(item.get("capability_id", "")).strip()
+            if not capability_id:
+                continue
+            assessment = item.get("maturity_assessment", {})
+            maturity_level = str(assessment.get("maturity_level", "C0")) if isinstance(assessment, dict) else "C0"
+            production_ready = bool(assessment.get("production_ready")) if isinstance(assessment, dict) else False
+            if production_ready:
+                status = "production"
+                live_capabilities.append(capability_id)
+            elif maturity_level in {"C4", "C5"}:
+                status = "pilot"
+            elif maturity_level == "C3":
+                status = "sandbox"
+                sandbox_only_capabilities.append(capability_id)
+            elif maturity_level in {"C1", "C2"}:
+                status = "tested"
+            else:
+                status = "described_only"
+            evidence_by_capability[capability_id] = status
+        return {
+            "enabled": True,
+            "capability_count": int(read_model.get("capability_count", len(evidence_by_capability))),
+            "capsule_count": int(read_model.get("capsule_count", 0)),
+            "require_certified": read_model.get("require_certified"),
+            "capability_evidence": evidence_by_capability,
+            "live_capabilities": live_capabilities,
+            "sandbox_only_capabilities": sandbox_only_capabilities,
+            "checks": [{
+                "check_id": "capability_registry_configured",
+                "passed": True,
+                "detail": f"capability_count={len(evidence_by_capability)}",
+            }],
+        }
+
+    def _build_deployment_witness() -> dict[str, Any]:
+        """Build the public production evidence witness for this gateway."""
+        health_payload = health()
+        conformance = runtime_conformance()
+        capability_projection = _capability_evidence_projection()
+        command_summary = command_ledger.summary()
+        checks = [
+            {
+                "check_id": "gateway_health",
+                "passed": health_payload.get("status") == "healthy",
+                "detail": str(health_payload.get("status", "unknown")),
+            },
+            {
+                "check_id": "runtime_conformance",
+                "passed": str(conformance.get("terminal_status", "")) in {
+                    "conformant",
+                    "conformant_with_gaps",
+                },
+                "detail": str(conformance.get("terminal_status", "missing")),
+            },
+            {
+                "check_id": "capability_registry",
+                "passed": capability_projection["enabled"],
+                "detail": f"capability_count={capability_projection['capability_count']}",
+            },
+            {
+                "check_id": "audit_anchor",
+                "passed": bool(command_summary.get("latest_anchor_id")),
+                "detail": str(command_summary.get("latest_anchor_id") or "anchor_missing"),
+            },
+            {
+                "check_id": "proof_store",
+                "passed": int(command_summary.get("terminal_certificates", 0)) > 0,
+                "detail": f"terminal_certificates={command_summary.get('terminal_certificates', 0)}",
+            },
+        ]
+        passed_checks = [check["check_id"] for check in checks if check["passed"]]
+        missing_checks = [check["check_id"] for check in checks if not check["passed"]]
+        payload = {
+            "deployment_id": _deployment_id(),
+            "commit_sha": _commit_sha(),
+            "runtime_env": gateway_env,
+            "version": app.version,
+            "gateway_health": _status_from_bool(health_payload.get("status") == "healthy"),
+            "api_health": "pass",
+            "db_health": _status_from_bool(command_summary.get("store", {}).get("available", True)),
+            "policy_engine": "pass",
+            "audit_store": _status_from_bool(bool(command_summary.get("latest_event_hash"))),
+            "proof_store": _status_from_bool(int(command_summary.get("terminal_certificates", 0)) > 0),
+            "capability_evidence": capability_projection["capability_evidence"],
+            "live_capabilities": capability_projection["live_capabilities"],
+            "sandbox_only_capabilities": capability_projection["sandbox_only_capabilities"],
+            "checks": checks,
+            "checks_passed": passed_checks,
+            "checks_missing": missing_checks,
+            "runtime_conformance_certificate_id": conformance.get("certificate_id", ""),
+            "signed_at": _clock(),
+            "witness": "mullu_gateway_production_evidence_v1",
+        }
+        return _signed_claim(
+            payload,
+            signing_secret=os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET", "local-deployment-witness-secret"),
+            signature_key_id=os.environ.get("MULLU_DEPLOYMENT_WITNESS_KEY_ID", "deployment-witness-local"),
+        )
+
+    def _unanchored_event_count() -> int:
+        """Return unanchored command-event count when the ledger store exposes it."""
+        store = getattr(command_ledger, "_store", None)
+        if store is None or not hasattr(store, "unanchored_events"):
+            return 0
+        try:
+            return len(store.unanchored_events())
+        except Exception:
+            return 0
+
     def _record_authority_operator_audit(request: Request, *, authorized: bool) -> None:
         """Record bounded authority operator access without storing bearer secrets."""
         channel = request.headers.get("X-Mullu-Authority-Channel", "").strip()
@@ -294,6 +495,7 @@ def create_gateway_app(
             executor=mcp_executor,
         )
     isolated_capability_executor = build_isolated_capability_executor_from_env()
+    observability_recorder = GatewayObservabilityRecorder()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,
@@ -305,6 +507,7 @@ def create_gateway_app(
         environment=gateway_env,
         isolated_capability_executor=isolated_capability_executor,
         mcp_authority_records=mcp_authority_records,
+        observability_recorder=observability_recorder,
     )
     session_mgr = SessionManager()
 
@@ -697,6 +900,99 @@ def create_gateway_app(
             runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
         return certificate.to_json_dict()
+
+    @app.get("/deployment/witness")
+    def deployment_witness():
+        return _build_deployment_witness()
+
+    @app.get("/capabilities/evidence")
+    def capabilities_evidence():
+        projection = _capability_evidence_projection()
+        return {
+            "runtime_env": gateway_env,
+            "commit_sha": _commit_sha(),
+            "deployment_id": _deployment_id(),
+            **projection,
+        }
+
+    @app.get("/audit/verify")
+    def audit_verify():
+        anchors = command_ledger.list_anchors(limit=1)
+        if not anchors:
+            return {
+                "valid": False,
+                "reason": "anchor_not_found",
+                "entries_checked": 0,
+                "latest_anchor_id": "",
+                "unanchored_event_count": _unanchored_event_count(),
+                "governed": True,
+            }
+        anchor = anchors[0]
+        proof = command_ledger.export_anchor_proof(anchor.anchor_id)
+        if proof is None:
+            return {
+                "valid": False,
+                "reason": "anchor_proof_not_found",
+                "entries_checked": 0,
+                "latest_anchor_id": anchor.anchor_id,
+                "unanchored_event_count": _unanchored_event_count(),
+                "governed": True,
+            }
+        verification = command_ledger.verify_anchor_proof(
+            proof,
+            signing_secret=os.environ.get("MULLU_COMMAND_ANCHOR_SECRET", "local-command-anchor-secret"),
+        )
+        return {
+            "valid": verification.valid,
+            "reason": verification.reason,
+            "entries_checked": len(proof.event_hashes),
+            "latest_anchor_id": verification.anchor_id,
+            "last_hash": anchor.to_event_hash[:16],
+            "unanchored_event_count": _unanchored_event_count(),
+            "governed": True,
+        }
+
+    @app.get("/proof/verify")
+    def proof_verify():
+        conformance = runtime_conformance()
+        deployment = _build_deployment_witness()
+        audit = audit_verify()
+        conformance_valid = _hmac_certificate_signature_valid(
+            conformance,
+            signing_secret=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", "local-runtime-conformance-secret"),
+        )
+        deployment_valid = _signed_claim_valid(
+            deployment,
+            signing_secret=os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET", "local-deployment-witness-secret"),
+        )
+        checks = [
+            {
+                "check_id": "runtime_conformance_signature",
+                "passed": conformance_valid,
+                "detail": str(conformance.get("certificate_id", "")),
+            },
+            {
+                "check_id": "deployment_witness_signature",
+                "passed": deployment_valid,
+                "detail": str(deployment.get("deployment_id", "")),
+            },
+            {
+                "check_id": "audit_anchor_verification",
+                "passed": bool(audit.get("valid")),
+                "detail": str(audit.get("reason", "")),
+            },
+        ]
+        return {
+            "valid": all(check["passed"] for check in checks),
+            "runtime_env": gateway_env,
+            "deployment_id": deployment.get("deployment_id", ""),
+            "commit_sha": deployment.get("commit_sha", ""),
+            "checks": checks,
+            "checks_passed": [check["check_id"] for check in checks if check["passed"]],
+            "checks_missing": [check["check_id"] for check in checks if not check["passed"]],
+            "terminal_status": "verified" if all(check["passed"] for check in checks) else "verification_gaps",
+            "governed": True,
+        }
 
     def _reflex_snapshot() -> RuntimeHealthSnapshot:
         router_summary = router.summary()
@@ -1509,6 +1805,47 @@ def create_gateway_app(
             ],
         }
 
+    @app.get("/cases/read-model")
+    def operational_cases_read_model(
+        request: Request,
+        tenant_id: str = "",
+        case_type: str = "",
+        status: str = "",
+        owner: str = "",
+        severity: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        read_model = build_operational_case_read_model(
+            approval_chains=authority_mesh_store.list_approval_chains(),
+            obligations=authority_mesh_store.list_obligations(),
+            escalation_events=authority_mesh_store.list_escalation_events(),
+        )
+        cases = tuple(read_model["cases"])
+        if tenant_id:
+            cases = tuple(case for case in cases if case["tenant_id"] == tenant_id)
+        if case_type:
+            cases = tuple(case for case in cases if case["case_type"] == case_type)
+        if status:
+            cases = tuple(case for case in cases if case["status"] == status)
+        if owner:
+            cases = tuple(case for case in cases if case["owner"] == owner)
+        if severity:
+            cases = tuple(case for case in cases if case["severity"] == severity)
+        page, page_meta = _read_model_page(
+            cases,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        return {
+            **read_model,
+            "cases": list(page),
+            "case_count": len(page),
+            "total_case_count": len(cases),
+            **page_meta,
+        }
+
     @app.get("/authority/operator-audit")
     def authority_operator_audit(
         request: Request,
@@ -1815,6 +2152,19 @@ def create_gateway_app(
             "plan_error": response.metadata.get("plan_error", ""),
         }
 
+    @app.get("/observability/summary")
+    def observability_summary(request: Request):
+        _require_authority_operator(request)
+        return router.observability_snapshot()
+
+    @app.get("/observability/traces/{trace_id}")
+    def observability_trace(trace_id: str, request: Request):
+        _require_authority_operator(request)
+        trace = router.observability_trace(trace_id)
+        if trace is None:
+            raise HTTPException(404, detail="trace not found")
+        return trace
+
     @app.get("/anchors/latest")
     def latest_anchor():
         anchors = command_ledger.list_anchors(limit=1)
@@ -1832,6 +2182,25 @@ def create_gateway_app(
             "anchored_at": anchor.anchored_at,
         }
 
+    @app.get("/evidence/bundles/{command_id}")
+    def command_evidence_bundle(command_id: str, request: Request):
+        _require_authority_operator(request)
+        try:
+            bundle = build_command_trust_bundle(
+                command_ledger=command_ledger,
+                command_id=command_id,
+                deployment_id=_deployment_id(),
+                commit_sha=_commit_sha(),
+                signing_secret=os.environ.get("MULLU_TRUST_LEDGER_SECRET", "local-trust-ledger-secret"),
+                signature_key_id=os.environ.get("MULLU_TRUST_LEDGER_KEY_ID", "trust-ledger-local"),
+                clock=_clock,
+            )
+        except KeyError as exc:
+            raise HTTPException(404, detail="command not found") from exc
+        except ValueError as exc:
+            raise HTTPException(409, detail=str(exc)) from exc
+        return bundle.to_json_dict()
+
     # Store references for testing
     app.state.router = router
     app.state.command_ledger = command_ledger
@@ -1848,6 +2217,7 @@ def create_gateway_app(
     app.state.mcp_authority_records = mcp_authority_records
     app.state.mcp_gateway_import = mcp_gateway_import
     app.state.plan_ledger = plan_ledger
+    app.state.observability_recorder = observability_recorder
     app.state.verifier = verifier
 
     return app

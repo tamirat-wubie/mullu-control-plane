@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-live-handoff-closure-run:1",
+  "title": "Finance Approval Live Handoff Closure Run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "checked_at",
+    "mode",
+    "status",
+    "ready_to_execute_live",
+    "command_count",
+    "blockers",
+    "commands"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^finance-live-handoff-closure-run-[0-9a-f]{16}$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "dry-run"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "blocked"
+      ]
+    },
+    "ready_to_execute_live": {
+      "type": "boolean"
+    },
+    "command_count": {
+      "type": "integer",
+      "minimum": 14,
+      "maximum": 14
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "items": {
+        "$ref": "#/$defs/closure_command"
+      }
+    }
+  },
+  "$defs": {
+    "closure_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "purpose",
+        "command",
+        "required_before_next",
+        "live_effect_possible"
+      ],
+      "properties": {
+        "step_id": {
+          "type": "string",
+          "enum": [
+            "01_emit_binding_receipt",
+            "02_validate_binding_receipt",
+            "03_collect_read_only_live_receipt",
+            "04_validate_read_only_live_receipt",
+            "05_collect_adapter_evidence",
+            "06_validate_pilot_readiness",
+            "07_refresh_handoff_plan",
+            "08_validate_handoff_plan_schema",
+            "09_run_preflight",
+            "10_validate_preflight_schema",
+            "11_produce_handoff_packet",
+            "12_validate_handoff_packet_schema",
+            "13_validate_handoff_chain",
+            "14_validate_handoff_chain_schema"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_before_next": {
+          "type": "boolean"
+        },
+        "live_effect_possible": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

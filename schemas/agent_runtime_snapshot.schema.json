@@ -1,0 +1,429 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agent-runtime-snapshot:1",
+  "title": "AgentRuntimeSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runtime_id",
+    "tenant_id",
+    "agents",
+    "leases",
+    "tasks",
+    "handoffs",
+    "receipts",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "runtime_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent_runtime_identity"
+      }
+    },
+    "leases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent_lease"
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent_task"
+      }
+    },
+    "handoffs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent_handoff"
+      }
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/agent_receipt"
+      }
+    },
+    "snapshot_hash": {
+      "type": "string",
+      "minLength": 32
+    }
+  },
+  "$defs": {
+    "agent_runtime_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "tenant_id",
+        "role",
+        "status",
+        "capability_scope",
+        "memory_scope",
+        "budget_scope_cents",
+        "parent_agent_id",
+        "lease_expires_at",
+        "evidence_refs",
+        "identity_hash",
+        "metadata"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "suspended",
+            "revoked"
+          ]
+        },
+        "capability_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "memory_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "budget_scope_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parent_agent_id": {
+          "type": "string"
+        },
+        "lease_expires_at": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "identity_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "agent_lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lease_id",
+        "agent_id",
+        "tenant_id",
+        "issued_by_agent_id",
+        "capability_scope",
+        "budget_scope_cents",
+        "issued_at",
+        "expires_at",
+        "evidence_refs",
+        "lease_hash"
+      ],
+      "properties": {
+        "lease_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_by_agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "budget_scope_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "issued_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expires_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "lease_hash": {
+          "type": "string",
+          "minLength": 32
+        }
+      }
+    },
+    "agent_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "agent_id",
+        "tenant_id",
+        "capability",
+        "goal_id",
+        "risk_tier",
+        "budget_cents",
+        "status",
+        "assigned_at",
+        "evidence_refs",
+        "task_hash",
+        "metadata"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk_tier": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "budget_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "rejected",
+            "executing",
+            "completed",
+            "failed",
+            "requires_review"
+          ]
+        },
+        "assigned_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "task_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "agent_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handoff_id",
+        "from_agent_id",
+        "to_agent_id",
+        "tenant_id",
+        "goal_id",
+        "task_id",
+        "capability_scope",
+        "budget_cents",
+        "context_refs",
+        "handed_off_at",
+        "handoff_hash",
+        "metadata"
+      ],
+      "properties": {
+        "handoff_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to_agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goal_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "budget_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "context_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "handed_off_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "handoff_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "agent_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_type",
+        "status",
+        "actor_agent_id",
+        "tenant_id",
+        "reason",
+        "evidence_refs",
+        "subject_ref",
+        "receipt_hash",
+        "metadata"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "rejected",
+            "recorded"
+          ]
+        },
+        "actor_agent_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "subject_ref": {
+          "type": "string"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

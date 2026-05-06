@@ -162,13 +162,17 @@ class CapabilityIsolationPolicy:
     """Classifies capability passports into execution boundaries."""
 
     _DANGEROUS_EXTERNAL_SYSTEMS = {
+        "browser_worker",
+        "computer_worker",
         "payment_provider",
         "deployment",
         "filesystem",
         "database",
         "secret_store",
         "external_webhook",
+        "shell_worker",
     }
+    _WORKER_REQUIRED_DOMAINS = {"browser", "computer", "shell"}
 
     def __init__(self, *, environment: str = "local_dev") -> None:
         self._environment = environment.strip().lower() or "local_dev"
@@ -180,18 +184,27 @@ class CapabilityIsolationPolicy:
 
     def boundary_for(self, passport: CapabilityPassport) -> CapabilityExecutionBoundary:
         """Build the execution boundary for a capability passport."""
+        capability_domain = passport.capability.split(".", 1)[0]
+        worker_required = capability_domain in self._WORKER_REQUIRED_DOMAINS
         isolation_required = bool(
+            worker_required
+            or
             passport.mutates_world
             or passport.risk_tier == "high"
             or passport.external_system in self._DANGEROUS_EXTERNAL_SYSTEMS
         )
         execution_plane = "isolated_worker" if isolation_required else "gateway_process"
         service_account = f"capability-{passport.capability.replace('.', '-')}"
+        network_policy = (passport.external_system,) if passport.external_system else ()
+        if worker_required and capability_domain == "browser":
+            network_policy = ("browser_egress_allowlist",)
+        if worker_required and capability_domain in {"computer", "shell"}:
+            network_policy = ("deny_all",)
         return CapabilityExecutionBoundary(
             capability_id=passport.capability,
             execution_plane=execution_plane,
             isolation_required=isolation_required,
-            network_policy=(passport.external_system,) if passport.external_system else (),
+            network_policy=network_policy,
             filesystem_policy="read_only",
             max_runtime_seconds=30 if isolation_required else 10,
             max_memory_mb=256 if isolation_required else 128,
