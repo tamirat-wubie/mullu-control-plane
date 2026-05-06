@@ -31,7 +31,7 @@ from scripts.produce_capability_adapter_live_receipts import DEFAULT_EMAIL_CALEN
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "finance_approval_email_calendar_live_receipt.schema.json"
-READ_ONLY_OPERATIONS = ("email.search", "calendar.free_busy")
+READ_ONLY_OPERATIONS = ("email.search", "calendar.conflict_check")
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +97,37 @@ def _validate_semantics(receipt: dict[str, Any], errors: list[str]) -> None:
         errors.append("blockers must be a list")
     elif receipt.get("status") == "passed" and blockers:
         errors.append("passed finance live receipt must not carry blockers")
+    _validate_worker_receipt(receipt, errors)
+
+
+def _validate_worker_receipt(receipt: dict[str, Any], errors: list[str]) -> None:
+    worker_receipt = receipt.get("worker_receipt")
+    if receipt.get("status") == "passed" and not isinstance(worker_receipt, dict):
+        errors.append("passed finance live receipt requires worker_receipt object")
+        return
+    if not isinstance(worker_receipt, dict):
+        return
+    for field_name in ("connector_id", "provider_operation", "resource_id", "response_digest"):
+        expected_value = str(receipt.get(field_name, "")).strip()
+        if expected_value and worker_receipt.get(field_name) != receipt.get(field_name):
+            errors.append(f"worker_receipt {field_name} must match receipt {field_name}")
+    if worker_receipt.get("external_write") is not False:
+        errors.append("worker_receipt external_write must be false")
+    if receipt.get("status") != "passed":
+        return
+    if worker_receipt.get("verification_status") != "passed":
+        errors.append("passed finance live receipt requires worker_receipt verification_status=passed")
+    if worker_receipt.get("capability_id") not in READ_ONLY_OPERATIONS:
+        errors.append("passed finance live receipt requires read-only worker_receipt capability_id")
+    if worker_receipt.get("action") not in READ_ONLY_OPERATIONS:
+        errors.append("passed finance live receipt requires read-only worker_receipt action")
+    if worker_receipt.get("forbidden_effects_observed") is not False:
+        errors.append("passed finance live receipt requires no forbidden worker effects")
+    if not str(worker_receipt.get("query_hash", "")).strip():
+        errors.append("passed finance live receipt requires worker_receipt query_hash")
+    evidence_refs = worker_receipt.get("evidence_refs")
+    if not isinstance(evidence_refs, list) or not evidence_refs:
+        errors.append("passed finance live receipt requires worker_receipt evidence_refs")
 
 
 def _receipt_ready(receipt: dict[str, Any]) -> bool:
@@ -106,7 +137,27 @@ def _receipt_ready(receipt: dict[str, Any]) -> bool:
         and receipt.get("verification_status") == "passed"
         and receipt.get("external_write") is False
         and str(receipt.get("provider_operation", "")) in READ_ONLY_OPERATIONS
+        and _worker_receipt_ready(receipt)
         and receipt.get("blockers") == []
+    )
+
+
+def _worker_receipt_ready(receipt: dict[str, Any]) -> bool:
+    worker_receipt = receipt.get("worker_receipt")
+    return (
+        isinstance(worker_receipt, dict)
+        and worker_receipt.get("connector_id") == receipt.get("connector_id")
+        and worker_receipt.get("provider_operation") == receipt.get("provider_operation")
+        and worker_receipt.get("resource_id") == receipt.get("resource_id")
+        and worker_receipt.get("response_digest") == receipt.get("response_digest")
+        and worker_receipt.get("verification_status") == "passed"
+        and worker_receipt.get("capability_id") in READ_ONLY_OPERATIONS
+        and worker_receipt.get("action") in READ_ONLY_OPERATIONS
+        and worker_receipt.get("external_write") is False
+        and worker_receipt.get("forbidden_effects_observed") is False
+        and bool(str(worker_receipt.get("query_hash", "")).strip())
+        and isinstance(worker_receipt.get("evidence_refs"), list)
+        and bool(worker_receipt.get("evidence_refs"))
     )
 
 

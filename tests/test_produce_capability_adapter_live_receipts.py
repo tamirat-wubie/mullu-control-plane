@@ -422,7 +422,7 @@ class FakeEmailCalendarAdapter:
             connector_id=request.connector_id,
             provider_operation=request.action,
             resource_id="email-search-live",
-            response_digest="email-search-digest",
+            response_digest="e" * 64,
             external_write=False,
         )
 

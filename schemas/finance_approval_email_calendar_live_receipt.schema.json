@@ -3,7 +3,7 @@
   "$id": "urn:mullusi:schema:finance-approval-email-calendar-live-receipt:1",
   "title": "Finance Approval Email Calendar Live Receipt",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": [
     "receipt_id",
     "adapter_id",
@@ -42,9 +42,24 @@
     },
     "connector_id": {
       "type": "string",
-      "minLength": 1
+      "enum": [
+        "gmail",
+        "google_calendar",
+        "microsoft_graph"
+      ]
     },
     "provider_operation": {
+      "type": "string",
+      "enum": [
+        "",
+        "email.search",
+        "calendar.conflict_check"
+      ]
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "response_digest": {
       "type": "string"
     },
     "external_write": {
@@ -52,7 +67,7 @@
       "const": false
     },
     "worker_receipt": {
-      "type": "object"
+      "$ref": "#/$defs/worker_receipt"
     },
     "blockers": {
       "type": "array",
@@ -63,6 +78,209 @@
     },
     "error": {
       "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "connector_id",
+          "provider_operation",
+          "resource_id",
+          "response_digest",
+          "worker_receipt"
+        ],
+        "properties": {
+          "verification_status": {
+            "const": "passed"
+          },
+          "provider_operation": {
+            "enum": [
+              "email.search",
+              "calendar.conflict_check"
+            ]
+          },
+          "resource_id": {
+            "minLength": 1
+          },
+          "response_digest": {
+            "$ref": "#/$defs/sha256_hex"
+          },
+          "blockers": {
+            "maxItems": 0
+          },
+          "worker_receipt": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/worker_receipt"
+              },
+              {
+                "$ref": "#/$defs/passed_worker_receipt"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256_hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "string_array": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "worker_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "request_id",
+        "tenant_id",
+        "capability_id",
+        "action",
+        "worker_id",
+        "connector_id",
+        "provider_operation",
+        "resource_id",
+        "response_digest",
+        "subject_hash",
+        "body_hash",
+        "query_hash",
+        "recipient_hashes",
+        "attendee_hashes",
+        "external_write",
+        "forbidden_effects_observed",
+        "verification_status",
+        "evidence_refs",
+        "approval_id"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^email-calendar-receipt-[0-9a-f]{16}$"
+        },
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_id": {
+          "type": "string",
+          "enum": [
+            "email.search",
+            "calendar.conflict_check"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "email.search",
+            "calendar.conflict_check"
+          ]
+        },
+        "worker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "connector_id": {
+          "type": "string",
+          "enum": [
+            "gmail",
+            "google_calendar",
+            "microsoft_graph"
+          ]
+        },
+        "provider_operation": {
+          "type": "string",
+          "enum": [
+            "email.search",
+            "calendar.conflict_check"
+          ]
+        },
+        "resource_id": {
+          "type": "string"
+        },
+        "response_digest": {
+          "type": "string"
+        },
+        "subject_hash": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "body_hash": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "query_hash": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "recipient_hashes": {
+          "$ref": "#/$defs/string_array"
+        },
+        "attendee_hashes": {
+          "$ref": "#/$defs/string_array"
+        },
+        "external_write": {
+          "type": "boolean",
+          "const": false
+        },
+        "forbidden_effects_observed": {
+          "type": "boolean"
+        },
+        "verification_status": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "blocked"
+          ]
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/string_array"
+        },
+        "approval_id": {
+          "type": "string"
+        }
+      }
+    },
+    "passed_worker_receipt": {
+      "type": "object",
+      "properties": {
+        "resource_id": {
+          "minLength": 1
+        },
+        "response_digest": {
+          "$ref": "#/$defs/sha256_hex"
+        },
+        "external_write": {
+          "const": false
+        },
+        "forbidden_effects_observed": {
+          "const": false
+        },
+        "verification_status": {
+          "const": "passed"
+        },
+        "evidence_refs": {
+          "minItems": 1
+        }
+      }
     }
   }
 }

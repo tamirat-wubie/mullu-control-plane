@@ -139,6 +139,22 @@ def test_finance_closure_run_schema_rejects_strict_promotion_command_drift(tmp_p
     assert any("--require-ready" in error for error in validation.errors)
 
 
+def test_finance_closure_run_schema_rejects_chain_schema_command_drift(tmp_path: Path) -> None:
+    closure_run_path = tmp_path / "finance_closure_run.json"
+    closure_run = run_finance_approval_live_handoff_closure().as_dict()
+    closure_run["commands"][13]["command"] = "python scripts/validate_finance_approval_live_handoff_chain_schema.py --json"
+    closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
+
+    validation = validate_finance_approval_live_handoff_closure_run_schema(
+        closure_run_path=closure_run_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("14_validate_handoff_chain_schema command missing required tokens" in error for error in validation.errors)
+    assert any("--strict" in error for error in validation.errors)
+
+
 def test_finance_closure_run_schema_rejects_operator_summary_schema_command_drift(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()

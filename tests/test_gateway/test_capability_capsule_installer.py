@@ -243,6 +243,34 @@ def test_capsule_admission_operator_endpoint_blocks_physical_preflight_failure()
     assert registry.artifact_count == 0
 
 
+def test_capsule_admission_operator_endpoint_accepts_physical_safety_refs_from_handoff() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    gate = MaturityProjectingCapabilityAdmissionGate(registry=registry, clock=_clock)
+    app = create_gateway_app(platform=StubPlatform(), capability_admission_gate_override=gate)
+    client = TestClient(app)
+    entry = _physical_entry("physical.unlock_door")
+    handoff = _certification_handoff_for(entry, physical_safety_evidence=True)
+
+    response = client.post(
+        "/capability-fabric/capsule-admissions",
+        json={
+            "capsule": _physical_capsule(("physical.unlock_door",)).to_json_dict(),
+            "registry_entries": [entry.to_json_dict()],
+            "handoffs": [asdict(handoff)],
+            "require_production_ready": True,
+        },
+    )
+    evidence_entry = response.json()["evidence_batch"]["registry_entries"][0]
+    physical_evidence = evidence_entry["extensions"]["physical_live_safety_evidence"]
+
+    assert response.status_code == 200
+    assert response.json()["admission_receipt"]["admission_status"] == "installed"
+    assert physical_evidence["simulation_ref"] == "proof://physical/simulation-pass"
+    assert physical_evidence["emergency_stop_ref"] == "emergency-stop:physical-live"
+    assert registry.capability_count == 1
+    assert registry.artifact_count > 0
+
+
 def _registry_entry() -> CapabilityRegistryEntry:
     return CapabilityRegistryEntry.from_mapping(_fixture("capability_registry_entry.json"))
 
@@ -290,7 +318,11 @@ def _physical_entry(
     raise AssertionError(f"physical fixture capability not found: {capability_id}")
 
 
-def _certification_handoff_for(entry: CapabilityRegistryEntry) -> CapabilityCertificationHandoff:
+def _certification_handoff_for(
+    entry: CapabilityRegistryEntry,
+    *,
+    physical_safety_evidence: bool = False,
+) -> CapabilityCertificationHandoff:
     candidate = CapabilityForge().create_candidate(_forge_input_for_entry(entry))
     return CapabilityForge().build_certification_handoff(
         candidate,
@@ -298,6 +330,7 @@ def _certification_handoff_for(entry: CapabilityRegistryEntry) -> CapabilityCert
         live_write_receipt_ref=f"proof://{entry.capability_id}/live-write",
         worker_deployment_ref=f"proof://{entry.capability_id}/worker",
         recovery_evidence_ref=f"proof://{entry.capability_id}/recovery",
+        physical_live_safety_evidence_refs=_full_live_safety_evidence() if physical_safety_evidence else None,
     )
 
 
