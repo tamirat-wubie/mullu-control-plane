@@ -54,6 +54,19 @@ from mcoi_runtime.contracts.coordination import (
     MergeDecision,
     MergeOutcome,
 )
+from mcoi_runtime.contracts.case_runtime import (
+    CaseClosureDisposition,
+    CaseClosureReport,
+    CaseDecision,
+    CaseKind,
+    CaseRecord,
+    CaseSeverity,
+    CaseStatus,
+    EvidenceItem,
+    EvidenceStatus,
+    ReviewDisposition,
+    ReviewRecord,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -172,6 +185,77 @@ def _build_conflict_record(payload: dict) -> ConflictRecord:
         strategy=ConflictStrategy(payload["strategy"]),
         resolved=payload["resolved"],
         resolution_id=payload["resolution_id"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_case_record(payload: dict) -> CaseRecord:
+    return CaseRecord(
+        case_id=payload["case_id"],
+        tenant_id=payload["tenant_id"],
+        kind=CaseKind(payload["kind"]),
+        severity=CaseSeverity(payload["severity"]),
+        status=CaseStatus(payload["status"]),
+        title=payload["title"],
+        description=payload["description"],
+        opened_by=payload["opened_by"],
+        opened_at=payload["opened_at"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_evidence_item(payload: dict) -> EvidenceItem:
+    return EvidenceItem(
+        evidence_id=payload["evidence_id"],
+        case_id=payload["case_id"],
+        source_type=payload["source_type"],
+        source_id=payload["source_id"],
+        status=EvidenceStatus(payload["status"]),
+        title=payload["title"],
+        description=payload["description"],
+        submitted_by=payload["submitted_by"],
+        submitted_at=payload["submitted_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_review_record(payload: dict) -> ReviewRecord:
+    return ReviewRecord(
+        review_id=payload["review_id"],
+        case_id=payload["case_id"],
+        evidence_id=payload["evidence_id"],
+        reviewer_id=payload["reviewer_id"],
+        disposition=ReviewDisposition(payload["disposition"]),
+        notes=payload["notes"],
+        reviewed_at=payload["reviewed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_case_decision(payload: dict) -> CaseDecision:
+    return CaseDecision(
+        decision_id=payload["decision_id"],
+        case_id=payload["case_id"],
+        disposition=CaseClosureDisposition(payload["disposition"]),
+        decided_by=payload["decided_by"],
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_case_closure_report(payload: dict) -> CaseClosureReport:
+    return CaseClosureReport(
+        report_id=payload["report_id"],
+        case_id=payload["case_id"],
+        tenant_id=payload["tenant_id"],
+        disposition=CaseClosureDisposition(payload["disposition"]),
+        total_evidence=payload["total_evidence"],
+        total_reviews=payload["total_reviews"],
+        total_findings=payload["total_findings"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
         metadata=payload["metadata"],
     )
 
@@ -322,6 +406,9 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("case_closure_report.json", _build_case_closure_report),
+        ("case_decision.json", _build_case_decision),
+        ("case_record.json", _build_case_record),
         ("conflict_record.json", _build_conflict_record),
         ("delegation_request.json", _build_delegation_request),
         ("delegation_result.json", _build_delegation_result),
@@ -330,6 +417,7 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
         ("continuity_snapshot.json", _build_continuity_snapshot),
         ("continuity_violation.json", _build_continuity_violation),
         ("disruption_event.json", _build_disruption_event),
+        ("evidence_item.json", _build_evidence_item),
         ("failover_record.json", _build_failover_record),
         ("handoff_record.json", _build_handoff_record),
         ("incident_record.json", _build_incident_record),
@@ -340,6 +428,7 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
         ("recovery_attempt.json", _build_recovery_attempt),
         ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
+        ("review_record.json", _build_review_record),
         ("verification_record.json", _build_verification_record),
     ],
 )

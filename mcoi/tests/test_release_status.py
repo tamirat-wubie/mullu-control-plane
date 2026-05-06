@@ -184,6 +184,26 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
         in summary.mcoi_runtime_fixtures
     )
     assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/case_record.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/evidence_item.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/review_record.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/case_decision.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/case_closure_report.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
         "integration/contracts_compat/fixtures/mcoi_runtime/continuity_plan.json"
         in summary.mcoi_runtime_fixtures
     )
@@ -221,7 +241,7 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert len(summary.maf_runtime_fixtures) >= 89
-    assert len(summary.mcoi_runtime_fixtures) >= 19
+    assert len(summary.mcoi_runtime_fixtures) >= 24
     assert summary.ci_workflow_present is True
     assert summary.release_version == "0.3.0 (v3.10.2)"
     assert summary.release_date == "2026-03-27"

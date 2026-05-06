@@ -126,6 +126,11 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "handoff_record.json" in mcoi_runtime_fixture_names
     assert "merge_decision.json" in mcoi_runtime_fixture_names
     assert "conflict_record.json" in mcoi_runtime_fixture_names
+    assert "case_record.json" in mcoi_runtime_fixture_names
+    assert "evidence_item.json" in mcoi_runtime_fixture_names
+    assert "review_record.json" in mcoi_runtime_fixture_names
+    assert "case_decision.json" in mcoi_runtime_fixture_names
+    assert "case_closure_report.json" in mcoi_runtime_fixture_names
     assert "continuity_plan.json" in mcoi_runtime_fixture_names
     assert "disruption_event.json" in mcoi_runtime_fixture_names
     assert "recovery_execution.json" in mcoi_runtime_fixture_names
@@ -145,7 +150,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 19
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 24
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1062,6 +1067,90 @@ def test_validate_mcoi_runtime_fixture_rejects_resolved_conflict_without_resolut
 
     assert len(errors) == 1
     assert "resolved conflicts must carry resolution_id" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_closed_case_without_closed_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "case_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "case_id": "case-drift",
+                "tenant_id": "tenant-1",
+                "kind": "incident",
+                "severity": "high",
+                "status": "closed",
+                "title": "Case drift",
+                "description": "Closed case without closure time.",
+                "opened_by": "operator-a",
+                "opened_at": "2026-04-03T08:00:00+00:00",
+                "closed_at": "",
+                "metadata": {"incident_id": "incident-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "closed cases must carry closed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_non_closed_case_with_closed_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "case_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "case_id": "case-drift",
+                "tenant_id": "tenant-1",
+                "kind": "incident",
+                "severity": "high",
+                "status": "escalated",
+                "title": "Case drift",
+                "description": "Escalated case should not already be closed.",
+                "opened_by": "operator-a",
+                "opened_at": "2026-04-03T08:00:00+00:00",
+                "closed_at": "2026-04-03T08:25:00+00:00",
+                "metadata": {"incident_id": "incident-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "non-closed cases must keep closed_at empty" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_case_closure_reverse_time(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "case_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "case_id": "case-drift",
+                "tenant_id": "tenant-1",
+                "kind": "incident",
+                "severity": "high",
+                "status": "closed",
+                "title": "Case drift",
+                "description": "Case closure time drifts before opening.",
+                "opened_by": "operator-a",
+                "opened_at": "2026-04-03T08:10:00+00:00",
+                "closed_at": "2026-04-03T08:05:00+00:00",
+                "metadata": {"incident_id": "incident-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "closed_at must be greater than or equal to opened_at" in errors[0]
     assert fixture_path.name in errors[0]
 
 

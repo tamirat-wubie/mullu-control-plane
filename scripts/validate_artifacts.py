@@ -147,6 +147,12 @@ FAILOVER_DISPOSITIONS = frozenset({"initiated", "completed", "failed", "rolled_b
 DELEGATION_STATUSES = frozenset({"accepted", "rejected", "expired"})
 MERGE_OUTCOMES = frozenset({"merged", "conflict_detected", "deferred"})
 CONFLICT_STRATEGIES = frozenset({"prefer_latest", "prefer_highest_confidence", "escalate", "manual"})
+CASE_STATUSES = frozenset({"open", "in_progress", "under_review", "pending_decision", "closed", "escalated"})
+CASE_SEVERITIES = frozenset({"low", "medium", "high", "critical"})
+CASE_KINDS = frozenset({"incident", "compliance", "audit", "security", "operational", "legal", "fault_analysis"})
+EVIDENCE_STATUSES = frozenset({"pending", "admitted", "reviewed", "challenged", "excluded"})
+REVIEW_DISPOSITIONS = frozenset({"requires_review", "accepted", "rejected", "inconclusive", "escalated"})
+CASE_CLOSURE_DISPOSITIONS = frozenset({"resolved", "unresolved", "remediated", "escalated", "dismissed"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -2167,7 +2173,7 @@ def _validate_assignment_decision_fixture(path: Path) -> list[str]:
     return errors
 
 
-def _validate_mcoi_handoff_record_fixture(path: Path) -> list[str]:
+def _validate_handoff_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     errors = _validate_exact_object_fields(
         payload,
@@ -4595,7 +4601,7 @@ def _validate_delegation_result_fixture(path: Path) -> list[str]:
     return errors
 
 
-def _validate_handoff_record_fixture(path: Path) -> list[str]:
+def _validate_mcoi_handoff_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MCOI runtime fixture")
     errors = _validate_exact_object_fields(
         payload,
@@ -4697,6 +4703,179 @@ def _validate_conflict_record_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_case_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "case_id",
+            "tenant_id",
+            "kind",
+            "severity",
+            "status",
+            "title",
+            "description",
+            "opened_by",
+            "opened_at",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("case_id", "tenant_id", "kind", "severity", "status", "title", "opened_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["description"], str):
+        errors.append(f"{_relative_path(path)}: field 'description' must be a string")
+    if payload["kind"] not in CASE_KINDS:
+        errors.append(f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(CASE_KINDS))}")
+    if payload["severity"] not in CASE_SEVERITIES:
+        errors.append(f"{_relative_path(path)}: field 'severity' must be one of {', '.join(sorted(CASE_SEVERITIES))}")
+    if payload["status"] not in CASE_STATUSES:
+        errors.append(f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(CASE_STATUSES))}")
+    errors.extend(_validate_iso8601_text(payload["opened_at"], field_name="opened_at", path=path))
+    if not isinstance(payload["closed_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'closed_at' must be a string")
+    elif payload["closed_at"]:
+        errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    if payload["status"] == "closed" and not payload["closed_at"]:
+        errors.append(f"{_relative_path(path)}: closed cases must carry closed_at")
+    if payload["status"] != "closed" and payload["closed_at"]:
+        errors.append(f"{_relative_path(path)}: non-closed cases must keep closed_at empty")
+    if not errors and payload["closed_at"] and _parse_iso8601_text(payload["closed_at"]) < _parse_iso8601_text(payload["opened_at"]):
+        errors.append(f"{_relative_path(path)}: closed_at must be greater than or equal to opened_at")
+    return errors
+
+
+def _validate_evidence_item_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "evidence_id",
+            "case_id",
+            "source_type",
+            "source_id",
+            "status",
+            "title",
+            "description",
+            "submitted_by",
+            "submitted_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("evidence_id", "case_id", "source_type", "source_id", "status", "title", "submitted_by"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["description"], str):
+        errors.append(f"{_relative_path(path)}: field 'description' must be a string")
+    if payload["status"] not in EVIDENCE_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(EVIDENCE_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["submitted_at"], field_name="submitted_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_review_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "review_id",
+            "case_id",
+            "evidence_id",
+            "reviewer_id",
+            "disposition",
+            "notes",
+            "reviewed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("review_id", "case_id", "evidence_id", "reviewer_id", "disposition"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["notes"], str):
+        errors.append(f"{_relative_path(path)}: field 'notes' must be a string")
+    if payload["disposition"] not in REVIEW_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(REVIEW_DISPOSITIONS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["reviewed_at"], field_name="reviewed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_case_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("decision_id", "case_id", "disposition", "decided_by", "reason", "decided_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "case_id", "disposition", "decided_by", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in CASE_CLOSURE_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(CASE_CLOSURE_DISPOSITIONS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_case_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "case_id",
+            "tenant_id",
+            "disposition",
+            "total_evidence",
+            "total_reviews",
+            "total_findings",
+            "total_violations",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "case_id", "tenant_id", "disposition"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in CASE_CLOSURE_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(CASE_CLOSURE_DISPOSITIONS))}"
+        )
+    for field_name in ("total_evidence", "total_reviews", "total_findings", "total_violations"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -4726,7 +4905,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "function_queue_profile.json": _validate_function_queue_profile_fixture,
     "function_sla_profile.json": _validate_function_sla_profile_fixture,
     "follow_up_record.json": _validate_follow_up_record_fixture,
-    "handoff_record.json": _validate_mcoi_handoff_record_fixture,
+    "handoff_record.json": _validate_handoff_record_fixture,
     "deadline_record.json": _validate_deadline_record_fixture,
     "goal_dependency.json": _validate_goal_dependency_fixture,
     "goal_descriptor.json": _validate_goal_descriptor_fixture,
@@ -4790,6 +4969,9 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "case_closure_report.json": _validate_case_closure_report_fixture,
+    "case_decision.json": _validate_case_decision_fixture,
+    "case_record.json": _validate_case_record_fixture,
     "conflict_record.json": _validate_conflict_record_fixture,
     "continuity_closure_report.json": _validate_continuity_closure_report_fixture,
     "continuity_plan.json": _validate_continuity_plan_fixture,
@@ -4798,8 +4980,9 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "delegation_request.json": _validate_delegation_request_fixture,
     "delegation_result.json": _validate_delegation_result_fixture,
     "disruption_event.json": _validate_disruption_event_fixture,
+    "evidence_item.json": _validate_evidence_item_fixture,
     "failover_record.json": _validate_failover_record_fixture,
-    "handoff_record.json": _validate_handoff_record_fixture,
+    "handoff_record.json": _validate_mcoi_handoff_record_fixture,
     "incident_record.json": _validate_incident_record_fixture,
     "merge_decision.json": _validate_merge_decision_fixture,
     "recovery_objective.json": _validate_recovery_objective_fixture,
@@ -4808,6 +4991,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "recovery_execution.json": _validate_recovery_execution_fixture,
     "recovery_plan.json": _validate_recovery_plan_fixture,
     "recovery_record.json": _validate_recovery_record_fixture,
+    "review_record.json": _validate_review_record_fixture,
     "verification_record.json": _validate_verification_record_fixture,
 }
 
