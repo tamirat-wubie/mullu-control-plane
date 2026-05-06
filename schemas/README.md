@@ -64,6 +64,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_evidence_freshness_receipt.schema.json` | Canonical governed evidence freshness recheck receipt |
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
 | `temporal_reapproval_receipt.schema.json` | Canonical governed execution-time approval recheck receipt |
+| `temporal_dispatch_window_receipt.schema.json` | Canonical governed dispatch-window admission receipt |
 | `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_memory_refresh_receipt.schema.json` | Canonical governed temporal memory refresh workflow receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |

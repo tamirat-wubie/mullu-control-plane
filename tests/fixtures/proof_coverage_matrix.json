@@ -275,6 +275,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_dispatch_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_dispatch_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -352,7 +359,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 44,
+      "action_proof": 45,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -360,7 +367,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 50,
+      "audit_chain": 51,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -368,16 +375,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 53
+      "witnessed": 54
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 44
+      "request_proof": 45
     },
-    "surface_count": 54
+    "surface_count": 55
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3145,6 +3152,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_reapproval"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_dispatch_window.py",
+        "schemas/temporal_dispatch_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_dispatch_window.py"
+      ],
+      "notes": "Temporal dispatch window rechecks tenant-local dispatch admission at runtime through allowed windows, blackout windows, holidays, evidence refs, and high-risk source schedule plus reapproval binding before worker execution.",
+      "representative_paths": [
+        "TemporalDispatchWindow.evaluate",
+        "DispatchWindowRequest",
+        "TemporalDispatchWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_dispatch_window_time",
+        "tenant_timezone_resolved",
+        "allowed_window_required_for_high_risk_dispatch",
+        "outside_allowed_window_defers_dispatch",
+        "active_blackout_defers_dispatch",
+        "holiday_closure_defers_dispatch",
+        "source_reapproval_bound_for_high_risk_dispatch",
+        "temporal_dispatch_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_dispatch_window"
     },
     {
       "action_proof": "action_proof",

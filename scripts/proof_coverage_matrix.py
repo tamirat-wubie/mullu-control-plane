@@ -1215,6 +1215,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_dispatch_window",
+            [
+                "TemporalDispatchWindow.evaluate",
+                "DispatchWindowRequest",
+                "TemporalDispatchWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_dispatch_window.py",
+                "schemas/temporal_dispatch_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_dispatch_window.py",
+            ],
+            "Temporal dispatch window rechecks tenant-local dispatch admission at runtime through allowed windows, blackout windows, holidays, evidence refs, and high-risk source schedule plus reapproval binding before worker execution.",
+            [
+                "runtime_clock_owns_dispatch_window_time",
+                "tenant_timezone_resolved",
+                "allowed_window_required_for_high_risk_dispatch",
+                "outside_allowed_window_defers_dispatch",
+                "active_blackout_defers_dispatch",
+                "holiday_closure_defers_dispatch",
+                "source_reapproval_bound_for_high_risk_dispatch",
+                "temporal_dispatch_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1678,6 +1707,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_reapproval_receipt_contract",
             "surfaces": ["temporal_reapproval"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_dispatch_window_receipt_contract",
+            "surfaces": ["temporal_dispatch_window"],
             "status": "closed",
         },
         {
