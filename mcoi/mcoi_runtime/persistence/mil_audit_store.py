@@ -1,7 +1,7 @@
-"""Purpose: persist MIL audit records and project them into replayable trace spines.
-Governance scope: MIL audit persistence, replay lookup, and TraceStore projection only.
-Dependencies: MIL contracts, static verifier reports, hash-chain store, trace store, replay contracts.
-Invariants: records are immutable; hash-chain anchoring is required for replay; trace projection is idempotent and fails closed on collision.
+"""Purpose: persist MIL audit records with tamper-evident hash-chain anchoring.
+Governance scope: MIL audit payload persistence and integrity validation only.
+Dependencies: MIL contracts, static verifier reports, hash-chain store, serialization helpers.
+Invariants: records are immutable; record content hashes must match chain entries; reads fail closed.
 """
 
 from __future__ import annotations
@@ -20,15 +20,8 @@ from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.core.mil_static_verifier import MILStaticReport
 
 from ._serialization import deserialize_record, serialize_record
-from .errors import (
-    CorruptedDataError,
-    PathTraversalError,
-    PersistenceError,
-    PersistenceWriteError,
-    TraceNotFoundError,
-)
+from .errors import CorruptedDataError, PathTraversalError, PersistenceError, PersistenceWriteError
 from .hash_chain import HashChainStore, compute_content_hash
-from .trace_store import TraceStore
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,12 +42,20 @@ class MILAuditRecord(ContractRecord):
         object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
         object.__setattr__(self, "program_id", require_non_empty_text(self.program_id, "program_id"))
         object.__setattr__(self, "goal_id", require_non_empty_text(self.goal_id, "goal_id"))
-        object.__setattr__(self, "policy_decision_id", require_non_empty_text(self.policy_decision_id, "policy_decision_id"))
+        object.__setattr__(
+            self,
+            "policy_decision_id",
+            require_non_empty_text(self.policy_decision_id, "policy_decision_id"),
+        )
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         if not isinstance(self.verification_passed, bool):
             raise ValueError("verification_passed must be a boolean")
-        object.__setattr__(self, "verification_issue_codes", _text_tuple(self.verification_issue_codes, "verification_issue_codes"))
-        object.__setattr__(self, "instruction_trace", _text_tuple(self.instruction_trace, "instruction_trace"))
+        object.__setattr__(
+            self,
+            "verification_issue_codes",
+            _freeze_text_tuple(self.verification_issue_codes, "verification_issue_codes"),
+        )
+        object.__setattr__(self, "instruction_trace", _freeze_text_tuple(self.instruction_trace, "instruction_trace"))
         if not isinstance(self.program, MILProgram):
             raise ValueError("program must be a MILProgram")
         if not isinstance(self.verification, MILStaticReport):
@@ -80,37 +81,24 @@ class MILAuditAppendResult(ContractRecord):
 @dataclass(frozen=True, slots=True)
 class MILAuditReplayLookup(ContractRecord):
     record: MILAuditRecord
+    replay_record: ReplayRecord
     chain_entry: HashChainEntry
     trace_entries: tuple[TraceEntry, ...]
-    replay_record: ReplayRecord
 
     def __post_init__(self) -> None:
         if not isinstance(self.record, MILAuditRecord):
             raise ValueError("record must be a MILAuditRecord")
+        if not isinstance(self.replay_record, ReplayRecord):
+            raise ValueError("replay_record must be a ReplayRecord")
         if not isinstance(self.chain_entry, HashChainEntry):
             raise ValueError("chain_entry must be a HashChainEntry")
         for index, entry in enumerate(self.trace_entries):
             if not isinstance(entry, TraceEntry):
                 raise ValueError(f"trace_entries[{index}] must be a TraceEntry")
-        if not isinstance(self.replay_record, ReplayRecord):
-            raise ValueError("replay_record must be a ReplayRecord")
-
-
-@dataclass(frozen=True, slots=True)
-class MILAuditTracePersistence(ContractRecord):
-    record_id: str
-    persisted_trace_ids: tuple[str, ...]
-    replay_lookup: MILAuditReplayLookup
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
-        object.__setattr__(self, "persisted_trace_ids", _text_tuple(self.persisted_trace_ids, "persisted_trace_ids"))
-        if not isinstance(self.replay_lookup, MILAuditReplayLookup):
-            raise ValueError("replay_lookup must be a MILAuditReplayLookup")
 
 
 class MILAuditStore:
-    """Append-only MIL audit payload store anchored to a hash chain."""
+    """Append-only MIL audit payload store anchored to a HashChainStore."""
 
     def __init__(self, base_path: Path, *, chain_id: str = "mil-audit") -> None:
         if not isinstance(base_path, Path):
@@ -124,6 +112,12 @@ class MILAuditStore:
     @property
     def chain(self) -> HashChainStore:
         return self._chain
+
+    def _record_path(self, record_id: str) -> Path:
+        return _safe_record_path(
+            self._records_path,
+            require_non_empty_text(record_id, "record_id"),
+        )
 
     def append(
         self,
@@ -140,9 +134,17 @@ class MILAuditStore:
             raise PersistenceError("verification must be a MILStaticReport")
         execution_id = require_non_empty_text(execution_id, "execution_id")
         recorded_at = require_datetime_text(recorded_at, "recorded_at")
-        trace = _text_tuple(instruction_trace, "instruction_trace")
+        trace = _freeze_text_tuple(instruction_trace, "instruction_trace")
         record = MILAuditRecord(
-            record_id=stable_identifier("mil-audit-record", {"program_id": program.program_id, "execution_id": execution_id, "recorded_at": recorded_at, "trace": trace}),
+            record_id=stable_identifier(
+                "mil-audit-record",
+                {
+                    "program_id": program.program_id,
+                    "execution_id": execution_id,
+                    "recorded_at": recorded_at,
+                    "trace": trace,
+                },
+            ),
             program_id=program.program_id,
             goal_id=program.goal_id,
             policy_decision_id=program.whqr_decision.decision_id,
@@ -155,16 +157,18 @@ class MILAuditStore:
             recorded_at=recorded_at,
         )
         content = serialize_record(record)
-        path = self._record_path(record.record_id)
-        if path.exists():
+        content_hash = compute_content_hash(content)
+        record_path = self._record_path(record.record_id)
+        if record_path.exists():
             raise PersistenceWriteError("MIL audit record already exists")
-        chain_entry = self._chain.append(compute_content_hash(content))
-        _atomic_write_exclusive(path, content)
+        chain_entry = self._chain.append(content_hash)
+        _atomic_write_exclusive(record_path, content)
         return MILAuditAppendResult(record=record, chain_entry=chain_entry)
 
     def load(self, record_id: str) -> MILAuditRecord:
+        path = self._record_path(record_id)
         try:
-            raw = self._record_path(record_id).read_text(encoding="utf-8")
+            raw = path.read_text(encoding="utf-8")
         except OSError as exc:
             raise CorruptedDataError("MIL audit record read failed") from exc
         try:
@@ -175,7 +179,7 @@ class MILAuditStore:
     def validate_record(self, record_id: str) -> bool:
         record = self.load(record_id)
         content_hash = compute_content_hash(serialize_record(record))
-        return self._chain_entry_for_content_hash(content_hash) is not None
+        return any(entry.content_hash == content_hash for entry in self._chain.load_all())
 
     def replay_lookup(self, record_id: str) -> MILAuditReplayLookup:
         record = self.load(record_id)
@@ -183,16 +187,19 @@ class MILAuditStore:
         chain_entry = self._chain_entry_for_content_hash(content_hash)
         if chain_entry is None:
             raise CorruptedDataError("MIL audit record is not anchored in hash chain")
-        trace_entries = _trace_entries(record, chain_entry, self._chain.chain_id)
-        replay = ReplayRecord(
+        trace_entries = self._trace_entries(record, chain_entry)
+        replay_record = ReplayRecord(
             replay_id=stable_identifier("mil-audit-replay", {"record_id": record.record_id}),
             trace_id=trace_entries[-1].trace_id,
             source_hash=chain_entry.chain_hash,
             approved_effects=(
                 ReplayEffect(
-                    record.execution_id,
-                    "MIL governed execution retained for observation-only replay",
-                    {"program_id": record.program_id, "verification_passed": record.verification_passed},
+                    effect_id=record.execution_id,
+                    description="MIL governed execution retained for observation-only replay",
+                    details={
+                        "program_id": record.program_id,
+                        "verification_passed": record.verification_passed,
+                    },
                 ),
             ),
             blocked_effects=(),
@@ -206,31 +213,12 @@ class MILAuditStore:
                 "chain_sequence": chain_entry.sequence_number,
             },
         )
-        return MILAuditReplayLookup(record, chain_entry, trace_entries, replay)
-
-    def persist_trace_spine(self, record_id: str, trace_store: TraceStore) -> MILAuditTracePersistence:
-        if not isinstance(trace_store, TraceStore):
-            raise PersistenceError("trace_store must be a TraceStore")
-        lookup = self.replay_lookup(record_id)
-        persisted: list[str] = []
-        for entry in lookup.trace_entries:
-            existing = _load_existing_trace(trace_store, entry.trace_id)
-            if existing is None:
-                trace_store.append(entry)
-            elif existing != entry:
-                raise PersistenceWriteError("MIL audit trace id collision")
-            persisted.append(entry.trace_id)
-        return MILAuditTracePersistence(lookup.record.record_id, tuple(persisted), lookup)
-
-    def _record_path(self, record_id: str) -> Path:
-        record_id = require_non_empty_text(record_id, "record_id")
-        if "\0" in record_id or "/" in record_id or "\\" in record_id or ".." in record_id:
-            raise PathTraversalError("record_id contains forbidden characters")
-        candidate = (self._records_path / f"{record_id}.json").resolve()
-        base = self._records_path.resolve()
-        if not candidate.is_relative_to(base):
-            raise PathTraversalError("record path escapes MIL audit store")
-        return candidate
+        return MILAuditReplayLookup(
+            record=record,
+            replay_record=replay_record,
+            chain_entry=chain_entry,
+            trace_entries=trace_entries,
+        )
 
     def _chain_entry_for_content_hash(self, content_hash: str) -> HashChainEntry | None:
         for entry in self._chain.load_all():
@@ -238,42 +226,77 @@ class MILAuditStore:
                 return entry
         return None
 
-
-def _trace_entries(record: MILAuditRecord, chain_entry: HashChainEntry, chain_id: str) -> tuple[TraceEntry, ...]:
-    parent = None
-    rows: list[TraceEntry] = []
-    specs = (
-        ("whqr_policy_decision", record.policy_decision_id, {"status": record.program.whqr_decision.status.value}),
-        ("policy_decision", record.policy_decision_id, {"subject_id": record.program.whqr_decision.subject_id}),
-        ("mil_program", record.program_id, {"instruction_count": len(record.program.instructions)}),
-        ("mil_static_verification", record.record_id, {"passed": record.verification_passed, "issue_codes": record.verification_issue_codes}),
-        ("dispatch_execution", record.execution_id, {"instruction_trace": record.instruction_trace}),
-        ("mil_audit_record", record.record_id, {"chain_sequence": chain_entry.sequence_number, "chain_hash": chain_entry.chain_hash}),
-    )
-    for event_type, anchor, metadata in specs:
-        trace_id = stable_identifier("mil-audit-record-trace", {"event_type": event_type, "anchor": anchor, "parent": parent})
-        rows.append(
-            TraceEntry(
-                trace_id=trace_id,
-                parent_trace_id=parent,
-                event_type=event_type,
-                subject_id=record.program.whqr_decision.subject_id,
-                goal_id=record.goal_id,
-                state_hash=f"mil-audit-record:{record.record_id}",
-                registry_hash=f"mil-audit-chain:{chain_id}",
-                timestamp=record.recorded_at,
-                metadata={"anchor": anchor, **metadata},
-            )
+    def _trace_entries(
+        self,
+        record: MILAuditRecord,
+        chain_entry: HashChainEntry,
+    ) -> tuple[TraceEntry, ...]:
+        parent = None
+        rows: list[TraceEntry] = []
+        specs = (
+            (
+                "whqr_policy_decision",
+                record.policy_decision_id,
+                {"status": record.program.whqr_decision.status.value},
+            ),
+            (
+                "policy_decision",
+                record.policy_decision_id,
+                {"subject_id": record.program.whqr_decision.subject_id},
+            ),
+            (
+                "mil_program",
+                record.program_id,
+                {"instruction_count": len(record.program.instructions)},
+            ),
+            (
+                "mil_static_verification",
+                record.record_id,
+                {
+                    "passed": record.verification_passed,
+                    "issue_codes": record.verification_issue_codes,
+                },
+            ),
+            (
+                "dispatch_execution",
+                record.execution_id,
+                {"instruction_trace": record.instruction_trace},
+            ),
+            (
+                "mil_audit_record",
+                record.record_id,
+                {
+                    "chain_sequence": chain_entry.sequence_number,
+                    "chain_hash": chain_entry.chain_hash,
+                },
+            ),
         )
-        parent = trace_id
-    return tuple(rows)
+        for event_type, anchor, metadata in specs:
+            trace_id = stable_identifier(
+                "mil-audit-record-trace",
+                {"event_type": event_type, "anchor": anchor, "parent": parent},
+            )
+            rows.append(
+                TraceEntry(
+                    trace_id=trace_id,
+                    parent_trace_id=parent,
+                    event_type=event_type,
+                    subject_id=record.program.whqr_decision.subject_id,
+                    goal_id=record.goal_id,
+                    state_hash=f"mil-audit-record:{record.record_id}",
+                    registry_hash=f"mil-audit-chain:{self._chain.chain_id}",
+                    timestamp=record.recorded_at,
+                    metadata={"anchor": anchor, **metadata},
+                )
+            )
+            parent = trace_id
+        return tuple(rows)
 
 
-def _load_existing_trace(trace_store: TraceStore, trace_id: str) -> TraceEntry | None:
-    try:
-        return trace_store.load_trace(trace_id)
-    except TraceNotFoundError:
-        return None
+def _record_path_component(record_id: str) -> str:
+    if "\0" in record_id or "/" in record_id or "\\" in record_id or ".." in record_id:
+        raise PathTraversalError("record_id contains forbidden characters")
+    return record_id
 
 
 def _atomic_write_exclusive(path: Path, content: str) -> None:
@@ -297,7 +320,15 @@ def _atomic_write_exclusive(path: Path, content: str) -> None:
             pass
 
 
-def _text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+def _freeze_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
     if not isinstance(values, tuple):
         raise ValueError(f"{field_name} must be a tuple")
     return tuple(require_non_empty_text(value, f"{field_name}[{index}]") for index, value in enumerate(values))
+
+
+def _safe_record_path(records_path: Path, record_id: str) -> Path:
+    candidate = (records_path / f"{_record_path_component(record_id)}.json").resolve()
+    base = records_path.resolve()
+    if not candidate.is_relative_to(base):
+        raise PathTraversalError("record path escapes MIL audit store")
+    return candidate

@@ -184,6 +184,8 @@ class OperatorLoop:
         mil_verification_passed: bool | None = None
         mil_verification_issues: tuple[str, ...] = ()
         mil_instruction_trace: tuple[str, ...] = ()
+        mil_audit_record_id: str | None = None
+        mil_trace_ids: tuple[str, ...] = ()
 
         if hasattr(self.runtime, 'governed_dispatcher') and self.runtime.governed_dispatcher is not None:
             mil_dispatch = governed_operator_mil_dispatch_with_trace(
@@ -204,6 +206,21 @@ class OperatorLoop:
             mil_verification_passed = mil_dispatch.verification.passed
             mil_verification_issues = tuple(issue.code for issue in mil_dispatch.verification.issues)
             mil_instruction_trace = mil_dispatch.instruction_trace
+            if self.runtime.mil_audit_store is not None:
+                mil_audit = self.runtime.mil_audit_store.append(
+                    program=mil_dispatch.program,
+                    verification=mil_dispatch.verification,
+                    execution_id=execution_result.execution_id,
+                    instruction_trace=mil_dispatch.instruction_trace,
+                    recorded_at=self.runtime.clock(),
+                )
+                mil_audit_record_id = mil_audit.record.record_id
+                if self.runtime.trace_store is not None:
+                    trace_projection = self.runtime.mil_audit_store.persist_trace_spine(
+                        mil_audit_record_id,
+                        self.runtime.trace_store,
+                    )
+                    mil_trace_ids = trace_projection.persisted_trace_ids
         else:
             execution_result = self.runtime.dispatcher.dispatch(
                 DispatchRequest(
@@ -307,6 +324,8 @@ class OperatorLoop:
             mil_verification_passed=mil_verification_passed,
             mil_verification_issues=mil_verification_issues,
             mil_instruction_trace=mil_instruction_trace,
+            mil_audit_record_id=mil_audit_record_id,
+            mil_trace_ids=mil_trace_ids,
             **self._resolve_provider_ids(),
         )
 

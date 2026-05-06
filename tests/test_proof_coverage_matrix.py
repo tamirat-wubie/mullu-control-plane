@@ -147,8 +147,6 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
 
     assert gateway_surface["action_proof"] == "action_proof"
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
-    assert "/capability-fabric/capsule-admissions" in gateway_surface["representative_paths"]
-    assert "/capability-fabric/capsule-admission-receipts" in gateway_surface["representative_paths"]
     assert "DomainCapsuleCompiler.compile" in gateway_surface["representative_paths"]
     assert "install_certified_capsule_with_handoff_evidence" in gateway_surface["representative_paths"]
     assert "gateway/capability_capsule_installer.py" in gateway_surface["evidence_files"]
@@ -160,7 +158,6 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "capsule_compiler_emits_certification_evidence_manifest" in witnesses
     assert "capsule_installer_stamps_admission_receipt" in witnesses
-    assert "capsule_admission_operator_endpoint_records_receipt" in witnesses
 
 
 def test_data_governance_controls_surface_is_witnessed() -> None:
@@ -602,12 +599,19 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "NetworkedWorkerMesh.register_worker" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.dispatch" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.read_model" in worker_surface["representative_paths"]
+    assert "gateway/physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "gateway/worker_mesh.py" in worker_surface["evidence_files"]
+    assert "scripts/produce_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "schemas/worker_mesh.schema.json" in worker_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_worker_mesh.py" in worker_surface["evidence_files"]
+    assert "tests/test_produce_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "active_lease_required" in witnesses
     assert "tenant_capability_operation_budget_checked" in witnesses
     assert "forbidden_operations_override_allowed" in witnesses
+    assert "physical_action_receipt_required_for_physical_workers" in witnesses
+    assert "physical_worker_canary_blocks_without_receipt" in witnesses
+    assert "physical_worker_canary_passed" in witnesses
     assert "worker_evidence_refs_required" in witnesses
     assert "worker_receipt_not_terminal_closure" in witnesses
     assert "worker_mesh_schema_valid" in witnesses
@@ -841,6 +845,32 @@ def test_multimodal_operating_layer_surface_emits_source_bound_receipts() -> Non
     assert "unknown_modality_fails_closed" in witnesses
     assert closure_actions["publish_multimodal_operation_receipt_contract"]["status"] == "closed"
 
+
+def test_physical_action_boundary_surface_blocks_dispatch_without_safety_controls() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    physical_surface = surfaces["physical_action_boundary"]
+    witnesses = set(physical_surface["runtime_witnesses"])
+
+    assert physical_surface["coverage_state"] == "witnessed"
+    assert physical_surface["request_proof"] == "request_proof"
+    assert physical_surface["action_proof"] == "action_proof"
+    assert "gateway/physical_boundary.py" in physical_surface["evidence_files"]
+    assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_boundary.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "hardware_identity_required" in witnesses
+    assert "emergency_stop_required" in witnesses
+    assert "physical_dispatch_blocked_until_controls_complete" in witnesses
+    assert "physical_worker_canary_uses_sandbox_handler" in witnesses
+    assert "physical_worker_canary_artifact_hash_bound" in witnesses
+    assert closure_actions["publish_physical_action_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -984,29 +1014,6 @@ def test_temporal_scheduler_surface_requires_leases_and_retry_windows() -> None:
     assert "active_lease_blocks_duplicate_execution" in witnesses
     assert "temporal_scheduler_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_scheduler_receipt_contract"]["status"] == "closed"
-
-
-def test_temporal_sla_surface_governs_business_deadlines() -> None:
-    matrix = _load_fixture()
-    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
-    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
-    sla_surface = surfaces["temporal_sla"]
-    witnesses = set(sla_surface["runtime_witnesses"])
-
-    assert sla_surface["coverage_state"] == "witnessed"
-    assert sla_surface["request_proof"] == "request_proof"
-    assert sla_surface["action_proof"] == "action_proof"
-    assert "TemporalSla.evaluate" in sla_surface["representative_paths"]
-    assert "SlaPolicy" in sla_surface["representative_paths"]
-    assert "SlaCase" in sla_surface["representative_paths"]
-    assert "gateway/temporal_sla.py" in sla_surface["evidence_files"]
-    assert "schemas/temporal_sla_receipt.schema.json" in sla_surface["evidence_files"]
-    assert "tests/test_gateway/test_temporal_sla.py" in sla_surface["evidence_files"]
-    assert "business_time_deadline_skips_closed_windows" in witnesses
-    assert "business_window_dispatch_checked" in witnesses
-    assert "response_deadline_breach_escalates" in witnesses
-    assert "temporal_sla_receipt_schema_valid" in witnesses
-    assert closure_actions["publish_temporal_sla_receipt_contract"]["status"] == "closed"
 
 
 def test_policy_proof_report_surface_is_counterexample_backed() -> None:

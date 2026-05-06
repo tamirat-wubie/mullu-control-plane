@@ -294,6 +294,33 @@ def test_collect_runtime_conformance_rejects_missing_plan_bundle_witness(monkeyp
     assert "runtime conformance capability plan evidence bundle was not witnessed" in collection.errors
 
 
+def test_collect_runtime_conformance_rejects_missing_physical_worker_canary(monkeypatch) -> None:
+    secret = "conformance-secret"
+    certificate = _signed_certificate(
+        secret=secret,
+        overrides={
+            "physical_worker_canary_passed": False,
+            "physical_worker_canary_evidence_count": 0,
+        },
+    )
+
+    monkeypatch.setattr("urllib.request.urlopen", _urlopen_for_certificate(certificate))
+
+    collection = collect_runtime_conformance(
+        gateway_url="http://localhost:8001",
+        conformance_secret=secret,
+    )
+    canary_step = next(
+        step for step in collection.steps
+        if step.name == "runtime conformance physical worker canary"
+    )
+
+    assert canary_step.passed is False
+    assert "passed=False" in canary_step.detail
+    assert "evidence_count=0" in canary_step.detail
+    assert "runtime conformance physical worker canary was not witnessed" in collection.errors
+
+
 def test_collect_runtime_conformance_records_authority_read_model_failures(monkeypatch) -> None:
     secret = "conformance-secret"
     certificate = _signed_certificate(secret=secret)
@@ -569,6 +596,10 @@ def _signed_certificate(
         "mcp_capability_manifest_capability_count": 1 if mcp_capability_manifest_configured else 0,
         "capability_plan_bundle_canary_passed": capability_plan_bundle_canary_passed,
         "capability_plan_bundle_count": capability_plan_bundle_count,
+        "physical_worker_canary_passed": True,
+        "physical_worker_canary_id": "physical-worker-canary-0123456789abcdef",
+        "physical_worker_canary_artifact_hash": "1" * 64,
+        "physical_worker_canary_evidence_count": 3,
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "proof_coverage_declared_routes_classified": True,

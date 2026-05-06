@@ -29,6 +29,8 @@ from mcoi_runtime.core.governed_dispatcher import (
 from mcoi_runtime.core.evidence_merger import EvidenceInput, EvidenceStateCategory
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnowledge
 from mcoi_runtime.core.template_validator import TemplateValidator
+from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
+from mcoi_runtime.persistence.trace_store import TraceStore
 
 
 def FIXED_CLOCK() -> str:
@@ -309,6 +311,46 @@ def test_operator_loop_uses_governed_when_available() -> None:
     assert report.execution_result.status is ExecutionOutcome.SUCCEEDED
     # governed dispatcher ledger should have entries
     assert runtime.governed_dispatcher.ledger_count >= 1
+
+
+def test_operator_loop_persists_mil_audit_trace_spine_when_stores_available(tmp_path) -> None:
+    executor = FakeExecutor()
+    mil_audit_store = MILAuditStore(tmp_path / "mil-audit")
+    trace_store = TraceStore(tmp_path / "traces")
+    runtime = bootstrap_runtime(
+        clock=FIXED_CLOCK,
+        executors={"shell_command": executor},
+        mil_audit_store=mil_audit_store,
+        trace_store=trace_store,
+    )
+    loop = OperatorLoop(runtime)
+
+    report = loop.run_step(
+        OperatorRequest(
+            request_id="request-mil-trace-1",
+            subject_id="subject-1",
+            goal_id="goal-1",
+            template=VALID_TEMPLATE,
+            bindings={"msg": "trace-me"},
+            knowledge_entries=(
+                PlanningKnowledge("knowledge-1", "constraint", KnowledgeLifecycle.ADMITTED),
+            ),
+            evidence_entries=(
+                EvidenceInput(
+                    evidence_id="evidence-1",
+                    state_key="workspace.seed",
+                    value={"ready": True},
+                    category=EvidenceStateCategory.OBSERVED,
+                ),
+            ),
+        )
+    )
+
+    assert report.mil_audit_record_id is not None
+    assert len(report.mil_trace_ids) == 6
+    assert mil_audit_store.validate_record(report.mil_audit_record_id) is True
+    assert trace_store.load_trace(report.mil_trace_ids[-1]).event_type == "mil_audit_record"
+    assert trace_store.load_trace(report.mil_trace_ids[-1]).parent_trace_id == report.mil_trace_ids[-2]
 
 
 def test_operator_loop_effect_assurance_reconciles_when_required() -> None:

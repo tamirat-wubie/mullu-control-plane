@@ -92,6 +92,10 @@ def render_run_summary(view: RunSummaryView) -> str:
         lines.append(f"  mil_program_id:     {view.mil_program_id}")
         lines.append(f"  mil_instructions:   {view.mil_instruction_count}")
         lines.append(f"  mil_verified:       {view.mil_verification_passed}")
+        if view.mil_audit_record_id:
+            lines.append(f"  mil_audit_record:   {view.mil_audit_record_id}")
+        if view.mil_trace_ids:
+            lines.append(f"  mil_trace_count:    {len(view.mil_trace_ids)}")
         if view.mil_verification_issues:
             lines.append(f"  mil_issues:         {', '.join(view.mil_verification_issues)}")
         if view.mil_instruction_trace:

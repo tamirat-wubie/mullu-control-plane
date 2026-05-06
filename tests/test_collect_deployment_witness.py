@@ -545,6 +545,46 @@ def test_collect_deployment_witness_rejects_missing_plan_bundle_witness(monkeypa
     assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
 
 
+def test_collect_deployment_witness_rejects_missing_physical_worker_canary(monkeypatch) -> None:
+    witness_secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    witness_payload = _signed_runtime_witness(secret=witness_secret)
+    conformance_payload = _signed_conformance_certificate(
+        secret=conformance_secret,
+        overrides={
+            "physical_worker_canary_passed": False,
+            "physical_worker_canary_evidence_count": 0,
+        },
+    )
+
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=witness_secret,
+        conformance_secret=conformance_secret,
+        expected_environment="pilot",
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    conformance_step = next(step for step in witness.steps if step.name == "runtime conformance certificate")
+
+    assert witness.deployment_claim == "not-published"
+    assert witness.conformance_signature_status == "verified"
+    assert conformance_step.passed is False
+    assert "physical_worker_canary_passed=False" in conformance_step.detail
+    assert "physical_worker_canary_evidence_count=0" in conformance_step.detail
+    assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
+
+
 def test_collect_deployment_witness_reports_health_body_by_digest_only(monkeypatch) -> None:
     witness_secret = "runtime-secret"
     conformance_secret = "conformance-secret"
@@ -800,6 +840,10 @@ def _signed_conformance_certificate(
         ),
         "capability_plan_bundle_canary_passed": capability_plan_bundle_canary_passed,
         "capability_plan_bundle_count": capability_plan_bundle_count,
+        "physical_worker_canary_passed": True,
+        "physical_worker_canary_id": "physical-worker-canary-0123456789abcdef",
+        "physical_worker_canary_artifact_hash": "1" * 64,
+        "physical_worker_canary_evidence_count": 3,
         "authority_pending_approval_chain_count": 0,
         "authority_overdue_approval_chain_count": 0,
         "authority_open_obligation_count": 0,

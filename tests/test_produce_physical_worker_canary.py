@@ -1,12 +1,13 @@
-"""Physical worker canary CLI tests.
+"""Physical worker canary producer tests.
 
-Purpose: verify the offline canary producer writes a deterministic artifact.
-Governance scope: CLI output, strict failure behavior, and artifact evidence.
+Purpose: verify the producer writes a deterministic canary artifact for
+operator handoff and change-assurance use.
+Governance scope: physical worker canary artifact persistence.
 Dependencies: scripts.produce_physical_worker_canary.
 Invariants:
-  - The CLI writes the full canary artifact.
-  - Strict mode succeeds only when the canary passes.
-  - JSON summary omits raw handler internals.
+  - The written artifact preserves canary id, status, blockers, and hash.
+  - The artifact remains sandbox-only.
+  - Strict CLI returns success for a passing canary.
 """
 
 from __future__ import annotations
@@ -14,31 +15,33 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.produce_physical_worker_canary import main
+from scripts.produce_physical_worker_canary import main, produce_physical_worker_canary
 
 
-def test_produce_physical_worker_canary_writes_artifact(capsys) -> None:
-    output_path = Path(".change_assurance") / "physical_worker_canary_cli_test.json"
+ROOT = Path(__file__).resolve().parent.parent
+TEST_OUTPUT_DIR = ROOT / ".change_assurance"
 
-    exit_code = main(["--strict", "--json", "--output", str(output_path)])
-    captured = capsys.readouterr()
-    artifact = json.loads(output_path.read_text(encoding="utf-8"))
-    summary = json.loads(captured.out)
+
+def test_produce_physical_worker_canary_writes_artifact() -> None:
+    output_path = TEST_OUTPUT_DIR / "physical_worker_canary_test.json"
+
+    artifact = produce_physical_worker_canary(output_path=output_path)
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert artifact.passed is True
+    assert payload["canary_id"] == artifact.canary_id
+    assert payload["status"] == "passed"
+    assert payload["blockers"] == []
+    assert payload["sandbox_output"]["physical_effect_applied"] is False
+    assert payload["artifact_hash"] == artifact.artifact_hash
+
+
+def test_physical_worker_canary_cli_strict_passes() -> None:
+    output_path = TEST_OUTPUT_DIR / "physical_worker_canary_cli_test.json"
+    exit_code = main(["--output", str(output_path), "--strict", "--json"])
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
 
     assert exit_code == 0
-    assert artifact["status"] == "passed"
-    assert artifact["blocked_dispatch_receipt"]["reason"] == "physical_action_receipt_required"
-    assert artifact["worker_mesh_envelope"]["receipt"]["status"] == "succeeded"
-    assert summary["canary_id"] == artifact["canary_id"]
-
-
-def test_produce_physical_worker_canary_artifact_is_hash_bound() -> None:
-    output_path = Path(".change_assurance") / "physical_worker_canary_cli_test.json"
-
-    exit_code = main(["--strict", "--output", str(output_path)])
-    artifact = json.loads(output_path.read_text(encoding="utf-8"))
-
-    assert exit_code == 0
-    assert len(artifact["artifact_hash"]) == 64
-    assert artifact["canary_id"].startswith("physical-worker-canary-")
-    assert artifact["metadata"]["no_physical_effect_applied"] is True
+    assert payload["status"] == "passed"
+    assert payload["metadata"]["physical_worker_canary_blocks_without_receipt"] is True
+    assert payload["worker_mesh_envelope"]["receipt"]["metadata"]["physical_action_receipt_validated"] is True

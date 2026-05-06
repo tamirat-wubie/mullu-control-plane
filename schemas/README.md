@@ -46,6 +46,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `finance_approval_live_handoff_plan.schema.json` | Canonical finance approval live email handoff promotion plan |
 | `finance_approval_live_handoff_preflight.schema.json` | Canonical four-step preflight report for finance approval live handoff readiness |
 | `finance_approval_packet_proof.schema.json` | Canonical proof export for governed finance approval packet closure or review |
+| `physical_action_receipt.schema.json` | Canonical no-effect physical action safety receipt |
 | `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |

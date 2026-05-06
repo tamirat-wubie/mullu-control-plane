@@ -210,6 +210,8 @@ class OperatorRunReport:
     mil_verification_passed: bool | None = None
     mil_verification_issues: tuple[str, ...] = ()
     mil_instruction_trace: tuple[str, ...] = ()
+    mil_audit_record_id: str | None = None
+    mil_trace_ids: tuple[str, ...] = ()
 
 
 __all__ = [

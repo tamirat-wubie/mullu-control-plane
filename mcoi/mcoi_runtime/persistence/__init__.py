@@ -21,7 +21,6 @@ from .mil_audit_store import (
     MILAuditRecord,
     MILAuditReplayLookup,
     MILAuditStore,
-    MILAuditTracePersistence,
 )
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
@@ -52,7 +51,6 @@ __all__ = [
     "MILAuditRecord",
     "MILAuditReplayLookup",
     "MILAuditStore",
-    "MILAuditTracePersistence",
     "PathTraversalError",
     "PersistenceError",
     "PersistenceWriteError",

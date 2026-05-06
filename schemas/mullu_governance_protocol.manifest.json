@@ -377,6 +377,12 @@
       "surface": "policy"
     },
     {
+      "schema_id": "physical-action-receipt",
+      "path": "schemas/physical_action_receipt.schema.json",
+      "urn": "urn:mullusi:schema:physical-action-receipt:1",
+      "surface": "safety"
+    },
+    {
       "schema_id": "production-evidence-witness",
       "path": "schemas/production_evidence_witness.schema.json",
       "urn": "urn:mullusi:schema:production-evidence-witness:1",

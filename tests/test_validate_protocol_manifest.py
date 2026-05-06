@@ -283,6 +283,17 @@ def test_protocol_manifest_indexes_multimodal_operation_receipt() -> None:
     assert multimodal_entry["surface"] == "multimodal"
 
 
+def test_protocol_manifest_indexes_physical_action_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    physical_entry = entries["physical-action-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert physical_entry["path"] == "schemas/physical_action_receipt.schema.json"
+    assert physical_entry["urn"] == "urn:mullusi:schema:physical-action-receipt:1"
+    assert physical_entry["surface"] == "safety"
+
+
 def test_protocol_manifest_indexes_temporal_operation_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

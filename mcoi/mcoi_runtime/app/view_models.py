@@ -71,6 +71,8 @@ class RunSummaryView:
     mil_verification_passed: bool | None = None
     mil_verification_issues: tuple[str, ...] = ()
     mil_instruction_trace: tuple[str, ...] = ()
+    mil_audit_record_id: str | None = None
+    mil_trace_ids: tuple[str, ...] = ()
 
     @staticmethod
     def from_report(report: OperatorRunReport) -> RunSummaryView:
@@ -110,6 +112,8 @@ class RunSummaryView:
             mil_verification_passed=report.mil_verification_passed,
             mil_verification_issues=report.mil_verification_issues,
             mil_instruction_trace=report.mil_instruction_trace,
+            mil_audit_record_id=report.mil_audit_record_id,
+            mil_trace_ids=report.mil_trace_ids,
         )
 
 
