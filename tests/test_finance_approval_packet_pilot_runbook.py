@@ -26,6 +26,7 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "python scripts\\validate_finance_approval_live_handoff_chain.py --strict --json" in content
     assert "python scripts\\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json" in content
     assert "python scripts\\produce_finance_approval_operator_summary.py --output .change_assurance\\finance_approval_operator_summary.json --strict --json" in content
+    assert "python scripts\\validate_finance_approval_operator_summary_schema.py --strict --json" in content
     assert "`promotion_boundary.ok` separately from `promotion_boundary.ready`" in content
     assert "operator summary is a redacted read-only artifact" in content
     assert "`ok=true` means the packet artifacts are structurally usable" in content

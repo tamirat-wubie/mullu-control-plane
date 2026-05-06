@@ -359,6 +359,7 @@ def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:
     assert "audit_verification_schema_valid" in witnesses
     assert "proof_verification_schema_valid" in witnesses
     assert "deployment_collection_requires_production_evidence" in witnesses
+    assert "live_physical_safety_evidence_derived_from_registry" in witnesses
     assert "live_physical_capability_requires_safety_evidence" in witnesses
     assert "sandbox_physical_capability_remains_non_production" in witnesses
     assert "missing_production_evidence_fails_closed" in witnesses

@@ -33,9 +33,10 @@ def test_finance_operator_summary_preserves_current_blocked_state() -> None:
     assert summary["promotion_mode"] == "proof-pilot-blocked"
     assert "validate_finance_approval_live_handoff_chain.py" in summary["strict_promotion_command"]
     assert "--require-ready" in summary["strict_promotion_command"]
-    assert "finance email/calendar live receipt not ready: status=failed blockers=['email_calendar_probe_exception']" in summary[
-        "readiness_blockers"
-    ]
+    assert (
+        "finance email/calendar live receipt not ready: status=failed "
+        "blockers=['email_calendar_worker_probe_failed']"
+    ) in summary["readiness_blockers"]
     assert summary["artifact_statuses"]["live_handoff_closure_run"] == "blocked"
     assert "live email delivery" in summary["must_not_claim"]
 

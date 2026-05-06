@@ -82,6 +82,18 @@ from gateway.tenant_identity import build_tenant_identity_store_from_env
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 
 _log = logging.getLogger(__name__)
+PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
+PHYSICAL_LIVE_SAFETY_EXTENSION_KEY = "physical_live_safety_evidence"
+PHYSICAL_CAPABILITY_PREFIXES = ("physical.", "iot.", "robotics.")
+REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
+    "physical_action_receipt_ref",
+    "simulation_ref",
+    "operator_approval_ref",
+    "manual_override_ref",
+    "emergency_stop_ref",
+    "sensor_confirmation_ref",
+    "deployment_witness_ref",
+)
 
 
 def create_gateway_app(
@@ -313,7 +325,7 @@ def create_gateway_app(
             maturity_level = str(assessment.get("maturity_level", "C0")) if isinstance(assessment, dict) else "C0"
             production_ready = bool(assessment.get("production_ready")) if isinstance(assessment, dict) else False
             if production_ready:
-                status = "production"
+                status = _capability_evidence_status(capability_id, item, production_ready=True)
                 live_capabilities.append(capability_id)
             elif maturity_level in {"C4", "C5"}:
                 status = "pilot"
@@ -339,6 +351,46 @@ def create_gateway_app(
                 "detail": f"capability_count={len(evidence_by_capability)}",
             }],
         }
+
+    def _capability_evidence_status(
+        capability_id: str,
+        capability_payload: Mapping[str, Any],
+        *,
+        production_ready: bool,
+    ) -> str | dict[str, Any]:
+        """Return public capability evidence without fabricating physical safety proof."""
+        if not production_ready or not _is_physical_capability(capability_id):
+            return "production"
+        physical_evidence = _physical_live_safety_evidence_from_registry(capability_payload)
+        return physical_evidence if physical_evidence is not None else "production"
+
+    def _physical_live_safety_evidence_from_registry(
+        capability_payload: Mapping[str, Any],
+    ) -> dict[str, Any] | None:
+        """Derive live physical safety evidence from registry extensions."""
+        extensions = capability_payload.get("extensions", {})
+        if not isinstance(extensions, Mapping):
+            return None
+        safety_evidence = extensions.get(PHYSICAL_LIVE_SAFETY_EXTENSION_KEY, {})
+        if not isinstance(safety_evidence, Mapping):
+            return None
+        refs: dict[str, str] = {}
+        for field_name in REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS:
+            ref = str(safety_evidence.get(field_name, "")).strip()
+            if not ref:
+                return None
+            refs[field_name] = ref
+        return {
+            "maturity": "production",
+            "effect_mode": "live",
+            "production_admissible": True,
+            "physical_action_receipt_schema_ref": PHYSICAL_ACTION_RECEIPT_SCHEMA_REF,
+            **refs,
+        }
+
+    def _is_physical_capability(capability_id: str) -> bool:
+        normalized = capability_id.strip().lower()
+        return any(normalized.startswith(prefix) for prefix in PHYSICAL_CAPABILITY_PREFIXES)
 
     def _build_deployment_witness() -> dict[str, Any]:
         """Build the public production evidence witness for this gateway."""

@@ -316,6 +316,7 @@ python scripts\validate_finance_approval_live_handoff_chain.py --strict --json
 python scripts\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json
 python scripts\validate_finance_approval_live_handoff_chain_schema.py --strict --json
 python scripts\produce_finance_approval_operator_summary.py --output .change_assurance\finance_approval_operator_summary.json --strict --json
+python scripts\validate_finance_approval_operator_summary_schema.py --strict --json
 ```
 
 The receipt records only token-name presence for `GMAIL_ACCESS_TOKEN`, `GOOGLE_CALENDAR_ACCESS_TOKEN`, and `MICROSOFT_GRAPH_ACCESS_TOKEN`. It never serializes token values.
