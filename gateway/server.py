@@ -2300,12 +2300,18 @@ def _certification_handoff_from_mapping(payload: Mapping[str, Any]) -> Capabilit
     raw_evidence_refs = payload.get("required_evidence_refs", ())
     if not isinstance(raw_evidence_refs, (list, tuple)):
         raise ValueError("capsule_admission_handoff_required_evidence_refs_must_be_array")
+    raw_physical_safety_refs = payload.get("physical_live_safety_evidence_refs", {})
+    if not isinstance(raw_physical_safety_refs, Mapping):
+        raise ValueError("capsule_admission_handoff_physical_safety_refs_must_be_object")
     return CapabilityCertificationHandoff(
         package_id=_required_text(payload, "package_id"),
         capability_id=_required_text(payload, "capability_id"),
         package_hash=_required_text(payload, "package_hash"),
         maturity_evidence_bundle=CapabilityCertificationEvidenceBundle.from_mapping(bundle_payload),
         required_evidence_refs=tuple(str(value) for value in raw_evidence_refs),
+        physical_live_safety_evidence_refs={
+            str(key): str(value) for key, value in raw_physical_safety_refs.items()
+        },
         handoff_hash=_required_text(payload, "handoff_hash"),
     )
 

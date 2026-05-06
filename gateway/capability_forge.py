@@ -693,6 +693,16 @@ def _promotion_evidence_requirements(
     return requirements
 
 
+def _receipt_schema_ref(source: CapabilityForgeInput) -> str:
+    if _requires_physical_live_safety(
+        domain=source.domain,
+        capability_id=source.capability_id,
+        side_effects=source.side_effects,
+    ):
+        return _PHYSICAL_ACTION_RECEIPT_SCHEMA_REF
+    return f"schemas/{source.capability_id}.receipt.schema.json"
+
+
 def _physical_live_safety_requirements() -> list[CapabilityPromotionEvidenceRequirement]:
     descriptions = {
         "physical_action_receipt_ref": "Physical action receipt must bind the live action outcome.",

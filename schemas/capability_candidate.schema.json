@@ -20,6 +20,7 @@
     "receipt_contract",
     "rollback_path",
     "documentation",
+    "promotion_evidence_requirements",
     "certification_status",
     "promotion_blocked",
     "package_hash"
@@ -93,6 +94,13 @@
     },
     "documentation": {
       "$ref": "#/$defs/documentation"
+    },
+    "promotion_evidence_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/promotion_evidence_requirement"
+      }
     },
     "certification_status": {
       "type": "string",
@@ -350,6 +358,42 @@
         "limitations_ref": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "promotion_evidence_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "evidence_type",
+        "evidence_key",
+        "required",
+        "description",
+        "schema_ref"
+      ],
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_ref": {
+          "type": "string"
         }
       }
     }
