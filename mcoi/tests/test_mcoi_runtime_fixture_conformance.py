@@ -44,6 +44,16 @@ from mcoi_runtime.contracts.continuity_runtime import (
     RecoveryVerificationStatus,
     VerificationRecord,
 )
+from mcoi_runtime.contracts.coordination import (
+    ConflictRecord,
+    ConflictStrategy,
+    DelegationRequest,
+    DelegationResult,
+    DelegationStatus,
+    HandoffRecord,
+    MergeDecision,
+    MergeOutcome,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -107,6 +117,62 @@ def _build_recovery_record(payload: dict) -> RecoveryRecord:
         recorded_at=payload["recorded_at"],
         metadata=payload["metadata"],
         extensions=payload["extensions"],
+    )
+
+
+def _build_delegation_request(payload: dict) -> DelegationRequest:
+    return DelegationRequest(
+        delegation_id=payload["delegation_id"],
+        delegator_id=payload["delegator_id"],
+        delegate_id=payload["delegate_id"],
+        goal_id=payload["goal_id"],
+        action_scope=payload["action_scope"],
+        deadline=payload["deadline"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_delegation_result(payload: dict) -> DelegationResult:
+    return DelegationResult(
+        delegation_id=payload["delegation_id"],
+        status=DelegationStatus(payload["status"]),
+        reason=payload["reason"],
+        resolved_at=payload["resolved_at"],
+    )
+
+
+def _build_handoff_record(payload: dict) -> HandoffRecord:
+    return HandoffRecord(
+        handoff_id=payload["handoff_id"],
+        from_party=payload["from_party"],
+        to_party=payload["to_party"],
+        goal_id=payload["goal_id"],
+        context_ids=tuple(payload["context_ids"]),
+        handed_off_at=payload["handed_off_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_merge_decision(payload: dict) -> MergeDecision:
+    return MergeDecision(
+        merge_id=payload["merge_id"],
+        goal_id=payload["goal_id"],
+        source_ids=tuple(payload["source_ids"]),
+        outcome=MergeOutcome(payload["outcome"]),
+        reason=payload["reason"],
+        resolved_at=payload["resolved_at"],
+    )
+
+
+def _build_conflict_record(payload: dict) -> ConflictRecord:
+    return ConflictRecord(
+        conflict_id=payload["conflict_id"],
+        goal_id=payload["goal_id"],
+        conflicting_ids=tuple(payload["conflicting_ids"]),
+        strategy=ConflictStrategy(payload["strategy"]),
+        resolved=payload["resolved"],
+        resolution_id=payload["resolution_id"],
+        metadata=payload["metadata"],
     )
 
 
@@ -256,13 +322,18 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("conflict_record.json", _build_conflict_record),
+        ("delegation_request.json", _build_delegation_request),
+        ("delegation_result.json", _build_delegation_result),
         ("continuity_closure_report.json", _build_continuity_closure_report),
         ("continuity_plan.json", _build_continuity_plan),
         ("continuity_snapshot.json", _build_continuity_snapshot),
         ("continuity_violation.json", _build_continuity_violation),
         ("disruption_event.json", _build_disruption_event),
         ("failover_record.json", _build_failover_record),
+        ("handoff_record.json", _build_handoff_record),
         ("incident_record.json", _build_incident_record),
+        ("merge_decision.json", _build_merge_decision),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),
         ("recovery_decision.json", _build_recovery_decision),

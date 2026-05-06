@@ -121,6 +121,11 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "recovery_plan.json" in mcoi_runtime_fixture_names
     assert "failover_record.json" in mcoi_runtime_fixture_names
     assert "recovery_objective.json" in mcoi_runtime_fixture_names
+    assert "delegation_request.json" in mcoi_runtime_fixture_names
+    assert "delegation_result.json" in mcoi_runtime_fixture_names
+    assert "handoff_record.json" in mcoi_runtime_fixture_names
+    assert "merge_decision.json" in mcoi_runtime_fixture_names
+    assert "conflict_record.json" in mcoi_runtime_fixture_names
     assert "continuity_plan.json" in mcoi_runtime_fixture_names
     assert "disruption_event.json" in mcoi_runtime_fixture_names
     assert "recovery_execution.json" in mcoi_runtime_fixture_names
@@ -140,7 +145,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 14
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 19
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -960,6 +965,103 @@ def test_validate_mcoi_runtime_fixture_rejects_unmet_recovery_objective_success_
 
     assert len(errors) == 1
     assert "unmet recovery objectives must keep actual_minutes greater than target_minutes" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_self_delegation(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "delegation_request.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "delegation_id": "delegation-drift",
+                "delegator_id": "operator-a",
+                "delegate_id": "operator-a",
+                "goal_id": "goal-drift",
+                "action_scope": "execute_recovery_plan",
+                "deadline": "2026-04-03T08:30:00+00:00",
+                "metadata": {"priority": "high"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "delegator_id and delegate_id must be different" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_handoff_without_context_ids(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "handoff_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "handoff_id": "handoff-drift",
+                "from_party": "operator-a",
+                "to_party": "operator-b",
+                "goal_id": "goal-drift",
+                "context_ids": [],
+                "handed_off_at": "2026-04-03T08:04:00+00:00",
+                "metadata": {"shift": "primary"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'context_ids' must be a non-empty array" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_merge_with_single_source(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "merge_decision.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "merge_id": "merge-drift",
+                "goal_id": "goal-drift",
+                "source_ids": ["assessment-primary"],
+                "outcome": "merged",
+                "reason": "not enough sources",
+                "resolved_at": "2026-04-03T08:10:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "field 'source_ids' must contain at least two items" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_resolved_conflict_without_resolution_id(
+    tmp_path: Path,
+) -> None:
+    fixture_path = tmp_path / "conflict_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "conflict_id": "conflict-drift",
+                "goal_id": "goal-drift",
+                "conflicting_ids": ["assessment-primary", "assessment-rollback"],
+                "strategy": "escalate",
+                "resolved": True,
+                "resolution_id": None,
+                "metadata": {"severity": "medium"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "resolved conflicts must carry resolution_id" in errors[0]
     assert fixture_path.name in errors[0]
 
 

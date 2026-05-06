@@ -144,6 +144,9 @@ RECOVERY_EXECUTION_STATUSES = frozenset({"pending", "in_progress", "completed", 
 DISRUPTION_SEVERITIES = frozenset({"low", "medium", "high", "critical"})
 RECOVERY_VERIFICATION_STATUSES = frozenset({"pending", "passed", "failed", "skipped"})
 FAILOVER_DISPOSITIONS = frozenset({"initiated", "completed", "failed", "rolled_back"})
+DELEGATION_STATUSES = frozenset({"accepted", "rejected", "expired"})
+MERGE_OUTCOMES = frozenset({"merged", "conflict_detected", "deferred"})
+CONFLICT_STRATEGIES = frozenset({"prefer_latest", "prefer_highest_confidence", "escalate", "manual"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -2164,7 +2167,7 @@ def _validate_assignment_decision_fixture(path: Path) -> list[str]:
     return errors
 
 
-def _validate_handoff_record_fixture(path: Path) -> list[str]:
+def _validate_mcoi_handoff_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MAF runtime fixture")
     errors = _validate_exact_object_fields(
         payload,
@@ -4543,6 +4546,157 @@ def _validate_continuity_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_delegation_request_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "delegation_id",
+            "delegator_id",
+            "delegate_id",
+            "goal_id",
+            "action_scope",
+            "deadline",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("delegation_id", "delegator_id", "delegate_id", "goal_id", "action_scope"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["delegator_id"] == payload["delegate_id"]:
+        errors.append(f"{_relative_path(path)}: delegator_id and delegate_id must be different")
+    if payload["deadline"] is not None:
+        errors.extend(_validate_iso8601_text(payload["deadline"], field_name="deadline", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_delegation_result_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("delegation_id", "status", "reason", "resolved_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("delegation_id", "status", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in DELEGATION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(DELEGATION_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["resolved_at"], field_name="resolved_at", path=path))
+    return errors
+
+
+def _validate_handoff_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "handoff_id",
+            "from_party",
+            "to_party",
+            "goal_id",
+            "context_ids",
+            "handed_off_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("handoff_id", "from_party", "to_party", "goal_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["from_party"] == payload["to_party"]:
+        errors.append(f"{_relative_path(path)}: from_party and to_party must be different")
+    context_ids = payload["context_ids"]
+    if not isinstance(context_ids, list) or not context_ids:
+        errors.append(f"{_relative_path(path)}: field 'context_ids' must be a non-empty array")
+    elif not errors:
+        for index, context_id in enumerate(context_ids):
+            errors.extend(_require_non_empty_text(context_id, field_name=f"context_ids[{index}]", path=path))
+    errors.extend(_validate_iso8601_text(payload["handed_off_at"], field_name="handed_off_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_merge_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("merge_id", "goal_id", "source_ids", "outcome", "reason", "resolved_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("merge_id", "goal_id", "outcome", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    source_ids = payload["source_ids"]
+    if not isinstance(source_ids, list) or len(source_ids) < 2:
+        errors.append(f"{_relative_path(path)}: field 'source_ids' must contain at least two items")
+    else:
+        for index, source_id in enumerate(source_ids):
+            errors.extend(_require_non_empty_text(source_id, field_name=f"source_ids[{index}]", path=path))
+    if payload["outcome"] not in MERGE_OUTCOMES:
+        errors.append(
+            f"{_relative_path(path)}: field 'outcome' must be one of {', '.join(sorted(MERGE_OUTCOMES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["resolved_at"], field_name="resolved_at", path=path))
+    return errors
+
+
+def _validate_conflict_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    required_fields = {"conflict_id", "goal_id", "conflicting_ids", "strategy", "resolved", "metadata"}
+    optional_fields = {"resolution_id"}
+    actual_fields = set(payload)
+    missing_fields = sorted(required_fields - actual_fields)
+    unexpected_fields = sorted(actual_fields - required_fields - optional_fields)
+    errors: list[str] = []
+    if missing_fields:
+        errors.append(
+            f"{_relative_path(path)}: runtime fixture missing required fields {', '.join(repr(name) for name in missing_fields)}"
+        )
+    if unexpected_fields:
+        errors.append(
+            f"{_relative_path(path)}: runtime fixture has unexpected fields {', '.join(repr(name) for name in unexpected_fields)}"
+        )
+    if errors:
+        return errors
+    for field_name in ("conflict_id", "goal_id", "strategy"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    conflicting_ids = payload["conflicting_ids"]
+    if not isinstance(conflicting_ids, list) or len(conflicting_ids) < 2:
+        errors.append(f"{_relative_path(path)}: field 'conflicting_ids' must contain at least two items")
+    else:
+        for index, conflicting_id in enumerate(conflicting_ids):
+            errors.extend(_require_non_empty_text(conflicting_id, field_name=f"conflicting_ids[{index}]", path=path))
+    if payload["strategy"] not in CONFLICT_STRATEGIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'strategy' must be one of {', '.join(sorted(CONFLICT_STRATEGIES))}"
+        )
+    if not isinstance(payload["resolved"], bool):
+        errors.append(f"{_relative_path(path)}: field 'resolved' must be a boolean")
+    resolution_id = payload.get("resolution_id")
+    if resolution_id is not None:
+        errors.extend(_require_non_empty_text(resolution_id, field_name="resolution_id", path=path))
+    if payload["resolved"] is True and resolution_id is None:
+        errors.append(f"{_relative_path(path)}: resolved conflicts must carry resolution_id")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -4572,7 +4726,7 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "function_queue_profile.json": _validate_function_queue_profile_fixture,
     "function_sla_profile.json": _validate_function_sla_profile_fixture,
     "follow_up_record.json": _validate_follow_up_record_fixture,
-    "handoff_record.json": _validate_handoff_record_fixture,
+    "handoff_record.json": _validate_mcoi_handoff_record_fixture,
     "deadline_record.json": _validate_deadline_record_fixture,
     "goal_dependency.json": _validate_goal_dependency_fixture,
     "goal_descriptor.json": _validate_goal_descriptor_fixture,
@@ -4636,13 +4790,18 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "conflict_record.json": _validate_conflict_record_fixture,
     "continuity_closure_report.json": _validate_continuity_closure_report_fixture,
     "continuity_plan.json": _validate_continuity_plan_fixture,
     "continuity_snapshot.json": _validate_continuity_snapshot_fixture,
     "continuity_violation.json": _validate_continuity_violation_fixture,
+    "delegation_request.json": _validate_delegation_request_fixture,
+    "delegation_result.json": _validate_delegation_result_fixture,
     "disruption_event.json": _validate_disruption_event_fixture,
     "failover_record.json": _validate_failover_record_fixture,
+    "handoff_record.json": _validate_handoff_record_fixture,
     "incident_record.json": _validate_incident_record_fixture,
+    "merge_decision.json": _validate_merge_decision_fixture,
     "recovery_objective.json": _validate_recovery_objective_fixture,
     "recovery_attempt.json": _validate_recovery_attempt_fixture,
     "recovery_decision.json": _validate_recovery_decision_fixture,
