@@ -163,6 +163,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "assurance_snapshot.json" in mcoi_runtime_fixture_names
     assert "assurance_violation.json" in mcoi_runtime_fixture_names
     assert "assurance_closure_report.json" in mcoi_runtime_fixture_names
+    assert "governance_contract_record.json" in mcoi_runtime_fixture_names
+    assert "contract_clause.json" in mcoi_runtime_fixture_names
+    assert "commitment_record.json" in mcoi_runtime_fixture_names
+    assert "sla_window.json" in mcoi_runtime_fixture_names
+    assert "breach_record.json" in mcoi_runtime_fixture_names
+    assert "remedy_record.json" in mcoi_runtime_fixture_names
+    assert "renewal_window.json" in mcoi_runtime_fixture_names
+    assert "contract_assessment.json" in mcoi_runtime_fixture_names
+    assert "contract_snapshot.json" in mcoi_runtime_fixture_names
+    assert "contract_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -175,7 +185,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 49
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 59
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1497,6 +1507,111 @@ def test_validate_mcoi_runtime_fixture_rejects_assurance_snapshot_active_certifi
 
     assert len(errors) == 1
     assert "active_certifications must not exceed total_certifications" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_contract_expiry_before_effective_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "governance_contract_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "contract_id": "contract-drift",
+                "tenant_id": "tenant-1",
+                "counterparty": "ops-team",
+                "status": "active",
+                "title": "Drift contract",
+                "description": "Expiry cannot precede effective date.",
+                "effective_at": "2026-04-04T10:00:00+00:00",
+                "expires_at": "2026-04-03T10:00:00+00:00",
+                "metadata": {"program": "drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "expires_at must be greater than or equal to effective_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_completed_renewal_without_completed_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "renewal_window.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "window_id": "renewal-drift",
+                "contract_id": "contract-drift",
+                "status": "completed",
+                "opens_at": "2026-12-01T00:00:00+00:00",
+                "closes_at": "2026-12-31T23:59:59+00:00",
+                "completed_at": "",
+                "metadata": {"owner": "contract-ops"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "completed renewal windows must carry completed_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_contract_assessment_commitment_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "contract_assessment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "assessment_id": "assessment-drift",
+                "contract_id": "contract-drift",
+                "tenant_id": "tenant-1",
+                "total_commitments": 2,
+                "healthy_commitments": 1,
+                "at_risk_commitments": 1,
+                "breached_commitments": 1,
+                "overall_compliance": 0.8,
+                "assessed_at": "2026-04-04T10:10:00+00:00",
+                "metadata": {"owner": "auditor"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "healthy_commitments plus at_risk_commitments plus breached_commitments must not exceed total_commitments" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_contract_snapshot_active_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "contract_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "snapshot-drift",
+                "total_contracts": 1,
+                "active_contracts": 2,
+                "total_commitments": 3,
+                "total_sla_windows": 2,
+                "total_breaches": 0,
+                "total_remedies": 0,
+                "total_renewals": 1,
+                "total_violations": 0,
+                "captured_at": "2026-04-04T10:15:00+00:00",
+                "metadata": {"captured_by": "monitor"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_contracts must not exceed total_contracts" in errors[0]
     assert fixture_path.name in errors[0]
 
 

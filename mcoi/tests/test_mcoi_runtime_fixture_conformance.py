@@ -108,6 +108,24 @@ from mcoi_runtime.contracts.assurance_runtime import (
     RecertificationStatus,
     RecertificationWindow,
 )
+from mcoi_runtime.contracts.contract_runtime import (
+    BreachRecord,
+    BreachSeverity,
+    CommitmentKind,
+    CommitmentRecord,
+    ContractAssessment,
+    ContractClause,
+    ContractClosureReport,
+    ContractSnapshot,
+    ContractStatus,
+    GovernanceContractRecord,
+    RemedyDisposition,
+    RemedyRecord,
+    RenewalStatus,
+    RenewalWindow,
+    SLAStatus,
+    SLAWindow,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -792,9 +810,152 @@ def _build_assurance_closure_report(payload: dict) -> AssuranceClosureReport:
     )
 
 
+def _build_governance_contract_record(payload: dict) -> GovernanceContractRecord:
+    return GovernanceContractRecord(
+        contract_id=payload["contract_id"],
+        tenant_id=payload["tenant_id"],
+        counterparty=payload["counterparty"],
+        status=ContractStatus(payload["status"]),
+        title=payload["title"],
+        description=payload["description"],
+        effective_at=payload["effective_at"],
+        expires_at=payload["expires_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_contract_clause(payload: dict) -> ContractClause:
+    return ContractClause(
+        clause_id=payload["clause_id"],
+        contract_id=payload["contract_id"],
+        title=payload["title"],
+        description=payload["description"],
+        commitment_kind=CommitmentKind(payload["commitment_kind"]),
+        metadata=payload["metadata"],
+    )
+
+
+def _build_commitment_record(payload: dict) -> CommitmentRecord:
+    return CommitmentRecord(
+        commitment_id=payload["commitment_id"],
+        contract_id=payload["contract_id"],
+        clause_id=payload["clause_id"],
+        tenant_id=payload["tenant_id"],
+        kind=CommitmentKind(payload["kind"]),
+        target_value=payload["target_value"],
+        scope_ref_id=payload["scope_ref_id"],
+        scope_ref_type=payload["scope_ref_type"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_sla_window(payload: dict) -> SLAWindow:
+    return SLAWindow(
+        window_id=payload["window_id"],
+        commitment_id=payload["commitment_id"],
+        status=SLAStatus(payload["status"]),
+        opens_at=payload["opens_at"],
+        closes_at=payload["closes_at"],
+        actual_value=payload["actual_value"],
+        compliance=payload["compliance"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_breach_record(payload: dict) -> BreachRecord:
+    return BreachRecord(
+        breach_id=payload["breach_id"],
+        commitment_id=payload["commitment_id"],
+        contract_id=payload["contract_id"],
+        tenant_id=payload["tenant_id"],
+        severity=BreachSeverity(payload["severity"]),
+        description=payload["description"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_remedy_record(payload: dict) -> RemedyRecord:
+    return RemedyRecord(
+        remedy_id=payload["remedy_id"],
+        breach_id=payload["breach_id"],
+        tenant_id=payload["tenant_id"],
+        disposition=RemedyDisposition(payload["disposition"]),
+        amount=payload["amount"],
+        description=payload["description"],
+        applied_at=payload["applied_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_renewal_window(payload: dict) -> RenewalWindow:
+    return RenewalWindow(
+        window_id=payload["window_id"],
+        contract_id=payload["contract_id"],
+        status=RenewalStatus(payload["status"]),
+        opens_at=payload["opens_at"],
+        closes_at=payload["closes_at"],
+        completed_at=payload["completed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_contract_assessment(payload: dict) -> ContractAssessment:
+    return ContractAssessment(
+        assessment_id=payload["assessment_id"],
+        contract_id=payload["contract_id"],
+        tenant_id=payload["tenant_id"],
+        total_commitments=payload["total_commitments"],
+        healthy_commitments=payload["healthy_commitments"],
+        at_risk_commitments=payload["at_risk_commitments"],
+        breached_commitments=payload["breached_commitments"],
+        overall_compliance=payload["overall_compliance"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_contract_snapshot(payload: dict) -> ContractSnapshot:
+    return ContractSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_contracts=payload["total_contracts"],
+        active_contracts=payload["active_contracts"],
+        total_commitments=payload["total_commitments"],
+        total_sla_windows=payload["total_sla_windows"],
+        total_breaches=payload["total_breaches"],
+        total_remedies=payload["total_remedies"],
+        total_renewals=payload["total_renewals"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_contract_closure_report(payload: dict) -> ContractClosureReport:
+    return ContractClosureReport(
+        report_id=payload["report_id"],
+        contract_id=payload["contract_id"],
+        tenant_id=payload["tenant_id"],
+        final_status=ContractStatus(payload["final_status"]),
+        total_commitments=payload["total_commitments"],
+        total_breaches=payload["total_breaches"],
+        total_remedies=payload["total_remedies"],
+        total_renewals=payload["total_renewals"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("breach_record.json", _build_breach_record),
+        ("commitment_record.json", _build_commitment_record),
+        ("contract_assessment.json", _build_contract_assessment),
+        ("contract_clause.json", _build_contract_clause),
+        ("contract_closure_report.json", _build_contract_closure_report),
+        ("contract_snapshot.json", _build_contract_snapshot),
         ("assurance_assessment.json", _build_assurance_assessment),
         ("assurance_closure_report.json", _build_assurance_closure_report),
         ("assurance_decision.json", _build_assurance_decision),
@@ -821,6 +982,7 @@ def _build_assurance_closure_report(payload: dict) -> AssuranceClosureReport:
         ("continuity_plan.json", _build_continuity_plan),
         ("continuity_snapshot.json", _build_continuity_snapshot),
         ("continuity_violation.json", _build_continuity_violation),
+        ("governance_contract_record.json", _build_governance_contract_record),
         ("disruption_event.json", _build_disruption_event),
         ("evidence_collection.json", _build_evidence_collection),
         ("evidence_item.json", _build_evidence_item),
@@ -840,9 +1002,12 @@ def _build_assurance_closure_report(payload: dict) -> AssuranceClosureReport:
         ("recovery_attempt.json", _build_recovery_attempt),
         ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
+        ("remedy_record.json", _build_remedy_record),
         ("review_packet.json", _build_review_packet),
         ("review_record.json", _build_review_record),
         ("recertification_window.json", _build_recertification_window),
+        ("renewal_window.json", _build_renewal_window),
+        ("sla_window.json", _build_sla_window),
         ("verification_record.json", _build_verification_record),
     ],
 )

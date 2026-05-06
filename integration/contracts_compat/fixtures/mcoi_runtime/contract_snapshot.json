@@ -1,0 +1,16 @@
+{
+  "snapshot_id": "contract-snapshot-20260404",
+  "total_contracts": 6,
+  "active_contracts": 5,
+  "total_commitments": 14,
+  "total_sla_windows": 9,
+  "total_breaches": 1,
+  "total_remedies": 1,
+  "total_renewals": 2,
+  "total_violations": 1,
+  "captured_at": "2026-04-04T10:15:00+00:00",
+  "metadata": {
+    "captured_by": "contract-monitor",
+    "scope": "tenant"
+  }
+}

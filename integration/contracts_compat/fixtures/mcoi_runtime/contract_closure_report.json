@@ -1,0 +1,15 @@
+{
+  "report_id": "contract-closure-20260404",
+  "contract_id": "contract-governance-042",
+  "tenant_id": "tenant-mullu-primary",
+  "final_status": "renewed",
+  "total_commitments": 5,
+  "total_breaches": 1,
+  "total_remedies": 1,
+  "total_renewals": 1,
+  "closed_at": "2026-12-20T12:30:00+00:00",
+  "metadata": {
+    "closed_by": "contract-board",
+    "renewal_basis": "satisfactory-governance"
+  }
+}
