@@ -327,6 +327,17 @@ def test_protocol_manifest_indexes_temporal_reapproval_receipt() -> None:
     assert reapproval_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_dispatch_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    dispatch_window_entry = entries["temporal-dispatch-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert dispatch_window_entry["path"] == "schemas/temporal_dispatch_window_receipt.schema.json"
+    assert dispatch_window_entry["urn"] == "urn:mullusi:schema:temporal-dispatch-window-receipt:1"
+    assert dispatch_window_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
