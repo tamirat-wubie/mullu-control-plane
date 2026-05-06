@@ -79,9 +79,35 @@
     },
     "artifact_statuses": {
       "type": "object",
-      "additionalProperties": {
-        "type": "string",
-        "minLength": 1
+      "additionalProperties": false,
+      "required": [
+        "pilot_witness",
+        "live_handoff_plan",
+        "email_calendar_binding_receipt",
+        "live_handoff_closure_run",
+        "live_handoff_preflight"
+      ],
+      "properties": {
+        "pilot_witness": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_handoff_plan": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email_calendar_binding_receipt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_handoff_closure_run": {
+          "type": "string",
+          "minLength": 1
+        },
+        "live_handoff_preflight": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "must_not_claim": {

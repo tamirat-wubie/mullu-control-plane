@@ -12,6 +12,7 @@ Invariants:
   - Packet readiness and chain readiness agree.
   - Blocked summaries carry readiness blockers.
   - Strict promotion command includes --strict and --require-ready.
+  - Artifact statuses are exactly the known finance source artifacts.
 """
 
 from __future__ import annotations
@@ -120,6 +121,9 @@ def _validate_summary_semantics(summary: dict[str, Any], errors: list[str]) -> N
         missing_artifacts = sorted(set(REQUIRED_ARTIFACT_STATUSES) - set(artifact_statuses))
         if missing_artifacts:
             errors.append(f"artifact_statuses missing {missing_artifacts}")
+        extra_artifacts = sorted(set(artifact_statuses) - set(REQUIRED_ARTIFACT_STATUSES))
+        if extra_artifacts:
+            errors.append(f"artifact_statuses contains unexpected {extra_artifacts}")
     must_not_claim = {str(item) for item in summary.get("must_not_claim", []) if isinstance(item, str)}
     missing_claims = sorted(set(REQUIRED_MUST_NOT_CLAIM) - must_not_claim)
     if missing_claims:

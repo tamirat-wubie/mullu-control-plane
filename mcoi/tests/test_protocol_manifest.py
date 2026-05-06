@@ -40,6 +40,7 @@ def test_protocol_manifest_is_valid() -> None:
     goal_entry = entries["goal"]
     temporal_entry = entries["temporal-operation-receipt"]
     temporal_evidence_entry = entries["temporal-evidence-freshness-receipt"]
+    temporal_reapproval_entry = entries["temporal-reapproval-receipt"]
     temporal_memory_entry = entries["temporal-memory-receipt"]
     temporal_memory_refresh_entry = entries["temporal-memory-refresh-receipt"]
     scheduler_entry = entries["temporal-scheduler-receipt"]
@@ -55,7 +56,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 88
+    assert len(manifest["schemas"]) == 91
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
@@ -119,6 +120,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert temporal_evidence_entry["path"] == "schemas/temporal_evidence_freshness_receipt.schema.json"
     assert temporal_evidence_entry["urn"] == "urn:mullusi:schema:temporal-evidence-freshness-receipt:1"
     assert temporal_evidence_entry["surface"] == "temporal"
+    assert temporal_reapproval_entry["path"] == "schemas/temporal_reapproval_receipt.schema.json"
+    assert temporal_reapproval_entry["urn"] == "urn:mullusi:schema:temporal-reapproval-receipt:1"
+    assert temporal_reapproval_entry["surface"] == "temporal"
     assert temporal_memory_entry["path"] == "schemas/temporal_memory_receipt.schema.json"
     assert temporal_memory_entry["urn"] == "urn:mullusi:schema:temporal-memory-receipt:1"
     assert temporal_memory_entry["surface"] == "temporal"

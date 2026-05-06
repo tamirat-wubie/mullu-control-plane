@@ -74,6 +74,7 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     collaboration_entry = entries["collaboration-case"]
     commercial_entry = entries["commercial-metering-snapshot"]
     operational_entry = entries["operational-case"]
+    operator_entry = entries["operator-control-tower-snapshot"]
 
     assert validate_protocol_manifest(manifest) == []
     assert collaboration_entry["path"] == "schemas/collaboration_case.schema.json"
@@ -85,6 +86,9 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert operational_entry["path"] == "schemas/operational_case.schema.json"
     assert operational_entry["urn"] == "urn:mullusi:schema:operational-case:1"
     assert operational_entry["surface"] == "case_management"
+    assert operator_entry["path"] == "schemas/operator_control_tower_snapshot.schema.json"
+    assert operator_entry["urn"] == "urn:mullusi:schema:operator-control-tower-snapshot:1"
+    assert operator_entry["surface"] == "operator"
 
 
 def test_protocol_manifest_indexes_connector_certification_registry() -> None:
@@ -294,6 +298,17 @@ def test_protocol_manifest_indexes_physical_action_receipt() -> None:
     assert physical_entry["surface"] == "safety"
 
 
+def test_protocol_manifest_indexes_physical_capability_promotion_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["physical-capability-promotion-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/physical_capability_promotion_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:physical-capability-promotion-receipt:1"
+    assert receipt_entry["surface"] == "safety"
+
+
 def test_protocol_manifest_indexes_temporal_operation_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -314,6 +329,17 @@ def test_protocol_manifest_indexes_temporal_evidence_freshness_receipt() -> None
     assert evidence_entry["path"] == "schemas/temporal_evidence_freshness_receipt.schema.json"
     assert evidence_entry["urn"] == "urn:mullusi:schema:temporal-evidence-freshness-receipt:1"
     assert evidence_entry["surface"] == "temporal"
+
+
+def test_protocol_manifest_indexes_temporal_reapproval_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    reapproval_entry = entries["temporal-reapproval-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert reapproval_entry["path"] == "schemas/temporal_reapproval_receipt.schema.json"
+    assert reapproval_entry["urn"] == "urn:mullusi:schema:temporal-reapproval-receipt:1"
+    assert reapproval_entry["surface"] == "temporal"
 
 
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:

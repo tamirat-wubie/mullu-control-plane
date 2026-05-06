@@ -887,13 +887,16 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
     assert "gateway/capability_capsule_installer.py" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
+    assert "gateway/physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "scripts/preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
+    assert "schemas/physical_capability_promotion_receipt.schema.json" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_capsule_installer.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_capability_pack.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "tests/test_preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
@@ -907,6 +910,8 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "physical_promotion_preflight_allows_sandbox_only_pack" in witnesses
     assert "physical_capsule_admission_runs_promotion_preflight" in witnesses
     assert "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure" in witnesses
+    assert "physical_promotion_receipt_binds_forge_handoff_registry_preflight" in witnesses
+    assert "physical_promotion_receipt_schema_valid" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses
@@ -981,6 +986,32 @@ def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> Non
     assert "expiring_evidence_warns_before_dispatch" in witnesses
     assert "temporal_evidence_freshness_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    reapproval_surface = surfaces["temporal_reapproval"]
+    witnesses = set(reapproval_surface["runtime_witnesses"])
+
+    assert reapproval_surface["coverage_state"] == "witnessed"
+    assert reapproval_surface["request_proof"] == "request_proof"
+    assert reapproval_surface["action_proof"] == "action_proof"
+    assert "TemporalReapproval.evaluate" in reapproval_surface["representative_paths"]
+    assert "ReapprovalRequest" in reapproval_surface["representative_paths"]
+    assert "TemporalReapprovalReceipt" in reapproval_surface["representative_paths"]
+    assert "gateway/temporal_reapproval.py" in reapproval_surface["evidence_files"]
+    assert "schemas/temporal_reapproval_receipt.schema.json" in reapproval_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_reapproval.py" in reapproval_surface["evidence_files"]
+    assert "runtime_clock_owns_reapproval_time" in witnesses
+    assert "high_risk_approval_roles_required" in witnesses
+    assert "expired_approval_requires_reapproval" in witnesses
+    assert "revoked_or_out_of_scope_approval_blocks_dispatch" in witnesses
+    assert "missing_approval_role_requires_reapproval" in witnesses
+    assert "low_risk_action_does_not_require_reapproval" in witnesses
+    assert "temporal_reapproval_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_reapproval_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

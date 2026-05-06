@@ -107,6 +107,12 @@
       "surface": "case_management"
     },
     {
+      "schema_id": "operator-control-tower-snapshot",
+      "path": "schemas/operator_control_tower_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:operator-control-tower-snapshot:1",
+      "surface": "operator"
+    },
+    {
       "schema_id": "communication-message",
       "path": "schemas/communication_message.schema.json",
       "urn": "urn:mullusi:schema:communication-message:1",
@@ -383,6 +389,12 @@
       "surface": "safety"
     },
     {
+      "schema_id": "physical-capability-promotion-receipt",
+      "path": "schemas/physical_capability_promotion_receipt.schema.json",
+      "urn": "urn:mullusi:schema:physical-capability-promotion-receipt:1",
+      "surface": "safety"
+    },
+    {
       "schema_id": "production-evidence-witness",
       "path": "schemas/production_evidence_witness.schema.json",
       "urn": "urn:mullusi:schema:production-evidence-witness:1",
@@ -452,6 +464,12 @@
       "schema_id": "temporal-evidence-freshness-receipt",
       "path": "schemas/temporal_evidence_freshness_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-evidence-freshness-receipt:1",
+      "surface": "temporal"
+    },
+    {
+      "schema_id": "temporal-reapproval-receipt",
+      "path": "schemas/temporal_reapproval_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-reapproval-receipt:1",
       "surface": "temporal"
     },
     {

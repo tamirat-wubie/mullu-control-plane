@@ -47,7 +47,9 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `finance_approval_live_handoff_preflight.schema.json` | Canonical four-step preflight report for finance approval live handoff readiness |
 | `finance_approval_operator_summary.schema.json` | Canonical redacted finance operator summary for packet and chain readiness |
 | `finance_approval_packet_proof.schema.json` | Canonical proof export for governed finance approval packet closure or review |
+| `operator_control_tower_snapshot.schema.json` | Canonical read-only operator control tower snapshot across governed platform panels |
 | `physical_action_receipt.schema.json` | Canonical no-effect physical action safety receipt |
+| `physical_capability_promotion_receipt.schema.json` | Canonical operator receipt binding physical Forge requirements, handoff refs, registry safety evidence, and preflight readiness |
 | `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
@@ -64,6 +66,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `streaming_budget_enforcement.schema.json` | Canonical predictive streaming budget event |
 | `temporal_evidence_freshness_receipt.schema.json` | Canonical governed evidence freshness recheck receipt |
 | `temporal_operation_receipt.schema.json` | Canonical runtime-owned temporal operation receipt |
+| `temporal_reapproval_receipt.schema.json` | Canonical governed execution-time approval recheck receipt |
 | `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_memory_refresh_receipt.schema.json` | Canonical governed temporal memory refresh workflow receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |
