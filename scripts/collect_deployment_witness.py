@@ -11,6 +11,8 @@ Invariants:
   - Public health proof records the probed endpoint, HTTP status, and body digest.
   - Missing or malformed endpoint evidence is recorded as a failed witness.
   - HMAC verification is explicit for runtime and conformance signatures.
+  - Live physical capability claims require explicit safety evidence; sandbox
+    physical canary evidence does not become a production claim.
   - Output is structured JSON suitable for repository status reflection.
 """
 
@@ -101,6 +103,36 @@ CORE_CONFORMANCE_BOOL_FIELDS = (
     "proof_coverage_matrix_current",
     "proof_coverage_declared_routes_classified",
 )
+PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
+PHYSICAL_CAPABILITY_PREFIXES = ("physical.", "iot.", "robotics.")
+REQUIRED_PHYSICAL_LIVE_EVIDENCE_FIELDS = (
+    "physical_action_receipt_ref",
+    "simulation_ref",
+    "operator_approval_ref",
+    "manual_override_ref",
+    "emergency_stop_ref",
+    "sensor_confirmation_ref",
+    "deployment_witness_ref",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class PhysicalCapabilityPolicy:
+    """Bounded decision for physical capability production admissibility."""
+
+    passed: bool
+    live_physical_capabilities: tuple[str, ...]
+    sandbox_physical_capabilities: tuple[str, ...]
+    blockers: tuple[str, ...]
+
+    def detail(self) -> str:
+        """Return bounded detail without copying raw evidence values."""
+        return (
+            f"physical_policy_passed={self.passed} "
+            f"live_physical_capabilities={list(self.live_physical_capabilities)} "
+            f"sandbox_physical_capabilities={list(self.sandbox_physical_capabilities)} "
+            f"physical_blockers={list(self.blockers)}"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -325,10 +357,12 @@ def collect_deployment_witness(
             missing_secret_status="skipped:no_deployment_witness_secret",
             missing_signature_status="failed:missing_hmac_sha256_signature",
         )
+        production_physical_policy = _evaluate_physical_capability_policy(production_payload)
         production_evidence_passed = (
             production_status == 200
             and production_signature_passed
             and not production_payload.get("checks_missing", ())
+            and production_physical_policy.passed
         )
         steps.append(
             ProbeStep(
@@ -337,18 +371,23 @@ def collect_deployment_witness(
                 detail=(
                     f"status={production_status} signature={production_signature_status} "
                     f"deployment_id={production_payload.get('deployment_id', '')} "
-                    f"checks_missing={list(production_payload.get('checks_missing', ())) }"
+                    f"checks_missing={list(production_payload.get('checks_missing', ())) } "
+                    f"{production_physical_policy.detail()}"
                 ),
             )
         )
         if not production_evidence_passed:
             errors.append("production evidence witness is missing required closure")
+        if production_physical_policy.blockers:
+            errors.append("production evidence witness includes live physical capability without safety evidence")
 
         capability_status, capability_payload = _probe_capability_evidence(gateway_base)
+        capability_physical_policy = _evaluate_physical_capability_policy(capability_payload)
         capability_evidence_passed = (
             capability_status == 200
             and capability_payload.get("enabled") is True
             and _int_count(capability_payload, "capability_count") > 0
+            and capability_physical_policy.passed
         )
         steps.append(
             ProbeStep(
@@ -356,12 +395,15 @@ def collect_deployment_witness(
                 passed=capability_evidence_passed,
                 detail=(
                     f"status={capability_status} enabled={capability_payload.get('enabled')} "
-                    f"capability_count={_int_count(capability_payload, 'capability_count')}"
+                    f"capability_count={_int_count(capability_payload, 'capability_count')} "
+                    f"{capability_physical_policy.detail()}"
                 ),
             )
         )
         if not capability_evidence_passed:
             errors.append("capability evidence endpoint is missing certified capability evidence")
+        if capability_physical_policy.blockers:
+            errors.append("capability evidence endpoint includes live physical capability without safety evidence")
 
         audit_status, audit_payload = _probe_audit_verification(gateway_base)
         audit_verification_passed = audit_status == 200 and audit_payload.get("valid") is True
@@ -616,6 +658,71 @@ def _certificate_fresh(*, expires_at: str, observed_at: str) -> bool:
     if observed.tzinfo is None:
         observed = observed.replace(tzinfo=timezone.utc)
     return expires > observed
+
+
+def _evaluate_physical_capability_policy(payload: dict[str, Any]) -> PhysicalCapabilityPolicy:
+    """Validate production-admissibility for live physical capability claims."""
+    live_capabilities = _string_tuple(payload.get("live_capabilities", ()))
+    sandbox_only_capabilities = _string_tuple(payload.get("sandbox_only_capabilities", ()))
+    sandbox_only_set = frozenset(sandbox_only_capabilities)
+    live_physical_capabilities = tuple(
+        capability_id
+        for capability_id in live_capabilities
+        if _is_physical_capability(capability_id)
+    )
+    sandbox_physical_capabilities = tuple(
+        capability_id
+        for capability_id in sandbox_only_capabilities
+        if _is_physical_capability(capability_id)
+    )
+    raw_evidence = payload.get("capability_evidence", {})
+    evidence_by_capability = raw_evidence if isinstance(raw_evidence, dict) else {}
+    blockers: list[str] = []
+    for capability_id in live_physical_capabilities:
+        if capability_id in sandbox_only_set:
+            blockers.append(f"{capability_id}:physical_capability_conflicting_live_and_sandbox")
+        blockers.extend(
+            _physical_live_evidence_blockers(
+                capability_id,
+                evidence_by_capability.get(capability_id),
+            )
+        )
+    return PhysicalCapabilityPolicy(
+        passed=not blockers,
+        live_physical_capabilities=live_physical_capabilities,
+        sandbox_physical_capabilities=sandbox_physical_capabilities,
+        blockers=tuple(blockers),
+    )
+
+
+def _physical_live_evidence_blockers(capability_id: str, evidence: Any) -> tuple[str, ...]:
+    """Return missing live-safety evidence blockers for one capability."""
+    if not isinstance(evidence, dict):
+        return (f"{capability_id}:physical_live_safety_evidence_required",)
+    blockers: list[str] = []
+    if evidence.get("maturity") != "production":
+        blockers.append(f"{capability_id}:production_maturity_required")
+    if evidence.get("effect_mode") != "live":
+        blockers.append(f"{capability_id}:live_effect_mode_required")
+    if evidence.get("production_admissible") is not True:
+        blockers.append(f"{capability_id}:production_admissible_required")
+    if evidence.get("physical_action_receipt_schema_ref") != PHYSICAL_ACTION_RECEIPT_SCHEMA_REF:
+        blockers.append(f"{capability_id}:physical_action_receipt_schema_ref_required")
+    for field_name in REQUIRED_PHYSICAL_LIVE_EVIDENCE_FIELDS:
+        if not str(evidence.get(field_name, "")).strip():
+            blockers.append(f"{capability_id}:{field_name}_required")
+    return tuple(blockers)
+
+
+def _is_physical_capability(capability_id: str) -> bool:
+    normalized = capability_id.strip().lower()
+    return any(normalized.startswith(prefix) for prefix in PHYSICAL_CAPABILITY_PREFIXES)
+
+
+def _string_tuple(value: Any) -> tuple[str, ...]:
+    if not isinstance(value, (list, tuple)):
+        return ()
+    return tuple(str(item).strip() for item in value if str(item).strip())
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:

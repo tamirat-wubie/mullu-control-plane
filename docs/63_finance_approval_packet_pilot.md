@@ -305,6 +305,7 @@ Credential binding receipt:
 ```powershell
 python scripts\emit_finance_approval_email_calendar_binding_receipt.py --output .change_assurance\finance_approval_email_calendar_binding_receipt.json --strict --json
 python scripts\validate_finance_approval_email_calendar_binding_receipt.py --require-ready --json
+python scripts\validate_finance_approval_email_calendar_live_receipt.py --require-ready --json
 python scripts\run_finance_approval_live_handoff_closure.py --output .change_assurance\finance_approval_live_handoff_closure_run.json --strict --json
 python scripts\validate_finance_approval_live_handoff_closure_run_schema.py --strict --json
 python scripts\preflight_finance_approval_live_handoff.py --strict --json
@@ -312,11 +313,15 @@ python scripts\validate_finance_approval_live_handoff_preflight_schema.py --stri
 python scripts\produce_finance_approval_handoff_packet.py --output .change_assurance\finance_approval_handoff_packet.json --json
 python scripts\validate_finance_approval_handoff_packet_schema.py --strict --json
 python scripts\validate_finance_approval_live_handoff_chain.py --strict --json
+python scripts\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json
 python scripts\validate_finance_approval_live_handoff_chain_schema.py --strict --json
+python scripts\produce_finance_approval_operator_summary.py --output .change_assurance\finance_approval_operator_summary.json --strict --json
 ```
 
 The receipt records only token-name presence for `GMAIL_ACCESS_TOKEN`, `GOOGLE_CALENDAR_ACCESS_TOKEN`, and `MICROSOFT_GRAPH_ACCESS_TOKEN`. It never serializes token values.
-The closure runner is a dry-run artifact by default. It marks the read-only email/calendar live receipt command as the only live connector touchpoint and blocks until the binding receipt and pilot readiness are closed.
+The handoff packet carries `promotion_boundary.ok` separately from `promotion_boundary.ready`. `ok=true` means the packet artifacts are structurally usable. `ready=false` means live handoff promotion remains blocked. The strict promotion command is `python scripts\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json`.
+The operator summary is a redacted read-only artifact that copies packet readiness, chain readiness, readiness blockers, artifact statuses, next actions, and must-not-claim boundaries into `.change_assurance\finance_approval_operator_summary.json`.
+The closure runner is a dry-run artifact by default. It marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
 
 Deterministic local pilot witness:
 

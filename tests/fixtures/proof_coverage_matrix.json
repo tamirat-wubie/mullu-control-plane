@@ -377,9 +377,9 @@
     "by_coverage_state": {
       "proven": 4,
       "unproven": 199,
-      "witnessed": 106
+      "witnessed": 107
     },
-    "route_count": 309,
+    "route_count": 310,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1070,6 +1070,11 @@
         "coverage_state": "unproven",
         "route": "/api/v1/migrations/summary",
         "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/admit-runbook",
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -2268,11 +2273,13 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/runbooks.py",
+        "mcoi/mcoi_runtime/app/routers/mil_audit.py",
         "mcoi/mcoi_runtime/core/runbook_learning.py",
         "mcoi/mcoi_runtime/app/server_http.py",
+        "mcoi/tests/test_mil_audit_router.py",
         "mcoi/tests/test_runbook_learning.py"
       ],
-      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, and expose bounded read models for runbooks, patterns, and summaries.",
+      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, and expose bounded read models for runbooks, patterns, and summaries.",
       "representative_paths": [
         "/api/v1/runbooks",
         "/api/v1/runbooks/analyze",
@@ -2281,7 +2288,8 @@
         "/api/v1/runbooks/promote",
         "/api/v1/runbooks/summary",
         "/api/v1/runbooks/{runbook_id}/activate",
-        "/api/v1/runbooks/{runbook_id}/retire"
+        "/api/v1/runbooks/{runbook_id}/retire",
+        "/api/v1/mil-audit/admit-runbook"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -2290,6 +2298,7 @@
         "approval_required_before_activation",
         "retirement_requires_active_runbook",
         "promote_and_approve_audit_records",
+        "mil_audit_replay_admits_runbook",
         "sanitized_runbook_error_details",
         "runbook_pattern_read_models_bounded",
         "runbook_responses_governed"
@@ -2503,7 +2512,7 @@
         "tests/test_gateway/test_production_evidence.py",
         "tests/test_collect_deployment_witness.py"
       ],
-      "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication.",
+      "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence.",
       "representative_paths": [
         "/deployment/witness",
         "/capabilities/evidence",
@@ -2517,6 +2526,8 @@
         "audit_verification_schema_valid",
         "proof_verification_schema_valid",
         "deployment_collection_requires_production_evidence",
+        "live_physical_capability_requires_safety_evidence",
+        "sandbox_physical_capability_remains_non_production",
         "missing_production_evidence_fails_closed"
       ],
       "surface_id": "production_evidence_plane"

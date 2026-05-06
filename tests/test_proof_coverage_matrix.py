@@ -218,14 +218,18 @@ def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/runbooks/approve" in runbook_surface["representative_paths"]
     assert "/api/v1/runbooks/{runbook_id}/activate" in runbook_surface["representative_paths"]
     assert "/api/v1/runbooks/{runbook_id}/retire" in runbook_surface["representative_paths"]
+    assert "/api/v1/mil-audit/admit-runbook" in runbook_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/runbooks.py" in runbook_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/mil_audit.py" in runbook_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "mcoi/tests/test_mil_audit_router.py" in runbook_surface["evidence_files"]
     assert "mcoi/tests/test_runbook_learning.py" in runbook_surface["evidence_files"]
     assert "patterns_detected_from_audit_trail" in witnesses
     assert "promotion_requires_detected_pattern" in witnesses
     assert "approval_required_before_activation" in witnesses
     assert "retirement_requires_active_runbook" in witnesses
     assert "promote_and_approve_audit_records" in witnesses
+    assert "mil_audit_replay_admits_runbook" in witnesses
     assert "sanitized_runbook_error_details" in witnesses
     assert "runbook_pattern_read_models_bounded" in witnesses
     assert "runbook_responses_governed" in witnesses
@@ -353,6 +357,8 @@ def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:
     assert "audit_verification_schema_valid" in witnesses
     assert "proof_verification_schema_valid" in witnesses
     assert "deployment_collection_requires_production_evidence" in witnesses
+    assert "live_physical_capability_requires_safety_evidence" in witnesses
+    assert "sandbox_physical_capability_remains_non_production" in witnesses
     assert "missing_production_evidence_fails_closed" in witnesses
     assert closure_actions["publish_production_evidence_plane"]["status"] == "closed"
     assert "gateway_runtime_witness" in closure_actions["publish_production_evidence_plane"]["surfaces"]

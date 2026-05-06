@@ -42,6 +42,7 @@ from mcoi_runtime.core.runbook import RunbookLibrary
 from mcoi_runtime.persistence.errors import PersistenceError
 from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
 from mcoi_runtime.persistence.replay_store import ReplayStore
+from mcoi_runtime.persistence.runbook_store import RunbookStore
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
 )
@@ -773,6 +774,11 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 learning_admission=learning,
                 context=context,
             )
+            runbook_persisted = False
+            if getattr(args, "runbook_store", None) and admission.entry is not None:
+                runbook_persisted = RunbookStore(
+                    _mil_output_store_path(args.runbook_store, field_name="runbook_store")
+                ).save(admission.entry)
             envelope = {
                 "operation": "admit-runbook",
                 "record_id": record.record_id,
@@ -788,6 +794,7 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 "trace_ids": list(bundle.trace_ids),
                 "runbook_id": admission.runbook_id,
                 "runbook_status": admission.status.value,
+                "runbook_persisted": runbook_persisted,
                 "reasons": list(admission.reasons),
                 "provenance": (
                     {
@@ -984,6 +991,7 @@ def build_parser() -> argparse.ArgumentParser:
     mil_audit_admit_parser.add_argument("record_id", help="MIL audit record id")
     mil_audit_admit_parser.add_argument("--trace-store", required=True, help="TraceStore directory for MIL trace spine")
     mil_audit_admit_parser.add_argument("--replay-store", required=True, help="ReplayStore directory for MIL replay record")
+    mil_audit_admit_parser.add_argument("--runbook-store", help="Optional RunbookStore directory for admitted runbook")
     mil_audit_admit_parser.add_argument("--runbook-id", required=True, help="Runbook id to admit")
     mil_audit_admit_parser.add_argument("--name", required=True, help="Runbook display name")
     mil_audit_admit_parser.add_argument("--description", required=True, help="Runbook description")
