@@ -452,6 +452,10 @@ def test_capability_plan_evidence_bundle_surface_is_witnessed() -> None:
     assert "tests/test_gateway/test_plan.py" in plan_surface["evidence_files"]
     assert "plan_evidence_bundle" in plan_surface["runtime_witnesses"]
     assert "capability_plan_bundle_canary_passed" in conformance_surface["runtime_witnesses"]
+    assert "physical_worker_canary_passed" in conformance_surface["runtime_witnesses"]
+    assert "physical_worker_canary_artifact_hash_bound" in conformance_surface["runtime_witnesses"]
+    assert "gateway/physical_worker_canary.py" in conformance_surface["evidence_files"]
+    assert "scripts/produce_physical_worker_canary.py" in conformance_surface["evidence_files"]
     assert "runtime_conformance_certificate_schema_valid" in conformance_surface["runtime_witnesses"]
     assert "runtime_conformance_collector_schema_valid" in conformance_surface["runtime_witnesses"]
     assert "proof_coverage_unclassified_routes_reported" in conformance_surface["runtime_witnesses"]
@@ -599,10 +603,13 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "NetworkedWorkerMesh.register_worker" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.dispatch" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.read_model" in worker_surface["representative_paths"]
+    assert "gateway/physical_action_boundary.py" in worker_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "gateway/worker_mesh.py" in worker_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in worker_surface["evidence_files"]
+    assert "schemas/physical_action_receipt.schema.json" in worker_surface["evidence_files"]
     assert "schemas/worker_mesh.schema.json" in worker_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_action_boundary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_worker_mesh.py" in worker_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in worker_surface["evidence_files"]
@@ -612,6 +619,7 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "physical_action_receipt_required_for_physical_workers" in witnesses
     assert "physical_worker_canary_blocks_without_receipt" in witnesses
     assert "physical_worker_canary_passed" in witnesses
+    assert "physical_worker_canary_uses_sandbox_handler" in witnesses
     assert "worker_evidence_refs_required" in witnesses
     assert "worker_receipt_not_terminal_closure" in witnesses
     assert "worker_mesh_schema_valid" in witnesses
@@ -856,11 +864,11 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert physical_surface["coverage_state"] == "witnessed"
     assert physical_surface["request_proof"] == "request_proof"
     assert physical_surface["action_proof"] == "action_proof"
-    assert "gateway/physical_boundary.py" in physical_surface["evidence_files"]
+    assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
-    assert "tests/test_gateway/test_physical_boundary.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "hardware_identity_required" in witnesses

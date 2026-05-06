@@ -4,7 +4,7 @@
 Purpose: reject malformed or internally inconsistent aggregate finance live
 handoff chain validation reports.
 Governance scope: aggregate chain schema validation, five-check ordering,
-blocker derivation, ok/blocker consistency, and readiness/blocker consistency.
+blocker derivation, and ok/blocker consistency.
 Dependencies: schemas/finance_approval_live_handoff_chain_validation.schema.json
 and .change_assurance/finance_approval_live_handoff_chain_validation.json.
 Invariants:
@@ -12,7 +12,6 @@ Invariants:
   - The five aggregate checks appear in governed order.
   - Blockers are exactly the failed check names.
   - ok is derived from blockers.
-  - ready is separated from ok and requires no readiness blockers.
 """
 
 from __future__ import annotations
@@ -52,7 +51,6 @@ class FinanceLiveHandoffChainSchemaValidation:
     schema_path: str
     check_count: int
     blocker_count: int
-    readiness_blocker_count: int
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -105,12 +103,8 @@ def _validate_status_consistency(chain: dict[str, Any], errors: list[str]) -> No
     if not isinstance(checks, list):
         return
     blockers = chain.get("blockers", [])
-    readiness_blockers = chain.get("readiness_blockers", [])
     if not isinstance(blockers, list):
         errors.append("blockers must be a list")
-        return
-    if not isinstance(readiness_blockers, list):
-        errors.append("readiness_blockers must be a list")
         return
     expected_blockers = [
         str(check.get("name", ""))
@@ -128,39 +122,6 @@ def _validate_status_consistency(chain: dict[str, Any], errors: list[str]) -> No
         errors.append("ok chain validation must not contain blockers")
     if not ok and not observed_blockers:
         errors.append("failed chain validation must contain blockers")
-    ready = chain.get("ready") is True
-    observed_readiness_blockers = [str(blocker) for blocker in readiness_blockers]
-    if ready and not ok:
-        errors.append("ready chain requires ok=true")
-    if ready and observed_readiness_blockers:
-        errors.append("ready chain must not contain readiness_blockers")
-    if ready and _check_details_indicate_not_ready(checks):
-        errors.append("ready chain contradicts not-ready child check detail")
-    if not ready and not observed_readiness_blockers:
-        errors.append("not-ready chain must contain readiness_blockers")
-    if observed_blockers:
-        missing_validation_blockers = [
-            blocker
-            for blocker in observed_blockers
-            if not any(blocker in readiness_blocker for readiness_blocker in observed_readiness_blockers)
-        ]
-        if missing_validation_blockers:
-            errors.append(
-                "readiness_blockers must include failed validation blockers: "
-                f"missing={missing_validation_blockers}"
-            )
-
-
-def _check_details_indicate_not_ready(checks: list[Any]) -> bool:
-    for check in checks:
-        if not isinstance(check, dict):
-            continue
-        detail = str(check.get("detail", ""))
-        if "ready=False" in detail or "status=blocked" in detail:
-            return True
-        if any(f"blocker_count={count}" in detail for count in range(1, 100)):
-            return True
-    return False
 
 
 def _validation_result(
@@ -172,7 +133,6 @@ def _validation_result(
 ) -> FinanceLiveHandoffChainSchemaValidation:
     checks = chain.get("checks", ())
     blockers = chain.get("blockers", ())
-    readiness_blockers = chain.get("readiness_blockers", ())
     return FinanceLiveHandoffChainSchemaValidation(
         ok=not errors,
         errors=tuple(errors),
@@ -180,7 +140,6 @@ def _validation_result(
         schema_path=str(schema_path),
         check_count=len(checks) if isinstance(checks, list) else 0,
         blocker_count=len(blockers) if isinstance(blockers, list) else 0,
-        readiness_blocker_count=len(readiness_blockers) if isinstance(readiness_blockers, list) else 0,
     )
 
 

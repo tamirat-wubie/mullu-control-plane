@@ -181,6 +181,17 @@ def _validate_email_calendar_live_receipt_action(actions: tuple[dict[str, Any], 
         for token in required_tokens:
             if token not in command:
                 errors.append(f"email/calendar live action {index} command missing token {token}")
+        verification_command = str(action.get("verification_command", ""))
+        required_verification_tokens = (
+            "validate_finance_approval_email_calendar_live_receipt.py",
+            "--require-ready",
+            "validate_finance_approval_pilot.py",
+        )
+        for token in required_verification_tokens:
+            if token not in verification_command:
+                errors.append(f"email/calendar live action {index} verification_command missing token {token}")
+        if "finance_email_calendar_live_receipt.ready" not in str(action.get("receipt_validator", "")):
+            errors.append(f"email/calendar live action {index} receipt_validator missing live receipt readiness")
         missing_evidence = sorted({"email_calendar_live_receipt.json", "read_only_probe_receipt"} - evidence_required)
         if missing_evidence:
             errors.append(f"email/calendar live action {index} evidence_required missing {missing_evidence}")

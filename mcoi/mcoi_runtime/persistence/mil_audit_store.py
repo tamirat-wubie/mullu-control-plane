@@ -16,12 +16,27 @@ from mcoi_runtime.contracts.integrity import HashChainEntry
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.contracts.replay import ReplayEffect, ReplayMode, ReplayRecord
 from mcoi_runtime.contracts.trace import TraceEntry
+from mcoi_runtime.core.replay_engine import (
+    EffectControl as CoreEffectControl,
+    ReplayArtifact as CoreReplayArtifact,
+    ReplayEffect as CoreReplayEffect,
+    ReplayMode as CoreReplayMode,
+    ReplayRecord as CoreReplayRecord,
+)
 from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.core.mil_static_verifier import MILStaticReport
 
 from ._serialization import deserialize_record, serialize_record
-from .errors import CorruptedDataError, PathTraversalError, PersistenceError, PersistenceWriteError
+from .errors import (
+    CorruptedDataError,
+    PathTraversalError,
+    PersistenceError,
+    PersistenceWriteError,
+    TraceNotFoundError,
+)
 from .hash_chain import HashChainStore, compute_content_hash
+from .replay_store import ReplayStore
+from .trace_store import TraceStore
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,6 +110,38 @@ class MILAuditReplayLookup(ContractRecord):
         for index, entry in enumerate(self.trace_entries):
             if not isinstance(entry, TraceEntry):
                 raise ValueError(f"trace_entries[{index}] must be a TraceEntry")
+
+
+@dataclass(frozen=True, slots=True)
+class MILAuditTracePersistence(ContractRecord):
+    record_id: str
+    persisted_trace_ids: tuple[str, ...]
+    replay_lookup: MILAuditReplayLookup
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
+        object.__setattr__(
+            self,
+            "persisted_trace_ids",
+            _freeze_text_tuple(self.persisted_trace_ids, "persisted_trace_ids"),
+        )
+        if not isinstance(self.replay_lookup, MILAuditReplayLookup):
+            raise ValueError("replay_lookup must be a MILAuditReplayLookup")
+
+
+@dataclass(frozen=True, slots=True)
+class MILAuditReplayPersistence(ContractRecord):
+    record_id: str
+    replay_id: str
+    trace_ids: tuple[str, ...]
+    replay_record: CoreReplayRecord
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
+        object.__setattr__(self, "replay_id", require_non_empty_text(self.replay_id, "replay_id"))
+        object.__setattr__(self, "trace_ids", _freeze_text_tuple(self.trace_ids, "trace_ids"))
+        if not isinstance(self.replay_record, CoreReplayRecord):
+            raise ValueError("replay_record must be a core ReplayRecord")
 
 
 class MILAuditStore:
@@ -220,6 +267,51 @@ class MILAuditStore:
             trace_entries=trace_entries,
         )
 
+    def persist_trace_spine(
+        self,
+        record_id: str,
+        trace_store: TraceStore,
+    ) -> MILAuditTracePersistence:
+        if not isinstance(trace_store, TraceStore):
+            raise PersistenceError("trace_store must be a TraceStore")
+        lookup = self.replay_lookup(record_id)
+        persisted_trace_ids: list[str] = []
+        for entry in lookup.trace_entries:
+            existing = _load_existing_trace(trace_store, entry.trace_id)
+            if existing is None:
+                trace_store.append(entry)
+            elif existing != entry:
+                raise PersistenceWriteError("MIL audit trace id collision")
+            persisted_trace_ids.append(entry.trace_id)
+        return MILAuditTracePersistence(
+            record_id=lookup.record.record_id,
+            persisted_trace_ids=tuple(persisted_trace_ids),
+            replay_lookup=lookup,
+        )
+
+    def persist_replay_bundle(
+        self,
+        record_id: str,
+        *,
+        trace_store: TraceStore,
+        replay_store: ReplayStore,
+    ) -> MILAuditReplayPersistence:
+        if not isinstance(replay_store, ReplayStore):
+            raise PersistenceError("replay_store must be a ReplayStore")
+        trace_projection = self.persist_trace_spine(record_id, trace_store)
+        replay_record = _core_replay_record(trace_projection.replay_lookup)
+        existing = _load_existing_replay(replay_store, replay_record.replay_id)
+        if existing is None:
+            replay_store.save(replay_record)
+        elif existing != replay_record:
+            raise PersistenceWriteError("MIL audit replay id collision")
+        return MILAuditReplayPersistence(
+            record_id=trace_projection.record_id,
+            replay_id=replay_record.replay_id,
+            trace_ids=trace_projection.persisted_trace_ids,
+            replay_record=replay_record,
+        )
+
     def _chain_entry_for_content_hash(self, content_hash: str) -> HashChainEntry | None:
         for entry in self._chain.load_all():
             if entry.content_hash == content_hash:
@@ -332,3 +424,45 @@ def _safe_record_path(records_path: Path, record_id: str) -> Path:
     if not candidate.is_relative_to(base):
         raise PathTraversalError("record path escapes MIL audit store")
     return candidate
+
+
+def _load_existing_trace(trace_store: TraceStore, trace_id: str) -> TraceEntry | None:
+    try:
+        return trace_store.load_trace(trace_id)
+    except TraceNotFoundError:
+        return None
+
+
+def _load_existing_replay(replay_store: ReplayStore, replay_id: str) -> CoreReplayRecord | None:
+    try:
+        return replay_store.load(replay_id)
+    except PersistenceError:
+        return None
+
+
+def _core_replay_record(lookup: MILAuditReplayLookup) -> CoreReplayRecord:
+    terminal_trace = lookup.trace_entries[-1]
+    artifact_id = stable_identifier("mil-audit-artifact", {"record_id": lookup.record.record_id})
+    return CoreReplayRecord(
+        replay_id=lookup.replay_record.replay_id,
+        trace_id=terminal_trace.trace_id,
+        source_hash=terminal_trace.state_hash,
+        approved_effects=(
+            CoreReplayEffect(
+                effect_id=lookup.record.execution_id,
+                control=CoreEffectControl.CONTROLLED,
+                artifact_id=artifact_id,
+            ),
+        ),
+        blocked_effects=(),
+        mode=CoreReplayMode.OBSERVATION_ONLY,
+        recorded_at=lookup.record.recorded_at,
+        artifacts=(
+            CoreReplayArtifact(
+                artifact_id=artifact_id,
+                payload_digest=lookup.chain_entry.chain_hash,
+            ),
+        ),
+        state_hash=terminal_trace.state_hash,
+        environment_digest=f"mil-audit-chain:{lookup.chain_entry.chain_hash}",
+    )

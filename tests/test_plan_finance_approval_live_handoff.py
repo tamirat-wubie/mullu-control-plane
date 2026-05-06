@@ -51,6 +51,14 @@ def test_current_finance_handoff_plan_scopes_to_email_calendar() -> None:
         "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
     ].verification_command
     assert actions_by_blocker["email_calendar_live_evidence_missing"].approval_required is False
+    assert (
+        "validate_finance_approval_email_calendar_live_receipt.py"
+        in actions_by_blocker["email_calendar_live_evidence_missing"].verification_command
+    )
+    assert (
+        "finance_email_calendar_live_receipt.ready"
+        in actions_by_blocker["email_calendar_live_evidence_missing"].receipt_validator
+    )
     assert "browser_live_evidence_missing" not in plan.blockers
     assert "voice_live_evidence_missing" not in plan.blockers
 

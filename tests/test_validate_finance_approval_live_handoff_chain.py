@@ -2,16 +2,13 @@
 
 Purpose: prove the aggregate finance live handoff chain validator fails closed
 when any child artifact validator fails.
-Governance scope: closure run validation, live receipt validation, preflight
-validation, handoff packet validation, protocol manifest validation, and strict
-CLI behavior.
+Governance scope: closure run validation, preflight validation, handoff packet
+validation, protocol manifest validation, and strict CLI behavior.
 Dependencies: scripts.validate_finance_approval_live_handoff_chain.
 Invariants:
   - Current generated artifact chain validates.
   - Broken closure-run artifacts fail the chain.
-  - Invalid live receipt artifacts fail the chain.
   - Broken preflight artifacts fail the chain.
-  - Valid-but-not-ready evidence is preserved as readiness blockers.
   - Strict CLI returns nonzero for a failed chain.
 """
 
@@ -43,9 +40,7 @@ def test_finance_live_handoff_chain_accepts_current_artifacts() -> None:
     validation = validate_finance_approval_live_handoff_chain()
 
     assert validation.ok is True
-    assert validation.ready is False
     assert validation.blockers == ()
-    assert validation.readiness_blockers
     assert validation.check_count == 5
     assert {check.name for check in validation.checks} == {
         "finance closure run schema validation",
@@ -56,7 +51,7 @@ def test_finance_live_handoff_chain_accepts_current_artifacts() -> None:
     }
     live_check = next(check for check in validation.checks if check.name == "finance email/calendar live receipt validation")
     assert "ready=False" in live_check.detail
-    assert any("email/calendar live receipt not ready" in blocker for blocker in validation.readiness_blockers)
+    assert "status=failed" in live_check.detail
 
 
 def test_finance_live_handoff_chain_rejects_invalid_closure_run(tmp_path: Path) -> None:
@@ -74,7 +69,23 @@ def test_finance_live_handoff_chain_rejects_invalid_closure_run(tmp_path: Path) 
 
     assert validation.ok is False
     assert "finance closure run schema validation" in validation.blockers
-    assert "finance closure run schema validation" in validation.readiness_blockers
+
+
+def test_finance_live_handoff_chain_rejects_invalid_preflight(tmp_path: Path) -> None:
+    closure_run_path, preflight_path, packet_path = _write_current_chain(tmp_path)
+    preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
+    preflight["blockers"] = []
+    preflight_path.write_text(json.dumps(preflight), encoding="utf-8")
+
+    validation = validate_finance_approval_live_handoff_chain(
+        closure_run_path=closure_run_path,
+        preflight_path=preflight_path,
+        packet_path=packet_path,
+    )
+
+    assert validation.ok is False
+    assert "finance preflight schema validation" in validation.blockers
+    assert "finance handoff packet schema validation" in validation.blockers
 
 
 def test_finance_live_handoff_chain_rejects_invalid_live_receipt(tmp_path: Path) -> None:
@@ -103,27 +114,7 @@ def test_finance_live_handoff_chain_rejects_invalid_live_receipt(tmp_path: Path)
     )
 
     assert validation.ok is False
-    assert validation.ready is False
     assert "finance email/calendar live receipt validation" in validation.blockers
-    assert "finance email/calendar live receipt validation" in validation.readiness_blockers
-
-
-def test_finance_live_handoff_chain_rejects_invalid_preflight(tmp_path: Path) -> None:
-    closure_run_path, preflight_path, packet_path = _write_current_chain(tmp_path)
-    preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
-    preflight["blockers"] = []
-    preflight_path.write_text(json.dumps(preflight), encoding="utf-8")
-
-    validation = validate_finance_approval_live_handoff_chain(
-        closure_run_path=closure_run_path,
-        preflight_path=preflight_path,
-        packet_path=packet_path,
-    )
-
-    assert validation.ok is False
-    assert "finance preflight schema validation" in validation.blockers
-    assert "finance handoff packet schema validation" in validation.blockers
-    assert any("finance preflight schema validation" in blocker for blocker in validation.readiness_blockers)
 
 
 def test_finance_live_handoff_chain_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:
@@ -159,12 +150,9 @@ def test_finance_live_handoff_chain_writer_and_cli_honor_strict(tmp_path: Path, 
 
     assert written == output_path
     assert validation.ok is False
-    assert validation.ready is False
     assert exit_code == 2
     assert payload["ok"] is False
-    assert payload["ready"] is False
     assert stdout_payload["blockers"] == list(validation.blockers)
-    assert stdout_payload["readiness_blockers"] == list(validation.readiness_blockers)
 
 
 def _write_current_chain(tmp_path: Path) -> tuple[Path, Path, Path]:

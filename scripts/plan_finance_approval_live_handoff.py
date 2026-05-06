@@ -172,10 +172,12 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             action_type="live-receipt",
             command="python scripts/produce_capability_adapter_live_receipts.py --target email-calendar --strict",
             verification_command=(
+                "python scripts/validate_finance_approval_email_calendar_live_receipt.py "
+                "--require-ready --json && "
                 "python scripts/validate_finance_approval_pilot.py "
                 "--output .change_assurance/finance_approval_readiness.json --json"
             ),
-            receipt_validator="finance_readiness.email_calendar_evidence_closed",
+            receipt_validator="finance_email_calendar_live_receipt.ready && finance_readiness.email_calendar_evidence_closed",
             evidence_required=("email_calendar_live_receipt.json", "read_only_probe_receipt"),
             approval_required=False,
         )

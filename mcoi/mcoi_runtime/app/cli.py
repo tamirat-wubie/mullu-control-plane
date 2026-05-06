@@ -35,6 +35,7 @@ from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceiptStage
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.persistence.errors import PersistenceError
+from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
 )
@@ -155,6 +156,17 @@ def _classify_software_receipt_error(exc: Exception) -> str:
     if isinstance(exc, OSError):
         return f"software receipt store access failed ({type(exc).__name__})"
     return f"software receipt command failed ({type(exc).__name__})"
+
+
+def _classify_mil_audit_error(exc: Exception) -> str:
+    """Return a bounded MIL audit CLI failure message."""
+    if isinstance(exc, PersistenceError):
+        return f"MIL audit store rejected request ({type(exc).__name__})"
+    if isinstance(exc, ValueError):
+        return f"invalid MIL audit argument ({type(exc).__name__})"
+    if isinstance(exc, OSError):
+        return f"MIL audit store access failed ({type(exc).__name__})"
+    return f"MIL audit command failed ({type(exc).__name__})"
 
 
 def _load_demo_json_object(raw: bytes) -> dict[str, Any]:
@@ -600,6 +612,112 @@ def software_receipts_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _mil_audit_store_path(args: argparse.Namespace) -> Path:
+    """Resolve the explicit MIL audit store directory for CLI reads."""
+    path_value = getattr(args, "store", None) or os.environ.get("MULLU_MIL_AUDIT_STORE_PATH")
+    if not isinstance(path_value, str) or not path_value.strip():
+        raise ValueError("MIL audit store path is required")
+    path = Path(path_value)
+    if not path.exists():
+        raise FileNotFoundError("MIL audit store path not found")
+    return path
+
+
+def _print_mil_audit_envelope(envelope: Mapping[str, Any], *, json_output: bool) -> None:
+    """Render a MIL audit envelope for local operator inspection."""
+    if json_output:
+        print(json.dumps(envelope, sort_keys=True, indent=2))
+        return
+    print("=== MIL Audit ===")
+    print(f"operation: {envelope['operation']}")
+    print(f"record_id: {envelope['record_id']}")
+    print(f"program_id: {envelope['program_id']}")
+    print(f"goal_id: {envelope['goal_id']}")
+    print(f"execution_id: {envelope['execution_id']}")
+    print(f"verification_passed: {str(envelope['verification_passed']).lower()}")
+    if envelope.get("replay_id") is not None:
+        print(f"replay_id: {envelope['replay_id']}")
+        print(f"replay_mode: {envelope['replay_mode']}")
+        print(f"chain_sequence: {envelope['chain_sequence']}")
+        print(f"source_hash: {envelope['source_hash']}")
+
+
+def _mil_verification_json(record: Any) -> dict[str, Any]:
+    """Return a JSON-safe MIL static verification projection."""
+    return {
+        "passed": record.verification.passed,
+        "issues": [
+            {
+                "code": issue.code,
+                "message": issue.message,
+                "target": issue.target,
+            }
+            for issue in record.verification.issues
+        ],
+    }
+
+
+def mil_audit_command(args: argparse.Namespace) -> int:
+    """Inspect MIL audit records and build observation-only replay anchors."""
+    sub = getattr(args, "mil_audit_command", None)
+    if sub is None:
+        print("Usage: mcoi mil-audit {get|replay} --store path record_id")
+        return 1
+    try:
+        store = MILAuditStore(_mil_audit_store_path(args))
+        if sub == "get":
+            record = store.load(args.record_id)
+            envelope = {
+                "operation": "get",
+                "record_id": record.record_id,
+                "program_id": record.program_id,
+                "goal_id": record.goal_id,
+                "execution_id": record.execution_id,
+                "policy_decision_id": record.policy_decision_id,
+                "verification_passed": record.verification_passed,
+                "verification_issue_codes": list(record.verification_issue_codes),
+                "instruction_trace": list(record.instruction_trace),
+                "record": {
+                    "record_id": record.record_id,
+                    "program_id": record.program_id,
+                    "goal_id": record.goal_id,
+                    "policy_decision_id": record.policy_decision_id,
+                    "execution_id": record.execution_id,
+                    "verification_passed": record.verification_passed,
+                    "verification_issue_codes": list(record.verification_issue_codes),
+                    "instruction_trace": list(record.instruction_trace),
+                    "program": record.program.to_json_dict(),
+                    "verification": _mil_verification_json(record),
+                    "recorded_at": record.recorded_at,
+                },
+            }
+        elif sub == "replay":
+            lookup = store.replay_lookup(args.record_id)
+            envelope = {
+                "operation": "replay",
+                "record_id": lookup.record.record_id,
+                "program_id": lookup.record.program_id,
+                "goal_id": lookup.record.goal_id,
+                "execution_id": lookup.record.execution_id,
+                "policy_decision_id": lookup.record.policy_decision_id,
+                "verification_passed": lookup.record.verification_passed,
+                "replay_id": lookup.replay_record.replay_id,
+                "replay_mode": lookup.replay_record.mode.value,
+                "chain_sequence": lookup.chain_entry.sequence_number,
+                "source_hash": lookup.replay_record.source_hash,
+                "trace_entries": [entry.to_json_dict() for entry in lookup.trace_entries],
+                "replay_record": lookup.replay_record.to_json_dict(),
+            }
+        else:
+            print(f"error: unknown mil-audit subcommand {sub!r}")
+            return 1
+    except Exception as exc:
+        print(f"error: {_classify_mil_audit_error(exc)}")
+        return 1
+    _print_mil_audit_envelope(envelope, json_output=args.json)
+    return 0
+
+
 def _load_json_object(*, content: str, kind: str, source_name: str) -> dict:
     """Load a JSON object and fail closed on malformed or non-object input."""
     try:
@@ -738,6 +856,32 @@ def build_parser() -> argparse.ArgumentParser:
     decision_group.add_argument("--approve", dest="approved", action="store_true", help="Approve the review")
     decision_group.add_argument("--reject", dest="approved", action="store_false", help="Reject the review")
     receipts_decide_parser.add_argument("--comment", default=None, help="Optional review comment")
+
+    mil_audit_parser = subparsers.add_parser(
+        "mil-audit",
+        help="Inspect MIL audit records",
+    )
+    mil_audit_subparsers = mil_audit_parser.add_subparsers(dest="mil_audit_command")
+    mil_audit_common = argparse.ArgumentParser(add_help=False)
+    mil_audit_common.add_argument(
+        "--store",
+        help="MIL audit store directory; defaults to MULLU_MIL_AUDIT_STORE_PATH",
+    )
+    mil_audit_common.add_argument("--json", action="store_true", help="Emit JSON envelope")
+
+    mil_audit_get_parser = mil_audit_subparsers.add_parser(
+        "get",
+        parents=[mil_audit_common],
+        help="Fetch one MIL audit record by id",
+    )
+    mil_audit_get_parser.add_argument("record_id", help="MIL audit record id")
+
+    mil_audit_replay_parser = mil_audit_subparsers.add_parser(
+        "replay",
+        parents=[mil_audit_common],
+        help="Build an observation-only replay anchor for a MIL audit record",
+    )
+    mil_audit_replay_parser.add_argument("record_id", help="MIL audit record id")
 
     # v4.25.0: migrate — DB schema migration ops surface
     migrate_parser = subparsers.add_parser(
@@ -1174,6 +1318,7 @@ def main(argv: list[str] | None = None) -> int:
         "verify-ledger": verify_ledger_command,
         "migrate": migrate_command,
         "software-receipts": software_receipts_command,
+        "mil-audit": mil_audit_command,
     }
 
     handler = commands.get(args.command)

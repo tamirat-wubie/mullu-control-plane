@@ -141,6 +141,7 @@ def test_finance_handoff_plan_schema_requires_read_only_receipt_gate(tmp_path: P
 
     assert validation.ok is False
     assert any("--target email-calendar" in error for error in validation.errors)
+    assert any("validate_finance_approval_email_calendar_live_receipt.py" in error for error in validation.errors)
     assert any("read_only_probe_receipt" in error for error in validation.errors)
 
 
@@ -214,8 +215,16 @@ def _valid_plan() -> dict[str, object]:
                 "blocker": "email_calendar_live_evidence_missing",
                 "action_type": "live-receipt",
                 "command": "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar --strict",
-                "verification_command": "python scripts/validate_finance_approval_pilot.py --output .change_assurance/finance_approval_readiness.json --json",
-                "receipt_validator": "finance_readiness.email_calendar_evidence_closed",
+                "verification_command": (
+                    "python scripts/validate_finance_approval_email_calendar_live_receipt.py "
+                    "--require-ready --json && "
+                    "python scripts/validate_finance_approval_pilot.py "
+                    "--output .change_assurance/finance_approval_readiness.json --json"
+                ),
+                "receipt_validator": (
+                    "finance_email_calendar_live_receipt.ready && "
+                    "finance_readiness.email_calendar_evidence_closed"
+                ),
                 "evidence_required": [
                     "email_calendar_live_receipt.json",
                     "read_only_probe_receipt",

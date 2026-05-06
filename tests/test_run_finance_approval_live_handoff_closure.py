@@ -34,7 +34,7 @@ def test_current_finance_live_handoff_closure_dry_run_blocks_absent_token() -> N
     assert run.mode == "dry-run"
     assert run.status == "blocked"
     assert run.ready_to_execute_live is False
-    assert run.command_count == 11
+    assert run.command_count == 14
     assert "finance_email_calendar_binding_receipt_not_ready" in run.blockers
     assert "finance_approval_pilot_readiness_not_ready" in run.blockers
 
@@ -45,8 +45,12 @@ def test_finance_live_handoff_closure_orders_binding_before_live_receipt() -> No
     live_commands = [command for command in run.commands if command.live_effect_possible]
 
     assert step_ids.index("02_validate_binding_receipt") < step_ids.index("03_collect_read_only_live_receipt")
-    assert step_ids.index("08_run_preflight") < step_ids.index("09_validate_preflight_schema")
-    assert step_ids.index("09_validate_preflight_schema") < step_ids.index("10_produce_handoff_packet")
+    assert step_ids.index("03_collect_read_only_live_receipt") < step_ids.index("04_validate_read_only_live_receipt")
+    assert step_ids.index("04_validate_read_only_live_receipt") < step_ids.index("05_collect_adapter_evidence")
+    assert step_ids.index("09_run_preflight") < step_ids.index("10_validate_preflight_schema")
+    assert step_ids.index("10_validate_preflight_schema") < step_ids.index("11_produce_handoff_packet")
+    assert step_ids.index("12_validate_handoff_packet_schema") < step_ids.index("13_validate_handoff_chain")
+    assert step_ids.index("13_validate_handoff_chain") < step_ids.index("14_validate_handoff_chain_schema")
     assert len(live_commands) == 1
     assert live_commands[0].step_id == "03_collect_read_only_live_receipt"
     assert "--target email-calendar" in live_commands[0].command
@@ -70,7 +74,7 @@ def test_finance_live_handoff_closure_accepts_ready_local_evidence(tmp_path: Pat
     assert run.status == "ready"
     assert run.ready_to_execute_live is True
     assert run.blockers == ()
-    assert run.command_count == 11
+    assert run.command_count == 14
 
 
 def test_finance_live_handoff_closure_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:

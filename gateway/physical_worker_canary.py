@@ -104,6 +104,8 @@ def run_physical_worker_canary() -> PhysicalWorkerCanaryArtifact:
             "physical_worker_claim": "sandbox_only",
             "production_admissible": False,
             "no_physical_effect_applied": sandbox_output.get("physical_effect_applied") is False,
+            "physical_worker_canary_blocks_without_receipt": blocked_receipt.status == "rejected"
+            and blocked_receipt.reason == "physical_action_receipt_required",
         },
     )
     artifact_hash = canonical_hash(asdict(replace(artifact, canary_id="pending", artifact_hash="")))
