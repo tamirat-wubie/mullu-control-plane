@@ -191,7 +191,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     "GITHUB_SURFACE.md": (
         "GitHub Surface Witness",
         "Governed symbolic intelligence control plane",
-        "v3.13.1",
+        "v3.13.2",
         "symbolic-intelligence",
         "docs/52_mullu_governance_protocol.md",
         "python scripts/validate_protocol_manifest.py",
