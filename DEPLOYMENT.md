@@ -371,6 +371,9 @@ MULLU_VOICE_WORKER_SECRET=...
 MULLU_EMAIL_CALENDAR_WORKER_URL=http://email-calendar-worker:8050/email-calendar/execute
 MULLU_EMAIL_CALENDAR_WORKER_SECRET=...
 MULLU_EMAIL_CALENDAR_WORKER_ADAPTER=production
+EMAIL_CALENDAR_CONNECTOR_TOKEN=...     # optional governed connector token
+EMAIL_CALENDAR_CONNECTOR_ID=gmail      # gmail, google_calendar, or microsoft_graph
+EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=...  # optional governed scope witness
 GMAIL_ACCESS_TOKEN=...                 # optional Gmail connector credential
 GOOGLE_CALENDAR_ACCESS_TOKEN=...       # optional Google Calendar connector credential
 MICROSOFT_GRAPH_ACCESS_TOKEN=...       # optional Microsoft Graph connector credential
@@ -388,9 +391,10 @@ default. Set `MULLU_INSTALL_WORKER_DEPS=false` at build time only for API or
 gateway images that intentionally exclude browser and document worker
 dependencies. Playwright Chromium is installed only when both
 `MULLU_INSTALL_WORKER_DEPS=true` and `MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true`.
-The email/calendar worker starts in production adapter mode with whatever
-connector credentials are supplied; missing credentials fail closed per request
-and still produce signed failure receipts.
+The email/calendar worker starts in production adapter mode with either
+`EMAIL_CALENDAR_CONNECTOR_TOKEN` plus `EMAIL_CALENDAR_CONNECTOR_ID`, or the
+provider-specific token names. Missing credentials fail closed per request and
+still produce signed failure receipts.
 
 The worker services expose:
 

@@ -877,16 +877,22 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "scripts/preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_capability_pack.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "tests/test_preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "physical_capability_pack_fixture_not_default_loaded" in witnesses
     assert "physical_sandbox_replay_admitted_without_production_gate" in witnesses
     assert "live_physical_capability_rejected_by_production_gate" in witnesses
     assert "physical_pack_projects_sandbox_only_evidence" in witnesses
+    assert "physical_promotion_preflight_blocks_fixture_live_claim" in witnesses
+    assert "physical_promotion_preflight_requires_live_safety_evidence" in witnesses
+    assert "physical_promotion_preflight_accepts_full_evidence" in witnesses
+    assert "physical_promotion_preflight_allows_sandbox_only_pack" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses

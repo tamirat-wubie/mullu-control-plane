@@ -98,6 +98,7 @@ class _PhysicalCapabilityProjection:
     maturity_level: str
     production_ready: bool
     world_mutating: bool
+    safety_evidence: Mapping[str, Any]
     live_safety_evidence_complete: bool
     safety_blockers: tuple[str, ...]
 
@@ -256,6 +257,7 @@ def _project_physical_capability(entry: CapabilityRegistryEntry) -> _PhysicalCap
         maturity_level=assessment.maturity_level,
         production_ready=assessment.production_ready,
         world_mutating=governed_record.world_mutating,
+        safety_evidence=safety_evidence,
         live_safety_evidence_complete=not safety_blockers,
         safety_blockers=safety_blockers,
     )
@@ -307,18 +309,14 @@ def _production_evidence_value(projection: _PhysicalCapabilityProjection) -> str
         "effect_mode": "live",
         "production_admissible": True,
         "physical_action_receipt_schema_ref": PHYSICAL_ACTION_RECEIPT_SCHEMA_REF,
-        **dict(_physical_safety_evidence_by_capability[projection.capability_id]),
+        **dict(projection.safety_evidence),
     }
-
-
-_physical_safety_evidence_by_capability: dict[str, Mapping[str, Any]] = {}
 
 
 def _physical_live_safety_evidence(entry: CapabilityRegistryEntry) -> Mapping[str, Any]:
     extensions = entry.extensions
     evidence = extensions.get("physical_live_safety_evidence", {})
     evidence = evidence if isinstance(evidence, Mapping) else {}
-    _physical_safety_evidence_by_capability[entry.capability_id] = evidence
     return evidence
 
 

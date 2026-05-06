@@ -73,6 +73,9 @@ def test_compose_profiles_adapter_workers_without_gateway_dependency() -> None:
     assert "OPENAI_API_KEY" in voice_block
     assert "MULLU_EMAIL_CALENDAR_WORKER_SECRET" in email_calendar_block
     assert "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: \"production\"" in email_calendar_block
+    assert "EMAIL_CALENDAR_CONNECTOR_TOKEN" in email_calendar_block
+    assert "EMAIL_CALENDAR_CONNECTOR_ID" in email_calendar_block
+    assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID" in email_calendar_block
     assert "GMAIL_ACCESS_TOKEN" in email_calendar_block
     assert "GOOGLE_CALENDAR_ACCESS_TOKEN" in email_calendar_block
     assert "MICROSOFT_GRAPH_ACCESS_TOKEN" in email_calendar_block
