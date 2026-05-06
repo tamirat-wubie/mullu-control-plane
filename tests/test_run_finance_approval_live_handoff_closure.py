@@ -57,6 +57,10 @@ def test_finance_live_handoff_closure_orders_binding_before_live_receipt() -> No
     assert live_commands[0].step_id == "03_collect_read_only_live_receipt"
     assert "--target email-calendar" in live_commands[0].command
     assert "produce_capability_adapter_live_receipts.py" in live_commands[0].command
+    assert "produce_finance_approval_operator_summary.py" in run.commands[14].command
+    assert "--strict --json" in run.commands[14].command
+    assert "validate_finance_approval_operator_summary_schema.py" in run.commands[15].command
+    assert "--strict --json" in run.commands[15].command
 
 
 def test_finance_live_handoff_closure_accepts_ready_local_evidence(tmp_path: Path) -> None:
