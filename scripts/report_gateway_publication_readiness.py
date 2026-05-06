@@ -7,7 +7,8 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: GitHub CLI repository metadata and DNS resolution.
 Invariants:
   - Gateway host is derived from explicit input or repository variables.
-  - Runtime witness and kubeconfig secrets are checked by name only.
+  - Runtime witness, conformance, deployment witness, and kubeconfig secrets
+    are checked by name only.
   - Workflow dispatch is never performed by this reporter.
   - The next operator command is emitted from validated values.
 """
@@ -33,6 +34,8 @@ from scripts.dispatch_deployment_witness import (
     VALID_ENVIRONMENTS,
 )
 from scripts.dispatch_gateway_publication import (
+    DEFAULT_CONFORMANCE_SECRET_NAME,
+    DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     DEFAULT_KUBECONFIG_SECRET_NAME,
     DEFAULT_RUNTIME_SECRET_NAME,
     DEFAULT_WORKFLOW_FILE,
@@ -119,6 +122,8 @@ def report_gateway_publication_readiness(
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     runtime_secret_name: str = DEFAULT_RUNTIME_SECRET_NAME,
+    conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
+    deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     kubeconfig_secret_name: str = DEFAULT_KUBECONFIG_SECRET_NAME,
     runner: CommandRunner | None = None,
     resolver: Resolver | None = None,
@@ -140,6 +145,18 @@ def report_gateway_publication_readiness(
         _check_secret(
             step_name="runtime witness secret",
             secret_name=runtime_secret_name,
+            required=True,
+            secrets=secret_names,
+        ),
+        _check_secret(
+            step_name="runtime conformance secret",
+            secret_name=conformance_secret_name,
+            required=True,
+            secrets=secret_names,
+        ),
+        _check_secret(
+            step_name="deployment witness secret",
+            secret_name=deployment_witness_secret_name,
             required=True,
             secrets=secret_names,
         ),
@@ -517,6 +534,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--runtime-secret-name", default=DEFAULT_RUNTIME_SECRET_NAME)
+    parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
+    parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--kubeconfig-secret-name", default=DEFAULT_KUBECONFIG_SECRET_NAME)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     return parser.parse_args(argv)
@@ -537,6 +556,8 @@ def main(argv: list[str] | None = None) -> int:
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             runtime_secret_name=args.runtime_secret_name,
+            conformance_secret_name=args.conformance_secret_name,
+            deployment_witness_secret_name=args.deployment_witness_secret_name,
             kubeconfig_secret_name=args.kubeconfig_secret_name,
         )
     except RuntimeError:

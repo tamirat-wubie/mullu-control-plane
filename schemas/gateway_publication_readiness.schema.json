@@ -81,7 +81,7 @@
     },
     "steps": {
       "type": "array",
-      "minItems": 5,
+      "minItems": 7,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -118,6 +118,40 @@
             "properties": {
               "name": {
                 "const": "repository variables"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "runtime conformance secret"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "properties": {
+        "steps": {
+          "contains": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "const": "deployment witness secret"
               }
             }
           }

@@ -5,7 +5,8 @@ workflow state, and artifact download without reading secret values.
 Governance scope: [OCE, RAG, CDCV, UWMA, PRS]
 Dependencies: scripts.dispatch_gateway_publication.
 Invariants:
-  - Runtime witness secret presence is checked by name only.
+  - Runtime witness, conformance, and deployment witness secret presence is
+    checked by name only.
   - Kubeconfig secret is required only when ingress apply is requested.
   - Workflow dispatch happens only after validation succeeds.
 """
@@ -32,11 +33,15 @@ class FakeRunner:
         self,
         *,
         runtime_secret_present: bool = True,
+        conformance_secret_present: bool = True,
+        deployment_witness_secret_present: bool = True,
         kubeconfig_secret_present: bool = True,
         workflow_state: str = "active",
         run_conclusion: str = "success",
     ) -> None:
         self.runtime_secret_present = runtime_secret_present
+        self.conformance_secret_present = conformance_secret_present
+        self.deployment_witness_secret_present = deployment_witness_secret_present
         self.kubeconfig_secret_present = kubeconfig_secret_present
         self.workflow_state = workflow_state
         self.run_conclusion = run_conclusion
@@ -59,6 +64,10 @@ class FakeRunner:
             payload = []
             if self.runtime_secret_present:
                 payload.append({"name": "MULLU_RUNTIME_WITNESS_SECRET"})
+            if self.conformance_secret_present:
+                payload.append({"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"})
+            if self.deployment_witness_secret_present:
+                payload.append({"name": "MULLU_DEPLOYMENT_WITNESS_SECRET"})
             if self.kubeconfig_secret_present:
                 payload.append({"name": "MULLU_KUBECONFIG_B64"})
             return _completed(command, payload)
@@ -205,6 +214,32 @@ def test_dispatch_gateway_publication_fails_before_dispatch_without_runtime_secr
         )
 
     assert runner.commands[0][:3] == ["gh", "secret", "list"]
+    assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_dispatch_gateway_publication_fails_before_dispatch_without_conformance_secret() -> None:
+    runner = FakeRunner(conformance_secret_present=False)
+
+    with pytest.raises(RuntimeError, match="MULLU_RUNTIME_CONFORMANCE_SECRET"):
+        dispatch_gateway_publication(
+            gateway_host="gateway.mullusi.com",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
+    assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_dispatch_gateway_publication_fails_before_dispatch_without_deployment_witness_secret() -> None:
+    runner = FakeRunner(deployment_witness_secret_present=False)
+
+    with pytest.raises(RuntimeError, match="MULLU_DEPLOYMENT_WITNESS_SECRET"):
+        dispatch_gateway_publication(
+            gateway_host="gateway.mullusi.com",
+            expected_environment="pilot",
+            runner=runner,
+        )
+
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 

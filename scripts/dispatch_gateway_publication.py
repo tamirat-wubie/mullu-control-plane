@@ -7,7 +7,8 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: GitHub CLI, .github/workflows/gateway-publication.yml.
 Invariants:
   - Gateway host is explicit and fully qualified before dispatch.
-  - Runtime witness secret presence is checked by name, not value.
+  - Runtime witness, conformance, and deployment witness secret presence is
+    checked by name, not value.
   - Kubeconfig secret presence is required only when ingress apply is requested.
   - Readiness-report handoff fails closed unless the report is ready.
   - The gateway-publication-witness artifact is downloaded after completion.
@@ -26,12 +27,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
-from scripts.dispatch_deployment_witness import DEFAULT_REPOSITORY, VALID_ENVIRONMENTS
+from scripts.dispatch_deployment_witness import (
+    DEFAULT_CONFORMANCE_SECRET_NAME as DEFAULT_DEPLOYMENT_CONFORMANCE_SECRET_NAME,
+    DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME as DEFAULT_PUBLICATION_WITNESS_SECRET_NAME,
+    DEFAULT_REPOSITORY,
+    VALID_ENVIRONMENTS,
+)
 from scripts.render_gateway_ingress import PLACEHOLDER_HOST
 
 DEFAULT_WORKFLOW_FILE = "gateway-publication.yml"
 DEFAULT_WORKFLOW_NAME = "Gateway Publication Orchestration"
 DEFAULT_RUNTIME_SECRET_NAME = "MULLU_RUNTIME_WITNESS_SECRET"
+DEFAULT_CONFORMANCE_SECRET_NAME = DEFAULT_DEPLOYMENT_CONFORMANCE_SECRET_NAME
+DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME = DEFAULT_PUBLICATION_WITNESS_SECRET_NAME
 DEFAULT_KUBECONFIG_SECRET_NAME = "MULLU_KUBECONFIG_B64"
 DEFAULT_ARTIFACT_NAME = "gateway-publication-witness"
 DEFAULT_DOWNLOAD_DIR = Path(".change_assurance") / "gateway-publication-artifact"
@@ -88,6 +96,8 @@ def dispatch_gateway_publication(
     workflow_file: str = DEFAULT_WORKFLOW_FILE,
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     runtime_secret_name: str = DEFAULT_RUNTIME_SECRET_NAME,
+    conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
+    deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     kubeconfig_secret_name: str = DEFAULT_KUBECONFIG_SECRET_NAME,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
@@ -102,6 +112,8 @@ def dispatch_gateway_publication(
     _require_expected_environment(expected_environment)
     secrets = _read_secret_names(repository=repository, runner=command_runner)
     _require_named_secret(secrets=secrets, secret_name=runtime_secret_name)
+    _require_named_secret(secrets=secrets, secret_name=conformance_secret_name)
+    _require_named_secret(secrets=secrets, secret_name=deployment_witness_secret_name)
     if apply_ingress:
         _require_named_secret(secrets=secrets, secret_name=kubeconfig_secret_name)
     _require_active_workflow(
@@ -467,6 +479,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-file", default=DEFAULT_WORKFLOW_FILE)
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--runtime-secret-name", default=DEFAULT_RUNTIME_SECRET_NAME)
+    parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
+    parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--kubeconfig-secret-name", default=DEFAULT_KUBECONFIG_SECRET_NAME)
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
@@ -500,6 +514,8 @@ def main(argv: list[str] | None = None) -> int:
             workflow_file=args.workflow_file,
             workflow_name=args.workflow_name,
             runtime_secret_name=args.runtime_secret_name,
+            conformance_secret_name=args.conformance_secret_name,
+            deployment_witness_secret_name=args.deployment_witness_secret_name,
             kubeconfig_secret_name=args.kubeconfig_secret_name,
             artifact_name=args.artifact_name,
             download_dir=Path(args.download_dir),

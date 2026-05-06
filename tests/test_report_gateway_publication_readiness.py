@@ -35,12 +35,16 @@ class FakeRunner:
         gateway_url: str = "https://gateway.mullusi.com",
         expected_environment: str = "pilot",
         runtime_secret_present: bool = True,
+        conformance_secret_present: bool = True,
+        deployment_witness_secret_present: bool = True,
         kubeconfig_secret_present: bool = True,
         workflow_state: str = "active",
     ) -> None:
         self.gateway_url = gateway_url
         self.expected_environment = expected_environment
         self.runtime_secret_present = runtime_secret_present
+        self.conformance_secret_present = conformance_secret_present
+        self.deployment_witness_secret_present = deployment_witness_secret_present
         self.kubeconfig_secret_present = kubeconfig_secret_present
         self.workflow_state = workflow_state
         self.commands: list[list[str]] = []
@@ -73,6 +77,10 @@ class FakeRunner:
             payload = []
             if self.runtime_secret_present:
                 payload.append({"name": "MULLU_RUNTIME_WITNESS_SECRET"})
+            if self.conformance_secret_present:
+                payload.append({"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"})
+            if self.deployment_witness_secret_present:
+                payload.append({"name": "MULLU_DEPLOYMENT_WITNESS_SECRET"})
             if self.kubeconfig_secret_present:
                 payload.append({"name": "MULLU_KUBECONFIG_B64"})
             return _completed(command, payload)
@@ -180,6 +188,29 @@ def test_report_requires_kubeconfig_secret_only_when_applying_ingress() -> None:
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
+def test_report_requires_conformance_and_deployment_witness_secrets() -> None:
+    runner = FakeRunner(
+        conformance_secret_present=False,
+        deployment_witness_secret_present=False,
+    )
+
+    report = report_gateway_publication_readiness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        runner=runner,
+        resolver=_resolve_ok,
+    )
+    conformance_step = _step(report, "runtime conformance secret")
+    deployment_step = _step(report, "deployment witness secret")
+
+    assert report.ready is False
+    assert conformance_step.passed is False
+    assert deployment_step.passed is False
+    assert conformance_step.detail == "missing=MULLU_RUNTIME_CONFORMANCE_SECRET"
+    assert deployment_step.detail == "missing=MULLU_DEPLOYMENT_WITNESS_SECRET"
+    assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
 def test_report_skips_kubeconfig_secret_when_not_applying_ingress() -> None:
     runner = FakeRunner(kubeconfig_secret_present=False)
 
@@ -194,6 +225,8 @@ def test_report_skips_kubeconfig_secret_when_not_applying_ingress() -> None:
     assert report.ready is True
     assert kubeconfig_step.passed is True
     assert kubeconfig_step.detail == "not-required"
+    assert _step(report, "runtime conformance secret").passed is True
+    assert _step(report, "deployment witness secret").passed is True
     assert "--apply-ingress" not in report.next_command
     assert runner.commands[0][:3] == ["gh", "secret", "list"]
 

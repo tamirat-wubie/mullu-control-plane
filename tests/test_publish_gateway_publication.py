@@ -28,11 +28,15 @@ class FakeRunner:
         self,
         *,
         runtime_secret_present: bool = True,
+        conformance_secret_present: bool = True,
+        deployment_witness_secret_present: bool = True,
         kubeconfig_secret_present: bool = True,
         workflow_state: str = "active",
         run_conclusion: str = "success",
     ) -> None:
         self.runtime_secret_present = runtime_secret_present
+        self.conformance_secret_present = conformance_secret_present
+        self.deployment_witness_secret_present = deployment_witness_secret_present
         self.kubeconfig_secret_present = kubeconfig_secret_present
         self.workflow_state = workflow_state
         self.run_conclusion = run_conclusion
@@ -55,6 +59,10 @@ class FakeRunner:
             payload = []
             if self.runtime_secret_present:
                 payload.append({"name": "MULLU_RUNTIME_WITNESS_SECRET"})
+            if self.conformance_secret_present:
+                payload.append({"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"})
+            if self.deployment_witness_secret_present:
+                payload.append({"name": "MULLU_DEPLOYMENT_WITNESS_SECRET"})
             if self.kubeconfig_secret_present:
                 payload.append({"name": "MULLU_KUBECONFIG_B64"})
             return _completed(command, payload)
@@ -196,6 +204,32 @@ def test_publish_blocks_dispatch_when_readiness_fails(tmp_path: Path) -> None:
     assert receipt["resolution_state"] == "blocked-not-ready"
     assert receipt["dispatch_requested"] is True
     assert receipt["dispatch_performed"] is False
+    assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
+
+
+def test_publish_blocks_dispatch_without_deployment_witness_secret(tmp_path: Path) -> None:
+    runner = FakeRunner(deployment_witness_secret_present=False)
+    report_path = tmp_path / "readiness.json"
+    receipt_path = tmp_path / "receipt.json"
+
+    result = publish_gateway_publication(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        dispatch=True,
+        readiness_report_path=report_path,
+        receipt_output_path=receipt_path,
+        runner=runner,
+        resolver=_resolve_ok,
+    )
+    payload = json.loads(report_path.read_text(encoding="utf-8"))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert result.readiness.ready is False
+    assert result.dispatch is None
+    assert "missing=MULLU_DEPLOYMENT_WITNESS_SECRET" in [
+        step["detail"] for step in payload["steps"]
+    ]
+    assert receipt["resolution_state"] == "blocked-not-ready"
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 

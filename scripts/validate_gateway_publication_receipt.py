@@ -285,6 +285,8 @@ def _check_readiness_proof_steps(payload: dict[str, Any]) -> ReceiptValidationSt
     required_step_names = {
         "repository variables",
         "runtime witness secret",
+        "runtime conformance secret",
+        "deployment witness secret",
         "kubeconfig secret",
         "gateway publication workflow",
         "dns resolution",

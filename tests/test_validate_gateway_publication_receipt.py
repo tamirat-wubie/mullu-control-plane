@@ -190,7 +190,7 @@ def test_receipt_failed_readiness_proof_step_is_invalid(tmp_path: Path) -> None:
     receipt_path = tmp_path / "receipt.json"
     _write_receipt(receipt_path, resolution_state="ready-only", readiness_ready=True)
     payload = json.loads(receipt_path.read_text(encoding="utf-8"))
-    payload["readiness"]["steps"][4]["passed"] = False
+    payload["readiness"]["steps"][6]["passed"] = False
     receipt_path.write_text(json.dumps(payload), encoding="utf-8")
 
     validation = validate_gateway_publication_receipt(receipt_path=receipt_path)
@@ -352,6 +352,8 @@ def _write_receipt(
         "steps": [
             {"name": "repository variables", "passed": True, "detail": "matched"},
             {"name": "runtime witness secret", "passed": True, "detail": "present"},
+            {"name": "runtime conformance secret", "passed": True, "detail": "present"},
+            {"name": "deployment witness secret", "passed": True, "detail": "present"},
             {"name": "kubeconfig secret", "passed": True, "detail": "not-required"},
             {"name": "gateway publication workflow", "passed": True, "detail": "state=active"},
             {"name": "dns resolution", "passed": True, "detail": "addresses=['203.0.113.10']"},
