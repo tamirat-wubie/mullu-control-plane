@@ -48,7 +48,7 @@ EXPECTED_DESCRIPTION = (
     "Governed symbolic intelligence control plane - multi-tenant LLM orchestration "
     "with budget enforcement, audit trails, and policy-driven governance"
 )
-EXPECTED_LATEST_RELEASE = "v3.13.2"
+EXPECTED_LATEST_RELEASE = "v3.13.3"
 REQUIRED_TOPICS = frozenset(
     {
         "audit-trail",
