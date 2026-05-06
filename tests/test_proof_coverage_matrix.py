@@ -799,6 +799,31 @@ def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     assert closure_actions["publish_temporal_memory_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_memory_refresh_surface_creates_bounded_refresh_work() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    refresh_surface = surfaces["temporal_memory_refresh"]
+    witnesses = set(refresh_surface["runtime_witnesses"])
+
+    assert refresh_surface["coverage_state"] == "witnessed"
+    assert refresh_surface["request_proof"] == "request_proof"
+    assert refresh_surface["action_proof"] == "action_proof"
+    assert "TemporalMemoryRefresh.evaluate" in refresh_surface["representative_paths"]
+    assert "MemoryRefreshRequest" in refresh_surface["representative_paths"]
+    assert "TemporalMemoryRefreshReceipt" in refresh_surface["representative_paths"]
+    assert "gateway/temporal_memory_refresh.py" in refresh_surface["evidence_files"]
+    assert "schemas/temporal_memory_refresh_receipt.schema.json" in refresh_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_memory_refresh.py" in refresh_surface["evidence_files"]
+    assert "usable_memory_does_not_create_refresh_task" in witnesses
+    assert "stale_memory_creates_bounded_refresh_task" in witnesses
+    assert "evidence_type_coverage_gates_review_readiness" in witnesses
+    assert "invalid_refresh_policy_blocks_task_creation" in witnesses
+    assert "superseded_memory_blocks_reactivation" in witnesses
+    assert "temporal_memory_refresh_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_memory_refresh_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_scheduler_surface_requires_leases_and_retry_windows() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

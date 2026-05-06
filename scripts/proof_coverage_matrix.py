@@ -1008,6 +1008,33 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_memory_refresh",
+            [
+                "TemporalMemoryRefresh.evaluate",
+                "MemoryRefreshRequest",
+                "TemporalMemoryRefreshReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_memory_refresh.py",
+                "schemas/temporal_memory_refresh_receipt.schema.json",
+                "tests/test_gateway/test_temporal_memory_refresh.py",
+            ],
+            "Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action.",
+            [
+                "usable_memory_does_not_create_refresh_task",
+                "stale_memory_creates_bounded_refresh_task",
+                "evidence_type_coverage_gates_review_readiness",
+                "invalid_refresh_policy_blocks_task_creation",
+                "superseded_memory_blocks_reactivation",
+                "temporal_memory_refresh_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_scheduler",
             [
                 "TemporalScheduler.evaluate",
@@ -1414,6 +1441,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_memory_receipt_contract",
             "surfaces": ["temporal_memory"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_memory_refresh_receipt_contract",
+            "surfaces": ["temporal_memory_refresh"],
             "status": "closed",
         },
         {
