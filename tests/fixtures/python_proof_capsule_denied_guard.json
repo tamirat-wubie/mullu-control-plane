@@ -1,0 +1,45 @@
+{
+  "receipt": {
+    "receipt_id": "rcpt-9edcb9a064faccb7",
+    "machine_id": "test",
+    "entity_id": "e1",
+    "from_state": "idle",
+    "to_state": "running",
+    "action": "start",
+    "before_state_hash": "h1",
+    "after_state_hash": "h2",
+    "guard_verdicts": [
+      {
+        "guard_id": "budget",
+        "passed": true,
+        "reason": "ok",
+        "detail": {}
+      },
+      {
+        "guard_id": "auth",
+        "passed": false,
+        "reason": "unauthorized",
+        "detail": {}
+      }
+    ],
+    "verdict": "denied_guard_failed",
+    "replay_token": "replay-0506f724eeee49e2",
+    "causal_parent": "genesis",
+    "issued_at": "2026-03-27T12:00:00Z",
+    "receipt_hash": "9edcb9a064faccb74122fd9612deecad6fb2868df2d90aaf7f2a51f283097ea1"
+  },
+  "audit_record": {
+    "audit_id": "audit-9edcb9a064fa",
+    "machine_id": "test",
+    "entity_id": "e1",
+    "from_state": "idle",
+    "to_state": "running",
+    "action": "start",
+    "verdict": "denied_guard_failed",
+    "actor_id": "actor",
+    "reason": "start",
+    "transitioned_at": "2026-03-27T12:00:00Z",
+    "metadata": {}
+  },
+  "lineage_depth": 0
+}

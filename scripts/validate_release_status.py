@@ -173,6 +173,20 @@ RELEASE_CHECKLIST_REQUIRED_LITERALS: tuple[str, ...] = (
     "CI workflow retains the full gated release command set in `.github/workflows/ci.yml`",
 )
 
+DEPLOYMENT_MATRIX_REQUIRED_LITERALS: tuple[str, ...] = (
+    "## Scaling Boundary",
+    "The default `MULLU_STATE_DIR` snapshot path is a node-local repair and restart",
+    "ReadWriteOnce state volume must run a single gateway replica",
+    "Pilot and production multi-replica deployments must externalize governed state",
+    "PostgreSQL via `MULLU_COMMAND_LEDGER_DB_URL`",
+    "PostgreSQL audit store with atomic append",
+    "RWX volume or object-store backed artifact path",
+    "Ledger concurrency contract",
+    "File snapshots are derived recovery artifacts, never the source of truth",
+    "If `MULLU_STATE_DIR` is mounted as ReadWriteOnce, set gateway replicas to",
+    "If gateway replicas are greater than `1`, use PostgreSQL for all governed",
+)
+
 PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     "GITHUB_SURFACE.md": (
         "GitHub Surface Witness",
@@ -597,6 +611,19 @@ def validate_release_checklist_text(content: str) -> list[str]:
     ]
 
 
+def validate_deployment_matrix_text(content: str) -> list[str]:
+    """Validate deployment docs declare the scaling and ledger boundary."""
+    missing_literals = tuple(
+        literal for literal in DEPLOYMENT_MATRIX_REQUIRED_LITERALS if literal not in content
+    )
+    if not missing_literals:
+        return []
+    return [
+        "DEPLOYMENT.md missing required scaling-boundary anchors: "
+        f"{list(missing_literals)}"
+    ]
+
+
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for pattern in SOURCE_HYGIENE_GLOBS:
@@ -706,6 +733,15 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
                 release_checklist_path.read_text(encoding="utf-8")
             )
         )
+    deployment_matrix_path = REPO_ROOT / "DEPLOYMENT.md"
+    if deployment_matrix_path.exists():
+        errors.extend(
+            validate_deployment_matrix_text(
+                deployment_matrix_path.read_text(encoding="utf-8")
+            )
+        )
+    else:
+        errors.append("missing required deployment matrix: DEPLOYMENT.md")
 
     errors.extend(validate_source_hygiene())
 

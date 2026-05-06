@@ -4,12 +4,12 @@ Purpose: Token-by-token streaming from Anthropic's Messages API.
     Wraps the real streaming API with governance (budget check before,
     ledger entry after) while yielding tokens progressively.
 Governance scope: streaming adapter only — budget + ledger at boundaries.
-Dependencies: anthropic SDK (optional — graceful fallback if not installed).
+Dependencies: anthropic SDK (optional for local/test stub mode only).
 Invariants:
   - Budget is checked before streaming begins.
   - Streaming errors produce error events, never silent drops.
   - Total tokens/cost are computed from stream metadata.
-  - Falls back to stub if anthropic SDK not available.
+  - Stub streaming requires explicit local/test opt-in.
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from mcoi_runtime.app.streaming import (
     StreamEvent,
     StreamingBudgetProtocol,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
 def _bounded_stream_error(exc: Exception) -> str:
@@ -61,7 +62,8 @@ class AnthropicStreamingAdapter:
     """Wraps Anthropic's streaming API with governance.
 
     If the anthropic SDK is available and an API key is set,
-    uses real streaming. Otherwise falls back to simulated streaming.
+    uses real streaming. Simulated streaming is only available when
+    explicitly enabled for local development or tests.
     """
 
     def __init__(
@@ -70,10 +72,12 @@ class AnthropicStreamingAdapter:
         api_key: str = "",
         default_model: str = "claude-sonnet-4-20250514",
         clock: Callable[[], str],
+        allow_stub_fallback: bool = False,
     ) -> None:
         self._api_key = api_key
         self._default_model = default_model
         self._clock = clock
+        self._allow_stub_fallback = allow_stub_fallback
         self._client = None
         self._available = False
 
@@ -89,6 +93,10 @@ class AnthropicStreamingAdapter:
     def is_available(self) -> bool:
         return self._available
 
+    @property
+    def stub_fallback_enabled(self) -> bool:
+        return self._allow_stub_fallback
+
     def stream_completion(
         self,
         prompt: str,
@@ -100,16 +108,20 @@ class AnthropicStreamingAdapter:
     ) -> Iterator[StreamChunk]:
         """Stream a completion token-by-token.
 
-        If real API is available, streams from Anthropic.
-        Otherwise, simulates streaming from stub.
+        If real API is available, streams from Anthropic. Otherwise this
+        fails closed unless explicit stub fallback was enabled at construction.
         """
         model = model or self._default_model
 
         if self._available and self._client is not None:
             yield from self._real_stream(prompt, model=model, system=system,
                                           max_tokens=max_tokens, temperature=temperature)
-        else:
+        elif self._allow_stub_fallback:
             yield from self._stub_stream(prompt, model=model)
+        else:
+            raise RuntimeCoreInvariantError(
+                "anthropic streaming unavailable; explicit stub fallback is required for local/test mode"
+            )
 
     def _real_stream(
         self,
@@ -196,6 +208,11 @@ class AnthropicStreamingAdapter:
         """Stream as StreamEvents for SSE delivery."""
         model = model or self._default_model
         request_ref = request_id or "anonymous"
+        if not self._available and not self._allow_stub_fallback:
+            raise RuntimeCoreInvariantError(
+                "anthropic streaming unavailable; explicit stub fallback is required for local/test mode"
+            )
+
         provider = "anthropic" if self._available else "stub"
         reserved_input_tokens = estimated_input_tokens if estimated_input_tokens is not None else max(len(prompt) // 4, 0)
         reserved_output_tokens = estimated_output_tokens if estimated_output_tokens is not None else max(max_tokens, 0)

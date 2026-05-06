@@ -58,6 +58,36 @@
 | `MULLU_CAPABILITY_WORKER_SECRET` | unset | HMAC secret shared by gateway and restricted capability worker |
 | `MULLU_CAPABILITY_WORKER_TIMEOUT_SECONDS` | `10.0` | HTTP timeout for restricted capability worker calls |
 
+## Scaling Boundary
+
+The default `MULLU_STATE_DIR` snapshot path is a node-local repair and restart
+surface. It is not a horizontal-scaling ledger. A deployment that relies on a
+ReadWriteOnce state volume must run a single gateway replica, because two
+replicas writing file snapshots can diverge from the governed PostgreSQL chain
+state and make recovery order ambiguous.
+
+Pilot and production multi-replica deployments must externalize governed state:
+
+| State surface | Single-replica minimum | Multi-replica requirement |
+|---|---|---|
+| Primary persistence | PostgreSQL | PostgreSQL |
+| Command ledger | PostgreSQL via `MULLU_COMMAND_LEDGER_DB_URL` | PostgreSQL via `MULLU_COMMAND_LEDGER_DB_URL` |
+| Tenant identity | PostgreSQL via `MULLU_TENANT_IDENTITY_BACKEND=postgresql` | PostgreSQL via `MULLU_TENANT_IDENTITY_BACKEND=postgresql` |
+| Audit/hash-chain state | PostgreSQL audit store | PostgreSQL audit store with atomic append |
+| Snapshots and repair artifacts | `MULLU_STATE_DIR` on one replica | RWX volume or object-store backed artifact path |
+
+Ledger concurrency contract:
+
+1. Each tenant ledger and audit chain has one ordered append path.
+2. PostgreSQL-backed deployments own chain-head allocation inside the store
+   transaction.
+3. File snapshots are derived recovery artifacts, never the source of truth for
+   multi-replica budget, command, tenant identity, or audit state.
+4. If `MULLU_STATE_DIR` is mounted as ReadWriteOnce, set gateway replicas to
+   `1` and record that single-replica limit in the deployment witness.
+5. If gateway replicas are greater than `1`, use PostgreSQL for all governed
+   ledgers and use an RWX or external artifact backend for snapshots.
+
 ## Quick Start
 
 ### Local Development
