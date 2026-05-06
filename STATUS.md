@@ -22,7 +22,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Surface | Witness | Status |
 |---|---|---|
 | Branch witness | GitHub `main` contains this status witness; the audited runtime baseline is named separately from the mutable status-witness commit | Reflected |
-| Release witness | GitHub latest release points to `v3.13.2`; release docs declare `0.4.2 (v3.13.2)` | Reflected |
+| Release witness | GitHub latest release points to `v3.13.3`; release docs declare `0.4.3 (v3.13.3)` | Reflected |
 | CI witness | `.github/workflows/ci.yml` contains Python, Rust, schema, protocol-manifest, artifact, release-status, and change-assurance gates | Reflected |
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, protocol manifest, logic governance doctrine, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
 | Protocol witness | `docs/52_mullu_governance_protocol.md` and `scripts/validate_protocol_manifest.py` bind the open schema surface, closed runtime boundary, and 32-schema public contract index | Reflected |
@@ -60,7 +60,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Gap | Cause | Required closure |
 |---|---|---|
 | Deployment status not published | `DEPLOYMENT_STATUS.md` declares no public production endpoint evidence yet; repository variables `MULLU_GATEWAY_URL` and `MULLU_EXPECTED_RUNTIME_ENV` are not set | Set deployment target variables, publish `/health`, `/gateway/witness`, and `/runtime/conformance`, then collect a signed `deployment_claim: published` witness |
-| Production claim boundary absent from README | README previously led with capability claims before naming release, mainline, and live-runtime evidence boundaries | **Closed (2026-05-06)** - README now names the `v3.13.2` latest-release witness, bounds v4.x release-note files as mainline records, and states that live production runtime is not published until deployment witness closure lands. |
+| Production claim boundary absent from README | README previously led with capability claims before naming release, mainline, and live-runtime evidence boundaries | **Closed (2026-05-06)** - README now names the `v3.13.3` latest-release witness, bounds v4.x release-note files as mainline records, and states that live production runtime is not published until deployment witness closure lands. |
 | Test-count claim not machine-derived | README stated test volume as a human-maintained claim | **Closed (2026-05-06)** - README now cites the generated `.change_assurance/test_inventory.json` runtime witness and keeps `python scripts/generate_test_inventory.py --check` as the drift gate. The artifact records `51,164` total tests at the 2026-05-06 witness; `mcoi/tests/test_inventory_freshness.py` guards shape and self-consistency. |
 | GitHub metadata external to git | GitHub description/topics live outside repository commits | Validate metadata with `scripts/validate_public_repository_surface.py` |
 
