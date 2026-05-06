@@ -18,6 +18,9 @@ from dataclasses import dataclass
 from typing import Any, Callable
 from hashlib import sha256
 import json
+from urllib.parse import urlparse
+
+from mcoi_runtime.governance.network.ssrf import is_private_url
 
 
 def _classify_tool_exception(exc: Exception) -> str:
@@ -92,6 +95,7 @@ class ToolDefinition:
     parameters: tuple[ToolParameter, ...]
     category: str = "general"
     enabled: bool = True
+    network_allowlist: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -131,6 +135,9 @@ class ToolRegistry:
         """Register a tool with its handler function."""
         if tool.tool_id in self._tools:
             raise ValueError("tool already registered")
+        for host in tool.network_allowlist:
+            if not host.strip():
+                raise ValueError("tool network allowlist entries must be non-empty")
         self._tools[tool.tool_id] = tool
         self._handlers[tool.tool_id] = handler
 
@@ -184,6 +191,15 @@ class ToolRegistry:
                 )
                 self._invocation_log.append(result)
                 return result
+
+        egress_error = _validate_network_egress(tool, arguments)
+        if egress_error:
+            result = ToolResult(
+                invocation_id=invocation_id, tool_id=tool_id,
+                output={}, succeeded=False, error=egress_error,
+            )
+            self._invocation_log.append(result)
+            return result
 
         handler = self._handlers[tool_id]
         try:
@@ -257,3 +273,43 @@ class ToolRegistry:
             "succeeded": succeeded,
             "failed": self.invocation_count - succeeded,
         }
+
+
+def _validate_network_egress(tool: ToolDefinition, arguments: dict[str, Any]) -> str:
+    """Apply deny-by-default egress policy to URL-shaped tool arguments."""
+    urls = tuple(_iter_url_argument_values(arguments))
+    if not urls:
+        return ""
+    allowed_hosts = frozenset(host.lower() for host in tool.network_allowlist)
+    if not allowed_hosts:
+        return "tool network egress not allowed"
+    for url in urls:
+        parsed = urlparse(url)
+        hostname = (parsed.hostname or "").lower()
+        if hostname not in allowed_hosts:
+            return "tool network egress not allowed"
+        if is_private_url(url):
+            return "tool network egress blocked"
+    return ""
+
+
+def _iter_url_argument_values(value: Any) -> tuple[str, ...]:
+    """Return HTTP(S) URL strings found inside a tool argument payload."""
+    found: list[str] = []
+
+    def walk(node: Any) -> None:
+        if isinstance(node, str):
+            parsed = urlparse(node)
+            if parsed.scheme in {"http", "https"} and parsed.netloc:
+                found.append(node)
+            return
+        if isinstance(node, dict):
+            for child in node.values():
+                walk(child)
+            return
+        if isinstance(node, (list, tuple)):
+            for child in node:
+                walk(child)
+
+    walk(value)
+    return tuple(found)

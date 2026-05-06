@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import pytest
 
 from mcoi_runtime.contracts.state_machine import (
@@ -10,6 +11,12 @@ from mcoi_runtime.contracts.state_machine import (
 from mcoi_runtime.contracts.proof import (
     GuardVerdict, TransitionReceipt, CausalLineage, ProofCapsule,
     certify_transition,
+)
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+PYTHON_DENIED_GUARD_FIXTURE = (
+    REPO_ROOT / "tests" / "fixtures" / "python_proof_capsule_denied_guard.json"
 )
 
 
@@ -213,6 +220,32 @@ class TestCrossLanguageSerialization:
         expected = {"lineage_id", "entity_id", "receipt_chain", "root_receipt_id", "current_state", "depth"}
         actual = {f.name for f in lineage.__dataclass_fields__.values()}
         assert expected == actual
+
+    def test_python_denied_guard_fixture_matches_certified_capsule(self):
+        """F1 direct witness: Python emits the fixture Rust deserializes."""
+        guards = (
+            GuardVerdict(guard_id="budget", passed=True, reason="ok"),
+            GuardVerdict(guard_id="auth", passed=False, reason="unauthorized"),
+        )
+        capsule = certify_transition(
+            _machine(),
+            entity_id="e1",
+            from_state="idle",
+            to_state="running",
+            action="start",
+            before_state_hash="h1",
+            after_state_hash="h2",
+            guards=guards,
+            actor_id="actor",
+            reason="start",
+            timestamp="2026-03-27T12:00:00Z",
+        )
+        expected = json.loads(PYTHON_DENIED_GUARD_FIXTURE.read_text(encoding="utf-8"))
+
+        assert capsule.to_json_dict() == expected
+        assert capsule.receipt.verdict == TransitionVerdict.DENIED_GUARD_FAILED
+        assert [guard.passed for guard in capsule.receipt.guard_verdicts] == [True, False]
+        assert capsule.receipt.guard_verdicts[1].reason == "unauthorized"
 
 
 # ═══════════════════════════════════════════

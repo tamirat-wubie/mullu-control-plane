@@ -128,6 +128,65 @@ class TestToolRegistry:
         assert result.error == "tool timeout (TimeoutError)"
         assert "secret timeout detail" not in result.error
 
+    def test_url_argument_without_network_allowlist_fails_closed(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(
+                tool_id="fetch",
+                name="Fetch",
+                description="Read a URL",
+                parameters=(ToolParameter(name="url", param_type="string"),),
+            ),
+            handler=lambda args: {"body": "should not run"},
+        )
+
+        result = reg.invoke("fetch", {"url": "https://example.com/data"})
+
+        assert result.succeeded is False
+        assert result.output == {}
+        assert result.error == "tool network egress not allowed"
+        assert reg.invocation_history()[-1].error == "tool network egress not allowed"
+
+    def test_url_argument_outside_network_allowlist_fails_closed(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(
+                tool_id="fetch",
+                name="Fetch",
+                description="Read a URL",
+                parameters=(ToolParameter(name="url", param_type="string"),),
+                network_allowlist=("docs.mullusi.com",),
+            ),
+            handler=lambda args: {"body": "should not run"},
+        )
+
+        result = reg.invoke("fetch", {"url": "https://example.com/data"})
+
+        assert result.succeeded is False
+        assert result.output == {}
+        assert result.error == "tool network egress not allowed"
+        assert "example.com" not in result.error
+
+    def test_url_argument_to_private_host_fails_ssrf_guard(self):
+        reg = ToolRegistry(clock=FIXED_CLOCK)
+        reg.register(
+            ToolDefinition(
+                tool_id="fetch",
+                name="Fetch",
+                description="Read a URL",
+                parameters=(ToolParameter(name="url", param_type="string"),),
+                network_allowlist=("localhost",),
+            ),
+            handler=lambda args: {"body": "should not run"},
+        )
+
+        result = reg.invoke("fetch", {"url": "http://localhost/admin"})
+
+        assert result.succeeded is False
+        assert result.output == {}
+        assert result.error == "tool network egress blocked"
+        assert "localhost" not in result.error
+
     def test_optional_params(self):
         reg = _registry()
         result = reg.invoke("greeting", {"name": "Alice"})

@@ -2542,6 +2542,34 @@ mod tests {
     }
 
     #[test]
+    fn python_denied_guard_fixture_deserializes_to_rust_proof_capsule() {
+        let json =
+            include_str!("../../../../../tests/fixtures/python_proof_capsule_denied_guard.json");
+        let restored: ProofCapsule = serde_json::from_str(json).unwrap();
+
+        assert_eq!(
+            restored.receipt.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        assert_eq!(
+            restored.audit_record.verdict,
+            TransitionVerdict::DeniedGuardFailed
+        );
+        assert_eq!(restored.receipt.guard_verdicts.len(), 2);
+        assert_eq!(restored.receipt.guard_verdicts[0].guard_id, "budget");
+        assert!(restored.receipt.guard_verdicts[0].passed);
+        assert_eq!(restored.receipt.guard_verdicts[1].guard_id, "auth");
+        assert!(!restored.receipt.guard_verdicts[1].passed);
+        assert_eq!(restored.receipt.guard_verdicts[1].reason, "unauthorized");
+        assert_eq!(
+            restored.receipt.receipt_hash,
+            "9edcb9a064faccb74122fd9612deecad6fb2868df2d90aaf7f2a51f283097ea1"
+        );
+        assert_eq!(restored.receipt.replay_token, "replay-0506f724eeee49e2");
+        assert_eq!(restored.lineage_depth, 0);
+    }
+
+    #[test]
     fn causal_lineage_serialization() {
         let lineage = CausalLineage {
             lineage_id: "lin-1".into(),

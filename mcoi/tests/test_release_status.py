@@ -37,8 +37,34 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert summary.ci_workflow_present is True
-    assert summary.release_version == "0.4.0 (v3.13.0)"
-    assert summary.release_date == "2026-03-30"
+    assert summary.release_version == "0.4.1 (v3.13.1)"
+    assert summary.release_date == "2026-05-06"
+
+
+def test_validate_deployment_matrix_requires_scaling_boundary() -> None:
+    content = (REPO_ROOT / "DEPLOYMENT.md").read_text(encoding="utf-8")
+
+    errors = validate_release_status.validate_deployment_matrix_text(content)
+
+    assert errors == []
+    assert "## Scaling Boundary" in content
+    assert "ReadWriteOnce state volume must run a single gateway replica" in content
+    assert "PostgreSQL audit store with atomic append" in content
+    assert "File snapshots are derived recovery artifacts" in content
+
+
+def test_validate_deployment_matrix_rejects_missing_scaling_boundary() -> None:
+    errors = validate_release_status.validate_deployment_matrix_text(
+        "# Deployment Matrix\n\n"
+        "| Profile | DB Backend |\n"
+        "|---|---|\n"
+        "| production | PostgreSQL |\n"
+    )
+
+    assert len(errors) == 1
+    assert "DEPLOYMENT.md missing required scaling-boundary anchors" in errors[0]
+    assert "## Scaling Boundary" in errors[0]
+    assert "MULLU_STATE_DIR" in errors[0]
 
 
 def test_validate_ci_workflow_text_rejects_missing_release_gate() -> None:

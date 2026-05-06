@@ -2,31 +2,43 @@
 
 from types import SimpleNamespace
 
+import pytest
+
 from mcoi_runtime.adapters.anthropic_streaming import (
     AnthropicStreamingAdapter, StreamChunk,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 
 def FIXED_CLOCK():
     return "2026-03-26T12:00:00Z"
 
 
+def _stub_adapter(**kwargs):
+    return AnthropicStreamingAdapter(
+        clock=FIXED_CLOCK,
+        allow_stub_fallback=True,
+        **kwargs,
+    )
+
+
 class TestAnthropicStreamingAdapter:
     def test_stub_streaming(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         assert adapter.is_available is False
+        assert adapter.stub_fallback_enabled is True
         chunks = list(adapter.stream_completion("hello"))
         assert len(chunks) >= 2  # Content chunks + final
         assert chunks[-1].is_final is True
 
     def test_stub_content(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         chunks = list(adapter.stream_completion("test prompt"))
         content = "".join(c.text for c in chunks if not c.is_final)
         assert "stub" in content.lower()
 
     def test_stub_final_has_tokens(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         chunks = list(adapter.stream_completion("hello world"))
         final = chunks[-1]
         assert final.is_final is True
@@ -34,28 +46,28 @@ class TestAnthropicStreamingAdapter:
         assert final.output_tokens >= 0
 
     def test_stream_to_events(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         events = list(adapter.stream_to_events("test", request_id="r1"))
         assert events[0].event_type == "meta"
         assert events[-1].event_type == "done"
         assert any(e.event_type == "token" for e in events)
 
     def test_events_meta_has_provider(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         events = list(adapter.stream_to_events("test"))
         meta = events[0]
         assert meta.data["provider"] == "stub"
         assert meta.data["streaming"] is True
 
     def test_events_done_has_cost(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         events = list(adapter.stream_to_events("test"))
         done = events[-1]
         assert done.data["governed"] is True
         assert "cost" in done.data
 
     def test_events_carry_budget_reservation_and_settlement(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         events = list(adapter.stream_to_events(
             "test",
             request_id="r-budget",
@@ -79,7 +91,7 @@ class TestAnthropicStreamingAdapter:
                 yield StreamChunk(text=" beta", index=2, output_tokens=3)
                 yield StreamChunk(text="", index=3, input_tokens=5, output_tokens=3, is_final=True)
 
-        adapter = NativeUsageAdapter(clock=FIXED_CLOCK)
+        adapter = NativeUsageAdapter(clock=FIXED_CLOCK, allow_stub_fallback=True)
         events = list(adapter.stream_to_events(
             "test",
             request_id="r-native",
@@ -100,7 +112,7 @@ class TestAnthropicStreamingAdapter:
                 yield StreamChunk(text=" blocked", index=2, output_tokens=5)
                 yield StreamChunk(text="", index=3, input_tokens=5, output_tokens=5, is_final=True)
 
-        adapter = NativeUsageAdapter(clock=FIXED_CLOCK)
+        adapter = NativeUsageAdapter(clock=FIXED_CLOCK, allow_stub_fallback=True)
         events = list(adapter.stream_to_events(
             "test",
             request_id="r-cut",
@@ -116,28 +128,37 @@ class TestAnthropicStreamingAdapter:
         assert events[-1].data["budget_settlement"]["cutoff_semantic"] == "graceful"
 
     def test_to_result(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         result = adapter.to_result("test prompt")
         assert result.content
         assert result.succeeded is True
 
     def test_to_result_provider(self):
-        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+        adapter = _stub_adapter()
         result = adapter.to_result("test")
         from mcoi_runtime.contracts.llm import LLMProvider
         assert result.provider == LLMProvider.STUB
 
-    def test_with_fake_key(self):
-        # No real SDK = still stub
+    def test_without_available_client_fails_closed_without_stub_opt_in(self):
+        adapter = AnthropicStreamingAdapter(clock=FIXED_CLOCK)
+
+        with pytest.raises(RuntimeCoreInvariantError, match="explicit stub fallback"):
+            list(adapter.stream_completion("test"))
+
+    def test_with_fake_key_uses_explicit_stub_fallback_when_sdk_unavailable(self):
         adapter = AnthropicStreamingAdapter(api_key="fake-key", clock=FIXED_CLOCK)
-        # Will be available only if anthropic SDK is installed
-        chunks = list(adapter.stream_completion("test"))
+        if adapter.is_available:
+            pytest.skip("anthropic SDK is installed in this environment")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="explicit stub fallback"):
+            list(adapter.stream_completion("test"))
+
+        stub_adapter = _stub_adapter(api_key="fake-key")
+        chunks = list(stub_adapter.stream_completion("test"))
         assert len(chunks) >= 1
 
     def test_custom_model(self):
-        adapter = AnthropicStreamingAdapter(
-            default_model="claude-haiku-4-5-20251001", clock=FIXED_CLOCK,
-        )
+        adapter = _stub_adapter(default_model="claude-haiku-4-5-20251001")
         events = list(adapter.stream_to_events("test"))
         meta = events[0]
         assert meta.data["model"] == "claude-haiku-4-5-20251001"
