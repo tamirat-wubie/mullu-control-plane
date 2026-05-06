@@ -873,13 +873,20 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert physical_surface["coverage_state"] == "witnessed"
     assert physical_surface["request_proof"] == "request_proof"
     assert physical_surface["action_proof"] == "action_proof"
+    assert "capsules/physical.json" in physical_surface["evidence_files"]
+    assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_capability_pack.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "physical_capability_pack_fixture_not_default_loaded" in witnesses
+    assert "physical_sandbox_replay_admitted_without_production_gate" in witnesses
+    assert "live_physical_capability_rejected_by_production_gate" in witnesses
+    assert "physical_pack_projects_sandbox_only_evidence" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses

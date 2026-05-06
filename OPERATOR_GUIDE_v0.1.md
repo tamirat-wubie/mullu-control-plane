@@ -293,6 +293,37 @@ The current handoff remains `pilot-governed-core` until live adapter receipts,
 governed credential approvals, deployment witness publication, and public health
 evidence are all closed.
 
+## MIL Audit Runbook Workflow
+
+MIL audit records can be promoted into replay-backed procedural runbooks after
+hash-chain validation, trace persistence, replay persistence, replay validation,
+and learning admission. The full operator procedure is documented in
+[`docs/64_mil_audit_runbook_workflow.md`](docs/64_mil_audit_runbook_workflow.md).
+
+Minimum CLI sequence:
+
+```powershell
+python scripts\validate_mil_audit_runbook_operator_checklist.py --checklist examples\mil_audit_runbook_operator_checklist.json --json
+mcoi mil-audit get --store .mullu\mil-audit --json <record_id>
+mcoi mil-audit replay --store .mullu\mil-audit --json <record_id>
+mcoi mil-audit admit-runbook `
+  --store .mullu\mil-audit `
+  --trace-store .mullu\mil-traces `
+  --replay-store .mullu\mil-replays `
+  --runbook-store .mullu\mil-runbooks `
+  --runbook-id runbook-mil-example-001 `
+  --name "MIL Governed Example Runbook" `
+  --description "Replay-backed runbook admitted from a verified MIL audit record." `
+  --json `
+  <record_id>
+mcoi mil-audit runbook-get --runbook-store .mullu\mil-runbooks --json runbook-mil-example-001
+mcoi mil-audit runbook-list --runbook-store .mullu\mil-runbooks --json
+```
+
+The admitted runbook response must include `runbook_status: admitted`, durable
+admission should include `runbook_persisted: true`, and the stored runbook
+`provenance.verification_id` must equal the source MIL audit record id.
+
 ## Limitations
 
 This is an internal alpha with significant limitations. See

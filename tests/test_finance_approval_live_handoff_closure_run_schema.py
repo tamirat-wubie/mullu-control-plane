@@ -39,7 +39,7 @@ def test_finance_closure_run_schema_accepts_current_run(tmp_path: Path) -> None:
 
     assert validation.ok is True
     assert validation.errors == ()
-    assert validation.command_count == 14
+    assert validation.command_count == 16
     assert validation.live_command_count == 1
     assert validation.status == "blocked"
 
@@ -119,4 +119,4 @@ def test_finance_closure_run_schema_writer_and_cli_honor_strict(tmp_path: Path, 
     assert written == output_path
     assert exit_code == 0
     assert payload["ok"] is True
-    assert stdout_payload["command_count"] == 14
+    assert stdout_payload["command_count"] == 16

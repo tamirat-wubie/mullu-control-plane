@@ -1,0 +1,26 @@
+{
+  "capsule_id": "physical.safety_boundary.v0",
+  "domain": "physical",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/physical/safety_boundary.json"],
+  "capability_refs": [
+    "physical.sandbox_replay",
+    "physical.unlock_door"
+  ],
+  "policy_refs": ["policies/physical/safety_boundary.policy.json"],
+  "evidence_rules": ["evidence/physical/safety_boundary.evidence.json"],
+  "approval_rules": ["approval/physical/safety_boundary.approval.json"],
+  "recovery_rules": ["recovery/physical/safety_boundary.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/physical/safety_boundary"],
+  "read_model_refs": ["read_models/physical/safety_boundary.json"],
+  "operator_view_refs": ["operator_views/physical/safety_boundary.json"],
+  "owner_team": "physical-safety",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Fixture-only physical boundary pack proving sandbox replay without default live control promotion"
+  },
+  "extensions": {
+    "default_pack_admission": false,
+    "fixture_only": true
+  }
+}

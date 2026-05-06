@@ -37,11 +37,12 @@
     },
     "accepted_binding_names": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
+      "minItems": 4,
+      "maxItems": 4,
       "items": {
         "type": "string",
         "enum": [
+          "EMAIL_CALENDAR_CONNECTOR_TOKEN",
           "GMAIL_ACCESS_TOKEN",
           "GOOGLE_CALENDAR_ACCESS_TOKEN",
           "MICROSOFT_GRAPH_ACCESS_TOKEN"
@@ -53,6 +54,7 @@
       "items": {
         "type": "string",
         "enum": [
+          "EMAIL_CALENDAR_CONNECTOR_TOKEN",
           "GMAIL_ACCESS_TOKEN",
           "GOOGLE_CALENDAR_ACCESS_TOKEN",
           "MICROSOFT_GRAPH_ACCESS_TOKEN"
@@ -61,12 +63,12 @@
     },
     "binding_count": {
       "type": "integer",
-      "const": 3
+      "const": 4
     },
     "bindings": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
+      "minItems": 4,
+      "maxItems": 4,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -83,6 +85,7 @@
           "name": {
             "type": "string",
             "enum": [
+              "EMAIL_CALENDAR_CONNECTOR_TOKEN",
               "GMAIL_ACCESS_TOKEN",
               "GOOGLE_CALENDAR_ACCESS_TOKEN",
               "MICROSOFT_GRAPH_ACCESS_TOKEN"

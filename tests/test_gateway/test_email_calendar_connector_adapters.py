@@ -192,6 +192,8 @@ def test_missing_connector_credential_fails_closed_without_transport() -> None:
 
 def test_env_builder_enables_configured_connectors_only(monkeypatch) -> None:
     monkeypatch.setenv("MULLU_EMAIL_CALENDAR_WORKER_ADAPTER", "production")
+    monkeypatch.delenv("EMAIL_CALENDAR_CONNECTOR_TOKEN", raising=False)
+    monkeypatch.delenv("EMAIL_CALENDAR_CONNECTOR_ID", raising=False)
     monkeypatch.setenv("GMAIL_ACCESS_TOKEN", "gmail-token")
     monkeypatch.delenv("GOOGLE_CALENDAR_ACCESS_TOKEN", raising=False)
     monkeypatch.setenv("MICROSOFT_GRAPH_ACCESS_TOKEN", "graph-token")
@@ -202,6 +204,42 @@ def test_env_builder_enables_configured_connectors_only(monkeypatch) -> None:
     assert sorted(adapter._credentials) == ["gmail", "microsoft_graph"]
     assert adapter._credentials["gmail"].base_url == "https://gmail.googleapis.com"
     assert adapter._credentials["microsoft_graph"].scope_id == "oauth:microsoft_graph"
+
+
+def test_env_builder_accepts_governed_connector_token(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_EMAIL_CALENDAR_WORKER_ADAPTER", "production")
+    monkeypatch.setenv("EMAIL_CALENDAR_CONNECTOR_TOKEN", "governed-token")
+    monkeypatch.delenv("EMAIL_CALENDAR_CONNECTOR_ID", raising=False)
+    monkeypatch.delenv("GMAIL_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("GOOGLE_CALENDAR_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("MICROSOFT_GRAPH_ACCESS_TOKEN", raising=False)
+
+    adapter = build_email_calendar_adapter_from_env()
+
+    assert isinstance(adapter, HttpEmailCalendarAdapter)
+    assert sorted(adapter._credentials) == ["gmail"]
+    assert adapter._credentials["gmail"].access_token == "governed-token"
+    assert adapter._credentials["gmail"].scope_id == "governed:gmail"
+
+
+def test_env_builder_rejects_unsupported_governed_connector_id(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_EMAIL_CALENDAR_WORKER_ADAPTER", "production")
+    monkeypatch.setenv("EMAIL_CALENDAR_CONNECTOR_TOKEN", "governed-token")
+    monkeypatch.setenv("EMAIL_CALENDAR_CONNECTOR_ID", "unknown")
+    monkeypatch.delenv("GMAIL_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("GOOGLE_CALENDAR_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("MICROSOFT_GRAPH_ACCESS_TOKEN", raising=False)
+
+    try:
+        build_email_calendar_adapter_from_env()
+    except ValueError as exc:
+        error = str(exc)
+    else:
+        error = ""
+
+    assert error == "EMAIL_CALENDAR_CONNECTOR_ID is unsupported"
+    assert "governed-token" not in error
+    assert "unknown" not in error
 
 
 class FakeTransport:

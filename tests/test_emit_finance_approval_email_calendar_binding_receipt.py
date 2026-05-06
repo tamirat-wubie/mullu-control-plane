@@ -26,16 +26,16 @@ from scripts.emit_finance_approval_email_calendar_binding_receipt import (
 
 def test_finance_email_calendar_binding_receipt_records_presence_without_values() -> None:
     receipt, errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "secret-token-value" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=lambda name: "secret-token-value" if name == "EMAIL_CALENDAR_CONNECTOR_TOKEN" else "",
     )
     payload = receipt.as_dict()
     serialized = json.dumps(payload, sort_keys=True)
 
     assert errors == ()
     assert receipt.ready is True
-    assert receipt.binding_count == 3
+    assert receipt.binding_count == 4
     assert receipt.accepted_binding_names == ACCEPTED_BINDING_NAMES
-    assert receipt.present_binding_names == ("GMAIL_ACCESS_TOKEN",)
+    assert receipt.present_binding_names == ("EMAIL_CALENDAR_CONNECTOR_TOKEN",)
     assert "secret-token-value" not in serialized
     assert all(binding.value_serialized is False for binding in receipt.bindings)
     assert all(binding.receipt_projection == "name_and_presence_only" for binding in receipt.bindings)

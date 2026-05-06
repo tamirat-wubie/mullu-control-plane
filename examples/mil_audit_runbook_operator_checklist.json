@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "checklist_id": "mil-audit-runbook-operator-v1",
+  "title": "MIL Audit Runbook Operator Checklist",
+  "status": "ready_for_handoff",
+  "required_environment_variables": [
+    "MULLU_MIL_AUDIT_STORE",
+    "MULLU_MIL_TRACE_STORE",
+    "MULLU_MIL_REPLAY_STORE",
+    "MULLU_MIL_RUNBOOK_STORE",
+    "MULLU_MIL_AUDIT_RECORD_ID",
+    "MULLU_MIL_RUNBOOK_ID"
+  ],
+  "required_commands": [
+    {
+      "step_id": "inspect_mil_audit_record",
+      "command": "mcoi mil-audit get --store \"$MULLU_MIL_AUDIT_STORE\" --json \"$MULLU_MIL_AUDIT_RECORD_ID\"",
+      "required_evidence": [
+        "operation=get",
+        "record_id=$MULLU_MIL_AUDIT_RECORD_ID",
+        "verification_passed=true",
+        "program_id non-empty"
+      ]
+    },
+    {
+      "step_id": "project_observation_replay",
+      "command": "mcoi mil-audit replay --store \"$MULLU_MIL_AUDIT_STORE\" --json \"$MULLU_MIL_AUDIT_RECORD_ID\"",
+      "required_evidence": [
+        "operation=replay",
+        "replay_mode=observation_only",
+        "trace_entries count>=6",
+        "source_hash non-empty"
+      ]
+    },
+    {
+      "step_id": "admit_persisted_runbook",
+      "command": "mcoi mil-audit admit-runbook --store \"$MULLU_MIL_AUDIT_STORE\" --trace-store \"$MULLU_MIL_TRACE_STORE\" --replay-store \"$MULLU_MIL_REPLAY_STORE\" --runbook-store \"$MULLU_MIL_RUNBOOK_STORE\" --runbook-id \"$MULLU_MIL_RUNBOOK_ID\" --name \"MIL Governed Runbook\" --description \"Replay-backed runbook admitted from a verified MIL audit record.\" --json \"$MULLU_MIL_AUDIT_RECORD_ID\"",
+      "required_evidence": [
+        "operation=admit-runbook",
+        "runbook_status=admitted",
+        "runbook_persisted=true",
+        "provenance.verification_id=$MULLU_MIL_AUDIT_RECORD_ID",
+        "provenance.replay_id non-empty"
+      ]
+    },
+    {
+      "step_id": "read_persisted_runbook",
+      "command": "mcoi mil-audit runbook-get --runbook-store \"$MULLU_MIL_RUNBOOK_STORE\" --json \"$MULLU_MIL_RUNBOOK_ID\"",
+      "required_evidence": [
+        "operation=runbook-get",
+        "count=1",
+        "runbooks[0].runbook_id=$MULLU_MIL_RUNBOOK_ID",
+        "runbooks[0].provenance.verification_id=$MULLU_MIL_AUDIT_RECORD_ID"
+      ]
+    },
+    {
+      "step_id": "list_persisted_runbooks",
+      "command": "mcoi mil-audit runbook-list --runbook-store \"$MULLU_MIL_RUNBOOK_STORE\" --json",
+      "required_evidence": [
+        "operation=runbook-list",
+        "count>=1",
+        "runbooks contains $MULLU_MIL_RUNBOOK_ID"
+      ]
+    }
+  ],
+  "required_response_fields": [
+    "operation",
+    "record_id",
+    "program_id",
+    "goal_id",
+    "execution_id",
+    "verification_passed",
+    "replay_id",
+    "trace_ids",
+    "runbook_id",
+    "runbook_status",
+    "runbook_persisted",
+    "provenance"
+  ],
+  "required_provenance_fields": [
+    "execution_id",
+    "verification_id",
+    "replay_id",
+    "trace_id",
+    "learning_admission_id"
+  ],
+  "blocking_failure_codes": [
+    "MIL audit store unavailable",
+    "MIL audit runbook admission rejected",
+    "MIL audit runbook unavailable",
+    "runbook_persisted=false"
+  ]
+}

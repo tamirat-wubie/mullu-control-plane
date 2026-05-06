@@ -4,8 +4,8 @@
 Purpose: produce one governed command sequence for promoting the finance
 approval packet pilot from proof-pilot-ready to live-email-handoff-ready.
 Governance scope: finance approval email/calendar binding, read-only live
-receipt collection, readiness validation, preflight validation, and packet
-schema validation.
+receipt collection, readiness validation, preflight validation, packet schema
+validation, aggregate chain validation, and operator summary publication.
 Dependencies: finance binding receipt validation and finance pilot readiness
 validation.
 Invariants:
@@ -234,6 +234,23 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
             step_id="14_validate_handoff_chain_schema",
             purpose="Validate the aggregate finance live handoff chain validation report schema.",
             command="python scripts/validate_finance_approval_live_handoff_chain_schema.py --strict --json",
+            required_before_next=True,
+            live_effect_possible=False,
+        ),
+        FinanceLiveHandoffClosureCommand(
+            step_id="15_produce_operator_summary",
+            purpose="Produce the operator-facing finance handoff summary from the bounded packet and chain result.",
+            command=(
+                "python scripts/produce_finance_approval_operator_summary.py "
+                "--output .change_assurance/finance_approval_operator_summary.json --strict --json"
+            ),
+            required_before_next=True,
+            live_effect_possible=False,
+        ),
+        FinanceLiveHandoffClosureCommand(
+            step_id="16_validate_operator_summary_schema",
+            purpose="Validate the operator summary schema and promotion-claim guardrails.",
+            command="python scripts/validate_finance_approval_operator_summary_schema.py --strict --json",
             required_before_next=True,
             live_effect_possible=False,
         ),

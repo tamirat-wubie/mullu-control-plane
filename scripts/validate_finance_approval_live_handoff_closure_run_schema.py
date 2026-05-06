@@ -3,7 +3,8 @@
 
 Purpose: reject malformed or unsafe finance live handoff closure run records.
 Governance scope: closure-run schema validation, dry-run enforcement, command
-ordering, live connector touchpoint boundary, and readiness/blocker consistency.
+ordering, live connector touchpoint boundary, readiness/blocker consistency,
+and operator summary completion.
 Dependencies: schemas/finance_approval_live_handoff_closure_run.schema.json and
 .change_assurance/finance_approval_live_handoff_closure_run.json.
 Invariants:
@@ -47,6 +48,8 @@ EXPECTED_STEP_IDS = (
     "12_validate_handoff_packet_schema",
     "13_validate_handoff_chain",
     "14_validate_handoff_chain_schema",
+    "15_produce_operator_summary",
+    "16_validate_operator_summary_schema",
 )
 LIVE_STEP_ID = "03_collect_read_only_live_receipt"
 
