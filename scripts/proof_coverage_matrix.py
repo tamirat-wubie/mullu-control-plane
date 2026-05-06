@@ -1293,6 +1293,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_budget_window",
+            [
+                "TemporalBudgetWindow.evaluate",
+                "BudgetWindowRequest",
+                "TemporalBudgetWindowReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_budget_window.py",
+                "schemas/temporal_budget_window_receipt.schema.json",
+                "tests/test_gateway/test_temporal_budget_window.py",
+            ],
+            "Temporal budget window rechecks tenant-local daily, weekly, monthly, or custom reset periods against active spend snapshots, reserved spend, projected spend, evidence refs, and high-risk source receipts before worker execution.",
+            [
+                "runtime_clock_owns_budget_window_time",
+                "tenant_timezone_resolves_budget_period",
+                "daily_weekly_monthly_budget_resets_computed",
+                "spend_snapshot_period_matches_active_window",
+                "projected_spend_blocks_over_limit_dispatch",
+                "future_budget_window_defers_dispatch",
+                "source_reapproval_bound_for_high_risk_budget_window",
+                "temporal_budget_window_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1761,6 +1790,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_dispatch_window_receipt_contract",
             "surfaces": ["temporal_dispatch_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_budget_window_receipt_contract",
+            "surfaces": ["temporal_budget_window"],
             "status": "closed",
         },
         {

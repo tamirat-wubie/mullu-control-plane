@@ -215,6 +215,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Temporal evidence freshness receipts are public contracts",
     "Temporal reapproval receipts are public contracts",
     "Temporal dispatch window receipts are public contracts",
+    "Temporal budget window receipts are public contracts",
     "Temporal memory receipts are public contracts",
     "Temporal memory refresh receipts are public contracts",
     "Temporal scheduler receipts are public contracts",

@@ -208,6 +208,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Temporal evidence freshness receipts are public contracts" in content
     assert "Temporal reapproval receipts are public contracts" in content
     assert "Temporal dispatch window receipts are public contracts" in content
+    assert "Temporal budget window receipts are public contracts" in content
     assert "Temporal memory refresh receipts are public contracts" in content
     assert "python scripts\\validate_protocol_manifest.py" in content
 

@@ -282,6 +282,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_budget_window_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_budget_window"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -359,7 +366,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 45,
+      "action_proof": 46,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -367,7 +374,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 51,
+      "audit_chain": 52,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -375,16 +382,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 54
+      "witnessed": 55
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 45
+      "request_proof": 46
     },
-    "surface_count": 55
+    "surface_count": 56
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3245,6 +3252,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_dispatch_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_budget_window.py",
+        "schemas/temporal_budget_window_receipt.schema.json",
+        "tests/test_gateway/test_temporal_budget_window.py"
+      ],
+      "notes": "Temporal budget window rechecks tenant-local daily, weekly, monthly, or custom reset periods against active spend snapshots, reserved spend, projected spend, evidence refs, and high-risk source receipts before worker execution.",
+      "representative_paths": [
+        "TemporalBudgetWindow.evaluate",
+        "BudgetWindowRequest",
+        "TemporalBudgetWindowReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_budget_window_time",
+        "tenant_timezone_resolves_budget_period",
+        "daily_weekly_monthly_budget_resets_computed",
+        "spend_snapshot_period_matches_active_window",
+        "projected_spend_blocks_over_limit_dispatch",
+        "future_budget_window_defers_dispatch",
+        "source_reapproval_bound_for_high_risk_budget_window",
+        "temporal_budget_window_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_budget_window"
     },
     {
       "action_proof": "action_proof",
