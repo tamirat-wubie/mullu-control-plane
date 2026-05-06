@@ -143,6 +143,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "continuity_snapshot.json" in mcoi_runtime_fixture_names
     assert "continuity_violation.json" in mcoi_runtime_fixture_names
     assert "continuity_closure_report.json" in mcoi_runtime_fixture_names
+    assert "human_task_record.json" in mcoi_runtime_fixture_names
+    assert "review_packet.json" in mcoi_runtime_fixture_names
+    assert "approval_board.json" in mcoi_runtime_fixture_names
+    assert "board_member.json" in mcoi_runtime_fixture_names
+    assert "board_vote.json" in mcoi_runtime_fixture_names
+    assert "collaborative_decision.json" in mcoi_runtime_fixture_names
+    assert "handoff_packet.json" in mcoi_runtime_fixture_names
+    assert "human_workflow_snapshot.json" in mcoi_runtime_fixture_names
+    assert "human_workflow_violation.json" in mcoi_runtime_fixture_names
+    assert "human_workflow_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -155,7 +165,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 29
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 39
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1233,6 +1243,143 @@ def test_validate_mcoi_runtime_fixture_rejects_snapshot_open_cases_over_total(tm
 
     assert len(errors) == 1
     assert "field 'open_cases' must not exceed total_cases" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_review_packet_completion_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "review_packet.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "packet_id": "packet-drift",
+                "tenant_id": "tenant-1",
+                "scope": "case",
+                "scope_ref_id": "case-drift",
+                "review_mode": "parallel",
+                "title": "Review packet drift",
+                "reviewer_count": 2,
+                "reviews_completed": 3,
+                "reviews_approved": 1,
+                "created_at": "2026-04-03T08:12:00+00:00",
+                "metadata": {"board_ref": "board-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "reviews_completed must not exceed reviewer_count" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_review_packet_approval_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "review_packet.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "packet_id": "packet-drift",
+                "tenant_id": "tenant-1",
+                "scope": "case",
+                "scope_ref_id": "case-drift",
+                "review_mode": "parallel",
+                "title": "Review packet drift",
+                "reviewer_count": 2,
+                "reviews_completed": 1,
+                "reviews_approved": 2,
+                "created_at": "2026-04-03T08:12:00+00:00",
+                "metadata": {"board_ref": "board-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "reviews_approved must not exceed reviews_completed" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_board_quorum_over_member_count(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "approval_board.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "board_id": "board-drift",
+                "tenant_id": "tenant-1",
+                "name": "Drift board",
+                "approval_mode": "quorum",
+                "quorum_required": 3,
+                "scope": "case",
+                "scope_ref_id": "case-drift",
+                "member_count": 2,
+                "created_at": "2026-04-03T08:13:00+00:00",
+                "metadata": {"owner": "governance"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "quorum_required must not exceed member_count" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_collaborative_decision_vote_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "collaborative_decision.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "decision_id": "decision-drift",
+                "board_id": "board-drift",
+                "scope_ref_id": "case-drift",
+                "status": "approved",
+                "total_votes": 2,
+                "approvals": 2,
+                "rejections": 1,
+                "decided_by": "chair-drift",
+                "decided_at": "2026-04-03T08:23:00+00:00",
+                "metadata": {"decision_type": "case_closure"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "approvals plus rejections must not exceed total_votes" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_handoff_packet_to_self(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "handoff_packet.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "handoff_id": "handoff-drift",
+                "tenant_id": "tenant-1",
+                "scope": "case",
+                "scope_ref_id": "case-drift",
+                "from_ref": "review-board",
+                "to_ref": "review-board",
+                "direction": "human_to_human",
+                "reason": "Invalid self handoff.",
+                "handed_at": "2026-04-03T08:14:00+00:00",
+                "metadata": {"source_run": "run-drift"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "from_ref and to_ref must be different" in errors[0]
     assert fixture_path.name in errors[0]
 
 

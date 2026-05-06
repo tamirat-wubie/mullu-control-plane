@@ -153,6 +153,11 @@ CASE_KINDS = frozenset({"incident", "compliance", "audit", "security", "operatio
 EVIDENCE_STATUSES = frozenset({"pending", "admitted", "reviewed", "challenged", "excluded"})
 REVIEW_DISPOSITIONS = frozenset({"requires_review", "accepted", "rejected", "inconclusive", "escalated"})
 CASE_CLOSURE_DISPOSITIONS = frozenset({"resolved", "unresolved", "remediated", "escalated", "dismissed"})
+HUMAN_TASK_STATUSES = frozenset({"pending", "assigned", "in_progress", "completed", "cancelled", "escalated"})
+HUMAN_REVIEW_MODES = frozenset({"single", "parallel", "sequential"})
+APPROVAL_MODES = frozenset({"single", "quorum", "unanimous", "override"})
+BOARD_DECISION_STATUSES = frozenset({"pending", "approved", "rejected", "escalated", "overridden"})
+COLLABORATION_SCOPES = frozenset({"change", "case", "procurement", "service", "regulatory", "executive"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -5024,6 +5029,357 @@ def _validate_case_violation_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_human_task_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "task_id",
+            "tenant_id",
+            "assignee_ref",
+            "status",
+            "scope",
+            "scope_ref_id",
+            "title",
+            "description",
+            "due_at",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("task_id", "tenant_id", "assignee_ref", "status", "scope", "scope_ref_id", "title"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in HUMAN_TASK_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(HUMAN_TASK_STATUSES))}"
+        )
+    if payload["scope"] not in COLLABORATION_SCOPES:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(COLLABORATION_SCOPES))}"
+        )
+    if not isinstance(payload["description"], str):
+        errors.append(f"{_relative_path(path)}: field 'description' must be a string")
+    if not isinstance(payload["due_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'due_at' must be a string")
+    elif payload["due_at"]:
+        errors.extend(_validate_iso8601_text(payload["due_at"], field_name="due_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if (
+        not errors
+        and payload["due_at"]
+        and _parse_iso8601_text(payload["due_at"]) < _parse_iso8601_text(payload["created_at"])
+    ):
+        errors.append(f"{_relative_path(path)}: due_at must be greater than or equal to created_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_review_packet_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "packet_id",
+            "tenant_id",
+            "scope",
+            "scope_ref_id",
+            "review_mode",
+            "title",
+            "reviewer_count",
+            "reviews_completed",
+            "reviews_approved",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("packet_id", "tenant_id", "scope", "scope_ref_id", "review_mode", "title"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope"] not in COLLABORATION_SCOPES:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(COLLABORATION_SCOPES))}"
+        )
+    if payload["review_mode"] not in HUMAN_REVIEW_MODES:
+        errors.append(
+            f"{_relative_path(path)}: field 'review_mode' must be one of {', '.join(sorted(HUMAN_REVIEW_MODES))}"
+        )
+    for field_name in ("reviewer_count", "reviews_completed", "reviews_approved"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["reviews_completed"] > payload["reviewer_count"]:
+        errors.append(f"{_relative_path(path)}: reviews_completed must not exceed reviewer_count")
+    if not errors and payload["reviews_approved"] > payload["reviews_completed"]:
+        errors.append(f"{_relative_path(path)}: reviews_approved must not exceed reviews_completed")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_approval_board_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "board_id",
+            "tenant_id",
+            "name",
+            "approval_mode",
+            "quorum_required",
+            "scope",
+            "scope_ref_id",
+            "member_count",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("board_id", "tenant_id", "name", "approval_mode", "scope", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["approval_mode"] not in APPROVAL_MODES:
+        errors.append(
+            f"{_relative_path(path)}: field 'approval_mode' must be one of {', '.join(sorted(APPROVAL_MODES))}"
+        )
+    if payload["scope"] not in COLLABORATION_SCOPES:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(COLLABORATION_SCOPES))}"
+        )
+    errors.extend(_require_positive_int(payload["quorum_required"], field_name="quorum_required", path=path))
+    errors.extend(_require_non_negative_int(payload["member_count"], field_name="member_count", path=path))
+    if not errors and payload["member_count"] > 0 and payload["quorum_required"] > payload["member_count"]:
+        errors.append(f"{_relative_path(path)}: quorum_required must not exceed member_count")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_board_member_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("member_id", "board_id", "identity_ref", "role", "added_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("member_id", "board_id", "identity_ref", "role"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["added_at"], field_name="added_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_board_vote_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("vote_id", "board_id", "member_id", "scope_ref_id", "approved", "reason", "voted_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("vote_id", "board_id", "member_id", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["approved"], bool):
+        errors.append(f"{_relative_path(path)}: field 'approved' must be a boolean")
+    if not isinstance(payload["reason"], str):
+        errors.append(f"{_relative_path(path)}: field 'reason' must be a string")
+    errors.extend(_validate_iso8601_text(payload["voted_at"], field_name="voted_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_collaborative_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "board_id",
+            "scope_ref_id",
+            "status",
+            "total_votes",
+            "approvals",
+            "rejections",
+            "decided_by",
+            "decided_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "board_id", "scope_ref_id", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["status"] not in BOARD_DECISION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(BOARD_DECISION_STATUSES))}"
+        )
+    for field_name in ("total_votes", "approvals", "rejections"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["approvals"] + payload["rejections"] > payload["total_votes"]:
+        errors.append(f"{_relative_path(path)}: approvals plus rejections must not exceed total_votes")
+    if payload["status"] != "pending":
+        errors.extend(_require_non_empty_text(payload["decided_by"], field_name="decided_by", path=path))
+    elif not isinstance(payload["decided_by"], str):
+        errors.append(f"{_relative_path(path)}: field 'decided_by' must be a string")
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_handoff_packet_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "handoff_id",
+            "tenant_id",
+            "scope",
+            "scope_ref_id",
+            "from_ref",
+            "to_ref",
+            "direction",
+            "reason",
+            "handed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("handoff_id", "tenant_id", "scope", "scope_ref_id", "from_ref", "to_ref", "direction"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope"] not in COLLABORATION_SCOPES:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(COLLABORATION_SCOPES))}"
+        )
+    if payload["from_ref"] == payload["to_ref"]:
+        errors.append(f"{_relative_path(path)}: from_ref and to_ref must be different")
+    if not isinstance(payload["reason"], str):
+        errors.append(f"{_relative_path(path)}: field 'reason' must be a string")
+    errors.extend(_validate_iso8601_text(payload["handed_at"], field_name="handed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_human_workflow_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "total_tasks",
+            "total_review_packets",
+            "total_boards",
+            "total_members",
+            "total_votes",
+            "total_decisions",
+            "total_handoffs",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    errors.extend(_require_non_empty_text(payload["snapshot_id"], field_name="snapshot_id", path=path))
+    for field_name in (
+        "total_tasks",
+        "total_review_packets",
+        "total_boards",
+        "total_members",
+        "total_votes",
+        "total_decisions",
+        "total_handoffs",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_human_workflow_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("violation_id", "tenant_id", "scope_ref_id", "operation", "reason", "detected_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "tenant_id", "scope_ref_id", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_human_workflow_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_tasks",
+            "total_review_packets",
+            "total_boards",
+            "total_decisions_approved",
+            "total_decisions_rejected",
+            "total_handoffs",
+            "total_violations",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_tasks",
+        "total_review_packets",
+        "total_boards",
+        "total_decisions_approved",
+        "total_decisions_rejected",
+        "total_handoffs",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -5117,12 +5473,16 @@ MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
 }
 
 MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
+    "approval_board.json": _validate_approval_board_fixture,
+    "board_member.json": _validate_board_member_fixture,
+    "board_vote.json": _validate_board_vote_fixture,
     "case_assignment.json": _validate_case_assignment_fixture,
     "case_closure_report.json": _validate_case_closure_report_fixture,
     "case_decision.json": _validate_case_decision_fixture,
     "case_record.json": _validate_case_record_fixture,
     "case_snapshot.json": _validate_case_snapshot_fixture,
     "case_violation.json": _validate_case_violation_fixture,
+    "collaborative_decision.json": _validate_collaborative_decision_fixture,
     "conflict_record.json": _validate_conflict_record_fixture,
     "continuity_closure_report.json": _validate_continuity_closure_report_fixture,
     "continuity_plan.json": _validate_continuity_plan_fixture,
@@ -5135,6 +5495,11 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "evidence_item.json": _validate_evidence_item_fixture,
     "failover_record.json": _validate_failover_record_fixture,
     "finding_record.json": _validate_finding_record_fixture,
+    "handoff_packet.json": _validate_handoff_packet_fixture,
+    "human_task_record.json": _validate_human_task_record_fixture,
+    "human_workflow_closure_report.json": _validate_human_workflow_closure_report_fixture,
+    "human_workflow_snapshot.json": _validate_human_workflow_snapshot_fixture,
+    "human_workflow_violation.json": _validate_human_workflow_violation_fixture,
     "handoff_record.json": _validate_mcoi_handoff_record_fixture,
     "incident_record.json": _validate_incident_record_fixture,
     "merge_decision.json": _validate_merge_decision_fixture,
@@ -5144,6 +5509,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "recovery_execution.json": _validate_recovery_execution_fixture,
     "recovery_plan.json": _validate_recovery_plan_fixture,
     "recovery_record.json": _validate_recovery_record_fixture,
+    "review_packet.json": _validate_review_packet_fixture,
     "review_record.json": _validate_review_record_fixture,
     "verification_record.json": _validate_verification_record_fixture,
 }

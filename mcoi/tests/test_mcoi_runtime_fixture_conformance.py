@@ -73,6 +73,23 @@ from mcoi_runtime.contracts.case_runtime import (
     ReviewDisposition,
     ReviewRecord,
 )
+from mcoi_runtime.contracts.human_workflow import (
+    ApprovalBoard,
+    ApprovalMode,
+    BoardDecisionStatus,
+    BoardMember,
+    BoardVote,
+    CollaborationScope,
+    CollaborativeDecision,
+    HandoffPacket,
+    HumanTaskRecord,
+    HumanTaskStatus,
+    HumanWorkflowClosureReport,
+    HumanWorkflowSnapshot,
+    HumanWorkflowViolation,
+    ReviewMode,
+    ReviewPacket,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -473,15 +490,164 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
     )
 
 
+def _build_human_task_record(payload: dict) -> HumanTaskRecord:
+    return HumanTaskRecord(
+        task_id=payload["task_id"],
+        tenant_id=payload["tenant_id"],
+        assignee_ref=payload["assignee_ref"],
+        status=HumanTaskStatus(payload["status"]),
+        scope=CollaborationScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        title=payload["title"],
+        description=payload["description"],
+        due_at=payload["due_at"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_review_packet(payload: dict) -> ReviewPacket:
+    return ReviewPacket(
+        packet_id=payload["packet_id"],
+        tenant_id=payload["tenant_id"],
+        scope=CollaborationScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        review_mode=ReviewMode(payload["review_mode"]),
+        title=payload["title"],
+        reviewer_count=payload["reviewer_count"],
+        reviews_completed=payload["reviews_completed"],
+        reviews_approved=payload["reviews_approved"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_approval_board(payload: dict) -> ApprovalBoard:
+    return ApprovalBoard(
+        board_id=payload["board_id"],
+        tenant_id=payload["tenant_id"],
+        name=payload["name"],
+        approval_mode=ApprovalMode(payload["approval_mode"]),
+        quorum_required=payload["quorum_required"],
+        scope=CollaborationScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        member_count=payload["member_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_board_member(payload: dict) -> BoardMember:
+    return BoardMember(
+        member_id=payload["member_id"],
+        board_id=payload["board_id"],
+        identity_ref=payload["identity_ref"],
+        role=payload["role"],
+        added_at=payload["added_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_board_vote(payload: dict) -> BoardVote:
+    return BoardVote(
+        vote_id=payload["vote_id"],
+        board_id=payload["board_id"],
+        member_id=payload["member_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        approved=payload["approved"],
+        reason=payload["reason"],
+        voted_at=payload["voted_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_collaborative_decision(payload: dict) -> CollaborativeDecision:
+    return CollaborativeDecision(
+        decision_id=payload["decision_id"],
+        board_id=payload["board_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        status=BoardDecisionStatus(payload["status"]),
+        total_votes=payload["total_votes"],
+        approvals=payload["approvals"],
+        rejections=payload["rejections"],
+        decided_by=payload["decided_by"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_handoff_packet(payload: dict) -> HandoffPacket:
+    return HandoffPacket(
+        handoff_id=payload["handoff_id"],
+        tenant_id=payload["tenant_id"],
+        scope=CollaborationScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        from_ref=payload["from_ref"],
+        to_ref=payload["to_ref"],
+        direction=payload["direction"],
+        reason=payload["reason"],
+        handed_at=payload["handed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_human_workflow_snapshot(payload: dict) -> HumanWorkflowSnapshot:
+    return HumanWorkflowSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_tasks=payload["total_tasks"],
+        total_review_packets=payload["total_review_packets"],
+        total_boards=payload["total_boards"],
+        total_members=payload["total_members"],
+        total_votes=payload["total_votes"],
+        total_decisions=payload["total_decisions"],
+        total_handoffs=payload["total_handoffs"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_human_workflow_violation(payload: dict) -> HumanWorkflowViolation:
+    return HumanWorkflowViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_human_workflow_closure_report(payload: dict) -> HumanWorkflowClosureReport:
+    return HumanWorkflowClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_tasks=payload["total_tasks"],
+        total_review_packets=payload["total_review_packets"],
+        total_boards=payload["total_boards"],
+        total_decisions_approved=payload["total_decisions_approved"],
+        total_decisions_rejected=payload["total_decisions_rejected"],
+        total_handoffs=payload["total_handoffs"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
+        ("approval_board.json", _build_approval_board),
+        ("board_member.json", _build_board_member),
+        ("board_vote.json", _build_board_vote),
         ("case_assignment.json", _build_case_assignment),
         ("case_closure_report.json", _build_case_closure_report),
         ("case_decision.json", _build_case_decision),
         ("case_record.json", _build_case_record),
         ("case_snapshot.json", _build_case_snapshot),
         ("case_violation.json", _build_case_violation),
+        ("collaborative_decision.json", _build_collaborative_decision),
         ("conflict_record.json", _build_conflict_record),
         ("delegation_request.json", _build_delegation_request),
         ("delegation_result.json", _build_delegation_result),
@@ -495,6 +661,11 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
         ("failover_record.json", _build_failover_record),
         ("finding_record.json", _build_finding_record),
         ("handoff_record.json", _build_handoff_record),
+        ("handoff_packet.json", _build_handoff_packet),
+        ("human_task_record.json", _build_human_task_record),
+        ("human_workflow_closure_report.json", _build_human_workflow_closure_report),
+        ("human_workflow_snapshot.json", _build_human_workflow_snapshot),
+        ("human_workflow_violation.json", _build_human_workflow_violation),
         ("incident_record.json", _build_incident_record),
         ("merge_decision.json", _build_merge_decision),
         ("recovery_objective.json", _build_recovery_objective),
@@ -503,6 +674,7 @@ def _build_continuity_closure_report(payload: dict) -> ContinuityClosureReport:
         ("recovery_attempt.json", _build_recovery_attempt),
         ("recovery_plan.json", _build_recovery_plan),
         ("recovery_record.json", _build_recovery_record),
+        ("review_packet.json", _build_review_packet),
         ("review_record.json", _build_review_record),
         ("verification_record.json", _build_verification_record),
     ],
