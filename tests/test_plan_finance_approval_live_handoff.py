@@ -48,6 +48,12 @@ def test_current_finance_handoff_plan_scopes_to_email_calendar() -> None:
         "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
     ].verification_command
     assert actions_by_blocker["email_calendar_live_evidence_missing"].approval_required is False
+    assert "--email-calendar-connector-id <connector_id>" in actions_by_blocker[
+        "email_calendar_live_evidence_missing"
+    ].command
+    assert "--email-calendar-query <read_only_query>" in actions_by_blocker[
+        "email_calendar_live_evidence_missing"
+    ].command
     assert (
         "validate_finance_approval_email_calendar_live_receipt.py"
         in actions_by_blocker["email_calendar_live_evidence_missing"].verification_command

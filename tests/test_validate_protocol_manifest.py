@@ -558,11 +558,25 @@ def test_protocol_manifest_indexes_finance_approval_packet_proof() -> None:
         "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1"
     )
     assert entries["finance-approval-email-calendar-binding-receipt"]["surface"] == "finance"
+    assert entries["finance-approval-email-calendar-live-receipt"]["path"] == (
+        "schemas/finance_approval_email_calendar_live_receipt.schema.json"
+    )
+    assert entries["finance-approval-email-calendar-live-receipt"]["urn"] == (
+        "urn:mullusi:schema:finance-approval-email-calendar-live-receipt:1"
+    )
+    assert entries["finance-approval-email-calendar-live-receipt"]["surface"] == "finance"
     assert entries["finance-approval-handoff-packet"]["path"] == "schemas/finance_approval_handoff_packet.schema.json"
     assert entries["finance-approval-handoff-packet"]["urn"] == (
         "urn:mullusi:schema:finance-approval-handoff-packet:1"
     )
     assert entries["finance-approval-handoff-packet"]["surface"] == "finance"
+    assert entries["finance-approval-operator-summary"]["path"] == (
+        "schemas/finance_approval_operator_summary.schema.json"
+    )
+    assert entries["finance-approval-operator-summary"]["urn"] == (
+        "urn:mullusi:schema:finance-approval-operator-summary:1"
+    )
+    assert entries["finance-approval-operator-summary"]["surface"] == "finance"
     assert validate_protocol_manifest(manifest) == []
 
 
