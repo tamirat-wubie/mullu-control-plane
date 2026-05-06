@@ -947,6 +947,32 @@ def test_temporal_evidence_freshness_surface_rechecks_required_evidence() -> Non
     assert closure_actions["publish_temporal_evidence_freshness_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_reapproval_surface_rechecks_execution_time_approval_grants() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    reapproval_surface = surfaces["temporal_reapproval"]
+    witnesses = set(reapproval_surface["runtime_witnesses"])
+
+    assert reapproval_surface["coverage_state"] == "witnessed"
+    assert reapproval_surface["request_proof"] == "request_proof"
+    assert reapproval_surface["action_proof"] == "action_proof"
+    assert "TemporalReapproval.evaluate" in reapproval_surface["representative_paths"]
+    assert "ReapprovalRequest" in reapproval_surface["representative_paths"]
+    assert "TemporalReapprovalReceipt" in reapproval_surface["representative_paths"]
+    assert "gateway/temporal_reapproval.py" in reapproval_surface["evidence_files"]
+    assert "schemas/temporal_reapproval_receipt.schema.json" in reapproval_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_reapproval.py" in reapproval_surface["evidence_files"]
+    assert "runtime_clock_owns_reapproval_time" in witnesses
+    assert "high_risk_approval_roles_required" in witnesses
+    assert "expired_approval_requires_reapproval" in witnesses
+    assert "revoked_or_out_of_scope_approval_blocks_dispatch" in witnesses
+    assert "missing_approval_role_requires_reapproval" in witnesses
+    assert "low_risk_action_does_not_require_reapproval" in witnesses
+    assert "temporal_reapproval_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_reapproval_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

@@ -1187,6 +1187,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_reapproval",
+            [
+                "TemporalReapproval.evaluate",
+                "ReapprovalRequest",
+                "TemporalReapprovalReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_reapproval.py",
+                "schemas/temporal_reapproval_receipt.schema.json",
+                "tests/test_gateway/test_temporal_reapproval.py",
+            ],
+            "Temporal reapproval rechecks high-risk and critical approval grants at execution time for expiry, revocation, scope, tenant, approver role coverage, approval age, evidence refs, and source schedule binding before dispatch.",
+            [
+                "runtime_clock_owns_reapproval_time",
+                "high_risk_approval_roles_required",
+                "expired_approval_requires_reapproval",
+                "revoked_or_out_of_scope_approval_blocks_dispatch",
+                "missing_approval_role_requires_reapproval",
+                "low_risk_action_does_not_require_reapproval",
+                "temporal_reapproval_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1645,6 +1673,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_evidence_freshness_receipt_contract",
             "surfaces": ["temporal_evidence_freshness"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_reapproval_receipt_contract",
+            "surfaces": ["temporal_reapproval"],
             "status": "closed",
         },
         {
