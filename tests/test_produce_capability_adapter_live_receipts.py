@@ -48,6 +48,7 @@ from scripts.collect_capability_adapter_evidence import (  # noqa: E402
     collect_capability_adapter_evidence,
 )
 from scripts.produce_capability_adapter_live_receipts import (  # noqa: E402
+    main,
     produce_browser_live_receipt,
     produce_document_live_receipt,
     produce_email_calendar_live_receipt,
@@ -288,6 +289,45 @@ def test_email_calendar_live_receipt_bounds_probe_exception_detail(tmp_path: Pat
     assert payload["error"] == "email_calendar_probe_exception"
     assert "email_calendar_probe_exception" in payload["blockers"]
     assert "secret-email-calendar-probe-token" not in serialized
+
+
+def test_email_calendar_live_receipt_cli_accepts_read_only_connector_probe(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    output_path = tmp_path / "email_calendar_live_receipt.json"
+    monkeypatch.delenv("MULLU_EMAIL_CALENDAR_WORKER_ADAPTER", raising=False)
+    monkeypatch.delenv("EMAIL_CALENDAR_CONNECTOR_TOKEN", raising=False)
+    monkeypatch.delenv("GMAIL_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("GOOGLE_CALENDAR_ACCESS_TOKEN", raising=False)
+    monkeypatch.delenv("MICROSOFT_GRAPH_ACCESS_TOKEN", raising=False)
+
+    exit_code = main(
+        [
+            "--target",
+            "email-calendar",
+            "--email-calendar-output",
+            str(output_path),
+            "--email-calendar-connector-id",
+            "google_calendar",
+            "--email-calendar-query",
+            "secret-query-marker",
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    stdout_payload = json.loads(captured.out)
+    receipt_payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized_receipt = json.dumps(receipt_payload, sort_keys=True)
+
+    assert exit_code == 0
+    assert stdout_payload["status"] == "failed"
+    assert receipt_payload["connector_id"] == "google_calendar"
+    assert receipt_payload["provider_operation"] == "email.search"
+    assert receipt_payload["external_write"] is False
+    assert receipt_payload["worker_receipt"]["query_hash"]
+    assert "secret-query-marker" not in serialized_receipt
 
 
 def test_generated_receipts_satisfy_adapter_evidence_collector(tmp_path: Path) -> None:

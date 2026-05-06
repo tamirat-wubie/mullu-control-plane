@@ -15,12 +15,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from scripts.validate_protocol_manifest import load_manifest
+
 ROOT = Path(__file__).resolve().parent.parent
 RUNBOOK = ROOT / "docs" / "63_finance_approval_packet_pilot.md"
 
 
 def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     content = RUNBOOK.read_text(encoding="utf-8")
+    manifest = load_manifest()
+    expected_manifest_result = f"protocol manifest ok: {len(manifest['schemas'])} schemas"
 
     assert "python scripts\\validate_finance_approval_email_calendar_live_receipt.py --require-ready --json" in content
     assert "python scripts\\validate_finance_approval_live_handoff_chain.py --strict --json" in content
@@ -35,4 +39,4 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "only live connector touchpoint" in content
     assert "validates the aggregate handoff chain" in content
     assert "validates the operator summary schema" in content
-    assert "protocol manifest ok: 88 schemas" in content
+    assert expected_manifest_result in content

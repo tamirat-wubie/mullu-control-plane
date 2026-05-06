@@ -21,7 +21,7 @@ import json
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -125,7 +125,28 @@ def preflight_physical_capability_promotion(
             live_physical_candidates=(),
             production_claim_capabilities=(),
         )
+    return preflight_physical_capability_records(capsule=capsule, registry_entries=entries)
 
+
+def preflight_physical_capability_records(
+    *,
+    capsule: DomainCapsule,
+    registry_entries: Iterable[CapabilityRegistryEntry],
+) -> PhysicalPromotionPreflightReport:
+    """Return physical promotion readiness for already parsed capability records."""
+    if not isinstance(capsule, DomainCapsule):
+        raise ValueError("physical_preflight_capsule_type_invalid")
+    entries = tuple(registry_entries)
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, CapabilityRegistryEntry):
+            raise ValueError(f"physical_preflight_registry_entry_type_invalid:{index}")
+    return _preflight_loaded_physical_capabilities(capsule, entries)
+
+
+def _preflight_loaded_physical_capabilities(
+    capsule: DomainCapsule,
+    entries: tuple[CapabilityRegistryEntry, ...],
+) -> PhysicalPromotionPreflightReport:
     by_id = {entry.capability_id: entry for entry in entries}
     missing_refs = tuple(capability_id for capability_id in capsule.capability_refs if capability_id not in by_id)
     referenced_entries = tuple(by_id[capability_id] for capability_id in capsule.capability_refs if capability_id in by_id)

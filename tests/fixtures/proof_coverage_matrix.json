@@ -1973,7 +1973,8 @@
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
         "capsule_compiler_emits_certification_evidence_manifest",
-        "capsule_installer_stamps_admission_receipt"
+        "capsule_installer_stamps_admission_receipt",
+        "physical_capsule_admission_runs_promotion_preflight"
       ],
       "surface_id": "gateway_capability_fabric"
     },
@@ -2287,9 +2288,14 @@
         "mcoi/mcoi_runtime/core/runbook_learning.py",
         "mcoi/mcoi_runtime/app/server_http.py",
         "mcoi/tests/test_mil_audit_router.py",
-        "mcoi/tests/test_runbook_learning.py"
+        "mcoi/tests/test_runbook_learning.py",
+        "examples/mil_audit_runbook_operator_checklist.json",
+        "scripts/validate_mil_audit_runbook_operator_checklist.py",
+        "scripts/preflight_mil_audit_runbook_workflow.py",
+        "tests/test_validate_mil_audit_runbook_operator_checklist.py",
+        "tests/test_preflight_mil_audit_runbook_workflow.py"
       ],
-      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, and expose bounded read models for runbooks, patterns, and summaries.",
+      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, expose bounded read models for runbooks, patterns, and summaries, and provide a checklist-backed MIL audit runbook preflight.",
       "representative_paths": [
         "/api/v1/runbooks",
         "/api/v1/runbooks/analyze",
@@ -2311,6 +2317,8 @@
         "retirement_requires_active_runbook",
         "promote_and_approve_audit_records",
         "mil_audit_replay_admits_runbook",
+        "mil_audit_operator_checklist_validated",
+        "mil_audit_runbook_preflight_ready",
         "sanitized_runbook_error_details",
         "runbook_pattern_read_models_bounded",
         "runbook_responses_governed"
@@ -3036,11 +3044,13 @@
       "evidence_files": [
         "capsules/physical.json",
         "capabilities/physical/capability_pack.json",
+        "gateway/capability_capsule_installer.py",
         "gateway/physical_action_boundary.py",
         "gateway/physical_worker_canary.py",
         "scripts/preflight_physical_capability_promotion.py",
         "scripts/produce_physical_worker_canary.py",
         "schemas/physical_action_receipt.schema.json",
+        "tests/test_gateway/test_capability_capsule_installer.py",
         "tests/test_gateway/test_physical_action_boundary.py",
         "tests/test_gateway/test_physical_capability_pack.py",
         "tests/test_gateway/test_physical_worker_canary.py",
@@ -3064,6 +3074,8 @@
         "physical_promotion_preflight_requires_live_safety_evidence",
         "physical_promotion_preflight_accepts_full_evidence",
         "physical_promotion_preflight_allows_sandbox_only_pack",
+        "physical_capsule_admission_runs_promotion_preflight",
+        "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
         "hardware_identity_required",
         "safety_envelope_required",
         "manual_override_required",

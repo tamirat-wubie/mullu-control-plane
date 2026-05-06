@@ -10,6 +10,7 @@ Dependencies: gateway.capability_capsule_installer, gateway.capability_forge,
 Invariants:
   - Installed receipts point at the registry admission record and evidence manifest.
   - Rejected strict admissions return receipts without mutating the registry.
+  - Production-ready physical capsule admission runs the physical promotion preflight.
   - The receipt is an audit witness, not admission authority.
 """
 
@@ -19,6 +20,7 @@ import json
 from dataclasses import asdict, replace
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from gateway.capability_capsule_installer import (
@@ -40,6 +42,8 @@ from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityReg
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = ROOT / "integration" / "governed_capability_fabric" / "fixtures"
+PHYSICAL_CAPSULE_PATH = ROOT / "capsules" / "physical.json"
+PHYSICAL_CAPABILITY_PACK_PATH = ROOT / "capabilities" / "physical" / "capability_pack.json"
 
 
 class StubPlatform:
@@ -113,6 +117,51 @@ def test_capsule_installer_returns_rejected_receipt_without_registry_mutation() 
     assert outcome.receipt.receipt_hash
 
 
+def test_capsule_installer_runs_physical_preflight_before_registry_mutation() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    entry = _physical_entry("physical.unlock_door")
+    handoff = _certification_handoff_for(entry)
+
+    with pytest.raises(ValueError) as exc_info:
+        install_certified_capsule_with_handoff_evidence(
+            capsule=_physical_capsule(("physical.unlock_door",)),
+            registry_entries=(entry,),
+            handoffs=(handoff,),
+            registry=registry,
+            clock=_clock,
+            require_production_ready=True,
+        )
+
+    error = str(exc_info.value)
+    assert error.startswith("physical_capability_promotion_preflight_failed:")
+    assert "live_physical_safety_evidence_complete" in error
+    assert "physical_production_evidence_projection" in error
+    assert registry.capability_count == 0
+    assert registry.artifact_count == 0
+
+
+def test_capsule_installer_admits_physical_capsule_when_preflight_passes() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    entry = _physical_entry("physical.unlock_door", physical_safety_evidence=True)
+    handoff = _certification_handoff_for(entry)
+
+    outcome = install_certified_capsule_with_handoff_evidence(
+        capsule=_physical_capsule(("physical.unlock_door",)),
+        registry_entries=(entry,),
+        handoffs=(handoff,),
+        registry=registry,
+        clock=_clock,
+        require_production_ready=True,
+    )
+
+    assert outcome.installation_record.status is CapsuleAdmissionStatus.INSTALLED
+    assert outcome.receipt.admission_status == "installed"
+    assert outcome.receipt.installed_capability_ids == ("physical.unlock_door",)
+    assert outcome.receipt.certification_evidence_manifest_id
+    assert registry.capability_count == 1
+    assert registry.artifact_count > 0
+
+
 def test_capsule_admission_operator_endpoint_installs_and_lists_receipt() -> None:
     registry = GovernedCapabilityRegistry(clock=_clock)
     gate = MaturityProjectingCapabilityAdmissionGate(registry=registry, clock=_clock)
@@ -167,6 +216,33 @@ def test_capsule_admission_operator_endpoint_rejects_invalid_payload() -> None:
     assert registry.artifact_count == 0
 
 
+def test_capsule_admission_operator_endpoint_blocks_physical_preflight_failure() -> None:
+    registry = GovernedCapabilityRegistry(clock=_clock)
+    gate = MaturityProjectingCapabilityAdmissionGate(registry=registry, clock=_clock)
+    app = create_gateway_app(platform=StubPlatform(), capability_admission_gate_override=gate)
+    client = TestClient(app)
+    entry = _physical_entry("physical.unlock_door")
+    handoff = _certification_handoff_for(entry)
+
+    response = client.post(
+        "/capability-fabric/capsule-admissions",
+        json={
+            "capsule": _physical_capsule(("physical.unlock_door",)).to_json_dict(),
+            "registry_entries": [entry.to_json_dict()],
+            "handoffs": [asdict(handoff)],
+            "require_production_ready": True,
+        },
+    )
+    receipts = client.get("/capability-fabric/capsule-admission-receipts")
+
+    assert response.status_code == 400
+    assert response.json()["detail"].startswith("physical_capability_promotion_preflight_failed:")
+    assert receipts.status_code == 200
+    assert receipts.json()["count"] == 0
+    assert registry.capability_count == 0
+    assert registry.artifact_count == 0
+
+
 def _registry_entry() -> CapabilityRegistryEntry:
     return CapabilityRegistryEntry.from_mapping(_fixture("capability_registry_entry.json"))
 
@@ -181,6 +257,37 @@ def _capsule() -> DomainCapsule:
 
 def _certified_capsule() -> DomainCapsule:
     return replace(_capsule(), certification_status=DomainCapsuleCertificationStatus.CERTIFIED)
+
+
+def _physical_capsule(capability_refs: tuple[str, ...]) -> DomainCapsule:
+    return replace(
+        DomainCapsule.from_mapping(_load_json(PHYSICAL_CAPSULE_PATH)),
+        capability_refs=capability_refs,
+    )
+
+
+def _physical_entry(
+    capability_id: str,
+    *,
+    physical_safety_evidence: bool = False,
+) -> CapabilityRegistryEntry:
+    pack = _load_json(PHYSICAL_CAPABILITY_PACK_PATH)
+    for raw_entry in pack["capabilities"]:
+        if raw_entry["capability_id"] != capability_id:
+            continue
+        entry = CapabilityRegistryEntry.from_mapping(raw_entry)
+        extensions = dict(entry.extensions)
+        extensions.pop("capability_maturity_evidence", None)
+        if not physical_safety_evidence:
+            return replace(entry, extensions=extensions)
+        return replace(
+            entry,
+            extensions={
+                **extensions,
+                "physical_live_safety_evidence": _full_live_safety_evidence(),
+            },
+        )
+    raise AssertionError(f"physical fixture capability not found: {capability_id}")
 
 
 def _certification_handoff_for(entry: CapabilityRegistryEntry) -> CapabilityCertificationHandoff:
@@ -213,6 +320,22 @@ def _forge_input_for_entry(entry: CapabilityRegistryEntry) -> CapabilityForgeInp
 
 def _fixture(name: str) -> dict:
     return json.loads((FIXTURE_DIR / name).read_text(encoding="utf-8"))
+
+
+def _load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _full_live_safety_evidence() -> dict[str, str]:
+    return {
+        "physical_action_receipt_ref": "physical-action-receipt-0123456789abcdef",
+        "simulation_ref": "proof://physical/simulation-pass",
+        "operator_approval_ref": "approval:physical-live",
+        "manual_override_ref": "manual-override:physical-live",
+        "emergency_stop_ref": "emergency-stop:physical-live",
+        "sensor_confirmation_ref": "sensor-confirmation:physical-live",
+        "deployment_witness_ref": "deployment-witness:physical-live",
+    }
 
 
 def _clock() -> str:

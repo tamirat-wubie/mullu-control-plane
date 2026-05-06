@@ -102,7 +102,7 @@ python scripts\validate_browser_sandbox_evidence.py --evidence "$env:MULLU_BROWS
 python scripts\produce_capability_adapter_live_receipts.py --target browser --browser-sandbox-evidence "$env:MULLU_BROWSER_SANDBOX_EVIDENCE" --strict
 python scripts\produce_capability_adapter_live_receipts.py --target document --strict
 python scripts\produce_capability_adapter_live_receipts.py --target voice --voice-audio-path "$env:MULLU_VOICE_PROBE_AUDIO" --strict
-python scripts\produce_capability_adapter_live_receipts.py --target email-calendar --strict
+python scripts\produce_capability_adapter_live_receipts.py --target email-calendar --email-calendar-connector-id gmail --email-calendar-query newer_than:1d --strict
 ```
 
 7. Regenerate adapter evidence:

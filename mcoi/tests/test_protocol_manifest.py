@@ -55,7 +55,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 87
+    assert len(manifest["schemas"]) == 88
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"

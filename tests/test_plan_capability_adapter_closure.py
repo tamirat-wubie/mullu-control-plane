@@ -73,6 +73,12 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
         actions_by_blocker["browser_dependency_missing:playwright"].receipt_validator
         == "adapter_evidence.browser.playwright.dependency.playwright"
     )
+    assert "--email-calendar-connector-id <connector_id>" in actions_by_blocker[
+        "email_calendar_live_evidence_missing"
+    ].command
+    assert "--email-calendar-query <read_only_query>" in actions_by_blocker[
+        "email_calendar_live_evidence_missing"
+    ].command
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].approval_required is True
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].risk_level == "high"
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].receipt_validator.endswith(

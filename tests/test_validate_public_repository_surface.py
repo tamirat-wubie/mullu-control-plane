@@ -17,6 +17,7 @@ from scripts.validate_public_repository_surface import (
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
+    EXPECTED_PROTOCOL_MANIFEST_RESULT,
     CI_WORKFLOW_PATH,
     CI_WORKFLOW_REQUIRED_LITERALS,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
@@ -30,6 +31,7 @@ from scripts.validate_public_repository_surface import (
     STATUS_REQUIRED_LITERALS,
     validate_required_document_text,
 )
+from scripts.validate_protocol_manifest import load_manifest
 
 
 def test_deployment_status_requires_orchestration_receipt_validation() -> None:
@@ -160,6 +162,8 @@ def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> No
 
 def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     content = (REPO_ROOT / GOVERNANCE_PROTOCOL_DOC_PATH).read_text(encoding="utf-8")
+    manifest = load_manifest()
+    expected_manifest_result = f"protocol manifest ok: {len(manifest['schemas'])} schemas"
 
     errors = validate_required_document_text(
         document_name=GOVERNANCE_PROTOCOL_DOC_PATH,
@@ -168,7 +172,9 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     )
 
     assert errors == []
-    assert "protocol manifest ok: 88 schemas" in content
+    assert EXPECTED_PROTOCOL_MANIFEST_RESULT == expected_manifest_result
+    assert expected_manifest_result in content
+    assert expected_manifest_result in GOVERNANCE_PROTOCOL_REQUIRED_LITERALS
     assert "Capability candidate packages are public contracts" in content
     assert "Capability maturity assessments are public contracts" in content
     assert "Policy proof reports are public contracts" in content

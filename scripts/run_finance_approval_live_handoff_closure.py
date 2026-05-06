@@ -141,7 +141,10 @@ def _closure_commands() -> tuple[FinanceLiveHandoffClosureCommand, ...]:
         FinanceLiveHandoffClosureCommand(
             step_id="03_collect_read_only_live_receipt",
             purpose="Produce the read-only email/calendar live receipt after binding readiness is proven.",
-            command="python scripts/produce_capability_adapter_live_receipts.py --target email-calendar --strict --json",
+            command=(
+                "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar "
+                "--email-calendar-connector-id gmail --email-calendar-query newer_than:1d --strict --json"
+            ),
             required_before_next=True,
             live_effect_possible=True,
         ),

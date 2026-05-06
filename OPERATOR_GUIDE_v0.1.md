@@ -320,6 +320,22 @@ mcoi mil-audit runbook-get --runbook-store .mullu\mil-runbooks --json runbook-mi
 mcoi mil-audit runbook-list --runbook-store .mullu\mil-runbooks --json
 ```
 
+Single-command preflight gate:
+
+```powershell
+python scripts\preflight_mil_audit_runbook_workflow.py `
+  --audit-store .mullu\mil-audit `
+  --trace-store .mullu\mil-traces `
+  --replay-store .mullu\mil-replays `
+  --runbook-store .mullu\mil-runbooks `
+  --record-id <record_id> `
+  --runbook-id runbook-mil-example-001 `
+  --name "MIL Governed Example Runbook" `
+  --description "Replay-backed runbook admitted from a verified MIL audit record." `
+  --strict `
+  --json
+```
+
 The admitted runbook response must include `runbook_status: admitted`, durable
 admission should include `runbook_persisted: true`, and the stored runbook
 `provenance.verification_id` must equal the source MIL audit record id.

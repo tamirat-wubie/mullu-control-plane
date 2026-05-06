@@ -171,7 +171,10 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             action_id="finance-email-calendar-read-only-live-receipt",
             blocker=blocker,
             action_type="live-receipt",
-            command="python scripts/produce_capability_adapter_live_receipts.py --target email-calendar --strict",
+            command=(
+                "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar "
+                "--email-calendar-connector-id <connector_id> --email-calendar-query <read_only_query> --strict"
+            ),
             verification_command=(
                 "python scripts/validate_finance_approval_email_calendar_live_receipt.py "
                 "--require-ready --json && "

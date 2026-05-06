@@ -34,6 +34,23 @@ Validate the machine-readable operator checklist before executing the workflow:
 python scripts\validate_mil_audit_runbook_operator_checklist.py --checklist examples\mil_audit_runbook_operator_checklist.json --json
 ```
 
+For CI or operator preflight, execute the full local workflow gate against
+explicit stores and ids:
+
+```powershell
+python scripts\preflight_mil_audit_runbook_workflow.py `
+  --audit-store $MIL_AUDIT_STORE `
+  --trace-store $TRACE_STORE `
+  --replay-store $REPLAY_STORE `
+  --runbook-store $RUNBOOK_STORE `
+  --record-id $RECORD_ID `
+  --runbook-id runbook-mil-example-001 `
+  --name "MIL Governed Example Runbook" `
+  --description "Replay-backed runbook admitted from a verified MIL audit record." `
+  --strict `
+  --json
+```
+
 Set explicit store paths. Do not rely on implicit process state.
 
 ```powershell
