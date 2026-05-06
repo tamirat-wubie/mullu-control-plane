@@ -168,6 +168,11 @@ jobs:
           MULLU_BROWSER_SANDBOX_EVIDENCE=ci-placeholder MULLU_VOICE_PROBE_AUDIO=ci-placeholder MULLU_GATEWAY_URL=ci-placeholder MULLU_RUNTIME_WITNESS_SECRET=ci-placeholder MULLU_RUNTIME_CONFORMANCE_SECRET=ci-placeholder MULLU_AUTHORITY_OPERATOR_SECRET=ci-placeholder python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json
           python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json
 
+      - name: Validate MIL audit runbook workflow
+        run: |
+          python scripts/validate_mil_audit_runbook_operator_checklist.py --checklist examples/mil_audit_runbook_operator_checklist.json --json
+          python -m pytest tests/test_preflight_mil_audit_runbook_workflow.py tests/test_validate_mil_audit_runbook_operator_checklist.py -q
+
       - name: Validate release status
         run: python scripts/validate_release_status.py
         env:

@@ -11,6 +11,7 @@ Dependencies: standard-library dataclasses, command-spine hashing, capability
 Invariants:
   - The forge emits candidate packages, never production-certified powers.
   - Effect-bearing capabilities require receipt, sandbox, and recovery evidence.
+  - Physical live-effect capabilities declare physical safety evidence requirements.
   - High-risk capabilities require approval policy and tenant-boundary evals.
   - Candidate packages must name mock providers before sandbox promotion.
   - Certification handoff emits evidence bundles, not registry mutations.
@@ -39,6 +40,13 @@ _REQUIRED_BASE_EVALS = (
     "no_secret_leak",
 )
 _REQUIRED_INJECTION_EVAL = "prompt_injection"
+_PHYSICAL_LIVE_EFFECTS = {
+    "physical_effect",
+    "physical_world_write",
+    "physical_actuator_command",
+    "hardware_command_sent",
+    "actuator_state_changed",
+}
 _EFFECT_BEARING_EFFECTS = {
     "external_message_send",
     "external_write",
@@ -46,9 +54,22 @@ _EFFECT_BEARING_EFFECTS = {
     "credentialed_provider_write",
     "filesystem_write",
     "database_write",
+    *_PHYSICAL_LIVE_EFFECTS,
 }
 _CERTIFICATION_EVIDENCE_EXTENSION_KEY = "capability_certification_evidence"
 _MATURITY_EVIDENCE_EXTENSION_KEY = "capability_maturity_evidence"
+_PHYSICAL_LIVE_SAFETY_EXTENSION_KEY = "physical_live_safety_evidence"
+_PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
+_PHYSICAL_CAPABILITY_PREFIXES = ("physical.", "iot.", "robotics.")
+_PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS = (
+    "physical_action_receipt_ref",
+    "simulation_ref",
+    "operator_approval_ref",
+    "manual_override_ref",
+    "emergency_stop_ref",
+    "sensor_confirmation_ref",
+    "deployment_witness_ref",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,6 +167,18 @@ class CapabilityDocumentation:
 
 
 @dataclass(frozen=True, slots=True)
+class CapabilityPromotionEvidenceRequirement:
+    """Evidence requirement that must be satisfied before promotion."""
+
+    requirement_id: str
+    evidence_type: str
+    evidence_key: str
+    required: bool
+    description: str
+    schema_ref: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class CandidateCapabilityPackage:
     """Candidate package emitted by the capability forge."""
 
@@ -164,6 +197,7 @@ class CandidateCapabilityPackage:
     receipt_contract: CapabilityReceiptContract
     rollback_path: CapabilityRollbackPath
     documentation: CapabilityDocumentation
+    promotion_evidence_requirements: list[CapabilityPromotionEvidenceRequirement]
     certification_status: str = "candidate"
     promotion_blocked: bool = True
     package_hash: str = ""
@@ -174,6 +208,7 @@ class CandidateCapabilityPackage:
         object.__setattr__(self, "policy_rules", list(self.policy_rules))
         object.__setattr__(self, "evals", list(self.evals))
         object.__setattr__(self, "sandbox_tests", list(self.sandbox_tests))
+        object.__setattr__(self, "promotion_evidence_requirements", list(self.promotion_evidence_requirements))
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,10 +254,16 @@ class CapabilityCertificationHandoff:
     package_hash: str
     maturity_evidence_bundle: CapabilityCertificationEvidenceBundle
     required_evidence_refs: tuple[str, ...]
+    physical_live_safety_evidence_refs: Mapping[str, str] = field(default_factory=dict)
     handoff_hash: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "required_evidence_refs", tuple(str(ref) for ref in self.required_evidence_refs))
+        object.__setattr__(
+            self,
+            "physical_live_safety_evidence_refs",
+            {str(key): str(value) for key, value in dict(self.physical_live_safety_evidence_refs).items()},
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -346,6 +387,7 @@ class CapabilityForge:
                 promotion_evidence_ref=f"evidence/{source.capability_id}/promotion.json",
                 limitations_ref=f"docs/capabilities/{source.capability_id}.limitations.md",
             ),
+            promotion_evidence_requirements=_promotion_evidence_requirements(source, effect_bearing=effect_bearing),
             certification_status="candidate",
             promotion_blocked=True,
             metadata={
@@ -386,6 +428,7 @@ class CapabilityForge:
         autonomy_controls_ref: str = "",
         certification_ref: str = "",
         sandbox_receipt_ref: str = "",
+        physical_live_safety_evidence_refs: Mapping[str, str] | None = None,
     ) -> CapabilityCertificationHandoff:
         """Build the maturity evidence handoff for an externally certified package."""
         validation = self.validate(package)
@@ -397,6 +440,10 @@ class CapabilityForge:
         normalized_live_write = str(live_write_receipt_ref).strip()
         if _effect_bearing(package.side_effects) and not normalized_live_write:
             raise ValueError("effect_bearing_certification_requires_live_write_ref")
+        physical_safety_refs = _physical_live_safety_evidence_refs(
+            package,
+            physical_live_safety_evidence_refs or {},
+        )
         bundle = CapabilityCertificationEvidenceBundle(
             capability_id=package.capability_id,
             certification_ref=str(certification_ref).strip() or package.documentation.promotion_evidence_ref,
@@ -413,7 +460,8 @@ class CapabilityForge:
                 capability_id=package.capability_id,
                 package_hash=package.package_hash,
                 maturity_evidence_bundle=bundle,
-                required_evidence_refs=_handoff_required_evidence_refs(package, bundle),
+                required_evidence_refs=_handoff_required_evidence_refs(package, bundle, physical_safety_refs),
+                physical_live_safety_evidence_refs=physical_safety_refs,
             )
         )
 
@@ -450,18 +498,28 @@ def install_certification_handoff_evidence(
             raise ValueError("capability_handoff_evidence_conflict")
         if dict(existing_extension) != extension:
             raise ValueError("capability_handoff_evidence_conflict")
+    physical_safety_extension = _physical_live_safety_extension_from_handoff(handoff)
+    existing_physical_safety_extension = entry.extensions.get(_PHYSICAL_LIVE_SAFETY_EXTENSION_KEY)
+    if physical_safety_extension and existing_physical_safety_extension is not None:
+        if not isinstance(existing_physical_safety_extension, Mapping):
+            raise ValueError("capability_handoff_physical_safety_evidence_conflict")
+        if dict(existing_physical_safety_extension) != physical_safety_extension:
+            raise ValueError("capability_handoff_physical_safety_evidence_conflict")
 
     CapabilityMaturityEvidenceSynthesizer().materialize_extension(
         entry,
         handoff.maturity_evidence_bundle,
         require_production_ready=require_production_ready,
     )
+    extensions = {
+        **dict(entry.extensions),
+        _CERTIFICATION_EVIDENCE_EXTENSION_KEY: extension,
+    }
+    if physical_safety_extension:
+        extensions[_PHYSICAL_LIVE_SAFETY_EXTENSION_KEY] = physical_safety_extension
     return replace(
         entry,
-        extensions={
-            **dict(entry.extensions),
-            _CERTIFICATION_EVIDENCE_EXTENSION_KEY: extension,
-        },
+        extensions=extensions,
     )
 
 
@@ -558,10 +616,134 @@ def _validation_errors(package: CandidateCapabilityPackage) -> list[str]:
         errors.append("effect_bearing_candidate_requires_terminal_certificate")
     if effect_bearing and package.rollback_path.rollback_type == "none":
         errors.append("effect_bearing_candidate_requires_recovery_path")
+    if not package.promotion_evidence_requirements:
+        errors.append("promotion_evidence_requirements_required")
+    errors.extend(_promotion_evidence_requirement_errors(package, effect_bearing=effect_bearing))
     if not package.mock_provider.provider_id or not package.mock_provider.deterministic:
         errors.append("deterministic_mock_provider_required")
     if not package.documentation.operator_runbook_ref:
         errors.append("operator_runbook_required")
+    return errors
+
+
+def _promotion_evidence_requirements(
+    source: CapabilityForgeInput,
+    *,
+    effect_bearing: bool,
+) -> list[CapabilityPromotionEvidenceRequirement]:
+    requirements = [
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-certification-ref",
+            evidence_type="certification",
+            evidence_key="certification_ref",
+            required=True,
+            description="External certification evidence must identify the certified package.",
+        ),
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-sandbox-receipt",
+            evidence_type="sandbox_receipt",
+            evidence_key="sandbox_receipt_ref",
+            required=True,
+            description="Sandbox replay receipt must exist before certification handoff.",
+        ),
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-live-read-receipt",
+            evidence_type="live_read_receipt",
+            evidence_key="live_read_receipt_ref",
+            required=True,
+            description="Live read receipt must prove provider reachability without mutation.",
+        ),
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-live-write-receipt",
+            evidence_type="live_write_receipt",
+            evidence_key="live_write_receipt_ref",
+            required=effect_bearing,
+            description="Live write receipt is required for effect-bearing promotion.",
+        ),
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-worker-deployment",
+            evidence_type="worker_deployment",
+            evidence_key="worker_deployment_ref",
+            required=True,
+            description="Worker deployment evidence must bind runtime identity and scope.",
+        ),
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-recovery-evidence",
+            evidence_type="recovery",
+            evidence_key="recovery_evidence_ref",
+            required=True,
+            description="Rollback, compensation, or review evidence must be available.",
+        ),
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id="promotion-autonomy-controls",
+            evidence_type="autonomy_controls",
+            evidence_key="autonomy_controls_ref",
+            required=False,
+            description="Autonomy controls are required only for C7 autonomy claims.",
+        ),
+    ]
+    if _requires_physical_live_safety(
+        domain=source.domain,
+        capability_id=source.capability_id,
+        side_effects=source.side_effects,
+    ):
+        requirements.extend(_physical_live_safety_requirements())
+    return requirements
+
+
+def _physical_live_safety_requirements() -> list[CapabilityPromotionEvidenceRequirement]:
+    descriptions = {
+        "physical_action_receipt_ref": "Physical action receipt must bind the live action outcome.",
+        "simulation_ref": "Simulation evidence must pass before a live physical effect.",
+        "operator_approval_ref": "Operator approval must authorize the live physical effect.",
+        "manual_override_ref": "Manual override evidence must be available before dispatch.",
+        "emergency_stop_ref": "Emergency stop evidence must be available before dispatch.",
+        "sensor_confirmation_ref": "Sensor confirmation must verify the physical environment.",
+        "deployment_witness_ref": "Deployment witness must bind the physical worker environment.",
+    }
+    return [
+        CapabilityPromotionEvidenceRequirement(
+            requirement_id=f"physical-live-safety-{field_name.replace('_', '-')}",
+            evidence_type="physical_live_safety",
+            evidence_key=field_name,
+            required=True,
+            description=descriptions[field_name],
+            schema_ref=_PHYSICAL_ACTION_RECEIPT_SCHEMA_REF,
+        )
+        for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS
+    ]
+
+
+def _promotion_evidence_requirement_errors(
+    package: CandidateCapabilityPackage,
+    *,
+    effect_bearing: bool,
+) -> list[str]:
+    errors: list[str] = []
+    required_keys = {
+        requirement.evidence_key
+        for requirement in package.promotion_evidence_requirements
+        if requirement.required
+    }
+    for key in (
+        "certification_ref",
+        "sandbox_receipt_ref",
+        "live_read_receipt_ref",
+        "worker_deployment_ref",
+        "recovery_evidence_ref",
+    ):
+        if key not in required_keys:
+            errors.append(f"missing_promotion_evidence_requirement:{key}")
+    if effect_bearing and "live_write_receipt_ref" not in required_keys:
+        errors.append("missing_promotion_evidence_requirement:live_write_receipt_ref")
+    if _requires_physical_live_safety(
+        domain=package.domain,
+        capability_id=package.capability_id,
+        side_effects=package.side_effects,
+    ):
+        for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS:
+            if field_name not in required_keys:
+                errors.append(f"missing_physical_safety_evidence_requirement:{field_name}")
     return errors
 
 
@@ -576,6 +758,46 @@ def _effect_bearing(side_effects: Iterable[str]) -> bool:
     return bool(set(side_effects).intersection(_EFFECT_BEARING_EFFECTS))
 
 
+def _requires_physical_live_safety(
+    *,
+    domain: str,
+    capability_id: str,
+    side_effects: Iterable[str],
+) -> bool:
+    if not _is_physical_capability(domain=domain, capability_id=capability_id):
+        return False
+    return bool(set(side_effects).intersection(_PHYSICAL_LIVE_EFFECTS))
+
+
+def _is_physical_capability(*, domain: str, capability_id: str) -> bool:
+    normalized_domain = domain.strip().lower()
+    normalized_capability_id = capability_id.strip().lower()
+    return normalized_domain in {"physical", "iot", "robotics"} or any(
+        normalized_capability_id.startswith(prefix) for prefix in _PHYSICAL_CAPABILITY_PREFIXES
+    )
+
+
+def _physical_live_safety_evidence_refs(
+    package: CandidateCapabilityPackage,
+    evidence_refs: Mapping[str, str],
+) -> dict[str, str]:
+    if not _requires_physical_live_safety(
+        domain=package.domain,
+        capability_id=package.capability_id,
+        side_effects=package.side_effects,
+    ):
+        return {str(key): str(value).strip() for key, value in evidence_refs.items() if str(value).strip()}
+    normalized_refs = {str(key): str(value).strip() for key, value in evidence_refs.items()}
+    missing = tuple(
+        field_name
+        for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS
+        if not normalized_refs.get(field_name)
+    )
+    if missing:
+        raise ValueError(f"physical_live_safety_evidence_refs_incomplete:{','.join(missing)}")
+    return {field_name: normalized_refs[field_name] for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS}
+
+
 def _sandbox_receipt_ref(package: CandidateCapabilityPackage) -> str:
     if not package.sandbox_tests:
         raise ValueError("sandbox_receipt_ref_required")
@@ -585,6 +807,7 @@ def _sandbox_receipt_ref(package: CandidateCapabilityPackage) -> str:
 def _handoff_required_evidence_refs(
     package: CandidateCapabilityPackage,
     bundle: CapabilityCertificationEvidenceBundle,
+    physical_live_safety_evidence_refs: Mapping[str, str],
 ) -> tuple[str, ...]:
     refs = (
         package.documentation.promotion_evidence_ref,
@@ -594,6 +817,11 @@ def _handoff_required_evidence_refs(
         bundle.worker_deployment_ref,
         bundle.recovery_evidence_ref,
         bundle.autonomy_controls_ref,
+        *(
+            physical_live_safety_evidence_refs[field_name]
+            for field_name in _PHYSICAL_LIVE_SAFETY_EVIDENCE_FIELDS
+            if field_name in physical_live_safety_evidence_refs
+        ),
     )
     return tuple(ref for ref in refs if ref)
 

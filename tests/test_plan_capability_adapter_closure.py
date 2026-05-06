@@ -73,17 +73,38 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
         actions_by_blocker["browser_dependency_missing:playwright"].receipt_validator
         == "adapter_evidence.browser.playwright.dependency.playwright"
     )
-    assert "--email-calendar-connector-id <connector_id>" in actions_by_blocker[
-        "email_calendar_live_evidence_missing"
-    ].command
-    assert "--email-calendar-query <read_only_query>" in actions_by_blocker[
-        "email_calendar_live_evidence_missing"
-    ].command
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].approval_required is True
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].risk_level == "high"
     assert actions_by_blocker["voice_dependency_missing:OPENAI_API_KEY"].receipt_validator.endswith(
         ".dependency.OPENAI_API_KEY"
     )
+
+
+def test_adapter_closure_plan_includes_email_calendar_probe_parameters(tmp_path: Path) -> None:
+    evidence_path = tmp_path / "capability_adapter_evidence.json"
+    evidence_path.write_text(
+        json.dumps({
+            "ready": False,
+            "adapters": [
+                {
+                    "adapter_id": "communication.email_calendar_worker",
+                    "blockers": ["email_calendar_live_evidence_missing"],
+                }
+            ],
+            "blockers": ["email_calendar_live_evidence_missing"],
+        }),
+        encoding="utf-8",
+    )
+
+    plan = plan_capability_adapter_closure(evidence_path)
+    action = plan.actions[0]
+
+    assert plan.action_count == 1
+    assert action.blocker == "email_calendar_live_evidence_missing"
+    assert action.action_type == "live-receipt"
+    assert "--email-calendar-connector-id <connector_id>" in action.command
+    assert "--email-calendar-query <read_only_query>" in action.command
+    assert action.receipt_validator == "adapter_evidence.communication.email_calendar_worker.receipt_check.passed"
 
 
 def test_adapter_closure_plan_preserves_unknown_blocker_for_manual_review(tmp_path: Path) -> None:
