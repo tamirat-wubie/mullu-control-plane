@@ -449,6 +449,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-reapproval-receipt",
+      "path": "schemas/temporal_reapproval_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-reapproval-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

@@ -316,6 +316,17 @@ def test_protocol_manifest_indexes_temporal_evidence_freshness_receipt() -> None
     assert evidence_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_reapproval_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    reapproval_entry = entries["temporal-reapproval-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert reapproval_entry["path"] == "schemas/temporal_reapproval_receipt.schema.json"
+    assert reapproval_entry["urn"] == "urn:mullusi:schema:temporal-reapproval-receipt:1"
+    assert reapproval_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
