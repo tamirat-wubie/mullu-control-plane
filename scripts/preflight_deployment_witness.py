@@ -7,9 +7,10 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: GitHub CLI for repository metadata, DNS resolution, standard
 library HTTP client for endpoint probes.
 Invariants:
-  - Runtime witness and conformance secret values are never read or printed.
-  - Mounted runtime and conformance secrets can witness presence without listing
-    secrets.
+  - Runtime witness, conformance, and deployment witness secret values are
+    never read or printed.
+  - Mounted runtime, conformance, and deployment witness secrets can witness
+    presence without listing secrets.
   - Workflow dispatch is never performed by this preflight.
   - Each readiness transition is represented as an explicit step.
   - Endpoint probes are opt-out and report bounded failure detail.
@@ -37,6 +38,7 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.collect_deployment_witness import REQUIRED_CONFORMANCE_FIELDS, REQUIRED_WITNESS_FIELDS  # noqa: E402
 from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_CONFORMANCE_SECRET_NAME,
+    DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     DEFAULT_EXPECTED_ENVIRONMENT_VARIABLE,
     DEFAULT_GATEWAY_URL_VARIABLE,
     DEFAULT_REPOSITORY,
@@ -106,8 +108,10 @@ def preflight_deployment_witness(
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
     conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
+    deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
+    deployment_witness_secret_present: bool = False,
     mcp_capability_manifest_path: str = "",
     probe_endpoints: bool = True,
     runner: CommandRunner | None = None,
@@ -142,6 +146,13 @@ def preflight_deployment_witness(
             secret_name=conformance_secret_name,
             secret_present=conformance_secret_present,
             step_name="runtime conformance secret",
+            runner=command_runner,
+        ),
+        _check_secret(
+            repository=repository,
+            secret_name=deployment_witness_secret_name,
+            secret_present=deployment_witness_secret_present,
+            step_name="deployment witness secret",
             runner=command_runner,
         ),
         _check_workflow(
@@ -480,8 +491,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
     parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
+    parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
+    parser.add_argument("--accept-deployment-witness-secret-env", action="store_true")
     parser.add_argument(
         "--mcp-capability-manifest",
         default=os.environ.get("MULLU_MCP_CAPABILITY_MANIFEST_PATH", ""),
@@ -504,6 +517,7 @@ def main(argv: list[str] | None = None) -> int:
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
             conformance_secret_name=args.conformance_secret_name,
+            deployment_witness_secret_name=args.deployment_witness_secret_name,
             runtime_secret_present=(
                 args.accept_runtime_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
@@ -511,6 +525,10 @@ def main(argv: list[str] | None = None) -> int:
             conformance_secret_present=(
                 args.accept_conformance_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET"))
+            ),
+            deployment_witness_secret_present=(
+                args.accept_deployment_witness_secret_env
+                and bool(os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET"))
             ),
             mcp_capability_manifest_path=args.mcp_capability_manifest,
             probe_endpoints=not args.skip_endpoint_probes,

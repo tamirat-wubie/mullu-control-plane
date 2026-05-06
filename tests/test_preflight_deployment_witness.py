@@ -5,7 +5,8 @@ readiness without mutating deployment state.
 Governance scope: [OCE, RAG, CDCV, UWMA, PRS]
 Dependencies: scripts.preflight_deployment_witness.
 Invariants:
-  - Runtime witness and conformance secret values are never read.
+  - Runtime witness, conformance, and deployment witness secret values are
+    never read.
   - Workflow dispatch is never executed.
   - Endpoint probes can be skipped for pre-apply readiness checks.
 """
@@ -36,12 +37,14 @@ class FakeRunner:
         expected_environment: str = "pilot",
         secret_present: bool = True,
         conformance_secret_present: bool = True,
+        deployment_witness_secret_present: bool = True,
         workflow_state: str = "active",
     ) -> None:
         self.gateway_url = gateway_url
         self.expected_environment = expected_environment
         self.secret_present = secret_present
         self.conformance_secret_present = conformance_secret_present
+        self.deployment_witness_secret_present = deployment_witness_secret_present
         self.workflow_state = workflow_state
         self.commands: list[list[str]] = []
 
@@ -75,6 +78,8 @@ class FakeRunner:
                 payload.append({"name": "MULLU_RUNTIME_WITNESS_SECRET"})
             if self.conformance_secret_present:
                 payload.append({"name": "MULLU_RUNTIME_CONFORMANCE_SECRET"})
+            if self.deployment_witness_secret_present:
+                payload.append({"name": "MULLU_DEPLOYMENT_WITNESS_SECRET"})
             return _completed(command, payload)
         if command[:3] == ["gh", "workflow", "list"]:
             return _completed(
@@ -105,7 +110,7 @@ def test_preflight_deployment_witness_reports_ready(tmp_path: Path) -> None:
 
     assert report.ready is True
     assert report.gateway_url == "https://gateway.mullusi.com"
-    assert len(report.steps) == 8
+    assert len(report.steps) == 9
     assert all(step.passed for step in report.steps)
     assert payload["ready"] is True
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
@@ -141,10 +146,11 @@ def test_preflight_deployment_witness_can_skip_endpoint_probes() -> None:
     )
 
     assert report.ready is False
-    assert len(report.steps) == 5
+    assert len(report.steps) == 6
     assert report.steps[-1].name == "deployment witness workflow"
     assert any(step.name == "runtime witness secret" for step in report.steps)
     assert any(step.name == "runtime conformance secret" for step in report.steps)
+    assert any(step.name == "deployment witness secret" for step in report.steps)
 
 
 def test_preflight_deployment_witness_accepts_mounted_runtime_secret() -> None:
@@ -155,6 +161,7 @@ def test_preflight_deployment_witness_accepts_mounted_runtime_secret() -> None:
         expected_environment="pilot",
         runtime_secret_present=True,
         conformance_secret_present=True,
+        deployment_witness_secret_present=True,
         probe_endpoints=False,
         runner=runner,
         resolver=lambda host: ("203.0.113.10",),
@@ -162,9 +169,11 @@ def test_preflight_deployment_witness_accepts_mounted_runtime_secret() -> None:
 
     secret_step = next(step for step in report.steps if step.name == "runtime witness secret")
     conformance_secret_step = next(step for step in report.steps if step.name == "runtime conformance secret")
+    deployment_secret_step = next(step for step in report.steps if step.name == "deployment witness secret")
     assert report.ready is True
     assert secret_step.passed is True
     assert conformance_secret_step.passed is True
+    assert deployment_secret_step.passed is True
     assert secret_step.detail == "present:mounted-environment"
     assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
 
@@ -187,7 +196,7 @@ def test_preflight_deployment_witness_accepts_valid_mcp_manifest() -> None:
     assert "valid=True" in manifest_step.detail
     assert "capabilities=1" in manifest_step.detail
     assert "approval_policies=1" in manifest_step.detail
-    assert len(report.steps) == 6
+    assert len(report.steps) == 7
 
 
 def test_preflight_deployment_witness_rejects_invalid_mcp_manifest(tmp_path: Path) -> None:
@@ -227,6 +236,23 @@ def test_preflight_deployment_witness_reports_missing_conformance_secret() -> No
     assert report.ready is False
     assert secret_step.passed is False
     assert "MULLU_RUNTIME_CONFORMANCE_SECRET" in secret_step.detail
+
+
+def test_preflight_deployment_witness_reports_missing_deployment_witness_secret() -> None:
+    runner = FakeRunner(deployment_witness_secret_present=False)
+
+    report = preflight_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        expected_environment="pilot",
+        probe_endpoints=False,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+    )
+
+    secret_step = next(step for step in report.steps if step.name == "deployment witness secret")
+    assert report.ready is False
+    assert secret_step.passed is False
+    assert "MULLU_DEPLOYMENT_WITNESS_SECRET" in secret_step.detail
 
 
 def test_preflight_deployment_witness_rejects_expired_conformance_certificate() -> None:
@@ -464,6 +490,10 @@ def _healthy_getter(url: str) -> tuple[int, dict[str, Any]]:
             "capability_plan_bundle_canary_passed": True,
             "capability_plan_bundle_count": 0,
             "capsule_registry_certified": True,
+            "physical_worker_canary_passed": True,
+            "physical_worker_canary_id": "physical-worker-canary-test",
+            "physical_worker_canary_artifact_hash": "sha256:" + "a" * 64,
+            "physical_worker_canary_evidence_count": 1,
             "proof_coverage_matrix_current": True,
             "proof_coverage_declared_routes_classified": True,
             "proof_coverage_declared_route_count": 301,

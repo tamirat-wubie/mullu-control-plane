@@ -15,9 +15,10 @@ Invariants:
   - Dispatch can be gated by a fresh preflight report.
   - Successful orchestration emits a deterministic receipt id and can persist
     the receipt for release evidence.
-  - Mounted runtime and conformance secrets can witness presence without
-    listing secrets.
-  - Runtime witness and conformance secrets are never written to stdout.
+  - Mounted runtime, conformance, and deployment witness secrets can witness
+    presence without listing secrets.
+  - Runtime witness, conformance, and deployment witness secrets are never
+    written to stdout.
 """
 
 from __future__ import annotations
@@ -39,6 +40,7 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_ARTIFACT_NAME,
     DEFAULT_CONFORMANCE_SECRET_NAME,
+    DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     DEFAULT_DOWNLOAD_DIR,
     DEFAULT_SECRET_NAME,
     DEFAULT_WORKFLOW_FILE,
@@ -142,8 +144,10 @@ def orchestrate_deployment_witness(
     workflow_name: str = DEFAULT_WORKFLOW_NAME,
     secret_name: str = DEFAULT_SECRET_NAME,
     conformance_secret_name: str = DEFAULT_CONFORMANCE_SECRET_NAME,
+    deployment_witness_secret_name: str = DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
     runtime_secret_present: bool = False,
     conformance_secret_present: bool = False,
+    deployment_witness_secret_present: bool = False,
     artifact_name: str = DEFAULT_ARTIFACT_NAME,
     download_dir: Path = DEFAULT_DOWNLOAD_DIR,
     timeout_seconds: int = 600,
@@ -186,8 +190,10 @@ def orchestrate_deployment_witness(
             workflow_name=workflow_name,
             secret_name=secret_name,
             conformance_secret_name=conformance_secret_name,
+            deployment_witness_secret_name=deployment_witness_secret_name,
             runtime_secret_present=runtime_secret_present,
             conformance_secret_present=conformance_secret_present,
+            deployment_witness_secret_present=deployment_witness_secret_present,
             probe_endpoints=preflight_probe_endpoints,
             runner=command_runner,
             resolver=resolver,
@@ -216,8 +222,10 @@ def orchestrate_deployment_witness(
             workflow_name=workflow_name,
             secret_name=secret_name,
             conformance_secret_name=conformance_secret_name,
+            deployment_witness_secret_name=deployment_witness_secret_name,
             runtime_secret_present=runtime_secret_present,
             conformance_secret_present=conformance_secret_present,
+            deployment_witness_secret_present=deployment_witness_secret_present,
             artifact_name=artifact_name,
             download_dir=download_dir,
             timeout_seconds=timeout_seconds,
@@ -291,8 +299,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--workflow-name", default=DEFAULT_WORKFLOW_NAME)
     parser.add_argument("--secret-name", default=DEFAULT_SECRET_NAME)
     parser.add_argument("--conformance-secret-name", default=DEFAULT_CONFORMANCE_SECRET_NAME)
+    parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--accept-runtime-secret-env", action="store_true")
     parser.add_argument("--accept-conformance-secret-env", action="store_true")
+    parser.add_argument("--accept-deployment-witness-secret-env", action="store_true")
     parser.add_argument("--artifact-name", default=DEFAULT_ARTIFACT_NAME)
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=600)
@@ -321,6 +331,7 @@ def main(argv: list[str] | None = None) -> int:
             workflow_name=args.workflow_name,
             secret_name=args.secret_name,
             conformance_secret_name=args.conformance_secret_name,
+            deployment_witness_secret_name=args.deployment_witness_secret_name,
             runtime_secret_present=(
                 args.accept_runtime_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_WITNESS_SECRET"))
@@ -328,6 +339,10 @@ def main(argv: list[str] | None = None) -> int:
             conformance_secret_present=(
                 args.accept_conformance_secret_env
                 and bool(os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET"))
+            ),
+            deployment_witness_secret_present=(
+                args.accept_deployment_witness_secret_env
+                and bool(os.environ.get("MULLU_DEPLOYMENT_WITNESS_SECRET"))
             ),
             artifact_name=args.artifact_name,
             download_dir=Path(args.download_dir),
