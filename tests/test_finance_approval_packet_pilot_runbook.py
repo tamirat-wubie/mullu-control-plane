@@ -31,4 +31,8 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "operator summary is a redacted read-only artifact" in content
     assert "`ok=true` means the packet artifacts are structurally usable" in content
     assert "`ready=false` means live handoff promotion remains blocked" in content
+    assert "16-command dry-run artifact" in content
     assert "only live connector touchpoint" in content
+    assert "validates the aggregate handoff chain" in content
+    assert "validates the operator summary schema" in content
+    assert "protocol manifest ok: 88 schemas" in content
