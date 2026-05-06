@@ -294,6 +294,23 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert "Validate general-agent promotion closure plan" in content
 
 
+def test_ci_workflow_runs_mil_audit_runbook_workflow_gate() -> None:
+    content = CI_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    errors = validate_ci_workflow_text(content)
+
+    assert errors == []
+    assert any("validate_mil_audit_runbook_operator_checklist.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert any("test_preflight_mil_audit_runbook_workflow.py" in literal for literal in REQUIRED_CI_LITERALS)
+    assert content.count(
+        "python scripts/validate_mil_audit_runbook_operator_checklist.py "
+        "--checklist examples/mil_audit_runbook_operator_checklist.json --json"
+    ) == 1
+    assert content.count("test_preflight_mil_audit_runbook_workflow.py") == 1
+    assert content.count("test_validate_mil_audit_runbook_operator_checklist.py") == 1
+    assert "Validate MIL audit runbook workflow" in content
+
+
 def test_release_gate_rejects_placeholder_workflows() -> None:
     workflow_texts = {
         ".github/workflows/validation-placeholder.yml": (

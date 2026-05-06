@@ -116,14 +116,90 @@
     "capability_evidence_map": {
       "type": "object",
       "additionalProperties": {
-        "type": "string",
-        "enum": [
-          "described_only",
-          "tested",
-          "sandbox",
-          "pilot",
-          "production"
-        ]
+        "$ref": "#/$defs/capability_evidence_value"
+      }
+    },
+    "capability_evidence_value": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/maturity_status"
+        },
+        {
+          "$ref": "#/$defs/physical_live_safety_evidence"
+        }
+      ]
+    },
+    "maturity_status": {
+      "type": "string",
+      "enum": [
+        "described_only",
+        "tested",
+        "sandbox",
+        "pilot",
+        "production"
+      ]
+    },
+    "physical_live_safety_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maturity",
+        "effect_mode",
+        "production_admissible",
+        "physical_action_receipt_schema_ref",
+        "physical_action_receipt_ref",
+        "simulation_ref",
+        "operator_approval_ref",
+        "manual_override_ref",
+        "emergency_stop_ref",
+        "sensor_confirmation_ref",
+        "deployment_witness_ref"
+      ],
+      "properties": {
+        "maturity": {
+          "type": "string",
+          "const": "production"
+        },
+        "effect_mode": {
+          "type": "string",
+          "const": "live"
+        },
+        "production_admissible": {
+          "type": "boolean",
+          "const": true
+        },
+        "physical_action_receipt_schema_ref": {
+          "type": "string",
+          "const": "urn:mullusi:schema:physical-action-receipt:1"
+        },
+        "physical_action_receipt_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "simulation_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator_approval_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manual_override_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "emergency_stop_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sensor_confirmation_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deployment_witness_ref": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "capability_ids": {

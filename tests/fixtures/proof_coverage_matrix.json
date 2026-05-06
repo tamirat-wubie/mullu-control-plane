@@ -398,9 +398,9 @@
     "by_coverage_state": {
       "proven": 4,
       "unproven": 199,
-      "witnessed": 106
+      "witnessed": 109
     },
-    "route_count": 309,
+    "route_count": 312,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1091,6 +1091,21 @@
         "coverage_state": "unproven",
         "route": "/api/v1/migrations/summary",
         "surface_id": "unclassified_declared_route"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/admit-runbook",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/runbooks",
+        "surface_id": "runbook_learning_lifecycle"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/mil-audit/runbooks/{runbook_id}",
+        "surface_id": "runbook_learning_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1979,7 +1994,8 @@
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
         "capsule_compiler_emits_certification_evidence_manifest",
-        "capsule_installer_stamps_admission_receipt"
+        "capsule_installer_stamps_admission_receipt",
+        "physical_capsule_admission_runs_promotion_preflight"
       ],
       "surface_id": "gateway_capability_fabric"
     },
@@ -2289,11 +2305,18 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/runbooks.py",
+        "mcoi/mcoi_runtime/app/routers/mil_audit.py",
         "mcoi/mcoi_runtime/core/runbook_learning.py",
         "mcoi/mcoi_runtime/app/server_http.py",
-        "mcoi/tests/test_runbook_learning.py"
+        "mcoi/tests/test_mil_audit_router.py",
+        "mcoi/tests/test_runbook_learning.py",
+        "examples/mil_audit_runbook_operator_checklist.json",
+        "scripts/validate_mil_audit_runbook_operator_checklist.py",
+        "scripts/preflight_mil_audit_runbook_workflow.py",
+        "tests/test_validate_mil_audit_runbook_operator_checklist.py",
+        "tests/test_preflight_mil_audit_runbook_workflow.py"
       ],
-      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, and expose bounded read models for runbooks, patterns, and summaries.",
+      "notes": "Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, expose bounded read models for runbooks, patterns, and summaries, and provide a checklist-backed MIL audit runbook preflight.",
       "representative_paths": [
         "/api/v1/runbooks",
         "/api/v1/runbooks/analyze",
@@ -2302,7 +2325,10 @@
         "/api/v1/runbooks/promote",
         "/api/v1/runbooks/summary",
         "/api/v1/runbooks/{runbook_id}/activate",
-        "/api/v1/runbooks/{runbook_id}/retire"
+        "/api/v1/runbooks/{runbook_id}/retire",
+        "/api/v1/mil-audit/admit-runbook",
+        "/api/v1/mil-audit/runbooks",
+        "/api/v1/mil-audit/runbooks/{runbook_id}"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -2311,6 +2337,9 @@
         "approval_required_before_activation",
         "retirement_requires_active_runbook",
         "promote_and_approve_audit_records",
+        "mil_audit_replay_admits_runbook",
+        "mil_audit_operator_checklist_validated",
+        "mil_audit_runbook_preflight_ready",
         "sanitized_runbook_error_details",
         "runbook_pattern_read_models_bounded",
         "runbook_responses_governed"
@@ -2524,7 +2553,7 @@
         "tests/test_gateway/test_production_evidence.py",
         "tests/test_collect_deployment_witness.py"
       ],
-      "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication.",
+      "notes": "Production evidence endpoints expose signed deployment posture, capability evidence, audit verification, and proof verification; deployment witness collection can require the whole plane before publication, derives live physical safety evidence only from certified registry extensions, and blocks live physical capability claims without explicit safety evidence while allowing sandbox-only physical canary evidence.",
       "representative_paths": [
         "/deployment/witness",
         "/capabilities/evidence",
@@ -2538,6 +2567,9 @@
         "audit_verification_schema_valid",
         "proof_verification_schema_valid",
         "deployment_collection_requires_production_evidence",
+        "live_physical_safety_evidence_derived_from_registry",
+        "live_physical_capability_requires_safety_evidence",
+        "sandbox_physical_capability_remains_non_production",
         "missing_production_evidence_fails_closed"
       ],
       "surface_id": "production_evidence_plane"
@@ -2628,7 +2660,7 @@
         "schemas/capability_candidate.schema.json",
         "tests/test_gateway/test_capability_forge.py"
       ],
-      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, and recovery evidence before certification handoff, installs certified handoffs as certification evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission.",
+      "notes": "Capability forge emits schema-backed candidate packages and maturity-ready certification handoffs only, keeps promotion blocked, validates approval, sandbox, receipt, eval, live-write, physical safety, and recovery evidence before certification handoff, installs certified handoffs as certification and physical safety evidence without direct maturity overrides, and batches handoff evidence with exact capsule-entry coverage before registry admission.",
       "representative_paths": [
         "CapabilityForge.create_candidate",
         "CapabilityForge.validate",
@@ -2643,6 +2675,8 @@
         "candidate_certification_handoff_emits_maturity_bundle",
         "certification_handoff_installs_evidence_without_maturity_claim",
         "certification_handoff_batch_preserves_capsule_admission_gate",
+        "physical_candidate_declares_live_safety_evidence_requirements",
+        "physical_handoff_installs_live_safety_evidence",
         "high_risk_approval_policy_required",
         "effect_bearing_candidate_requires_sandbox",
         "effect_bearing_candidate_requires_recovery_path"
@@ -3031,16 +3065,30 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "capsules/physical.json",
+        "capabilities/physical/capability_pack.json",
+        "gateway/capability_capsule_installer.py",
+        "gateway/server.py",
         "gateway/physical_action_boundary.py",
+        "gateway/physical_capability_promotion_receipt.py",
         "gateway/physical_worker_canary.py",
+        "scripts/emit_physical_capability_promotion_receipt.py",
+        "scripts/preflight_physical_capability_promotion.py",
         "scripts/produce_physical_worker_canary.py",
         "schemas/physical_action_receipt.schema.json",
+        "schemas/physical_capability_promotion_receipt.schema.json",
+        "tests/test_emit_physical_capability_promotion_receipt.py",
+        "tests/test_gateway/test_capability_capsule_installer.py",
         "tests/test_gateway/test_physical_action_boundary.py",
+        "tests/test_gateway/test_physical_capability_pack.py",
+        "tests/test_gateway/test_physical_capability_promotion_receipt.py",
         "tests/test_gateway/test_physical_worker_canary.py",
+        "tests/test_preflight_physical_capability_promotion.py",
         "tests/test_produce_physical_worker_canary.py"
       ],
-      "notes": "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present.",
+      "notes": "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim.",
       "representative_paths": [
+        "/operator/physical-capability-promotion-receipts",
         "PhysicalActionBoundary.evaluate",
         "PhysicalActionRequest",
         "PhysicalActionReceipt"
@@ -3048,6 +3096,22 @@
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "physical_action_receipt_schema_valid",
+        "physical_capability_pack_fixture_not_default_loaded",
+        "physical_sandbox_replay_admitted_without_production_gate",
+        "live_physical_capability_rejected_by_production_gate",
+        "physical_pack_projects_sandbox_only_evidence",
+        "physical_promotion_preflight_blocks_fixture_live_claim",
+        "physical_promotion_preflight_requires_live_safety_evidence",
+        "physical_promotion_preflight_accepts_full_evidence",
+        "physical_promotion_preflight_allows_sandbox_only_pack",
+        "physical_capsule_admission_runs_promotion_preflight",
+        "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure",
+        "physical_promotion_receipt_binds_forge_handoff_registry_preflight",
+        "physical_promotion_receipt_schema_valid",
+        "physical_promotion_receipt_cli_emits_schema_valid_bundle",
+        "physical_promotion_receipt_cli_blocks_missing_live_refs",
+        "physical_promotion_receipt_operator_endpoint_emits_bundle",
+        "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
         "hardware_identity_required",
         "safety_envelope_required",
         "manual_override_required",

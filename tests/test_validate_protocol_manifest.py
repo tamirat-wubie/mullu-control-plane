@@ -74,6 +74,7 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     collaboration_entry = entries["collaboration-case"]
     commercial_entry = entries["commercial-metering-snapshot"]
     operational_entry = entries["operational-case"]
+    operator_entry = entries["operator-control-tower-snapshot"]
 
     assert validate_protocol_manifest(manifest) == []
     assert collaboration_entry["path"] == "schemas/collaboration_case.schema.json"
@@ -85,6 +86,9 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert operational_entry["path"] == "schemas/operational_case.schema.json"
     assert operational_entry["urn"] == "urn:mullusi:schema:operational-case:1"
     assert operational_entry["surface"] == "case_management"
+    assert operator_entry["path"] == "schemas/operator_control_tower_snapshot.schema.json"
+    assert operator_entry["urn"] == "urn:mullusi:schema:operator-control-tower-snapshot:1"
+    assert operator_entry["surface"] == "operator"
 
 
 def test_protocol_manifest_indexes_connector_certification_registry() -> None:
@@ -264,9 +268,17 @@ def test_protocol_manifest_indexes_trust_ledger_anchor_receipt() -> None:
 def test_protocol_manifest_indexes_memory_lattice_admission() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    builder_entry = entries["low-code-builder-catalog"]
+    marketplace_entry = entries["marketplace-sdk-catalog"]
     lattice_entry = entries["memory-lattice"]
 
     assert validate_protocol_manifest(manifest) == []
+    assert builder_entry["path"] == "schemas/low_code_builder_catalog.schema.json"
+    assert builder_entry["urn"] == "urn:mullusi:schema:low-code-builder-catalog:1"
+    assert builder_entry["surface"] == "builder"
+    assert marketplace_entry["path"] == "schemas/marketplace_sdk_catalog.schema.json"
+    assert marketplace_entry["urn"] == "urn:mullusi:schema:marketplace-sdk-catalog:1"
+    assert marketplace_entry["surface"] == "marketplace"
     assert lattice_entry["path"] == "schemas/memory_lattice.schema.json"
     assert lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
     assert lattice_entry["surface"] == "memory"
@@ -292,6 +304,17 @@ def test_protocol_manifest_indexes_physical_action_receipt() -> None:
     assert physical_entry["path"] == "schemas/physical_action_receipt.schema.json"
     assert physical_entry["urn"] == "urn:mullusi:schema:physical-action-receipt:1"
     assert physical_entry["surface"] == "safety"
+
+
+def test_protocol_manifest_indexes_physical_capability_promotion_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries["physical-capability-promotion-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == "schemas/physical_capability_promotion_receipt.schema.json"
+    assert receipt_entry["urn"] == "urn:mullusi:schema:physical-capability-promotion-receipt:1"
+    assert receipt_entry["surface"] == "safety"
 
 
 def test_protocol_manifest_indexes_temporal_operation_receipt() -> None:
@@ -591,11 +614,25 @@ def test_protocol_manifest_indexes_finance_approval_packet_proof() -> None:
         "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1"
     )
     assert entries["finance-approval-email-calendar-binding-receipt"]["surface"] == "finance"
+    assert entries["finance-approval-email-calendar-live-receipt"]["path"] == (
+        "schemas/finance_approval_email_calendar_live_receipt.schema.json"
+    )
+    assert entries["finance-approval-email-calendar-live-receipt"]["urn"] == (
+        "urn:mullusi:schema:finance-approval-email-calendar-live-receipt:1"
+    )
+    assert entries["finance-approval-email-calendar-live-receipt"]["surface"] == "finance"
     assert entries["finance-approval-handoff-packet"]["path"] == "schemas/finance_approval_handoff_packet.schema.json"
     assert entries["finance-approval-handoff-packet"]["urn"] == (
         "urn:mullusi:schema:finance-approval-handoff-packet:1"
     )
     assert entries["finance-approval-handoff-packet"]["surface"] == "finance"
+    assert entries["finance-approval-operator-summary"]["path"] == (
+        "schemas/finance_approval_operator_summary.schema.json"
+    )
+    assert entries["finance-approval-operator-summary"]["urn"] == (
+        "urn:mullusi:schema:finance-approval-operator-summary:1"
+    )
+    assert entries["finance-approval-operator-summary"]["surface"] == "finance"
     assert validate_protocol_manifest(manifest) == []
 
 
@@ -724,4 +761,36 @@ def test_protocol_manifest_rejects_missing_terminal_closure_certificate_entry() 
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "terminal_closure_certificate.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_finance_live_receipt_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "finance-approval-email-calendar-live-receipt"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "finance_approval_email_calendar_live_receipt.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_finance_operator_summary_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "finance-approval-operator-summary"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "finance_approval_operator_summary.schema.json" in errors[0]
     assert "schemas/" in errors[0]

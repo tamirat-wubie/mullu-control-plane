@@ -100,6 +100,9 @@ Rules:
 - Procedural Memory revocation MUST record the revocation reason, actor, and
   evidence, preserve the admitted runbook history, and remove the revoked
   runbook from active selection.
+- MIL-derived procedural runbooks MUST be admitted from hash-anchored MIL audit
+  records through persisted replay validation and explicit learning admission.
+  The operator procedure is documented in `docs/64_mil_audit_runbook_workflow.md`.
 
 ### Tier 5: Archive Memory
 

@@ -41,8 +41,8 @@
     },
     "command_count": {
       "type": "integer",
-      "minimum": 14,
-      "maximum": 14
+      "minimum": 16,
+      "maximum": 16
     },
     "blockers": {
       "type": "array",
@@ -53,8 +53,8 @@
     },
     "commands": {
       "type": "array",
-      "minItems": 14,
-      "maxItems": 14,
+      "minItems": 16,
+      "maxItems": 16,
       "items": {
         "$ref": "#/$defs/closure_command"
       }
@@ -88,7 +88,9 @@
             "11_produce_handoff_packet",
             "12_validate_handoff_packet_schema",
             "13_validate_handoff_chain",
-            "14_validate_handoff_chain_schema"
+            "14_validate_handoff_chain_schema",
+            "15_produce_operator_summary",
+            "16_validate_operator_summary_schema"
           ]
         },
         "purpose": {

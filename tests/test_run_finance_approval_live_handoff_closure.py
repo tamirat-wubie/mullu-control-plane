@@ -34,7 +34,7 @@ def test_current_finance_live_handoff_closure_dry_run_blocks_absent_token() -> N
     assert run.mode == "dry-run"
     assert run.status == "blocked"
     assert run.ready_to_execute_live is False
-    assert run.command_count == 14
+    assert run.command_count == 16
     assert "finance_email_calendar_binding_receipt_not_ready" in run.blockers
     assert "finance_approval_pilot_readiness_not_ready" in run.blockers
 
@@ -51,10 +51,18 @@ def test_finance_live_handoff_closure_orders_binding_before_live_receipt() -> No
     assert step_ids.index("10_validate_preflight_schema") < step_ids.index("11_produce_handoff_packet")
     assert step_ids.index("12_validate_handoff_packet_schema") < step_ids.index("13_validate_handoff_chain")
     assert step_ids.index("13_validate_handoff_chain") < step_ids.index("14_validate_handoff_chain_schema")
+    assert step_ids.index("14_validate_handoff_chain_schema") < step_ids.index("15_produce_operator_summary")
+    assert step_ids.index("15_produce_operator_summary") < step_ids.index("16_validate_operator_summary_schema")
     assert len(live_commands) == 1
     assert live_commands[0].step_id == "03_collect_read_only_live_receipt"
     assert "--target email-calendar" in live_commands[0].command
+    assert "--email-calendar-connector-id gmail" in live_commands[0].command
+    assert "--email-calendar-query newer_than:1d" in live_commands[0].command
     assert "produce_capability_adapter_live_receipts.py" in live_commands[0].command
+    assert "produce_finance_approval_operator_summary.py" in run.commands[14].command
+    assert "--strict --json" in run.commands[14].command
+    assert "validate_finance_approval_operator_summary_schema.py" in run.commands[15].command
+    assert "--strict --json" in run.commands[15].command
 
 
 def test_finance_live_handoff_closure_accepts_ready_local_evidence(tmp_path: Path) -> None:
@@ -74,7 +82,7 @@ def test_finance_live_handoff_closure_accepts_ready_local_evidence(tmp_path: Pat
     assert run.status == "ready"
     assert run.ready_to_execute_live is True
     assert run.blockers == ()
-    assert run.command_count == 14
+    assert run.command_count == 16
 
 
 def test_finance_live_handoff_closure_writer_and_cli_honor_strict(tmp_path: Path, capsys) -> None:

@@ -3,7 +3,8 @@
 
 Purpose: reject malformed or unsafe finance live handoff closure run records.
 Governance scope: closure-run schema validation, dry-run enforcement, command
-ordering, live connector touchpoint boundary, and readiness/blocker consistency.
+ordering, live connector touchpoint boundary, readiness/blocker consistency,
+and operator summary completion.
 Dependencies: schemas/finance_approval_live_handoff_closure_run.schema.json and
 .change_assurance/finance_approval_live_handoff_closure_run.json.
 Invariants:
@@ -11,6 +12,7 @@ Invariants:
   - Closure run mode remains dry-run.
   - Binding validation precedes live receipt collection.
   - Exactly one live connector touchpoint is declared.
+  - Promotion and operator-summary commands preserve strict readiness gates.
   - Status, blockers, and ready_to_execute_live remain mutually consistent.
 """
 
@@ -47,8 +49,39 @@ EXPECTED_STEP_IDS = (
     "12_validate_handoff_packet_schema",
     "13_validate_handoff_chain",
     "14_validate_handoff_chain_schema",
+    "15_produce_operator_summary",
+    "16_validate_operator_summary_schema",
 )
 LIVE_STEP_ID = "03_collect_read_only_live_receipt"
+REQUIRED_COMMAND_TOKENS_BY_STEP = {
+    "03_collect_read_only_live_receipt": (
+        "produce_capability_adapter_live_receipts.py",
+        "--target email-calendar",
+        "--strict",
+        "--json",
+    ),
+    "13_validate_handoff_chain": (
+        "validate_finance_approval_live_handoff_chain.py",
+        "--strict",
+        "--require-ready",
+        "--json",
+    ),
+    "14_validate_handoff_chain_schema": (
+        "validate_finance_approval_live_handoff_chain_schema.py",
+        "--strict",
+        "--json",
+    ),
+    "15_produce_operator_summary": (
+        "produce_finance_approval_operator_summary.py",
+        "--strict",
+        "--json",
+    ),
+    "16_validate_operator_summary_schema": (
+        "validate_finance_approval_operator_summary_schema.py",
+        "--strict",
+        "--json",
+    ),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,9 +181,11 @@ def _validate_command_sequence(closure_run: dict[str, Any], errors: list[str]) -
     if required_steps != EXPECTED_STEP_IDS:
         errors.append("all finance closure commands must be required_before_next=true")
     command_by_step = {str(command.get("step_id", "")): command for command in commands if isinstance(command, dict)}
-    live_command = command_by_step.get(LIVE_STEP_ID, {})
-    if "produce_capability_adapter_live_receipts.py --target email-calendar" not in str(live_command.get("command", "")):
-        errors.append("live receipt command must target email-calendar capability adapter")
+    for step_id, required_tokens in REQUIRED_COMMAND_TOKENS_BY_STEP.items():
+        command_text = str(command_by_step.get(step_id, {}).get("command", ""))
+        missing_tokens = [token for token in required_tokens if token not in command_text]
+        if missing_tokens:
+            errors.append(f"{step_id} command missing required tokens: {missing_tokens}")
 
 
 def _validation_result(

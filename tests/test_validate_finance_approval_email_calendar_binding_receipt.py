@@ -29,7 +29,7 @@ from scripts.validate_finance_approval_email_calendar_binding_receipt import (
 def test_validate_finance_binding_receipt_accepts_ready_receipt(tmp_path: Path) -> None:
     receipt_path = tmp_path / "finance-email-calendar-binding.json"
     receipt, emit_errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=lambda name: "present" if name == "EMAIL_CALENDAR_CONNECTOR_TOKEN" else "",
     )
     write_finance_email_calendar_binding_receipt(receipt, receipt_path)
 
@@ -38,8 +38,8 @@ def test_validate_finance_binding_receipt_accepts_ready_receipt(tmp_path: Path) 
     assert emit_errors == ()
     assert result.valid is True
     assert result.ready is True
-    assert result.binding_count == 3
-    assert result.present_binding_names == ("GMAIL_ACCESS_TOKEN",)
+    assert result.binding_count == 4
+    assert result.present_binding_names == ("EMAIL_CALENDAR_CONNECTOR_TOKEN",)
 
 
 def test_validate_finance_binding_receipt_allows_blocked_non_strict_receipt(tmp_path: Path) -> None:
@@ -52,7 +52,7 @@ def test_validate_finance_binding_receipt_allows_blocked_non_strict_receipt(tmp_
     assert emit_errors == ()
     assert result.valid is True
     assert result.ready is False
-    assert result.binding_count == 3
+    assert result.binding_count == 4
     assert result.present_binding_names == ()
 
 
@@ -75,7 +75,7 @@ def test_validate_finance_binding_receipt_require_ready_blocks_absent_tokens(tmp
 def test_validate_finance_binding_receipt_rejects_value_serialization(tmp_path: Path) -> None:
     receipt_path = tmp_path / "finance-email-calendar-binding.json"
     receipt, emit_errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=lambda name: "present" if name == "EMAIL_CALENDAR_CONNECTOR_TOKEN" else "",
     )
     payload = receipt.as_dict()
     payload["bindings"][0]["value_serialized"] = True
@@ -91,7 +91,7 @@ def test_validate_finance_binding_receipt_rejects_value_serialization(tmp_path: 
 def test_validate_finance_binding_receipt_rejects_present_name_drift(tmp_path: Path) -> None:
     receipt_path = tmp_path / "finance-email-calendar-binding.json"
     receipt, emit_errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=lambda name: "present" if name == "EMAIL_CALENDAR_CONNECTOR_TOKEN" else "",
     )
     payload = receipt.as_dict()
     payload["present_binding_names"] = []
@@ -108,7 +108,7 @@ def test_validate_finance_binding_receipt_rejects_present_name_drift(tmp_path: P
 def test_validate_finance_binding_receipt_cli_outputs_json(tmp_path: Path, capsys) -> None:
     receipt_path = tmp_path / "finance-email-calendar-binding.json"
     receipt, emit_errors = emit_finance_approval_email_calendar_binding_receipt(
-        env_reader=lambda name: "present" if name == "GMAIL_ACCESS_TOKEN" else "",
+        env_reader=lambda name: "present" if name == "EMAIL_CALENDAR_CONNECTOR_TOKEN" else "",
     )
     write_finance_email_calendar_binding_receipt(receipt, receipt_path)
 
@@ -120,7 +120,7 @@ def test_validate_finance_binding_receipt_cli_outputs_json(tmp_path: Path, capsy
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
-    assert payload["present_binding_names"] == ["GMAIL_ACCESS_TOKEN"]
+    assert payload["present_binding_names"] == ["EMAIL_CALENDAR_CONNECTOR_TOKEN"]
 
 
 def test_validate_finance_binding_receipt_missing_file_error_is_bounded(tmp_path: Path) -> None:

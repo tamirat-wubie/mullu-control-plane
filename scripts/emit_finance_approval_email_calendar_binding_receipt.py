@@ -32,6 +32,7 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "finance_approval_email_calendar_binding_receipt.schema.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "finance_approval_email_calendar_binding_receipt.json"
 ACCEPTED_BINDING_NAMES = (
+    "EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "GMAIL_ACCESS_TOKEN",
     "GOOGLE_CALENDAR_ACCESS_TOKEN",
     "MICROSOFT_GRAPH_ACCESS_TOKEN",

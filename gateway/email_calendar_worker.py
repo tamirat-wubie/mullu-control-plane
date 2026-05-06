@@ -22,8 +22,17 @@ import os
 from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import Response
+try:
+    from fastapi import FastAPI, HTTPException, Request
+    from fastapi.responses import Response
+
+    _FASTAPI_AVAILABLE = True
+except ModuleNotFoundError:
+    FastAPI = None  # type: ignore[assignment]
+    HTTPException = None  # type: ignore[assignment]
+    Request = Any  # type: ignore[assignment]
+    Response = None  # type: ignore[assignment]
+    _FASTAPI_AVAILABLE = False
 
 from gateway.capability_isolation import sign_capability_payload, verify_capability_signature
 from gateway.command_spine import canonical_hash
@@ -192,6 +201,7 @@ def create_email_calendar_worker_app(
     signing_secret: str | None = None,
 ) -> FastAPI:
     """Create the restricted email/calendar worker FastAPI app."""
+    _require_fastapi()
     secret = signing_secret if signing_secret is not None else os.environ.get("MULLU_EMAIL_CALENDAR_WORKER_SECRET", "")
     if not secret:
         raise ValueError("email/calendar worker signing secret is required")
@@ -435,6 +445,11 @@ def _sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
 
 
+def _require_fastapi() -> None:
+    if not _FASTAPI_AVAILABLE:
+        raise RuntimeError("fastapi is required to create the email/calendar worker HTTP app")
+
+
 def _default_app() -> FastAPI:
     environment = os.environ.get("MULLU_ENV", "local_dev").strip().lower()
     secret = os.environ.get("MULLU_EMAIL_CALENDAR_WORKER_SECRET", "")
@@ -454,4 +469,4 @@ def _default_adapter() -> EmailCalendarConnectorAdapter | None:
     raise ValueError(f"unsupported email/calendar worker adapter: {adapter_name}")
 
 
-app = _default_app()
+app = _default_app() if _FASTAPI_AVAILABLE else None

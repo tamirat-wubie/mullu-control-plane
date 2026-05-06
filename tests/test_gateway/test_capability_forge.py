@@ -3,11 +3,13 @@
 Purpose: verify that candidate capability packages remain candidate-only,
     schema-backed, and promotion-blocked until governed certification.
 Governance scope: capability candidate generation, validation, schema contract,
-    sandbox evidence, approval controls, and recovery coverage.
+    sandbox evidence, approval controls, physical safety evidence requirements,
+    and recovery coverage.
 Dependencies: gateway.capability_forge and schemas/capability_candidate.schema.json.
 Invariants:
   - Candidate packages validate against the public schema.
   - Effect-bearing candidates require sandbox, receipt, and recovery evidence.
+  - Physical live-effect candidates declare live safety evidence requirements.
   - High-risk candidates require approval policy and injection evals.
   - Candidates cannot claim certified status or unblock their own promotion.
 """
@@ -50,6 +52,7 @@ def test_capability_forge_creates_schema_valid_candidate_package() -> None:
     assert schema["$id"] == "urn:mullusi:schema:capability-candidate:1"
     assert schema["properties"]["certification_status"]["const"] == "candidate"
     assert schema["properties"]["promotion_blocked"]["const"] is True
+    assert "promotion_evidence_requirements" in schema["required"]
     assert candidate.certification_status == "candidate"
     assert candidate.promotion_blocked is True
     assert candidate.package_hash
@@ -66,6 +69,44 @@ def test_capability_forge_projects_high_risk_controls() -> None:
     assert candidate.adapter.sandbox_required is True
     assert candidate.receipt_contract.terminal_certificate_required is True
     assert candidate.rollback_path.review_required is True
+
+
+def test_capability_forge_generates_physical_safety_evidence_requirements() -> None:
+    candidate = CapabilityForge().create_candidate(_physical_forge_input())
+    validation = CapabilityForge().validate(candidate)
+    requirements = {
+        requirement.evidence_key: requirement
+        for requirement in candidate.promotion_evidence_requirements
+        if requirement.evidence_type == "physical_live_safety"
+    }
+
+    assert validation.accepted is True
+    assert candidate.schemas.receipt_schema_ref == "urn:mullusi:schema:physical-action-receipt:1"
+    assert set(requirements) == set(_physical_live_safety_evidence_refs())
+    assert all(requirement.required is True for requirement in requirements.values())
+    assert all(
+        requirement.schema_ref == "urn:mullusi:schema:physical-action-receipt:1"
+        for requirement in requirements.values()
+    )
+    assert "physical_action_receipt_ref" in requirements
+    assert "emergency_stop_ref" in requirements
+
+
+def test_capability_forge_rejects_physical_candidate_missing_safety_requirement() -> None:
+    candidate = CapabilityForge().create_candidate(_physical_forge_input())
+    unsafe = replace(
+        candidate,
+        promotion_evidence_requirements=[
+            requirement
+            for requirement in candidate.promotion_evidence_requirements
+            if requirement.evidence_key != "simulation_ref"
+        ],
+    )
+    validation = CapabilityForge().validate(unsafe)
+
+    assert validation.accepted is False
+    assert validation.reason == "candidate_invalid"
+    assert "missing_physical_safety_evidence_requirement:simulation_ref" in validation.errors
 
 
 def test_capability_forge_builds_certification_handoff_for_maturity_synthesis() -> None:
@@ -85,6 +126,22 @@ def test_capability_forge_builds_certification_handoff_for_maturity_synthesis() 
     assert extension["live_write_receipt_valid"] is True
     assert "proof://payments.send/worker" in handoff.required_evidence_refs
     assert handoff.handoff_hash
+
+
+def test_capability_forge_installs_physical_safety_refs_from_handoff() -> None:
+    candidate = CapabilityForge().create_candidate(_physical_forge_input())
+    handoff = _physical_certification_handoff(candidate)
+    entry = _registry_entry_for_candidate(candidate)
+
+    installed = install_certification_handoff_evidence(entry, handoff, require_production_ready=True)
+    physical_evidence = installed.extensions["physical_live_safety_evidence"]
+
+    assert physical_evidence["physical_action_receipt_schema_ref"] == "urn:mullusi:schema:physical-action-receipt:1"
+    assert physical_evidence["simulation_ref"] == "proof://physical.unlock_door/simulation"
+    assert physical_evidence["emergency_stop_ref"] == "proof://physical.unlock_door/emergency-stop"
+    assert "proof://physical.unlock_door/sensor-confirmation" in handoff.required_evidence_refs
+    assert "capability_certification_evidence" in installed.extensions
+    assert "capability_maturity_evidence" not in installed.extensions
 
 
 def test_capability_forge_installs_handoff_as_certification_evidence_only() -> None:
@@ -196,6 +253,17 @@ def test_capability_forge_certification_handoff_rejects_missing_required_refs() 
             worker_deployment_ref="proof://payments.send/worker",
             recovery_evidence_ref="proof://payments.send/recovery",
         )
+    with pytest.raises(
+        ValueError,
+        match="^physical_live_safety_evidence_refs_incomplete:physical_action_receipt_ref,simulation_ref,",
+    ):
+        CapabilityForge().build_certification_handoff(
+            CapabilityForge().create_candidate(_physical_forge_input()),
+            live_read_receipt_ref="proof://physical.unlock_door/live-read",
+            live_write_receipt_ref="proof://physical.unlock_door/live-write",
+            worker_deployment_ref="proof://physical.unlock_door/worker",
+            recovery_evidence_ref="proof://physical.unlock_door/recovery",
+        )
 
 
 def test_capability_forge_rejects_candidate_self_promotion() -> None:
@@ -265,6 +333,23 @@ def _forge_input() -> CapabilityForgeInput:
     )
 
 
+def _physical_forge_input() -> CapabilityForgeInput:
+    return CapabilityForgeInput(
+        capability_id="physical.unlock_door",
+        version="0.1.0",
+        domain="physical",
+        risk="high",
+        side_effects=("physical_actuator_command",),
+        api_docs_ref="docs/providers/physical-control.md",
+        input_schema_ref="schemas/physical/unlock_door.input.schema.json",
+        output_schema_ref="urn:mullusi:schema:physical-action-receipt:1",
+        owner_team="physical-safety",
+        network_allowlist=("physical-control.internal",),
+        secret_scope="physical_live_control",
+        requires_approval=True,
+    )
+
+
 def _certification_handoff(candidate) -> CapabilityCertificationHandoff:
     return CapabilityForge().build_certification_handoff(
         candidate,
@@ -273,6 +358,29 @@ def _certification_handoff(candidate) -> CapabilityCertificationHandoff:
         worker_deployment_ref="proof://payments.send/worker",
         recovery_evidence_ref="proof://payments.send/recovery",
     )
+
+
+def _physical_certification_handoff(candidate) -> CapabilityCertificationHandoff:
+    return CapabilityForge().build_certification_handoff(
+        candidate,
+        live_read_receipt_ref="proof://physical.unlock_door/live-read",
+        live_write_receipt_ref="proof://physical.unlock_door/live-write",
+        worker_deployment_ref="proof://physical.unlock_door/worker",
+        recovery_evidence_ref="proof://physical.unlock_door/recovery",
+        physical_live_safety_evidence_refs=_physical_live_safety_evidence_refs(),
+    )
+
+
+def _physical_live_safety_evidence_refs() -> dict[str, str]:
+    return {
+        "physical_action_receipt_ref": "proof://physical.unlock_door/action-receipt",
+        "simulation_ref": "proof://physical.unlock_door/simulation",
+        "operator_approval_ref": "proof://physical.unlock_door/operator-approval",
+        "manual_override_ref": "proof://physical.unlock_door/manual-override",
+        "emergency_stop_ref": "proof://physical.unlock_door/emergency-stop",
+        "sensor_confirmation_ref": "proof://physical.unlock_door/sensor-confirmation",
+        "deployment_witness_ref": "proof://physical.unlock_door/deployment-witness",
+    }
 
 
 def _registry_entry_for_candidate(candidate) -> CapabilityRegistryEntry:

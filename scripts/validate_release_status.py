@@ -108,6 +108,8 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/validate_general_agent_promotion_closure_plan.py --output .change_assurance/general_agent_promotion_closure_plan_validation.json --strict",
     "python scripts/preflight_general_agent_promotion_handoff.py --output .change_assurance/general_agent_promotion_handoff_preflight.json --strict --json",
     "python scripts/validate_general_agent_promotion_handoff_preflight.py --report .change_assurance/general_agent_promotion_handoff_preflight.json --require-ready --json",
+    "python scripts/validate_mil_audit_runbook_operator_checklist.py --checklist examples/mil_audit_runbook_operator_checklist.json --json",
+    "python -m pytest tests/test_preflight_mil_audit_runbook_workflow.py tests/test_validate_mil_audit_runbook_operator_checklist.py -q",
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
 )
 

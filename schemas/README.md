@@ -45,8 +45,11 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `finance_approval_live_handoff_closure_run.schema.json` | Canonical dry-run command sequence for finance approval live handoff closure |
 | `finance_approval_live_handoff_plan.schema.json` | Canonical finance approval live email handoff promotion plan |
 | `finance_approval_live_handoff_preflight.schema.json` | Canonical four-step preflight report for finance approval live handoff readiness |
+| `finance_approval_operator_summary.schema.json` | Canonical redacted finance operator summary for packet and chain readiness |
 | `finance_approval_packet_proof.schema.json` | Canonical proof export for governed finance approval packet closure or review |
+| `operator_control_tower_snapshot.schema.json` | Canonical read-only operator control tower snapshot across governed platform panels |
 | `physical_action_receipt.schema.json` | Canonical no-effect physical action safety receipt |
+| `physical_capability_promotion_receipt.schema.json` | Canonical operator receipt binding physical Forge requirements, handoff refs, registry safety evidence, and preflight readiness |
 | `general_agent_promotion_closure_plan.schema.json` | Canonical promotion closure action plan |
 | `general_agent_promotion_environment_bindings.schema.json` | Canonical presence-only operator environment binding contract |
 | `general_agent_promotion_environment_binding_receipt.schema.json` | Canonical presence-only operator environment binding receipt |
@@ -75,6 +78,8 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `trust_ledger_bundle.schema.json` | Canonical signed evidence bundle for terminal closure anchoring |
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
+| `low_code_builder_catalog.schema.json` | Canonical declarative low-code builder catalog snapshot |
+| `marketplace_sdk_catalog.schema.json` | Canonical governed marketplace and SDK catalog snapshot |
 | `memory_lattice.schema.json` | Canonical memory planning and execution admission claim |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation admission receipt |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |

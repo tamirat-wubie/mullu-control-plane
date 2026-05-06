@@ -107,6 +107,12 @@
       "surface": "case_management"
     },
     {
+      "schema_id": "operator-control-tower-snapshot",
+      "path": "schemas/operator_control_tower_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:operator-control-tower-snapshot:1",
+      "surface": "operator"
+    },
+    {
       "schema_id": "communication-message",
       "path": "schemas/communication_message.schema.json",
       "urn": "urn:mullusi:schema:communication-message:1",
@@ -293,6 +299,12 @@
       "surface": "finance"
     },
     {
+      "schema_id": "finance-approval-operator-summary",
+      "path": "schemas/finance_approval_operator_summary.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-operator-summary:1",
+      "surface": "finance"
+    },
+    {
       "schema_id": "finance-approval-email-calendar-binding-receipt",
       "path": "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1",
@@ -315,6 +327,18 @@
       "path": "schemas/learning_admission.schema.json",
       "urn": "urn:mullusi:schema:learning-admission:1",
       "surface": "learning"
+    },
+    {
+      "schema_id": "low-code-builder-catalog",
+      "path": "schemas/low_code_builder_catalog.schema.json",
+      "urn": "urn:mullusi:schema:low-code-builder-catalog:1",
+      "surface": "builder"
+    },
+    {
+      "schema_id": "marketplace-sdk-catalog",
+      "path": "schemas/marketplace_sdk_catalog.schema.json",
+      "urn": "urn:mullusi:schema:marketplace-sdk-catalog:1",
+      "surface": "marketplace"
     },
     {
       "schema_id": "memory-lattice",
@@ -374,6 +398,12 @@
       "schema_id": "physical-action-receipt",
       "path": "schemas/physical_action_receipt.schema.json",
       "urn": "urn:mullusi:schema:physical-action-receipt:1",
+      "surface": "safety"
+    },
+    {
+      "schema_id": "physical-capability-promotion-receipt",
+      "path": "schemas/physical_capability_promotion_receipt.schema.json",
+      "urn": "urn:mullusi:schema:physical-capability-promotion-receipt:1",
       "surface": "safety"
     },
     {

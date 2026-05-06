@@ -7,6 +7,8 @@ Invariants:
   - Published claims require health, runtime witness, conformance certificate,
     and signature proof.
   - Missing signature secrets keep the witness in not-published state.
+  - Live physical capability claims require safety evidence; sandbox physical
+    claims remain non-production.
   - CLI writes structured witness JSON for operator review.
 """
 
@@ -17,15 +19,19 @@ from pathlib import Path
 from typing import Any
 
 from scripts.collect_deployment_witness import (
+    REQUIRED_PHYSICAL_LIVE_EVIDENCE_FIELDS,
     collect_deployment_witness,
     main,
     write_deployment_witness,
+    _evaluate_physical_capability_policy,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
+CAPABILITY_EVIDENCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "capability_evidence_endpoint.schema.json"
+PRODUCTION_EVIDENCE_SCHEMA_PATH = REPO_ROOT / "schemas" / "production_evidence_witness.schema.json"
 
 
 class StubHttpResponse:
@@ -175,6 +181,160 @@ def test_collect_deployment_witness_requires_production_evidence_plane(monkeypat
     assert any(step.name == "capability evidence endpoint" for step in witness.steps)
     assert any(step.name == "audit verification endpoint" for step in witness.steps)
     assert any(step.name == "proof verification endpoint" for step in witness.steps)
+
+
+def test_collect_deployment_witness_rejects_live_physical_capability_without_safety_evidence(
+    monkeypatch,
+) -> None:
+    secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    deployment_secret = "deployment-secret"
+    witness_payload = _signed_runtime_witness(secret=secret)
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+    production_payload = _signed_production_evidence_witness(
+        secret=deployment_secret,
+        overrides={
+            "capability_evidence": {"physical.unlock_door": "production"},
+            "live_capabilities": ["physical.unlock_door"],
+            "sandbox_only_capabilities": [],
+        },
+    )
+    capability_payload = _capability_evidence_endpoint_payload(
+        capability_evidence={"physical.unlock_door": "production"},
+        live_capabilities=["physical.unlock_door"],
+        sandbox_only_capabilities=[],
+    )
+    _install_production_evidence_urlopen(
+        monkeypatch,
+        witness_payload=witness_payload,
+        conformance_payload=conformance_payload,
+        production_payload=production_payload,
+        capability_payload=capability_payload,
+    )
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=secret,
+        conformance_secret=conformance_secret,
+        deployment_witness_secret=deployment_secret,
+        expected_environment="pilot",
+        require_production_evidence=True,
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    production_step = next(step for step in witness.steps if step.name == "production evidence witness")
+    capability_step = next(step for step in witness.steps if step.name == "capability evidence endpoint")
+
+    assert witness.deployment_claim == "not-published"
+    assert production_step.passed is False
+    assert capability_step.passed is False
+    assert "physical.unlock_door:physical_live_safety_evidence_required" in production_step.detail
+    assert "physical.unlock_door:physical_live_safety_evidence_required" in capability_step.detail
+    assert "production evidence witness includes live physical capability without safety evidence" in witness.errors
+    assert "capability evidence endpoint includes live physical capability without safety evidence" in witness.errors
+
+
+def test_collect_deployment_witness_allows_sandbox_physical_capability_without_live_claim(
+    monkeypatch,
+) -> None:
+    secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    deployment_secret = "deployment-secret"
+    witness_payload = _signed_runtime_witness(secret=secret)
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+    production_payload = _signed_production_evidence_witness(
+        secret=deployment_secret,
+        overrides={
+            "capability_evidence": {
+                "rag.query": "production",
+                "physical.sandbox_replay": "sandbox",
+            },
+            "live_capabilities": ["rag.query"],
+            "sandbox_only_capabilities": ["physical.sandbox_replay"],
+        },
+    )
+    capability_payload = _capability_evidence_endpoint_payload(
+        capability_evidence={
+            "rag.query": "production",
+            "physical.sandbox_replay": "sandbox",
+        },
+        live_capabilities=["rag.query"],
+        sandbox_only_capabilities=["physical.sandbox_replay"],
+    )
+    _install_production_evidence_urlopen(
+        monkeypatch,
+        witness_payload=witness_payload,
+        conformance_payload=conformance_payload,
+        production_payload=production_payload,
+        capability_payload=capability_payload,
+    )
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=secret,
+        conformance_secret=conformance_secret,
+        deployment_witness_secret=deployment_secret,
+        expected_environment="pilot",
+        require_production_evidence=True,
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    capability_step = next(step for step in witness.steps if step.name == "capability evidence endpoint")
+
+    assert witness.deployment_claim == "published"
+    assert capability_step.passed is True
+    assert "sandbox_physical_capabilities=['physical.sandbox_replay']" in capability_step.detail
+    assert "physical_policy_passed=True" in capability_step.detail
+    assert not witness.errors
+
+
+def test_collect_deployment_witness_allows_live_physical_capability_with_safety_evidence(
+    monkeypatch,
+) -> None:
+    secret = "runtime-secret"
+    conformance_secret = "conformance-secret"
+    deployment_secret = "deployment-secret"
+    physical_evidence = _physical_live_evidence()
+    witness_payload = _signed_runtime_witness(secret=secret)
+    conformance_payload = _signed_conformance_certificate(secret=conformance_secret)
+    production_payload = _signed_production_evidence_witness(
+        secret=deployment_secret,
+        overrides={
+            "capability_evidence": {"physical.unlock_door": physical_evidence},
+            "live_capabilities": ["physical.unlock_door"],
+            "sandbox_only_capabilities": [],
+        },
+    )
+    capability_payload = _capability_evidence_endpoint_payload(
+        capability_evidence={"physical.unlock_door": physical_evidence},
+        live_capabilities=["physical.unlock_door"],
+        sandbox_only_capabilities=[],
+    )
+    _install_production_evidence_urlopen(
+        monkeypatch,
+        witness_payload=witness_payload,
+        conformance_payload=conformance_payload,
+        production_payload=production_payload,
+        capability_payload=capability_payload,
+    )
+
+    witness = collect_deployment_witness(
+        gateway_url="https://gateway.example",
+        witness_secret=secret,
+        conformance_secret=conformance_secret,
+        deployment_witness_secret=deployment_secret,
+        expected_environment="pilot",
+        require_production_evidence=True,
+        clock=lambda: "2026-04-25T00:00:00+00:00",
+    )
+    production_step = next(step for step in witness.steps if step.name == "production evidence witness")
+    capability_step = next(step for step in witness.steps if step.name == "capability evidence endpoint")
+
+    assert witness.deployment_claim == "published"
+    assert production_step.passed is True
+    assert capability_step.passed is True
+    assert "live_physical_capabilities=['physical.unlock_door']" in production_step.detail
+    assert "physical_policy_passed=True" in capability_step.detail
+    assert _validate_schema_instance(_load_schema(PRODUCTION_EVIDENCE_SCHEMA_PATH), production_payload) == []
+    assert _validate_schema_instance(_load_schema(CAPABILITY_EVIDENCE_SCHEMA_PATH), capability_payload) == []
 
 
 def test_collect_deployment_witness_rejects_missing_production_evidence_secret(monkeypatch) -> None:
@@ -585,6 +745,59 @@ def test_collect_deployment_witness_rejects_missing_physical_worker_canary(monke
     assert "runtime conformance certificate is missing acceptable production evidence" in witness.errors
 
 
+def test_physical_capability_policy_allows_sandbox_only_physical_capability() -> None:
+    policy = _evaluate_physical_capability_policy(
+        {
+            "live_capabilities": ["rag.query"],
+            "sandbox_only_capabilities": ["physical.arm.move", "iot.sensor.read"],
+            "checks": [],
+        }
+    )
+
+    assert policy.passed is True
+    assert policy.live_physical_capabilities == ()
+    assert policy.sandbox_physical_capabilities == ("physical.arm.move", "iot.sensor.read")
+    assert policy.blockers == ()
+
+
+def test_physical_capability_policy_blocks_live_physical_without_safety_evidence() -> None:
+    policy = _evaluate_physical_capability_policy(
+        {
+            "live_capabilities": ["physical.arm.move"],
+            "sandbox_only_capabilities": ["physical.arm.simulate"],
+            "checks": [],
+        }
+    )
+
+    assert policy.passed is False
+    assert policy.live_physical_capabilities == ("physical.arm.move",)
+    assert policy.sandbox_physical_capabilities == ("physical.arm.simulate",)
+    assert policy.blockers == ("physical.arm.move:physical_live_safety_evidence_required",)
+
+
+def test_physical_capability_policy_accepts_live_physical_with_passed_safety_checks() -> None:
+    policy = _evaluate_physical_capability_policy(
+        {
+            "live_capabilities": ["robotics.gripper.close"],
+            "sandbox_only_capabilities": [],
+            "capability_evidence": {
+                "robotics.gripper.close": {
+                    "maturity": "production",
+                    "effect_mode": "live",
+                    "production_admissible": True,
+                    "physical_action_receipt_schema_ref": "urn:mullusi:schema:physical-action-receipt:1",
+                    **{field_name: f"{field_name}:ref" for field_name in REQUIRED_PHYSICAL_LIVE_EVIDENCE_FIELDS},
+                }
+            },
+        }
+    )
+
+    assert policy.passed is True
+    assert policy.live_physical_capabilities == ("robotics.gripper.close",)
+    assert policy.sandbox_physical_capabilities == ()
+    assert policy.blockers == ()
+
+
 def test_collect_deployment_witness_reports_health_body_by_digest_only(monkeypatch) -> None:
     witness_secret = "runtime-secret"
     conformance_secret = "conformance-secret"
@@ -886,7 +1099,11 @@ def _signed_conformance_certificate(
     return {**payload, "signature": f"hmac-sha256:{signature}"}
 
 
-def _signed_production_evidence_witness(*, secret: str) -> dict[str, Any]:
+def _signed_production_evidence_witness(
+    *,
+    secret: str,
+    overrides: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "deployment_id": "dep_001",
         "commit_sha": "abc123",
@@ -913,6 +1130,8 @@ def _signed_production_evidence_witness(*, secret: str) -> dict[str, Any]:
         "witness": "mullu_gateway_production_evidence_v1",
         "signature_key_id": "deployment-witness-test",
     }
+    if overrides:
+        payload.update(overrides)
     import hashlib
     import hmac
 
@@ -924,3 +1143,107 @@ def _signed_production_evidence_witness(*, secret: str) -> dict[str, Any]:
         hashlib.sha256,
     ).hexdigest()
     return {**payload, "claim_hash": claim_hash, "signature": f"hmac-sha256:{signature}"}
+
+
+def _capability_evidence_endpoint_payload(
+    *,
+    capability_evidence: dict[str, Any] | None = None,
+    live_capabilities: list[str] | None = None,
+    sandbox_only_capabilities: list[str] | None = None,
+) -> dict[str, Any]:
+    evidence = capability_evidence or {"rag.query": "production"}
+    return {
+        "runtime_env": "pilot",
+        "commit_sha": "abc123",
+        "deployment_id": "dep_001",
+        "enabled": True,
+        "capability_count": len(evidence),
+        "capability_evidence": evidence,
+        "live_capabilities": live_capabilities if live_capabilities is not None else ["rag.query"],
+        "sandbox_only_capabilities": (
+            sandbox_only_capabilities
+            if sandbox_only_capabilities is not None
+            else []
+        ),
+        "checks": [
+            {
+                "check_id": "capability_registry_configured",
+                "passed": True,
+                "detail": f"capability_count={len(evidence)}",
+            }
+        ],
+    }
+
+
+def _physical_live_evidence() -> dict[str, Any]:
+    return {
+        "maturity": "production",
+        "effect_mode": "live",
+        "production_admissible": True,
+        "physical_action_receipt_schema_ref": "urn:mullusi:schema:physical-action-receipt:1",
+        "physical_action_receipt_ref": "physical-action-receipt-0123456789abcdef",
+        "simulation_ref": "proof://physical/simulation-pass",
+        "operator_approval_ref": "approval:physical-live",
+        "manual_override_ref": "manual-override:physical-live",
+        "emergency_stop_ref": "emergency-stop:physical-live",
+        "sensor_confirmation_ref": "sensor-confirmation:physical-live",
+        "deployment_witness_ref": "deployment-witness:physical-live",
+    }
+
+
+def _install_production_evidence_urlopen(
+    monkeypatch,
+    *,
+    witness_payload: dict[str, Any],
+    conformance_payload: dict[str, Any],
+    production_payload: dict[str, Any],
+    capability_payload: dict[str, Any],
+) -> None:
+    def fake_urlopen(url, timeout):
+        if str(url).endswith("/health"):
+            return StubHttpResponse(status=200, payload={"status": "healthy"})
+        if str(url).endswith("/gateway/witness"):
+            return StubHttpResponse(status=200, payload=witness_payload)
+        if str(url).endswith("/runtime/conformance"):
+            return StubHttpResponse(status=200, payload=conformance_payload)
+        if str(url).endswith("/deployment/witness"):
+            return StubHttpResponse(status=200, payload=production_payload)
+        if str(url).endswith("/capabilities/evidence"):
+            return StubHttpResponse(status=200, payload=capability_payload)
+        if str(url).endswith("/audit/verify"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "valid": True,
+                    "reason": "verified",
+                    "entries_checked": 3,
+                    "latest_anchor_id": "cmd-anchor-1",
+                    "last_hash": "a" * 16,
+                    "unanchored_event_count": 0,
+                    "governed": True,
+                },
+            )
+        if str(url).endswith("/proof/verify"):
+            return StubHttpResponse(
+                status=200,
+                payload={
+                    "valid": True,
+                    "runtime_env": "pilot",
+                    "deployment_id": "dep_001",
+                    "commit_sha": "abc123",
+                    "checks": [
+                        {
+                            "check_id": "audit_anchor_verification",
+                            "passed": True,
+                            "detail": "verified",
+                        }
+                    ],
+                    "checks_passed": ["audit_anchor_verification"],
+                    "checks_missing": [],
+                    "terminal_status": "verified",
+                    "governed": True,
+                },
+            )
+        raise AssertionError(f"unexpected URL {url}")
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)

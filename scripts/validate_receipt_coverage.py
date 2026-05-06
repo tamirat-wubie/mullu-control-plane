@@ -27,6 +27,10 @@ Coverage rules (matching the actual deployed middleware filters):
         Path starts with a certified prefix in
         mcoi_runtime.app.musia_receipt_middleware::MusiaReceiptMiddleware.
 
+    DIRECT_RECEIPT
+        Path is an operator receipt-emission endpoint that directly returns
+        and stores a governed receipt as its state transition artifact.
+
     EXCLUDED
         Path matches an entry in EXCLUSIONS below, with a written
         justification. Excluded routes are read-only-equivalent or
@@ -88,6 +92,17 @@ GATEWAY_CERTIFIED_PREFIXES = (
 # The pre-existing MUSIA route debt remains intentionally visible in
 # UNCOVERED until a dedicated coverage ratchet slice moves it down.
 MUSIA_CERTIFIED_PREFIXES = ("/software/receipts/",)
+
+# Direct receipt emitters: route_path -> justification.
+# These routes are state-mutating, but their mutation is the governed
+# receipt ledger entry they emit and return to the caller.
+DIRECT_RECEIPT_ROUTES: dict[str, str] = {
+    "/operator/physical-capability-promotion-receipts": (
+        "Operator physical capability promotion emits a "
+        "PhysicalCapabilityPromotionReceipt, stores it in the in-memory "
+        "operator ledger, and returns both receipt_id and receipt payload."
+    ),
+}
 
 # Methods considered state-mutating. GET/HEAD/OPTIONS are read-only by
 # REST convention and produce no governed transition.
@@ -159,6 +174,8 @@ def classify(method: str, full_path: str) -> str:
     """Return one of the middleware/exclusion/coverage buckets."""
     if full_path in EXCLUSIONS:
         return "EXCLUDED"
+    if full_path in DIRECT_RECEIPT_ROUTES:
+        return "DIRECT_RECEIPT"
     if full_path.startswith("/api/") and full_path not in MCOI_EXEMPT_PATHS:
         return "MIDDLEWARE_API"
     if any(full_path.startswith(p) for p in GATEWAY_CERTIFIED_PREFIXES):
@@ -182,6 +199,7 @@ def compute_buckets() -> dict[str, list[tuple[str, str, str]]]:
         "MIDDLEWARE_API": [],
         "MIDDLEWARE_GATEWAY": [],
         "MIDDLEWARE_MUSIA": [],
+        "DIRECT_RECEIPT": [],
         "EXCLUDED": [],
         "UNCOVERED": [],
     }
@@ -210,7 +228,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Scanned {len(collect_source_files())} source files.")
     print(f"State-mutating routes (POST/PUT/PATCH/DELETE): {total_mutating}\n")
 
-    for name in ("MIDDLEWARE_API", "MIDDLEWARE_GATEWAY", "MIDDLEWARE_MUSIA", "EXCLUDED", "UNCOVERED"):
+    for name in (
+        "MIDDLEWARE_API",
+        "MIDDLEWARE_GATEWAY",
+        "MIDDLEWARE_MUSIA",
+        "DIRECT_RECEIPT",
+        "EXCLUDED",
+        "UNCOVERED",
+    ):
         items = buckets[name]
         print(f"--- {name} ({len(items)}) ---")
         for method, path, src in sorted(items):
@@ -237,6 +262,7 @@ def main(argv: list[str] | None = None) -> int:
         f"({len(buckets['MIDDLEWARE_API'])} via /api/, "
         f"{len(buckets['MIDDLEWARE_GATEWAY'])} via gateway, "
         f"{len(buckets['MIDDLEWARE_MUSIA'])} via musia receipt middleware, "
+        f"{len(buckets['DIRECT_RECEIPT'])} direct receipt emitter(s), "
         f"{len(buckets['EXCLUDED'])} excluded)."
     )
     return 0

@@ -148,7 +148,8 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             action_type="credential",
             command=(
                 "Bind one scoped read-capable connector token in the governed worker secret store: "
-                "GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, or MICROSOFT_GRAPH_ACCESS_TOKEN. "
+                "EMAIL_CALENDAR_CONNECTOR_TOKEN, GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, "
+                "or MICROSOFT_GRAPH_ACCESS_TOKEN. "
                 "Then run python scripts/emit_finance_approval_email_calendar_binding_receipt.py --strict"
             ),
             verification_command=(
@@ -170,7 +171,10 @@ def _action_for(blocker: str) -> FinanceLiveHandoffAction:
             action_id="finance-email-calendar-read-only-live-receipt",
             blocker=blocker,
             action_type="live-receipt",
-            command="python scripts/produce_capability_adapter_live_receipts.py --target email-calendar --strict",
+            command=(
+                "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar "
+                "--email-calendar-connector-id <connector_id> --email-calendar-query <read_only_query> --strict"
+            ),
             verification_command=(
                 "python scripts/validate_finance_approval_email_calendar_live_receipt.py "
                 "--require-ready --json && "

@@ -158,6 +158,7 @@ def build_email_calendar_adapter_from_env() -> HttpEmailCalendarAdapter | None:
         raise ValueError(f"unsupported email/calendar worker adapter: {adapter_name}")
 
     credentials: dict[str, ConnectorCredential] = {}
+    generic_token = os.environ.get("EMAIL_CALENDAR_CONNECTOR_TOKEN", "").strip()
     gmail_token = os.environ.get("GMAIL_ACCESS_TOKEN", "").strip()
     if gmail_token:
         credentials["gmail"] = ConnectorCredential(
@@ -182,7 +183,38 @@ def build_email_calendar_adapter_from_env() -> HttpEmailCalendarAdapter | None:
             base_url=os.environ.get("MICROSOFT_GRAPH_API_BASE_URL", "https://graph.microsoft.com").rstrip("/"),
             scope_id=os.environ.get("MICROSOFT_GRAPH_SCOPE_ID", "oauth:microsoft_graph"),
         )
+    if generic_token:
+        connector_id = os.environ.get("EMAIL_CALENDAR_CONNECTOR_ID", "gmail").strip()
+        if connector_id not in {"gmail", "google_calendar", "microsoft_graph"}:
+            raise ValueError("EMAIL_CALENDAR_CONNECTOR_ID is unsupported")
+        if connector_id not in credentials:
+            credentials[connector_id] = _generic_connector_credential(connector_id, generic_token)
     return HttpEmailCalendarAdapter(credentials=credentials)
+
+
+def _generic_connector_credential(connector_id: str, access_token: str) -> ConnectorCredential:
+    if connector_id == "gmail":
+        return ConnectorCredential(
+            connector_id="gmail",
+            access_token=access_token,
+            base_url=os.environ.get("GMAIL_API_BASE_URL", "https://gmail.googleapis.com").rstrip("/"),
+            scope_id=os.environ.get("EMAIL_CALENDAR_CONNECTOR_SCOPE_ID", "governed:gmail"),
+        )
+    if connector_id == "google_calendar":
+        return ConnectorCredential(
+            connector_id="google_calendar",
+            access_token=access_token,
+            base_url=os.environ.get("GOOGLE_CALENDAR_API_BASE_URL", "https://www.googleapis.com").rstrip("/"),
+            scope_id=os.environ.get("EMAIL_CALENDAR_CONNECTOR_SCOPE_ID", "governed:google_calendar"),
+        )
+    if connector_id == "microsoft_graph":
+        return ConnectorCredential(
+            connector_id="microsoft_graph",
+            access_token=access_token,
+            base_url=os.environ.get("MICROSOFT_GRAPH_API_BASE_URL", "https://graph.microsoft.com").rstrip("/"),
+            scope_id=os.environ.get("EMAIL_CALENDAR_CONNECTOR_SCOPE_ID", "governed:microsoft_graph"),
+        )
+    raise ValueError("connector is unsupported")
 
 
 def _operation_for(

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-control-tower-snapshot:1",
+  "title": "OperatorControlTowerSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tower_id",
+    "tenant_id",
+    "generated_at",
+    "panels",
+    "signals",
+    "overall_health",
+    "panel_count",
+    "missing_panel_count",
+    "degraded_panel_count",
+    "critical_signal_count",
+    "raw_tool_surface_exposed",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "tower_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "panels": {"type": "array", "items": {"$ref": "#/$defs/panel_state"}},
+    "signals": {"type": "array", "items": {"$ref": "#/$defs/signal"}},
+    "overall_health": {"$ref": "#/$defs/health"},
+    "panel_count": {"type": "integer", "minimum": 0},
+    "missing_panel_count": {"type": "integer", "minimum": 0},
+    "degraded_panel_count": {"type": "integer", "minimum": 0},
+    "critical_signal_count": {"type": "integer", "minimum": 0},
+    "raw_tool_surface_exposed": {"type": "boolean", "const": false},
+    "snapshot_hash": {"type": "string", "minLength": 32}
+  },
+  "$defs": {
+    "panel": {
+      "type": "string",
+      "enum": [
+        "live_runs",
+        "approvals",
+        "risk_queue",
+        "budget_center",
+        "tenant_admin",
+        "capability_health",
+        "workflow_monitor",
+        "incident_center",
+        "proof_explorer",
+        "audit_explorer",
+        "deployment_witness",
+        "policy_studio",
+        "learning_queue",
+        "compliance_center",
+        "commercial_center"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["info", "warning", "critical"]
+    },
+    "health": {
+      "type": "string",
+      "enum": ["ok", "degraded", "missing"]
+    },
+    "signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_id",
+        "panel",
+        "severity",
+        "reason",
+        "evidence_refs",
+        "signal_hash"
+      ],
+      "properties": {
+        "signal_id": {"type": "string", "minLength": 1},
+        "panel": {"$ref": "#/$defs/panel"},
+        "severity": {"$ref": "#/$defs/severity"},
+        "reason": {"type": "string", "minLength": 1},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "signal_hash": {"type": "string", "minLength": 32}
+      }
+    },
+    "panel_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "panel",
+        "source_surface",
+        "health",
+        "item_count",
+        "freshness_seconds",
+        "signal_count",
+        "blocked_count",
+        "review_count",
+        "evidence_refs",
+        "panel_hash",
+        "metadata"
+      ],
+      "properties": {
+        "panel": {"$ref": "#/$defs/panel"},
+        "source_surface": {"type": "string", "minLength": 1},
+        "health": {"$ref": "#/$defs/health"},
+        "item_count": {"type": "integer", "minimum": 0},
+        "freshness_seconds": {"type": "integer", "minimum": 0},
+        "signal_count": {"type": "integer", "minimum": 0},
+        "blocked_count": {"type": "integer", "minimum": 0},
+        "review_count": {"type": "integer", "minimum": 0},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "panel_hash": {"type": "string", "minLength": 32},
+        "metadata": {"type": "object"}
+      }
+    }
+  }
+}

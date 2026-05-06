@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:physical-capability-promotion-receipt:1",
+  "title": "Physical Capability Promotion Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "capability_id",
+    "candidate_package_id",
+    "candidate_package_hash",
+    "handoff_hash",
+    "installed_registry_capability_id",
+    "promotion_status",
+    "preflight_ready",
+    "preflight_readiness_level",
+    "preflight_blockers",
+    "forge_requirement_keys",
+    "handoff_required_evidence_refs",
+    "handoff_physical_safety_ref_keys",
+    "registry_physical_safety_evidence_present",
+    "registry_physical_safety_evidence_keys",
+    "registry_physical_safety_evidence_hash",
+    "evidence_refs",
+    "recorded_at",
+    "receipt_is_not_admission_authority",
+    "receipt_is_not_terminal_closure",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^physical-capability-promotion-receipt-[0-9a-f]{16}$"
+    },
+    "capability_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_package_hash": {
+      "type": "string",
+      "minLength": 32
+    },
+    "handoff_hash": {
+      "type": "string",
+      "minLength": 32
+    },
+    "installed_registry_capability_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "promotion_status": {
+      "type": "string",
+      "enum": ["ready", "blocked"]
+    },
+    "preflight_ready": {
+      "type": "boolean"
+    },
+    "preflight_readiness_level": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preflight_blockers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forge_requirement_keys": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "handoff_required_evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "handoff_physical_safety_ref_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "registry_physical_safety_evidence_present": {
+      "type": "boolean"
+    },
+    "registry_physical_safety_evidence_keys": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "registry_physical_safety_evidence_hash": {
+      "type": "string"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "recorded_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "receipt_is_not_admission_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_hash": {
+      "type": "string",
+      "minLength": 32
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "operator_receipt",
+        "no_effect_execution",
+        "preflight_result_bound",
+        "registry_extension_state_bound"
+      ],
+      "properties": {
+        "operator_receipt": {
+          "type": "boolean",
+          "const": true
+        },
+        "no_effect_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "preflight_result_bound": {
+          "type": "boolean",
+          "const": true
+        },
+        "registry_extension_state_bound": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

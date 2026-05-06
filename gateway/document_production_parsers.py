@@ -4,8 +4,8 @@ Purpose: register real parser implementations for PDF, DOCX, XLSX, and PPTX
 inputs when their runtime libraries are installed.
 Governance scope: deterministic extraction, dependency availability checks,
 structured table output, parser health reports, and fail-closed parse errors.
-Dependencies: mcoi artifact parser contracts and optional pypdf, python-docx,
-openpyxl, and python-pptx libraries.
+Dependencies: mcoi artifact parser contracts, optional pypdf/python-docx/
+openpyxl libraries, and stdlib Open XML parsing for PPTX.
 Invariants:
   - Parsers are registered only when their backing library can be imported.
   - Each parser produces normalized output through the shared parser contract.
@@ -22,6 +22,8 @@ import importlib.util
 import io
 from pathlib import Path
 from typing import Any, Mapping
+from xml.etree import ElementTree
+import zipfile
 
 from mcoi_runtime.contracts.artifact_parser import (
     ArtifactParserDescriptor,
@@ -270,7 +272,7 @@ class ProductionPPTXParser(ProductionParser):
     parser_family = ParserFamily.PRESENTATION
     parser_extensions = (".pptx",)
     parser_mime_types = ("application/vnd.openxmlformats-officedocument.presentationml.presentation",)
-    parser_libraries = ("pptx",)
+    parser_libraries = ("zipfile", "xml.etree.ElementTree")
 
     def __init__(self) -> None:
         super().__init__("production-pptx")
@@ -282,13 +284,7 @@ class ProductionPPTXParser(ProductionParser):
         filename: str,
         content: bytes,
     ) -> NormalizedParseOutput:
-        from pptx import Presentation
-
-        presentation = Presentation(io.BytesIO(content))
-        slide_text = []
-        for slide in presentation.slides:
-            texts = [str(shape.text) for shape in slide.shapes if hasattr(shape, "text") and str(shape.text).strip()]
-            slide_text.append("\n".join(texts))
+        slide_text = _pptx_slide_texts(content)
         return _normalized_output(
             parser_id=self._parser_id,
             artifact_id=artifact_id,
@@ -367,6 +363,29 @@ def _table_to_text(table: Mapping[str, Any]) -> str:
     lines = ["\t".join(str(value) for value in table.get("headers", ()))]
     lines.extend("\t".join(str(value) for value in row) for row in table.get("rows", ()))
     return "\n".join(line for line in lines if line)
+
+
+def _pptx_slide_texts(content: bytes) -> tuple[str, ...]:
+    slide_texts: list[str] = []
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        slide_names = sorted(
+            name
+            for name in archive.namelist()
+            if name.startswith("ppt/slides/slide") and name.endswith(".xml")
+        )
+        for slide_name in slide_names:
+            root = ElementTree.fromstring(archive.read(slide_name))
+            texts = tuple(
+                element.text or ""
+                for element in root.iter()
+                if _xml_local_name(element.tag) == "t" and (element.text or "").strip()
+            )
+            slide_texts.append("\n".join(texts))
+    return tuple(slide_texts)
+
+
+def _xml_local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
 
 
 def _manifest_id(parser_id: str) -> str:

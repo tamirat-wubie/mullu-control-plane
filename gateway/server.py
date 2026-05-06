@@ -75,6 +75,11 @@ from gateway.plan_ledger import build_capability_plan_ledger_from_env
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
 from gateway.capability_dispatch import build_capability_dispatcher_from_platform
+from scripts.emit_physical_capability_promotion_receipt import (
+    DEFAULT_CAPABILITY_ID as DEFAULT_PHYSICAL_PROMOTION_CAPABILITY_ID,
+    PHYSICAL_SAFETY_REF_FIELDS,
+    emit_physical_capability_promotion_receipt,
+)
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
 )
@@ -82,6 +87,18 @@ from gateway.tenant_identity import build_tenant_identity_store_from_env
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 
 _log = logging.getLogger(__name__)
+PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
+PHYSICAL_LIVE_SAFETY_EXTENSION_KEY = "physical_live_safety_evidence"
+PHYSICAL_CAPABILITY_PREFIXES = ("physical.", "iot.", "robotics.")
+REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
+    "physical_action_receipt_ref",
+    "simulation_ref",
+    "operator_approval_ref",
+    "manual_override_ref",
+    "emergency_stop_ref",
+    "sensor_confirmation_ref",
+    "deployment_witness_ref",
+)
 
 
 def create_gateway_app(
@@ -137,6 +154,7 @@ def create_gateway_app(
     )
     authority_operator_audit_events: list[dict[str, Any]] = []
     capability_capsule_admission_receipts: list[dict[str, Any]] = []
+    physical_capability_promotion_receipts: list[dict[str, Any]] = []
     platform_decision_log = getattr(platform, "_decision_log", None)
     reflex_deployment_witness_log_backed = platform_decision_log is not None
     reflex_deployment_witness_log = platform_decision_log or GovernanceDecisionLog(clock=_clock)
@@ -313,7 +331,7 @@ def create_gateway_app(
             maturity_level = str(assessment.get("maturity_level", "C0")) if isinstance(assessment, dict) else "C0"
             production_ready = bool(assessment.get("production_ready")) if isinstance(assessment, dict) else False
             if production_ready:
-                status = "production"
+                status = _capability_evidence_status(capability_id, item, production_ready=True)
                 live_capabilities.append(capability_id)
             elif maturity_level in {"C4", "C5"}:
                 status = "pilot"
@@ -339,6 +357,46 @@ def create_gateway_app(
                 "detail": f"capability_count={len(evidence_by_capability)}",
             }],
         }
+
+    def _capability_evidence_status(
+        capability_id: str,
+        capability_payload: Mapping[str, Any],
+        *,
+        production_ready: bool,
+    ) -> str | dict[str, Any]:
+        """Return public capability evidence without fabricating physical safety proof."""
+        if not production_ready or not _is_physical_capability(capability_id):
+            return "production"
+        physical_evidence = _physical_live_safety_evidence_from_registry(capability_payload)
+        return physical_evidence if physical_evidence is not None else "production"
+
+    def _physical_live_safety_evidence_from_registry(
+        capability_payload: Mapping[str, Any],
+    ) -> dict[str, Any] | None:
+        """Derive live physical safety evidence from registry extensions."""
+        extensions = capability_payload.get("extensions", {})
+        if not isinstance(extensions, Mapping):
+            return None
+        safety_evidence = extensions.get(PHYSICAL_LIVE_SAFETY_EXTENSION_KEY, {})
+        if not isinstance(safety_evidence, Mapping):
+            return None
+        refs: dict[str, str] = {}
+        for field_name in REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS:
+            ref = str(safety_evidence.get(field_name, "")).strip()
+            if not ref:
+                return None
+            refs[field_name] = ref
+        return {
+            "maturity": "production",
+            "effect_mode": "live",
+            "production_admissible": True,
+            "physical_action_receipt_schema_ref": PHYSICAL_ACTION_RECEIPT_SCHEMA_REF,
+            **refs,
+        }
+
+    def _is_physical_capability(capability_id: str) -> bool:
+        normalized = capability_id.strip().lower()
+        return any(normalized.startswith(prefix) for prefix in PHYSICAL_CAPABILITY_PREFIXES)
 
     def _build_deployment_witness() -> dict[str, Any]:
         """Build the public production evidence witness for this gateway."""
@@ -2010,6 +2068,72 @@ def create_gateway_app(
             "offset": bounded_offset,
         }
 
+    @app.post("/operator/physical-capability-promotion-receipts")
+    async def operator_physical_capability_promotion_receipt(request: Request):
+        _require_authority_operator(request)
+        try:
+            payload = await request.json()
+            emission_request = _physical_promotion_receipt_request(
+                payload,
+                recorded_at_default=_clock(),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+        receipt, errors = emit_physical_capability_promotion_receipt(**emission_request)
+        if receipt is None or errors:
+            raise HTTPException(
+                409,
+                detail={
+                    "ready": False,
+                    "capability_id": emission_request["capability_id"],
+                    "errors": list(errors),
+                },
+            )
+
+        receipt_payload = receipt.to_json_dict()
+        physical_capability_promotion_receipts.append(receipt_payload)
+        del physical_capability_promotion_receipts[:-500]
+        return {
+            "ready": True,
+            "receipt_id": receipt.receipt_id,
+            "errors": [],
+            "receipt": receipt_payload,
+        }
+
+    @app.get("/operator/physical-capability-promotion-receipts")
+    def operator_physical_capability_promotion_receipts(
+        request: Request,
+        capability_id: str = "",
+        status: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        receipts = tuple(reversed(physical_capability_promotion_receipts))
+        if capability_id:
+            receipts = tuple(
+                receipt for receipt in receipts
+                if receipt.get("capability_id") == capability_id
+            )
+        if status:
+            receipts = tuple(
+                receipt for receipt in receipts
+                if receipt.get("promotion_status") == status
+            )
+        page, page_meta = _read_model_page(
+            receipts,
+            limit=_bounded_read_model_limit(limit),
+            offset=_bounded_read_model_offset(offset),
+        )
+        return {
+            "physical_capability_promotion_receipts": list(page),
+            "count": len(page),
+            "capability_id_filter": capability_id,
+            "status_filter": status,
+            **page_meta,
+        }
+
     @app.get("/operator/capabilities/read-model")
     def operator_capabilities_read_model(
         request: Request,
@@ -2209,6 +2333,7 @@ def create_gateway_app(
     app.state.authority_obligation_mesh = authority_obligation_mesh
     app.state.authority_operator_audit_events = authority_operator_audit_events
     app.state.capability_capsule_admission_receipts = capability_capsule_admission_receipts
+    app.state.physical_capability_promotion_receipts = physical_capability_promotion_receipts
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.capability_admission_gate = capability_admission_gate
@@ -2248,12 +2373,18 @@ def _certification_handoff_from_mapping(payload: Mapping[str, Any]) -> Capabilit
     raw_evidence_refs = payload.get("required_evidence_refs", ())
     if not isinstance(raw_evidence_refs, (list, tuple)):
         raise ValueError("capsule_admission_handoff_required_evidence_refs_must_be_array")
+    raw_physical_safety_refs = payload.get("physical_live_safety_evidence_refs", {})
+    if not isinstance(raw_physical_safety_refs, Mapping):
+        raise ValueError("capsule_admission_handoff_physical_safety_refs_must_be_object")
     return CapabilityCertificationHandoff(
         package_id=_required_text(payload, "package_id"),
         capability_id=_required_text(payload, "capability_id"),
         package_hash=_required_text(payload, "package_hash"),
         maturity_evidence_bundle=CapabilityCertificationEvidenceBundle.from_mapping(bundle_payload),
         required_evidence_refs=tuple(str(value) for value in raw_evidence_refs),
+        physical_live_safety_evidence_refs={
+            str(key): str(value) for key, value in raw_physical_safety_refs.items()
+        },
         handoff_hash=_required_text(payload, "handoff_hash"),
     )
 
@@ -2264,6 +2395,37 @@ def _handoff_evidence_batch_payload(batch: Any) -> dict[str, Any]:
         "installed_capability_ids": tuple(batch.installed_capability_ids),
         "handoff_hashes": tuple(batch.handoff_hashes),
         "batch_hash": batch.batch_hash,
+    }
+
+
+def _physical_promotion_receipt_request(
+    payload: Any,
+    *,
+    recorded_at_default: str,
+) -> dict[str, Any]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("physical_promotion_receipt_request_must_be_object")
+    raw_physical_safety_refs = payload.get("physical_live_safety_evidence_refs", {})
+    if not isinstance(raw_physical_safety_refs, Mapping):
+        raise ValueError("physical_promotion_receipt_physical_safety_refs_must_be_object")
+
+    return {
+        "capability_id": _optional_text(
+            payload,
+            "capability_id",
+            default=DEFAULT_PHYSICAL_PROMOTION_CAPABILITY_ID,
+        ),
+        "live_read_receipt_ref": _optional_text(payload, "live_read_receipt_ref"),
+        "live_write_receipt_ref": _optional_text(payload, "live_write_receipt_ref"),
+        "worker_deployment_ref": _optional_text(payload, "worker_deployment_ref"),
+        "recovery_evidence_ref": _optional_text(payload, "recovery_evidence_ref"),
+        "physical_live_safety_evidence_refs": {
+            field_name: _optional_text(raw_physical_safety_refs, field_name)
+            or _optional_text(payload, field_name)
+            for field_name in PHYSICAL_SAFETY_REF_FIELDS
+        },
+        "use_fixture_refs": _payload_bool(payload, "use_fixture_refs", default=False),
+        "recorded_at": _optional_text(payload, "recorded_at", default=recorded_at_default),
     }
 
 
@@ -2285,6 +2447,13 @@ def _required_text(payload: Mapping[str, Any], field_name: str) -> str:
     if not value:
         raise ValueError(f"{field_name}_required")
     return value
+
+
+def _optional_text(payload: Mapping[str, Any], field_name: str, *, default: str = "") -> str:
+    value = payload.get(field_name, default)
+    if value is None:
+        return default
+    return str(value).strip()
 
 
 def _payload_bool(payload: Mapping[str, Any], field_name: str, *, default: bool) -> bool:

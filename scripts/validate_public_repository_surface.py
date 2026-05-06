@@ -26,8 +26,23 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+PROTOCOL_MANIFEST_PATH = REPO_ROOT / "schemas" / "mullu_governance_protocol.manifest.json"
 REPOSITORY_API_URL = "https://api.github.com/repos/tamirat-wubie/mullu-control-plane"
 LATEST_RELEASE_API_URL = f"{REPOSITORY_API_URL}/releases/latest"
+
+
+def expected_protocol_manifest_result() -> str:
+    """Return the expected protocol manifest validator success line."""
+    try:
+        manifest = json.loads(PROTOCOL_MANIFEST_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return "protocol manifest ok: unavailable schemas"
+    schemas = manifest.get("schemas", ())
+    schema_count = len(schemas) if isinstance(schemas, list) else 0
+    return f"protocol manifest ok: {schema_count} schemas"
+
+
+EXPECTED_PROTOCOL_MANIFEST_RESULT = expected_protocol_manifest_result()
 
 EXPECTED_DESCRIPTION = (
     "Governed symbolic intelligence control plane - multi-tenant LLM orchestration "
@@ -158,7 +173,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "schemas/mullu_governance_protocol.manifest.json",
     "scripts/validate_protocol_manifest.py",
     "python scripts\\validate_protocol_manifest.py",
-    "protocol manifest ok: 90 schemas",
+    EXPECTED_PROTOCOL_MANIFEST_RESULT,
     "Capability candidate packages are public contracts",
     "Capability maturity assessments are public contracts",
     "Policy proof reports are public contracts",
@@ -178,6 +193,9 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Capability evidence endpoint responses are public contracts",
     "Audit verification endpoint responses are public contracts",
     "Proof verification endpoint responses are public contracts",
+    "Operator control tower snapshots are public contracts",
+    "Low-code builder catalogs are public contracts",
+    "Marketplace SDK catalogs are public contracts",
     "Deployment handoff receipts are public contracts",
     "Deployment publication closure validation reports are public contracts",
     "Deployment orchestration receipt validation reports are public contracts",
@@ -190,6 +208,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "General-agent promotion handoff packets are public contracts",
     "Governed runtime promotion",
     "Terminal closure certificates are public contracts",
+    "Finance approval live handoff artifacts are public contracts",
     "Reflex deployment witness envelopes are public contracts",
     "Reflex deployment witness validator receipts are public contracts",
     "Temporal operation receipts are public contracts",

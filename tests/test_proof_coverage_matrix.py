@@ -158,6 +158,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "capsule_compiler_emits_certification_evidence_manifest" in witnesses
     assert "capsule_installer_stamps_admission_receipt" in witnesses
+    assert "physical_capsule_admission_runs_promotion_preflight" in witnesses
 
 
 def test_data_governance_controls_surface_is_witnessed() -> None:
@@ -218,14 +219,27 @@ def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
     assert "/api/v1/runbooks/approve" in runbook_surface["representative_paths"]
     assert "/api/v1/runbooks/{runbook_id}/activate" in runbook_surface["representative_paths"]
     assert "/api/v1/runbooks/{runbook_id}/retire" in runbook_surface["representative_paths"]
+    assert "/api/v1/mil-audit/admit-runbook" in runbook_surface["representative_paths"]
+    assert "/api/v1/mil-audit/runbooks" in runbook_surface["representative_paths"]
+    assert "/api/v1/mil-audit/runbooks/{runbook_id}" in runbook_surface["representative_paths"]
     assert "mcoi/mcoi_runtime/app/routers/runbooks.py" in runbook_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/mil_audit.py" in runbook_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "mcoi/tests/test_mil_audit_router.py" in runbook_surface["evidence_files"]
     assert "mcoi/tests/test_runbook_learning.py" in runbook_surface["evidence_files"]
+    assert "examples/mil_audit_runbook_operator_checklist.json" in runbook_surface["evidence_files"]
+    assert "scripts/validate_mil_audit_runbook_operator_checklist.py" in runbook_surface["evidence_files"]
+    assert "scripts/preflight_mil_audit_runbook_workflow.py" in runbook_surface["evidence_files"]
+    assert "tests/test_validate_mil_audit_runbook_operator_checklist.py" in runbook_surface["evidence_files"]
+    assert "tests/test_preflight_mil_audit_runbook_workflow.py" in runbook_surface["evidence_files"]
     assert "patterns_detected_from_audit_trail" in witnesses
     assert "promotion_requires_detected_pattern" in witnesses
     assert "approval_required_before_activation" in witnesses
     assert "retirement_requires_active_runbook" in witnesses
     assert "promote_and_approve_audit_records" in witnesses
+    assert "mil_audit_replay_admits_runbook" in witnesses
+    assert "mil_audit_operator_checklist_validated" in witnesses
+    assert "mil_audit_runbook_preflight_ready" in witnesses
     assert "sanitized_runbook_error_details" in witnesses
     assert "runbook_pattern_read_models_bounded" in witnesses
     assert "runbook_responses_governed" in witnesses
@@ -353,6 +367,9 @@ def test_production_evidence_plane_is_witnessed_and_schema_backed() -> None:
     assert "audit_verification_schema_valid" in witnesses
     assert "proof_verification_schema_valid" in witnesses
     assert "deployment_collection_requires_production_evidence" in witnesses
+    assert "live_physical_safety_evidence_derived_from_registry" in witnesses
+    assert "live_physical_capability_requires_safety_evidence" in witnesses
+    assert "sandbox_physical_capability_remains_non_production" in witnesses
     assert "missing_production_evidence_fails_closed" in witnesses
     assert closure_actions["publish_production_evidence_plane"]["status"] == "closed"
     assert "gateway_runtime_witness" in closure_actions["publish_production_evidence_plane"]["surfaces"]
@@ -549,6 +566,8 @@ def test_capability_forge_surface_is_candidate_only() -> None:
     assert "candidate_certification_handoff_emits_maturity_bundle" in witnesses
     assert "certification_handoff_installs_evidence_without_maturity_claim" in witnesses
     assert "certification_handoff_batch_preserves_capsule_admission_gate" in witnesses
+    assert "physical_candidate_declares_live_safety_evidence_requirements" in witnesses
+    assert "physical_handoff_installs_live_safety_evidence" in witnesses
     assert "high_risk_approval_policy_required" in witnesses
     assert "effect_bearing_candidate_requires_sandbox" in witnesses
     assert "effect_bearing_candidate_requires_recovery_path" in witnesses
@@ -864,13 +883,43 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert physical_surface["coverage_state"] == "witnessed"
     assert physical_surface["request_proof"] == "request_proof"
     assert physical_surface["action_proof"] == "action_proof"
+    assert "/operator/physical-capability-promotion-receipts" in physical_surface["representative_paths"]
+    assert "capsules/physical.json" in physical_surface["evidence_files"]
+    assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
+    assert "gateway/capability_capsule_installer.py" in physical_surface["evidence_files"]
+    assert "gateway/server.py" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
+    assert "gateway/physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "scripts/emit_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
+    assert "scripts/preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in physical_surface["evidence_files"]
+    assert "schemas/physical_capability_promotion_receipt.schema.json" in physical_surface["evidence_files"]
+    assert "tests/test_emit_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_capability_capsule_installer.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_capability_pack.py" in physical_surface["evidence_files"]
+    assert "tests/test_gateway/test_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "tests/test_preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
     assert "tests/test_produce_physical_worker_canary.py" in physical_surface["evidence_files"]
+    assert "physical_capability_pack_fixture_not_default_loaded" in witnesses
+    assert "physical_sandbox_replay_admitted_without_production_gate" in witnesses
+    assert "live_physical_capability_rejected_by_production_gate" in witnesses
+    assert "physical_pack_projects_sandbox_only_evidence" in witnesses
+    assert "physical_promotion_preflight_blocks_fixture_live_claim" in witnesses
+    assert "physical_promotion_preflight_requires_live_safety_evidence" in witnesses
+    assert "physical_promotion_preflight_accepts_full_evidence" in witnesses
+    assert "physical_promotion_preflight_allows_sandbox_only_pack" in witnesses
+    assert "physical_capsule_admission_runs_promotion_preflight" in witnesses
+    assert "physical_capsule_admission_keeps_registry_unmutated_on_preflight_failure" in witnesses
+    assert "physical_promotion_receipt_binds_forge_handoff_registry_preflight" in witnesses
+    assert "physical_promotion_receipt_schema_valid" in witnesses
+    assert "physical_promotion_receipt_cli_emits_schema_valid_bundle" in witnesses
+    assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
+    assert "physical_promotion_receipt_operator_endpoint_emits_bundle" in witnesses
+    assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses

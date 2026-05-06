@@ -203,7 +203,10 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
             adapter_id=adapter_id,
             blocker=blocker,
             action_type="credential",
-            command="Bind one scoped connector token: GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, or MICROSOFT_GRAPH_ACCESS_TOKEN.",
+            command=(
+                "Bind one scoped connector token: EMAIL_CALENDAR_CONNECTOR_TOKEN, GMAIL_ACCESS_TOKEN, "
+                "GOOGLE_CALENDAR_ACCESS_TOKEN, or MICROSOFT_GRAPH_ACCESS_TOKEN."
+            ),
             verification_command=(
                 "python scripts/collect_capability_adapter_evidence.py "
                 "--output .change_assurance/capability_adapter_evidence.json"
@@ -217,7 +220,10 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
         return _receipt_action(
             adapter_id,
             blocker,
-            "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar --strict",
+            (
+                "python scripts/produce_capability_adapter_live_receipts.py --target email-calendar "
+                "--email-calendar-connector-id <connector_id> --email-calendar-query <read_only_query> --strict"
+            ),
             ("email_calendar_live_receipt.json", "read_only_probe_receipt"),
         )
     return AdapterClosureAction(

@@ -194,7 +194,8 @@ def _valid_plan() -> dict[str, object]:
                 "action_type": "credential",
                 "command": (
                     "Bind one scoped read-capable connector token in the governed worker secret store: "
-                    "GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, or MICROSOFT_GRAPH_ACCESS_TOKEN."
+                    "EMAIL_CALENDAR_CONNECTOR_TOKEN, GMAIL_ACCESS_TOKEN, GOOGLE_CALENDAR_ACCESS_TOKEN, "
+                    "or MICROSOFT_GRAPH_ACCESS_TOKEN."
                 ),
                 "verification_command": (
                     "python scripts/validate_finance_approval_email_calendar_binding_receipt.py "

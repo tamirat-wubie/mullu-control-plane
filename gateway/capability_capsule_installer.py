@@ -8,6 +8,7 @@ Dependencies: capability forge handoff installers, domain capsule compiler,
     governed capability registry, and command-spine canonical hashing.
 Invariants:
   - Certification evidence is installed before capsule compilation.
+  - Physical production-ready admissions run promotion preflight before registry mutation.
   - Registry admission is delegated to GovernedCapabilityRegistry.install.
   - The receipt records the causal chain and is not admission authority.
   - Rejected admissions still return an audit receipt when compilation runs.
@@ -24,6 +25,11 @@ from gateway.capability_forge import (
     install_certification_handoff_evidence_batch,
 )
 from gateway.command_spine import canonical_hash
+from scripts.preflight_physical_capability_promotion import (
+    PHYSICAL_CAPABILITY_PREFIXES,
+    PhysicalPromotionPreflightReport,
+    preflight_physical_capability_records,
+)
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityRegistryEntry,
     CapsuleAdmissionStatus,
@@ -137,6 +143,7 @@ def install_certified_capsule_with_handoff_evidence(
       - handoff batch installation errors from install_certification_handoff_evidence_batch.
       - capsule_admission_registry_type_invalid when registry is not a governed registry.
       - capsule_admission_compiler_type_invalid when compiler is not a capsule compiler.
+      - physical_capability_promotion_preflight_failed when live physical safety evidence is incomplete.
       - receipt relation errors if an impossible outcome relation is constructed.
     """
     if not isinstance(registry, GovernedCapabilityRegistry):
@@ -150,6 +157,8 @@ def install_certified_capsule_with_handoff_evidence(
         handoffs,
         require_production_ready=require_production_ready,
     )
+    if require_production_ready:
+        _enforce_physical_promotion_preflight(capsule, evidence_batch.registry_entries)
     compilation_result = active_compiler.compile(capsule, evidence_batch.registry_entries)
     installation_record = registry.install(compilation_result, evidence_batch.registry_entries)
     receipt = _stamp_receipt(
@@ -166,6 +175,47 @@ def install_certified_capsule_with_handoff_evidence(
         installation_record=installation_record,
         receipt=receipt,
     )
+
+
+def _enforce_physical_promotion_preflight(
+    capsule: DomainCapsule,
+    registry_entries: tuple[CapabilityRegistryEntry, ...],
+) -> None:
+    if not _physical_preflight_required(capsule, registry_entries):
+        return
+    report = preflight_physical_capability_records(
+        capsule=capsule,
+        registry_entries=registry_entries,
+    )
+    if report.ready:
+        return
+    raise ValueError(_physical_preflight_error(report))
+
+
+def _physical_preflight_required(
+    capsule: DomainCapsule,
+    registry_entries: tuple[CapabilityRegistryEntry, ...],
+) -> bool:
+    if capsule.domain.strip().lower() == "physical":
+        return True
+    return any(_is_physical_capability_id(entry.capability_id) for entry in registry_entries)
+
+
+def _is_physical_capability_id(capability_id: str) -> bool:
+    normalized = capability_id.strip().lower()
+    return any(normalized.startswith(prefix) for prefix in PHYSICAL_CAPABILITY_PREFIXES)
+
+
+def _physical_preflight_error(report: PhysicalPromotionPreflightReport) -> str:
+    blocker_tokens = tuple(_preflight_error_token(blocker) for blocker in report.blockers)
+    if blocker_tokens:
+        return f"physical_capability_promotion_preflight_failed:{','.join(blocker_tokens)}"
+    return "physical_capability_promotion_preflight_failed"
+
+
+def _preflight_error_token(value: object) -> str:
+    token = "_".join(str(value).strip().lower().split())
+    return token or "unknown"
 
 
 def _receipt(

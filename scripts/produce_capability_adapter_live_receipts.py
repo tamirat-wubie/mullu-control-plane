@@ -385,6 +385,8 @@ def produce_live_receipts(
     browser_sandbox_evidence: str = "",
     voice_audio_path: Path | None = None,
     voice_text: str = "Mullu governed voice adapter receipt.",
+    email_calendar_connector_id: str = "gmail",
+    email_calendar_query: str = "newer_than:1d",
     clock: Callable[[], str] | None = None,
 ) -> LiveReceiptRun:
     """Produce requested live receipts and return a run summary."""
@@ -411,7 +413,14 @@ def produce_live_receipts(
             )
         )
     if target in {"all", "email-calendar"}:
-        writes.append(produce_email_calendar_live_receipt(output_path=email_calendar_output, clock=resolved_clock))
+        writes.append(
+            produce_email_calendar_live_receipt(
+                output_path=email_calendar_output,
+                connector_id=email_calendar_connector_id,
+                query=email_calendar_query,
+                clock=resolved_clock,
+            )
+        )
     blockers = tuple(blocker for write in writes for blocker in write.blockers)
     return LiveReceiptRun(
         status="passed" if not blockers else "failed",
@@ -639,6 +648,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--voice-audio-path", default="")
     parser.add_argument("--voice-text", default="Mullu governed voice adapter receipt.")
+    parser.add_argument(
+        "--email-calendar-connector-id",
+        default="gmail",
+        choices=("gmail", "google_calendar", "microsoft_graph"),
+        help="Read-only connector id for email/calendar live receipt probing.",
+    )
+    parser.add_argument(
+        "--email-calendar-query",
+        default="newer_than:1d",
+        help="Read-only search query for email/calendar live receipt probing.",
+    )
     parser.add_argument("--json", action="store_true", help="Print deterministic JSON run output.")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero when any requested receipt fails.")
     return parser.parse_args(argv)
@@ -657,6 +677,8 @@ def main(argv: list[str] | None = None) -> int:
         browser_sandbox_evidence=args.browser_sandbox_evidence,
         voice_audio_path=Path(args.voice_audio_path) if args.voice_audio_path else None,
         voice_text=args.voice_text,
+        email_calendar_connector_id=args.email_calendar_connector_id,
+        email_calendar_query=args.email_calendar_query,
     )
     if args.json:
         print(json.dumps(run.as_dict(), indent=2, sort_keys=True))

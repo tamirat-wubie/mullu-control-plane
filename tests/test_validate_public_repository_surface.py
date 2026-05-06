@@ -17,6 +17,7 @@ from scripts.validate_public_repository_surface import (
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
+    EXPECTED_PROTOCOL_MANIFEST_RESULT,
     CI_WORKFLOW_PATH,
     CI_WORKFLOW_REQUIRED_LITERALS,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
@@ -30,6 +31,7 @@ from scripts.validate_public_repository_surface import (
     STATUS_REQUIRED_LITERALS,
     validate_required_document_text,
 )
+from scripts.validate_protocol_manifest import load_manifest
 
 
 def test_deployment_status_requires_orchestration_receipt_validation() -> None:
@@ -160,6 +162,8 @@ def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> No
 
 def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     content = (REPO_ROOT / GOVERNANCE_PROTOCOL_DOC_PATH).read_text(encoding="utf-8")
+    manifest = load_manifest()
+    expected_manifest_result = f"protocol manifest ok: {len(manifest['schemas'])} schemas"
 
     errors = validate_required_document_text(
         document_name=GOVERNANCE_PROTOCOL_DOC_PATH,
@@ -168,7 +172,9 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     )
 
     assert errors == []
-    assert "protocol manifest ok: 90 schemas" in content
+    assert EXPECTED_PROTOCOL_MANIFEST_RESULT == expected_manifest_result
+    assert expected_manifest_result in content
+    assert expected_manifest_result in GOVERNANCE_PROTOCOL_REQUIRED_LITERALS
     assert "Capability candidate packages are public contracts" in content
     assert "Capability maturity assessments are public contracts" in content
     assert "Policy proof reports are public contracts" in content
@@ -187,11 +193,16 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "Gateway publication readiness reports are public contracts" in content
     assert "Gateway publication receipt validation reports are public contracts" in content
     assert "World-state projections are public contracts" in content
+    assert "Operator control tower snapshots are public contracts" in content
+    assert "Low-code builder catalogs are public contracts" in content
+    assert "Marketplace SDK catalogs are public contracts" in content
     assert "Goal compilation reports are public contracts" in content
     assert "Workflow mining reports are public contracts" in content
     assert "Simulation receipts are public contracts" in content
     assert "Governed runtime promotion validators are public contracts" in content
     assert "Terminal closure certificates are public contracts" in content
+    assert "Finance approval live handoff artifacts are public contracts" in content
+    assert "finance approval live handoff artifact contract" in content
     assert "Reflex deployment witness envelopes are public contracts" in content
     assert "Reflex deployment witness validator receipts are public contracts" in content
     assert "Temporal evidence freshness receipts are public contracts" in content

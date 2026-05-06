@@ -89,6 +89,33 @@ def test_validate_finance_email_calendar_live_receipt_rejects_external_write(tmp
     assert any("external_write" in error for error in result.errors)
 
 
+def test_validate_finance_email_calendar_live_receipt_rejects_worker_receipt_drift(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "email-calendar-live-receipt.json"
+    payload = _ready_receipt()
+    payload["worker_receipt"] = dict(payload["worker_receipt"]) | {
+        "response_digest": "c" * 64,
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+
+    assert result.valid is False
+    assert result.ready is False
+    assert "worker_receipt response_digest must match receipt response_digest" in result.errors
+
+
+def test_validate_finance_email_calendar_live_receipt_rejects_raw_query_field(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "email-calendar-live-receipt.json"
+    payload = _ready_receipt() | {"query": "newer_than:1d"}
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+
+    assert result.valid is False
+    assert result.ready is False
+    assert "$: unexpected property 'query'" in result.errors
+
+
 def test_validate_finance_email_calendar_live_receipt_cli_outputs_json(tmp_path: Path, capsys) -> None:
     receipt_path = tmp_path / "email-calendar-live-receipt.json"
     receipt_path.write_text(json.dumps(_ready_receipt()), encoding="utf-8")
@@ -112,11 +139,30 @@ def _ready_receipt() -> dict[str, object]:
         "checked_at": "2026-05-01T12:00:00+00:00",
         "connector_id": "gmail",
         "provider_operation": "email.search",
+        "resource_id": "email-search-live",
+        "response_digest": "b" * 64,
         "external_write": False,
         "worker_receipt": {
+            "receipt_id": "email-calendar-receipt-aaaaaaaaaaaaaaaa",
+            "request_id": "email-calendar-live-receipt",
+            "tenant_id": "tenant-adapter-evidence",
             "verification_status": "passed",
             "capability_id": "email.search",
+            "action": "email.search",
+            "worker_id": "email-calendar-worker",
+            "connector_id": "gmail",
+            "provider_operation": "email.search",
+            "resource_id": "email-search-live",
+            "response_digest": "b" * 64,
+            "subject_hash": "0" * 64,
+            "body_hash": "0" * 64,
+            "query_hash": "1" * 64,
+            "recipient_hashes": [],
+            "attendee_hashes": [],
             "external_write": False,
+            "forbidden_effects_observed": False,
+            "evidence_refs": ["email_calendar_action:aaaaaaaaaaaaaaaa"],
+            "approval_id": "",
         },
         "blockers": [],
     }

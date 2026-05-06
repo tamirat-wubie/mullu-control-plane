@@ -371,6 +371,9 @@ MULLU_VOICE_WORKER_SECRET=...
 MULLU_EMAIL_CALENDAR_WORKER_URL=http://email-calendar-worker:8050/email-calendar/execute
 MULLU_EMAIL_CALENDAR_WORKER_SECRET=...
 MULLU_EMAIL_CALENDAR_WORKER_ADAPTER=production
+EMAIL_CALENDAR_CONNECTOR_TOKEN=...     # optional governed connector token
+EMAIL_CALENDAR_CONNECTOR_ID=gmail      # gmail, google_calendar, or microsoft_graph
+EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=...  # optional governed scope witness
 GMAIL_ACCESS_TOKEN=...                 # optional Gmail connector credential
 GOOGLE_CALENDAR_ACCESS_TOKEN=...       # optional Google Calendar connector credential
 MICROSOFT_GRAPH_ACCESS_TOKEN=...       # optional Microsoft Graph connector credential
@@ -388,9 +391,10 @@ default. Set `MULLU_INSTALL_WORKER_DEPS=false` at build time only for API or
 gateway images that intentionally exclude browser and document worker
 dependencies. Playwright Chromium is installed only when both
 `MULLU_INSTALL_WORKER_DEPS=true` and `MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true`.
-The email/calendar worker starts in production adapter mode with whatever
-connector credentials are supplied; missing credentials fail closed per request
-and still produce signed failure receipts.
+The email/calendar worker starts in production adapter mode with either
+`EMAIL_CALENDAR_CONNECTOR_TOKEN` plus `EMAIL_CALENDAR_CONNECTOR_ID`, or the
+provider-specific token names. Missing credentials fail closed per request and
+still produce signed failure receipts.
 
 The worker services expose:
 
@@ -428,7 +432,7 @@ The worker services expose:
 23. Run `python scripts/validate_gateway_deployment_env.py --strict` before claiming pilot or production readiness
 24. Run `python scripts/gateway_runtime_smoke.py` against the live gateway and capability worker before claiming runtime readiness
 25. Set `MULLU_BROWSER_WORKER_URL`, `MULLU_BROWSER_WORKER_SECRET`, `MULLU_DOCUMENT_WORKER_URL`, `MULLU_DOCUMENT_WORKER_SECRET`, `MULLU_VOICE_WORKER_URL`, `MULLU_VOICE_WORKER_SECRET`, `MULLU_EMAIL_CALENDAR_WORKER_URL`, and `MULLU_EMAIL_CALENDAR_WORKER_SECRET` on gateway and gateway worker before enabling adapter-backed capabilities
-26. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO"` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
+26. Run `python scripts/produce_capability_adapter_live_receipts.py --strict --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" --voice-audio-path "$MULLU_VOICE_PROBE_AUDIO" --email-calendar-connector-id gmail --email-calendar-query newer_than:1d` after browser, document, voice, and email/calendar worker dependencies and connector credentials are installed
 27. Run `python scripts/collect_capability_adapter_evidence.py --strict` after browser, document, voice, and email/calendar live receipts are available
 28. If adapter evidence is not closed, run `python scripts/plan_capability_adapter_closure.py --json` and resolve every generated dependency, credential, and live-receipt action before promotion
 29. Run `python scripts/validate_general_agent_promotion.py --output .change_assurance/general_agent_promotion_readiness.json` to write the current promotion-readiness artifact

@@ -1,0 +1,135 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "physical.sandbox_replay",
+      "domain": "physical",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/physical/sandbox_replay.input.schema.json",
+      "output_schema_ref": "urn:mullusi:schema:physical-action-receipt:1",
+      "effect_model": {
+        "expected_effects": ["physical_sandbox_replay_completed"],
+        "forbidden_effects": ["physical_effect_applied", "hardware_command_sent", "actuator_state_changed"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["physical_action_receipt", "physical_worker_canary_artifact", "no_physical_effect_applied"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["physical_safety_operator"],
+        "approval_chain": ["physical_safety_admin"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "physical_worker",
+        "network_allowlist": [],
+        "secret_scope": "physical_sandbox"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "physical_sandbox",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "physical-safety",
+        "failure_due_seconds": 300,
+        "escalation_route": "physical-safety-oncall"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Physical sandbox replay",
+        "risk_tier": "critical",
+        "fixture_only": true
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": false,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_tools": ["physical_worker.sandbox_replay"],
+          "allowed_networks": [],
+          "forbidden_effects": ["physical_effect_applied", "hardware_command_sent", "actuator_state_changed"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "physical.unlock_door",
+      "domain": "physical",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/physical/unlock_door.input.schema.json",
+      "output_schema_ref": "urn:mullusi:schema:physical-action-receipt:1",
+      "effect_model": {
+        "expected_effects": ["door_unlocked"],
+        "forbidden_effects": ["unlock_without_operator_approval", "unlock_without_simulation", "unlock_without_sensor_confirmation"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["physical_action_receipt", "simulation_ref", "operator_approval_ref", "sensor_confirmation_ref"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["physical_safety_operator"],
+        "approval_chain": ["physical_safety_admin"],
+        "separation_of_duty": true
+      },
+      "isolation_profile": {
+        "execution_plane": "physical_worker",
+        "network_allowlist": ["physical-control.internal"],
+        "secret_scope": "physical_live_control"
+      },
+      "recovery_plan": {
+        "rollback_capability": "physical.lock_door",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "physical_live_control",
+        "max_estimated_cost": 1.0
+      },
+      "obligation_model": {
+        "owner_team": "physical-safety",
+        "failure_due_seconds": 120,
+        "escalation_route": "physical-safety-oncall"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Unlock physical door",
+        "risk_tier": "critical",
+        "fixture_only": true
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": true,
+          "requires_approval": true,
+          "requires_sandbox": true,
+          "allowed_tools": ["physical_worker.unlock_door"],
+          "allowed_networks": ["physical-control.internal"],
+          "forbidden_effects": ["unlock_without_operator_approval", "unlock_without_simulation", "unlock_without_sensor_confirmation"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": true
+        },
+        "capability_maturity_evidence": {
+          "sandbox_receipt_valid": true,
+          "live_read_receipt_valid": true,
+          "live_write_receipt_valid": false,
+          "worker_deployment_bound": false,
+          "recovery_evidence_present": false,
+          "evidence_refs": [
+            "proof://capabilities/physical.unlock_door/sandbox",
+            "proof://capabilities/physical.unlock_door/live-read"
+          ]
+        }
+      }
+    }
+  ]
+}

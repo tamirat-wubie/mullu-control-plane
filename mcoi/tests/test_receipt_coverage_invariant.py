@@ -5,7 +5,8 @@ The companion validator script is `scripts/validate_receipt_coverage.py`.
 That script enumerates every state-mutating HTTP route declared in
 `mcoi/mcoi_runtime/app/routers/` and `gateway/server.py` +
 `gateway/capability_worker.py`, then classifies each as
-MIDDLEWARE_API, MIDDLEWARE_GATEWAY, EXCLUDED, or UNCOVERED.
+MIDDLEWARE_API, MIDDLEWARE_GATEWAY, MIDDLEWARE_MUSIA, DIRECT_RECEIPT,
+EXCLUDED, or UNCOVERED.
 
 The ratchet here pins UNCOVERED count to `EXPECTED_UNCOVERED_BASELINE`.
 Any drift fails:

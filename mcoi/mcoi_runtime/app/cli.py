@@ -39,9 +39,11 @@ from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
 from mcoi_runtime.core.replay_engine import ReplayContext
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.runbook import RunbookLibrary
+from mcoi_runtime.persistence._serialization import serialize_record
 from mcoi_runtime.persistence.errors import PersistenceError
 from mcoi_runtime.persistence.mil_audit_store import MILAuditStore
 from mcoi_runtime.persistence.replay_store import ReplayStore
+from mcoi_runtime.persistence.runbook_store import RunbookStore
 from mcoi_runtime.persistence.software_change_receipt_store import (
     FileSoftwareChangeReceiptStore,
 )
@@ -644,6 +646,15 @@ def _print_mil_audit_envelope(envelope: Mapping[str, Any], *, json_output: bool)
         return
     print("=== MIL Audit ===")
     print(f"operation: {envelope['operation']}")
+    if envelope["operation"] in {"runbook-list", "runbook-get"}:
+        print(f"count: {envelope['count']}")
+        if envelope.get("runbook_id") is not None:
+            print(f"runbook_id: {envelope['runbook_id']}")
+        if envelope.get("found") is not None:
+            print(f"found: {str(envelope['found']).lower()}")
+        for runbook in envelope.get("runbooks") or []:
+            print(f"  {runbook['runbook_id']} {runbook['name']}")
+        return
     print(f"record_id: {envelope['record_id']}")
     print(f"program_id: {envelope['program_id']}")
     print(f"goal_id: {envelope['goal_id']}")
@@ -674,15 +685,23 @@ def _mil_verification_json(record: Any) -> dict[str, Any]:
     }
 
 
+def _runbook_entry_json(entry: Any) -> dict[str, Any]:
+    """Return a JSON-safe persisted runbook projection."""
+    raw = json.loads(serialize_record(entry))
+    if not isinstance(raw, dict):
+        raise ValueError("serialized runbook entry must be a JSON object")
+    return raw
+
+
 def mil_audit_command(args: argparse.Namespace) -> int:
     """Inspect MIL audit records and build observation-only replay anchors."""
     sub = getattr(args, "mil_audit_command", None)
     if sub is None:
-        print("Usage: mcoi mil-audit {get|replay} --store path record_id")
+        print("Usage: mcoi mil-audit {get|replay|admit-runbook|runbook-get|runbook-list}")
         return 1
     try:
-        store = MILAuditStore(_mil_audit_store_path(args))
         if sub == "get":
+            store = MILAuditStore(_mil_audit_store_path(args))
             record = store.load(args.record_id)
             envelope = {
                 "operation": "get",
@@ -709,6 +728,7 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 },
             }
         elif sub == "replay":
+            store = MILAuditStore(_mil_audit_store_path(args))
             lookup = store.replay_lookup(args.record_id)
             envelope = {
                 "operation": "replay",
@@ -726,6 +746,7 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 "replay_record": lookup.replay_record.to_json_dict(),
             }
         elif sub == "admit-runbook":
+            store = MILAuditStore(_mil_audit_store_path(args))
             trace_store = TraceStore(_mil_output_store_path(args.trace_store, field_name="trace_store"))
             replay_store = ReplayStore(_mil_output_store_path(args.replay_store, field_name="replay_store"))
             bundle = store.persist_replay_bundle(
@@ -773,6 +794,11 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 learning_admission=learning,
                 context=context,
             )
+            runbook_persisted = False
+            if getattr(args, "runbook_store", None) and admission.entry is not None:
+                runbook_persisted = RunbookStore(
+                    _mil_output_store_path(args.runbook_store, field_name="runbook_store")
+                ).save(admission.entry)
             envelope = {
                 "operation": "admit-runbook",
                 "record_id": record.record_id,
@@ -788,6 +814,7 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                 "trace_ids": list(bundle.trace_ids),
                 "runbook_id": admission.runbook_id,
                 "runbook_status": admission.status.value,
+                "runbook_persisted": runbook_persisted,
                 "reasons": list(admission.reasons),
                 "provenance": (
                     {
@@ -800,6 +827,30 @@ def mil_audit_command(args: argparse.Namespace) -> int:
                     if admission.entry
                     else None
                 ),
+            }
+        elif sub == "runbook-get":
+            entry = RunbookStore(
+                _mil_output_store_path(args.runbook_store, field_name="runbook_store")
+            ).load(args.runbook_id)
+            envelope = {
+                "operation": "runbook-get",
+                "count": 1,
+                "runbook_id": entry.runbook_id,
+                "found": True,
+                "governed": True,
+                "runbooks": [_runbook_entry_json(entry)],
+            }
+        elif sub == "runbook-list":
+            entries = RunbookStore(
+                _mil_output_store_path(args.runbook_store, field_name="runbook_store")
+            ).load_all()
+            envelope = {
+                "operation": "runbook-list",
+                "count": len(entries),
+                "runbook_id": None,
+                "found": None,
+                "governed": True,
+                "runbooks": [_runbook_entry_json(entry) for entry in entries],
             }
         else:
             print(f"error: unknown mil-audit subcommand {sub!r}")
@@ -984,9 +1035,25 @@ def build_parser() -> argparse.ArgumentParser:
     mil_audit_admit_parser.add_argument("record_id", help="MIL audit record id")
     mil_audit_admit_parser.add_argument("--trace-store", required=True, help="TraceStore directory for MIL trace spine")
     mil_audit_admit_parser.add_argument("--replay-store", required=True, help="ReplayStore directory for MIL replay record")
+    mil_audit_admit_parser.add_argument("--runbook-store", help="Optional RunbookStore directory for admitted runbook")
     mil_audit_admit_parser.add_argument("--runbook-id", required=True, help="Runbook id to admit")
     mil_audit_admit_parser.add_argument("--name", required=True, help="Runbook display name")
     mil_audit_admit_parser.add_argument("--description", required=True, help="Runbook description")
+
+    mil_audit_runbook_get_parser = mil_audit_subparsers.add_parser(
+        "runbook-get",
+        parents=[mil_audit_common],
+        help="Fetch one persisted MIL-derived runbook by id",
+    )
+    mil_audit_runbook_get_parser.add_argument("--runbook-store", required=True, help="RunbookStore directory")
+    mil_audit_runbook_get_parser.add_argument("runbook_id", help="Persisted runbook id")
+
+    mil_audit_runbook_list_parser = mil_audit_subparsers.add_parser(
+        "runbook-list",
+        parents=[mil_audit_common],
+        help="List persisted MIL-derived runbooks",
+    )
+    mil_audit_runbook_list_parser.add_argument("--runbook-store", required=True, help="RunbookStore directory")
 
     # v4.25.0: migrate — DB schema migration ops surface
     migrate_parser = subparsers.add_parser(
