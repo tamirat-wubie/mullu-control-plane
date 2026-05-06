@@ -293,6 +293,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-evidence-freshness-receipt",
+      "path": "schemas/temporal_evidence_freshness_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-evidence-freshness-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

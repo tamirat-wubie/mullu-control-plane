@@ -979,6 +979,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_evidence_freshness",
+            [
+                "TemporalEvidenceFreshness.evaluate",
+                "EvidenceFreshnessClaim",
+                "TemporalEvidenceFreshnessReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_evidence_freshness.py",
+                "schemas/temporal_evidence_freshness_receipt.schema.json",
+                "tests/test_gateway/test_temporal_evidence_freshness.py",
+            ],
+            "Temporal evidence freshness rechecks required evidence age, freshness windows, tenant scope, high-risk verification, revoked evidence, missing evidence, and expiring evidence before dispatch.",
+            [
+                "evidence_age_computed_from_runtime_clock",
+                "freshness_window_required_for_dispatch",
+                "stale_required_evidence_triggers_refresh",
+                "missing_required_evidence_blocks_dispatch",
+                "revoked_or_unverified_high_risk_evidence_blocks",
+                "expiring_evidence_warns_before_dispatch",
+                "temporal_evidence_freshness_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1436,6 +1464,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_operation_receipt_contract",
             "surfaces": ["temporal_kernel"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_evidence_freshness_receipt_contract",
+            "surfaces": ["temporal_evidence_freshness"],
             "status": "closed",
         },
         {

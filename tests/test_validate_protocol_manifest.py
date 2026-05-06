@@ -225,6 +225,17 @@ def test_protocol_manifest_indexes_temporal_operation_receipt() -> None:
     assert temporal_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_evidence_freshness_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    evidence_entry = entries["temporal-evidence-freshness-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert evidence_entry["path"] == "schemas/temporal_evidence_freshness_receipt.schema.json"
+    assert evidence_entry["urn"] == "urn:mullusi:schema:temporal-evidence-freshness-receipt:1"
+    assert evidence_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
