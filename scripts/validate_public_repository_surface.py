@@ -195,6 +195,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Proof verification endpoint responses are public contracts",
     "Operator control tower snapshots are public contracts",
     "Low-code builder catalogs are public contracts",
+    "Marketplace SDK catalogs are public contracts",
     "Deployment handoff receipts are public contracts",
     "Deployment publication closure validation reports are public contracts",
     "Deployment orchestration receipt validation reports are public contracts",

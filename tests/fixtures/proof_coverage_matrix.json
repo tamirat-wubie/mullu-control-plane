@@ -3061,6 +3061,7 @@
         "capsules/physical.json",
         "capabilities/physical/capability_pack.json",
         "gateway/capability_capsule_installer.py",
+        "gateway/server.py",
         "gateway/physical_action_boundary.py",
         "gateway/physical_capability_promotion_receipt.py",
         "gateway/physical_worker_canary.py",
@@ -3080,6 +3081,7 @@
       ],
       "notes": "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim.",
       "representative_paths": [
+        "/operator/physical-capability-promotion-receipts",
         "PhysicalActionBoundary.evaluate",
         "PhysicalActionRequest",
         "PhysicalActionReceipt"
@@ -3101,6 +3103,8 @@
         "physical_promotion_receipt_schema_valid",
         "physical_promotion_receipt_cli_emits_schema_valid_bundle",
         "physical_promotion_receipt_cli_blocks_missing_live_refs",
+        "physical_promotion_receipt_operator_endpoint_emits_bundle",
+        "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
         "hardware_identity_required",
         "safety_envelope_required",
         "manual_override_required",

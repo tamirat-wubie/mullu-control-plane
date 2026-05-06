@@ -1102,6 +1102,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "physical_action_boundary",
             [
+                "/operator/physical-capability-promotion-receipts",
                 "PhysicalActionBoundary.evaluate",
                 "PhysicalActionRequest",
                 "PhysicalActionReceipt",
@@ -1114,6 +1115,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "capsules/physical.json",
                 "capabilities/physical/capability_pack.json",
                 "gateway/capability_capsule_installer.py",
+                "gateway/server.py",
                 "gateway/physical_action_boundary.py",
                 "gateway/physical_capability_promotion_receipt.py",
                 "gateway/physical_worker_canary.py",
@@ -1148,6 +1150,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "physical_promotion_receipt_schema_valid",
                 "physical_promotion_receipt_cli_emits_schema_valid_bundle",
                 "physical_promotion_receipt_cli_blocks_missing_live_refs",
+                "physical_promotion_receipt_operator_endpoint_emits_bundle",
+                "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
                 "hardware_identity_required",
                 "safety_envelope_required",
                 "manual_override_required",

@@ -335,6 +335,12 @@
       "surface": "builder"
     },
     {
+      "schema_id": "marketplace-sdk-catalog",
+      "path": "schemas/marketplace_sdk_catalog.schema.json",
+      "urn": "urn:mullusi:schema:marketplace-sdk-catalog:1",
+      "surface": "marketplace"
+    },
+    {
       "schema_id": "memory-lattice",
       "path": "schemas/memory_lattice.schema.json",
       "urn": "urn:mullusi:schema:memory-lattice:1",

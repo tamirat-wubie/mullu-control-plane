@@ -195,6 +195,7 @@ def test_governance_protocol_doc_is_public_surface_anchor() -> None:
     assert "World-state projections are public contracts" in content
     assert "Operator control tower snapshots are public contracts" in content
     assert "Low-code builder catalogs are public contracts" in content
+    assert "Marketplace SDK catalogs are public contracts" in content
     assert "Goal compilation reports are public contracts" in content
     assert "Workflow mining reports are public contracts" in content
     assert "Simulation receipts are public contracts" in content

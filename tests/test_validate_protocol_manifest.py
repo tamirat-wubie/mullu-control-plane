@@ -269,12 +269,16 @@ def test_protocol_manifest_indexes_memory_lattice_admission() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     builder_entry = entries["low-code-builder-catalog"]
+    marketplace_entry = entries["marketplace-sdk-catalog"]
     lattice_entry = entries["memory-lattice"]
 
     assert validate_protocol_manifest(manifest) == []
     assert builder_entry["path"] == "schemas/low_code_builder_catalog.schema.json"
     assert builder_entry["urn"] == "urn:mullusi:schema:low-code-builder-catalog:1"
     assert builder_entry["surface"] == "builder"
+    assert marketplace_entry["path"] == "schemas/marketplace_sdk_catalog.schema.json"
+    assert marketplace_entry["urn"] == "urn:mullusi:schema:marketplace-sdk-catalog:1"
+    assert marketplace_entry["surface"] == "marketplace"
     assert lattice_entry["path"] == "schemas/memory_lattice.schema.json"
     assert lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
     assert lattice_entry["surface"] == "memory"

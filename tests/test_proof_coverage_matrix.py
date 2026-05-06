@@ -883,9 +883,11 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert physical_surface["coverage_state"] == "witnessed"
     assert physical_surface["request_proof"] == "request_proof"
     assert physical_surface["action_proof"] == "action_proof"
+    assert "/operator/physical-capability-promotion-receipts" in physical_surface["representative_paths"]
     assert "capsules/physical.json" in physical_surface["evidence_files"]
     assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
     assert "gateway/capability_capsule_installer.py" in physical_surface["evidence_files"]
+    assert "gateway/server.py" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
@@ -916,6 +918,8 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "physical_promotion_receipt_schema_valid" in witnesses
     assert "physical_promotion_receipt_cli_emits_schema_valid_bundle" in witnesses
     assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
+    assert "physical_promotion_receipt_operator_endpoint_emits_bundle" in witnesses
+    assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses

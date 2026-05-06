@@ -78,6 +78,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `verification_result.schema.json` | Canonical verification closure |
 | `learning_admission.schema.json` | Canonical learning admission decision |
 | `low_code_builder_catalog.schema.json` | Canonical declarative low-code builder catalog snapshot |
+| `marketplace_sdk_catalog.schema.json` | Canonical governed marketplace and SDK catalog snapshot |
 | `memory_lattice.schema.json` | Canonical memory planning and execution admission claim |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation admission receipt |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |

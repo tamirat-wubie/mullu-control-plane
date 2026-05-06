@@ -21,6 +21,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from gateway.capability_forge import (
     CapabilityForge,
@@ -31,6 +32,7 @@ from gateway.physical_capability_promotion_receipt import (
     PhysicalCapabilityPromotionReceipt,
     build_physical_capability_promotion_receipt,
 )
+from gateway.server import create_gateway_app
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 from scripts.preflight_physical_capability_promotion import preflight_physical_capability_records
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
@@ -40,6 +42,17 @@ ROOT = Path(__file__).resolve().parents[2]
 REGISTRY_FIXTURE_PATH = ROOT / "integration" / "governed_capability_fabric" / "fixtures" / "capability_registry_entry.json"
 PHYSICAL_CAPSULE_PATH = ROOT / "capsules" / "physical.json"
 SCHEMA_PATH = ROOT / "schemas" / "physical_capability_promotion_receipt.schema.json"
+
+
+class StubPlatform:
+    """Minimal platform fixture for gateway app construction."""
+
+    def process_message(self, message, tenant_id: str, identity_id: str):  # noqa: ANN001
+        return {
+            "response": "ok",
+            "tenant_id": tenant_id,
+            "identity_id": identity_id,
+        }
 
 
 def test_physical_capability_promotion_receipt_binds_ready_chain() -> None:
@@ -84,6 +97,61 @@ def test_physical_capability_promotion_receipt_rejects_mismatched_handoff() -> N
     assert candidate.capability_id == "physical.unlock_door"
     assert installed_entry.capability_id == candidate.capability_id
     assert preflight_report.ready is True
+
+
+def test_operator_physical_promotion_receipt_endpoint_emits_ready_bundle() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/operator/physical-capability-promotion-receipts",
+        json={
+            "use_fixture_refs": True,
+            "recorded_at": "2026-05-06T12:00:00+00:00",
+        },
+    )
+    payload = response.json()
+    ledger_response = client.get("/operator/physical-capability-promotion-receipts")
+    ledger_payload = ledger_response.json()
+
+    assert response.status_code == 200
+    assert payload["ready"] is True
+    assert payload["errors"] == []
+    assert payload["receipt_id"] == payload["receipt"]["receipt_id"]
+    assert payload["receipt"]["promotion_status"] == "ready"
+    assert payload["receipt"]["receipt_is_not_admission_authority"] is True
+    assert ledger_response.status_code == 200
+    assert ledger_payload["count"] == 1
+    assert ledger_payload["physical_capability_promotion_receipts"][0]["receipt_id"] == payload["receipt_id"]
+
+
+def test_operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post("/operator/physical-capability-promotion-receipts", json={})
+    payload = response.json()["detail"]
+    ledger_response = client.get("/operator/physical-capability-promotion-receipts")
+    ledger_payload = ledger_response.json()
+
+    assert response.status_code == 409
+    assert payload["ready"] is False
+    assert payload["capability_id"] == "physical.unlock_door"
+    assert "live_read_receipt_ref_required" in payload["errors"]
+    assert ledger_response.status_code == 200
+    assert ledger_payload["count"] == 0
+    assert ledger_payload["total"] == 0
+
+
+def test_operator_physical_promotion_receipt_endpoint_rejects_invalid_payload_shape() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/operator/physical-capability-promotion-receipts",
+        json={"physical_live_safety_evidence_refs": []},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "physical_promotion_receipt_physical_safety_refs_must_be_object"
+    assert client.get("/operator/physical-capability-promotion-receipts").json()["count"] == 0
 
 
 def _ready_physical_promotion_chain():
