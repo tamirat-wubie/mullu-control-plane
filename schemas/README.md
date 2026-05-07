@@ -75,6 +75,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `temporal_accepted_risk_expiry_receipt.schema.json` | Canonical governed accepted-risk expiry receipt |
 | `temporal_credential_expiry_receipt.schema.json` | Canonical governed credential expiry receipt |
 | `temporal_retention_window_receipt.schema.json` | Canonical governed retention-window receipt |
+| `temporal_rate_limit_window_receipt.schema.json` | Canonical governed rate-limit window receipt |
 | `temporal_memory_receipt.schema.json` | Canonical governed temporal memory use receipt |
 | `temporal_memory_refresh_receipt.schema.json` | Canonical governed temporal memory refresh workflow receipt |
 | `temporal_scheduler_receipt.schema.json` | Canonical governed scheduled wakeup and lease receipt |

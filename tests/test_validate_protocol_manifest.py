@@ -431,6 +431,17 @@ def test_protocol_manifest_indexes_temporal_retention_window_receipt() -> None:
     assert retention_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_rate_limit_window_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    rate_limit_entry = entries["temporal-rate-limit-window-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert rate_limit_entry["path"] == "schemas/temporal_rate_limit_window_receipt.schema.json"
+    assert rate_limit_entry["urn"] == "urn:mullusi:schema:temporal-rate-limit-window-receipt:1"
+    assert rate_limit_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
