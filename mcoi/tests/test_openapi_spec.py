@@ -2,7 +2,6 @@
 
 import pytest
 import os
-import json
 
 try:
     from fastapi.testclient import TestClient

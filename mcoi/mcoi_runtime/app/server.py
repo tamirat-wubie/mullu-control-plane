@@ -6,38 +6,39 @@ Purpose: HTTP boundary for the governed platform. All requests enter governed ex
 Dependencies: fastapi, production_surface, llm_bootstrap, streaming, certification_daemon.
 Run: uvicorn mcoi_runtime.app.server:app --host 0.0.0.0 --port 8000
 """
+# ruff: noqa: E402
+
 from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Any
-from fastapi import FastAPI, HTTPException, Header
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
 
 from mcoi_runtime.app.production_surface import (
-    ProductionSurface, APIRequest, DEPLOYMENT_MANIFESTS,
+    ProductionSurface, DEPLOYMENT_MANIFESTS,
 )
+from mcoi_runtime.app.engineering_puzzle_control import EngineeringPuzzleControlSurface
 from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 from mcoi_runtime.app.streaming import StreamingAdapter
-from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.core.live_path_certification import LivePathCertifier
 from mcoi_runtime.core.certification_daemon import CertificationConfig, CertificationDaemon
-from mcoi_runtime.core.tenant_budget import TenantBudgetManager, TenantBudgetPolicy
+from mcoi_runtime.core.tenant_budget import TenantBudgetManager
 from mcoi_runtime.core.governance_metrics import GovernanceMetricsEngine
 from mcoi_runtime.core.rate_limiter import RateLimiter, RateLimitConfig
 from mcoi_runtime.core.audit_trail import AuditTrail
 from mcoi_runtime.core.agent_protocol import (
-    AgentCapability, AgentDescriptor, AgentRegistry, TaskManager, TaskSpec,
+    AgentCapability, AgentDescriptor, AgentRegistry, TaskManager,
 )
 from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine
-from mcoi_runtime.core.webhook_system import WebhookManager, WebhookSubscription
+from mcoi_runtime.core.webhook_system import WebhookManager
 from mcoi_runtime.core.deep_health import DeepHealthChecker
 from mcoi_runtime.core.config_reload import ConfigManager
 from mcoi_runtime.core.observability import ObservabilityAggregator
 from mcoi_runtime.core.plugin_system import HookPoint, PluginDescriptor, PluginRegistry
 from mcoi_runtime.core.event_bus import EventBus
-from mcoi_runtime.core.batch_pipeline import BatchPipeline, PipelineStep
+from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.batch_pipeline import BatchPipeline
 from mcoi_runtime.persistence.tenant_ledger import TenantLedger
-from mcoi_runtime.persistence.postgres_store import InMemoryStore, create_store
+from mcoi_runtime.persistence.postgres_store import create_store
 
 import hashlib
 import json
@@ -185,6 +186,8 @@ plugin_registry = PluginRegistry()
 
 # Phase 206A: Event bus
 event_bus = EventBus(clock=_clock)
+engineering_puzzle_event_spine = EventSpineEngine(clock=_clock)
+engineering_puzzle_control = EngineeringPuzzleControlSurface(engineering_puzzle_event_spine)
 # Wire event bus into observability
 observability.register_source("event_bus", lambda: event_bus.summary())
 # Wire event bus into deep health
@@ -312,7 +315,7 @@ health_agg.register("metrics", lambda: {"status": "healthy"}, weight=0.5)
 health_agg.register("event_bus", lambda: {"status": "healthy" if event_bus.error_count == 0 else "degraded"}, weight=0.5)
 
 # Phase 210C: API version manager
-from mcoi_runtime.core.api_version import APIVersionManager, EndpointDescriptor
+from mcoi_runtime.core.api_version import APIVersionManager
 api_versions = APIVersionManager(clock=_clock)
 
 # Phase 222A: Grafana dashboard generator
@@ -320,7 +323,7 @@ from mcoi_runtime.core.grafana_dashboard import build_default_dashboard
 grafana_dashboard = build_default_dashboard()
 
 # Phase 222B: Request tracing
-from mcoi_runtime.core.request_tracing import RequestTracer, TraceContext
+from mcoi_runtime.core.request_tracing import RequestTracer
 request_tracer = RequestTracer(
     max_traces=10_000,
     on_span_finish=lambda span: audit_trail.record(
@@ -365,7 +368,7 @@ from mcoi_runtime.core.governance_guard import create_api_key_guard
 guard_chain.insert(0, create_api_key_guard(api_key_mgr))
 
 # Phase 224C: Data export pipeline
-from mcoi_runtime.core.data_export import DataExportPipeline, ExportFormat, ExportRequest
+from mcoi_runtime.core.data_export import DataExportPipeline
 data_export = DataExportPipeline(clock=_clock)
 data_export.register_source("audit", lambda: [
     e.to_dict() if hasattr(e, "to_dict") else e for e in audit_trail.recent(1000)
@@ -604,7 +607,7 @@ from mcoi_runtime.core.graceful_shutdown import ShutdownManager
 shutdown_mgr = ShutdownManager()
 
 # Phase 215A: Agent chain
-from mcoi_runtime.core.agent_chain import AgentChainEngine, ChainStep
+from mcoi_runtime.core.agent_chain import AgentChainEngine
 agent_chain = AgentChainEngine(
     clock=_clock,
     llm_fn=lambda prompt: llm_bridge.complete(prompt, budget_id="default"),
@@ -722,7 +725,7 @@ async def _app_lifespan(_: FastAPI):
 app = FastAPI(
     title="Mullu Platform",
     version="3.10.2",
-    description="Governed AI Operating System",
+    description="Governed Symbolic Operating System",
     lifespan=_app_lifespan,
 )
 
@@ -854,6 +857,8 @@ deps.set("cert_daemon", cert_daemon)
 
 # Events & webhooks
 deps.set("event_bus", event_bus)
+deps.set("engineering_puzzle_event_spine", engineering_puzzle_event_spine)
+deps.set("engineering_puzzle_control", engineering_puzzle_control)
 deps.set("event_store", event_store)
 deps.set("webhook_manager", webhook_manager)
 deps.set("webhook_retry", webhook_retry)
@@ -908,6 +913,7 @@ from mcoi_runtime.app.routers.workflow import router as workflow_router
 from mcoi_runtime.app.routers.agent import router as agent_router
 from mcoi_runtime.app.routers.data import router as data_router
 from mcoi_runtime.app.routers.ops import router as ops_router
+from mcoi_runtime.app.routers.engineering_puzzle import router as engineering_puzzle_router
 
 app.include_router(health_router)
 app.include_router(llm_router)
@@ -917,6 +923,7 @@ app.include_router(workflow_router)
 app.include_router(agent_router)
 app.include_router(data_router)
 app.include_router(ops_router)
+app.include_router(engineering_puzzle_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
