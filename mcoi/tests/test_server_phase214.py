@@ -63,6 +63,10 @@ class TestAutoRoutedCompletion:
         assert "meta-llama/Meta-Llama-3.1-8B-Instruct" in ids
         assert "Qwen/Qwen2.5-Coder-32B-Instruct" in ids
         assert "Meta-Llama-3.3-70B-Instruct" in ids
+        assert "@cf/meta/llama-3.1-8b-instruct-fp8-fast" in ids
+        assert "kimi-k2.5" in ids
+        assert "qwen-turbo" in ids
+        assert "glm-4.5-air" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps
