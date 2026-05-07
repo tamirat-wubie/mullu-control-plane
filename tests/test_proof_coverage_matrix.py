@@ -631,12 +631,18 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "NetworkedWorkerMesh.register_worker" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.dispatch" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.read_model" in worker_surface["representative_paths"]
+    assert "SandboxedCodeWorker.execute_command" in worker_surface["representative_paths"]
+    assert "CodeWorkerLease" in worker_surface["representative_paths"]
+    assert "CodeWorkerReceipt" in worker_surface["representative_paths"]
     assert "gateway/physical_action_boundary.py" in worker_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "gateway/worker_mesh.py" in worker_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/code_worker.py" in worker_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/workers/code_worker.py" in worker_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in worker_surface["evidence_files"]
     assert "schemas/worker_mesh.schema.json" in worker_surface["evidence_files"]
+    assert "tests/test_code_worker.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_worker_mesh.py" in worker_surface["evidence_files"]
@@ -644,6 +650,9 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "active_lease_required" in witnesses
     assert "tenant_capability_operation_budget_checked" in witnesses
     assert "forbidden_operations_override_allowed" in witnesses
+    assert "code_worker_exact_lease_command_required" in witnesses
+    assert "code_worker_blocks_network_shell_and_risky_git" in witnesses
+    assert "code_worker_receipt_binds_sandbox_evidence" in witnesses
     assert "physical_action_receipt_required_for_physical_workers" in witnesses
     assert "physical_worker_canary_blocks_without_receipt" in witnesses
     assert "physical_worker_canary_passed" in witnesses
