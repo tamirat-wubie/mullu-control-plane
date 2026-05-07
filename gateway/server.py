@@ -81,6 +81,7 @@ from scripts.emit_physical_capability_promotion_receipt import (
     PHYSICAL_SAFETY_REF_FIELDS,
     emit_physical_capability_promotion_receipt,
 )
+from gateway.physical_capability_promotion_store import build_physical_capability_promotion_receipt_store_from_env
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
 )
@@ -155,7 +156,7 @@ def create_gateway_app(
     )
     authority_operator_audit_events: list[dict[str, Any]] = []
     capability_capsule_admission_receipts: list[dict[str, Any]] = []
-    physical_capability_promotion_receipts: list[dict[str, Any]] = []
+    physical_capability_promotion_receipt_store = build_physical_capability_promotion_receipt_store_from_env()
     platform_decision_log = getattr(platform, "_decision_log", None)
     reflex_deployment_witness_log_backed = platform_decision_log is not None
     reflex_deployment_witness_log = platform_decision_log or GovernanceDecisionLog(clock=_clock)
@@ -2185,8 +2186,13 @@ def create_gateway_app(
             )
 
         receipt_payload = receipt.to_json_dict()
-        physical_capability_promotion_receipts.append(receipt_payload)
-        del physical_capability_promotion_receipts[:-500]
+        try:
+            physical_capability_promotion_receipt_store.append(receipt_payload)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(
+                503,
+                detail=f"physical_promotion_receipt_store_unavailable:{exc}",
+            ) from exc
         return {
             "ready": True,
             "receipt_id": receipt.receipt_id,
@@ -2203,28 +2209,27 @@ def create_gateway_app(
         offset: int = 0,
     ):
         _require_authority_operator(request)
-        receipts = tuple(reversed(physical_capability_promotion_receipts))
-        if capability_id:
-            receipts = tuple(
-                receipt for receipt in receipts
-                if receipt.get("capability_id") == capability_id
+        try:
+            page = physical_capability_promotion_receipt_store.list(
+                capability_id=capability_id,
+                status=status,
+                limit=limit,
+                offset=offset,
             )
-        if status:
-            receipts = tuple(
-                receipt for receipt in receipts
-                if receipt.get("promotion_status") == status
-            )
-        page, page_meta = _read_model_page(
-            receipts,
-            limit=_bounded_read_model_limit(limit),
-            offset=_bounded_read_model_offset(offset),
-        )
+        except (OSError, ValueError) as exc:
+            raise HTTPException(
+                503,
+                detail=f"physical_promotion_receipt_store_unavailable:{exc}",
+            ) from exc
         return {
-            "physical_capability_promotion_receipts": list(page),
-            "count": len(page),
+            "physical_capability_promotion_receipts": list(page.receipts),
+            "count": len(page.receipts),
             "capability_id_filter": capability_id,
             "status_filter": status,
-            **page_meta,
+            "total": page.total,
+            "limit": page.limit,
+            "offset": page.offset,
+            "next_offset": page.next_offset,
         }
 
     @app.get("/operator/capabilities/read-model")
@@ -2426,7 +2431,7 @@ def create_gateway_app(
     app.state.authority_obligation_mesh = authority_obligation_mesh
     app.state.authority_operator_audit_events = authority_operator_audit_events
     app.state.capability_capsule_admission_receipts = capability_capsule_admission_receipts
-    app.state.physical_capability_promotion_receipts = physical_capability_promotion_receipts
+    app.state.physical_capability_promotion_receipt_store = physical_capability_promotion_receipt_store
     app.state.session_mgr = session_mgr
     app.state.event_log = event_log
     app.state.capability_admission_gate = capability_admission_gate
