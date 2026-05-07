@@ -521,6 +521,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-credential-expiry-receipt",
+      "path": "schemas/temporal_credential_expiry_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-credential-expiry-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",

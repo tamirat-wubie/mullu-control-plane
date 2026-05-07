@@ -409,6 +409,17 @@ def test_protocol_manifest_indexes_temporal_accepted_risk_expiry_receipt() -> No
     assert accepted_risk_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_credential_expiry_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    credential_entry = entries["temporal-credential-expiry-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert credential_entry["path"] == "schemas/temporal_credential_expiry_receipt.schema.json"
+    assert credential_entry["urn"] == "urn:mullusi:schema:temporal-credential-expiry-receipt:1"
+    assert credential_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
