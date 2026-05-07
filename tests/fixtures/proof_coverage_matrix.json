@@ -310,6 +310,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_credential_expiry_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_credential_expiry"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -387,7 +394,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 49,
+      "action_proof": 50,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -395,7 +402,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 55,
+      "audit_chain": 56,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -403,16 +410,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 58
+      "witnessed": 59
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 49
+      "request_proof": 50
     },
-    "surface_count": 59
+    "surface_count": 60
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3402,6 +3409,37 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_accepted_risk_expiry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_credential_expiry.py",
+        "schemas/temporal_credential_expiry_receipt.schema.json",
+        "tests/test_gateway/test_temporal_credential_expiry.py"
+      ],
+      "notes": "Temporal credential expiry rechecks connector credential descriptors for expiry, lifecycle disposition, provider and credential scope, rotation warning windows, owner, evidence refs, source binding receipts, and no-secret serialization before dispatch.",
+      "representative_paths": [
+        "TemporalCredentialExpiry.evaluate",
+        "TemporalCredentialRequest",
+        "TemporalCredentialExpiryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_credential_expiry",
+        "expired_credentials_block_dispatch",
+        "revoked_credentials_block_dispatch",
+        "provider_and_credential_scope_checked",
+        "rotation_pending_warns_before_dispatch",
+        "rotation_overdue_blocks_dispatch",
+        "credential_evidence_refs_required",
+        "secret_value_absence_verified",
+        "high_risk_source_receipts_bound",
+        "temporal_credential_expiry_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_credential_expiry"
     },
     {
       "action_proof": "action_proof",

@@ -1165,6 +1165,35 @@ def test_temporal_accepted_risk_expiry_surface_blocks_stale_risk() -> None:
     assert closure_actions["publish_temporal_accepted_risk_expiry_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_credential_expiry_surface_blocks_expired_credentials() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    credential_surface = surfaces["temporal_credential_expiry"]
+    witnesses = set(credential_surface["runtime_witnesses"])
+
+    assert credential_surface["coverage_state"] == "witnessed"
+    assert credential_surface["request_proof"] == "request_proof"
+    assert credential_surface["action_proof"] == "action_proof"
+    assert "TemporalCredentialExpiry.evaluate" in credential_surface["representative_paths"]
+    assert "TemporalCredentialRequest" in credential_surface["representative_paths"]
+    assert "TemporalCredentialExpiryReceipt" in credential_surface["representative_paths"]
+    assert "gateway/temporal_credential_expiry.py" in credential_surface["evidence_files"]
+    assert "schemas/temporal_credential_expiry_receipt.schema.json" in credential_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_credential_expiry.py" in credential_surface["evidence_files"]
+    assert "runtime_clock_owns_credential_expiry" in witnesses
+    assert "expired_credentials_block_dispatch" in witnesses
+    assert "revoked_credentials_block_dispatch" in witnesses
+    assert "provider_and_credential_scope_checked" in witnesses
+    assert "rotation_pending_warns_before_dispatch" in witnesses
+    assert "rotation_overdue_blocks_dispatch" in witnesses
+    assert "credential_evidence_refs_required" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_credential_expiry_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_credential_expiry_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}

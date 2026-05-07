@@ -1417,6 +1417,37 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_credential_expiry",
+            [
+                "TemporalCredentialExpiry.evaluate",
+                "TemporalCredentialRequest",
+                "TemporalCredentialExpiryReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_credential_expiry.py",
+                "schemas/temporal_credential_expiry_receipt.schema.json",
+                "tests/test_gateway/test_temporal_credential_expiry.py",
+            ],
+            "Temporal credential expiry rechecks connector credential descriptors for expiry, lifecycle disposition, provider and credential scope, rotation warning windows, owner, evidence refs, source binding receipts, and no-secret serialization before dispatch.",
+            [
+                "runtime_clock_owns_credential_expiry",
+                "expired_credentials_block_dispatch",
+                "revoked_credentials_block_dispatch",
+                "provider_and_credential_scope_checked",
+                "rotation_pending_warns_before_dispatch",
+                "rotation_overdue_blocks_dispatch",
+                "credential_evidence_refs_required",
+                "secret_value_absence_verified",
+                "high_risk_source_receipts_bound",
+                "temporal_credential_expiry_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1905,6 +1936,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_accepted_risk_expiry_receipt_contract",
             "surfaces": ["temporal_accepted_risk_expiry"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_credential_expiry_receipt_contract",
+            "surfaces": ["temporal_credential_expiry"],
             "status": "closed",
         },
         {

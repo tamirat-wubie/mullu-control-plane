@@ -230,6 +230,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Temporal causal order receipts are public contracts",
     "Temporal monotonic duration receipts are public contracts",
     "Temporal accepted-risk expiry receipts are public contracts",
+    "Temporal credential expiry receipts are public contracts",
     "Temporal memory receipts are public contracts",
     "Temporal memory refresh receipts are public contracts",
     "Temporal scheduler receipts are public contracts",
