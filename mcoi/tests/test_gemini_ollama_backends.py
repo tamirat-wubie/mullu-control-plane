@@ -34,12 +34,26 @@ def _make_params(prompt: str = "Hello", model: str = "") -> LLMInvocationParams:
 # --- LLMProvider enum ---
 
 
-def test_llm_provider_has_five_members() -> None:
-    assert len(LLMProvider) == 10
-    assert {LLMProvider.ANTHROPIC, LLMProvider.OPENAI, LLMProvider.GEMINI,
-            LLMProvider.GROQ, LLMProvider.DEEPSEEK, LLMProvider.GROK,
-            LLMProvider.MISTRAL, LLMProvider.OPENROUTER,
-            LLMProvider.OLLAMA, LLMProvider.STUB} == set(LLMProvider)
+def test_llm_provider_declares_hosted_provider_mesh() -> None:
+    expected_providers = {
+        LLMProvider.ANTHROPIC,
+        LLMProvider.OPENAI,
+        LLMProvider.GEMINI,
+        LLMProvider.GROQ,
+        LLMProvider.DEEPSEEK,
+        LLMProvider.TOGETHER,
+        LLMProvider.FIREWORKS,
+        LLMProvider.FRIENDLI,
+        LLMProvider.NOVITA,
+        LLMProvider.CEREBRAS,
+        LLMProvider.GROK,
+        LLMProvider.MISTRAL,
+        LLMProvider.OPENROUTER,
+        LLMProvider.OLLAMA,
+        LLMProvider.STUB,
+    }
+    assert len(LLMProvider) == len(expected_providers)
+    assert expected_providers == set(LLMProvider)
 
 
 # --- GeminiBackend ---
