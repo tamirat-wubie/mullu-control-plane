@@ -179,6 +179,24 @@ from mcoi_runtime.contracts.settlement_runtime import (
     WriteoffDisposition,
     WriteoffRecord,
 )
+from mcoi_runtime.contracts.customer_runtime import (
+    AccountHealthSnapshot,
+    AccountHealthStatus,
+    AccountRecord,
+    AccountStatus,
+    CustomerClosureReport,
+    CustomerDecision,
+    CustomerDisposition,
+    CustomerRecord,
+    CustomerSnapshot,
+    CustomerStatus,
+    CustomerViolation,
+    EntitlementRecord,
+    EntitlementStatus,
+    ProductRecord,
+    ProductStatus,
+    SubscriptionRecord,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -1408,6 +1426,145 @@ def _build_settlement_closure_report(payload: dict) -> SettlementClosureReport:
     )
 
 
+def _build_customer_record(payload: dict) -> CustomerRecord:
+    return CustomerRecord(
+        customer_id=payload["customer_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        status=CustomerStatus(payload["status"]),
+        tier=payload["tier"],
+        account_count=payload["account_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_account_record(payload: dict) -> AccountRecord:
+    return AccountRecord(
+        account_id=payload["account_id"],
+        customer_id=payload["customer_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        status=AccountStatus(payload["status"]),
+        contract_ref=payload["contract_ref"],
+        entitlement_count=payload["entitlement_count"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_product_record(payload: dict) -> ProductRecord:
+    return ProductRecord(
+        product_id=payload["product_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        status=ProductStatus(payload["status"]),
+        category=payload["category"],
+        base_price=payload["base_price"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_subscription_record(payload: dict) -> SubscriptionRecord:
+    return SubscriptionRecord(
+        subscription_id=payload["subscription_id"],
+        account_id=payload["account_id"],
+        product_id=payload["product_id"],
+        tenant_id=payload["tenant_id"],
+        status=AccountStatus(payload["status"]),
+        quantity=payload["quantity"],
+        start_at=payload["start_at"],
+        end_at=payload["end_at"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_entitlement_record(payload: dict) -> EntitlementRecord:
+    return EntitlementRecord(
+        entitlement_id=payload["entitlement_id"],
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        service_ref=payload["service_ref"],
+        status=EntitlementStatus(payload["status"]),
+        granted_at=payload["granted_at"],
+        expires_at=payload["expires_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_account_health_snapshot(payload: dict) -> AccountHealthSnapshot:
+    return AccountHealthSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        account_id=payload["account_id"],
+        tenant_id=payload["tenant_id"],
+        health_status=AccountHealthStatus(payload["health_status"]),
+        health_score=payload["health_score"],
+        sla_breaches=payload["sla_breaches"],
+        open_cases=payload["open_cases"],
+        billing_issues=payload["billing_issues"],
+        entitlement_count=payload["entitlement_count"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_customer_decision(payload: dict) -> CustomerDecision:
+    return CustomerDecision(
+        decision_id=payload["decision_id"],
+        tenant_id=payload["tenant_id"],
+        customer_id=payload["customer_id"],
+        account_id=payload["account_id"],
+        disposition=CustomerDisposition(payload["disposition"]),
+        reason=payload["reason"],
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_customer_violation(payload: dict) -> CustomerViolation:
+    return CustomerViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_customer_snapshot(payload: dict) -> CustomerSnapshot:
+    return CustomerSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_customers=payload["total_customers"],
+        total_accounts=payload["total_accounts"],
+        total_products=payload["total_products"],
+        total_subscriptions=payload["total_subscriptions"],
+        total_entitlements=payload["total_entitlements"],
+        total_health_snapshots=payload["total_health_snapshots"],
+        total_decisions=payload["total_decisions"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_customer_closure_report(payload: dict) -> CustomerClosureReport:
+    return CustomerClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_customers=payload["total_customers"],
+        total_accounts=payload["total_accounts"],
+        total_products=payload["total_products"],
+        total_subscriptions=payload["total_subscriptions"],
+        total_entitlements=payload["total_entitlements"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -1460,10 +1617,16 @@ def _build_settlement_closure_report(payload: dict) -> SettlementClosureReport:
         ("continuity_plan.json", _build_continuity_plan),
         ("continuity_snapshot.json", _build_continuity_snapshot),
         ("continuity_violation.json", _build_continuity_violation),
+        ("customer_closure_report.json", _build_customer_closure_report),
+        ("customer_decision.json", _build_customer_decision),
+        ("customer_record.json", _build_customer_record),
+        ("customer_snapshot.json", _build_customer_snapshot),
+        ("customer_violation.json", _build_customer_violation),
         ("governance_contract_record.json", _build_governance_contract_record),
         ("disruption_event.json", _build_disruption_event),
         ("dispute_record.json", _build_dispute_record),
         ("dunning_notice.json", _build_dunning_notice),
+        ("entitlement_record.json", _build_entitlement_record),
         ("evidence_collection.json", _build_evidence_collection),
         ("evidence_item.json", _build_evidence_item),
         ("failover_record.json", _build_failover_record),
@@ -1481,6 +1644,7 @@ def _build_settlement_closure_report(payload: dict) -> SettlementClosureReport:
         ("merge_decision.json", _build_merge_decision),
         ("payment_record.json", _build_payment_record),
         ("penalty_record.json", _build_penalty_record),
+        ("product_record.json", _build_product_record),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),
         ("recovery_decision.json", _build_recovery_decision),
@@ -1498,8 +1662,11 @@ def _build_settlement_closure_report(payload: dict) -> SettlementClosureReport:
         ("settlement_decision.json", _build_settlement_decision),
         ("settlement_record.json", _build_settlement_record),
         ("sla_window.json", _build_sla_window),
+        ("subscription_record.json", _build_subscription_record),
         ("verification_record.json", _build_verification_record),
         ("writeoff_record.json", _build_writeoff_record),
+        ("account_health_snapshot.json", _build_account_health_snapshot),
+        ("account_record.json", _build_account_record),
     ],
 )
 def test_mcoi_runtime_fixture_round_trips_exactly_through_mcoi_contracts(

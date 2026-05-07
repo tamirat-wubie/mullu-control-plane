@@ -203,6 +203,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "aging_snapshot.json" in mcoi_runtime_fixture_names
     assert "settlement_decision.json" in mcoi_runtime_fixture_names
     assert "settlement_closure_report.json" in mcoi_runtime_fixture_names
+    assert "customer_record.json" in mcoi_runtime_fixture_names
+    assert "account_record.json" in mcoi_runtime_fixture_names
+    assert "product_record.json" in mcoi_runtime_fixture_names
+    assert "subscription_record.json" in mcoi_runtime_fixture_names
+    assert "entitlement_record.json" in mcoi_runtime_fixture_names
+    assert "account_health_snapshot.json" in mcoi_runtime_fixture_names
+    assert "customer_decision.json" in mcoi_runtime_fixture_names
+    assert "customer_violation.json" in mcoi_runtime_fixture_names
+    assert "customer_snapshot.json" in mcoi_runtime_fixture_names
+    assert "customer_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -215,7 +225,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 89
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 99
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -1968,6 +1978,113 @@ def test_validate_mcoi_runtime_fixture_rejects_settlement_closure_refund_overflo
 
     assert len(errors) == 1
     assert "total_refunds must not exceed total_payments" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_subscription_end_before_start(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "subscription_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "subscription_id": "subscription-drift",
+                "account_id": "billing-account-1",
+                "product_id": "product-1",
+                "tenant_id": "tenant-1",
+                "status": "active",
+                "quantity": 1,
+                "start_at": "2026-04-10T00:00:00+00:00",
+                "end_at": "2026-04-09T00:00:00+00:00",
+                "created_at": "2026-04-01T00:00:00+00:00",
+                "metadata": {"plan": "standard"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "end_at must not precede start_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_entitlement_expiry_before_grant(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "entitlement_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "entitlement_id": "entitlement-drift",
+                "account_id": "billing-account-1",
+                "tenant_id": "tenant-1",
+                "service_ref": "service-1",
+                "status": "active",
+                "granted_at": "2026-04-10T00:00:00+00:00",
+                "expires_at": "2026-04-09T00:00:00+00:00",
+                "metadata": {"scope": "runtime"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "expires_at must not precede granted_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_customer_snapshot_health_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "customer_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "customer-snapshot-drift",
+                "total_customers": 2,
+                "total_accounts": 3,
+                "total_products": 2,
+                "total_subscriptions": 4,
+                "total_entitlements": 5,
+                "total_health_snapshots": 4,
+                "total_decisions": 1,
+                "total_violations": 0,
+                "captured_at": "2026-04-30T23:00:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_health_snapshots must not exceed total_accounts" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_customer_closure_account_underflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "customer_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "customer-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_customers": 4,
+                "total_accounts": 3,
+                "total_products": 2,
+                "total_subscriptions": 4,
+                "total_entitlements": 5,
+                "total_violations": 0,
+                "closed_at": "2026-04-30T23:59:00+00:00",
+                "metadata": {"period": "2026-04"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_accounts must be at least total_customers" in errors[0]
     assert fixture_path.name in errors[0]
 
 
