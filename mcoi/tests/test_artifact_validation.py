@@ -294,6 +294,15 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "rollback_plan.json" in mcoi_runtime_fixture_names
     assert "change_outcome.json" in mcoi_runtime_fixture_names
     assert "change_impact_assessment.json" in mcoi_runtime_fixture_names
+    assert "availability_record.json" in mcoi_runtime_fixture_names
+    assert "scheduling_window.json" in mcoi_runtime_fixture_names
+    assert "business_hours_profile.json" in mcoi_runtime_fixture_names
+    assert "meeting_record.json" in mcoi_runtime_fixture_names
+    assert "meeting_request.json" in mcoi_runtime_fixture_names
+    assert "meeting_decision.json" in mcoi_runtime_fixture_names
+    assert "response_sla.json" in mcoi_runtime_fixture_names
+    assert "availability_conflict.json" in mcoi_runtime_fixture_names
+    assert "availability_routing_decision.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -306,7 +315,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 180
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 189
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2946,6 +2955,110 @@ def test_validate_mcoi_runtime_fixture_rejects_change_outcome_without_observed_i
 
     assert len(errors) == 1
     assert "improvement_pct must be 0 when improvement_observed is false" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_scheduling_window_capacity_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "scheduling_window.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "window_id": "window-drift",
+                "identity_ref": "contact-alice",
+                "window_type": "meeting",
+                "starts_at": "2026-05-08T14:00:00+00:00",
+                "ends_at": "2026-05-08T15:00:00+00:00",
+                "timezone": "UTC",
+                "capacity": 2,
+                "reserved": 3,
+                "metadata": {"scope": "calendar"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "reserved must not exceed capacity" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_business_hours_reverse_weekday_window(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "business_hours_profile.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "profile_id": "business-hours-drift",
+                "identity_ref": "contact-alice",
+                "timezone": "America/New_York",
+                "weekday_start_hour": 18,
+                "weekday_end_hour": 9,
+                "weekend_available": False,
+                "quiet_start_hour": 22,
+                "quiet_end_hour": 7,
+                "emergency_override": True,
+                "created_at": "2026-05-07T12:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "weekday_start_hour must be less than weekday_end_hour" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_response_sla_escalation_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "response_sla.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "sla_id": "sla-drift",
+                "identity_ref": "contact-alice",
+                "expectation": "within_sla",
+                "max_response_seconds": 3600,
+                "escalation_after_seconds": 7200,
+                "escalation_target": "contact-manager-1",
+                "channel_preference": "email",
+                "created_at": "2026-05-07T12:10:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "escalation_after_seconds must not exceed max_response_seconds" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_fallback_routing_without_identity(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "availability_routing_decision.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "decision_id": "routing-drift",
+                "identity_ref": "contact-alice",
+                "resolution": "fallback_identity",
+                "channel_chosen": "slack",
+                "fallback_identity_ref": "",
+                "contact_at": "2026-05-08T13:30:00+00:00",
+                "reason": "Primary reviewer is outside business hours.",
+                "priority_used": "high",
+                "decided_at": "2026-05-07T12:20:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "fallback_identity resolution must carry fallback_identity_ref" in errors[0]
     assert fixture_path.name in errors[0]
 
 

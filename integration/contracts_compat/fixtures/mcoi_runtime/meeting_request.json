@@ -1,0 +1,15 @@
+{
+  "request_id": "meeting-request-q2-availability-review",
+  "organizer_ref": "contact-ops-lead",
+  "participant_refs": [
+    "contact-ops-lead",
+    "contact-backup-lead"
+  ],
+  "duration_minutes": 45,
+  "earliest_start": "2026-05-08T13:00:00+00:00",
+  "latest_end": "2026-05-08T17:00:00+00:00",
+  "preferred_timezone": "America/New_York",
+  "campaign_ref": "campaign-enterprise-renewal",
+  "title": "Q2 availability coverage review",
+  "created_at": "2026-05-07T12:08:00+00:00"
+}

@@ -325,6 +325,23 @@ from mcoi_runtime.contracts.records_runtime import (
     RetentionSchedule,
     RetentionStatus,
 )
+from mcoi_runtime.contracts.availability import (
+    AvailabilityConflict,
+    AvailabilityKind,
+    AvailabilityRecord,
+    AvailabilityResolution,
+    AvailabilityRoutingDecision,
+    BusinessHoursProfile,
+    MeetingDecision,
+    MeetingRecord,
+    MeetingRequest,
+    MeetingStatus,
+    ResponseExpectation,
+    ResponseSLA,
+    SchedulingConflictKind,
+    SchedulingWindow,
+    WindowType,
+)
 from mcoi_runtime.contracts.change_runtime import (
     ChangeApprovalBinding,
     ChangeEvidence,
@@ -2838,6 +2855,137 @@ def _build_change_impact_assessment(payload: dict) -> ChangeImpactAssessment:
     )
 
 
+def _build_availability_record(payload: dict) -> AvailabilityRecord:
+    return AvailabilityRecord(
+        record_id=payload["record_id"],
+        identity_ref=payload["identity_ref"],
+        kind=AvailabilityKind(payload["kind"]),
+        starts_at=payload["starts_at"],
+        ends_at=payload["ends_at"],
+        timezone=payload["timezone"],
+        priority_floor=payload["priority_floor"],
+        channels_allowed=tuple(payload["channels_allowed"]),
+        channels_blocked=tuple(payload["channels_blocked"]),
+        reason=payload["reason"],
+        active=payload["active"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_scheduling_window(payload: dict) -> SchedulingWindow:
+    return SchedulingWindow(
+        window_id=payload["window_id"],
+        identity_ref=payload["identity_ref"],
+        window_type=WindowType(payload["window_type"]),
+        starts_at=payload["starts_at"],
+        ends_at=payload["ends_at"],
+        timezone=payload["timezone"],
+        capacity=payload["capacity"],
+        reserved=payload["reserved"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_business_hours_profile(payload: dict) -> BusinessHoursProfile:
+    return BusinessHoursProfile(
+        profile_id=payload["profile_id"],
+        identity_ref=payload["identity_ref"],
+        timezone=payload["timezone"],
+        weekday_start_hour=payload["weekday_start_hour"],
+        weekday_end_hour=payload["weekday_end_hour"],
+        weekend_available=payload["weekend_available"],
+        quiet_start_hour=payload["quiet_start_hour"],
+        quiet_end_hour=payload["quiet_end_hour"],
+        emergency_override=payload["emergency_override"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_meeting_record(payload: dict) -> MeetingRecord:
+    return MeetingRecord(
+        meeting_id=payload["meeting_id"],
+        title=payload["title"],
+        organizer_ref=payload["organizer_ref"],
+        participant_refs=tuple(payload["participant_refs"]),
+        status=MeetingStatus(payload["status"]),
+        starts_at=payload["starts_at"],
+        ends_at=payload["ends_at"],
+        timezone=payload["timezone"],
+        location=payload["location"],
+        campaign_ref=payload["campaign_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_meeting_request(payload: dict) -> MeetingRequest:
+    return MeetingRequest(
+        request_id=payload["request_id"],
+        organizer_ref=payload["organizer_ref"],
+        participant_refs=tuple(payload["participant_refs"]),
+        duration_minutes=payload["duration_minutes"],
+        earliest_start=payload["earliest_start"],
+        latest_end=payload["latest_end"],
+        preferred_timezone=payload["preferred_timezone"],
+        campaign_ref=payload["campaign_ref"],
+        title=payload["title"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_meeting_decision(payload: dict) -> MeetingDecision:
+    return MeetingDecision(
+        decision_id=payload["decision_id"],
+        request_id=payload["request_id"],
+        meeting_id=payload["meeting_id"],
+        scheduled=payload["scheduled"],
+        reason=payload["reason"],
+        proposed_start=payload["proposed_start"],
+        proposed_end=payload["proposed_end"],
+        conflicts=tuple(payload["conflicts"]),
+        decided_at=payload["decided_at"],
+    )
+
+
+def _build_response_sla(payload: dict) -> ResponseSLA:
+    return ResponseSLA(
+        sla_id=payload["sla_id"],
+        identity_ref=payload["identity_ref"],
+        expectation=ResponseExpectation(payload["expectation"]),
+        max_response_seconds=payload["max_response_seconds"],
+        escalation_after_seconds=payload["escalation_after_seconds"],
+        escalation_target=payload["escalation_target"],
+        channel_preference=payload["channel_preference"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_availability_conflict(payload: dict) -> AvailabilityConflict:
+    return AvailabilityConflict(
+        conflict_id=payload["conflict_id"],
+        identity_ref=payload["identity_ref"],
+        kind=SchedulingConflictKind(payload["kind"]),
+        conflicting_window_ids=tuple(payload["conflicting_window_ids"]),
+        description=payload["description"],
+        severity=payload["severity"],
+        detected_at=payload["detected_at"],
+    )
+
+
+def _build_availability_routing_decision(payload: dict) -> AvailabilityRoutingDecision:
+    return AvailabilityRoutingDecision(
+        decision_id=payload["decision_id"],
+        identity_ref=payload["identity_ref"],
+        resolution=AvailabilityResolution(payload["resolution"]),
+        channel_chosen=payload["channel_chosen"],
+        fallback_identity_ref=payload["fallback_identity_ref"],
+        contact_at=payload["contact_at"],
+        reason=payload["reason"],
+        priority_used=payload["priority_used"],
+        decided_at=payload["decided_at"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2849,6 +2997,15 @@ def _build_change_impact_assessment(payload: dict) -> ChangeImpactAssessment:
         ("asset_record.json", _build_asset_record),
         ("asset_snapshot.json", _build_asset_snapshot),
         ("asset_violation.json", _build_asset_violation),
+        ("availability_record.json", _build_availability_record),
+        ("scheduling_window.json", _build_scheduling_window),
+        ("business_hours_profile.json", _build_business_hours_profile),
+        ("meeting_record.json", _build_meeting_record),
+        ("meeting_request.json", _build_meeting_request),
+        ("meeting_decision.json", _build_meeting_decision),
+        ("response_sla.json", _build_response_sla),
+        ("availability_conflict.json", _build_availability_conflict),
+        ("availability_routing_decision.json", _build_availability_routing_decision),
         ("billing_account.json", _build_billing_account),
         ("billing_closure_report.json", _build_billing_closure_report),
         ("billing_decision.json", _build_billing_decision),

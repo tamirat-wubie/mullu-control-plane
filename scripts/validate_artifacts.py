@@ -294,6 +294,52 @@ HOLD_STATUSES = frozenset({"active", "released", "expired"})
 DISPOSAL_DISPOSITIONS = frozenset({"delete", "archive", "anonymize", "transfer", "deny"})
 RECORD_AUTHORITIES = frozenset({"system", "operator", "legal", "compliance", "executive", "automated"})
 EVIDENCE_GRADES = frozenset({"primary", "secondary", "derived", "copy", "reconstructed"})
+AVAILABILITY_KINDS = frozenset(
+    {
+        "business_hours",
+        "temporary_available",
+        "temporary_unavailable",
+        "quiet_hours",
+        "vacation",
+        "on_call",
+        "emergency_only",
+    }
+)
+WINDOW_TYPES = frozenset({"contact", "meeting", "callback", "follow_up", "escalation", "quiet", "no_contact"})
+MEETING_STATUSES = frozenset({"proposed", "accepted", "declined", "tentative", "cancelled", "completed"})
+RESPONSE_EXPECTATIONS = frozenset(
+    {
+        "immediate",
+        "within_business_hours",
+        "within_sla",
+        "next_business_day",
+        "best_effort",
+        "no_response_expected",
+    }
+)
+AVAILABILITY_RESOLUTIONS = frozenset(
+    {
+        "available_now",
+        "available_later",
+        "unavailable",
+        "quiet_hours",
+        "emergency_override",
+        "fallback_identity",
+        "deferred",
+    }
+)
+SCHEDULING_CONFLICT_KINDS = frozenset(
+    {
+        "overlap",
+        "quiet_hours_violation",
+        "outside_business_hours",
+        "double_booking",
+        "sla_violation",
+        "unavailable_participant",
+    }
+)
+AVAILABILITY_PRIORITIES = frozenset({"low", "normal", "high", "urgent", "critical"})
+AVAILABILITY_SEVERITIES = frozenset({"low", "medium", "high", "critical"})
 CHANGE_TYPES = frozenset(
     {
         "connector_preference",
@@ -10127,6 +10173,415 @@ def _validate_records_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_availability_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "record_id",
+            "identity_ref",
+            "kind",
+            "starts_at",
+            "ends_at",
+            "timezone",
+            "priority_floor",
+            "channels_allowed",
+            "channels_blocked",
+            "reason",
+            "active",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("record_id", "identity_ref", "timezone", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in AVAILABILITY_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(AVAILABILITY_KINDS))}"
+        )
+    if payload["priority_floor"] not in AVAILABILITY_PRIORITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'priority_floor' must be one of {', '.join(sorted(AVAILABILITY_PRIORITIES))}"
+        )
+    for field_name in ("channels_allowed", "channels_blocked"):
+        channels = payload[field_name]
+        if not isinstance(channels, list):
+            errors.append(f"{_relative_path(path)}: field '{field_name}' must be an array")
+            continue
+        for index, channel in enumerate(channels):
+            errors.extend(_require_non_empty_text(channel, field_name=f"{field_name}[{index}]", path=path))
+        if len(set(channels)) != len(channels):
+            errors.append(f"{_relative_path(path)}: {field_name} must not contain duplicates")
+    if not errors and set(payload["channels_allowed"]).intersection(payload["channels_blocked"]):
+        errors.append(f"{_relative_path(path)}: channels_allowed and channels_blocked must not overlap")
+    if not isinstance(payload["active"], bool):
+        errors.append(f"{_relative_path(path)}: field 'active' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["starts_at"], field_name="starts_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["ends_at"], field_name="ends_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and _parse_iso8601_text(payload["ends_at"]) <= _parse_iso8601_text(payload["starts_at"]):
+        errors.append(f"{_relative_path(path)}: ends_at must be after starts_at")
+    return errors
+
+
+def _validate_scheduling_window_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "window_id",
+            "identity_ref",
+            "window_type",
+            "starts_at",
+            "ends_at",
+            "timezone",
+            "capacity",
+            "reserved",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("window_id", "identity_ref", "timezone"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["window_type"] not in WINDOW_TYPES:
+        errors.append(
+            f"{_relative_path(path)}: field 'window_type' must be one of {', '.join(sorted(WINDOW_TYPES))}"
+        )
+    for field_name in ("capacity", "reserved"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["starts_at"], field_name="starts_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["ends_at"], field_name="ends_at", path=path))
+    if not errors:
+        if _parse_iso8601_text(payload["ends_at"]) <= _parse_iso8601_text(payload["starts_at"]):
+            errors.append(f"{_relative_path(path)}: ends_at must be after starts_at")
+        if payload["reserved"] > payload["capacity"]:
+            errors.append(f"{_relative_path(path)}: reserved must not exceed capacity")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_business_hours_profile_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "profile_id",
+            "identity_ref",
+            "timezone",
+            "weekday_start_hour",
+            "weekday_end_hour",
+            "weekend_available",
+            "quiet_start_hour",
+            "quiet_end_hour",
+            "emergency_override",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("profile_id", "identity_ref", "timezone"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("weekday_start_hour", "weekday_end_hour", "quiet_start_hour", "quiet_end_hour"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+        if not errors and payload[field_name] > 23:
+            errors.append(f"{_relative_path(path)}: field '{field_name}' must be between 0 and 23")
+    if not isinstance(payload["weekend_available"], bool):
+        errors.append(f"{_relative_path(path)}: field 'weekend_available' must be boolean")
+    if not isinstance(payload["emergency_override"], bool):
+        errors.append(f"{_relative_path(path)}: field 'emergency_override' must be boolean")
+    if not errors and payload["weekday_start_hour"] >= payload["weekday_end_hour"]:
+        errors.append(f"{_relative_path(path)}: weekday_start_hour must be less than weekday_end_hour")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_meeting_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "meeting_id",
+            "title",
+            "organizer_ref",
+            "participant_refs",
+            "status",
+            "starts_at",
+            "ends_at",
+            "timezone",
+            "location",
+            "campaign_ref",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("meeting_id", "title", "organizer_ref", "timezone"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    participant_refs = payload["participant_refs"]
+    if not isinstance(participant_refs, list) or not participant_refs:
+        errors.append(f"{_relative_path(path)}: field 'participant_refs' must be a non-empty array")
+    else:
+        for index, participant_ref in enumerate(participant_refs):
+            errors.extend(_require_non_empty_text(participant_ref, field_name=f"participant_refs[{index}]", path=path))
+        if len(set(participant_refs)) != len(participant_refs):
+            errors.append(f"{_relative_path(path)}: participant_refs must not contain duplicates")
+    if payload["status"] not in MEETING_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(MEETING_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["starts_at"], field_name="starts_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["ends_at"], field_name="ends_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not errors and _parse_iso8601_text(payload["ends_at"]) <= _parse_iso8601_text(payload["starts_at"]):
+        errors.append(f"{_relative_path(path)}: ends_at must be after starts_at")
+    if not isinstance(payload["location"], str):
+        errors.append(f"{_relative_path(path)}: field 'location' must be a string")
+    if not isinstance(payload["campaign_ref"], str):
+        errors.append(f"{_relative_path(path)}: field 'campaign_ref' must be a string")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_meeting_request_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "request_id",
+            "organizer_ref",
+            "participant_refs",
+            "duration_minutes",
+            "earliest_start",
+            "latest_end",
+            "preferred_timezone",
+            "campaign_ref",
+            "title",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("request_id", "organizer_ref", "preferred_timezone", "title"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    participant_refs = payload["participant_refs"]
+    if not isinstance(participant_refs, list) or not participant_refs:
+        errors.append(f"{_relative_path(path)}: field 'participant_refs' must be a non-empty array")
+    else:
+        for index, participant_ref in enumerate(participant_refs):
+            errors.extend(_require_non_empty_text(participant_ref, field_name=f"participant_refs[{index}]", path=path))
+        if len(set(participant_refs)) != len(participant_refs):
+            errors.append(f"{_relative_path(path)}: participant_refs must not contain duplicates")
+    if isinstance(payload["duration_minutes"], bool) or not isinstance(payload["duration_minutes"], int) or payload["duration_minutes"] < 1:
+        errors.append(f"{_relative_path(path)}: field 'duration_minutes' must be a positive integer")
+    errors.extend(_validate_iso8601_text(payload["earliest_start"], field_name="earliest_start", path=path))
+    errors.extend(_validate_iso8601_text(payload["latest_end"], field_name="latest_end", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["campaign_ref"], str):
+        errors.append(f"{_relative_path(path)}: field 'campaign_ref' must be a string")
+    if not errors:
+        earliest_start = _parse_iso8601_text(payload["earliest_start"])
+        latest_end = _parse_iso8601_text(payload["latest_end"])
+        if latest_end <= earliest_start:
+            errors.append(f"{_relative_path(path)}: latest_end must be after earliest_start")
+        elif (latest_end - earliest_start).total_seconds() < payload["duration_minutes"] * 60:
+            errors.append(f"{_relative_path(path)}: duration_minutes must fit within earliest_start and latest_end")
+    return errors
+
+
+def _validate_meeting_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "request_id",
+            "meeting_id",
+            "scheduled",
+            "reason",
+            "proposed_start",
+            "proposed_end",
+            "conflicts",
+            "decided_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "request_id", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["scheduled"], bool):
+        errors.append(f"{_relative_path(path)}: field 'scheduled' must be boolean")
+    if payload["proposed_start"]:
+        errors.extend(_validate_iso8601_text(payload["proposed_start"], field_name="proposed_start", path=path))
+    elif not isinstance(payload["proposed_start"], str):
+        errors.append(f"{_relative_path(path)}: field 'proposed_start' must be a string")
+    if payload["proposed_end"]:
+        errors.extend(_validate_iso8601_text(payload["proposed_end"], field_name="proposed_end", path=path))
+    elif not isinstance(payload["proposed_end"], str):
+        errors.append(f"{_relative_path(path)}: field 'proposed_end' must be a string")
+    conflicts = payload["conflicts"]
+    if not isinstance(conflicts, list):
+        errors.append(f"{_relative_path(path)}: field 'conflicts' must be an array")
+    else:
+        for index, conflict in enumerate(conflicts):
+            errors.extend(_require_non_empty_text(conflict, field_name=f"conflicts[{index}]", path=path))
+        if len(set(conflicts)) != len(conflicts):
+            errors.append(f"{_relative_path(path)}: conflicts must not contain duplicates")
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not errors:
+        if payload["scheduled"] and not payload["meeting_id"]:
+            errors.append(f"{_relative_path(path)}: scheduled meeting decisions must carry meeting_id")
+        if payload["scheduled"] and (not payload["proposed_start"] or not payload["proposed_end"]):
+            errors.append(f"{_relative_path(path)}: scheduled meeting decisions must carry proposed_start and proposed_end")
+        if bool(payload["proposed_start"]) != bool(payload["proposed_end"]):
+            errors.append(f"{_relative_path(path)}: proposed_start and proposed_end must both be present or both be empty")
+        if payload["proposed_start"] and payload["proposed_end"]:
+            if _parse_iso8601_text(payload["proposed_end"]) <= _parse_iso8601_text(payload["proposed_start"]):
+                errors.append(f"{_relative_path(path)}: proposed_end must be after proposed_start")
+    return errors
+
+
+def _validate_response_sla_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "sla_id",
+            "identity_ref",
+            "expectation",
+            "max_response_seconds",
+            "escalation_after_seconds",
+            "escalation_target",
+            "channel_preference",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("sla_id", "identity_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["expectation"] not in RESPONSE_EXPECTATIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'expectation' must be one of {', '.join(sorted(RESPONSE_EXPECTATIONS))}"
+        )
+    for field_name in ("max_response_seconds", "escalation_after_seconds"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not isinstance(payload["escalation_target"], str):
+        errors.append(f"{_relative_path(path)}: field 'escalation_target' must be a string")
+    if not isinstance(payload["channel_preference"], str):
+        errors.append(f"{_relative_path(path)}: field 'channel_preference' must be a string")
+    if not errors and payload["escalation_after_seconds"] > payload["max_response_seconds"]:
+        errors.append(f"{_relative_path(path)}: escalation_after_seconds must not exceed max_response_seconds")
+    if not errors and payload["escalation_after_seconds"] > 0 and not payload["escalation_target"].strip():
+        errors.append(f"{_relative_path(path)}: escalation_target must be non-empty when escalation_after_seconds is positive")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_availability_conflict_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "conflict_id",
+            "identity_ref",
+            "kind",
+            "conflicting_window_ids",
+            "description",
+            "severity",
+            "detected_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("conflict_id", "identity_ref", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in SCHEDULING_CONFLICT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(SCHEDULING_CONFLICT_KINDS))}"
+        )
+    window_ids = payload["conflicting_window_ids"]
+    if not isinstance(window_ids, list) or not window_ids:
+        errors.append(f"{_relative_path(path)}: field 'conflicting_window_ids' must be a non-empty array")
+    else:
+        for index, window_id in enumerate(window_ids):
+            errors.extend(_require_non_empty_text(window_id, field_name=f"conflicting_window_ids[{index}]", path=path))
+        if len(set(window_ids)) != len(window_ids):
+            errors.append(f"{_relative_path(path)}: conflicting_window_ids must not contain duplicates")
+    if payload["severity"] not in AVAILABILITY_SEVERITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'severity' must be one of {', '.join(sorted(AVAILABILITY_SEVERITIES))}"
+        )
+    if not errors and payload["kind"] in {"overlap", "double_booking"} and len(window_ids) < 2:
+        errors.append(f"{_relative_path(path)}: overlap and double_booking conflicts must reference at least two windows")
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    return errors
+
+
+def _validate_availability_routing_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "identity_ref",
+            "resolution",
+            "channel_chosen",
+            "fallback_identity_ref",
+            "contact_at",
+            "reason",
+            "priority_used",
+            "decided_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "identity_ref", "channel_chosen", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["resolution"] not in AVAILABILITY_RESOLUTIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'resolution' must be one of {', '.join(sorted(AVAILABILITY_RESOLUTIONS))}"
+        )
+    if payload["priority_used"] not in AVAILABILITY_PRIORITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'priority_used' must be one of {', '.join(sorted(AVAILABILITY_PRIORITIES))}"
+        )
+    if payload["contact_at"]:
+        errors.extend(_validate_iso8601_text(payload["contact_at"], field_name="contact_at", path=path))
+    elif not isinstance(payload["contact_at"], str):
+        errors.append(f"{_relative_path(path)}: field 'contact_at' must be a string")
+    if not isinstance(payload["fallback_identity_ref"], str):
+        errors.append(f"{_relative_path(path)}: field 'fallback_identity_ref' must be a string")
+    if not errors and payload["resolution"] == "fallback_identity" and not payload["fallback_identity_ref"].strip():
+        errors.append(f"{_relative_path(path)}: fallback_identity resolution must carry fallback_identity_ref")
+    if not errors and payload["resolution"] in {"available_later", "deferred"} and not payload["contact_at"]:
+        errors.append(f"{_relative_path(path)}: available_later and deferred resolutions must carry contact_at")
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    return errors
+
+
 def _validate_change_request_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MCOI runtime fixture")
     errors = _validate_exact_object_fields(
@@ -10611,11 +11066,15 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "asset_record.json": _validate_asset_record_fixture,
     "asset_snapshot.json": _validate_asset_snapshot_fixture,
     "asset_violation.json": _validate_asset_violation_fixture,
+    "availability_conflict.json": _validate_availability_conflict_fixture,
+    "availability_record.json": _validate_availability_record_fixture,
+    "availability_routing_decision.json": _validate_availability_routing_decision_fixture,
     "billing_account.json": _validate_billing_account_fixture,
     "billing_closure_report.json": _validate_billing_closure_report_fixture,
     "billing_decision.json": _validate_billing_decision_fixture,
     "billing_violation.json": _validate_billing_violation_fixture,
     "breach_record.json": _validate_breach_record_fixture,
+    "business_hours_profile.json": _validate_business_hours_profile_fixture,
     "charge_record.json": _validate_charge_record_fixture,
     "change_approval_binding.json": _validate_change_approval_binding_fixture,
     "change_evidence.json": _validate_change_evidence_fixture,
@@ -10709,6 +11168,9 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "marketplace_closure_report.json": _validate_marketplace_closure_report_fixture,
     "marketplace_snapshot.json": _validate_marketplace_snapshot_fixture,
     "marketplace_violation.json": _validate_marketplace_violation_fixture,
+    "meeting_decision.json": _validate_meeting_decision_fixture,
+    "meeting_record.json": _validate_meeting_record_fixture,
+    "meeting_request.json": _validate_meeting_request_fixture,
     "payment_record.json": _validate_payment_record_fixture,
     "package_record.json": _validate_package_record_fixture,
     "penalty_record.json": _validate_penalty_record_fixture,
@@ -10752,9 +11214,11 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "review_record.json": _validate_review_record_fixture,
     "recertification_window.json": _validate_recertification_window_fixture,
     "renewal_window.json": _validate_renewal_window_fixture,
+    "response_sla.json": _validate_response_sla_fixture,
     "preservation_decision.json": _validate_preservation_decision_fixture,
     "disposal_decision.json": _validate_disposal_decision_fixture,
     "disposition_review.json": _validate_disposition_review_fixture,
+    "scheduling_window.json": _validate_scheduling_window_fixture,
     "legal_hold_record.json": _validate_legal_hold_record_fixture,
     "settlement_closure_report.json": _validate_settlement_closure_report_fixture,
     "settlement_decision.json": _validate_settlement_decision_fixture,
