@@ -1667,6 +1667,197 @@ class TestGatewayStatus:
         assert witnesses[0]["witness_refs"]
         assert witnesses[1]["evidence_refs"] == data["terminal_certificate"]["evidence_refs"]
 
+    def test_command_universal_action_proof_read_model(self, gateway_app, client):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-proof",
+            idempotency_key="universal-proof-read",
+            intent="llm_completion",
+            payload={"body": "run governed action"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": {
+                    "action_id": "uact-1",
+                    "blocked": False,
+                    "block_reason": "",
+                    "proof_hash": "proof-hash-1",
+                    "capability_id": "shell_command",
+                    "dispatch_ledger_hash": "dispatch-ledger-1",
+                    "terminal_certificate_id": "",
+                    "learning_admission_id": "",
+                },
+            },
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.TERMINALLY_CERTIFIED,
+            detail={
+                "cause": "universal_action_terminal_certificate",
+                "terminal_certificate_id": "terminal-1",
+                "terminal_disposition": "committed",
+                "proof_hash": "proof-hash-1",
+            },
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.LEARNING_DECIDED,
+            detail={
+                "cause": "universal_action_learning_decided",
+                "learning_admission_id": "learn-1",
+                "learning_status": "admit",
+                "proof_hash": "proof-hash-1",
+            },
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/universal-action-proof")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        proof = data["universal_action_proof"]
+        assert data["command_id"] == command.command_id
+        assert data["proof_hash"] == "proof-hash-1"
+        assert data["event_count"] == 4
+        assert proof["blocked"] is False
+        assert proof["action_id"] == "uact-1"
+        assert proof["capability_id"] == "shell_command"
+        assert proof["dispatch_ledger_hash"] == "dispatch-ledger-1"
+        assert proof["terminal_certificate_id"] == "terminal-1"
+        assert proof["terminal_disposition"] == "committed"
+        assert proof["learning_admission_id"] == "learn-1"
+        assert proof["learning_status"] == "admit"
+        assert CommandState.DISPATCHED.value in data["state_sequence"]
+        assert CommandState.LEARNING_DECIDED.value in data["state_sequence"]
+
+    def test_command_universal_action_proof_missing_returns_404(self, gateway_app, client):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-proof-missing",
+            idempotency_key="universal-proof-missing",
+            intent="llm_completion",
+            payload={"body": "no universal proof"},
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/universal-action-proof")
+
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "universal action proof not found"
+
+    def test_operator_universal_actions_read_model_filters_proofs(self, gateway_app, client):
+        committed = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-proof-index-1",
+            idempotency_key="universal-proof-index-1",
+            intent="llm_completion",
+            payload={"body": "committed proof"},
+        )
+        blocked = gateway_app.state.command_ledger.create_command(
+            tenant_id="t2",
+            actor_id="u2",
+            source="web",
+            conversation_id="conversation-proof-index-2",
+            idempotency_key="universal-proof-index-2",
+            intent="llm_completion",
+            payload={"body": "blocked proof"},
+        )
+        gateway_app.state.command_ledger.transition(
+            committed.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": {
+                    "action_id": "uact-committed",
+                    "blocked": False,
+                    "block_reason": "",
+                    "proof_hash": "proof-hash-committed",
+                    "capability_id": "shell_command",
+                    "dispatch_ledger_hash": "dispatch-ledger-committed",
+                },
+            },
+        )
+        gateway_app.state.command_ledger.transition(
+            blocked.command_id,
+            CommandState.REQUIRES_REVIEW,
+            detail={
+                "cause": "universal_action_kernel_blocked",
+                "universal_action": {
+                    "action_id": "uact-blocked",
+                    "blocked": True,
+                    "block_reason": "open_world_contradictions",
+                    "proof_hash": "proof-hash-blocked",
+                    "capability_id": "shell_command",
+                    "dispatch_ledger_hash": "",
+                },
+            },
+        )
+
+        all_resp = client.get("/operator/universal-actions/read-model")
+        blocked_resp = client.get("/operator/universal-actions/read-model?blocked=true")
+        tenant_resp = client.get("/operator/universal-actions/read-model?tenant_id=t1")
+        invalid_resp = client.get("/operator/universal-actions/read-model?blocked=maybe")
+
+        assert all_resp.status_code == 200
+        assert all_resp.json()["total"] == 2
+        assert {item["proof_hash"] for item in all_resp.json()["universal_action_proofs"]} == {
+            "proof-hash-committed",
+            "proof-hash-blocked",
+        }
+        assert blocked_resp.status_code == 200
+        assert blocked_resp.json()["count"] == 1
+        assert blocked_resp.json()["universal_action_proofs"][0]["blocked"] is True
+        assert blocked_resp.json()["universal_action_proofs"][0]["block_reason"] == "open_world_contradictions"
+        assert tenant_resp.status_code == 200
+        assert tenant_resp.json()["count"] == 1
+        assert tenant_resp.json()["universal_action_proofs"][0]["tenant_id"] == "t1"
+        assert invalid_resp.status_code == 400
+        assert invalid_resp.json()["detail"] == "blocked must be true or false"
+
+    def test_operator_universal_actions_console_renders_proof_table(self, gateway_app, client):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-proof-console",
+            idempotency_key="universal-proof-console",
+            intent="llm_completion",
+            payload={"body": "console proof"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.REQUIRES_REVIEW,
+            detail={
+                "cause": "universal_action_kernel_blocked",
+                "universal_action": {
+                    "action_id": "uact-console",
+                    "blocked": True,
+                    "block_reason": "open_world_contradictions",
+                    "proof_hash": "proof-hash-console",
+                    "capability_id": "shell_command",
+                    "dispatch_ledger_hash": "",
+                },
+            },
+        )
+
+        resp = client.get("/operator/universal-actions?blocked=true")
+
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers["content-type"]
+        assert "Mullu Universal Action Proofs" in resp.text
+        assert "/operator/universal-actions/read-model" in resp.text
+        assert command.command_id in resp.text
+        assert "proof-hash-console" in resp.text
+        assert "open_world_contradictions" in resp.text
+        assert "shell_command" in resp.text
+
     def test_latest_anchor_read_model(self, gateway_app, client):
         msg_resp = client.post(
             "/webhook/web",

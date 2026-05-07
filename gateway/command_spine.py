@@ -2318,6 +2318,14 @@ class CommandLedger:
             self._commands[command_id] = command
         return command
 
+    def list_commands(self, *, tenant_id: str = "", limit: int = 100) -> list[CommandEnvelope]:
+        """Return recent command envelopes from the configured store."""
+        bounded_limit = max(1, min(limit, 1000))
+        commands = self._store.list_commands(tenant_id=tenant_id, limit=bounded_limit)
+        for command in commands:
+            self._commands[command.command_id] = command
+        return commands
+
     def bind_governed_action(self, command_id: str) -> GovernedAction:
         """Compile intent, bind capability passport, and witness the action."""
         command = self.get(command_id)

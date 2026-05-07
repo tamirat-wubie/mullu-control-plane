@@ -396,11 +396,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 4,
+      "proven": 5,
       "unproven": 199,
       "witnessed": 109
     },
-    "route_count": 312,
+    "route_count": 313,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1863,6 +1863,11 @@
         "surface_id": "gateway_capability_fabric"
       },
       {
+        "coverage_state": "proven",
+        "route": "/commands/{command_id}/universal-action-proof",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
         "coverage_state": "unproven",
         "route": "/evidence/bundles/{command_id}",
         "surface_id": "unclassified_declared_route"
@@ -1975,16 +1980,22 @@
         "gateway/server.py",
         "gateway/capability_fabric.py",
         "gateway/capability_capsule_installer.py",
+        "gateway/command_spine.py",
+        "mcoi/mcoi_runtime/app/governed_execution.py",
         "mcoi/mcoi_runtime/core/command_capability_admission.py",
         "mcoi/mcoi_runtime/core/domain_capsule_compiler.py",
         "tests/test_gateway/test_capability_capsule_installer.py",
+        "tests/test_gateway/test_webhooks.py",
         "tests/test_governed_capability_fabric.py"
       ],
-      "notes": "Gateway command admission, request receipt envelopes, terminal closure, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+      "notes": "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
       "representative_paths": [
         "/webhook/*",
         "/capability-fabric/read-model",
         "/commands/{command_id}/closure",
+        "/commands/{command_id}/universal-action-proof",
+        "/operator/universal-actions/read-model",
+        "/operator/universal-actions",
         "DomainCapsuleCompiler.compile",
         "install_certified_capsule_with_handoff_evidence"
       ],
@@ -1993,6 +2004,9 @@
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
+        "universal_action_proof_replays_from_command_events",
+        "operator_universal_action_read_model_filters_command_proofs",
+        "operator_universal_action_console_renders_replay_state",
         "capsule_compiler_emits_certification_evidence_manifest",
         "capsule_installer_stamps_admission_receipt",
         "physical_capsule_admission_runs_promotion_preflight"
