@@ -343,14 +343,14 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
-            model_id="Meta-Llama-3.1-8B-Instruct",
-            name="Llama 3.1 8B via SambaNova",
+            model_id="Meta-Llama-3.3-70B-Instruct",
+            name="Llama 3.3 70B via SambaNova",
             provider="sambanova",
-            cost_per_1k_input=0.00010,
-            cost_per_1k_output=0.00020,
-            max_context=16000,
+            cost_per_1k_input=0.00060,
+            cost_per_1k_output=0.00120,
+            max_context=131072,
             speed_tier="fast",
-            capability_tier="basic",
+            capability_tier="advanced",
         )
     )
     model_router.register(

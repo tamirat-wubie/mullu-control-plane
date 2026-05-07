@@ -532,7 +532,7 @@ class SambaNovaBackend:
     """SambaNova Cloud OpenAI-compatible endpoint for fast open models."""
 
     provider = LLMProvider.SAMBANOVA
-    DEFAULT_MODEL = "Meta-Llama-3.1-8B-Instruct"
+    DEFAULT_MODEL = "Meta-Llama-3.3-70B-Instruct"
 
     def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "SAMBANOVA_API_KEY") -> None:
         self._model = model or self.DEFAULT_MODEL
@@ -551,8 +551,8 @@ class SambaNovaBackend:
             max_tokens=params.max_tokens,
             temperature=0.0,
             provider=self.provider,
-            cost_per_1m_input=0.10,
-            cost_per_1m_output=0.20,
+            cost_per_1m_input=0.60,
+            cost_per_1m_output=1.20,
         )
 
     @property

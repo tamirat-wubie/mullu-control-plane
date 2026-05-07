@@ -683,7 +683,7 @@ def _register_models(
         ("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", "Llama 3.1 8B Turbo via DeepInfra", "deepinfra", 0.02, 0.03),
         ("meta-llama/Meta-Llama-3.1-8B-Instruct", "Llama 3.1 8B via Nebius", "nebius", 0.02, 0.06),
         ("Qwen/Qwen2.5-Coder-32B-Instruct", "Qwen2.5 Coder 32B via Hyperbolic", "hyperbolic", 0.20, 0.20),
-        ("Meta-Llama-3.1-8B-Instruct", "Llama 3.1 8B via SambaNova", "sambanova", 0.10, 0.20),
+        ("Meta-Llama-3.3-70B-Instruct", "Llama 3.3 70B via SambaNova", "sambanova", 0.60, 1.20),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
