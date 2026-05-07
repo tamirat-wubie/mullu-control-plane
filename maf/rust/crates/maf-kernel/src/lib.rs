@@ -1195,8 +1195,7 @@ pub struct RestoreVerification {
     pub expected_composite_hash: String,
     pub actual_composite_hash: String,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub subsystem_results:
-        BTreeMap<String, BTreeMap<String, String>>,
+    pub subsystem_results: BTreeMap<String, BTreeMap<String, String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub verified_at: Option<String>,
 }
