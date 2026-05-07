@@ -296,6 +296,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_monotonic_duration_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_monotonic_duration"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -373,7 +380,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 47,
+      "action_proof": 48,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -381,7 +388,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 53,
+      "audit_chain": 54,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -389,16 +396,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 56
+      "witnessed": 57
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 47
+      "request_proof": 48
     },
-    "surface_count": 57
+    "surface_count": 58
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3331,6 +3338,34 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_causal_order"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_monotonic_duration.py",
+        "schemas/temporal_monotonic_duration_receipt.schema.json",
+        "tests/test_gateway/test_temporal_monotonic_duration.py"
+      ],
+      "notes": "Temporal monotonic duration rechecks timeout, latency, cooldown, retry-delay, and watchdog elapsed time from monotonic clock readings before dispatch.",
+      "representative_paths": [
+        "TemporalMonotonicDuration.evaluate",
+        "TemporalMonotonicDurationRequest",
+        "TemporalMonotonicDurationReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_monotonic_clock_owns_duration_truth",
+        "wall_clock_not_used_for_duration",
+        "duration_limit_exceeded_blocks_dispatch",
+        "cooldown_lower_bound_defers_dispatch",
+        "monotonic_clock_regression_blocks_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_monotonic_duration_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_monotonic_duration"
     },
     {
       "action_proof": "action_proof",

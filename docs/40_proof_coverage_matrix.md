@@ -55,6 +55,7 @@ document is the operator-readable witness.
 | `temporal_dispatch_window` | TemporalDispatchWindow.evaluate, DispatchWindowRequest, TemporalDispatchWindowReceipt | request_proof | action_proof | runtime_clock_owns_dispatch_window_time, tenant_timezone_resolved, allowed_window_required_for_high_risk_dispatch, outside_allowed_window_defers_dispatch, active_blackout_defers_dispatch, holiday_closure_defers_dispatch, source_reapproval_bound_for_high_risk_dispatch, temporal_dispatch_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal dispatch window rechecks tenant-local dispatch admission at runtime through allowed windows, blackout windows, holidays, evidence refs, and high-risk source schedule plus reapproval binding before worker execution. |
 | `temporal_budget_window` | TemporalBudgetWindow.evaluate, BudgetWindowRequest, TemporalBudgetWindowReceipt | request_proof | action_proof | runtime_clock_owns_budget_window_time, tenant_timezone_resolves_budget_period, daily_weekly_monthly_budget_resets_computed, spend_snapshot_period_matches_active_window, projected_spend_blocks_over_limit_dispatch, future_budget_window_defers_dispatch, source_reapproval_bound_for_high_risk_budget_window, temporal_budget_window_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal budget window rechecks tenant-local daily, weekly, monthly, or custom reset periods against active spend snapshots, reserved spend, projected spend, evidence refs, and high-risk source receipts before worker execution. |
 | `temporal_causal_order` | TemporalCausalOrder.evaluate, TemporalCausalOrderRequest, TemporalCausalOrderReceipt | request_proof | action_proof | runtime_clock_owns_causal_order_time, required_events_must_be_present, tenant_and_command_scope_checked, predecessor_edges_checked, out_of_order_events_block_dispatch, future_events_block_dispatch, high_risk_source_receipts_bound, temporal_causal_order_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution. |
+| `temporal_monotonic_duration` | TemporalMonotonicDuration.evaluate, TemporalMonotonicDurationRequest, TemporalMonotonicDurationReceipt | request_proof | action_proof | runtime_monotonic_clock_owns_duration_truth, wall_clock_not_used_for_duration, duration_limit_exceeded_blocks_dispatch, cooldown_lower_bound_defers_dispatch, monotonic_clock_regression_blocks_dispatch, high_risk_source_receipts_bound, temporal_monotonic_duration_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal monotonic duration rechecks timeout, latency, cooldown, retry-delay, and watchdog elapsed time from monotonic clock readings before dispatch. |
 | `temporal_memory_refresh` | TemporalMemoryRefresh.evaluate, MemoryRefreshRequest, TemporalMemoryRefreshReceipt | request_proof | action_proof | usable_memory_does_not_create_refresh_task, stale_memory_creates_bounded_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action. |
 | `temporal_scheduler` | TemporalScheduler.evaluate, ScheduledCommand, TemporalSchedulerReceipt | request_proof | action_proof | scheduled_command_requires_execute_at, idempotency_required, lease_acquired_before_dispatch, future_schedule_defers, missed_run_receipt_emitted, retry_window_checked, high_risk_reapproval_required, active_lease_blocks_duplicate_execution, temporal_scheduler_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | PolicyProver.prove | request_proof | action_proof | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid | audit_chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
@@ -71,9 +72,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 57 |
+| Total surfaces | 58 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 56 |
+| Witnessed surfaces | 57 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -141,14 +142,15 @@ Resolved closure actions:
 40. `publish_temporal_dispatch_window_receipt_contract`
 41. `publish_temporal_budget_window_receipt_contract`
 42. `publish_temporal_causal_order_receipt_contract`
-43. `publish_temporal_memory_refresh_receipt_contract`
-44. `classify_temporal_scheduler_routes`
-45. `publish_temporal_scheduler_receipt_contract`
-46. `publish_policy_proof_report_contract`
-47. `publish_capability_upgrade_plan_contract`
-48. `publish_autonomous_test_generation_plan_contract`
-49. `publish_trust_ledger_bundle_contract`
-50. `publish_trust_ledger_anchor_receipt_contract`
+43. `publish_temporal_monotonic_duration_receipt_contract`
+44. `publish_temporal_memory_refresh_receipt_contract`
+45. `classify_temporal_scheduler_routes`
+46. `publish_temporal_scheduler_receipt_contract`
+47. `publish_policy_proof_report_contract`
+48. `publish_capability_upgrade_plan_contract`
+49. `publish_autonomous_test_generation_plan_contract`
+50. `publish_trust_ledger_bundle_contract`
+51. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -156,6 +158,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
   Open issues: 199 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

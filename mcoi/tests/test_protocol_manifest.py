@@ -45,6 +45,7 @@ def test_protocol_manifest_is_valid() -> None:
     temporal_dispatch_window_entry = entries["temporal-dispatch-window-receipt"]
     temporal_budget_window_entry = entries["temporal-budget-window-receipt"]
     temporal_causal_order_entry = entries["temporal-causal-order-receipt"]
+    temporal_monotonic_duration_entry = entries["temporal-monotonic-duration-receipt"]
     temporal_memory_entry = entries["temporal-memory-receipt"]
     temporal_memory_refresh_entry = entries["temporal-memory-refresh-receipt"]
     scheduler_entry = entries["temporal-scheduler-receipt"]
@@ -60,7 +61,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 96
+    assert len(manifest["schemas"]) == 97
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
@@ -139,6 +140,12 @@ def test_protocol_manifest_is_valid() -> None:
     assert temporal_causal_order_entry["path"] == "schemas/temporal_causal_order_receipt.schema.json"
     assert temporal_causal_order_entry["urn"] == "urn:mullusi:schema:temporal-causal-order-receipt:1"
     assert temporal_causal_order_entry["surface"] == "temporal"
+    assert temporal_monotonic_duration_entry["path"] == "schemas/temporal_monotonic_duration_receipt.schema.json"
+    assert (
+        temporal_monotonic_duration_entry["urn"]
+        == "urn:mullusi:schema:temporal-monotonic-duration-receipt:1"
+    )
+    assert temporal_monotonic_duration_entry["surface"] == "temporal"
     assert temporal_memory_entry["path"] == "schemas/temporal_memory_receipt.schema.json"
     assert temporal_memory_entry["urn"] == "urn:mullusi:schema:temporal-memory-receipt:1"
     assert temporal_memory_entry["surface"] == "temporal"

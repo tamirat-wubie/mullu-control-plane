@@ -503,6 +503,12 @@
       "surface": "temporal"
     },
     {
+      "schema_id": "temporal-monotonic-duration-receipt",
+      "path": "schemas/temporal_monotonic_duration_receipt.schema.json",
+      "urn": "urn:mullusi:schema:temporal-monotonic-duration-receipt:1",
+      "surface": "temporal"
+    },
+    {
       "schema_id": "temporal-memory-receipt",
       "path": "schemas/temporal_memory_receipt.schema.json",
       "urn": "urn:mullusi:schema:temporal-memory-receipt:1",
