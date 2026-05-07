@@ -147,15 +147,24 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
 
     assert gateway_surface["action_proof"] == "action_proof"
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
+    assert "/commands/{command_id}/universal-action-proof" in gateway_surface["representative_paths"]
+    assert "/operator/universal-actions/read-model" in gateway_surface["representative_paths"]
+    assert "/operator/universal-actions" in gateway_surface["representative_paths"]
     assert "DomainCapsuleCompiler.compile" in gateway_surface["representative_paths"]
     assert "install_certified_capsule_with_handoff_evidence" in gateway_surface["representative_paths"]
     assert "gateway/capability_capsule_installer.py" in gateway_surface["evidence_files"]
+    assert "gateway/command_spine.py" in gateway_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/governed_execution.py" in gateway_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/domain_capsule_compiler.py" in gateway_surface["evidence_files"]
     assert "tests/test_gateway/test_capability_capsule_installer.py" in gateway_surface["evidence_files"]
+    assert "tests/test_gateway/test_webhooks.py" in gateway_surface["evidence_files"]
     assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
+    assert "universal_action_proof_replays_from_command_events" in witnesses
+    assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
+    assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capsule_compiler_emits_certification_evidence_manifest" in witnesses
     assert "capsule_installer_stamps_admission_receipt" in witnesses
     assert "physical_capsule_admission_runs_promotion_preflight" in witnesses

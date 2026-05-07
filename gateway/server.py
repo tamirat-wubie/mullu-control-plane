@@ -43,6 +43,7 @@ from mcoi_runtime.core.reflex import (
     propose_upgrade,
     verify_reflex_deployment_witness,
 )
+from mcoi_runtime.app.governed_execution import universal_command_proof_view
 
 from gateway.channels.discord import DiscordAdapter
 from gateway.channels.slack import SlackAdapter
@@ -2024,6 +2025,98 @@ def create_gateway_app(
             "events": events,
         }
 
+    @app.get("/commands/{command_id}/universal-action-proof")
+    def command_universal_action_proof(command_id: str):
+        proof = universal_command_proof_view(command_ledger, command_id)
+        if proof is None:
+            if command_ledger.get(command_id) is None:
+                raise HTTPException(404, detail="command not found")
+            raise HTTPException(404, detail="universal action proof not found")
+        proof_payload = asdict(proof)
+        return {
+            "command_id": command_id,
+            "universal_action_proof": proof_payload,
+            "event_count": len(proof.event_hashes),
+            "state_sequence": list(proof.state_sequence),
+            "proof_hash": proof.proof_hash,
+        }
+
+    def _operator_universal_actions_payload(
+        *,
+        tenant_id: str = "",
+        blocked: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        requested_blocked = blocked.strip().lower()
+        if requested_blocked and requested_blocked not in {"true", "false"}:
+            raise HTTPException(400, detail="blocked must be true or false")
+        bounded_limit = _bounded_read_model_limit(limit)
+        bounded_offset = _bounded_read_model_offset(offset)
+        scan_limit = _bounded_read_model_limit(bounded_limit + bounded_offset, maximum=1000)
+        proofs = []
+        for command in command_ledger.list_commands(tenant_id=tenant_id, limit=scan_limit):
+            proof = universal_command_proof_view(command_ledger, command.command_id)
+            if proof is None:
+                continue
+            if requested_blocked:
+                expected_blocked = requested_blocked == "true"
+                if proof.blocked is not expected_blocked:
+                    continue
+            payload = asdict(proof)
+            payload["tenant_id"] = command.tenant_id
+            payload["actor_id"] = command.actor_id
+            payload["intent"] = command.intent
+            payload["command_state"] = command.state.value
+            payload["created_at"] = command.created_at
+            proofs.append(payload)
+        page, page_meta = _read_model_page(
+            tuple(proofs),
+            limit=bounded_limit,
+            offset=bounded_offset,
+        )
+        return {
+            "universal_action_proofs": list(page),
+            "count": len(page),
+            "total": len(proofs),
+            "tenant_id_filter": tenant_id,
+            "blocked_filter": requested_blocked,
+            **page_meta,
+        }
+
+    @app.get("/operator/universal-actions/read-model")
+    def operator_universal_actions_read_model(
+        request: Request,
+        tenant_id: str = "",
+        blocked: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        return _operator_universal_actions_payload(
+            tenant_id=tenant_id,
+            blocked=blocked,
+            limit=limit,
+            offset=offset,
+        )
+
+    @app.get("/operator/universal-actions", response_class=HTMLResponse)
+    def operator_universal_actions_console(
+        request: Request,
+        tenant_id: str = "",
+        blocked: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        read_model = _operator_universal_actions_payload(
+            tenant_id=tenant_id,
+            blocked=blocked,
+            limit=limit,
+            offset=offset,
+        )
+        return HTMLResponse(_universal_actions_console_html(read_model))
+
     @app.get("/capability-fabric/admission-audits")
     def capability_fabric_admission_audits(
         request: Request,
@@ -2568,6 +2661,97 @@ def _authority_operator_console_html(
   <table>
     <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in operator_audit_columns)}</tr></thead>
     <tbody>{_rows(operator_audit_events, operator_audit_columns)}</tbody>
+  </table>
+</main>
+</body>
+</html>"""
+
+
+def _universal_actions_console_html(read_model: Mapping[str, Any]) -> str:
+    """Render universal action proof replay state for operators."""
+    from html import escape
+
+    records = read_model.get("universal_action_proofs", ())
+    if not isinstance(records, list):
+        records = []
+    columns = (
+        "command_id",
+        "tenant_id",
+        "command_state",
+        "blocked",
+        "block_reason",
+        "capability_id",
+        "proof_hash",
+        "terminal_certificate_id",
+        "learning_status",
+    )
+
+    def _cell(value: Any) -> str:
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (list, tuple)):
+            return escape(", ".join(str(item) for item in value))
+        return escape(str(value))
+
+    def _rows() -> str:
+        if not records:
+            return f'<tr><td colspan="{len(columns)}">No universal action proofs</td></tr>'
+        rendered_rows: list[str] = []
+        for record in records:
+            if not isinstance(record, Mapping):
+                continue
+            rendered_rows.append(
+                "<tr>"
+                + "".join(f"<td>{_cell(record.get(column, ''))}</td>" for column in columns)
+                + "</tr>"
+            )
+        if not rendered_rows:
+            return f'<tr><td colspan="{len(columns)}">No universal action proofs</td></tr>'
+        return "\n".join(rendered_rows)
+
+    total = _cell(read_model.get("total", 0))
+    count = _cell(read_model.get("count", 0))
+    tenant_filter = _cell(read_model.get("tenant_id_filter", ""))
+    blocked_filter = _cell(read_model.get("blocked_filter", ""))
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Universal Action Proofs</title>
+  <style>
+    :root {{ color-scheme: light; font-family: Arial, sans-serif; }}
+    body {{ margin: 0; background: #f7f8fa; color: #1b1f24; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }}
+    h1 {{ margin: 0 0 8px; font-size: 28px; }}
+    p {{ margin: 0 0 20px; color: #57606a; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }}
+    a {{ color: #0969da; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 0; margin: 0 0 24px; }}
+    .metrics li {{ display: flex; justify-content: space-between; gap: 16px; list-style: none; background: #fff; border: 1px solid #d8dee4; border-radius: 8px; padding: 14px; }}
+    table {{ width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d8dee4; }}
+    th, td {{ padding: 10px 12px; border-bottom: 1px solid #d8dee4; text-align: left; vertical-align: top; font-size: 13px; overflow-wrap: anywhere; }}
+    th {{ background: #eef1f4; font-weight: 700; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullu Universal Action Proofs</h1>
+  <p>Replayable command proofs for dispatch, blocked outcomes, terminal closure, and learning admission.</p>
+  <nav>
+    <a href="/operator/universal-actions/read-model">read model json</a>
+    <a href="/gateway/status">gateway status</a>
+    <a href="/authority/operator">authority console</a>
+    <a href="/operator/capabilities">capability console</a>
+  </nav>
+  <ul class="metrics">
+    <li><span>Visible</span><strong>{count}</strong></li>
+    <li><span>Total</span><strong>{total}</strong></li>
+    <li><span>Tenant Filter</span><strong>{tenant_filter}</strong></li>
+    <li><span>Blocked Filter</span><strong>{blocked_filter}</strong></li>
+  </ul>
+  <table>
+    <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in columns)}</tr></thead>
+    <tbody>{_rows()}</tbody>
   </table>
 </main>
 </body>

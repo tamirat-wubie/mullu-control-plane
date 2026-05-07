@@ -54,6 +54,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
+        "universal_action_proof_replays_from_command_events",
+        "operator_universal_action_read_model_filters_command_proofs",
+        "operator_universal_action_console_renders_replay_state",
     ]
     surfaces = [
         _surface(
@@ -62,6 +65,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/webhook/*",
                 "/capability-fabric/read-model",
                 "/commands/{command_id}/closure",
+                "/commands/{command_id}/universal-action-proof",
+                "/operator/universal-actions/read-model",
+                "/operator/universal-actions",
                 "DomainCapsuleCompiler.compile",
                 "install_certified_capsule_with_handoff_evidence",
             ],
@@ -73,12 +79,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "gateway/server.py",
                 "gateway/capability_fabric.py",
                 "gateway/capability_capsule_installer.py",
+                "gateway/command_spine.py",
+                "mcoi/mcoi_runtime/app/governed_execution.py",
                 "mcoi/mcoi_runtime/core/command_capability_admission.py",
                 "mcoi/mcoi_runtime/core/domain_capsule_compiler.py",
                 "tests/test_gateway/test_capability_capsule_installer.py",
+                "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, terminal closure, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capsule_compiler_emits_certification_evidence_manifest",
