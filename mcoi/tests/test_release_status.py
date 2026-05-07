@@ -103,9 +103,10 @@ def test_validate_public_surface_document_texts_rejects_missing_anchor() -> None
         }
     )
 
-    assert len(errors) == 2
+    assert len(errors) == 3
     assert any("GITHUB_SURFACE.md missing required public-surface anchors" in error for error in errors)
     assert any("DEPLOYMENT_STATUS.md missing required public-surface anchors" in error for error in errors)
+    assert any("docs/PRODUCT_BOUNDARY.md missing from public-surface documents" in error for error in errors)
     assert any("symbolic intelligence" in error for error in errors)
 
 
