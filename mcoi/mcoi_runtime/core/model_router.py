@@ -24,6 +24,12 @@ class TaskComplexity(StrEnum):
     COMPLEX = "complex"     # Multi-step reasoning, code generation, research
 
 
+class ProviderRoutingStatus(StrEnum):
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    UNAVAILABLE = "unavailable"
+
+
 @dataclass(frozen=True, slots=True)
 class ModelProfile:
     """Profile describing a model's capabilities and cost."""
@@ -56,9 +62,42 @@ class ModelRouter:
     def __init__(self) -> None:
         self._profiles: dict[str, ModelProfile] = {}
         self._routing_history: list[RoutingDecision] = []
+        self._provider_status: dict[str, ProviderRoutingStatus] = {}
+        self._provider_reasons: dict[str, str] = {}
 
     def register(self, profile: ModelProfile) -> None:
         self._profiles[profile.model_id] = profile
+        self._provider_status.setdefault(profile.provider, ProviderRoutingStatus.HEALTHY)
+
+    def set_provider_status(self, provider: str, status: str, *, reason: str = "") -> None:
+        """Set deterministic routing health for a provider."""
+        if provider not in {p.provider for p in self._profiles.values()}:
+            raise ValueError(f"unknown provider: {provider}")
+
+        try:
+            provider_status = ProviderRoutingStatus(status)
+        except ValueError as exc:
+            allowed = ", ".join(s.value for s in ProviderRoutingStatus)
+            raise ValueError(f"unknown provider status: {status}; expected one of {allowed}") from exc
+
+        self._provider_status[provider] = provider_status
+        if reason:
+            self._provider_reasons[provider] = reason
+        else:
+            self._provider_reasons.pop(provider, None)
+
+    def provider_status(self, provider: str) -> ProviderRoutingStatus:
+        return self._provider_status.get(provider, ProviderRoutingStatus.HEALTHY)
+
+    def provider_health(self) -> dict[str, dict[str, str]]:
+        providers = {p.provider for p in self._profiles.values()} | set(self._provider_status)
+        return {
+            provider: {
+                "status": self.provider_status(provider).value,
+                "reason": self._provider_reasons.get(provider, ""),
+            }
+            for provider in sorted(providers)
+        }
 
     def classify_complexity(self, prompt: str, *, max_tokens: int = 1024) -> TaskComplexity:
         """Estimate task complexity from prompt characteristics."""
@@ -85,6 +124,17 @@ class ModelRouter:
         """Select the optimal model for a task."""
         if force_model and force_model in self._profiles:
             profile = self._profiles[force_model]
+            if self.provider_status(profile.provider) == ProviderRoutingStatus.UNAVAILABLE:
+                decision = RoutingDecision(
+                    model_id="",
+                    reason="forced model provider unavailable",
+                    complexity=self.classify_complexity(prompt, max_tokens=max_tokens),
+                    estimated_cost=0.0,
+                    alternatives=(),
+                )
+                self._routing_history.append(decision)
+                return decision
+
             decision = RoutingDecision(
                 model_id=force_model,
                 reason="forced model override",
@@ -99,8 +149,11 @@ class ModelRouter:
         candidates = self._get_candidates(complexity, max_cost, preferred_speed)
 
         if not candidates:
-            # Fallback to any enabled model
-            candidates = [p for p in self._profiles.values() if p.enabled]
+            # Fallback to any enabled model on a routable provider.
+            candidates = self._filter_by_provider_health(
+                [p for p in self._profiles.values() if p.enabled],
+                allow_degraded=True,
+            )
 
         if not candidates:
             decision = RoutingDecision(
@@ -116,6 +169,7 @@ class ModelRouter:
             cost = self._estimate_cost(p, len(prompt), max_tokens)
             capability_score = {"basic": 1, "standard": 2, "advanced": 3}.get(p.capability_tier, 1)
             speed_score = {"fast": 3, "medium": 2, "slow": 1}.get(p.speed_tier, 1)
+            health_penalty = 0.5 if self.provider_status(p.provider) == ProviderRoutingStatus.DEGRADED else 0.0
 
             if complexity == TaskComplexity.SIMPLE:
                 score = speed_score * 2 + (1 / max(cost, 0.0001))
@@ -124,6 +178,7 @@ class ModelRouter:
             else:
                 score = capability_score * 2 + speed_score + (1 / max(cost, 0.0001))
 
+            score -= health_penalty
             scored.append((score, cost, p))
 
         scored.sort(key=lambda x: x[0], reverse=True)
@@ -158,7 +213,24 @@ class ModelRouter:
         if max_cost > 0:
             candidates = [p for p in candidates if self._estimate_cost(p, 500, 1024) <= max_cost]
 
-        return candidates
+        return self._filter_by_provider_health(candidates, allow_degraded=True)
+
+    def _filter_by_provider_health(
+        self,
+        candidates: list[ModelProfile],
+        *,
+        allow_degraded: bool,
+    ) -> list[ModelProfile]:
+        routable = [
+            p
+            for p in candidates
+            if self.provider_status(p.provider) != ProviderRoutingStatus.UNAVAILABLE
+        ]
+        if not allow_degraded:
+            return [p for p in routable if self.provider_status(p.provider) == ProviderRoutingStatus.HEALTHY]
+
+        healthy = [p for p in routable if self.provider_status(p.provider) == ProviderRoutingStatus.HEALTHY]
+        return healthy or routable
 
     def _estimate_cost(self, profile: ModelProfile, input_chars: int, max_tokens: int) -> float:
         input_tokens = input_chars // 4
@@ -175,8 +247,15 @@ class ModelRouter:
         complexity_counts: dict[str, int] = {}
         for d in self._routing_history:
             complexity_counts[d.complexity.value] = complexity_counts.get(d.complexity.value, 0) + 1
+        provider_health = self.provider_health()
+        provider_counts: dict[str, int] = {}
+        for provider in provider_health.values():
+            status = provider["status"]
+            provider_counts[status] = provider_counts.get(status, 0) + 1
         return {
             "models": self.model_count,
             "routing_decisions": len(self._routing_history),
             "by_complexity": complexity_counts,
+            "providers": provider_health,
+            "provider_status_counts": provider_counts,
         }
