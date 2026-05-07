@@ -224,6 +224,43 @@ PURCHASE_ORDER_STATUSES = frozenset(
 VENDOR_RISK_LEVELS = frozenset({"low", "medium", "high", "critical"})
 RENEWAL_DISPOSITIONS = frozenset({"pending", "approved", "denied", "deferred", "auto_renewed"})
 PROCUREMENT_DECISION_STATUSES = frozenset({"pending", "approved", "denied", "escalated"})
+BUDGET_SCOPES = frozenset({"global", "portfolio", "campaign", "connector", "channel", "team", "function"})
+FINANCIAL_COST_CATEGORIES = frozenset(
+    {
+        "connector_call",
+        "communication",
+        "artifact_parsing",
+        "provider_routing",
+        "compute",
+        "human_labor",
+        "escalation",
+        "overhead",
+    }
+)
+SPEND_STATUSES = frozenset({"reserved", "consumed", "released", "cancelled", "refunded"})
+APPROVAL_THRESHOLD_MODES = frozenset(
+    {"per_transaction", "cumulative", "percentage_of_limit", "remaining_budget"}
+)
+CHARGE_DISPOSITIONS = frozenset(
+    {
+        "approved",
+        "denied_hard_stop",
+        "denied_insufficient",
+        "pending_approval",
+        "warning_issued",
+        "fallback_suggested",
+    }
+)
+BUDGET_CONFLICT_KINDS = frozenset(
+    {
+        "over_limit",
+        "currency_mismatch",
+        "double_reservation",
+        "orphaned_reservation",
+        "negative_balance",
+        "threshold_breach",
+    }
+)
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -297,6 +334,14 @@ def _require_number_in_range(
         return [
             f"{_relative_path(path)}: field '{field_name}' must be between {minimum} and {maximum}"
         ]
+    return []
+
+
+def _validate_currency_code(value: Any, *, field_name: str, path: Path) -> list[str]:
+    if not isinstance(value, str) or not value.strip():
+        return [f"{_relative_path(path)}: field '{field_name}' must be a non-empty 3-letter currency code"]
+    if len(value) != 3 or not value.isalpha() or not value.isupper():
+        return [f"{_relative_path(path)}: field '{field_name}' must be a 3-letter uppercase currency code"]
     return []
 
 
@@ -8440,6 +8485,478 @@ def _validate_procurement_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_budget_envelope_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "budget_id",
+            "name",
+            "scope",
+            "scope_ref_id",
+            "currency",
+            "limit_amount",
+            "reserved_amount",
+            "consumed_amount",
+            "warning_threshold",
+            "hard_stop_threshold",
+            "active",
+            "tags",
+            "created_at",
+            "updated_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("budget_id", "name", "scope", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["scope"] not in BUDGET_SCOPES:
+        errors.append(
+            f"{_relative_path(path)}: field 'scope' must be one of {', '.join(sorted(BUDGET_SCOPES))}"
+        )
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    for field_name in ("limit_amount", "reserved_amount", "consumed_amount"):
+        errors.extend(_require_non_negative_float(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(payload["warning_threshold"], field_name="warning_threshold", path=path, minimum=0.0, maximum=1.0)
+    )
+    errors.extend(
+        _require_number_in_range(payload["hard_stop_threshold"], field_name="hard_stop_threshold", path=path, minimum=0.0, maximum=1.0)
+    )
+    if not isinstance(payload["active"], bool):
+        errors.append(f"{_relative_path(path)}: field 'active' must be boolean")
+    tags = payload["tags"]
+    if not isinstance(tags, list):
+        errors.append(f"{_relative_path(path)}: field 'tags' must be an array")
+    else:
+        for index, tag in enumerate(tags):
+            errors.extend(_require_non_empty_text(tag, field_name=f"tags[{index}]", path=path))
+    if not errors:
+        if payload["consumed_amount"] + payload["reserved_amount"] > payload["limit_amount"]:
+            errors.append(f"{_relative_path(path)}: consumed_amount plus reserved_amount must not exceed limit_amount")
+        if payload["warning_threshold"] > payload["hard_stop_threshold"]:
+            errors.append(f"{_relative_path(path)}: warning_threshold must not exceed hard_stop_threshold")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["updated_at"], field_name="updated_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_spend_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "spend_id",
+            "budget_id",
+            "category",
+            "status",
+            "amount",
+            "currency",
+            "campaign_ref",
+            "step_ref",
+            "connector_ref",
+            "reason",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("spend_id", "budget_id", "category", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["category"] not in FINANCIAL_COST_CATEGORIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'category' must be one of {', '.join(sorted(FINANCIAL_COST_CATEGORIES))}"
+        )
+    if payload["status"] not in SPEND_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(SPEND_STATUSES))}"
+        )
+    errors.extend(_require_non_negative_float(payload["amount"], field_name="amount", path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_cost_estimate_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "estimate_id",
+            "category",
+            "estimated_amount",
+            "currency",
+            "confidence",
+            "connector_ref",
+            "campaign_ref",
+            "step_ref",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("estimate_id", "category"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["category"] not in FINANCIAL_COST_CATEGORIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'category' must be one of {', '.join(sorted(FINANCIAL_COST_CATEGORIES))}"
+        )
+    errors.extend(_require_non_negative_float(payload["estimated_amount"], field_name="estimated_amount", path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    errors.extend(
+        _require_number_in_range(payload["confidence"], field_name="confidence", path=path, minimum=0.0, maximum=1.0)
+    )
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_connector_cost_profile_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "profile_id",
+            "connector_ref",
+            "cost_per_call",
+            "cost_per_unit",
+            "currency",
+            "unit_name",
+            "monthly_minimum",
+            "monthly_cap",
+            "tier",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("profile_id", "connector_ref", "unit_name", "tier"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("cost_per_call", "cost_per_unit", "monthly_minimum", "monthly_cap"):
+        errors.extend(_require_non_negative_float(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    if not errors and payload["monthly_minimum"] > payload["monthly_cap"]:
+        errors.append(f"{_relative_path(path)}: monthly_minimum must not exceed monthly_cap")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_campaign_budget_binding_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "binding_id",
+            "campaign_id",
+            "budget_id",
+            "allocated_amount",
+            "consumed_amount",
+            "currency",
+            "active",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("binding_id", "campaign_id", "budget_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["allocated_amount"], field_name="allocated_amount", path=path))
+    errors.extend(_require_non_negative_float(payload["consumed_amount"], field_name="consumed_amount", path=path))
+    if not errors and payload["consumed_amount"] > payload["allocated_amount"]:
+        errors.append(f"{_relative_path(path)}: consumed_amount must not exceed allocated_amount")
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    if not isinstance(payload["active"], bool):
+        errors.append(f"{_relative_path(path)}: field 'active' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_approval_threshold_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "threshold_id",
+            "budget_id",
+            "mode",
+            "amount",
+            "currency",
+            "approver_ref",
+            "auto_approve_below",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("threshold_id", "budget_id", "mode", "approver_ref"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["mode"] not in APPROVAL_THRESHOLD_MODES:
+        errors.append(
+            f"{_relative_path(path)}: field 'mode' must be one of {', '.join(sorted(APPROVAL_THRESHOLD_MODES))}"
+        )
+    errors.extend(_require_non_negative_float(payload["amount"], field_name="amount", path=path))
+    errors.extend(_require_non_negative_float(payload["auto_approve_below"], field_name="auto_approve_below", path=path))
+    if not errors and payload["auto_approve_below"] > payload["amount"]:
+        errors.append(f"{_relative_path(path)}: auto_approve_below must not exceed amount")
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_budget_reservation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "reservation_id",
+            "budget_id",
+            "amount",
+            "currency",
+            "category",
+            "campaign_ref",
+            "step_ref",
+            "connector_ref",
+            "active",
+            "reason",
+            "created_at",
+            "expires_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("reservation_id", "budget_id", "category"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["category"] not in FINANCIAL_COST_CATEGORIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'category' must be one of {', '.join(sorted(FINANCIAL_COST_CATEGORIES))}"
+        )
+    errors.extend(_require_non_negative_float(payload["amount"], field_name="amount", path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    if not isinstance(payload["active"], bool):
+        errors.append(f"{_relative_path(path)}: field 'active' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["expires_at"], field_name="expires_at", path=path))
+    if not errors and _parse_iso8601_text(payload["expires_at"]) < _parse_iso8601_text(payload["created_at"]):
+        errors.append(f"{_relative_path(path)}: expires_at must not precede created_at")
+    return errors
+
+
+def _validate_spend_forecast_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "forecast_id",
+            "budget_id",
+            "projected_amount",
+            "currency",
+            "period_start",
+            "period_end",
+            "confidence",
+            "breakdown",
+            "created_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("forecast_id", "budget_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_float(payload["projected_amount"], field_name="projected_amount", path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    errors.extend(_validate_iso8601_text(payload["period_start"], field_name="period_start", path=path))
+    errors.extend(_validate_iso8601_text(payload["period_end"], field_name="period_end", path=path))
+    errors.extend(
+        _require_number_in_range(payload["confidence"], field_name="confidence", path=path, minimum=0.0, maximum=1.0)
+    )
+    breakdown = payload["breakdown"]
+    if not isinstance(breakdown, dict):
+        errors.append(f"{_relative_path(path)}: field 'breakdown' must be an object")
+    else:
+        for key, value in breakdown.items():
+            if not isinstance(key, str) or not key.strip():
+                errors.append(f"{_relative_path(path)}: breakdown keys must be non-empty strings")
+                break
+            errors.extend(_require_non_negative_float(value, field_name=f"breakdown[{key}]", path=path))
+    if not errors and _parse_iso8601_text(payload["period_start"]) >= _parse_iso8601_text(payload["period_end"]):
+        errors.append(f"{_relative_path(path)}: period_start must be before period_end")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_budget_conflict_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("conflict_id", "budget_id", "kind", "description", "severity", "detected_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("conflict_id", "budget_id", "kind", "description"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in BUDGET_CONFLICT_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(BUDGET_CONFLICT_KINDS))}"
+        )
+    errors.extend(_require_non_negative_int(payload["severity"], field_name="severity", path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    return errors
+
+
+def _validate_budget_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "budget_id",
+            "disposition",
+            "requested_amount",
+            "available_amount",
+            "currency",
+            "reason",
+            "reservation_id",
+            "approval_required",
+            "approver_ref",
+            "decided_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "budget_id", "disposition"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in CHARGE_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(CHARGE_DISPOSITIONS))}"
+        )
+    errors.extend(_require_non_negative_float(payload["requested_amount"], field_name="requested_amount", path=path))
+    errors.extend(_require_non_negative_float(payload["available_amount"], field_name="available_amount", path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    if not isinstance(payload["approval_required"], bool):
+        errors.append(f"{_relative_path(path)}: field 'approval_required' must be boolean")
+    elif payload["approval_required"] and (not isinstance(payload["approver_ref"], str) or not payload["approver_ref"].strip()):
+        errors.append(f"{_relative_path(path)}: approver_ref must be non-empty when approval_required is true")
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    return errors
+
+
+def _validate_financial_health_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "budget_id",
+            "limit_amount",
+            "consumed_amount",
+            "reserved_amount",
+            "available_amount",
+            "utilization",
+            "currency",
+            "warning_triggered",
+            "hard_stop_triggered",
+            "active_reservations",
+            "total_spend_records",
+            "captured_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "budget_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("limit_amount", "consumed_amount", "reserved_amount", "available_amount"):
+        errors.extend(_require_non_negative_float(payload[field_name], field_name=field_name, path=path))
+    errors.extend(
+        _require_number_in_range(payload["utilization"], field_name="utilization", path=path, minimum=0.0, maximum=1.0)
+    )
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    if not isinstance(payload["warning_triggered"], bool):
+        errors.append(f"{_relative_path(path)}: field 'warning_triggered' must be boolean")
+    if not isinstance(payload["hard_stop_triggered"], bool):
+        errors.append(f"{_relative_path(path)}: field 'hard_stop_triggered' must be boolean")
+    errors.extend(_require_non_negative_int(payload["active_reservations"], field_name="active_reservations", path=path))
+    errors.extend(_require_non_negative_int(payload["total_spend_records"], field_name="total_spend_records", path=path))
+    if not errors:
+        if payload["consumed_amount"] + payload["reserved_amount"] > payload["limit_amount"]:
+            errors.append(f"{_relative_path(path)}: consumed_amount plus reserved_amount must not exceed limit_amount")
+        expected_available = payload["limit_amount"] - payload["consumed_amount"] - payload["reserved_amount"]
+        if abs(payload["available_amount"] - expected_available) > 1e-9:
+            errors.append(f"{_relative_path(path)}: available_amount must equal limit_amount minus consumed_amount minus reserved_amount")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    return errors
+
+
+def _validate_budget_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "budget_id",
+            "limit_amount",
+            "total_consumed",
+            "total_released",
+            "total_reservations",
+            "total_spend_records",
+            "currency",
+            "under_budget",
+            "overspend_amount",
+            "warnings_issued",
+            "hard_stops_triggered",
+            "closed_at",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "budget_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("limit_amount", "total_consumed", "total_released", "overspend_amount"):
+        errors.extend(_require_non_negative_float(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("total_reservations", "total_spend_records", "warnings_issued", "hard_stops_triggered"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_currency_code(payload["currency"], field_name="currency", path=path))
+    if not isinstance(payload["under_budget"], bool):
+        errors.append(f"{_relative_path(path)}: field 'under_budget' must be boolean")
+    if not errors:
+        expected_overspend = max(payload["total_consumed"] - payload["limit_amount"], 0.0)
+        if abs(payload["overspend_amount"] - expected_overspend) > 1e-9:
+            errors.append(f"{_relative_path(path)}: overspend_amount must equal max(total_consumed minus limit_amount, 0)")
+        if payload["under_budget"] and payload["overspend_amount"] != 0.0:
+            errors.append(f"{_relative_path(path)}: under_budget reports must keep overspend_amount at 0")
+        if not payload["under_budget"] and payload["overspend_amount"] <= 0.0:
+            errors.append(f"{_relative_path(path)}: over-budget reports must carry a positive overspend_amount")
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -8563,9 +9080,16 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "assurance_violation.json": _validate_assurance_violation_fixture,
     "attestation_record.json": _validate_attestation_record_fixture,
     "approval_board.json": _validate_approval_board_fixture,
+    "approval_threshold.json": _validate_approval_threshold_fixture,
     "certification_record.json": _validate_certification_record_fixture,
     "board_member.json": _validate_board_member_fixture,
     "board_vote.json": _validate_board_vote_fixture,
+    "budget_closure_report.json": _validate_budget_closure_report_fixture,
+    "budget_conflict.json": _validate_budget_conflict_fixture,
+    "budget_decision.json": _validate_budget_decision_fixture,
+    "budget_envelope.json": _validate_budget_envelope_fixture,
+    "budget_reservation.json": _validate_budget_reservation_fixture,
+    "campaign_budget_binding.json": _validate_campaign_budget_binding_fixture,
     "case_assignment.json": _validate_case_assignment_fixture,
     "case_closure_report.json": _validate_case_closure_report_fixture,
     "case_decision.json": _validate_case_decision_fixture,
@@ -8593,6 +9117,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "dispute_record.json": _validate_dispute_record_fixture,
     "dunning_notice.json": _validate_dunning_notice_fixture,
     "entitlement_record.json": _validate_entitlement_record_fixture,
+    "financial_health_snapshot.json": _validate_financial_health_snapshot_fixture,
     "evidence_collection.json": _validate_evidence_collection_fixture,
     "evidence_item.json": _validate_evidence_item_fixture,
     "failover_record.json": _validate_failover_record_fixture,
@@ -8654,6 +9179,8 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "settlement_decision.json": _validate_settlement_decision_fixture,
     "settlement_record.json": _validate_settlement_record_fixture,
     "sla_window.json": _validate_sla_window_fixture,
+    "spend_forecast.json": _validate_spend_forecast_fixture,
+    "spend_record.json": _validate_spend_record_fixture,
     "subscription_record.json": _validate_subscription_record_fixture,
     "verification_record.json": _validate_verification_record_fixture,
     "vendor_assessment.json": _validate_vendor_assessment_fixture,
@@ -8662,6 +9189,8 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "vendor_violation.json": _validate_vendor_violation_fixture,
     "writeoff_record.json": _validate_writeoff_record_fixture,
     "aging_snapshot.json": _validate_aging_snapshot_fixture,
+    "connector_cost_profile.json": _validate_connector_cost_profile_fixture,
+    "cost_estimate.json": _validate_cost_estimate_fixture,
 }
 
 DOCUMENT_ARTIFACT_EXPECTATIONS: dict[str, tuple[str, ...]] = {

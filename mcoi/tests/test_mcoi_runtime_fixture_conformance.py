@@ -251,6 +251,26 @@ from mcoi_runtime.contracts.procurement_runtime import (
     VendorStatus,
     VendorViolation,
 )
+from mcoi_runtime.contracts.financial_runtime import (
+    ApprovalThreshold,
+    ApprovalThresholdMode,
+    BudgetClosureReport,
+    BudgetConflict,
+    BudgetConflictKind,
+    BudgetDecision,
+    BudgetEnvelope,
+    BudgetReservation,
+    BudgetScope,
+    CampaignBudgetBinding,
+    ChargeDisposition,
+    ConnectorCostProfile,
+    CostCategory,
+    CostEstimate,
+    FinancialHealthSnapshot,
+    SpendForecast,
+    SpendRecord,
+    SpendStatus,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2027,6 +2047,192 @@ def _build_procurement_closure_report(payload: dict) -> ProcurementClosureReport
     )
 
 
+def _build_budget_envelope(payload: dict) -> BudgetEnvelope:
+    return BudgetEnvelope(
+        budget_id=payload["budget_id"],
+        name=payload["name"],
+        scope=BudgetScope(payload["scope"]),
+        scope_ref_id=payload["scope_ref_id"],
+        currency=payload["currency"],
+        limit_amount=payload["limit_amount"],
+        reserved_amount=payload["reserved_amount"],
+        consumed_amount=payload["consumed_amount"],
+        warning_threshold=payload["warning_threshold"],
+        hard_stop_threshold=payload["hard_stop_threshold"],
+        active=payload["active"],
+        tags=tuple(payload["tags"]),
+        created_at=payload["created_at"],
+        updated_at=payload["updated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_spend_record(payload: dict) -> SpendRecord:
+    return SpendRecord(
+        spend_id=payload["spend_id"],
+        budget_id=payload["budget_id"],
+        category=CostCategory(payload["category"]),
+        status=SpendStatus(payload["status"]),
+        amount=payload["amount"],
+        currency=payload["currency"],
+        campaign_ref=payload["campaign_ref"],
+        step_ref=payload["step_ref"],
+        connector_ref=payload["connector_ref"],
+        reason=payload["reason"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_cost_estimate(payload: dict) -> CostEstimate:
+    return CostEstimate(
+        estimate_id=payload["estimate_id"],
+        category=CostCategory(payload["category"]),
+        estimated_amount=payload["estimated_amount"],
+        currency=payload["currency"],
+        confidence=payload["confidence"],
+        connector_ref=payload["connector_ref"],
+        campaign_ref=payload["campaign_ref"],
+        step_ref=payload["step_ref"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_connector_cost_profile(payload: dict) -> ConnectorCostProfile:
+    return ConnectorCostProfile(
+        profile_id=payload["profile_id"],
+        connector_ref=payload["connector_ref"],
+        cost_per_call=payload["cost_per_call"],
+        cost_per_unit=payload["cost_per_unit"],
+        currency=payload["currency"],
+        unit_name=payload["unit_name"],
+        monthly_minimum=payload["monthly_minimum"],
+        monthly_cap=payload["monthly_cap"],
+        tier=payload["tier"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_campaign_budget_binding(payload: dict) -> CampaignBudgetBinding:
+    return CampaignBudgetBinding(
+        binding_id=payload["binding_id"],
+        campaign_id=payload["campaign_id"],
+        budget_id=payload["budget_id"],
+        allocated_amount=payload["allocated_amount"],
+        consumed_amount=payload["consumed_amount"],
+        currency=payload["currency"],
+        active=payload["active"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_approval_threshold(payload: dict) -> ApprovalThreshold:
+    return ApprovalThreshold(
+        threshold_id=payload["threshold_id"],
+        budget_id=payload["budget_id"],
+        mode=ApprovalThresholdMode(payload["mode"]),
+        amount=payload["amount"],
+        currency=payload["currency"],
+        approver_ref=payload["approver_ref"],
+        auto_approve_below=payload["auto_approve_below"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_budget_reservation(payload: dict) -> BudgetReservation:
+    return BudgetReservation(
+        reservation_id=payload["reservation_id"],
+        budget_id=payload["budget_id"],
+        amount=payload["amount"],
+        currency=payload["currency"],
+        category=CostCategory(payload["category"]),
+        campaign_ref=payload["campaign_ref"],
+        step_ref=payload["step_ref"],
+        connector_ref=payload["connector_ref"],
+        active=payload["active"],
+        reason=payload["reason"],
+        created_at=payload["created_at"],
+        expires_at=payload["expires_at"],
+    )
+
+
+def _build_spend_forecast(payload: dict) -> SpendForecast:
+    return SpendForecast(
+        forecast_id=payload["forecast_id"],
+        budget_id=payload["budget_id"],
+        projected_amount=payload["projected_amount"],
+        currency=payload["currency"],
+        period_start=payload["period_start"],
+        period_end=payload["period_end"],
+        confidence=payload["confidence"],
+        breakdown=payload["breakdown"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_budget_conflict(payload: dict) -> BudgetConflict:
+    return BudgetConflict(
+        conflict_id=payload["conflict_id"],
+        budget_id=payload["budget_id"],
+        kind=BudgetConflictKind(payload["kind"]),
+        description=payload["description"],
+        severity=payload["severity"],
+        detected_at=payload["detected_at"],
+    )
+
+
+def _build_budget_decision(payload: dict) -> BudgetDecision:
+    return BudgetDecision(
+        decision_id=payload["decision_id"],
+        budget_id=payload["budget_id"],
+        disposition=ChargeDisposition(payload["disposition"]),
+        requested_amount=payload["requested_amount"],
+        available_amount=payload["available_amount"],
+        currency=payload["currency"],
+        reason=payload["reason"],
+        reservation_id=payload["reservation_id"],
+        approval_required=payload["approval_required"],
+        approver_ref=payload["approver_ref"],
+        decided_at=payload["decided_at"],
+    )
+
+
+def _build_financial_health_snapshot(payload: dict) -> FinancialHealthSnapshot:
+    return FinancialHealthSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        budget_id=payload["budget_id"],
+        limit_amount=payload["limit_amount"],
+        consumed_amount=payload["consumed_amount"],
+        reserved_amount=payload["reserved_amount"],
+        available_amount=payload["available_amount"],
+        utilization=payload["utilization"],
+        currency=payload["currency"],
+        warning_triggered=payload["warning_triggered"],
+        hard_stop_triggered=payload["hard_stop_triggered"],
+        active_reservations=payload["active_reservations"],
+        total_spend_records=payload["total_spend_records"],
+        captured_at=payload["captured_at"],
+    )
+
+
+def _build_budget_closure_report(payload: dict) -> BudgetClosureReport:
+    return BudgetClosureReport(
+        report_id=payload["report_id"],
+        budget_id=payload["budget_id"],
+        limit_amount=payload["limit_amount"],
+        total_consumed=payload["total_consumed"],
+        total_released=payload["total_released"],
+        total_reservations=payload["total_reservations"],
+        total_spend_records=payload["total_spend_records"],
+        currency=payload["currency"],
+        under_budget=payload["under_budget"],
+        overspend_amount=payload["overspend_amount"],
+        warnings_issued=payload["warnings_issued"],
+        hard_stops_triggered=payload["hard_stops_triggered"],
+        closed_at=payload["closed_at"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2052,6 +2258,8 @@ def _build_procurement_closure_report(payload: dict) -> ProcurementClosureReport
         ("contract_clause.json", _build_contract_clause),
         ("contract_closure_report.json", _build_contract_closure_report),
         ("contract_snapshot.json", _build_contract_snapshot),
+        ("connector_cost_profile.json", _build_connector_cost_profile),
+        ("cost_estimate.json", _build_cost_estimate),
         ("credit_record.json", _build_credit_record),
         ("assurance_assessment.json", _build_assurance_assessment),
         ("assurance_closure_report.json", _build_assurance_closure_report),
@@ -2062,8 +2270,15 @@ def _build_procurement_closure_report(payload: dict) -> ProcurementClosureReport
         ("assurance_violation.json", _build_assurance_violation),
         ("attestation_record.json", _build_attestation_record),
         ("approval_board.json", _build_approval_board),
+        ("approval_threshold.json", _build_approval_threshold),
         ("board_member.json", _build_board_member),
         ("board_vote.json", _build_board_vote),
+        ("budget_closure_report.json", _build_budget_closure_report),
+        ("budget_conflict.json", _build_budget_conflict),
+        ("budget_decision.json", _build_budget_decision),
+        ("budget_envelope.json", _build_budget_envelope),
+        ("budget_reservation.json", _build_budget_reservation),
+        ("campaign_budget_binding.json", _build_campaign_budget_binding),
         ("case_assignment.json", _build_case_assignment),
         ("case_closure_report.json", _build_case_closure_report),
         ("case_decision.json", _build_case_decision),
@@ -2150,6 +2365,8 @@ def _build_procurement_closure_report(payload: dict) -> ProcurementClosureReport
         ("settlement_decision.json", _build_settlement_decision),
         ("settlement_record.json", _build_settlement_record),
         ("sla_window.json", _build_sla_window),
+        ("spend_forecast.json", _build_spend_forecast),
+        ("spend_record.json", _build_spend_record),
         ("subscription_record.json", _build_subscription_record),
         ("verification_record.json", _build_verification_record),
         ("vendor_assessment.json", _build_vendor_assessment),
@@ -2159,6 +2376,7 @@ def _build_procurement_closure_report(payload: dict) -> ProcurementClosureReport
         ("writeoff_record.json", _build_writeoff_record),
         ("account_health_snapshot.json", _build_account_health_snapshot),
         ("account_record.json", _build_account_record),
+        ("financial_health_snapshot.json", _build_financial_health_snapshot),
     ],
 )
 def test_mcoi_runtime_fixture_round_trips_exactly_through_mcoi_contracts(

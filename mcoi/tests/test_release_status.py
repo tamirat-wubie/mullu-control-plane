@@ -651,6 +651,54 @@ def test_discover_release_status_summary_exposes_live_inventory() -> None:
         "integration/contracts_compat/fixtures/mcoi_runtime/procurement_closure_report.json"
         in summary.mcoi_runtime_fixtures
     )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/budget_envelope.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/spend_record.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/cost_estimate.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/connector_cost_profile.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/campaign_budget_binding.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/approval_threshold.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/budget_reservation.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/spend_forecast.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/budget_conflict.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/budget_decision.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/financial_health_snapshot.json"
+        in summary.mcoi_runtime_fixtures
+    )
+    assert (
+        "integration/contracts_compat/fixtures/mcoi_runtime/budget_closure_report.json"
+        in summary.mcoi_runtime_fixtures
+    )
 
 
 def test_validate_release_status_strictly() -> None:
@@ -661,7 +709,7 @@ def test_validate_release_status_strictly() -> None:
     assert len(summary.schema_files) >= 10
     assert len(summary.config_artifacts) >= 5
     assert len(summary.maf_runtime_fixtures) >= 89
-    assert len(summary.mcoi_runtime_fixtures) >= 129
+    assert len(summary.mcoi_runtime_fixtures) >= 141
     assert summary.ci_workflow_present is True
     assert summary.release_version == "0.3.0 (v3.10.2)"
     assert summary.release_date == "2026-03-27"

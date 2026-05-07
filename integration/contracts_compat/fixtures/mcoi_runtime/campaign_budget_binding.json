@@ -1,0 +1,10 @@
+{
+  "binding_id": "binding-launch-q2-main",
+  "campaign_id": "campaign-launch-q2-2026",
+  "budget_id": "budget-launch-q2-2026",
+  "allocated_amount": 25000.0,
+  "consumed_amount": 9100.0,
+  "currency": "USD",
+  "active": true,
+  "created_at": "2026-05-06T09:15:00+00:00"
+}

@@ -243,6 +243,18 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "vendor_violation.json" in mcoi_runtime_fixture_names
     assert "procurement_snapshot.json" in mcoi_runtime_fixture_names
     assert "procurement_closure_report.json" in mcoi_runtime_fixture_names
+    assert "budget_envelope.json" in mcoi_runtime_fixture_names
+    assert "spend_record.json" in mcoi_runtime_fixture_names
+    assert "cost_estimate.json" in mcoi_runtime_fixture_names
+    assert "connector_cost_profile.json" in mcoi_runtime_fixture_names
+    assert "campaign_budget_binding.json" in mcoi_runtime_fixture_names
+    assert "approval_threshold.json" in mcoi_runtime_fixture_names
+    assert "budget_reservation.json" in mcoi_runtime_fixture_names
+    assert "spend_forecast.json" in mcoi_runtime_fixture_names
+    assert "budget_conflict.json" in mcoi_runtime_fixture_names
+    assert "budget_decision.json" in mcoi_runtime_fixture_names
+    assert "financial_health_snapshot.json" in mcoi_runtime_fixture_names
+    assert "budget_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -255,7 +267,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 129
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 141
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2351,6 +2363,122 @@ def test_validate_mcoi_runtime_fixture_rejects_procurement_closure_tally_overflo
 
     assert len(errors) == 1
     assert "total_fulfilled plus total_cancelled must not exceed total_purchase_orders" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_budget_envelope_limit_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "budget_envelope.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "budget_id": "budget-drift",
+                "name": "Launch budget drift",
+                "scope": "campaign",
+                "scope_ref_id": "campaign-launch-1",
+                "currency": "USD",
+                "limit_amount": 1000.0,
+                "reserved_amount": 250.0,
+                "consumed_amount": 900.0,
+                "warning_threshold": 0.8,
+                "hard_stop_threshold": 1.0,
+                "active": True,
+                "tags": ["launch", "runtime"],
+                "created_at": "2026-05-06T09:00:00+00:00",
+                "updated_at": "2026-05-06T09:30:00+00:00",
+                "metadata": {"cost_center": "growth"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "consumed_amount plus reserved_amount must not exceed limit_amount" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_approval_threshold_auto_approve_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "approval_threshold.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "threshold_id": "threshold-drift",
+                "budget_id": "budget-1",
+                "mode": "per_transaction",
+                "amount": 500.0,
+                "currency": "USD",
+                "approver_ref": "finance-reviewer-1",
+                "auto_approve_below": 750.0,
+                "created_at": "2026-05-06T10:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "auto_approve_below must not exceed amount" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_spend_forecast_reverse_window(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "spend_forecast.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "forecast_id": "forecast-drift",
+                "budget_id": "budget-1",
+                "projected_amount": 1200.0,
+                "currency": "USD",
+                "period_start": "2026-06-30T00:00:00+00:00",
+                "period_end": "2026-06-01T00:00:00+00:00",
+                "confidence": 0.72,
+                "breakdown": {
+                    "connector_calls": 800.0,
+                    "storage": 400.0
+                },
+                "created_at": "2026-05-06T11:00:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "period_start must be before period_end" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_budget_closure_overspend_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "budget_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "budget-closure-drift",
+                "budget_id": "budget-1",
+                "limit_amount": 1000.0,
+                "total_consumed": 1200.0,
+                "total_released": 150.0,
+                "total_reservations": 4,
+                "total_spend_records": 5,
+                "currency": "USD",
+                "under_budget": False,
+                "overspend_amount": 150.0,
+                "warnings_issued": 2,
+                "hard_stops_triggered": 1,
+                "closed_at": "2026-05-31T23:59:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "overspend_amount must equal max(total_consumed minus limit_amount, 0)" in errors[0]
     assert fixture_path.name in errors[0]
 
 

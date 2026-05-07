@@ -1,0 +1,14 @@
+{
+  "reservation_id": "reservation-launch-q2-0011",
+  "budget_id": "budget-launch-q2-2026",
+  "amount": 3200.0,
+  "currency": "USD",
+  "category": "human_labor",
+  "campaign_ref": "campaign-launch-q2-2026",
+  "step_ref": "wf-stage-human-approval",
+  "connector_ref": "connector-human-review-board",
+  "active": true,
+  "reason": "Reserve human approval capacity for release gating.",
+  "created_at": "2026-05-06T12:00:00+00:00",
+  "expires_at": "2026-05-20T12:00:00+00:00"
+}

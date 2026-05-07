@@ -1,0 +1,16 @@
+{
+  "profile_id": "connector-cost-openai-primary",
+  "connector_ref": "connector-openai-primary",
+  "cost_per_call": 0.0125,
+  "cost_per_unit": 0.0008,
+  "currency": "USD",
+  "unit_name": "token",
+  "monthly_minimum": 500.0,
+  "monthly_cap": 7500.0,
+  "tier": "enterprise",
+  "created_at": "2026-05-01T00:00:00+00:00",
+  "metadata": {
+    "provider": "mullusi-governed",
+    "region": "us-east-1"
+  }
+}
