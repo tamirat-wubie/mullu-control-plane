@@ -503,7 +503,7 @@ def _goal_errors(state: GoalExecutionState) -> tuple[StructuredError, ...]:
         return (
             execution_error(
                 error_code="goal_sub_goal_failed",
-                message=f"goal failed: sub-goals {', '.join(state.failed_sub_goals)} failed",
+                message="goal failed due to sub-goal failure",
                 related_ids=state.failed_sub_goals,
             ),
         )
@@ -604,8 +604,9 @@ def resume_goal(
             errors=(
                 validation_error(
                     error_code="goal_resume_invalid_state",
-                    message=f"goal is in terminal state {state.status.value}; cannot resume",
+                    message="goal is in terminal state and cannot resume",
                     source_plane=SourcePlane.EXECUTION,
+                    context={"goal_status": state.status.value},
                 ),
             ),
             started_at=goal_descriptor.created_at,
@@ -694,15 +695,13 @@ def resume_goal(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        f"blocked goal resume: {autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked goal resume",
                     recoverability=Recoverability.FATAL_FOR_RUN,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -731,7 +730,7 @@ def resume_goal(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=f"policy gate returned {policy_decision.status.value} for goal resume",
+                    message="policy gate blocked goal resume",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -982,16 +981,13 @@ def reconcile_workforce(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        "blocked workforce reconciliation: "
-                        f"{autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked workforce reconciliation",
                     recoverability=Recoverability.APPROVAL_REQUIRED,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -1030,10 +1026,7 @@ def reconcile_workforce(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        "policy gate returned "
-                        f"{policy_decision.status.value} for workforce reconciliation"
-                    ),
+                    message="policy gate blocked workforce reconciliation",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -1289,12 +1282,10 @@ def _coordination_consistency_errors(
             errors.append(
                 validation_error(
                     error_code="recovery_missing_job_for_queue_entry",
-                    message=(
-                        "work queue entries reference missing job descriptors: "
-                        + ", ".join(missing_job_ids)
-                    ),
+                    message="work queue entries reference missing job descriptors",
                     source_plane=SourcePlane.COORDINATION,
                     recoverability=Recoverability.FATAL_FOR_RUN,
+                    related_ids=missing_job_ids,
                 )
             )
 
@@ -1314,12 +1305,10 @@ def _coordination_consistency_errors(
             errors.append(
                 validation_error(
                     error_code="recovery_missing_workflow_for_job",
-                    message=(
-                        "job descriptors reference missing workflow descriptors: "
-                        + ", ".join(missing_workflow_ids)
-                    ),
+                    message="job descriptors reference missing workflow descriptors",
                     source_plane=SourcePlane.COORDINATION,
                     recoverability=Recoverability.FATAL_FOR_RUN,
+                    related_ids=missing_workflow_ids,
                 )
             )
 
@@ -1346,12 +1335,10 @@ def _coordination_consistency_errors(
             errors.append(
                 validation_error(
                     error_code="recovery_missing_goal_for_job",
-                    message=(
-                        "job descriptors reference missing goal descriptors: "
-                        + ", ".join(missing_goal_ids)
-                    ),
+                    message="job descriptors reference missing goal descriptors",
                     source_plane=SourcePlane.COORDINATION,
                     recoverability=Recoverability.FATAL_FOR_RUN,
+                    related_ids=missing_goal_ids,
                 )
             )
 
@@ -1404,16 +1391,13 @@ def recover_coordination_state(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        "blocked coordination recovery: "
-                        f"{autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked coordination recovery",
                     recoverability=Recoverability.APPROVAL_REQUIRED,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -1453,10 +1437,7 @@ def recover_coordination_state(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        "policy gate returned "
-                        f"{policy_decision.status.value} for coordination recovery"
-                    ),
+                    message="policy gate blocked coordination recovery",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -1805,16 +1786,13 @@ def reconcile_team_queues(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        "blocked team queue reconciliation: "
-                        f"{autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked team queue reconciliation",
                     recoverability=Recoverability.APPROVAL_REQUIRED,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -1850,10 +1828,7 @@ def reconcile_team_queues(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        "policy gate returned "
-                        f"{policy_decision.status.value} for team queue reconciliation"
-                    ),
+                    message="policy gate blocked team queue reconciliation",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -1944,12 +1919,10 @@ def reconcile_team_queues(
                 errors=(
                     validation_error(
                         error_code="team_queue_state_missing",
-                        message=(
-                            "requested team queue state not found: "
-                            + ", ".join(missing_team_ids)
-                        ),
+                        message="requested team queue state not found",
                         source_plane=SourcePlane.COORDINATION,
                         recoverability=Recoverability.FATAL_FOR_RUN,
+                        related_ids=missing_team_ids,
                     ),
                 ),
                 started_at=started_at,
@@ -2011,16 +1984,13 @@ def reconcile_work_queue(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        "blocked work queue reconciliation: "
-                        f"{autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked work queue reconciliation",
                     recoverability=Recoverability.APPROVAL_REQUIRED,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -2055,10 +2025,7 @@ def reconcile_work_queue(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        "policy gate returned "
-                        f"{policy_decision.status.value} for work queue reconciliation"
-                    ),
+                    message="policy gate blocked work queue reconciliation",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -2147,12 +2114,10 @@ def reconcile_work_queue(
                 errors=(
                     validation_error(
                         error_code="work_queue_entry_missing",
-                        message=(
-                            "requested work queue entry not found: "
-                            + ", ".join(missing_entry_ids)
-                        ),
+                        message="requested work queue entry not found",
                         source_plane=SourcePlane.COORDINATION,
                         recoverability=Recoverability.FATAL_FOR_RUN,
+                        related_ids=missing_entry_ids,
                     ),
                 ),
                 started_at=started_at,
@@ -2217,16 +2182,13 @@ def reconcile_jobs(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        "blocked job reconciliation: "
-                        f"{autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked job reconciliation",
                     recoverability=Recoverability.APPROVAL_REQUIRED,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -2261,10 +2223,7 @@ def reconcile_jobs(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        "policy gate returned "
-                        f"{policy_decision.status.value} for job reconciliation"
-                    ),
+                    message="policy gate blocked job reconciliation",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -2359,12 +2318,10 @@ def reconcile_jobs(
                 errors=(
                     validation_error(
                         error_code="job_runtime_missing",
-                        message=(
-                            "requested job runtime witness not found: "
-                            + ", ".join(missing_job_ids)
-                        ),
+                        message="requested job runtime witness not found",
                         source_plane=SourcePlane.COORDINATION,
                         recoverability=Recoverability.FATAL_FOR_RUN,
+                        related_ids=missing_job_ids,
                     ),
                 ),
                 started_at=started_at,
@@ -2433,16 +2390,13 @@ def reconcile_goals(
             errors=(
                 policy_error(
                     error_code="autonomy_blocked",
-                    message=(
-                        f"autonomy mode {loop.runtime.autonomy.mode.value} "
-                        "blocked goal reconciliation: "
-                        f"{autonomy_decision.reason}"
-                    ),
+                    message="autonomy policy blocked goal reconciliation",
                     recoverability=Recoverability.APPROVAL_REQUIRED,
                     related_ids=(autonomy_decision.decision_id,),
                     context={
                         "autonomy_mode": loop.runtime.autonomy.mode.value,
                         "autonomy_status": autonomy_decision.status.value,
+                        "autonomy_reason": autonomy_decision.reason,
                     },
                 ),
             ),
@@ -2479,10 +2433,7 @@ def reconcile_goals(
             errors=(
                 policy_error(
                     error_code=f"policy_{policy_decision.status.value}",
-                    message=(
-                        "policy gate returned "
-                        f"{policy_decision.status.value} for goal reconciliation"
-                    ),
+                    message="policy gate blocked goal reconciliation",
                     recoverability=(
                         Recoverability.APPROVAL_REQUIRED
                         if policy_decision.status is PolicyDecisionStatus.ESCALATE
@@ -2592,12 +2543,10 @@ def reconcile_goals(
                 errors=(
                     validation_error(
                         error_code="goal_runtime_missing",
-                        message=(
-                            "requested goal runtime witness not found: "
-                            + ", ".join(missing_goal_ids)
-                        ),
+                        message="requested goal runtime witness not found",
                         source_plane=SourcePlane.COORDINATION,
                         recoverability=Recoverability.FATAL_FOR_RUN,
+                        related_ids=missing_goal_ids,
                     ),
                 ),
                 started_at=started_at,
