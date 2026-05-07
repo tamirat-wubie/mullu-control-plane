@@ -1331,6 +1331,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "temporal_causal_order",
+            [
+                "TemporalCausalOrder.evaluate",
+                "TemporalCausalOrderRequest",
+                "TemporalCausalOrderReceipt",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "gateway/temporal_causal_order.py",
+                "schemas/temporal_causal_order_receipt.schema.json",
+                "tests/test_gateway/test_temporal_causal_order.py",
+            ],
+            "Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution.",
+            [
+                "runtime_clock_owns_causal_order_time",
+                "required_events_must_be_present",
+                "tenant_and_command_scope_checked",
+                "predecessor_edges_checked",
+                "out_of_order_events_block_dispatch",
+                "future_events_block_dispatch",
+                "high_risk_source_receipts_bound",
+                "temporal_causal_order_receipt_schema_valid",
+                "receipt_not_terminal_closure",
+            ],
+        ),
+        _surface(
             "temporal_memory",
             [
                 "TemporalMemory.evaluate",
@@ -1804,6 +1833,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_temporal_budget_window_receipt_contract",
             "surfaces": ["temporal_budget_window"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_temporal_causal_order_receipt_contract",
+            "surfaces": ["temporal_causal_order"],
             "status": "closed",
         },
         {

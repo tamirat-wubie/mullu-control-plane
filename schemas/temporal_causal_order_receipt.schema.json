@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:temporal-causal-order-receipt:1",
+  "title": "Temporal Causal Order Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "command_id",
+    "action_type",
+    "risk_level",
+    "policy_id",
+    "status",
+    "order_state",
+    "runtime_now_utc",
+    "earliest_event_at",
+    "latest_event_at",
+    "required_event_types",
+    "ordered_event_types",
+    "observed_event_types",
+    "missing_event_types",
+    "out_of_order_event_ids",
+    "invalid_event_ids",
+    "event_count",
+    "required_controls",
+    "evidence_refs",
+    "event_evidence_refs",
+    "source_temporal_receipt_id",
+    "source_dispatch_window_receipt_id",
+    "source_budget_window_receipt_id",
+    "source_reapproval_receipt_id",
+    "blocked_reasons",
+    "receipt_schema_ref",
+    "terminal_closure_required",
+    "receipt_hash",
+    "metadata"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^temporal-causal-order-receipt-[0-9a-f]{16}$"
+    },
+    "request_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "command_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "policy_id": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": ["order_valid", "blocked", "not_required"]
+    },
+    "order_state": {
+      "type": "string",
+      "enum": ["valid", "missing", "out_of_order", "invalid", "not_required"]
+    },
+    "runtime_now_utc": {"type": "string", "format": "date-time"},
+    "earliest_event_at": {"type": "string"},
+    "latest_event_at": {"type": "string"},
+    "required_event_types": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "ordered_event_types": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "observed_event_types": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "missing_event_types": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "out_of_order_event_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "invalid_event_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "event_count": {"type": "integer", "minimum": 0},
+    "required_controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "event_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_temporal_receipt_id": {"type": "string"},
+    "source_dispatch_window_receipt_id": {"type": "string"},
+    "source_budget_window_receipt_id": {"type": "string"},
+    "source_reapproval_receipt_id": {"type": "string"},
+    "blocked_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "receipt_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:temporal-causal-order-receipt:1"
+    },
+    "terminal_closure_required": {"type": "boolean", "const": true},
+    "receipt_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "receipt_is_not_terminal_closure",
+        "runtime_owns_time_truth",
+        "dispatch_allowed",
+        "causal_order_checked",
+        "high_risk_causal_order_checked",
+        "source_receipts_checked"
+      ],
+      "properties": {
+        "receipt_is_not_terminal_closure": {"type": "boolean", "const": true},
+        "runtime_owns_time_truth": {"type": "boolean", "const": true},
+        "dispatch_allowed": {"type": "boolean"},
+        "causal_order_checked": {"type": "boolean"},
+        "high_risk_causal_order_checked": {"type": "boolean"},
+        "source_receipts_checked": {"type": "boolean"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "order_valid"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "order_state": {"const": "valid"},
+          "missing_event_types": {"maxItems": 0},
+          "out_of_order_event_ids": {"maxItems": 0},
+          "invalid_event_ids": {"maxItems": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "causal_order_checked": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "blocked"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "blocked_reasons": {"minItems": 1},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {"status": {"const": "not_required"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "order_state": {"const": "not_required"},
+          "required_event_types": {"maxItems": 0},
+          "ordered_event_types": {"maxItems": 0},
+          "missing_event_types": {"maxItems": 0},
+          "out_of_order_event_ids": {"maxItems": 0},
+          "invalid_event_ids": {"maxItems": 0},
+          "blocked_reasons": {"maxItems": 0},
+          "metadata": {
+            "properties": {
+              "dispatch_allowed": {"const": true},
+              "causal_order_checked": {"const": false},
+              "high_risk_causal_order_checked": {"const": false},
+              "source_receipts_checked": {"const": false}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

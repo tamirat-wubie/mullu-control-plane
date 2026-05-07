@@ -289,6 +289,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_causal_order_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_causal_order"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -366,7 +373,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 46,
+      "action_proof": 47,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 8,
@@ -374,7 +381,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 52,
+      "audit_chain": 53,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -382,16 +389,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 55
+      "witnessed": 56
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 10,
-      "request_proof": 46
+      "request_proof": 47
     },
-    "surface_count": 56
+    "surface_count": 57
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -3295,6 +3302,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_budget_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_causal_order.py",
+        "schemas/temporal_causal_order_receipt.schema.json",
+        "tests/test_gateway/test_temporal_causal_order.py"
+      ],
+      "notes": "Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution.",
+      "representative_paths": [
+        "TemporalCausalOrder.evaluate",
+        "TemporalCausalOrderRequest",
+        "TemporalCausalOrderReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_causal_order_time",
+        "required_events_must_be_present",
+        "tenant_and_command_scope_checked",
+        "predecessor_edges_checked",
+        "out_of_order_events_block_dispatch",
+        "future_events_block_dispatch",
+        "high_risk_source_receipts_bound",
+        "temporal_causal_order_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_causal_order"
     },
     {
       "action_proof": "action_proof",

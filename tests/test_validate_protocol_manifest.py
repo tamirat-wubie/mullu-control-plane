@@ -372,6 +372,17 @@ def test_protocol_manifest_indexes_temporal_budget_window_receipt() -> None:
     assert budget_window_entry["surface"] == "temporal"
 
 
+def test_protocol_manifest_indexes_temporal_causal_order_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    causal_order_entry = entries["temporal-causal-order-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert causal_order_entry["path"] == "schemas/temporal_causal_order_receipt.schema.json"
+    assert causal_order_entry["urn"] == "urn:mullusi:schema:temporal-causal-order-receipt:1"
+    assert causal_order_entry["surface"] == "temporal"
+
+
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
