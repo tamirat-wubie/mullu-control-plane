@@ -2,7 +2,14 @@
 
 import os
 import pytest
-from mcoi_runtime.adapters.multi_provider import GroqBackend
+from mcoi_runtime.adapters.multi_provider import (
+    CerebrasBackend,
+    FireworksBackend,
+    FriendliBackend,
+    GroqBackend,
+    NovitaBackend,
+    TogetherBackend,
+)
 from mcoi_runtime.app.llm_bootstrap import (
     LLMConfig,
     bootstrap_llm,
@@ -18,6 +25,26 @@ def FIXED_CLOCK() -> str:
     return "2026-03-26T12:00:00Z"
 
 
+LLM_ENV_KEYS = (
+    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "GEMINI_API_KEY",
+    "GROQ_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "TOGETHER_API_KEY",
+    "FIREWORKS_API_KEY",
+    "FRIENDLI_TOKEN",
+    "FRIENDLI_API_KEY",
+    "NOVITA_API_KEY",
+    "CEREBRAS_API_KEY",
+    "XAI_API_KEY",
+    "MISTRAL_API_KEY",
+    "OPENROUTER_API_KEY",
+    "OLLAMA_BASE_URL",
+    "MULLU_LLM_BACKEND",
+)
+
+
 class TestLLMConfig:
     def test_default_config(self):
         config = LLMConfig()
@@ -27,18 +54,7 @@ class TestLLMConfig:
 
     def test_from_env_defaults(self):
         env_backup = {}
-        for key in (
-            "ANTHROPIC_API_KEY",
-            "OPENAI_API_KEY",
-            "GEMINI_API_KEY",
-            "GROQ_API_KEY",
-            "DEEPSEEK_API_KEY",
-            "XAI_API_KEY",
-            "MISTRAL_API_KEY",
-            "OPENROUTER_API_KEY",
-            "OLLAMA_BASE_URL",
-            "MULLU_LLM_BACKEND",
-        ):
+        for key in LLM_ENV_KEYS:
             env_backup[key] = os.environ.pop(key, None)
         try:
             config = LLMConfig.from_env()
@@ -63,18 +79,7 @@ class TestLLMConfig:
                 os.environ.pop("ANTHROPIC_API_KEY", None)
 
     def test_from_env_low_cost_provider_detected(self, monkeypatch):
-        for key in (
-            "ANTHROPIC_API_KEY",
-            "OPENAI_API_KEY",
-            "GEMINI_API_KEY",
-            "GROQ_API_KEY",
-            "DEEPSEEK_API_KEY",
-            "XAI_API_KEY",
-            "MISTRAL_API_KEY",
-            "OPENROUTER_API_KEY",
-            "OLLAMA_BASE_URL",
-            "MULLU_LLM_BACKEND",
-        ):
+        for key in LLM_ENV_KEYS:
             monkeypatch.delenv(key, raising=False)
         monkeypatch.setenv("GROQ_API_KEY", "groq-test-key")
 
@@ -84,6 +89,30 @@ class TestLLMConfig:
         assert config.groq_api_key == "groq-test-key"
         assert config.deepseek_api_key == ""
         assert config.openrouter_api_key == ""
+
+    def test_from_env_added_low_cost_provider_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("TOGETHER_API_KEY", "together-test-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "together"
+        assert config.together_api_key == "together-test-key"
+        assert config.fireworks_api_key == ""
+        assert config.cerebras_api_key == ""
+
+    def test_from_env_friendli_api_key_alias_detected(self, monkeypatch):
+        for key in LLM_ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+        monkeypatch.setenv("FRIENDLI_API_KEY", "friendli-alias-key")
+
+        config = LLMConfig.from_env()
+
+        assert config.default_backend == "friendli"
+        assert config.friendli_api_key == "friendli-alias-key"
+        assert config.together_api_key == ""
+        assert config.groq_api_key == ""
 
     def test_from_env_explicit_backend(self):
         os.environ["MULLU_LLM_BACKEND"] = "stub"
@@ -215,6 +244,11 @@ class TestBootstrapLLM:
             default_model="claude-sonnet-4-20250514",
             groq_api_key="gq",
             deepseek_api_key="ds",
+            together_api_key="tg",
+            fireworks_api_key="fw",
+            friendli_api_key="fl",
+            novita_api_key="nv",
+            cerebras_api_key="cb",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -228,13 +262,36 @@ class TestBootstrapLLM:
         )
 
         assert result.default_backend_name == "groq"
-        assert {"groq", "deepseek", "grok", "mistral", "openrouter"}.issubset(result.backends)
+        assert {
+            "groq",
+            "deepseek",
+            "together",
+            "fireworks",
+            "friendli",
+            "novita",
+            "cerebras",
+            "grok",
+            "mistral",
+            "openrouter",
+        }.issubset(result.backends)
         assert isinstance(result.backends["groq"], GroqBackend)
+        assert isinstance(result.backends["together"], TogetherBackend)
+        assert isinstance(result.backends["fireworks"], FireworksBackend)
+        assert isinstance(result.backends["friendli"], FriendliBackend)
+        assert isinstance(result.backends["novita"], NovitaBackend)
+        assert isinstance(result.backends["cerebras"], CerebrasBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
+        assert "llm-together" in result.registered_providers
+        assert "llm-cerebras" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
+        assert "LiquidAI/LFM2-24B-A2B" in result.registered_models
+        assert "accounts/fireworks/models/gpt-oss-20b" in result.registered_models
+        assert "meta-llama-3.1-8b-instruct" in result.registered_models
+        assert "deepseek/deepseek-v4-flash" in result.registered_models
+        assert "llama3.1-8b" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models
@@ -256,6 +313,12 @@ class TestLLMConfigFromEnv:
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
         monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("TOGETHER_API_KEY", raising=False)
+        monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+        monkeypatch.delenv("FRIENDLI_TOKEN", raising=False)
+        monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
+        monkeypatch.delenv("NOVITA_API_KEY", raising=False)
+        monkeypatch.delenv("CEREBRAS_API_KEY", raising=False)
         monkeypatch.delenv("XAI_API_KEY", raising=False)
         monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
         monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
@@ -271,6 +334,12 @@ class TestLLMConfigFromEnv:
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
         monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("TOGETHER_API_KEY", raising=False)
+        monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+        monkeypatch.delenv("FRIENDLI_TOKEN", raising=False)
+        monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
+        monkeypatch.delenv("NOVITA_API_KEY", raising=False)
+        monkeypatch.delenv("CEREBRAS_API_KEY", raising=False)
         monkeypatch.delenv("XAI_API_KEY", raising=False)
         monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
         monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
@@ -293,6 +362,12 @@ class TestLLMConfigFromEnv:
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
         monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+        monkeypatch.delenv("TOGETHER_API_KEY", raising=False)
+        monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+        monkeypatch.delenv("FRIENDLI_TOKEN", raising=False)
+        monkeypatch.delenv("FRIENDLI_API_KEY", raising=False)
+        monkeypatch.delenv("NOVITA_API_KEY", raising=False)
+        monkeypatch.delenv("CEREBRAS_API_KEY", raising=False)
         monkeypatch.delenv("XAI_API_KEY", raising=False)
         monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
         monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)

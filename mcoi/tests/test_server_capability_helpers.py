@@ -49,8 +49,17 @@ def test_bootstrap_capability_services_registers_tools_models_and_flags() -> Non
     }
     assert bootstrap.structured_output.summary()["schemas"] == 1
     model_ids = set(bootstrap.model_router._profiles)
-    assert bootstrap.model_router.summary()["models"] >= 11
-    assert {"gpt-4.1-nano", "gemini-2.0-flash-lite", "deepseek-v4-flash"}.issubset(model_ids)
+    assert bootstrap.model_router.summary()["models"] >= 17
+    assert {
+        "gpt-4.1-nano",
+        "gemini-2.0-flash-lite",
+        "deepseek-v4-flash",
+        "LiquidAI/LFM2-24B-A2B",
+        "accounts/fireworks/models/gpt-oss-20b",
+        "meta-llama/Llama-3.1-8B-Instruct",
+        "llama3.1-8b",
+    }.issubset(model_ids)
+    assert "meta-llama-3.1-8b-instruct" not in model_ids
     assert bootstrap.feature_flags.summary() == {"total": 4, "enabled": 4, "disabled": 0}
     assert bootstrap.feature_flags.is_enabled("tool_augmentation") is True
     assert bootstrap.llm_circuit.status()["state"] == "closed"

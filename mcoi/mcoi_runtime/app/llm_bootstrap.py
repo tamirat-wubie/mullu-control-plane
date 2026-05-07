@@ -28,11 +28,16 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.adapters.multi_provider import (
+    CerebrasBackend,
     DeepSeekBackend,
+    FireworksBackend,
+    FriendliBackend,
     GrokBackend,
     GroqBackend,
     MistralBackend,
+    NovitaBackend,
     OpenRouterBackend,
+    TogetherBackend,
 )
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.contracts.provider import (
@@ -60,6 +65,11 @@ class LLMConfig:
     gemini_api_key: str = ""
     groq_api_key: str = ""
     deepseek_api_key: str = ""
+    together_api_key: str = ""
+    fireworks_api_key: str = ""
+    friendli_api_key: str = ""
+    novita_api_key: str = ""
+    cerebras_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -81,6 +91,11 @@ class LLMConfig:
         gemini_key = os.environ.get("GEMINI_API_KEY", "")
         groq_key = os.environ.get("GROQ_API_KEY", "")
         deepseek_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        together_key = os.environ.get("TOGETHER_API_KEY", "")
+        fireworks_key = os.environ.get("FIREWORKS_API_KEY", "")
+        friendli_key = os.environ.get("FRIENDLI_TOKEN", "") or os.environ.get("FRIENDLI_API_KEY", "")
+        novita_key = os.environ.get("NOVITA_API_KEY", "")
+        cerebras_key = os.environ.get("CEREBRAS_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -100,6 +115,16 @@ class LLMConfig:
                 default_backend = "groq"
             elif deepseek_key:
                 default_backend = "deepseek"
+            elif together_key:
+                default_backend = "together"
+            elif fireworks_key:
+                default_backend = "fireworks"
+            elif friendli_key:
+                default_backend = "friendli"
+            elif novita_key:
+                default_backend = "novita"
+            elif cerebras_key:
+                default_backend = "cerebras"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -121,7 +146,9 @@ class LLMConfig:
                 f"MULLU_LLM_BACKEND='stub' is forbidden in {env!r} environment. "
                 "Set MULLU_LLM_BACKEND explicitly or provide an API key "
                 "(ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, "
-                "GROQ_API_KEY, DEEPSEEK_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
+                "GROQ_API_KEY, DEEPSEEK_API_KEY, TOGETHER_API_KEY, "
+                "FIREWORKS_API_KEY, FRIENDLI_TOKEN, NOVITA_API_KEY, "
+                "CEREBRAS_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
             )
@@ -133,6 +160,11 @@ class LLMConfig:
             gemini_api_key=gemini_key,
             groq_api_key=groq_key,
             deepseek_api_key=deepseek_key,
+            together_api_key=together_key,
+            fireworks_api_key=fireworks_key,
+            friendli_api_key=friendli_key,
+            novita_api_key=novita_key,
+            cerebras_api_key=cerebras_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -247,6 +279,61 @@ def bootstrap_llm(
             ),
         )
         backends["deepseek"] = deepseek
+
+    if llm_config.together_api_key:
+        together = TogetherBackend(
+            api_key=llm_config.together_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("lfm", "liquid", "qwen", "openai/gpt-oss", "together/"),
+                TogetherBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["together"] = together
+
+    if llm_config.fireworks_api_key:
+        fireworks = FireworksBackend(
+            api_key=llm_config.fireworks_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("accounts/fireworks/", "fireworks/", "gpt-oss"),
+                FireworksBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["fireworks"] = fireworks
+
+    if llm_config.friendli_api_key:
+        friendli = FriendliBackend(
+            api_key=llm_config.friendli_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama", "qwen/", "deepseek-ai/", "friendli/"),
+                FriendliBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["friendli"] = friendli
+
+    if llm_config.novita_api_key:
+        novita = NovitaBackend(
+            api_key=llm_config.novita_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("deepseek/", "openai/gpt-oss", "meta-llama/", "zai-org/", "novita/"),
+                NovitaBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["novita"] = novita
+
+    if llm_config.cerebras_api_key:
+        cerebras = CerebrasBackend(
+            api_key=llm_config.cerebras_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("llama", "qwen", "gpt-oss", "zai-glm"),
+                CerebrasBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["cerebras"] = cerebras
 
     if llm_config.grok_api_key:
         grok = GrokBackend(
@@ -375,6 +462,36 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "together": {
+            "name": "Together",
+            "base_url": "https://api.together.xyz/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "fireworks": {
+            "name": "Fireworks",
+            "base_url": "https://api.fireworks.ai/inference/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "friendli": {
+            "name": "Friendli",
+            "base_url": "https://api.friendli.ai/serverless/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "novita": {
+            "name": "Novita",
+            "base_url": "https://api.novita.ai/openai",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "cerebras": {
+            "name": "Cerebras",
+            "base_url": "https://api.cerebras.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -463,6 +580,13 @@ def _register_models(
         ("openai/gpt-oss-120b", "GPT OSS 120B", "groq", 0.15, 0.60),
         ("deepseek-v4-flash", "DeepSeek V4 Flash", "deepseek", 0.14, 0.28),
         ("deepseek-reasoner", "DeepSeek Reasoner", "deepseek", 0.14, 0.28),
+        ("LiquidAI/LFM2-24B-A2B", "LFM2 24B A2B", "together", 0.03, 0.12),
+        ("Qwen/Qwen3.5-9B", "Qwen3.5 9B", "together", 0.10, 0.15),
+        ("accounts/fireworks/models/gpt-oss-20b", "GPT OSS 20B via Fireworks", "fireworks", 0.07, 0.30),
+        ("accounts/fireworks/models/llama-v3p1-8b-instruct", "Llama 3.1 8B via Fireworks", "fireworks", 0.10, 0.10),
+        ("meta-llama-3.1-8b-instruct", "Llama 3.1 8B via Friendli", "friendli", 0.10, 0.10),
+        ("deepseek/deepseek-v4-flash", "DeepSeek V4 Flash via Novita", "novita", 0.14, 0.28),
+        ("llama3.1-8b", "Llama 3.1 8B via Cerebras", "cerebras", 0.10, 0.10),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
