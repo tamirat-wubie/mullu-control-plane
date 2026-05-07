@@ -13,6 +13,7 @@ Invariants:
 
 from __future__ import annotations
 
+import scripts.validate_protocol_manifest as protocol_manifest
 from scripts.validate_protocol_manifest import load_manifest, validate_protocol_manifest
 
 
@@ -74,6 +75,7 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     collaboration_entry = entries["collaboration-case"]
     commercial_entry = entries["commercial-metering-snapshot"]
     economic_entry = entries["economic-intelligence-snapshot"]
+    federated_entry = entries["federated-control-snapshot"]
     operational_entry = entries["operational-case"]
     operator_entry = entries["operator-control-tower-snapshot"]
 
@@ -87,6 +89,9 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert economic_entry["path"] == "schemas/economic_intelligence_snapshot.schema.json"
     assert economic_entry["urn"] == "urn:mullusi:schema:economic-intelligence-snapshot:1"
     assert economic_entry["surface"] == "commercial"
+    assert federated_entry["path"] == "schemas/federated_control_snapshot.schema.json"
+    assert federated_entry["urn"] == "urn:mullusi:schema:federated-control-snapshot:1"
+    assert federated_entry["surface"] == "federation"
     assert operational_entry["path"] == "schemas/operational_case.schema.json"
     assert operational_entry["urn"] == "urn:mullusi:schema:operational-case:1"
     assert operational_entry["surface"] == "case_management"
@@ -886,3 +891,50 @@ def test_protocol_manifest_rejects_missing_finance_operator_summary_entry() -> N
     assert "manifest missing public schemas" in errors[0]
     assert "finance_approval_operator_summary.schema.json" in errors[0]
     assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_reports_malformed_public_schema(monkeypatch, tmp_path) -> None:
+    schema_dir = tmp_path / "schemas"
+    schema_dir.mkdir()
+    (schema_dir / "malformed.schema.json").write_text("{not-json", encoding="utf-8")
+    manifest = {
+        "protocol_id": "mullu-governance-protocol",
+        "protocol_uri_scheme": "mgp://",
+        "claim_boundary": {
+            "open_surface": "schemas_and_wire_contracts",
+            "closed_surface": "runtime_implementation",
+            "third_party_implementation_allowed": True,
+        },
+        "compatibility": {
+            "json_schema_draft": "2020-12",
+            "runtime_private_modules_are_not_protocol_contracts": True,
+        },
+        "schemas": [
+            {
+                "schema_id": "malformed",
+                "path": "schemas/malformed.schema.json",
+                "urn": "urn:mullusi:schema:malformed:1",
+                "surface": "test",
+            }
+        ],
+        "non_contract_paths": [
+            "mcoi/mcoi_runtime/core",
+            "mcoi/mcoi_runtime/app",
+            "gateway",
+            "scripts",
+        ],
+        "uri_schemes": [
+            {"scheme": "lineage://"},
+            {"scheme": "proof://"},
+            {"scheme": "mgp://"},
+        ],
+    }
+
+    monkeypatch.setattr(protocol_manifest, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(protocol_manifest, "SCHEMA_DIR", schema_dir)
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert errors[0] == "schemas/malformed.schema.json: invalid JSON schema"
+    assert "Traceback" not in errors[0]

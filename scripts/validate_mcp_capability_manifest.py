@@ -39,8 +39,12 @@ class MCPCapabilityManifestValidation:
     manifest_path: Path
     manifest_ref: str
     capability_ids: tuple[str, ...]
+    certified_by_refs: tuple[str, ...]
+    certification_evidence_refs: tuple[str, ...]
+    owner_teams: tuple[str, ...]
     ownership_resource_refs: tuple[str, ...]
     approval_policy_ids: tuple[str, ...]
+    approval_policy_capabilities: tuple[str, ...]
     escalation_policy_ids: tuple[str, ...]
     errors: tuple[str, ...]
 
@@ -56,12 +60,16 @@ class MCPCapabilityManifestValidation:
             "manifest_path": str(self.manifest_path),
             "manifest_ref": self.manifest_ref,
             "capability_count": len(self.capability_ids),
+            "certified_by_refs": list(self.certified_by_refs),
+            "certification_evidence_refs": list(self.certification_evidence_refs),
+            "owner_teams": list(self.owner_teams),
             "ownership_count": len(self.ownership_resource_refs),
             "approval_policy_count": len(self.approval_policy_ids),
             "escalation_policy_count": len(self.escalation_policy_ids),
             "capability_ids": list(self.capability_ids),
             "ownership_resource_refs": list(self.ownership_resource_refs),
             "approval_policy_ids": list(self.approval_policy_ids),
+            "approval_policy_capabilities": list(self.approval_policy_capabilities),
             "escalation_policy_ids": list(self.escalation_policy_ids),
             "errors": list(self.errors),
         }
@@ -83,28 +91,49 @@ def validate_mcp_capability_manifest(
             manifest_path=manifest_path,
             manifest_ref="",
             capability_ids=(),
+            certified_by_refs=(),
+            certification_evidence_refs=(),
+            owner_teams=(),
             ownership_resource_refs=(),
             approval_policy_ids=(),
+            approval_policy_capabilities=(),
             escalation_policy_ids=(),
             errors=(str(exc),),
         )
 
     capability_ids = tuple(entry.capability_id for entry in imported.entries)
+    certified_by_refs = tuple(str(entry.metadata.get("certified_by", "")) for entry in imported.entries)
+    certification_evidence_refs = tuple(
+        str(entry.metadata.get("certification_evidence_ref", "")) for entry in imported.entries
+    )
+    owner_teams = tuple(entry.obligation_model.owner_team for entry in imported.entries)
     ownership_resource_refs = tuple(record.resource_ref for record in imported.authority_records.ownership)
     approval_policy_ids = tuple(policy.policy_id for policy in imported.authority_records.approval_policies)
+    approval_policy_capabilities = tuple(
+        policy.capability for policy in imported.authority_records.approval_policies
+    )
     escalation_policy_ids = tuple(policy.policy_id for policy in imported.authority_records.escalation_policies)
     errors = _validate_import_shape(
+        entries=imported.entries,
+        ownership_records=imported.authority_records.ownership,
+        approval_policies=imported.authority_records.approval_policies,
+        escalation_policies=imported.authority_records.escalation_policies,
         capability_ids=capability_ids,
         ownership_resource_refs=ownership_resource_refs,
         approval_policy_ids=approval_policy_ids,
+        approval_policy_capabilities=approval_policy_capabilities,
         escalation_policy_ids=escalation_policy_ids,
     )
     return MCPCapabilityManifestValidation(
         manifest_path=manifest_path,
         manifest_ref=imported.manifest_ref,
         capability_ids=capability_ids,
+        certified_by_refs=certified_by_refs,
+        certification_evidence_refs=certification_evidence_refs,
+        owner_teams=owner_teams,
         ownership_resource_refs=ownership_resource_refs,
         approval_policy_ids=approval_policy_ids,
+        approval_policy_capabilities=approval_policy_capabilities,
         escalation_policy_ids=escalation_policy_ids,
         errors=tuple(errors),
     )
@@ -112,20 +141,69 @@ def validate_mcp_capability_manifest(
 
 def _validate_import_shape(
     *,
+    entries: tuple[Any, ...],
+    ownership_records: tuple[Any, ...],
+    approval_policies: tuple[Any, ...],
+    escalation_policies: tuple[Any, ...],
     capability_ids: tuple[str, ...],
     ownership_resource_refs: tuple[str, ...],
     approval_policy_ids: tuple[str, ...],
+    approval_policy_capabilities: tuple[str, ...],
     escalation_policy_ids: tuple[str, ...],
 ) -> list[str]:
     errors: list[str] = []
     if not capability_ids:
         errors.append("MCP manifest must produce at least one capability")
+    for entry in entries:
+        if getattr(entry, "domain", "") != "mcp":
+            errors.append(f"MCP manifest capability must use mcp domain: {entry.capability_id}")
+        if getattr(entry.certification_status, "value", "") != "certified":
+            errors.append(f"MCP manifest capability must be certified: {entry.capability_id}")
+        if not str(entry.metadata.get("certified_by", "")).strip():
+            errors.append(f"MCP manifest capability missing certified_by provenance: {entry.capability_id}")
+        if not str(entry.metadata.get("certification_evidence_ref", "")).strip():
+            errors.append(f"MCP manifest capability missing certification evidence: {entry.capability_id}")
+        if not str(entry.obligation_model.owner_team).strip():
+            errors.append(f"MCP manifest capability missing owner team: {entry.capability_id}")
     if set(ownership_resource_refs) != set(capability_ids):
         errors.append("MCP manifest ownership records must match capability ids")
+    for ownership in ownership_records:
+        if not str(ownership.owner_team).strip():
+            errors.append(f"MCP manifest ownership missing owner team: {ownership.resource_ref}")
+        if not str(ownership.primary_owner_id).strip():
+            errors.append(f"MCP manifest ownership missing primary owner: {ownership.resource_ref}")
+        if not str(ownership.fallback_owner_id).strip():
+            errors.append(f"MCP manifest ownership missing fallback owner: {ownership.resource_ref}")
+        if not str(ownership.escalation_team).strip():
+            errors.append(f"MCP manifest ownership missing escalation team: {ownership.resource_ref}")
     if len(approval_policy_ids) != len(capability_ids):
         errors.append("MCP manifest approval policy count must match capability count")
+    if set(approval_policy_capabilities) != set(capability_ids):
+        errors.append("MCP manifest approval policies must match capability ids")
+    for policy in approval_policies:
+        if not policy.required_roles:
+            errors.append(f"MCP manifest approval policy missing required roles: {policy.policy_id}")
+        if policy.timeout_seconds <= 0:
+            errors.append(f"MCP manifest approval policy timeout must be positive: {policy.policy_id}")
+        if policy.risk_tier == "high" and policy.required_approver_count < 2:
+            errors.append(f"MCP manifest high-risk approval policy requires dual approval: {policy.policy_id}")
+        if policy.risk_tier == "high" and not policy.separation_of_duty:
+            errors.append(f"MCP manifest high-risk approval policy requires separation of duty: {policy.policy_id}")
+        if policy.escalation_policy_id not in escalation_policy_ids:
+            errors.append(f"MCP manifest approval policy references missing escalation policy: {policy.policy_id}")
     if not escalation_policy_ids:
         errors.append("MCP manifest must produce an escalation policy")
+    for policy in escalation_policies:
+        if policy.notify_after_seconds <= 0:
+            errors.append(f"MCP manifest escalation notify timeout must be positive: {policy.policy_id}")
+        if policy.escalate_after_seconds <= policy.notify_after_seconds:
+            errors.append(f"MCP manifest escalation timeout ordering is invalid: {policy.policy_id}")
+        if policy.incident_after_seconds <= policy.escalate_after_seconds:
+            errors.append(f"MCP manifest incident timeout ordering is invalid: {policy.policy_id}")
+        if not str(policy.fallback_owner_id).strip():
+            errors.append(f"MCP manifest escalation missing fallback owner: {policy.policy_id}")
+        if not str(policy.escalation_team).strip():
+            errors.append(f"MCP manifest escalation missing escalation team: {policy.policy_id}")
     return errors
 
 

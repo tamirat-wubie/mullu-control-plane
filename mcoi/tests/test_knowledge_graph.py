@@ -150,6 +150,29 @@ def test_add_link_endpoint(client) -> None:
     assert resp.json()["governed"] is True
 
 
+def test_contradiction_endpoints_emit_governed_read_model(client) -> None:
+    client.post("/api/v1/knowledge/entities", json={
+        "entity_id": "contradict-http", "name": "Contradiction Subject", "entity_type": "concept",
+    })
+
+    report_resp = client.post("/api/v1/knowledge/contradictions", json={
+        "entity_id": "contradict-http",
+        "claim_a": "status is approved",
+        "claim_b": "status is rejected",
+    })
+    unresolved_resp = client.get("/api/v1/knowledge/contradictions/unresolved")
+
+    assert report_resp.status_code == 200
+    assert report_resp.json()["entity_id"] == "contradict-http"
+    assert report_resp.json()["governed"] is True
+    assert unresolved_resp.status_code == 200
+    assert unresolved_resp.json()["governed"] is True
+    assert any(
+        item["entity_id"] == "contradict-http"
+        for item in unresolved_resp.json()["contradictions"]
+    )
+
+
 def test_knowledge_summary_endpoint(client) -> None:
     resp = client.get("/api/v1/knowledge/summary")
     assert resp.status_code == 200

@@ -1095,6 +1095,102 @@ class GlamaBackend:
         return self._call_count
 
 
+class GMIBackend:
+    """GMI Cloud OpenAI-compatible endpoint for inexpensive Qwen models."""
+
+    provider = LLMProvider.GMI
+    DEFAULT_MODEL = "Qwen/Qwen3-32B-FP8"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "GMI_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.gmi-serving.com/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.10,
+            cost_per_1m_output=0.60,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class AtlasCloudBackend:
+    """Atlas Cloud OpenAI-compatible endpoint for inexpensive Qwen models."""
+
+    provider = LLMProvider.ATLASCLOUD
+    DEFAULT_MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "ATLASCLOUD_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.atlascloud.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.09,
+            cost_per_1m_output=0.30,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ModelMaxBackend:
+    """ModelMax OpenAI-compatible gateway for inexpensive Qwen coder models."""
+
+    provider = LLMProvider.MODELMAX
+    DEFAULT_MODEL = "qwen3-coder-30b-a3b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MODELMAX_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.modelmax.io/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.15,
+            cost_per_1m_output=0.60,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -1244,6 +1340,9 @@ ALL_PROVIDERS: dict[str, type] = {
     "ridvay": RidvayBackend,
     "neurorouters": NeuroRoutersBackend,
     "glama": GlamaBackend,
+    "gmi": GMIBackend,
+    "atlascloud": AtlasCloudBackend,
+    "modelmax": ModelMaxBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1289,6 +1388,9 @@ def available_providers() -> list[str]:
         "ridvay": ("RIDVAY_API_KEY",),
         "neurorouters": ("NEUROROUTERS_API_KEY",),
         "glama": ("GLAMA_API_KEY",),
+        "gmi": ("GMI_API_KEY",),
+        "atlascloud": ("ATLASCLOUD_API_KEY",),
+        "modelmax": ("MODELMAX_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

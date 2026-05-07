@@ -18,8 +18,6 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-import pytest
-
 from gateway.command_spine import CommandLedger, InMemoryCommandLedgerStore
 from mcoi_runtime.adapters.code_adapter import CommandPolicy, LocalCodeAdapter
 from mcoi_runtime.contracts.code import PatchProposal
@@ -27,7 +25,6 @@ from mcoi_runtime.contracts.software_dev_loop import (
     QualityGateResult,
     WorkPlan,
 )
-from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.core.governed_session import Platform
 from mcoi_runtime.core.proof_bridge import ProofBridge
 from mcoi_runtime.core.software_dev_loop import UCJAOutcomeShape
@@ -174,6 +171,82 @@ class TestMCPSoftwareChangeListing:
         for required_gate in ("unit_tests", "integration_tests", "lint",
                               "typecheck", "security_scan", "build", "review"):
             assert required_gate in gates
+        assert "include_learning_admission" in schema["properties"]
+
+
+class TestMCPAppBuilderPlan:
+    def test_app_builder_plan_tool_present_when_runner_configured(self, tmp_path):
+        server = MulluMCPServer(
+            platform=_PlatformStub(),
+            software_dev_runner=_runner_config(tmp_path),
+        )
+        tool = next(t for t in server.list_tools() if t.name == "mullu_app_builder_plan")
+
+        assert tool.input_schema["required"] == ["product_spec", "repository"]
+        assert "include_pr_candidate" in tool.input_schema["properties"]
+        assert "software_receipt_refs" in tool.input_schema["properties"]
+
+    def test_app_builder_plan_returns_task_graph_and_request_candidates(self, tmp_path):
+        server = MulluMCPServer(
+            platform=_PlatformStub(),
+            command_ledger=_ledger(),
+            software_dev_runner=_runner_config(tmp_path),
+        )
+        result = server.call_tool("mullu_app_builder_plan", {
+            "repository": "invoice-service",
+            "target_branch": "feature/invoice-dashboard",
+            "product_spec": {
+                "app_name": "Invoice Dashboard",
+                "users": ["finance operator"],
+                "jobs_to_be_done": ["review invoices"],
+                "core_flows": ["list invoices", "mark invoice paid"],
+                "non_goals": ["production deployment"],
+                "security_requirements": ["tenant scoped access"],
+            },
+        })
+        body = json.loads(result.content)
+
+        assert not result.is_error
+        assert result.metadata["risk_tier"] == "medium"
+        assert body["planning_only"] is True
+        assert body["direct_deployment_allowed"] is False
+        assert body["git_push_allowed"] is False
+        assert len(body["task_graph"]["tasks"]) == 7
+        assert len(body["software_requests"]) == 7
+        assert {request["mode"] for request in body["software_requests"]} == {"patch_test_review"}
+        assert body["pr_candidate"] is None
+
+    def test_app_builder_plan_can_include_approval_gated_pr_candidate(self, tmp_path):
+        server = MulluMCPServer(
+            platform=_PlatformStub(),
+            command_ledger=_ledger(),
+            software_dev_runner=_runner_config(tmp_path),
+        )
+        result = server.call_tool("mullu_app_builder_plan", {
+            "repository": "invoice-service",
+            "target_branch": "main",
+            "include_pr_candidate": True,
+            "software_receipt_refs": ["receipt:terminal-closed"],
+            "quality_gate_refs": ["gate:unit_tests", "gate:review"],
+            "product_spec": {
+                "app_name": "Invoice Dashboard",
+                "users": ["finance operator"],
+                "jobs_to_be_done": ["review invoices"],
+                "core_flows": ["list invoices", "mark invoice paid"],
+                "non_goals": ["production deployment"],
+                "security_requirements": ["tenant scoped access"],
+            },
+        })
+        body = json.loads(result.content)
+        pr_candidate = body["pr_candidate"]
+
+        assert not result.is_error
+        assert pr_candidate["status"] == "approval_required"
+        assert pr_candidate["metadata"]["local_git_push_allowed"] is False
+        assert pr_candidate["open_intent"]["requires_approval"] is True
+        assert pr_candidate["open_intent"]["execution_allowed"] is False
+        assert pr_candidate["open_intent"]["capability_id"] == "github.open_pull_request"
+        assert "receipt:terminal-closed" in pr_candidate["evidence_refs"]
 
 
 # ---- Schema-level rejection ----
@@ -266,6 +339,14 @@ class TestMCPSoftwareChangeSuccess:
         attempt = body["evidence"]["attempts"][0]
         assert attempt["status"] == "gates_passed"
         assert attempt["rolled_back"] is False
+        learning = body["learning_admission"]
+        assert learning["requested"] is True
+        assert learning["available"] is True
+        assert learning["raw_logs_admitted"] is False
+        assert learning["candidate_count"] == 1
+        assert learning["decision_count"] == 1
+        assert learning["decisions"][0]["status"] == "admit"
+        assert learning["planning_knowledge"][0]["knowledge_class"] == "procedural_memory"
 
     def test_high_risk_tier_recorded(self, tmp_path):
         ledger = _ledger()

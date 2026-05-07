@@ -60,10 +60,15 @@ from gateway.capability_isolation import build_isolated_capability_executor_from
 from gateway.capability_forge import CapabilityCertificationHandoff
 from gateway.capability_maturity import CapabilityCertificationEvidenceBundle
 from gateway.case_management import build_operational_case_read_model
+from gateway.code_intelligence_read_model import (
+    build_code_intelligence_operator_read_model,
+    parse_affected_files,
+)
 from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
 from gateway.evidence_bundle import build_command_trust_bundle
 from gateway.event_log import WebhookEventLog
+from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.observability import GatewayObservabilityRecorder
@@ -556,6 +561,7 @@ def create_gateway_app(
         )
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     observability_recorder = GatewayObservabilityRecorder()
+    federated_control_plane = FederatedControlPlane()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,
@@ -1053,6 +1059,11 @@ def create_gateway_app(
             "terminal_status": "verified" if all(check["passed"] for check in checks) else "verification_gaps",
             "governed": True,
         }
+
+    @app.get("/api/v1/federation/summary")
+    def federation_summary(request: Request):
+        _require_authority_operator(request)
+        return federated_control_snapshot_to_json_dict(federated_control_plane.snapshot())
 
     def _reflex_snapshot() -> RuntimeHealthSnapshot:
         router_summary = router.summary()
@@ -2232,6 +2243,39 @@ def create_gateway_app(
             "next_offset": page.next_offset,
         }
 
+    @app.get("/operator/physical-capability-promotion-receipts/console", response_class=HTMLResponse)
+    def operator_physical_capability_promotion_receipts_console(
+        request: Request,
+        capability_id: str = "",
+        status: str = "",
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        _require_authority_operator(request)
+        try:
+            page = physical_capability_promotion_receipt_store.list(
+                capability_id=capability_id,
+                status=status,
+                limit=limit,
+                offset=offset,
+            )
+        except (OSError, ValueError) as exc:
+            raise HTTPException(
+                503,
+                detail=f"physical_promotion_receipt_store_unavailable:{exc}",
+            ) from exc
+        read_model = {
+            "physical_capability_promotion_receipts": list(page.receipts),
+            "count": len(page.receipts),
+            "capability_id_filter": capability_id,
+            "status_filter": status,
+            "total": page.total,
+            "limit": page.limit,
+            "offset": page.offset,
+            "next_offset": page.next_offset,
+        }
+        return HTMLResponse(_physical_promotion_receipts_console_html(read_model))
+
     @app.get("/operator/capabilities/read-model")
     def operator_capabilities_read_model(
         request: Request,
@@ -2252,6 +2296,30 @@ def create_gateway_app(
             audit_limit=audit_limit,
             audit_offset=audit_offset,
         )
+
+    @app.get("/operator/code-intelligence/read-model")
+    def operator_code_intelligence_read_model(
+        request: Request,
+        affected_files: str = "",
+        task_summary: str = "",
+        max_symbol_count: int = 40,
+        max_test_count: int = 20,
+        max_dependency_edges: int = 60,
+        target_model: str = "unspecified",
+    ):
+        _require_authority_operator(request)
+        try:
+            return build_code_intelligence_operator_read_model(
+                repository_root=os.environ.get("MULLU_CODE_INTELLIGENCE_ROOT", os.getcwd()),
+                affected_files=parse_affected_files(affected_files),
+                task_summary=task_summary,
+                max_symbol_count=max_symbol_count,
+                max_test_count=max_test_count,
+                max_dependency_edges=max_dependency_edges,
+                target_model=target_model,
+            )
+        except (RuntimeError, ValueError) as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
 
     @app.get("/operator/capabilities", response_class=HTMLResponse)
     def operator_capabilities_console(
@@ -2441,6 +2509,7 @@ def create_gateway_app(
     app.state.mcp_gateway_import = mcp_gateway_import
     app.state.plan_ledger = plan_ledger
     app.state.observability_recorder = observability_recorder
+    app.state.federated_control_plane = federated_control_plane
     app.state.verifier = verifier
 
     return app
@@ -2668,6 +2737,105 @@ def _authority_operator_console_html(
     <tbody>{_rows(operator_audit_events, operator_audit_columns)}</tbody>
   </table>
 </main>
+</body>
+</html>"""
+
+
+def _physical_promotion_receipts_console_html(read_model: Mapping[str, Any]) -> str:
+    """Render persisted physical promotion receipt state for operators."""
+    from html import escape
+    from urllib.parse import urlencode
+
+    def _cell(value: Any) -> str:
+        if isinstance(value, (list, tuple)):
+            rendered = ", ".join(str(item) for item in value)
+        elif isinstance(value, dict):
+            rendered = json.dumps(value, sort_keys=True)
+        else:
+            rendered = str(value)
+        return escape(rendered)
+
+    receipts = tuple(read_model.get("physical_capability_promotion_receipts", ()))
+    columns = (
+        "receipt_id",
+        "capability_id",
+        "promotion_status",
+        "preflight_ready",
+        "preflight_readiness_level",
+        "recorded_at",
+        "receipt_hash",
+    )
+    if receipts:
+        rows = "\n".join(
+            "<tr>"
+            + "".join(f"<td>{_cell(receipt.get(column, ''))}</td>" for column in columns)
+            + "</tr>"
+            for receipt in receipts
+            if isinstance(receipt, Mapping)
+        )
+    else:
+        rows = f'<tr><td colspan="{len(columns)}">No receipts</td></tr>'
+    query = {
+        key: value
+        for key, value in {
+            "capability_id": read_model.get("capability_id_filter", ""),
+            "status": read_model.get("status_filter", ""),
+            "limit": read_model.get("limit", 100),
+            "offset": read_model.get("offset", 0),
+        }.items()
+        if value not in ("", None)
+    }
+    json_href = "/operator/physical-capability-promotion-receipts"
+    if query:
+        json_href = f"{json_href}?{urlencode(query)}"
+    metrics = (
+        ("visible", read_model.get("count", 0)),
+        ("total", read_model.get("total", 0)),
+        ("limit", read_model.get("limit", 0)),
+        ("offset", read_model.get("offset", 0)),
+        ("next offset", read_model.get("next_offset", "")),
+        ("capability filter", read_model.get("capability_id_filter", "")),
+        ("status filter", read_model.get("status_filter", "")),
+    )
+    metric_items = "\n".join(
+        f"<span class=\"metric\"><strong>{escape(label)}</strong>{_cell(value)}</span>"
+        for label, value in metrics
+    )
+    headings = "".join(f"<th>{escape(column)}</th>" for column in columns)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Physical Promotion Receipts</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 24px; color: #17202a; }}
+    header {{ margin-bottom: 20px; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 20px; }}
+    table {{ border-collapse: collapse; width: 100%; margin: 12px 0 28px; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 13px; }}
+    th {{ background: #f6f8fa; }}
+    .metrics {{ display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 20px; }}
+    .metric {{ border: 1px solid #d8dee4; border-radius: 6px; padding: 8px 10px; background: #fff; }}
+    .metric strong {{ display: block; font-size: 12px; color: #57606a; }}
+    a {{ color: #0969da; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu Physical Promotion Receipts</h1>
+    <nav>
+      <a href="{escape(json_href)}">json read model</a>
+      <a href="/operator/capabilities">capability console</a>
+      <a href="/authority/operator">authority console</a>
+    </nav>
+    <div class="metrics">{metric_items}</div>
+  </header>
+  <main>
+    <table>
+      <thead><tr>{headings}</tr></thead>
+      <tbody>{rows}</tbody>
+    </table>
+  </main>
 </body>
 </html>"""
 

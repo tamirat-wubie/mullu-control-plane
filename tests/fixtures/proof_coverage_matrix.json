@@ -62,6 +62,13 @@
       ]
     },
     {
+      "action_id": "classify_operator_console_read_model_routes",
+      "status": "closed",
+      "surfaces": [
+        "operator_console_read_models"
+      ]
+    },
+    {
       "action_id": "publish_hosted_demo_sandbox_read_models",
       "status": "closed",
       "surfaces": [
@@ -111,6 +118,13 @@
       ]
     },
     {
+      "action_id": "publish_software_outcome_learning_contract",
+      "status": "closed",
+      "surfaces": [
+        "software_outcome_learning"
+      ]
+    },
+    {
       "action_id": "publish_runtime_conformance_attestation",
       "status": "closed",
       "surfaces": [
@@ -150,6 +164,13 @@
     },
     {
       "action_id": "publish_governed_operational_intelligence_witnesses",
+      "status": "closed",
+      "surfaces": [
+        "governed_operational_intelligence"
+      ]
+    },
+    {
+      "action_id": "classify_world_state_knowledge_routes",
       "status": "closed",
       "surfaces": [
         "governed_operational_intelligence"
@@ -289,6 +310,13 @@
       ]
     },
     {
+      "action_id": "publish_temporal_memory_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_memory"
+      ]
+    },
+    {
       "action_id": "publish_temporal_causal_order_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -335,13 +363,6 @@
       "status": "closed",
       "surfaces": [
         "temporal_retry_window"
-      ]
-    },
-    {
-      "action_id": "publish_temporal_memory_receipt_contract",
-      "status": "closed",
-      "surfaces": [
-        "temporal_memory"
       ]
     },
     {
@@ -415,15 +436,15 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 53,
+      "action_proof": 55,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 8,
+      "read_model": 10,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 59,
+      "audit_chain": 63,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -431,23 +452,23 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 62
+      "witnessed": 66
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 10,
-      "request_proof": 53
+      "read_model": 12,
+      "request_proof": 55
     },
-    "surface_count": 63
+    "surface_count": 67
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
       "proven": 5,
-      "unproven": 201,
-      "witnessed": 109
+      "unproven": 188,
+      "witnessed": 122
     },
     "route_count": 315,
     "routes": [
@@ -742,39 +763,39 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/audit",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/checkpoints",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/home",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/providers",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/runs",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/console/scheduler",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operator_console_read_models"
       },
       {
         "coverage_state": "unproven",
@@ -1062,34 +1083,34 @@
         "surface_id": "unclassified_declared_route"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/contradictions",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/contradictions/unresolved",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/entities",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/entities/{entity_id}/links",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/links",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "witnessed",
         "route": "/api/v1/knowledge/summary",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "governed_operational_intelligence"
       },
       {
         "coverage_state": "unproven",
@@ -2027,7 +2048,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 201
+    "unclassified_route_count": 188
   },
   "schema_version": 1,
   "surfaces": [
@@ -2094,6 +2115,38 @@
       "surface_id": "llm_streaming"
     },
     {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/code_intelligence_read_model.py",
+        "gateway/server.py",
+        "mcoi/mcoi_runtime/contracts/code_intelligence.py",
+        "mcoi/mcoi_runtime/contracts/code_context.py",
+        "mcoi/mcoi_runtime/core/code_intelligence.py",
+        "mcoi/mcoi_runtime/core/code_context_builder.py",
+        "tests/test_code_intelligence.py",
+        "tests/test_code_context_builder.py",
+        "tests/test_gateway/test_code_intelligence_read_model.py"
+      ],
+      "notes": "Code-intelligence operator read models expose repository maps, selected symbols, risk counts, bounded context receipts, and cost estimates without source content or execution authority.",
+      "representative_paths": [
+        "/operator/code-intelligence/read-model",
+        "build_repo_map",
+        "build_code_context",
+        "create_code_context_receipt"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "code_intelligence_repo_map_detects_routes_schemas_dependencies",
+        "code_context_bundle_bounds_symbols_tests_and_edges",
+        "code_context_missing_affected_file_fails_closed",
+        "code_intelligence_operator_read_model_hides_source_content",
+        "code_intelligence_operator_endpoint_fails_closed_for_missing_file"
+      ],
+      "surface_id": "code_intelligence_operator_read_model"
+    },
+    {
       "action_proof": "action_proof",
       "audit": "audit_chain",
       "coverage_state": "witnessed",
@@ -2149,6 +2202,37 @@
       "request_proof": "read_model",
       "runtime_witnesses": [],
       "surface_id": "cost_budget_read_models"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/routers/console.py",
+        "mcoi/mcoi_runtime/app/console.py",
+        "mcoi/mcoi_runtime/app/view_models.py",
+        "mcoi/tests/test_operator_console.py",
+        "mcoi/tests/test_console.py"
+      ],
+      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, and aggregate views with governed response witnesses.",
+      "representative_paths": [
+        "/api/v1/console",
+        "/api/v1/console/home",
+        "/api/v1/console/runs",
+        "/api/v1/console/audit",
+        "/api/v1/console/checkpoints",
+        "/api/v1/console/providers",
+        "/api/v1/console/scheduler"
+      ],
+      "request_proof": "read_model",
+      "runtime_witnesses": [
+        "console_home_returns_governed_runtime_vitals",
+        "console_runs_bounds_recent_audit_entries",
+        "console_audit_exposes_chain_intact_read_model",
+        "console_checkpoints_expose_persisted_state_summary",
+        "console_provider_and_scheduler_views_are_read_only"
+      ],
+      "surface_id": "operator_console_read_models"
     },
     {
       "action_proof": "action_proof",
@@ -2236,17 +2320,29 @@
       "audit": "read_model",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "gateway/federated_control.py",
+        "gateway/server.py",
         "mcoi/mcoi_runtime/app/routers/federation.py",
         "mcoi/mcoi_runtime/core/federated_control_plane.py",
         "mcoi/tests/test_federated_control_plane.py",
-        "docs/51_federated_control_plane.md"
+        "schemas/federated_control_snapshot.schema.json",
+        "docs/51_federated_control_plane.md",
+        "tests/test_gateway/test_federated_control.py"
       ],
       "notes": "Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication.",
       "representative_paths": [
         "/api/v1/federation/summary"
       ],
       "request_proof": "read_model",
-      "runtime_witnesses": [],
+      "runtime_witnesses": [
+        "signed_policy_metadata_only_sync",
+        "invalid_signature_denied_before_local_acceptance",
+        "policy_not_allowed_for_cluster_denied",
+        "unsynced_policy_denied_locally",
+        "tenant_region_mismatch_denied_locally",
+        "central_data_transfer_forbidden",
+        "federated_snapshot_schema_valid"
+      ],
       "surface_id": "federated_control_plane"
     },
     {
@@ -2418,6 +2514,37 @@
         "runbook_responses_governed"
       ],
       "surface_id": "runbook_learning_lifecycle"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/mcp/server.py",
+        "mcoi/mcoi_runtime/contracts/software_learning.py",
+        "mcoi/mcoi_runtime/core/software_learning.py",
+        "mcoi/tests/test_mcp_software_change.py",
+        "mcoi/tests/test_software_learning.py"
+      ],
+      "notes": "Software outcome learning derives sanitized procedural and risk-memory candidates from governed software-change receipts, rejects raw logs, and projects planning knowledge only after admitted learning decisions.",
+      "representative_paths": [
+        "mullu_software_change",
+        "_software_learning_admission_payload",
+        "derive_software_outcome_learning_candidates",
+        "decide_software_outcome_learning",
+        "planning_knowledge_from_software_candidate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "software_learning_schema_default_enabled",
+        "passed_gates_yield_procedural_memory",
+        "failed_gates_yield_hashed_risk_memory",
+        "raw_logs_rejected_before_planning_use",
+        "rollback_failure_defers_learning",
+        "planning_projection_requires_admitted_matching_decision",
+        "software_learning_errors_are_bounded"
+      ],
+      "surface_id": "software_outcome_learning"
     },
     {
       "action_proof": "action_proof",
@@ -2700,22 +2827,35 @@
         "gateway/world_state.py",
         "gateway/goal_compiler.py",
         "gateway/causal_simulator.py",
+        "mcoi/mcoi_runtime/app/routers/knowledge.py",
+        "mcoi/mcoi_runtime/core/knowledge_graph.py",
         "schemas/world_state.schema.json",
         "schemas/goal.schema.json",
         "schemas/simulation_receipt.schema.json",
+        "mcoi/tests/test_knowledge_graph.py",
         "tests/test_gateway/test_world_state.py",
         "tests/test_gateway/test_goal_compiler.py",
         "tests/test_gateway/test_causal_simulator.py"
       ],
-      "notes": "Governed operational intelligence binds sourced world-state admission, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
+      "notes": "Governed operational intelligence binds sourced world-state admission, knowledge graph entity/link/contradiction routes, compiled goal-plan certificates, and deterministic causal simulation receipts before effect-bearing execution.",
       "representative_paths": [
         "WorldStateStore.add_entity",
         "GoalCompiler.compile",
-        "CausalSimulator.simulate"
+        "CausalSimulator.simulate",
+        "/api/v1/knowledge/entities",
+        "/api/v1/knowledge/links",
+        "/api/v1/knowledge/entities/{entity_id}/links",
+        "/api/v1/knowledge/contradictions",
+        "/api/v1/knowledge/contradictions/unresolved",
+        "/api/v1/knowledge/summary"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "world_assertions_require_source_evidence",
+        "knowledge_entity_routes_governed",
+        "knowledge_link_routes_governed",
+        "knowledge_contradiction_routes_governed",
+        "knowledge_summary_route_bounded",
         "goal_plan_certificate_hash_bound",
         "simulation_receipt_schema_valid",
         "open_world_contradictions_block_execution",
@@ -2802,25 +2942,34 @@
         "gateway/physical_action_boundary.py",
         "gateway/physical_worker_canary.py",
         "gateway/worker_mesh.py",
+        "mcoi/mcoi_runtime/contracts/code_worker.py",
+        "mcoi/mcoi_runtime/workers/code_worker.py",
         "scripts/produce_physical_worker_canary.py",
         "schemas/physical_action_receipt.schema.json",
         "schemas/worker_mesh.schema.json",
+        "tests/test_code_worker.py",
         "tests/test_gateway/test_physical_action_boundary.py",
         "tests/test_gateway/test_physical_worker_canary.py",
         "tests/test_gateway/test_worker_mesh.py",
         "tests/test_produce_physical_worker_canary.py"
       ],
-      "notes": "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, requires admitted physical action receipts for physical workers, and emits schema-backed receipts that explicitly require terminal closure.",
+      "notes": "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, requires admitted physical action receipts for physical workers, and emits schema-backed receipts that explicitly require terminal closure; the sandboxed code worker adds exact-command leases, no-network sandbox dispatch, denied shell/network/git controls, and command/output hash receipts.",
       "representative_paths": [
         "NetworkedWorkerMesh.register_worker",
         "NetworkedWorkerMesh.dispatch",
-        "NetworkedWorkerMesh.read_model"
+        "NetworkedWorkerMesh.read_model",
+        "SandboxedCodeWorker.execute_command",
+        "CodeWorkerLease",
+        "CodeWorkerReceipt"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "active_lease_required",
         "tenant_capability_operation_budget_checked",
         "forbidden_operations_override_allowed",
+        "code_worker_exact_lease_command_required",
+        "code_worker_blocks_network_shell_and_risky_git",
+        "code_worker_receipt_binds_sandbox_evidence",
         "physical_action_receipt_required_for_physical_workers",
         "physical_worker_canary_blocks_without_receipt",
         "physical_worker_canary_passed",
@@ -3144,6 +3293,7 @@
         "gateway/server.py",
         "gateway/physical_action_boundary.py",
         "gateway/physical_capability_promotion_receipt.py",
+        "gateway/physical_capability_promotion_store.py",
         "gateway/physical_worker_canary.py",
         "scripts/emit_physical_capability_promotion_receipt.py",
         "scripts/preflight_physical_capability_promotion.py",
@@ -3162,6 +3312,7 @@
       "notes": "Physical action boundary emits schema-backed pre-dispatch receipts that block physical-world side effects unless hardware identity, safety envelope, manual override, emergency stop, simulation, operator approval, sensor confirmation, and safe-state controls are present; checked-in physical capability fixtures stay outside default loading, admit sandbox replay only when production readiness is not required, reject live physical promotion by default, and require promotion preflight evidence before any live production claim.",
       "representative_paths": [
         "/operator/physical-capability-promotion-receipts",
+        "/operator/physical-capability-promotion-receipts/console",
         "PhysicalActionBoundary.evaluate",
         "PhysicalActionRequest",
         "PhysicalActionReceipt"
@@ -3185,6 +3336,9 @@
         "physical_promotion_receipt_cli_blocks_missing_live_refs",
         "physical_promotion_receipt_operator_endpoint_emits_bundle",
         "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs",
+        "physical_promotion_receipt_jsonl_store_persists",
+        "physical_promotion_receipt_store_fails_closed_on_invalid_record",
+        "physical_promotion_receipt_operator_console_renders_ledger",
         "hardware_identity_required",
         "safety_envelope_required",
         "manual_override_required",
@@ -3354,6 +3508,35 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_budget_window"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_memory.py",
+        "schemas/temporal_memory_receipt.schema.json",
+        "tests/test_gateway/test_temporal_memory.py"
+      ],
+      "notes": "Temporal memory gates memory use through runtime-owned age, evidence freshness, validity windows, confidence decay, tenant-owner scope, allowed use, and supersession checks before memory can guide action.",
+      "representative_paths": [
+        "TemporalMemory.evaluate",
+        "TemporalMemoryRecord",
+        "TemporalMemoryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "memory_age_computed_from_runtime_clock",
+        "stale_memory_requires_refresh",
+        "validity_window_blocks_expired_memory",
+        "superseded_memory_not_usable",
+        "confidence_decay_blocks_weak_memory",
+        "tenant_owner_scope_checked",
+        "allowed_use_checked",
+        "temporal_memory_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_memory"
     },
     {
       "action_proof": "action_proof",

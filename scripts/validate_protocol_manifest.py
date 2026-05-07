@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
@@ -90,7 +91,11 @@ def validate_protocol_manifest(manifest: dict[str, Any]) -> list[str]:
         if not schema_path.exists():
             errors.append(f"{path_text}: schema file missing")
             continue
-        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        try:
+            schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        except JSONDecodeError:
+            errors.append(f"{path_text}: invalid JSON schema")
+            continue
         if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
             errors.append(f"{path_text}: unsupported JSON schema draft")
         if schema.get("$id") != urn:

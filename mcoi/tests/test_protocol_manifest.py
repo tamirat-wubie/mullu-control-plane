@@ -30,6 +30,8 @@ def test_protocol_manifest_is_valid() -> None:
     candidate_entry = entries["capability-candidate"]
     maturity_entry = entries["capability-maturity"]
     marketplace_entry = entries["marketplace-sdk-catalog"]
+    economic_intelligence_entry = entries["economic-intelligence-snapshot"]
+    federated_control_entry = entries["federated-control-snapshot"]
     memory_lattice_entry = entries["memory-lattice"]
     policy_proof_entry = entries["policy-proof-report"]
     trust_ledger_entry = entries["trust-ledger-bundle"]
@@ -66,7 +68,7 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_id"] == PROTOCOL_ID
     assert manifest["protocol_name"] == "Mullu Governance Protocol"
     assert manifest["protocol_uri_scheme"] == "mgp://"
-    assert len(manifest["schemas"]) == 104
+    assert len(manifest["schemas"]) == 105
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"
@@ -100,6 +102,12 @@ def test_protocol_manifest_is_valid() -> None:
     assert marketplace_entry["path"] == "schemas/marketplace_sdk_catalog.schema.json"
     assert marketplace_entry["urn"] == "urn:mullusi:schema:marketplace-sdk-catalog:1"
     assert marketplace_entry["surface"] == "marketplace"
+    assert economic_intelligence_entry["path"] == "schemas/economic_intelligence_snapshot.schema.json"
+    assert economic_intelligence_entry["urn"] == "urn:mullusi:schema:economic-intelligence-snapshot:1"
+    assert economic_intelligence_entry["surface"] == "commercial"
+    assert federated_control_entry["path"] == "schemas/federated_control_snapshot.schema.json"
+    assert federated_control_entry["urn"] == "urn:mullusi:schema:federated-control-snapshot:1"
+    assert federated_control_entry["surface"] == "federation"
     assert memory_lattice_entry["path"] == "schemas/memory_lattice.schema.json"
     assert memory_lattice_entry["urn"] == "urn:mullusi:schema:memory-lattice:1"
     assert memory_lattice_entry["surface"] == "memory"

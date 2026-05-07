@@ -79,6 +79,9 @@ class TestAutoRoutedCompletion:
         assert "qwen/qwen3-30b-a3b" in ids
         assert "qwen/qwen3-30b-a3b:free" in ids
         assert "deepseek-chat-v3" in ids
+        assert "Qwen/Qwen3-32B-FP8" in ids
+        assert "Qwen/Qwen3-30B-A3B-Instruct-2507" in ids
+        assert "qwen3-coder-30b-a3b" in ids
 
     def test_auto_complete_exception_is_sanitized(self, client, monkeypatch):
         from mcoi_runtime.app.routers.deps import deps

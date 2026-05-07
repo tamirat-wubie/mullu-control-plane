@@ -152,6 +152,28 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "docs/60_logic_governance_application.md" in content
 
 
+def test_deployment_guide_requires_read_only_email_calendar_scope() -> None:
+    content = (REPO_ROOT / "DEPLOYMENT.md").read_text(encoding="utf-8")
+    template = (REPO_ROOT / "examples" / "finance_email_calendar_recovery.env.example").read_text(encoding="utf-8")
+
+    assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly" in content
+    assert "required read-only scope witness when a connector token is set" in content
+    assert "Any configured connector token must be paired" in content
+    assert "calendar.events.readonly" in content
+    assert "python scripts/preflight_finance_email_calendar_recovery.py --receipt .change_assurance/email_calendar_live_receipt.json --strict --json" in content
+    assert "python scripts/validate_finance_approval_email_calendar_live_receipt.py --require-ready --json" in content
+    assert "examples/finance_email_calendar_recovery.env.example" in content
+    assert "MULLU_EMAIL_CALENDAR_WORKER_URL=http://email-calendar-worker:8050/email-calendar/execute" in template
+    assert "MULLU_EMAIL_CALENDAR_WORKER_SECRET=<secret-from-secret-manager>" in template
+    assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly" in template
+    assert "GOOGLE_CALENDAR_SCOPE_ID=calendar.events.readonly" in template
+    assert "MICROSOFT_GRAPH_SCOPE_ID=mail.read" in template
+    assert (
+        "python scripts/validate_finance_email_calendar_recovery_env_example.py "
+        "--template examples/finance_email_calendar_recovery.env.example --strict --json"
+    ) in content
+
+
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:
     content = "Gateway Publication Orchestration\nworkflow_dispatch\n"
 

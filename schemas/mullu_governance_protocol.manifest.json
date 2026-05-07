@@ -107,6 +107,12 @@
       "surface": "commercial"
     },
     {
+      "schema_id": "federated-control-snapshot",
+      "path": "schemas/federated_control_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:federated-control-snapshot:1",
+      "surface": "federation"
+    },
+    {
       "schema_id": "operational-case",
       "path": "schemas/operational_case.schema.json",
       "urn": "urn:mullusi:schema:operational-case:1",

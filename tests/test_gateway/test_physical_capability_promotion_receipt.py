@@ -153,6 +153,29 @@ def test_operator_physical_promotion_receipt_endpoint_persists_jsonl_ledger(
     assert ledger_payload["physical_capability_promotion_receipts"][0]["receipt_id"] == receipt_id
 
 
+def test_operator_physical_promotion_receipt_console_renders_ledger() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    emission_response = client.post(
+        "/operator/physical-capability-promotion-receipts",
+        json={
+            "use_fixture_refs": True,
+            "recorded_at": "2026-05-06T12:00:00+00:00",
+        },
+    )
+    receipt_id = emission_response.json()["receipt_id"]
+    console_response = client.get(
+        "/operator/physical-capability-promotion-receipts/console?status=ready&limit=10"
+    )
+    body = console_response.text
+
+    assert console_response.status_code == 200
+    assert "Mullu Physical Promotion Receipts" in body
+    assert receipt_id in body
+    assert "json read model" in body
+    assert "status=ready" in body
+
+
 def test_operator_physical_promotion_receipt_endpoint_blocks_missing_live_refs() -> None:
     client = TestClient(create_gateway_app(platform=StubPlatform()))
 

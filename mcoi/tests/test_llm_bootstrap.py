@@ -3,6 +3,7 @@
 import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
+    AtlasCloudBackend,
     BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
@@ -12,10 +13,12 @@ from mcoi_runtime.adapters.multi_provider import (
     DInferenceBackend,
     FireworksBackend,
     FriendliBackend,
+    GMIBackend,
     GlamaBackend,
     GroqBackend,
     HyperbolicBackend,
     LlamaAPIBackend,
+    ModelMaxBackend,
     MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
@@ -80,6 +83,9 @@ LLM_ENV_KEYS = (
     "RIDVAY_API_KEY",
     "NEUROROUTERS_API_KEY",
     "GLAMA_API_KEY",
+    "GMI_API_KEY",
+    "ATLASCLOUD_API_KEY",
+    "MODELMAX_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -341,6 +347,9 @@ class TestBootstrapLLM:
             ridvay_api_key="rv",
             neurorouters_api_key="nr",
             glama_api_key="gm",
+            gmi_api_key="gmi",
+            atlascloud_api_key="ac",
+            modelmax_api_key="mm",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -382,6 +391,9 @@ class TestBootstrapLLM:
             "ridvay",
             "neurorouters",
             "glama",
+            "gmi",
+            "atlascloud",
+            "modelmax",
             "grok",
             "mistral",
             "openrouter",
@@ -412,6 +424,9 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["ridvay"], RidvayBackend)
         assert isinstance(result.backends["neurorouters"], NeuroRoutersBackend)
         assert isinstance(result.backends["glama"], GlamaBackend)
+        assert isinstance(result.backends["gmi"], GMIBackend)
+        assert isinstance(result.backends["atlascloud"], AtlasCloudBackend)
+        assert isinstance(result.backends["modelmax"], ModelMaxBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -435,6 +450,9 @@ class TestBootstrapLLM:
         assert "llm-ridvay" in result.registered_providers
         assert "llm-neurorouters" in result.registered_providers
         assert "llm-glama" in result.registered_providers
+        assert "llm-gmi" in result.registered_providers
+        assert "llm-atlascloud" in result.registered_providers
+        assert "llm-modelmax" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -463,6 +481,9 @@ class TestBootstrapLLM:
         assert "qwen/qwen3-30b-a3b" in result.registered_models
         assert "qwen/qwen3-30b-a3b:free" in result.registered_models
         assert "deepseek-chat-v3" in result.registered_models
+        assert "Qwen/Qwen3-32B-FP8" in result.registered_models
+        assert "Qwen/Qwen3-30B-A3B-Instruct-2507" in result.registered_models
+        assert "qwen3-coder-30b-a3b" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

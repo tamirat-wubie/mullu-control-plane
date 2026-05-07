@@ -51,6 +51,7 @@ class SoftwareDevRunnerConfig:
     ucja_runner: Any | None = None
     receipt_store: Any | None = None
     receipt_review_queue: Any | None = None
+    software_learning_store: Any | None = None
 
 
 _TAIL_BYTES: int = 1024

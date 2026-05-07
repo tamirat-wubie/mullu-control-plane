@@ -30,6 +30,7 @@ from gateway.marketplace_sdk import (
     SDKLanguage,
     marketplace_sdk_catalog_snapshot_to_json_dict,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -138,6 +139,48 @@ def test_marketplace_sdk_catalog_schema_exposes_public_contract() -> None:
     assert "typescript" in schema["$defs"]["language"]["enum"]
     assert payload["raw_execution_surface_exposed"] is False
     assert snapshot.snapshot_hash
+
+
+def test_marketplace_sdk_catalog_shared_validator_accepts_public_snapshot() -> None:
+    catalog = MarketplaceSDKCatalog()
+    offering = catalog.register_offering(_write_connector())
+    catalog.publish(offering_id=offering.offering_id, channel=MarketplaceChannel.SDK, listed_at=NOW)
+    payload = marketplace_sdk_catalog_snapshot_to_json_dict(catalog.snapshot())
+
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), payload)
+
+    assert errors == []
+    assert payload["sdk_contract_count"] == 1
+    assert payload["raw_execution_surface_exposed"] is False
+    assert payload["offerings"][0]["sdk_contract"]["sandbox_base_url"] == "https://sandbox.mullusi.com"
+
+
+def test_marketplace_sdk_catalog_shared_validator_rejects_raw_execution_surface() -> None:
+    catalog = MarketplaceSDKCatalog()
+    offering = catalog.register_offering(_write_connector())
+    catalog.publish(offering_id=offering.offering_id, channel=MarketplaceChannel.SDK, listed_at=NOW)
+    payload = marketplace_sdk_catalog_snapshot_to_json_dict(catalog.snapshot())
+    payload["raw_execution_surface_exposed"] = True
+
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), payload)
+
+    assert len(errors) == 1
+    assert "$.raw_execution_surface_exposed: expected const False" in errors
+    assert payload["raw_execution_surface_exposed"] is True
+
+
+def test_marketplace_sdk_catalog_shared_validator_rejects_extra_public_fields() -> None:
+    catalog = MarketplaceSDKCatalog()
+    offering = catalog.register_offering(_write_connector())
+    catalog.publish(offering_id=offering.offering_id, channel=MarketplaceChannel.SDK, listed_at=NOW)
+    payload = marketplace_sdk_catalog_snapshot_to_json_dict(catalog.snapshot())
+    payload["raw_execution_handle"] = "invoke:quickbooks-create-bill"
+
+    errors = _validate_schema_instance(_load_schema(SCHEMA_PATH), payload)
+
+    assert len(errors) == 1
+    assert "$: unexpected property 'raw_execution_handle'" in errors
+    assert payload["raw_execution_handle"] == "invoke:quickbooks-create-bill"
 
 
 def _write_connector() -> MarketplaceOffering:

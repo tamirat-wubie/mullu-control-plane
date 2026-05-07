@@ -55,7 +55,7 @@ def test_write_connector_manifest_requires_approval_receipt_and_idempotency() ->
 
 def test_production_certification_requires_live_evidence_and_eval_coverage() -> None:
     registry = ConnectorCertificationRegistry()
-    registry.register_manifest(_quickbooks_manifest(eval_suites=("tenant_isolation",)))
+    registry.register_manifest(_quickbooks_manifest(eval_suites=("tenant_isolation", "approval_required")))
     registry.add_evidence(_evidence("ev-mock", "mock_test"))
     registry.add_evidence(_evidence("ev-sandbox", "sandbox_receipt"))
 
@@ -70,9 +70,38 @@ def test_production_certification_requires_live_evidence_and_eval_coverage() -> 
     assert certification is None
     assert decision.verdict == ConnectorCertificationVerdict.DENY
     assert decision.reason == "connector_certification_requirements_missing"
-    assert "approval_required" in decision.missing_evals
+    assert "duplicate_prevention" in decision.missing_evals
+    assert "idempotency" in decision.missing_evals
+    assert "receipt_verification" in decision.missing_evals
     assert "live_receipt" in decision.missing_evidence
     assert "deployment_witness" in decision.missing_evidence
+
+
+def test_financial_write_connector_requires_side_effect_eval_coverage_for_production() -> None:
+    registry = ConnectorCertificationRegistry()
+    registry.register_manifest(_quickbooks_manifest(eval_suites=("tenant_isolation", "approval_required")))
+    for evidence_id, evidence_type in (
+        ("ev-mock", "mock_test"),
+        ("ev-sandbox", "sandbox_receipt"),
+        ("ev-live-read", "live_read_receipt"),
+        ("ev-live-write", "live_write_receipt"),
+        ("ev-live", "live_receipt"),
+        ("ev-deploy", "deployment_witness"),
+    ):
+        registry.add_evidence(_evidence(evidence_id, evidence_type))
+
+    certification, decision = registry.certify(
+        connector_id="quickbooks.create_bill",
+        requested_level=ConnectorCertificationLevel.L5_PRODUCTION_CERTIFIED,
+        certified_by="operator-1",
+        certified_at="2026-05-05T12:00:00Z",
+        requested_oauth_scopes=("accounting",),
+    )
+
+    assert certification is None
+    assert decision.verdict == ConnectorCertificationVerdict.DENY
+    assert decision.missing_evidence == ()
+    assert decision.missing_evals == ("duplicate_prevention", "idempotency", "receipt_verification")
 
 
 def test_quickbooks_connector_can_be_production_certified_with_full_evidence() -> None:
@@ -106,6 +135,22 @@ def test_invocation_requires_scope_tenant_idempotency_and_receipt() -> None:
         tenant_bound=True,
         receipt_ref="receipt://quickbooks/001",
     )
+    denied_receipt_ref = registry.evaluate_invocation(
+        connector_id="quickbooks.create_bill",
+        requested_oauth_scopes=("accounting",),
+        requires_write=True,
+        tenant_bound=True,
+        idempotency_key="idem-001",
+        receipt_ref="unbounded receipt ref",
+    )
+    denied_empty_receipt_ref = registry.evaluate_invocation(
+        connector_id="quickbooks.create_bill",
+        requested_oauth_scopes=("accounting",),
+        requires_write=True,
+        tenant_bound=True,
+        idempotency_key="idem-001",
+        receipt_ref="receipt://",
+    )
     allowed = registry.evaluate_invocation(
         connector_id="quickbooks.create_bill",
         requested_oauth_scopes=("accounting",),
@@ -119,6 +164,10 @@ def test_invocation_requires_scope_tenant_idempotency_and_receipt() -> None:
     assert denied_scope.reason == "oauth_scope_exceeds_manifest"
     assert denied_idempotency.verdict == ConnectorCertificationVerdict.DENY
     assert denied_idempotency.reason == "idempotency_key_required"
+    assert denied_receipt_ref.verdict == ConnectorCertificationVerdict.DENY
+    assert denied_receipt_ref.reason == "connector_receipt_ref_invalid"
+    assert denied_empty_receipt_ref.verdict == ConnectorCertificationVerdict.DENY
+    assert denied_empty_receipt_ref.reason == "connector_receipt_ref_invalid"
     assert allowed.verdict == ConnectorCertificationVerdict.ALLOW
     assert allowed.reason == "connector_invocation_certified"
     assert "receipt://quickbooks/001" in allowed.evidence_refs
@@ -228,7 +277,13 @@ def _evidence(evidence_id: str, evidence_type: str, *, connector_id: str = "quic
 
 def _certified_quickbooks_registry() -> ConnectorCertificationRegistry:
     registry = ConnectorCertificationRegistry()
-    registry.register_manifest(_quickbooks_manifest())
+    registry.register_manifest(_quickbooks_manifest(eval_suites=(
+        "tenant_isolation",
+        "approval_required",
+        "idempotency",
+        "receipt_verification",
+        "duplicate_prevention",
+    )))
     for evidence_id, evidence_type in (
         ("ev-mock", "mock_test"),
         ("ev-sandbox", "sandbox_receipt"),

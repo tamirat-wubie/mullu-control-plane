@@ -101,6 +101,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/authority/ownership"]["surface_id"] == "authority_operator_controls"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
+    assert classified_routes["/api/v1/knowledge/entities"]["surface_id"] == "governed_operational_intelligence"
+    assert classified_routes["/api/v1/knowledge/contradictions/unresolved"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/finance/approval-packets"]["surface_id"] == "finance_approval_packets"
     assert (
         classified_routes["/api/v1/finance/approval-packets/operator/read-model"]["surface_id"]
@@ -137,6 +139,33 @@ def test_finance_approval_packet_surface_is_witnessed() -> None:
     assert "packet_proof_requires_policy_evidence_and_closure_for_closed_states" in witnesses
     assert "operator_read_model_bounds_visible_packets_and_counts" in witnesses
     assert closure_actions["classify_finance_approval_packet_routes"]["status"] == "closed"
+
+
+def test_federated_control_plane_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    federation_surface = surfaces["federated_control_plane"]
+    witnesses = set(federation_surface["runtime_witnesses"])
+
+    assert federation_surface["coverage_state"] == "witnessed"
+    assert federation_surface["request_proof"] == "read_model"
+    assert federation_surface["action_proof"] == "read_model"
+    assert "/api/v1/federation/summary" in federation_surface["representative_paths"]
+    assert "gateway/federated_control.py" in federation_surface["evidence_files"]
+    assert "gateway/server.py" in federation_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/federation.py" in federation_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/federated_control_plane.py" in federation_surface["evidence_files"]
+    assert "schemas/federated_control_snapshot.schema.json" in federation_surface["evidence_files"]
+    assert "tests/test_gateway/test_federated_control.py" in federation_surface["evidence_files"]
+    assert "signed_policy_metadata_only_sync" in witnesses
+    assert "invalid_signature_denied_before_local_acceptance" in witnesses
+    assert "policy_not_allowed_for_cluster_denied" in witnesses
+    assert "unsynced_policy_denied_locally" in witnesses
+    assert "tenant_region_mismatch_denied_locally" in witnesses
+    assert "central_data_transfer_forbidden" in witnesses
+    assert "federated_snapshot_schema_valid" in witnesses
+    assert closure_actions["publish_federated_control_plane_read_model"]["status"] == "closed"
 
 
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
@@ -253,6 +282,32 @@ def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
     assert "runbook_pattern_read_models_bounded" in witnesses
     assert "runbook_responses_governed" in witnesses
     assert closure_actions["classify_runbook_learning_routes"]["status"] == "closed"
+
+
+def test_software_outcome_learning_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    learning_surface = surfaces["software_outcome_learning"]
+    witnesses = set(learning_surface["runtime_witnesses"])
+
+    assert learning_surface["coverage_state"] == "witnessed"
+    assert learning_surface["request_proof"] == "request_proof"
+    assert learning_surface["action_proof"] == "action_proof"
+    assert "mullu_software_change" in learning_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/mcp/server.py" in learning_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/software_learning.py" in learning_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/software_learning.py" in learning_surface["evidence_files"]
+    assert "mcoi/tests/test_mcp_software_change.py" in learning_surface["evidence_files"]
+    assert "mcoi/tests/test_software_learning.py" in learning_surface["evidence_files"]
+    assert "software_learning_schema_default_enabled" in witnesses
+    assert "passed_gates_yield_procedural_memory" in witnesses
+    assert "failed_gates_yield_hashed_risk_memory" in witnesses
+    assert "raw_logs_rejected_before_planning_use" in witnesses
+    assert "rollback_failure_defers_learning" in witnesses
+    assert "planning_projection_requires_admitted_matching_decision" in witnesses
+    assert "software_learning_errors_are_bounded" in witnesses
+    assert closure_actions["publish_software_outcome_learning_contract"]["status"] == "closed"
 
 
 def test_authority_operator_controls_surface_is_witnessed() -> None:
@@ -535,21 +590,32 @@ def test_governed_operational_intelligence_surface_is_witnessed() -> None:
     assert "WorldStateStore.add_entity" in operational_surface["representative_paths"]
     assert "GoalCompiler.compile" in operational_surface["representative_paths"]
     assert "CausalSimulator.simulate" in operational_surface["representative_paths"]
+    assert "/api/v1/knowledge/entities" in operational_surface["representative_paths"]
+    assert "/api/v1/knowledge/links" in operational_surface["representative_paths"]
+    assert "/api/v1/knowledge/contradictions/unresolved" in operational_surface["representative_paths"]
     assert "gateway/world_state.py" in operational_surface["evidence_files"]
     assert "gateway/goal_compiler.py" in operational_surface["evidence_files"]
     assert "gateway/causal_simulator.py" in operational_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/routers/knowledge.py" in operational_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/knowledge_graph.py" in operational_surface["evidence_files"]
     assert "schemas/world_state.schema.json" in operational_surface["evidence_files"]
     assert "schemas/goal.schema.json" in operational_surface["evidence_files"]
     assert "schemas/simulation_receipt.schema.json" in operational_surface["evidence_files"]
+    assert "mcoi/tests/test_knowledge_graph.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_world_state.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_goal_compiler.py" in operational_surface["evidence_files"]
     assert "tests/test_gateway/test_causal_simulator.py" in operational_surface["evidence_files"]
     assert "world_assertions_require_source_evidence" in witnesses
+    assert "knowledge_entity_routes_governed" in witnesses
+    assert "knowledge_link_routes_governed" in witnesses
+    assert "knowledge_contradiction_routes_governed" in witnesses
+    assert "knowledge_summary_route_bounded" in witnesses
     assert "goal_plan_certificate_hash_bound" in witnesses
     assert "simulation_receipt_schema_valid" in witnesses
     assert "open_world_contradictions_block_execution" in witnesses
     assert "high_risk_controls_projected_before_execution" in witnesses
     assert closure_actions["publish_governed_operational_intelligence_witnesses"]["status"] == "closed"
+    assert closure_actions["classify_world_state_knowledge_routes"]["status"] == "closed"
 
 
 def test_capability_forge_surface_is_candidate_only() -> None:
@@ -631,12 +697,18 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "NetworkedWorkerMesh.register_worker" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.dispatch" in worker_surface["representative_paths"]
     assert "NetworkedWorkerMesh.read_model" in worker_surface["representative_paths"]
+    assert "SandboxedCodeWorker.execute_command" in worker_surface["representative_paths"]
+    assert "CodeWorkerLease" in worker_surface["representative_paths"]
+    assert "CodeWorkerReceipt" in worker_surface["representative_paths"]
     assert "gateway/physical_action_boundary.py" in worker_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "gateway/worker_mesh.py" in worker_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/code_worker.py" in worker_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/workers/code_worker.py" in worker_surface["evidence_files"]
     assert "scripts/produce_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "schemas/physical_action_receipt.schema.json" in worker_surface["evidence_files"]
     assert "schemas/worker_mesh.schema.json" in worker_surface["evidence_files"]
+    assert "tests/test_code_worker.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_action_boundary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_physical_worker_canary.py" in worker_surface["evidence_files"]
     assert "tests/test_gateway/test_worker_mesh.py" in worker_surface["evidence_files"]
@@ -644,6 +716,9 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "active_lease_required" in witnesses
     assert "tenant_capability_operation_budget_checked" in witnesses
     assert "forbidden_operations_override_allowed" in witnesses
+    assert "code_worker_exact_lease_command_required" in witnesses
+    assert "code_worker_blocks_network_shell_and_risky_git" in witnesses
+    assert "code_worker_receipt_binds_sandbox_evidence" in witnesses
     assert "physical_action_receipt_required_for_physical_workers" in witnesses
     assert "physical_worker_canary_blocks_without_receipt" in witnesses
     assert "physical_worker_canary_passed" in witnesses
@@ -893,12 +968,14 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert physical_surface["request_proof"] == "request_proof"
     assert physical_surface["action_proof"] == "action_proof"
     assert "/operator/physical-capability-promotion-receipts" in physical_surface["representative_paths"]
+    assert "/operator/physical-capability-promotion-receipts/console" in physical_surface["representative_paths"]
     assert "capsules/physical.json" in physical_surface["evidence_files"]
     assert "capabilities/physical/capability_pack.json" in physical_surface["evidence_files"]
     assert "gateway/capability_capsule_installer.py" in physical_surface["evidence_files"]
     assert "gateway/server.py" in physical_surface["evidence_files"]
     assert "gateway/physical_action_boundary.py" in physical_surface["evidence_files"]
     assert "gateway/physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
+    assert "gateway/physical_capability_promotion_store.py" in physical_surface["evidence_files"]
     assert "gateway/physical_worker_canary.py" in physical_surface["evidence_files"]
     assert "scripts/emit_physical_capability_promotion_receipt.py" in physical_surface["evidence_files"]
     assert "scripts/preflight_physical_capability_promotion.py" in physical_surface["evidence_files"]
@@ -929,12 +1006,40 @@ def test_physical_action_boundary_surface_blocks_dispatch_without_safety_control
     assert "physical_promotion_receipt_cli_blocks_missing_live_refs" in witnesses
     assert "physical_promotion_receipt_operator_endpoint_emits_bundle" in witnesses
     assert "physical_promotion_receipt_operator_endpoint_blocks_missing_live_refs" in witnesses
+    assert "physical_promotion_receipt_jsonl_store_persists" in witnesses
+    assert "physical_promotion_receipt_store_fails_closed_on_invalid_record" in witnesses
+    assert "physical_promotion_receipt_operator_console_renders_ledger" in witnesses
     assert "hardware_identity_required" in witnesses
     assert "emergency_stop_required" in witnesses
     assert "physical_dispatch_blocked_until_controls_complete" in witnesses
     assert "physical_worker_canary_uses_sandbox_handler" in witnesses
     assert "physical_worker_canary_artifact_hash_bound" in witnesses
     assert closure_actions["publish_physical_action_receipt_contract"]["status"] == "closed"
+
+
+def test_code_intelligence_operator_surface_is_read_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    code_surface = surfaces["code_intelligence_operator_read_model"]
+    witnesses = set(code_surface["runtime_witnesses"])
+
+    assert code_surface["coverage_state"] == "witnessed"
+    assert code_surface["request_proof"] == "read_model"
+    assert code_surface["action_proof"] == "read_model"
+    assert "/operator/code-intelligence/read-model" in code_surface["representative_paths"]
+    assert "build_repo_map" in code_surface["representative_paths"]
+    assert "build_code_context" in code_surface["representative_paths"]
+    assert "gateway/code_intelligence_read_model.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/code_intelligence.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/code_context.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/code_intelligence.py" in code_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/code_context_builder.py" in code_surface["evidence_files"]
+    assert "tests/test_gateway/test_code_intelligence_read_model.py" in code_surface["evidence_files"]
+    assert "code_intelligence_repo_map_detects_routes_schemas_dependencies" in witnesses
+    assert "code_context_bundle_bounds_symbols_tests_and_edges" in witnesses
+    assert "code_context_missing_affected_file_fails_closed" in witnesses
+    assert "code_intelligence_operator_read_model_hides_source_content" in witnesses
+    assert "code_intelligence_operator_endpoint_fails_closed_for_missing_file" in witnesses
 
 
 def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:

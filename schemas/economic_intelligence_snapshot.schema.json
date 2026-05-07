@@ -4,68 +4,267 @@
   "title": "EconomicIntelligenceSnapshot",
   "type": "object",
   "additionalProperties": false,
-  "required": ["snapshot_id", "candidates", "decisions", "selected_count", "review_count", "denied_count", "blocked_candidate_count", "policy_override_allowed", "snapshot_hash"],
+  "required": [
+    "snapshot_id",
+    "candidates",
+    "decisions",
+    "selected_count",
+    "review_count",
+    "denied_count",
+    "blocked_candidate_count",
+    "policy_override_allowed",
+    "snapshot_hash"
+  ],
   "properties": {
-    "snapshot_id": {"type": "string", "minLength": 1},
-    "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
-    "decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
-    "selected_count": {"type": "integer", "minimum": 0},
-    "review_count": {"type": "integer", "minimum": 0},
-    "denied_count": {"type": "integer", "minimum": 0},
-    "blocked_candidate_count": {"type": "integer", "minimum": 0},
-    "policy_override_allowed": {"type": "boolean", "const": false},
-    "snapshot_hash": {"type": "string", "minLength": 32}
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "selected_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "review_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "denied_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "policy_override_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "snapshot_hash": {
+      "type": "string",
+      "minLength": 32
+    }
   },
   "$defs": {
-    "money": {"type": "string", "pattern": "^-?[0-9]+\\.[0-9]{2}$"},
-    "non_negative_money": {"type": "string", "pattern": "^[0-9]+\\.[0-9]{2}$"},
-    "verdict": {"type": "string", "enum": ["select", "deny", "review"]},
-    "risk_tier": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
-    "control_verdict": {"type": "string", "enum": ["allow", "deny", "review"]},
-    "nullable_text": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+    "money": {
+      "type": "string",
+      "pattern": "^-?[0-9]+\\.[0-9]{2}$"
+    },
+    "non_negative_money": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]{2}$"
+    },
+    "risk_tier": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "control_verdict": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny",
+        "review"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "select",
+        "deny",
+        "review"
+      ]
+    },
+    "nullable_text": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "candidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidate_id", "tenant_id", "action_ref", "capability_ref", "policy_verdict", "authority_verdict", "budget_verdict", "evidence_refs", "expected_value_usd", "model_cost_usd", "tool_cost_usd", "latency_cost_usd", "risk_cost_usd", "human_review_cost_usd", "failure_compensation_cost_usd", "risk_tier", "control_admitted", "candidate_hash", "metadata"],
+      "required": [
+        "candidate_id",
+        "tenant_id",
+        "action_ref",
+        "capability_ref",
+        "policy_verdict",
+        "authority_verdict",
+        "budget_verdict",
+        "evidence_refs",
+        "expected_value_usd",
+        "model_cost_usd",
+        "tool_cost_usd",
+        "latency_cost_usd",
+        "risk_cost_usd",
+        "human_review_cost_usd",
+        "failure_compensation_cost_usd",
+        "risk_tier",
+        "control_admitted",
+        "candidate_hash",
+        "metadata"
+      ],
       "properties": {
-        "candidate_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "action_ref": {"type": "string", "minLength": 1},
-        "capability_ref": {"type": "string", "minLength": 1},
-        "policy_verdict": {"$ref": "#/$defs/control_verdict"},
-        "authority_verdict": {"$ref": "#/$defs/control_verdict"},
-        "budget_verdict": {"$ref": "#/$defs/control_verdict"},
-        "evidence_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "expected_value_usd": {"$ref": "#/$defs/non_negative_money"},
-        "model_cost_usd": {"$ref": "#/$defs/non_negative_money"},
-        "tool_cost_usd": {"$ref": "#/$defs/non_negative_money"},
-        "latency_cost_usd": {"$ref": "#/$defs/non_negative_money"},
-        "risk_cost_usd": {"$ref": "#/$defs/non_negative_money"},
-        "human_review_cost_usd": {"$ref": "#/$defs/non_negative_money"},
-        "failure_compensation_cost_usd": {"$ref": "#/$defs/non_negative_money"},
-        "risk_tier": {"$ref": "#/$defs/risk_tier"},
-        "control_admitted": {"type": "boolean"},
-        "candidate_hash": {"type": "string", "minLength": 32},
-        "metadata": {"type": "object"}
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_verdict": {
+          "$ref": "#/$defs/control_verdict"
+        },
+        "authority_verdict": {
+          "$ref": "#/$defs/control_verdict"
+        },
+        "budget_verdict": {
+          "$ref": "#/$defs/control_verdict"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expected_value_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "model_cost_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "tool_cost_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "latency_cost_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "risk_cost_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "human_review_cost_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "failure_compensation_cost_usd": {
+          "$ref": "#/$defs/non_negative_money"
+        },
+        "risk_tier": {
+          "$ref": "#/$defs/risk_tier"
+        },
+        "control_admitted": {
+          "type": "boolean"
+        },
+        "candidate_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
       }
     },
     "decision": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["decision_id", "tenant_id", "verdict", "selected_candidate_id", "selected_action_ref", "reason", "utility_score", "blocked_candidate_ids", "blocked_reasons", "evidence_refs", "decision_hash", "metadata"],
+      "required": [
+        "decision_id",
+        "tenant_id",
+        "verdict",
+        "selected_candidate_id",
+        "selected_action_ref",
+        "reason",
+        "utility_score",
+        "blocked_candidate_ids",
+        "blocked_reasons",
+        "evidence_refs",
+        "decision_hash",
+        "metadata"
+      ],
       "properties": {
-        "decision_id": {"type": "string", "minLength": 1},
-        "tenant_id": {"type": "string", "minLength": 1},
-        "verdict": {"$ref": "#/$defs/verdict"},
-        "selected_candidate_id": {"$ref": "#/$defs/nullable_text"},
-        "selected_action_ref": {"$ref": "#/$defs/nullable_text"},
-        "reason": {"type": "string", "minLength": 1},
-        "utility_score": {"$ref": "#/$defs/money"},
-        "blocked_candidate_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "blocked_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "decision_hash": {"type": "string", "minLength": 32},
-        "metadata": {"type": "object"}
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "selected_candidate_id": {
+          "$ref": "#/$defs/nullable_text"
+        },
+        "selected_action_ref": {
+          "$ref": "#/$defs/nullable_text"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "utility_score": {
+          "$ref": "#/$defs/money"
+        },
+        "blocked_candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blocked_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "decision_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
       }
     }
   }

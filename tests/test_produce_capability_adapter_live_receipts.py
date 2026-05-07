@@ -289,6 +289,35 @@ def test_email_calendar_live_receipt_bounds_probe_exception_detail(tmp_path: Pat
     assert payload["error"] == "email_calendar_probe_exception"
     assert "email_calendar_probe_exception" in payload["blockers"]
     assert "secret-email-calendar-probe-token" not in serialized
+    assert payload["failure_class"] == "probe_exception"
+    assert payload["recovery_actions"] == [
+        "verify_email_calendar_worker_reachable",
+        "verify_connector_token_present",
+        "verify_connector_scope_read_only",
+        "rerun_email_calendar_live_receipt_probe",
+    ]
+
+
+def test_email_calendar_live_receipt_failed_worker_includes_recovery_actions(tmp_path: Path) -> None:
+    output_path = tmp_path / "email_calendar_live_receipt.json"
+
+    result = produce_email_calendar_live_receipt(
+        output_path=output_path,
+        executor=_failed_email_calendar_executor(),
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["failure_class"] == "worker_probe_failed"
+    assert payload["recovery_actions"] == [
+        "verify_email_calendar_worker_reachable",
+        "verify_connector_token_present",
+        "verify_connector_scope_read_only",
+        "rerun_email_calendar_live_receipt_probe",
+    ]
+    assert "email_calendar_worker_probe_failed" in payload["blockers"]
+    assert "secret-email-calendar-worker-token" not in serialized
 
 
 def test_email_calendar_live_receipt_cli_accepts_read_only_connector_probe(
@@ -427,6 +456,21 @@ class FakeEmailCalendarAdapter:
         )
 
 
+class FailedEmailCalendarAdapter:
+    """Deterministic failed email/calendar observation fixture."""
+
+    def perform(self, request: EmailCalendarActionRequest) -> EmailCalendarActionObservation:
+        return EmailCalendarActionObservation(
+            succeeded=False,
+            connector_id=request.connector_id,
+            provider_operation=request.action,
+            resource_id="email-search-live",
+            response_digest="",
+            external_write=False,
+            error="secret-email-calendar-worker-token",
+        )
+
+
 def _browser_executor():
     adapter = FakeBrowserAdapter()
     policy = BrowserWorkerPolicy()
@@ -449,6 +493,16 @@ def _voice_executor():
 
 def _email_calendar_executor():
     adapter = FakeEmailCalendarAdapter()
+    policy = EmailCalendarWorkerPolicy()
+
+    def execute(request: EmailCalendarActionRequest):
+        return execute_email_calendar_request(request, adapter=adapter, policy=policy)
+
+    return execute
+
+
+def _failed_email_calendar_executor():
+    adapter = FailedEmailCalendarAdapter()
     policy = EmailCalendarWorkerPolicy()
 
     def execute(request: EmailCalendarActionRequest):

@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:federated-control-snapshot:1",
+  "title": "FederatedControlSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "policy_bundles",
+    "clusters",
+    "sync_decisions",
+    "enforcement_receipts",
+    "cluster_count",
+    "accepted_policy_count",
+    "local_enforcement_receipt_count",
+    "central_data_transfer",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "policy_bundles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/policy_bundle"
+      }
+    },
+    "clusters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/cluster"
+      }
+    },
+    "sync_decisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sync_decision"
+      }
+    },
+    "enforcement_receipts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/enforcement_receipt"
+      }
+    },
+    "cluster_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "accepted_policy_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "local_enforcement_receipt_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "central_data_transfer": {
+      "type": "boolean",
+      "const": false
+    },
+    "snapshot_hash": {
+      "type": "string",
+      "minLength": 32
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "text_array": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "synced",
+        "denied"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "policy_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "version",
+        "artifact_hash",
+        "signing_key_id",
+        "signature",
+        "allowed_regions",
+        "bundle_hash",
+        "metadata"
+      ],
+      "properties": {
+        "policy_id": {
+          "$ref": "#/$defs/text"
+        },
+        "version": {
+          "$ref": "#/$defs/text"
+        },
+        "artifact_hash": {
+          "$ref": "#/$defs/text"
+        },
+        "signing_key_id": {
+          "$ref": "#/$defs/text"
+        },
+        "signature": {
+          "$ref": "#/$defs/text"
+        },
+        "allowed_regions": {
+          "$ref": "#/$defs/text_array"
+        },
+        "bundle_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "cluster": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cluster_id",
+        "region",
+        "allowed_policy_ids",
+        "accepted_policy_hashes",
+        "cluster_hash",
+        "metadata"
+      ],
+      "properties": {
+        "cluster_id": {
+          "$ref": "#/$defs/text"
+        },
+        "region": {
+          "$ref": "#/$defs/text"
+        },
+        "allowed_policy_ids": {
+          "$ref": "#/$defs/text_array"
+        },
+        "accepted_policy_hashes": {
+          "$ref": "#/$defs/text_array"
+        },
+        "cluster_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "sync_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "cluster_id",
+        "policy_id",
+        "version",
+        "status",
+        "reason",
+        "central_data_transfer",
+        "decision_hash",
+        "metadata"
+      ],
+      "properties": {
+        "decision_id": {
+          "$ref": "#/$defs/text"
+        },
+        "cluster_id": {
+          "$ref": "#/$defs/text"
+        },
+        "policy_id": {
+          "$ref": "#/$defs/text"
+        },
+        "version": {
+          "$ref": "#/$defs/text"
+        },
+        "status": {
+          "$ref": "#/$defs/sync_status"
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "central_data_transfer": {
+          "type": "boolean",
+          "const": false
+        },
+        "decision_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "enforcement_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "tenant_id",
+        "tenant_region",
+        "cluster_id",
+        "policy_id",
+        "policy_version",
+        "verdict",
+        "reason_codes",
+        "central_data_transfer",
+        "receipt_hash",
+        "metadata"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/text"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/text"
+        },
+        "tenant_region": {
+          "$ref": "#/$defs/text"
+        },
+        "cluster_id": {
+          "$ref": "#/$defs/text"
+        },
+        "policy_id": {
+          "$ref": "#/$defs/text"
+        },
+        "policy_version": {
+          "$ref": "#/$defs/text"
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/text_array"
+        },
+        "central_data_transfer": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_hash": {
+          "type": "string",
+          "minLength": 32
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

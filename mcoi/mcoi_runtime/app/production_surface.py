@@ -69,7 +69,8 @@ class APIBoundary:
         return len(self._requests)
 
     def error_rate(self) -> float:
-        if not self._responses: return 0.0
+        if not self._responses:
+            return 0.0
         errors = sum(1 for r in self._responses if r.status_code >= 400)
         return errors / len(self._responses)
 

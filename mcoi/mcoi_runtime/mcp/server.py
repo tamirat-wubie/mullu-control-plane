@@ -34,6 +34,145 @@ def _bounded_mcp_error(prefix: str, summary: str, exc: Exception) -> str:
     return f"{prefix}: {summary} ({type(exc).__name__})"
 
 
+def _software_request_to_json_dict(request: Any) -> dict[str, Any]:
+    """Return a bounded JSON representation of a SoftwareRequest candidate."""
+    return {
+        "kind": request.kind.value,
+        "summary": request.summary,
+        "repository": request.repository,
+        "target_branch": request.target_branch,
+        "affected_files": list(request.affected_files),
+        "acceptance_criteria": list(request.acceptance_criteria),
+        "blast_radius": request.blast_radius,
+        "reviewer_required": request.reviewer_required,
+        "mode": request.mode.value,
+        "quality_gates": [gate.value for gate in request.quality_gates],
+        "max_self_debug_iterations": request.max_self_debug_iterations,
+        "rollback_required": request.rollback_required,
+        "sandbox_profile": request.sandbox_profile,
+        "evidence_required": list(request.evidence_required),
+    }
+
+
+def _software_learning_admission_payload(
+    *,
+    requested: bool,
+    outcome: Any,
+    request: Any,
+    receipts: tuple[Any, ...],
+    store: Any | None = None,
+) -> dict[str, Any]:
+    """Return sanitized learning-admission preview for a software outcome."""
+    payload: dict[str, Any] = {
+        "requested": requested,
+        "available": False,
+        "candidate_count": 0,
+        "decision_count": 0,
+        "raw_logs_admitted": False,
+        "candidates": [],
+        "decisions": [],
+        "planning_knowledge": [],
+        "persistence": {
+            "configured": store is not None,
+            "persisted": False,
+            "candidates": 0,
+            "decisions": 0,
+            "planning_entries": 0,
+            "error": "",
+        },
+        "error": "",
+    }
+    if not requested:
+        return payload
+    try:
+        from mcoi_runtime.core.software_learning import (
+            decide_software_outcome_learning,
+            derive_software_outcome_learning_candidates,
+            planning_knowledge_from_software_candidate,
+        )
+    except ImportError as exc:
+        payload["error"] = _bounded_mcp_error(
+            "Service error", "software learning modules unavailable", exc,
+        )
+        return payload
+
+    try:
+        receipt_refs = tuple(f"receipt:{receipt.receipt_id}" for receipt in receipts)
+        candidates = derive_software_outcome_learning_candidates(
+            outcome.evidence,
+            repository=request.repository,
+            affected_files=tuple(request.affected_files or ("software_request_boundary",)),
+            receipt_refs=receipt_refs,
+        )
+        decisions = tuple(
+            decide_software_outcome_learning(
+                candidate,
+                outcome.evidence,
+                issued_at=outcome.evidence.completed_at,
+            )
+            for candidate in candidates
+        )
+        planning_entries = []
+        planning_knowledge = []
+        for candidate, decision in zip(candidates, decisions, strict=True):
+            try:
+                entry = planning_knowledge_from_software_candidate(
+                    candidate,
+                    decision,
+                )
+                planning_entries.append(entry)
+                planning_knowledge.append({
+                    "knowledge_id": entry.knowledge_id,
+                    "knowledge_class": entry.knowledge_class,
+                    "lifecycle": entry.lifecycle.value,
+                    "admission_id": entry.admission_id,
+                })
+            except ValueError:
+                continue
+        payload.update({
+            "available": True,
+            "candidate_count": len(candidates),
+            "decision_count": len(decisions),
+            "candidates": [candidate.to_json_dict() for candidate in candidates],
+            "decisions": [decision.to_json_dict() for decision in decisions],
+            "planning_knowledge": planning_knowledge,
+        })
+        if store is not None:
+            try:
+                persisted = store.append_bundle(
+                    candidates=candidates,
+                    decisions=decisions,
+                    planning_entries=tuple(planning_entries),
+                )
+                payload["persistence"] = {
+                    "configured": True,
+                    "persisted": True,
+                    "candidates": persisted["candidates"],
+                    "decisions": persisted["decisions"],
+                    "planning_entries": persisted["planning_entries"],
+                    "error": "",
+                }
+            except Exception as exc:
+                payload["persistence"] = {
+                    "configured": True,
+                    "persisted": False,
+                    "candidates": 0,
+                    "decisions": 0,
+                    "planning_entries": 0,
+                    "error": _bounded_mcp_error(
+                        "Learning persistence failed",
+                        "software learning store rejected write",
+                        exc,
+                    ),
+                }
+        return payload
+    except Exception as exc:
+        payload["error"] = _bounded_mcp_error(
+            "Learning admission failed", "software learning rejected", exc,
+        )
+        return payload
+
+
 @dataclass(frozen=True, slots=True)
 class MCPTool:
     """An MCP tool definition."""
@@ -61,6 +200,7 @@ _MCP_TOOL_INTENTS: dict[str, str] = {
     "mullu_pay": "financial.send_payment",
     "mullu_software_change": "software_dev.governed_change",
     "mullu_software_receipts": "software_dev.receipt_query",
+    "mullu_app_builder_plan": "software_dev.app_builder_plan",
 }
 
 
@@ -108,6 +248,7 @@ class MulluMCPServer:
         tools = self._base_tools()
         if self._software_dev_runner is not None:
             tools.append(self._software_change_tool())
+            tools.append(self._app_builder_plan_tool())
             if self._software_dev_runner.receipt_store is not None:
                 tools.append(self._software_receipts_tool())
         return tools
@@ -265,6 +406,14 @@ class MulluMCPServer:
                         "minimum": 0,
                         "default": 3,
                     },
+                    "include_learning_admission": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": (
+                            "Include sanitized software-learning candidates "
+                            "and learning admission decisions in the response."
+                        ),
+                    },
                     "tenant_id": {"type": "string"},
                 },
                 "required": ["kind", "summary", "repository"],
@@ -321,6 +470,44 @@ class MulluMCPServer:
                     },
                     "tenant_id": {"type": "string"},
                 },
+            },
+        )
+
+    def _app_builder_plan_tool(self) -> MCPTool:
+        return MCPTool(
+            name="mullu_app_builder_plan",
+            description=(
+                "Compile a bounded ProductSpec into an ArchitectureSpec, "
+                "AppTaskGraph, patch_test_review SoftwareRequest candidates, "
+                "and optional approval-gated pull-request candidate. Planning "
+                "only: no patch, commit, push, PR open, or deployment occurs."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "product_spec": {
+                        "type": "object",
+                        "description": "ProductSpec fields for the app-builder planner.",
+                    },
+                    "repository": {
+                        "type": "string",
+                        "description": "Repository identifier for generated request candidates.",
+                    },
+                    "target_branch": {"type": "string", "default": "main"},
+                    "include_pr_candidate": {"type": "boolean", "default": False},
+                    "software_receipt_refs": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Required when include_pr_candidate is true.",
+                    },
+                    "quality_gate_refs": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Required when include_pr_candidate is true.",
+                    },
+                    "tenant_id": {"type": "string"},
+                },
+                "required": ["product_spec", "repository"],
             },
         )
 
@@ -411,6 +598,8 @@ class MulluMCPServer:
                 result = self._tool_software_change(session, arguments)
             elif name == "mullu_software_receipts":
                 result = self._tool_software_receipts(session, arguments)
+            elif name == "mullu_app_builder_plan":
+                result = self._tool_app_builder_plan(session, arguments)
             else:
                 result = MCPToolResult(content="Unknown tool", is_error=True)
         except Exception as exc:
@@ -594,6 +783,8 @@ class MulluMCPServer:
     def _risk_tier_for_tool(self, name: str) -> str:
         if name in {"mullu_pay", "mullu_execute", "mullu_software_change"}:
             return "high"
+        if name == "mullu_app_builder_plan":
+            return "medium"
         return "low"
 
     def _tool_llm(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
@@ -639,6 +830,88 @@ class MulluMCPServer:
             "governed": True,
             "note": "Connect a financial provider to enable transaction history",
         }))
+
+    def _tool_app_builder_plan(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
+        """Compile a product spec into governed app-builder planning receipts."""
+        try:
+            from mcoi_runtime.core.app_builder import (
+                build_pull_request_candidate,
+                plan_app_build,
+                product_spec_from_mapping,
+            )
+        except ImportError as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error(
+                    "Service error", "app_builder modules unavailable", exc,
+                ),
+                is_error=True,
+            )
+
+        product_payload = args.get("product_spec")
+        if not isinstance(product_payload, dict):
+            return MCPToolResult(content="product_spec must be an object", is_error=True)
+        repository = str(args.get("repository") or "").strip()
+        if not repository:
+            return MCPToolResult(content="repository is required", is_error=True)
+        target_branch = str(args.get("target_branch") or "main")
+
+        try:
+            product_spec = product_spec_from_mapping(product_payload)
+            architecture, graph, requests = plan_app_build(
+                product_spec,
+                repository=repository,
+                target_branch=target_branch,
+            )
+        except (ValueError, TypeError) as exc:
+            return MCPToolResult(
+                content=_bounded_mcp_error("Invalid request", "app-builder request rejected", exc),
+                is_error=True,
+            )
+
+        payload: dict[str, Any] = {
+            "operation": "app_builder_plan",
+            "planning_only": True,
+            "direct_deployment_allowed": False,
+            "git_push_allowed": False,
+            "architecture": architecture.to_json_dict(),
+            "task_graph": graph.to_json_dict(),
+            "software_requests": [
+                _software_request_to_json_dict(request)
+                for request in requests
+            ],
+            "pr_candidate": None,
+        }
+
+        include_pr_candidate = bool(args.get("include_pr_candidate", False))
+        if include_pr_candidate:
+            receipt_refs = tuple(str(item) for item in (args.get("software_receipt_refs") or ()))
+            gate_refs = tuple(str(item) for item in (args.get("quality_gate_refs") or ()))
+            if not receipt_refs:
+                return MCPToolResult(
+                    content="software_receipt_refs are required for pr candidate",
+                    is_error=True,
+                )
+            if not gate_refs:
+                return MCPToolResult(
+                    content="quality_gate_refs are required for pr candidate",
+                    is_error=True,
+                )
+            try:
+                pr_candidate = build_pull_request_candidate(
+                    graph,
+                    repository=repository,
+                    base_branch=target_branch,
+                    software_receipt_refs=receipt_refs,
+                    quality_gate_refs=gate_refs,
+                )
+            except (ValueError, TypeError) as exc:
+                return MCPToolResult(
+                    content=_bounded_mcp_error("Invalid request", "pr candidate rejected", exc),
+                    is_error=True,
+                )
+            payload["pr_candidate"] = pr_candidate.to_json_dict()
+
+        return MCPToolResult(content=json.dumps(payload, default=str))
 
     def _tool_software_change(self, session: Any, args: dict[str, Any]) -> MCPToolResult:
         """Run governed_software_change with the configured runner.
@@ -780,6 +1053,13 @@ class MulluMCPServer:
             receipt_persistence["configured"]
             and not receipt_persistence["persisted"]
         )
+        learning_admission = _software_learning_admission_payload(
+            requested=bool(args.get("include_learning_admission", True)),
+            outcome=outcome,
+            request=request,
+            receipts=tuple(receipts),
+            store=config.software_learning_store,
+        )
         return MCPToolResult(
             content=json.dumps({
                 "outcome": outcome.outcome.value,
@@ -815,6 +1095,7 @@ class MulluMCPServer:
                     for receipt in receipts
                 ],
                 "receipt_persistence": receipt_persistence,
+                "learning_admission": learning_admission,
             }, default=str),
             is_error=is_persistence_error,
         )
