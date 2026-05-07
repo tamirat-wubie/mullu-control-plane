@@ -560,6 +560,151 @@ class SambaNovaBackend:
         return self._call_count
 
 
+class CloudflareBackend:
+    """Cloudflare Workers AI OpenAI-compatible endpoint."""
+
+    provider = LLMProvider.CLOUDFLARE
+    DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+
+    def __init__(
+        self,
+        *,
+        model: str = "",
+        api_key: str | None = None,
+        api_key_env: str = "CLOUDFLARE_API_TOKEN",
+        account_id: str = "",
+        account_id_env: str = "CLOUDFLARE_ACCOUNT_ID",
+    ) -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._account_id = account_id
+        self._account_id_env = account_id_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        account_id = self._account_id or os.environ.get(self._account_id_env, "")
+        if not account_id:
+            return LLMResult(
+                content="", input_tokens=0, output_tokens=0, cost=0.0,
+                model_name=params.model_name or self._model, provider=self.provider,
+                finished=False, error="provider account unavailable",
+            )
+        return _openai_compatible_call(
+            base_url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, "") or os.environ.get("CLOUDFLARE_API_KEY", ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.045,
+            cost_per_1m_output=0.384,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class MoonshotBackend:
+    """Moonshot Kimi OpenAI-compatible endpoint for agentic coding models."""
+
+    provider = LLMProvider.MOONSHOT
+    DEFAULT_MODEL = "kimi-k2.5"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "MOONSHOT_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.moonshot.ai/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.60,
+            cost_per_1m_output=3.00,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class DashScopeBackend:
+    """Alibaba Cloud DashScope OpenAI-compatible endpoint for Qwen models."""
+
+    provider = LLMProvider.DASHSCOPE
+    DEFAULT_MODEL = "qwen-turbo"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "DASHSCOPE_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.05,
+            cost_per_1m_output=0.20,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class ZAIBackend:
+    """Z.AI OpenAI-compatible endpoint for GLM models."""
+
+    provider = LLMProvider.ZAI
+    DEFAULT_MODEL = "glm-4.5-air"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "ZAI_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.z.ai/api/paas/v4",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.20,
+            cost_per_1m_output=1.10,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -693,6 +838,10 @@ ALL_PROVIDERS: dict[str, type] = {
     "nebius": NebiusBackend,
     "hyperbolic": HyperbolicBackend,
     "sambanova": SambaNovaBackend,
+    "cloudflare": CloudflareBackend,
+    "moonshot": MoonshotBackend,
+    "dashscope": DashScopeBackend,
+    "zai": ZAIBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -722,8 +871,15 @@ def available_providers() -> list[str]:
         "nebius": ("NEBIUS_API_KEY",),
         "hyperbolic": ("HYPERBOLIC_API_KEY",),
         "sambanova": ("SAMBANOVA_API_KEY",),
+        "cloudflare": ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_KEY"),
+        "moonshot": ("MOONSHOT_API_KEY",),
+        "dashscope": ("DASHSCOPE_API_KEY",),
+        "zai": ("ZAI_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),
     }
-    return [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
+    available = [name for name, env_vars in env_map.items() if any(os.environ.get(env_var) for env_var in env_vars)]
+    if "cloudflare" in available and not os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
+        available.remove("cloudflare")
+    return available

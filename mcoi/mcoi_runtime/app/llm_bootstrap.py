@@ -29,6 +29,8 @@ from mcoi_runtime.adapters.llm_adapter import (
 )
 from mcoi_runtime.adapters.multi_provider import (
     CerebrasBackend,
+    CloudflareBackend,
+    DashScopeBackend,
     DeepSeekBackend,
     DeepInfraBackend,
     FireworksBackend,
@@ -37,11 +39,13 @@ from mcoi_runtime.adapters.multi_provider import (
     GroqBackend,
     HyperbolicBackend,
     MistralBackend,
+    MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
     SambaNovaBackend,
     TogetherBackend,
+    ZAIBackend,
 )
 from mcoi_runtime.contracts.llm import LLMBudget
 from mcoi_runtime.contracts.provider import (
@@ -78,6 +82,11 @@ class LLMConfig:
     nebius_api_key: str = ""
     hyperbolic_api_key: str = ""
     sambanova_api_key: str = ""
+    cloudflare_api_key: str = ""
+    cloudflare_account_id: str = ""
+    moonshot_api_key: str = ""
+    dashscope_api_key: str = ""
+    zai_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -108,6 +117,11 @@ class LLMConfig:
         nebius_key = os.environ.get("NEBIUS_API_KEY", "")
         hyperbolic_key = os.environ.get("HYPERBOLIC_API_KEY", "")
         sambanova_key = os.environ.get("SAMBANOVA_API_KEY", "")
+        cloudflare_key = os.environ.get("CLOUDFLARE_API_TOKEN", "") or os.environ.get("CLOUDFLARE_API_KEY", "")
+        cloudflare_account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+        moonshot_key = os.environ.get("MOONSHOT_API_KEY", "")
+        dashscope_key = os.environ.get("DASHSCOPE_API_KEY", "")
+        zai_key = os.environ.get("ZAI_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -145,6 +159,14 @@ class LLMConfig:
                 default_backend = "hyperbolic"
             elif sambanova_key:
                 default_backend = "sambanova"
+            elif cloudflare_key and cloudflare_account_id:
+                default_backend = "cloudflare"
+            elif moonshot_key:
+                default_backend = "moonshot"
+            elif dashscope_key:
+                default_backend = "dashscope"
+            elif zai_key:
+                default_backend = "zai"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -169,7 +191,9 @@ class LLMConfig:
                 "GROQ_API_KEY, DEEPSEEK_API_KEY, TOGETHER_API_KEY, "
                 "FIREWORKS_API_KEY, FRIENDLI_TOKEN, NOVITA_API_KEY, "
                 "CEREBRAS_API_KEY, DEEPINFRA_TOKEN, NEBIUS_API_KEY, "
-                "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
+                "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, CLOUDFLARE_API_TOKEN "
+                "with CLOUDFLARE_ACCOUNT_ID, MOONSHOT_API_KEY, DASHSCOPE_API_KEY, "
+                "ZAI_API_KEY, XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
             )
@@ -190,6 +214,11 @@ class LLMConfig:
             nebius_api_key=nebius_key,
             hyperbolic_api_key=hyperbolic_key,
             sambanova_api_key=sambanova_key,
+            cloudflare_api_key=cloudflare_key,
+            cloudflare_account_id=cloudflare_account_id,
+            moonshot_api_key=moonshot_key,
+            dashscope_api_key=dashscope_key,
+            zai_api_key=zai_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -404,6 +433,51 @@ def bootstrap_llm(
         )
         backends["sambanova"] = sambanova
 
+    if llm_config.cloudflare_api_key and llm_config.cloudflare_account_id:
+        cloudflare = CloudflareBackend(
+            api_key=llm_config.cloudflare_api_key,
+            account_id=llm_config.cloudflare_account_id,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("@cf/", "cloudflare/"),
+                CloudflareBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["cloudflare"] = cloudflare
+
+    if llm_config.moonshot_api_key:
+        moonshot = MoonshotBackend(
+            api_key=llm_config.moonshot_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("kimi", "moonshot"),
+                MoonshotBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["moonshot"] = moonshot
+
+    if llm_config.dashscope_api_key:
+        dashscope = DashScopeBackend(
+            api_key=llm_config.dashscope_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen", "dashscope"),
+                DashScopeBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["dashscope"] = dashscope
+
+    if llm_config.zai_api_key:
+        zai = ZAIBackend(
+            api_key=llm_config.zai_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("glm", "zai", "z.ai"),
+                ZAIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["zai"] = zai
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -585,6 +659,34 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "cloudflare": {
+            "name": "Cloudflare Workers AI",
+            "base_url": (
+                f"https://api.cloudflare.com/client/v4/accounts/{config.cloudflare_account_id}/ai/v1"
+                if config.cloudflare_account_id
+                else "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1"
+            ),
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "moonshot": {
+            "name": "Moonshot Kimi",
+            "base_url": "https://api.moonshot.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
+        "dashscope": {
+            "name": "Alibaba DashScope",
+            "base_url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "zai": {
+            "name": "Z.AI",
+            "base_url": "https://api.z.ai/api/paas/v4",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -684,6 +786,10 @@ def _register_models(
         ("meta-llama/Meta-Llama-3.1-8B-Instruct", "Llama 3.1 8B via Nebius", "nebius", 0.02, 0.06),
         ("Qwen/Qwen2.5-Coder-32B-Instruct", "Qwen2.5 Coder 32B via Hyperbolic", "hyperbolic", 0.20, 0.20),
         ("Meta-Llama-3.3-70B-Instruct", "Llama 3.3 70B via SambaNova", "sambanova", 0.60, 1.20),
+        ("@cf/meta/llama-3.1-8b-instruct-fp8-fast", "Llama 3.1 8B FP8 Fast via Cloudflare", "cloudflare", 0.045, 0.384),
+        ("kimi-k2.5", "Kimi K2.5 via Moonshot", "moonshot", 0.60, 3.00),
+        ("qwen-turbo", "Qwen Turbo via DashScope", "dashscope", 0.05, 0.20),
+        ("glm-4.5-air", "GLM-4.5 Air via Z.AI", "zai", 0.20, 1.10),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

@@ -355,6 +355,54 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="@cf/meta/llama-3.1-8b-instruct-fp8-fast",
+            name="Llama 3.1 8B FP8 Fast via Cloudflare",
+            provider="cloudflare",
+            cost_per_1k_input=0.000045,
+            cost_per_1k_output=0.000384,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="kimi-k2.5",
+            name="Kimi K2.5 via Moonshot",
+            provider="moonshot",
+            cost_per_1k_input=0.00060,
+            cost_per_1k_output=0.00300,
+            max_context=256000,
+            speed_tier="medium",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="qwen-turbo",
+            name="Qwen Turbo via DashScope",
+            provider="dashscope",
+            cost_per_1k_input=0.00005,
+            cost_per_1k_output=0.00020,
+            max_context=1000000,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="glm-4.5-air",
+            name="GLM-4.5 Air via Z.AI",
+            provider="zai",
+            cost_per_1k_input=0.00020,
+            cost_per_1k_output=0.00110,
+            max_context=128000,
+            speed_tier="fast",
+            capability_tier="standard",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

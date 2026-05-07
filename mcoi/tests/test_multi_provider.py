@@ -14,6 +14,8 @@ from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvi
 from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
     CerebrasBackend,
+    CloudflareBackend,
+    DashScopeBackend,
     DeepSeekBackend,
     DeepInfraBackend,
     FireworksBackend,
@@ -23,11 +25,13 @@ from mcoi_runtime.adapters.multi_provider import (
     GroqBackend,
     HyperbolicBackend,
     MistralBackend,
+    MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
     OpenRouterBackend,
     SambaNovaBackend,
     TogetherBackend,
+    ZAIBackend,
     available_providers,
     create_provider,
     _params_to_messages,
@@ -47,6 +51,10 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     NebiusBackend,
     HyperbolicBackend,
     SambaNovaBackend,
+    CloudflareBackend,
+    MoonshotBackend,
+    DashScopeBackend,
+    ZAIBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -313,6 +321,10 @@ class TestProviderRegistry:
             "nebius",
             "hyperbolic",
             "sambanova",
+            "cloudflare",
+            "moonshot",
+            "dashscope",
+            "zai",
             "grok",
             "mistral",
             "openrouter",
@@ -336,6 +348,10 @@ class TestProviderRegistry:
             ("nebius", NebiusBackend, LLMProvider.NEBIUS),
             ("hyperbolic", HyperbolicBackend, LLMProvider.HYPERBOLIC),
             ("sambanova", SambaNovaBackend, LLMProvider.SAMBANOVA),
+            ("cloudflare", CloudflareBackend, LLMProvider.CLOUDFLARE),
+            ("moonshot", MoonshotBackend, LLMProvider.MOONSHOT),
+            ("dashscope", DashScopeBackend, LLMProvider.DASHSCOPE),
+            ("zai", ZAIBackend, LLMProvider.ZAI),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):
@@ -364,6 +380,15 @@ class TestProviderRegistry:
         assert "deepinfra" in available
         assert "nebius" not in available
         assert isinstance(available, list)
+
+    def test_available_providers_detects_cloudflare_account_pair(self, monkeypatch):
+        monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "cloudflare-token")
+        monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+
+        assert "cloudflare" not in available_providers()
+
+        monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account-id")
+        assert "cloudflare" in available_providers()
 
 
 # ═══ Custom Model Override ═══
