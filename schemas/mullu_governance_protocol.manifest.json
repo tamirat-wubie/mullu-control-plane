@@ -185,6 +185,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-publication-closure-plan",
+      "path": "schemas/deployment_publication_closure_plan.schema.json",
+      "urn": "urn:mullusi:schema:deployment-publication-closure-plan:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "deployment-witness",
       "path": "schemas/deployment_witness.schema.json",
       "urn": "urn:mullusi:schema:deployment-witness:1",
