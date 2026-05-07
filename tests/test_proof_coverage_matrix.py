@@ -1085,6 +1085,33 @@ def test_temporal_budget_window_surface_rechecks_tenant_budget_periods() -> None
     assert closure_actions["publish_temporal_budget_window_receipt_contract"]["status"] == "closed"
 
 
+def test_temporal_causal_order_surface_rechecks_required_event_order() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    causal_order_surface = surfaces["temporal_causal_order"]
+    witnesses = set(causal_order_surface["runtime_witnesses"])
+
+    assert causal_order_surface["coverage_state"] == "witnessed"
+    assert causal_order_surface["request_proof"] == "request_proof"
+    assert causal_order_surface["action_proof"] == "action_proof"
+    assert "TemporalCausalOrder.evaluate" in causal_order_surface["representative_paths"]
+    assert "TemporalCausalOrderRequest" in causal_order_surface["representative_paths"]
+    assert "TemporalCausalOrderReceipt" in causal_order_surface["representative_paths"]
+    assert "gateway/temporal_causal_order.py" in causal_order_surface["evidence_files"]
+    assert "schemas/temporal_causal_order_receipt.schema.json" in causal_order_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_causal_order.py" in causal_order_surface["evidence_files"]
+    assert "runtime_clock_owns_causal_order_time" in witnesses
+    assert "required_events_must_be_present" in witnesses
+    assert "tenant_and_command_scope_checked" in witnesses
+    assert "predecessor_edges_checked" in witnesses
+    assert "out_of_order_events_block_dispatch" in witnesses
+    assert "future_events_block_dispatch" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_causal_order_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_causal_order_receipt_contract"]["status"] == "closed"
+
+
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
