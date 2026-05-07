@@ -307,6 +307,24 @@ from mcoi_runtime.contracts.tenant_runtime import (
     WorkspaceRecord,
     WorkspaceStatus,
 )
+from mcoi_runtime.contracts.records_runtime import (
+    DisposalDecision,
+    DisposalDisposition,
+    DispositionReview,
+    EvidenceGrade,
+    HoldStatus,
+    LegalHoldRecord,
+    PreservationDecision,
+    RecordAuthority,
+    RecordDescriptor,
+    RecordKind,
+    RecordLink,
+    RecordSnapshot,
+    RecordViolation,
+    RecordsClosureReport,
+    RetentionSchedule,
+    RetentionStatus,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -2537,6 +2555,140 @@ def _build_tenant_closure_report(payload: dict) -> TenantClosureReport:
     )
 
 
+def _build_record_descriptor(payload: dict) -> RecordDescriptor:
+    return RecordDescriptor(
+        record_id=payload["record_id"],
+        tenant_id=payload["tenant_id"],
+        kind=RecordKind(payload["kind"]),
+        title=payload["title"],
+        source_type=payload["source_type"],
+        source_id=payload["source_id"],
+        authority=RecordAuthority(payload["authority"]),
+        evidence_grade=EvidenceGrade(payload["evidence_grade"]),
+        classification=payload["classification"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_retention_schedule(payload: dict) -> RetentionSchedule:
+    return RetentionSchedule(
+        schedule_id=payload["schedule_id"],
+        record_id=payload["record_id"],
+        tenant_id=payload["tenant_id"],
+        retention_days=payload["retention_days"],
+        status=RetentionStatus(payload["status"]),
+        disposal_disposition=DisposalDisposition(payload["disposal_disposition"]),
+        scope_ref_id=payload["scope_ref_id"],
+        created_at=payload["created_at"],
+        expires_at=payload["expires_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_legal_hold_record(payload: dict) -> LegalHoldRecord:
+    return LegalHoldRecord(
+        hold_id=payload["hold_id"],
+        record_id=payload["record_id"],
+        tenant_id=payload["tenant_id"],
+        reason=payload["reason"],
+        authority=RecordAuthority(payload["authority"]),
+        status=HoldStatus(payload["status"]),
+        placed_at=payload["placed_at"],
+        released_at=payload["released_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_disposition_review(payload: dict) -> DispositionReview:
+    return DispositionReview(
+        review_id=payload["review_id"],
+        record_id=payload["record_id"],
+        reviewer_id=payload["reviewer_id"],
+        decision=DisposalDisposition(payload["decision"]),
+        reason=payload["reason"],
+        reviewed_at=payload["reviewed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_record_link(payload: dict) -> RecordLink:
+    return RecordLink(
+        link_id=payload["link_id"],
+        record_id=payload["record_id"],
+        target_type=payload["target_type"],
+        target_id=payload["target_id"],
+        relationship=payload["relationship"],
+        created_at=payload["created_at"],
+    )
+
+
+def _build_record_snapshot(payload: dict) -> RecordSnapshot:
+    return RecordSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        scope_ref_id=payload["scope_ref_id"],
+        total_records=payload["total_records"],
+        total_schedules=payload["total_schedules"],
+        total_holds=payload["total_holds"],
+        active_holds=payload["active_holds"],
+        total_links=payload["total_links"],
+        total_disposals=payload["total_disposals"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_record_violation(payload: dict) -> RecordViolation:
+    return RecordViolation(
+        violation_id=payload["violation_id"],
+        record_id=payload["record_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_preservation_decision(payload: dict) -> PreservationDecision:
+    return PreservationDecision(
+        decision_id=payload["decision_id"],
+        record_id=payload["record_id"],
+        preserve=payload["preserve"],
+        reason=payload["reason"],
+        authority=RecordAuthority(payload["authority"]),
+        decided_at=payload["decided_at"],
+    )
+
+
+def _build_disposal_decision(payload: dict) -> DisposalDecision:
+    return DisposalDecision(
+        decision_id=payload["decision_id"],
+        record_id=payload["record_id"],
+        tenant_id=payload["tenant_id"],
+        disposition=DisposalDisposition(payload["disposition"]),
+        reason=payload["reason"],
+        authority=RecordAuthority(payload["authority"]),
+        decided_at=payload["decided_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_records_closure_report(payload: dict) -> RecordsClosureReport:
+    return RecordsClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_records=payload["total_records"],
+        total_preserved=payload["total_preserved"],
+        total_disposed=payload["total_disposed"],
+        total_held=payload["total_held"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -2668,6 +2820,16 @@ def _build_tenant_closure_report(payload: dict) -> TenantClosureReport:
         ("revenue_snapshot.json", _build_revenue_snapshot),
         ("refund_record.json", _build_refund_record),
         ("remedy_record.json", _build_remedy_record),
+        ("record_descriptor.json", _build_record_descriptor),
+        ("retention_schedule.json", _build_retention_schedule),
+        ("legal_hold_record.json", _build_legal_hold_record),
+        ("disposition_review.json", _build_disposition_review),
+        ("record_link.json", _build_record_link),
+        ("record_snapshot.json", _build_record_snapshot),
+        ("record_violation.json", _build_record_violation),
+        ("preservation_decision.json", _build_preservation_decision),
+        ("disposal_decision.json", _build_disposal_decision),
+        ("records_closure_report.json", _build_records_closure_report),
         ("review_packet.json", _build_review_packet),
         ("review_record.json", _build_review_record),
         ("recertification_window.json", _build_recertification_window),

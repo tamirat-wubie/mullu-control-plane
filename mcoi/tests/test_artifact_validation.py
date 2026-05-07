@@ -275,6 +275,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "tenant_health.json" in mcoi_runtime_fixture_names
     assert "tenant_decision.json" in mcoi_runtime_fixture_names
     assert "tenant_closure_report.json" in mcoi_runtime_fixture_names
+    assert "record_descriptor.json" in mcoi_runtime_fixture_names
+    assert "retention_schedule.json" in mcoi_runtime_fixture_names
+    assert "legal_hold_record.json" in mcoi_runtime_fixture_names
+    assert "disposition_review.json" in mcoi_runtime_fixture_names
+    assert "record_link.json" in mcoi_runtime_fixture_names
+    assert "record_snapshot.json" in mcoi_runtime_fixture_names
+    assert "record_violation.json" in mcoi_runtime_fixture_names
+    assert "preservation_decision.json" in mcoi_runtime_fixture_names
+    assert "disposal_decision.json" in mcoi_runtime_fixture_names
+    assert "records_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -287,7 +297,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 161
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 171
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2712,6 +2722,113 @@ def test_validate_mcoi_runtime_fixture_rejects_tenant_closure_promotion_overflow
 
     assert len(errors) == 1
     assert "total_promotions must not exceed total_environments" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_retention_schedule_reverse_expiry(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "retention_schedule.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "schedule_id": "retention-drift",
+                "record_id": "record-1",
+                "tenant_id": "tenant-1",
+                "retention_days": 90,
+                "status": "active",
+                "disposal_disposition": "archive",
+                "scope_ref_id": "scope-1",
+                "created_at": "2026-05-07T10:00:00+00:00",
+                "expires_at": "2026-05-01T10:00:00+00:00",
+                "metadata": {"policy": "default"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "expires_at must not precede created_at" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_active_legal_hold_with_released_at(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "legal_hold_record.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "hold_id": "hold-drift",
+                "record_id": "record-1",
+                "tenant_id": "tenant-1",
+                "reason": "litigation hold",
+                "authority": "legal",
+                "status": "active",
+                "placed_at": "2026-05-07T10:05:00+00:00",
+                "released_at": "2026-05-08T10:05:00+00:00",
+                "metadata": {"case_ref": "case-1"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active legal holds must keep released_at empty" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_record_snapshot_active_hold_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "record_snapshot.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "records-snapshot-drift",
+                "scope_ref_id": "tenant-1",
+                "total_records": 12,
+                "total_schedules": 10,
+                "total_holds": 3,
+                "active_holds": 4,
+                "total_links": 9,
+                "total_disposals": 2,
+                "total_violations": 1,
+                "captured_at": "2026-05-07T10:10:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_holds must not exceed total_holds" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_records_closure_tally_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "records_closure_report.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "report_id": "records-closure-drift",
+                "tenant_id": "tenant-1",
+                "total_records": 10,
+                "total_preserved": 5,
+                "total_disposed": 4,
+                "total_held": 2,
+                "total_violations": 1,
+                "closed_at": "2026-05-31T23:59:00+00:00",
+                "metadata": {"period": "2026-05"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "total_preserved plus total_disposed plus total_held must not exceed total_records" in errors[0]
     assert fixture_path.name in errors[0]
 
 

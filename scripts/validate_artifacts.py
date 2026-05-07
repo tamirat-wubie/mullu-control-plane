@@ -286,6 +286,14 @@ SCOPE_BOUNDARY_KINDS = frozenset(
 PROMOTION_STATUSES = frozenset(
     {"requested", "approved", "in_progress", "completed", "failed", "rolled_back"}
 )
+RECORD_KINDS = frozenset(
+    {"operational", "compliance", "audit", "evidence", "communication", "financial", "legal"}
+)
+RETENTION_STATUSES = frozenset({"active", "expired", "disposed", "held", "pending_review"})
+HOLD_STATUSES = frozenset({"active", "released", "expired"})
+DISPOSAL_DISPOSITIONS = frozenset({"delete", "archive", "anonymize", "transfer", "deny"})
+RECORD_AUTHORITIES = frozenset({"system", "operator", "legal", "compliance", "executive", "automated"})
+EVIDENCE_GRADES = frozenset({"primary", "secondary", "derived", "copy", "reconstructed"})
 
 
 def _sort_paths(paths: list[Path]) -> tuple[Path, ...]:
@@ -9740,6 +9748,340 @@ def _validate_tenant_closure_report_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_record_descriptor_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "record_id",
+            "tenant_id",
+            "kind",
+            "title",
+            "source_type",
+            "source_id",
+            "authority",
+            "evidence_grade",
+            "classification",
+            "created_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in (
+        "record_id",
+        "tenant_id",
+        "kind",
+        "title",
+        "source_type",
+        "source_id",
+        "authority",
+        "evidence_grade",
+        "classification",
+    ):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["kind"] not in RECORD_KINDS:
+        errors.append(
+            f"{_relative_path(path)}: field 'kind' must be one of {', '.join(sorted(RECORD_KINDS))}"
+        )
+    if payload["authority"] not in RECORD_AUTHORITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'authority' must be one of {', '.join(sorted(RECORD_AUTHORITIES))}"
+        )
+    if payload["evidence_grade"] not in EVIDENCE_GRADES:
+        errors.append(
+            f"{_relative_path(path)}: field 'evidence_grade' must be one of {', '.join(sorted(EVIDENCE_GRADES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_retention_schedule_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "schedule_id",
+            "record_id",
+            "tenant_id",
+            "retention_days",
+            "status",
+            "disposal_disposition",
+            "scope_ref_id",
+            "created_at",
+            "expires_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("schedule_id", "record_id", "tenant_id", "status", "disposal_disposition", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_require_non_negative_int(payload["retention_days"], field_name="retention_days", path=path))
+    if payload["status"] not in RETENTION_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(RETENTION_STATUSES))}"
+        )
+    if payload["disposal_disposition"] not in DISPOSAL_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposal_disposition' must be one of {', '.join(sorted(DISPOSAL_DISPOSITIONS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    errors.extend(_validate_iso8601_text(payload["expires_at"], field_name="expires_at", path=path))
+    if not errors and _parse_iso8601_text(payload["expires_at"]) < _parse_iso8601_text(payload["created_at"]):
+        errors.append(f"{_relative_path(path)}: expires_at must not precede created_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_legal_hold_record_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "hold_id",
+            "record_id",
+            "tenant_id",
+            "reason",
+            "authority",
+            "status",
+            "placed_at",
+            "released_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("hold_id", "record_id", "tenant_id", "reason", "authority", "status"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["authority"] not in RECORD_AUTHORITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'authority' must be one of {', '.join(sorted(RECORD_AUTHORITIES))}"
+        )
+    if payload["status"] not in HOLD_STATUSES:
+        errors.append(
+            f"{_relative_path(path)}: field 'status' must be one of {', '.join(sorted(HOLD_STATUSES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["placed_at"], field_name="placed_at", path=path))
+    if payload["released_at"]:
+        errors.extend(_validate_iso8601_text(payload["released_at"], field_name="released_at", path=path))
+    if not errors:
+        if payload["status"] == "active" and payload["released_at"]:
+            errors.append(f"{_relative_path(path)}: active legal holds must keep released_at empty")
+        if payload["status"] in {"released", "expired"} and not payload["released_at"]:
+            errors.append(f"{_relative_path(path)}: released or expired legal holds must carry released_at")
+        if payload["released_at"] and _parse_iso8601_text(payload["released_at"]) < _parse_iso8601_text(payload["placed_at"]):
+            errors.append(f"{_relative_path(path)}: released_at must not precede placed_at")
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_disposition_review_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("review_id", "record_id", "reviewer_id", "decision", "reason", "reviewed_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("review_id", "record_id", "reviewer_id", "decision", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["decision"] not in DISPOSAL_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'decision' must be one of {', '.join(sorted(DISPOSAL_DISPOSITIONS))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["reviewed_at"], field_name="reviewed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_record_link_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("link_id", "record_id", "target_type", "target_id", "relationship", "created_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("link_id", "record_id", "target_type", "target_id", "relationship"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["target_type"] == "record" and payload["record_id"] == payload["target_id"]:
+        errors.append(f"{_relative_path(path)}: record links must not self-reference the same record_id")
+    errors.extend(_validate_iso8601_text(payload["created_at"], field_name="created_at", path=path))
+    return errors
+
+
+def _validate_record_snapshot_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "snapshot_id",
+            "scope_ref_id",
+            "total_records",
+            "total_schedules",
+            "total_holds",
+            "active_holds",
+            "total_links",
+            "total_disposals",
+            "total_violations",
+            "captured_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("snapshot_id", "scope_ref_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in (
+        "total_records",
+        "total_schedules",
+        "total_holds",
+        "active_holds",
+        "total_links",
+        "total_disposals",
+        "total_violations",
+    ):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors:
+        if payload["active_holds"] > payload["total_holds"]:
+            errors.append(f"{_relative_path(path)}: active_holds must not exceed total_holds")
+        if payload["total_holds"] > payload["total_records"]:
+            errors.append(f"{_relative_path(path)}: total_holds must not exceed total_records")
+        if payload["total_disposals"] > payload["total_records"]:
+            errors.append(f"{_relative_path(path)}: total_disposals must not exceed total_records")
+    errors.extend(_validate_iso8601_text(payload["captured_at"], field_name="captured_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_record_violation_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("violation_id", "record_id", "tenant_id", "operation", "reason", "detected_at", "metadata"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("violation_id", "record_id", "tenant_id", "operation", "reason"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    errors.extend(_validate_iso8601_text(payload["detected_at"], field_name="detected_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_preservation_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=("decision_id", "record_id", "preserve", "reason", "authority", "decided_at"),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "record_id", "reason", "authority"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["authority"] not in RECORD_AUTHORITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'authority' must be one of {', '.join(sorted(RECORD_AUTHORITIES))}"
+        )
+    if not isinstance(payload["preserve"], bool):
+        errors.append(f"{_relative_path(path)}: field 'preserve' must be boolean")
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    return errors
+
+
+def _validate_disposal_decision_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "decision_id",
+            "record_id",
+            "tenant_id",
+            "disposition",
+            "reason",
+            "authority",
+            "decided_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("decision_id", "record_id", "tenant_id", "disposition", "reason", "authority"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["disposition"] not in DISPOSAL_DISPOSITIONS:
+        errors.append(
+            f"{_relative_path(path)}: field 'disposition' must be one of {', '.join(sorted(DISPOSAL_DISPOSITIONS))}"
+        )
+    if payload["authority"] not in RECORD_AUTHORITIES:
+        errors.append(
+            f"{_relative_path(path)}: field 'authority' must be one of {', '.join(sorted(RECORD_AUTHORITIES))}"
+        )
+    errors.extend(_validate_iso8601_text(payload["decided_at"], field_name="decided_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
+def _validate_records_closure_report_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "report_id",
+            "tenant_id",
+            "total_records",
+            "total_preserved",
+            "total_disposed",
+            "total_held",
+            "total_violations",
+            "closed_at",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    for field_name in ("report_id", "tenant_id"):
+        errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    for field_name in ("total_records", "total_preserved", "total_disposed", "total_held", "total_violations"):
+        errors.extend(_require_non_negative_int(payload[field_name], field_name=field_name, path=path))
+    if not errors and payload["total_preserved"] + payload["total_disposed"] + payload["total_held"] > payload["total_records"]:
+        errors.append(
+            f"{_relative_path(path)}: total_preserved plus total_disposed plus total_held must not exceed total_records"
+        )
+    errors.extend(_validate_iso8601_text(payload["closed_at"], field_name="closed_at", path=path))
+    if not isinstance(payload["metadata"], dict):
+        errors.append(f"{_relative_path(path)}: field 'metadata' must be an object")
+    return errors
+
+
 MAF_RUNTIME_FIXTURE_VALIDATORS: dict[str, MAFRuntimeFixtureValidator] = {
     "adversarial_case.json": _validate_adversarial_case_fixture,
     "assignment_record.json": _validate_assignment_record_fixture,
@@ -9964,11 +10306,21 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "revenue_share_record.json": _validate_revenue_share_record_fixture,
     "revenue_snapshot.json": _validate_revenue_snapshot_fixture,
     "remedy_record.json": _validate_remedy_record_fixture,
+    "record_descriptor.json": _validate_record_descriptor_fixture,
+    "record_link.json": _validate_record_link_fixture,
+    "record_snapshot.json": _validate_record_snapshot_fixture,
+    "record_violation.json": _validate_record_violation_fixture,
+    "records_closure_report.json": _validate_records_closure_report_fixture,
     "refund_record.json": _validate_refund_record_fixture,
+    "retention_schedule.json": _validate_retention_schedule_fixture,
     "review_packet.json": _validate_review_packet_fixture,
     "review_record.json": _validate_review_record_fixture,
     "recertification_window.json": _validate_recertification_window_fixture,
     "renewal_window.json": _validate_renewal_window_fixture,
+    "preservation_decision.json": _validate_preservation_decision_fixture,
+    "disposal_decision.json": _validate_disposal_decision_fixture,
+    "disposition_review.json": _validate_disposition_review_fixture,
+    "legal_hold_record.json": _validate_legal_hold_record_fixture,
     "settlement_closure_report.json": _validate_settlement_closure_report_fixture,
     "settlement_decision.json": _validate_settlement_decision_fixture,
     "settlement_proof.json": _validate_settlement_proof_fixture,

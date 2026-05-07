@@ -1,0 +1,14 @@
+{
+  "hold_id": "legal-hold-release-evidence-042",
+  "record_id": "record-governance-2026-042",
+  "tenant_id": "tenant-mullu-primary",
+  "reason": "Preserve release evidence pending quarterly compliance review.",
+  "authority": "legal",
+  "status": "active",
+  "placed_at": "2026-05-07T10:40:00+00:00",
+  "released_at": "",
+  "metadata": {
+    "matter_ref": "quarterly-compliance-2026-q2",
+    "priority": "high"
+  }
+}
