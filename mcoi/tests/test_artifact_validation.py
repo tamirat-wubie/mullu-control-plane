@@ -223,6 +223,16 @@ def test_example_inventory_covers_shipped_and_pilot_artifacts() -> None:
     assert "partner_violation.json" in mcoi_runtime_fixture_names
     assert "partner_snapshot.json" in mcoi_runtime_fixture_names
     assert "partner_closure_report.json" in mcoi_runtime_fixture_names
+    assert "offering_record.json" in mcoi_runtime_fixture_names
+    assert "package_record.json" in mcoi_runtime_fixture_names
+    assert "bundle_record.json" in mcoi_runtime_fixture_names
+    assert "listing_record.json" in mcoi_runtime_fixture_names
+    assert "eligibility_rule.json" in mcoi_runtime_fixture_names
+    assert "pricing_binding.json" in mcoi_runtime_fixture_names
+    assert "marketplace_assessment.json" in mcoi_runtime_fixture_names
+    assert "marketplace_snapshot.json" in mcoi_runtime_fixture_names
+    assert "marketplace_violation.json" in mcoi_runtime_fixture_names
+    assert "marketplace_closure_report.json" in mcoi_runtime_fixture_names
     assert "approval_gated_command" in pilot_names
 
 
@@ -235,7 +245,7 @@ def test_validate_example_artifacts_strictly() -> None:
     assert len(inventory.request_paths) >= 3
     assert len(inventory.auxiliary_paths) >= 1
     assert len(inventory.maf_runtime_fixture_paths) >= 89
-    assert len(inventory.mcoi_runtime_fixture_paths) >= 109
+    assert len(inventory.mcoi_runtime_fixture_paths) >= 119
 
 
 def test_validate_maf_runtime_fixtures_strictly() -> None:
@@ -2174,6 +2184,86 @@ def test_validate_mcoi_runtime_fixture_rejects_partner_snapshot_health_overflow(
 
     assert len(errors) == 1
     assert "total_health_snapshots must not exceed total_partners" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_marketplace_standard_price_drift(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "pricing_binding.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "binding_id": "pricing-binding-drift",
+                "offering_id": "offering-1",
+                "tenant_id": "tenant-1",
+                "base_price": 500.0,
+                "effective_price": 450.0,
+                "disposition": "standard",
+                "contract_ref": "contract-1",
+                "created_at": "2026-05-03T10:00:00+00:00",
+                "metadata": {"currency": "USD"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "standard pricing must keep effective_price equal to base_price" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_marketplace_active_offering_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "marketplace_assessment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "assessment_id": "marketplace-assessment-drift",
+                "tenant_id": "tenant-1",
+                "total_offerings": 4,
+                "active_offerings": 5,
+                "total_listings": 6,
+                "active_listings": 4,
+                "total_packages": 3,
+                "coverage_score": 0.72,
+                "assessed_at": "2026-05-03T12:00:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_offerings must not exceed total_offerings" in errors[0]
+    assert fixture_path.name in errors[0]
+
+
+def test_validate_mcoi_runtime_fixture_rejects_marketplace_active_listing_overflow(tmp_path: Path) -> None:
+    fixture_path = tmp_path / "marketplace_assessment.json"
+    fixture_path.write_text(
+        json.dumps(
+            {
+                "assessment_id": "marketplace-assessment-listing-drift",
+                "tenant_id": "tenant-1",
+                "total_offerings": 5,
+                "active_offerings": 4,
+                "total_listings": 3,
+                "active_listings": 4,
+                "total_packages": 2,
+                "coverage_score": 0.65,
+                "assessed_at": "2026-05-03T12:30:00+00:00",
+                "metadata": {"scope": "tenant"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    errors = validate_artifacts.validate_mcoi_runtime_fixture(fixture_path)
+
+    assert len(errors) == 1
+    assert "active_listings must not exceed total_listings" in errors[0]
     assert fixture_path.name in errors[0]
 
 

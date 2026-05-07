@@ -1,0 +1,15 @@
+{
+  "assessment_id": "marketplace-assessment-20260504",
+  "tenant_id": "tenant-mullu-primary",
+  "total_offerings": 6,
+  "active_offerings": 5,
+  "total_listings": 8,
+  "active_listings": 6,
+  "total_packages": 3,
+  "coverage_score": 0.84,
+  "assessed_at": "2026-05-04T11:00:00+00:00",
+  "metadata": {
+    "scope": "tenant",
+    "assessed_by": "marketplace-health-monitor"
+  }
+}

@@ -215,6 +215,24 @@ from mcoi_runtime.contracts.partner_runtime import (
     RevenueShareRecord,
     RevenueShareStatus,
 )
+from mcoi_runtime.contracts.marketplace_runtime import (
+    BundleDisposition,
+    BundleRecord,
+    EligibilityRule,
+    EligibilityStatus,
+    ListingRecord,
+    MarketplaceAssessment,
+    MarketplaceChannel,
+    MarketplaceClosureReport,
+    MarketplaceSnapshot,
+    MarketplaceViolation,
+    OfferingKind,
+    OfferingRecord,
+    OfferingStatus,
+    PackageRecord,
+    PricingBinding,
+    PricingDisposition,
+)
 from mcoi_runtime.contracts.recovery import RecoveryRecord
 
 
@@ -1722,6 +1740,141 @@ def _build_partner_closure_report(payload: dict) -> PartnerClosureReport:
     )
 
 
+def _build_offering_record(payload: dict) -> OfferingRecord:
+    return OfferingRecord(
+        offering_id=payload["offering_id"],
+        product_id=payload["product_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        kind=OfferingKind(payload["kind"]),
+        status=OfferingStatus(payload["status"]),
+        version_ref=payload["version_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_package_record(payload: dict) -> PackageRecord:
+    return PackageRecord(
+        package_id=payload["package_id"],
+        tenant_id=payload["tenant_id"],
+        display_name=payload["display_name"],
+        offering_count=payload["offering_count"],
+        status=OfferingStatus(payload["status"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_bundle_record(payload: dict) -> BundleRecord:
+    return BundleRecord(
+        bundle_id=payload["bundle_id"],
+        package_id=payload["package_id"],
+        offering_id=payload["offering_id"],
+        tenant_id=payload["tenant_id"],
+        disposition=BundleDisposition(payload["disposition"]),
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_listing_record(payload: dict) -> ListingRecord:
+    return ListingRecord(
+        listing_id=payload["listing_id"],
+        offering_id=payload["offering_id"],
+        tenant_id=payload["tenant_id"],
+        channel=MarketplaceChannel(payload["channel"]),
+        active=payload["active"],
+        listed_at=payload["listed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_eligibility_rule(payload: dict) -> EligibilityRule:
+    return EligibilityRule(
+        rule_id=payload["rule_id"],
+        offering_id=payload["offering_id"],
+        tenant_id=payload["tenant_id"],
+        account_segment=payload["account_segment"],
+        status=EligibilityStatus(payload["status"]),
+        reason=payload["reason"],
+        evaluated_at=payload["evaluated_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_pricing_binding(payload: dict) -> PricingBinding:
+    return PricingBinding(
+        binding_id=payload["binding_id"],
+        offering_id=payload["offering_id"],
+        tenant_id=payload["tenant_id"],
+        base_price=payload["base_price"],
+        effective_price=payload["effective_price"],
+        disposition=PricingDisposition(payload["disposition"]),
+        contract_ref=payload["contract_ref"],
+        created_at=payload["created_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_marketplace_assessment(payload: dict) -> MarketplaceAssessment:
+    return MarketplaceAssessment(
+        assessment_id=payload["assessment_id"],
+        tenant_id=payload["tenant_id"],
+        total_offerings=payload["total_offerings"],
+        active_offerings=payload["active_offerings"],
+        total_listings=payload["total_listings"],
+        active_listings=payload["active_listings"],
+        total_packages=payload["total_packages"],
+        coverage_score=payload["coverage_score"],
+        assessed_at=payload["assessed_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_marketplace_snapshot(payload: dict) -> MarketplaceSnapshot:
+    return MarketplaceSnapshot(
+        snapshot_id=payload["snapshot_id"],
+        total_offerings=payload["total_offerings"],
+        total_packages=payload["total_packages"],
+        total_bundles=payload["total_bundles"],
+        total_listings=payload["total_listings"],
+        total_eligibility_rules=payload["total_eligibility_rules"],
+        total_pricing_bindings=payload["total_pricing_bindings"],
+        total_assessments=payload["total_assessments"],
+        total_violations=payload["total_violations"],
+        captured_at=payload["captured_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_marketplace_violation(payload: dict) -> MarketplaceViolation:
+    return MarketplaceViolation(
+        violation_id=payload["violation_id"],
+        tenant_id=payload["tenant_id"],
+        operation=payload["operation"],
+        reason=payload["reason"],
+        detected_at=payload["detected_at"],
+        metadata=payload["metadata"],
+    )
+
+
+def _build_marketplace_closure_report(payload: dict) -> MarketplaceClosureReport:
+    return MarketplaceClosureReport(
+        report_id=payload["report_id"],
+        tenant_id=payload["tenant_id"],
+        total_offerings=payload["total_offerings"],
+        total_packages=payload["total_packages"],
+        total_bundles=payload["total_bundles"],
+        total_listings=payload["total_listings"],
+        total_eligibility_rules=payload["total_eligibility_rules"],
+        total_pricing_bindings=payload["total_pricing_bindings"],
+        total_violations=payload["total_violations"],
+        closed_at=payload["closed_at"],
+        metadata=payload["metadata"],
+    )
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "builder"),
     [
@@ -1798,8 +1951,14 @@ def _build_partner_closure_report(payload: dict) -> PartnerClosureReport:
         ("inventory_record.json", _build_inventory_record),
         ("invoice_record.json", _build_invoice_record),
         ("lifecycle_event.json", _build_lifecycle_event),
+        ("listing_record.json", _build_listing_record),
         ("merge_decision.json", _build_merge_decision),
+        ("marketplace_assessment.json", _build_marketplace_assessment),
+        ("marketplace_closure_report.json", _build_marketplace_closure_report),
+        ("marketplace_snapshot.json", _build_marketplace_snapshot),
+        ("marketplace_violation.json", _build_marketplace_violation),
         ("payment_record.json", _build_payment_record),
+        ("package_record.json", _build_package_record),
         ("penalty_record.json", _build_penalty_record),
         ("partner_account_link.json", _build_partner_account_link),
         ("partner_closure_report.json", _build_partner_closure_report),
@@ -1809,7 +1968,11 @@ def _build_partner_closure_report(payload: dict) -> PartnerClosureReport:
         ("partner_record.json", _build_partner_record),
         ("partner_snapshot.json", _build_partner_snapshot),
         ("partner_violation.json", _build_partner_violation),
+        ("pricing_binding.json", _build_pricing_binding),
         ("product_record.json", _build_product_record),
+        ("offering_record.json", _build_offering_record),
+        ("bundle_record.json", _build_bundle_record),
+        ("eligibility_rule.json", _build_eligibility_rule),
         ("ecosystem_agreement.json", _build_ecosystem_agreement),
         ("recovery_objective.json", _build_recovery_objective),
         ("recovery_execution.json", _build_recovery_execution),

@@ -1,0 +1,12 @@
+{
+  "listing_id": "listing-marketplace-ops-analytics",
+  "offering_id": "offering-analytics-suite-2026",
+  "tenant_id": "tenant-mullu-primary",
+  "channel": "marketplace",
+  "active": true,
+  "listed_at": "2026-05-04T09:30:00+00:00",
+  "metadata": {
+    "region": "global",
+    "visibility": "public"
+  }
+}
