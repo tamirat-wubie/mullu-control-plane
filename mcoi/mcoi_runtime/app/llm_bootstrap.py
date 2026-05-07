@@ -28,6 +28,7 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.adapters.multi_provider import (
+    AtlasCloudBackend,
     BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
@@ -39,12 +40,14 @@ from mcoi_runtime.adapters.multi_provider import (
     FeatherlessBackend,
     FireworksBackend,
     FriendliBackend,
+    GMIBackend,
     GlamaBackend,
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
     LlamaAPIBackend,
     MistralBackend,
+    ModelMaxBackend,
     MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
@@ -111,6 +114,9 @@ class LLMConfig:
     ridvay_api_key: str = ""
     neurorouters_api_key: str = ""
     glama_api_key: str = ""
+    gmi_api_key: str = ""
+    atlascloud_api_key: str = ""
+    modelmax_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -158,6 +164,9 @@ class LLMConfig:
         ridvay_key = os.environ.get("RIDVAY_API_KEY", "")
         neurorouters_key = os.environ.get("NEUROROUTERS_API_KEY", "")
         glama_key = os.environ.get("GLAMA_API_KEY", "")
+        gmi_key = os.environ.get("GMI_API_KEY", "")
+        atlascloud_key = os.environ.get("ATLASCLOUD_API_KEY", "")
+        modelmax_key = os.environ.get("MODELMAX_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -227,6 +236,12 @@ class LLMConfig:
                 default_backend = "neurorouters"
             elif glama_key:
                 default_backend = "glama"
+            elif gmi_key:
+                default_backend = "gmi"
+            elif atlascloud_key:
+                default_backend = "atlascloud"
+            elif modelmax_key:
+                default_backend = "modelmax"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -257,7 +272,8 @@ class LLMConfig:
                 "CHUTES_API_KEY, WAVESPEED_API_KEY, BAZAARLINK_API_KEY, "
                 "LLAMA_API_KEY, PARASAIL_API_KEY, FEATHERLESS_API_KEY, "
                 "PACKET_API_KEY, RIDVAY_API_KEY, NEUROROUTERS_API_KEY, "
-                "GLAMA_API_KEY, "
+                "GLAMA_API_KEY, GMI_API_KEY, ATLASCLOUD_API_KEY, "
+                "MODELMAX_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -296,6 +312,9 @@ class LLMConfig:
             ridvay_api_key=ridvay_key,
             neurorouters_api_key=neurorouters_key,
             glama_api_key=glama_key,
+            gmi_api_key=gmi_key,
+            atlascloud_api_key=atlascloud_key,
+            modelmax_api_key=modelmax_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -687,6 +706,39 @@ def bootstrap_llm(
         )
         backends["glama"] = glama
 
+    if llm_config.gmi_api_key:
+        gmi = GMIBackend(
+            api_key=llm_config.gmi_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek", "gpt-oss", "gmi/"),
+                GMIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["gmi"] = gmi
+
+    if llm_config.atlascloud_api_key:
+        atlascloud = AtlasCloudBackend(
+            api_key=llm_config.atlascloud_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen/", "deepseek", "llama", "atlascloud/"),
+                AtlasCloudBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["atlascloud"] = atlascloud
+
+    if llm_config.modelmax_api_key:
+        modelmax = ModelMaxBackend(
+            api_key=llm_config.modelmax_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("qwen", "deepseek", "llama", "modelmax/"),
+                ModelMaxBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["modelmax"] = modelmax
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -968,6 +1020,24 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "gmi": {
+            "name": "GMI Cloud",
+            "base_url": "https://api.gmi-serving.com/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "atlascloud": {
+            "name": "Atlas Cloud",
+            "base_url": "https://api.atlascloud.ai/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "modelmax": {
+            "name": "ModelMax",
+            "base_url": "https://api.modelmax.io/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -1083,6 +1153,9 @@ def _register_models(
         ("qwen/qwen3-30b-a3b", "Qwen3 30B A3B via Ridvay", "ridvay", 0.06, 0.22),
         ("qwen/qwen3-30b-a3b:free", "Qwen3 30B A3B Free via NeuroRouters", "neurorouters", 0.0, 0.0),
         ("deepseek-chat-v3", "DeepSeek Chat V3 via Glama Gateway", "glama", 0.14, 0.28),
+        ("Qwen/Qwen3-32B-FP8", "Qwen3 32B FP8 via GMI Cloud", "gmi", 0.10, 0.60),
+        ("Qwen/Qwen3-30B-A3B-Instruct-2507", "Qwen3 30B A3B 2507 via Atlas Cloud", "atlascloud", 0.09, 0.30),
+        ("qwen3-coder-30b-a3b", "Qwen3 Coder 30B A3B via ModelMax", "modelmax", 0.15, 0.60),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),
