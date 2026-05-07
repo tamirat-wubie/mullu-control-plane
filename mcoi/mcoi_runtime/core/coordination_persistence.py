@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from mcoi_runtime.contracts.access_runtime import DelegationRecord
 from mcoi_runtime.contracts.roles import HandoffRecord
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.team_runtime import TeamEngine
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 from mcoi_runtime.persistence.coordination_store import CoordinationStore
 
 

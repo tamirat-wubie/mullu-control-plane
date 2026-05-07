@@ -15,11 +15,11 @@ import pytest
 
 from mcoi_runtime.contracts.access_runtime import AuthContextKind, IdentityKind, RoleKind
 from mcoi_runtime.contracts.roles import HandoffReason, WorkerProfile, WorkerStatus
-from mcoi_runtime.core.access_runtime import AccessRuntimeEngine
 from mcoi_runtime.core.coordination_persistence import CoordinationPersistenceBridge
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.team_runtime import TeamEngine, WorkerRegistry
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine
 from mcoi_runtime.persistence.coordination_store import CoordinationStore
 
 

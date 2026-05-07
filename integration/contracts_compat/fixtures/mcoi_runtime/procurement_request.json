@@ -8,6 +8,7 @@
   "currency": "USD",
   "requested_by": "ops-governance-lead",
   "requested_at": "2026-05-05T09:00:00+00:00",
+  "cancelled_by": "",
   "metadata": {
     "cost_center": "platform-reliability",
     "priority": "high"
