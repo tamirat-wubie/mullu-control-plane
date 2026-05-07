@@ -41,6 +41,8 @@ class LLMProvider(StrEnum):
     DINFERENCE = "dinference"
     CHUTES = "chutes"
     WAVESPEED = "wavespeed"
+    BAZAARLINK = "bazaarlink"
+    LLAMAAPI = "llamaapi"
     GROK = "grok"
     MISTRAL = "mistral"
     OPENROUTER = "openrouter"

@@ -58,6 +58,8 @@ def test_llm_provider_declares_hosted_provider_mesh() -> None:
         LLMProvider.DINFERENCE,
         LLMProvider.CHUTES,
         LLMProvider.WAVESPEED,
+        LLMProvider.BAZAARLINK,
+        LLMProvider.LLAMAAPI,
         LLMProvider.GROK,
         LLMProvider.MISTRAL,
         LLMProvider.OPENROUTER,

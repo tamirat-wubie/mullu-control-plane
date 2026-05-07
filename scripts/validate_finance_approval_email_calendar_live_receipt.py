@@ -47,11 +47,14 @@ class FinanceEmailCalendarLiveReceiptValidation:
     verification_status: str
     external_write: bool
     provider_operation: str
+    failure_class: str
+    recovery_actions: tuple[str, ...]
     blockers: tuple[str, ...]
     errors: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        payload["recovery_actions"] = list(self.recovery_actions)
         payload["blockers"] = list(self.blockers)
         payload["errors"] = list(self.errors)
         return payload
@@ -167,6 +170,7 @@ def _validation_result(
     errors: list[str],
 ) -> FinanceEmailCalendarLiveReceiptValidation:
     blockers = receipt.get("blockers", ())
+    recovery_actions = receipt.get("recovery_actions", ())
     return FinanceEmailCalendarLiveReceiptValidation(
         valid=not errors,
         ready=not errors and _receipt_ready(receipt),
@@ -177,6 +181,12 @@ def _validation_result(
         verification_status=str(receipt.get("verification_status", "")),
         external_write=receipt.get("external_write") is True,
         provider_operation=str(receipt.get("provider_operation", "")),
+        failure_class=str(receipt.get("failure_class", "")),
+        recovery_actions=(
+            tuple(str(action) for action in recovery_actions)
+            if isinstance(recovery_actions, list)
+            else ()
+        ),
         blockers=tuple(str(blocker) for blocker in blockers) if isinstance(blockers, list) else (),
         errors=tuple(errors),
     )

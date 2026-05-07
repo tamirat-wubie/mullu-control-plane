@@ -28,6 +28,7 @@ from mcoi_runtime.adapters.llm_adapter import (
     StubLLMBackend,
 )
 from mcoi_runtime.adapters.multi_provider import (
+    BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
     CloudflareBackend,
@@ -40,6 +41,7 @@ from mcoi_runtime.adapters.multi_provider import (
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    LlamaAPIBackend,
     MistralBackend,
     MoonshotBackend,
     NebiusBackend,
@@ -95,6 +97,8 @@ class LLMConfig:
     dinference_api_key: str = ""
     chutes_api_key: str = ""
     wavespeed_api_key: str = ""
+    bazaarlink_api_key: str = ""
+    llama_api_key: str = ""
     grok_api_key: str = ""
     mistral_api_key: str = ""
     openrouter_api_key: str = ""
@@ -134,6 +138,8 @@ class LLMConfig:
         dinference_key = os.environ.get("DINFERENCE_API_KEY", "")
         chutes_key = os.environ.get("CHUTES_API_KEY", "")
         wavespeed_key = os.environ.get("WAVESPEED_API_KEY", "")
+        bazaarlink_key = os.environ.get("BAZAARLINK_API_KEY", "")
+        llama_key = os.environ.get("LLAMA_API_KEY", "")
         grok_key = os.environ.get("XAI_API_KEY", "")
         mistral_key = os.environ.get("MISTRAL_API_KEY", "")
         openrouter_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -187,6 +193,10 @@ class LLMConfig:
                 default_backend = "chutes"
             elif wavespeed_key:
                 default_backend = "wavespeed"
+            elif bazaarlink_key:
+                default_backend = "bazaarlink"
+            elif llama_key:
+                default_backend = "llamaapi"
             elif mistral_key:
                 default_backend = "mistral"
             elif grok_key:
@@ -214,7 +224,8 @@ class LLMConfig:
                 "HYPERBOLIC_API_KEY, SAMBANOVA_API_KEY, CLOUDFLARE_API_TOKEN "
                 "with CLOUDFLARE_ACCOUNT_ID, MOONSHOT_API_KEY, DASHSCOPE_API_KEY, "
                 "ZAI_API_KEY, SILICONFLOW_API_KEY, DINFERENCE_API_KEY, "
-                "CHUTES_API_KEY, WAVESPEED_API_KEY, "
+                "CHUTES_API_KEY, WAVESPEED_API_KEY, BAZAARLINK_API_KEY, "
+                "LLAMA_API_KEY, "
                 "XAI_API_KEY, MISTRAL_API_KEY, "
                 "OPENROUTER_API_KEY) "
                 "or OLLAMA_BASE_URL."
@@ -245,6 +256,8 @@ class LLMConfig:
             dinference_api_key=dinference_key,
             chutes_api_key=chutes_key,
             wavespeed_api_key=wavespeed_key,
+            bazaarlink_api_key=bazaarlink_key,
+            llama_api_key=llama_key,
             grok_api_key=grok_key,
             mistral_api_key=mistral_key,
             openrouter_api_key=openrouter_key,
@@ -548,6 +561,28 @@ def bootstrap_llm(
         )
         backends["wavespeed"] = wavespeed
 
+    if llm_config.bazaarlink_api_key:
+        bazaarlink = BazaarLinkBackend(
+            api_key=llm_config.bazaarlink_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("meta-llama/", "llama", "bazaarlink/"),
+                BazaarLinkBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["bazaarlink"] = bazaarlink
+
+    if llm_config.llama_api_key:
+        llamaapi = LlamaAPIBackend(
+            api_key=llm_config.llama_api_key,
+            model=_select_provider_default_model(
+                llm_config.default_model,
+                ("llama", "meta-llama/"),
+                LlamaAPIBackend.DEFAULT_MODEL,
+            ),
+        )
+        backends["llamaapi"] = llamaapi
+
     if llm_config.grok_api_key:
         grok = GrokBackend(
             api_key=llm_config.grok_api_key,
@@ -781,6 +816,18 @@ def _register_providers(
             "rate_limit": 120,
             "cost_limit": 0.25,
         },
+        "bazaarlink": {
+            "name": "BazaarLink",
+            "base_url": "https://bazaarlink.ai/api/v1",
+            "rate_limit": 120,
+            "cost_limit": 0.25,
+        },
+        "llamaapi": {
+            "name": "LlamaAPI",
+            "base_url": "https://api.llama-api.com",
+            "rate_limit": 120,
+            "cost_limit": 0.50,
+        },
         "grok": {
             "name": "xAI Grok",
             "base_url": "https://api.x.ai/v1",
@@ -888,6 +935,8 @@ def _register_models(
         ("gpt-oss-120b", "GPT OSS 120B via DInference", "dinference", 0.09, 0.36),
         ("Qwen/Qwen3-32B-TEE", "Qwen3 32B TEE via Chutes", "chutes", 0.08, 0.24),
         ("qwen/qwen3-coder-30b-a3b-instruct", "Qwen3 Coder 30B A3B via WaveSpeed", "wavespeed", 0.07, 0.27),
+        ("meta-llama/llama-3.1-8b-instruct", "Llama 3.1 8B via BazaarLink", "bazaarlink", 0.02, 0.05),
+        ("llama3-70b", "Llama 3 70B via LlamaAPI", "llamaapi", 0.65, 0.65),
         ("mistral-small-2506", "Mistral Small 2506", "mistral", 0.10, 0.30),
         ("mistral-small-2603", "Mistral Small 2603", "mistral", 0.15, 0.60),
         ("grok-3-mini", "Grok 3 Mini", "grok", 0.30, 0.50),

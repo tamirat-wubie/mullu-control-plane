@@ -111,6 +111,13 @@
       ]
     },
     {
+      "action_id": "publish_software_outcome_learning_contract",
+      "status": "closed",
+      "surfaces": [
+        "software_outcome_learning"
+      ]
+    },
+    {
       "action_id": "publish_runtime_conformance_attestation",
       "status": "closed",
       "surfaces": [
@@ -317,6 +324,20 @@
       ]
     },
     {
+      "action_id": "publish_temporal_credential_expiry_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_credential_expiry"
+      ]
+    },
+    {
+      "action_id": "publish_temporal_memory_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "temporal_memory"
+      ]
+    },
+    {
       "action_id": "publish_temporal_memory_refresh_receipt_contract",
       "status": "closed",
       "surfaces": [
@@ -387,7 +408,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 49,
+      "action_proof": 51,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 9,
@@ -395,7 +416,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 56,
+      "audit_chain": 58,
       "gap": 0,
       "read_model": 4,
       "request_proof": 0
@@ -403,16 +424,16 @@
     "by_coverage_state": {
       "proven": 1,
       "unproven": 0,
-      "witnessed": 59
+      "witnessed": 61
     },
     "by_request_proof": {
       "action_proof": 0,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 11,
-      "request_proof": 49
+      "request_proof": 51
     },
-    "surface_count": 60
+    "surface_count": 62
   },
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
@@ -2418,6 +2439,37 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/mcp/server.py",
+        "mcoi/mcoi_runtime/contracts/software_learning.py",
+        "mcoi/mcoi_runtime/core/software_learning.py",
+        "mcoi/tests/test_mcp_software_change.py",
+        "mcoi/tests/test_software_learning.py"
+      ],
+      "notes": "Software outcome learning derives sanitized procedural and risk-memory candidates from governed software-change receipts, rejects raw logs, and projects planning knowledge only after admitted learning decisions.",
+      "representative_paths": [
+        "mullu_software_change",
+        "_software_learning_admission_payload",
+        "derive_software_outcome_learning_candidates",
+        "decide_software_outcome_learning",
+        "planning_knowledge_from_software_candidate"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "software_learning_schema_default_enabled",
+        "passed_gates_yield_procedural_memory",
+        "failed_gates_yield_hashed_risk_memory",
+        "raw_logs_rejected_before_planning_use",
+        "rollback_failure_defers_learning",
+        "planning_projection_requires_admitted_matching_decision",
+        "software_learning_errors_are_bounded"
+      ],
+      "surface_id": "software_outcome_learning"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "gateway/server.py",
         "gateway/router.py",
         "tests/test_gateway/test_webhooks.py"
@@ -3477,6 +3529,37 @@
         "receipt_not_terminal_closure"
       ],
       "surface_id": "temporal_accepted_risk_expiry"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "gateway/temporal_credential_expiry.py",
+        "schemas/temporal_credential_expiry_receipt.schema.json",
+        "tests/test_gateway/test_temporal_credential_expiry.py"
+      ],
+      "notes": "Temporal credential expiry rechecks connector credential descriptors for expiry, lifecycle disposition, provider and credential scope, rotation warning windows, owner, evidence refs, source binding receipts, and no-secret serialization before dispatch.",
+      "representative_paths": [
+        "TemporalCredentialExpiry.evaluate",
+        "TemporalCredentialRequest",
+        "TemporalCredentialExpiryReceipt"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "runtime_clock_owns_credential_expiry",
+        "expired_credentials_block_dispatch",
+        "revoked_credentials_block_dispatch",
+        "provider_and_credential_scope_checked",
+        "rotation_pending_warns_before_dispatch",
+        "rotation_overdue_blocks_dispatch",
+        "credential_evidence_refs_required",
+        "secret_value_absence_verified",
+        "high_risk_source_receipts_bound",
+        "temporal_credential_expiry_receipt_schema_valid",
+        "receipt_not_terminal_closure"
+      ],
+      "surface_id": "temporal_credential_expiry"
     },
     {
       "action_proof": "action_proof",

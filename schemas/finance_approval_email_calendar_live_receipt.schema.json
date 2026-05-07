@@ -78,6 +78,21 @@
     },
     "error": {
       "type": "string"
+    },
+    "failure_class": {
+      "type": "string",
+      "enum": [
+        "external_write_observed",
+        "probe_exception",
+        "worker_probe_failed"
+      ]
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   },
   "allOf": [

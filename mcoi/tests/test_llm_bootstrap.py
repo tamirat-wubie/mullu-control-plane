@@ -3,6 +3,7 @@
 import os
 import pytest
 from mcoi_runtime.adapters.multi_provider import (
+    BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
     CloudflareBackend,
@@ -13,6 +14,7 @@ from mcoi_runtime.adapters.multi_provider import (
     FriendliBackend,
     GroqBackend,
     HyperbolicBackend,
+    LlamaAPIBackend,
     MoonshotBackend,
     NebiusBackend,
     NovitaBackend,
@@ -64,6 +66,8 @@ LLM_ENV_KEYS = (
     "DINFERENCE_API_KEY",
     "CHUTES_API_KEY",
     "WAVESPEED_API_KEY",
+    "BAZAARLINK_API_KEY",
+    "LLAMA_API_KEY",
     "XAI_API_KEY",
     "MISTRAL_API_KEY",
     "OPENROUTER_API_KEY",
@@ -317,6 +321,8 @@ class TestBootstrapLLM:
             dinference_api_key="df",
             chutes_api_key="ct",
             wavespeed_api_key="ws",
+            bazaarlink_api_key="bl",
+            llama_api_key="la",
             grok_api_key="xai",
             mistral_api_key="ms",
             openrouter_api_key="or",
@@ -350,6 +356,8 @@ class TestBootstrapLLM:
             "dinference",
             "chutes",
             "wavespeed",
+            "bazaarlink",
+            "llamaapi",
             "grok",
             "mistral",
             "openrouter",
@@ -372,6 +380,8 @@ class TestBootstrapLLM:
         assert isinstance(result.backends["dinference"], DInferenceBackend)
         assert isinstance(result.backends["chutes"], ChutesBackend)
         assert isinstance(result.backends["wavespeed"], WaveSpeedBackend)
+        assert isinstance(result.backends["bazaarlink"], BazaarLinkBackend)
+        assert isinstance(result.backends["llamaapi"], LlamaAPIBackend)
         assert "llm-groq" in result.registered_providers
         assert "llm-deepseek" in result.registered_providers
         assert "llm-together" in result.registered_providers
@@ -387,6 +397,8 @@ class TestBootstrapLLM:
         assert "llm-dinference" in result.registered_providers
         assert "llm-chutes" in result.registered_providers
         assert "llm-wavespeed" in result.registered_providers
+        assert "llm-bazaarlink" in result.registered_providers
+        assert "llm-llamaapi" in result.registered_providers
         assert "llm-openrouter" in result.registered_providers
         assert "meta-llama/llama-4-scout-17b-16e-instruct" in result.registered_models
         assert "deepseek-v4-flash" in result.registered_models
@@ -407,6 +419,8 @@ class TestBootstrapLLM:
         assert "gpt-oss-120b" in result.registered_models
         assert "Qwen/Qwen3-32B-TEE" in result.registered_models
         assert "qwen/qwen3-coder-30b-a3b-instruct" in result.registered_models
+        assert "meta-llama/llama-3.1-8b-instruct" in result.registered_models
+        assert "llama3-70b" in result.registered_models
         assert "mistral-small-2506" in result.registered_models
         assert "grok-3-mini" in result.registered_models
         assert "meta-llama/llama-4-scout" in result.registered_models

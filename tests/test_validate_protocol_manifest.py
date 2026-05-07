@@ -74,6 +74,8 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     collaboration_entry = entries["collaboration-case"]
     commercial_entry = entries["commercial-metering-snapshot"]
+    economic_entry = entries["economic-intelligence-snapshot"]
+    federated_entry = entries["federated-control-snapshot"]
     operational_entry = entries["operational-case"]
     operator_entry = entries["operator-control-tower-snapshot"]
 
@@ -84,6 +86,12 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert commercial_entry["path"] == "schemas/commercial_metering_snapshot.schema.json"
     assert commercial_entry["urn"] == "urn:mullusi:schema:commercial-metering-snapshot:1"
     assert commercial_entry["surface"] == "commercial"
+    assert economic_entry["path"] == "schemas/economic_intelligence_snapshot.schema.json"
+    assert economic_entry["urn"] == "urn:mullusi:schema:economic-intelligence-snapshot:1"
+    assert economic_entry["surface"] == "commercial"
+    assert federated_entry["path"] == "schemas/federated_control_snapshot.schema.json"
+    assert federated_entry["urn"] == "urn:mullusi:schema:federated-control-snapshot:1"
+    assert federated_entry["surface"] == "federation"
     assert operational_entry["path"] == "schemas/operational_case.schema.json"
     assert operational_entry["urn"] == "urn:mullusi:schema:operational-case:1"
     assert operational_entry["surface"] == "case_management"
@@ -404,6 +412,17 @@ def test_protocol_manifest_indexes_temporal_accepted_risk_expiry_receipt() -> No
     assert accepted_risk_entry["path"] == "schemas/temporal_accepted_risk_expiry_receipt.schema.json"
     assert accepted_risk_entry["urn"] == "urn:mullusi:schema:temporal-accepted-risk-expiry-receipt:1"
     assert accepted_risk_entry["surface"] == "temporal"
+
+
+def test_protocol_manifest_indexes_temporal_credential_expiry_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    credential_entry = entries["temporal-credential-expiry-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert credential_entry["path"] == "schemas/temporal_credential_expiry_receipt.schema.json"
+    assert credential_entry["urn"] == "urn:mullusi:schema:temporal-credential-expiry-receipt:1"
+    assert credential_entry["surface"] == "temporal"
 
 
 def test_protocol_manifest_indexes_temporal_memory_receipt() -> None:

@@ -255,6 +255,32 @@ def test_runbook_learning_lifecycle_surface_is_witnessed() -> None:
     assert closure_actions["classify_runbook_learning_routes"]["status"] == "closed"
 
 
+def test_software_outcome_learning_surface_is_witnessed() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    learning_surface = surfaces["software_outcome_learning"]
+    witnesses = set(learning_surface["runtime_witnesses"])
+
+    assert learning_surface["coverage_state"] == "witnessed"
+    assert learning_surface["request_proof"] == "request_proof"
+    assert learning_surface["action_proof"] == "action_proof"
+    assert "mullu_software_change" in learning_surface["representative_paths"]
+    assert "mcoi/mcoi_runtime/mcp/server.py" in learning_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/contracts/software_learning.py" in learning_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/software_learning.py" in learning_surface["evidence_files"]
+    assert "mcoi/tests/test_mcp_software_change.py" in learning_surface["evidence_files"]
+    assert "mcoi/tests/test_software_learning.py" in learning_surface["evidence_files"]
+    assert "software_learning_schema_default_enabled" in witnesses
+    assert "passed_gates_yield_procedural_memory" in witnesses
+    assert "failed_gates_yield_hashed_risk_memory" in witnesses
+    assert "raw_logs_rejected_before_planning_use" in witnesses
+    assert "rollback_failure_defers_learning" in witnesses
+    assert "planning_projection_requires_admitted_matching_decision" in witnesses
+    assert "software_learning_errors_are_bounded" in witnesses
+    assert closure_actions["publish_software_outcome_learning_contract"]["status"] == "closed"
+
+
 def test_authority_operator_controls_surface_is_witnessed() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
@@ -1202,6 +1228,35 @@ def test_temporal_accepted_risk_expiry_surface_blocks_stale_risk() -> None:
     assert "high_risk_source_receipts_bound" in witnesses
     assert "temporal_accepted_risk_expiry_receipt_schema_valid" in witnesses
     assert closure_actions["publish_temporal_accepted_risk_expiry_receipt_contract"]["status"] == "closed"
+
+
+def test_temporal_credential_expiry_surface_blocks_expired_credentials() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    credential_surface = surfaces["temporal_credential_expiry"]
+    witnesses = set(credential_surface["runtime_witnesses"])
+
+    assert credential_surface["coverage_state"] == "witnessed"
+    assert credential_surface["request_proof"] == "request_proof"
+    assert credential_surface["action_proof"] == "action_proof"
+    assert "TemporalCredentialExpiry.evaluate" in credential_surface["representative_paths"]
+    assert "TemporalCredentialRequest" in credential_surface["representative_paths"]
+    assert "TemporalCredentialExpiryReceipt" in credential_surface["representative_paths"]
+    assert "gateway/temporal_credential_expiry.py" in credential_surface["evidence_files"]
+    assert "schemas/temporal_credential_expiry_receipt.schema.json" in credential_surface["evidence_files"]
+    assert "tests/test_gateway/test_temporal_credential_expiry.py" in credential_surface["evidence_files"]
+    assert "runtime_clock_owns_credential_expiry" in witnesses
+    assert "expired_credentials_block_dispatch" in witnesses
+    assert "revoked_credentials_block_dispatch" in witnesses
+    assert "provider_and_credential_scope_checked" in witnesses
+    assert "rotation_pending_warns_before_dispatch" in witnesses
+    assert "rotation_overdue_blocks_dispatch" in witnesses
+    assert "credential_evidence_refs_required" in witnesses
+    assert "secret_value_absence_verified" in witnesses
+    assert "high_risk_source_receipts_bound" in witnesses
+    assert "temporal_credential_expiry_receipt_schema_valid" in witnesses
+    assert closure_actions["publish_temporal_credential_expiry_receipt_contract"]["status"] == "closed"
 
 
 def test_temporal_memory_surface_blocks_stale_or_superseded_memory() -> None:

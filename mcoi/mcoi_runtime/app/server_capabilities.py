@@ -451,6 +451,30 @@ def bootstrap_capability_services(
     )
     model_router.register(
         ModelProfile(
+            model_id="meta-llama/llama-3.1-8b-instruct",
+            name="Llama 3.1 8B via BazaarLink",
+            provider="bazaarlink",
+            cost_per_1k_input=0.00002,
+            cost_per_1k_output=0.00005,
+            max_context=16384,
+            speed_tier="fast",
+            capability_tier="basic",
+        )
+    )
+    model_router.register(
+        ModelProfile(
+            model_id="llama3-70b",
+            name="Llama 3 70B via LlamaAPI",
+            provider="llamaapi",
+            cost_per_1k_input=0.00065,
+            cost_per_1k_output=0.00065,
+            max_context=8192,
+            speed_tier="fast",
+            capability_tier="advanced",
+        )
+    )
+    model_router.register(
+        ModelProfile(
             model_id="mistral-small-2603",
             name="Mistral Small 2603",
             provider="mistral",

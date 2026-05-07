@@ -25,6 +25,7 @@ document is the operator-readable witness.
 | `compliance_evidence_exports` | /api/v1/compliance/audit-package, /api/v1/compliance/incident-package, /api/v1/compliance/mapping, /api/v1/compliance/summary | request_proof | action_proof | compliance_package_hash, audit_chain_verification, self_audited_export_event | audit_chain | witnessed | Compliance export routes emit bounded evidence packages with package hashes, audit-chain verification, supported-framework boundaries, and self-audited export events. |
 | `audit_chain_api` | /api/v1/audit, /api/v1/audit/verify, /api/v1/audit/summary, /api/v1/audit/anchor, /api/v1/audit/anchor/{anchor_id}/verify, /api/v1/audit/anchors | read_model | request_proof | audit_chain_verify_endpoint, audit_summary_read_model, audit_anchor_checkpoint_created, audit_anchor_verification_endpoint, audit_anchor_history_read_model, audit_chain_hash_linked | audit_chain | witnessed | Audit routes expose bounded audit entries, chain verification, summaries, checkpoint anchoring, anchor verification, and anchor history with hash-chain witnesses. |
 | `runbook_learning_lifecycle` | /api/v1/runbooks, /api/v1/runbooks/analyze, /api/v1/runbooks/approve, /api/v1/runbooks/patterns, /api/v1/runbooks/promote, /api/v1/runbooks/summary, /api/v1/runbooks/{runbook_id}/activate, /api/v1/runbooks/{runbook_id}/retire, /api/v1/mil-audit/admit-runbook, /api/v1/mil-audit/runbooks, /api/v1/mil-audit/runbooks/{runbook_id} | request_proof | action_proof | patterns_detected_from_audit_trail, promotion_requires_detected_pattern, approval_required_before_activation, retirement_requires_active_runbook, promote_and_approve_audit_records, mil_audit_replay_admits_runbook, mil_audit_operator_checklist_validated, mil_audit_runbook_preflight_ready, sanitized_runbook_error_details, runbook_pattern_read_models_bounded, runbook_responses_governed | audit_chain | witnessed | Runbook learning lifecycle routes derive candidate runbooks from audit-trail patterns and MIL audit replay bundles, require explicit promotion and operator approval before activation, gate retirement by active state, emit governed sanitized errors, expose bounded read models for runbooks, patterns, and summaries, and provide a checklist-backed MIL audit runbook preflight. |
+| `software_outcome_learning` | mullu_software_change, _software_learning_admission_payload, derive_software_outcome_learning_candidates, decide_software_outcome_learning, planning_knowledge_from_software_candidate | request_proof | action_proof | software_learning_schema_default_enabled, passed_gates_yield_procedural_memory, failed_gates_yield_hashed_risk_memory, raw_logs_rejected_before_planning_use, rollback_failure_defers_learning, planning_projection_requires_admitted_matching_decision, software_learning_errors_are_bounded | audit_chain | witnessed | Software outcome learning derives sanitized procedural and risk-memory candidates from governed software-change receipts, rejects raw logs, and projects planning knowledge only after admitted learning decisions. |
 | `gateway_webhook_ingress` | /webhook/web, /webhook/slack, /webhook/telegram | request_proof | action_proof | none | audit_chain | witnessed | Webhook ingress binds tenant resolution, command ledger, and event-log evidence. |
 | `gateway_approval_resolution` | /webhook/approve/{request_id}, /authority/approval-chains | request_proof | action_proof | none | audit_chain | witnessed | Approval resolution exposes protected operator paths and audited chain state. |
 | `authority_obligation_mesh` | /authority/witness, /authority/responsibility, /authority/obligations, /authority/escalations | request_proof | action_proof | pending_approval_chain_count, open_obligation_count, overdue_obligation_count, escalated_obligation_count | audit_chain | witnessed | Authority and obligation surfaces expose unresolved responsibility state. |
@@ -58,6 +59,7 @@ document is the operator-readable witness.
 | `temporal_causal_order` | TemporalCausalOrder.evaluate, TemporalCausalOrderRequest, TemporalCausalOrderReceipt | request_proof | action_proof | runtime_clock_owns_causal_order_time, required_events_must_be_present, tenant_and_command_scope_checked, predecessor_edges_checked, out_of_order_events_block_dispatch, future_events_block_dispatch, high_risk_source_receipts_bound, temporal_causal_order_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal causal order rechecks required timestamped events, tenant and command scope, predecessor edges, source receipts, missing events, and out-of-order events before worker execution. |
 | `temporal_monotonic_duration` | TemporalMonotonicDuration.evaluate, TemporalMonotonicDurationRequest, TemporalMonotonicDurationReceipt | request_proof | action_proof | runtime_monotonic_clock_owns_duration_truth, wall_clock_not_used_for_duration, duration_limit_exceeded_blocks_dispatch, cooldown_lower_bound_defers_dispatch, monotonic_clock_regression_blocks_dispatch, high_risk_source_receipts_bound, temporal_monotonic_duration_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal monotonic duration rechecks timeout, latency, cooldown, retry-delay, and watchdog elapsed time from monotonic clock readings before dispatch. |
 | `temporal_accepted_risk_expiry` | TemporalAcceptedRiskExpiry.evaluate, TemporalAcceptedRiskRequest, TemporalAcceptedRiskExpiryReceipt | request_proof | action_proof | runtime_clock_owns_accepted_risk_expiry, expired_accepted_risk_blocks_dispatch, revoked_or_closed_accepted_risk_blocks_dispatch, tenant_command_and_action_scope_checked, review_obligation_required, accepted_risk_evidence_refs_required, high_risk_source_receipts_bound, temporal_accepted_risk_expiry_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal accepted-risk expiry rechecks active accepted-risk records for expiry, lifecycle disposition, tenant and command scope, review obligation, owner, evidence refs, and source receipts before dispatch reuse. |
+| `temporal_credential_expiry` | TemporalCredentialExpiry.evaluate, TemporalCredentialRequest, TemporalCredentialExpiryReceipt | request_proof | action_proof | runtime_clock_owns_credential_expiry, expired_credentials_block_dispatch, revoked_credentials_block_dispatch, provider_and_credential_scope_checked, rotation_pending_warns_before_dispatch, rotation_overdue_blocks_dispatch, credential_evidence_refs_required, secret_value_absence_verified, high_risk_source_receipts_bound, temporal_credential_expiry_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal credential expiry rechecks connector credential descriptors for expiry, lifecycle disposition, provider and credential scope, rotation warning windows, owner, evidence refs, source binding receipts, and no-secret serialization before dispatch. |
 | `temporal_memory_refresh` | TemporalMemoryRefresh.evaluate, MemoryRefreshRequest, TemporalMemoryRefreshReceipt | request_proof | action_proof | usable_memory_does_not_create_refresh_task, stale_memory_creates_bounded_refresh_task, evidence_type_coverage_gates_review_readiness, invalid_refresh_policy_blocks_task_creation, superseded_memory_blocks_reactivation, temporal_memory_refresh_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal memory refresh converts stale or refresh-required memory receipts into bounded refresh tasks with required evidence coverage, owner scope, review readiness, due windows, and activation blocks before refreshed memory can guide action. |
 | `temporal_scheduler` | TemporalScheduler.evaluate, ScheduledCommand, TemporalSchedulerReceipt | request_proof | action_proof | scheduled_command_requires_execute_at, idempotency_required, lease_acquired_before_dispatch, future_schedule_defers, missed_run_receipt_emitted, retry_window_checked, high_risk_reapproval_required, active_lease_blocks_duplicate_execution, temporal_scheduler_receipt_schema_valid, receipt_not_terminal_closure | audit_chain | witnessed | Temporal scheduler gates scheduled command wakeups with idempotency, due checks, retry windows, missed-run receipts, lease acquisition, recurrence declaration, and high-risk approval plus temporal recheck evidence before dispatch. |
 | `policy_proof_report` | PolicyProver.prove | request_proof | action_proof | bounded_policy_cases_required, empty_invariants_rejected, counterexamples_are_concrete, proved_report_has_no_counterexamples, policy_weakening_forbidden, policy_proof_schema_valid | audit_chain | witnessed | Policy proof reports evaluate explicit invariants over bounded cases, emit concrete counterexamples, and forbid policy weakening as a proof strategy. |
@@ -74,9 +76,9 @@ Coverage summary:
 
 | Metric | Count |
 |---|---:|
-| Total surfaces | 60 |
+| Total surfaces | 62 |
 | Proven surfaces | 1 |
-| Witnessed surfaces | 59 |
+| Witnessed surfaces | 61 |
 | Unproven surfaces | 0 |
 
 Declared route coverage:
@@ -121,43 +123,46 @@ Resolved closure actions:
 13. `classify_compliance_evidence_exports`
 14. `classify_audit_chain_api`
 15. `classify_runbook_learning_routes`
-16. `publish_runtime_conformance_attestation`
-17. `publish_production_evidence_plane`
-18. `publish_capability_plan_evidence_bundles`
-19. `publish_deployment_orchestration_receipt_contract`
-20. `publish_runtime_reflex_engine_read_models`
-21. `publish_governed_operational_intelligence_witnesses`
-22. `publish_capability_forge_candidate_contract`
-23. `publish_capability_maturity_assessment_contract`
-24. `publish_networked_worker_mesh_contract`
-25. `publish_agent_identity_contract`
-26. `publish_claim_verification_report_contract`
-27. `publish_connector_self_healing_receipt_contract`
-28. `publish_collaboration_case_contract`
-29. `publish_capability_maturity_contract`
-30. `publish_policy_prover_counterexample_contract`
-31. `publish_memory_lattice_admission_contract`
-32. `publish_workflow_mining_draft_contract`
-33. `publish_domain_operating_pack_contract`
-34. `publish_multimodal_operation_receipt_contract`
-35. `publish_physical_action_receipt_contract`
-36. `publish_temporal_operation_receipt_contract`
-37. `publish_temporal_evidence_freshness_receipt_contract`
-38. `publish_temporal_reapproval_receipt_contract`
-39. `publish_temporal_dispatch_window_receipt_contract`
-40. `publish_temporal_budget_window_receipt_contract`
-41. `publish_temporal_memory_receipt_contract`
-42. `publish_temporal_causal_order_receipt_contract`
-43. `publish_temporal_monotonic_duration_receipt_contract`
-44. `publish_temporal_accepted_risk_expiry_receipt_contract`
-45. `publish_temporal_memory_refresh_receipt_contract`
-46. `classify_temporal_scheduler_routes`
-47. `publish_temporal_scheduler_receipt_contract`
-48. `publish_policy_proof_report_contract`
-49. `publish_capability_upgrade_plan_contract`
-50. `publish_autonomous_test_generation_plan_contract`
-51. `publish_trust_ledger_bundle_contract`
-52. `publish_trust_ledger_anchor_receipt_contract`
+16. `publish_software_outcome_learning_contract`
+17. `publish_runtime_conformance_attestation`
+18. `publish_production_evidence_plane`
+19. `publish_capability_plan_evidence_bundles`
+20. `publish_deployment_orchestration_receipt_contract`
+21. `publish_runtime_reflex_engine_read_models`
+22. `publish_governed_operational_intelligence_witnesses`
+23. `publish_capability_forge_candidate_contract`
+24. `publish_capability_maturity_assessment_contract`
+25. `publish_networked_worker_mesh_contract`
+26. `publish_agent_identity_contract`
+27. `publish_claim_verification_report_contract`
+28. `publish_connector_self_healing_receipt_contract`
+29. `publish_collaboration_case_contract`
+30. `publish_capability_maturity_contract`
+31. `publish_policy_prover_counterexample_contract`
+32. `publish_memory_lattice_admission_contract`
+33. `publish_workflow_mining_draft_contract`
+34. `publish_domain_operating_pack_contract`
+35. `publish_multimodal_operation_receipt_contract`
+36. `publish_physical_action_receipt_contract`
+37. `publish_temporal_operation_receipt_contract`
+38. `publish_temporal_evidence_freshness_receipt_contract`
+39. `publish_temporal_reapproval_receipt_contract`
+40. `publish_temporal_dispatch_window_receipt_contract`
+41. `publish_temporal_budget_window_receipt_contract`
+42. `publish_temporal_memory_receipt_contract`
+43. `publish_temporal_causal_order_receipt_contract`
+44. `publish_temporal_monotonic_duration_receipt_contract`
+45. `publish_temporal_accepted_risk_expiry_receipt_contract`
+46. `publish_temporal_credential_expiry_receipt_contract`
+47. `publish_temporal_memory_receipt_contract`
+48. `publish_temporal_memory_refresh_receipt_contract`
+49. `classify_temporal_scheduler_routes`
+50. `publish_temporal_scheduler_receipt_contract`
+51. `publish_policy_proof_report_contract`
+52. `publish_capability_upgrade_plan_contract`
+53. `publish_autonomous_test_generation_plan_contract`
+54. `publish_trust_ledger_bundle_contract`
+55. `publish_trust_ledger_anchor_receipt_contract`
 
 Open closure actions:
 
@@ -165,6 +170,6 @@ Open closure actions:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted risk expiry contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
+  Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, gateway runtime witness mapping, claim verification report contract mapping, collaboration case contract mapping, connector self-healing receipt contract mapping, physical action receipt contract mapping, temporal evidence freshness contract mapping, temporal reapproval contract mapping, temporal dispatch window contract mapping, temporal budget window contract mapping, temporal causal order contract mapping, temporal monotonic duration contract mapping, temporal accepted risk expiry contract mapping, temporal credential expiry contract mapping, temporal memory refresh contract mapping, physical worker canary mapping, schema contract validation, deployment orchestration receipt schema contract
   Open issues: 199 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
   Next action: classify unproven declared routes into named proof surfaces or explicit exemptions

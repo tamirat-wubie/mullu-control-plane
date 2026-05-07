@@ -833,6 +833,70 @@ class WaveSpeedBackend:
         return self._call_count
 
 
+class BazaarLinkBackend:
+    """BazaarLink OpenAI-compatible endpoint for inexpensive Llama models."""
+
+    provider = LLMProvider.BAZAARLINK
+    DEFAULT_MODEL = "meta-llama/llama-3.1-8b-instruct"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "BAZAARLINK_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://bazaarlink.ai/api/v1",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.02,
+            cost_per_1m_output=0.05,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+class LlamaAPIBackend:
+    """LlamaAPI OpenAI-compatible endpoint for inexpensive Llama models."""
+
+    provider = LLMProvider.LLAMAAPI
+    DEFAULT_MODEL = "llama3-70b"
+
+    def __init__(self, *, model: str = "", api_key: str | None = None, api_key_env: str = "LLAMA_API_KEY") -> None:
+        self._model = model or self.DEFAULT_MODEL
+        self._default_model = self._model
+        self._api_key = api_key or ""
+        self._api_key_env = api_key_env
+        self._call_count = 0
+
+    def call(self, params: LLMInvocationParams) -> LLMResult:
+        self._call_count += 1
+        return _openai_compatible_call(
+            base_url="https://api.llama-api.com",
+            api_key=self._api_key or os.environ.get(self._api_key_env, ""),
+            model=params.model_name or self._model,
+            messages=_params_to_messages(params),
+            max_tokens=params.max_tokens,
+            temperature=0.0,
+            provider=self.provider,
+            cost_per_1m_input=0.65,
+            cost_per_1m_output=0.65,
+        )
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
 # --- xAI Grok (real-time X data) ---
 
 
@@ -974,6 +1038,8 @@ ALL_PROVIDERS: dict[str, type] = {
     "dinference": DInferenceBackend,
     "chutes": ChutesBackend,
     "wavespeed": WaveSpeedBackend,
+    "bazaarlink": BazaarLinkBackend,
+    "llamaapi": LlamaAPIBackend,
     "grok": GrokBackend,
     "mistral": MistralBackend,
     "openrouter": OpenRouterBackend,
@@ -1011,6 +1077,8 @@ def available_providers() -> list[str]:
         "dinference": ("DINFERENCE_API_KEY",),
         "chutes": ("CHUTES_API_KEY",),
         "wavespeed": ("WAVESPEED_API_KEY",),
+        "bazaarlink": ("BAZAARLINK_API_KEY",),
+        "llamaapi": ("LLAMA_API_KEY",),
         "grok": ("XAI_API_KEY",),
         "mistral": ("MISTRAL_API_KEY",),
         "openrouter": ("OPENROUTER_API_KEY",),

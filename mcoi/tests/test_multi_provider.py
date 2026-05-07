@@ -13,6 +13,7 @@ import pytest
 from mcoi_runtime.contracts.llm import LLMInvocationParams, LLMMessage, LLMProvider, LLMRole
 from mcoi_runtime.adapters.multi_provider import (
     ALL_PROVIDERS,
+    BazaarLinkBackend,
     CerebrasBackend,
     ChutesBackend,
     CloudflareBackend,
@@ -26,6 +27,7 @@ from mcoi_runtime.adapters.multi_provider import (
     GrokBackend,
     GroqBackend,
     HyperbolicBackend,
+    LlamaAPIBackend,
     MistralBackend,
     MoonshotBackend,
     NebiusBackend,
@@ -63,6 +65,8 @@ OPENAI_COMPATIBLE_PROVIDER_CLASSES = [
     DInferenceBackend,
     ChutesBackend,
     WaveSpeedBackend,
+    BazaarLinkBackend,
+    LlamaAPIBackend,
     GrokBackend,
     MistralBackend,
     OpenRouterBackend,
@@ -337,6 +341,8 @@ class TestProviderRegistry:
             "dinference",
             "chutes",
             "wavespeed",
+            "bazaarlink",
+            "llamaapi",
             "grok",
             "mistral",
             "openrouter",
@@ -368,6 +374,8 @@ class TestProviderRegistry:
             ("dinference", DInferenceBackend, LLMProvider.DINFERENCE),
             ("chutes", ChutesBackend, LLMProvider.CHUTES),
             ("wavespeed", WaveSpeedBackend, LLMProvider.WAVESPEED),
+            ("bazaarlink", BazaarLinkBackend, LLMProvider.BAZAARLINK),
+            ("llamaapi", LlamaAPIBackend, LLMProvider.LLAMAAPI),
         ],
     )
     def test_new_openai_compatible_providers(self, provider_name, backend_cls, provider):

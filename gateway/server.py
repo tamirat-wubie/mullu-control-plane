@@ -68,6 +68,7 @@ from gateway.command_spine import build_command_ledger_from_env
 from gateway.conformance import issue_conformance_certificate
 from gateway.evidence_bundle import build_command_trust_bundle
 from gateway.event_log import WebhookEventLog
+from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.observability import GatewayObservabilityRecorder
@@ -560,6 +561,7 @@ def create_gateway_app(
         )
     isolated_capability_executor = build_isolated_capability_executor_from_env()
     observability_recorder = GatewayObservabilityRecorder()
+    federated_control_plane = FederatedControlPlane()
     router = GatewayRouter(
         platform=platform,
         command_ledger=command_ledger,

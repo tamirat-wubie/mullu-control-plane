@@ -356,6 +356,8 @@ def produce_email_calendar_live_receipt(
             "worker_receipt": _json_ready(worker_receipt),
             "blockers": blockers,
         }
+        if status == "failed":
+            payload.update(_email_calendar_recovery_payload(blockers))
     except Exception:  # noqa: BLE001
         blockers.append("email_calendar_probe_exception")
         payload = _failed_payload(
@@ -365,6 +367,7 @@ def produce_email_calendar_live_receipt(
             error="email_calendar_probe_exception",
         )
         payload["external_write"] = True
+        payload.update(_email_calendar_recovery_payload(blockers))
     _write_json(output_path, payload)
     return LiveReceiptWrite(
         adapter_id="communication.email_calendar_worker",
@@ -372,6 +375,30 @@ def produce_email_calendar_live_receipt(
         output_path=str(output_path),
         blockers=tuple(blockers),
     )
+
+
+def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
+    """Return bounded recovery metadata for failed email/calendar live receipts."""
+    if "email_calendar_probe_observed_external_write" in blockers:
+        return {
+            "failure_class": "external_write_observed",
+            "recovery_actions": [],
+        }
+    if "email_calendar_probe_exception" in blockers:
+        failure_class = "probe_exception"
+    elif "email_calendar_worker_probe_failed" in blockers:
+        failure_class = "worker_probe_failed"
+    else:
+        return {}
+    return {
+        "failure_class": failure_class,
+        "recovery_actions": [
+            "verify_email_calendar_worker_reachable",
+            "verify_connector_token_present",
+            "verify_connector_scope_read_only",
+            "rerun_email_calendar_live_receipt_probe",
+        ],
+    }
 
 
 def produce_live_receipts(
